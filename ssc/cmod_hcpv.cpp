@@ -255,6 +255,7 @@ public:
 		// define variables consistent across subarrays
 
 		weatherfile wf( as_string("file_name") );
+		if( wf.msg() ) log( wf.message(), SSC_WARNING);
 		if ( !wf.ok() ) throw exec_error( "hcpv", wf.error_message());
 			
 		if ( wf.nrecords != 8760 ) throw exec_error("hcpv", "pv simulator only accepts hourly weather data");

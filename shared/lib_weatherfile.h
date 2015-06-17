@@ -46,11 +46,13 @@ class weatherfile
 {
 private:
 	bool m_ok;
+	bool m_msg;
 	int m_type;
 	std::string m_file;
 	int m_startYear;
 	double m_time;
 	std::string m_errorStr;
+	std::string m_message;
 
 	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
 		GHI, DNI, DHI, 
@@ -80,11 +82,13 @@ public:
 	enum { INVALID, TMY2, TMY3, EPW, SMW, WFCSV };
 
 	bool ok();
+	bool msg();
 	int type();
 	std::string filename();
 	bool open( const std::string &file, bool header_only = false, bool interp = false );
 	void rewind();
 	std::string error_message() { return m_errorStr; }
+	std::string message() { return m_message; }
 
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );

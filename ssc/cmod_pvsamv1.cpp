@@ -747,6 +747,7 @@ public:
 		// open the weather file
 		// define variables consistent across subarrays
 		weatherfile wf( as_string("solar_resource_file") );
+		if( wf.msg() ) log( wf.message(), SSC_WARNING);
 		if ( !wf.ok() ) throw exec_error( "pvsamv1", wf.error_message() );
 		
 

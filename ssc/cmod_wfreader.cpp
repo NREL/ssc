@@ -72,6 +72,7 @@ public:
 		const char *file = as_string("file_name");
 
 		weatherfile wf( file, header_only );
+		if( wf.msg() ) log( wf.message(), SSC_WARNING);
 		if (!wf.ok()) 
 		{
 			assign( "error", var_data(wf.error_message()) );

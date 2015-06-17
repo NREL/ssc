@@ -154,6 +154,7 @@ public:
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf(file);
+		if( wf.msg() ) log( wf.message(), SSC_WARNING);
 		if (!wf.ok()) throw exec_error("swh", wf.error_message());
 
 		/* **********************************************************************
