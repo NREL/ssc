@@ -18,8 +18,11 @@ copy apiwrappers\python\belpe.py sdk-release\languages\python
 copy apiwrappers\python\utilityrate3.py sdk-release\languages\python
 copy apiwrappers\python\cashloan.py sdk-release\languages\python
 
-copy apiwrappers\php\ExtensionWin32Howto.pdf sdk-release\languages\php
-copy apiwrappers\php\ssimphp.cpp sdk-release\languages\php
+copy apiwrappers\php\down-arrow.png sdk-release\languages\php
+copy apiwrappers\php\jquery.searchabledropdown-1.0.8.min.js sdk-release\languages\php
+copy apiwrappers\php\Makefile sdk-release\languages\php
+copy apiwrappers\php\pvwatts.php sdk-release\languages\php
+copy apiwrappers\php\sscphp.c sdk-release\languages\php
 
 copy apiwrappers\csharp\SSC.cs sdk-release\languages\csharp
 copy apiwrappers\csharp\App.config sdk-release\languages\csharp
