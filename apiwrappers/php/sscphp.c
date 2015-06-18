@@ -5,7 +5,7 @@
 
 #include <php.h>
 
-#include "../../ssc/sscapi.h"
+#include "sscapi.h"
 
 #define PHP_SSC_VERSION "1.0"
 #define PHP_SSC_EXTNAME "sscphp"
