@@ -33,7 +33,7 @@ public:
 		double foc = 0; // fixed operating cost
 
 		aep = as_double("annual_energy");           // kWh
-		foc = as_double("fixed_operating_cost");    // $/kW
+		foc = as_double("fixed_operating_cost");    // $
 		voc = as_double("variable_operating_cost"); // $/kWh
 		fcr = as_double("fixed_charge_rate");       // unitless fraction
 		icc = as_double("capital_cost");            // $
