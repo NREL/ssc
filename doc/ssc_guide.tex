@@ -1547,7 +1547,7 @@ PHP: Hypertext Preprocessor (PHP) is a popular server-side scripting language de
 \begin{enumerate}
 \item Compile the PHP extension.  The first line of the \texttt{Makefile} sets the path to the PHP header files, which defaults to \texttt{/usr/include/php}.  You may need to edit this for your specific system configuration.
 \begin{verbatimtab}[4]
-$ cd apiwrappers/php
+$ cd languages/php
 $ cp ../../sscapi.h .
 $ cp ../../linux64/ssc.so .
 $ make
@@ -1555,7 +1555,7 @@ $ make
 Upon success, a new dynamic library \texttt{sscphp.so} will be created that can be loaded into PHP as an extension.
 \item Configure PHP to load the extension by editing the \texttt{php.ini} file.  On Slackware Linux, this can be found in \texttt{/etc/httpd/php.ini}.  Add a line in the extensions section:
 \begin{verbatimtab}[4]
-extension=<path-to-ssc-sdk>/apiwrappers/php/sscphp.so
+extension=<path-to-ssc-sdk>/languages/php/sscphp.so
 \end{verbatimtab}
 \item At the shell, test that the module is loaded and working:
 \begin{verbatimtab}[4]
