@@ -3,25 +3,25 @@
 
 static var_info vtab_lcoefcr[] = 
 {	
-/*   VARTYPE            DATATYPE         NAME                        LABEL                       UNITS     META      GROUP          REQUIRED_IF    CONSTRAINTS UI_HINTS*/
-	{ SSC_INPUT,        SSC_MATRIX,      "input",                  "Capital cost",             "$",      "",       "IEC61853", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "nser",                   "Annual operating cost",    "$/yr",   "",       "IEC61853", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "type",                   "Fixed charge rate",        "",       "",       "IEC61853", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "verbose",                "Annual energy production", "kWh/yr", "",       "IEC61853", "*",           "",         "" },
-	
-	{ SSC_OUTPUT,       SSC_NUMBER,      "alphaIsc",               "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "betaVoc",                "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "gammaPmp",               "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "n",                      "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "Il",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "Io",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "C1",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "C2",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "C3",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "D1",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "D2",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "D3",                     "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "Egref",                  "Levelized cost of energy", "$/kWh", "",       "Simple LCOE", "*",           "",         "" },
+/*   VARTYPE            DATATYPE         NAME                        LABEL                       UNITS     META                                             GROUP          REQUIRED_IF    CONSTRAINTS UI_HINTS*/
+	{ SSC_INPUT,        SSC_MATRIX,      "input",                  "IEC-61853 matrix test data", "various",  "[IRR,TC,PMP,VMP,VOC,ISC]",                      "IEC61853",    "*",           "",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "nser",                   "Number of cells in series",  "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "type",                   "Cell technology type",       "0..5",     "monoSi,multiSi/polySi,cis,cigs,cdte,amorphous", "IEC61853",    "*",           "",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "verbose",                "Output solver messages",     "0/1",      "",                                              "IEC61853",    "*",           "",         "" },
+																								 											                			   
+	{ SSC_OUTPUT,       SSC_NUMBER,      "alphaIsc",               "SC temp coefficient @ STC",  "A/C",      "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "betaVoc",                "OC temp coefficient @ STC",  "V/C",      "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "gammaPmp",               "MP temp coefficient @ STC",  "%/C",      "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "n",                      "Diode factor",               "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "Il",                     "Light current",              "A",        "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "Io",                     "Saturation current",         "A",        "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "C1",                     "Rsh fitting C1",             "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "C2",                     "Rsh fitting C2",             "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "C3",                     "Rsh fitting C3",             "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "D1",                     "Rs fitting D1",              "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "D2",                     "Rs fitting D2",              "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "D3",                     "Rs fitting D3",              "",         "",                                              "IEC61853",    "*",           "",         "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "Egref",                  "Bandgap voltage",            "eV",       "",                                              "IEC61853",    "*",           "",         "" },
 
 var_info_invalid };
 
@@ -86,4 +86,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( iec61853par, "Calculate 11-parameter single diode model parameters from IEC 61853 test data.", 1 )
+DEFINE_MODULE_ENTRY( iec61853par, "Calculate 11-parameter single diode model parameters from IEC-61853 PV module test data.", 1 )

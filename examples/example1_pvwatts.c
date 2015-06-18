@@ -17,17 +17,18 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	ssc_data_set_string( data, "file_name", argv[1] ); // set the weather file name
-	ssc_data_set_number( data, "system_size", 1.0f );  // system size of 1 kW DC
-	ssc_data_set_number( data, "derate", 0.77f );      // system derate
-	ssc_data_set_number( data, "track_mode", 0 );      // fixed tilt system
+	ssc_data_set_string( data, "solar_resource_file", argv[1] ); // weather file name
+	ssc_data_set_number( data, "system_capacity", 1.0f );  // 1 kW DC system
+	ssc_data_set_number( data, "losses", 14.0f );      // system losses, in %
+	ssc_data_set_number( data, "array_type", 0 );      // fixed tilt system
 	ssc_data_set_number( data, "tilt", 20 );           // 20 degree tilt
-	ssc_data_set_number( data, "azimuth", 180 );       // south facing (180 degrees)
+	ssc_data_set_number( data, "azimuth", 180 );       // south facing
+	ssc_data_set_number( data, "adjust:factor", 0.0f ); // energy adjustment, 0 % losses
 	
-	ssc_module_t module = ssc_module_create( "pvwattsv1" );
+	ssc_module_t module = ssc_module_create( "pvwattsv5" );
 	if ( NULL == module )
 	{
-		printf("error: could not create 'pvwattsv1' module.\n");
+		printf("error: could not create 'pvwattsv5' module.\n");
 		ssc_data_free( data );
 		return -1;
 	}
