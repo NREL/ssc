@@ -230,9 +230,9 @@ var_info_invalid };
 var_info vtab_adjustment_factors[] = {
 /*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
-	{ SSC_INPUT,        SSC_NUMBER,      "adjust:factor",                 "Constant adjustment factor",                "%",    "",                                     "Adjustment factors",      "*",                     "MAX=100",                     "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly adjustment factors",                 "%",    "",                                     "Adjustment factors",      "?",                     "LENGTH=8760",                "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based adjustment factors",           "%",    "n x 3 matrix [ start, end, factor ]",  "Adjustment factors",      "?",                     "COLS=3",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "adjust:constant",               "Constant loss adjustment",                "%",    "",                                     "Adjustment factors",      "*",                     "MAX=100",                     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "adjust:hourly",                 "Hourly loss adjustments",                 "%",    "",                                     "Adjustment factors",      "?",                     "LENGTH=8760",                "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "adjust:periods",                "Period-based loss adjustments",           "%",    "n x 3 matrix [ start, end, factor ]",  "Adjustment factors",      "?",                     "COLS=3",                     "" },
 	
 var_info_invalid };
 
@@ -252,7 +252,7 @@ adjustment_factors::adjustment_factors( compute_module *cm )
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup()
 {
-	float f = (float)m_cm->as_number( "adjust:factor" );
+	float f = (float)m_cm->as_number( "adjust:constant" );
 	f = 1 - f / 100; //convert from percentage to factor
 	m_factors.resize( 8760, f );
 
