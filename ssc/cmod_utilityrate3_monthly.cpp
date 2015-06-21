@@ -1307,6 +1307,7 @@ public:
 				assign("year1_monthly_electricity_needed_from_grid", var_data(&monthly_elec_needed_from_grid[0], 12));
 
 				assign("year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess_energy[0], 12));
+				assign("year1_monthly_cumulative_excess_dollars", var_data(&monthly_cumulative_excess_dollars[0], 12));
 				assign("year1_monthly_salespurchases", var_data(&monthly_salespurchases[0], 12));
 
 				// output and demand per Paul's email 9/10/10
