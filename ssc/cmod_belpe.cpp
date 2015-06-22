@@ -171,8 +171,8 @@ public:
 		// read weather file inputs 		
 		const char *file = as_string("solar_resource_file");
 		weatherfile wf(file);
-		if( wf.msg() ) log( wf.message(), SSC_WARNING);
-		if (!wf.ok()) throw exec_error("belpe", wf.error_message());
+		if (!wf.ok()) throw exec_error("belpe", wf.message());
+		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
 
 		//allocate input arrays
 		ssc_number_t *T_ambF = allocate("T_ambF", 8760);
