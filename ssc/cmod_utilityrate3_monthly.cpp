@@ -671,8 +671,10 @@ static var_info vtab_utility_rate3_monthly[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_peak_per_period",    "Electricity from grid peak per TOU period",        "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_with_system",      "Electricity demand charge (Fixed) with system",    "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_with_system",        "Electricity demand charge (TOU) with system",      "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_fixed_with_system", "Electricity charge (Fixed) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_fixed_without_system", "Electricity charge (Fixed) without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_dc_fixed_with_system", "Electricity demand charge (Fixed) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_dc_tou_with_system", "Electricity demand charge (TOU) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_charge_with_system",     "Electricity energy charge with system",            "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	
@@ -1220,6 +1222,7 @@ public:
 				}
 				assign( "year1_hourly_salespurchases_without_system", var_data( &salespurchases[0], 8760 ) );
 				assign( "year1_monthly_salespurchases_wo_sys", var_data(&monthly_salespurchases[0], 12) );
+				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 			}
 
 			// calculate revenue with solar system (using net grid energy & maxpower)
@@ -1295,6 +1298,7 @@ public:
 				assign("year1_hourly_system_to_load", var_data(&e_sys_to_load[0], 8760));
 				assign("year1_hourly_p_system_to_load", var_data(&p_sys_to_load[0], 8760));
 
+				assign("year1_monthly_fixed_with_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_dc_fixed_with_system", var_data(&monthly_dc_fixed[0], 12));
 				assign("year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12));
 				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
@@ -1856,6 +1860,13 @@ public:
 							}
 							if (enable_nm && (m > 0) && excess_monthly_dollars && !apply_excess_to_flat_rate)
 							{
+	/*							ssc_number_t chrg = monthly_ec_charges[m] - monthly_cumulative_excess_dollars[m - 1];
+								if (chrg < 0)
+								{
+									monthly_ec_charges[m] = 0;
+
+								}
+		*/
 								monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 								// excess dollar for the month
 								//							cumulative_excess_dollars[m] = (ec_charge[m] < 0) ? -ec_charge[m] : 0;
@@ -1873,8 +1884,13 @@ public:
 									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] == 0)) // buy from grid
 										payment[c] += monthly_ec_charges[m];
 									else if (excess_monthly_dollars)
+									{
 										// && (monthly_cumulative_excess_dollars[m] == 0)) // buy from grid
-										payment[c] += monthly_ec_charges[m];
+										if (monthly_ec_charges[m] > 0)
+											payment[c] += monthly_ec_charges[m];
+										else
+											income[c] -= monthly_ec_charges[m];
+									}
 								}
 							}
 							else // non-net metering - no rollover 
@@ -1960,30 +1976,23 @@ public:
 							// end of TOU demand charge
 						}
 
+
 					} // end of if end of month
 					c++;
 				}  // h loop
 			} // d loop
 
-
+			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
+			monthly_bill[m] = payment[c - 1] - income[c - 1];
+			if (enable_nm && (monthly_bill[m] < 0))
+			{
+				if (excess_monthly_dollars)
+					monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+				monthly_bill[m] = 0;
+			}
 
 		} // end of month m (m loop)
 
-		// TODO calculate monthly bill and excess dollars and rollover if m>0
-
-
-		/*
-		// process basic flat rate - V3 handled in energy charge
-		process_flat_rate( e_in, payment, income, price );
-
-		// process demand charges
-		if (as_boolean("ur_dc_enable"))
-			process_demand_charge( p_in, payment, demand_charge, monthly_dc_fixed, monthly_dc_tou, dc_tou_sched, dc_hourly_peak );
-
-		// process energy charges
-		if (as_boolean("ur_ec_enable"))
-			process_energy_charge( e_in, payment, income, price, monthly_ec_charges, monthly_ec_rates, ec_tou_sched );
-			*/
 
 
 
@@ -2022,7 +2031,7 @@ public:
 				for (h = 0; h<24; h++)
 					annual_charge += payment[c];
 		// check against min charge
-		if (annual_charge < min_charge)
+		if ((annual_charge > 0) && (annual_charge < min_charge))
 		{
 			// if less then apply charge to last month and last hour
 			ssc_number_t add_annual_charge = min_charge - annual_charge;
@@ -2057,7 +2066,7 @@ public:
 		{
 			ssc_number_t add_monthly_charge = 0;
 			// if less then add difference to end of month
-			if (monthly_charge[m] < min_charge)
+			if ((monthly_charge[m] >0) && (monthly_charge[m] < min_charge))
 			{
 				add_monthly_charge = min_charge - monthly_charge[m];
 			}
