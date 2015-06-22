@@ -192,8 +192,14 @@ static bool golden(double ax, double bx, double (*f)(double,void*), void *data, 
 {
 	double f1,f2,x0,x1,x2,x3,cx, fa, fb, fc;
 	int ni = 0;
-
+	double ax0(ax), bx0(bx);
 	mnbrak(&ax, &bx, &cx, &fa, &fb, &fc, f, data );
+
+	// in rare cases mnbrak returns values beyond original bounds???
+	if ( ax < ax0 ) ax = ax0;
+	if ( ax > bx0 ) ax = bx0;
+	if ( bx < ax0 ) bx = ax0;
+	if ( bx > bx0 ) bx = bx0;
 
 	x0=ax;
 	x3=cx;

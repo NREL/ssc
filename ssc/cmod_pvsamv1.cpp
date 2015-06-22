@@ -1828,6 +1828,9 @@ public:
 							(*module_model)(in, tcell, module_voltage, out);
 						}
 
+						if ( out.Voltage > module_model->VocRef()*1.3 )
+							log(util::format("Non-physical module voltage at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage ), SSC_NOTICE );
+
 						if (!std::isfinite(out.Power))
 						{
 							out.Power = 0;
