@@ -397,13 +397,12 @@ weatherfile::weatherfile()
 weatherfile::weatherfile(const std::string &file, bool header_only, bool interp)
 {
 	reset();
-	m_msg = false;
 	m_ok = open(file, header_only, interp);
 }
 
 void weatherfile::reset()
 {
-	m_errorStr.clear();
+	m_message.clear();
 	m_ok = false;
 	m_type = INVALID;
 	m_startYear = 1900;
@@ -440,11 +439,6 @@ bool weatherfile::ok()
 	return m_ok;
 }
 
-bool weatherfile::msg()
-{
-	return m_msg;
-}
-
 int weatherfile::type()
 {
 	return m_type;
@@ -459,7 +453,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 {
 	if (file.empty())
 	{
-		m_errorStr = "no file name given to weather file reader";
+		m_message = "no file name given to weather file reader";
 		return false;
 	}
 
@@ -475,7 +469,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		m_type = SMW;
 	else
 	{
-		m_errorStr = "could not detect weather data file format from file extension (.csv,.tm2,.tm2,.epw)";
+		m_message = "could not detect weather data file format from file extension (.csv,.tm2,.tm2,.epw)";
 		return false;
 	}
 
@@ -487,7 +481,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	FILE *fp = fopen(file.c_str(), "r");
 	if (!fp)
 	{
-		m_errorStr = "could not open file for reading: " + file;
+		m_message = "could not open file for reading: " + file;
 		m_type = INVALID;
 		return false;
 	}
@@ -544,7 +538,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		int nhdr = locate(buf, cols, NCOL, ',');
 		if (nhdr != 7)
 		{
-			m_errorStr = "invalid TMY3 header: must contain 7 fields.  station,city,state,tz,lat,lon,elev";
+			m_message = "invalid TMY3 header: must contain 7 fields.  station,city,state,tz,lat,lon,elev";
 			m_ok = false;
 			fclose(fp);
 			return false;
@@ -574,7 +568,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 		if (nhdr != 10)
 		{
-			m_errorStr = "invalid EPW header: must contain 10 fields. LOCATION,city,state,country,source,station,lat,lon,tz,elev";
+			m_message = "invalid EPW header: must contain 10 fields. LOCATION,city,state,country,source,station,lat,lon,tz,elev";
 			m_ok = false;
 			fclose(fp);
 			return false;
@@ -612,7 +606,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 		if (10 != nhdr)
 		{
-			m_errorStr = "invalid SMW header format, 10 fields required";
+			m_message = "invalid SMW header format, 10 fields required";
 			fclose(fp);
 			m_ok = false;
 			return false;
@@ -663,7 +657,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			{
 				// Check if the weather file contains a leap day
 				// if so, exit out with an error 
-				m_errorStr = "could not determine timestep in CSV weather file. Does the file contain a leap day?";
+				m_message = "could not determine timestep in CSV weather file. Does the file contain a leap day?";
 				m_ok = false;
 				fclose(fp);
 				return false;
@@ -776,7 +770,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			// divide by zero error 2/20/19
 			if (nmult <= 0)
 			{
-				m_errorStr = "could not determine number of records in CSV weather file";
+				m_message = "could not determine number of records in CSV weather file";
 				m_ok = false;
 				fclose(fp);
 				return false;
@@ -806,7 +800,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			}
 			else
 			{
-				m_errorStr = "could not determine timestep in CSV weather file";
+				m_message = "could not determine timestep in CSV weather file";
 				m_ok = false;
 				fclose(fp);
 				return false;
@@ -816,7 +810,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	}
 	else
 	{
-		m_errorStr = "could not detect file format";
+		m_message = "could not detect file format";
 		fclose(fp);
 		return false;
 	}
@@ -841,7 +835,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		pbuf = fgets(buf, NBUF, fp); // read column names	
 		if (pbuf != buf)
 		{
-			m_errorStr = "could not read column names";
+			m_message = "could not read column names";
 			fclose(fp);
 			return false;
 		}
@@ -853,14 +847,14 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			pbuf1 = fgets(buf1, NBUF, fp); // read column units;
 			if (pbuf1 != buf1)
 			{
-				m_errorStr = "could not read column units";
+				m_message = "could not read column units";
 				fclose(fp);
 				return false;
 			}
 			int ncols1 = locate(buf1, cols1, NCOL, ',');
 
 			if (ncols != ncols1) {
-				m_errorStr = "column names and units must have the same number of fields";
+				m_message = "column names and units must have the same number of fields";
 				fclose(fp);
 				return false;
 			}
@@ -899,11 +893,8 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	// by default, subtract 1 from hour of TMY3 files to switch
 	// from 1-24 standard to 0-23
 	int tmy3_hour_shift = 1;
-	bool leapDayDetected = false;
-	int leapDayCount = 0;
-
-	std::string feb29 = "02/29/";
-
+	int n_leap_data_removed = 0;
+	
 	for (int i = 0; i<nrecords; i++)
 	{
 		if (m_type == TMY2)
@@ -915,49 +906,13 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			int w1, w2, w3, w4, w5, w6, w7, w8, w9, w10;
 			char f1[2], f2[2], f3[2], f4[2], f5[2], f6[2], f7[2], f8[2], f9[2], f10[2], f11[2], f12[2], f13[2], f14[2], f15[2], f16[2], f17[2], f18[2], f19[2], f20[2], f21[2];
 
-			char *pret = fgets(buf, NBUF, fp);
+			char *pret = 0;
+			int nread = 0;
 
-			int nread = sscanf(buf,
-				"%2d%2d%2d%2d"
-				"%4d%4d"
-				"%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
-				"%2d%1s%1d%2d%1s%1d%4d%1s%1d%4d%1s%1d%3d%1s%1d%4d%1s%1d%3d%1s%1d"
-				"%3d%1s%1d%4d%1s%1d%5d%1s%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%3d%1s%1d%3d%1s%1d%3d%1s%1d%2d%1s%1d\n",
-				&yr, &mn, &dy, &hr,
-				&ethor, /* extraterrestrial horizontal radiation */
-				&etdn, /* extraterrestrial direct normal radiation */
-				&d1, f1, &u1, /* GH data value 0-1415 Wh/m2, Source, Uncertainty */
-				&d2, f2, &u2, /* DN data value 0-1200 Wh/m2, Source, Uncertainty */
-				&d3, f3, &u3, /* DF data value 0-700 Wh/m2, Source, Uncertainty */
-				&d4, f4, &u4, /* GH illum data value, Source, Uncertainty */
-				&d5, f5, &u5, /* DN illum data value, Source, Uncertainty */
-				&d6, f6, &u6, /* DF illum data value, Source, Uncertainty */
-				&d7, f7, &u7, /* Zenith illum data value, Source, Uncertainty */
-				&d8, f8, &u8, /* Total sky cover */
-				&d9, f9, &u9, /* opaque sky cover */
-				&d10, f10, &u10, /* dry bulb temp -500 to 500 = -50.0 to 50.0 'C */
-				&d11, f11, &u11, /* dew point temp -600 to 300 = -60.0 to 30.0 'C */
-				&d12, f12, &u12, /* relative humidity 0-100 */
-				&d13, f13, &u13, /* pressure millibars */
-				&d14, f14, &u14, /* wind direction */
-				&d15, &f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
-				&d16, &f16, &u16, // visibility
-				&d17, &f17, &u17, // ceiling height
-				&w1, &w2, &w3, &w4, &w5, &w6, &w7, &w8, &w9, &w10, // present weather
-				&d18, &f18, &u18, // precipitable water
-				&d19, &f19, &u19, // aerosol optical depth
-				&d20, &f20, &u20, // snow depth 0-150 cm
-				&d21, &f21, &u21); // days since last snowfall 0-88
-
-			// Sev March 11th
-			// If the month and day correspond to feb. 29th, skip the next 24 lines in the weather file
-			if (mn == 2 && dy == 29){
-				leapDayDetected = true;
-				for (int tossLine = 0; tossLine < 24; tossLine++){
-					char *pret = fgets(buf, NBUF, fp);
-				}
-
-				int nread = sscanf(buf,
+			while ( 1 )
+			{
+				pret = fgets(buf, NBUF, fp);
+				nread = sscanf(buf,
 					"%2d%2d%2d%2d"
 					"%4d%4d"
 					"%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
@@ -988,9 +943,14 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 					&d19, &f19, &u19, // aerosol optical depth
 					&d20, &f20, &u20, // snow depth 0-150 cm
 					&d21, &f21, &u21); // days since last snowfall 0-88
-			}
 
-			if (!(mn == 2 && dy == 29)){
+				if ( mn == 2 && dy == 29 )
+				{
+					// skip data lines for february 29th if they exist in the file
+					n_leap_data_removed++;
+					continue;
+				}
+
 				m_columns[YEAR].data[i] = yr + 1900;
 				m_columns[MONTH].data[i] = mn;
 				m_columns[DAY].data[i] = dy;
@@ -1010,139 +970,159 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY2 */
 				m_columns[TWET].data[i] = calc_twet(tdry, rhum, pres); /* must calculate wet bulb */
 
+				break;
 			}
-			if (nread != 79 || pret != buf)
+
+
+			if ( nread != 79 || pret != buf )
 			{
-				m_errorStr = "TMY2: data line does not have at exactly 79 characters at record " + util::to_string(i);
+				m_message = "TMY2: data line does not have at exactly 79 characters at record " + util::to_string(i);
 				fclose(fp);
 				return false;
 			}
+
 		}
 		else if (m_type == TMY3)
 		{
-			char *pret = fgets(buf, NBUF, fp);
+			char *pret = 0;
+			while( 1 )
+			{
+				pret = fgets(buf, NBUF, fp);
 
-			// Sev March 11th
-			// If the month and day correspond to feb. 29th, skip the next 24 lines in the weather file
-			if (((std::string)buf).find(feb29) == 0){
-				leapDayDetected = true;
-				for (int tossLine = 0; tossLine < 24; tossLine++){
-					char* pret = fgets(buf, NBUF, fp);
+				int ncols = locate(buf, cols, NCOL, ',');
+				if (ncols < 68)
+				{
+					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
+					fclose(fp);
+					return false;
 				}
+
+				char *p = cols[0];
+
+				int month = atoi(p);
+				p = strchr(p, '/');
+				if (!p)
+				{
+					m_message = "TMY3: invalid date format at record " + util::to_string(i);
+					fclose(fp);
+					return false;
+				}
+				p++;
+				int day = atoi(p);
+				p = strchr(p, '/');
+				if (!p)
+				{
+					m_message = "TMY3: invalid date format at record " + util::to_string(i);
+					fclose(fp);
+					return false;
+				}
+				p++;
+				int year = atoi(p);
+
+				int hour = atoi(cols[1]) - tmy3_hour_shift;  // hour goes 0-23, not 1-24
+				if (i == 0 && m_columns[HOUR].data[i] < 0)
+				{
+					// this was a TMY3 file but with hours going 0-23 (against the tmy3 spec)
+					// handle it anyway by NOT subtracting from the hour to convert from 1-24
+					tmy3_hour_shift = 0;
+					hour = 0;
+				}
+
+				if ( month == 2 && day == 29 )
+				{
+					n_leap_data_removed++;
+					continue;
+				}
+
+				m_columns[YEAR].data[i] = year;
+				m_columns[MONTH].data[i] = month;
+				m_columns[DAY].data[i] = day;
+				m_columns[HOUR].data[i] = hour;
+				m_columns[MINUTE].data[i] = 30;
+
+				m_columns[GHI].data[i] = (double)atof(cols[4]);
+				m_columns[DNI].data[i] = (double)atof(cols[7]);
+				m_columns[DHI].data[i] = (double)atof(cols[10]);
+
+				m_columns[TDRY].data[i] = (double)atof(cols[31]);
+				m_columns[TWET].data[i] = (double)atof(cols[34]);
+
+				m_columns[WSPD].data[i] = (double)atof(cols[46]);
+				m_columns[WDIR].data[i] = (double)atof(cols[43]);
+
+				m_columns[RH].data[i] = (double)atof(cols[37]);
+				m_columns[PRES].data[i] = (double)atof(cols[40]);
+				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
+				m_columns[ALB].data[i] = (double)atof(cols[61]);
+				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
+
+				m_columns[TDEW].data[i] = wiki_dew_calc(tdry, rhum);
+
+				break;
 			}
-
-			int ncols = locate(buf, cols, NCOL, ',');
-
-			if (ncols < 68)
-			{
-				m_errorStr = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
-				fclose(fp);
-				return false;
-			}
-
-			char *p = cols[0];
-
-			m_columns[MONTH].data[i] = atoi(p);
-			p = strchr(p, '/');
-			if (!p)
-			{
-				m_errorStr = "TMY3: invalid date format at record " + util::to_string(i);
-				fclose(fp);
-				return false;
-			}
-			p++;
-			m_columns[DAY].data[i] = atoi(p);
-			p = strchr(p, '/');
-			if (!p)
-			{
-				m_errorStr = "TMY3: invalid date format at record " + util::to_string(i);
-				fclose(fp);
-				return false;
-			}
-			p++;
-			m_columns[YEAR].data[i] = atoi(p);
-
-			m_columns[HOUR].data[i] = atoi(cols[1]) - tmy3_hour_shift;  // hour goes 0-23, not 1-24
-			if (i == 0 && m_columns[HOUR].data[i] < 0)
-			{
-				// this was a TMY3 file but with hours going 0-23 (against the tmy3 spec)
-				// handle it anyway by NOT subtracting from the hour to convert from 1-24
-				tmy3_hour_shift = 0;
-				m_columns[HOUR].data[i] = 0;
-			}
-
-			m_columns[MINUTE].data[i] = 30;
-
-			m_columns[GHI].data[i] = (double)atof(cols[4]);
-			m_columns[DNI].data[i] = (double)atof(cols[7]);
-			m_columns[DHI].data[i] = (double)atof(cols[10]);
-
-			m_columns[TDRY].data[i] = (double)atof(cols[31]);
-			m_columns[TWET].data[i] = (double)atof(cols[34]);
-
-			m_columns[WSPD].data[i] = (double)atof(cols[46]);
-			m_columns[WDIR].data[i] = (double)atof(cols[43]);
-
-			m_columns[RH].data[i] = (double)atof(cols[37]);
-			m_columns[PRES].data[i] = (double)atof(cols[40]);
-			m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-			m_columns[ALB].data[i] = (double)atof(cols[61]);
-			m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
-
-			m_columns[TDEW].data[i] = wiki_dew_calc(tdry, rhum);
 
 			if (pret != buf)
 			{
-				m_errorStr = "TMY3: data line formatting error at record " + util::to_string(i);
+				m_message = "TMY3: data line formatting error at record " + util::to_string(i);
 				fclose(fp);
 				return false;
 			}
 		}
 		else if (m_type == EPW)
 		{
-			char *pret = fgets(buf, NBUF, fp);
-			int ncols = locate(buf, cols, NCOL, ',');
+			char *pret = 0;
 
-			while( atoi(cols[1])==2 && atoi(cols[2])==29 ){
-				leapDayDetected = true;
-				char *pret = fgets(buf, NBUF, fp);
-				int ncols = locate(buf, cols, NCOL, ',');
-			}
-
-			if (ncols < 32)
+			while( 1 )
 			{
-				m_errorStr = "EPW: data line does not have at least 32 fields at record " + util::to_string(i);
-				fclose(fp);
-				return false;
+				pret = fgets(buf, NBUF, fp);
+				int ncols = locate(buf, cols, NCOL, ',');
+
+				if (ncols < 32)
+				{
+					m_message = "EPW: data line does not have at least 32 fields at record " + util::to_string(i);
+					fclose(fp);
+					return false;
+				}
+
+				int month = atoi(cols[1]);
+				int day = atoi(cols[2] );
+
+				if ( month == 2 && day == 29 )
+				{
+					n_leap_data_removed++;
+					continue;
+				}
+
+				m_columns[YEAR].data[i] = atoi(cols[0]);
+				m_columns[MONTH].data[i] = atoi(cols[1]);
+				m_columns[DAY].data[i] = atoi(cols[2]);
+				m_columns[HOUR].data[i] = atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
+				m_columns[MINUTE].data[i] = 30;
+
+				m_columns[GHI].data[i] = (double)atof(cols[13]);
+				m_columns[DNI].data[i] = (double)atof(cols[14]);
+				m_columns[DHI].data[i] = (double)atof(cols[15]);
+
+				m_columns[WSPD].data[i] = (double)atof(cols[21]);
+				m_columns[WDIR].data[i] = (double)atof(cols[20]);
+
+				m_columns[TDRY].data[i] = (double)atof(cols[6]);
+				m_columns[TWET].data[i] = (double)atof(cols[7]);
+
+				m_columns[RH].data[i] = (double)atof(cols[8]);
+				m_columns[PRES].data[i] = (double)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
+				m_columns[SNOW].data[i] = (double)atof(cols[30]); // snowfall
+				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
+				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
+
+				m_columns[TDEW].data[i] = wiki_dew_calc(tdry, rhum);
+
+				break;
 			}
-
-			m_columns[YEAR].data[i] = atoi(cols[0]);
-			m_columns[MONTH].data[i] = atoi(cols[1]);
-			m_columns[DAY].data[i] = atoi(cols[2]);
-			m_columns[HOUR].data[i] = atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
-			m_columns[MINUTE].data[i] = 30;
-
-			m_columns[GHI].data[i] = (double)atof(cols[13]);
-			m_columns[DNI].data[i] = (double)atof(cols[14]);
-			m_columns[DHI].data[i] = (double)atof(cols[15]);
-
-			m_columns[WSPD].data[i] = (double)atof(cols[21]);
-			m_columns[WDIR].data[i] = (double)atof(cols[20]);
-
-			m_columns[TDRY].data[i] = (double)atof(cols[6]);
-			m_columns[TWET].data[i] = (double)atof(cols[7]);
-
-			m_columns[RH].data[i] = (double)atof(cols[8]);
-			m_columns[PRES].data[i] = (double)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
-			m_columns[SNOW].data[i] = (double)atof(cols[30]); // snowfall
-			m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
-			m_columns[AOD].data[i] = -999; /* no AOD in EPW */
-
-			m_columns[TDEW].data[i] = wiki_dew_calc(tdry, rhum);
 
 			if ( pret!=buf )
 			{
-				m_errorStr = "EPW: data line formatting error at record " + util::to_string(i);
+				m_message = "EPW: data line formatting error at record " + util::to_string(i);
 				fclose(fp);
 				return false;
 			}
@@ -1154,7 +1134,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 			if (ncols < 12)
 			{
-				m_errorStr = "SMW: data line does not have at least 12 fields at record " + util::to_string(i);
+				m_message = "SMW: data line does not have at least 12 fields at record " + util::to_string(i);
 				fclose(fp);
 				return false;
 			}
@@ -1166,7 +1146,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			m_columns[DAY].data[i] = (float)util::day_of_month(month, T / 3600.0); // 1-nday
 			m_columns[HOUR].data[i] = (float)(((int)(T / 3600.0)) % 24);  // hour goes 0-23, not 1-24;
 			m_columns[MINUTE].data[i] = (float)fmod(T / 60.0, 60.0);      // minute goes 0-59
-
 
 			m_time += step; // increment by step
 
@@ -1189,49 +1168,44 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 			if ( pret!=buf )
 			{
-				m_errorStr = "SMW: data line formatting error at record " + util::to_string(i);
+				m_message = "SMW: data line formatting error at record " + util::to_string(i);
 				fclose(fp);
 				return false;
 			}
 		}
 		else if (m_type == WFCSV)
-		{
-			
-			buf[0] = 0;
-			fgets(buf, NBUF, fp);
-			pbuf = trimboth(buf);
-			if (!pbuf || !*pbuf)
+		{	
+
+			while( 1 )
 			{
-				m_errorStr = "CSV: data line formatting error at record " + util::to_string(i);
-				fclose(fp);
-				return false;
-			}
-
-			int ncols = locate(pbuf, cols, NCOL, ',');
-
-			while ( (atoi(cols[1]) == 2 && atoi(cols[2]) == 29)){
-				leapDayCount++;
-				leapDayDetected = true;
 				buf[0] = 0;
 				fgets(buf, NBUF, fp);
 				pbuf = trimboth(buf);
 				if (!pbuf || !*pbuf)
 				{
-					m_errorStr = "CSV: data line formatting error at record " + util::to_string(i);
+					m_message = "CSV: data line formatting error at record " + util::to_string(i);
 					fclose(fp);
 					return false;
 				}
 
-				int ncols = locate(pbuf, cols, NCOL, ',');
-			}
-
-			for (size_t k = 0; k < _MAXCOL_; k++)
-			{
-				if (m_columns[k].index >= 0
-					&& m_columns[k].index < ncols)
+				int ncols = locate(pbuf, cols, NCOL, ',');			
+				for (size_t k = 0; k < _MAXCOL_; k++)
 				{
-					m_columns[k].data[i] = (float)atof(trimboth(cols[m_columns[k].index]));
-				} 
+					if (m_columns[k].index >= 0
+						&& m_columns[k].index < ncols)
+					{
+						m_columns[k].data[i] = (float)atof(trimboth(cols[m_columns[k].index]));
+					} 
+				}
+
+				if ( m_columns[MONTH].data[i] == 2
+					&& m_columns[DAY].data[i] == 29 )
+				{
+					n_leap_data_removed++;
+					continue;
+				}
+				else
+					break;
 			}
 
 
@@ -1240,16 +1214,13 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	}
 
 	fclose(fp);
-
-
-	if( leapDayDetected ){
-		m_msg = true;
-		m_message= "Leap day data has been removed from this weather file.";
-	}
+	
+	if( n_leap_data_removed > 0 )
+		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
 
 	if (m_type == WFCSV)
 	{
-		// special handling for certain columns that we can calcul ate from others
+		// special handling for certain columns that we can calculate from others
 		// if the data doesn't exist
 
 		if (m_columns[TWET].index < 0

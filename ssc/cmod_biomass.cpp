@@ -423,8 +423,8 @@ public:
 		}
 
 		weatherfile wf(as_string("file_name"));
-		if( wf.msg() ) log( wf.message(), SSC_WARNING);
-		if (!wf.ok()) throw exec_error("biopower", wf.error_message());
+		if (!wf.ok()) throw exec_error("biopower", wf.message());
+		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
 
 		//const char *wf = SVal("climate.location");
 		//if (!wf)

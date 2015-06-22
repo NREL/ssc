@@ -154,8 +154,8 @@ public:
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wf(file);
-		if( wf.msg() ) log( wf.message(), SSC_WARNING);
-		if (!wf.ok()) throw exec_error("swh", wf.error_message());
+		if (!wf.ok()) throw exec_error("swh", wf.message());
+		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
 
 		/* **********************************************************************
 		Read user specified system parameters from compute engine

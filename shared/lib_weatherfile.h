@@ -51,7 +51,6 @@ private:
 	std::string m_file;
 	int m_startYear;
 	double m_time;
-	std::string m_errorStr;
 	std::string m_message;
 
 	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
@@ -82,12 +81,11 @@ public:
 	enum { INVALID, TMY2, TMY3, EPW, SMW, WFCSV };
 
 	bool ok();
-	bool msg();
 	int type();
 	std::string filename();
 	bool open( const std::string &file, bool header_only = false, bool interp = false );
-	void rewind();
-	std::string error_message() { return m_errorStr; }
+	void rewind();	
+	bool has_message() { return m_message.size() > 0; }
 	std::string message() { return m_message; }
 
 	static std::string normalize_city( const std::string &in );

@@ -135,7 +135,7 @@ bool solarpilot_invoke::run()
 	const char *wffile = m_cmod->as_string("solar_resource_file" );
 	if ( !wffile ) throw compute_module::exec_error( "solarpilot", "no weather file specified" );
 	weatherfile wf( wffile );
-	if ( !wf.ok() || wf.type() == weatherfile::INVALID ) throw compute_module::exec_error("solarpilot", wf.error_message());
+	if ( !wf.ok() || wf.type() == weatherfile::INVALID ) throw compute_module::exec_error("solarpilot", wf.message());
 
 		
 	amb.site_latitude = wf.lat;

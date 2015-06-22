@@ -982,8 +982,8 @@ public:
 		const char *file = as_string("file_name");
 
 		weatherfile wf( file );
-		if( wf.msg() ) log( wf.message(), SSC_WARNING);
-		if (!wf.ok()) throw exec_error("pvwattsv1", wf.error_message());
+		if (!wf.ok()) throw exec_error("pvwattsv1", wf.message());
+		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
 		
 		double dcrate = as_double("system_size"); /* DC rating */
 		double derate = as_double("derate"); /* Derate factor */
