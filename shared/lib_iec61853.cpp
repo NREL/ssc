@@ -738,7 +738,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	tpoa *= ama;	
 	
 	double Tc = input.Tdry + 273.15;
-	if ( poa >= 0.5 && tpoa >= 0.5 )
+	if ( tpoa >= 1.0 )
 	{
 		Tc = TcellC + 273.15;
 		double q = 1.6e-19;
