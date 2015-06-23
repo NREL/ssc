@@ -163,7 +163,7 @@ public:
 class voltage_dynamic_t : public voltage_t
 {
 public:
-	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate);
+	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R);
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, double dt);
 
@@ -184,6 +184,7 @@ private:
 	double _B;
 	double _E0;
 	double _K;
+	double _R;
 };
 
 /*
@@ -276,7 +277,6 @@ protected:
 	double _length;		// [m]
 	double _width;		// [m]
 	double _height;		// [m]
-	double _thickness;	// [m] - wall thickness
 	double _Cp;			// [J/KgK] - battery specific heat capacity
 	double _h;			// [Wm2K] - general heat transfer coefficient
 	double _T_room;		// [K] - storage room temperature
@@ -353,7 +353,7 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
-	dispatch_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
+	dispatch_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, double Pc_max, double Pd_max,double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, 
@@ -409,6 +409,8 @@ protected:
 	double _SOC_max;
 	double _Ic_max;
 	double _Id_max;
+	double _Pc_max;		// [W]
+	double _Pd_max;		// [W]
 	double _t_min;
 	double _e_max_discharge;
 	double _e_max_charge;
@@ -430,7 +432,7 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double t_min, 
+	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min,
 					 bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
 					 util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double> dm_percent_discharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
@@ -446,8 +448,6 @@ protected:
 	bool  _can_discharge;
 	bool  _can_grid_charge;
 	double _percent_discharge;
-
-
 };
 
 
