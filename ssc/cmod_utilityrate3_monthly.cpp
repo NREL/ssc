@@ -1092,7 +1092,7 @@ public:
 						e_sys[j] += ts_power * ts_hour_gen;
 						p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
 						// until lifetime load fully implemented
-						lifetime_hourly_load[idx] = -e_load_cy[j]*ts_hour_gen;
+						lifetime_hourly_load[idx] = -e_load_cy[j];
 						idx++;
 					}
 				}
