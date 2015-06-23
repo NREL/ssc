@@ -29,10 +29,10 @@
 #define __PLATFORM__ "Windows"
 #endif
 #ifdef __UNIX__
-#define __PLATFORM__ "Unix"
+#define __PLATFORM__ "Linux"
 #endif
 #ifdef __MACOSX__
-#define __PLATFORM__ "Mac OS X"
+#define __PLATFORM__ "OS X"
 #endif
 
 #ifdef __32BIT__
