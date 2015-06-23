@@ -863,7 +863,7 @@ public:
 
 
 		// prepare 8760 arrays for load and grid values
-		std::vector<ssc_number_t> e_sys(8760), p_sys(8760), 
+		std::vector<ssc_number_t> e_sys(8760), p_sys(8760), e_sys_cy(8760), p_sys_cy(8760),
 			e_load(8760), p_load(8760),
 			e_grid(8760), p_grid(8760),
 			e_load_cy(8760), p_load_cy(8760); // current year load (accounts for escal)
@@ -1098,31 +1098,33 @@ public:
 				}
 
 				// calculate e_grid value (e_sys + e_load)
+				e_sys_cy[j] = e_sys[j] * sys_scale[i];
+				p_sys_cy[j] = p_sys[j] * sys_scale[i];
 				// note: load is assumed to have negative sign
-				e_grid[j] = e_sys[j] * sys_scale[i] + e_load_cy[j];
-				p_grid[j] = p_sys[j]*sys_scale[i] + p_load_cy[j];
+				e_grid[j] = e_sys_cy[j] + e_load_cy[j];
+				p_grid[j] = p_sys_cy[j] + p_load_cy[j];
 			}
 
-			// now recalculate revenue without solar system (using load only)
+			// now calculate revenue without solar system (using load only)
 			ur_calc( &e_load_cy[0], &p_load_cy[0],
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0]);
+				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
 
 
-			ch_wo_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0] * rate_scale[i];
-			ch_wo_sys_dc_fixed_feb[i + 1] = monthly_dc_fixed[1] * rate_scale[i];
-			ch_wo_sys_dc_fixed_mar[i + 1] = monthly_dc_fixed[2] * rate_scale[i];
-			ch_wo_sys_dc_fixed_apr[i + 1] = monthly_dc_fixed[3] * rate_scale[i];
-			ch_wo_sys_dc_fixed_may[i + 1] = monthly_dc_fixed[4] * rate_scale[i];
-			ch_wo_sys_dc_fixed_jun[i + 1] = monthly_dc_fixed[5] * rate_scale[i];
-			ch_wo_sys_dc_fixed_jul[i + 1] = monthly_dc_fixed[6] * rate_scale[i];
-			ch_wo_sys_dc_fixed_aug[i + 1] = monthly_dc_fixed[7] * rate_scale[i];
-			ch_wo_sys_dc_fixed_sep[i + 1] = monthly_dc_fixed[8] * rate_scale[i];
-			ch_wo_sys_dc_fixed_oct[i + 1] = monthly_dc_fixed[9] * rate_scale[i];
-			ch_wo_sys_dc_fixed_nov[i + 1] = monthly_dc_fixed[10] * rate_scale[i];
-			ch_wo_sys_dc_fixed_dec[i + 1] = monthly_dc_fixed[11] * rate_scale[i];
+			ch_wo_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0];
+			ch_wo_sys_dc_fixed_feb[i + 1] = monthly_dc_fixed[1];
+			ch_wo_sys_dc_fixed_mar[i + 1] = monthly_dc_fixed[2];
+			ch_wo_sys_dc_fixed_apr[i + 1] = monthly_dc_fixed[3];
+			ch_wo_sys_dc_fixed_may[i + 1] = monthly_dc_fixed[4];
+			ch_wo_sys_dc_fixed_jun[i + 1] = monthly_dc_fixed[5];
+			ch_wo_sys_dc_fixed_jul[i + 1] = monthly_dc_fixed[6];
+			ch_wo_sys_dc_fixed_aug[i + 1] = monthly_dc_fixed[7];
+			ch_wo_sys_dc_fixed_sep[i + 1] = monthly_dc_fixed[8];
+			ch_wo_sys_dc_fixed_oct[i + 1] = monthly_dc_fixed[9];
+			ch_wo_sys_dc_fixed_nov[i + 1] = monthly_dc_fixed[10];
+			ch_wo_sys_dc_fixed_dec[i + 1] = monthly_dc_fixed[11];
 			ch_wo_sys_dc_fixed[i + 1] = ch_wo_sys_dc_fixed_jan[i + 1]
 				+ ch_wo_sys_dc_fixed_feb[i + 1]
 				+ ch_wo_sys_dc_fixed_mar[i + 1]
@@ -1137,18 +1139,18 @@ public:
 				+ ch_wo_sys_dc_fixed_dec[i + 1];
 
 
-			ch_wo_sys_dc_tou_jan[i + 1] = monthly_dc_tou[0] * rate_scale[i];
-			ch_wo_sys_dc_tou_feb[i + 1] = monthly_dc_tou[1] * rate_scale[i];
-			ch_wo_sys_dc_tou_mar[i + 1] = monthly_dc_tou[2] * rate_scale[i];
-			ch_wo_sys_dc_tou_apr[i + 1] = monthly_dc_tou[3] * rate_scale[i];
-			ch_wo_sys_dc_tou_may[i + 1] = monthly_dc_tou[4] * rate_scale[i];
-			ch_wo_sys_dc_tou_jun[i + 1] = monthly_dc_tou[5] * rate_scale[i];
-			ch_wo_sys_dc_tou_jul[i + 1] = monthly_dc_tou[6] * rate_scale[i];
-			ch_wo_sys_dc_tou_aug[i + 1] = monthly_dc_tou[7] * rate_scale[i];
-			ch_wo_sys_dc_tou_sep[i + 1] = monthly_dc_tou[8] * rate_scale[i];
-			ch_wo_sys_dc_tou_oct[i + 1] = monthly_dc_tou[9] * rate_scale[i];
-			ch_wo_sys_dc_tou_nov[i + 1] = monthly_dc_tou[10] * rate_scale[i];
-			ch_wo_sys_dc_tou_dec[i + 1] = monthly_dc_tou[11] * rate_scale[i];
+			ch_wo_sys_dc_tou_jan[i + 1] = monthly_dc_tou[0];
+			ch_wo_sys_dc_tou_feb[i + 1] = monthly_dc_tou[1];
+			ch_wo_sys_dc_tou_mar[i + 1] = monthly_dc_tou[2];
+			ch_wo_sys_dc_tou_apr[i + 1] = monthly_dc_tou[3];
+			ch_wo_sys_dc_tou_may[i + 1] = monthly_dc_tou[4];
+			ch_wo_sys_dc_tou_jun[i + 1] = monthly_dc_tou[5];
+			ch_wo_sys_dc_tou_jul[i + 1] = monthly_dc_tou[6];
+			ch_wo_sys_dc_tou_aug[i + 1] = monthly_dc_tou[7];
+			ch_wo_sys_dc_tou_sep[i + 1] = monthly_dc_tou[8];
+			ch_wo_sys_dc_tou_oct[i + 1] = monthly_dc_tou[9];
+			ch_wo_sys_dc_tou_nov[i + 1] = monthly_dc_tou[10];
+			ch_wo_sys_dc_tou_dec[i + 1] = monthly_dc_tou[11];
 			ch_wo_sys_dc_tou[i + 1] = ch_wo_sys_dc_tou_jan[i + 1]
 				+ ch_wo_sys_dc_tou_feb[i + 1]
 				+ ch_wo_sys_dc_tou_mar[i + 1]
@@ -1162,18 +1164,18 @@ public:
 				+ ch_wo_sys_dc_tou_nov[i + 1]
 				+ ch_wo_sys_dc_tou_dec[i + 1];
 
-			ch_wo_sys_ec_jan[i + 1] = monthly_ec_charges[0] * rate_scale[i];
-			ch_wo_sys_ec_feb[i + 1] = monthly_ec_charges[1] * rate_scale[i];
-			ch_wo_sys_ec_mar[i + 1] = monthly_ec_charges[2] * rate_scale[i];
-			ch_wo_sys_ec_apr[i + 1] = monthly_ec_charges[3] * rate_scale[i];
-			ch_wo_sys_ec_may[i + 1] = monthly_ec_charges[4] * rate_scale[i];
-			ch_wo_sys_ec_jun[i + 1] = monthly_ec_charges[5] * rate_scale[i];
-			ch_wo_sys_ec_jul[i + 1] = monthly_ec_charges[6] * rate_scale[i];
-			ch_wo_sys_ec_aug[i + 1] = monthly_ec_charges[7] * rate_scale[i];
-			ch_wo_sys_ec_sep[i + 1] = monthly_ec_charges[8] * rate_scale[i];
-			ch_wo_sys_ec_oct[i + 1] = monthly_ec_charges[9] * rate_scale[i];
-			ch_wo_sys_ec_nov[i + 1] = monthly_ec_charges[10] * rate_scale[i];
-			ch_wo_sys_ec_dec[i + 1] = monthly_ec_charges[11] * rate_scale[i];
+			ch_wo_sys_ec_jan[i + 1] = monthly_ec_charges[0];
+			ch_wo_sys_ec_feb[i + 1] = monthly_ec_charges[1];
+			ch_wo_sys_ec_mar[i + 1] = monthly_ec_charges[2];
+			ch_wo_sys_ec_apr[i + 1] = monthly_ec_charges[3];
+			ch_wo_sys_ec_may[i + 1] = monthly_ec_charges[4];
+			ch_wo_sys_ec_jun[i + 1] = monthly_ec_charges[5];
+			ch_wo_sys_ec_jul[i + 1] = monthly_ec_charges[6];
+			ch_wo_sys_ec_aug[i + 1] = monthly_ec_charges[7];
+			ch_wo_sys_ec_sep[i + 1] = monthly_ec_charges[8];
+			ch_wo_sys_ec_oct[i + 1] = monthly_ec_charges[9];
+			ch_wo_sys_ec_nov[i + 1] = monthly_ec_charges[10];
+			ch_wo_sys_ec_dec[i + 1] = monthly_ec_charges[11];
 			ch_wo_sys_ec[i + 1] = ch_wo_sys_ec_jan[i + 1]
 				+ ch_wo_sys_ec_feb[i + 1]
 				+ ch_wo_sys_ec_mar[i + 1]
@@ -1225,12 +1227,42 @@ public:
 				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 			}
 
-			// calculate revenue with solar system (using net grid energy & maxpower)
-			ur_calc(&e_grid[0], &p_grid[0],
-				&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-				&monthly_fixed_charges[0],
-				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0]);
+
+
+			// false = 2 meters, load and system treated separately
+			// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
+			bool enable_nm = as_boolean("ur_enable_net_metering");
+
+
+
+			if (enable_nm)
+			{
+				// calculate revenue with solar system (using net grid energy & maxpower)
+				ur_calc(&e_grid[0], &p_grid[0],
+					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+					&monthly_fixed_charges[0],
+					&monthly_dc_fixed[0], &monthly_dc_tou[0],
+					&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+			}
+			else
+			{
+				// calculate revenue with solar system (using system energy & maxpower)
+				ur_calc(&e_sys_cy[0], &p_sys_cy[0],
+					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+					&monthly_fixed_charges[0],
+					&monthly_dc_fixed[0], &monthly_dc_tou[0],
+					&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+				// Two meters - adjust output accordingly
+				for (j = 0; j<8760; j++)
+				{
+					revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
+					annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
+					// TODO - check monthly values and update as necessary
+				}
+
+
+			}
+
 
 			if (i == 0)
 			{
@@ -1254,7 +1286,7 @@ public:
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
 				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13 and 9/10/13
-				monthly_outputs(&e_load[0], &e_sys[0], &e_grid[0], &salespurchases[0],
+				monthly_outputs(&e_load[0], &e_sys_cy[0], &e_grid[0], &salespurchases[0],
 					&monthly_load[0], &monthly_system_generation[0], &monthly_elec_to_grid[0],
 					&monthly_elec_needed_from_grid[0],
 					&monthly_salespurchases[0]);
@@ -1278,7 +1310,7 @@ public:
 				std::vector<ssc_number_t> output(8760), edemand(8760), pdemand(8760), e_sys_to_grid(8760), e_sys_to_load(8760), p_sys_to_load(8760);
 				for (j = 0; j<8760; j++)
 				{
-					output[j] = e_sys[j] * sys_scale[i];
+					output[j] = e_sys_cy[j];
 					edemand[j] = e_grid[j] < 0.0 ? -e_grid[j] : (ssc_number_t)0.0;
 					pdemand[j] = p_grid[j] < 0.0 ? -p_grid[j] : (ssc_number_t)0.0;
 
@@ -1315,34 +1347,34 @@ public:
 
 			for(j=0;j<8760;j++)
 			{
-				energy_net[i + 1] +=  e_sys[j]*sys_scale[i];
+				energy_net[i + 1] +=  e_sys_cy[j];
 				annual_net_revenue[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
 				annual_electric_load[i + 1] += -e_load_cy[j];
 				annual_revenue_w_sys[i + 1] += revenue_w_sys[j];
 				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
 			}
 
-			annual_net_revenue[i + 1] *= rate_scale[i];
-			annual_revenue_w_sys[i + 1] *= rate_scale[i];
-			annual_revenue_wo_sys[i + 1] *= rate_scale[i];
+//			annual_net_revenue[i + 1] *= rate_scale[i];
+//			annual_revenue_w_sys[i + 1] *= rate_scale[i];
+//			annual_revenue_wo_sys[i + 1] *= rate_scale[i];
 
 			//Outputs from Paul, Nate and Sean 9/9/13
 			annual_elec_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
 			annual_elec_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
 
 
-			ch_w_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0] * rate_scale[i];
-			ch_w_sys_dc_fixed_feb[i + 1] = monthly_dc_fixed[1] * rate_scale[i];
-			ch_w_sys_dc_fixed_mar[i + 1] = monthly_dc_fixed[2] * rate_scale[i];
-			ch_w_sys_dc_fixed_apr[i + 1] = monthly_dc_fixed[3] * rate_scale[i];
-			ch_w_sys_dc_fixed_may[i + 1] = monthly_dc_fixed[4] * rate_scale[i];
-			ch_w_sys_dc_fixed_jun[i + 1] = monthly_dc_fixed[5] * rate_scale[i];
-			ch_w_sys_dc_fixed_jul[i + 1] = monthly_dc_fixed[6] * rate_scale[i];
-			ch_w_sys_dc_fixed_aug[i + 1] = monthly_dc_fixed[7] * rate_scale[i];
-			ch_w_sys_dc_fixed_sep[i + 1] = monthly_dc_fixed[8] * rate_scale[i];
-			ch_w_sys_dc_fixed_oct[i + 1] = monthly_dc_fixed[9] * rate_scale[i];
-			ch_w_sys_dc_fixed_nov[i + 1] = monthly_dc_fixed[10] * rate_scale[i];
-			ch_w_sys_dc_fixed_dec[i + 1] = monthly_dc_fixed[11] * rate_scale[i];
+			ch_w_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0] ;
+			ch_w_sys_dc_fixed_feb[i + 1] = monthly_dc_fixed[1] ;
+			ch_w_sys_dc_fixed_mar[i + 1] = monthly_dc_fixed[2] ;
+			ch_w_sys_dc_fixed_apr[i + 1] = monthly_dc_fixed[3] ;
+			ch_w_sys_dc_fixed_may[i + 1] = monthly_dc_fixed[4] ;
+			ch_w_sys_dc_fixed_jun[i + 1] = monthly_dc_fixed[5] ;
+			ch_w_sys_dc_fixed_jul[i + 1] = monthly_dc_fixed[6] ;
+			ch_w_sys_dc_fixed_aug[i + 1] = monthly_dc_fixed[7] ;
+			ch_w_sys_dc_fixed_sep[i + 1] = monthly_dc_fixed[8] ;
+			ch_w_sys_dc_fixed_oct[i + 1] = monthly_dc_fixed[9] ;
+			ch_w_sys_dc_fixed_nov[i + 1] = monthly_dc_fixed[10] ;
+			ch_w_sys_dc_fixed_dec[i + 1] = monthly_dc_fixed[11] ;
 			ch_w_sys_dc_fixed[i + 1] = ch_w_sys_dc_fixed_jan[i + 1]
 				+ ch_w_sys_dc_fixed_feb[i + 1]
 				+ ch_w_sys_dc_fixed_mar[i + 1]
@@ -1357,18 +1389,18 @@ public:
 				+ ch_w_sys_dc_fixed_dec[i + 1];
 
 		
-			ch_w_sys_dc_tou_jan[i + 1] = monthly_dc_tou[0] * rate_scale[i];
-			ch_w_sys_dc_tou_feb[i + 1] = monthly_dc_tou[1] * rate_scale[i];
-			ch_w_sys_dc_tou_mar[i + 1] = monthly_dc_tou[2] * rate_scale[i];
-			ch_w_sys_dc_tou_apr[i + 1] = monthly_dc_tou[3] * rate_scale[i];
-			ch_w_sys_dc_tou_may[i + 1] = monthly_dc_tou[4] * rate_scale[i];
-			ch_w_sys_dc_tou_jun[i + 1] = monthly_dc_tou[5] * rate_scale[i];
-			ch_w_sys_dc_tou_jul[i + 1] = monthly_dc_tou[6] * rate_scale[i];
-			ch_w_sys_dc_tou_aug[i + 1] = monthly_dc_tou[7] * rate_scale[i];
-			ch_w_sys_dc_tou_sep[i + 1] = monthly_dc_tou[8] * rate_scale[i];
-			ch_w_sys_dc_tou_oct[i + 1] = monthly_dc_tou[9] * rate_scale[i];
-			ch_w_sys_dc_tou_nov[i + 1] = monthly_dc_tou[10] * rate_scale[i];
-			ch_w_sys_dc_tou_dec[i + 1] = monthly_dc_tou[11] * rate_scale[i];
+			ch_w_sys_dc_tou_jan[i + 1] = monthly_dc_tou[0] ;
+			ch_w_sys_dc_tou_feb[i + 1] = monthly_dc_tou[1] ;
+			ch_w_sys_dc_tou_mar[i + 1] = monthly_dc_tou[2] ;
+			ch_w_sys_dc_tou_apr[i + 1] = monthly_dc_tou[3] ;
+			ch_w_sys_dc_tou_may[i + 1] = monthly_dc_tou[4] ;
+			ch_w_sys_dc_tou_jun[i + 1] = monthly_dc_tou[5] ;
+			ch_w_sys_dc_tou_jul[i + 1] = monthly_dc_tou[6] ;
+			ch_w_sys_dc_tou_aug[i + 1] = monthly_dc_tou[7] ;
+			ch_w_sys_dc_tou_sep[i + 1] = monthly_dc_tou[8] ;
+			ch_w_sys_dc_tou_oct[i + 1] = monthly_dc_tou[9] ;
+			ch_w_sys_dc_tou_nov[i + 1] = monthly_dc_tou[10] ;
+			ch_w_sys_dc_tou_dec[i + 1] = monthly_dc_tou[11] ;
 			ch_w_sys_dc_tou[i + 1] = ch_w_sys_dc_tou_jan[i + 1]
 				+ ch_w_sys_dc_tou_feb[i + 1]
 				+ ch_w_sys_dc_tou_mar[i + 1]
@@ -1382,18 +1414,18 @@ public:
 				+ ch_w_sys_dc_tou_nov[i + 1]
 				+ ch_w_sys_dc_tou_dec[i + 1];
 
-			ch_w_sys_ec_jan[i + 1] = monthly_ec_charges[0] * rate_scale[i];
-			ch_w_sys_ec_feb[i + 1] = monthly_ec_charges[1] * rate_scale[i];
-			ch_w_sys_ec_mar[i + 1] = monthly_ec_charges[2] * rate_scale[i];
-			ch_w_sys_ec_apr[i + 1] = monthly_ec_charges[3] * rate_scale[i];
-			ch_w_sys_ec_may[i + 1] = monthly_ec_charges[4] * rate_scale[i];
-			ch_w_sys_ec_jun[i + 1] = monthly_ec_charges[5] * rate_scale[i];
-			ch_w_sys_ec_jul[i + 1] = monthly_ec_charges[6] * rate_scale[i];
-			ch_w_sys_ec_aug[i + 1] = monthly_ec_charges[7] * rate_scale[i];
-			ch_w_sys_ec_sep[i + 1] = monthly_ec_charges[8] * rate_scale[i];
-			ch_w_sys_ec_oct[i + 1] = monthly_ec_charges[9] * rate_scale[i];
-			ch_w_sys_ec_nov[i + 1] = monthly_ec_charges[10] * rate_scale[i];
-			ch_w_sys_ec_dec[i + 1] = monthly_ec_charges[11] * rate_scale[i];			
+			ch_w_sys_ec_jan[i + 1] = monthly_ec_charges[0] ;
+			ch_w_sys_ec_feb[i + 1] = monthly_ec_charges[1] ;
+			ch_w_sys_ec_mar[i + 1] = monthly_ec_charges[2] ;
+			ch_w_sys_ec_apr[i + 1] = monthly_ec_charges[3] ;
+			ch_w_sys_ec_may[i + 1] = monthly_ec_charges[4] ;
+			ch_w_sys_ec_jun[i + 1] = monthly_ec_charges[5] ;
+			ch_w_sys_ec_jul[i + 1] = monthly_ec_charges[6] ;
+			ch_w_sys_ec_aug[i + 1] = monthly_ec_charges[7] ;
+			ch_w_sys_ec_sep[i + 1] = monthly_ec_charges[8] ;
+			ch_w_sys_ec_oct[i + 1] = monthly_ec_charges[9] ;
+			ch_w_sys_ec_nov[i + 1] = monthly_ec_charges[10] ;
+			ch_w_sys_ec_dec[i + 1] = monthly_ec_charges[11] ;			
 			ch_w_sys_ec[i + 1] = ch_w_sys_ec_jan[i + 1]
 				+ ch_w_sys_ec_feb[i + 1]
 				+ ch_w_sys_ec_mar[i + 1]
@@ -1465,7 +1497,7 @@ public:
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12],
-		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12]) throw(general_error)
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], ssc_number_t rate_esc) throw(general_error)
 	{
 		int i;
 
@@ -1482,16 +1514,20 @@ public:
 				= monthly_bill[i] = 0.0;
 		}
 		// initialize all montly values
-		ssc_number_t buy = as_number("ur_flat_buy_rate");
-		ssc_number_t sell = as_number("ur_flat_sell_rate");
+		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
+		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
 
 		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		
+		// false = 2 meters, load and system treated separately
+		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
 		bool enable_nm = as_boolean("ur_enable_net_metering");
+
 		bool ec_enabled = as_boolean("ur_ec_enable");
-		bool dc_enabled = as_boolean("ur_ec_enable");
+		bool dc_enabled = as_boolean("ur_dc_enable");
 
 		bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
-		bool apply_excess_to_flat_rate = !ec_enabled;
+//		bool apply_excess_to_flat_rate = !ec_enabled;
 
 		if (sell_eq_buy)
 			sell = buy;
@@ -1499,7 +1535,7 @@ public:
 		// calculate the monthly net energy and monthly hours
 		int m, d, h;
 		ssc_number_t monthly_energy_net[12]; // 12 months
-		// calculate the monthly net energy per mont
+		// calculate the monthly net energy per month
 		int hours_per_month[12];
 		int c = 0;
 		for (m = 0; m < 12; m++)
@@ -1576,8 +1612,8 @@ public:
 			{
 				std::string str_tier = util::to_string(tier + 1);
 
-				ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br");
-				ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr");
+				ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
+				ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc;
 				ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
 			}
 		}
@@ -1612,6 +1648,23 @@ public:
 			}
 		}
 
+// adjust net energy if net metering with monthly rollover
+		if (enable_nm && !excess_monthly_dollars)
+		{
+			for (m = 1; m < 12; m++)
+			{
+				if (monthly_energy_net[m] < 0)
+					monthly_energy_net[m] += monthly_cumulative_excess_energy[m - 1];
+				for (period = 0; period < 12; period++)
+				{
+					if (monthly_energy_net[m] != 0 && (ec_monthly_energy_net[m][period]<0))
+					{
+						ssc_number_t reduction = fabs(monthly_cumulative_excess_energy[m - 1] * ec_monthly_energy_net[m][period] / monthly_energy_net[m]);
+						ec_monthly_energy_net[m][period] += reduction;
+					}
+				}
+			}
+		}
 
 
 // fixed demand charge initialization
@@ -1623,7 +1676,7 @@ public:
 			for (tier = 0; tier<6; tier++)
 			{
 				std::string str_tier = util::to_string(tier + 1);
-				dc_fixed_charges[m][tier] = as_number("ur_dc_" + util::schedule_int_to_month(m) + "_t" + str_tier + "_dc");
+				dc_fixed_charges[m][tier] = as_number("ur_dc_" + util::schedule_int_to_month(m) + "_t" + str_tier + "_dc")*rate_esc;
 				dc_fixed_energy_ub[m][tier] = as_number("ur_dc_" + util::schedule_int_to_month(m) + "_t" + str_tier + "_ub");
 			}
 		}
@@ -1701,7 +1754,7 @@ public:
 			for (tier = 0; tier<6; tier++)
 			{
 				std::string str_tier = util::to_string(tier + 1);
-				dc_charges[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_dc");
+				dc_charges[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_dc")*rate_esc;
 				dc_energy_ub[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_ub");
 			}
 		}
@@ -1747,40 +1800,7 @@ public:
 					{
 						if (enable_nm)
 						{
-							// monthly rollover with year end sell at reduced rate
-							if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] == 0)) // buy from grid
-							{
-								if ((m > 0) && apply_excess_to_flat_rate)
-									payment[c] += -(monthly_energy_net[m] + monthly_cumulative_excess_energy[m - 1]) * buy;
-								else
-									payment[c] += -monthly_energy_net[m] * buy;
-							}
-							else if (excess_monthly_dollars) // may need to buy from grid
-							{
-								if (m > 0)
-								{
-									if (monthly_energy_net[m] < 0) // may need to buy from grid
-									{
-										ssc_number_t energy_cost = -monthly_energy_net[m] * buy;
-										ssc_number_t excess_dollars = -energy_cost;
-										if (apply_excess_to_flat_rate)
-											excess_dollars += monthly_cumulative_excess_dollars[m - 1];
-										if (excess_dollars < 0) // buy from grid
-											payment[c] += -excess_dollars;
-//										else // update excess dollars
-//											monthly_cumulative_excess_dollars[m] = excess_dollars;
-									}
-//									else // update excess dollars
-//										monthly_cumulative_excess_dollars[m] = monthly_energy_net[m] * sell + monthly_cumulative_excess_dollars[m - 1];
-								}
-								else
-								{
-									if (monthly_energy_net[m] < 0) // must buy from grid
-										payment[c] += -monthly_energy_net[m] * buy;
-//									else // update excess dollars
-//										monthly_cumulative_excess_dollars[m] = monthly_energy_net[m] * sell;
-								}
-							}
+							payment[c] += -monthly_energy_net[m] * buy;
 						}
 						else // no net metering - so no rollover.
 						{
@@ -1794,9 +1814,9 @@ public:
 
 // end of flat rate
 
+// energy charge
 						if (ec_enabled)
 						{
-							// energy charge
 							ssc_number_t monthly_energy = 0;
 							for (period = 0; period<12; period++)
 							{
@@ -1832,10 +1852,6 @@ public:
 									ssc_number_t charge_amt = 0;
 									ssc_number_t energy_deficit = -ec_monthly_energy_net[m][period];
 
-									// update 9/1/14 based on feedback from Peter Jeavons 8/28/14
-									if (enable_nm && (m>0) && !excess_monthly_dollars && !apply_excess_to_flat_rate) // reduce energy used to calculate charge
-										energy_deficit -= fabs(monthly_cumulative_excess_energy[m - 1] * ec_monthly_energy_net[m][period] / monthly_energy_net[m]);
-
 									tier = 0;
 									while (tier < 6)
 									{
@@ -1858,40 +1874,13 @@ public:
 								}
 								//monthly_energy += energy_net[m][period];
 							}
-							if (enable_nm && (m > 0) && excess_monthly_dollars && !apply_excess_to_flat_rate)
-							{
-	/*							ssc_number_t chrg = monthly_ec_charges[m] - monthly_cumulative_excess_dollars[m - 1];
-								if (chrg < 0)
-								{
-									monthly_ec_charges[m] = 0;
-
-								}
-		*/
-								monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
-								// excess dollar for the month
-								//							cumulative_excess_dollars[m] = (ec_charge[m] < 0) ? -ec_charge[m] : 0;
-							}
 							monthly_ec_rates[m] = monthly_energy != 0 ? monthly_ec_charges[m] / monthly_energy : (ssc_number_t)0.0;
 
 
 							// monthly rollover with year end sell at reduced rate
 							if (enable_nm)
 							{
-								if (apply_excess_to_flat_rate)
-									payment[c] += monthly_ec_charges[m];
-								else
-								{
-									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[m] == 0)) // buy from grid
-										payment[c] += monthly_ec_charges[m];
-									else if (excess_monthly_dollars)
-									{
-										// && (monthly_cumulative_excess_dollars[m] == 0)) // buy from grid
-										if (monthly_ec_charges[m] > 0)
-											payment[c] += monthly_ec_charges[m];
-										else
-											income[c] -= monthly_ec_charges[m];
-									}
-								}
+								payment[c] += monthly_ec_charges[m];
 							}
 							else // non-net metering - no rollover 
 							{
@@ -1984,13 +1973,17 @@ public:
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
 			monthly_bill[m] = payment[c - 1] - income[c - 1];
-			if (enable_nm && (monthly_bill[m] < 0))
+			if (enable_nm)
 			{
-				if (excess_monthly_dollars)
-					monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
-				monthly_bill[m] = 0;
+				if (m > 0) monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
+				if (monthly_bill[m] < 0)
+				{
+					if (excess_monthly_dollars)
+						monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+					monthly_bill[m] = 0;
+					payment[c - 1] = 0; // fixed charges applied below
+				}
 			}
-
 		} // end of month m (m loop)
 
 
@@ -1999,33 +1992,33 @@ public:
 
 		// Assumption that fixed and minimum charges independent of rollovers kWh or $
 		// process monthly fixed charges
-		process_monthly_charge(payment, monthly_fixed_charges);
+		process_monthly_charge(payment, monthly_fixed_charges, rate_esc);
 		// process min charges
-		process_monthly_min(payment, monthly_fixed_charges);
-		process_annual_min(payment, monthly_fixed_charges);
+		process_monthly_min(payment, monthly_fixed_charges, rate_esc);
+		process_annual_min(payment, monthly_fixed_charges, rate_esc);
 
 		if (enable_nm)
 		{
 			// monthly rollover with year end sell at reduced rate
 			if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[11] > 0))
-				income[8759] += monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate");
+				income[8759] += monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
 			else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[11] > 0))
 				income[8759] += monthly_cumulative_excess_dollars[11];
 
 		}
 
-		// compute revenue ( = income - payment )
+		// compute revenue ( = income - payment ) and monthly bill with fixed charges
 		for (i=0;i<8760;i++)
 			revenue[i] = income[i] - payment[i];
 
 	}
 
-	void process_annual_min(ssc_number_t payment[8760], ssc_number_t charges[12])
+	void process_annual_min(ssc_number_t payment[8760], ssc_number_t charges[12], ssc_number_t rate_esc)
 	{
 		int m, d, h, c = 0;
 		ssc_number_t annual_charge = 0;
 
-		ssc_number_t min_charge = as_number("ur_annual_min_charge");
+		ssc_number_t min_charge = as_number("ur_annual_min_charge")*rate_esc;
 		for (m = 0; m<12; m++)
 			for (d = 0; d<util::nday[m]; d++)
 				for (h = 0; h<24; h++)
@@ -2039,14 +2032,15 @@ public:
 			payment[8759] += add_annual_charge;
 		}
 
+
 	}
 
-	void process_monthly_min(ssc_number_t payment[8760], ssc_number_t charges[12])
+	void process_monthly_min(ssc_number_t payment[8760], ssc_number_t charges[12], ssc_number_t rate_esc)
 	{
 		int m, d, h, c;
 		ssc_number_t monthly_charge[12];
 
-		ssc_number_t min_charge = as_number("ur_monthly_min_charge");
+		ssc_number_t min_charge = as_number("ur_monthly_min_charge")*rate_esc;
 		c = 0;
 		for (m = 0; m<12; m++)
 		{
@@ -2086,11 +2080,11 @@ public:
 	}
 
 
-	void process_monthly_charge(ssc_number_t payment[8760], ssc_number_t charges[12])
+	void process_monthly_charge(ssc_number_t payment[8760], ssc_number_t charges[12], ssc_number_t rate_esc)
 	{
 		int m, d, h, c;
 
-		ssc_number_t fixed = as_number("ur_monthly_fixed_charge");
+		ssc_number_t fixed = as_number("ur_monthly_fixed_charge")*rate_esc;
 		c = 0;
 		for (m = 0; m<12; m++)
 		{
