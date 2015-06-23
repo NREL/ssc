@@ -22,7 +22,7 @@ static var_info _cm_vtab_belpe[] =
 	// load is modified in BELPE. It is passed straight through 
 	// if BELPE is disabled, and subhourly loads can be pass through.
 	// but BELPE always runs hourly, at least for now....
-	{ SSC_INOUT,		SSC_ARRAY,		"load",			    "Electric load",			        "kW",	    "",				"Load Profile Estimator", "en_belpe=0",	 "",	 "" },
+	{ SSC_INOUT,		SSC_ARRAY,		"load",			    "Electricity load (year 1)",        "kW",	    "",				"Load Profile Estimator", "en_belpe=0",	 "",	 "" },
 
 	{ SSC_INPUT,        SSC_STRING,		"solar_resource_file","Weather Data file",				"n/a",		"",				"Load Profile Estimator", "en_belpe=1",			"LOCAL_FILE",	"" },
 //	{ SSC_INPUT,        SSC_NUMBER,		"tstep",            "time step",						"hrs",      "",				"Load Profile Estimator", "en_belpe=1",			"",				"Time Step" },
