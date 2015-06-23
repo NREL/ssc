@@ -79,28 +79,28 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q0",                                    "Battery Total Charge",                                   "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q1",                                    "Battery Available Charge",                               "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q2",                                    "Battery Bound Charge",                                   "Ah",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "SOC",                                        "Battery State of Charge",                                "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "DOD",                                        "Battery Cycle Depth of Discharge",                       "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "qmaxI",                                      "Battery Max Capacity at Current",                        "Ah",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "qmax",                                       "Battery Max Charge",                                     "Ah",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_SOC",                                   "Battery State of Charge",                                "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_DOD",                                   "Battery Cycle Depth of Discharge",                       "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmaxI",                                 "Battery Max Capacity at Current",                        "Ah",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmax",                                  "Battery Max Charge",                                     "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                                     "Battery Current",                                        "A",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_cell",                               "Battery Cell Voltage",                                   "V",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "voltage_battery",                            "Battery Voltage",	                                     "V",        "",                     "Battery",       "",                           "",                              "" },
-																			          
-	// Lifecycle related outputs											          
-	{ SSC_OUTPUT,        SSC_ARRAY,      "Cycles",                                     "Battery Number of Cycles",                               "",         "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_temperature",                        "Battery Temperature",                                    "C",        "",                     "Battery",       "",                           "",                              "" }, 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_percent",                           "Battery Capacity Percent for Lifetime",                  "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "capacity_thermal_percent",                   "Battery Capacity Percent for Temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_bank_replacement",                   "Battery Bank Replacements Per Year",                     "number/year", "",                 "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage_cell",                          "Battery Cell Voltage",                                   "V",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage",                               "Battery Voltage",	                                     "V",        "",                     "Battery",       "",                           "",                              "" },
+																		               
+	// Lifecycle related outputs											             
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_cycles",                                "Battery Number of Cycles",                               "",         "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_temperature",                           "Battery Temperature",                                    "C",        "",                     "Battery",       "",                           "",                              "" }, 
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_percent",                      "Battery Capacity Percent for Lifetime",                  "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_thermal_percent",              "Battery Capacity Percent for Temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery Bank Replacements Per Year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 																			          
 	// Energy outputs	- Power outputs at native time step													        
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_power",                              "Power to/from Battery",                                 "kW",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from Grid",                                    "kW",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery",                                   "kW",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                                 "Power to load from PV",                                 "kW",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "battery_to_load",                            "Power to load from battery",                            "kW",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Power to load from grid",                               "kW",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Power to/from Battery",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from Grid",                                    "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery",                                   "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                                 "Power to load from PV",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Power to load from battery",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Power to load from grid",                               "kW",      "",                       "Battery",       "",                           "",                              "" },
 																			          
 	// Efficiency outputs													          
 	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average Battery Cycle Efficiency",                       "%",        "",                     "Annual",        "",                           "",                              "" },
@@ -213,26 +213,26 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			outAvailableCharge = cm.allocate("batt_q1", nrec*nyears);
 			outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
 		}
-		outMaxCharge = cm.allocate("qmax", nrec*nyears);
-		outCellVoltage = cm.allocate("voltage_cell", nrec*nyears);
+		outMaxCharge = cm.allocate("batt_qmax", nrec*nyears);
+		outCellVoltage = cm.allocate("batt_voltage_cell", nrec*nyears);
 		outCurrent = cm.allocate("batt_I", nrec*nyears);
-		outCycles = cm.allocate("Cycles", nrec*nyears);
-		outBatteryVoltage = cm.allocate("voltage_battery", nrec*nyears);
-		outBatteryTemperature = cm.allocate("battery_temperature", nrec*nyears);
-		outCapacityThermalPercent = cm.allocate("capacity_thermal_percent", nrec*nyears);
+		outCycles = cm.allocate("batt_cycles", nrec*nyears);
+		outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
+		outBatteryTemperature = cm.allocate("batt_temperature", nrec*nyears);
+		outCapacityThermalPercent = cm.allocate("batt_capacity_thermal_percent", nrec*nyears);
 
 	}
 	 
-	outSOC = cm.allocate("SOC", nrec*nyears);
-	outDOD = cm.allocate("DOD", nrec*nyears);
-	outCapacityPercent = cm.allocate("capacity_percent", nrec*nyears);
-	outBatteryBankReplacement = cm.allocate("battery_bank_replacement", nyears+1); 
+	outSOC = cm.allocate("batt_SOC", nrec*nyears);
+	outDOD = cm.allocate("batt_DOD", nrec*nyears);
+	outCapacityPercent = cm.allocate("batt_capacity_percent", nrec*nyears);
+	outBatteryBankReplacement = cm.allocate("batt_bank_replacement", nyears+1); 
 	outBatteryBankReplacement[0] = 0; // consistent with all annual items nyears + 1 length
-	outBatteryPower = cm.allocate("battery_power", nrec*nyears);
+	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
 	outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
-	outBatteryToLoad = cm.allocate("battery_to_load", nrec*nyears);
+	outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
 	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
 
 	// model initialization
