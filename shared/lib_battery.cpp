@@ -1017,11 +1017,10 @@ double dispatch_t::current_controller(double battery_voltage)
 		{
 			P = -_Pc_max;
 			I = P / battery_voltage;
-			// then check current
-			if (fabs(I) > _Ic_max)
-				I = -_Ic_max;
 		}
-		
+		// then check current
+		if (fabs(I) > _Ic_max)
+			I = -_Ic_max;
 	}
 	else
 	{ 
@@ -1030,10 +1029,10 @@ double dispatch_t::current_controller(double battery_voltage)
 		{
 			P = _Pd_max;
 			I = P / battery_voltage;
-			// then current
-			if (I > _Id_max)
-				I = _Id_max;
 		}
+		// then current
+		if (I > _Id_max)
+			I = _Id_max;
 	}
 	return I;
 }
