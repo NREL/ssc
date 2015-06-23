@@ -353,7 +353,9 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
-	dispatch_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, double Pc_max, double Pd_max,double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
+	dispatch_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
+			   // double Pc_max, double Pd_max,
+			   double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, 
@@ -409,8 +411,8 @@ protected:
 	double _SOC_max;
 	double _Ic_max;
 	double _Id_max;
-	double _Pc_max;		// [W]
-	double _Pd_max;		// [W]
+	// double _Pc_max;		// [W]
+	// double _Pd_max;		// [W]
 	double _t_min;
 	double _e_max_discharge;
 	double _e_max_charge;
@@ -432,8 +434,9 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min,
-					 bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
+	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
+				     // double Pc_max, double Pd_max, 
+					 double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
 					 util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double> dm_percent_discharge);
 	void dispatch(size_t hour_of_year, double e_pv, double e_load);
 
