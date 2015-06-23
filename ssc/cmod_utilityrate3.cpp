@@ -20,7 +20,7 @@ static var_info vtab_utility_rate3[] = {
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_INPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
 	// optional
 //	{ SSC_INPUT, SSC_ARRAY, "grid", "System power delivered to grid", "kW", "", "Time Series", "", "", "" },
 
@@ -639,10 +639,10 @@ static var_info vtab_utility_rate3[] = {
 	
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_load", "Electricity load (first year)", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_load", "Hourly electricity load (year 1)", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 // lifetime load (optional for lifetime analysis)
-	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Electricity load", "kW", "", "Time Series", "system_use_lifetime_output=1", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Lifetime electricity load", "kW", "", "Time Series", "system_use_lifetime_output=1", "", "" },
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_grid",         "Year 1 subhourly peak to/from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Electricity to/from grid peak", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
@@ -1129,7 +1129,7 @@ public:
 						e_sys[j] += ts_power * ts_hour_gen;
 						p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
 						// until lifetime load fully implemented
-						lifetime_hourly_load[idx] = -e_load_cy[j]*ts_hour_gen;
+						lifetime_hourly_load[idx] = -e_load_cy[j];
 						idx++;
 					}
 				}
