@@ -904,7 +904,9 @@ double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac)
+dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
+	//double Pc_max, double Pd_max, 
+	double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac)
 {
 	_Battery = Battery;
 	_dt_hour = dt_hour;
@@ -912,8 +914,8 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_SOC_max = SOC_max;
 	_Ic_max = Ic_max;
 	_Id_max = Id_max;
-	_Pc_max = Pc_max*kilowatt_to_watt;	// pass in as kW, convert to W
-	_Pd_max = Pd_max*kilowatt_to_watt;  // pass in as kW, convert to W
+	//_Pc_max = Pc_max*kilowatt_to_watt;	// pass in as kW, convert to W
+	//_Pd_max = Pd_max*kilowatt_to_watt;  // pass in as kW, convert to W
 	_t_min = t_min;
 	_ac_or_dc = ac_or_dc;
 	_dc_dc = dc_dc;
@@ -1012,24 +1014,28 @@ double dispatch_t::current_controller(double battery_voltage)
 	I = P / battery_voltage;
 	if (_charging)
 	{
+		/* 
 		// first limit power
 		if (fabs(P) > _Pc_max)
 		{
 			P = -_Pc_max;
 			I = P / battery_voltage;
 		}
+		*/
 		// then check current
 		if (fabs(I) > _Ic_max)
 			I = -_Ic_max;
 	}
 	else
 	{ 
+		/*
 		// limit power
 		if (P > _Pd_max)
 		{
 			P = _Pd_max;
 			I = P / battery_voltage;
 		}
+		*/
 		// then current
 		if (I > _Id_max)
 			I = _Id_max;
@@ -1095,10 +1101,13 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, double Pc_max, double Pd_max,
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
+	// double Pc_max, double Pd_max,
 	double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
 	util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double>  dm_percent_discharge)
-	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max, Pc_max, Pd_max, t_min, ac_or_dc, dc_dc, ac_dc, dc_ac)
+	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max, 
+			    // Pc_max, Pd_max, 
+				t_min, ac_or_dc, dc_dc, ac_dc, dc_ac)
 {
 	_sched = dm_sched;
 	_charge_array = dm_charge;
