@@ -30,6 +30,8 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_max_charge",                      "Maximum charge current",                                  "kW",      "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_power_max_discharge",                   "Maximum discharge current",                               "kW",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
 
 	// Voltage discharge curve
@@ -41,6 +43,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qexp",                                  "Cell capacity at end of exponential zone",                "Ah",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qnom",                                  "Cell capacity at end of nominal zone",                    "Ah",      "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_C_rate",                                "Rate at which voltage vs. capacity curve input",          "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_resistance",                            "Internal Resistance",                                     "Ohm",     "",                     "Battery",       "",                           "",                              "" },
 
 	// lead-acid inputs
 	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q20_computed",	                   "Capacity at 20-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                           "",                             "" },
@@ -234,7 +237,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 
 	// model initialization
 	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_strings"), cm.as_double("batt_Vnom_default"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
-		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"));
+		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"), cm.as_double("batt_resistance"));
 
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix, replacement_option, cm.as_double("batt_replacement_capacity") );
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
@@ -292,7 +295,10 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	
 
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"), cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"), cm.as_double("batt_minimum_modetime"), 
+	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"), 
+		cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
+		cm.as_double("batt_power_max_charge"), cm.as_double("batt_power_max_discharge"),
+		cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
 		dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
 }
