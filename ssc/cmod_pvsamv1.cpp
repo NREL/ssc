@@ -46,7 +46,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_degrade_factor",                           "Annual ac degrade factor",                             "",         "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
 																                        																		                             
 	//SEV: Activating the snow model							                        																		                             
-	{ SSC_INPUT,        SSC_NUMBER,      "en_snow_model",                               "Toggle Snow Loss Estimation",                          "0/1",      "",                              "snowmodel",            "?=0",                       "BOOLEAN",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "en_snow_model",                               "Toggle snow loss estimation",                          "0/1",      "",                              "snowmodel",            "?=0",                       "BOOLEAN",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "Nameplate capacity",                                   "kW",       "",                              "pvsamv1",              "*",                         "",                             "" },
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                         "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "",                              "pvsamv1",              "*",                         "LOCAL_FILE",                   "" },
 	
@@ -348,7 +348,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "batt_replacement_schedule",                  "Battery bank replacements per year (user specified)",     "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                         "kW", "", "Battery", "?", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV+Battery Configuration",                                 "",      "",                     "Battery",       "?=0",                                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV with battery configuration",                                 "",      "",                     "Battery",       "?=0",                                    "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -367,7 +367,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "airmass",                                    "Absolute air mass",                                                 "",       "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Albedo",							                                 "",       "",                     "Time Series",       "*",                    "",                              "" },
 	//SEV: snow depth output
-	{ SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Snow Depth",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Snow depth",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
 
 	/* sub-array level outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_aoi",                        "Subarray 1 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -412,8 +412,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 
 	//SEV: Snow loss and coverage % time series arrays for SA2
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Power Loss Due to Snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Power loss due to snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 
@@ -435,8 +435,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_soiling_derate",             "Subarray 3 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	//SEV: Snow loss and coverage % time series arrays for SA3
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Power Loss Due to Snow (DC)",							  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Power loss due to snow (DC)",							  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 
@@ -458,8 +458,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_soiling_derate",             "Subarray 4 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	//SEV: Snow loss and coverage % time series arrays for SA3
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Power Loss Due to Snow (DC)",						      "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Power loss due to snow (DC)",						      "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                   "Subarray 4 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 
@@ -474,12 +474,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter dc input voltage",                             "V",      "",                      "Time Series",       "*",                    "",                              "" },
 	
 	//SEV: total dc snow loss time series (not a required output) 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Power Loss Due to Snow (DC)",						      "kW",    "",                       "Time Series",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Power loss due to snow (DC)",						      "kW",    "",                       "Time Series",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array power (DC)",                                      "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 
 	//SEV: total dc snow loss monthy array and annual value (not a required output) 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Energy Loss Due to Snow (DC)",					       "kWh",    "",                       "Monthly",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Energy Loss Due to Snow (DC)",						   "kWh",    "",                       "Annual",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Energy loss due to snow (DC)",					       "kWh",    "",                       "Monthly",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Energy loss due to snow (DC)",						   "kWh",    "",                       "Annual",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
 
