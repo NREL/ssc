@@ -1875,7 +1875,6 @@ public:
 						// Calculate and apply snow coverage losses if activated
 						if (en_snow_model){
 							float smLoss;
-//								if (!sa[nn].sm.getLoss(p_poashaded[nn][idx], p_surftilt[nn][idx], wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
 							if (!sa[nn].sm.getLoss(sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff, sa[nn].poa.stilt, wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
 									if (!sa[nn].sm.good) {
 									log(sa[nn].sm.msg, SSC_ERROR);
@@ -1883,7 +1882,6 @@ public:
 									return;
 								}
 							}
-							sa[nn].module.dcpwr *= (1 - smLoss);
 							if (iyear == 0)
 							{
 								p_snowloss[nn][idx] = 0.001*sa[nn].module.dcpwr*smLoss;
@@ -1891,6 +1889,7 @@ public:
 								p_snowcoverage[nn][idx] = sa[nn].sm.coverage;
 								annual_snow_loss += 0.001*sa[nn].module.dcpwr*smLoss;
 							}
+							sa[nn].module.dcpwr *= (1 - smLoss);
 						}
 
 						// apply pre-inverter power derate
