@@ -1524,7 +1524,7 @@ public:
 		size_t idx = 0;
 		size_t hour = 0;
 
-		double annual_energy = 0, annual_ac_gross = 0, dc_gross[4] = { 0, 0, 0, 0 };
+		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 };
 
 		// lifetime analysis over nyears
 		for (int iyear = 0; iyear < nyears; iyear++)
@@ -2005,7 +2005,12 @@ public:
 
 					// apply ac degradation  
 //					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
-					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) );
+					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
+					if (iyear == 0)
+						annual_ac_pre_avail += p_gen[idx];
+
+					//apply availability and curtailment
+					p_gen[idx] *= haf(hour);
 
 //					p_inveff[idx] = (ssc_number_t)(aceff);
 //					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
@@ -2344,11 +2349,11 @@ public:
 		percent = 0;
 		if (annual_ac_gross > 0) percent = 100 * transformer_loss / annual_ac_gross;
 		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
-		// annual_ac_net
+		// annual_ac_pre_avail
 		percent = 0;
-		if (annual_ac_net > 0) percent = 100 * (annual_ac_net - annual_energy) / annual_ac_net;
+		if (annual_ac_pre_avail > 0) percent = 100 * (annual_ac_pre_avail - annual_energy) / annual_ac_pre_avail;
 		assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
-		// system_output
+		// annual_ac_net = system_output
 
 
 
