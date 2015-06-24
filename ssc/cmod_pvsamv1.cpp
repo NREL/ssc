@@ -513,8 +513,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "Monthly POA total radiation after shading and soiling",  "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "Monthly POA beam radiation after shading and soiling",   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "Array energy (DC)",                                      "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly energy",                                         "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array energy (DC)",                                   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_gen",                                 "PV generation (AC)",                                     "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Global horizontal irradiance",                           "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
 
@@ -1462,19 +1462,18 @@ public:
 			throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
 		
 		// setup battery model
-//		battstor batt(*this, as_boolean("en_batt"), nrec, ts_hour);
 		bool en_batt = as_boolean("en_batt");
 		int batt_replacement_option = as_integer("batt_replacement_option");
 		int ac_or_dc = as_integer("batt_ac_or_dc");
+		
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
+
 		// user replacement schedule
 		size_t count_batt_replacement = 0;
 		ssc_number_t *batt_replacement = 0;
 		if (batt_replacement_option==2)
 			batt_replacement = as_array("batt_replacement_schedule", &count_batt_replacement);
-
-
-
+		
 		double cur_load = 0.0;
 		size_t nload = 0;
 		ssc_number_t *p_load_in = 0;
@@ -2013,7 +2012,7 @@ public:
 
 
 		accumulate_monthly_for_year("dc_net", "monthly_dc", ts_hour, step_per_hour);
-		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
+		accumulate_monthly_for_year("gen", "monthly_gen", ts_hour, step_per_hour);
 		
 		// scale by ts_hour to convert power -> energy
 		accumulate_annual_for_year("gh", "annual_gh", ts_hour, step_per_hour);
