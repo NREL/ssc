@@ -360,8 +360,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Diffuse irradiance",                                                "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "input_radiation",                            "Input radiation",                                                   "kW",     "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "input_radiation_beam",                       "Beam input radiation",                                              "kW",     "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_zen",                                    "Solar zenith angle",                                                "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_alt",                                    "Solar altitude angle",                                              "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_azi",                                    "Solar azimuth angle",                                               "deg",    "",                      "Time Series",       "*",                    "",                              "" },
@@ -390,9 +388,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	//SEV: Snow loss and coverage % time series arrays for SA1
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",					 "Subarray 1 Power Loss Due to Snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",				 "Subarray 1 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",					 "Subarray 1 Power loss due to snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",				 "Subarray 1 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_aoi",                        "Subarray 2 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -412,10 +410,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_modeff",                     "Subarray 2 Module efficiency",                                      "%",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_soiling_derate",             "Subarray 2 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
+
 	//SEV: Snow loss and coverage % time series arrays for SA2
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Power Loss Due to Snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow Coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                   "Subarray 2 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 2)",       "",                    "",                              "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_aoi",                        "Subarray 3 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -466,13 +465,17 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 
 /* aggregate array level outputs */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "POA total radiation (nominal)",                         "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "POA total radiation after shading only",                "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "POA total radiation after shading and soiling",         "kWh",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter dc input voltage",                             "V",     "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "POA total radiation (nominal)",                                     "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_nom",                         "POA beam radiation (nominal)",                                      "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "POA total radiation after shading only",                            "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "POA total radiation after shading and soiling",                     "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_eff",                         "POA beam radiation after shading and soiling",                      "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter dc input voltage",                             "V",      "",                      "Time Series",       "*",                    "",                              "" },
+	
 	//SEV: total dc snow loss time series (not a required output) 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Power Loss Due to Snow (DC)",						  "kW",    "",                       "Time Series",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array power (DC)",                                    "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Power Loss Due to Snow (DC)",						      "kW",    "",                       "Time Series",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array power (DC)",                                      "kW",    "",                       "Time Series",       "*",                    "",                              "" },
 
 	//SEV: total dc snow loss monthy array and annual value (not a required output) 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Energy Loss Due to Snow (DC)",					       "kWh",    "",                       "Monthly",       "",                    "",                              "" },
@@ -505,19 +508,22 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                          "Inverter power consumption loss",                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                          "Inverter night time loss",                               "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_nom",                             "POA total radiation (nominal)",                    "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA total radiation after shading and soiling",  "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff_beam",                        "POA beam radiation after shading and soiling",   "kWh/m2", "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                              "Array power (DC)",                                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_nom",                             "Monthly POA total radiation (nominal)",                  "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_nom",                        "Monthly POA beam radiation (nominal)",                   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "Monthly POA total radiation after shading and soiling",  "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "Monthly POA beam radiation after shading and soiling",   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "Array energy (DC)",                                      "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly energy",                                         "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Global horizontal irradiance",                           "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation",                      "Input radiation",                                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_input_radiation_beam",                 "Beam input radiation",                                   "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "Annual POA total radiation (nominal)",                     "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "Annual POA total radiation (nominal)",                   "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "Annual POA beam radiation (nominal)",                    "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "Annual POA total radiation after shading only",          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "Annual POA total radiation after shading and soiling",   "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "Annual POA beam radiation after shading and soiling",    "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Nominal dc energy",                                      "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "Gross dc energy",                                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "Net dc energy",                                          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
@@ -662,9 +668,6 @@ struct subarray
 		module.dcv = 0;
 		module.dceff = 0;
 		module.tcell = 0;
-
-		for (int i=0;i<12;i++)
-			monthly_poa_nom[i] = monthly_poa_eff_beam[i] = monthly_poa_eff[i] = 0.0;
 	}
 
 	bool enable;
@@ -707,10 +710,7 @@ struct subarray
 		double dceff;
 		double tcell;
 	} module;
-	
-	double monthly_poa_nom[12];
-	double monthly_poa_eff[12];
-	double monthly_poa_eff_beam[12];
+		
 };
 	
 class cm_pvsamv1 : public compute_module
@@ -836,7 +836,7 @@ public:
 
 			// Initialize snow model if activated
 			if (en_snow_model)
-				if( !sa[nn].sm.setup( as_integer(prefix + "nmody"), sa[nn].tilt )){
+				if( !sa[nn].sm.setup( as_integer(prefix + "nmody"), (float)sa[nn].tilt )){
 					if(sa[nn].sm.good)log(sa[nn].sm.msg, SSC_WARNING);
 					else{
 						log(sa[nn].sm.msg, SSC_ERROR);
@@ -1320,7 +1320,10 @@ public:
 		if (pv_lifetime_simulation == 1)
 			nyears = as_integer("analysis_period");
 
-		ssc_number_t *p_dc_degrade_factor;
+		if ( __ARCHBITS__ == 32 && pv_lifetime_simulation )
+			throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
+
+		ssc_number_t *p_dc_degrade_factor = 0;
 
 		if (pv_lifetime_simulation == 1)
 		{
@@ -1333,44 +1336,18 @@ public:
 
 			p_dc_degrade_factor[0] = 1.0; // degradation assumed to start at year 2
 			p_dc_degrade_factor[1] = 1.0; // degradation assumed to start at year 2
+
 			if (count_dc_degrad == 1)
 			{
 				for (size_t i = 1; i < nyears; i++)
-					p_dc_degrade_factor[i+1] = pow((1.0 - dc_degrad[0] / 100.0), i);
+					p_dc_degrade_factor[i+1] = (ssc_number_t)pow((1.0 - dc_degrad[0] / 100.0), i);
 			}
 			else if (count_dc_degrad > 0)
 			{
 				for (size_t i = 1; i < nyears && i < count_dc_degrad; i++)
-					p_dc_degrade_factor[i+1] = (1.0 - dc_degrad[i] / 100.0);
-			}
-			/*
-			size_t count_ac_degrad = 0;
-			ssc_number_t *ac_degrad = 0;
-			ac_degrad = as_array("ac_degradation", &count_ac_degrad);
-			p_ac_degrade_factor[0] = 1.0; // degradation assumed to start at year 2
-			if (count_ac_degrad == 1)
-			{
-				for (size_t i = 1; i < nyears; i++)
-					p_ac_degrade_factor[i] = pow((1.0 - ac_degrad[0] / 100.0), i);
-			}
-			else if (count_ac_degrad > 0)
-			{
-				for (size_t i = 1; i < nyears && i < count_ac_degrad; i++)
-					p_ac_degrade_factor[i] = (1.0 - ac_degrad[i] / 100.0);
-			}
-			*/
-		}
-		/*
-		else
-		{
-			for (size_t i = 0; i < nyears; i++)
-			{
-				p_dc_degrade_factor[i+1] = 1.0;
-//				p_ac_degrade_factor[i] = 1.0;
+					p_dc_degrade_factor[i+1] = (ssc_number_t)(1.0 - dc_degrad[i] / 100.0);
 			}
 		}
-		*/
-
 
 		// output arrays for weather info- same for all four subarrays	
 		ssc_number_t *p_glob = allocate( "gh", nrec );
@@ -1415,10 +1392,7 @@ public:
 		ssc_number_t *p_modeff[4];    
 		ssc_number_t *p_dcv[4];
 		ssc_number_t *p_dcsubarray[4];
-
-		//output for CPV performance ratio
-		double poa_nom_beam = 0;
-
+		
 		// self-shading outputs- also sub-array specific
 		ssc_number_t *p_ss_derate[4];
 		ssc_number_t *p_ss_diffuse_derate[4];
@@ -1461,18 +1435,16 @@ public:
 			}
 		}
 		
-		// hourly outputs summed across all subarrays
-		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec );
-		ssc_number_t *p_inrad = allocate( "input_radiation", nrec );
-		ssc_number_t *p_inradbeam = allocate( "input_radiation_beam", nrec );
+		// outputs summed across all subarrays
 		ssc_number_t *p_poanom_ts_total = allocate( "poa_nom", nrec );
+		ssc_number_t *p_poabeamnom_ts_total = allocate( "poa_beam_nom", nrec );
 		ssc_number_t *p_poashaded_ts_total = allocate("poa_shaded", nrec );
 		ssc_number_t *p_poaeff_ts_total = allocate("poa_eff", nrec );
+		ssc_number_t *p_poabeameff_ts_total = allocate("poa_beam_eff", nrec );
+		
 		ssc_number_t *p_dcsnowloss = allocate("dc_snow_loss", nrec);
-//		ssc_number_t *p_dcgross = allocate( "dc_gross", nrec );
-//		ssc_number_t *p_dcpwr = allocate( "dc_net", nrec * nyears);
-//		ssc_number_t *p_acgross = allocate( "ac_gross", nrec );
-//		ssc_number_t *p_gen = allocate("gen", nrec * nyears);
+
+		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec );
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
 		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
@@ -1527,7 +1499,7 @@ public:
 		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 };
 
 		// lifetime analysis over nyears
-		for (int iyear = 0; iyear < nyears; iyear++)
+		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			// begin 8760 loop through each timestep
 			hour = 0;
@@ -1540,7 +1512,7 @@ public:
 				{
 					float percent = 100.0f * ((float)ireport) / ((float)insteps);
 					if ( !update( "", percent , (float)idx ) )
-						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour+1.0) + " in year " + util::to_string(iyear+1) );
+						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour+1.0) + " in year " + util::to_string((int)iyear+1) );
 
 					ireplast = ireport;
 				}
@@ -1564,14 +1536,16 @@ public:
 
 					double solazi = 0, solzen = 0, solalt = 0;
 					int sunup = 0;
-//					double dcpwr_gross = 0.0, dcpwr_net = 0.0, dc_string_voltage = 0.0;
 					double dcpwr_net = 0.0, dc_string_voltage = 0.0;
-					double inprad_total = 0.0;
-					double inprad_beam = 0.0;
-					double poa_nom_ts_total = 0.0;
-					double poa_shaded_ts_total = 0.0;
 					double alb = 0.2;
-					double poa_eff_ts_total = 0.0;
+
+					// accumulators for radiation power (W) over this 
+					// timestep from each subarray
+					double ts_accum_poa_nom = 0.0;
+					double ts_accum_poa_beam_nom = 0.0;
+					double ts_accum_poa_shaded = 0.0;
+					double ts_accum_poa_eff = 0.0;
+					double ts_accum_poa_beam_eff = 0.0;
 
 					int month_idx = wf.month - 1;
 
@@ -1589,9 +1563,7 @@ public:
 						if (!sa[nn].enable
 							|| sa[nn].nstrings < 1)
 							continue; // skip disabled subarrays
-
 #define IRRMAX 1500
-
 						if (wf.gh < 0 || wf.gh > IRRMAX)
 						{
 							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
@@ -1645,16 +1617,14 @@ public:
 						if (iyear==0)
 							p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));							
 
-						//record sub-array contribution to total plane of array for this hour
-						poa_nom_ts_total += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
-//						poa_nom_ts_total += p_poanom[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						// note: ibeam, iskydiff, ignddiff are in units of W/m2
 
-						//record sub-array contribution to total POA beam for this hour (used for CPV performance ratio)
-						poa_nom_beam += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						// record sub-array contribution to total POA power for this time step  (W)
+						ts_accum_poa_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
-						//accumulate monthly nominal poa
-						sa[nn].monthly_poa_nom[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
-
+						// record sub-array contribution to total POA beam power for this time step (W)
+						ts_accum_poa_beam_nom += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						
 						// note: shading factors are still hourly inputs
 						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi);
 
@@ -1692,15 +1662,13 @@ public:
 							else
 								throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
 						}
+						
+						double poashad = ibeam + iskydiff + ignddiff;
 
-						if (iyear == 0)
-						{
-							// record sub-array level output after shading, before soiling
-							p_poashaded[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
+						// determine sub-array contribution to total shaded plane of array for this hour
+						ts_accum_poa_shaded += poashad * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						
 
-							//record sub-array contribution to total shaded plane of array for this hour
-							poa_shaded_ts_total += p_poashaded[nn][idx] * ref_area_m2 *				modules_per_string * sa[nn].nstrings;
-						}
 						// apply soiling derate to all components of irradiance
 						double soiling_factor = 1.0;
 						if (month_idx >= 0 && month_idx < 12)
@@ -1711,10 +1679,11 @@ public:
 							ignddiff *= soiling_factor;
 							beam_shad_factor *= soiling_factor;
 						}
-
+						
 						if (iyear == 0)
 						{
-							// record sub-array level outputs				
+							// save sub-array level outputs			
+							p_poashaded[nn][idx] = (ssc_number_t)poashad;	
 							p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
 							p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
 							p_poaeff[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
@@ -1725,10 +1694,14 @@ public:
 							p_surftilt[nn][idx] = (ssc_number_t)stilt;
 							p_surfazi[nn][idx] = (ssc_number_t)sazi;
 							p_soiling[nn][idx] = (ssc_number_t)soiling_factor;
-							// accumulate incident total radiation in this timestep (all subarrays)
-							poa_eff_ts_total += p_poaeff[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
+							
 						}
+						
+						// accumulate incident total radiation (W) in this timestep (all subarrays)
+						ts_accum_poa_eff += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						ts_accum_poa_beam_eff += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+
 						// save the required irradiance inputs on array plane for the module output calculations.
 						sa[nn].poa.ibeam = ibeam;
 						sa[nn].poa.iskydiff = iskydiff;
@@ -1738,21 +1711,8 @@ public:
 						sa[nn].poa.stilt = stilt;
 						sa[nn].poa.sazi = sazi;
 
-						// accumulate incident total radiation in this timestep (all subarrays)
-//						poa_eff_ts_total += p_poaeff[nn][idx] * ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
-						// accumulate monthly incident total & beam
-						sa[nn].monthly_poa_eff[month_idx] += ((ibeam + iskydiff + ignddiff) * 0.001);
-						sa[nn].monthly_poa_eff_beam[month_idx] += (ibeam * 0.001);
-
-						// calculate total input radiaton to system (array-level output)
-						inprad_total += (sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff)
-							* ref_area_m2 * modules_per_string * sa[nn].nstrings;
-
-						inprad_beam += sa[nn].poa.ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 					}
-
-
+					
 					// compute dc power output of one module in each subarray
 					double module_voltage = -1;
 
@@ -1873,28 +1833,31 @@ public:
 						sa[nn].module.dcpwr *= modules_per_string*sa[nn].nstrings;
 
 						// Calculate and apply snow coverage losses if activated
-						if (en_snow_model){
-							float smLoss;
-							if (!sa[nn].sm.getLoss(sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff, sa[nn].poa.stilt, wf.wspd, wf.tdry, wf.snow, sunup, 1.0 / step_per_hour, &smLoss)){
-									if (!sa[nn].sm.good) {
-									log(sa[nn].sm.msg, SSC_ERROR);
-									// What is the best way to force a quit?
-									return;
-								}
+						if (en_snow_model)
+						{
+							float smLoss = 0.0f;
+
+							if (!sa[nn].sm.getLoss( (float)( sa[nn].poa.ibeam + sa[nn].poa.iskydiff + sa[nn].poa.ignddiff ),  
+									(float)sa[nn].poa.stilt, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, &smLoss))
+							{
+								if (!sa[nn].sm.good)
+									throw exec_error( "pvsamv1", sa[nn].sm.msg );
 							}
+
 							if (iyear == 0)
 							{
-								p_snowloss[nn][idx] = 0.001*sa[nn].module.dcpwr*smLoss;
-								p_dcsnowloss[idx] += 0.001*sa[nn].module.dcpwr*smLoss;
-								p_snowcoverage[nn][idx] = sa[nn].sm.coverage;
-								annual_snow_loss += 0.001*sa[nn].module.dcpwr*smLoss;
+								p_snowloss[nn][idx] = (ssc_number_t)( 0.001*sa[nn].module.dcpwr*smLoss );
+								p_dcsnowloss[idx] += (ssc_number_t)( 0.001*sa[nn].module.dcpwr*smLoss );
+								p_snowcoverage[nn][idx] = (ssc_number_t)( sa[nn].sm.coverage );
+								annual_snow_loss += (ssc_number_t)( 0.001*sa[nn].module.dcpwr*smLoss );
 							}
+
 							sa[nn].module.dcpwr *= (1 - smLoss);
 						}
 
 						// apply pre-inverter power derate
 						// apply yearly degradation as necessary
-//						dcpwr_gross += sa[nn].module.dcpwr;
+
 						if (iyear == 0)
 						{
 							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to	energy kWh
@@ -1910,11 +1873,6 @@ public:
 						if (pv_lifetime_simulation==1)
 							dcpwr_net*= p_dc_degrade_factor[iyear + 1];
 
-						// save to SSC output arrays
-//						p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
-//						p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
-//						p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
-//						p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
 					}
 
 					// Battery replacement
@@ -1955,7 +1913,6 @@ public:
 						aceff *= 100;
 					}
 					
-					
 					// if dc connected battery, update post-inverted quantities
 					if (en_batt && (ac_or_dc == 0) )
 						batt.update_post_inverted(*this, idx, acpwr_gross*0.001*ts_hour, cur_load*ts_hour);
@@ -1989,21 +1946,18 @@ public:
 						p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * wf.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
 						p_sunup[idx] = (ssc_number_t)sunup;
 
-						p_inrad[idx] = (ssc_number_t)(inprad_total * 0.001);
-						p_inradbeam[idx] = (ssc_number_t)(inprad_beam * 0.001);
-						p_poanom_ts_total[idx] = (ssc_number_t)(poa_nom_ts_total * 0.001);
-						p_poashaded_ts_total[idx] = (ssc_number_t)(poa_shaded_ts_total * 0.001);
-						p_poaeff_ts_total[idx] = (ssc_number_t)(poa_eff_ts_total * 0.001);
+						// save radiation values.  the ts_accum_* variables are units of (W), 
+						// and are sums of radiation power on each subarray for the current timestep
+						p_poanom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_nom * 0.001); // kW
+						p_poabeamnom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_nom * 0.001); // kW
+						p_poashaded_ts_total[idx] = (ssc_number_t)(ts_accum_poa_shaded * 0.001); // kW
+						p_poaeff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_eff * 0.001); // kW
+						p_poabeameff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * 0.001); // kW
 
 						p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
-						//					p_dcgross[idx] = (ssc_number_t)(dcpwr_gross * 0.001);
 					}
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
-//					p_acgross[idx] = (ssc_number_t)(acpwr_gross * 0.001);
-
-					// apply ac degradation  
-//					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001 * haf(hour) * p_ac_degrade_factor[iyear]);
 					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
 					if (iyear == 0)
 						annual_ac_pre_avail += p_gen[idx];
@@ -2011,19 +1965,12 @@ public:
 					//apply availability and curtailment
 					p_gen[idx] *= haf(hour);
 
-//					p_inveff[idx] = (ssc_number_t)(aceff);
-//					p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
-//					p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
-//					p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
-
 					if (en_batt && ac_or_dc == 1)
 					{
 						batt.advance(*this, idx, hour, jj, p_gen[idx]*ts_hour, cur_load*ts_hour);
 						p_gen[idx] = batt.outGenPower[idx];
 					}
 
-					// accumulate hourly PV system generation too
-//					p_hourlygen[hour+iyear*8760] += (ssc_number_t)(p_gen[idx] * ts_hour);
 					// accumulate first year annual energy
 					if (iyear == 0)
 					{
@@ -2055,66 +2002,43 @@ public:
 			if (sa[0].sm.badValues > 0){
 				log(util::format("The snow model has detected %d bad snow depth values. These values have been set to zero.", sa[0].sm.badValues), SSC_WARNING);
 			}
-
-			accumulate_monthly_for_year( "dc_snow_loss", "monthly_snow_loss", 1.0 , step_per_hour );
-			accumulate_annual_for_year( "dc_snow_loss", "annual_snow_loss", 1.0, step_per_hour);
+			
+			// scale by ts_hour to convert power -> energy
+			accumulate_monthly_for_year( "dc_snow_loss", "monthly_snow_loss", ts_hour , step_per_hour );			
+			accumulate_annual_for_year( "dc_snow_loss", "annual_snow_loss", ts_hour, step_per_hour);
 		}
 		 
 		if (hour != 8760)
 			throw exec_error("pvsamv1", "failed to simulate all 8760 hours, error in weather file ?");
 
-		// calculate monthly_poa_nom, monthly_poa_eff, monthly_poa_eff_beam
-		// sum up monthly_inc for each subarray.  
-		// weight total it by relative area of each subarray to total pv system area.
-		ssc_number_t *p_monthly_poa_nom = allocate ("monthly_poa_nom", 12);
-		ssc_number_t *p_monthly_poa_eff = allocate( "monthly_poa_eff", 12 );
-		ssc_number_t *p_monthly_poa_eff_beam = allocate( "monthly_poa_eff_beam", 12 );
 
-		for (int i=0;i<12;i++)
-		{
-			double nom = 0;
-			double total = 0;
-			double beam = 0;
-			double num_strings = 0;
-			for (int nn=0;nn<4;nn++)
-			{
-				if (sa[nn].enable && sa[nn].nstrings > 0)
-				{
-					nom += sa[nn].monthly_poa_nom[i] * sa[nn].nstrings;
-					total += sa[nn].monthly_poa_eff[i] * sa[nn].nstrings;
-					beam += sa[nn].monthly_poa_eff_beam[i] * sa[nn].nstrings;
-					num_strings += sa[nn].nstrings;
-				}
-			}
-
-			p_monthly_poa_nom[i] = (ssc_number_t) (nom / num_strings );
-			p_monthly_poa_eff[i] = (ssc_number_t) ( total / num_strings );
-			p_monthly_poa_eff_beam[i] = (ssc_number_t) ( beam / num_strings );
-		}
-
-		accumulate_monthly_for_year("dc_net", "monthly_dc", 1.0, step_per_hour);
-		accumulate_monthly_for_year("gen", "monthly_energy", 1.0, step_per_hour);
+		accumulate_monthly_for_year("dc_net", "monthly_dc", ts_hour, step_per_hour);
+		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
 		
-		accumulate_annual_for_year("gh", "annual_gh", 1.0, step_per_hour);
-		accumulate_annual_for_year("input_radiation", "annual_input_radiation", 1.0, step_per_hour);
-		accumulate_annual_for_year("input_radiation_beam", "annual_input_radiation_beam", 1.0, step_per_hour);
-		double annual_poa_nom = accumulate_annual_for_year("poa_nom", "annual_poa_nom", 1.0, step_per_hour);
-		double annual_poa_shaded = accumulate_annual_for_year("poa_shaded", "annual_poa_shaded", 1.0, step_per_hour);
-		double annual_poa_eff = accumulate_annual_for_year("poa_eff", "annual_poa_eff", 1.0, step_per_hour);
+		// scale by ts_hour to convert power -> energy
+		accumulate_annual_for_year("gh", "annual_gh", ts_hour, step_per_hour);
 		
-//		accumulate_annual_for_year("dc_gross", "annual_dc_gross", 1.0, step_per_hour);
-		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", 1.0, step_per_hour);
-//		double annual_ac_gross = accumulate_annual_for_year("ac_gross", "annual_ac_gross", 1.0, step_per_hour);
-		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", 1.0, step_per_hour);
+		// scale by ts_hour to convert power -> energy
+		double annual_poa_nom = accumulate_annual_for_year("poa_nom", "annual_poa_nom", ts_hour, step_per_hour);
+		double annual_poa_beam_nom = accumulate_annual_for_year("poa_beam_nom", "annual_poa_beam_nom", ts_hour, step_per_hour);
+		double annual_poa_shaded = accumulate_annual_for_year("poa_shaded", "annual_poa_shaded", ts_hour, step_per_hour);
+		double annual_poa_eff = accumulate_annual_for_year("poa_eff", "annual_poa_eff", ts_hour, step_per_hour);
+		double annual_poa_beam_eff = accumulate_annual_for_year("poa_beam_eff", "annual_poa_beam_eff", ts_hour, step_per_hour);
+		
+		accumulate_monthly_for_year( "poa_nom", "monthly_poa_nom", ts_hour, step_per_hour );
+		accumulate_monthly_for_year( "poa_beam_nom", "monthly_poa_beam_nom", ts_hour, step_per_hour );
+		accumulate_monthly_for_year( "poa_eff", "monthly_poa_eff", ts_hour, step_per_hour );
+		accumulate_monthly_for_year( "poa_beam_eff", "monthly_poa_beam_eff", ts_hour, step_per_hour );
 
-
-		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", 1.0, step_per_hour);
-		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour);
-		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", 1.0, step_per_hour);
+		// scale by ts_hour to convert power -> energy
+		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", ts_hour, step_per_hour);
+		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
+		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", ts_hour, step_per_hour);
+		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
+		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
 	
-
-		double inp_rad = is_cpv ? as_double("annual_input_radiation_beam") : as_double("annual_input_radiation");
-		double pr_rad = is_cpv ? (poa_nom_beam / 1000) : as_double("annual_poa_nom"); //fix units to kWh for poa_nom_beam
+		double nom_rad = is_cpv ? annual_poa_beam_nom : annual_poa_nom;
+		double inp_rad = is_cpv ? annual_poa_beam_eff : annual_poa_eff;
 		double ac_net = as_double("annual_ac_net");
 		double mod_eff = module_eff( mod_type );
 
@@ -2122,16 +2046,11 @@ public:
 		// reference: (http://files.sma.de/dl/7680/Perfratio-UEN100810.pdf)
 		// additional reference: (http://www.nrel.gov/docs/fy05osti/37358.pdf)
 		// PR = net_ac (kWh) / ( total input radiation (kWh) * stc efficiency (%) )
-		// bug fix 6/15/15 jmf: total input radiation should NOT including shading or soiling.
-		//assign( "performance_ratio", var_data( (ssc_number_t)( ac_net / ( inp_rad * mod_eff/100.0 ) ) ) );
-		assign("performance_ratio", var_data((ssc_number_t)(ac_net / (pr_rad * mod_eff / 100.0))));
+		// bug fix 6/15/15 jmf: total input radiation for PR should NOT including shading or soiling, hence use Nominal value.
+		assign("performance_ratio", var_data((ssc_number_t)(ac_net / (nom_rad * mod_eff / 100.0))));
 
-		if (en_batt)
-		{
-			assign("average_cycle_efficiency", var_data((ssc_number_t)batt.outAverageCycleEfficiency));
-		}
-		else
-			assign("average_cycle_efficiency", 0);
+		// average battery eff
+		assign("average_cycle_efficiency", var_data( (ssc_number_t)( en_batt ? batt.outAverageCycleEfficiency : 0 )));
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
@@ -2142,46 +2061,13 @@ public:
 		inverter_vdcmax_check();
 		inverter_size_check();
 
-
-
-
 		assign("system_use_lifetime_output", var_data((ssc_number_t) pv_lifetime_simulation));
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 
 
-		// dc gross to dc net
-		// loss diagram values generate entire dcloss value for each sub array
-		// percentages
-		/*
-		double mismatch = as_double("subarray1_mismatch_derate");
-		double diodes = as_double("subarray1_diodeconn_derate");
-		double wiring = as_double("subarray1_dcwiring_derate");
-		double tracking = as_double("subarray1_tracking_derate");
-		double nameplate = as_double("subarray1_nameplate_derate");
-		double total_percent = mismatch + diodes + wiring + tracking + nameplate;
-		double mismatch_loss = 0;
-		double diode_loss = 0;
-		double wiring_loss = 0;
-		double tracking_loss = 0;
-		double nameplate_loss = 0;
-		double dc_loss = *p_dcsubarray[0] * (1.0 - sa[0].derate);
-		if (total_percent != 0)
-		{
-			mismatch_loss = mismatch / total_percent * dc_loss;
-			diode_loss = diodes / total_percent * dc_loss;
-			wiring_loss = wiring / total_percent * dc_loss;
-			tracking_loss = tracking / total_percent * dc_loss;
-			nameplate_loss = nameplate / total_percent * dc_loss;
-		}
-		assign("annual_subarray1_dc_mismatch_loss", var_data((ssc_number_t)mismatch_loss));
-		assign("annual_subarray1_dc_diodes_loss", var_data((ssc_number_t)diode_loss));
-		assign("annual_subarray1_dc_wiring_loss", var_data((ssc_number_t)wiring_loss));
-		assign("annual_subarray1_dc_tracking_loss", var_data((ssc_number_t)tracking_loss));
-		assign("annual_subarray1_dc_nameplate_loss", var_data((ssc_number_t)nameplate_loss));
-		*/
-
 		double annual_mismatch_loss = 0, annual_diode_loss = 0, annual_wiring_loss = 0, annual_tracking_loss = 0, annual_nameplate_loss = 0, annual_dcopt_loss = 0;
 		double annual_dc_gross = 0;
+		
 		//dc optimizer losses are the same for all four subarrays, assign outside of subarray loop but calculate inside loop
 		double dc_opt = as_double("dcoptimizer_loss");
 		// loop over subarrays
@@ -2198,9 +2084,6 @@ public:
 				double total_percent = mismatch + diodes + wiring + tracking + nameplate + dc_opt;
 
 				double mismatch_loss = 0,diode_loss = 0,wiring_loss = 0,tracking_loss = 0, nameplate_loss = 0, dcopt_loss = 0;
-//				double dc_gross = 0;
-				// gross for each subarray
-//				dc_gross = accumulate_annual_for_year(prefix + "dc_gross", "annual_" + prefix + "dc_gross", 1.0, step_per_hour);
 				// dc derate for each sub array
 				double dc_loss = dc_gross[nn] * (1.0 - sa[nn].derate);
 				annual_dc_gross += dc_gross[nn];
@@ -2253,8 +2136,13 @@ public:
 		sys_output -= annual_nameplate_loss;
 		assign("annual_dc_after_nameplate_loss", var_data((ssc_number_t)sys_output));
 
+//#define WITH_CHECKS
+
+#ifdef WITH_CHECKS
 		// check that sys_output=dc_net
-		//assert(fabs(annual_dc_net - sys_output) < 1e-3);
+		if ( fabs(annual_dc_net - sys_output) > 0.001 )
+			log( util::format("Internal discrepancy in calculated output: %lg != %lg at DC1.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
+#endif
 
 		// dc to ac losses
 		sys_output -= annual_inv_cliploss;
@@ -2264,11 +2152,11 @@ public:
 		sys_output -= annual_inv_pntloss;
 		assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
 
-
+#ifdef WITH_CHECKS
 		// check that ac_gross = sys_output at this point
-		//assert(fabs(annual_ac_gross - sys_output) < 1e-3);
-
-
+		if ( fabs(annual_ac_gross - sys_output) > 0.001 )
+			log( util::format("Internal discrepancy in calculated output: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
+#endif
 		double acwiring = as_double("acwiring_loss");
 		double transformer = as_double("transformer_loss");
 		double total_percent = acwiring + transformer;
@@ -2291,9 +2179,12 @@ public:
 		sys_output -= transformer_loss;
 		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)sys_output));
 
+#ifdef WITH_CHECKS
+		// check that ac_gross = sys_output at this point
+		if ( fabs(annual_ac_gross - sys_output) > 0.001 )
+			log( util::format("Internal discrepancy in calculated output: %lg != %lg at AC2.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
+#endif
 
-		// check that ac_net = sys_output at this point
-		//assert(fabs(annual_ac_net - sys_output) < 1e-3);
 		double percent = 0;
 		if (annual_poa_nom > 0) percent = 100 * (annual_poa_nom - annual_poa_shaded) / annual_poa_nom;
 		assign("annual_poa_shading_loss_percent", var_data((ssc_number_t)percent));

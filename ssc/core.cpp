@@ -817,7 +817,7 @@ ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, cons
 	return monthly;
 }
 
-ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std::string &monthly_var, double scale, double step_per_hour, size_t year) throw(exec_error)
+ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std::string &monthly_var, double scale, size_t step_per_hour, size_t year) throw(exec_error)
 {
 
 	size_t count = 0;
@@ -840,7 +840,7 @@ ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_
 				for (size_t j = 0; j<step_per_hour; j++)
 					monthly[m] += ts[c++];
 
-		monthly[m] *= scale*(1.0/step_per_hour);
+		monthly[m] *= scale;
 	}
 
 	return monthly;
@@ -865,22 +865,28 @@ ssc_number_t compute_module::accumulate_annual(const std::string &ts_var, const 
 	return (ssc_number_t)(annual*scale);
 }
 
-ssc_number_t compute_module::accumulate_annual_for_year(const std::string &ts_var, const std::string &annual_var, double scale, double step_per_hour, size_t year) throw(exec_error)
+ssc_number_t compute_module::accumulate_annual_for_year( const std::string &ts_var, 
+	const std::string &annual_var, 
+	double scale,
+	size_t step_per_hour, 
+	size_t year ) throw(exec_error)
 {
 	size_t count = 0;
 	ssc_number_t *ts = as_array(ts_var, &count);
 
-	size_t annual_values = step_per_hour * 8760;
+	size_t annual_values = step_per_hour * 8760;	
 
 	if (!ts || step_per_hour < 1 || step_per_hour > 60 || year*step_per_hour * 8760 > count)
 		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to annual: " + annual_var);
 
-	double annual = 0;
+	size_t istart = (year-1)*annual_values;
+	size_t iend  = year*annual_values;
+	
+	double sum = 0;
+	for (size_t i = istart; i < iend; i++)
+		sum += ts[i];
 
-	for (size_t i = (year-1)*annual_values; i < year*annual_values; i++)
-		annual += ts[i];
+	assign( annual_var, var_data((ssc_number_t)( sum * scale )));
 
-	assign(annual_var, var_data((ssc_number_t)(annual*scale*(1.0 / step_per_hour))));
-
-	return (ssc_number_t)(annual*scale*(1.0/step_per_hour));
+	return (ssc_number_t)( sum*scale );
 }
