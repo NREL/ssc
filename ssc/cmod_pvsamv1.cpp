@@ -1960,7 +1960,7 @@ public:
 
 					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
 					if (iyear == 0)
-						annual_ac_pre_avail += p_gen[idx];
+						annual_ac_pre_avail += p_gen[idx] * ts_hour; //have to multiply by timestep to keep from adding too much of the same value
 
 					//apply availability and curtailment
 					p_gen[idx] *= haf(hour);
