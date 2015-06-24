@@ -95,13 +95,18 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery Bank Replacements Per Year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 																			          
 	// Energy outputs	- Power outputs at native time step													        
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Power to/from Battery",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from Grid",                                    "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Power to/from battery",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from grid",                                    "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery",                                   "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                                 "Power to load from PV",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Power to load from battery",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Power to load from grid",                               "kW",      "",                       "Battery",       "",                           "",                              "" },
-																			          
+	
+	// monthly outputs
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                       "Battery",       "",                          "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_load",                       "Energy to load from battery",                           "kWh",      "",                       "Battery",       "",                          "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                       "Battery",       "",                          "LENGTH=12",                     "" },
+	
 	// Efficiency outputs													          
 	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average Battery Cycle Efficiency",                       "%",        "",                     "Annual",        "",                           "",                              "" },
 	
@@ -401,6 +406,20 @@ void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, d
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
 }
+
+void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
+{
+	int step_per_hour = (int)( 1.0 / _dt_hour );
+
+	// average battery eff
+	cm.assign("average_cycle_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
+
+	// monthly outputs
+	cm.accumulate_monthly_for_year( "pv_to_load",   "monthly_pv_to_load",   _dt_hour, step_per_hour );
+	cm.accumulate_monthly_for_year( "batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour );
+	cm.accumulate_monthly_for_year( "grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour );
+}
+
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/

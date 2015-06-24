@@ -2048,8 +2048,9 @@ public:
 		// bug fix 6/15/15 jmf: total input radiation for PR should NOT including shading or soiling, hence use Nominal value.
 		assign("performance_ratio", var_data((ssc_number_t)(ac_net / (nom_rad * mod_eff / 100.0))));
 
-		// average battery eff
-		assign("average_cycle_efficiency", var_data( (ssc_number_t)( en_batt ? batt.outAverageCycleEfficiency : 0 )));
+		// accumulate annual and monthly battery model outputs
+		if ( en_batt ) batt.calculate_monthly_and_annual_outputs( *this );
+		else assign( "average_cycle_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
