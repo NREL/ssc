@@ -697,6 +697,37 @@ static var_info vtab_utility_rate3_monthly[] = {
 
 
 
+
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jan", "Jan utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_feb", "Feb utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_mar", "Mar utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_apr", "Apr utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_may", "May utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jun", "Jun utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jul", "Jul utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_aug", "Aug utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_sep", "Sep utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_oct", "Oct utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_nov", "Nov utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_dec", "Dec utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys", "Annual utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jan", "Jan utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_feb", "Feb utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_mar", "Mar utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_apr", "Apr utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_may", "May utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jun", "Jun utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jul", "Jul utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_aug", "Aug utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_sep", "Sep utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_oct", "Oct utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_nov", "Nov utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_dec", "Dec utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys", "Annual utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+
+
+
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_jan",      "Demand charge with system (fixed) in Jan",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_feb",      "Demand charge with system (fixed) in Feb",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_mar",      "Demand charge with system (fixed) in Mar",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
@@ -725,20 +756,34 @@ static var_info vtab_utility_rate3_monthly[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou_dec", "Demand charge with system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jan",            "Energy charge with system in Jan",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_feb",            "Energy charge with system in Feb",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_mar",            "Energy charge with system in Mar",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_apr",            "Energy charge with system in Apr",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_may",            "Energy charge with system in May",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jun",            "Energy charge with system in Jun",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jul",            "Energy charge with system in Jul",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_aug",            "Energy charge with system in Aug",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_sep",            "Energy charge with system in Sep",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_oct",            "Energy charge with system in Oct",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_nov",            "Energy charge with system in Nov",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec", "Energy charge with system in Dec", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jan",            "Energy charge with system (TOU) in Jan",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_feb",            "Energy charge with system (TOU) in Feb",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_mar",            "Energy charge with system (TOU) in Mar",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_apr",            "Energy charge with system (TOU) in Apr",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_may",            "Energy charge with system (TOU) in May",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jun",            "Energy charge with system (TOU) in Jun",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jul",            "Energy charge with system (TOU) in Jul",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_aug",            "Energy charge with system (TOU) in Aug",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_sep",            "Energy charge with system (TOU) in Sep",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_oct",            "Energy charge with system (TOU) in Oct",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_nov",            "Energy charge with system (TOU) in Nov",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec", "Energy charge with system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_jan", "Energy charge with system (flat) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_feb", "Energy charge with system (flat) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_mar", "Energy charge with system (flat) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_apr", "Energy charge with system (flat) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_may", "Energy charge with system (flat) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_jun", "Energy charge with system (flat) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_jul", "Energy charge with system (flat) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_aug", "Energy charge with system (flat) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_sep", "Energy charge with system (flat) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_oct", "Energy charge with system (flat) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_nov", "Energy charge with system (flat) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_dec", "Energy charge with system (flat) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat", "Energy charge with system (flat)", "$", "", "Charges by Month", "*", "", "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_jan", "Demand charge without system (fixed) in Jan", "$", "", "Charges by Month", "*", "", "" },
@@ -769,19 +814,33 @@ static var_info vtab_utility_rate3_monthly[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_dec", "Demand charge without system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou", "Demand charge without system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan", "Energy charge without system in Jan", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb", "Energy charge without system in Feb", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar", "Energy charge without system in Mar", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr", "Energy charge without system in Apr", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may", "Energy charge without system in May", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun", "Energy charge without system in Jun", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul", "Energy charge without system in Jul", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug", "Energy charge without system in Aug", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep", "Energy charge without system in Sep", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct", "Energy charge without system in Oct", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov", "Energy charge without system in Nov", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec", "Energy charge without system in Dec", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec", "Energy charge without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan", "Energy charge without system (TOU) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb", "Energy charge without system (TOU) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar", "Energy charge without system (TOU) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr", "Energy charge without system (TOU) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may", "Energy charge without system (TOU) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun", "Energy charge without system (TOU) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul", "Energy charge without system (TOU) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug", "Energy charge without system (TOU) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep", "Energy charge without system (TOU) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct", "Energy charge without system (TOU) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov", "Energy charge without system (TOU) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec", "Energy charge without system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec", "Energy charge without system (TOU)", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_jan", "Energy charge without system (flat) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_feb", "Energy charge without system (flat) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_mar", "Energy charge without system (flat) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_apr", "Energy charge without system (flat) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_may", "Energy charge without system (flat) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_jun", "Energy charge without system (flat) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_jul", "Energy charge without system (flat) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_aug", "Energy charge without system (flat) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_sep", "Energy charge without system (flat) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_oct", "Energy charge without system (flat) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_nov", "Energy charge without system (flat) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_dec", "Energy charge without system (flat) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat", "Energy charge without system (flat)", "$", "", "Charges by Month", "*", "", "" },
 
 	var_info_invalid };
 
@@ -951,7 +1010,7 @@ public:
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12),
 			monthly_dc_fixed(12), monthly_dc_tou(12),
-			monthly_ec_charges(12), monthly_ec_rates(12), 
+			monthly_ec_charges(12), monthly_ec_flat_charges(12), monthly_ec_rates(12),
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12), 
 			monthly_elec_needed_from_grid(12), 
@@ -966,7 +1025,37 @@ public:
 		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears+1);
 		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears+1);
 
-		ssc_number_t *ch_w_sys_dc_fixed_jan = allocate("charge_w_sys_dc_fixed_jan", nyears+1 );
+		ssc_number_t *utility_bill_w_sys_jan = allocate("utility_bill_w_sys_jan", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_feb = allocate("utility_bill_w_sys_feb", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_mar = allocate("utility_bill_w_sys_mar", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_apr = allocate("utility_bill_w_sys_apr", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_may = allocate("utility_bill_w_sys_may", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_jun = allocate("utility_bill_w_sys_jun", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_jul = allocate("utility_bill_w_sys_jul", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_aug = allocate("utility_bill_w_sys_aug", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_sep = allocate("utility_bill_w_sys_sep", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_oct = allocate("utility_bill_w_sys_oct", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_nov = allocate("utility_bill_w_sys_nov", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_dec = allocate("utility_bill_w_sys_dec", nyears + 1);
+		ssc_number_t *utility_bill_w_sys = allocate("utility_bill_w_sys", nyears + 1);
+
+
+		ssc_number_t *utility_bill_wo_sys_jan = allocate("utility_bill_wo_sys_jan", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_feb = allocate("utility_bill_wo_sys_feb", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_mar = allocate("utility_bill_wo_sys_mar", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_apr = allocate("utility_bill_wo_sys_apr", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_may = allocate("utility_bill_wo_sys_may", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_jun = allocate("utility_bill_wo_sys_jun", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_jul = allocate("utility_bill_wo_sys_jul", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_aug = allocate("utility_bill_wo_sys_aug", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_sep = allocate("utility_bill_wo_sys_sep", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_oct = allocate("utility_bill_wo_sys_oct", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_nov = allocate("utility_bill_wo_sys_nov", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_dec = allocate("utility_bill_wo_sys_dec", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys = allocate("utility_bill_wo_sys", nyears + 1);
+
+
+		ssc_number_t *ch_w_sys_dc_fixed_jan = allocate("charge_w_sys_dc_fixed_jan", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_fixed_feb = allocate("charge_w_sys_dc_fixed_feb", nyears+1 );
 		ssc_number_t *ch_w_sys_dc_fixed_mar = allocate("charge_w_sys_dc_fixed_mar", nyears+1 );
 		ssc_number_t *ch_w_sys_dc_fixed_apr = allocate("charge_w_sys_dc_fixed_apr", nyears+1 );
@@ -994,19 +1083,33 @@ public:
 		ssc_number_t *ch_w_sys_dc_tou_dec = allocate("charge_w_sys_dc_tou_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_tou = allocate("charge_w_sys_dc_tou", nyears + 1);
 
-		ssc_number_t *ch_w_sys_ec_jan = allocate("charge_w_sys_ec_jan", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_feb = allocate("charge_w_sys_ec_feb", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_mar = allocate("charge_w_sys_ec_mar", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_apr = allocate("charge_w_sys_ec_apr", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_may = allocate("charge_w_sys_ec_may", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_jun = allocate("charge_w_sys_ec_jun", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_jul = allocate("charge_w_sys_ec_jul", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_aug = allocate("charge_w_sys_ec_aug", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_sep = allocate("charge_w_sys_ec_sep", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_oct = allocate("charge_w_sys_ec_oct", nyears+1 );
-		ssc_number_t *ch_w_sys_ec_nov = allocate("charge_w_sys_ec_nov", nyears+1 );
+		ssc_number_t *ch_w_sys_ec_jan = allocate("charge_w_sys_ec_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_feb = allocate("charge_w_sys_ec_feb", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_mar = allocate("charge_w_sys_ec_mar", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_apr = allocate("charge_w_sys_ec_apr", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_may = allocate("charge_w_sys_ec_may", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_jun = allocate("charge_w_sys_ec_jun", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_jul = allocate("charge_w_sys_ec_jul", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_aug = allocate("charge_w_sys_ec_aug", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_sep = allocate("charge_w_sys_ec_sep", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_oct = allocate("charge_w_sys_ec_oct", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_nov = allocate("charge_w_sys_ec_nov", nyears + 1);
 		ssc_number_t *ch_w_sys_ec_dec = allocate("charge_w_sys_ec_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_ec = allocate("charge_w_sys_ec", nyears + 1);
+
+		ssc_number_t *ch_w_sys_ec_flat_jan = allocate("charge_w_sys_ec_flat_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_feb = allocate("charge_w_sys_ec_flat_feb", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_mar = allocate("charge_w_sys_ec_flat_mar", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_apr = allocate("charge_w_sys_ec_flat_apr", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_may = allocate("charge_w_sys_ec_flat_may", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_jun = allocate("charge_w_sys_ec_flat_jun", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_jul = allocate("charge_w_sys_ec_flat_jul", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_aug = allocate("charge_w_sys_ec_flat_aug", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_sep = allocate("charge_w_sys_ec_flat_sep", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_oct = allocate("charge_w_sys_ec_flat_oct", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_nov = allocate("charge_w_sys_ec_flat_nov", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_dec = allocate("charge_w_sys_ec_flat_dec", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat = allocate("charge_w_sys_ec_flat", nyears + 1);
 
 		ssc_number_t *ch_wo_sys_dc_fixed_jan = allocate("charge_wo_sys_dc_fixed_jan", nyears + 1);
 		ssc_number_t *ch_wo_sys_dc_fixed_feb = allocate("charge_wo_sys_dc_fixed_feb", nyears + 1);
@@ -1050,6 +1153,19 @@ public:
 		ssc_number_t *ch_wo_sys_ec_dec = allocate("charge_wo_sys_ec_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_ec = allocate("charge_wo_sys_ec", nyears + 1);
 
+		ssc_number_t *ch_wo_sys_ec_flat_jan = allocate("charge_wo_sys_ec_flat_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_feb = allocate("charge_wo_sys_ec_flat_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_mar = allocate("charge_wo_sys_ec_flat_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_apr = allocate("charge_wo_sys_ec_flat_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_may = allocate("charge_wo_sys_ec_flat_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_jun = allocate("charge_wo_sys_ec_flat_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_jul = allocate("charge_wo_sys_ec_flat_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_aug = allocate("charge_wo_sys_ec_flat_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_sep = allocate("charge_wo_sys_ec_flat_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_oct = allocate("charge_wo_sys_ec_flat_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_nov = allocate("charge_wo_sys_ec_flat_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_dec = allocate("charge_wo_sys_ec_flat_dec", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat = allocate("charge_wo_sys_ec_flat", nyears + 1);
 
 		// lifetime hourly load
 		ssc_number_t *lifetime_hourly_load = allocate("lifetime_load", nrec_gen);
@@ -1110,7 +1226,34 @@ public:
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 				&monthly_fixed_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+				&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+
+	
+			utility_bill_wo_sys_jan[i + 1] = monthly_bill[0];
+			utility_bill_wo_sys_feb[i + 1] = monthly_bill[1];
+			utility_bill_wo_sys_mar[i + 1] = monthly_bill[2];
+			utility_bill_wo_sys_apr[i + 1] = monthly_bill[3];
+			utility_bill_wo_sys_may[i + 1] = monthly_bill[4];
+			utility_bill_wo_sys_jun[i + 1] = monthly_bill[5];
+			utility_bill_wo_sys_jul[i + 1] = monthly_bill[6];
+			utility_bill_wo_sys_aug[i + 1] = monthly_bill[7];
+			utility_bill_wo_sys_sep[i + 1] = monthly_bill[8];
+			utility_bill_wo_sys_oct[i + 1] = monthly_bill[9];
+			utility_bill_wo_sys_nov[i + 1] = monthly_bill[10];
+			utility_bill_wo_sys_dec[i + 1] = monthly_bill[11];
+			utility_bill_wo_sys[i + 1] = utility_bill_wo_sys_jan[i + 1]
+				+ utility_bill_wo_sys_feb[i + 1]
+				+ utility_bill_wo_sys_mar[i + 1]
+				+ utility_bill_wo_sys_apr[i + 1]
+				+ utility_bill_wo_sys_may[i + 1]
+				+ utility_bill_wo_sys_jun[i + 1]
+				+ utility_bill_wo_sys_jul[i + 1]
+				+ utility_bill_wo_sys_aug[i + 1]
+				+ utility_bill_wo_sys_sep[i + 1]
+				+ utility_bill_wo_sys_oct[i + 1]
+				+ utility_bill_wo_sys_nov[i + 1]
+				+ utility_bill_wo_sys_dec[i + 1];
+
 
 
 			ch_wo_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0];
@@ -1189,6 +1332,30 @@ public:
 				+ ch_wo_sys_ec_nov[i + 1]
 				+ ch_wo_sys_ec_dec[i + 1];
 
+			ch_wo_sys_ec_flat_jan[i + 1] = monthly_ec_flat_charges[0];
+			ch_wo_sys_ec_flat_feb[i + 1] = monthly_ec_flat_charges[1];
+			ch_wo_sys_ec_flat_mar[i + 1] = monthly_ec_flat_charges[2];
+			ch_wo_sys_ec_flat_apr[i + 1] = monthly_ec_flat_charges[3];
+			ch_wo_sys_ec_flat_may[i + 1] = monthly_ec_flat_charges[4];
+			ch_wo_sys_ec_flat_jun[i + 1] = monthly_ec_flat_charges[5];
+			ch_wo_sys_ec_flat_jul[i + 1] = monthly_ec_flat_charges[6];
+			ch_wo_sys_ec_flat_aug[i + 1] = monthly_ec_flat_charges[7];
+			ch_wo_sys_ec_flat_sep[i + 1] = monthly_ec_flat_charges[8];
+			ch_wo_sys_ec_flat_oct[i + 1] = monthly_ec_flat_charges[9];
+			ch_wo_sys_ec_flat_nov[i + 1] = monthly_ec_flat_charges[10];
+			ch_wo_sys_ec_flat_dec[i + 1] = monthly_ec_flat_charges[11];
+			ch_wo_sys_ec_flat[i + 1] = ch_wo_sys_ec_flat_jan[i + 1]
+				+ ch_wo_sys_ec_flat_feb[i + 1]
+				+ ch_wo_sys_ec_flat_mar[i + 1]
+				+ ch_wo_sys_ec_flat_apr[i + 1]
+				+ ch_wo_sys_ec_flat_may[i + 1]
+				+ ch_wo_sys_ec_flat_jun[i + 1]
+				+ ch_wo_sys_ec_flat_jul[i + 1]
+				+ ch_wo_sys_ec_flat_aug[i + 1]
+				+ ch_wo_sys_ec_flat_sep[i + 1]
+				+ ch_wo_sys_ec_flat_oct[i + 1]
+				+ ch_wo_sys_ec_flat_nov[i + 1]
+				+ ch_wo_sys_ec_flat_dec[i + 1];
 
 
 			if (i == 0)
@@ -1242,7 +1409,7 @@ public:
 					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 					&monthly_fixed_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0],  &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
 			}
 			else
 			{
@@ -1251,15 +1418,75 @@ public:
 					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 					&monthly_fixed_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], false, false);
+				// TODO - remove annual_revenue and just use annual bill
 				// Two meters - adjust output accordingly
 				for (j = 0; j<8760; j++)
 				{
 					revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
 					annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
-					// TODO - check monthly values and update as necessary
 				}
-
+				// adjust monthly outputs as sum of both meters = system meter + load meter 
+				monthly_dc_fixed[0] += ch_wo_sys_dc_fixed_jan[i + 1];
+				monthly_dc_fixed[1] += ch_wo_sys_dc_fixed_feb[i + 1];
+				monthly_dc_fixed[2] += ch_wo_sys_dc_fixed_mar[i + 1];
+				monthly_dc_fixed[3] += ch_wo_sys_dc_fixed_apr[i + 1];
+				monthly_dc_fixed[4] += ch_wo_sys_dc_fixed_may[i + 1];
+				monthly_dc_fixed[5] += ch_wo_sys_dc_fixed_jun[i + 1];
+				monthly_dc_fixed[6] += ch_wo_sys_dc_fixed_jul[i + 1];
+				monthly_dc_fixed[7] += ch_wo_sys_dc_fixed_aug[i + 1];
+				monthly_dc_fixed[8] += ch_wo_sys_dc_fixed_sep[i + 1];
+				monthly_dc_fixed[9] += ch_wo_sys_dc_fixed_oct[i + 1];
+				monthly_dc_fixed[10] += ch_wo_sys_dc_fixed_nov[i + 1];
+				monthly_dc_fixed[11] += ch_wo_sys_dc_fixed_dec[i + 1];
+				monthly_dc_tou[0] += ch_wo_sys_dc_tou_jan[i + 1];
+				monthly_dc_tou[1] += ch_wo_sys_dc_tou_feb[i + 1];
+				monthly_dc_tou[2] += ch_wo_sys_dc_tou_mar[i + 1];
+				monthly_dc_tou[3] += ch_wo_sys_dc_tou_apr[i + 1];
+				monthly_dc_tou[4] += ch_wo_sys_dc_tou_may[i + 1];
+				monthly_dc_tou[5] += ch_wo_sys_dc_tou_jun[i + 1];
+				monthly_dc_tou[6] += ch_wo_sys_dc_tou_jul[i + 1];
+				monthly_dc_tou[7] += ch_wo_sys_dc_tou_aug[i + 1];
+				monthly_dc_tou[8] += ch_wo_sys_dc_tou_sep[i + 1];
+				monthly_dc_tou[9] += ch_wo_sys_dc_tou_oct[i + 1];
+				monthly_dc_tou[10] += ch_wo_sys_dc_tou_nov[i + 1];
+				monthly_dc_tou[11] += ch_wo_sys_dc_tou_dec[i + 1];
+				monthly_ec_charges[0] += ch_wo_sys_ec_jan[i + 1];
+				monthly_ec_charges[1] += ch_wo_sys_ec_feb[i + 1];
+				monthly_ec_charges[2] += ch_wo_sys_ec_mar[i + 1];
+				monthly_ec_charges[3] += ch_wo_sys_ec_apr[i + 1];
+				monthly_ec_charges[4] += ch_wo_sys_ec_may[i + 1];
+				monthly_ec_charges[5] += ch_wo_sys_ec_jun[i + 1];
+				monthly_ec_charges[6] += ch_wo_sys_ec_jul[i + 1];
+				monthly_ec_charges[7] += ch_wo_sys_ec_aug[i + 1];
+				monthly_ec_charges[8] += ch_wo_sys_ec_sep[i + 1];
+				monthly_ec_charges[9] += ch_wo_sys_ec_oct[i + 1];
+				monthly_ec_charges[10] += ch_wo_sys_ec_nov[i + 1];
+				monthly_ec_charges[11] += ch_wo_sys_ec_dec[i + 1];
+				monthly_ec_flat_charges[0] += ch_wo_sys_ec_flat_jan[i + 1];
+				monthly_ec_flat_charges[1] += ch_wo_sys_ec_flat_feb[i + 1];
+				monthly_ec_flat_charges[2] += ch_wo_sys_ec_flat_mar[i + 1];
+				monthly_ec_flat_charges[3] += ch_wo_sys_ec_flat_apr[i + 1];
+				monthly_ec_flat_charges[4] += ch_wo_sys_ec_flat_may[i + 1];
+				monthly_ec_flat_charges[5] += ch_wo_sys_ec_flat_jun[i + 1];
+				monthly_ec_flat_charges[6] += ch_wo_sys_ec_flat_jul[i + 1];
+				monthly_ec_flat_charges[7] += ch_wo_sys_ec_flat_aug[i + 1];
+				monthly_ec_flat_charges[8] += ch_wo_sys_ec_flat_sep[i + 1];
+				monthly_ec_flat_charges[9] += ch_wo_sys_ec_flat_oct[i + 1];
+				monthly_ec_flat_charges[10] += ch_wo_sys_ec_flat_nov[i + 1];
+				monthly_ec_flat_charges[11] += ch_wo_sys_ec_flat_dec[i + 1];
+				monthly_bill[0] += utility_bill_wo_sys_jan[i + 1];
+				monthly_bill[1] += utility_bill_wo_sys_feb[i + 1];
+				monthly_bill[2] += utility_bill_wo_sys_mar[i + 1];
+				monthly_bill[3] += utility_bill_wo_sys_apr[i + 1];
+				monthly_bill[4] += utility_bill_wo_sys_may[i + 1];
+				monthly_bill[5] += utility_bill_wo_sys_jun[i + 1];
+				monthly_bill[6] += utility_bill_wo_sys_jul[i + 1];
+				monthly_bill[7] += utility_bill_wo_sys_aug[i + 1];
+				monthly_bill[8] += utility_bill_wo_sys_sep[i + 1];
+				monthly_bill[9] += utility_bill_wo_sys_oct[i + 1];
+				monthly_bill[10] += utility_bill_wo_sys_nov[i + 1];
+				monthly_bill[11] += utility_bill_wo_sys_dec[i + 1];
 
 			}
 
@@ -1354,13 +1581,39 @@ public:
 				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
 			}
 
-//			annual_net_revenue[i + 1] *= rate_scale[i];
-//			annual_revenue_w_sys[i + 1] *= rate_scale[i];
-//			annual_revenue_wo_sys[i + 1] *= rate_scale[i];
-
 			//Outputs from Paul, Nate and Sean 9/9/13
 			annual_elec_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
 			annual_elec_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
+
+
+
+
+			utility_bill_w_sys_jan[i + 1] = monthly_bill[0];
+			utility_bill_w_sys_feb[i + 1] = monthly_bill[1];
+			utility_bill_w_sys_mar[i + 1] = monthly_bill[2];
+			utility_bill_w_sys_apr[i + 1] = monthly_bill[3];
+			utility_bill_w_sys_may[i + 1] = monthly_bill[4];
+			utility_bill_w_sys_jun[i + 1] = monthly_bill[5];
+			utility_bill_w_sys_jul[i + 1] = monthly_bill[6];
+			utility_bill_w_sys_aug[i + 1] = monthly_bill[7];
+			utility_bill_w_sys_sep[i + 1] = monthly_bill[8];
+			utility_bill_w_sys_oct[i + 1] = monthly_bill[9];
+			utility_bill_w_sys_nov[i + 1] = monthly_bill[10];
+			utility_bill_w_sys_dec[i + 1] = monthly_bill[11];
+			utility_bill_w_sys[i + 1] = utility_bill_w_sys_jan[i + 1]
+				+ utility_bill_w_sys_feb[i + 1]
+				+ utility_bill_w_sys_mar[i + 1]
+				+ utility_bill_w_sys_apr[i + 1]
+				+ utility_bill_w_sys_may[i + 1]
+				+ utility_bill_w_sys_jun[i + 1]
+				+ utility_bill_w_sys_jul[i + 1]
+				+ utility_bill_w_sys_aug[i + 1]
+				+ utility_bill_w_sys_sep[i + 1]
+				+ utility_bill_w_sys_oct[i + 1]
+				+ utility_bill_w_sys_nov[i + 1]
+				+ utility_bill_w_sys_dec[i + 1];
+
+
 
 
 			ch_w_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0] ;
@@ -1438,6 +1691,35 @@ public:
 				+ ch_w_sys_ec_oct[i + 1]
 				+ ch_w_sys_ec_nov[i + 1]
 				+ ch_w_sys_ec_dec[i + 1];
+
+
+			ch_w_sys_ec_flat_jan[i + 1] = monthly_ec_flat_charges[0];
+			ch_w_sys_ec_flat_feb[i + 1] = monthly_ec_flat_charges[1];
+			ch_w_sys_ec_flat_mar[i + 1] = monthly_ec_flat_charges[2];
+			ch_w_sys_ec_flat_apr[i + 1] = monthly_ec_flat_charges[3];
+			ch_w_sys_ec_flat_may[i + 1] = monthly_ec_flat_charges[4];
+			ch_w_sys_ec_flat_jun[i + 1] = monthly_ec_flat_charges[5];
+			ch_w_sys_ec_flat_jul[i + 1] = monthly_ec_flat_charges[6];
+			ch_w_sys_ec_flat_aug[i + 1] = monthly_ec_flat_charges[7];
+			ch_w_sys_ec_flat_sep[i + 1] = monthly_ec_flat_charges[8];
+			ch_w_sys_ec_flat_oct[i + 1] = monthly_ec_flat_charges[9];
+			ch_w_sys_ec_flat_nov[i + 1] = monthly_ec_flat_charges[10];
+			ch_w_sys_ec_flat_dec[i + 1] = monthly_ec_flat_charges[11];
+			ch_w_sys_ec_flat[i + 1] = ch_w_sys_ec_flat_jan[i + 1]
+				+ ch_w_sys_ec_flat_feb[i + 1]
+				+ ch_w_sys_ec_flat_mar[i + 1]
+				+ ch_w_sys_ec_flat_apr[i + 1]
+				+ ch_w_sys_ec_flat_may[i + 1]
+				+ ch_w_sys_ec_flat_jun[i + 1]
+				+ ch_w_sys_ec_flat_jul[i + 1]
+				+ ch_w_sys_ec_flat_aug[i + 1]
+				+ ch_w_sys_ec_flat_sep[i + 1]
+				+ ch_w_sys_ec_flat_oct[i + 1]
+				+ ch_w_sys_ec_flat_nov[i + 1]
+				+ ch_w_sys_ec_flat_dec[i + 1];
+
+
+
 		}
 
 		assign("elec_cost_with_system_year1", annual_elec_cost_w_sys[1]);
@@ -1496,8 +1778,9 @@ public:
 		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
 		ssc_number_t monthly_fixed_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
-		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_rates[12],
-		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], ssc_number_t rate_esc) throw(general_error)
+		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_flat_charges[12],
+		ssc_number_t monthly_ec_rates[12],
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], ssc_number_t rate_esc, bool include_fixed=true, bool include_min=true) throw(general_error)
 	{
 		int i;
 
@@ -1506,7 +1789,7 @@ public:
 
 		for (i=0;i<12;i++)
 		{
-			monthly_fixed_charges[i] 
+			monthly_fixed_charges[i] = monthly_ec_flat_charges[i]
 				= monthly_dc_fixed[i] = monthly_dc_tou[i] 
 				= monthly_ec_charges[i] = monthly_ec_rates[i] 
 				= monthly_cumulative_excess_energy[i] 
@@ -1786,7 +2069,7 @@ public:
 
 
 
-
+		c = 0;
 		// process one month at a time
 		for (m = 0; m < 12; m++)
 		{
@@ -1800,14 +2083,24 @@ public:
 					{
 						if (enable_nm)
 						{
-							payment[c] += -monthly_energy_net[m] * buy;
+							if (monthly_energy_net[m] < 0)
+							{
+								payment[c] += -monthly_energy_net[m] * buy;
+								monthly_ec_flat_charges[m] += payment[c];
+							}
 						}
 						else // no net metering - so no rollover.
 						{
 							if (monthly_energy_net[m] < 0) // must buy from grid
+							{
 								payment[c] += -monthly_energy_net[m] * buy;
+								monthly_ec_flat_charges[m] += payment[c];
+							}
 							else
+							{
 								income[c] += monthly_energy_net[m] * sell;
+								monthly_ec_flat_charges[m] -= income[c];
+							}
 						}
 
 // Price ?
@@ -1988,15 +2281,6 @@ public:
 
 
 
-
-
-		// Assumption that fixed and minimum charges independent of rollovers kWh or $
-		// process monthly fixed charges
-		process_monthly_charge(payment, monthly_fixed_charges, rate_esc);
-		// process min charges
-		process_monthly_min(payment, monthly_fixed_charges, rate_esc);
-		process_annual_min(payment, monthly_fixed_charges, rate_esc);
-
 		if (enable_nm)
 		{
 			// monthly rollover with year end sell at reduced rate
@@ -2007,9 +2291,38 @@ public:
 
 		}
 
+		// Assumption that fixed and minimum charges independent of rollovers kWh or $
+		// process monthly fixed charges
+		if (include_fixed)
+			process_monthly_charge(payment, monthly_fixed_charges, rate_esc);
+		// process min charges
+		if (include_min)
+		{
+			process_monthly_min(payment, monthly_fixed_charges, rate_esc);
+			process_annual_min(payment, monthly_fixed_charges, rate_esc);
+		}
+
 		// compute revenue ( = income - payment ) and monthly bill with fixed charges
-		for (i=0;i<8760;i++)
-			revenue[i] = income[i] - payment[i];
+		c = 0;
+		// process one month at a time
+		for (m = 0; m < 12; m++)
+		{
+			for (d = 0; d < util::nday[m]; d++)
+			{
+				for (h = 0; h < 24; h++)
+				{
+					if (d == util::nday[m] - 1 && h == 23)
+					{
+						revenue[c] = income[c] - payment[c];
+						monthly_bill[m] = -revenue[c]; // payment
+					}
+					c++;
+				}
+			}
+		}
+
+
+
 
 	}
 
