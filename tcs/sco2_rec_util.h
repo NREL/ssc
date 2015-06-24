@@ -12,6 +12,16 @@ using namespace std;
 
 namespace N_sco2_rec
 {
+    
+    class sco2_exception : public std::runtime_error
+    {
+    public:
+        sco2_exception(const std::string& message) 
+		    : std::runtime_error(message.c_str()){};
+	    sco2_exception(const char *msg)
+		    : std::runtime_error(msg){};
+    };
+
 	class C_rec_des_props
 	{
 	public:
@@ -257,28 +267,37 @@ namespace N_sco2_rec
 
             double get_max_damage();
 
+            vector<double> get_max_damage_matrix();
+
+            vector<double> *get_fluid_temp_matrix();
+
+            vector<double> *get_surface_temp_matrix();
+
+            vector<double> *get_fluid_pres_matrix();
+
             util::matrix_t<double> *get_damage_matrix();
 
             void get_damage_matrix(vector<vector<double> > &damage);
 
-			bool calc_th_1Dmaxflux_Tout(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+			bool calc_th_flux_Tout(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 				                        double d_out_m, double T_fluid_in_C, double T_fluid_out_C, 
                                         double P_fluid_in_MPa);
 
-			bool calc_th_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+			bool calc_th_flux_mdot(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 				                        double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, 
                                         double m_dot_tube_kgs);
 
-            bool calc_perf_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+            bool calc_perf_flux_mdot(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 				                          double d_out_m, double th_m, double T_fluid_in_C, double P_fluid_in_MPa, 
                                           double m_dot_tube_kgs);
 
 		private:
 			CO2_state co2_props;
 
-			vector<double> m_max_flux_array;		//[W/m2] 1D axial array of max flux on tube
+			vector<vector<double> > m_flux_array;		//[W/m2] 2D axial array of max flux on tube. axial=m_flux_array.size(), circumferential=m_flux_array.element.size()
 			vector<double> m_q_abs_array;			//[W] 1D axial array of absorbed flux on tube
-
+            vector<double> m_q_max_array;           //[W/m2] 1D axial array of maximum flux on tube
+            
 			double m_d_out;				//[m]
 			double m_T_fluid_in;		//[C]
 			double m_T_fluid_out;		//[C]
@@ -304,7 +323,7 @@ namespace N_sco2_rec
             double m_max_deltaP_frac;   //[-] Largest allowable fractional pressure drop
             int m_iter_d_in_max;        //maximum number of tube thickness iterations allowed
 
-			vector<double> m_Temp, m_Pres, m_Enth, m_h_conv_ave;
+			vector<double> m_Temp, m_Pres, m_Enth, m_h_conv_ave, m_Tsurf;
 			
 			// Results
 				// vectors (add to 'all' functions)
@@ -318,7 +337,7 @@ namespace N_sco2_rec
 
 			util::matrix_t<double> m_element_results_temp;
 
-			bool calc_th_1Dmaxflux(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+			bool calc_th_flux(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 				double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, double m_dot_tube, bool know_Tout);
 
 			bool calc_min_thick_general();
