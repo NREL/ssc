@@ -937,8 +937,8 @@ public:
 		SCA_drives_elec = value(P_SCA_DRIVES_ELEC);		//Tracking power, in Watts per SCA drive [W/SCA]
 		fthrok = (int)value(P_FTHROK);		//Flag to allow partial defocusing of the collectors [none]
 		fthrctrl = (int)value(P_FTHRCTRL);		//Defocusing strategy [none]
-		ColTilt = value(P_COLTILT);		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
-		ColAz = value(P_COLAZ);		//Collector azimuth angle [deg]
+		ColTilt = value(P_COLTILT)*d2r;		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
+		ColAz = value(P_COLAZ)*d2r;		//Collector azimuth angle [deg]
 		
 		accept_mode = (int)value(P_ACCEPT_MODE);				// Acceptance testing mode? (1=yes, 0=no) [none]
 		accept_init = value(P_ACCEPT_INIT) == 1;				// In acceptance testing mode - require steady-state startup [none]

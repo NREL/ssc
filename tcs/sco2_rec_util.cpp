@@ -417,6 +417,26 @@ double N_sco2_rec::C_calc_tube_min_th::get_max_damage(){
     return m_max_damage;
 }
 
+vector<double> N_sco2_rec::C_calc_tube_min_th::get_max_damage_matrix()
+{
+    /* 
+    Return a copy of the array containing the max damage at each axial position
+    */
+    vector<double> d;
+    int nr = (int)m_total_damage.nrows();
+    int nc = (int)m_total_damage.ncols();
+    d.reserve(nr);
+    for(int i=0; i<nr; i++)
+    {
+        double dmax =0.;
+        for(int j=0; j<nc; j++)
+            dmax = max(dmax, m_total_damage.at(i,j) );
+        d.push_back(dmax);
+    }
+
+    return d;
+}
+
 util::matrix_t<double> *N_sco2_rec::C_calc_tube_min_th::get_damage_matrix()
 {
     return &m_total_damage;
@@ -432,22 +452,38 @@ void N_sco2_rec::C_calc_tube_min_th::get_damage_matrix(vector<vector<double> > &
         damage.at(i).at(j) = m_total_damage.at(i,j);
 }
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_Tout(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+vector<double> *N_sco2_rec::C_calc_tube_min_th::get_fluid_temp_matrix()
+{
+    return &m_Temp;
+}
+
+vector<double> *N_sco2_rec::C_calc_tube_min_th::get_surface_temp_matrix()
+{
+    return &m_Tsurf;
+}
+
+vector<double> *N_sco2_rec::C_calc_tube_min_th::get_fluid_pres_matrix()
+{
+    return &m_Pres;
+}
+
+
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_flux_Tout(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 	double d_out_m,
 	double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa)
 {
 	/* Calculate tube thickness when a 1D flux profile and the fluid outlet temperature are known */
-	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, T_fluid_out_C, P_fluid_in_MPa, -999.0, true);
+	return calc_th_flux(flux_Wm2, L_tube_m, d_out_m, T_fluid_in_C, T_fluid_out_C, P_fluid_in_MPa, -999.0, true);
 }
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_flux_mdot(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 	double d_out_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs)
 {
 	/* Calculate tube thickness when a 1D flux profile and the mass flow rate are known */
-	return calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
+	return calc_th_flux(flux_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
 }
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_perf_1Dmaxflux_mdot(const vector<double> &max_flux_axial_1D_Wm2, double L_tube_m,
+bool N_sco2_rec::C_calc_tube_min_th::calc_perf_flux_mdot(const vector<vector<double> > &flux_Wm2, double L_tube_m,
 		double d_out_m, double th_m, double T_fluid_in_C, double P_fluid_in_MPa, double m_dot_tube_kgs)
 {
     int last_iter_max = m_iter_d_in_max;    //save the current max iteration setting
@@ -456,7 +492,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_perf_1Dmaxflux_mdot(const vector<doubl
     m_iter_d_in_max = 1;    //Don't allow iteration on thickness
     m_th_min_guess = th_m;  //use the specified thickness
     
-    bool simok = calc_th_1Dmaxflux(max_flux_axial_1D_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
+    bool simok = calc_th_flux(flux_Wm2, L_tube_m, d_out_m, T_fluid_in_C, -999.9, P_fluid_in_MPa, m_dot_tube_kgs, false);
     
     //return member values to original
     m_iter_d_in_max = last_iter_max;
@@ -465,7 +501,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_perf_1Dmaxflux_mdot(const vector<doubl
     return simok;
 }
 
-bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> &max_flux_axial_1D_Wm2, 
+bool N_sco2_rec::C_calc_tube_min_th::calc_th_flux(const vector<vector<double> > &flux_Wm2, 
     double L_tube_m, double d_out_m, double T_fluid_in_C, double T_fluid_out_C, double P_fluid_in_MPa, 
     double m_dot_tube, bool know_Tout)
 {
@@ -480,19 +516,31 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_th_1Dmaxflux(const vector<double> &max
 
 	// Could check T_out > T_in and that pressure is in MPa...
 
-	m_max_flux_array = max_flux_axial_1D_Wm2;	//[W/m2]
-	m_n_tube_elements = m_max_flux_array.size();
+	m_flux_array = flux_Wm2;	//[W/m2]
+	m_n_tube_elements = (int)m_flux_array.size();
 
-	// Assume absorbed irradiance around circumference is max_flux * cos(theta), for both sides of tube:
-	// = (2 sides)*d_out
-	// Calculate total absorbed flux
+    //Calculate average and max flux on each axial tube element
 	m_q_abs_array.resize(m_n_tube_elements);
+    m_q_max_array.resize(m_n_tube_elements);
+
 	m_L_node = m_L_tube / (double)m_n_tube_elements;
+
 	for( int i = 0; i < m_n_tube_elements; i++ )
-	{
-		m_q_abs_array[i] = 2.0*m_max_flux_array[i] * m_d_out * m_L_node;	//[W]
-	}
-		
+    {
+        double qmax=0.;
+        double qave=0.;
+        int ncirc = (int)m_flux_array.at(i).size();
+        for(int j=0; j<ncirc; j++)
+        {
+            double thisflux = m_flux_array.at(i).at(j);
+            qmax = qmax > thisflux ? qmax : thisflux;
+            qave += thisflux;
+        }
+        qave /= (double)ncirc;
+        m_q_abs_array.at(i) = qave * 2. * m_d_out * m_L_node;       //W
+        m_q_max_array.at(i) = qmax;     //W/m2      maximum flux on the current axial node
+    }
+
 	return calc_min_thick_general();
 }
 
@@ -505,6 +553,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 	m_Temp.resize(m_n_temps);
 	m_Pres.resize(m_n_temps);
 	m_Enth.resize(m_n_temps);
+    m_Tsurf.resize(m_n_temps);
 
 	// Size convective and length vectors: elemental
 	m_h_conv_ave.resize(m_n_tube_elements);	
@@ -519,6 +568,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 	// Set first value in nodal vectors
 	m_Temp[0] = m_T_fluid_in;
+    m_Tsurf[0] = m_T_fluid_in;  //just set as fluid temp without other info.
 	m_Pres[0] = m_P_fluid_in*1000.0;		//[kPa]
 	CO2_TP(m_Temp[0] + 273.15, m_Pres[0], &co2_props);
 	m_Enth[0] = co2_props.enth*1000.0;				//[J/kg], convert from [kJ/kg]
@@ -608,7 +658,10 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			if(m_know_T_out)	// Know outlet temperature - calculate mass flow rate
 			{
 				// Get co2 props at tube outlet
-				CO2_TP(m_T_fluid_out + 273.15, P_tube_out_guess, &co2_props);
+				int ret = CO2_TP(m_T_fluid_out + 273.15, P_tube_out_guess, &co2_props);
+                if(ret != 0)
+                    throw sco2_exception( CO2_error_message(ret) );
+
 				double h_tube_out = co2_props.enth*1000.0;
 
 				// Energy balance to calculate mass flow rate
@@ -617,7 +670,9 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			else	// Know mass flow rate - calculate outlet temperature
 			{
 				double h_tube_out = q_abs_total/m_m_dot_tube + m_Enth[0];
-				CO2_PH(P_tube_out_guess, h_tube_out/1000.0, &co2_props);
+                int ret = CO2_PH(P_tube_out_guess, h_tube_out/1000.0, &co2_props);
+                if(ret != 0 )
+                    throw sco2_exception( CO2_error_message(ret) );
 
 				m_T_fluid_out = co2_props.temp - 273.15;
 			}
@@ -683,7 +738,12 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 					// Know enthalpy and guessed pressure, so get props
 					// ***
 					// Check and catch errors in property calls
-					CO2_PH(P_node_out_guess, m_Enth[i] / 1000.0, &co2_props);
+                    {
+                        int ret = CO2_PH(P_node_out_guess, m_Enth[i] / 1000.0, &co2_props);
+                        if(ret != 0)
+                            throw sco2_exception( CO2_error_message(ret) );
+                    }
+
 					m_Temp[i] = co2_props.temp - 273.15;		//[C], convert from K
 
 					// Calculate friction factor, Reynolds number, nusselt number and h_conv at average nodal P and h
@@ -691,7 +751,9 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 					double h_ave = 0.5*(m_Enth[i] + m_Enth[i - 1]);
 
 					// Properties at midpoint of element
-					CO2_PH(P_ave, h_ave / 1000.0, &co2_props);
+					int ret = CO2_PH(P_ave, h_ave / 1000.0, &co2_props);
+                    if(ret != 0)
+                        throw sco2_exception( CO2_error_message(ret) );
 
 					double visc_dyn = CO2_visc(co2_props.dens, co2_props.temp)*1.E-6;
 					double Re = m_m_dot_tube*m_d_in / (A_cs*visc_dyn);
@@ -765,7 +827,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			tube_inputs.m_T_fluid = m_Temp[i];
 			tube_inputs.m_d_out = m_d_out;				// Constant
 			tube_inputs.m_d_in = m_d_in;					// Constant
-			tube_inputs.m_flux = m_max_flux_array[i-1];
+			tube_inputs.m_flux = m_q_max_array[i-1];
 			tube_inputs.m_h_conv = m_h_conv_ave[i-1];
 
 			tube_slice.calc_ID_OD_perf_and_lifetime(tube_inputs, tube_outputs);
@@ -775,6 +837,9 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			total_damage = max(total_damage, max(inner_total_damage, outer_total_damage));
 
 			m_total_damage(i-1,m_n_results_cols-1) =  max(inner_total_damage, outer_total_damage);
+
+            //mjw
+            m_Tsurf.at(i) = tube_outputs.m_T_surf_out;
 		}
 
         m_max_damage = total_damage;  //keep track of the max damage value
@@ -1025,6 +1090,10 @@ void N_sco2_rec::C_tube_slice::radial_ss_E_bal()
 		double k_tube = p_tube_mat->cond(T_surf_avg_guess);	//[W/m-K]
 		double T_surf_out_calc = q_max*log(s_ID_OD_perf_and_lifetime_inputs.m_d_out / s_ID_OD_perf_and_lifetime_inputs.m_d_in) / (2.0*CSP::pi*k_tube) + T_surf_in;		//[C]
 		double T_surf_out_err = (T_surf_out_guess - T_surf_out_calc) / T_surf_out_calc;
+
+        if( T_surf_out_err != T_surf_out_err ) 
+            throw sco2_exception("Convergence failed in the sCO2 receiver tube model: radial_ss_E_bal().");
+
 		if( abs(T_surf_out_err) < 1.E-10 )
 			break;
 		else
