@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	ssc_data_set_number( data, "array_type", 0 );      // fixed tilt system
 	ssc_data_set_number( data, "tilt", 20 );           // 20 degree tilt
 	ssc_data_set_number( data, "azimuth", 180 );       // south facing
-	ssc_data_set_number( data, "adjust:factor", 0.0f ); // energy adjustment, 0 % losses
+	ssc_data_set_number( data, "adjust:constant", 0.0f ); // energy adjustment, 0 % losses
 	
 	ssc_module_t module = ssc_module_create( "pvwattsv5" );
 	if ( NULL == module )
