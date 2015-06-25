@@ -64,17 +64,10 @@ copy apiwrappers\java\SSC\SSCAPIJNI.java sdk-release\languages\java\SSC
 copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
-copy "examples\USA AZ Phoenix (TMY2).csv" sdk-release\examples
 copy examples\example1_pvwatts.c sdk-release\examples
 copy examples\pvwatts1ts_ex.c sdk-release\examples
 copy examples\pvwattsv5run.c sdk-release\examples
 copy examples\ver.c sdk-release\examples
-copy examples\pvwatts1ts_test.lk sdk-release\examples
-copy examples\ssc-belpe.lk sdk-release\examples
-copy examples\ssc-cashloan.lk sdk-release\examples
-copy examples\ssc-pvsamv1.lk sdk-release\examples
-copy examples\ssc-utilityrate3.lk sdk-release\examples
-copy examples\ssc-pvres.lk sdk-release\examples
 
 
 copy ..\lk\docs\lk_guide.pdf sdk-release\
