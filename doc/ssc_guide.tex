@@ -198,7 +198,7 @@ The \texttt{pvwattsv1} input variables are numbers, except for the weather file 
 	ssc_data_set_number( data, "array_type", 0 );      // fixed tilt system
 	ssc_data_set_number( data, "tilt", 20 );           // 20 degree tilt
 	ssc_data_set_number( data, "azimuth", 180 );       // south facing
-	ssc_data_set_number( data, "adjust:factor", 0.0f ); // energy adjustment, 0 \% losses
+	ssc_data_set_number( data, "adjust:constant", 0.0f ); // energy adjustment, 0 \% losses
 \end{verbatimtab}
 
 \subsection{Run the module}
@@ -1606,7 +1606,7 @@ The only differences are that \texttt{sscphp\_module\_var\_info(...)} and \textt
 	sscphp_data_set_number( $dat, "tilt", $tilt );
 	sscphp_data_set_number( $dat, "azimuth", $azimuth );
 	sscphp_data_set_number( $dat, "gcr", $gcr );
-	sscphp_data_set_number( $dat, "adjust:factor", 0 );
+	sscphp_data_set_number( $dat, "adjust:constant", 0 );
 	
 	$mod = sscphp_module_create( "pvwattsv5" );
 	if ( sscphp_module_exec( $mod, $dat ) )
