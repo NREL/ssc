@@ -514,7 +514,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "Monthly POA beam radiation after shading and soiling",   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array energy (DC)",                                   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_gen",                                 "PV generation (AC)",                                     "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                                 "PV generation (AC)",                                     "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Global horizontal irradiance",                           "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
 
@@ -2012,7 +2012,7 @@ public:
 
 
 		accumulate_monthly_for_year("dc_net", "monthly_dc", ts_hour, step_per_hour);
-		accumulate_monthly_for_year("gen", "monthly_gen", ts_hour, step_per_hour);
+		accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
 		
 		// scale by ts_hour to convert power -> energy
 		accumulate_annual_for_year("gh", "annual_gh", ts_hour, step_per_hour);
@@ -2136,7 +2136,7 @@ public:
 		sys_output -= annual_nameplate_loss;
 		assign("annual_dc_after_nameplate_loss", var_data((ssc_number_t)sys_output));
 
-//#define WITH_CHECKS
+#define WITH_CHECKS
 
 #ifdef WITH_CHECKS
 		// check that sys_output=dc_net
