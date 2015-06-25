@@ -2,6 +2,8 @@
 #define __SCO2_REC_UTIL_
 
 #include <vector>
+#include <stdexcept>
+
 //#include "co2props.h"
 //#include "co2props_nn.h"
 #include "CO2_properties.h"
