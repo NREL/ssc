@@ -2141,7 +2141,7 @@ public:
 #ifdef WITH_CHECKS
 		// check that sys_output=dc_net
 		if ( fabs(annual_dc_net - sys_output) > 0.001 )
-			log( util::format("Internal discrepancy in calculated output: %lg != %lg at DC1.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
+			log(util::format("Internal discrepancy in calculated output dc_gross: %lg != %lg at DC1.  Please report to SAM support.", annual_dc_net, sys_output), SSC_WARNING);
 #endif
 
 		// dc to ac losses
@@ -2152,11 +2152,13 @@ public:
 		sys_output -= annual_inv_pntloss;
 		assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
 
+		/* old gross before inverter efficiency
 #ifdef WITH_CHECKS
 		// check that ac_gross = sys_output at this point
 		if ( fabs(annual_ac_gross - sys_output) > 0.001 )
 			log( util::format("Internal discrepancy in calculated output: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
 #endif
+			*/
 		double acwiring = as_double("acwiring_loss");
 		double transformer = as_double("transformer_loss");
 		double total_percent = acwiring + transformer;
@@ -2179,12 +2181,13 @@ public:
 		sys_output -= transformer_loss;
 		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)sys_output));
 
+		/*
 #ifdef WITH_CHECKS
-		// check that ac_gross = sys_output at this point
-		if ( fabs(annual_ac_gross - sys_output) > 0.001 )
-			log( util::format("Internal discrepancy in calculated output: %lg != %lg at AC2.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
+		// check that ac_net = sys_output at this point
+		if ( fabs(annual_ac_net - sys_output) > 0.001 )
+			log( util::format("Internal discrepancy in calculated output: %lg != %lg at AC2.  Please report to SAM support.", annual_ac_net, sys_output ), SSC_WARNING );
 #endif
-
+			*/
 		double percent = 0;
 		if (annual_poa_nom > 0) percent = 100 * (annual_poa_nom - annual_poa_shaded) / annual_poa_nom;
 		assign("annual_poa_shading_loss_percent", var_data((ssc_number_t)percent));
@@ -2233,18 +2236,34 @@ public:
 		if (sys_output > 0) percent = 100 * (sys_output - annual_ac_gross) / sys_output;
 		assign("annual_ac_inv_eff_loss_percent", var_data((ssc_number_t)percent));
 		// annual_ac_gross
+		sys_output *= (1.0 - percent / 100.0);
+#ifdef WITH_CHECKS
+		// check that ac_gross = sys_output at this point
+		if (fabs(annual_ac_gross - sys_output) > 0.001)
+			log(util::format("Internal discrepancy in calculated output ac_gross: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output), SSC_WARNING);
+#endif
+
+		sys_output = annual_ac_gross;
 		percent = 0;
-		if (annual_ac_gross > 0) percent = 100 * acwiring_loss / annual_ac_gross;
+		if (annual_ac_gross > 0) percent = 100.0 * acwiring_loss / annual_ac_gross;
 		assign("annual_ac_wiring_loss_percent", var_data((ssc_number_t)percent));
+		sys_output *= (1.0 - percent / 100.0);
 		percent = 0;
-		if (annual_ac_gross > 0) percent = 100 * transformer_loss / annual_ac_gross;
+		if (annual_ac_gross > 0) percent = 100.0 * transformer_loss / annual_ac_gross;
 		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
+		sys_output *= (1.0 - percent / 100.0);
 		// annual_ac_pre_avail
 		percent = 0;
-		if (annual_ac_pre_avail > 0) percent = 100 * (annual_ac_pre_avail - annual_energy) / annual_ac_pre_avail;
+		if (annual_ac_pre_avail > 0) percent = 100.0 * (annual_ac_pre_avail - annual_energy) / annual_ac_pre_avail;
 		assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
+		sys_output *= (1.0 - percent / 100.0);
 		// annual_ac_net = system_output
 
+#ifdef WITH_CHECKS
+		// check that ac_net = sys_output at this point
+		if (fabs(annual_ac_net - sys_output) > 0.001)
+			log(util::format("Internal discrepancy in calculated output ac_net: %lg != %lg at AC2.  Please report to SAM support.", annual_ac_net, sys_output), SSC_WARNING);
+#endif
 
 
 		// end of losses
