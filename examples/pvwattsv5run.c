@@ -31,7 +31,7 @@ varinfo variables[] = {
 	{ "tilt",                "tilt",    "Tilt",                       "degrees",                                                                                     20.0f,  "",    0.0f,     90.0f     },
 	{ "azimuth",             "azi",     "Azimuth",                    "degrees",                                                                                     180.0f, "",    0.0f,     360.0f    },
 	{ "gcr",                 "gcr",     "Ground coverage ratio",      "ratio",                                                                                       0.4f,   "",    0.0f,     3.0f      },
-	{ "adjust:factor",       "adj",     "Output adjustment",          "fraction",                                                                                    1.0f,   "",    0.0f,     2.0f      },
+	{ "adjust:constant",     "adj",     "Availability losses",        "%",                                                                                           0.0f,   "",    -5.0f,    100.0f    },
 	{ "print",               "prn",     "Print annual results",       "0/1/2",                                                                                       1.0f,   "",    0.0f,     2.0f      },
 	{ "output",              "out",     "Output file name",           "path",                                                                                        -99,    "",    0,        0         },
 	{ 0, 0, 0, 0, 0, "", 0, 0 } };
