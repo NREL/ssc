@@ -279,7 +279,7 @@ if ( file_exists($wf) )
 	sscphp_data_set_number( $dat, "tilt", $tilt );
 	sscphp_data_set_number( $dat, "azimuth", $azimuth );
 	sscphp_data_set_number( $dat, "gcr", $gcr );
-	sscphp_data_set_number( $dat, "adjust:factor", 0 );
+	sscphp_data_set_number( $dat, "adjust:constant", 0 );
 	
 	$mod = sscphp_module_create( "pvwattsv5" );
 	if ( sscphp_module_exec( $mod, $dat ) )
