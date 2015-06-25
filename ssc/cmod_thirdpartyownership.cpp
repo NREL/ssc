@@ -37,7 +37,7 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net",      "Energy",                  "kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Value of electricity savings",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+//	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_value",      "Value of electricity savings",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_agreement_cost",      "Agreement cost",                  "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
@@ -152,13 +152,12 @@ public:
 			}
 
 		}
+		// output from utility rate already nyears+1 - no offset
 		arrp = as_array("annual_energy_value", &count);
-		i=0;
-		while ( i < nyears && i < (int)count )
-		{
-			cf.at(CF_energy_value, i+1) = (double) arrp[i];
-			i++;
-		}
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("energy value input wron length (%d) should be (%d)",count, nyears+1));
+		for (i = 0; i < count; i++)
+			cf.at(CF_energy_value, i) = (double) arrp[i];
 		
 	
 		double inflation_rate = as_double("inflation_rate")*0.01;
@@ -247,7 +246,7 @@ public:
 		
 		save_cf(CF_agreement_cost, nyears, "cf_agreement_cost");
 		save_cf(CF_energy_net, nyears, "cf_energy_net");
-		save_cf(CF_energy_value, nyears, "cf_energy_value");
+//		save_cf(CF_energy_value, nyears, "cf_energy_value");
 
 
 		save_cf( CF_after_tax_net_equity_cost_flow, nyears, "cf_after_tax_net_equity_cost_flow" );
