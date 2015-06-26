@@ -2136,7 +2136,7 @@ public:
 		sys_output -= annual_nameplate_loss;
 		assign("annual_dc_after_nameplate_loss", var_data((ssc_number_t)sys_output));
 
-#define WITH_CHECKS
+//#define WITH_CHECKS
 
 #ifdef WITH_CHECKS
 		// check that sys_output=dc_net
@@ -2152,13 +2152,6 @@ public:
 		sys_output -= annual_inv_pntloss;
 		assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
 
-		/* old gross before inverter efficiency
-#ifdef WITH_CHECKS
-		// check that ac_gross = sys_output at this point
-		if ( fabs(annual_ac_gross - sys_output) > 0.001 )
-			log( util::format("Internal discrepancy in calculated output: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output ), SSC_WARNING );
-#endif
-			*/
 		double acwiring = as_double("acwiring_loss");
 		double transformer = as_double("transformer_loss");
 		double total_percent = acwiring + transformer;
@@ -2230,6 +2223,7 @@ public:
 		assign("annual_ac_inv_eff_loss_percent", var_data((ssc_number_t)percent));
 		// annual_ac_gross
 		sys_output *= (1.0 - percent / 100.0);
+
 #ifdef WITH_CHECKS
 		// check that ac_gross = sys_output at this point
 		if (fabs(annual_ac_gross - sys_output)/ annual_ac_gross > 0.00001)
