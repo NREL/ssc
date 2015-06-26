@@ -114,6 +114,7 @@ static int cmp_ext(const char *file, const char *ext)
 std::string weatherfile::normalize_city(const std::string &in)
 {
 	std::string city = util::lower_case(in);
+	util::replace(city, "?", " ");
 	util::replace(city, "_", " ");
 	util::replace(city, "\"", "");
 	util::replace(city, "/", " ");

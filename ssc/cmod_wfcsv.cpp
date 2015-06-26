@@ -75,6 +75,18 @@ public:
 			util::replace( output, "$country ", country );
 			util::replace( output, "$loc", loc );
 			util::replace( output, "$type", type );
+			
+			// remove any fishy characters from output file name that
+			// might have been read in from the header data in the csv file
+			static const char illegal[] = { '?', '*', '#', '$', '%', '{' , '}', '<', '>', '!', ';', '@', '|', '`', '+', 0 };
+			int i=0;
+			char buf[2];
+			buf[1] = 0;
+			while( illegal[i] != 0 )
+			{
+				buf[0] = illegal[i++];
+				util::replace( output, buf, "" );
+			}
 
 			if ( util::ext_only( output ) != "csv" )
 				output += ".csv";
