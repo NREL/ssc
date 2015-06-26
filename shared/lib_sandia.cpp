@@ -330,15 +330,21 @@ bool sandia_inverter_t::acpower(
 	double B = Pso * ( 1.0 + C2*( Vdc - Vdco ));
 	double C = C0 * ( 1.0 + C3*( Vdc - Vdco ));
 
+	// crummy kludge to make sure B parameter
+	// has a resonable value (not negative!!)
+	// even for inverters with weird input ranges
+	// and power levels, i.e. LeadSolar LS700
+	// assumption is that Pso can't be less than
+	// half or more than double its nominal value
+	if ( B < 0.5 * Pso ) B = 0.5 * Pso;
+	if ( B > 2.0 * Pso ) B = 2.0 * Pso;
+
 	*Pac = ((Paco / (A-B)) - C*(A-B))*(Pdc-B) + C0*(Pdc-B)*(Pdc-B);
 	*Ppar = 0.0;
 
 
-	// operating power loss Wdc
+	// Power consumption during operation: initialize to zero.
 	*Psoloss = 0.0;
-	B = 0;
-	double PacNoPso = ((Paco / (A-B)) - C*(A-B))*(Pdc-B) + C0*(Pdc-B)*(Pdc-B);
-	*Psoloss = PacNoPso - *Pac;
 
 	// night time power loss Wac (note that if PacNoPso > Pso and Pac < Pso then the night time loss could be considered an operating power loss)
 	*Pntloss = 0.0;
@@ -347,6 +353,14 @@ bool sandia_inverter_t::acpower(
 		*Pac = -Pntare;
 		*Ppar = Pntare;
 		*Pntloss = Pntare;
+	}
+	else
+	{	
+		// Power consumption during operation only occurs
+		// when inverter is operating during the day 
+		// calculate by setting B to zero (ie. Pso = 0 );
+		double PacNoPso = ((Paco / A) - C*A)*Pdc + C0*Pdc*Pdc;
+		*Psoloss = PacNoPso - *Pac;
 	}
 	
 	// clipping loss Wac (note that the Pso=0 may have no clipping)
