@@ -16,8 +16,8 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
 
 		// configuration inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
+//  { SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
 
@@ -290,23 +290,18 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 
 	dc_dc = ac_dc = dc_ac = 100.;
-	ac_or_dc = cm.as_integer("batt_ac_or_dc");
-	if (ac_or_dc == 0)
-		dc_dc = cm.as_double("batt_dc_dc_efficiency");
-	else
-	{
-		ac_dc = cm.as_double("batt_ac_dc_efficiency");
-		dc_ac = cm.as_double("batt_dc_ac_efficiency");
-	}
+	// ac_or_dc = cm.as_integer("batt_ac_or_dc");
+	ac_or_dc = 1; // hard code to ac for now
+	ac_dc = cm.as_double("batt_ac_dc_efficiency");
+	dc_ac = cm.as_double("batt_dc_ac_efficiency");
 	
-
 	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"), 
 		cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
 	//	cm.as_double("batt_power_max_charge"), cm.as_double("batt_power_max_discharge"),
 		cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
 		dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
-}
+} 
 
 battstor::~battstor()
 {

@@ -348,7 +348,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "batt_replacement_schedule",                  "Battery bank replacements per year (user specified)",     "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                         "kW", "", "Battery", "?", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV with battery configuration",                                 "",      "",                     "Battery",       "?=0",                                    "",                              "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV with battery configuration",                                 "",      "",                     "Battery",       "?=0",                                    "",                              "" },
 
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
@@ -1464,8 +1464,9 @@ public:
 		// setup battery model
 		bool en_batt = as_boolean("en_batt");
 		int batt_replacement_option = as_integer("batt_replacement_option");
-		int ac_or_dc = as_integer("batt_ac_or_dc");
-		
+//		int ac_or_dc = as_integer("batt_ac_or_dc");
+		int ac_or_dc = 1; // hard code to ac for now
+
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
 
 		// user replacement schedule
