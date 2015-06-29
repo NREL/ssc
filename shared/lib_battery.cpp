@@ -964,6 +964,10 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 	{
 		_charging = false;
 		double e_max_discharge = battery_voltage *(charge_total - charge_max*_SOC_min*0.01)*watt_to_kilowatt;
+		
+		if (e_max_discharge < 0)
+			e_max_discharge = 0;
+
 		if (_e_tofrom_batt > e_max_discharge)
 			_e_tofrom_batt = e_max_discharge;
 
@@ -980,7 +984,10 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 	else if (_e_tofrom_batt < 0)
 	{
 		_charging = true;
-		double e_max_charge = -battery_voltage*(charge_total - charge_max*_SOC_max*0.01)*watt_to_kilowatt;
+		double e_max_charge = battery_voltage*(charge_total - charge_max*_SOC_max*0.01)*watt_to_kilowatt;
+		if (e_max_charge > 0)
+			e_max_charge = 0;
+
 		if (_e_tofrom_batt < e_max_charge)
 			_e_tofrom_batt = e_max_charge;
 

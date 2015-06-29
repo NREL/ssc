@@ -1885,6 +1885,10 @@ public:
 					{
 						batt.advance(*this, idx, hour, jj, dcpwr_net*0.001*ts_hour, cur_load*ts_hour);
 						dcpwr_net = 1000*batt.outGenPower[idx];
+
+						// inverter can't handle negative dcpwr
+						if (dcpwr_net < 0)
+							dcpwr_net = 0;
 					}
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
