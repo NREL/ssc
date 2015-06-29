@@ -36,7 +36,7 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
 	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Retail and wholesale rates", "", "?=1", "BOOLEAN", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Retail and wholesale rates", "", "?=1", "BOOLEAN", "" },
 	{ SSC_INPUT, SSC_NUMBER, "ur_excess_monthly_energy_or_dollars", "Net metering handling of monthly excess", "0=Rollover energy,1=Rollover dollars", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
@@ -695,8 +695,8 @@ static var_info vtab_utility_rate3[] = {
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_generation", "Electricity net metering credit", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_dollars", "Dollar net metering credit", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_salespurchases", "Electricity sales/purchases with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_salespurchases_wo_sys", "Electricity sales/purchases without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_salespurchases", "Electricity sales/purchases with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_salespurchases_wo_sys", "Electricity sales/purchases without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_w_sys", "Utility bill with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_wo_sys", "Utility bill without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
@@ -1576,7 +1576,7 @@ public:
 					}
 				}
 				assign( "year1_hourly_salespurchases_without_system", var_data( &salespurchases[0], 8760 ) );
-				assign("year1_monthly_salespurchases_wo_sys", var_data(&monthly_salespurchases[0], 12));
+//				assign("year1_monthly_salespurchases_wo_sys", var_data(&monthly_salespurchases[0], 12));
 				assign("year1_monthly_utility_bill_wo_sys", var_data(&monthly_bill[0], 12));
 				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_minimum_without_system", var_data(&monthly_minimum_charges[0], 12));
@@ -1747,7 +1747,7 @@ public:
 
 				assign("year1_monthly_cumulative_excess_generation", var_data(&monthly_cumulative_excess_energy[0], 12));
 				assign("year1_monthly_cumulative_excess_dollars", var_data(&monthly_cumulative_excess_dollars[0], 12));
-				assign("year1_monthly_salespurchases", var_data(&monthly_salespurchases[0], 12));
+//				assign("year1_monthly_salespurchases", var_data(&monthly_salespurchases[0], 12));
 				assign("year1_monthly_utility_bill_w_sys", var_data(&monthly_bill[0], 12));
 
 				// output and demand per Paul's email 9/10/10
@@ -2073,11 +2073,13 @@ public:
 		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
 		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
 
-		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+		//bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+
 		
 		// false = 2 meters, load and system treated separately
 		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
 		bool enable_nm = as_boolean("ur_enable_net_metering");
+		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
 		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool dc_enabled = as_boolean("ur_dc_enable");
@@ -2128,82 +2130,82 @@ public:
 		// 12 periods with 6 tiers each rates 3rd index = 0 = buy and 1=sell
 		ssc_number_t ec_rates[12][6][2];
 		ssc_number_t ec_energy_ub[12][6];
-
-
-
 		size_t nrows, ncols;
-		ssc_number_t *ec_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
-		{
-			std::ostringstream ss;
-			ss << "energy charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
-			throw exec_error("utilityrate3", ss.str());
-		}
-		ssc_number_t *ec_weekend = as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
-		{
-			std::ostringstream ss;
-			ss << "energy charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
-			throw exec_error("utilityrate3", ss.str());
-		}
-		util::matrix_t<float> ec_schedwkday(12, 24);
-		ec_schedwkday.assign(ec_weekday, nrows, ncols);
-		util::matrix_t<float> ec_schedwkend(12, 24);
-		ec_schedwkend.assign(ec_weekend, nrows, ncols);
-
-		int ec_tod[8760];
-
-		if (!util::translate_schedule(ec_tod, ec_schedwkday, ec_schedwkend, 1, 12))
-			throw general_error("could not translate weekday and weekend schedules for energy charges");
-
-		for (int i = 0; i<8760; i++) ec_tou_sched[i] = (ssc_number_t)(ec_tod[i]);
-
-		// tiered rates for all 6 tiers in each of the 12 periods
-
-		for (int period = 0; period<12; period++)
-		{
-			std::string str_period = util::to_string(period + 1);
-
-			for (int tier = 0; tier<6; tier++)
-			{
-				std::string str_tier = util::to_string(tier + 1);
-
-				ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
-				ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc;
-				ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
-			}
-		}
-
-
-
-
-		// calculate the monthly net energy per period
 		int period, tier;
 		ssc_number_t ec_monthly_energy_net[12][12]; // 12 months, 12 periods
 		int ec_hours_per_month_per_period[12][12];
-		c = 0;
-		for (m = 0; m<12; m++)
+
+		if (ec_enabled)
 		{
-			for (period = 0; period<12; period++)
+
+			ssc_number_t *ec_weekday = as_matrix("ur_ec_sched_weekday", &nrows, &ncols);
+			if (nrows != 12 || ncols != 24)
 			{
-				ec_monthly_energy_net[m][period] = 0;
-				ec_hours_per_month_per_period[m][period] = 0;
+				std::ostringstream ss;
+				ss << "energy charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+				throw exec_error("utilityrate3", ss.str());
+			}
+			ssc_number_t *ec_weekend = as_matrix("ur_ec_sched_weekend", &nrows, &ncols);
+			if (nrows != 12 || ncols != 24)
+			{
+				std::ostringstream ss;
+				ss << "energy charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+				throw exec_error("utilityrate3", ss.str());
+			}
+			util::matrix_t<float> ec_schedwkday(12, 24);
+			ec_schedwkday.assign(ec_weekday, nrows, ncols);
+			util::matrix_t<float> ec_schedwkend(12, 24);
+			ec_schedwkend.assign(ec_weekend, nrows, ncols);
+
+			int ec_tod[8760];
+
+			if (!util::translate_schedule(ec_tod, ec_schedwkday, ec_schedwkend, 1, 12))
+				throw general_error("could not translate weekday and weekend schedules for energy charges");
+
+			for (int i = 0; i < 8760; i++) ec_tou_sched[i] = (ssc_number_t)(ec_tod[i]);
+
+			// tiered rates for all 6 tiers in each of the 12 periods
+
+			for (period = 0; period < 12; period++)
+			{
+				std::string str_period = util::to_string(period + 1);
+
+				for (tier = 0; tier < 6; tier++)
+				{
+					std::string str_tier = util::to_string(tier + 1);
+
+					ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
+					ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc;
+					ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
+				}
 			}
 
-			for (d = 0; d<util::nday[m]; d++)
+
+
+			// calculate the monthly net energy per period
+			c = 0;
+			for (m = 0; m < 12; m++)
 			{
-				for (h = 0; h<24; h++)
+				for (period = 0; period < 12; period++)
 				{
-					int todp = ec_tod[c] - 1;
-					// net energy use per period per month
-					ec_monthly_energy_net[m][todp] += e_in[c];
-					// hours per period per month
-					ec_hours_per_month_per_period[m][todp]++;
-					c++;
+					ec_monthly_energy_net[m][period] = 0;
+					ec_hours_per_month_per_period[m][period] = 0;
+				}
+
+				for (d = 0; d < util::nday[m]; d++)
+				{
+					for (h = 0; h < 24; h++)
+					{
+						int todp = ec_tod[c] - 1;
+						// net energy use per period per month
+						ec_monthly_energy_net[m][todp] += e_in[c];
+						// hours per period per month
+						ec_hours_per_month_per_period[m][todp]++;
+						c++;
+					}
 				}
 			}
 		}
-
 // adjust net energy if net metering with monthly rollover
 		if (enable_nm && !excess_monthly_dollars)
 		{
@@ -2268,78 +2270,81 @@ public:
 		// initialize to diurnal all 1 if only flat monthly demand charge specified per Mike Gleason 1/16/15
 		util::matrix_t<float> dc_schedwkday(12, 24, 1);
 		util::matrix_t<float> dc_schedwkend(12, 24, 1);
-		if (is_assigned("ur_dc_sched_weekday"))
-		{
-			dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
-			{
-				std::ostringstream ss;
-				ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
-				throw exec_error("utilityrate3", ss.str());
-			}
-			dc_schedwkday.assign(dc_weekday, nrows, ncols);
-		}
-		if (is_assigned("ur_dc_sched_weekend"))
-		{
-			dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
-			{
-				std::ostringstream ss;
-				ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
-				throw exec_error("utilityrate3", ss.str());
-			}
-			dc_schedwkend.assign(dc_weekend, nrows, ncols);
-		}
-
-
-
-		int dc_tod[8760];
-		if (!util::translate_schedule(dc_tod, dc_schedwkday, dc_schedwkend, 1, 12))
-			throw general_error("could not translate weekday and weekend schedules for demand charge time-of-use rate");
-
-		for (int i = 0; i<8760; i++) dc_tou_sched[i] = (ssc_number_t)(dc_tod[i]);
-
-
-		// extract rate info
-		ssc_number_t dc_charges[12][6];
-		ssc_number_t dc_energy_ub[12][6];
-
-		for (period = 0; period<12; period++)
-		{
-			std::string str_period = util::to_string(period + 1);
-			for (tier = 0; tier<6; tier++)
-			{
-				std::string str_tier = util::to_string(tier + 1);
-				dc_charges[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_dc")*rate_esc;
-				dc_energy_ub[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_ub");
-			}
-		}
-
 		ssc_number_t monthly_period_peak[12][12];  // peak usage for period for the month (negative value)
 		int peak_period_hour[12][12];
-		c = 0;
-		for (m = 0; m < 12; m++)
+		ssc_number_t dc_charges[12][6];
+		ssc_number_t dc_energy_ub[12][6];
+		int dc_tod[8760];
+
+
+		if (dc_enabled)
 		{
-			for (i = 0; i < 12; i++) // TOU periods
+			if (is_assigned("ur_dc_sched_weekday"))
 			{
-				monthly_period_peak[m][i] = 0;
-				peak_period_hour[m][i] = 0;
+				dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+				if (nrows != 12 || ncols != 24)
+				{
+					std::ostringstream ss;
+					ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+					throw exec_error("utilityrate3", ss.str());
+				}
+				dc_schedwkday.assign(dc_weekday, nrows, ncols);
+			}
+			if (is_assigned("ur_dc_sched_weekend"))
+			{
+				dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+				if (nrows != 12 || ncols != 24)
+				{
+					std::ostringstream ss;
+					ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+					throw exec_error("utilityrate3", ss.str());
+				}
+				dc_schedwkend.assign(dc_weekend, nrows, ncols);
 			}
 
-			for (d = 0; d < util::nday[m]; d++)
+
+
+			if (!util::translate_schedule(dc_tod, dc_schedwkday, dc_schedwkend, 1, 12))
+				throw general_error("could not translate weekday and weekend schedules for demand charge time-of-use rate");
+
+			for (i = 0; i < 8760; i++) dc_tou_sched[i] = (ssc_number_t)(dc_tod[i]);
+
+
+			// extract rate info
+			for (period = 0; period < 12; period++)
 			{
-				for (h = 0; h < 24; h++)
+				std::string str_period = util::to_string(period + 1);
+				for (tier = 0; tier < 6; tier++)
 				{
-					int todp = dc_tod[c] - 1;
-					if (p_in[c] < 0 && p_in[c] < monthly_period_peak[m][todp])
+					std::string str_tier = util::to_string(tier + 1);
+					dc_charges[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_dc")*rate_esc;
+					dc_energy_ub[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_ub");
+				}
+			}
+
+			c = 0;
+			for (m = 0; m < 12; m++)
+			{
+				for (i = 0; i < 12; i++) // TOU periods
+				{
+					monthly_period_peak[m][i] = 0;
+					peak_period_hour[m][i] = 0;
+				}
+
+				for (d = 0; d < util::nday[m]; d++)
+				{
+					for (h = 0; h < 24; h++)
 					{
-						monthly_period_peak[m][todp] = p_in[c];
-						peak_period_hour[m][todp] = c;
+						int todp = dc_tod[c] - 1;
+						if (p_in[c] < 0 && p_in[c] < monthly_period_peak[m][todp])
+						{
+							monthly_period_peak[m][todp] = p_in[c];
+							peak_period_hour[m][todp] = c;
+						}
 					}
 				}
 			}
 		}
-
 
 
 		c = 0;
