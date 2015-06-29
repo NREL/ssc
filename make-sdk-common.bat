@@ -15,7 +15,7 @@ copy apiwrappers\python\ssc.py sdk-release\languages\python
 copy apiwrappers\python\testssc.py sdk-release\languages\python
 copy apiwrappers\python\pvsamv1.py sdk-release\languages\python
 copy apiwrappers\python\belpe.py sdk-release\languages\python
-copy apiwrappers\python\utilityrate3.py sdk-release\languages\python
+copy apiwrappers\python\utilityrate3_sj.py sdk-release\languages\python
 copy apiwrappers\python\cashloan.py sdk-release\languages\python
 
 copy apiwrappers\php\down-arrow.png sdk-release\languages\php
