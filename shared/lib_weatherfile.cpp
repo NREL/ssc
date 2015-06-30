@@ -372,13 +372,14 @@ static double wiki_dew_calc(double T, double RH)
 {
 	// ref: http://en.wikipedia.org/wiki/Dew_point
 
-	if (RH > 0)
+	if ( RH > 0 && RH < 100 )
 	{
 		static const double a = 17.271;
 		static const double b = 237.7;
 		double gamma = a*T / (b + T) + log(RH / 100.0);
-		if (a - gamma != 0.0)
-			return b*gamma / (a - gamma);
+		double denom = a - gamma;
+		if ( denom != 0.0 )
+			return b*gamma / denom;
 	}
 
 	// ultra-simple equation (OK as long as RH > 50%)
