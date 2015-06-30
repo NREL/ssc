@@ -2349,6 +2349,7 @@ public:
 							monthly_period_peak[m][todp] = p_in[c];
 							peak_period_hour[m][todp] = c;
 						}
+						c++;
 					}
 				}
 			}
@@ -2498,6 +2499,7 @@ public:
 								else
 									charge += (peak_demand - e_lower)*dc_fixed_charges[m][tier];
 
+//								log(util::format("Demand fixed, month %d, tier %d, lower %lg, upper %lg, charge %lg, peak %lg", m, tier, e_lower, e_upper, charge, peak_demand),2);
 								if (peak_demand < e_upper)
 									break;
 								tier++;
@@ -2526,12 +2528,12 @@ public:
 									// add up the charge amount for this block
 									ssc_number_t e_upper = dc_energy_ub[period][tier];
 									ssc_number_t e_lower = tier > 0 ? dc_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
-
 									if (peak_demand > e_upper)
 										charge += (e_upper - e_lower)*dc_charges[period][tier];
 									else
 										charge += (peak_demand - e_lower)*dc_charges[period][tier];
 
+//									log(util::format("TOU demand, month %d, hour %d, peak hour %d, period %d, tier %d, lower %lg, upper %lg, charge %lg, rate %lg, peak %lg", m, c, peak_hour, period, tier, e_lower, e_upper, charge, dc_charges[period][tier], peak_demand), 2);
 									if (peak_demand < e_upper)
 										break;
 
@@ -2647,96 +2649,6 @@ public:
 
 
 
-	}
-
-	void process_annual_min(ssc_number_t payment[8760], ssc_number_t charges[12], ssc_number_t rate_esc)
-	{
-		int m, d, h, c = 0;
-		ssc_number_t annual_charge = 0;
-
-		ssc_number_t min_charge = as_number("ur_annual_min_charge")*rate_esc;
-		for (m = 0; m<12; m++)
-			for (d = 0; d<util::nday[m]; d++)
-				for (h = 0; h<24; h++)
-					annual_charge += payment[c];
-		// check against min charge
-		if ((annual_charge > 0) && (annual_charge < min_charge))
-		{
-			// if less then apply charge to last month and last hour
-			ssc_number_t add_annual_charge = min_charge - annual_charge;
-			charges[11] += add_annual_charge;
-			payment[8759] += add_annual_charge;
-		}
-
-
-	}
-
-	void process_monthly_min(ssc_number_t payment[8760], ssc_number_t charges[12], ssc_number_t rate_esc)
-	{
-		int m, d, h, c;
-		ssc_number_t monthly_charge[12];
-
-		ssc_number_t min_charge = as_number("ur_monthly_min_charge")*rate_esc;
-		c = 0;
-		for (m = 0; m<12; m++)
-		{
-			monthly_charge[m] = 0;
-			for (d = 0; d<util::nday[m]; d++)
-			{
-				for (h = 0; h<24; h++)
-				{
-					monthly_charge[m] += payment[c];
-					c++;
-				}
-			}
-		}
-		// check each month against minimum charge
-		c = 0;
-		for (m = 0; m < 12; m++)
-		{
-			ssc_number_t add_monthly_charge = 0;
-			// if less then add difference to end of month
-			if ((monthly_charge[m] >0) && (monthly_charge[m] < min_charge))
-			{
-				add_monthly_charge = min_charge - monthly_charge[m];
-			}
-			for (d = 0; d<util::nday[m]; d++)
-			{
-				for (h = 0; h<24; h++)
-				{
-					if (d == util::nday[m] - 1 && h == 23)
-					{
-						charges[m] += add_monthly_charge;
-						payment[c] += add_monthly_charge;
-					}
-					c++;
-				}
-			}
-		}
-	}
-
-
-	void process_monthly_charge(ssc_number_t payment[8760], ssc_number_t charges[12], ssc_number_t rate_esc)
-	{
-		int m, d, h, c;
-
-		ssc_number_t fixed = as_number("ur_monthly_fixed_charge")*rate_esc;
-		c = 0;
-		for (m = 0; m<12; m++)
-		{
-			for (d = 0; d<util::nday[m]; d++)
-			{
-				for (h = 0; h<24; h++)
-				{
-					if (d == util::nday[m] - 1 && h == 23)
-					{
-						charges[m] = fixed;
-						payment[c] += fixed;
-					}
-					c++;
-				}
-			}
-		}
 	}
 
 
