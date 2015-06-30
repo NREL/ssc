@@ -663,10 +663,13 @@ static var_info vtab_utility_rate3[] = {
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_income_without_system",   "Year 1 hourly electricity sales without system",  "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_price_without_system",    "Year 1 hourly energy charge without system",   "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_with_system",        "Electricity demand charge with system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_without_system",     "Electricity demand charge without system",      "$/kW", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Electricity energy charge with system", "$", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_without_system", "Electricity energy charge without system", "$", "", "Time Series", "*", "LENGTH=8760", "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_ec_tou_schedule",       "Electricity TOU period for energy charges", "", "",          "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_with_system", "Electricity demand charge with system", "$", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_dc_without_system", "Electricity demand charge without system", "$", "", "Time Series", "*", "LENGTH=8760", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_tou_schedule", "Electricity TOU period for energy charges", "", "", "Time Series", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "Electricity TOU period for demand charges", "", "", "Time Series", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_peak_per_period",    "Electricity from grid peak per TOU period",        "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
@@ -1071,7 +1074,7 @@ public:
 
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(8760), revenue_wo_sys(8760),
-			payment(8760), income(8760), price(8760), demand_charge(8760), 
+			payment(8760), income(8760), price(8760), demand_charge(8760), energy_charge(8760),
 			ec_tou_sched(8760), dc_tou_sched(8760), load(8760), dc_hourly_peak(8760),
 			e_tofromgrid(8760), p_tofromgrid(8760),	salespurchases(8760);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
@@ -1353,7 +1356,7 @@ public:
 
 			// now calculate revenue without solar system (using load only)
 			ur_calc( &e_load_cy[0], &p_load_cy[0],
-				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
 				&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
 				&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
@@ -1549,8 +1552,9 @@ public:
 				//assign( "year1_hourly_payment_without_system", var_data( &payment[0], 8760 ) );
 				//assign( "year1_hourly_income_without_system", var_data( &income[0], 8760 ) );
 				//assign( "year1_hourly_price_without_system", var_data( &price[0], 8760 ) );
-				assign( "year1_hourly_dc_without_system", var_data( &demand_charge[0], 8760 ) );
-							
+				assign("year1_hourly_dc_without_system", var_data(&demand_charge[0], 8760));
+				assign("year1_hourly_ec_without_system", var_data(&energy_charge[0], 8760));
+
 				assign( "year1_monthly_dc_fixed_without_system", var_data(&monthly_dc_fixed[0], 12) );
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
@@ -1595,6 +1599,7 @@ public:
 				// calculate revenue with solar system (using net grid energy & maxpower)
 				ur_calc(&e_grid[0], &p_grid[0],
 					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+					&energy_charge[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0],  &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
@@ -1604,6 +1609,7 @@ public:
 				// calculate revenue with solar system (using system energy & maxpower)
 				ur_calc(&e_sys_cy[0], &p_sys_cy[0],
 					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+					&energy_charge[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], false, false);
@@ -1716,6 +1722,7 @@ public:
 				//assign( "year1_hourly_income_with_system", var_data( &income[0], 8760 ) );
 				//assign( "year1_hourly_price_with_system", var_data( &price[0], 8760 ) );
 				assign("year1_hourly_dc_with_system", var_data(&demand_charge[0], 8760));
+				assign("year1_hourly_ec_with_system", var_data(&energy_charge[0], 8760));
 				//				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
 				//				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
 				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], 8760));
@@ -2048,6 +2055,7 @@ public:
 
 		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], 
 		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
+		ssc_number_t energy_charge[8760],
 		ssc_number_t monthly_fixed_charges[12], ssc_number_t monthly_minimum_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_flat_charges[12],
@@ -2057,7 +2065,7 @@ public:
 		int i;
 
 		for (i=0;i<8760;i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = 0.0;
+			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
 
 		for (i=0;i<12;i++)
 		{
@@ -2380,7 +2388,8 @@ public:
 								monthly_ec_flat_charges[m] -= income[c];
 							}
 						}
-
+						// added for Mike Gleason 
+						energy_charge[c] += monthly_ec_flat_charges[m];
 // Price ?
 
 // end of flat rate
@@ -2462,6 +2471,8 @@ public:
 							}
 
 							// Price ?
+							// added for Mike Gleason 
+							energy_charge[c] += monthly_ec_charges[m];
 
 							// end of energy charge
 
