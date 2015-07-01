@@ -729,9 +729,14 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	double poa = input.Ibeam + input.Idiff + input.Ignd; 
 
 	// transmitted poa through module cover
-	double iamf = iam( input.IncAng, GlassAR );
-	double tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
-	if( tpoa < 0.0 ) tpoa = 0.0;
+	double tpoa = poa;
+	if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
+	{
+		double iamf = iam( input.IncAng, GlassAR );
+		tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
+		if( tpoa < 0.0 ) tpoa = 0.0;
+		if( tpoa > poa ) tpoa = poa;
+	}
 	
 	// spectral effect via AM modifier
 	double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );

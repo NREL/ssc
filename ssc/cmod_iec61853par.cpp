@@ -1,7 +1,7 @@
 #include "core.h"
 #include "lib_iec61853.h"
 
-static var_info vtab_lcoefcr[] = 
+static var_info vtab_iec61853[] = 
 {	
 /*   VARTYPE            DATATYPE         NAME                        LABEL                       UNITS     META                                             GROUP          REQUIRED_IF    CONSTRAINTS UI_HINTS*/
 	{ SSC_INPUT,        SSC_MATRIX,      "input",                  "IEC-61853 matrix test data", "various",  "[IRR,TC,PMP,VMP,VOC,ISC]",                      "IEC61853",    "*",           "",         "" },
@@ -31,7 +31,7 @@ private:
 public:
 	cm_iec61853par()
 	{
-		add_var_info( vtab_lcoefcr );
+		add_var_info( vtab_iec61853 );
 	}
 
 	class msg_handler : public Imessage_api
