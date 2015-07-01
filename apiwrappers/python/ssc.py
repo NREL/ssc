@@ -216,6 +216,16 @@ class SSCAPI:
 		return SSCAPI._dll.ssc_info_group( c_void_p(p_inf) )
 
 	@staticmethod
+	 def ssc_info_required( p_inf ):
+		 SSCAPI._dll.ssc_info_required.restype = c_char_p
+		 return SSCAPI._dll.ssc_info_required( c_void_p(p_inf) )
+
+	@staticmethod
+	 def ssc_info_constraints( p_inf ):
+		 SSCAPI._dll.ssc_info_constraints.restype = c_char_p
+		 return SSCAPI._dll.ssc_info_constraints( c_void_p(p_inf) )
+		 
+	@staticmethod
 	def ssc_info_uihint( p_inf ):
 		SSCAPI._dll.ssc_info_uihint.restype = c_char_p
 		return SSCAPI._dll.ssc_info_uihint( c_void_p(p_inf) )
@@ -236,7 +246,7 @@ class SSCAPI:
 		SSCAPI._dll.ssc_module_log.restype = c_char_p
 		return SSCAPI._dll.ssc_module_log( c_void_p(p_mod), c_int(index), byref(type), byref(time) )
 	
-	
+
 	
 	
 	
