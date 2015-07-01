@@ -55,6 +55,7 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "sunup",                          "Sun up over horizon",                         "0/1",    "",                        "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "shad_beam_factor",               "Shading factor for beam radiation",           "",       "",                        "Time Series",      "*",                       "",                                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "aoi",                            "Angle of incidence",                          "deg",    "",                        "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "poa",                            "Plane of array irradiance",                   "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",      "",                        "Time Series",      "*",                       "",                          "" },	
@@ -211,7 +212,7 @@ public:
 		return code;
 	}
 
-	void powerout(double time, double &shad_beam, double shad_diff, double beam, double alb, double wspd, double tdry)
+	void powerout(double time, double &shad_beam, double shad_diff, double dni, double alb, double wspd, double tdry)
 	{
 		
 		if (sunup > 0)
@@ -235,7 +236,7 @@ public:
 					// calculate sky and gnd diffuse derate factors
 					// based on view factor reductions from self-shading
 					diffuse_reduce( solzen, stilt,
-						beam, iskydiff+ignddiff,
+						dni, iskydiff+ignddiff,
 						gcr, phi0, alb, 1000,
 
 						// outputs (pass by reference)
@@ -266,7 +267,7 @@ public:
 			if ( aoi > AOI_MIN && aoi < AOI_MAX )
 			{
 				double mod = iam( aoi, use_ar_glass );
-				tpoa = poa - ( 1.0 - mod )*ibeam*cosd(aoi);
+				tpoa = poa - ( 1.0 - mod )*dni*cosd(aoi);
 				if( tpoa < 0.0 ) tpoa = 0.0;
 				if( tpoa > poa ) tpoa = poa;
 			}
@@ -360,6 +361,7 @@ public:
 		ssc_number_t *p_wspd = allocate("wspd", nrec);
 		
 		ssc_number_t *p_sunup = allocate("sunup", nrec);
+		ssc_number_t *p_aoi = allocate("aoi", nrec);
 		ssc_number_t *p_shad_beam = allocate("shad_beam_factor", nrec); // just for reporting output
 
 		ssc_number_t *p_tcell = allocate("tcell", nrec);
@@ -420,6 +422,7 @@ public:
 							code, wf.year, wf.month, wf.day, wf.hour));
 			
 				p_sunup[idx] = (ssc_number_t)sunup;
+				p_aoi[idx] = (ssc_number_t)aoi;
 				
 				double shad_beam = shad.fbeam( hour, solalt, solazi );
 				p_shad_beam[idx] = (ssc_number_t)shad_beam ;
