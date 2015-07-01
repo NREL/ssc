@@ -22,7 +22,7 @@ var_info_invalid };
 var_info vtab_battery_replacement_cost[] = {
 
 	/*   VARTYPE           DATATYPE         NAME                            LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-		{ SSC_INPUT, SSC_ARRAY, "battery_bank_replacement", "Battery bank replacements per year", "number/year", "", "Battery", "", "", "" },
+		{ SSC_INPUT, SSC_ARRAY, "batt_bank_replacement", "Battery bank replacements per year", "number/year", "", "Battery", "", "", "" },
 		{ SSC_INPUT, SSC_ARRAY, "batt_replacement_schedule", "Battery bank replacements per year (user specified)", "number/year", "", "Battery", "", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "en_batt", "Enable battery storage model", "0/1", "", "Battery", "?=0", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
