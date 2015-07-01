@@ -349,6 +349,9 @@ double transmittance( double theta1_deg, /* incidence angle of incoming radiatio
 
 double iam( double theta, bool ar_glass )
 {
+	if ( theta < AOI_MIN ) theta = AOI_MIN;
+	if ( theta > AOI_MAX ) theta = AOI_MAX;
+
 	double normal = iam_nonorm( 1, ar_glass );
 	double actual = iam_nonorm( theta, ar_glass );
 	return actual/normal;	
@@ -366,8 +369,8 @@ double iam_nonorm( double theta, bool ar_glass )
 	double k_arc = 4;
 	double l_arc = l_g*0.01;  // assume 1/100th thickness of glass for AR coating
 
-	if ( theta < 1 ) theta = 1;
-	if ( theta > 89 ) theta = 89;
+	if ( theta < AOI_MIN ) theta = AOI_MIN;
+	if ( theta > AOI_MAX ) theta = AOI_MAX;
 
 	if ( ar_glass )
 	{

@@ -261,12 +261,18 @@ public:
 				
 			poa = ibeam + iskydiff +ignddiff;
 				
-			double wspd_corr = wspd < 0 ? 0 : wspd;
-								
-			// module cover
-			tpoa = poa - ( 1.0 - iam( aoi, use_ar_glass ) )*beam*cosd(aoi);
-			if( tpoa < 0.0 ) tpoa = 0.0;
-			
+			double wspd_corr = wspd < 0 ? 0 : wspd;					
+
+			// module cover			
+			tpoa = poa;
+			if ( aoi > AOI_MIN && aoi < AOI_MAX )
+			{
+				double mod = iam( aoi, use_ar_glass );
+				tpoa = poa - ( 1.0 - mod )*ibeam*cosd(aoi);
+				if( tpoa < 0.0 ) tpoa = 0.0;
+				if( tpoa > poa ) tpoa = poa;
+			}
+						
 			// cell temperature
 			pvt = (*tccalc)( poa, wspd_corr, tdry );
 

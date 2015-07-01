@@ -102,6 +102,8 @@ public:
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
 };
 
+#define AOI_MIN 0.5
+#define AOI_MAX 89.5
 
 double current_5par( double V, double IMR, double A, double IL, double IO, double RS, double RSH );
 double openvoltage_5par( double Voc0, double a, double IL, double IO, double Rsh );
