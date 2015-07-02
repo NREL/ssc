@@ -26,7 +26,7 @@ private:
 	double m_od_control;
 	double m_tol_od;
 	double m_m_dot_htf_des;
-	double m_q_rec_min;
+	//double m_q_rec_min;		// twn: moved to public so upstream code can retrieve
 
 	/* declare storage variables here */
 	int m_mode;
@@ -98,6 +98,9 @@ public:
 
 	int m_n_flux_x;
 	int m_n_flux_y;
+
+	// Calculate in init()
+	double m_q_rec_min;				//[W]
 
 		// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
 	double m_T_salt_hot_target;			//[C], convert to K in init() call

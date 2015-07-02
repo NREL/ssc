@@ -25,6 +25,7 @@ int C_csp_mspt_collector_receiver::get_operating_state()
 void C_csp_mspt_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;
+	solved_params.m_q_dot_rec_on_min = mc_mspt_receiver_222.m_q_rec_min/1.E6;	//[MW]
 }
 
 void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,

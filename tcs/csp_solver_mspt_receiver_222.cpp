@@ -838,6 +838,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		if( q_thermal < m_q_rec_min )
 		{
 			// GOTO 900
+			// Steady State always reports q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
+			// Should be a way to communicate to controller that q_thermal is less than q_min without losing this functionality
 			if(m_mode != C_csp_collector_receiver::STEADY_STATE)
 				rec_is_off = true;
 		}
