@@ -462,11 +462,16 @@ double C_csp_two_tank_tes::get_hot_temp()
 	return mc_hot_tank.get_m_T_prev();	//[K]
 }
 
+double C_csp_two_tank_tes::get_cold_temp()
+{
+	return mc_cold_tank.get_m_T_prev();	//[K]
+}
+
 void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) 
 {
 	double f_storage = 0.0;		// for now, hardcode such that storage always completely discharges
 
-	double m_dot_tank_disch_avail = mc_hot_tank.m_dot_available(f_storage, step_s);
+	double m_dot_tank_disch_avail = mc_hot_tank.m_dot_available(f_storage, step_s);	//[kg/s]
 
 	double T_hot_ini = mc_hot_tank.get_m_T_prev();		//[K]
 
@@ -496,7 +501,7 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s, double 
 {
 	double f_ch_storage = 0.0;	// for now, hardcode such that storage always completely charges
 
-	double m_dot_tank_charge_avail = mc_cold_tank.m_dot_available(f_ch_storage, step_s);
+	double m_dot_tank_charge_avail = mc_cold_tank.m_dot_available(f_ch_storage, step_s);	//[kg/s]
 
 	double T_cold_ini = mc_cold_tank.get_m_T_prev();	//[K]
 
@@ -519,7 +524,7 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s, double 
 		T_cold_field_est = T_cold_ini;
 	}
 
-	m_m_dot_tes_ch_max = m_dot_tank_charge_avail;		//[kg/s]
+	m_m_dot_tes_ch_max = m_dot_tank_charge_avail*step_s;		//[kg/s]
 }
 
 void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
@@ -609,48 +614,59 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
 	return true;
+}
 
-	//// Guess average hot tank outlet temperature
-	//double T_hot_out_avg = mc_hot_tank.m_T_prev;		//[K]
+bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+{
+	// This method calculates the cold charge return temperature on the HX side (if applicable). If no heat exchanger (direct storage),
+	// the return charge temperature is equal to the average (timestep) cold tank outlet temperature.
+	
+	// The method returns FALSE if the input mass flow rate 'm_dot_htf_in' * timestep is greater than the allowable charge 
 
-	//// Set up iteration on T_hot_out_avg
-	//	// Upper bound, error, booleans
-	//double T_hot_out_upper = std::numeric_limits<double>::quiet_NaN();
-	//double y_T_hot_out_upper = std::numeric_limits<double>::quiet_NaN();
-	//bool is_upper_bound = false;
-	//bool is_upper_error = false;
-	//	// Lower bound, error, booleans
-	//double T_hot_out_lower = std::numeric_limits<double>::quiet_NaN();
-	//double y_T_hot_out_lower = std::numeric_limits<double>::quiet_NaN();
-	//bool is_lower_bound = false;
-	//bool is_lower_error = false;
+	// Inputs are:
+	// 1) Required cold side mass flow rate on the HX side (if applicable). If no heat exchanger, then the mass flow rate
+	//     is equal to the cold tank exit mass flow rate (and hot tank fill mass flow rate)
+	// 2) Inlet temperature on the HX side (if applicable). If no heat exchanger, the inlet temperature is the temperature
+	//     of HTF directly entering the hot tank
 
-	//double tol = 0.0005;		//[-]
+	double q_heater_cold, q_heater_hot, q_dot_loss_cold, q_dot_loss_hot, T_hot_ave;
+	q_heater_cold = q_heater_hot = q_dot_loss_cold = q_dot_loss_hot = T_hot_ave = std::numeric_limits<double>::quiet_NaN();
 
-	//double diff_T_hot = 999.9*tol;	//[-]
+	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
+	if( !ms_params.m_is_hx )
+	{
+		if( m_dot_htf_in > m_m_dot_tes_ch_max / timestep )
+		{
+			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_T_hot_ave = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_T_cold_ave = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_T_hot_final = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 
-	//int iter_T_hot_out = 0;
+			return false;
+		}
 
-	//// Start iteration loop
-	//while(abs(diff_T_hot) > tol)
-	//{
-	//	iter_T_hot_out++;		// First iteration = 1
+		// Call energy balance on cold tank discharge to get average outlet temperature over timestep
+		mc_cold_tank.energy_balance(timestep, 0.0, m_dot_htf_in, 0.0, T_amb, T_htf_cold_out, q_heater_cold, q_dot_loss_cold);
 
-	//	double m_dot_tes = std::numeric_limits<double>::quiet_NaN();
-	//	// If there is a heat exchanger, solve for TES-side mass flow rate
-	//	if(ms_params.m_is_hx)
-	//	{
-	//		
-	//	}
-	//	else	// No heat exchanger, the TES-side mass flow rate is equal to the input mass flow rate
-	//	{
-	//		m_dot_tes = m_dot_htf_in;
-	//	}
+		// Call energy balance on hot tank charge to track tank mass and temperature
+		mc_hot_tank.energy_balance(timestep, m_dot_htf_in, 0.0, T_htf_hot_in, T_amb, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+	}
 
+	else
+	{	// Iterate between field htf - hx - and storage	
 
-	//}
+	}
 
-	//return false;
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MW] Heating power required to keep tanks at a minimum temperature
+	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MW] Storage thermal losses
+	outputs.m_T_hot_ave = T_hot_ave;							//[K] Average hot tank temperature over timestep
+	outputs.m_T_cold_ave = T_htf_cold_out;						//[K] Average cold tank temperature over timestep
+	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K] Hot temperature at end of timestep
+	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K] Cold temperature at end of timestep
+
+	return true;
 
 }
 

@@ -13,6 +13,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 	m_standby_control_prev = m_standby_control_calc = -1;	
 
 	m_F_wcMax = m_F_wcMin = m_delta_h_steam = m_startup_energy_required = m_eta_adj =
+		m_m_dot_design =
 		m_startup_time_remain_prev = m_startup_time_remain_calc =
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
@@ -273,6 +274,11 @@ void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solve
 	solved_params.m_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
 	solved_params.m_sb_frac = ms_params.m_q_sby_frac;				//[-]
 	solved_params.m_T_htf_hot_ref = ms_params.m_T_htf_hot_ref;			//[C]
+
+	// Calculate design point HTF mass flow rate
+	double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((ms_params.m_T_htf_hot_ref + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+	m_m_dot_design = solved_params.m_q_dot_des*1000.0/(c_htf*((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref)))*3600.0;	//[kg/hr]
+	solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
 }
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weather, 
@@ -308,6 +314,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
 	int mode = 2;
 	double demand_var = 0.0;
+
+	double q_dot_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
 	double time_required_su = 0.0;
 
@@ -349,6 +357,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]
 		}
 
+		q_dot_htf = q_startup/3600.0 / (step_sec/3600.0);	//[kWt-hr] * [MW/kW] * [1/hr] = [MWt]
+
 		// *****
 		P_cycle = 0.0;		
 		eta = 0.0;									
@@ -382,6 +392,11 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			W_cool_par = 0.0;
 			f_hrsys = 0.0;
 			P_cond = 0.0;
+			q_dot_htf = 0.0;
+		}
+		else
+		{
+			q_dot_htf = P_cycle/1000.0/eta;		//[MWt]
 		}
 
 		// -----Calculate the blowdown fraction-----
@@ -394,7 +409,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	case E_csp_power_cycle_modes::STANDBY:
 		{
-			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));
+			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));	//[kJ/kg-K]
 			// double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0), 1.0);
 			double q_tot = ms_params.m_P_ref / ms_params.m_eta_ref;
 
@@ -414,6 +429,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			W_cool_par = 0.0;
 			f_hrsys = 0.0;
 			P_cond = 0.0;
+
+			q_dot_htf = m_dot_htf/3600.0*c_htf*(T_htf_hot - T_htf_cold)/1000.0;		//[MWt]
 		}
 
 		break;
@@ -430,6 +447,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		f_hrsys = 0.0;
 		P_cond = 0.0;
 		
+		q_dot_htf = 0.0;
+
 		// Cycle is off, so reset startup parameters!
 		m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
 		m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
@@ -478,6 +497,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		f_hrsys = 0.0;
 		P_cond = 0.0;
 
+		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/1000.0;	//[MWt]
 
 
 		break;
@@ -570,6 +590,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	outputs.m_q_startup = q_startup / 1.E3;			//[MWt-hr] Startup energy
 	outputs.m_time_required_su = time_required_su*3600.0;	//[s]
+	outputs.m_q_dot_htf = q_dot_htf;				//[MWt] Thermal power from HTF (= thermal power into cycle)
 }
 
 void C_pc_Rankine_indirect_224::converged()

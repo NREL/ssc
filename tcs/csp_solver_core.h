@@ -144,10 +144,11 @@ public:
 	struct S_csp_cr_solved_params
 	{
 		double m_T_htf_cold_des;
+		double m_q_dot_rec_on_min;		//[MW]
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_q_dot_rec_on_min = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -228,11 +229,12 @@ public:
 		double m_cutoff_frac;		//[-]
 		double m_sb_frac;			//[-]
 		double m_T_htf_hot_ref;		//[C]
+		double m_m_dot_design;		//[kg/hr]
 
 		S_solved_params()
 		{
 			m_W_dot_des = m_eta_des = m_q_dot_des = m_max_frac = m_cutoff_frac = 
-				m_sb_frac = m_T_htf_hot_ref = std::numeric_limits<double>::quiet_NaN();
+				m_sb_frac = m_T_htf_hot_ref = m_m_dot_design = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -252,13 +254,14 @@ public:
 		
 		double m_time_required_su;		//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
 		double m_q_startup;			//[MWt-hr] Startup energy required
+		double m_q_dot_htf;			//[MWt] Thermal power from HTF (= thermal power into cycle)
 
 		S_csp_pc_outputs()
 		{
 			m_P_cycle = m_eta = m_T_htf_cold = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf = m_m_dot_htf_ref =
 				m_W_cool_par = m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
 			
-			m_time_required_su = m_q_startup = std::numeric_limits<double>::quiet_NaN();
+			m_time_required_su = m_q_startup = m_q_dot_htf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
@@ -288,7 +291,7 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;		//[MJ] Heating power required to keep tanks at a minimum temperature
+		double m_q_heater;		//[MW] Heating power required to keep tanks at a minimum temperature
 		double m_q_dot_loss;	//[MW] Storage thermal losses
 		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
 		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
@@ -306,6 +309,8 @@ public:
 	virtual bool does_tes_exist() = 0;
 
 	virtual double get_hot_temp() = 0;
+
+	virtual double get_cold_temp() = 0;
 	
 	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
 	
@@ -315,6 +320,8 @@ public:
 	
 	virtual void discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 
+	virtual bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
+	
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void converged() = 0;
@@ -346,6 +353,7 @@ private:
 
 		// Collector receiver design parameters
 	double m_T_htf_cold_des;			//[K]
+	double m_q_dot_rec_on_min;			//[MW]
 
 		// Power cycle design parameters
 	double m_cycle_W_dot_des;			//[MW]
@@ -355,6 +363,7 @@ private:
 	double m_cycle_cutoff_frac;			//[-]
 	double m_cycle_sb_frac_des;			//[-]
 	double m_cycle_T_htf_hot_des;		//[K]
+	double m_m_dot_pc_des;				//[kg/hr]
 
 		// Storage logic
 	bool m_is_tes;			//[-] True: plant has storage
@@ -367,7 +376,10 @@ private:
 	{
 		NO_SOLUTION,		// Models did not provide enough information with which to iterate on T_rec_in
 		POOR_CONVERGENCE,	// Models solved, but convergence on T_rec_in was not within specified tolerance
-		CONVERGED			// Models solved; convergence within specified tolerance
+		CONVERGED,			// Models solved; convergence within specified tolerance
+		KNOW_NEXT_MODE,		// Models did not solve, but failure mode allowed next mode to be determined
+		UNDER_TARGET_PC,	// Models solved, but could not converge because the operating mode did not allow enough thermal power to go to power cycle
+		OVER_TARGET_PC		// Models solved, but could not converge because the operating mode could not reduce the mass flow rate enough to the power cycle
 	};
 
 	// Solved Controller Variables
@@ -391,7 +403,9 @@ public:
 		CR_ON__PC_RM__TES_OFF__AUX_OFF,			// PC_RM = Resource Match
 		CR_DF__PC_FULL__TES_OFF__AUX_OFF,
 
-		CR_OFF__PC_SU__TES_DC__AUX_OFF
+		CR_OFF__PC_SU__TES_DC__AUX_OFF,
+		CR_ON__PC_OFF__TES_CH__AUX_OFF,
+		CR_ON__PC_TARGET__TES_CH__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,

@@ -18,6 +18,8 @@ private:
 	double m_startup_energy_required;
 	double m_eta_adj;
 
+	double m_m_dot_design;				//[kg/hr]
+
 	int m_standby_control_prev;
 	double m_startup_time_remain_prev;		//[hr]
 	double m_startup_energy_remain_prev;	//[kW-hr]
