@@ -379,7 +379,7 @@ void C_csp_solver::simulate()
 								// Run at highest possible PC fraction by dispatch all remaining storage
 								// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
 							
-								throw(C_csp_exception("operating_mode = CR_ON__PC_RM__TES_DC__AUX_OFF", "CSP Solver"));
+								throw(C_csp_exception("operating_mode = CR_ON__PC_RM__TES_EMPTY__AUX_OFF", "CSP Solver"));
 							}
 							else if( is_pc_sb_allowed )
 							{	// If standby is allowed
@@ -485,10 +485,10 @@ void C_csp_solver::simulate()
 						}
 						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min )
 						{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
-							// Run at highest possible PC fraction by dispatch all remaining storage
+							// Run at highest possible PC fraction by dispatching all remaining storage
 							// Tolerance is applied so that if CR + TES is *close* to reaching PC min, the controller tries that mode
 
-							throw(C_csp_exception("operating_mode = CR_OFF__PC_RM__TES_DC__AUX_OFF", "CSP Solver"));
+							throw(C_csp_exception("operating_mode = CR_OFF__PC_RM__TES_EMPTY__AUX_OFF", "CSP Solver"));
 						}
 						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb )
 						{	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
@@ -498,7 +498,7 @@ void C_csp_solver::simulate()
 						else
 						{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
 
-							throw(C_csp_exception("operating_mode = CR_ON__PC_MIN__TES_EMPTY__AUX_OFF", "CSP Solver"));
+							throw(C_csp_exception("operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF", "CSP Solver"));
 						}
 					}	// End logic for if( q_dot_tes_dc > 0.0 )
 					else
