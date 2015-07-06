@@ -348,6 +348,17 @@ private:
 
 	C_csp_solver_sim_info mc_sim_info;
 
+	// Hierarchy logic
+	bool m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail;
+	bool m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail;
+	bool m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail;
+	bool m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail;
+	bool m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail;
+	bool m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail;
+	
+	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE;
+	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE;
+
 	// member string for exception messages
 	std::string error_msg;
 
@@ -367,6 +378,9 @@ private:
 
 		// Storage logic
 	bool m_is_tes;			//[-] True: plant has storage
+
+		// Reset hierarchy logic
+	void reset_hierarchy_logic();
 
 	void init_independent();
 
@@ -396,11 +410,17 @@ public:
 
 	enum tech_operating_modes
 	{
-		CR_OFF__PC_OFF__TES_OFF__AUX_OFF = 1,
+		ENTRY_MODE = 1,
+		
+		CR_OFF__PC_OFF__TES_OFF__AUX_OFF,
 		CR_SU__PC_OFF__TES_OFF__AUX_OFF,
 		CR_ON__PC_SU__TES_OFF__AUX_OFF,
 		CR_ON__PC_SB__TES_OFF__AUX_OFF,
-		CR_ON__PC_RM__TES_OFF__AUX_OFF,			// PC_RM = Resource Match
+		
+		//CR_ON__PC_RM__TES_OFF__AUX_OFF,			// PC_RM = Resource Match
+		CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
+		CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
+		
 		CR_DF__PC_FULL__TES_OFF__AUX_OFF,
 
 		CR_OFF__PC_SU__TES_DC__AUX_OFF,
@@ -418,8 +438,6 @@ public:
 	void init();
 
 	void simulate();
-
-
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
