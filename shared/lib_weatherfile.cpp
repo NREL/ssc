@@ -1022,7 +1022,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				int year = atoi(p);
 
 				int hour = atoi(cols[1]) - tmy3_hour_shift;  // hour goes 0-23, not 1-24
-				if (i == 0 && m_columns[HOUR].data[i] < 0)
+				if (i == 0 && hour < 0)
 				{
 					// this was a TMY3 file but with hours going 0-23 (against the tmy3 spec)
 					// handle it anyway by NOT subtracting from the hour to convert from 1-24
