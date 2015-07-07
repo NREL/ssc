@@ -2332,6 +2332,22 @@ void C_csp_solver::simulate()
 		mv_tes_T_hot.push_back(mc_tes_outputs.m_T_hot_final-273.15);	//[C] TES hot temperature at end of timestep
 		mv_tes_T_cold.push_back(mc_tes_outputs.m_T_cold_final-273.15);	//[C] TES cold temperature at end of timestep
 
+		int n_op_modes = m_op_mode_tracking.size();
+		double op_mode_key = m_op_mode_tracking[0];
+		for(int i = 1; i < n_op_modes; i++)
+		{
+			double op_mode_step = m_op_mode_tracking[i];
+			if( op_mode_step >= 10.0 )
+			{
+				op_mode_key = 1000.0*op_mode_key + op_mode_step;
+			}
+			else
+			{
+				op_mode_key = 100.0*op_mode_key + op_mode_step;
+			}
+		}
+		mv_operating_modes.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+
 		// Track time and step forward
 		is_sim_timestep_complete = true;
 		time_previous = mc_sim_info.m_time;						//[s]

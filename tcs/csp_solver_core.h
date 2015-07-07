@@ -415,7 +415,7 @@ public:
 
 	enum tech_operating_modes
 	{
-		ENTRY_MODE = 1,
+		ENTRY_MODE = 0,
 		
 		CR_OFF__PC_OFF__TES_OFF__AUX_OFF,
 		CR_SU__PC_OFF__TES_OFF__AUX_OFF,
@@ -430,6 +430,9 @@ public:
 
 		CR_OFF__PC_SU__TES_DC__AUX_OFF,
 		CR_ON__PC_OFF__TES_CH__AUX_OFF,
+
+		SKIP_10,
+
 		CR_ON__PC_TARGET__TES_CH__AUX_OFF
 	};
 
@@ -462,7 +465,7 @@ public:
 	std::vector<double> mv_tes_T_hot;		//[C] TES hot temperature at end of timestep
 	std::vector<double> mv_tes_T_cold;		//[C] TES cold temperature at end of timestep
 
-	std::vector<std::string> mv_operating_modes;	//[-] List of operating modes tried each timestep
+	std::vector<double> mv_operating_modes;	//[-] List of operating modes tried each timestep
 };
 
 
