@@ -359,6 +359,11 @@ private:
 	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE;
 	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE;
 
+	bool m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail;
+
+	bool m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE;
+	bool m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE;
+
 	// member string for exception messages
 	std::string error_msg;
 

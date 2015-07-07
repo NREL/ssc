@@ -54,6 +54,14 @@ void C_csp_solver::reset_hierarchy_logic()
 	m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = true;
 	m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail = true;
 	m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail = true;
+
+	m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE = true;
+	m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = true;
+
+	m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail = true;
+
+	m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE = true;
+	m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE = true;
 }
 
 void C_csp_solver::init_independent()
@@ -354,7 +362,8 @@ void C_csp_solver::simulate()
 				
 				if( is_pc_su_allowed )
 				{
-					if( q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_target )
+					if( q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_target &&
+						m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE && m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE )
 					{	// The power cycle cannot accept the entire receiver output
 						// Tolerance is applied so that if CR is *close* to reaching the PC target, the controller tries modes that fill TES
 					
@@ -362,7 +371,8 @@ void C_csp_solver::simulate()
 						if( q_dot_tes_ch > 0.0 )
 						{
 							// 1) Try to fill storage while hitting power cycle target
-							if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target )
+							if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target &&
+								m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE )
 							{	// Storage can accept the remaining receiver output
 								// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
 
@@ -389,7 +399,8 @@ void C_csp_solver::simulate()
 						{	// No storage available for dispatch
 
 							// 1) Try operating power cycle at maximum capacity
-							if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_pc_max )
+							if( q_dot_cr_on*(1.0 - tol_mode_switching) < q_pc_max && 
+									m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE )
 							{	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
 
 								operating_mode = CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
@@ -461,7 +472,8 @@ void C_csp_solver::simulate()
 						{	// Storage dispatch is not available
 
 							// Can the power cycle operate at or above the minimum operation fraction?
-							if( q_dot_cr_on*(1.0+tol_mode_switching) > q_pc_min )
+							if( q_dot_cr_on*(1.0+tol_mode_switching) > q_pc_min && 
+								m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail )
 							{	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
 
 								operating_mode = CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
@@ -944,11 +956,13 @@ void C_csp_solver::simulate()
 
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
 					{
-
+						m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail = false;
+						are_models_converged = false;
 					}
 					else if( operating_mode == CR_ON__PC_RM_HI__TES_OFF__AUX_OFF )
 					{
-
+						m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = false;
+						are_models_converged = false;
 					}
 					else
 					{
@@ -963,18 +977,48 @@ void C_csp_solver::simulate()
 
 				else if( exit_mode == CONVERGED )
 				{
+					// If the CR and PC models converged, check whether the power cycle thermal input is within bounds
+
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
-					{
+					{	// In this mode, the power cycle thermal input needs to be greater than the minimum power cycle fraction
+
+						if( mc_cr_outputs.m_q_thermal < q_pc_min )
+						{
+							m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail = false;
+							are_models_converged = false;
+							// break;						
+						}
 
 					}
 					else if( operating_mode == CR_ON__PC_RM_HI__TES_OFF__AUX_OFF )
-					{
+					{	// In this mode, the power cycle thermal input needs to be greater than the target cycle fraction
+						// ... and less than the maximum cycle fraction
+
+						if( mc_cr_outputs.m_q_thermal > q_pc_max )
+						{
+							m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE = false;
+							are_models_converged = false;
+							// break;
+						}
+						else if( mc_cr_outputs.m_q_thermal < q_pc_target )
+						{
+							m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = false;
+							are_models_converged = false;
+							// break;
+						}
 
 					}
 					else
 					{
 						throw(C_csp_exception("Operating mode not recognized", "CSP Solver"));
 					}
+
+
+
+					// mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+					// are_models_converged = true;
+
+
 
 					// Now, check whether we need to defocus the receiver
 					if( mc_cr_outputs.m_q_thermal > q_pc_max )
@@ -2204,35 +2248,43 @@ void C_csp_solver::simulate()
 					// If inner nest (power cycle thermal power iteration) causes exit, then we know CR solved with *some* inputs
 				if(q_pc_exit_mode == UNDER_TARGET_PC)
 				{
-					if( q_dot_tes_dc > 0.0 )
-					{	// Can we dispatch thermal storage to hit target cycle output?
+					m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE = false;
+					are_models_converged = false;
+					break;
 					
-						throw(C_csp_exception("operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF", "CSP Solver"));
-						break;
-					}
-					else
-					{	// If not, try running power cycle below target power level with idle TES
+					//if( q_dot_tes_dc > 0.0 )
+					//{	// Can we dispatch thermal storage to hit target cycle output?
+					//
+					//	throw(C_csp_exception("operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF", "CSP Solver"));
+					//	break;
+					//}
+					//else
+					//{	// If not, try running power cycle below target power level with idle TES
 
-						operating_mode = CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
-						break;
-					}
+					//	operating_mode = CR_ON__PC_RM_LO__TES_OFF__AUX_OFF;
+					//	break;
+					//}
 				}
 				else if( q_pc_exit_mode == OVER_TARGET_PC )
 				{
-					// 2) Try operating power cycle at maximum capacity
-					// Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
-					if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_max )
-					{	// Storage and the power cycle operating between target and max can accept the remaining receiver output
-						// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
+					m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE = false;
+					are_models_converged = false;
+					break;
 
-						throw(C_csp_exception("operating_mode = CR_ON__PC_RM__TES_FULL__AUX_OFF", "CSP_Solver"));
-					}
+					//// 2) Try operating power cycle at maximum capacity
+					//// Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
+					//if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_max )
+					//{	// Storage and the power cycle operating between target and max can accept the remaining receiver output
+					//	// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
 
-					// 3) Try defocusing the CR and operating the power cycle at maximum capacity
-					else
-					{
-						throw(C_csp_exception("operating_mode = CR_DF__PC_FULL__TES_FULL__AUX_OFF", "CSP_Solver"));
-					}
+					//	throw(C_csp_exception("operating_mode = CR_ON__PC_RM__TES_FULL__AUX_OFF", "CSP_Solver"));
+					//}
+
+					//// 3) Try defocusing the CR and operating the power cycle at maximum capacity
+					//else
+					//{
+					//	throw(C_csp_exception("operating_mode = CR_DF__PC_FULL__TES_FULL__AUX_OFF", "CSP_Solver"));
+					//}
 				}
 
 				// If convergence was successful, finalize this timestep and get out
