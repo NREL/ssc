@@ -530,16 +530,16 @@ public:
 
 				/* Flow rate corrections to FRta, FRUL (D&B pp 307) */
 				double FprimeUL = -mdotCp_test / area_coll * ::log( 1 - FRUL*area_coll/mdotCp_test ); // D&B eqn 6.20.4
-				double r = ( mdotCp_use/area_coll*(1-exp(-area_coll*FprimeUL/mdotCp_use)) ) / FRUL; // D&B eqn 6.20.3
+				double r = ( mdotCp_use/area_total*(1-exp(-area_total*FprimeUL/mdotCp_use)) ) / FRUL; // D&B eqn 6.20.3
 				double FRta_use = FRta * r; // FRta_use = value for this time step
 				double FRUL_use = FRUL * r; // FRUL_use = value for this time step
 
 				/* Pipe loss adjustment (D&B pp 430) */
 				FRta_use = FRta_use / (1 + UA_pipe / mdotCp_use); // D&B eqn 10.3.9
-				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_coll*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
+				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_total*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
 
 				/* Heat exchanger adjustment (D&B pp 427) */
-				double FR_ratio = 1/( 1 + (area_coll*FRUL_use/mdotCp_use)*(mdotCp_use/(Eff_hx*mdotCp_use)-1)); // D&B eqn 10.2.3
+				double FR_ratio = 1/( 1 + (area_total*FRUL_use/mdotCp_use)*(mdotCp_use/(Eff_hx*mdotCp_use)-1)); // D&B eqn 10.2.3
 				FRta_use = FRta_use * FR_ratio;
 				FRUL_use = FRUL_use * FR_ratio;
 
