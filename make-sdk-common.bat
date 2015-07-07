@@ -86,6 +86,6 @@ copy examples\pvwatts1ts_ex.c sdk-release\examples
 copy examples\pvwattsv5run.c sdk-release\examples
 copy examples\ver.c sdk-release\examples
 
-copy ..\lk\docs\lk_guide.pdf sdk-release\
+copy ..\lk\doc\lk_guide.pdf sdk-release\
 copy ssc\sscapi.h sdk-release\
 copy doc\ssc_guide.pdf sdk-release\
