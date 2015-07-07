@@ -29,6 +29,8 @@ Uses inputs from TRNSYS subhourly outputs for:
 3. Angle of Incidence
 
 Still outputs hourly quantities
+
+7/7/2015 - Nick DiOrio - modified FprimeUL to use single collector not full system area
 -------------------------------------- */
 
 #ifndef M_PI
@@ -202,8 +204,9 @@ public:
 		double test_flow = as_double("test_flow"); // collector test flow rate (kg/s)
 
 		/* collector properties */
-		double mdot = as_double("mdot"); // total system mass flow rate (kg/s)
-		double area = as_double("area_coll") * as_integer("ncoll"); // total solar collector area (m2)
+		double mdot_total = as_double("mdot"); // total system mass flow rate (kg/s)
+		double area_total = as_double("area_coll") * as_integer("ncoll"); // total solar collector area (m2)
+		double area_coll = as_double("area_coll");
 
 		double FRta = as_double("FRta"); // FR(ta)_n (D&B pp 291) (dimensionless) collector heat removal factor * effective transmittance-absorption product (intercept on efficiency curve); indication of how energy is absorbed.
 		double FRUL = as_double("FRUL"); // FRUL (D&B pp 291) (W/m2.C)  collector heat removal factor * collector heat loss coefficient (slope of efficiency curve); indication of how energy is lost.
@@ -522,30 +525,30 @@ public:
 				double T_bot = T_bot_prev;
 				double T_top = T_hot_prev;
 
-				double mdotCp_use = mdot * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
+				double mdotCp_use = mdot_total * fluid_cp; // mass flow rate (kg/s) * Cp_fluid (J/kg.K)
 				double mdotCp_test = test_flow * test_cp; // test flow (kg/s) * Cp_test
 
 				/* Flow rate corrections to FRta, FRUL (D&B pp 307) */
-				double FprimeUL = -mdotCp_test / area * ::log( 1 - FRUL*area/mdotCp_test ); // D&B eqn 6.20.4
-				double r = ( mdotCp_use/area*(1-exp(-area*FprimeUL/mdotCp_use)) ) / FRUL; // D&B eqn 6.20.3
+				double FprimeUL = -mdotCp_test / area_coll * ::log( 1 - FRUL*area_coll/mdotCp_test ); // D&B eqn 6.20.4
+				double r = ( mdotCp_use/area_coll*(1-exp(-area_coll*FprimeUL/mdotCp_use)) ) / FRUL; // D&B eqn 6.20.3
 				double FRta_use = FRta * r; // FRta_use = value for this time step
 				double FRUL_use = FRUL * r; // FRUL_use = value for this time step
 
 				/* Pipe loss adjustment (D&B pp 430) */
 				FRta_use = FRta_use / (1 + UA_pipe / mdotCp_use); // D&B eqn 10.3.9
-				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
+				FRUL_use = FRUL_use * ((1 - UA_pipe / mdotCp_use + 2 * UA_pipe / (area_coll*FRUL_use)) / (1 + UA_pipe / mdotCp_use)); // D&B eqn 10.3.10
 
 				/* Heat exchanger adjustment (D&B pp 427) */
-				double FR_ratio = 1/( 1 + (area*FRUL_use/mdotCp_use)*(mdotCp_use/(Eff_hx*mdotCp_use)-1)); // D&B eqn 10.2.3
+				double FR_ratio = 1/( 1 + (area_coll*FRUL_use/mdotCp_use)*(mdotCp_use/(Eff_hx*mdotCp_use)-1)); // D&B eqn 10.2.3
 				FRta_use = FRta_use * FR_ratio;
 				FRUL_use = FRUL_use * FR_ratio;
 
 				// Compute Q_useful
 				if (Q_useful_prev > 0.)
 				{
-					Q_useful = area*( FRta_use*I_transmitted[idx] - FRUL_use*(T_bot - T_amb_use)); // D&B eqn 6.8.1
+					Q_useful = area_total*( FRta_use*I_transmitted[idx] - FRUL_use*(T_bot - T_amb_use)); // D&B eqn 6.8.1
 				}
-				else Q_useful = area*(FRta_use*I_transmitted[idx] - FRUL_use*(T_tank_prev - T_amb_use) );
+				else Q_useful = area_total*(FRta_use*I_transmitted[idx] - FRUL_use*(T_tank_prev - T_amb_use) );
 				// T_tank_prev is used, because use of T_cold_prev can cause the system to oscillate on and off 
 			
 				if ( I_incident_use < 0.0 )
@@ -556,7 +559,7 @@ public:
 	// Charging -- solar system operating			
 				if (Q_useful > 0.)
 				{
-					double V_hot_next = V_hot_prev + (ts_sec*mdot/rho_water);
+					double V_hot_next = V_hot_prev + (ts_sec*mdot_total/rho_water);
 					if (V_hot_next < V_tank)
 					{
 		// Mode 1 Transition -- solar system operating
@@ -567,9 +570,9 @@ public:
 						if (T_tank > T_tank_max) T_tank = T_tank_max;
 						Q_tankloss = UA_tank * (T_tank - T_room);
 						// uses UA_tank; ignores difference between losses from V_hot and V_cold during this transition period			
-						V_hot = V_hot_prev + ts_sec*mdot/rho_water;
+						V_hot = V_hot_prev + ts_sec*mdot_total/rho_water;
 						V_cold = V_tank - V_hot;
-						T_hot = (T_hot_prev*V_hot_prev + ts_sec*(mdot/rho_water)*(T_cold_prev + dT_collector))/V_hot;
+						T_hot = (T_hot_prev*V_hot_prev + ts_sec*(mdot_total/rho_water)*(T_cold_prev + dT_collector))/V_hot;
 						T_cold = (V_tank/V_cold)*T_tank - (V_hot/V_cold)*T_hot;
 						T_top = T_hot;
 						T_bot = T_cold;
@@ -685,7 +688,7 @@ public:
 				if (Q_useful < 0) Q_useful = 0.0;
 
 				// save output variables - convert Q values to kWh 
-				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area);
+				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total);
 				out_Q_useful[idx] = (ssc_number_t)(Q_useful);
 				out_Q_deliv[idx] = (ssc_number_t)(Q_deliv); //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
 				out_Q_loss[idx] = (ssc_number_t)(Q_tankloss);
