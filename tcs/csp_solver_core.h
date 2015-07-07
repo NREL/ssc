@@ -461,6 +461,8 @@ public:
 	std::vector<double> mv_tes_q_heater;	//[MWt-hr] Energy into TES from heaters (hot+cold) to maintain tank temperatures
 	std::vector<double> mv_tes_T_hot;		//[C] TES hot temperature at end of timestep
 	std::vector<double> mv_tes_T_cold;		//[C] TES cold temperature at end of timestep
+
+	std::vector<std::string> mv_operating_modes;	//[-] List of operating modes tried each timestep
 };
 
 
