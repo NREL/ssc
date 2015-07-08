@@ -55,6 +55,20 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	mv_operating_modes.resize(0);
 
+	mv_q_dot_pc_sb.resize(0);
+	mv_q_dot_pc_min.resize(0);
+	mv_q_dot_pc_max.resize(0);
+	mv_q_dot_pc_target.resize(0);
+
+	mv_is_rec_su_allowed.resize(0);
+	mv_is_pc_su_allowed.resize(0);
+	mv_is_pb_sb_allowed.resize(0);
+
+	mv_q_dot_est_cr_su.resize(0);
+	mv_q_dot_est_cr_on.resize(0);
+	mv_q_dot_tes_dc.resize(0);
+	mv_q_dot_tes_ch.resize(0);
+
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
 }
@@ -2481,6 +2495,24 @@ void C_csp_solver::simulate()
 			}
 		}
 		mv_operating_modes.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+
+
+		// Controller logic info
+		mv_q_dot_pc_sb.push_back(q_pc_sb);		//[MW]
+		mv_q_dot_pc_min.push_back(q_pc_min);	//[MW]
+		mv_q_dot_pc_max.push_back(q_pc_max);	//[MW]
+		mv_q_dot_pc_target.push_back(q_pc_max);	//[MW]
+
+		mv_is_rec_su_allowed.push_back((int)is_rec_su_allowed);	//[-]
+		mv_is_pc_su_allowed.push_back((int)is_pc_su_allowed);	//[-]
+		mv_is_pb_sb_allowed.push_back((int)is_pc_sb_allowed);	//[-]
+
+		mv_q_dot_est_cr_su.push_back(q_dot_cr_startup);		//[MW]
+		mv_q_dot_est_cr_on.push_back(q_dot_cr_on);			//[MW]
+		mv_q_dot_tes_dc.push_back(q_dot_tes_dc);			//[MW]
+		mv_q_dot_tes_ch.push_back(q_dot_tes_ch);			//[MW]
+
+
 
 		// Track time and step forward
 		is_sim_timestep_complete = true;
