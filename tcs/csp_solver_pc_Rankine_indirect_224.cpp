@@ -357,7 +357,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]
 		}
 
-		q_dot_htf = q_startup/3600.0 / (step_sec/3600.0);	//[kWt-hr] * [MW/kW] * [1/hr] = [MWt]
+		q_dot_htf = q_startup/1000.0 / (time_required_su);	//[kWt-hr] * [MW/kW] * [1/hr] = [MWt]
 
 		// *****
 		P_cycle = 0.0;		

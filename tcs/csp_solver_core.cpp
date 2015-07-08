@@ -37,10 +37,22 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	mv_pc_eta.resize(0);
 	mv_pc_W_gross.resize(0);
 	mv_pc_q_startup.resize(0);
+	mv_pc_q_thermal.resize(0);
 	mv_tes_q_losses.resize(0);
 	mv_tes_q_heater.resize(0);
 	mv_tes_T_hot.resize(0);
 	mv_tes_T_cold.resize(0);	
+	mv_tes_dc_q_thermal.resize(0);
+	mv_tes_ch_q_thermal.resize(0);
+	
+	mv_rec_m_dot.resize(0);
+	mv_pc_m_dot.resize(0);
+	mv_tes_dc_m_dot.resize(0);
+	mv_tes_ch_m_dot.resize(0);
+	mv_m_dot_balance.resize(0);
+
+	mv_q_balance.resize(0);
+
 	mv_operating_modes.resize(0);
 
 	// Solved Controller Variables
@@ -100,6 +112,27 @@ void C_csp_solver::init()
 		
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
+
+	if(!m_is_tes)
+	{	// Set constant values for tes HTF states
+	
+		mc_tes_ch_htf_state.m_m_dot = 0.0;		//[kg/hr]
+		mc_tes_ch_htf_state.m_temp_in = 0.0;	//[C]
+		mc_tes_ch_htf_state.m_temp_out =0.0;	//[C]
+
+		mc_tes_dc_htf_state.m_m_dot = 0.0;		//[kg/hr]
+		mc_tes_dc_htf_state.m_temp_in = 0.0;	//[C]
+		mc_tes_dc_htf_state.m_temp_out = 0.0;	//[C]
+
+		mc_tes_outputs.m_q_heater = 0.0;		//[MW]
+		mc_tes_outputs.m_q_dot_loss = 0.0;		//[MW]
+		mc_tes_outputs.m_q_dot_dc_to_htf = 0.0;	//[MW]
+		mc_tes_outputs.m_q_dot_ch_from_htf = 0.0;	//[MW]
+		mc_tes_outputs.m_T_hot_ave = 0.0;		//[K]
+		mc_tes_outputs.m_T_cold_ave = 0.0;		//[K]
+		mc_tes_outputs.m_T_hot_final = 0.0;		//[K]
+		mc_tes_outputs.m_T_cold_final = 0.0;	//[K]
+	}
 }
 
 
@@ -882,6 +915,16 @@ void C_csp_solver::simulate()
 					if( m_is_tes )
 					{
 						mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+					
+						// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+						mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+						mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+						mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+						// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+						mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+						mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+						mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 					}
 
 					are_models_converged = true;
@@ -1011,47 +1054,26 @@ void C_csp_solver::simulate()
 					}
 
 
+					if(m_is_tes)
+					{
+						mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+					
+					
+						// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+						mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+						mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+						mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
 
-					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+						// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+						mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+						mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+						mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					}
+
+					
 					are_models_converged = true;
 					break;
 
-
-					//// Now, check whether we need to defocus the receiver
-					//if( mc_cr_outputs.m_q_thermal > q_pc_max )
-					//{	// Too much power to PC, try defocusing
-					//	operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
-
-					//	are_models_converged = false;
-					//}
-					//else if( mc_cr_outputs.m_q_thermal < q_pc_min )
-					//{	// Not enough thermal power to run power cycle at Min Cutoff fraction: check if we can try standby
-
-					//	// Controller initially entered PC_RM mode, so assume that we should try standby if allowed
-					//	if( is_pc_sb_allowed )
-					//	{	// If controller *was* trying to generate power, then assume that there is enough power to at least try standby
-
-					//		operating_mode = CR_ON__PC_SB__TES_OFF__AUX_OFF;
-					//	}
-					//	else
-					//	{	// PC standby not allowed - shut down CR and PC
-
-					//		operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					//	}
-
-					//	are_models_converged = false;
-					//}
-					//else
-					//{	// Solved successfully within bounds of this operation mode: move on
-					//	if( m_is_tes )
-					//	{
-					//		mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
-					//	}
-
-					//	are_models_converged = true;
-					//}
-
-					//break;
 				}
 				else
 				{
@@ -1098,7 +1120,7 @@ void C_csp_solver::simulate()
 				// If receiver is indeed producing power, then try power cycle at standby
 				// Power cycle: STANDBY
 				mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
-				mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STANDBY;
 				//mc_pc_inputs.m_tou = tou_timestep;
@@ -1112,6 +1134,17 @@ void C_csp_solver::simulate()
 				if( m_is_tes )
 				{
 					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+
+
+					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+					// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 				}
 
 				are_models_converged = true;
@@ -1184,6 +1217,17 @@ void C_csp_solver::simulate()
 				if( m_is_tes )
 				{
 					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+
+
+					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+					// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 				}
 
 				are_models_converged = true;
@@ -1249,6 +1293,17 @@ void C_csp_solver::simulate()
 				if( m_is_tes )
 				{
 					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+
+
+					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+					// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 				}
 
 				are_models_converged = true;
@@ -1288,6 +1343,17 @@ void C_csp_solver::simulate()
 				if( m_is_tes )
 				{
 					mc_tes.idle(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
+
+
+					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+					// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 				}
 
 				are_models_converged = true;
@@ -1427,8 +1493,21 @@ void C_csp_solver::simulate()
 					// 'm_m_dot_htf' and 'm_m_dot_htf_ref' will be NaN, but that should be ok...
 
 					double m_dot_pc = mc_pc_outputs.m_m_dot_demand / 3600.0;		//[kg/s]
+					
+					// Reset mass flow rate in 'mc_pc_htf_state'
+					mc_pc_htf_state.m_m_dot = mc_pc_outputs.m_m_dot_demand;			//[kg/hr]
 
 					bool dc_solved = mc_tes.discharge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_pc, m_T_htf_cold_des, T_pc_in_calc, mc_tes_outputs);
+
+					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+					// Set discharge htf state
+					mc_tes_dc_htf_state.m_m_dot = m_dot_pc*3600.0;							//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;				//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = T_pc_in_calc - 273.15;					//[C] convert from K
 
 					if( dc_solved )
 					{
@@ -1451,11 +1530,20 @@ void C_csp_solver::simulate()
 					double m_dot_pc = std::numeric_limits<double>::quiet_NaN();
 					mc_tes.discharge_full(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_T_htf_cold_des, T_pc_in_calc, m_dot_pc, mc_tes_outputs);
 
+					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+					// Set discharge htf state
+					mc_tes_dc_htf_state.m_m_dot = m_dot_pc*3600.0;							//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;				//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = T_pc_in_calc - 273.15;					//[C] convert from K
 
 					// If receiver IS producing energy, try starting up power cycle
 					// Power Cycle: STARTUP
 					mc_pc_htf_state.m_temp_in = T_pc_in_calc - 273.15;				//[C]
-					mc_pc_htf_state.m_m_dot = m_dot_pc*3600.0;								//[kg/hr] no mass flow rate to power cycle
+					mc_pc_htf_state.m_m_dot = m_dot_pc*3600.0;						//[kg/hr] no mass flow rate to power cycle
 					// Inputs
 					mc_pc_inputs.m_standby_control = C_csp_power_cycle::E_csp_power_cycle_modes::STARTUP;
 					//mc_pc_inputs.m_tou = tou_timestep;
@@ -1703,6 +1791,16 @@ void C_csp_solver::simulate()
 					bool tes_charge_success = mc_tes.charge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_cr_outputs.m_m_dot_salt_tot/3600.0, mc_cr_outputs.m_T_salt_hot+273.15,
 						T_htf_tes_cold_out, mc_tes_outputs);
 					T_htf_tes_cold_out -= 273.15;		//[C] convert back from K
+
+					// Set charge htf state
+					mc_tes_ch_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+					mc_tes_ch_htf_state.m_temp_out = T_htf_tes_cold_out;			//[C]
+
+					// Set discharge htf state
+					mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 
 					if( !tes_charge_success )
 					{	// If receiver output overcharges storage during iteration, then assume we need some defocus and break loop
@@ -2225,6 +2323,16 @@ void C_csp_solver::simulate()
 						break;
 					}
 
+					// HTF charging state
+					mc_tes_ch_htf_state.m_m_dot = m_dot_tes;								//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;				//[C]
+					mc_tes_ch_htf_state.m_temp_out = T_tes_cold_out - 273.15;				//[C] convert from K
+
+					// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+					mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+					mc_tes_dc_htf_state.m_temp_in = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+
 					// Enthalpy balancer (mixer)
 					double T_rec_in_calc = (m_dot_tes*T_tes_cold_out + m_dot_pc_guess*T_pc_out)/m_dot_receiver - 273.15;		//[C]
 
@@ -2327,11 +2435,37 @@ void C_csp_solver::simulate()
 		mv_pc_eta.push_back(mc_pc_outputs.m_eta);					//[-] Power cycle efficiency (gross - no parasitics outside of power block)
 		mv_pc_W_gross.push_back(mc_pc_outputs.m_P_cycle*step_hr);	//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
 		mv_pc_q_startup.push_back(mc_pc_outputs.m_q_startup);		//[MWt-hr] Power cycle startup thermal energy
+		mv_pc_q_thermal.push_back(mc_pc_outputs.m_q_dot_htf*step_hr);	//[MWt-hr] Power cycle input thermal energy
 		mv_tes_q_losses.push_back(mc_tes_outputs.m_q_dot_loss*step_hr);	//[MWt-hr] TES thermal losses to environment
 		mv_tes_q_heater.push_back(mc_tes_outputs.m_q_heater*step_hr);	//[MWt-hr] Energy into TES from heaters (hot+cold) to maintain tank temperatures
 		mv_tes_T_hot.push_back(mc_tes_outputs.m_T_hot_final-273.15);	//[C] TES hot temperature at end of timestep
 		mv_tes_T_cold.push_back(mc_tes_outputs.m_T_cold_final-273.15);	//[C] TES cold temperature at end of timestep
+		mv_tes_dc_q_thermal.push_back(mc_tes_outputs.m_q_dot_dc_to_htf*step_hr);	//[MWt-hr] TES discharge thermal energy
+		mv_tes_ch_q_thermal.push_back(mc_tes_outputs.m_q_dot_ch_from_htf*step_hr);	//[MWt-hr] TES charge thermal energy
 
+		mv_rec_m_dot.push_back(mc_cr_outputs.m_m_dot_salt_tot);		//[kg/hr] Receiver mass flow rate output
+		mv_pc_m_dot.push_back(mc_pc_htf_state.m_m_dot);				//[kg/hr] Mass flow rate to power cycle
+		mv_tes_dc_m_dot.push_back(mc_tes_dc_htf_state.m_m_dot);		//[kg/hr] TES mass flow rate discharge
+		mv_tes_ch_m_dot.push_back(mc_tes_ch_htf_state.m_m_dot);		//[kg/hr] TES mass flow rate charge
+
+		// Mass flow rate balance
+		double m_dot_bal = mc_cr_outputs.m_m_dot_salt_tot + mc_tes_dc_htf_state.m_m_dot - mc_pc_htf_state.m_m_dot - mc_tes_ch_htf_state.m_m_dot;
+		double m_dot_sys_max = fmax(mc_tes_ch_htf_state.m_m_dot, fmax(mc_pc_htf_state.m_m_dot, fmax(mc_cr_outputs.m_m_dot_salt_tot, mc_tes_dc_htf_state.m_m_dot)));
+		if(m_dot_sys_max > 0.0)
+			mv_m_dot_balance.push_back(m_dot_bal / m_dot_sys_max);		//[-] Relative mass balance 'error'
+		else
+			mv_m_dot_balance.push_back(0.0);			
+
+		// Energy balance
+		double q_dot_bal = mc_cr_outputs.m_q_thermal + mc_tes_outputs.m_q_dot_dc_to_htf - mc_pc_outputs.m_q_dot_htf - mc_tes_outputs.m_q_dot_ch_from_htf;
+		double q_dot_sys_max = fmax(fmax(fmax(mc_cr_outputs.m_q_thermal, mc_tes_outputs.m_q_dot_dc_to_htf), mc_pc_outputs.m_q_dot_htf),mc_tes_outputs.m_q_dot_ch_from_htf);
+		if(q_dot_sys_max > 0.0)
+			mv_q_balance.push_back(q_dot_bal / q_dot_sys_max);
+		else
+			mv_q_balance.push_back(0.0);
+
+		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
+		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
 		int n_op_modes = m_op_mode_tracking.size();
 		double op_mode_key = m_op_mode_tracking[0];
 		for(int i = 1; i < n_op_modes; i++)

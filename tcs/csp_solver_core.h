@@ -293,6 +293,8 @@ public:
 	{
 		double m_q_heater;		//[MW] Heating power required to keep tanks at a minimum temperature
 		double m_q_dot_loss;	//[MW] Storage thermal losses
+		double m_q_dot_dc_to_htf;	//[MW] Thermal power to the HTF from storage
+		double m_q_dot_ch_from_htf;	//[MW] Thermal power from the HTF to storage
 		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
 		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
 		double m_T_hot_final;	//[K] Hot temperature at end of timestep
@@ -300,7 +302,8 @@ public:
 	
 		S_csp_tes_outputs()
 		{
-			m_q_heater = m_q_dot_loss = m_T_hot_ave = m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
+			m_q_heater = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = m_T_hot_ave = 
+			m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -344,6 +347,8 @@ private:
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
 	C_csp_power_cycle::S_csp_pc_outputs mc_pc_outputs;
 
+	C_csp_solver_htf_state mc_tes_ch_htf_state;
+	C_csp_solver_htf_state mc_tes_dc_htf_state;
 	C_csp_tes::S_csp_tes_outputs mc_tes_outputs;
 
 	C_csp_solver_sim_info mc_sim_info;
@@ -460,10 +465,21 @@ public:
 	std::vector<double> mv_pc_eta;			//[-] Power cycle efficiency (gross - no parasitics outside of power block)
 	std::vector<double> mv_pc_W_gross;		//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
 	std::vector<double> mv_pc_q_startup;	//[MWt-hr] Power cycle startup thermal energy
+	std::vector<double> mv_pc_q_thermal;	//[MWt-hr] Power cycle input thermal energy
 	std::vector<double> mv_tes_q_losses;	//[MWt-hr] TES thermal losses to environment
 	std::vector<double> mv_tes_q_heater;	//[MWt-hr] Energy into TES from heaters (hot+cold) to maintain tank temperatures
 	std::vector<double> mv_tes_T_hot;		//[C] TES hot temperature at end of timestep
 	std::vector<double> mv_tes_T_cold;		//[C] TES cold temperature at end of timestep
+	std::vector<double> mv_tes_dc_q_thermal;	//[MWt-hr] TES discharge thermal energy
+	std::vector<double> mv_tes_ch_q_thermal;	//[MWt-hr] TES charge thermal energy
+
+	std::vector<double> mv_rec_m_dot;		//[kg/hr] Mass flow rate from receiver
+	std::vector<double> mv_pc_m_dot;		//[kg/hr] Mass flow rate to power cycle
+	std::vector<double> mv_tes_dc_m_dot;	//[kg/hr] Mass flow rate (HTF) discharged from TES
+	std::vector<double> mv_tes_ch_m_dot;	//[kg/hr] Mass flow rate (HTF) charging TES
+	std::vector<double> mv_m_dot_balance;	//[-] Are the sums of mass flow (close to) zero?
+
+	std::vector<double> mv_q_balance;		//[-] Is the 1st law satisfied?
 
 	std::vector<double> mv_operating_modes;	//[-] List of operating modes tried each timestep
 };

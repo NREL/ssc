@@ -527,7 +527,7 @@ void C_csp_two_tank_tes::charge_avail_est(double T_hot_K, double step_s, double 
 	m_m_dot_tes_ch_max = m_dot_tank_charge_avail*step_s;		//[kg/s]
 }
 
-void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
+void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the hot discharge temperature on the HX side (if applicable) during FULL DISCHARGE. If no heat exchanger (direct storage),
 	//    the discharge temperature is equal to the average (timestep) hot tank outlet temperature
@@ -563,9 +563,15 @@ void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
 	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
 
+	// Calculate thermal power to HTF
+	double T_htf_ave = 0.5*(T_htf_cold_in + T_htf_hot_out);		//[K]
+	double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+	outputs.m_q_dot_dc_to_htf = m_dot_htf_out*cp_htf_ave*(T_htf_hot_out - T_htf_cold_in)/1000.0;		//[MWt]
+	outputs.m_q_dot_ch_from_htf = 0.0;							//[MWt]
+
 }
 
-bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_cold_in /*K*/, double & T_htf_hot_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the hot discharge temperature on the HX side (if applicable). If no heat exchanger (direct storage),
 	// the discharge temperature is equal to the average (timestep) hot tank outlet temperature.
@@ -606,17 +612,23 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 
 	}
 
-	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
-	outputs.m_q_heater = q_heater_cold + q_heater_hot;
-	outputs.m_T_hot_ave = T_htf_hot_out;
-	outputs.m_T_cold_ave = T_cold_ave;
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
+	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MWt]
+	outputs.m_T_hot_ave = T_htf_hot_out;						//[K]
+	outputs.m_T_cold_ave = T_cold_ave;							//[K]
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
 	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
+
+	// Calculate thermal power to HTF
+	double T_htf_ave = 0.5*(T_htf_cold_in + T_htf_hot_out);		//[K]
+	double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+	outputs.m_q_dot_dc_to_htf = m_dot_htf_in*cp_htf_ave*(T_htf_hot_out - T_htf_cold_in)/1000.0;		//[MWt]
+	outputs.m_q_dot_ch_from_htf = 0.0;		//[MWt]
 
 	return true;
 }
 
-bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
+bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	// This method calculates the cold charge return temperature on the HX side (if applicable). If no heat exchanger (direct storage),
 	// the return charge temperature is equal to the average (timestep) cold tank outlet temperature.
@@ -666,6 +678,13 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K] Hot temperature at end of timestep
 	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K] Cold temperature at end of timestep
 
+
+	// Calculate thermal power to HTF
+	double T_htf_ave = 0.5*(T_htf_hot_in + T_htf_cold_out);		//[K]
+	double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+	outputs.m_q_dot_ch_from_htf = m_dot_htf_in*cp_htf_ave*(T_htf_hot_in - T_htf_cold_out)/1000.0;		//[MWt]
+	outputs.m_q_dot_dc_to_htf = 0.0;							//[MWt]
+
 	return true;
 
 }
@@ -688,6 +707,9 @@ void C_csp_two_tank_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_te
 	outputs.m_T_cold_ave = T_cold_ave;							//[K]
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
 	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
+
+	outputs.m_q_dot_ch_from_htf = 0.0;		//[MWt]
+	outputs.m_q_dot_dc_to_htf = 0.0;		//[MWt]
 }
 
 void C_csp_two_tank_tes::converged()
