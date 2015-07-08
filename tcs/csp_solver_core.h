@@ -482,6 +482,23 @@ public:
 	std::vector<double> mv_q_balance;		//[-] Is the 1st law satisfied?
 
 	std::vector<double> mv_operating_modes;	//[-] List of operating modes tried each timestep
+
+	// Controller logic info
+	std::vector<double> mv_q_dot_pc_sb;		//[MW]
+	std::vector<double> mv_q_dot_pc_min;	//[MW]
+	std::vector<double> mv_q_dot_pc_max;	//[MW]
+	std::vector<double> mv_q_dot_pc_target;	//[MW]
+
+	std::vector<int> mv_is_rec_su_allowed;	//[-]
+	std::vector<int> mv_is_pc_su_allowed;	//[-]
+	std::vector<int> mv_is_pb_sb_allowed;	//[-]
+
+	std::vector<double> mv_q_dot_est_cr_su;	//[MW]
+	std::vector<double> mv_q_dot_est_cr_on;	//[MW]
+	std::vector<double> mv_q_dot_tes_dc;	//[MW]
+	std::vector<double> mv_q_dot_tes_ch;	//[MW]
+	
+
 };
 
 
