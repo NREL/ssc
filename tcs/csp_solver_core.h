@@ -483,7 +483,7 @@ public:
 
 	std::vector<double> mv_operating_modes;	//[-] List of operating modes tried each timestep
 
-	// Controller logic info
+	// Controller logic info	
 	std::vector<double> mv_q_dot_pc_sb;		//[MW]
 	std::vector<double> mv_q_dot_pc_min;	//[MW]
 	std::vector<double> mv_q_dot_pc_max;	//[MW]
@@ -491,13 +491,17 @@ public:
 
 	std::vector<int> mv_is_rec_su_allowed;	//[-]
 	std::vector<int> mv_is_pc_su_allowed;	//[-]
-	std::vector<int> mv_is_pb_sb_allowed;	//[-]
+	std::vector<int> mv_is_pc_sb_allowed;	//[-]
 
-	std::vector<double> mv_q_dot_est_cr_su;	//[MW]
-	std::vector<double> mv_q_dot_est_cr_on;	//[MW]
-	std::vector<double> mv_q_dot_tes_dc;	//[MW]
-	std::vector<double> mv_q_dot_tes_ch;	//[MW]
+	std::vector<double> mv_q_dot_est_cr_su;	 //[MW]
+	std::vector<double> mv_q_dot_est_cr_on;	 //[MW]
+	std::vector<double> mv_q_dot_est_tes_dc; //[MW]
+	std::vector<double> mv_q_dot_est_tes_ch; //[MW]
 	
+	std::vector<double> mv_rec_q_dot_thermal;	//[MWt] Receiver thermal power output over (perhaps varying length) timestep 
+	std::vector<double> mv_pc_q_dot_thermal;	//[MWt] Power cycle input thermal power
+	std::vector<double> mv_tes_dc_q_dot_thermal;	//[MWt] TES discharge thermal power
+	std::vector<double> mv_tes_ch_q_dot_thermal;	//[MWt] TES charge thermal power
 
 };
 
