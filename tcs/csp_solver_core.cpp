@@ -62,12 +62,17 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	mv_is_rec_su_allowed.resize(0);
 	mv_is_pc_su_allowed.resize(0);
-	mv_is_pb_sb_allowed.resize(0);
+	mv_is_pc_sb_allowed.resize(0);
 
 	mv_q_dot_est_cr_su.resize(0);
 	mv_q_dot_est_cr_on.resize(0);
-	mv_q_dot_tes_dc.resize(0);
-	mv_q_dot_tes_ch.resize(0);
+	mv_q_dot_est_tes_dc.resize(0);
+	mv_q_dot_est_tes_ch.resize(0);
+
+	mv_rec_q_dot_thermal.resize(0);
+	mv_pc_q_dot_thermal.resize(0);
+	mv_tes_dc_q_dot_thermal.resize(0);
+	mv_tes_ch_q_dot_thermal.resize(0);
 
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
@@ -187,6 +192,10 @@ void C_csp_solver::simulate()
 
 	while( mc_sim_info.m_time <= sim_time_end )
 	{
+		// Store mc_sim_info at start of timestep, use in case it needs to be reset if variable timestep modes fail
+		double step_ts_start = mc_sim_info.m_step;		//[s]
+		double time_ts_start = mc_sim_info.m_step;		//[s]
+		
 		// Get collector/receiver & power cycle operating states
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		pc_operating_state = mc_power_cycle.get_operating_state();
@@ -1501,7 +1510,23 @@ void C_csp_solver::simulate()
 						mc_pc_htf_state,
 						mc_pc_inputs,
 						mc_pc_outputs,
-						mc_sim_info);
+						mc_sim_info);  
+
+					// Check for new timestep, probably will find one here
+					step_local = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+					if( step_local < mc_sim_info.m_step )
+					{
+						is_sim_timestep_complete = false;
+					}
+					else
+					{
+						is_sim_timestep_complete = true;
+					}
+
+					// Reset sim_info values
+					mc_sim_info.m_step = step_local;						//[s]
+					mc_sim_info.m_time = time_previous + step_local;		//[s]
+
 
 					// Use 'm_m_dot_demand' as an input to TES model
 					// 'm_m_dot_htf' and 'm_m_dot_htf_ref' will be NaN, but that should be ok...
@@ -1539,6 +1564,11 @@ void C_csp_solver::simulate()
 				if( exit_mode == NO_SOLUTION )
 				{	// Try fully discharging TES and beginning PC startup
 					// Check that power cycle hasn't completely started up, as that suggests an error above (in this mode)
+
+					// First, reset timestep info
+					mc_sim_info.m_step = step_ts_start;		//[s]
+					mc_sim_info.m_time = time_ts_start;		//[s]
+					is_sim_timestep_complete = true;
 
 					// Get mass flow rate and temperature at a full discharge
 					double m_dot_pc = std::numeric_limits<double>::quiet_NaN();
@@ -2505,14 +2535,17 @@ void C_csp_solver::simulate()
 
 		mv_is_rec_su_allowed.push_back((int)is_rec_su_allowed);	//[-]
 		mv_is_pc_su_allowed.push_back((int)is_pc_su_allowed);	//[-]
-		mv_is_pb_sb_allowed.push_back((int)is_pc_sb_allowed);	//[-]
+		mv_is_pc_sb_allowed.push_back((int)is_pc_sb_allowed);	//[-]
 
 		mv_q_dot_est_cr_su.push_back(q_dot_cr_startup);		//[MW]
 		mv_q_dot_est_cr_on.push_back(q_dot_cr_on);			//[MW]
-		mv_q_dot_tes_dc.push_back(q_dot_tes_dc);			//[MW]
-		mv_q_dot_tes_ch.push_back(q_dot_tes_ch);			//[MW]
+		mv_q_dot_est_tes_dc.push_back(q_dot_tes_dc);		//[MW]
+		mv_q_dot_est_tes_ch.push_back(q_dot_tes_ch);		//[MW]
 
-
+		mv_rec_q_dot_thermal.push_back(mc_cr_outputs.m_q_thermal);				//[MW]
+		mv_pc_q_dot_thermal.push_back(mc_pc_outputs.m_q_dot_htf);				//[MW]
+		mv_tes_dc_q_dot_thermal.push_back(mc_tes_outputs.m_q_dot_dc_to_htf);	//[MW]
+		mv_tes_ch_q_dot_thermal.push_back(mc_tes_outputs.m_q_dot_ch_from_htf);	//[MW]
 
 		// Track time and step forward
 		is_sim_timestep_complete = true;
