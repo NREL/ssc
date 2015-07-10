@@ -38,104 +38,104 @@ Still outputs hourly quantities
 #endif
 
 static var_info _cm_vtab_swh[] = {
-	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                                  GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",             "local weather file path",          "",       "",                      "Weather",      "*",                         "LOCAL_FILE",                  "" },
-
-	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                   "kg/hr",  "",                      "SWH",      "*",                       "LENGTH=8760",						 "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "SWH", "*", "", "" },
-
-
-	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                   "deg",    "",                      "SWH",      "*",                       "MIN=0,MAX=90",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                "deg",    "90=E,180=S",            "SWH",      "*",                       "MIN=0,MAX=360",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",        "0..1",   "",                      "SWH",      "*",                       "FACTOR",                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",            "0/1/2",    "Beam+Diff,Global+Beam,Global+Diff", "SWH",      "?=0",                     "INTEGER,MIN=0,MAX=2",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",  "0/1/2",  "Isotropic,HDKR,Perez",  "SWH",      "?=1",                     "INTEGER,MIN=0,MAX=2",               "" },
-
-	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",        "Hourly beam shading loss",             "%",         "",               "SWH",      "?",                       "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",           "Month x Hour beam shading loss",       "%",         "",               "SWH",      "?",                       "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",          "Azimuth x altitude beam shading loss", "%",         "",               "SWH",      "?",                       "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",          "Diffuse shading loss",                 "%",         "",               "SWH",      "?",                       "",                              "" },
-
-
-	{ SSC_INPUT,        SSC_NUMBER,      "mdot",                  "Total system mass flow rate",      "kg/s",   "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ncoll",                 "Number of collectors",             "",       "",                      "SWH",      "*",                       "POSITIVE,INTEGER",                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fluid",			      "Working fluid in system",          "",       "Water,Glycol",          "SWH",      "*",                       "INTEGER,MIN=0,MAX=1",               "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "area_coll",             "Single collector area",            "m2",     "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "FRta",                  "FRta",                             "",       "",                      "SWH",      "*",                       "",                                  "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "FRUL",                  "FRUL",                             "",       "",                      "SWH",      "*",                       "",                                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "iam",                   "Incidence angle modifier",         "",       "",                      "SWH",      "*",                       "",                                  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "test_fluid",            "Fluid used in collector test",     "",       "Water,Glycol",          "SWH",      "*",                       "INTEGER,MIN=0,MAX=1",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "test_flow",             "Flow rate used in collector test", "kg/s",   "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_length",           "Length of piping in system",       "m",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_diam",             "Pipe diameter",                    "m",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",     "W/m2.C", "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pipe_insul",            "Pipe insulation thickness",        "m",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "tank_h2d_ratio",        "Solar tank height to diameter ratio", "",    "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "U_tank",                "Solar tank heat loss coefficient",  "W/m2K", "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "V_tank",                "Solar tank volume",                 "m3",    "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "hx_eff",                "Heat exchanger effectiveness",      "0..1",  "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "T_room",                "Temperature around solar tank", "C",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "T_tank_max",            "Max temperature in solar tank",  "C",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "T_set",                 "Set temperature",                  "C",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "pump_power",            "Pump power",                       "W",      "",                      "SWH",      "*",                       "POSITIVE",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "pump_eff",              "Pumping efficiency",               "%",      "",                      "SWH",      "*",                       "PERCENT",                           "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "use_custom_mains",      "Use custom mains",                   "%",      "",                      "SWH",      "*",                       "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "custom_mains",          "Custom mains",						"C",      "",                      "SWH",      "*",                       "LENGTH=8760",                     "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "use_custom_set",		  "Use custom set points",              "%",      "",                      "SWH",      "*",                       "INTEGER,MIN=0,MAX=1",            "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "custom_set",            "Custom set points",					"C",      "",                      "SWH",      "*",                       "LENGTH=8760",                     "" },
-
-
-
-	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                  "Irradiance - Beam",                  "W/m2",  "",                      "Time Series",      "*",                        "",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "diffuse",               "Irradiance - Diffuse",               "W/m2",  "",                      "Time Series",      "*",                        "",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "I_incident",            "Irradiance - Incident",              "W/m2",  "",                      "Time Series",      "*",                        "",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "I_transmitted",         "Irradiance - Transmitted",           "W/m2",  "",                      "Time Series",      "*",                        "",                     "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "shading_loss",          "Shading losses",                     "%",     "",                      "Time Series",      "*",                        "",                     "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",   "local weather file path",             "",        "",                                  "Weather",          "*",                      "LOCAL_FILE",                         "" },
+																									     		    						             				     
+	{ SSC_INPUT,        SSC_ARRAY,       "scaled_draw",           "Hot water draw",                      "kg/hr",   "",                                  "SWH",              "*",                      "LENGTH=8760",						 "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",       "Nameplate capacity",                  "kW",      "",                                  "SWH",              "*",                      "", "" },
+																									     		    						             				     
+																									     		    						             				     
+	{ SSC_INPUT,        SSC_NUMBER,      "tilt",                  "Collector tilt",                      "deg",     "",                                  "SWH",              "*",                      "MIN=0,MAX=90",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "azimuth",               "Collector azimuth",                   "deg",     "90=E,180=S",                        "SWH",              "*",                      "MIN=0,MAX=360",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "albedo",                "Ground reflectance factor",           "0..1",    "",                                  "SWH",              "*",                      "FACTOR",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",               "0/1/2",   "Beam+Diff,Global+Beam,Global+Diff", "SWH",              "?=0",                    "INTEGER,MIN=0,MAX=2",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",     "0/1/2",   "Isotropic,HDKR,Perez",  "SWH",      "?=1",                                        "INTEGER,MIN=0,MAX=2",                "" },
+																																								             
+	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",        "Hourly beam shading loss",             "%",      "",                                  "SWH",              "?",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",           "Month x Hour beam shading loss",       "%",      "",                                  "SWH",              "?",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",          "Azimuth x altitude beam shading loss", "%",      "",                                  "SWH",              "?",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",          "Diffuse shading loss",                 "%",      "",                                  "SWH",              "?",                       "",                                  "" },
+																																								             
+																																								             
+	{ SSC_INPUT,        SSC_NUMBER,      "mdot",                  "Total system mass flow rate",          "kg/s",   "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ncoll",                 "Number of collectors",                 "",       "",                                  "SWH",              "*",                       "POSITIVE,INTEGER",                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fluid",			      "Working fluid in system",              "",       "Water,Glycol",                      "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
+																									      									             		             
+	{ SSC_INPUT,        SSC_NUMBER,      "area_coll",             "Single collector area",                "m2",     "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "FRta",                  "FRta",                                 "",       "",                                  "SWH",              "*",                       "",                                  "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "FRUL",                  "FRUL",                                 "",       "",                                  "SWH",              "*",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "iam",                   "Incidence angle modifier",             "",       "",                                  "SWH",              "*",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "test_fluid",            "Fluid used in collector test",         "",       "Water,Glycol",                      "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "test_flow",             "Flow rate used in collector test",     "kg/s",   "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+																									      									             		             
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_length",           "Length of piping in system",           "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_diam",             "Pipe diameter",                        "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_k",                "Pipe insulation conductivity",         "W/m2.C", "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pipe_insul",            "Pipe insulation thickness",            "m",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+																									      														             
+	{ SSC_INPUT,        SSC_NUMBER,      "tank_h2d_ratio",        "Solar tank height to diameter ratio",  "",       "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "U_tank",                "Solar tank heat loss coefficient",     "W/m2K",  "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "V_tank",                "Solar tank volume",                    "m3",     "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "hx_eff",                "Heat exchanger effectiveness",         "0..1",   "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+																																			             		             
+	{ SSC_INPUT,        SSC_NUMBER,      "T_room",                "Temperature around solar tank",        "C",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_tank_max",            "Max temperature in solar tank",        "C",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "T_set",                 "Set temperature",                      "C",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+																																			             		             
+	{ SSC_INPUT,        SSC_NUMBER,      "pump_power",            "Pump power",                           "W",      "",                                  "SWH",              "*",                       "POSITIVE",                          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pump_eff",              "Pumping efficiency",                   "%",      "",                                  "SWH",              "*",                       "PERCENT",                           "" },
+																																			             		             
+	{ SSC_INPUT,        SSC_NUMBER,      "use_custom_mains",      "Use custom mains",                     "%",      "",                                  "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "custom_mains",          "Custom mains",						  "C",      "",                                  "SWH",              "*",                       "LENGTH=8760",                       "" },
+																									      									             		             
+	{ SSC_INPUT,        SSC_NUMBER,      "use_custom_set",		  "Use custom set points",                "%",      "",                                  "SWH",              "*",                       "INTEGER,MIN=0,MAX=1",               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "custom_set",            "Custom set points",					  "C",      "",                                  "SWH",              "*",                       "LENGTH=8760",                       "" },
+																																			             
 
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                    "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                         "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                      "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                           "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                      "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                 "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                          "W",    "",                      "Time Series",      "*",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                  "Irradiance - Beam",                    "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "diffuse",               "Irradiance - Diffuse",                 "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "I_incident",            "Irradiance - Incident",                "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "I_transmitted",         "Irradiance - Transmitted",             "W/m2",   "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "shading_loss",          "Shading losses",                       "%",      "",                                  "Time Series",      "*",                        "",                                 "" },
+																										  
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                           "W",    "",                      "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_amb",                 "T ambient",						  "C",		"",                    "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                           "C",     "",                     "Time Series",      "*",                        "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_deliv",               "T delivered",                      "C",      "",                    "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_hot",                 "T hot",                            "C",     "",                     "Time Series",      "*",                        "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_mains",               "T mains",						  "C",      "",                    "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tank",                "T tank",                           "C",      "",                    "Time Series",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "V_hot",                 "V hot",                            "m3",    "",                     "Time Series",      "*",                        "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "V_cold",                "V cold",                           "m3",    "",                     "Time Series",      "*",                        "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                   "kg/hr",  "",                    "Time Series",      "*",                       "",                       "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                   "",      "1,2,3,4",              "Time Series",      "*",                         "",                      "" },
-	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Energy saved",                     "Wh",      "1,2,3,4",             "Time Series",      "*",                         "",                      "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",		  "Energy saved",                    "kWh",    "",                      "Time Series",      "*",                        "",                      "" },
-	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                    "kWh",    "",                      "Monthly",      "*",                        "LENGTH=12",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_aux",		  "Q auxiliary",                    "kWh",    "",                      "Monthly",      "*",                        "LENGTH=12",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "Monthly",      "*",                        "LENGTH=12",                      "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",		  "System energy",                    "kWh",    "",                      "Monthly",      "*",                        "LENGTH=12",                      "" },
-	
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_deliv",		  "Q delivered",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_aux",		  "Q auxiliary",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",		  "System energy",                    "kWh",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                    "",    "",                      "Annual",      "*",                        "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                   "%",         "",                   "Annual",                                   "*",           "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                 "kWh/kW",         "",                   "Annual",                                   "*",           "", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                        "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                             "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                          "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                               "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                          "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                     "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                              "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+																									      		    					                 																		             
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                               "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_amb",                 "T ambient",						      "C",		"",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                               "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_deliv",               "T delivered",                          "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_hot",                 "T hot",                                "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_mains",               "T mains",						      "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tank",                "T tank",                               "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "V_hot",                 "V hot",                                "m3",     "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "V_cold",                "V cold",                               "m3",     "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                       "kg/hr",  "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                       "",       "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
+																									      								                 																		            
+	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Energy saved",                         "Wh",     "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",		  "Energy saved",                         "kWh",    "",                                  "Time Series",      "*",                        "",                                 "" },
+																																			             																		            
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_aux",		  "Q auxiliary",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_auxonly",	  "Q auxiliary only",                    "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",		  "System energy",                       "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
+																												    						             			        
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_aux",		  "Q auxiliary",                         "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_Q_auxonly",	  "Q auxiliary only",                    "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",		  "System energy",                       "kWh",     "",                                  "Annual",           "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                      "",        "",                                  "Annual",           "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                     "%",       "",                                  "Annual",           "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                   "kWh/kW",  "",                                  "Annual",           "*",                        "",                                 "" },
 
 	
 	var_info_invalid };
