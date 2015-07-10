@@ -438,7 +438,8 @@ public:
 
 		SKIP_10,
 
-		CR_ON__PC_TARGET__TES_CH__AUX_OFF
+		CR_ON__PC_TARGET__TES_CH__AUX_OFF,
+		CR_ON__PC_TARGET__TES_DC__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
