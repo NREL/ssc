@@ -447,6 +447,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 				int expr_result = 0;
 				char op = 0;
 				if ( (pos=expr.find('=')) != std::string::npos ) op = '=';
+				else if ( (pos=expr.find('~')) != std::string::npos) op = '~';
 				else if ( (pos=expr.find('<')) != std::string::npos ) op = '<';
 				else if ( (pos=expr.find('>')) != std::string::npos ) op = '>';
 				else if ( (pos=expr.find(':')) != std::string::npos ) op = ':';
@@ -507,6 +508,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 					switch(op)
 					{
 					case '=': expr_result = lhs_val == rhs_val ? 1 : 0 ; break;
+					case '~': expr_result = lhs_val != rhs_val ? 1 : 0; break;
 					case '<': expr_result = lhs_val < rhs_val ? 1 : 0 ; break;
 					case '>': expr_result = lhs_val > rhs_val ? 1 : 0 ; break;
 					default: throw check_error(name, "invalid numerical operator", expr);
@@ -525,6 +527,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 				{
 					cur_result = (cur_result || expr_result);
 				}
+
 				else
 					throw check_error(name, "invalid evaluation sequence", reqexpr);
 			}
