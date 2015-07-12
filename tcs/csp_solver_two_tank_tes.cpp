@@ -689,6 +689,50 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 
 }
 
+void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs)
+{
+	// This method calculates the cold charge return temperature and mass flow rate on the HX side (if applicable) during FULL CHARGE. If no heat exchanger (direct storage),
+	//    the charge return temperature is equal to the average (timestep) cold tank outlet temperature
+
+	// Inputs are:
+	// 1) inlet temperature on the HX side (if applicable). If no heat exchanger, the inlet temperature is the temperature
+	//	   of HTF directly entering the hot tank. 
+
+	double q_heater_cold, q_heater_hot, q_dot_loss_cold, q_dot_loss_hot, T_hot_ave;
+	q_heater_cold = q_heater_hot = q_dot_loss_cold = q_dot_loss_hot = T_hot_ave = std::numeric_limits<double>::quiet_NaN();
+
+	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
+	if( !ms_params.m_is_hx )
+	{
+		m_dot_htf_out = m_m_dot_tes_dc_max / timestep;		//[kg/s]
+
+		// Call energy balance on hot tank charge to track tank mass and temperature
+		mc_hot_tank.energy_balance(timestep, m_dot_htf_out, 0.0, T_amb, T_htf_hot_in, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+
+		// Call energy balance on cold tank charge to calculate cold HTF return temperature
+		mc_cold_tank.energy_balance(timestep, 0.0, m_dot_htf_out, T_amb, 0.0, T_htf_cold_out, q_heater_cold, q_dot_loss_cold);
+	}
+
+	else
+	{	// Iterate between field htf - hx - and storage	
+
+	}
+
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
+	outputs.m_q_heater = q_heater_cold + q_heater_hot;
+	outputs.m_T_hot_ave = T_hot_ave;
+	outputs.m_T_cold_ave = T_htf_cold_out;
+	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
+	outputs.m_T_cold_final = mc_cold_tank.get_m_T_calc();		//[K]
+
+	// Calculate thermal power to HTF
+	double T_htf_ave = 0.5*(T_htf_hot_in + T_htf_cold_out);		//[K]
+	double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
+	outputs.m_q_dot_dc_to_htf = m_dot_htf_out*cp_htf_ave*(T_htf_hot_in - T_htf_cold_out) / 1000.0;		//[MWt]
+	outputs.m_q_dot_ch_from_htf = 0.0;							//[MWt]
+
+}
+
 void C_csp_two_tank_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs)
 {
 	double T_hot_ave, q_hot_heater, q_dot_hot_loss;
