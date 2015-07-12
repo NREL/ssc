@@ -324,6 +324,8 @@ public:
 	virtual void discharge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_cold_in, double & T_htf_hot_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 
 	virtual bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/, double T_htf_hot_in, double & T_htf_cold_out /*K*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
+
+	virtual void charge_full(double timestep /*s*/, double T_amb /*K*/, double T_htf_hot_in /*K*/, double & T_htf_cold_out /*K*/, double & m_dot_htf_out /*kg/s*/, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
 	virtual void idle(double timestep, double T_amb, C_csp_tes::S_csp_tes_outputs &outputs) = 0;
 	
@@ -368,6 +370,9 @@ private:
 
 	bool m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE;
 	bool m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE;
+
+	bool m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail;
+	bool m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
 
 	// member string for exception messages
 	std::string error_msg;
@@ -439,7 +444,9 @@ public:
 		SKIP_10,
 
 		CR_ON__PC_TARGET__TES_CH__AUX_OFF,
-		CR_ON__PC_TARGET__TES_DC__AUX_OFF
+		CR_ON__PC_TARGET__TES_DC__AUX_OFF,
+
+		CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
