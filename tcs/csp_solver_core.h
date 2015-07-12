@@ -374,6 +374,10 @@ private:
 	bool m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail;
 	bool m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
 
+	bool m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail;
+
+	bool m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail;
+
 	// member string for exception messages
 	std::string error_msg;
 
@@ -446,7 +450,11 @@ public:
 		CR_ON__PC_TARGET__TES_CH__AUX_OFF,
 		CR_ON__PC_TARGET__TES_DC__AUX_OFF,
 
-		CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF
+		CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+		CR_DF__PC_OFF__TES_FULL__AUX_OFF,
+		
+		CR_OFF__PC_SB__TES_DC__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
