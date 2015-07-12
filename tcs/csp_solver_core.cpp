@@ -657,9 +657,18 @@ void C_csp_solver::simulate()
 				// Assuming here that partial defocus is allowed, so should always be able to reach full power to PC
 				// If CR and PC for some reason don't solve or produce power, will shut down CR and PC
 
-				// Should have CR thermal output results from either steady state call at beginning of timestep or previous mode
-				// Use this to estimate required defocus as a starting point for iteration
-				// But.. check anyway
+				
+				// Get collector-receiver performance with no defocus
+				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+				mc_collector_receiver.call(mc_weather.ms_outputs,
+					mc_cr_htf_state,
+					mc_cr_inputs,
+					mc_cr_outputs,
+					mc_sim_info);
+
+
 				double defocus_guess_ini = std::numeric_limits<double>::quiet_NaN();
 				if( mc_cr_outputs.m_q_thermal > 0.0 )
 				{
@@ -667,37 +676,21 @@ void C_csp_solver::simulate()
 					defocus_guess_ini = fmin(1.0, q_pc_max / mc_cr_outputs.m_q_thermal);
 				}
 				else
-				{
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
-					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
-						mc_cr_inputs,
-						mc_cr_outputs,
-						mc_sim_info);
+				{					
+					// CR not producing power at design inlet temperature
 
-					if( mc_cr_outputs.m_q_thermal > 0.0 )
-					{
-						// Controller hierarchy doesn't allow to go back to No Defocus and PC_RM, so check that defocus is <= 1
-						defocus_guess_ini = fmin(1.0, q_pc_max / mc_cr_outputs.m_q_thermal);
-					}
-					else
-					{	// CR not producing power at design inlet temperature
+					// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
+					error_msg = util::format("At time = %lg the controller chose Defocus operating mode, but the collector/receiver"
+						"did not produce power with the design inlet temperature. Controller will shut-down CR and PC",
+						mc_sim_info.m_time / 3600.0);
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-						error_msg = util::format("At time = %lg the controller chose Defocus operating mode, but the collector/receiver"
-							"did not produce power with the design inlet temperature. Controller will shut-down CR and PC",
-							mc_sim_info.m_time / 3600.0);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					are_models_converged = false;
 
-						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						are_models_converged = false;
+					m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail = false;
 
-						m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail = false;
-
-						break;
-					}
+					break;
 				}
 
 				// Solve for inner loop: cr-pc convergence tolerances
@@ -962,10 +955,7 @@ void C_csp_solver::simulate()
 					throw(C_csp_exception("Solver tried mode 'CR_DF__PC_FULL__TES_OFF__AUX_OFF' and did not receive useful exit instructions", "CSP Solver"));
 				}
 
-
-
-
-				break;		// Get out of switch()
+				break;		
 			}
 
 			//case CR_ON__PC_RM__TES_OFF__AUX_OFF:
