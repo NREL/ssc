@@ -190,6 +190,8 @@ void C_csp_solver::simulate()
 
 	double time_sim_step_next = sim_time_start + sim_step_size_baseline;	//[s]
 
+	double step_tolerance = 10.0;	//[s] For adjustable timesteps, if within 10 seconds, assume it equals baseline timesteps
+
 	mc_sim_info.m_step = step_local;						//[s]
 	mc_sim_info.m_time = time_previous + step_local;		//[s]
 
@@ -1246,7 +1248,7 @@ void C_csp_solver::simulate()
 
 				// Check for new timestep
 				step_local = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
-				if( step_local < mc_sim_info.m_step )
+				if( step_local < mc_sim_info.m_step - step_tolerance )
 				{
 					is_sim_timestep_complete = false;
 				}
@@ -1309,7 +1311,7 @@ void C_csp_solver::simulate()
 
 				// Check for new timestep
 				step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
-				if( step_local < mc_sim_info.m_step )
+				if( step_local < mc_sim_info.m_step - step_tolerance )
 				{
 					is_sim_timestep_complete = false;
 				}
@@ -1535,7 +1537,7 @@ void C_csp_solver::simulate()
 
 					// Check for new timestep, probably will find one here
 					step_local = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
-					if( step_local < mc_sim_info.m_step )
+					if( step_local < mc_sim_info.m_step - step_tolerance )
 					{
 						is_sim_timestep_complete = false;
 					}
@@ -1624,7 +1626,7 @@ void C_csp_solver::simulate()
 
 					// Check for new timestep
 					double step_local_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
-					if( step_local_su < mc_sim_info.m_step )
+					if( step_local_su < mc_sim_info.m_step - step_tolerance )
 					{
 						are_models_converged = false;
 						m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail = false;
