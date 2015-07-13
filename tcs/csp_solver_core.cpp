@@ -412,7 +412,7 @@ void C_csp_solver::simulate()
 					}
 					else if( is_pc_su_allowed && q_dot_tes_dc > 0.0 )
 					{
-						throw(C_csp_exception("operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
+						operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;												
 					}
 					else
 					{
@@ -639,7 +639,7 @@ void C_csp_solver::simulate()
 							else
 							{	// If not enough thermal power to stay in standby, then run at min PC load until TES is fully discharged
 
-								throw(C_csp_exception("operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF", "CSP Solver"));
+								operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;
 							}
 						}	// End logic for if( q_dot_tes_dc > 0.0 )
 						else
@@ -3538,6 +3538,148 @@ void C_csp_solver::simulate()
 				are_models_converged = true;
 			}
 				break;	// break case CR_OFF__PC_SB__TES_DC__AUX_OFF
+
+
+			case tech_operating_modes::CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF:
+			{
+				// The collector receiver is off
+				// The power cycle runs at its minimum operating fraction until storage is depleted
+				// A new, shorter timestep is calculated here
+
+				double T_tes_cold_ini = m_T_htf_cold_des - 273.15;		//[C], convert from K
+				double T_tes_cold_guess = T_tes_cold_ini;				//[C]
+
+				double T_tes_cold_lower = std::numeric_limits<double>::quiet_NaN();
+				double y_T_tes_cold_lower = std::numeric_limits<double>::quiet_NaN();
+				bool is_lower_bound = true;
+				bool is_lower_error = true;
+
+				double T_tes_cold_upper = std::numeric_limits<double>::quiet_NaN();
+				double y_T_tes_cold_upper = std::numeric_limits<double>::quiet_NaN();
+				bool is_upper_bound = true;
+				bool is_upper_error = true;
+
+				double tol_C = 1.0;								//[C]
+				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
+
+				double relaxed_tol_mult = 5.0;				//[-]
+				double relaxed_tol = relaxed_tol_mult*tol;	//[-]
+
+				double diff_T_tes_cold = 999.9*tol;			//[-] (T_tes_cold_calc - T_tes_cold_guess)/T_tes_cold_guess
+
+				int iter_T_tes_cold = 0;
+
+				int exit_mode = CONVERGED;
+				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
+
+				// Start iteration loop
+				while( abs(diff_T_tes_cold) > tol || diff_T_tes_cold != diff_T_tes_cold )
+				{
+					iter_T_tes_cold++;
+
+					// Check if distance between bounds is "too small"
+					double diff_T_bounds = T_tes_cold_upper - T_tes_cold_lower;
+					if( diff_T_bounds / T_tes_cold_upper < tol / 2.0 )
+					{
+						if( diff_T_tes_cold != diff_T_tes_cold )
+						{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_tes_cold
+
+							exit_mode = NO_SOLUTION;
+							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
+							break;
+						}
+						else
+						{
+
+							exit_mode = POOR_CONVERGENCE;
+							exit_tolerance = diff_T_tes_cold;
+							break;
+						}
+					}
+
+					// Subsequent iterations need to re-calculate T_tes_cold
+					if( iter_T_tes_cold > 1 )
+					{	// diff_T_tes_cold = (T_tes_cold_calc - T_tes_cold_guess)/T_tes_cold_guess
+					
+						if( diff_T_tes_cold != diff_T_tes_cold )
+						{	// Models did not solve such that a convergence error could be calculated
+							// However, we can check whether upper and lower bounds are set, and may be able to calculate a new guess via bisection method
+							// But, check that bounds exist
+							if( !is_lower_bound || !is_upper_bound )
+							{
+							
+								exit_mode = NO_SOLUTION;
+								exit_tolerance = std::numeric_limits<double>::quiet_NaN();
+								break;
+							}
+							T_tes_cold_guess = 0.5*(T_tes_cold_lower + T_tes_cold_upper);						
+						}
+						else if( diff_T_tes_cold > 0.0 )		// Guess cold temperature was too low
+						{
+							is_lower_bound = true;
+							is_lower_error = true;
+							T_tes_cold_lower = T_tes_cold_guess;	//[C]
+							y_T_tes_cold_lower = diff_T_tes_cold;	//[-]
+
+							if( is_upper_bound && is_upper_error )
+							{
+								T_tes_cold_guess = y_T_tes_cold_upper/(y_T_tes_cold_upper-y_T_tes_cold_lower)*(T_tes_cold_lower-T_tes_cold_upper) + T_tes_cold_upper;		//[C]
+							}
+							else if( is_upper_bound )
+							{
+								T_tes_cold_guess = 0.5*(T_tes_cold_lower + T_tes_cold_upper);
+							}
+							else
+							{
+								T_tes_cold_guess += 10.0;			//[C]
+							}
+						}
+						else
+						{
+							is_upper_bound = true;
+							is_upper_error = true;
+							T_tes_cold_upper = T_tes_cold_guess;	//[C]
+							y_T_tes_cold_upper = diff_T_tes_cold;	//[-]
+
+							if( is_lower_bound && is_lower_error )
+							{
+								T_tes_cold_guess = y_T_tes_cold_upper / (y_T_tes_cold_upper - y_T_tes_cold_lower)*(T_tes_cold_lower - T_tes_cold_upper) + T_tes_cold_upper;		//[C]
+							}
+							else if( is_lower_bound )
+							{
+								T_tes_cold_guess = 0.5*(T_tes_cold_lower + T_tes_cold_upper);
+							}
+							else
+							{
+								T_tes_cold_guess -= 10.0;		//[C]
+							}
+						}
+					}	// end logic to determine new T_tes_cold
+
+					// Get max TES discharge m_dot
+
+					// Calculate max TES discharge MASS
+
+					// Guess time required to deplete storage while delivering q_dot_min to PC
+
+						// Calculate m_dot discharge
+
+						// solve TES discharge model
+
+						// Is q_dot_dc_calc = q_dot_pc_min??
+
+					// Solver PC model
+
+					// Is T_PC_cold = T_tes_cold_guess??
+
+					throw(C_csp_exception("operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
+				
+				}	// end while() on diff_T_tes_cold
+
+
+				throw(C_csp_exception("operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
+			}
+				break;	// break case CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF
 
 			default: 
 				throw(C_csp_exception("Operation mode not recognized",""));
