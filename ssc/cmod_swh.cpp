@@ -121,7 +121,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                       "kg/hr",  "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                       "",       "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
 																									      								                 																		            
-	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Energy saved",                         "Wh",     "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Energy saved",                         "W",     "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",		  "Energy saved",                         "kWh",    "",                                  "Time Series",      "*",                        "",                                 "" },
 																																			             																		            
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
