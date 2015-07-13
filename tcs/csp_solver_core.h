@@ -377,6 +377,7 @@ private:
 	bool m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail;
 
 	bool m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail;
+	bool m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail;
 
 	// member string for exception messages
 	std::string error_msg;
