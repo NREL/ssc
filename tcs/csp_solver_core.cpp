@@ -367,61 +367,85 @@ void C_csp_solver::simulate()
 				if( q_dot_cr_startup > 0.0 && is_rec_su_allowed )
 				{	// Receiver startup is allowed and possible (will generate net energy) - determine if power cycle can remain on
 
-					if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
-					{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
+					if( is_pc_su_allowed )
+					{					
+						if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
+						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
 
-						throw(C_csp_exception("operating_mode = CR_SU__PC_TARGET__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
-					}
-					else if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min )
-					{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+							throw(C_csp_exception("operating_mode = CR_SU__PC_TARGET__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+						}
+						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min )
+						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
 
-						throw(C_csp_exception("operating_mode = CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
-					}
-					else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb )
-					{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+							throw(C_csp_exception("operating_mode = CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
+						}
+						else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb )
+						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
 
-						throw(C_csp_exception("operating_mode = CR_SU__PC_SB__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
-					}
-					else if( is_pc_su_allowed && q_dot_tes_dc > 0.0 )
-					{
-						throw(C_csp_exception("operating_mode = CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
-						// In this mode, need to be able to operate PC at >= MIN level until CR is running
-					}
-					else if( m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
-					{
-						operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
-					}
+							throw(C_csp_exception("operating_mode = CR_SU__PC_SB__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+						}
+						else if( q_dot_tes_dc > 0.0 )
+						{
+							throw(C_csp_exception("operating_mode = CR_SU__PC_MIN__TES_EMPTY__AUX_OFF; not yet available", "CSP Solver"));
+							// In this mode, need to be able to operate PC at >= MIN level until CR is running
+						}
+						else if( m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+						{
+							operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+						}
+						else
+						{
+							operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+						}
+					}	// End 'is_pc_su_allowed' logic
 					else
-					{
-						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+					{	// power cycle startup/operation not allowed
+						
+						if( m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail )
+						{
+							operating_mode = CR_SU__PC_OFF__TES_OFF__AUX_OFF;
+						}
+						else
+						{
+							operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+						}
 					}
 				}
 				else	// Receiver remains OFF - determine if power cycle can remain on
 				{
-					if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
-					{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
-
-						throw(C_csp_exception("operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
-					}
-					else if( is_pc_su_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min &&
-							m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail )
-					{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-						operating_mode = CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;						
-					}
-					else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb &&
-							m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail )
-					{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
-
-						operating_mode = CR_OFF__PC_SB__TES_DC__AUX_OFF;						
-					}
-					else if( is_pc_su_allowed && q_dot_tes_dc > 0.0 &&
-							m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail )
+					if( is_pc_su_allowed )
 					{
-						operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;												
-					}
+					
+						if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target )
+						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
+
+							throw(C_csp_exception("operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF; not yet available", "CSP Solver"));
+						}
+						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min &&
+								m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail )
+						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+							operating_mode = CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;						
+						}
+						else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb &&
+								m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail )
+						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
+
+							operating_mode = CR_OFF__PC_SB__TES_DC__AUX_OFF;						
+						}
+						else if( q_dot_tes_dc > 0.0 &&
+								m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail )
+						{
+							operating_mode = CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF;												
+						}
+						else
+						{
+							operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+						}
+					}	// end logic on 'is_pc_su_allowed'
 					else
 					{
+
 						operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					}
 				}
