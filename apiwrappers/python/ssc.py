@@ -216,14 +216,14 @@ class SSCAPI:
 		return SSCAPI._dll.ssc_info_group( c_void_p(p_inf) )
 
 	@staticmethod
-	 def ssc_info_required( p_inf ):
-		 SSCAPI._dll.ssc_info_required.restype = c_char_p
-		 return SSCAPI._dll.ssc_info_required( c_void_p(p_inf) )
+	def ssc_info_required( p_inf ):
+	    SSCAPI._dll.ssc_info_required.restype = c_char_p
+		return SSCAPI._dll.ssc_info_required( c_void_p(p_inf) )
 
 	@staticmethod
-	 def ssc_info_constraints( p_inf ):
-		 SSCAPI._dll.ssc_info_constraints.restype = c_char_p
-		 return SSCAPI._dll.ssc_info_constraints( c_void_p(p_inf) )
+	def ssc_info_constraints( p_inf ):
+		SSCAPI._dll.ssc_info_constraints.restype = c_char_p
+		return SSCAPI._dll.ssc_info_constraints( c_void_p(p_inf) )
 		 
 	@staticmethod
 	def ssc_info_uihint( p_inf ):
@@ -293,8 +293,8 @@ class Entry:
 		self._idx = 0
     
 	def get(self):
-	        self._entry = SSCAPI.ssc_module_entry(self._idx)
-	        if (self._entry is None):
+	    self._entry = SSCAPI.ssc_module_entry(self._idx)
+	    if (self._entry is None):
 			self.reset()
 			return False
 		else:
