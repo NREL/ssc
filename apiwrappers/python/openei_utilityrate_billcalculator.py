@@ -20,7 +20,6 @@
 import httplib, json, sys
 
 ## Include SAM libraries
-sys.path.insert(0,'<insert path to python folder in SDK release>')
 import ssc
 
 ########################################
@@ -50,7 +49,7 @@ data.set_number('array_type', 0)
 data.set_number('tilt', 20)
 data.set_number('azimuth', 180)
 data.set_number('gcr', 0.4)
-data.set_number('adjust:factor', 0)
+data.set_number('adjust:constant', 0)
 
 
 ########################################
@@ -303,7 +302,10 @@ data.set_string("solar_resource_file", weatherFile)
 
 electricLoad = []
 for line in open(loadFile):
-    electricLoad.append( float(line[:-1]) )
+    try:
+        electricLoad.append( float(line[:-1]) )
+    except ValueError:
+        continue
 
 ## for pre-gen utilityrate3 before 4/15/15
 ##data.set_array('p_load', electricLoad )
@@ -337,4 +339,4 @@ for i in range(12):
     print( "\t %s \t  %6.5f  \t  %6.5f" %(monthNames[i], monthlyBillWithSystem[i], monthlyBillWithoutSystem[i]) )
 
 
-
+raw_input("\n\nPress Enter to exit...")
