@@ -361,7 +361,7 @@ private:
 	bool m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail;
 	bool m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail;
 	bool m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail;
-	bool m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail;
+	bool m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail;
 	
 	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE;
 	bool m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE;
@@ -442,7 +442,7 @@ public:
 		CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
 		CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
 		
-		CR_DF__PC_FULL__TES_OFF__AUX_OFF,
+		CR_DF__PC_MAX__TES_OFF__AUX_OFF,
 
 		CR_OFF__PC_SU__TES_DC__AUX_OFF,
 		CR_ON__PC_OFF__TES_CH__AUX_OFF,

@@ -85,7 +85,7 @@ void C_csp_solver::reset_hierarchy_logic()
 	m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail = true;
 	m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = true;
 	m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail = true;
-	m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail = true;
+	m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = true;
 
 	m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE = true;
 	m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = true;
@@ -488,7 +488,7 @@ void C_csp_solver::simulate()
 								// 3) Try defocusing the CR and operating the power cycle at maximum capacity
 								else
 								{
-									throw(C_csp_exception("operating_mode = CR_DF__PC_FULL__TES_FULL__AUX_OFF", "CSP_Solver"));
+									throw(C_csp_exception("operating_mode = CR_DF__PC_MAX__TES_FULL__AUX_OFF", "CSP_Solver"));
 								}
 							}	// End if(q_dot_tes_ch > 0.0) logic
 
@@ -502,9 +502,9 @@ void C_csp_solver::simulate()
 
 									operating_mode = CR_ON__PC_RM_HI__TES_OFF__AUX_OFF;
 								}
-								else if( m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail )
+								else if( m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail )
 								{
-									operating_mode = CR_DF__PC_FULL__TES_OFF__AUX_OFF;
+									operating_mode = CR_DF__PC_MAX__TES_OFF__AUX_OFF;
 								}
 								else
 								{
@@ -701,7 +701,7 @@ void C_csp_solver::simulate()
 
 			switch( operating_mode )
 			{
-			case CR_DF__PC_FULL__TES_OFF__AUX_OFF:
+			case CR_DF__PC_MAX__TES_OFF__AUX_OFF:
 			{
 				// Running CR at full power results in too much thermal power to power cycle
 				// Therefore, must defocus CR and operating PC at FULL POWER
@@ -740,7 +740,7 @@ void C_csp_solver::simulate()
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					are_models_converged = false;
 
-					m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail = false;
+					m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
 
 					break;
 				}
@@ -976,7 +976,7 @@ void C_csp_solver::simulate()
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 					are_models_converged = false;
 
-					m_is_CR_DF__PC_FULL__TES_OFF__AUX_OFF_avail = false;
+					m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
 
 					break;
 				}
@@ -1004,7 +1004,7 @@ void C_csp_solver::simulate()
 				}
 				else
 				{
-					throw(C_csp_exception("Solver tried mode 'CR_DF__PC_FULL__TES_OFF__AUX_OFF' and did not receive useful exit instructions", "CSP Solver"));
+					throw(C_csp_exception("Solver tried mode 'CR_DF__PC_MAX__TES_OFF__AUX_OFF' and did not receive useful exit instructions", "CSP Solver"));
 				}
 
 				break;		
