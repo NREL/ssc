@@ -23,8 +23,7 @@ copy "apiwrappers\matlab\+SSC\@Module\Module.m" "sdk-release\languages\matlab\+S
 
 mkdir sdk-release\languages\python
 copy apiwrappers\python\sscapi.py sdk-release\languages\python
-copy apiwrappers\python\ssc.py sdk-release\languages\python
-copy apiwrappers\python\testssc.py sdk-release\languages\python
+copy apiwrappers\python\sscapi3.4.2.py sdk-release\languages\python
 copy apiwrappers\python\openei_utilityrate_billcalculator.py sdk-release\languages\python
 
 mkdir sdk-release\languages\php
