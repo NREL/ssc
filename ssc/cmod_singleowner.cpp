@@ -2471,25 +2471,26 @@ public:
 	for (i = 1; i <= nyears; i++)
 	{
 		cf.at(CF_Annual_Costs, i) =
-			cf.at(CF_pbi_total, i) 
-			+ cf.at(CF_statax, i) 
+			cf.at(CF_pbi_total, i)
+			+ cf.at(CF_statax, i)
 			+ cf.at(CF_fedtax, i)
 			- cf.at(CF_debt_payment_interest, i)
 			- cf.at(CF_debt_payment_principal, i)
 			- cf.at(CF_operating_expenses, i)
 			// incentives (cbi and ibi in installed cost and itc in year 1 below
 			// TODO - check PBI
-			+ cf.at(CF_ptc_fed, i) 
+			+ cf.at(CF_ptc_fed, i)
 			+ cf.at(CF_ptc_sta, i)
 			// reserve accounts
 			- cf.at(CF_funding_equip1, i)
 			- cf.at(CF_funding_equip2, i)
 			- cf.at(CF_funding_equip3, i)
 			- cf.at(CF_funding_om, i)
-			- cf.at(CF_funding_debtservice,i)
+			- cf.at(CF_funding_debtservice, i)
 			+ cf.at(CF_reserve_interest, i)
 			- cf.at(CF_disbursement_debtservice, i) // note sign is negative for positive disbursement
-			-cf.at(CF_disbursement_om, i); // note sign is negative for positive disbursement
+			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
+			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
 	if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;

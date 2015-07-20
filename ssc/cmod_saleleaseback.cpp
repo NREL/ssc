@@ -762,7 +762,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Levelized cost (real)",                          "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Levelized cost (nominal)",                       "cents/kWh",    "",                      "DHF",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "lppa_real", "Levelized PPA price (real)", "cents/kWh", "", "DHF", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Levelized PPA price (real)", "cents/kWh", "", "DHF", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lppa_nom", "Levelized PPA price (nominal)", "cents/kWh", "", "DHF", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "ppa", "PPA price", "", "", "DHF", "*", "", "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "ppa_escalation",                 "PPA price escalation",                       "%",    "",                      "DHF",      "*",                       "",                                         "" },
@@ -2484,7 +2484,8 @@ public:
 			- cf.at(CF_funding_equip3, i)
 			- cf.at(CF_funding_om, i)
 			+ cf.at(CF_reserve_interest, i)
-			-cf.at(CF_disbursement_om, i); // disbusement negative for benefit
+			- cf.at(CF_disbursement_om, i) // note sign is negative for positive disbursement
+			+ cf.at(CF_net_salvage_value, i); // benefit to cost reduction so that project revenue based on PPA revenue and not total revenue per 7/16/15 meeting
 	}
 	// year 1 add total ITC (net benefit) so that project return = project revenue - project cost
 	if (nyears >= 1) cf.at(CF_Annual_Costs, 1) += itc_total;
