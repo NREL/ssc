@@ -760,7 +760,6 @@ enum {
 	CF_energy_net,
 	CF_energy_value,
 	CF_ppa_price,
-	CF_ppa_revenue,
 
 	CF_om_fixed_expense,
 	CF_om_production_expense,
@@ -2452,9 +2451,10 @@ public:
 	}
 	assign("flip_actual_irr", var_data((ssc_number_t)actual_flip_irr));
 
-	// LPPA
-//	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
-	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
+	// LPPA - change form total revenue to PPA revenue 7/19/15 consistent with DHF v4.4
+	// fixed price PPA - LPPA independent of salvage value per 7/16/15 meeting
+	double npv_ppa_revenue = npv(CF_energy_value, nyears, nom_discount_rate);
+//	double npv_ppa_revenue = npv(CF_total_revenue, nyears, nom_discount_rate);
 	double npv_energy_nom = npv(CF_energy_net, nyears, nom_discount_rate);
 	double lppa_nom = 0;
 	if (npv_energy_nom != 0) lppa_nom = npv_ppa_revenue / npv_energy_nom * 100.0;

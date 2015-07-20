@@ -320,7 +320,6 @@ enum {
 	CF_degradation,
 	CF_ppa_price,
 	CF_energy_price,
-	CF_ppa_revenue,
 
 	CF_om_fixed_expense,
 	CF_om_production_expense,
