@@ -8,8 +8,13 @@
 
 // Can probably delete these headers later...
 #include "csp_solver_util.h"
+#include "csp_solver_core.h"
 #include "csp_solver_pt_heliostatfield.h"
 #include "csp_solver_mspt_receiver_222.h"
+#include "csp_solver_mspt_collector_receiver.h"
+#include "csp_solver_pc_Rankine_indirect_224.h"
+#include "csp_solver_two_tank_tes.h"
+
 
 static bool ssc_mspt_solarpilot_callback(simulation_info *siminfo, void *data);
 
@@ -171,7 +176,8 @@ static var_info _cm_vtab_ty_sandbox[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",           "Number of equivalent tank pairs",                                   "-",            "",            "controller",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "cold_tank_Thtr",       "Minimum allowable cold tank HTF temp",                              "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                               "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tank_max_heat",        "Rated heater capacity for tank heating",                            "MW",           "",            "controller",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",                        "MW",           "",            "controller",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cold_tank_max_heat",   "Rated heater capacity for cold tank heating",                       "MW",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_in_des",       "Field design inlet temperature",                                    "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",      "Field design outlet temperature",                                   "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",          "Design heat input to power block",                                  "MWt",          "",            "controller",     "*",                       "",                      "" },
@@ -186,7 +192,7 @@ static var_info _cm_vtab_ty_sandbox[] = {
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",            "Coefficients for auxiliary heater parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_startup",            "Startup temperature",                                               "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",          "Fossil backup mode 1=Normal 2=Topping",                             "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fthr_ok",              "Does the defocus control allow partial defocusing",                 "-",            "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "fthr_ok",              "Does the defocus control allow partial defocusing",                 "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nSCA",                 "Number of SCAs in a single loop",                                   "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",             "Design point irradiation value",                                    "W/m2",         "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fc_on",                "DNI forecasting enabled",                                           "-",            "",            "controller",     "?=0",                       "",                      "" },
@@ -271,6 +277,56 @@ static var_info _cm_vtab_ty_sandbox[] = {
     {SSC_INPUT,         SSC_NUMBER,      "recirc_source",        "Recirculation heater control",                                      "none",        "",             "parasitics",     "*",                       "",                      "" },
 
 	// Outputs here:
+	{ SSC_OUTPUT,       SSC_ARRAY,       "time_hr",              "Time at end of timestep",                                      "hr",           "",            "Solver",         "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Resource Solar Zenith",                                        "deg",          "",            "weather",        "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Resource Beam normal irradiance",                              "W/m2",         "",            "weather",        "*",                       "",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Controller",     "*",                       "",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Receiver thermal efficiency",                                  "",             "",            "CR",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Receiver thermal power to HTF",                                "MWt-hr",       "",            "CR",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",            "Receiver startup thermal energy consumed",                     "MWt-hr",       "",            "CR",             "*",                       "",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "Cycle efficiency (gross)",                                     "",             "",            "PC",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",              "Cycle electrical power output (gross)",                        "MWe-hr",       "",            "PC",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",         "Cycle startup energy",                                         "MWt-hr",       "",            "PC",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		         "Cycle input energy",                                           "MWt-hr",       "",            "PC",             "*",                       "",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "TES thermal losses from tank(s)",                              "MWt-hr",       "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_heater",             "TES heater energy",                                            "MJ",           "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tes_hot",            "TES hot temperature",                                          "C",            "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tes_cold",           "TES cold temperature",                                         "C",            "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dc_tes",             "TES discharge energy",                                         "MWt-hr",       "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_ch_tes",             "TES charge energy",                                            "MWt-hr",       "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_to_tes",             "TES thermal power in (+) or out (-)",                          "MWt-hr",       "",            "TES",            "*",                       "",           "" },
+	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Receiver mass flow rate",                                      "kg/hr",        "",            "CR",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",             "Cycle HTF mass flow rate",                                     "kg/hr",        "",            "PC",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",         "TES discharge mass flow rate",                                 "kg/hr",        "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_ch",         "TES charge mass flow rate",                                    "kg/hr",        "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_balance",        "Relative mass flow balance error",                             "",             "",            "Controller",     "*",                       "",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_balance",            "Relative energy balance error",                                "",             "",            "Controller",     "*",                       "",           "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "operating_modes",      "Solver operating modes tried",                                 "",             "",            "Solver",         "*",                       "",           "" },
+
+
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_sb",          "Timestep required thermal power for PC standby",               "MWt",          "",            "Controller",     "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_min",		 "Timestep required thermal power for PC min operation",		 "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_max",		 "Timestep maximum thermal power to PC",						 "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_target",		 "Timestep target thermal power to PC",							 "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "is_rec_su_allowed",	 "Timestep decision boolean: is receiver startup allowed",		 "",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "is_pc_su_allowed",	 "Timestep decision boolean: is power cycle startup allowed",	 "",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "is_pc_sb_allowed",	 "Timestep decision boolean: is power cycle standby allowed",	 "",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_su",		 "Initial estimate of available receiver startup thermal power", "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_on",		 "Initial estimate of available receiver thermal power TO HTF",	 "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_dc",	 "Initial estimate of maximum TES dc thermal power",			 "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_ch",	 "Initial estimate of maximum TES ch thermal power",			 "MWt",			 "",            "Controller",	  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_thermal",	 "Solved receiver thermal power",								 "MWt",			 "",            "CR",			  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_thermal",	 "Solved thermal power to power cycle",							 "MWt",			 "",            "PC",			  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_tes_dc",		 "Solved thermal power discharged from TES",					 "MWt",			 "",            "TES",			  "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_tes_ch",		 "Solved thermal power charging TES",							 "MWt",			 "",            "TES",			  "*",                       "",           "" },
 
 	var_info_invalid };
 
@@ -291,7 +347,7 @@ public:
 
 	void exec() throw(general_error)
 	{
-		std::string example_msg = "Does this work?";
+		/*std::string example_msg = "Does this work?";
 		int example_type = C_csp_messages::NOTICE;
 
 		C_csp_messages csp_messages;
@@ -313,7 +369,7 @@ public:
 		{
 			std::string error_message_out = csp_exception.m_error_message;
 			std::string code_location_out = csp_exception.m_code_location;
-		}
+		}*/
 
 		C_pt_heliostatfield heliostatfield;
 
@@ -518,13 +574,17 @@ public:
 			throw exec_error("MSPT CSP Solver", msg);
 		}
 
+		// Set parameters that were set with TCS defaults
+		heliostatfield.ms_params.m_interp_nug = 0.0;
+		heliostatfield.ms_params.m_interp_beta = 1.99;
+
 		// Set callback information
 		heliostatfield.mf_callback = ssc_mspt_solarpilot_callback;
 		heliostatfield.m_cdata = (void*)this;
 
 		// Try running pt heliostat init() call just for funsies
 			// What happens when no callback to reference?
-		heliostatfield.init();
+		//heliostatfield.init();
 
 
 		//// *********************************************************
@@ -558,55 +618,441 @@ public:
 		receiver.m_n_flux_x = as_double("n_flux_x");
 		receiver.m_n_flux_y = as_double("n_flux_y");
 
-		// Optional ISCC stuff...
-		receiver.init();
+		receiver.m_T_salt_hot_target = as_double("T_salt_hot_target");
+		receiver.m_eta_pump = as_double("eta_pump");
+		receiver.m_night_recirc = 0;
+		receiver.m_hel_stow_deploy = as_double("hel_stow_deploy");
+
+		// Set parameters that were set with TCS defaults
+		receiver.m_is_iscc = false;
+
+		// Could add optional ISCC stuff...
+
+		// Test mspt_receiver initialization
+		//receiver.init();
+
+		// Now try to instantiate mspt_collector_receiver
+		C_csp_mspt_collector_receiver collector_receiver(heliostatfield, receiver);
+		// Then try init() call here, which should call inits from both classes
+		//collector_receiver.init();
 
 
 
-		//C_csp_weatherreader weather;
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		weather_reader.m_filename = as_string("solar_resource_file");
+		weather_reader.m_trackmode = 0;
+		weather_reader.m_tilt = 0.0;
+		weather_reader.m_azimuth = 0.0;
 
-		//weather.set_csp_component_value_ssc_string("file_name", as_string("solar_resource_file"));
-		//weather.set_csp_component_value_ssc_double("track_mode", 0.0);
-		//weather.set_csp_component_value_ssc_double("tilt", 0.0);
-		//weather.set_csp_component_value_ssc_double("azimuth", 0.0);
+		// Test weatherreader initialization
+		//weather_reader.init();
 
-		////weather.init();
 
-		//C_csp_no_storage thermal_storage;
-
-		//C_csp_indirect_Rankine_224 power_cycle;
-
-		//C_csp_solver csp_solver;
-
-		//csp_solver.setup_technology_model(&weather, &solar_field, &thermal_storage, &power_cycle);
-
-		//csp_solver.timeseries_simulation();
-
-		//log("Solar Field Initialization was incredibly successful");
-
-		//solar_field.set_csp_component_value_ssc_double("run_type", as_double("run_type"));
-		//solar_field.set_csp_component_value_ssc_double("helio_width", as_double("helio_width"));
-		//
-		//size_t l_ffrac = 0;
-		//
-		//solar_field.set_csp_component_value_ssc_array("ffrac", as_array("ffrac", &l_ffrac), l_ffrac);
-		//
-		//size_t n_rows = 0;
-		//size_t n_cols = 0;
-		//ssc_number_t *p_matrix = as_matrix("field_fl_props", &n_rows, &n_cols);
-		//
-		//n_rows = 0;
-		//n_cols = 0;
-		//solar_field.set_csp_component_value_ssc_matrix("field_fl_props", as_matrix("field_fl_props", &n_rows, &n_cols), n_rows, n_cols);
-		//
-		//solar_field.set_csp_component_value_ssc_string("weather_file", as_string("solar_resource_file"));
-		//
+		// Power cycle
+		C_pc_Rankine_indirect_224 power_cycle;
+		C_pc_Rankine_indirect_224::S_params *pc = &power_cycle.ms_params;
+		pc->m_P_ref = as_double("P_ref");
+		pc->m_eta_ref = as_double("eta_ref");
+		pc->m_T_htf_hot_ref = as_double("T_htf_hot_ref");
+		pc->m_T_htf_cold_ref = as_double("T_htf_cold_ref");
+		pc->m_dT_cw_ref = as_double("dT_cw_ref");
+		pc->m_T_amb_des = as_double("T_amb_des");
+		pc->m_pc_fl = as_integer("HTF");
+		pc->m_pc_fl_props = as_matrix("field_fl_props");
+		pc->m_cycle_max_frac = as_double("cycle_max_frac");
+		pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
+		pc->m_q_sby_frac = as_double("q_sby_frac");
+		pc->m_P_boil = as_double("P_boil");
+		pc->m_CT = as_integer("CT");
+		pc->m_startup_time = as_double("startup_time");
+		pc->m_startup_frac = as_double("startup_frac");
+		pc->m_tech_type = as_integer("tech_type");
+		pc->m_T_approach = as_double("T_approach");
+		pc->m_T_ITD_des = as_double("T_ITD_des");
+		pc->m_P_cond_ratio = as_double("P_cond_ratio");
+		pc->m_pb_bd_frac = as_double("pb_bd_frac");
+		pc->m_P_cond_min = as_double("P_cond_min");
+		pc->m_n_pl_inc = as_integer("n_pl_inc");
 		
-		//
-		//double check_end = 1.23;
+		size_t n_F_wc = -1;
+		ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
+		pc->m_F_wc.resize(n_F_wc, 0.0);
+		for( int i = 0; i < n_F_wc; i++ )
+			pc->m_F_wc[i] = (double) p_F_wc[i];
+
+		// Test power cycle initialization
+		//power_cycle.init();
+
+
+		// Thermal energy storage 
+		C_csp_two_tank_tes storage;
+		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
+		tes->m_field_fl = as_integer("field_fluid");
+		tes->m_field_fl_props = as_matrix("field_fl_props");
+		tes->m_tes_fl = as_integer("field_fluid");
+		tes->m_tes_fl_props = as_matrix("field_fl_props");
+		tes->m_is_hx = (bool) as_integer("is_hx");
+		tes->m_q_pb_design = as_double("q_pb_design");
+		tes->m_solarm = as_double("solarm");
+		tes->m_ts_hours = as_double("tshours");
+		tes->m_vol_tank = as_double("vol_tank");
+		tes->m_h_tank = as_double("h_tank");
+		tes->m_u_tank = as_double("u_tank");
+		tes->m_tank_pairs = as_integer("tank_pairs");
+		tes->m_hot_tank_Thtr = as_double("hot_tank_Thtr");
+		tes->m_hot_tank_max_heat = as_double("hot_tank_max_heat");
+		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
+		tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
+		tes->m_dt_hot = as_double("dt_hot");
+		tes->m_T_field_in_des = as_double("T_field_in_des");
+		tes->m_T_field_out_des = as_double("T_field_out_des");
+		tes->m_V_tank_hot_ini = as_double("V_tank_hot_ini");
+		tes->m_T_tank_hot_ini = as_double("T_tank_hot_ini");
+		tes->m_T_tank_cold_ini = as_double("T_tank_cold_ini");
+		tes->m_h_tank_min = as_double("h_tank_min");
+
+
+		// Instantiate Solver
+		C_csp_solver csp_solver(weather_reader, collector_receiver, power_cycle, storage);
+
+		// Initialize Solver
+		csp_solver.init();
+
+		int out_type = -1;
+		std::string out_msg = "";
+
+		try
+		{
+			// Simulate !
+			csp_solver.simulate();
+		}
+		catch(C_csp_exception &csp_exception)
+		{
+			// Report warning before exiting with error
+			while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
+			{
+				log(out_msg);
+			}
+
+			log(csp_exception.m_error_message);
+		}
+
+		// If no exception, then report messages
+		while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
+		{
+			log(out_msg);
+		}
 
 
 
+		// Ok, try writing some SSC OUTPUTS
+			// Get size of time vector: all other output vectors need to match
+		int n_ts = csp_solver.mv_time_mid.size();
+
+		
+		ssc_number_t *time_hr = allocate("time_hr", n_ts);
+		
+		if(csp_solver.mv_solzen.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Solzen vector was not the same size as the time vector");
+		}
+		ssc_number_t *solzen = allocate("solzen", n_ts);
+
+		if(csp_solver.mv_beam.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Beam vector was not the same size as the time vector");
+		}
+		ssc_number_t *beam = allocate("beam", n_ts);
+
+		if(csp_solver.mv_eta_field.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Eta Field vector was not the same size as the time vector");
+		}
+		ssc_number_t *eta_field = allocate("eta_field", n_ts);
+
+		if(csp_solver.mv_defocus.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Defocus vector was not the same size as the time vector");
+		}
+		ssc_number_t *defocus = allocate("defocus", n_ts);
+
+		if(csp_solver.mv_rec_eta_thermal.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Eta Thermal vector was not the same size as the time vector");
+		}
+		ssc_number_t *eta_therm = allocate("eta_therm", n_ts);
+
+		if(csp_solver.mv_rec_q_thermal.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Q_thermal vector was not the same size as the time vector");
+		}
+		ssc_number_t *Q_thermal = allocate("Q_thermal", n_ts);
+
+		if(csp_solver.mv_pc_eta.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "Eta vector was not the same size as the time vector");
+		}
+		ssc_number_t *eta = allocate("eta", n_ts);
+
+		if(csp_solver.mv_pc_W_gross.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "P_cycle vector was not the same size as the time vector");
+		}
+		ssc_number_t *P_cycle = allocate("P_cycle", n_ts);
+
+		if(csp_solver.mv_rec_q_startup.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "q_startup vector was not the same size as the time vector");
+		}
+		ssc_number_t *q_startup = allocate("q_startup", n_ts);
+
+		if(csp_solver.mv_pc_q_startup.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "pc_q_startup vector was not the same size as the time vector");
+		}
+		ssc_number_t *q_pc_startup = allocate("q_pc_startup", n_ts);
+
+		if(csp_solver.mv_tes_q_losses.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_q_losses vector was not the same sizse as the time vector");
+		}
+		ssc_number_t *tank_losses = allocate("tank_losses", n_ts);
+
+		if(csp_solver.mv_tes_q_heater.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_q_heater vector was not the same size as the time vector");
+		}
+		ssc_number_t *q_heater = allocate("q_heater", n_ts);
+
+		if(csp_solver.mv_tes_T_hot.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_T_hot vector was not the same size as the time vector");
+		}
+		ssc_number_t *T_tes_hot = allocate("T_tes_hot", n_ts);
+
+		if(csp_solver.mv_tes_T_cold.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_T_cold vector was not the same size as the time vector");
+		}
+		ssc_number_t *T_tes_cold = allocate("T_tes_cold", n_ts);
+
+		if(csp_solver.mv_rec_m_dot.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "rec_m_dot vector was not the same size as the time vector");
+		}
+		ssc_number_t *rec_m_dot = allocate("m_dot_rec", n_ts);
+
+		if(csp_solver.mv_pc_m_dot.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "pc_m_dot vector was not the same size as the time vector");
+		}
+		ssc_number_t *pc_m_dot = allocate("m_dot_pc", n_ts);
+
+		if(csp_solver.mv_tes_dc_m_dot.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_dc_m_dot vector was not the same size as the time vector");
+		}
+		ssc_number_t *tes_dc_m_dot = allocate("m_dot_tes_dc", n_ts);
+
+		if(csp_solver.mv_tes_ch_m_dot.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_ch_m_dot vector was not the same size as the time vector");
+		}
+		ssc_number_t *tes_ch_m_dot = allocate("m_dot_tes_ch", n_ts);
+
+		if(csp_solver.mv_m_dot_balance.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "m_dot_balance vector was not the same size as the time vector");
+		}
+		ssc_number_t *m_dot_balance = allocate("m_dot_balance", n_ts);
+
+		if(csp_solver.mv_operating_modes.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "operating_modes vector was not the same size as the time vector");
+		}
+		ssc_number_t *operating_modes = allocate("operating_modes", n_ts);
+
+
+		if(csp_solver.mv_pc_q_thermal.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "pc_q_thermal vector was not the same size as the time vector");
+		}
+		ssc_number_t *pc_q_thermal = allocate("q_pb", n_ts);
+
+		if(csp_solver.mv_tes_dc_q_thermal.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_dc_q_thermal vector was not the same size as the time vector");
+		}
+		ssc_number_t *tes_dc_q_thermal = allocate("q_dc_tes", n_ts);
+
+		if(csp_solver.mv_tes_ch_q_thermal.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "tes_ch_q_thermal vector was not the same size as the time vector");
+		}
+		ssc_number_t *tes_ch_q_thermal = allocate("q_ch_tes", n_ts);
+
+		if(csp_solver.mv_q_balance.size() != n_ts)
+		{
+			throw exec_error("CSP solver", "q_balance vector was not the same size as the time vector");
+		}
+		ssc_number_t *q_balance = allocate("q_balance", n_ts);
+
+		if(csp_solver.mv_q_dot_pc_sb.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_pc_sb = allocate("q_dot_pc_sb", n_ts);
+
+		if(csp_solver.mv_q_dot_pc_min.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_pc_min = allocate("q_dot_pc_min", n_ts);
+
+		if(csp_solver.mv_q_dot_pc_max.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_pc_max = allocate("q_dot_pc_max", n_ts);
+
+		if(csp_solver.mv_q_dot_pc_target.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_pc_target = allocate("q_dot_pc_target", n_ts);
+
+		if(csp_solver.mv_is_rec_su_allowed.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *is_rec_su_allowed = allocate("is_rec_su_allowed", n_ts);
+
+		if(csp_solver.mv_is_pc_su_allowed.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *is_pc_su_allowed = allocate("is_pc_su_allowed", n_ts);
+
+		if(csp_solver.mv_is_pc_sb_allowed.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *is_pc_sb_allowed = allocate("is_pc_sb_allowed", n_ts);
+
+
+		if(csp_solver.mv_q_dot_est_cr_su.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_est_cr_su = allocate("q_dot_est_cr_su", n_ts);
+
+		if(csp_solver.mv_q_dot_est_cr_on.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_est_cr_on = allocate("q_dot_est_cr_on", n_ts);
+
+		if(csp_solver.mv_q_dot_est_tes_dc.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_est_tes_dc = allocate("q_dot_est_tes_dc", n_ts);
+
+		if(csp_solver.mv_q_dot_est_tes_ch.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_est_tes_ch = allocate("q_dot_est_tes_ch", n_ts);
+
+		if(csp_solver.mv_rec_q_dot_thermal.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_rec_thermal = allocate("q_dot_rec_thermal", n_ts);
+
+		if(csp_solver.mv_pc_q_dot_thermal.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_pc_thermal = allocate("q_dot_pc_thermal", n_ts);
+
+		if(csp_solver.mv_tes_dc_q_dot_thermal.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_tes_dc = allocate("q_dot_tes_dc", n_ts);
+
+		if(csp_solver.mv_tes_ch_q_dot_thermal.size() != n_ts)
+		{
+		
+		}
+		ssc_number_t *q_dot_tes_ch = allocate("q_dot_tes_ch", n_ts);	
+		
+		ssc_number_t *q_to_tes = allocate("q_to_tes", n_ts);
+
+
+		for( int i = 0; i < n_ts; i++ )
+		{
+			time_hr[i] = csp_solver.mv_time_mid[i];
+			solzen[i] = csp_solver.mv_solzen[i];
+			beam[i] = csp_solver.mv_beam[i];
+			eta_field[i] = csp_solver.mv_eta_field[i];
+			defocus[i] = csp_solver.mv_defocus[i];
+			eta_therm[i] = csp_solver.mv_rec_eta_thermal[i];
+			Q_thermal[i] = csp_solver.mv_rec_q_thermal[i];
+			q_startup[i] = csp_solver.mv_rec_q_startup[i];
+			eta[i] = csp_solver.mv_pc_eta[i];
+			P_cycle[i] = csp_solver.mv_pc_W_gross[i];
+			q_pc_startup[i] = csp_solver.mv_pc_q_startup[i];
+			pc_q_thermal[i] = csp_solver.mv_pc_q_thermal[i];
+			tank_losses[i] = csp_solver.mv_tes_q_losses[i];
+			q_heater[i] = csp_solver.mv_tes_q_heater[i];
+			T_tes_hot[i] = csp_solver.mv_tes_T_hot[i];
+			T_tes_cold[i] = csp_solver.mv_tes_T_cold[i];
+			tes_dc_q_thermal[i] = csp_solver.mv_tes_dc_q_thermal[i];
+			tes_ch_q_thermal[i] = csp_solver.mv_tes_ch_q_thermal[i];
+
+			rec_m_dot[i] = csp_solver.mv_rec_m_dot[i];
+			pc_m_dot[i] = csp_solver.mv_pc_m_dot[i];
+			tes_dc_m_dot[i] = csp_solver.mv_tes_dc_m_dot[i];
+			tes_ch_m_dot[i] = csp_solver.mv_tes_ch_m_dot[i];
+			m_dot_balance[i] = csp_solver.mv_m_dot_balance[i];
+
+			q_balance[i] = csp_solver.mv_q_balance[i];
+
+			operating_modes[i] = csp_solver.mv_operating_modes[i];
+
+			q_dot_pc_sb[i] = csp_solver.mv_q_dot_pc_sb[i];
+			q_dot_pc_min[i] = csp_solver.mv_q_dot_pc_min[i];
+			q_dot_pc_max[i] = csp_solver.mv_q_dot_pc_max[i];
+			q_dot_pc_target[i] = csp_solver.mv_q_dot_pc_target[i];
+
+			is_rec_su_allowed[i] = csp_solver.mv_is_rec_su_allowed[i];
+			is_pc_su_allowed[i] = csp_solver.mv_is_pc_su_allowed[i];
+			is_pc_sb_allowed[i] = csp_solver.mv_is_pc_sb_allowed[i];
+
+			q_dot_est_cr_su[i] = csp_solver.mv_q_dot_est_cr_su[i];
+			q_dot_est_cr_on[i] = csp_solver.mv_q_dot_est_cr_on[i];
+			q_dot_est_tes_dc[i] = csp_solver.mv_q_dot_est_tes_dc[i];
+			q_dot_est_tes_ch[i] = csp_solver.mv_q_dot_est_tes_ch[i];
+
+			q_dot_rec_thermal[i] = csp_solver.mv_rec_q_dot_thermal[i];
+			q_dot_pc_thermal[i] = csp_solver.mv_pc_q_dot_thermal[i];
+			q_dot_tes_dc[i] = csp_solver.mv_tes_dc_q_dot_thermal[i];
+			q_dot_tes_ch[i] = csp_solver.mv_tes_ch_q_dot_thermal[i];
+
+			if(tes_dc_q_thermal[i] > 0.0)
+				q_to_tes[i] = -tes_dc_q_thermal[i];
+			else
+				q_to_tes[i] = tes_ch_q_thermal[i];
+			
+		}
+
+
+		log("Everything was super successful, great job!");
+
+		 
 	}
 };
 
