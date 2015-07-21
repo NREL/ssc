@@ -14,6 +14,10 @@
 #include <algorithm>
 #include "exceptions.hpp"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 
 //-------Access functions
 //"GETS"
@@ -935,7 +939,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		else{
 			//User defined layouts - need to check for user defined canting and focusing
 			if(layout->at(i).is_user_cant) {
-				cant_method = 4;
+				cant_method = Heliostat::CANT_METHOD::USER;
 				hptr->IsUserCant( true );
 			}
 			else{
@@ -944,7 +948,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 			}
 
 			if(layout->at(i).is_user_focus) {
-				focus_method = 3;	//user defined
+				focus_method = Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR;	//user defined
 			}
 			else{
 				focus_method = hptr->getFocusMethod();
@@ -989,21 +993,21 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		hptr->setSlantRange( slant );
 		
 		//Choose how to cant the heliostat
-		if(cant_method == 0){	//No canting
+        switch (cant_method)
+        {
+        case Heliostat::CANT_METHOD::NONE:
 			hptr->setCantRadius( 9.e99 );
-		}
-		else if(cant_method == -1){ //Cant on axis equal to slant range
+            break;
+        case Heliostat::CANT_METHOD::AT_SLANT:
 			hptr->setCantRadius( slant );
-		}
-		else if(cant_method == 1){	//User-defined on axis canting, length in meters
-			//double cant[] = {cant_vect_i*cant_vect_scale, cant_vect_j*cant_vect_scale, cant_vect_k*cant_vect_scale};
-			//hptr->setCantVector(cant);
-		}
-		else if(cant_method == 3){ //Off-axis canting at user-defined day-hour
-
-		}
-		else if(cant_method == 4){ //User-defined canting at an un-normalized vector
-			crad = sqrt( pow(layout->at(i).cant.i, 2) + pow(layout->at(i).cant.j,2) + pow(layout->at(i).cant.k,2) );
+            break;
+        case Heliostat::CANT_METHOD::ON_AXIS_UD:    //User-defined on axis canting, length in meters
+        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
+            //do nothing
+            break;
+        case Heliostat::CANT_METHOD::USER:
+        {
+            crad = sqrt( pow(layout->at(i).cant.i, 2) + pow(layout->at(i).cant.j,2) + pow(layout->at(i).cant.k,2) );
 			hptr->setCantRadius( crad );
 			hptr->IsUserCant( true );
 			//Calculate the cant vector for each panel
@@ -1018,7 +1022,17 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 					cpanel->setAim( vec );
 				}
 			}
-		}
+            break;
+        }
+        default:
+            {   
+            stringstream msg;
+            msg << "Invalid Cant Method specified in PrepareFieldLayout algorithm. Method specified: " << cant_method << ".";
+            throw spexception(msg.str());
+            break;
+            }   
+        }
+
 
 		//Choose how to focus the heliostat
 		switch(focus_method)
@@ -1296,6 +1310,25 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         return;
     }
 	
+
+    /*ofstream fout("C:/Users/mwagner/Documents/NREL/SAM/Tower development/Generic-Tower-Macro/Mark2/hdata.csv");
+    fout.clear();
+    
+    fout << "X,Y,Atten,Block,Shad,Cos,Int,Tot,Pow\n";
+
+    for(int i=0; i<Npos; i++){
+        fout << _heliostats.at(i)->getLocation()->x << ","
+             << _heliostats.at(i)->getLocation()->y << ","
+             << _heliostats.at(i)->getEfficiencyAtten() << "," 
+             << _heliostats.at(i)->getEfficiencyBlock() << ","
+             << _heliostats.at(i)->getEfficiencyShading() << ","
+             << _heliostats.at(i)->getEfficiencyCosine() << ","
+             << _heliostats.at(i)->getEfficiencyIntercept() << ","
+             << _heliostats.at(i)->getEfficiencyTotal() << ","
+             << _heliostats.at(i)->getPowerToReceiver() << "\n";
+    }
+
+    fout.close();*/
 
 	_q_to_rec = 0.;
 	for(int i=0; i<Npos; i++){

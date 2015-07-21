@@ -84,25 +84,27 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		V["heliostat"][ind]["r_collision"].value = my_to_string( dc);
 		
 		//Heliostat cant radius
-		int cant_type = V["heliostat"][ind]["cant_method"].value_int(); 
-			/* 
-			No canting=0
-			On-axis at slant=-1
-			On-axis, user-defined=1
-			Off-axis, day and hour=3
-			User-defined vector=4 
-			*/
-		if(cant_type == 1){	//On-axis, user-defined
-			bool is_scaled = V["heliostat"][ind]["is_cant_rad_scaled"].value_bool(); 
+		int cant_method = V["heliostat"][ind]["cant_method"].value_int(); 
+			
+        switch (cant_method)
+        {
+        case Heliostat::CANT_METHOD::NONE:
+        case Heliostat::CANT_METHOD::AT_SLANT:
+            break;
+        case Heliostat::CANT_METHOD::ON_AXIS_UD:
+        {
+            bool is_scaled = V["heliostat"][ind]["is_cant_rad_scaled"].value_bool(); 
 			double cant_radius, 
 				cant_rad_scaled = V["heliostat"][ind]["cant_rad_scaled"].value_double();
 			
 			if(is_scaled){ cant_radius = cant_rad_scaled * tht; }
 			else{ cant_radius = cant_rad_scaled; }
 			V["heliostat"][ind]["cant_radius"].value = my_to_string( cant_radius );
-		}
-		else if(cant_type == 3){	//Off-axis, day and hour
-			/* Calculate the sun position at this day and hour */
+            break;
+        }
+        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
+        {
+                                                         /* Calculate the sun position at this day and hour */
 			double cant_hour, lat, lon, tmz;
 			int cant_day =  V["heliostat"][ind]["cant_day"].value_int();
 			to_double( V["heliostat"][ind]["cant_hour"].value, &cant_hour);
@@ -154,9 +156,11 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			V["heliostat"][ind]["cant_sun_el"].value = my_to_string( 90. - SP.zenetr);
 			V["heliostat"][ind]["cant_sun_az"].value = my_to_string( SP.azim );
 
-		}
-		else if(cant_type == 4){	//User-defined vector
-			//Calculate the magnitude of the vector components
+            break;
+        }
+        case Heliostat::CANT_METHOD::USER:
+        {
+            //Calculate the magnitude of the vector components
 			double i, j, k, scale, cmag;
 			to_double(V["heliostat"][ind]["cant_vect_i"].value, &i);
 			to_double(V["heliostat"][ind]["cant_vect_j"].value, &j);
@@ -169,7 +173,13 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			V["heliostat"][ind]["cant_mag_i"].value = my_to_string( i/cmag*scale );
 			V["heliostat"][ind]["cant_mag_j"].value = my_to_string( j/cmag*scale );
 			V["heliostat"][ind]["cant_mag_k"].value = my_to_string( k/cmag*scale );
-		}
+            break;
+        }
+        default:
+            throw spexception("Invalid cant method specified in UpdateCalculatedMapValues algorithm.");
+            break;
+        }
+
 
 		//calculate the total error
 		double err_elevation, err_azimuth, err_surface_x, err_surface_y, err_reflect_x, err_reflect_y;

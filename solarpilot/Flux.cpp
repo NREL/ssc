@@ -8,6 +8,7 @@
 #include "Land.h"
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 using namespace std;
 using namespace Toolbox;
@@ -879,8 +880,13 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	//SAVE2=SIGEL2+SIGSY2
 	double term2 = pow(err_angular[1], 2) + pow(err_surface[1], 2);  //second reused term
 	
-	if(cant_method < 2){
-		//Everything except individual off-axis canting 
+    switch (cant_method)
+    {
+    case Heliostat::CANT_METHOD::NONE:
+    case Heliostat::CANT_METHOD::AT_SLANT:
+    case Heliostat::CANT_METHOD::ON_AXIS_UD:
+    {
+        //Everything except individual off-axis canting 
 
 		//A(1,1)=CBNT 
 		A11 = cos_t_az * cos_n_az + sin_n_az * sin_t_az;
@@ -896,9 +902,12 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		B12 = -2.*A21;
 		B21 = -2.*A12;
 		B22 = 2.*A11;
-		
-	}
-	else{	//case 3: individual off-axis canting at defined time
+		break;
+    }
+    case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
+    case Heliostat::CANT_METHOD::USER:
+    {
+        //case 3: individual off-axis canting at defined time
 		//Calculate sun angles at canting time 7097
 		double
 			cant_day = H.getCantDay(),
@@ -969,8 +978,16 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		B21 = -A12*2.;
 		//	B(2,2)=2.*A(1,1)
 		B22 = 2.*A11;
-		
-	}
+        break;
+    }
+    default:
+    {   
+        stringstream msg;
+        msg << "Invalid Cant Method specified in ImagePlaneIntercept algorithm. Method specified: " << cant_method << ".";
+        throw spexception(msg.str());
+        break;
+    }
+    }
 
 	
 	//if the focal distance of the heliostat is not equal to the slant range, do additional 
@@ -1144,7 +1161,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		//Are the heliostats canted on or off axis?
 		switch(cant_method)
 		{
-		case -1:
+        case Heliostat::CANT_METHOD::AT_SLANT:
 			//method -1 for on-axis at default slant range (6 tht)
 			gcanta = 0.;
 			gcanty = 0.;
@@ -1152,14 +1169,14 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 			gcantx = -.5*tht/H.getSlantRange()*srange[1];
 			gcantb = gcantx;
 			break;
-		case 1:
+        case Heliostat::CANT_METHOD::ON_AXIS_UD:
 			//method 1 for on-axis at user defined length
 			gcanta = 0.;
 			gcanty = 0.;
 			gcantx = -.5*tht/H.getCantRadius()*srange[1];	
 			gcantb = gcantx;
 			break;
-		case 2:
+        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
 			//off-axis user defined time
 			tempmult = 1./(4.*eta_cosine*slant)*srange[1];
 			gcantx = (A21*B12 - A11*B22)*tempmult;
@@ -1167,14 +1184,20 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 			gcanty = (A11*B21 - A21*B11)*tempmult;
 			gcantb = (A12*B21 - A22*B11)*tempmult;
 			break;
-		case 0:
+        case Heliostat::CANT_METHOD::NONE:
 			//No canting
 			gcanta = 0.;
 			gcantx = 0.;
 			gcantb = 0.;
 			gcanty = 0.;
 			break;
-		}
+		default:
+        {
+            stringstream msg;
+            msg << "Invalid Cant Method specified in ImagePlaneIntercept algorithm. Method specified: " << cant_method << ".";
+            throw spexception(msg.str());
+        }
+        }
 
 		matrix_t<double> xcent, ycent;
 		xcent.resize(ncanty,ncantx);

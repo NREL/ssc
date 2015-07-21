@@ -112,6 +112,8 @@ public:
 	/*Heliostat(){};
 	~Heliostat(){};*/
 
+    struct CANT_METHOD {enum A {NONE=0, AT_SLANT=-1, ON_AXIS_UD=1, OFF_AXIS_DAYHOUR=3, USER=4};};
+
 	//Declare other subroutines
 	void installPanels();	//Define the cant panel locations, pointing vectors, and shape
 	void setDefaults();

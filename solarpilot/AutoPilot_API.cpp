@@ -890,14 +890,14 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 		_variables["heliostat"][h]["cant_method"].set(helio->cant_type);
 		switch (helio->focus_type)
 		{
-		case sp_heliostat::CANT_TYPE::FLAT:
-		case sp_heliostat::CANT_TYPE::AT_SLANT:
+        case Heliostat::CANT_METHOD::NONE:
+        case Heliostat::CANT_METHOD::AT_SLANT:
 			break;
-		case sp_heliostat::CANT_TYPE::AT_DAY_HOUR:
+        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
 			_variables["heliostat"][h]["cant_day"].set(helio->cant_settings.point_day);
 			_variables["heliostat"][h]["cant_hour"].set(helio->cant_settings.point_hour);
 			break;
-		case sp_heliostat::CANT_TYPE::USER_VECTOR:
+        case Heliostat::CANT_METHOD::USER:
 			_variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
 			_variables["heliostat"][h]["cant_vect_i"].set(helio->cant_settings.point_vector.i);
 			_variables["heliostat"][h]["cant_vect_j"].set(helio->cant_settings.point_vector.j);
