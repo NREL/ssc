@@ -501,7 +501,9 @@ public:
 
 	std::vector<double> mv_q_balance;		//[-] Is the 1st law satisfied?
 
-	std::vector<double> mv_operating_modes;	//[-] List of operating modes tried each timestep
+	std::vector<double> mv_operating_modes_a;	//[-] List of operating modes tried each timestep
+	std::vector<double> mv_operating_modes_b;	//[-] List of operating modes tried each timestep
+	std::vector<double> mv_operating_modes_c;	//[-] List of operating modes tried each timestep
 
 	// Controller logic info	
 	std::vector<double> mv_q_dot_pc_sb;		//[MW]
