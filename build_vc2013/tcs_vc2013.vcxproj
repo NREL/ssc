@@ -23,10 +23,6 @@
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
     <ClCompile Include="..\tcs\compact_hx_discretized.cpp" />
-    <ClCompile Include="..\tcs\csp_solver_mspt_collector_receiver.cpp" />
-    <ClCompile Include="..\tcs\csp_solver_mspt_receiver_222.cpp" />
-    <ClCompile Include="..\tcs\csp_solver_pt_heliostatfield.cpp" />
-    <ClCompile Include="..\tcs\csp_solver_util.cpp" />
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
@@ -84,11 +80,6 @@
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
     <ClInclude Include="..\tcs\compact_hx_discretized.h" />
-    <ClInclude Include="..\tcs\csp_solver_core.h" />
-    <ClInclude Include="..\tcs\csp_solver_mspt_collector_receiver.h" />
-    <ClInclude Include="..\tcs\csp_solver_mspt_receiver_222.h" />
-    <ClInclude Include="..\tcs\csp_solver_pt_heliostatfield.h" />
-    <ClInclude Include="..\tcs\csp_solver_util.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
     <ClInclude Include="..\tcs\sco2_pc_core.h" />
