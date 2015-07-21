@@ -289,13 +289,15 @@ public:
 		int out_type = -1;
 		std::string out_msg = "";
 
-		try
+        // ------------- CALL --------------------
+        try
 		{
 			mspt_receiver.call(ms_weather, 
 				ms_htf_state, 
 				ms_inputs, 
 				ms_sim_info);
 		}
+        // ------------- END CALL -----------------
 		
 		catch( C_csp_exception &csp_exception )
 		{

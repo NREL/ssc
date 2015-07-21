@@ -750,7 +750,7 @@ public:
 			// Get size of time vector: all other output vectors need to match
 		int n_ts = csp_solver.mv_time_mid.size();
 
-		
+
 		ssc_number_t *time_hr = allocate("time_hr", n_ts);
 		
 		if(csp_solver.mv_solzen.size() != n_ts)
