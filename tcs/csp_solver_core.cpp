@@ -53,7 +53,9 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	mv_q_balance.resize(0);
 
-	mv_operating_modes.resize(0);
+	mv_operating_modes_a.resize(0);
+	mv_operating_modes_b.resize(0);
+	mv_operating_modes_c.resize(0);
 
 	mv_q_dot_pc_sb.resize(0);
 	mv_q_dot_pc_min.resize(0);
@@ -4259,20 +4261,53 @@ void C_csp_solver::simulate()
 		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
 		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
 		int n_op_modes = m_op_mode_tracking.size();
-		double op_mode_key = m_op_mode_tracking[0];
-		for(int i = 1; i < n_op_modes; i++)
+		double op_mode_key = 0.0;
+		for( int i = 0; i < fmin(3,n_op_modes); i++ )
 		{
 			double op_mode_step = m_op_mode_tracking[i];
-			if( op_mode_step >= 10.0 )
+
+			if( op_mode_step < 10.0 )
 			{
-				op_mode_key = 1000.0*op_mode_key + op_mode_step;
+				op_mode_key = 100.0*op_mode_key + 10.0*op_mode_step;
 			}
 			else
 			{
 				op_mode_key = 100.0*op_mode_key + op_mode_step;
 			}
 		}
-		mv_operating_modes.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+		mv_operating_modes_a.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+
+		op_mode_key = 0.0;
+		for( int i = 3; i < fmin(6,n_op_modes); i++ )
+		{
+			double op_mode_step = m_op_mode_tracking[i];
+
+			if( op_mode_step < 10.0 )
+			{
+				op_mode_key = 100.0*op_mode_key + 10.0*op_mode_step;
+			}
+			else
+			{
+				op_mode_key = 100.0*op_mode_key + op_mode_step;
+			}
+		}
+		mv_operating_modes_b.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+
+		op_mode_key = 0.0;
+		for( int i = 6; i < n_op_modes; i++ )
+		{
+			double op_mode_step = m_op_mode_tracking[i];
+
+			if( op_mode_step < 10.0 )
+			{
+				op_mode_key = 100.0*op_mode_key + 10.0*op_mode_step;
+			}
+			else
+			{
+				op_mode_key = 100.0*op_mode_key + op_mode_step;
+			}
+		}
+		mv_operating_modes_c.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 
 
 		// Controller logic info
