@@ -118,6 +118,12 @@ void C_csp_solver::init_independent()
 void C_csp_solver::init()
 {
 	init_independent();
+    /* 
+    This function calculates constant parameters to be used by the controller-solver
+    and passes them back. E.g. mass flow rate for scaling, initial cold temperature
+    guess value, etc.
+    */
+
 
 	// Get controller values from component models
 		// Collector/Receiver
@@ -140,6 +146,10 @@ void C_csp_solver::init()
 		
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
+
+    /* 
+    If no TES exists, initialize values to zero. They won't be touched again
+    */
 
 	if(!m_is_tes)
 	{	// Set constant values for tes HTF states
@@ -166,15 +176,20 @@ void C_csp_solver::init()
 
 void C_csp_solver::simulate()
 {
-	
+	/* 
+    This function is called once and manages the time series simulation.
+    */
+
+    //Set up initial simulation information.
 	double sim_time_start = 0.0;			//[s] hardcode simulation to start at first of year, for now
 	double sim_time_end = 8760.0*3600;		//[s] hardcode simulation to run through entire year, for now
 	double sim_step_size_baseline = 3600.0;			//[s]
 	mc_sim_info.m_step = sim_step_size_baseline;		//[s] hardcode steps = 1 hr, for now
 
-	bool is_rec_su_allowed = true;
+    //initialize control flags
+	/*bool is_rec_su_allowed = true;
 	bool is_pc_su_allowed = true;
-	bool is_pc_sb_allowed = true;
+	bool is_pc_sb_allowed = true;*/
 
 	int cr_operating_state = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 	int pc_operating_state = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
@@ -201,21 +216,25 @@ void C_csp_solver::simulate()
 	// Reset Controller Variables to Defaults
 	m_defocus = 1.0;		//[-]  
 
+    /* 
+    ************************** MAIN TIME-SERIES LOOP **************************
+    */
 	while( mc_sim_info.m_time <= sim_time_end )
 	{
 		// Store mc_sim_info at start of timestep, use in case it needs to be reset if variable timestep modes fail
 		double step_ts_start = mc_sim_info.m_step;		//[s]
 		double time_ts_start = mc_sim_info.m_time;		//[s]
 		
-		// Get collector/receiver & power cycle operating states
+		// Get collector/receiver & power cycle operating states at start of time step (last time step)
 		cr_operating_state = mc_collector_receiver.get_operating_state();
 		pc_operating_state = mc_power_cycle.get_operating_state();
 
-		// Get TES operating state info
+		// Get TES operating state info at end of last time step
 		double q_dot_tes_dc, q_dot_tes_ch;
 		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
 		if( m_is_tes )
 		{
+            //predict estimated amount of charge/discharge available
 			double m_dot_field_dc_est, T_hot_field_dc_est;	//[MW, kg/s, K]
 			m_dot_field_dc_est = T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
 			mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_sim_info.m_step, q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est);
@@ -246,20 +265,21 @@ void C_csp_solver::simulate()
 		bool is_rec_su_allowed = true;
 		bool is_pc_su_allowed = true;
 		bool is_pc_sb_allowed = true;
-		mc_sim_info.m_tou = 1;			//[base 1] used by power cycle model for hybrid cooling - may also want to move this to controller
+		mc_sim_info.m_tou = 1;	    //[base 1] used ONLY by power cycle model for hybrid cooling - may also want to move this to controller
 
 		// Get standby fraction and min operating fraction
 			// Could eventually be a method in PC class...
-		double cycle_sb_frac = m_cycle_sb_frac_des;				//[MW]
+		double cycle_sb_frac = m_cycle_sb_frac_des;				//[-]
 			
-			// *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** or is this too confusing and not helpful enough?
+			// *** If standby not allowed, then reset q_pc_sb = q_pc_min ?? *** 
+                //or is this too confusing and not helpful enough?
 		double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
 		double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
 		double q_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MW]
 		double q_pc_target = q_pc_max;							//[MW]
 
 
-		// Solve collector/receiver with design inputs and weather to estimate output
+		// Solve collector/receiver at steady state with design inputs and weather to estimate output
 			// May replace this call with a simple proxy model later...
 		mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 		mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
@@ -279,12 +299,40 @@ void C_csp_solver::simulate()
 
 
 		double q_dot_cr_on = std::numeric_limits<double>::quiet_NaN();
-		if(q_dot_cr_startup < m_q_dot_rec_on_min*(1.0-0.05))
+		if(q_dot_cr_startup < m_q_dot_rec_on_min*0.95)      //multiply by tolerance - just trying to get it to work
 			q_dot_cr_on = 0.0;
 		else
 			q_dot_cr_on = q_dot_cr_startup;
 
 
+        /* 
+        
+        
+        dispatch optimization here??
+        
+       
+        These control variables will be set by the dispatch algorithm. The steady state calls do not
+        depend on these variables.
+        
+        bool is_rec_su_allowed = true;
+		bool is_pc_su_allowed = true;
+		bool is_pc_sb_allowed = true;
+
+        Optionally, can also determine these values:
+
+        double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
+		double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
+		double q_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MW]
+		double q_pc_target = q_pc_max;							//[MW]
+                << this is the variable that will control how much TES is dispatched
+
+        */
+
+
+
+        /* 
+        ------------ Controller/Solver iteration loop -------------
+        */
 
 		int operating_mode = ENTRY_MODE;
 		bool are_models_converged = false;
@@ -4136,7 +4184,11 @@ void C_csp_solver::simulate()
 
 			}	// End switch() on receiver operating modes
 		
-		}	// End loop to find correct operating mode and system performance
+		}	
+        
+        /* 
+        ------------ End loop to find correct operating mode and system performance --------
+        */
 
 
 		// Timestep solved: run post-processing, converged()		
