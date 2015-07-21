@@ -79,7 +79,7 @@
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
     <ClCompile Include="..\ssc\csp_common.cpp" />
-    <ClCompile Include="..\ssc\sscapi.cpp" />
+    <ClCompile Include="..\ssc\sscapi_csp.cpp" />
     <ClCompile Include="..\ssc\tckernel.cpp" />
     <ClCompile Include="..\ssc\vartab.cpp" />
     <ClCompile Include="..\ssc\common.cpp" />
