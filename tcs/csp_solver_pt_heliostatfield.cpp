@@ -6,8 +6,11 @@
 #include "AutoPilot_API.h"
 #include "IOUtil.h"
 #include "sort_method.h"
+#include "heliostat.h"
 
 #include "lib_weatherfile.h"
+
+#include <sstream>
 
 #define az_scale 6.283125908 
 #define zen_scale 1.570781477 
@@ -310,12 +313,40 @@ void C_pt_heliostatfield::init()
 			helios.front().active_fraction = helio_active_fraction * dens_mirror;   //availability * mirror area fraction
 			helios.front().reflectance = helio_reflectance;
 			int cmap[5];
-			cmap[0] = sp_heliostat::CANT_TYPE::FLAT;
-			cmap[1] = sp_heliostat::CANT_TYPE::AT_SLANT;
-			cmap[2] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
-			cmap[3] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
-			cmap[4] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+			cmap[0] = Heliostat::CANT_METHOD::NONE;
+            cmap[1] = Heliostat::CANT_METHOD::AT_SLANT;
+            cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR;
 			helios.front().cant_type = cmap[ cant_type ];
+
+            switch (cant_type)
+            {
+            case sp_heliostat::CANT_TYPE::NONE:
+            case sp_heliostat::CANT_TYPE::ON_AXIS:
+                //do nothing
+                break;
+            case sp_heliostat::CANT_TYPE::EQUINOX:
+                helios.front().cant_settings.point_day = 81;  //spring equinox
+		        helios.front().cant_settings.point_hour = 12.;
+                break;
+            case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
+                helios.front().cant_settings.point_day = 172;  //Summer solstice
+		        helios.front().cant_settings.point_hour = 12.;
+                break;
+            case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
+                helios.front().cant_settings.point_day = 355;  //Winter solstice
+		        helios.front().cant_settings.point_hour = 12.;
+                break;
+            default:
+            {
+                stringstream msg;
+                msg << "Invalid Cant Type specified in CSP SOLVER PT HELIOSTAT. Method must be one of: \n" <<
+                       "NONE(0), ON_AXIS(1), EQUINOX(2), SOLSTICE_SUMMER(3), SOLSTICE_WINTER(4).\n" <<
+                       "Method specified is: " << cant_type << ".";
+                throw spexception(msg.str());
+            }
+                break;
+            }
+
 			if( cant_type == 2 ){
 				helios.front().cant_settings.point_day = 81;  //spring equinox
 				helios.front().cant_settings.point_hour = 12.;

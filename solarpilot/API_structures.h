@@ -136,7 +136,9 @@ public:
 	void LoadDefaults(var_set &V);
 
 	struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
-	struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
+	//struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
+    struct CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
+    //None,On-axis,Equinox,Summer Solstice,Winter Solstice
 	int focus_type;
 	int cant_type;	
 	Cant_settings cant_settings;

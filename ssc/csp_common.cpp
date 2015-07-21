@@ -2,6 +2,7 @@
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_util.h"
+#include <sstream>
 
 // solarpilot header files
 #include "AutoPilot_API.h"
@@ -79,25 +80,43 @@ bool solarpilot_invoke::run()
 	helios.front().npanels_h = m_cmod->as_integer("n_facet_y");
 	helios.front().npanels_w = m_cmod->as_integer("n_facet_x");
 	int cmap[5];
-	cmap[0] = sp_heliostat::CANT_TYPE::FLAT;
-	cmap[1] = sp_heliostat::CANT_TYPE::AT_SLANT;
-	cmap[2] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
-	cmap[3] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
-	cmap[4] = sp_heliostat::CANT_TYPE::AT_DAY_HOUR;
+    cmap[0] = Heliostat::CANT_METHOD::NONE;
+    cmap[1] = Heliostat::CANT_METHOD::AT_SLANT;
+    cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR;
+	
 	int cant_type = m_cmod->as_integer("cant_type");
-	helios.front().cant_type = cmap[ cant_type ];
-	if( cant_type == 2 ){
-		helios.front().cant_settings.point_day = 81;  //spring equinox
+
+	helios.front().cant_type = cmap[ cant_type ];       //Convert to the Heliostat::CANT_METHOD list
+    switch (cant_type)
+    {
+    case sp_heliostat::CANT_TYPE::NONE:
+    case sp_heliostat::CANT_TYPE::ON_AXIS:
+        //do nothing
+        break;
+    case sp_heliostat::CANT_TYPE::EQUINOX:
+        helios.front().cant_settings.point_day = 81;  //spring equinox
 		helios.front().cant_settings.point_hour = 12.;
-	}
-	else if( cant_type == 3 ){
-		helios.front().cant_settings.point_day = 172;  //Summer solstice
+        break;
+    case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
+        helios.front().cant_settings.point_day = 172;  //Summer solstice
 		helios.front().cant_settings.point_hour = 12.;
-	}
-	else if( cant_type == 4){
-		helios.front().cant_settings.point_day = 355;  //Winter solstice
+        break;
+    case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
+        helios.front().cant_settings.point_day = 355;  //Winter solstice
 		helios.front().cant_settings.point_hour = 12.;
-	}
+        break;
+    default:
+    {
+        stringstream msg;
+        msg << "Invalid Cant Type specified in AutoPILOT API. Method must be one of: \n" <<
+               "NONE(0), ON_AXIS(1), EQUINOX(2), SOLSTICE_SUMMER(3), SOLSTICE_WINTER(4).\n" <<
+               "Method specified is: " << cant_type << ".";
+        throw spexception(msg.str());
+    }
+        break;
+    }
+
+
 
 	int fmap[2];
 	fmap[0] = sp_heliostat::FOCUS_TYPE::FLAT;
