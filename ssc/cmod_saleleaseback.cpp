@@ -560,7 +560,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 /* Partial Income Statement: Project */
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_net",            "Energy",                     "kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_ppa_price",            "PPA price",                     "cents/kWh",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "Total PPA revenue",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "cf_energy_value",         "PPA revenue",                     "$",      "",                      "DHF",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fixed_expense",      "O&M fixed expense",                  "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_production_expense", "O&M production-based expense",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_capacity_expense",   "O&M capacity-based expense",         "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
