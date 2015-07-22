@@ -314,7 +314,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c3",                                  "Rsh fit parameter 3",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	
 // inverter model
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",       "0=cec,1=datasheet,2=partload",        "pvsamv1",       "*",                                 "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload",        "pvsamv1",       "*",                                 "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum MPPT voltage",                                    "Vdc",     "",                     "pvsamv1",       "",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum MPPT voltage",                                    "Vdc",     "",                     "pvsamv1",       "",                    "",                              "" },
+
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                                  "Curvature between ac-power and dc-power at ref",          "1/W",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c1",                                  "Coefficient of Pdco variation with dc input voltage",     "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
@@ -326,9 +329,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_pso",                                 "DC power required to enable the inversion process",       "Wdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdco",                                "DC input voltage for the rated ac-power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdcmax",                              "Maximum dc input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
+	
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                "Weighted or Peak or Nominal Efficiency",     "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Weighted or Peak or Nominal Efficiency",     "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pnt",                                 "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_pso",                                 "DC power required to enable the inversion process",       "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_vdco",                                "DC input voltage for the rated ac-power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
@@ -341,7 +345,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_pnt",                                 "AC power consumed by inverter at night",                  "Wac",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdco",                                "DC input voltage for the rated ac-power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_vdcmax",                              "Maximum dc input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=2",                    "",                              "" },
-
+	
 	// battery storage and dispatch
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
@@ -1265,6 +1269,8 @@ public:
 		::partload_inverter_t plinv;
 
 		int inv_type = as_integer("inverter_model");
+		double V_mppt_lo = as_double("mppt_low_inverter");
+		double V_mppt_hi = as_double("mppt_hi_inverter");
 
 		if (inv_type == 0) // cec database
 		{
@@ -1277,6 +1283,7 @@ public:
 			snlinv.C1 = as_double("inv_snl_c1");
 			snlinv.C2 = as_double("inv_snl_c2");
 			snlinv.C3 = as_double("inv_snl_c3");
+
 		}
 		else if (inv_type == 1) // datasheet data
 		{
@@ -1786,6 +1793,23 @@ public:
 							// calculate module power output using conversion model previously specified
 							(*celltemp_model)(in, *module_model, module_voltage, tcell);
 							(*module_model)(in, tcell, module_voltage, out);
+
+							// for CEC or iec61853
+							if (mod_type == 1 || mod_type == 2 ||  mod_type == 4)
+							{
+								if (out.Voltage < (V_mppt_lo / modules_per_string))
+								{
+									module_voltage = V_mppt_lo / modules_per_string;
+									(*celltemp_model)(in, *module_model, module_voltage, tcell);
+									(*module_model)(in, tcell, module_voltage, out);
+								}
+								else if (out.Voltage > (V_mppt_hi / modules_per_string))
+								{
+									module_voltage = V_mppt_hi / modules_per_string;
+									(*celltemp_model)(in, *module_model, module_voltage, tcell);
+									(*module_model)(in, tcell, module_voltage, out);
+								}
+							}
 						}
 
 						if ( out.Voltage > module_model->VocRef()*1.3 )
