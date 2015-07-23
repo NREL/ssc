@@ -314,10 +314,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "sd11par_c3",                                  "Rsh fit parameter 3",                                     "",       "",                                                                  "pvsamv1",       "module_model=4",                           "",                              "" },
 	
 // inverter model
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload",        "pvsamv1",       "*",                                 "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum MPPT voltage",                                    "Vdc",     "",                     "pvsamv1",       "",                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum MPPT voltage",                                    "Vdc",     "",                     "pvsamv1",       "",                    "",                              "" },
-
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload",        "pvsamv1",               "*",                         "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
+	
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                                  "Curvature between ac-power and dc-power at ref",          "1/W",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c1",                                  "Coefficient of Pdco variation with dc input voltage",     "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
@@ -919,9 +919,10 @@ public:
 
 		double module_watts_stc = -1.0;
 
+		//"0=spe,1=cec,2=6par_user,3=snl,4=sd11-iec61853"
 		bool enable_mismatch_vmax_calc = as_boolean("enable_mismatch_vmax_calc");
 		if (enable_mismatch_vmax_calc 
-			&& mod_type != 1 && mod_type != 3 && mod_type != 4 )
+			&& mod_type != 1 && mod_type != 2 && mod_type != 4 )
 			throw exec_error( "pvsamv1", "String level subarray mismatch can only be calculated using a single-diode based module model.");
 
 		if ( mod_type == 0 )
@@ -1269,8 +1270,27 @@ public:
 		::partload_inverter_t plinv;
 
 		int inv_type = as_integer("inverter_model");
-		double V_mppt_lo = as_double("mppt_low_inverter");
-		double V_mppt_hi = as_double("mppt_hi_inverter");
+		double V_mppt_lo_1module = as_double("mppt_low_inverter") / modules_per_string;
+		double V_mppt_hi_1module = as_double("mppt_hi_inverter") / modules_per_string;
+		bool clip_mppt_window = false;
+
+		if ( V_mppt_lo_1module > 0 && V_mppt_hi_1module > V_mppt_lo_1module )
+		{
+			if ( mod_type == 1     // cec with database
+				|| mod_type == 2   // cec with user specs
+				|| mod_type == 4 ) // iec61853 single diode
+			{
+				clip_mppt_window = true;
+			}
+			else
+			{
+				log( "The simple efficiency and Sandia module models do not allow limiting module voltage to the MPPT tracking range of the inverter.", SSC_NOTICE );
+			}
+		}
+		else
+		{
+			log( "Inverter MPPT voltage tracking window not defined - modules always operate at MPPT.", SSC_NOTICE );
+		}
 
 		if (inv_type == 0) // cec database
 		{
@@ -1763,6 +1783,13 @@ public:
 								module_voltage = V[i];
 							}
 						}
+
+						if ( clip_mppt_window )
+						{
+							if ( module_voltage < V_mppt_lo_1module ) module_voltage = V_mppt_lo_1module;
+							if ( module_voltage > V_mppt_hi_1module ) module_voltage = V_mppt_hi_1module;
+						}
+
 					}
 
 
@@ -1794,18 +1821,20 @@ public:
 							(*celltemp_model)(in, *module_model, module_voltage, tcell);
 							(*module_model)(in, tcell, module_voltage, out);
 
-							// for CEC or iec61853
-							if (mod_type == 1 || mod_type == 2 ||  mod_type == 4)
+							// if mismatch was enabled, the module voltage already was clipped to the inverter MPPT range if appropriate
+							// here, if the module was running at mppt by default, and mppt window clipping is possible, recalculate
+							// module power output to determine actual module power using the voltage window of the inverter
+							if ( !enable_mismatch_vmax_calc && clip_mppt_window )
 							{
-								if (out.Voltage < (V_mppt_lo / modules_per_string))
+								if ( out.Voltage < V_mppt_lo_1module )
 								{
-									module_voltage = V_mppt_lo / modules_per_string;
+									module_voltage = V_mppt_lo_1module;
 									(*celltemp_model)(in, *module_model, module_voltage, tcell);
 									(*module_model)(in, tcell, module_voltage, out);
 								}
-								else if (out.Voltage > (V_mppt_hi / modules_per_string))
+								else if ( out.Voltage > V_mppt_hi_1module )
 								{
-									module_voltage = V_mppt_hi / modules_per_string;
+									module_voltage = V_mppt_hi_1module;
 									(*celltemp_model)(in, *module_model, module_voltage, tcell);
 									(*module_model)(in, tcell, module_voltage, out);
 								}
