@@ -19,7 +19,7 @@ struct battstor
 
 	// for user schedule
 	void force_replacement();
-	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour);
+	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step);
 
 
 	void calculate_monthly_and_annual_outputs( compute_module &cm );

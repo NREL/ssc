@@ -314,17 +314,21 @@ battstor::~battstor()
 	if( dispatch_model ) delete dispatch_model;
 }
 
-void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour)
+void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step)
 {
 	if (batt_replacement_option == 2)
 	{
+		// don't allow replacement on first hour of first year
+		if (hour == 0 && iyear == 0)
+			return;
+
 		bool replace = false;
 		if (iyear < count_batt_replacement)
 		{
 			int num_repl = batt_replacement[iyear];
 			for (int j_repl = 0; j_repl < num_repl; j_repl++)
 			{
-				if (hour = (int)(j_repl*8760.0 / num_repl))
+				if ((hour == (int)(j_repl*8760.0 / num_repl)) && step == 0)
 				{
 					replace = true;
 					break;
@@ -338,7 +342,7 @@ void battstor::check_replacement_schedule(int batt_replacement_option, size_t co
 void battstor::force_replacement()
 {
 	lifetime_model->force_replacement();
-	lifetime_model->reset_replacements();
+	battery_model->runLifetimeModel(0);
 }
 
 
