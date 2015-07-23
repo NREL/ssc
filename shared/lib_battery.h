@@ -238,6 +238,7 @@ protected:
 	int _replacement_option;
 	double _replacement_capacity;
 	int _replacements;
+	bool _replacement_scheduled;
 
 	enum RETURN_CODES
 	{

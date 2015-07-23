@@ -1901,7 +1901,7 @@ public:
 
 					// Battery replacement
 					if (en_batt)
-						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour);
+						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour,jj);
 
 					 
 					// DC Connected Battery

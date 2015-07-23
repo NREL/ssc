@@ -417,6 +417,7 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const
 	// issues as capacity approaches 0%
 	if (replacement_capacity == 0.) { _replacement_capacity = 2.; }
 	_replacements = 0;
+	_replacement_scheduled = false;
 
 	for (int i = 0; i < _batt_lifetime_matrix.nrows(); i++)
 	{
@@ -534,7 +535,7 @@ int lifetime_t::rainflow_compareRanges()
 bool lifetime_t::check_replaced()
 {
 	bool replaced = false;
-	if (_replacement_option !=0 && _Clt <= _replacement_capacity)
+	if ( (_replacement_option == 1 && _Clt <= _replacement_capacity) || _replacement_scheduled)
 	{
 		_replacements++;
 		_Clt = bilinear(0.,0);
@@ -546,20 +547,13 @@ bool lifetime_t::check_replaced()
 		_Range = 0;
 		_Peaks.clear();
 		replaced = true;
+		_replacement_scheduled = false;
 	}
 	return replaced;
 }
 void lifetime_t::force_replacement()
 {
-	_replacements++;
-	_Clt = bilinear(0., 0);
-	_Dlt = 0.;
-	_nCycles = 0;
-	_jlt = 0;
-	_Xlt = 0;
-	_Ylt = 0;
-	_Range = 0;
-	_Peaks.clear();
+	_replacement_scheduled = true;
 }
 
 void lifetime_t::reset_replacements(){ _replacements = 0; }
