@@ -3922,14 +3922,20 @@ public:
 	}
 
 
-	double min( double a, double b )
-	{
-		return (a < b) ? a : b;
+	double min(double a, double b)
+	{ // handle NaN
+		if ((a != a) || (b != b))
+			return 0;
+		else
+			return (a < b) ? a : b;
 	}
 
-	double max( double a, double b )
-	{
-		return (a > b) ? a : b;
+	double max(double a, double b)
+	{ // handle NaN
+		if ((a != a) || (b != b))
+			return 0;
+		else
+			return (a > b) ? a : b;
 	}
 
 	double min_cashflow_value(int cf_line, int nyears)

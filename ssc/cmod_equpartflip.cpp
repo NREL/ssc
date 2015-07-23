@@ -2191,8 +2191,9 @@ public:
 
 		for (i=1;i<=nyears;i++)
 		{
-			cf.at(CF_sponsor_capital_recovery_cash,i) = -( (cf.at(CF_project_return_pretax,i)<0 ) ? 0 : min(cf.at(CF_sponsor_capital_recovery_balance,i-1),cf.at(CF_project_return_pretax,i)) ) * 
-															((sponsor_cap_recovery_mode==0 ) ? ( ( i <= sponsor_cap_recovery_year) ? 1:0): 1 );
+			cf.at(CF_sponsor_capital_recovery_cash,i) = 
+				-( (cf.at(CF_project_return_pretax,i)<0 ) ? 0 : min(cf.at(CF_sponsor_capital_recovery_balance,i-1),cf.at(CF_project_return_pretax,i)) ) * ((sponsor_cap_recovery_mode==0 ) ? ( ( i <= sponsor_cap_recovery_year) ? 1:0): 1 );
+
 			cf.at(CF_sponsor_capital_recovery_balance,i) = cf.at(CF_sponsor_capital_recovery_balance,i-1) + cf.at(CF_sponsor_capital_recovery_cash,i);
 
 			cf.at(CF_tax_investor_aftertax_cash,i) = ((cf.at(CF_tax_investor_aftertax_max_irr,i-1) < flip_target_percent) ? 
@@ -3632,14 +3633,20 @@ public:
 	}
 
 
-	double min( double a, double b )
-	{
-		return (a < b) ? a : b;
+	double min(double a, double b)
+	{ // handle NaN
+		if ((a != a) || (b != b))
+			return 0;
+		else
+			return (a < b) ? a : b;
 	}
 
-	double max( double a, double b )
-	{
-		return (a > b) ? a : b;
+	double max(double a, double b)
+	{ // handle NaN
+		if ((a != a) || (b != b))
+			return 0;
+		else
+			return (a > b) ? a : b;
 	}
 
 
