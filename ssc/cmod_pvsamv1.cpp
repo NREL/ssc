@@ -581,6 +581,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
 	// annual_dc_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_snow_loss_percent", "DC snow loss", "%", "", "Loss", "*", "", "" },
+	
+	
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mppt_clip_loss_percent", "DC MPPT clipping window loss", "%", "", "Loss", "*", "", "" },
+
+	
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss_percent", "DC mismatch loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss_percent", "DC diodes and connections loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss_percent", "DC wiring loss", "%", "", "Loss", "*", "", "" },
@@ -1523,7 +1528,9 @@ public:
 		size_t idx = 0;
 		size_t hour = 0;
 
-		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 };
+		// for loss diagram
+		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0;
+
 
 		// lifetime analysis over nyears
 		for (size_t iyear = 0; iyear < nyears; iyear++)
@@ -1814,6 +1821,7 @@ public:
 						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 
 						double tcell = wf.tdry;
+						double mppt_clip_window = 0;
 						if (sa[nn].poa.sunup > 0)
 						{
 							// calculate cell temperature using selected temperature model
@@ -1824,6 +1832,7 @@ public:
 							// if mismatch was enabled, the module voltage already was clipped to the inverter MPPT range if appropriate
 							// here, if the module was running at mppt by default, and mppt window clipping is possible, recalculate
 							// module power output to determine actual module power using the voltage window of the inverter
+							if (iyear == 0) mppt_clip_window = out.Power;
 							if ( !enable_mismatch_vmax_calc && clip_mppt_window )
 							{
 								if ( out.Voltage < V_mppt_lo_1module )
@@ -1838,6 +1847,12 @@ public:
 									(*celltemp_model)(in, *module_model, module_voltage, tcell);
 									(*module_model)(in, tcell, module_voltage, out);
 								}
+								// MPPT loss
+							}
+							if (iyear == 0)
+							{
+								mppt_clip_window -= out.Power;
+								mppt_clip_window *= 0.001*ts_hour; //power W to	energy kWh
 							}
 						}
 
@@ -2243,9 +2258,17 @@ public:
 		// SEV: Apply Snow loss to loss diagram 
 		if (annual_dc_nominal > 0) percent = 100 * annual_snow_loss / annual_dc_nominal;
 		assign("annual_dc_snow_loss_percent", var_data((ssc_number_t)percent));
+
+		// apply clipping window loss
+		if (annual_dc_nominal > 0) percent = 100 * clip_mppt_window / annual_dc_nominal;
+		assign("annual_dc_mppt_clip_loss_percent", var_data((ssc_number_t)percent));
+
+		// module loss depends on if MPPT clipping enabled.
 		percent = 0;
-		if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - (annual_dc_gross + annual_snow_loss)) / annual_dc_nominal;
+		if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - (annual_dc_gross + annual_snow_loss + clip_mppt_window)) / annual_dc_nominal;
 		assign("annual_dc_module_loss_percent", var_data((ssc_number_t)percent));
+
+
 		// annual_dc_gross
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_mismatch_loss / annual_dc_gross;
