@@ -11,7 +11,7 @@
 #include "IOUtil.h"
 #include "sort_method.h"
 
-#include "heliostat.h"
+#include "Heliostat.h"
 #include <sstream>
 
 using namespace std;
