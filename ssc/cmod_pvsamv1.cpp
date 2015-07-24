@@ -1806,6 +1806,7 @@ public:
 					// for averaging voltage in the case that mismatch calcs are disabled.
 					int n_voltage_values = 0;
 					double voltage_sum = 0.0;
+					double mppt_clip_window = 0;
 
 					for (int nn = 0; nn < 4; nn++)
 					{
@@ -1821,7 +1822,6 @@ public:
 						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 
 						double tcell = wf.tdry;
-						double mppt_clip_window = 0;
 						if (sa[nn].poa.sunup > 0)
 						{
 							// calculate cell temperature using selected temperature model
@@ -1849,11 +1849,7 @@ public:
 								}
 								// MPPT loss
 							}
-							if (iyear == 0)
-							{
-								mppt_clip_window -= out.Power;
-								mppt_clip_window *= 0.001*ts_hour; //power W to	energy kWh
-							}
+							if (iyear == 0)	mppt_clip_window -= out.Power;
 						}
 
 						if ( out.Voltage > module_model->VocRef()*1.3 )
@@ -1897,8 +1893,11 @@ public:
 						// apply self-shading derate (by default it is 1.0 if disbled)
 						sa[nn].module.dcpwr *= sa[nn].poa.nonlinear_dc_shading_derate;
 
+						if (iyear == 0) mppt_clip_window *= sa[nn].poa.nonlinear_dc_shading_derate;
+
 						// scale power and voltage to array dimensions
 						sa[nn].module.dcpwr *= modules_per_string*sa[nn].nstrings;
+						if (iyear == 0) mppt_clip_window *= modules_per_string*sa[nn].nstrings;
 
 						// Calculate and apply snow coverage losses if activated
 						if (en_snow_model)
@@ -1929,6 +1928,7 @@ public:
 						if (iyear == 0)
 						{
 							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to	energy kWh
+							annual_mppt_window_clipping += mppt_clip_window*001*ts_hour; //power W to	energy kWh
 							// save to SSC output arrays
 							p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
 							p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
@@ -2260,12 +2260,12 @@ public:
 		assign("annual_dc_snow_loss_percent", var_data((ssc_number_t)percent));
 
 		// apply clipping window loss
-		if (annual_dc_nominal > 0) percent = 100 * clip_mppt_window / annual_dc_nominal;
+		if (annual_dc_nominal > 0) percent = 100 * annual_mppt_window_clipping / annual_dc_nominal;
 		assign("annual_dc_mppt_clip_loss_percent", var_data((ssc_number_t)percent));
 
 		// module loss depends on if MPPT clipping enabled.
 		percent = 0;
-		if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - (annual_dc_gross + annual_snow_loss + clip_mppt_window)) / annual_dc_nominal;
+		if (annual_dc_nominal > 0) percent = 100 * (annual_dc_nominal - (annual_dc_gross + annual_snow_loss + annual_mppt_window_clipping)) / annual_dc_nominal;
 		assign("annual_dc_module_loss_percent", var_data((ssc_number_t)percent));
 
 
