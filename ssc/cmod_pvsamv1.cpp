@@ -504,11 +504,13 @@ static var_info _cm_vtab_pvsamv1[] = {
 	*/
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_eff",                                     "Inverter efficiency",                                    "%",      "",                     "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                                "Inverter clipping loss",                                 "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_mpptloss",                                "Inverter clipping loss due to MPPT voltage limit",       "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                                "Inverter clipping loss due to power limit",              "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                                 "Inverter power consumption loss",                        "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                                 "Inverter night time loss",                               "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                         "Inverter clipping loss",                                 "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_mpptloss",                         "Inverter clipping loss due to MPPT voltage limit",       "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                         "Inverter clipping loss due to power limit",              "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                          "Inverter power consumption loss",                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                          "Inverter night time loss",                               "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 
@@ -1479,6 +1481,8 @@ public:
 		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec );
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
+		ssc_number_t *p_invmpptloss = allocate("inv_mpptloss", nrec);
+		
 		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
 		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
 
@@ -1928,7 +1932,7 @@ public:
 						if (iyear == 0)
 						{
 							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to	energy kWh
-							annual_mppt_window_clipping += mppt_clip_window*001*ts_hour; //power W to	energy kWh
+							annual_mppt_window_clipping += mppt_clip_window*0.001*ts_hour; //power W to	energy kWh
 							// save to SSC output arrays
 							p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
 							p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
@@ -2050,6 +2054,7 @@ public:
 						annual_ac_gross += acpwr_gross * 0.001 * ts_hour;
 						p_inveff[idx] = (ssc_number_t)(aceff);
 						p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
+						p_invmpptloss[idx] = (ssc_number_t)(mppt_clip_window * 0.001);
 						p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
 						p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
 					}
@@ -2106,6 +2111,8 @@ public:
 		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", ts_hour, step_per_hour);
 		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
 		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", ts_hour, step_per_hour);
+		double annual_inv_mpptloss = accumulate_annual_for_year("inv_mpptloss", "annual_inv_mpptloss", ts_hour, step_per_hour);
+
 		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
 	
