@@ -504,12 +504,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	*/
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_eff",                                     "Inverter efficiency",                                    "%",      "",                     "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_mpptloss",                                "Inverter clipping loss due to MPPT voltage limit",       "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_invmppt_loss",                             "Clipping loss on DC output due to MPPT voltage limit",   "kW",    "",                      "Time Series",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                                "Inverter clipping loss due to power limit",              "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                                 "Inverter power consumption loss",                        "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                                 "Inverter night time loss",                               "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_mpptloss",                         "Inverter clipping loss due to MPPT voltage limit",       "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",                      "Clipping loss on DC output due to MPPT voltage limit",   "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                         "Inverter clipping loss due to power limit",              "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                          "Inverter power consumption loss",                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                          "Inverter night time loss",                               "kWh",    "",                      "Annual",       "*",                    "",                              "" },
@@ -1481,7 +1481,7 @@ public:
 		ssc_number_t *p_inv_dc_voltage = allocate( "inverter_dc_voltage", nrec );
 		ssc_number_t *p_inveff = allocate("inv_eff", nrec);
 		ssc_number_t *p_invcliploss = allocate( "inv_cliploss", nrec );
-		ssc_number_t *p_invmpptloss = allocate("inv_mpptloss", nrec);
+		ssc_number_t *p_invmpptloss = allocate("dc_invmppt_loss", nrec);
 		
 		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
 		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
@@ -2111,7 +2111,7 @@ public:
 		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", ts_hour, step_per_hour);
 		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
 		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", ts_hour, step_per_hour);
-		double annual_inv_mpptloss = accumulate_annual_for_year("inv_mpptloss", "annual_inv_mpptloss", ts_hour, step_per_hour);
+		double annual_dc_invmppt_loss = accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
 
 		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
