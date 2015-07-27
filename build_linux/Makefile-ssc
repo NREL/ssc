@@ -80,6 +80,7 @@ $(TARGET) : $(OBJECTS)
 	$(CXX) -shared -o $@ $^ $(LDFLAGS)
 	gcc $(CFLAGS) dltest.c -o dltest -ldl
 	./dltest ./$(TARGET)
+	cp $(TARGET) ../../SAMnt/linux_wx3
 
 clean:
 	rm -rf $(OBJECTS) $(TARGET) ./dltest
