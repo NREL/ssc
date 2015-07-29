@@ -37,6 +37,10 @@
 
 static var_info _cm_vtab_pvsamv1[] = {
 /*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                         "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "",                              "pvsamv1",              "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",                         "Weather data",                                         "",         "lat,lon,tz,elev,year,month,hour,minute,gh,dn,df,tdry,twet,tdew,rhum,pres,snow,alb,aod,wspd,wdir",    "pvsamv1",              "?",                        "",                              "" },
+	
+	
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                      "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
@@ -48,7 +52,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//SEV: Activating the snow model							                        																		                             
 	{ SSC_INPUT,        SSC_NUMBER,      "en_snow_model",                               "Toggle snow loss estimation",                          "0/1",      "",                              "snowmodel",            "?=0",                       "BOOLEAN",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",                             "Nameplate capacity",                                   "kW",       "",                              "pvsamv1",              "*",                         "",                             "" },
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                         "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "",                              "pvsamv1",              "*",                         "LOCAL_FILE",                   "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",               "0/1",      "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					  "" },
@@ -756,19 +759,31 @@ public:
 	}
 	
 	void exec( ) throw( general_error )
-	{
-		// open the weather file
-		// define variables consistent across subarrays
-		weatherfile wfile( as_string("solar_resource_file") );
-		if ( !wfile.ok() ) throw exec_error( "pvsamv1", wfile.message() );
-		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
+	{		
+		std::auto_ptr<weather_data_provider> wdprov;
+		if ( is_assigned( "solar_resource_file" ) )
+		{
+			const char *file = as_string("solar_resource_file");
+			wdprov = std::auto_ptr<weather_data_provider>( new weatherfile( file ) );
+
+			weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
+			if (!wfile->ok()) throw exec_error("pvsamv1", wfile->message());
+			if( wfile->has_message() ) log( wfile->message(), SSC_WARNING);
+		}
+		else if ( is_assigned( "solar_resource_data" ) )
+		{
+			wdprov = std::auto_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+		}
+		else
+			throw exec_error("pvsamv1", "no weather data supplied");
+		
 
 		weather_header hdr;
-		wfile.header( &hdr );
+		wdprov->header( &hdr );
 
 		weather_record wf;		
 
-		size_t nrec = wfile.nrecords();
+		size_t nrec = wdprov->nrecords();
 		size_t step_per_hour = nrec/8760;
 		if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
 			throw exec_error( "pvsamv1", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
@@ -1577,7 +1592,7 @@ public:
 					if (p_load_in != 0 && nload == nrec*nyears)
 						cur_load = p_load_in[idx];
 
-					if (!wfile.read( &wf ))
+					if (!wdprov->read( &wf ))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
 					double solazi = 0, solzen = 0, solalt = 0;
@@ -2074,7 +2089,7 @@ public:
 			} // over single year
 
 			// using single weather file initially - so rewind to use for next year
-			wfile.rewind();
+			wdprov->rewind();
 
 		} // over all nyears
 
