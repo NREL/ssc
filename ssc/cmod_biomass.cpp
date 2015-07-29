@@ -422,9 +422,9 @@ public:
 			}
 		}
 
-		weatherfile wf(as_string("file_name"));
-		if (!wf.ok()) throw exec_error("biopower", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wFile(as_string("file_name"));
+		if (!wFile.ok()) throw exec_error("biopower", wFile.message());
+		if( wFile.has_message() ) log( wFile.message(), SSC_WARNING);
 
 		//const char *wf = SVal("climate.location");
 		//if (!wf)
@@ -582,8 +582,9 @@ public:
 		double total_wair_eff_loss = 0;
 		double total_dry_eff_loss = 0;
 
-		int istep = 0, nstep = wf.nrecords;
-		while (wf.read() && istep < 8760)
+		weather_record wf;
+		int istep = 0, nstep = (int)wFile.nrecords();
+		while (wFile.read( &wf ) && istep < 8760)
 		{
 			// send progress update notification to any callback
 			if (istep % (nstep / 20) == 0)

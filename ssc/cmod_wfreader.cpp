@@ -71,44 +71,47 @@ public:
 		bool header_only = as_boolean("header_only");
 		const char *file = as_string("file_name");
 
-		weatherfile wf( file, header_only );
-		if (!wf.ok()) 
+		weatherfile wfile( file, header_only );
+		if (!wfile.ok()) 
 		{
-			assign( "error", var_data(wf.message()) );
-			throw exec_error("wfreader", "failed to read local weather file: " + std::string(file) + "  " + wf.message());
+			assign( "error", var_data(wfile.message()) );
+			throw exec_error("wfreader", "failed to read local weather file: " + std::string(file) + "  " + wfile.message());
 		}
 		
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING );
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING );
 
-		int records = wf.nrecords;
+		weather_header hdr;
+		wfile.header( &hdr );
+
+		int records = wfile.nrecords();
 		
 		for (int i = 3; i < 100; i++){
 
 		}
 
-		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
-		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
-		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
-		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
-		assign( "location", var_data( std::string( wf.location ) ) );
-		assign( "city", var_data( std::string( wf.city ) ) );
-		assign( "state", var_data( std::string( wf.state ) ) );
-		assign( "country", var_data( std::string( wf.country ) ) );
-		assign( "description", var_data( std::string( wf.description ) ) );
-		assign( "source", var_data( std::string( wf.source ) ) );
-		assign( "url", var_data( std::string( wf.url ) ) );
+		assign( "lat", var_data( (ssc_number_t)hdr.lat ) );
+		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
+		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );
+		assign( "elev", var_data( (ssc_number_t)hdr.elev ) );
+		assign( "location", var_data( std::string( hdr.location ) ) );
+		assign( "city", var_data( std::string( hdr.city ) ) );
+		assign( "state", var_data( std::string( hdr.state ) ) );
+		assign( "country", var_data( std::string( hdr.country ) ) );
+		assign( "description", var_data( std::string( hdr.description ) ) );
+		assign( "source", var_data( std::string( hdr.source ) ) );
+		assign( "url", var_data( std::string( hdr.url ) ) );
 
-		assign( "start", var_data( (ssc_number_t)wf.start ) );
-		assign( "step", var_data( (ssc_number_t)wf.step ) );
-		assign( "nrecords", var_data( (ssc_number_t)wf.nrecords ) );
+		assign( "start", var_data( (ssc_number_t)wfile.start_sec() ) );
+		assign( "step", var_data( (ssc_number_t)wfile.step_sec() ) );
+		assign( "nrecords", var_data( (ssc_number_t)wfile.nrecords() ) );
 
-		switch( wf.type() )
+		switch( wfile.type() )
 		{
 		case weatherfile::TMY2: assign("format", var_data("tmy2") ); break;
 		case weatherfile::TMY3: assign("format", var_data("tmy3") ); break;
 		case weatherfile::EPW: assign("format", var_data("epw") ); break;
 		case weatherfile::SMW: assign("format", var_data("smw") ); break;
-		case weatherfile::WFCSV: assign("format", var_data("wfcsv") ); break;
+		case weatherfile::WFCSV: assign("format", var_data("csv") ); break;
 		default: assign("format", var_data("invalid")); break;
 		}
 
@@ -138,11 +141,13 @@ public:
 		double gh_sum = 0.0, dn_sum = 0.0, df_sum = 0.0;
 		double temp_sum = 0.0, wind_sum = 0.0;
 
-		double ts_hour = wf.step / 3600.0;
+		double ts_hour = wfile.step_sec() / 3600.0;
+
+		weather_record wf;
 
 		for (int i=0;i<records;i++)
 		{
-			if (!wf.read())
+			if (!wfile.read( &wf ))
 				throw exec_error("wfreader", "could not read data line " + util::to_string(i+1) + " of 8760");
 
 			p_year[i] = (ssc_number_t)wf.year;
@@ -163,7 +168,7 @@ public:
 			p_rhum[i] = (ssc_number_t)wf.rhum;
 			p_pres[i] = (ssc_number_t)wf.pres;
 			p_snow[i] = (ssc_number_t)wf.snow;
-			p_albedo[i] = (ssc_number_t)wf.albedo;	
+			p_albedo[i] = (ssc_number_t)wf.alb;	
 
 			gh_sum += wf.gh * ts_hour;
 			dn_sum += wf.dn * ts_hour;

@@ -329,28 +329,30 @@ bool Ambient::readWeatherFile(WeatherData &data, std::string &file_name, Ambient
 	*/	
 
 	//Open the file
-	weatherfile wf_reader;
-	if(! wf_reader.open(file_name)) return false;	//Error
+	weatherfile wfile;
+	if(! wfile.open(file_name)) return false;	//Error
+	
 	//Read the header info
 	if(Amb != (Ambient*)NULL){
 		//If the ambient class reference is provided, set the local values in that class
 		double d2r = acos(-1.)/180.;
-		Amb->setPlantLocation(wf_reader.lat*d2r, wf_reader.lon*d2r, wf_reader.tz);
-		Amb->setElevation(wf_reader.elev);
+		Amb->setPlantLocation(wfile.lat()*d2r, wfile.lon()*d2r, wfile.tz());
+		Amb->setElevation(wfile.elev());
 	}
 
 	//Read in the weather data
-	int nrec = wf_reader.nrecords;
+	int nrec = (int)wfile.nrecords();
+	weather_record rec;
 	data.resizeAll(nrec);
 	for(int i=0; i<nrec; i++){
-		if(! wf_reader.read() ) return false; //Error
-		data.Day.at(i) = (double)wf_reader.day;
-		data.DNI.at(i) = (double)wf_reader.dn;
-		data.Hour.at(i) = (double)wf_reader.hour;
-		data.Month.at(i) = (double)wf_reader.month;
-		data.Pres.at(i) = wf_reader.pres/1000.;	//bar
-		data.T_db.at(i) = wf_reader.tdry;		//C
-		data.V_wind.at(i) = wf_reader.wspd;	//m/s
+		if(! wfile.read( &rec ) ) return false; //Error
+		data.Day.at(i) = (double)rec.day;
+		data.DNI.at(i) = (double)rec.dn;
+		data.Hour.at(i) = (double)rec.hour;
+		data.Month.at(i) = (double)rec.month;
+		data.Pres.at(i) = rec.pres/1000.;	//bar
+		data.T_db.at(i) = rec.tdry;		//C
+		data.V_wind.at(i) = rec.wspd;	//m/s
 		data.Step_weight.at(i) = 1.;	//default step
 	}
 	//wf_reader.close();

@@ -155,9 +155,9 @@ public:
 	{
 		const char *file = as_string("solar_resource_file");
 
-		weatherfile wf(file);
-		if (!wf.ok()) throw exec_error("swh", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wfile(file);
+		if (!wfile.ok()) throw exec_error("swh", wfile.message());
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
 
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
@@ -249,7 +249,12 @@ public:
 		Initialize data storage, read weather file, set draw profile
 		********************************************************************** */
 
-		size_t nrec = wf.nrecords;
+		weather_header hdr;
+		wfile.header( &hdr );
+
+		weather_record wf;
+
+		size_t nrec = wfile.nrecords();
 		size_t step_per_hour = nrec/8760;
 		if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
 			throw exec_error( "swh", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
@@ -303,7 +308,7 @@ public:
 		{
 			for( size_t jj=0;jj<step_per_hour;jj++)
 			{
-				if( !wf.read() )
+				if( !wfile.read( &wf ) )
 					throw exec_error( "swh", util::format("error reading from weather file at position %d", (int)idx ) );
 
 				Beam[idx] = (ssc_number_t)wf.dn;
@@ -328,7 +333,7 @@ public:
 				if (irrad_mode == 0) tt.set_beam_diffuse(wf.dn, wf.df);
 				else if (irrad_mode == 2) tt.set_global_diffuse(wf.gh, wf.df);
 				else tt.set_global_beam(wf.gh, wf.dn);
-				tt.set_location(wf.lat, wf.lon, wf.tz);
+				tt.set_location(hdr.lat, hdr.lon, hdr.tz);
 				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
 				tt.set_sky_model(sky_model /* isotropic=0, hdkr=1, perez=2 */, albedo, shad.en_skydiff_viewfactor());
 				tt.set_surface(0, tilt, azimuth, 0, 0, 0);

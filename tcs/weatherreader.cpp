@@ -100,7 +100,10 @@ tcsvarinfo weatherreader_variables[] = {
 class weatherreader : public tcstypeinterface
 {
 private:
-	weatherfile m_wf;
+	weatherfile m_wfile;
+	weather_header m_hdr;
+	weather_record m_rec;
+
 	bool m_first;	//flag to indicate whether this is the first call
 public:
 	weatherreader( tcscontext *cxt, tcstypeinfo *ti )
@@ -111,11 +114,14 @@ public:
 	virtual int init()
 	{
 		std::string file = value_str( P_FILENAME ).c_str();
-		if (! m_wf.open( file ) )
+		if (! m_wfile.open( file ) )
 		{
 			message(TCS_ERROR, "could not open %s for reading", file.c_str() );
 			return -1;
 		}
+
+		m_wfile.header( &m_hdr );
+
 		m_first = true; //True the first time call() is accessed
 		return 0; // success
 	}
@@ -133,9 +139,9 @@ public:
 
 			for(int i=0; i<nread; i++){		//for all calls except the first, nread=1
 				
-				if ( !m_wf.read() )
+				if ( !m_wfile.read( &m_rec ) )
 				{
-					message(TCS_ERROR, "failed to read from weather file %s at time %lg", m_wf.filename().c_str(), time );
+					message(TCS_ERROR, "failed to read from weather file %s at time %lg", m_wfile.filename().c_str(), time );
 					return -1; // error code
 				}
 
@@ -159,44 +165,44 @@ public:
 		angle[0] = angle[1] = angle[2] = angle[3] = angle[4] = 0;
 		diffc[0] = diffc[1] = diffc[2] = 0;
 	
-		solarpos( m_wf.year, m_wf.month, m_wf.day, m_wf.hour, m_wf.minute,
-			m_wf.lat, m_wf.lon, m_wf.tz, sunn );
+		solarpos( m_rec.year, m_rec.month, m_rec.day, m_rec.hour, m_rec.minute,
+			m_hdr.lat, m_hdr.lon, m_hdr.tz, sunn );
 
 		if (sunn[2] > 0.0087)
 		{
 			/* sun elevation > 0.5 degrees */
 			incidence( trackmode, tilt, azimuth, 45.0, sunn[1], sunn[0], 0, 0, angle );
-			perez( sunn[8], m_wf.dn, m_wf.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc, false );  // diffuse shading factor not enabled (set to 1.0 by default)
+			perez( sunn[8], m_rec.dn, m_rec.df, 0.2, angle[0], angle[1], sunn[1], poa, diffc, false );  // diffuse shading factor not enabled (set to 1.0 by default)
 		}
 		
 		// set some output values
-		value( O_YEAR, m_wf.year );
-		value( O_MONTH, m_wf.month );
-		value( O_DAY, m_wf.day );
-		value( O_HOUR, m_wf.hour );
-		value( O_MINUTE, m_wf.minute );
+		value( O_YEAR, m_rec.year );
+		value( O_MONTH, m_rec.month );
+		value( O_DAY, m_rec.day );
+		value( O_HOUR, m_rec.hour );
+		value( O_MINUTE, m_rec.minute );
 
-		value( O_GLOBAL, m_wf.gh );
-		value( O_BEAM, m_wf.dn );
-		value( O_DIFFUSE, m_wf.df );
-		value( O_TDRY, m_wf.tdry );
-		value( O_TWET, m_wf.twet );
-		value( O_TDEW, m_wf.tdew );
-		value( O_WSPD, m_wf.wspd );
-		value( O_WDIR, m_wf.wdir );
-		value( O_RHUM, m_wf.rhum );
-		value( O_PRES, m_wf.pres );
-		value( O_SNOW, m_wf.snow );
-		value( O_ALBEDO, m_wf.albedo );
+		value( O_GLOBAL, m_rec.gh );
+		value( O_BEAM, m_rec.dn );
+		value( O_DIFFUSE, m_rec.df );
+		value( O_TDRY, m_rec.tdry );
+		value( O_TWET, m_rec.twet );
+		value( O_TDEW, m_rec.tdew );
+		value( O_WSPD, m_rec.wspd );
+		value( O_WDIR, m_rec.wdir );
+		value( O_RHUM, m_rec.rhum );
+		value( O_PRES, m_rec.pres );
+		value( O_SNOW, m_rec.snow );
+		value( O_ALBEDO, m_rec.alb );
 
 		value( O_POA,  poa[0]+poa[1]+poa[2] );
 		value( O_SOLAZI, sunn[0]*180/M_PI );
 		value( O_SOLZEN, sunn[1]*180/M_PI );
-		value( O_LAT, m_wf.lat );
-		value( O_LON, m_wf.lon );
-		value( O_TZ, m_wf.tz );
-		value( O_SHIFT, (m_wf.lon - m_wf.tz*15.0));
-		value( O_ELEV, m_wf.elev );
+		value( O_LAT, m_hdr.lat );
+		value( O_LON, m_hdr.lon );
+		value( O_TZ, m_hdr.tz );
+		value( O_SHIFT, (m_hdr.lon - m_hdr.tz*15.0));
+		value( O_ELEV, m_hdr.elev );
 
 		value( D_POABEAM, poa[0] );
 		value( D_POADIFF, poa[1] );

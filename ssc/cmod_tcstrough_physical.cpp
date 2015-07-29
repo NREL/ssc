@@ -382,12 +382,15 @@ public:
 	{
 		// **************************************************************************
 		// Check weatherfile for timestep and such: use to setup TCS simulation
-		weatherfile wf(as_string("file_name"));
-		if( !wf.ok() ) throw exec_error("Physical Trough", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wfile(as_string("file_name"));
+		if( !wfile.ok() ) throw exec_error("Physical Trough", wfile.message());
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
+
+		weather_header hdr;
+		wfile.header( &hdr );
 
 		size_t hours_year = 8760;
-		size_t nrec = wf.nrecords;
+		size_t nrec = wfile.nrecords();
 		size_t step_per_hour = nrec / hours_year;
 		
 		if( step_per_hour < 1 || step_per_hour > 60 || step_per_hour * hours_year != nrec )

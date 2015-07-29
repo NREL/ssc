@@ -153,13 +153,15 @@ bool solarpilot_invoke::run()
 	//set up the weather data for simulation
 	const char *wffile = m_cmod->as_string("solar_resource_file" );
 	if ( !wffile ) throw compute_module::exec_error( "solarpilot", "no weather file specified" );
-	weatherfile wf( wffile );
-	if ( !wf.ok() || wf.type() == weatherfile::INVALID ) throw compute_module::exec_error("solarpilot", wf.message());
+	weatherfile wFile( wffile );
+	if ( !wFile.ok() || wFile.type() == weatherfile::INVALID ) throw compute_module::exec_error("solarpilot", wFile.message());
 
+	weather_header hdr;
+	wFile.header( &hdr );
 		
-	amb.site_latitude = wf.lat;
-	amb.site_longitude = wf.lon;
-	amb.site_time_zone = wf.tz;
+	amb.site_latitude = hdr.lat;
+	amb.site_longitude = hdr.lon;
+	amb.site_time_zone = hdr.tz;
 	amb.atten_model = sp_ambient::ATTEN_MODEL::USER_DEFINED;
 	amb.user_atten_coefs.clear();
 	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_0") );
@@ -167,12 +169,14 @@ bool solarpilot_invoke::run()
 	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_2") );
 	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_3") );
 
+	weather_record wf;
+
 	vector<string> wfdata;
 	wfdata.reserve( 8760 );
 	char buf[1024];
 	for( int i=0;i<8760;i++ )
 	{
-		if( !wf.read() )
+		if( !wFile.read( &wf ) )
 			throw compute_module::exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
 
 		mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
