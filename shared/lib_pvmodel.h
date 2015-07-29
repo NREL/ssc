@@ -82,6 +82,8 @@ public:
 class spe_module_t : public pvmodule_t
 {
 public:
+	double VmpNominal;
+	double VocNominal;
 	double Area; // m2
 	double Gamma; // temp coefficient %/'C
 	int Reference; // specification of reference condition.  valid values: 0..4
@@ -95,9 +97,9 @@ public:
 	double WattsStc() { return Eff[Reference] * Rad[Reference] * Area; }
 
 	virtual double AreaRef() { return Area; }
-	virtual double VmpRef() { return 30; }
+	virtual double VmpRef() { return VmpNominal; }
 	virtual double ImpRef() { return WattsStc()/VmpRef(); }
-	virtual double VocRef() { return 36; }
+	virtual double VocRef() { return VocNominal; }
 	virtual double IscRef() { return ImpRef()*1.3; }
 	virtual bool operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output);
 };

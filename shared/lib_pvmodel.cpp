@@ -70,6 +70,8 @@ std::string pvmodule_t::error()
 
 spe_module_t::spe_module_t( )
 {
+	VmpNominal = 0;
+	VocNominal = 0;
 	Area = 0;
 	Gamma = 0;
 	Reference = 0;
