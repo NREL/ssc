@@ -184,7 +184,6 @@ private:
 	double _B;
 	double _E0;
 	double _K;
-	double _R;
 };
 
 /*
