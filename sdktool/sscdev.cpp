@@ -707,6 +707,9 @@ void SCFrame::Copy( ssc_data_t p_data, var_table *vt, bool clear_first)
 			case SSC_MATRIX:
 				::ssc_data_set_matrix( p_data, name, v->num.data(), v->num.nrows(), v->num.ncols() );
 				break;
+			case SSC_TABLE:
+				::ssc_data_set_table( p_data, name, (&v->table) );
+				break;
 			}
 		}
 
@@ -751,6 +754,17 @@ void SCFrame::Copy( var_table *vt,  ssc_data_t p_data, bool clear_first )
 				const ssc_number_t *pmat = ::ssc_data_get_matrix( p_data, name, &nrows, &ncols );
 				if (pmat)
 					vt->assign( name, var_data( pmat, nrows, ncols ) );
+			}
+			break;
+		case SSC_TABLE:
+			{
+				ssc_data_t table = ::ssc_data_get_table( p_data, name );
+				var_table *src = (var_table*)table;
+
+				var_data x;
+				x.type = SSC_TABLE;
+				x.table = *src; // deep copy
+				vt->assign( name, x );				
 			}
 			break;
 		}
@@ -878,7 +892,7 @@ void SCFrame::OnCMListSelect(wxCommandEvent &)
 			case SSC_INPUT: row.Add("SSC_INPUT"); break;
 			case SSC_OUTPUT: row.Add("SSC_OUTPUT"); break;
 			case SSC_INOUT: row.Add("SSC_INOUT"); break;
-			default: row.Add("<!unknown>"); break;
+			default: row.Add("<unknown>"); break;
 			}
 
 			switch( data_type )
@@ -887,7 +901,8 @@ void SCFrame::OnCMListSelect(wxCommandEvent &)
 			case SSC_NUMBER: row.Add("SSC_NUMBER"); break;
 			case SSC_ARRAY: row.Add("SSC_ARRAY"); break;
 			case SSC_MATRIX: row.Add("SSC_MATRIX"); break;
-			default: row.Add("<!unknown>"); break;
+			case SSC_TABLE: row.Add("SSC_TABLE"); break;
+			default: row.Add("<unknown>"); break;
 			}
 			
 			row.Add( ssc_info_name( p_inf ) );

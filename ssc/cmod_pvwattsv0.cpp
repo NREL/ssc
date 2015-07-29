@@ -981,9 +981,9 @@ public:
 	{
 		const char *file = as_string("file_name");
 
-		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv1", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wfile( file );
+		if (!wfile.ok()) throw exec_error("pvwattsv1", wfile.message());
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
 		
 		double dcrate = as_double("system_size"); /* DC rating */
 		double derate = as_double("derate"); /* Derate factor */
@@ -1025,11 +1025,13 @@ public:
 		pwrdgr = -0.005;           /* Power degradation due to temperature (decimal fraction), si approx -0.004 */
 		efffp = 0.92;              /* Efficiency of inverter at rated output (decimal fraction) */
 
+		weather_header hdr;
+		wfile.header( &hdr );
 
-		lat = (double)wf.lat;         /* In degrees */
-		lng = (double)wf.lon;
-		tz = (double)wf.tz;
-		elv = (double)wf.elev;
+		lat = (double)hdr.lat;         /* In degrees */
+		lng = (double)hdr.lon;
+		tz = (double)hdr.tz;
+		elv = (double)hdr.elev;
 
 		if ( dcrate < 0.49999 || dcrate > 99999.9 )  // Use defaults if dcrate out of range
 			dcrate = 4.0;
@@ -1057,6 +1059,8 @@ public:
 		jday = 0;
 		yr=mn=dy=0;
 
+		weather_record wf;
+
 		for(m=0;m<12;m++)   /* Loop thru a year of data a month at a time */
 		{
 			for(n=1;n<=nday[m];n++)    /* For each day of month */
@@ -1064,7 +1068,7 @@ public:
 				jday++;                 /* Increment julian day */
 				for(i=0;i<=23;i++)      /* Read a day of data and initialize */
 				{
-					wf.read();
+					wfile.read( &wf );
 
 					yr = wf.year;
 					mn = wf.month;

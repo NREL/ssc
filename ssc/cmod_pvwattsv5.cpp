@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "core.h"
 
 #include "common.h"
@@ -21,7 +23,8 @@
 
 static var_info _cm_vtab_pvwattsv5_part1[] = {
 /*   VARTYPE           DATATYPE          NAME                         LABEL                                               UNITS        META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Weather", "*", "LOCAL_FILE", "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",            "Weather file path",                           "",          "",                       "Weather",     "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",            "Weather data",                                "",          "dn,df,tdry,wspd,lat,lon,tz", "Weather", "?",                        "",                              "" },
 	
 	var_info_invalid };
 
@@ -330,11 +333,23 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		const char *file = as_string("solar_resource_file");
+		std::auto_ptr<weather_data_provider> wdprov;
 
-		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv5", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		if ( is_assigned( "solar_resource_file" ) )
+		{
+			const char *file = as_string("solar_resource_file");
+			wdprov = std::auto_ptr<weather_data_provider>( new weatherfile( file ) );
+
+			weatherfile *wfile = dynamic_cast<weatherfile*>(wdprov.get());
+			if (!wfile->ok()) throw exec_error("pvwattsv5", wfile->message());
+			if( wfile->has_message() ) log( wfile->message(), SSC_WARNING);
+		}
+		else if ( is_assigned( "solar_resource_data" ) )
+		{
+			wdprov = std::auto_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+		}
+		else
+			throw exec_error("pvwattsv5", "no weather data supplied");
 
 		setup_system_inputs(); // setup all basic system specifications
 				
@@ -347,7 +362,12 @@ public:
 		if ( !shad.setup( this, "" ) )
 			throw exec_error( "pvwattsv5", shad.get_error() );
 
-		size_t nrec = wf.nrecords;
+		weather_header hdr;
+		wdprov->header( &hdr );
+
+		weather_record wf;
+		
+		size_t nrec = wdprov->nrecords();
 		size_t step_per_hour = nrec/8760;
 		if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
 			throw exec_error( "pvwattsv5", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
@@ -392,7 +412,7 @@ public:
 
 			for( size_t jj=0;jj<step_per_hour;jj++)
 			{
-				if (!wf.read())
+				if (!wdprov->read( &wf ))
 					throw exec_error("pvwattsv5", util::format("could not read data line %d of %d in weather file", (int)(idx+1), (int)nrec ));
 				
 
@@ -403,18 +423,12 @@ public:
 				p_wspd[idx] = (ssc_number_t)wf.wspd;			
 				p_tcell[idx] = (ssc_number_t)wf.tdry;
 				
-				double alb = 0.2; // do not increase albedo if snow exists in TMY2
-			
-				if ( wf.type() == weatherfile::TMY3 
-					|| wf.type() == weatherfile::WFCSV )
-				{
-					if ( wf.albedo >= 0 && wf.albedo < 1 )
-						alb = wf.albedo;
-				}
-
+				double alb = 0.2; // do not increase albedo if snow exists in TMY2			
+				if ( std::isfinite( wf.alb ) && wf.alb >= 0 && wf.alb < 1 )
+					alb = wf.alb;
 				
 				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
-					wf.lat, wf.lon, wf.tz, wf.dn, wf.df, alb, shad.en_skydiff_viewfactor());
+					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb, shad.en_skydiff_viewfactor());
 
 				if ( 0 != code )
 					throw exec_error( "pvwattsv5", 
@@ -468,13 +482,13 @@ public:
 		accumulate_annual("gen", "annual_energy", ts_hour);
 
 		assign("system_use_lifetime_output", 0);
-		assign( "location", var_data( wf.location ) );
-		assign( "city", var_data( wf.city ) );
-		assign( "state", var_data( wf.state ) );
-		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
-		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
-		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
-		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
+		assign( "location", var_data( hdr.location ) );
+		assign( "city", var_data( hdr.city ) );
+		assign( "state", var_data( hdr.state ) );
+		assign( "lat", var_data( (ssc_number_t)hdr.lat ) );
+		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
+		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );
+		assign( "elev", var_data( (ssc_number_t)hdr.elev ) );
 		
 
 		// metric outputs moved to technology

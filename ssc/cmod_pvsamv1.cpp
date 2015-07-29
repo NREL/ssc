@@ -759,12 +759,16 @@ public:
 	{
 		// open the weather file
 		// define variables consistent across subarrays
-		weatherfile wf( as_string("solar_resource_file") );
-		if ( !wf.ok() ) throw exec_error( "pvsamv1", wf.message() );
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
-		
+		weatherfile wfile( as_string("solar_resource_file") );
+		if ( !wfile.ok() ) throw exec_error( "pvsamv1", wfile.message() );
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
 
-		size_t nrec = wf.nrecords;
+		weather_header hdr;
+		wfile.header( &hdr );
+
+		weather_record wf;		
+
+		size_t nrec = wfile.nrecords();
 		size_t step_per_hour = nrec/8760;
 		if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
 			throw exec_error( "pvsamv1", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
@@ -826,7 +830,7 @@ public:
 			sa[nn].derate = 1 - as_double( prefix+"dcloss" )/100;	// convert from % (passed in) to derate
 			sa[nn].track_mode = as_integer( prefix+"track_mode"); // 0=fixed, 1=1axis, 2=2axis, 3=aziaxis
 
-			sa[nn].tilt = fabs(wf.lat);
+			sa[nn].tilt = fabs(hdr.lat);
 			if ( !lookup( prefix+"tilt_eq_lat" ) || !as_boolean( prefix+"tilt_eq_lat" ) )
 				sa[nn].tilt = fabs( as_double( prefix+"tilt" ) );
 
@@ -1573,7 +1577,7 @@ public:
 					if (p_load_in != 0 && nload == nrec*nyears)
 						cur_load = p_load_in[idx];
 
-					if (!wf.read())
+					if (!wfile.read( &wf ))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
 					double solazi = 0, solzen = 0, solalt = 0;
@@ -1591,8 +1595,8 @@ public:
 
 					int month_idx = wf.month - 1;
 
-					if (use_wf_alb && wf.albedo >= 0 && wf.albedo <= 1)
-						alb = wf.albedo;
+					if (use_wf_alb && wf.alb >= 0 && wf.alb <= 1)
+						alb = wf.alb;
 					else if (month_idx >= 0 && month_idx < 12)
 						alb = alb_array[month_idx];
 					else
@@ -1627,7 +1631,7 @@ public:
 
 						irrad irr;
 						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
-						irr.set_location(wf.lat, wf.lon, wf.tz);
+						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 
 						// if enabled apply sky diffuse shading factor after irradiation processor 
 						irr.set_sky_model(skymodel, alb, sa[nn].shad.en_skydiff_viewfactor());
@@ -1776,7 +1780,7 @@ public:
 
 								pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff,
 									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-									solzen, sa[nn].poa.aoi, wf.elev,
+									solzen, sa[nn].poa.aoi, hdr.elev,
 									sa[nn].poa.stilt, sa[nn].poa.sazi,
 									((double)wf.hour) + wf.minute / 60.0);
 								pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
@@ -1824,7 +1828,7 @@ public:
 
 						pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-							solzen, sa[nn].poa.aoi, wf.elev,
+							solzen, sa[nn].poa.aoi, hdr.elev,
 							sa[nn].poa.stilt, sa[nn].poa.sazi,
 							((double)wf.hour) + wf.minute / 60.0);
 						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
@@ -2023,7 +2027,7 @@ public:
 						p_solazi[idx] = (ssc_number_t)solazi;
 
 						// absolute relative airmass calculation as f(zenith angle, site elevation)
-						p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * wf.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
+						p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
 						p_sunup[idx] = (ssc_number_t)sunup;
 
 						// save radiation values.  the ts_accum_* variables are units of (W), 
@@ -2070,7 +2074,7 @@ public:
 			} // over single year
 
 			// using single weather file initially - so rewind to use for next year
-			wf.rewind();
+			wfile.rewind();
 
 		} // over all nyears
 

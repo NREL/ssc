@@ -410,7 +410,9 @@ private:
 	// variables
 	std::string ms_ErrorString;
 	float mf_LastIntervalDone; // used to display "% done" to user
-	weatherfile m_wf;
+	weatherfile m_wFile;
+	weather_header m_hdr;
+	weather_record m_wf;
 	bool mb_WeatherFileOpen;
 	long ml_ReadCount;  // resource file reads through the year, 1 to 8760
 	long ml_HourCount;	// hour of analysis (zero to yearsX8760); used to tell the Power Block how many seconds have passed.
@@ -1474,7 +1476,7 @@ bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 {
 	mb_WeatherFileOpen = false;
 	ml_ReadCount = 0;
-	if (!m_wf.open(fn))
+	if (!m_wFile.open(fn))
 		ms_ErrorString = "Could not open the weather file: " + std::string(fn);
 	else
 		mb_WeatherFileOpen = true;
@@ -1520,11 +1522,11 @@ bool CGeothermalAnalyzer::ReadNextLineInWeatherFile(void)
 {
 	if (ml_ReadCount >= 8760)
 	{
-		m_wf.rewind();
+		m_wFile.rewind();
 		ml_ReadCount = 0;
 	}
 
-	if (!m_wf.read())
+	if (!m_wFile.read( &m_wf ))
 	{
 		ms_ErrorString = "Could not read  line " + util::to_string((int)ml_ReadCount+1) + " in the weather file.";
 		return false;

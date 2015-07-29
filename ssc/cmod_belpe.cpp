@@ -170,9 +170,9 @@ public:
 
 		// read weather file inputs 		
 		const char *file = as_string("solar_resource_file");
-		weatherfile wf(file);
-		if (!wf.ok()) throw exec_error("belpe", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wfile(file);
+		if (!wfile.ok()) throw exec_error("belpe", wfile.message());
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
 
 		//allocate input arrays
 		ssc_number_t *T_ambF = allocate("T_ambF", 8760);
@@ -203,14 +203,18 @@ public:
 		ssc_number_t *monthlyhvac_lpgendebug = allocate("monthlyhvac_lpgen", 12);
 		*/
 
+		weather_header hdr;
+		wfile.header( &hdr );
+
 		for (size_t i = 0; i < 8760; i++)
 		{
-			if (!wf.read()) throw exec_error(" belpe", "error reading record in weather file");
+			weather_record wf;
+			if (!wfile.read( &wf )) throw exec_error(" belpe", "error reading record in weather file");
 
 			//calculate irradiances on four walls of building, needed later
 			irrad irr;
-			irr.set_location(wf.lat, wf.lon, wf.tz);
-			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600);
+			irr.set_location(hdr.lat, hdr.lon, hdr.tz);
+			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, wfile.step_sec() / 3600);
 			irr.set_global_beam(wf.gh, wf.dn);	//CHANGE THIS WHEN OPTION TO USE GLOBAL AND DIFFUSE IS INTRODUCED
 			irr.set_sky_model(1, 0.2, false); //using HDKR model and default albedo and diffuse shading factor not enabled (set to 1.0 by default)
 			//variables to store irradiance info
@@ -237,10 +241,10 @@ public:
 			RadWallW[i] = beam + sky + gnd;
 
 			//store in output arrays
-			radn[i] = RadWallN[i];
-			rade[i] = RadWallE[i];
-			rads[i] = RadWallS[i];
-			radw[i] = RadWallW[i];
+			radn[i] = (ssc_number_t)RadWallN[i];
+			rade[i] = (ssc_number_t)RadWallE[i];
+			rads[i] = (ssc_number_t)RadWallS[i];
+			radw[i] = (ssc_number_t)RadWallW[i];
 			
 			//read and store other weather variables needed in calculations
 			T_ambF[i] = (ssc_number_t)(wf.tdry*1.8 + 32);

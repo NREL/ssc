@@ -383,17 +383,19 @@ void C_pt_heliostatfield::init()
 				mc_csp_messages.add_message(C_csp_messages::WARNING, "solarpilot: could not open weather file or invalid weather file format");
 				//message(TCS_WARNING, "solarpilot: no weather file specified");
 			}
-			weatherfile wf( wffile );
-			if( !wf.ok() || wf.type() == weatherfile::INVALID )
+			weatherfile wfile( wffile );
+			if( !wfile.ok() || wfile.type() == weatherfile::INVALID )
 			{
 				mc_csp_messages.add_message(C_csp_messages::WARNING, "solarpilot: could not open weather file or invalid weather file format");
 				//message(TCS_WARNING, "solarpilot: could not open weather file or invalid weather file format");
 			}
 
+			weather_header hdr;
+			wfile.header( &hdr );
 
-			amb.site_latitude = wf.lat;
-			amb.site_longitude = wf.lon;
-			amb.site_time_zone = wf.tz;
+			amb.site_latitude = hdr.lat;
+			amb.site_longitude = hdr.lon;
+			amb.site_time_zone = hdr.tz;
 			amb.atten_model = sp_ambient::ATTEN_MODEL::USER_DEFINED;
 			amb.user_atten_coefs.clear();
 			amb.user_atten_coefs.push_back(c_atm_0);
@@ -411,14 +413,16 @@ void C_pt_heliostatfield::init()
 				//char buf[1024];
 				for( int i=0;i<8760;i++ )
 				{
-					if( !wf.read() )
+					weather_record rec;
+					if( !wfile.read( &rec ) )
 					{
 						error_msg = "solarpilot: could not read data line " + util::to_string(i+1) + " of 8760 in weather file";
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 						//message(TCS_WARNING, msg.c_str());
 					}
 
-					error_msg = util::format("%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres / 1000., wf.wspd);
+					error_msg = util::format("%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", 
+						rec.day, rec.hour, rec.month, rec.dn, rec.tdry, rec.pres / 1000., rec.wspd);
 					wfdata.push_back(error_msg);
 					//mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
 					//wfdata.push_back( std::string(buf) );

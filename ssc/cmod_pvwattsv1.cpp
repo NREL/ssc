@@ -111,15 +111,18 @@ public:
 	{
 		const char *file = as_string("solar_resource_file");
 
-		weatherfile wf( file );
-		if (!wf.ok()) throw exec_error("pvwattsv1", wf.message());
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wfile( file );
+		if (!wfile.ok()) throw exec_error("pvwattsv1", wfile.message());
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
+
+		weather_header hdr;
+		wfile.header( &hdr );
 					
 		double dcrate = as_double("system_size");
 		double derate = as_double("derate");
 		int track_mode = as_integer("track_mode"); // 0, 1, 2, 3
 		double azimuth = as_double("azimuth");
-		double tilt = fabs(wf.lat);
+		double tilt = fabs(hdr.lat);
 		if ( !lookup("tilt_eq_lat") || !as_boolean("tilt_eq_lat") )
 			tilt = fabs( as_double("tilt") );
 		
@@ -200,7 +203,7 @@ public:
 		if( track_mode < 0 || track_mode > 3 )
 			track_mode = 0;
 		if( tilt < 0 || tilt > 90 )
-			tilt = wf.lat;
+			tilt = hdr.lat;
 		if( azimuth < 0 || azimuth > 360 )
 			azimuth = 180.0;
 						
@@ -223,15 +226,17 @@ public:
 			fixed_albedo = as_double( "albedo" );
 
 	
+		weather_record wf;
+
 		int i=0;
 		while( i < 8760 )
 		{
-			if (!wf.read())
+			if (!wfile.read( &wf ))
 				throw exec_error("pvwattsv1", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
 
 			irrad irr;
-			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.step / 3600.0 );
-			irr.set_location( wf.lat, wf.lon, wf.tz );
+			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wfile.step_sec() / 3600.0 );
+			irr.set_location( hdr.lat, hdr.lon, hdr.tz );
 				
 			double alb = 0.2;
 			
@@ -239,15 +244,15 @@ public:
 			{
 				alb = fixed_albedo;
 			}
-			else if ( wf.type() == weatherfile::TMY2 )
+			else if ( wfile.type() == weatherfile::TMY2 )
 			{
 				if (wf.snow > 0 && wf.snow < 150)
 					alb = 0.6;
 			}
-			else if ( wf.type() == weatherfile::TMY3 )
+			else if ( wfile.type() == weatherfile::TMY3 )
 			{
-				if ( wf.albedo >= 0 && wf.albedo < 1 )
-					alb = wf.albedo;
+				if ( wf.alb >= 0 && wf.alb < 1 )
+					alb = wf.alb;
 			}
 
 			irr.set_sky_model(2, alb, shad.en_skydiff_viewfactor());
@@ -379,13 +384,13 @@ public:
 		accumulate_annual( "ac", "ac_annual", 0.001 );
 		accumulate_annual( "gen", "annual_energy" ); 
 
-		assign( "location", var_data( wf.location ) );
-		assign( "city", var_data( wf.city ) );
-		assign( "state", var_data( wf.state ) );
-		assign( "lat", var_data( (ssc_number_t)wf.lat ) );
-		assign( "lon", var_data( (ssc_number_t)wf.lon ) );
-		assign( "tz", var_data( (ssc_number_t)wf.tz ) );
-		assign( "elev", var_data( (ssc_number_t)wf.elev ) );
+		assign( "location", var_data( hdr.location ) );
+		assign( "city", var_data( hdr.city ) );
+		assign( "state", var_data( hdr.state ) );
+		assign( "lat", var_data( (ssc_number_t)hdr.lat ) );
+		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
+		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );
+		assign( "elev", var_data( (ssc_number_t)hdr.elev ) );
 	}
 };
 

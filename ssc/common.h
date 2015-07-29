@@ -1,9 +1,11 @@
 #ifndef __common_h
 #define __common_h
 
+#include <memory>
 #include <vector>
 #include "core.h"
 
+#include "lib_weatherfile.h"
 
 extern var_info vtab_standard_financial[];
 extern var_info vtab_standard_loan[];
@@ -46,6 +48,37 @@ public:
 	double fbeam( size_t hour /* 0-8759 */, double solalt, double solazi );
 	double fdiff();
 	bool en_skydiff_viewfactor();
+};
+
+
+	
+class weatherdata : public weather_data_provider
+{
+	std::string m_error;
+	size_t m_startSec, m_stepSec, m_nRecords;
+	weather_header m_hdr;
+	std::vector< weather_record* > m_data;
+	size_t m_index;
+
+	struct vec {
+		ssc_number_t *p;
+		int len;
+	};
+
+	vec get_vector( var_data *v, const char *name, int *maxlen = 0 );	
+	ssc_number_t get_number( var_data *v, const char *name );
+
+public:
+	weatherdata( var_data *data_table );
+	virtual ~weatherdata();
+
+	virtual bool header( weather_header *h );		
+	virtual bool read( weather_record *r ); // reads one more record
+	virtual void rewind();	
+	virtual size_t start_sec() { return m_startSec; } // start time in seconds, 0 = jan 1st midnight
+	virtual size_t step_sec() { return m_stepSec; } // step time in seconds
+	virtual size_t nrecords() { return m_nRecords; } // number of data records in file		
+	virtual const char *error( size_t idx = 0 );
 };
 
 #endif

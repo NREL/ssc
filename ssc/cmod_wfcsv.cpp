@@ -34,8 +34,11 @@ public:
 		}
 		else
 		{
-			weatherfile hdr( input, true );
-			if ( !hdr.ok() ) throw exec_error("wfcsvconv", "could not read input file: " + input );
+			weatherfile wfile( input, true );
+			if ( !wfile.ok() ) throw exec_error("wfcsvconv", "could not read input file: " + input );
+
+			weather_header hdr;
+			wfile.header( &hdr );
 
 			std::string state = hdr.state;
 			std::string city = weatherfile::normalize_city( hdr.city );
@@ -46,7 +49,7 @@ public:
 			std::string type = "?";
 
 
-			switch( hdr.type() )
+			switch( wfile.type() )
 			{
 			case weatherfile::TMY2: type = "TMY2"; 
 				if ( country.empty() ) country = "USA";

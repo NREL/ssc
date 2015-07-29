@@ -40,9 +40,14 @@ public:
 
 	void exec() throw( general_error )
 	{
-		weatherfile wf( as_string("input_file") );
-		if ( !wf.ok() ) throw general_error( wf.message() );
-		if( wf.has_message() ) log( wf.message(), SSC_WARNING);
+		weatherfile wfile( as_string("input_file") );
+		if ( !wfile.ok() ) throw general_error( wfile.message() );
+		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
+
+		weather_header hdr;
+		wfile.header( &hdr );
+
+		weather_record wf;
 
 		nwarnings = nerrors = 0;
 
@@ -50,15 +55,15 @@ public:
 
 		double zenith, hextra;
 		double sunn[9];
-		for( size_t i = 0; i<wf.nrecords; i++ )
+		for( size_t i = 0; i<wfile.nrecords(); i++ )
 		{
-			if ( !wf.read() )
+			if ( !wfile.read( &wf ) )
 			{
 				warn("error reading record %d, stopping", i );
 				break;
 			}			
 
-			solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, wf.lat, wf.lon, wf.tz, sunn );						
+			solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sunn );						
 			zenith = sunn[1]; // zenith angle, radians
 			hextra = sunn[8];
 			
