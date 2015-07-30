@@ -20,7 +20,8 @@
 import httplib, json, sys
 
 ## Include SAM libraries
-import ssc
+sys.path.insert(0, 'C:\\Users\\dryberg\\Documents\\Projects\\SSC_SDK\\apiwrappers\\python\\')
+import sscapi
 
 ########################################
 ## Runtime Variables
@@ -39,17 +40,19 @@ monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oc
 ########################################
 ## Construct PVWatts simulation
 
-data = ssc.Data()
-data.set_number('system_capacity', 4)
-data.set_number('module_type', 0)
-data.set_number('dc_ac_ratio', 1.1)
-data.set_number('inv_eff', 96)
-data.set_number('losses', 14.0757)
-data.set_number('array_type', 0)
-data.set_number('tilt', 20)
-data.set_number('azimuth', 180)
-data.set_number('gcr', 0.4)
-data.set_number('adjust:constant', 0)
+ssc = sscapi.PySSC()
+
+data = ssc.data_create()
+ssc.data_set_number(data, 'system_capacity', 4)
+ssc.data_set_number(data, 'module_type', 0)
+ssc.data_set_number(data, 'dc_ac_ratio', 1.1)
+ssc.data_set_number(data, 'inv_eff', 96)
+ssc.data_set_number(data, 'losses', 14.0757)
+ssc.data_set_number(data, 'array_type', 0)
+ssc.data_set_number(data, 'tilt', 20)
+ssc.data_set_number(data, 'azimuth', 180)
+ssc.data_set_number(data, 'gcr', 0.4)
+ssc.data_set_number(data, 'adjust:constant', 0)
 
 
 ########################################
@@ -248,46 +251,46 @@ if(goodRead):
 print("\nWriting rate data into SAM")
 
 ## Write Constant Variables
-data.set_number('analysis_period', 25)
-data.set_number('inflation_rate', 2.5)
-data.set_array('degradation', [ 0.5 ])
-data.set_array('load_escalation', [ 0 ])
-data.set_array('rate_escalation', [ 0 ])
-data.set_number('ur_enable_net_metering', 1)
-data.set_number('ur_nm_yearend_sell_rate', 0.02789)
-data.set_number('ur_flat_buy_rate', 0 )
-data.set_number('ur_flat_sell_rate', 0 )
-data.set_number('ur_monthly_min_charge', 0 )
-data.set_number('ur_annual_min_charge', 0 )
+ssc.data_set_number(data, 'analysis_period', 25)
+ssc.data_set_number(data, 'inflation_rate', 2.5)
+ssc.data_set_array(data, 'degradation', [ 0.5 ])
+ssc.data_set_array(data, 'load_escalation', [ 0 ])
+ssc.data_set_array(data, 'rate_escalation', [ 0 ])
+ssc.data_set_number(data, 'ur_enable_net_metering', 1)
+ssc.data_set_number(data, 'ur_nm_yearend_sell_rate', 0.02789)
+ssc.data_set_number(data, 'ur_flat_buy_rate', 0 )
+ssc.data_set_number(data, 'ur_flat_sell_rate', 0 )
+ssc.data_set_number(data, 'ur_monthly_min_charge', 0 )
+ssc.data_set_number(data, 'ur_annual_min_charge', 0 )
 
 ## Write volatile variables
 
-data.set_number('ur_monthly_fixed_charge', monthlyFixedCharge )
+ssc.data_set_number(data, 'ur_monthly_fixed_charge', monthlyFixedCharge )
 
-data.set_number('ur_ec_enable', energyChargesEnable )
-data.set_matrix('ur_ec_sched_weekday', energyChargesWeekdaySchedule)
-data.set_matrix('ur_ec_sched_weekend', energyChargesWeekendSchedule)
+ssc.data_set_number(data, 'ur_ec_enable', energyChargesEnable )
+ssc.data_set_matrix(data, 'ur_ec_sched_weekday', energyChargesWeekdaySchedule)
+ssc.data_set_matrix(data, 'ur_ec_sched_weekend', energyChargesWeekendSchedule)
 
 for pi in range(periodSize):
     for ti in range(tierSize):
         root = ("ur_ec_p%d_t%d_" %(pi+1, ti+1))
-        data.set_number(root +"br", energyChargesBuyRate[pi][ti])
-        data.set_number(root +"sr", energyChargesSellRate[pi][ti])
-        data.set_number(root +"ub", energyChargesMaxUsage[pi][ti])
+        ssc.data_set_number(data, root +"br", energyChargesBuyRate[pi][ti])
+        ssc.data_set_number(data, root +"sr", energyChargesSellRate[pi][ti])
+        ssc.data_set_number(data, root +"ub", energyChargesMaxUsage[pi][ti])
 
-data.set_number('ur_dc_enable', demandChargesEnable )
-data.set_matrix('ur_dc_sched_weekday', touDemandChargesWeekdaySchedule)
-data.set_matrix('ur_dc_sched_weekend', touDemandChargesWeekendSchedule)
+ssc.data_set_number(data, 'ur_dc_enable', demandChargesEnable )
+ssc.data_set_matrix(data, 'ur_dc_sched_weekday', touDemandChargesWeekdaySchedule)
+ssc.data_set_matrix(data, 'ur_dc_sched_weekend', touDemandChargesWeekendSchedule)
 
 for pi in range(periodSize):
     for ti in range(tierSize):
         root = ("ur_dc_p%d_t%d_" %(pi+1, ti+1))
-        data.set_number(root +"dc", touDemandChargesCharge[pi][ti])
-        data.set_number(root +"ub", touDemandChargesMaxUsage[pi][ti])
+        ssc.data_set_number(data, root +"dc", touDemandChargesCharge[pi][ti])
+        ssc.data_set_number(data, root +"ub", touDemandChargesMaxUsage[pi][ti])
 
         root = ("ur_dc_%s_t%d_" %(monthNames[pi], ti+1))
-        data.set_number(root +"dc", fixedDemandChargesCharge[pi][ti])
-        data.set_number(root +"ub", fixedDemandChargesMaxUsage[pi][ti])
+        ssc.data_set_number(data, root +"dc", fixedDemandChargesCharge[pi][ti])
+        ssc.data_set_number(data, root +"ub", fixedDemandChargesMaxUsage[pi][ti])
 
 
 ##########################################
@@ -296,7 +299,7 @@ for pi in range(periodSize):
 weatherFile = raw_input('\nEnter location of weather file: ')
 loadFile = raw_input('Enter location of electric load file: ')
 
-data.set_string("solar_resource_file", weatherFile)
+ssc.data_set_string(data, "solar_resource_file", weatherFile)
 
 ## Read in electric load data from csv file
 
@@ -308,29 +311,28 @@ for line in open(loadFile):
         continue
 
 ## for pre-gen utilityrate3 before 4/15/15
-##data.set_array('p_load', electricLoad )
-##data.set_array('e_load', electricLoad )
-data.set_array('load', electricLoad )
+##ssc.data_set_array(data, 'p_load', electricLoad )
+##ssc.data_set_array(data, 'e_load', electricLoad )
+ssc.data_set_array(data, 'load', electricLoad )
 
 ########################################
 ## Running SAM Simulation
 
 print("\nExecuting SAM Simulations...")
 
-pvModule = ssc.Module("pvwattsv5")
-utilityModule = ssc.Module("utilityrate3")
+pvModule = ssc.module_create("pvwattsv5")
+utilityModule = ssc.module_create("utilityrate3")
 
-api = ssc.API()
-api.set_print(0)
+ssc.module_exec_set_print( 0 )
 
-print( "\nPVWatts Sim: " + str(pvModule.exec_( data )))
-print( "Utility Sim: " + str(utilityModule.exec_( data )))
+print( "\nPVWatts Sim: " + str( ssc.module_exec( pvModule, data )))
+print( "Utility Sim: " + str( ssc.module_exec( utilityModule, data )))
 
 ########################################
 ## Report Results
 
-monthlyBillWithSystem = data.get_array('year1_monthly_ec_charge_with_system')
-monthlyBillWithoutSystem = data.get_array('year1_monthly_ec_charge_without_system')
+monthlyBillWithSystem = ssc.data_get_array( data, 'year1_monthly_ec_charge_with_system')
+monthlyBillWithoutSystem = ssc.data_get_array(data, 'year1_monthly_ec_charge_without_system')
 
 print("\n\nEstimated Monthly Bill ($):")
 print('\tMonth\tWith System\tWithout System')
