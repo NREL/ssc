@@ -1648,8 +1648,7 @@ public:
 						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
 						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 
-						// if enabled apply sky diffuse shading factor after irradiation processor 
-						irr.set_sky_model(skymodel, alb, sa[nn].shad.en_skydiff_viewfactor());
+						irr.set_sky_model(skymodel, alb);
 						if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
 						else if (radmode == 1) irr.set_global_beam(wf.gh, wf.dn);
 						else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);

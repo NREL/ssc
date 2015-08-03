@@ -216,7 +216,7 @@ public:
 			irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, wfile.step_sec() / 3600);
 			irr.set_global_beam(wf.gh, wf.dn);	//CHANGE THIS WHEN OPTION TO USE GLOBAL AND DIFFUSE IS INTRODUCED
-			irr.set_sky_model(1, 0.2, false); //using HDKR model and default albedo and diffuse shading factor not enabled (set to 1.0 by default)
+			irr.set_sky_model(1, 0.2); //using HDKR model and default albedo
 			//variables to store irradiance info
 			double beam, sky, gnd;
 			//North wall
