@@ -335,7 +335,7 @@ public:
 				else tt.set_global_beam(wf.gh, wf.dn);
 				tt.set_location(hdr.lat, hdr.lon, hdr.tz);
 				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
-				tt.set_sky_model(sky_model /* isotropic=0, hdkr=1, perez=2 */, albedo, shad.en_skydiff_viewfactor());
+				tt.set_sky_model(sky_model /* isotropic=0, hdkr=1, perez=2 */, albedo );
 				tt.set_surface(0, tilt, azimuth, 0, 0, 0);
 				tt.calc();
 

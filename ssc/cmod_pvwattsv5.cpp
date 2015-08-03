@@ -194,12 +194,12 @@ public:
 
 	
 	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour,
-		double lat, double lon, double tz, double dn, double df, double alb, bool en_diff)
+		double lat, double lon, double tz, double dn, double df, double alb )
 	{
 		irrad irr;
 		irr.set_time( year, month, day, hour, minute, ts_hour );
 		irr.set_location( lat, lon, tz );
-		irr.set_sky_model(2, alb, en_diff);
+		irr.set_sky_model(2, alb );
 		irr.set_beam_diffuse(dn, df);
 		irr.set_surface( track_mode, tilt, azimuth, 45.0, 
 			shade_mode_1x == 1, // backtracking mode
@@ -428,7 +428,7 @@ public:
 					alb = wf.alb;
 				
 				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
-					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb, shad.en_skydiff_viewfactor());
+					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb );
 
 				if ( 0 != code )
 					throw exec_error( "pvwattsv5", 
@@ -570,7 +570,7 @@ public:
 		setup_system_inputs();
 		initialize_cell_temp( time_step, last_tcell, last_poa );
 		
-		int code = process_irradiance(year, month, day, hour, minute, time_step, lat, lon, tz, beam, diff, alb, false);  // diffuse shading factor not enabled (set to 1.0 by default)
+		int code = process_irradiance(year, month, day, hour, minute, time_step, lat, lon, tz, beam, diff, alb );
 		if (code != 0)
 			throw exec_error( "pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters" );
 

@@ -436,7 +436,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 
 #define SMALL 1e-6
 
-void hdkr(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be null */, bool en_skydiff_viewfactor)
+void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be null */ )
 {
 /* added aug2011 by aron dobos. Defines Hay, Davies, Klutcher, Reindl model for diffuse irradiance on a tilted surface
 	
@@ -478,11 +478,8 @@ void hdkr(double hextra, double dn, double df, double alb, double inc, double ti
 	double isohor = df*(1.0-Ai)*0.5*(1.0+cos(tilt))*(1.0+f*s3);
 
 	poa[0] = dn*cos(inc);
-	if (en_skydiff_viewfactor)
-		poa[1] = isohor + cir;
-	else
-		poa[1] = df*(1.0 - Ai) + cir; // factor applied later
-	poa[2] = (hb + df)*alb*(1.0 - cos(tilt)) / 2.0;
+	poa[1] = isohor+cir;
+	poa[2] = (hb+df)*alb*(1.0-cos(tilt))/2.0;
 
 	//prevent from returning negative poa values, added by jmf 7/28/14
 	if (poa[0] < 0) poa[0] = 0;
@@ -498,7 +495,7 @@ void hdkr(double hextra, double dn, double df, double alb, double inc, double ti
 }
 
 
-void isotropic(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3], bool en_skydiff_viewfactor)
+void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* added aug2011 by aron dobos. Defines isotropic sky model for diffuse irradiance on a tilted surface
 	
@@ -524,11 +521,7 @@ void isotropic(double hextra, double dn, double df, double alb, double inc, doub
 				*/
 
 	poa[0] = dn*cos(inc);
-	if (en_skydiff_viewfactor)
-		poa[1] = df*(1.0 + cos(tilt)) / 2.0;
-	else
-		poa[1] = df; // shading factor applied later
-
+	poa[1] = df*(1.0+cos(tilt))/2.0;
 	poa[2] = (dn*cos(zen)+df)*alb*(1.0-cos(tilt))/2.0;
 
 	//prevent from returning negative poa values, added by jmf 7/28/14
@@ -544,7 +537,7 @@ void isotropic(double hextra, double dn, double df, double alb, double inc, doub
 	}
 }
 
-void perez(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3], bool en_skydiff_viewfactor)
+void perez( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
 	Total POA is poa[0]+poa[1]+poa[2]
@@ -615,10 +608,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 		if ( cos(inc) > 0.0 && zen < 1.5707963 )  /* Zen between 87.5 and 90 */
 			{                                      /* and incident < 90 deg   */
 			poa[0] = dn * cos(inc);
-			if (en_skydiff_viewfactor)
-				poa[1] = df*(1.0 + cos(tilt)) / 2.0;
-			else
-				poa[1] = df;
+			poa[1] = df*( 1.0 + cos(tilt) )/2.0;
 			poa[2] = 0.0;
 
 			if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
@@ -627,10 +617,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 		else
 			{
 			poa[0] = 0;
-			if (en_skydiff_viewfactor)
-				poa[1] = df*(1.0 + cos(tilt)) / 2.0;
-			else
-				poa[1] = df;
+			poa[1] = df*( 1.0 + cos(tilt) )/2.0;   /* Isotropic diffuse only */
 			poa[2] = 0.0;
 			
 			if (diffc != 0) diffc[0] = poa[1]; /* isotropic only */
@@ -694,11 +681,8 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 			
 			// original PVWatts: poa = A + F1*B + F2*C + alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0 + dn*ZC;
 			poa[0] = dn*ZC; // beam
-			if (en_skydiff_viewfactor)
-				poa[1] = A + B + C; // total sky diffuse
-			else
-				poa[1] = D*(1 - F1) + D*F1*ZC / ZH; // total sky diffuse - factor applied later
-			poa[2] = alb*(dn*CZ + D)*(1.0 - cos(tilt)) / 2.0; // ground diffuse
+			poa[1] = A + B + C; // total sky diffuse
+			poa[2] = alb*(dn*CZ+D)*(1.0 - cos(tilt) )/2.0; // ground diffuse
 			return;
 			}
 		}
@@ -809,11 +793,10 @@ void irrad::set_location( double lat, double lon, double tz )
 	this->tz = tz;
 }
 
-void irrad::set_sky_model(int skymodel, double albedo, bool en_skydiff_viewfactor)
+void irrad::set_sky_model( int skymodel, double albedo )
 {
 	this->skymodel = skymodel;
 	this->alb = albedo;
-	this->en_skydiff_viewfactor = en_skydiff_viewfactor;
 }
 
 void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr )
@@ -975,18 +958,17 @@ int irrad::calc()
 		switch( skymodel )
 		{
 		case 0:
-			isotropic(hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc, en_skydiff_viewfactor);
+			isotropic( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		case 1:
-			hdkr(hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc, en_skydiff_viewfactor);
+			hdkr( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		default:
-			perez(hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc, en_skydiff_viewfactor);
+			perez( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
 			break;
 		}
 
 		ghi = idiff;
-
 	}
 
 	return 0;
