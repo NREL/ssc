@@ -12,6 +12,7 @@
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
 const double hour_to_min = 60.;
+const double tolerance = 0.001;
 
 /*
 Base class from which capacity models derive
@@ -411,8 +412,6 @@ protected:
 	double _SOC_max;
 	double _Ic_max;
 	double _Id_max;
-	// double _Pc_max;		// [W]
-	// double _Pd_max;		// [W]
 	double _t_min;
 	double _e_max_discharge;
 	double _e_max_charge;
@@ -421,6 +420,7 @@ protected:
 	int _t_at_mode; // [minutes]
 	bool _charging;
 	bool _prev_charging;
+	bool _grid_recharge;
 
 	// efficiency
 	double _charge_accumulated;		// [Kwh]
