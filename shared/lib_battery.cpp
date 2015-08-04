@@ -935,6 +935,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_charging = false;
 	_e_max_discharge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_min*0.01)*watt_to_kilowatt;
 	_e_max_charge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_max*0.01)*watt_to_kilowatt;
+	_grid_recharge = false;
 
 	// efficiency
 	_charge_accumulated = _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
@@ -1135,7 +1136,7 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	double energyNeededToFill = (chargeNeededToFill * battery_voltage)*watt_to_kilowatt;// [kWh]
 	double charge_total = _Battery->battery_charge_total();								// [Ah]
 	double charge_max = _Battery->battery_charge_maximum();								// [Ah]
-
+	double diff = 0.;																	// [%]
 	_e_grid = 0.;																		// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
 	_e_tofrom_batt = 0.;																// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 	_pv_to_load = 0.;
@@ -1163,11 +1164,27 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, double e_pv, double e_load
 	{
 		// try to discharge full amount.  Will only use what battery can provide
 		if (_can_discharge)
+		{
 			_e_tofrom_batt = e_load - e_pv;
+			diff = fabs(_Battery->capacity_model()->SOC() - _SOC_min);
+			if ( (diff < tolerance) || _grid_recharge)
+			{
+				if (_can_grid_charge)
+				{
+					_grid_recharge = true;
+					_e_tofrom_batt = -energyNeededToFill;
+					diff = fabs(_Battery->capacity_model()->SOC() - _SOC_max);
+					if (diff < tolerance)
+						_grid_recharge = false;
+				}
+			}
+			
+		}
 		// if we want to charge from grid
-		// this scenario doesn't really make sense
 		else if (_can_grid_charge)
 			_e_tofrom_batt = -energyNeededToFill;
+		else if (!_can_grid_charge)
+			_grid_recharge = false;
 	}
 
 	// Controllers
