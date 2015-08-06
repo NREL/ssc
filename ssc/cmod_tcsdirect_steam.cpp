@@ -847,13 +847,13 @@ public:
 		bConnected &= connect(tou, "tou_value", type234_powerblock, "TOU");
 
 		// Set Parasitics Parameters
-		set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
+		//set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
 		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
 		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
 		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
+		//set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
+		//set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
@@ -865,16 +865,16 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); //bop_par_0 );
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); //bop_par_1 );
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); //bop_par_2 );
-		set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
+		//set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
 
 		// Set Parasitics Inputs (Initial values?)
-		set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
+		//set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_cold_tank", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_hot_tank", 0.0);
-		set_unit_value_ssc_double(type228_parasitics, "P_tower_conv", 0.0);
-		set_unit_value_ssc_double(type228_parasitics, "P_tower_rad", 0.0);
-		set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
-		set_unit_value_ssc_double(type228_parasitics, "ref_htf_flow", 0.0);
+		//set_unit_value_ssc_double(type228_parasitics, "P_tower_conv", 0.0);
+		//set_unit_value_ssc_double(type228_parasitics, "P_tower_rad", 0.0);
+		//set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
+		//set_unit_value_ssc_double(type228_parasitics, "ref_htf_flow", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_htf_pump", 0.0);
 
 		bConnected &= connect(type234_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
