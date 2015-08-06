@@ -260,13 +260,13 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 //	{ SSC_INPUT,        SSC_NUMBER,      "dp_rh",               "Pressure drop in reheater",                                         "Pa",          "",            "powerblock",     "*",                       "",                      "" },
 															  
 	// Parasitics (type 228) parameters						  
-    {SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",      "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",     "",            "parasitics",     "*",                       "",                      "" },
+    //{SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",      "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",     "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_loss",         "Thermal loss per meter of piping",                                  "Wt/m",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_length",       "Total length of exposed piping",                                    "m",           "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_mult",     "Piping length multiplier",                             "",             "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_const",    "Piping constant length",                               "m",            "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Design_power",        "Power production at design conditions",                             "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",      "Recirculation heater efficiency",                                   "none",        "",            "parasitics",     "*",                       "",                      "" },
+   // {SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",      "Recirculation heater efficiency",                                   "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",          "Power cycle efficiency at design",                                  "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "night_recirc",        "Flag indicating whether night recirculation is allowed",            "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "pb_fixed_par",        "Fixed parasitic load - runs at all times",                          "MWe/MWcap",   "",            "parasitics",     "*",                       "",                      "" },
@@ -280,19 +280,19 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     {SSC_INPUT,         SSC_NUMBER,      "bop_par_0",           "Balance of plant parasitic power fraction - const coeff",           "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "bop_par_1",           "Balance of plant parasitic power fraction - linear coeff",          "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "bop_par_2",           "Balance of plant parasitic power fraction - quadratic coeff",       "none",        "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "storage_bypass",      "Flag indicating whether the hot salt pump always runs w/ PB",       "none",        "",            "parasitics",     "*",                       "",                      "" },
+   // {SSC_INPUT,         SSC_NUMBER,      "storage_bypass",      "Flag indicating whether the hot salt pump always runs w/ PB",       "none",        "",            "parasitics",     "*",                       "",                      "" },
     // Parasitics (type 228) inputs							   
-    {SSC_INPUT,         SSC_NUMBER,      "flow_from_storage",   "Flow rate from storage",                                           "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
+   // {SSC_INPUT,         SSC_NUMBER,      "flow_from_storage",   "Flow rate from storage",                                           "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "P_cooling_tower",     "Cooling tower parasitic power fraction",                            "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "P_tower_pump",        "Reported tower pump power",                                         "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "P_helio_track",       "Reported heliostat tracking power",                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "P_plant_output",      "Reported plant power output",                                       "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "eta_cycle",           "Power cycle efficiency",                                            "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "P_cold_tank",         "Cold tank heater parasitic power",                                  "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "P_hot_tank",          "Hot tank heater parasitic power",                                   "MWe",         "",            "parasitics",     "*",                       "",                      "" },
+   // {SSC_INPUT,         SSC_NUMBER,      "P_hot_tank",          "Hot tank heater parasitic power",                                   "MWe",         "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "P_tower_conv",        "Reported tower convection loss",                                    "MWt",         "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "P_tower_rad",         "Reported tower radiation loss",                                     "MWt",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "recirc_source",       "Recirculation heater control",                                      "none",        "",            "parasitics",     "*",                       "",                      "" },
+  //  {SSC_INPUT,         SSC_NUMBER,      "recirc_source",       "Recirculation heater control",                                      "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "ref_htf_flow",        "HTF flow rate through the power cycle at design",                   "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "aux_power",           "Auxiliary heater thermal power output",                             "MWt",         "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "P_htf_pump",          "HTF pumping power",                                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
@@ -847,13 +847,13 @@ public:
 		bConnected &= connect(tou, "tou_value", type234_powerblock, "TOU");
 
 		// Set Parasitics Parameters
-		set_unit_value_ssc_double(type228_parasitics, "P_storage_pump"); //P_storage_pump);
+		set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
 		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
 		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
 		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff"); //recirc_htr_eff );
+		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "night_recirc"); //night_recirc );
+		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
@@ -865,7 +865,7 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); //bop_par_0 );
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); //bop_par_1 );
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); //bop_par_2 );
-		set_unit_value_ssc_double(type228_parasitics, "storage_bypass"); //storage_bypass );
+		set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
 
 		// Set Parasitics Inputs (Initial values?)
 		set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
