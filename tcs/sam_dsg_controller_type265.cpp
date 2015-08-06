@@ -41,12 +41,7 @@ enum {
 	P_th_t_boiler,
 	P_emis_boiler,
 	P_abs_boiler, 
-	P_mat_boiler, 
-	P_th_fin,     
-	P_l_fin,      
-	P_emis_fin,   
-	P_abs_fin,    
-	P_mat_fin,    
+	P_mat_boiler,  
 	P_h_sh,       
 	P_d_sh,       
 	P_th_sh,      
@@ -175,11 +170,6 @@ tcsvarinfo sam_dsg_controller_type265_variables[] = {
 	{ TCS_PARAM,  TCS_NUMBER, P_emis_boiler,    "emis_boiler",            "Emissivity of boiler tubes",                 "-",   "", "", "" },
 	{ TCS_PARAM,  TCS_NUMBER, P_abs_boiler,     "abs_boiler",             "Absorptance of boiler tubes",                "-",   "", "", "" },
 	{ TCS_PARAM,  TCS_NUMBER, P_mat_boiler,     "mat_boiler",             "Numerical code for tube material",           "-",   "", "", "" },
-	{ TCS_PARAM,  TCS_NUMBER, P_th_fin,         "th_fin",                 "Thickness of fin",                           "m",   "", "", "" },
-	{ TCS_PARAM,  TCS_NUMBER, P_l_fin,          "l_fin",                  "Length of fin (distance between tubes)",     "m",   "", "", "" },
-	{ TCS_PARAM,  TCS_NUMBER, P_emis_fin,       "emis_fin",               "Emissivity of fin",                          "-",   "", "", "" },
-	{ TCS_PARAM,  TCS_NUMBER, P_abs_fin,        "abs_fin",                "Absorptance of fin",                         "-",   "", "", "" },
-	{ TCS_PARAM,  TCS_NUMBER, P_mat_fin,        "mat_fin",                "Numerical code for fin material",            "-",   "", "", "" },
 	{ TCS_PARAM,  TCS_NUMBER, P_h_sh,           "h_sh",                   "Height of superheater",                      "m",   "", "", "" },
 	{ TCS_PARAM,  TCS_NUMBER, P_d_sh,           "d_sh",                   "O.D. of superheater tubes",                  "m",   "", "", "" },
 	{ TCS_PARAM,  TCS_NUMBER, P_th_sh,          "th_sh",                  "Thickness of superheater tubes",             "m",   "", "", "" },
@@ -698,11 +688,17 @@ public:
 		double emis_boiler = value( P_emis_boiler );	//[-] Emissivity of boiler tubes
 		double abs_boiler = value( P_abs_boiler );		//[-] Absorptivity of boiler tubes
 		double mat_boiler = value( P_mat_boiler );		//[-] Material of boiler tubes
-		double th_fin = value( P_th_fin );				//[m] Thickness of fin 
-		double l_fin = value( P_l_fin );				//[m] Length of fin (distance between boiler tubes)
-		double emis_fin = value( P_emis_fin );			//[-] Emissivity of fin
-		double abs_fin = value( P_abs_fin );			//[-] Absorptivity of fin
-		double mat_fin = value( P_mat_fin );			//[-] Numerical code for fin material (2:Stainless_AISI316, 28: T-91 Steel)
+		
+		// 8.6.15, twn: Fin calculations are not enabled in the boiler performance model
+		//                so don't pass into the TCS type as inputs
+		//               ****  'l_fin' MUST be = 0 *****
+		double th_fin = 0.0;			//value( P_th_fin );				//[m] Thickness of fin 
+		double l_fin = 0.0;				//value( P_l_fin );				//[m] Length of fin (distance between boiler tubes)
+		double emis_fin = 0.0;			//value( P_emis_fin );			//[-] Emissivity of fin
+		double abs_fin = 0.0;			//value( P_abs_fin );			//[-] Absorptivity of fin
+		double mat_fin = 0.0;			//value( P_mat_fin );			//[-] Numerical code for fin material (2:Stainless_AISI316, 28: T-91 Steel)
+		// ***********************************************************
+		
 		double A_cs_b = CSP::pi*0.25*pow(d_t_boiler,2);	//[m^2] Cross-sectional area of boiler tube
 
 		if( !dsg_rec.Initialize_Receiver( n_panels, d_rec, per_rec, hl_ffact, flowtype, false, 0, 0.0 ))
