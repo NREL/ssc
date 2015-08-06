@@ -177,11 +177,6 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "emis_boiler",         "Emissivity of boiler tubes",                                       "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "abs_boiler",          "Absorptance of boiler tubes",                                      "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mat_boiler",          "Numerical code for tube material",                                 "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "th_fin",              "Thickness of fin",                                                 "m",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "l_fin",               "Length of fin (distance between tubes)",                           "m",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "emis_fin",            "Emissivity of fin",                                                "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "abs_fin",             "Absorptance of fin",                                               "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "mat_fin",             "Numerical code for fin material",                                  "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_sh",                "Height of superheater",                                            "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_sh",                "O.D. of superheater tubes",                                        "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "th_sh",               "Thickness of superheater tubes",                                   "m",            "",            "dsg_controller", "*",                       "",                      "" },
@@ -726,11 +721,7 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler"); //emis_boiler);
 		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler"); //abs_boiler);
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_boiler"); //Mat_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "th_fin"); //th_fin);
-		set_unit_value_ssc_double( type265_dsg_controller, "l_fin"); //L_fin);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_fin"); //emis_fin);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_fin"); //abs_fin);
-		set_unit_value_ssc_double( type265_dsg_controller, "mat_fin"); //Mat_fin);
+		
 		set_unit_value_ssc_double( type265_dsg_controller, "h_sh"); //h_SH);
 		set_unit_value_ssc_double( type265_dsg_controller, "d_sh"); //d_SH);
 		set_unit_value_ssc_double( type265_dsg_controller, "th_sh"); //th_SH);
