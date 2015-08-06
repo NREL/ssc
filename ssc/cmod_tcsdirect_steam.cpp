@@ -244,7 +244,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",            "Number of part-load increments for the heat rejection system",      "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                "Fraction indicating wet cooling use for hybrid system",             "none",        "",            "powerblock",     "*",                       "",                      "" },
 	// Power block (type 234) inputs					       
-    { SSC_INPUT,        SSC_NUMBER,      "mode",                "Cycle part load control, from plant controller",                    "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
+//    { SSC_INPUT,        SSC_NUMBER,      "mode",                "Cycle part load control, from plant controller",                    "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_hot",               "Hot HTF inlet temperature, from storage tank",                      "C",           "",            "powerblock",     "*",                       "",                      "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_st",            "HTF mass flow rate",                                                "kg/hr",       "",            "powerblock",     "*",                       "",                      "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "T_wb",                "Ambient wet bulb temperature",                                      "C",           "",            "powerblock",     "*",                       "",                      "" },
@@ -268,7 +268,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     {SSC_INPUT,         SSC_NUMBER,      "Design_power",        "Power production at design conditions",                             "MWe",         "",            "parasitics",     "*",                       "",                      "" },
    // {SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",      "Recirculation heater efficiency",                                   "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",          "Power cycle efficiency at design",                                  "none",        "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "night_recirc",        "Flag indicating whether night recirculation is allowed",            "none",        "",            "parasitics",     "*",                       "",                      "" },
+  //  {SSC_INPUT,         SSC_NUMBER,      "night_recirc",        "Flag indicating whether night recirculation is allowed",            "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "pb_fixed_par",        "Fixed parasitic load - runs at all times",                          "MWe/MWcap",   "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "aux_par",             "Aux heater, boiler parasitic",                                      "MWe/MWcap",   "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "aux_par_f",           "Aux heater, boiler parasitic - multiplying fraction",               "none",        "",            "parasitics",     "*",                       "",                      "" },
@@ -288,14 +288,14 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 //	{SSC_INPUT,         SSC_NUMBER,      "P_helio_track",       "Reported heliostat tracking power",                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "P_plant_output",      "Reported plant power output",                                       "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "eta_cycle",           "Power cycle efficiency",                                            "none",        "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "P_cold_tank",         "Cold tank heater parasitic power",                                  "MWe",         "",            "parasitics",     "*",                       "",                      "" },
+  //  {SSC_INPUT,         SSC_NUMBER,      "P_cold_tank",         "Cold tank heater parasitic power",                                  "MWe",         "",            "parasitics",     "*",                       "",                      "" },
    // {SSC_INPUT,         SSC_NUMBER,      "P_hot_tank",          "Hot tank heater parasitic power",                                   "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "P_tower_conv",        "Reported tower convection loss",                                    "MWt",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "P_tower_rad",         "Reported tower radiation loss",                                     "MWt",         "",            "parasitics",     "*",                       "",                      "" },
+ //   {SSC_INPUT,         SSC_NUMBER,      "P_tower_conv",        "Reported tower convection loss",                                    "MWt",         "",            "parasitics",     "*",                       "",                      "" },
+ //   {SSC_INPUT,         SSC_NUMBER,      "P_tower_rad",         "Reported tower radiation loss",                                     "MWt",         "",            "parasitics",     "*",                       "",                      "" },
   //  {SSC_INPUT,         SSC_NUMBER,      "recirc_source",       "Recirculation heater control",                                      "none",        "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "ref_htf_flow",        "HTF flow rate through the power cycle at design",                   "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
+   // {SSC_INPUT,         SSC_NUMBER,      "ref_htf_flow",        "HTF flow rate through the power cycle at design",                   "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
 //	{SSC_INPUT,         SSC_NUMBER,      "aux_power",           "Auxiliary heater thermal power output",                             "MWt",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "P_htf_pump",          "HTF pumping power",                                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
+//    {SSC_INPUT,         SSC_NUMBER,      "P_htf_pump",          "HTF pumping power",                                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
 
 
 // OUTPUTS
@@ -828,7 +828,7 @@ public:
 		set_unit_value_ssc_array(type234_powerblock, "F_wc"); //[HC_LOGIC0, HC_LOGIC1, HC_LOGIC2, HC_LOGIC3, HC_LOGIC4, HC_LOGIC5, HC_LOGIC6, HC_LOGIC7, HC_LOGIC8]);
 
 		// Set Powerblock initial values
-		set_unit_value_ssc_double(type234_powerblock, "mode");//, 2);
+		set_unit_value_ssc_double(type234_powerblock, "mode", 2);		//8.6.15 twn: this value should be hardcoded (and maybe removed from Type234)
 		set_unit_value_ssc_double(type234_powerblock, "T_hot"); //T_SH_out_ref);
 		//set_unit_value_ssc_double(type234_powerblock, "TOU");//, 1);
 
