@@ -380,8 +380,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// Therefore, these outputs have to have the same name in both types, or TCS will throw an error when trying to read the results.
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Receiver thermal efficiency",                                    "",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_solar_total",        "Receiver thermal power absorbed",                                "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_conv",         "Receiver thermal power loss to convection",                      "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_rad",          "Receiver thermal power loss to radiation",                       "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_conv_sum",           "Receiver thermal power loss to convection",                      "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_rad_sum",            "Receiver thermal power loss to radiation",                       "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Receiver thermal power to HTF",                                  "MWt",           "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_field",          "Receiver HTF mass flow rate",                                    "kg/hr",        "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_field_in",           "Receiver HTF temperature in",                                    "C",            "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
@@ -436,7 +436,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",  "Parasitic power condenser operation",                            "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",         "Parasitic power equiv. header pipe losses",                      "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tank_heater",        "Parasitic power TES freeze protection",                          "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_par",          "Parasitic power receiver freeze protection",                     "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_par",          "Parasitic power receiver freeze protection",                     "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_parasitics",         "Parasitic power total consumption",                              "MWe",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	
@@ -885,8 +885,8 @@ public:
 			bConnected &= connect( type222_receiver, "T_salt_hot", type251_controller, "T_field_out" );
 			bConnected &= connect( type222_receiver, "q_startup", type251_controller, "q_startup" );		// This input is not used by the controller
 			bConnected &= connect( type222_receiver, "W_dot_pump", type228_parasitics, "P_tower_pump");
-			bConnected &= connect( type222_receiver, "q_conv_sum", type228_parasitics, "P_tower_conv");
-			bConnected &= connect( type222_receiver, "q_rad_sum", type228_parasitics, "P_tower_rad");
+			//bConnected &= connect( type222_receiver, "q_conv_sum", type228_parasitics, "P_tower_conv");
+			//bConnected &= connect( type222_receiver, "q_rad_sum", type228_parasitics, "P_tower_rad");
 
 			bConnected &= connect( type_hel_field, "flux_map", type222_receiver, "flux_map");
 
@@ -955,8 +955,8 @@ public:
 			bConnected &= connect( type232_cav_rec, "T_htf_hot_out", type251_controller, "T_field_out" );
 			bConnected &= connect( type232_cav_rec, "Q_startup", type251_controller, "q_startup" );
 			bConnected &= connect( type232_cav_rec, "W_pump", type228_parasitics, "P_tower_pump");
-			bConnected &= connect( type232_cav_rec, "Q_conv_loss", type228_parasitics, "P_tower_conv");
-			bConnected &= connect( type232_cav_rec, "Q_rad_loss", type228_parasitics, "P_tower_rad");
+			//bConnected &= connect( type232_cav_rec, "Q_conv_loss", type228_parasitics, "P_tower_conv");
+			//bConnected &= connect( type232_cav_rec, "Q_rad_loss", type228_parasitics, "P_tower_rad");
 		}// cavity receiver
 
 		set_unit_value_ssc_double(type251_controller, "field_fluid" ); //, 17);
@@ -1178,13 +1178,13 @@ public:
 		}
 
 		// Set Parasitics (type 228) Parameters
-		set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
+		//set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
 		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
 		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
 		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
+		//set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
+		//set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
@@ -1196,12 +1196,12 @@ public:
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); //bop_par_0 );
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); //bop_par_1 );
 		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); //bop_par_2 );
-		set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
+		//set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
 
 		// Set Parasitics (type 228) Inputs (Initial values?)
-		set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
+		// set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_hot_tank", 0.0);	// "tank_fp_par" from controller contains both hot and cold tank htr values
-		set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
+		//set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
 
 		// Connect Parasitics (type 228) module to others
 		if( is_steam_pc )
@@ -1209,14 +1209,14 @@ public:
 			bConnected &= connect(type224_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
 			bConnected &= connect(type224_powerblock, "P_cycle", type228_parasitics, "P_plant_output");
 			bConnected &= connect(type224_powerblock, "eta", type228_parasitics, "eta_cycle");
-			bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
+			//bConnected &= connect(type224_powerblock, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
 		}
 		else
 		{
 			bConnected &= connect(type424_sco2, "W_cool_par", type228_parasitics, "P_cooling_tower");
 			bConnected &= connect(type424_sco2, "P_cycle", type228_parasitics, "P_plant_output");
 			bConnected &= connect(type424_sco2, "eta", type228_parasitics, "eta_cycle");
-			bConnected &= connect(type424_sco2, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
+			//bConnected &= connect(type424_sco2, "m_dot_htf_ref", type228_parasitics, "ref_htf_flow");
 		}
 		
 		bConnected &= connect(type_hel_field, "pparasi", type228_parasitics, "P_helio_track");		
