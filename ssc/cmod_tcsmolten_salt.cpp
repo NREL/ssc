@@ -244,8 +244,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",                  "kW/kg",        "",            "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",                 "kW/kg",        "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par_cntl",    "Fraction of rated gross power constantly consumed by controller",   "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "bop_array",            "Coefficients for balance of plant parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "aux_array",            "Coefficients for auxiliary heater parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "bop_array",            "Coefficients for balance of plant parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "aux_array",            "Coefficients for auxiliary heater parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_startup",            "Startup temperature",                                               "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",          "Fossil backup mode 1=Normal 2=Topping",                             "-",            "",            "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "fthr_ok",              "Does the defocus control allow partial defocusing",                 "-",            "",            "controller",     "*",                       "",                      "" },
@@ -1019,8 +1019,18 @@ public:
 		set_unit_value_ssc_double(type251_controller, "pb_pump_coef" ); //, 0.55);
 		set_unit_value_ssc_double(type251_controller, "tes_pump_coef", 0.0 ); // 8.5.15 twn: MSPT does not have TES pumping losses as it assumes direct storage
 		set_unit_value_ssc_double(type251_controller, "pb_fixed_par", as_double("pb_fixed_par_cntl") ); //, 0.0);
-		set_unit_value_ssc_array(type251_controller, "bop_array" ); //, [0.0,0.0,0.0,0.0,0.0]);
-		set_unit_value_ssc_array(type251_controller, "aux_array" ); //, [0.0,0.0,0.0,0.0,0.0]);
+
+		ssc_number_t *bop_array_test = allocate("bop_array_test", 5);
+		ssc_number_t *aux_array_test = allocate("aux_array_test", 5);
+		for( int ii = 0; ii < 5; ii++ )
+		{
+			bop_array_test[ii] = 0.0;
+			aux_array_test[ii] = 0.0;
+		}
+		set_unit_value_ssc_array(type251_controller, "bop_array", "bop_array_test" ); //, [0.0,0.0,0.0,0.0,0.0]);
+		set_unit_value_ssc_array(type251_controller, "aux_array", "aux_array_test" ); //, [0.0,0.0,0.0,0.0,0.0]);
+		
+		
 		set_unit_value_ssc_double(type251_controller, "T_startup" ); //, 500);
 		set_unit_value_ssc_double(type251_controller, "fossil_mode" ); //, 1);
 		
