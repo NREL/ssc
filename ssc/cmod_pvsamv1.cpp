@@ -1589,8 +1589,13 @@ public:
 				{
 					// electric load is subhourly
 					// if no load profile supplied, load = 0
-					if (p_load_in != 0 && nload == nrec*nyears)
-						cur_load = p_load_in[idx];
+					if (p_load_in != 0 && nload == nrec)
+						cur_load = p_load_in[hour*step_per_hour + jj];
+
+					// log cur_load to check both hourly and sub hourly load data
+					// load data over entrie lifetime period not currently supported.
+					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
+						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
 
 					if (!wdprov->read( &wf ))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
