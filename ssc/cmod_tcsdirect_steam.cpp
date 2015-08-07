@@ -174,21 +174,17 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "h_boiler",            "Height of boiler",                                                 "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_t_boiler",          "O.D. of boiler tubes",                                             "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "th_t_boiler",         "Thickness of boiler tubes",                                        "m",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "emis_boiler",         "Emissivity of boiler tubes",                                       "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "abs_boiler",          "Absorptance of boiler tubes",                                      "-",            "",            "dsg_controller", "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "emis_boiler",         "Emissivity of receiver tubes",                                     "-",            "",            "dsg_controller", "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",     "Absorptance of receiver tubes",                                    "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mat_boiler",          "Numerical code for tube material",                                 "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_sh",                "Height of superheater",                                            "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_sh",                "O.D. of superheater tubes",                                        "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "th_sh",               "Thickness of superheater tubes",                                   "m",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "emis_sh",             "Emissivity of superheater tubes",                                  "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "abs_sh",              "Absorptance of superheater tubes",                                 "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mat_sh",              "Numerical code for superheater material",                          "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_sh_out_des",        "Target superheater outlet temperature",                            "C",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_rh",                "Height of reheater",                                               "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_rh",                "O.D. of reheater tubes",                                           "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "th_rh",               "Thickness of reheater tubes",                                      "m",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "emis_rh",             "Emissivity of reheater tubes",                                     "-",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "abs_rh",              "Absorptance of reheater tubes",                                    "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mat_rh",              "Numerical code for reheater material",                             "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_rh_out_des",        "Target reheater outlet temperature",                               "C",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",      "Cycle maximum overdesign fraction",                                "-",            "",            "dsg_controller", "*",                       "",                      "" },
@@ -718,22 +714,22 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "h_boiler"); //h_boiler);
 		set_unit_value_ssc_double( type265_dsg_controller, "d_t_boiler"); //d_boiler);
 		set_unit_value_ssc_double( type265_dsg_controller, "th_t_boiler"); //th_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler"); //emis_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler"); //abs_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler", "emis_boiler"); //emis_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler", "rec_absorptance"); //abs_boiler);
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_boiler"); //Mat_boiler);
 		
 		set_unit_value_ssc_double( type265_dsg_controller, "h_sh"); //h_SH);
 		set_unit_value_ssc_double( type265_dsg_controller, "d_sh"); //d_SH);
 		set_unit_value_ssc_double( type265_dsg_controller, "th_sh"); //th_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh"); //emis_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_sh"); //abs_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh", "emis_boiler"); //emis_SH);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_sh", "rec_absorptance"); //abs_SH);
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_sh"); //Mat_SH);
 		set_unit_value_ssc_double( type265_dsg_controller, "T_sh_out_des"); //T_SH_out_ref);
 		set_unit_value_ssc_double( type265_dsg_controller, "h_rh"); //h_RH);
 		set_unit_value_ssc_double( type265_dsg_controller, "d_rh"); //d_RH);
 		set_unit_value_ssc_double( type265_dsg_controller, "th_rh"); //th_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh"); //emis_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_rh"); //abs_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh", "emis_boiler"); //emis_RH);
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_rh", "rec_absorptance"); //abs_RH);
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_rh"); //Mat_RH);
 		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
 		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
