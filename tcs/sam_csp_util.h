@@ -292,6 +292,9 @@ public:
 		xax_allocated = false;
 		yax_allocated = false;
 		data_allocated = false;
+		xvals = 0;
+		yvals = 0;
+		data = 0;
 	}
 
 	~OpticalDataTable(){
