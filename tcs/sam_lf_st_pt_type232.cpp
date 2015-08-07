@@ -29,7 +29,7 @@ enum {
 	P_eta_pump,       
 	P_hel_stow,       
 	P_flow_pattern,   
-	P_htf,            
+	P_HTF,            
 	P_htf_props,      
 	P_material,       
 	P_hl_ffact,       
@@ -52,8 +52,7 @@ enum {
 	I_azimuth,        
 	I_zenith,         
 	I_T_htf_hot,      
-	I_T_htf_cold,     
-	I_P_htf,          
+	I_T_htf_cold,            
 	I_P_amb,                     
 	I_T_dp,           
 	I_I_bn,           
@@ -92,7 +91,7 @@ tcsvarinfo sam_lf_st_pt_type232_variables[] = {
 	{ TCS_PARAM, TCS_NUMBER, P_eta_pump,       "eta_pump",       "Efficiency of HTF pump",                                      "-",     "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_hel_stow,       "hel_stow",       "Heliostat field stow/deploy solar angle",                     "deg",   "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_flow_pattern,   "flow_pattern",   "HTF flow scheme through receiver panels",                     "-",     "",    "",  "" },
-	{ TCS_PARAM, TCS_NUMBER, P_htf,            "htf",            "Flag indicating heat transfer fluid",                         "-",     "",    "",  "" },
+	{ TCS_PARAM, TCS_NUMBER, P_HTF,            "htf",            "Flag indicating heat transfer fluid",                         "-",     "",    "",  "" },
 	{ TCS_PARAM, TCS_MATRIX, P_htf_props,      "field_fl_props", "User defined field fluid property data",                      "-",     "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
 	{ TCS_PARAM, TCS_NUMBER, P_material,       "material",       "Receiver tube material",                                      "-",     "",    "",  "" },
 	{ TCS_PARAM, TCS_NUMBER, P_hl_ffact,       "hl_ffact",       "Heat loss factor (thermal loss fudge factor)",                "-",     "",    "",  "" },
@@ -116,7 +115,6 @@ tcsvarinfo sam_lf_st_pt_type232_variables[] = {
 	{ TCS_INPUT, TCS_NUMBER, I_zenith,         "zenith",         "solar zenith angle",                                          "deg",   "",    "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_T_htf_hot,      "T_htf_hot",      "Target hot outlet temperature of the working fluid",          "C",     "",    "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_T_htf_cold,     "T_htf_cold",     "Inlet temperature of the HTF",                                "C",     "",    "",  "" },
-	{ TCS_INPUT, TCS_NUMBER, I_P_htf,          "P_htf",          "Average coolant pressure",                                    "bar",   "",    "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_P_amb,          "P_amb",          "Ambient pressure",                                            "atm",   "",    "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_T_dp,           "T_dp",           "Dew point temperature",                                       "C",     "",    "",  "" },
 	{ TCS_INPUT, TCS_NUMBER, I_I_bn,           "I_bn",           "Direct normal irradiation",                                   "W/m2",  "",    "",  "" },
@@ -387,7 +385,7 @@ public:
 		eta_pump	= value( P_eta_pump );
 		hel_stow	= value( P_hel_stow );
 		flow_pattern = (int) value( P_flow_pattern );
-		htf			= (int) value( P_htf );		
+		htf			= (int) value( P_HTF );		
 
 		// Declare instance of fluid class for STORAGE fluid.
 		// Set fluid number or copy over fluid matrix, depending on specified fluid.
@@ -955,8 +953,11 @@ public:
 		double zenith		= value( I_zenith ); 
 		double T_htf_hot	= value( I_T_htf_hot )+ 273.15;		// [K] Convert from C
 		double T_htf_cold	= value( I_T_htf_cold )+ 273.15;	// [K] Convert from C
-		double P_htf		= value( I_P_htf )*1.E5;			// [Pa] Convert from bar
-		double P_amb		= value( I_P_amb )*100.0;		// [Pa] Convert from atm
+		
+		// 8.7.15 twn: hardcode coolant pressure - hard to see a case where this would be an input from a different model...
+		double P_htf		= 1.0*1.E5;							// [Pa] Convert from bar
+		
+		double P_amb		= value( I_P_amb )*100.0;			// [Pa] Convert from atm
 		double hour			= time/3600.0;
 		double T_dp			= value( I_T_dp )+273.15;			// [K] Convert from C      
 		double I_bn			= value( I_I_bn );					// [W/m2]
