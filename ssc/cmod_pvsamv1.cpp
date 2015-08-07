@@ -1594,8 +1594,8 @@ public:
 
 					// log cur_load to check both hourly and sub hourly load data
 					// load data over entrie lifetime period not currently supported.
-					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
-						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
+//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
+//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
 
 					if (!wdprov->read( &wf ))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
