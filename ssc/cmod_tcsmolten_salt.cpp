@@ -152,7 +152,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "azimuth_ini",          "Solar azimuth angle",                                               "deg",          "",            "receiver",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "zenith_ini",           "Solar zenith angle",                                                "deg",          "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_salt_cold",          "Desired HTF inlet temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "T_salt_cold",          "Desired HTF inlet temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "V_wind_10",            "Ambient wind velocity, ground level",                               "m/s",          "",            "receiver",       "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "P_amb",                "Ambient atmospheric pressure",                                      "mbar",         "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",             "Receiver HTF pump efficiency",                                      "",             "",            "receiver",       "*",                       "",                      "" },
@@ -205,21 +205,21 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
   //{ SSC_INPUT,        SSC_NUMBER,      "eta_field",            "Overall efficiency of heliostat field",                             "-",            "",            "cavity_receiver","*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "T_amb",                "Ambient temperature",                                               "C",            "",            "cavity_receiver","*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "u_wind",               "Wind velocity",                                                     "m/s",          "",            "cavity_receiver","*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "deg_wind",             "Wind direction",                                                    "deg",          "",            "cavity_receiver","*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_htf",                "Average coolant pressure",                                          "bar",          "",            "cavity_receiver","*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "deg_wind",             "Wind direction",                                                    "deg",          "",            "cavity_receiver","*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "P_htf",                "Average coolant pressure",                                          "bar",          "",            "cavity_receiver","*",                       "",                      "" },
 															     																	  
 															     																	  
 															     																	  
     // Controller (type 251) parameters						     																	  
     { SSC_INPUT,        SSC_NUMBER,      "field_fluid",          "Material number for the collector field",                           "-",            "",            "controller",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_MATRIX,      "field_fl_props",       "User defined field fluid property data",                            "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "store_fluid",          "Material number for storage fluid",                                 "-",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "store_fluid",          "Material number for storage fluid",                                 "-",            "",            "controller",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_MATRIX,      "user_fluid",           "User defined fluid property data",                                  "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_hx",                "1=yes, 0=no"                                                        "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dt_hot",               "Hot side HX approach temp",                                         "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dt_cold",              "Cold side HX approach temp",                                        "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "hx_config",            "HX configuration",                                                  "-",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "is_hx",                "1=yes, 0=no"                                                        "-",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "dt_hot",               "Hot side HX approach temp",                                         "C",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "dt_cold",              "Cold side HX approach temp",                                        "C",            "",            "controller",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "hx_config",            "HX configuration",                                                  "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_max_aux",            "Max heat rate of auxiliary heater",                                 "MWt",          "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_set_aux",            "Aux heater outlet temp set point",                                  "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_tank_hot_ini",       "Initial hot tank fluid volume",                                     "m3",           "",            "controller",     "*",                       "",                      "" },
@@ -243,7 +243,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",                  "kW/kg",        "",            "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",        "Pumping power to move 1kg of HTF through tes loop",                 "kW/kg",        "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par_cntl",    "Fraction of rated gross power constantly consumed by controller",   "-",            "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par_cntl",    "Fraction of rated gross power constantly consumed by controller",   "-",            "",            "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_ARRAY,       "bop_array",            "Coefficients for balance of plant parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_ARRAY,       "aux_array",            "Coefficients for auxiliary heater parasitics calcs",                "-",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_startup",            "Startup temperature",                                               "C",            "",            "controller",     "*",                       "",                      "" },
@@ -269,8 +269,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
   //{ SSC_INPUT,        SSC_ARRAY,       "TOU_schedule",         "Annual hourly time-of-use schedule",                                "-",            "",            "controller",     "*",                       "",                      "" },
 															     																	  
     // Controller (type 251) inputs							     																	  
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",        "Reference HTF flow rate at design conditions",                      "kg/hr",        "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_pb_out",             "Fluid temperature from the power block",                            "C",            "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",        "Reference HTF flow rate at design conditions",                      "kg/hr",        "",            "controller",     "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "T_pb_out",             "Fluid temperature from the power block",                            "C",            "",            "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_lhv",              "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",    "controller",     "*",                       "",                      "" },													     																	  
 															     																	  
     // Powerblock (type 224) parameters						     																	  
@@ -280,13 +280,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_ref",       "Reference HTF outlet temperature at design",                        "C",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",            "Reference condenser cooling water inlet/outlet T diff",             "C",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",            "Reference ambient temperature at design point",                     "C",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "HTF",                  "Integer flag identifying HTF in power block",                       "none",         "",            "powerblock",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "HTF",                  "Integer flag identifying HTF in power block",                       "none",         "",            "powerblock",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",           "Fraction of thermal power required for standby mode",               "none",         "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",               "Boiler operating pressure",                                         "bar",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                   "Flag for using dry cooling or wet cooling system",                  "none",         "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_time",         "Time needed for power block startup",                               "hr",           "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_frac",         "Fraction of design thermal power needed for startup",               "none",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tech_type",            "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)", "none",         "",            "powerblock",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "tech_type",            "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)", "none",         "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",           "Cooling tower approach temperature",                                "C",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",            "ITD at design for dry system",                                      "C",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",         "Condenser pressure ratio",                                          "none",         "",            "powerblock",     "*",                       "",                      "" },
@@ -297,7 +297,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                 "Fraction indicating wet cooling use for hybrid system",             "none",         "",            "powerblock",     "*",                       "",                      "" },
 															     																	  
     // Powerblock (type 224) inputs							     																	  
-    { SSC_INPUT,        SSC_NUMBER,      "mode",                 "Cycle part load control, from plant controller",                    "none",         "",            "powerblock",     "*",                       "",                      "" },
+  //{ SSC_INPUT,        SSC_NUMBER,      "mode",                 "Cycle part load control, from plant controller",                    "none",         "",            "powerblock",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot",            "Hot HTF inlet temperature, from storage tank",                      "C",            "",            "powerblock",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf",            "HTF mass flow rate",                                                "kg/hr",        "",            "powerblock",     "*",                       "",                      "" },
   //{ SSC_INPUT,        SSC_NUMBER,      "T_wb",                 "Ambient wet bulb temperature",                                      "C",            "",            "powerblock",     "*",                       "",                      "" },
@@ -323,7 +323,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     {SSC_INPUT,         SSC_NUMBER,      "Piping_length",        "Total length of exposed piping",                                    "m",            "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_mult",     "Piping length multiplier",                             "",             "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_const",    "Piping constant length",                               "m",            "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "Design_power",         "Power production at design conditions",                             "MWe",          "",            "parasitics",     "*",                       "",                      "" },
+    //{SSC_INPUT,         SSC_NUMBER,      "Design_power",         "Power production at design conditions",                             "MWe",          "",            "parasitics",     "*",                       "",                      "" },
     //{SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",       "Recirculation heater efficiency",                                   "none",         "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "parasitics",     "*",                       "",                      "" },
   //{SSC_INPUT,         SSC_NUMBER,      "night_recirc",         "Flag indicating whether night recirculation is allowed",            "none",         "",            "parasitics",     "*",                       "",                      "" },
@@ -407,7 +407,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",           "Cycle electrical power output (gross)",                             "MWe",          "",            "Net_E_Calc",     "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pb",          "Cycle HTF mass flow rate",                                          "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_in",           "Cycle HTF temperature in (hot)",                                    "C",            "",            "Type251",        "*",                       "LENGTH=8760",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_out",          "Cycle HTF temperature out (cold)",                                  "C",            "",            "Type251",        "*",                       "LENGTH=8760",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "T_pb_out",          "Cycle HTF temperature out (cold)",                                  "C",            "",            "Type251",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_makeup",      "Cycle cooling water mass flow rate - makeup",                       "kg/hr",        "",            "Type250",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_pb",              "Cycle thermal power input",                                         "MWt",          "",            "Type251",        "*",                       "LENGTH=8760",           "" },
     
@@ -930,14 +930,13 @@ public:
 			set_unit_value_ssc_double( type232_cav_rec, "zenith", as_double("zenith_ini") ); // 0
 			set_unit_value_ssc_double( type232_cav_rec, "T_htf_hot", as_double("T_htf_hot_des")); //  HTF_rec_out );
 			set_unit_value_ssc_double( type232_cav_rec, "T_htf_cold", as_double("T_htf_cold_des")); //  290 );
-			set_unit_value_ssc_double( type232_cav_rec, "P_amb"); //  0.9435 );
-			set_unit_value_ssc_double( type232_cav_rec, "T_dp"); //  0.0 );
-			set_unit_value_ssc_double( type232_cav_rec, "I_bn"); //  0.0 );
+			set_unit_value_ssc_double( type232_cav_rec, "P_amb", 1.0); //  0.9435 );
+			set_unit_value_ssc_double( type232_cav_rec, "T_dp", 0.0); //  0.0 );
+			set_unit_value_ssc_double( type232_cav_rec, "I_bn", 0.0); //  0.0 );
 			set_unit_value_ssc_double( type232_cav_rec, "eta_field", as_double("field_eff")); //  0.0 );
 			set_unit_value_ssc_double( type232_cav_rec, "T_amb", avg_temp); //  15.0 );
 			set_unit_value_ssc_double( type232_cav_rec, "u_wind", avg_wind_v ); //  0.0 );
-			set_unit_value_ssc_double( type232_cav_rec, "deg_wind"); //  0.0 );
-			set_unit_value_ssc_double( type232_cav_rec, "P_htf"); //  P_htf );
+			set_unit_value_ssc_double( type232_cav_rec, "deg_wind", 0.0); // 8.7.15 twn: Don't need an SSC INPUT for a TCS *INPUT* as it is provided by another TCS type OUTPUT
 
 			// Make all the connections to/from the Cavity Receiver (type 232)
 			bConnected &= connect( weather, "solazi", type232_cav_rec, "azimuth" );
@@ -965,10 +964,10 @@ public:
 //		set_unit_value_ssc_matrix(type251_controller, "field_fl_props", "store_fl_props");
 		set_unit_value_ssc_matrix(type251_controller, "store_fl_props", "field_fl_props");
 		set_unit_value_ssc_double(type251_controller, "tshours"); //, 10);
-		set_unit_value_ssc_double(type251_controller, "is_hx" ); //, 0);
-		set_unit_value_ssc_double(type251_controller, "dt_hot" ); //, 0);
-		set_unit_value_ssc_double(type251_controller, "dt_cold" ); //, 0);
-		set_unit_value_ssc_double(type251_controller, "hx_config" ); //, 0);
+		set_unit_value_ssc_double(type251_controller, "is_hx", 0.0 );	// 8.7.15 twn: MSPT assumes direct storage, no user input required here
+		set_unit_value_ssc_double(type251_controller, "dt_hot", 0.0 );	// 8.7.15 twn: MSPT assumes direct storage, so can hardcode hot and cold approach temps = 0 and remove from SSC INPUTs
+		set_unit_value_ssc_double(type251_controller, "dt_cold", 0.0 );
+		set_unit_value_ssc_double(type251_controller, "hx_config", 0.0 );	// 8.7.15 twn: similarly, there is no HX, so no user input required
 		set_unit_value_ssc_double(type251_controller, "q_max_aux" ); //, 115/0.412);
 		set_unit_value_ssc_double(type251_controller, "lhv_eff", as_double("eta_lhv"));			// 9.17.14 twn: input lhv here to calculate fuel usage
 
@@ -1018,7 +1017,7 @@ public:
 		set_unit_value_ssc_double(type251_controller, "solarm" ); //, 669.903/(115/0.412) );
 		set_unit_value_ssc_double(type251_controller, "pb_pump_coef" ); //, 0.55);
 		set_unit_value_ssc_double(type251_controller, "tes_pump_coef", 0.0 ); // 8.5.15 twn: MSPT does not have TES pumping losses as it assumes direct storage
-		set_unit_value_ssc_double(type251_controller, "pb_fixed_par", as_double("pb_fixed_par_cntl") ); //, 0.0);
+		set_unit_value_ssc_double(type251_controller, "pb_fixed_par", 0.0 ); //  8.7.15 twn: MSPT calculates fixed parasitic losses in type 228, not type 251
 
 		ssc_number_t *bop_array_test = allocate("bop_array_test", 5);
 		ssc_number_t *aux_array_test = allocate("aux_array_test", 5);
@@ -1062,8 +1061,8 @@ public:
 	  //set_unit_value_ssc_array( type251_controller, "TOU_schedule");
 
 		// Set initial values for inputs generated from subsequently called types
-		set_unit_value_ssc_double( type251_controller, "m_dot_htf_ref" ); //, 1.0 );
-		set_unit_value_ssc_double( type251_controller, "T_pb_out" ); //, T_HTF_out_ref );
+		set_unit_value_ssc_double( type251_controller, "m_dot_htf_ref", 1.0 ); //, 1.0 );
+		set_unit_value_ssc_double( type251_controller, "T_pb_out", "T_htf_hot_ref"); //, T_HTF_out_ref );
 
 		// Connect Controller (type 251) inputs
 		bConnected &= connect( weather, "beam", type251_controller, "I_bn" );
@@ -1120,14 +1119,14 @@ public:
 			set_unit_value_ssc_double(type224_powerblock, "T_htf_cold_ref"); //, 290);
 			set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref"); //, 10);
 			set_unit_value_ssc_double(type224_powerblock, "T_amb_des"); //, 43.0);
-			set_unit_value_ssc_double(type224_powerblock, "HTF"); //, 17);
+			set_unit_value_ssc_double(type224_powerblock, "HTF", "rec_htf"); // 8.7.15 twn: PC htf is same as receiver htf
 			set_unit_value_ssc_matrix(type224_powerblock, "field_fl_props");
 			set_unit_value_ssc_double(type224_powerblock, "q_sby_frac"); //, 0.2);
 			set_unit_value_ssc_double(type224_powerblock, "P_boil"); //, 100);
 			set_unit_value_ssc_double(type224_powerblock, "CT"); //, 2);
 			set_unit_value_ssc_double(type224_powerblock, "startup_time"); //, 0.5);
 			set_unit_value_ssc_double(type224_powerblock, "startup_frac"); //, 0.5);
-			set_unit_value_ssc_double(type224_powerblock, "tech_type"); //, 1);
+			set_unit_value_ssc_double(type224_powerblock, "tech_type", 1.0);	// 8.7.15 twn: compute module is for MSPT, so hardcode tech type and remove user input
 			set_unit_value_ssc_double(type224_powerblock, "T_approach"); //, 5);
 			set_unit_value_ssc_double(type224_powerblock, "T_ITD_des"); //, 16);
 			set_unit_value_ssc_double(type224_powerblock, "P_cond_ratio"); //, 1.0028);
@@ -1165,7 +1164,7 @@ public:
 		if( is_steam_pc )
 		{
 			// Set Powerblock (type 224) Inputs
-			set_unit_value_ssc_double(type224_powerblock, "mode"); //, 2 );		//Always set to 2 for type 251
+			set_unit_value_ssc_double(type224_powerblock, "mode", 2.0);		//Always set to 2 for type 251
 			//set_unit_value_ssc_double( type224_powerblock, "demand_var" ); //, 110.0 );		//Don't need to set this?
 
 			// Connect Powerblock (type 224) inputs
@@ -1191,7 +1190,7 @@ public:
 		//set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
 		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
 		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
-		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
+		set_unit_value_ssc_double(type228_parasitics, "Design_power", "P_ref"); //P_cycle_design );
 		//set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
 		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
 		//set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
