@@ -912,6 +912,1039 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_dec", "Energy charge without system (flat) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat", "Energy charge without system (flat)", "$", "", "Charges by Month", "*", "", "" },
 
+
+
+// for Pablo at IRENA 8/8/15
+// 72 outputs per month for energy
+// 72 outputs per month for charges
+// repeat with and without system for total of 144*2*12=3456 outputs!
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1_t1", "Energy charge without system (TOU) in Jan for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1_t2", "Energy charge without system (TOU) in Jan for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1_t3", "Energy charge without system (TOU) in Jan for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1_t4", "Energy charge without system (TOU) in Jan for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1_t5", "Energy charge without system (TOU) in Jan for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1_t6", "Energy charge without system (TOU) in Jan for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2_t1", "Energy charge without system (TOU) in Jan for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2_t2", "Energy charge without system (TOU) in Jan for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2_t3", "Energy charge without system (TOU) in Jan for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2_t4", "Energy charge without system (TOU) in Jan for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2_t5", "Energy charge without system (TOU) in Jan for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2_t6", "Energy charge without system (TOU) in Jan for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3_t1", "Energy charge without system (TOU) in Jan for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3_t2", "Energy charge without system (TOU) in Jan for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3_t3", "Energy charge without system (TOU) in Jan for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3_t4", "Energy charge without system (TOU) in Jan for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3_t5", "Energy charge without system (TOU) in Jan for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3_t6", "Energy charge without system (TOU) in Jan for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4_t1", "Energy charge without system (TOU) in Jan for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4_t2", "Energy charge without system (TOU) in Jan for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4_t3", "Energy charge without system (TOU) in Jan for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4_t4", "Energy charge without system (TOU) in Jan for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4_t5", "Energy charge without system (TOU) in Jan for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4_t6", "Energy charge without system (TOU) in Jan for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5_t1", "Energy charge without system (TOU) in Jan for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5_t2", "Energy charge without system (TOU) in Jan for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5_t3", "Energy charge without system (TOU) in Jan for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5_t4", "Energy charge without system (TOU) in Jan for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5_t5", "Energy charge without system (TOU) in Jan for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5_t6", "Energy charge without system (TOU) in Jan for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6_t1", "Energy charge without system (TOU) in Jan for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6_t2", "Energy charge without system (TOU) in Jan for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6_t3", "Energy charge without system (TOU) in Jan for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6_t4", "Energy charge without system (TOU) in Jan for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6_t5", "Energy charge without system (TOU) in Jan for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6_t6", "Energy charge without system (TOU) in Jan for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7_t1", "Energy charge without system (TOU) in Jan for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7_t2", "Energy charge without system (TOU) in Jan for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7_t3", "Energy charge without system (TOU) in Jan for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7_t4", "Energy charge without system (TOU) in Jan for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7_t5", "Energy charge without system (TOU) in Jan for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7_t6", "Energy charge without system (TOU) in Jan for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8_t1", "Energy charge without system (TOU) in Jan for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8_t2", "Energy charge without system (TOU) in Jan for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8_t3", "Energy charge without system (TOU) in Jan for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8_t4", "Energy charge without system (TOU) in Jan for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8_t5", "Energy charge without system (TOU) in Jan for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8_t6", "Energy charge without system (TOU) in Jan for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9_t1", "Energy charge without system (TOU) in Jan for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9_t2", "Energy charge without system (TOU) in Jan for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9_t3", "Energy charge without system (TOU) in Jan for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9_t4", "Energy charge without system (TOU) in Jan for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9_t5", "Energy charge without system (TOU) in Jan for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9_t6", "Energy charge without system (TOU) in Jan for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10_t1", "Energy charge without system (TOU) in Jan for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10_t2", "Energy charge without system (TOU) in Jan for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10_t3", "Energy charge without system (TOU) in Jan for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10_t4", "Energy charge without system (TOU) in Jan for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10_t5", "Energy charge without system (TOU) in Jan for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10_t6", "Energy charge without system (TOU) in Jan for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11_t1", "Energy charge without system (TOU) in Jan for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11_t2", "Energy charge without system (TOU) in Jan for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11_t3", "Energy charge without system (TOU) in Jan for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11_t4", "Energy charge without system (TOU) in Jan for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11_t5", "Energy charge without system (TOU) in Jan for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11_t6", "Energy charge without system (TOU) in Jan for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12_t1", "Energy charge without system (TOU) in Jan for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12_t2", "Energy charge without system (TOU) in Jan for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12_t3", "Energy charge without system (TOU) in Jan for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12_t4", "Energy charge without system (TOU) in Jan for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12_t5", "Energy charge without system (TOU) in Jan for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12_t6", "Energy charge without system (TOU) in Jan for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1_t1", "Energy charge without system (TOU) in Feb for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1_t2", "Energy charge without system (TOU) in Feb for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1_t3", "Energy charge without system (TOU) in Feb for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1_t4", "Energy charge without system (TOU) in Feb for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1_t5", "Energy charge without system (TOU) in Feb for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1_t6", "Energy charge without system (TOU) in Feb for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2_t1", "Energy charge without system (TOU) in Feb for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2_t2", "Energy charge without system (TOU) in Feb for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2_t3", "Energy charge without system (TOU) in Feb for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2_t4", "Energy charge without system (TOU) in Feb for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2_t5", "Energy charge without system (TOU) in Feb for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2_t6", "Energy charge without system (TOU) in Feb for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3_t1", "Energy charge without system (TOU) in Feb for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3_t2", "Energy charge without system (TOU) in Feb for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3_t3", "Energy charge without system (TOU) in Feb for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3_t4", "Energy charge without system (TOU) in Feb for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3_t5", "Energy charge without system (TOU) in Feb for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3_t6", "Energy charge without system (TOU) in Feb for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4_t1", "Energy charge without system (TOU) in Feb for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4_t2", "Energy charge without system (TOU) in Feb for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4_t3", "Energy charge without system (TOU) in Feb for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4_t4", "Energy charge without system (TOU) in Feb for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4_t5", "Energy charge without system (TOU) in Feb for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4_t6", "Energy charge without system (TOU) in Feb for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5_t1", "Energy charge without system (TOU) in Feb for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5_t2", "Energy charge without system (TOU) in Feb for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5_t3", "Energy charge without system (TOU) in Feb for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5_t4", "Energy charge without system (TOU) in Feb for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5_t5", "Energy charge without system (TOU) in Feb for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5_t6", "Energy charge without system (TOU) in Feb for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6_t1", "Energy charge without system (TOU) in Feb for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6_t2", "Energy charge without system (TOU) in Feb for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6_t3", "Energy charge without system (TOU) in Feb for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6_t4", "Energy charge without system (TOU) in Feb for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6_t5", "Energy charge without system (TOU) in Feb for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6_t6", "Energy charge without system (TOU) in Feb for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7_t1", "Energy charge without system (TOU) in Feb for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7_t2", "Energy charge without system (TOU) in Feb for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7_t3", "Energy charge without system (TOU) in Feb for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7_t4", "Energy charge without system (TOU) in Feb for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7_t5", "Energy charge without system (TOU) in Feb for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7_t6", "Energy charge without system (TOU) in Feb for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8_t1", "Energy charge without system (TOU) in Feb for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8_t2", "Energy charge without system (TOU) in Feb for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8_t3", "Energy charge without system (TOU) in Feb for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8_t4", "Energy charge without system (TOU) in Feb for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8_t5", "Energy charge without system (TOU) in Feb for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8_t6", "Energy charge without system (TOU) in Feb for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9_t1", "Energy charge without system (TOU) in Feb for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9_t2", "Energy charge without system (TOU) in Feb for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9_t3", "Energy charge without system (TOU) in Feb for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9_t4", "Energy charge without system (TOU) in Feb for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9_t5", "Energy charge without system (TOU) in Feb for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9_t6", "Energy charge without system (TOU) in Feb for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10_t1", "Energy charge without system (TOU) in Feb for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10_t2", "Energy charge without system (TOU) in Feb for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10_t3", "Energy charge without system (TOU) in Feb for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10_t4", "Energy charge without system (TOU) in Feb for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10_t5", "Energy charge without system (TOU) in Feb for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10_t6", "Energy charge without system (TOU) in Feb for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11_t1", "Energy charge without system (TOU) in Feb for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11_t2", "Energy charge without system (TOU) in Feb for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11_t3", "Energy charge without system (TOU) in Feb for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11_t4", "Energy charge without system (TOU) in Feb for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11_t5", "Energy charge without system (TOU) in Feb for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11_t6", "Energy charge without system (TOU) in Feb for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12_t1", "Energy charge without system (TOU) in Feb for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12_t2", "Energy charge without system (TOU) in Feb for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12_t3", "Energy charge without system (TOU) in Feb for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12_t4", "Energy charge without system (TOU) in Feb for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12_t5", "Energy charge without system (TOU) in Feb for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12_t6", "Energy charge without system (TOU) in Feb for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1_t1", "Energy charge without system (TOU) in Mar for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1_t2", "Energy charge without system (TOU) in Mar for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1_t3", "Energy charge without system (TOU) in Mar for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1_t4", "Energy charge without system (TOU) in Mar for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1_t5", "Energy charge without system (TOU) in Mar for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1_t6", "Energy charge without system (TOU) in Mar for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2_t1", "Energy charge without system (TOU) in Mar for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2_t2", "Energy charge without system (TOU) in Mar for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2_t3", "Energy charge without system (TOU) in Mar for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2_t4", "Energy charge without system (TOU) in Mar for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2_t5", "Energy charge without system (TOU) in Mar for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2_t6", "Energy charge without system (TOU) in Mar for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3_t1", "Energy charge without system (TOU) in Mar for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3_t2", "Energy charge without system (TOU) in Mar for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3_t3", "Energy charge without system (TOU) in Mar for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3_t4", "Energy charge without system (TOU) in Mar for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3_t5", "Energy charge without system (TOU) in Mar for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3_t6", "Energy charge without system (TOU) in Mar for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4_t1", "Energy charge without system (TOU) in Mar for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4_t2", "Energy charge without system (TOU) in Mar for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4_t3", "Energy charge without system (TOU) in Mar for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4_t4", "Energy charge without system (TOU) in Mar for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4_t5", "Energy charge without system (TOU) in Mar for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4_t6", "Energy charge without system (TOU) in Mar for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5_t1", "Energy charge without system (TOU) in Mar for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5_t2", "Energy charge without system (TOU) in Mar for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5_t3", "Energy charge without system (TOU) in Mar for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5_t4", "Energy charge without system (TOU) in Mar for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5_t5", "Energy charge without system (TOU) in Mar for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5_t6", "Energy charge without system (TOU) in Mar for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6_t1", "Energy charge without system (TOU) in Mar for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6_t2", "Energy charge without system (TOU) in Mar for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6_t3", "Energy charge without system (TOU) in Mar for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6_t4", "Energy charge without system (TOU) in Mar for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6_t5", "Energy charge without system (TOU) in Mar for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6_t6", "Energy charge without system (TOU) in Mar for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7_t1", "Energy charge without system (TOU) in Mar for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7_t2", "Energy charge without system (TOU) in Mar for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7_t3", "Energy charge without system (TOU) in Mar for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7_t4", "Energy charge without system (TOU) in Mar for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7_t5", "Energy charge without system (TOU) in Mar for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7_t6", "Energy charge without system (TOU) in Mar for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8_t1", "Energy charge without system (TOU) in Mar for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8_t2", "Energy charge without system (TOU) in Mar for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8_t3", "Energy charge without system (TOU) in Mar for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8_t4", "Energy charge without system (TOU) in Mar for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8_t5", "Energy charge without system (TOU) in Mar for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8_t6", "Energy charge without system (TOU) in Mar for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9_t1", "Energy charge without system (TOU) in Mar for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9_t2", "Energy charge without system (TOU) in Mar for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9_t3", "Energy charge without system (TOU) in Mar for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9_t4", "Energy charge without system (TOU) in Mar for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9_t5", "Energy charge without system (TOU) in Mar for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9_t6", "Energy charge without system (TOU) in Mar for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10_t1", "Energy charge without system (TOU) in Mar for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10_t2", "Energy charge without system (TOU) in Mar for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10_t3", "Energy charge without system (TOU) in Mar for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10_t4", "Energy charge without system (TOU) in Mar for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10_t5", "Energy charge without system (TOU) in Mar for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10_t6", "Energy charge without system (TOU) in Mar for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11_t1", "Energy charge without system (TOU) in Mar for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11_t2", "Energy charge without system (TOU) in Mar for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11_t3", "Energy charge without system (TOU) in Mar for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11_t4", "Energy charge without system (TOU) in Mar for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11_t5", "Energy charge without system (TOU) in Mar for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11_t6", "Energy charge without system (TOU) in Mar for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12_t1", "Energy charge without system (TOU) in Mar for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12_t2", "Energy charge without system (TOU) in Mar for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12_t3", "Energy charge without system (TOU) in Mar for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12_t4", "Energy charge without system (TOU) in Mar for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12_t5", "Energy charge without system (TOU) in Mar for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12_t6", "Energy charge without system (TOU) in Mar for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1_t1", "Energy charge without system (TOU) in Apr for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1_t2", "Energy charge without system (TOU) in Apr for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1_t3", "Energy charge without system (TOU) in Apr for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1_t4", "Energy charge without system (TOU) in Apr for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1_t5", "Energy charge without system (TOU) in Apr for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1_t6", "Energy charge without system (TOU) in Apr for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2_t1", "Energy charge without system (TOU) in Apr for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2_t2", "Energy charge without system (TOU) in Apr for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2_t3", "Energy charge without system (TOU) in Apr for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2_t4", "Energy charge without system (TOU) in Apr for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2_t5", "Energy charge without system (TOU) in Apr for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2_t6", "Energy charge without system (TOU) in Apr for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3_t1", "Energy charge without system (TOU) in Apr for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3_t2", "Energy charge without system (TOU) in Apr for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3_t3", "Energy charge without system (TOU) in Apr for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3_t4", "Energy charge without system (TOU) in Apr for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3_t5", "Energy charge without system (TOU) in Apr for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3_t6", "Energy charge without system (TOU) in Apr for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4_t1", "Energy charge without system (TOU) in Apr for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4_t2", "Energy charge without system (TOU) in Apr for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4_t3", "Energy charge without system (TOU) in Apr for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4_t4", "Energy charge without system (TOU) in Apr for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4_t5", "Energy charge without system (TOU) in Apr for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4_t6", "Energy charge without system (TOU) in Apr for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5_t1", "Energy charge without system (TOU) in Apr for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5_t2", "Energy charge without system (TOU) in Apr for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5_t3", "Energy charge without system (TOU) in Apr for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5_t4", "Energy charge without system (TOU) in Apr for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5_t5", "Energy charge without system (TOU) in Apr for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5_t6", "Energy charge without system (TOU) in Apr for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6_t1", "Energy charge without system (TOU) in Apr for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6_t2", "Energy charge without system (TOU) in Apr for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6_t3", "Energy charge without system (TOU) in Apr for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6_t4", "Energy charge without system (TOU) in Apr for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6_t5", "Energy charge without system (TOU) in Apr for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6_t6", "Energy charge without system (TOU) in Apr for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7_t1", "Energy charge without system (TOU) in Apr for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7_t2", "Energy charge without system (TOU) in Apr for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7_t3", "Energy charge without system (TOU) in Apr for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7_t4", "Energy charge without system (TOU) in Apr for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7_t5", "Energy charge without system (TOU) in Apr for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7_t6", "Energy charge without system (TOU) in Apr for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8_t1", "Energy charge without system (TOU) in Apr for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8_t2", "Energy charge without system (TOU) in Apr for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8_t3", "Energy charge without system (TOU) in Apr for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8_t4", "Energy charge without system (TOU) in Apr for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8_t5", "Energy charge without system (TOU) in Apr for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8_t6", "Energy charge without system (TOU) in Apr for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9_t1", "Energy charge without system (TOU) in Apr for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9_t2", "Energy charge without system (TOU) in Apr for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9_t3", "Energy charge without system (TOU) in Apr for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9_t4", "Energy charge without system (TOU) in Apr for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9_t5", "Energy charge without system (TOU) in Apr for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9_t6", "Energy charge without system (TOU) in Apr for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10_t1", "Energy charge without system (TOU) in Apr for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10_t2", "Energy charge without system (TOU) in Apr for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10_t3", "Energy charge without system (TOU) in Apr for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10_t4", "Energy charge without system (TOU) in Apr for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10_t5", "Energy charge without system (TOU) in Apr for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10_t6", "Energy charge without system (TOU) in Apr for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11_t1", "Energy charge without system (TOU) in Apr for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11_t2", "Energy charge without system (TOU) in Apr for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11_t3", "Energy charge without system (TOU) in Apr for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11_t4", "Energy charge without system (TOU) in Apr for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11_t5", "Energy charge without system (TOU) in Apr for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11_t6", "Energy charge without system (TOU) in Apr for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12_t1", "Energy charge without system (TOU) in Apr for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12_t2", "Energy charge without system (TOU) in Apr for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12_t3", "Energy charge without system (TOU) in Apr for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12_t4", "Energy charge without system (TOU) in Apr for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12_t5", "Energy charge without system (TOU) in Apr for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12_t6", "Energy charge without system (TOU) in Apr for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1_t1", "Energy charge without system (TOU) in May for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1_t2", "Energy charge without system (TOU) in May for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1_t3", "Energy charge without system (TOU) in May for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1_t4", "Energy charge without system (TOU) in May for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1_t5", "Energy charge without system (TOU) in May for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1_t6", "Energy charge without system (TOU) in May for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2_t1", "Energy charge without system (TOU) in May for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2_t2", "Energy charge without system (TOU) in May for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2_t3", "Energy charge without system (TOU) in May for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2_t4", "Energy charge without system (TOU) in May for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2_t5", "Energy charge without system (TOU) in May for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2_t6", "Energy charge without system (TOU) in May for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3_t1", "Energy charge without system (TOU) in May for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3_t2", "Energy charge without system (TOU) in May for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3_t3", "Energy charge without system (TOU) in May for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3_t4", "Energy charge without system (TOU) in May for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3_t5", "Energy charge without system (TOU) in May for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3_t6", "Energy charge without system (TOU) in May for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4_t1", "Energy charge without system (TOU) in May for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4_t2", "Energy charge without system (TOU) in May for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4_t3", "Energy charge without system (TOU) in May for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4_t4", "Energy charge without system (TOU) in May for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4_t5", "Energy charge without system (TOU) in May for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4_t6", "Energy charge without system (TOU) in May for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5_t1", "Energy charge without system (TOU) in May for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5_t2", "Energy charge without system (TOU) in May for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5_t3", "Energy charge without system (TOU) in May for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5_t4", "Energy charge without system (TOU) in May for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5_t5", "Energy charge without system (TOU) in May for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5_t6", "Energy charge without system (TOU) in May for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6_t1", "Energy charge without system (TOU) in May for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6_t2", "Energy charge without system (TOU) in May for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6_t3", "Energy charge without system (TOU) in May for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6_t4", "Energy charge without system (TOU) in May for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6_t5", "Energy charge without system (TOU) in May for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6_t6", "Energy charge without system (TOU) in May for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7_t1", "Energy charge without system (TOU) in May for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7_t2", "Energy charge without system (TOU) in May for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7_t3", "Energy charge without system (TOU) in May for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7_t4", "Energy charge without system (TOU) in May for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7_t5", "Energy charge without system (TOU) in May for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7_t6", "Energy charge without system (TOU) in May for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8_t1", "Energy charge without system (TOU) in May for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8_t2", "Energy charge without system (TOU) in May for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8_t3", "Energy charge without system (TOU) in May for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8_t4", "Energy charge without system (TOU) in May for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8_t5", "Energy charge without system (TOU) in May for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8_t6", "Energy charge without system (TOU) in May for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9_t1", "Energy charge without system (TOU) in May for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9_t2", "Energy charge without system (TOU) in May for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9_t3", "Energy charge without system (TOU) in May for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9_t4", "Energy charge without system (TOU) in May for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9_t5", "Energy charge without system (TOU) in May for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9_t6", "Energy charge without system (TOU) in May for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10_t1", "Energy charge without system (TOU) in May for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10_t2", "Energy charge without system (TOU) in May for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10_t3", "Energy charge without system (TOU) in May for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10_t4", "Energy charge without system (TOU) in May for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10_t5", "Energy charge without system (TOU) in May for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10_t6", "Energy charge without system (TOU) in May for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11_t1", "Energy charge without system (TOU) in May for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11_t2", "Energy charge without system (TOU) in May for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11_t3", "Energy charge without system (TOU) in May for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11_t4", "Energy charge without system (TOU) in May for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11_t5", "Energy charge without system (TOU) in May for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11_t6", "Energy charge without system (TOU) in May for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12_t1", "Energy charge without system (TOU) in May for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12_t2", "Energy charge without system (TOU) in May for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12_t3", "Energy charge without system (TOU) in May for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12_t4", "Energy charge without system (TOU) in May for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12_t5", "Energy charge without system (TOU) in May for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12_t6", "Energy charge without system (TOU) in May for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1_t1", "Energy charge without system (TOU) in Jun for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1_t2", "Energy charge without system (TOU) in Jun for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1_t3", "Energy charge without system (TOU) in Jun for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1_t4", "Energy charge without system (TOU) in Jun for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1_t5", "Energy charge without system (TOU) in Jun for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1_t6", "Energy charge without system (TOU) in Jun for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2_t1", "Energy charge without system (TOU) in Jun for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2_t2", "Energy charge without system (TOU) in Jun for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2_t3", "Energy charge without system (TOU) in Jun for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2_t4", "Energy charge without system (TOU) in Jun for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2_t5", "Energy charge without system (TOU) in Jun for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2_t6", "Energy charge without system (TOU) in Jun for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3_t1", "Energy charge without system (TOU) in Jun for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3_t2", "Energy charge without system (TOU) in Jun for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3_t3", "Energy charge without system (TOU) in Jun for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3_t4", "Energy charge without system (TOU) in Jun for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3_t5", "Energy charge without system (TOU) in Jun for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3_t6", "Energy charge without system (TOU) in Jun for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4_t1", "Energy charge without system (TOU) in Jun for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4_t2", "Energy charge without system (TOU) in Jun for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4_t3", "Energy charge without system (TOU) in Jun for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4_t4", "Energy charge without system (TOU) in Jun for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4_t5", "Energy charge without system (TOU) in Jun for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4_t6", "Energy charge without system (TOU) in Jun for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5_t1", "Energy charge without system (TOU) in Jun for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5_t2", "Energy charge without system (TOU) in Jun for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5_t3", "Energy charge without system (TOU) in Jun for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5_t4", "Energy charge without system (TOU) in Jun for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5_t5", "Energy charge without system (TOU) in Jun for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5_t6", "Energy charge without system (TOU) in Jun for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6_t1", "Energy charge without system (TOU) in Jun for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6_t2", "Energy charge without system (TOU) in Jun for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6_t3", "Energy charge without system (TOU) in Jun for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6_t4", "Energy charge without system (TOU) in Jun for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6_t5", "Energy charge without system (TOU) in Jun for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6_t6", "Energy charge without system (TOU) in Jun for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7_t1", "Energy charge without system (TOU) in Jun for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7_t2", "Energy charge without system (TOU) in Jun for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7_t3", "Energy charge without system (TOU) in Jun for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7_t4", "Energy charge without system (TOU) in Jun for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7_t5", "Energy charge without system (TOU) in Jun for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7_t6", "Energy charge without system (TOU) in Jun for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8_t1", "Energy charge without system (TOU) in Jun for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8_t2", "Energy charge without system (TOU) in Jun for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8_t3", "Energy charge without system (TOU) in Jun for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8_t4", "Energy charge without system (TOU) in Jun for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8_t5", "Energy charge without system (TOU) in Jun for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8_t6", "Energy charge without system (TOU) in Jun for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9_t1", "Energy charge without system (TOU) in Jun for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9_t2", "Energy charge without system (TOU) in Jun for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9_t3", "Energy charge without system (TOU) in Jun for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9_t4", "Energy charge without system (TOU) in Jun for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9_t5", "Energy charge without system (TOU) in Jun for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9_t6", "Energy charge without system (TOU) in Jun for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10_t1", "Energy charge without system (TOU) in Jun for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10_t2", "Energy charge without system (TOU) in Jun for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10_t3", "Energy charge without system (TOU) in Jun for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10_t4", "Energy charge without system (TOU) in Jun for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10_t5", "Energy charge without system (TOU) in Jun for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10_t6", "Energy charge without system (TOU) in Jun for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11_t1", "Energy charge without system (TOU) in Jun for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11_t2", "Energy charge without system (TOU) in Jun for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11_t3", "Energy charge without system (TOU) in Jun for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11_t4", "Energy charge without system (TOU) in Jun for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11_t5", "Energy charge without system (TOU) in Jun for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11_t6", "Energy charge without system (TOU) in Jun for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12_t1", "Energy charge without system (TOU) in Jun for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12_t2", "Energy charge without system (TOU) in Jun for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12_t3", "Energy charge without system (TOU) in Jun for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12_t4", "Energy charge without system (TOU) in Jun for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12_t5", "Energy charge without system (TOU) in Jun for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12_t6", "Energy charge without system (TOU) in Jun for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1_t1", "Energy charge without system (TOU) in Jul for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1_t2", "Energy charge without system (TOU) in Jul for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1_t3", "Energy charge without system (TOU) in Jul for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1_t4", "Energy charge without system (TOU) in Jul for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1_t5", "Energy charge without system (TOU) in Jul for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1_t6", "Energy charge without system (TOU) in Jul for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2_t1", "Energy charge without system (TOU) in Jul for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2_t2", "Energy charge without system (TOU) in Jul for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2_t3", "Energy charge without system (TOU) in Jul for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2_t4", "Energy charge without system (TOU) in Jul for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2_t5", "Energy charge without system (TOU) in Jul for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2_t6", "Energy charge without system (TOU) in Jul for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3_t1", "Energy charge without system (TOU) in Jul for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3_t2", "Energy charge without system (TOU) in Jul for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3_t3", "Energy charge without system (TOU) in Jul for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3_t4", "Energy charge without system (TOU) in Jul for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3_t5", "Energy charge without system (TOU) in Jul for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3_t6", "Energy charge without system (TOU) in Jul for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4_t1", "Energy charge without system (TOU) in Jul for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4_t2", "Energy charge without system (TOU) in Jul for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4_t3", "Energy charge without system (TOU) in Jul for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4_t4", "Energy charge without system (TOU) in Jul for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4_t5", "Energy charge without system (TOU) in Jul for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4_t6", "Energy charge without system (TOU) in Jul for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5_t1", "Energy charge without system (TOU) in Jul for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5_t2", "Energy charge without system (TOU) in Jul for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5_t3", "Energy charge without system (TOU) in Jul for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5_t4", "Energy charge without system (TOU) in Jul for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5_t5", "Energy charge without system (TOU) in Jul for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5_t6", "Energy charge without system (TOU) in Jul for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6_t1", "Energy charge without system (TOU) in Jul for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6_t2", "Energy charge without system (TOU) in Jul for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6_t3", "Energy charge without system (TOU) in Jul for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6_t4", "Energy charge without system (TOU) in Jul for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6_t5", "Energy charge without system (TOU) in Jul for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6_t6", "Energy charge without system (TOU) in Jul for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7_t1", "Energy charge without system (TOU) in Jul for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7_t2", "Energy charge without system (TOU) in Jul for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7_t3", "Energy charge without system (TOU) in Jul for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7_t4", "Energy charge without system (TOU) in Jul for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7_t5", "Energy charge without system (TOU) in Jul for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7_t6", "Energy charge without system (TOU) in Jul for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8_t1", "Energy charge without system (TOU) in Jul for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8_t2", "Energy charge without system (TOU) in Jul for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8_t3", "Energy charge without system (TOU) in Jul for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8_t4", "Energy charge without system (TOU) in Jul for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8_t5", "Energy charge without system (TOU) in Jul for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8_t6", "Energy charge without system (TOU) in Jul for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9_t1", "Energy charge without system (TOU) in Jul for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9_t2", "Energy charge without system (TOU) in Jul for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9_t3", "Energy charge without system (TOU) in Jul for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9_t4", "Energy charge without system (TOU) in Jul for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9_t5", "Energy charge without system (TOU) in Jul for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9_t6", "Energy charge without system (TOU) in Jul for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10_t1", "Energy charge without system (TOU) in Jul for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10_t2", "Energy charge without system (TOU) in Jul for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10_t3", "Energy charge without system (TOU) in Jul for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10_t4", "Energy charge without system (TOU) in Jul for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10_t5", "Energy charge without system (TOU) in Jul for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10_t6", "Energy charge without system (TOU) in Jul for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11_t1", "Energy charge without system (TOU) in Jul for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11_t2", "Energy charge without system (TOU) in Jul for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11_t3", "Energy charge without system (TOU) in Jul for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11_t4", "Energy charge without system (TOU) in Jul for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11_t5", "Energy charge without system (TOU) in Jul for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11_t6", "Energy charge without system (TOU) in Jul for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12_t1", "Energy charge without system (TOU) in Jul for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12_t2", "Energy charge without system (TOU) in Jul for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12_t3", "Energy charge without system (TOU) in Jul for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12_t4", "Energy charge without system (TOU) in Jul for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12_t5", "Energy charge without system (TOU) in Jul for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12_t6", "Energy charge without system (TOU) in Jul for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1_t1", "Energy charge without system (TOU) in Aug for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1_t2", "Energy charge without system (TOU) in Aug for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1_t3", "Energy charge without system (TOU) in Aug for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1_t4", "Energy charge without system (TOU) in Aug for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1_t5", "Energy charge without system (TOU) in Aug for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1_t6", "Energy charge without system (TOU) in Aug for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2_t1", "Energy charge without system (TOU) in Aug for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2_t2", "Energy charge without system (TOU) in Aug for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2_t3", "Energy charge without system (TOU) in Aug for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2_t4", "Energy charge without system (TOU) in Aug for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2_t5", "Energy charge without system (TOU) in Aug for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2_t6", "Energy charge without system (TOU) in Aug for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3_t1", "Energy charge without system (TOU) in Aug for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3_t2", "Energy charge without system (TOU) in Aug for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3_t3", "Energy charge without system (TOU) in Aug for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3_t4", "Energy charge without system (TOU) in Aug for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3_t5", "Energy charge without system (TOU) in Aug for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3_t6", "Energy charge without system (TOU) in Aug for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4_t1", "Energy charge without system (TOU) in Aug for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4_t2", "Energy charge without system (TOU) in Aug for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4_t3", "Energy charge without system (TOU) in Aug for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4_t4", "Energy charge without system (TOU) in Aug for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4_t5", "Energy charge without system (TOU) in Aug for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4_t6", "Energy charge without system (TOU) in Aug for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5_t1", "Energy charge without system (TOU) in Aug for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5_t2", "Energy charge without system (TOU) in Aug for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5_t3", "Energy charge without system (TOU) in Aug for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5_t4", "Energy charge without system (TOU) in Aug for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5_t5", "Energy charge without system (TOU) in Aug for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5_t6", "Energy charge without system (TOU) in Aug for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6_t1", "Energy charge without system (TOU) in Aug for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6_t2", "Energy charge without system (TOU) in Aug for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6_t3", "Energy charge without system (TOU) in Aug for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6_t4", "Energy charge without system (TOU) in Aug for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6_t5", "Energy charge without system (TOU) in Aug for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6_t6", "Energy charge without system (TOU) in Aug for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7_t1", "Energy charge without system (TOU) in Aug for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7_t2", "Energy charge without system (TOU) in Aug for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7_t3", "Energy charge without system (TOU) in Aug for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7_t4", "Energy charge without system (TOU) in Aug for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7_t5", "Energy charge without system (TOU) in Aug for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7_t6", "Energy charge without system (TOU) in Aug for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8_t1", "Energy charge without system (TOU) in Aug for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8_t2", "Energy charge without system (TOU) in Aug for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8_t3", "Energy charge without system (TOU) in Aug for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8_t4", "Energy charge without system (TOU) in Aug for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8_t5", "Energy charge without system (TOU) in Aug for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8_t6", "Energy charge without system (TOU) in Aug for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9_t1", "Energy charge without system (TOU) in Aug for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9_t2", "Energy charge without system (TOU) in Aug for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9_t3", "Energy charge without system (TOU) in Aug for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9_t4", "Energy charge without system (TOU) in Aug for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9_t5", "Energy charge without system (TOU) in Aug for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9_t6", "Energy charge without system (TOU) in Aug for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10_t1", "Energy charge without system (TOU) in Aug for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10_t2", "Energy charge without system (TOU) in Aug for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10_t3", "Energy charge without system (TOU) in Aug for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10_t4", "Energy charge without system (TOU) in Aug for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10_t5", "Energy charge without system (TOU) in Aug for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10_t6", "Energy charge without system (TOU) in Aug for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11_t1", "Energy charge without system (TOU) in Aug for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11_t2", "Energy charge without system (TOU) in Aug for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11_t3", "Energy charge without system (TOU) in Aug for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11_t4", "Energy charge without system (TOU) in Aug for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11_t5", "Energy charge without system (TOU) in Aug for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11_t6", "Energy charge without system (TOU) in Aug for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12_t1", "Energy charge without system (TOU) in Aug for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12_t2", "Energy charge without system (TOU) in Aug for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12_t3", "Energy charge without system (TOU) in Aug for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12_t4", "Energy charge without system (TOU) in Aug for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12_t5", "Energy charge without system (TOU) in Aug for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12_t6", "Energy charge without system (TOU) in Aug for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1_t1", "Energy charge without system (TOU) in Sep for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1_t2", "Energy charge without system (TOU) in Sep for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1_t3", "Energy charge without system (TOU) in Sep for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1_t4", "Energy charge without system (TOU) in Sep for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1_t5", "Energy charge without system (TOU) in Sep for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1_t6", "Energy charge without system (TOU) in Sep for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2_t1", "Energy charge without system (TOU) in Sep for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2_t2", "Energy charge without system (TOU) in Sep for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2_t3", "Energy charge without system (TOU) in Sep for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2_t4", "Energy charge without system (TOU) in Sep for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2_t5", "Energy charge without system (TOU) in Sep for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2_t6", "Energy charge without system (TOU) in Sep for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3_t1", "Energy charge without system (TOU) in Sep for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3_t2", "Energy charge without system (TOU) in Sep for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3_t3", "Energy charge without system (TOU) in Sep for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3_t4", "Energy charge without system (TOU) in Sep for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3_t5", "Energy charge without system (TOU) in Sep for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3_t6", "Energy charge without system (TOU) in Sep for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4_t1", "Energy charge without system (TOU) in Sep for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4_t2", "Energy charge without system (TOU) in Sep for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4_t3", "Energy charge without system (TOU) in Sep for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4_t4", "Energy charge without system (TOU) in Sep for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4_t5", "Energy charge without system (TOU) in Sep for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4_t6", "Energy charge without system (TOU) in Sep for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5_t1", "Energy charge without system (TOU) in Sep for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5_t2", "Energy charge without system (TOU) in Sep for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5_t3", "Energy charge without system (TOU) in Sep for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5_t4", "Energy charge without system (TOU) in Sep for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5_t5", "Energy charge without system (TOU) in Sep for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5_t6", "Energy charge without system (TOU) in Sep for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6_t1", "Energy charge without system (TOU) in Sep for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6_t2", "Energy charge without system (TOU) in Sep for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6_t3", "Energy charge without system (TOU) in Sep for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6_t4", "Energy charge without system (TOU) in Sep for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6_t5", "Energy charge without system (TOU) in Sep for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6_t6", "Energy charge without system (TOU) in Sep for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7_t1", "Energy charge without system (TOU) in Sep for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7_t2", "Energy charge without system (TOU) in Sep for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7_t3", "Energy charge without system (TOU) in Sep for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7_t4", "Energy charge without system (TOU) in Sep for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7_t5", "Energy charge without system (TOU) in Sep for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7_t6", "Energy charge without system (TOU) in Sep for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8_t1", "Energy charge without system (TOU) in Sep for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8_t2", "Energy charge without system (TOU) in Sep for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8_t3", "Energy charge without system (TOU) in Sep for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8_t4", "Energy charge without system (TOU) in Sep for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8_t5", "Energy charge without system (TOU) in Sep for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8_t6", "Energy charge without system (TOU) in Sep for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9_t1", "Energy charge without system (TOU) in Sep for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9_t2", "Energy charge without system (TOU) in Sep for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9_t3", "Energy charge without system (TOU) in Sep for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9_t4", "Energy charge without system (TOU) in Sep for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9_t5", "Energy charge without system (TOU) in Sep for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9_t6", "Energy charge without system (TOU) in Sep for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10_t1", "Energy charge without system (TOU) in Sep for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10_t2", "Energy charge without system (TOU) in Sep for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10_t3", "Energy charge without system (TOU) in Sep for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10_t4", "Energy charge without system (TOU) in Sep for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10_t5", "Energy charge without system (TOU) in Sep for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10_t6", "Energy charge without system (TOU) in Sep for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11_t1", "Energy charge without system (TOU) in Sep for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11_t2", "Energy charge without system (TOU) in Sep for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11_t3", "Energy charge without system (TOU) in Sep for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11_t4", "Energy charge without system (TOU) in Sep for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11_t5", "Energy charge without system (TOU) in Sep for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11_t6", "Energy charge without system (TOU) in Sep for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12_t1", "Energy charge without system (TOU) in Sep for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12_t2", "Energy charge without system (TOU) in Sep for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12_t3", "Energy charge without system (TOU) in Sep for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12_t4", "Energy charge without system (TOU) in Sep for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12_t5", "Energy charge without system (TOU) in Sep for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12_t6", "Energy charge without system (TOU) in Sep for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1_t1", "Energy charge without system (TOU) in Oct for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1_t2", "Energy charge without system (TOU) in Oct for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1_t3", "Energy charge without system (TOU) in Oct for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1_t4", "Energy charge without system (TOU) in Oct for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1_t5", "Energy charge without system (TOU) in Oct for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1_t6", "Energy charge without system (TOU) in Oct for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2_t1", "Energy charge without system (TOU) in Oct for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2_t2", "Energy charge without system (TOU) in Oct for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2_t3", "Energy charge without system (TOU) in Oct for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2_t4", "Energy charge without system (TOU) in Oct for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2_t5", "Energy charge without system (TOU) in Oct for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2_t6", "Energy charge without system (TOU) in Oct for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3_t1", "Energy charge without system (TOU) in Oct for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3_t2", "Energy charge without system (TOU) in Oct for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3_t3", "Energy charge without system (TOU) in Oct for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3_t4", "Energy charge without system (TOU) in Oct for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3_t5", "Energy charge without system (TOU) in Oct for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3_t6", "Energy charge without system (TOU) in Oct for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4_t1", "Energy charge without system (TOU) in Oct for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4_t2", "Energy charge without system (TOU) in Oct for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4_t3", "Energy charge without system (TOU) in Oct for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4_t4", "Energy charge without system (TOU) in Oct for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4_t5", "Energy charge without system (TOU) in Oct for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4_t6", "Energy charge without system (TOU) in Oct for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5_t1", "Energy charge without system (TOU) in Oct for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5_t2", "Energy charge without system (TOU) in Oct for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5_t3", "Energy charge without system (TOU) in Oct for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5_t4", "Energy charge without system (TOU) in Oct for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5_t5", "Energy charge without system (TOU) in Oct for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5_t6", "Energy charge without system (TOU) in Oct for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6_t1", "Energy charge without system (TOU) in Oct for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6_t2", "Energy charge without system (TOU) in Oct for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6_t3", "Energy charge without system (TOU) in Oct for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6_t4", "Energy charge without system (TOU) in Oct for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6_t5", "Energy charge without system (TOU) in Oct for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6_t6", "Energy charge without system (TOU) in Oct for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7_t1", "Energy charge without system (TOU) in Oct for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7_t2", "Energy charge without system (TOU) in Oct for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7_t3", "Energy charge without system (TOU) in Oct for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7_t4", "Energy charge without system (TOU) in Oct for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7_t5", "Energy charge without system (TOU) in Oct for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7_t6", "Energy charge without system (TOU) in Oct for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8_t1", "Energy charge without system (TOU) in Oct for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8_t2", "Energy charge without system (TOU) in Oct for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8_t3", "Energy charge without system (TOU) in Oct for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8_t4", "Energy charge without system (TOU) in Oct for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8_t5", "Energy charge without system (TOU) in Oct for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8_t6", "Energy charge without system (TOU) in Oct for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9_t1", "Energy charge without system (TOU) in Oct for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9_t2", "Energy charge without system (TOU) in Oct for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9_t3", "Energy charge without system (TOU) in Oct for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9_t4", "Energy charge without system (TOU) in Oct for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9_t5", "Energy charge without system (TOU) in Oct for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9_t6", "Energy charge without system (TOU) in Oct for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10_t1", "Energy charge without system (TOU) in Oct for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10_t2", "Energy charge without system (TOU) in Oct for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10_t3", "Energy charge without system (TOU) in Oct for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10_t4", "Energy charge without system (TOU) in Oct for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10_t5", "Energy charge without system (TOU) in Oct for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10_t6", "Energy charge without system (TOU) in Oct for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11_t1", "Energy charge without system (TOU) in Oct for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11_t2", "Energy charge without system (TOU) in Oct for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11_t3", "Energy charge without system (TOU) in Oct for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11_t4", "Energy charge without system (TOU) in Oct for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11_t5", "Energy charge without system (TOU) in Oct for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11_t6", "Energy charge without system (TOU) in Oct for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12_t1", "Energy charge without system (TOU) in Oct for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12_t2", "Energy charge without system (TOU) in Oct for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12_t3", "Energy charge without system (TOU) in Oct for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12_t4", "Energy charge without system (TOU) in Oct for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12_t5", "Energy charge without system (TOU) in Oct for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12_t6", "Energy charge without system (TOU) in Oct for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1_t1", "Energy charge without system (TOU) in Nov for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1_t2", "Energy charge without system (TOU) in Nov for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1_t3", "Energy charge without system (TOU) in Nov for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1_t4", "Energy charge without system (TOU) in Nov for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1_t5", "Energy charge without system (TOU) in Nov for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1_t6", "Energy charge without system (TOU) in Nov for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2_t1", "Energy charge without system (TOU) in Nov for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2_t2", "Energy charge without system (TOU) in Nov for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2_t3", "Energy charge without system (TOU) in Nov for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2_t4", "Energy charge without system (TOU) in Nov for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2_t5", "Energy charge without system (TOU) in Nov for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2_t6", "Energy charge without system (TOU) in Nov for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3_t1", "Energy charge without system (TOU) in Nov for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3_t2", "Energy charge without system (TOU) in Nov for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3_t3", "Energy charge without system (TOU) in Nov for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3_t4", "Energy charge without system (TOU) in Nov for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3_t5", "Energy charge without system (TOU) in Nov for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3_t6", "Energy charge without system (TOU) in Nov for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4_t1", "Energy charge without system (TOU) in Nov for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4_t2", "Energy charge without system (TOU) in Nov for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4_t3", "Energy charge without system (TOU) in Nov for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4_t4", "Energy charge without system (TOU) in Nov for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4_t5", "Energy charge without system (TOU) in Nov for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4_t6", "Energy charge without system (TOU) in Nov for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5_t1", "Energy charge without system (TOU) in Nov for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5_t2", "Energy charge without system (TOU) in Nov for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5_t3", "Energy charge without system (TOU) in Nov for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5_t4", "Energy charge without system (TOU) in Nov for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5_t5", "Energy charge without system (TOU) in Nov for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5_t6", "Energy charge without system (TOU) in Nov for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6_t1", "Energy charge without system (TOU) in Nov for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6_t2", "Energy charge without system (TOU) in Nov for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6_t3", "Energy charge without system (TOU) in Nov for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6_t4", "Energy charge without system (TOU) in Nov for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6_t5", "Energy charge without system (TOU) in Nov for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6_t6", "Energy charge without system (TOU) in Nov for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7_t1", "Energy charge without system (TOU) in Nov for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7_t2", "Energy charge without system (TOU) in Nov for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7_t3", "Energy charge without system (TOU) in Nov for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7_t4", "Energy charge without system (TOU) in Nov for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7_t5", "Energy charge without system (TOU) in Nov for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7_t6", "Energy charge without system (TOU) in Nov for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8_t1", "Energy charge without system (TOU) in Nov for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8_t2", "Energy charge without system (TOU) in Nov for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8_t3", "Energy charge without system (TOU) in Nov for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8_t4", "Energy charge without system (TOU) in Nov for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8_t5", "Energy charge without system (TOU) in Nov for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8_t6", "Energy charge without system (TOU) in Nov for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9_t1", "Energy charge without system (TOU) in Nov for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9_t2", "Energy charge without system (TOU) in Nov for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9_t3", "Energy charge without system (TOU) in Nov for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9_t4", "Energy charge without system (TOU) in Nov for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9_t5", "Energy charge without system (TOU) in Nov for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9_t6", "Energy charge without system (TOU) in Nov for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10_t1", "Energy charge without system (TOU) in Nov for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10_t2", "Energy charge without system (TOU) in Nov for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10_t3", "Energy charge without system (TOU) in Nov for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10_t4", "Energy charge without system (TOU) in Nov for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10_t5", "Energy charge without system (TOU) in Nov for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10_t6", "Energy charge without system (TOU) in Nov for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11_t1", "Energy charge without system (TOU) in Nov for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11_t2", "Energy charge without system (TOU) in Nov for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11_t3", "Energy charge without system (TOU) in Nov for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11_t4", "Energy charge without system (TOU) in Nov for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11_t5", "Energy charge without system (TOU) in Nov for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11_t6", "Energy charge without system (TOU) in Nov for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12_t1", "Energy charge without system (TOU) in Nov for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12_t2", "Energy charge without system (TOU) in Nov for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12_t3", "Energy charge without system (TOU) in Nov for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12_t4", "Energy charge without system (TOU) in Nov for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12_t5", "Energy charge without system (TOU) in Nov for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12_t6", "Energy charge without system (TOU) in Nov for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1_t1", "Energy charge without system (TOU) in Dec for period 1 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1_t2", "Energy charge without system (TOU) in Dec for period 1 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1_t3", "Energy charge without system (TOU) in Dec for period 1 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1_t4", "Energy charge without system (TOU) in Dec for period 1 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1_t5", "Energy charge without system (TOU) in Dec for period 1 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1_t6", "Energy charge without system (TOU) in Dec for period 1 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2_t1", "Energy charge without system (TOU) in Dec for period 2 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2_t2", "Energy charge without system (TOU) in Dec for period 2 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2_t3", "Energy charge without system (TOU) in Dec for period 2 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2_t4", "Energy charge without system (TOU) in Dec for period 2 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2_t5", "Energy charge without system (TOU) in Dec for period 2 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2_t6", "Energy charge without system (TOU) in Dec for period 2 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3_t1", "Energy charge without system (TOU) in Dec for period 3 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3_t2", "Energy charge without system (TOU) in Dec for period 3 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3_t3", "Energy charge without system (TOU) in Dec for period 3 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3_t4", "Energy charge without system (TOU) in Dec for period 3 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3_t5", "Energy charge without system (TOU) in Dec for period 3 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3_t6", "Energy charge without system (TOU) in Dec for period 3 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4_t1", "Energy charge without system (TOU) in Dec for period 4 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4_t2", "Energy charge without system (TOU) in Dec for period 4 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4_t3", "Energy charge without system (TOU) in Dec for period 4 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4_t4", "Energy charge without system (TOU) in Dec for period 4 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4_t5", "Energy charge without system (TOU) in Dec for period 4 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4_t6", "Energy charge without system (TOU) in Dec for period 4 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5_t1", "Energy charge without system (TOU) in Dec for period 5 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5_t2", "Energy charge without system (TOU) in Dec for period 5 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5_t3", "Energy charge without system (TOU) in Dec for period 5 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5_t4", "Energy charge without system (TOU) in Dec for period 5 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5_t5", "Energy charge without system (TOU) in Dec for period 5 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5_t6", "Energy charge without system (TOU) in Dec for period 5 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6_t1", "Energy charge without system (TOU) in Dec for period 6 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6_t2", "Energy charge without system (TOU) in Dec for period 6 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6_t3", "Energy charge without system (TOU) in Dec for period 6 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6_t4", "Energy charge without system (TOU) in Dec for period 6 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6_t5", "Energy charge without system (TOU) in Dec for period 6 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6_t6", "Energy charge without system (TOU) in Dec for period 6 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7_t1", "Energy charge without system (TOU) in Dec for period 7 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7_t2", "Energy charge without system (TOU) in Dec for period 7 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7_t3", "Energy charge without system (TOU) in Dec for period 7 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7_t4", "Energy charge without system (TOU) in Dec for period 7 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7_t5", "Energy charge without system (TOU) in Dec for period 7 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7_t6", "Energy charge without system (TOU) in Dec for period 7 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8_t1", "Energy charge without system (TOU) in Dec for period 8 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8_t2", "Energy charge without system (TOU) in Dec for period 8 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8_t3", "Energy charge without system (TOU) in Dec for period 8 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8_t4", "Energy charge without system (TOU) in Dec for period 8 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8_t5", "Energy charge without system (TOU) in Dec for period 8 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8_t6", "Energy charge without system (TOU) in Dec for period 8 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9_t1", "Energy charge without system (TOU) in Dec for period 9 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9_t2", "Energy charge without system (TOU) in Dec for period 9 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9_t3", "Energy charge without system (TOU) in Dec for period 9 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9_t4", "Energy charge without system (TOU) in Dec for period 9 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9_t5", "Energy charge without system (TOU) in Dec for period 9 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9_t6", "Energy charge without system (TOU) in Dec for period 9 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10_t1", "Energy charge without system (TOU) in Dec for period 10 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10_t2", "Energy charge without system (TOU) in Dec for period 10 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10_t3", "Energy charge without system (TOU) in Dec for period 10 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10_t4", "Energy charge without system (TOU) in Dec for period 10 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10_t5", "Energy charge without system (TOU) in Dec for period 10 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10_t6", "Energy charge without system (TOU) in Dec for period 10 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11_t1", "Energy charge without system (TOU) in Dec for period 11 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11_t2", "Energy charge without system (TOU) in Dec for period 11 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11_t3", "Energy charge without system (TOU) in Dec for period 11 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11_t4", "Energy charge without system (TOU) in Dec for period 11 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11_t5", "Energy charge without system (TOU) in Dec for period 11 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11_t6", "Energy charge without system (TOU) in Dec for period 11 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12_t1", "Energy charge without system (TOU) in Dec for period 12 and tier 1", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12_t2", "Energy charge without system (TOU) in Dec for period 12 and tier 2", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12_t3", "Energy charge without system (TOU) in Dec for period 12 and tier 3", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12_t4", "Energy charge without system (TOU) in Dec for period 12 and tier 4", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12_t5", "Energy charge without system (TOU) in Dec for period 12 and tier 5", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12_t6", "Energy charge without system (TOU) in Dec for period 12 and tier 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+
+
 	var_info_invalid };
 
 
@@ -1082,9 +2115,11 @@ public:
 			monthly_dc_fixed(12), monthly_dc_tou(12),
 			monthly_ec_charges(12), monthly_ec_flat_charges(12), monthly_ec_rates(12),
 			monthly_salespurchases(12),
-			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12), 
-			monthly_elec_needed_from_grid(12), 
+			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
+			monthly_elec_needed_from_grid(12),
 			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12);
+		ssc_number_t monthly_e_use_period_tier[12][12][6],
+			monthly_charge_period_tier[12][12][6];
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
@@ -1359,7 +2394,7 @@ public:
 				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
 				&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 				&monthly_dc_fixed[0], &monthly_dc_tou[0],
-				&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+				&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], &monthly_e_use_period_tier[0], &monthly_charge_period_tier[0], rate_scale[i]);
 
 	
 			utility_bill_wo_sys_jan[i + 1] = monthly_bill[0];
@@ -1602,7 +2637,7 @@ public:
 					&energy_charge[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0],  &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], &monthly_e_use_period_tier[0], &monthly_charge_period_tier[0], rate_scale[i]);
 			}
 			else
 			{
@@ -1612,7 +2647,7 @@ public:
 					&energy_charge[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], false, false);
+					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], &monthly_e_use_period_tier[0], &monthly_charge_period_tier[0], rate_scale[i], false, false);
 				// TODO - remove annual_revenue and just use annual bill
 				// Two meters - adjust output accordingly
 				for (j = 0; j<8760; j++)
@@ -2052,7 +3087,6 @@ public:
 
 
 	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
-
 		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], 
 		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
 		ssc_number_t energy_charge[8760],
@@ -2060,7 +3094,13 @@ public:
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_flat_charges[12],
 		ssc_number_t monthly_ec_rates[12],
-		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], ssc_number_t rate_esc, bool include_fixed=true, bool include_min=true) throw(general_error)
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], 
+		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], 
+		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], 
+		ssc_number_t monthly_e_use_period_tier[12][12][6], 
+		ssc_number_t monthly_charge_period_tier[12][12][6],
+		ssc_number_t rate_esc, bool include_fixed=true, bool include_min=true) 
+		throw(general_error)
 	{
 		int i;
 
@@ -2198,6 +3238,11 @@ public:
 				{
 					ec_monthly_energy_net[m][period] = 0;
 					ec_hours_per_month_per_period[m][period] = 0;
+					for (tier = 0; tier < 6; tier++)
+					{
+						monthly_e_use_period_tier[m][period][tier] = 0;
+						monthly_charge_period_tier[m][period][tier] = 0;
+					}
 				}
 
 				for (d = 0; d < util::nday[m]; d++)
@@ -2411,15 +3456,25 @@ public:
 									tier = 0;
 									while (tier < 6)
 									{
+										ssc_number_t tier_energy = 0;
+										ssc_number_t tier_credit = 0;
 										// add up the charge amount for this block
 										ssc_number_t e_upper = ec_energy_ub[period][tier];
 										ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
 
 										if (energy_surplus > e_upper)
-											credit_amt += (e_upper - e_lower)*ec_rates[period][tier][1];
+										{
+											tier_energy = e_upper - e_lower;
+											tier_credit = tier_energy*ec_rates[period][tier][1];
+										}
 										else
-											credit_amt += (energy_surplus - e_lower)*ec_rates[period][tier][1];
-
+										{
+											tier_energy = energy_surplus - e_lower;
+											tier_credit = tier_energy*ec_rates[period][tier][1];
+										}
+										credit_amt += tier_credit;
+										monthly_e_use_period_tier[m][period][tier] -= tier_energy;
+										monthly_charge_period_tier[m][period][tier] -= tier_credit;
 										if (energy_surplus < e_upper)
 											break;
 										tier++;
@@ -2436,15 +3491,25 @@ public:
 									tier = 0;
 									while (tier < 6)
 									{
+										ssc_number_t tier_energy = 0;
+										ssc_number_t tier_charge = 0;
 										// add up the charge amount for this block
 										ssc_number_t e_upper = ec_energy_ub[period][tier];
 										ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
 
 										if (energy_deficit > e_upper)
-											charge_amt += (e_upper - e_lower)*ec_rates[period][tier][0];
+										{
+											tier_energy = e_upper - e_lower;
+											tier_charge = tier_energy*ec_rates[period][tier][0];
+										}
 										else
-											charge_amt += (energy_deficit - e_lower)*ec_rates[period][tier][0];
-
+										{
+											tier_energy = energy_deficit - e_lower;
+											tier_charge = tier_energy*ec_rates[period][tier][0];
+										}
+										charge_amt += tier_charge;
+										monthly_e_use_period_tier[m][period][tier] += tier_energy;
+										monthly_charge_period_tier[m][period][tier] += tier_charge;
 										if (energy_deficit < e_upper)
 											break;
 										tier++;
