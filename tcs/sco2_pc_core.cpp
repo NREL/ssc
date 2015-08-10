@@ -2687,7 +2687,7 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 	int rc_error_code = 0;
 	opt_design_core(rc_error_code);
 
-	int local_eta_rc = 0.0;
+	double local_eta_rc = 0.0;
 	if( rc_error_code == 0 )
 		local_eta_rc = m_eta_thermal_opt;
 	
@@ -2710,7 +2710,7 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 	int s_error_code = 0;
 	opt_design_core(s_error_code);
 
-	int local_eta_s = 0.0;
+	double local_eta_s = 0.0;
 	if( s_error_code == 0 )
 		local_eta_s = m_eta_thermal_opt;
 
