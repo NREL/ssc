@@ -922,11 +922,11 @@ public:
 		(field_control < 1.e-4 && eta_prev >= 1.e-4) ||			// OR Shutdown by setting of control paramter (Field_control 1->0 )
 		(field_control > 1.e-4 && v_wind >= v_wind_max ) ||		// OR Shutdown by high wind speed
 		(eta_prev > 1.e-4 && v_wind_prev >= v_wind_max && v_wind < v_wind_max)  )	// OR Startup after high wind speed
-			pparasi = N_hel * p_start / (step/3600.0);			// kJ/hr 
+			pparasi = N_hel * p_start / (step/3600.0);			// [kWe-hr]/[hr] = kWe
      
 		// Parasitics for tracking      
 		if( v_wind < v_wind_max && v_wind_prev < v_wind_max )
-				pparasi += N_hel * p_track * field_control;	// kJ/hr
+				pparasi += N_hel * p_track * field_control;		// [kWe]
 
 		double eta_field = 0.;
 
@@ -987,7 +987,7 @@ public:
 		
 		
 		// Set output parameters
-		value( O_pparasi, pparasi/3.6e6 );	// [MW], convert from kJ/hr: Parasitic power for tracking
+		value( O_pparasi, pparasi/1.E3 );	// [MW], convert from kWe: Parasitic power for tracking
 		value( O_eta_field, eta_field );	// [-], field efficiency
 		
 		return 0;
