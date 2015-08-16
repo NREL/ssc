@@ -254,8 +254,8 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     //{SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",      "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",     "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_loss",         "Thermal loss per meter of piping",                                  "Wt/m",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_length",       "Total length of exposed piping",                                    "m",           "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_mult",     "Piping length multiplier",                             "",             "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_const",    "Piping constant length",                               "m",            "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "piping_length_mult",  "Piping length multiplier",                                          "",            "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "piping_length_add",   "Piping constant length",                                            "m",           "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Design_power",        "Power production at design conditions",                             "MWe",         "",            "parasitics",     "*",                       "",                      "" },
    // {SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",      "Recirculation heater efficiency",                                   "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",          "Power cycle efficiency at design",                                  "none",        "",            "parasitics",     "*",                       "",                      "" },
@@ -526,7 +526,7 @@ public:
             A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
             //update piping length for parasitic calculation
-            double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
+            double piping_length = THT * as_double("piping_length_mult") + as_double("piping_length_add");
             
             //update assignments for cost model
 		    assign("H_rec", var_data((ssc_number_t)H_rec));
@@ -835,41 +835,30 @@ public:
 
 		// Set Parasitics Parameters
 		set_unit_value_ssc_double(type228_parasitics, "Piping_loss");
-		set_unit_value_ssc_double(type228_parasitics, "piping_length_add", "csp.pt.par.piping_length_const");
-		set_unit_value_ssc_double(type228_parasitics, "piping_length_mult", "csp.pt.par.piping_length_mult");
-
+		set_unit_value_ssc_double(type228_parasitics, "piping_length_add");
+		set_unit_value_ssc_double(type228_parasitics, "piping_length_mult");
 		set_unit_value_ssc_double(type228_parasitics, "THT", THT);
-
 		set_unit_value_ssc_double(type228_parasitics, "Design_power");
-
 		set_unit_value_ssc_double(type228_parasitics, "design_eff");
-
-		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_0"); //aux_par_0 );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_1"); //aux_par_1 );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_2"); //aux_par_2 );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par"); //bop_par );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_f"); //bop_par_f );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); //bop_par_0 );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); //bop_par_1 );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); //bop_par_2 );
-		//set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
+		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par");
+		set_unit_value_ssc_double(type228_parasitics, "aux_par");
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_0"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_1"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_2"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_f"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); 
 
 		// Set Parasitics Inputs (Initial values?)
-		//set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_cold_tank", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_hot_tank", 0.0);
-		//set_unit_value_ssc_double(type228_parasitics, "P_tower_conv", 0.0);
-		//set_unit_value_ssc_double(type228_parasitics, "P_tower_rad", 0.0);
-		//set_unit_value_ssc_double(type228_parasitics, "recirc_source", 0.0);
-		//set_unit_value_ssc_double(type228_parasitics, "ref_htf_flow", 0.0);
 		set_unit_value_ssc_double(type228_parasitics, "P_htf_pump", 0.0);
 
 		bConnected &= connect(type234_powerblock, "W_cool_par", type228_parasitics, "P_cooling_tower");
 		bConnected &= connect(type265_dsg_controller, "W_dot_boost", type228_parasitics, "P_tower_pump");
-//		bConnected &= connect(type221_hel_field, "pparasi", type228_parasitics, "P_helio_track");
 		bConnected &= connect(type_hel_field, "pparasi", type228_parasitics, "P_helio_track");
 		bConnected &= connect(type234_powerblock, "P_cycle", type228_parasitics, "P_plant_output");
 		bConnected &= connect(type234_powerblock, "eta", type228_parasitics, "eta_cycle");
