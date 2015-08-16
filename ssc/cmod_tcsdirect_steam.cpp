@@ -142,7 +142,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "h_boiler",            "Height of boiler",                                                 "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_t_boiler",          "O.D. of boiler tubes",                                             "m",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "th_t_boiler",         "Thickness of boiler tubes",                                        "m",            "",            "dsg_controller", "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "emis_boiler",         "Emissivity of receiver tubes",                                     "-",            "",            "dsg_controller", "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_emis",            "Emissivity of receiver tubes",                                     "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",     "Absorptance of receiver tubes",                                    "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mat_boiler",          "Numerical code for tube material",                                 "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_sh",                "Height of superheater",                                            "m",            "",            "dsg_controller", "*",                       "",                      "" },
@@ -602,21 +602,21 @@ public:
 		set_unit_value_ssc_double( type265_dsg_controller, "h_boiler");
 		set_unit_value_ssc_double( type265_dsg_controller, "d_t_boiler");
 		set_unit_value_ssc_double( type265_dsg_controller, "th_t_boiler");
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler", "emis_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler", "rec_emis");
 		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler", "rec_absorptance");
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_boiler");
 		
 		set_unit_value_ssc_double( type265_dsg_controller, "h_sh");
 		set_unit_value_ssc_double( type265_dsg_controller, "d_sh");
 		set_unit_value_ssc_double( type265_dsg_controller, "th_sh");
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh", "emis_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh", "rec_emis");
 		set_unit_value_ssc_double( type265_dsg_controller, "abs_sh", "rec_absorptance");
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_sh");
 		set_unit_value_ssc_double( type265_dsg_controller, "T_sh_out_des");
 		set_unit_value_ssc_double( type265_dsg_controller, "h_rh");
 		set_unit_value_ssc_double( type265_dsg_controller, "d_rh");
 		set_unit_value_ssc_double( type265_dsg_controller, "th_rh");
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh", "emis_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh", "rec_emis");
 		set_unit_value_ssc_double( type265_dsg_controller, "abs_rh", "rec_absorptance");
 		set_unit_value_ssc_double( type265_dsg_controller, "mat_rh");
 		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des");
