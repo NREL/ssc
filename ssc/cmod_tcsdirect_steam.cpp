@@ -834,13 +834,16 @@ public:
 		bConnected &= connect(tou, "tou_value", type234_powerblock, "TOU");
 
 		// Set Parasitics Parameters
-		//set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
-		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
-		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
-		set_unit_value_ssc_double(type228_parasitics, "Design_power"); //P_cycle_design );
-		//set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
-		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		//set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
+		set_unit_value_ssc_double(type228_parasitics, "Piping_loss");
+		set_unit_value_ssc_double(type228_parasitics, "piping_length_add", "csp.pt.par.piping_length_const");
+		set_unit_value_ssc_double(type228_parasitics, "piping_length_mult", "csp.pt.par.piping_length_mult");
+
+		set_unit_value_ssc_double(type228_parasitics, "THT", THT);
+
+		set_unit_value_ssc_double(type228_parasitics, "Design_power");
+
+		set_unit_value_ssc_double(type228_parasitics, "design_eff");
+
 		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
 		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
