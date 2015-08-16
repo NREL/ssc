@@ -20,29 +20,10 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_STRING, "solar_resource_file", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
 	
 	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "direct steam tower", "*", "", "" },
-
-	/*
-	{ SSC_INPUT, SSC_STRING, "file_name", "local weather file path", "", "", "Weather", "*", "LOCAL_FILE", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "track_mode",          "Tracking mode",                                                  "",             "",            "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",                "Tilt angle of surface/axis",                                     "",             "",            "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",             "Azimuth angle of surface/axis",                                  "",             "",            "Weather",        "*",                       "",                      "" },
-	*/													     
+												     
     // TOU												     
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",    "12x24 Time of Use Values for week days",                         "",             "",            "tou_translator", "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",    "12x24 Time of Use Values for week end days",                     "",             "",            "tou_translator", "*",                       "",                      "" }, 
-	/*
-	// Heliostat field (type 221) parameters			     
-    { SSC_INPUT,        SSC_MATRIX,      "eta_map",             "Field efficiency matrix",                                          "-",            "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_zen",               "Number of zenith angle data points in file",                       "-",            "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_azi",               "Number of azimuth angle data points in file",                      "-",            "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_hel",               "Number of heliostats in the field",                                "-",            "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "q_start",             "Electric work for starting up one heliostat",                      "kWe-hr",       "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "p_run",               "Electric power for tracking one heliostat",                        "kWe",          "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "v_wind_max",          "Maximum tolerable wind speed",                                     "m/s",          "",            "heliostat",      "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "hel_stow_deploy",     "Heliostat field stow/deploy solar elevation angle",                "deg",          "",            "heliostat",      "*",                       "",                      "" },
-	// Heliostat field (type 221) inputs				       
-    { SSC_INPUT,        SSC_NUMBER,      "field_control",       "Field defocus control",                                            "",             "",            "heliostat",      "*",                       "",                      "" },
-	*/	
 
 	// Heliostat field  parameters				     										
 	{ SSC_INPUT, SSC_NUMBER, "run_type", "Run type", "-", "", "heliostat", "*", "", "" },
@@ -53,7 +34,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_NUMBER, "helio_reflectance", "Heliostat reflectance", "-", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "rec_absorptance", "Receiver absorptance", "-", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "rec_aspect", "Receiver aspect ratio", "-", "", "heliostat", "*", "", "" },
-    { SSC_INPUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT, SSC_NUMBER, "rec_height",           "Receiver height",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT, SSC_NUMBER, "rec_hl_perm2", "Receiver design heatloss", "kW/m2", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "land_bound_type", "Land boundary type", "-", "", "heliostat", "?=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "land_max", "Land max boundary", "-ORm", "", "heliostat", "?=7.5", "", "" },
@@ -87,14 +68,9 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT, SSC_NUMBER, "n_flux_days", "No. days in flux map lookup", "", "", "heliostat", "?=8", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "delta_flux_hrs", "Hourly frequency in flux map lookup", "", "", "heliostat", "?=1", "", "" },
 
-	//
-
-
 	{ SSC_INPUT, SSC_NUMBER, "H_rec", "The height of the receiver", "m", "", "receiver", "*", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "THT", "The height of the tower (hel. pivot to rec equator)", "m", "", "receiver", "*", "", "" },
 
-        
-	//{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "heliostat",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "heliostat",   "*",                "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "heliostat",   "?=1",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "heliostat",   "*",                "",                "" },
@@ -134,14 +110,6 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.land_overhead_factor", "Land overhead factor",              "",         "",     "heliostat",   "*",                "",                "" },
 	//The total installed cost from the cost page
     { SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",           "Total installed cost",              "$",        "",     "heliostat",   "*",                "",                "" },
-
-
-
-	//// Heliostat field inputs					     																	  
-	//   { SSC_INPUT,        SSC_NUMBER,      "field_control",        "Field defocus control",                                             "",             "",            "heliostat",      "*",                       "",                      "" },
-	//   { SSC_INPUT,        SSC_NUMBER,      "vwind",                "Wind velocity",                                                     "m/s",          "",            "heliostat",      "*",                       "",                     "" },
-	//   { SSC_INPUT,        SSC_NUMBER,      "solaz",                "Solar azimuth angle: 0 due north, clocwise to +360",                "deg",          "",            "heliostat",      "*",                       "",                     "" },
-	//   { SSC_INPUT,        SSC_NUMBER,      "solzen",               "Solar zenith angle",                                                "deg",          "",            "heliostat",      "*",                       "",                     "" },
 
 	// Direct steam controller (type 265) parameters	       
     { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",         "Fossil model: 1=Normal, 2=Supplemental",                           "-",            "",            "dsg_controller", "*",                       "INTEGER",               "" },
@@ -190,18 +158,8 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",      "Cycle maximum overdesign fraction",                                "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "A_sf",                "Solar field area",                                                 "m^2",          "",            "dsg_controller", "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "ffrac",               "Fossil dispatch logic",                                            "-",            "",            "dsg_controller", "*",                       "",                      "" },
-//    { SSC_INPUT,        SSC_MATRIX,      "fluxmap_angles",      "Matrix containing zenith and azimuth angles for flux maps",        "-",            "",            "dsg_controller", "*",                       "",                      "" },
- //   { SSC_INPUT,        SSC_MATRIX,      "fluxmap",             "Matrix containing flux map for various solar positions",           "-",            "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_ARRAY,       "TOU_schedule",        "Annual hourly time-of-use schedule",                               "-",            "",            "dsg_controller", "*",                       "",                      "" },
+
 	// Direct steam controller (type 265) inputs		       
-  //{ SSC_INPUT,        SSC_NUMBER,      "azimuth",             "Solar azimuth",                                                    "deg",          "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "zenith",              "Solar zenith",                                                     "deg",          "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "DNI",                 "Direct normal irradiance",                                         "W/m^2",        "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_amb",               "Ambient dry bulb temperature",                                     "C",            "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "v_wind_10",           "Wind speed at 10 m",                                               "m/s",          "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "P_atm",               "Ambient Pressure",                                                 "atm",          "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_dp",                "Dew point temperature",                                            "C",            "",            "dsg_controller", "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "field_eff",           "Heliostat field efficiency",                                       "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_b_in_init",         "Initial Boiler inlet pressure",                                    "bar",          "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "f_mdot_rh_init",      "Reheat mass flow rate fraction",                                   "-",            "",            "dsg_controller", "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_hp_out",            "HP turbine outlet pressure",                                       "bar",          "",            "dsg_controller", "*",                       "",                      "" },
@@ -219,15 +177,10 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",           "Reference ambient temperature at design point",                     "C",           "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",          "Fraction of thermal power required for standby mode",               "none",        "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil_des",          "Boiler operating pressure @ design",                                "bar",         "",            "powerblock",     "*",                       "",                      "" },
-//    { SSC_INPUT,        SSC_NUMBER,      "is_rh",               "Flag indicating whether reheat is used 0:no, 1:yes",                "none",        "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_rh_ref",            "Reheater operating pressure at design",                             "bar",         "",            "powerblock",     "*",                       "",                      "" },
-//    { SSC_INPUT,        SSC_NUMBER,      "T_rh_hot_ref",        "Reheater design outlet temperature",                                "C",           "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rh_frac_ref",         "Reheater flow fraction at design",                                  "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "CT",                  "Flag for using dry cooling or wet cooling system",                  "none",        "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_time",        "Time needed for power block startup",                               "hr",          "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_frac",        "Fraction of design thermal power needed for startup",               "none",        "",            "powerblock",     "*",                       "",                      "" },
-//    { SSC_INPUT,        SSC_NUMBER,      "tech_type",           "Flag indicating which coef. set to use. (1=tower,2=trough,3=user)", "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "T_approach",          "Cooling tower approach temperature",                                "C",           "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",           "ITD at design for dry system",                                      "C",           "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",        "Condenser pressure ratio",                                          "none",        "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",          "Power block blowdown steam fraction ",                              "none",        "",            "powerblock",     "*",                       "",                      "" },
@@ -235,31 +188,15 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",            "Number of part-load increments for the heat rejection system",      "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                "Fraction indicating wet cooling use for hybrid system",             "none",        "",            "powerblock",     "*",                       "",                      "" },
 	// Power block (type 234) inputs					       
-//    { SSC_INPUT,        SSC_NUMBER,      "mode",                "Cycle part load control, from plant controller",                    "none",        "",            "powerblock",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_hot",               "Hot HTF inlet temperature, from storage tank",                      "C",           "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_st",            "HTF mass flow rate",                                                "kg/hr",       "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "T_wb",                "Ambient wet bulb temperature",                                      "C",           "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "demand_var",          "Control signal indicating operational mode",                        "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "standby_control",     "Control signal indicating standby mode",                            "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "T_db",                "Ambient dry bulb temperature",                                      "C",           "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "P_amb",               "Ambient pressure",                                                  "atm",         "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "TOU",                 "Current Time-of-use period",                                        "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "relhum",              "Relative humidity of the ambient air",                              "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "f_recSU",             "Fraction powerblock can run due to receiver startup",               "none",        "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "dp_b",                "Pressure drop in boiler",                                           "Pa",          "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "dp_sh",               "Pressure drop in superheater",                                      "Pa",          "",            "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "dp_rh",               "Pressure drop in reheater",                                         "Pa",          "",            "powerblock",     "*",                       "",                      "" },
 															  
 	// Parasitics (type 228) parameters						  
-    //{SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",      "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",     "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_loss",         "Thermal loss per meter of piping",                                  "Wt/m",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Piping_length",       "Total length of exposed piping",                                    "m",           "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "piping_length_mult",  "Piping length multiplier",                                          "",            "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "piping_length_add",   "Piping constant length",                                            "m",           "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "Design_power",        "Power production at design conditions",                             "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-   // {SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",      "Recirculation heater efficiency",                                   "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",          "Power cycle efficiency at design",                                  "none",        "",            "parasitics",     "*",                       "",                      "" },
-  //  {SSC_INPUT,         SSC_NUMBER,      "night_recirc",        "Flag indicating whether night recirculation is allowed",            "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "pb_fixed_par",        "Fixed parasitic load - runs at all times",                          "MWe/MWcap",   "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "aux_par",             "Aux heater, boiler parasitic",                                      "MWe/MWcap",   "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "aux_par_f",           "Aux heater, boiler parasitic - multiplying fraction",               "none",        "",            "parasitics",     "*",                       "",                      "" },
@@ -271,23 +208,6 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     {SSC_INPUT,         SSC_NUMBER,      "bop_par_0",           "Balance of plant parasitic power fraction - const coeff",           "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "bop_par_1",           "Balance of plant parasitic power fraction - linear coeff",          "none",        "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "bop_par_2",           "Balance of plant parasitic power fraction - quadratic coeff",       "none",        "",            "parasitics",     "*",                       "",                      "" },
-   // {SSC_INPUT,         SSC_NUMBER,      "storage_bypass",      "Flag indicating whether the hot salt pump always runs w/ PB",       "none",        "",            "parasitics",     "*",                       "",                      "" },
-    // Parasitics (type 228) inputs							   
-   // {SSC_INPUT,         SSC_NUMBER,      "flow_from_storage",   "Flow rate from storage",                                           "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
-//	{SSC_INPUT,         SSC_NUMBER,      "P_cooling_tower",     "Cooling tower parasitic power fraction",                            "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-//	{SSC_INPUT,         SSC_NUMBER,      "P_tower_pump",        "Reported tower pump power",                                         "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-//	{SSC_INPUT,         SSC_NUMBER,      "P_helio_track",       "Reported heliostat tracking power",                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-//	{SSC_INPUT,         SSC_NUMBER,      "P_plant_output",      "Reported plant power output",                                       "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-//	{SSC_INPUT,         SSC_NUMBER,      "eta_cycle",           "Power cycle efficiency",                                            "none",        "",            "parasitics",     "*",                       "",                      "" },
-  //  {SSC_INPUT,         SSC_NUMBER,      "P_cold_tank",         "Cold tank heater parasitic power",                                  "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-   // {SSC_INPUT,         SSC_NUMBER,      "P_hot_tank",          "Hot tank heater parasitic power",                                   "MWe",         "",            "parasitics",     "*",                       "",                      "" },
- //   {SSC_INPUT,         SSC_NUMBER,      "P_tower_conv",        "Reported tower convection loss",                                    "MWt",         "",            "parasitics",     "*",                       "",                      "" },
- //   {SSC_INPUT,         SSC_NUMBER,      "P_tower_rad",         "Reported tower radiation loss",                                     "MWt",         "",            "parasitics",     "*",                       "",                      "" },
-  //  {SSC_INPUT,         SSC_NUMBER,      "recirc_source",       "Recirculation heater control",                                      "none",        "",            "parasitics",     "*",                       "",                      "" },
-   // {SSC_INPUT,         SSC_NUMBER,      "ref_htf_flow",        "HTF flow rate through the power cycle at design",                   "kg/hr",       "",            "parasitics",     "*",                       "",                      "" },
-//	{SSC_INPUT,         SSC_NUMBER,      "aux_power",           "Auxiliary heater thermal power output",                             "MWt",         "",            "parasitics",     "*",                       "",                      "" },
-//    {SSC_INPUT,         SSC_NUMBER,      "P_htf_pump",          "HTF pumping power",                                                 "MWe",         "",            "parasitics",     "*",                       "",                      "" },
-
 
 // OUTPUTS
 // The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
@@ -446,42 +366,14 @@ public:
 		else
 		{
 			//Set weatherreader parameters
-			//set_unit_value_ssc_string( weather, "file_name" );
-			//set_unit_value_ssc_double( weather, "track_mode" );
-			//set_unit_value_ssc_double( weather, "tilt" );
-			//set_unit_value_ssc_double( weather, "azimuth" );
-
-			//Set weatherreader parameters
 			set_unit_value(weather, "file_name", as_string("solar_resource_file"));
 			set_unit_value(weather, "track_mode", 0.0);
 			set_unit_value(weather, "tilt", 0.0);
 			set_unit_value(weather, "azimuth", 0.0);
-
 		}
 
 		set_unit_value_ssc_matrix(tou, "weekday_schedule"); // tou values from control will be between 1 and 9
 		set_unit_value_ssc_matrix(tou, "weekend_schedule");
-
-		/*
-		// Set heliostat field parameters
-		set_unit_value_ssc_matrix( type221_hel_field, "eta_map");//, eta_field_map );
-		set_unit_value_ssc_double( type221_hel_field, "n_zen");//, num_zen );
-		set_unit_value_ssc_double( type221_hel_field, "n_azi");//, num_azi );
-		set_unit_value_ssc_double( type221_hel_field, "n_hel");//, num_helio );
-		set_unit_value_ssc_double( type221_hel_field, "q_start");//, P_hel_start );
-		set_unit_value_ssc_double( type221_hel_field, "p_run");//, P_hel_track );
-		set_unit_value_ssc_double( type221_hel_field, "v_wind_max");//, wind_stow_speed );
-		set_unit_value_ssc_double( type221_hel_field, "hel_stow_deploy");//, hel_stow_deploy );
-        set_unit_value_ssc_double( type221_hel_field, "field_control" ); // INITIAL VALUE
-		
-
-
-		// Connect heliostat field inputs
-		bool bConnected = connect( weather, "wspd", type221_hel_field, "vwind" );
-		bConnected &= connect( weather, "solzen", type221_hel_field, "theta" );
-		bConnected &= connect( weather, "solazi", type221_hel_field, "phi" );
-		*/
-
 
 		// Heliostat field
 		set_unit_value_ssc_double(type_hel_field, "run_type");// , 0);	//0=auto, 1=user-type_hel_field, 2=user data
@@ -625,23 +517,22 @@ public:
         }
         d_rec = H_rec/rec_aspect;
 
-        set_unit_value_ssc_double(type_hel_field, "rec_height", H_rec);//, 5.);
+        set_unit_value_ssc_double(type_hel_field, "rec_height", H_rec);
 		set_unit_value_ssc_double(type_hel_field, "rec_aspect", rec_aspect);
-		set_unit_value_ssc_double(type_hel_field, "h_tower", THT);//, 50);
-		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");//, 0.);
-		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));//, 25.);
+		set_unit_value_ssc_double(type_hel_field, "h_tower", THT);
+		set_unit_value_ssc_double(type_hel_field, "rec_hl_perm2");
+		set_unit_value_ssc_double(type_hel_field, "q_design", as_double("Q_rec_des"));
 		set_unit_value_ssc_double(type_hel_field, "dni_des");
-		//set_unit_value_ssc_double(type_hel_field, "h_tower", as_double("THT"));//, 50);
 		set_unit_value(type_hel_field, "weather_file", as_string("solar_resource_file"));
-		set_unit_value_ssc_double(type_hel_field, "land_bound_type");//, 0);
-		set_unit_value_ssc_double(type_hel_field, "land_max");//, 7.5);
-		set_unit_value_ssc_double(type_hel_field, "land_min");//, 0.75);
-		set_unit_value_ssc_double(type_hel_field, "p_start");//, 0.025);
-		set_unit_value_ssc_double(type_hel_field, "p_track");//, 0.055);
-		set_unit_value_ssc_double(type_hel_field, "hel_stow_deploy");//, 8);
-		set_unit_value_ssc_double(type_hel_field, "v_wind_max");//, 25.);
-		set_unit_value_ssc_double(type_hel_field, "n_flux_x");//, 10);
-		set_unit_value_ssc_double(type_hel_field, "n_flux_y");//, 1);
+		set_unit_value_ssc_double(type_hel_field, "land_bound_type");
+		set_unit_value_ssc_double(type_hel_field, "land_max");
+		set_unit_value_ssc_double(type_hel_field, "land_min");;
+		set_unit_value_ssc_double(type_hel_field, "p_start");
+		set_unit_value_ssc_double(type_hel_field, "p_track");
+		set_unit_value_ssc_double(type_hel_field, "hel_stow_deploy");
+		set_unit_value_ssc_double(type_hel_field, "v_wind_max");
+		set_unit_value_ssc_double(type_hel_field, "n_flux_x");
+		set_unit_value_ssc_double(type_hel_field, "n_flux_y");
         set_unit_value_ssc_double(type_hel_field, "dens_mirror");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_0");
 		set_unit_value_ssc_double(type_hel_field, "c_atm_1");
@@ -653,9 +544,6 @@ public:
 		set_unit_value_ssc_double(type_hel_field, "cant_type");
 		set_unit_value_ssc_double(type_hel_field, "n_flux_days");
 		set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs");
-
-		//set_unit_value_ssc_double(type_hel_field, "n_flux_days", 2.0);
-		//set_unit_value_ssc_double(type_hel_field, "delta_flux_hrs", 2.0);
 
 		int run_type = (int)get_unit_value_number(type_hel_field, "run_type");
 		/*if(run_type == 0){
@@ -684,72 +572,68 @@ public:
 
 
 		//Set DSG Controller Parameters
-		set_unit_value_ssc_double( type265_dsg_controller, "fossil_mode"); //fossil_mode);
-        set_unit_value_ssc_double( type265_dsg_controller, "q_pb_design"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design") );
-		set_unit_value_ssc_double( type265_dsg_controller, "q_aux_max"); //, as_double("p_cycle_design")/as_double("Eff_cycle_design")); //q_pb_design);
-		set_unit_value_ssc_double( type265_dsg_controller, "lhv_eff"); //LHV_eff);
-		set_unit_value_ssc_double( type265_dsg_controller, "h_tower", THT); //h_tower);
-		set_unit_value_ssc_double( type265_dsg_controller, "n_panels"); //num_panels);
-		set_unit_value_ssc_double( type265_dsg_controller, "flowtype"); //flow_pattern);
+		set_unit_value_ssc_double( type265_dsg_controller, "fossil_mode");
+        set_unit_value_ssc_double( type265_dsg_controller, "q_pb_design");
+		set_unit_value_ssc_double( type265_dsg_controller, "q_aux_max"); 
+		set_unit_value_ssc_double( type265_dsg_controller, "lhv_eff"); 
+		set_unit_value_ssc_double( type265_dsg_controller, "h_tower", THT); 
+		set_unit_value_ssc_double( type265_dsg_controller, "n_panels"); 
+		set_unit_value_ssc_double( type265_dsg_controller, "flowtype"); 
 		set_unit_value_ssc_double( type265_dsg_controller, "d_rec", d_rec);
-		set_unit_value_ssc_double( type265_dsg_controller, "q_rec_des"); //Q_rec_des);
-		set_unit_value_ssc_double( type265_dsg_controller, "f_rec_min"); //f_rec_min);
-		set_unit_value_ssc_double( type265_dsg_controller, "rec_qf_delay"); //rec_qf_delay);
-		set_unit_value_ssc_double( type265_dsg_controller, "rec_su_delay"); //rec_su_delay);
-		set_unit_value_ssc_double( type265_dsg_controller, "f_pb_cutoff"); //cycle_cutoff_frac);
-		set_unit_value_ssc_double( type265_dsg_controller, "f_pb_sb"); //F_standby);
-		set_unit_value_ssc_double( type265_dsg_controller, "t_standby_ini"); //T_standby);
-		set_unit_value_ssc_double( type265_dsg_controller, "x_b_target"); //x_b_target);
-		set_unit_value_ssc_double( type265_dsg_controller, "eta_rec_pump"); //eta_rec_pump);
-		set_unit_value_ssc_double( type265_dsg_controller, "P_hp_in_des"); //P_HP_in);
-		set_unit_value_ssc_double( type265_dsg_controller, "P_hp_out_des"); //P_HP_out);
-		set_unit_value_ssc_double( type265_dsg_controller, "f_mdotrh_des"); //rh_frac_ref);
-		set_unit_value_ssc_double( type265_dsg_controller, "p_cycle_design"); //P_cycle_design);
-		set_unit_value_ssc_double( type265_dsg_controller, "ct"); //Cool_type);
-		set_unit_value_ssc_double( type265_dsg_controller, "T_amb_des"); //T_amb_des);
-		set_unit_value_ssc_double( type265_dsg_controller, "dT_cw_ref"); //dT_cooling_ref);
-		set_unit_value_ssc_double( type265_dsg_controller, "T_approach"); //T_approach);
-		set_unit_value_ssc_double( type265_dsg_controller, "T_ITD_des"); //T_ITD_des);
-		set_unit_value_ssc_double( type265_dsg_controller, "hl_ffact"); //hl_ffact);
-		set_unit_value_ssc_double( type265_dsg_controller, "h_boiler"); //h_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "d_t_boiler"); //d_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "th_t_boiler"); //th_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler", "emis_boiler"); //emis_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler", "rec_absorptance"); //abs_boiler);
-		set_unit_value_ssc_double( type265_dsg_controller, "mat_boiler"); //Mat_boiler);
+		set_unit_value_ssc_double( type265_dsg_controller, "q_rec_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "f_rec_min");
+		set_unit_value_ssc_double( type265_dsg_controller, "rec_qf_delay");
+		set_unit_value_ssc_double( type265_dsg_controller, "rec_su_delay");
+		set_unit_value_ssc_double( type265_dsg_controller, "f_pb_cutoff");
+		set_unit_value_ssc_double( type265_dsg_controller, "f_pb_sb");
+		set_unit_value_ssc_double( type265_dsg_controller, "t_standby_ini");
+		set_unit_value_ssc_double( type265_dsg_controller, "x_b_target");
+		set_unit_value_ssc_double( type265_dsg_controller, "eta_rec_pump");
+		set_unit_value_ssc_double( type265_dsg_controller, "P_hp_in_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "P_hp_out_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "f_mdotrh_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "p_cycle_design");
+		set_unit_value_ssc_double( type265_dsg_controller, "ct");
+		set_unit_value_ssc_double( type265_dsg_controller, "T_amb_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "dT_cw_ref");
+		set_unit_value_ssc_double( type265_dsg_controller, "T_approach");
+		set_unit_value_ssc_double( type265_dsg_controller, "T_ITD_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "hl_ffact");
+		set_unit_value_ssc_double( type265_dsg_controller, "h_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "d_t_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "th_t_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_boiler", "emis_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_boiler", "rec_absorptance");
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_boiler");
 		
-		set_unit_value_ssc_double( type265_dsg_controller, "h_sh"); //h_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "d_sh"); //d_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "th_sh"); //th_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh", "emis_boiler"); //emis_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_sh", "rec_absorptance"); //abs_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "mat_sh"); //Mat_SH);
-		set_unit_value_ssc_double( type265_dsg_controller, "T_sh_out_des"); //T_SH_out_ref);
-		set_unit_value_ssc_double( type265_dsg_controller, "h_rh"); //h_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "d_rh"); //d_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "th_rh"); //th_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh", "emis_boiler"); //emis_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "abs_rh", "rec_absorptance"); //abs_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "mat_rh"); //Mat_RH);
-		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des"); //T_rh_out_ref);
-		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac"); //cycle_max_fraction);
+		set_unit_value_ssc_double( type265_dsg_controller, "h_sh");
+		set_unit_value_ssc_double( type265_dsg_controller, "d_sh");
+		set_unit_value_ssc_double( type265_dsg_controller, "th_sh");
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_sh", "emis_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_sh", "rec_absorptance");
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_sh");
+		set_unit_value_ssc_double( type265_dsg_controller, "T_sh_out_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "h_rh");
+		set_unit_value_ssc_double( type265_dsg_controller, "d_rh");
+		set_unit_value_ssc_double( type265_dsg_controller, "th_rh");
+		set_unit_value_ssc_double( type265_dsg_controller, "emis_rh", "emis_boiler");
+		set_unit_value_ssc_double( type265_dsg_controller, "abs_rh", "rec_absorptance");
+		set_unit_value_ssc_double( type265_dsg_controller, "mat_rh");
+		set_unit_value_ssc_double( type265_dsg_controller, "T_rh_out_des");
+		set_unit_value_ssc_double( type265_dsg_controller, "cycle_max_frac");
 		set_unit_value_ssc_double( type265_dsg_controller, "A_sf", A_sf );
 		set_unit_value_ssc_array( type265_dsg_controller, "ffrac");
 		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_x");
 		set_unit_value_ssc_double(type265_dsg_controller, "n_flux_y");
 
-//		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap_angles"); //arr_sol_pos);
-//		set_unit_value_ssc_matrix( type265_dsg_controller, "fluxmap"); //arr_flux);
-		//set_unit_value_ssc_array( type265_dsg_controller, "TOU_schedule");
-
 		// initial values for dsg controller
-		set_unit_value_ssc_double(type265_dsg_controller, "P_b_in", as_double("P_b_in_init")); //P_HP_in);			// Initial value
-		set_unit_value_ssc_double(type265_dsg_controller, "f_mdot_rh", as_double("f_mdot_rh_init")); //rh_frac_ref);		// Initial value
-		set_unit_value_ssc_double(type265_dsg_controller, "P_hp_out"); //P_HP_out);			// Initial value
-		set_unit_value_ssc_double(type265_dsg_controller, "T_hp_out"); //300);				// Initial value
-		set_unit_value_ssc_double(type265_dsg_controller, "T_rh_target"); //T_rh_out_ref);	// Initial value
-		set_unit_value_ssc_double(type265_dsg_controller, "T_fw", as_double("T_fw_init")); //340);					// Initial value
-		set_unit_value_ssc_double(type265_dsg_controller, "P_cond", as_double("P_cond_init")); //P_HP_out);			// Initial value
+		set_unit_value_ssc_double(type265_dsg_controller, "P_b_in", as_double("P_b_in_init"));
+		set_unit_value_ssc_double(type265_dsg_controller, "f_mdot_rh", as_double("f_mdot_rh_init"));
+		set_unit_value_ssc_double(type265_dsg_controller, "P_hp_out");
+		set_unit_value_ssc_double(type265_dsg_controller, "T_hp_out");
+		set_unit_value_ssc_double(type265_dsg_controller, "T_rh_target");
+		set_unit_value_ssc_double(type265_dsg_controller, "T_fw", as_double("T_fw_init"));
+		set_unit_value_ssc_double(type265_dsg_controller, "P_cond", as_double("P_cond_init"));
 
 
 		// Connect DSG Controller Inputs
@@ -760,7 +644,6 @@ public:
 		bConnected &= connect(weather, "wspd", type265_dsg_controller, "v_wind_10");
 		bConnected &= connect(weather, "pres", type265_dsg_controller, "P_atm");
 		bConnected &= connect(weather, "tdew", type265_dsg_controller, "T_dp");
-//		bConnected &= connect(type221_hel_field, "eta_field", type265_dsg_controller, "field_eff");
 		bConnected &= connect(type_hel_field, "eta_field", type265_dsg_controller, "field_eff");
 		bConnected &= connect(type234_powerblock, "P_boiler_in", type265_dsg_controller, "P_b_in");
 		bConnected &= connect(type234_powerblock, "f_rh", type265_dsg_controller, "f_mdot_rh");
@@ -771,53 +654,45 @@ public:
 		bConnected &= connect(type234_powerblock, "P_cond", type265_dsg_controller, "P_cond");
 		bConnected &= connect(tou, "tou_value", type265_dsg_controller, "TOUPeriod");
 		bConnected &= connect(type_hel_field, "flux_map", type265_dsg_controller, "flux_map");
-//		bConnected &= connect(type_hel_field, "flux_positions", type265_dsg_controller, "fluxmap_angles");
 
 
 		// Set Powerblock Parameters
-		set_unit_value_ssc_double(type234_powerblock, "P_ref"); //P_cycle_design);
-		set_unit_value_ssc_double(type234_powerblock, "eta_ref"); //Eff_cycle_design);
-		set_unit_value_ssc_double(type234_powerblock, "T_hot_ref"); //T_SH_out_ref);
-		set_unit_value_ssc_double(type234_powerblock, "T_cold_ref"); //-1.23);				// This value isn't used in DSG
-		set_unit_value_ssc_double(type234_powerblock, "dT_cw_ref"); //dT_cooling_ref);
-		set_unit_value_ssc_double(type234_powerblock, "T_amb_des"); //T_amb_des);
-		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac"); //F_standby);
-		set_unit_value_ssc_double(type234_powerblock, "P_boil_des"); //P_HP_in);
+		set_unit_value_ssc_double(type234_powerblock, "P_ref");
+		set_unit_value_ssc_double(type234_powerblock, "eta_ref");
+		set_unit_value_ssc_double(type234_powerblock, "T_hot_ref");
+		set_unit_value_ssc_double(type234_powerblock, "T_cold_ref");
+		set_unit_value_ssc_double(type234_powerblock, "dT_cw_ref");
+		set_unit_value_ssc_double(type234_powerblock, "T_amb_des");
+		set_unit_value_ssc_double(type234_powerblock, "q_sby_frac");
+		set_unit_value_ssc_double(type234_powerblock, "P_boil_des");
 		
-		
-		//set_unit_value_ssc_double(type234_powerblock, "is_rh"); //is_rh);
 		set_unit_value_ssc_double(type234_powerblock, "is_rh", 1);
 		
 		
-		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref"); //P_HP_out);
-		
-		
-		//set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref"); //T_rh_out_ref);
+		set_unit_value_ssc_double(type234_powerblock, "P_rh_ref");
+				
 		set_unit_value_ssc_double(type234_powerblock, "T_rh_hot_ref", as_double("T_rh_out_des"));
 		
 		
-		set_unit_value_ssc_double(type234_powerblock, "rh_frac_ref"); //rh_frac_ref);
-		set_unit_value_ssc_double(type234_powerblock, "CT"); //Cool_type);
-		set_unit_value_ssc_double(type234_powerblock, "startup_time"); //startup_time);
-		set_unit_value_ssc_double(type234_powerblock, "startup_frac"); //startup_frac);
+		set_unit_value_ssc_double(type234_powerblock, "rh_frac_ref");
+		set_unit_value_ssc_double(type234_powerblock, "CT");
+		set_unit_value_ssc_double(type234_powerblock, "startup_time");
+		set_unit_value_ssc_double(type234_powerblock, "startup_frac");
 		
-		
-		//set_unit_value_ssc_double(type234_powerblock, "tech_type"); //tech_type);
 		set_unit_value_ssc_double(type234_powerblock, "tech_type", 5);
 		
 		
-		set_unit_value_ssc_double(type234_powerblock, "T_approach"); //T_approach);
-		set_unit_value_ssc_double(type234_powerblock, "T_ITD_des"); //T_ITD_des);
-		set_unit_value_ssc_double(type234_powerblock, "P_cond_ratio"); //P_cond_ratio);
-		set_unit_value_ssc_double(type234_powerblock, "pb_bd_frac"); //pb_bd_frac);
-		set_unit_value_ssc_double(type234_powerblock, "P_cond_min"); //min_cond_pres);
-		set_unit_value_ssc_double(type234_powerblock, "n_pl_inc"); //hr_pl_nlev);
-		set_unit_value_ssc_array(type234_powerblock, "F_wc"); //[HC_LOGIC0, HC_LOGIC1, HC_LOGIC2, HC_LOGIC3, HC_LOGIC4, HC_LOGIC5, HC_LOGIC6, HC_LOGIC7, HC_LOGIC8]);
+		set_unit_value_ssc_double(type234_powerblock, "T_approach");
+		set_unit_value_ssc_double(type234_powerblock, "T_ITD_des");
+		set_unit_value_ssc_double(type234_powerblock, "P_cond_ratio");
+		set_unit_value_ssc_double(type234_powerblock, "pb_bd_frac");
+		set_unit_value_ssc_double(type234_powerblock, "P_cond_min");
+		set_unit_value_ssc_double(type234_powerblock, "n_pl_inc");
+		set_unit_value_ssc_array(type234_powerblock, "F_wc");
 
 		// Set Powerblock initial values
 		set_unit_value_ssc_double(type234_powerblock, "mode", 2);		//8.6.15 twn: this value should be hardcoded (and maybe removed from Type234)
-		set_unit_value_ssc_double(type234_powerblock, "T_hot"); //T_SH_out_ref);
-		//set_unit_value_ssc_double(type234_powerblock, "TOU");//, 1);
+		set_unit_value_ssc_double(type234_powerblock, "T_hot");
 
 		// Connect Powerblock Inputs (and initial values?)
 		bConnected &= connect(type265_dsg_controller, "m_dot_toPB", type234_powerblock, "m_dot_st");
