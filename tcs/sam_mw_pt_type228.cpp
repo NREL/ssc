@@ -5,7 +5,9 @@ using namespace std;
 
 enum{	//Parameters
 		P_piping_loss,   
-		P_piping_length, 
+		P_PIPE_LENGTH_ADD,
+		P_PIPE_LENGTH_MULT,
+		P_THT,
 		P_design_power,  
 		P_design_eff,    
 		P_pb_fixed_par,  
@@ -47,7 +49,9 @@ enum{	//Parameters
 tcsvarinfo sam_mw_pt_type228_variables[] = {
 	//PARAMETERS
 	{TCS_PARAM,   TCS_NUMBER,   P_piping_loss,      "Piping_loss",         "Thermal loss per meter of piping",                               "Wt/m",      "", "", ""},
-	{TCS_PARAM,   TCS_NUMBER,   P_piping_length,    "Piping_length",       "Total length of exposed piping",                                 "m",         "", "", ""},
+	{TCS_PARAM,   TCS_NUMBER,   P_PIPE_LENGTH_ADD,  "piping_length_add",   "Value added to product of tower height*piping length multiple",	 "m"		  "", "", ""},
+	{TCS_PARAM,   TCS_NUMBER,   P_PIPE_LENGTH_MULT, "piping_length_mult",  "Value multiplied to tower height",								 "-"		  "", "", ""},
+	{TCS_PARAM,   TCS_NUMBER,   P_THT,				"THT",				   "The height of the tower (hel. pivot to rec equator)",			 "m",		  "", "", ""},
 	{TCS_PARAM,   TCS_NUMBER,   P_design_power,     "Design_power",        "Power production at design conditions",                          "MWe",       "", "", ""},
 	{TCS_PARAM,   TCS_NUMBER,   P_design_eff,       "design_eff",          "Power cycle efficiency at design",                               "none",      "", "", ""},
 	{TCS_PARAM,   TCS_NUMBER,   P_pb_fixed_par,     "pb_fixed_par",        "Fixed parasitic load - runs at all times",                       "MWe/MWcap", "", "", ""},
@@ -91,8 +95,7 @@ class sam_mw_pt_type228 : public tcstypeinterface
 {
 private:
 
-	double Piping_loss;
-	double Piping_length;
+	double m_Q_dot_piping_loss;
 	double Design_power;
 	double design_eff;
 	double pb_fixed_par;
@@ -111,8 +114,8 @@ public:
 	sam_mw_pt_type228( tcscontext *cst, tcstypeinfo *ti)
 		: tcstypeinterface( cst, ti)
 	{
-		Piping_loss = std::numeric_limits<double>::quiet_NaN();
-		Piping_length = std::numeric_limits<double>::quiet_NaN();
+
+		m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 		Design_power = std::numeric_limits<double>::quiet_NaN();
 		design_eff = std::numeric_limits<double>::quiet_NaN();
 		pb_fixed_par = std::numeric_limits<double>::quiet_NaN();
@@ -136,36 +139,41 @@ public:
 
 	virtual int init()
 	{
-		Piping_loss = value( P_piping_loss );
-		Piping_length = value( P_piping_length );
-		Design_power = value( P_design_power );
-		design_eff = value( P_design_eff );
-		pb_fixed_par = value( P_pb_fixed_par );
-		aux_par = value( P_aux_par );
-		aux_par_f = value( P_aux_par_f );
-		aux_par_0 = value( P_aux_par_0 );     
-		aux_par_1 = value( P_aux_par_1 );
-		aux_par_2 = value( P_aux_par_2 );     
-		bop_par = value( P_bop_par ); 
-		bop_par_f = value( P_bop_par_f );     
-		bop_par_0 = value( P_bop_par_0 ); 
-		bop_par_1 = value( P_bop_par_1 );     
-		bop_par_2 = value( P_bop_par_2 ); 
+		double pipe_loss_per_m = value( P_piping_loss )/1.E6;		//[MWt/m] convert from Wt/m
+		double h_tower = value(P_THT);								//[m] Tower height
+		double pipe_length_mult = value(P_PIPE_LENGTH_MULT);		//[-]
+		double pipe_length_add = value(P_PIPE_LENGTH_ADD);			//[m]
+
+		m_Q_dot_piping_loss = pipe_loss_per_m*(h_tower*pipe_length_mult + pipe_length_add);	//[MWt]
+
+		Design_power = value( P_design_power );			//[MWe]
+		design_eff = value( P_design_eff );				//[-]
+		pb_fixed_par = value( P_pb_fixed_par );			//[MWe/MWcap]
+		aux_par = value( P_aux_par );					//[MWe/MWcap]
+		aux_par_f = value( P_aux_par_f );				//[-]
+		aux_par_0 = value( P_aux_par_0 );				//[-]
+		aux_par_1 = value( P_aux_par_1 );				//[-]
+		aux_par_2 = value( P_aux_par_2 );     			//[-]
+		bop_par = value( P_bop_par );					//[MWe/MWcap]
+		bop_par_f = value( P_bop_par_f );				//[-]
+		bop_par_0 = value( P_bop_par_0 ); 				//[-]
+		bop_par_1 = value( P_bop_par_1 );     			//[-]
+		bop_par_2 = value( P_bop_par_2 ); 				//[-]
 
 		return 0;
 	}
 
 	virtual int call( double time, double step, int ncall )
 	{						
-		double P_cooling_tower = value( I_P_cooling_tower );
-		double P_tower_pump = value( I_P_tower_pump );
-		double P_helio_track = value( I_P_helio_track );
-		double P_plant_output = value( I_P_plant_output );
-		double eta_cycle = value( I_eta_cycle );
-		double P_cold_tank = value( I_P_cold_tank );
-		double P_hot_tank = value( I_P_hot_tank );
-		double aux_power = value( I_aux_power );
-		double P_htf_pump = value( I_P_htf_pump );
+		double P_cooling_tower = value( I_P_cooling_tower );	//[MWe] Cooling parasitics from power cycle model
+		double P_tower_pump = value( I_P_tower_pump );			//[MWe] Power required to pump HTF through the tower
+		double P_helio_track = value( I_P_helio_track );		//[MWe] Power required to startup/stow/track heliostats
+		double P_plant_output = value( I_P_plant_output );		//[MWe] Electric output from power cycle model (not including cooling parasitics)
+		double eta_cycle = value( I_eta_cycle );				//[-] Power cycle thermal efficiency considering cycle generation (defined above) and thermal input
+		double P_cold_tank = value( I_P_cold_tank );			//[MWe] Power required to keep cold tank at its minimum temperature
+		double P_hot_tank = value( I_P_hot_tank );				//[MWe] Power required to keep hot tank at its minimum temperature
+		double aux_power = value( I_aux_power );				//[MWt] Aux power used during timestep
+		double P_htf_pump = value( I_P_htf_pump );				//[MWe] Power required to pump HTF through PC AND TES (but no TES storage side pumping)
 
 		double P_ratio = P_plant_output/Design_power;
 		double aux_ratio = aux_power/Design_power/design_eff;
@@ -176,7 +184,7 @@ public:
 		//else
 		//	P_storage_pump_tot = P_storage_pump*P_plant_output/design_eff;	//Hot pump operates when any hot HTF is sent to the power block
 
-		double P_fixed = pb_fixed_par * Design_power;
+		double P_fixed = pb_fixed_par * Design_power;		//[MWe]
 
 		double P_plant_balance_tot;
 		if( P_plant_output > 0.0 )
@@ -190,9 +198,12 @@ public:
 		else
 			P_aux = 0.0;
 
-		double P_cooling_tower_tot = P_cooling_tower;
+		double P_cooling_tower_tot = P_cooling_tower;		//[MWe]
 
-		double P_piping_tot = Piping_loss * Piping_length * eta_cycle * P_plant_output / (Design_power*1.E6);	//MWe
+				
+		//[MW] = piping loss thermal * conversion to electric * current timestep scaling
+		double P_piping_tot = m_Q_dot_piping_loss * eta_cycle * P_plant_output / Design_power;	//MWe
+
 
 		double P_tank_heater = (P_cold_tank + P_hot_tank);		//MWe
 
@@ -202,7 +213,7 @@ public:
 		//else
 		//	P_tower_par = 0.0;
 
-		// 7.8.13, twn: Add htf pumping power to parasitic calcs
+		// 7.8.13, twn: Add htf pumping power to parasitic calcs: MWe
 		double P_parasitics = P_plant_balance_tot + P_cooling_tower_tot + P_fixed + P_tower_pump + P_helio_track + P_piping_tot + P_tank_heater + P_aux + P_htf_pump;
 
 		value( O_P_plant_balance_tot, P_plant_balance_tot );
