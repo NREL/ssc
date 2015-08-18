@@ -22,7 +22,7 @@ class voltage_t;
 class capacity_t
 {
 public:
-	capacity_t(double q);
+	capacity_t(double q, double SOC_max);
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
@@ -52,6 +52,7 @@ protected:
 	double _qmax0; // [Ah] - original maximum capacity
 	double _I;   // [A]  - Current draw during last step
 	double _SOC; // [%] - State of Charge
+	double _SOC_max; // [%] - Maximum SOC
 	double _DOD; // [%] - Depth of Discharge
 	double _DOD_prev; // [%] - Depth of Discharge of previous step
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
@@ -68,7 +69,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
-	capacity_kibam_t(double q20, double t1, double q1, double q10);
+	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max);
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
@@ -115,7 +116,7 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q);
+	capacity_lithium_ion_t(double q, double SOC_max);
 	~capacity_lithium_ion_t();
 
 	// override public api
