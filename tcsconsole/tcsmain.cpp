@@ -572,7 +572,11 @@ int tcFrame::Simulate( double start, double end, double step, int iter, bool sto
 	while( tcKernel::dataset *d = m_kernel->get_results(idx++) )
 	{
 		if ( d->type == TCS_NUMBER && d->values.size() > 0)
-			m_plot->AddDataSet( new tcsDVDataSet( d, start, step ), d->group.c_str() );
+		{
+			tcsDVDataSet *dvset = new tcsDVDataSet( d, start, step );
+			dvset->SetGroupName( d->group );
+			m_plot->AddDataSet( dvset );
+		}
 
 		wxString text = wxString(d->group.c_str()) + ":  " + wxString(d->name.c_str()) + " (" + wxString(d->units.c_str()) + ")";
 		int idx = m_varSelector->Append( text );
