@@ -1187,25 +1187,26 @@ public:
 		}
 
 		// Set Parasitics (type 228) Parameters
-		//set_unit_value_ssc_double(type228_parasitics, "P_storage_pump", 0.0); //P_storage_pump);
-		set_unit_value_ssc_double(type228_parasitics, "Piping_loss"); //piping_loss );
-		set_unit_value_ssc_double(type228_parasitics, "Piping_length"); //piping_length );
-		set_unit_value_ssc_double(type228_parasitics, "Design_power", "P_ref"); //P_cycle_design );
-		//set_unit_value_ssc_double(type228_parasitics, "recirc_htr_eff", 1.0); //recirc_htr_eff );
-		set_unit_value_ssc_double(type228_parasitics, "design_eff"); //Eff_cycle_design );
-		//set_unit_value_ssc_double(type228_parasitics, "night_recirc", 0.0); //night_recirc );
-		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); //pb_fixed_par );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par"); //aux_par );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); //aux_par_f );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_0"); //aux_par_0 );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_1"); //aux_par_1 );
-		set_unit_value_ssc_double(type228_parasitics, "aux_par_2"); //aux_par_2 );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par"); //bop_par );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_f"); //bop_par_f );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); //bop_par_0 );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); //bop_par_1 );
-		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); //bop_par_2 );
-		//set_unit_value_ssc_double(type228_parasitics, "storage_bypass", 0.0); //storage_bypass );
+			// 8.15.15 twn: For MSPT, we're calculating piping losses in physical receiver model, so zero out tower piping parasitics here
+			// ...... still need this in Type 228 for DSGPT
+		set_unit_value_ssc_double(type228_parasitics, "Piping_loss");
+		set_unit_value_ssc_double(type228_parasitics, "piping_length_add", "csp.pt.par.piping_length_const");          
+		set_unit_value_ssc_double(type228_parasitics, "piping_length_mult", "csp.pt.par.piping_length_mult");	
+		set_unit_value_ssc_double(type228_parasitics, "THT", THT);
+
+		set_unit_value_ssc_double(type228_parasitics, "Design_power", "P_ref");
+		set_unit_value_ssc_double(type228_parasitics, "design_eff");
+		set_unit_value_ssc_double(type228_parasitics, "pb_fixed_par"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_f"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_0"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_1"); 
+		set_unit_value_ssc_double(type228_parasitics, "aux_par_2"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_f"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_0"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_1"); 
+		set_unit_value_ssc_double(type228_parasitics, "bop_par_2"); 
 
 		// Set Parasitics (type 228) Inputs (Initial values?)
 		// set_unit_value_ssc_double(type228_parasitics, "flow_from_storage", 0.0);
