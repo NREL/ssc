@@ -8,12 +8,15 @@
 #include <map>
 #include <string>
 #include <stdio.h>
+#include <algorithm>
 
 const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
 const double hour_to_min = 60.;
 const double tolerance = 0.001;
 
+typedef std::vector<double> double_vec;
+typedef std::vector<int> int_vec;
 /*
 Base class from which capacity models derive
 Note, all capacity models are based on the capacity of one battery
@@ -356,17 +359,17 @@ class dispatch_t
 {
 public:
 	dispatch_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
-			   // double Pc_max, double Pd_max,
 			   double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac);
 
 	// Public APIs
 	virtual void dispatch(size_t hour_of_year, 
+						  size_t step, 
 						  double e_pv,     // PV energy [kWh]
 						  double e_load)   // Load energy [kWh]
 						  = 0;
 
 	// Controllers
-	void SOC_controller(double battery_voltage, double charge_total, double charge_max, double percent_discharge);
+	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	
@@ -416,7 +419,8 @@ protected:
 	double _t_min;
 	double _e_max_discharge;
 	double _e_max_charge;
-
+	double _percent_discharge;
+	double _percent_charge;
 	// rapid charge change controller
 	int _t_at_mode; // [minutes]
 	bool _charging;
@@ -435,30 +439,64 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
+	friend class automate_dispatch_t;
 	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
-				     // double Pc_max, double Pd_max, 
 					 double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
-					 util::matrix_static_t<float, 12, 24> dm_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double> dm_percent_discharge);
-	void dispatch(size_t hour_of_year, double e_pv, double e_load);
+					 int mode, util::matrix_t<float> dm_dynamic_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double> dm_percent_discharge);
+	void dispatch(size_t hour_of_year, size_t step, double e_pv, double e_load);
 
 protected:
-	util::matrix_static_t<float, 12, 24> _sched;
-	bool * _charge_array;
-	bool * _discharge_array;
-	bool * _gridcharge_array;
+	util::matrix_t < float > _sched;
+	std::vector<bool> _charge_array;
+	std::vector<bool> _discharge_array;
+	std::vector<bool> _gridcharge_array;
 	std::map<int, double>  _percent_discharge_array;
-
+	std::map<int, double> _percent_charge_array;
 	bool  _can_charge;
 	bool  _can_discharge;
 	bool  _can_grid_charge;
-	double _percent_discharge;
+	
+	int _mode; // 0 = look ahead, 1 = look behind, 2 = manual dispatch
 };
+/*
+Automate dispatch class
+*/
+class automate_dispatch_t
+{
+public:
+	automate_dispatch_t(dispatch_manual_t * Dispatch,
+		int nyears,
+		double dt_hour,			   // [hr]
+		double * pv, double *load, // input as power [kW] not energy
+		int mode);				   // 0/1/2
+	void update_pv_load_data(double *pv, double *load);
+	void update_dispatch(int hour_of_year, int idx);
+	int get_mode();
 
+protected:
+	void initialize(int hour_of_year, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps);
+	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
+	void sort_grid(FILE *p, bool debug, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps);
+	void compute_energy(FILE *p, bool debug, double & E_useful, double & E_max);
+	void target_power(FILE*p, bool debug, double_vec sorted_grid, double & P_target, double E_useful);
+	void set_charge(int profile);
+	int set_discharge(FILE *p, bool debug, int hour_of_year, double_vec sorted_grid, int_vec sorted_hours, int_vec sorted_steps, double P_target, double E_max);
+	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double_vec grid, double_vec sorted_grid, int_vec sorted_hours, int_vec sorted_steps, double P_target, double E_max);
+
+
+	dispatch_manual_t * _dispatch;
+	double * _pv;   // [kW]
+	double * _load; // [kW]
+	int _hour_last_updated;
+	double _dt_hour;
+	int _steps_per_hour;
+	int _num_steps;
+	int _nyears;
+	int _mode;
+};
 
 /*
 Non-class functions
 */
-void getMonthHour(int hourOfYear, int * month, int * hour);
-bool compare(int, int);
-
+void getMonthHour(int hourOfYear, int & month, int & hour);
 #endif

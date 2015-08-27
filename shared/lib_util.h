@@ -126,7 +126,20 @@ namespace util
 				for( size_t j=0;j<n_cols;j++ )
 					t_array[i][j] = fillval;
 		}
-
+		void set_column(const T val, size_t c)
+		{
+			for (size_t i = 0; i< n_rows;i++)
+				t_array[i][c] = val;
+		}
+		void set_row(const T val, size_t r)
+		{
+			for (size_t j = 0; j< n_cols; j++)
+				t_array[r][j] = val;
+		}
+		void set_value(const T val, size_t r, size_t c)
+		{
+			t_array[r][c] = val;
+		}
 		inline T &at(size_t r, size_t c)
 		{
 	#ifdef _DEBUG
@@ -337,7 +350,10 @@ namespace util
 		{
 			resize_fill( 1, len, val );
 		}
-		
+		void set_value(const T &val, size_t r, size_t c)
+		{
+			t_array[n_cols*r + c] = val;
+		}
 		inline T &at(size_t i)
 		{
 	#ifdef _DEBUG

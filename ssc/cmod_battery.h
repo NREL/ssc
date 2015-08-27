@@ -11,10 +11,11 @@ struct battstor
 {
 
 	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr );
+	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0, int mode=0);
 	~battstor();
 
 	// Note, PV & LOAD are energy quantities, not power
-	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV, double LOAD );
+	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, size_t year, double PV, double LOAD );
 	void update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD);
 
 	// for user schedule
@@ -38,15 +39,17 @@ struct battstor
 	capacity_t *capacity_model;
 	battery_t *battery_model;
 	dispatch_manual_t *dispatch_model;
+	automate_dispatch_t *automated_dispatch=0;
 	losses_t *losses_model;
 
 	bool en;
 	int chem;
 	
 
+	int batt_dispatch;
 	bool dm_charge[6], dm_discharge[6], dm_gridcharge[6]; // manual dispatch
 	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
-	util::matrix_static_t<float, 12, 24> dm_sched;
+	util::matrix_t<float> dm_dynamic_sched;
 	
 	bool ac_or_dc;
 	double dc_dc, ac_dc, dc_ac;
@@ -54,6 +57,9 @@ struct battstor
 	double e_charge;
 	double e_discharge;
 
+	double * pv_prediction=0;
+	double * load_prediction=0;
+	int prediction_index;
 	// outputs
 	ssc_number_t 
 		*outTotalCharge,
