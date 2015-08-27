@@ -24,13 +24,13 @@ var_info vtab_battery[] = {
 	// generic battery inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_strings",                      "Number of strings of cells",                              "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of cells in series",                               "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_bank_capacity",                "Computed bank capacity",                                  "kWh",     "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,		 "batt_bank_size",                             "Battery bank desired size",                               "kWh",     "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
 
 	// Voltage discharge curve
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vfull",                                 "Fully charged cell voltage",                              "V",       "",                     "Battery",       "",                           "",                              "" },
@@ -71,6 +71,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
 		
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                              "0/1/2",    "",                    "Battery",       "?=0",                        "",                             "" },
 
 
 // Capacity, Voltage, Charge outputs
@@ -106,8 +107,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                       "Battery",       "",                          "LENGTH=12",                     "" },
 	
 	// Efficiency outputs													          
-	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average battery cycle efficiency",                      "%",        "",                     "Annual",        "",                           "",                              "" },
-	
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average battery cycle efficiency",                      "%",        "",                      "Annual",        "",                           "",                               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                       "Annual",        "",                         "",                             "" },
 var_info_invalid };
 
 
@@ -189,14 +190,25 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		}
 	}
 	size_t m,n;
-	ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
-	if ( m != 12 || n != 24 )
-		throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24" );
+	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
 
-	for( size_t i=0;i<12;i++ )
-		for( size_t j=0;j<24;j++ )
-			dm_sched(i,j) = psched[ i*24 + j ];
-	
+	if (batt_dispatch == 2)
+	{
+		ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
+		if (m != 12 || n != 24)
+			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
+		dm_dynamic_sched.resize(m, n);
+		for (size_t i = 0; i < 12; i++)
+			for (size_t j = 0; j < 24; j++)
+				dm_dynamic_sched(i, j) = psched[i * 24 + j];
+
+	}
+	else 
+	{
+		m = 12;
+		n = 24 * step_per_hour;
+		dm_dynamic_sched.resize_fill(m,n,1);
+	}
 	util::matrix_t<double>  batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
 		throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
@@ -298,9 +310,34 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
 		cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
-		dm_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
+		batt_dispatch,
+		dm_dynamic_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
 } 
+void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
+{
+	int nrec;
+	prediction_index = 0;
+	// automatic look ahead
+	if (mode == 0)
+		nrec = nyears * 8760 * step_per_hour;
+	// look behind
+	else if (mode == 1)
+		nrec = 24 * step_per_hour;
 
+	pv_prediction = new double[nrec];
+	load_prediction = new double[nrec];
+
+	if (mode == 0)
+	{
+		for (int idx = 0; idx != nrec; idx++)
+		{
+			pv_prediction[idx] = pv[idx];
+			load_prediction[idx] = load[idx];
+		}
+	}
+	automated_dispatch = new automate_dispatch_t(dispatch_model, nyears, _dt_hour, pv_prediction, load_prediction, mode);
+
+}
 battstor::~battstor()
 {
 	if( voltage_model ) delete voltage_model;
@@ -310,6 +347,12 @@ battstor::~battstor()
 	if( capacity_model ) delete capacity_model;
 	if (losses_model) delete losses_model;
 	if( dispatch_model ) delete dispatch_model;
+	if (automated_dispatch)
+	{
+		delete automated_dispatch;
+		delete[] pv_prediction;
+		delete[] load_prediction;
+	}
 }
 
 void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step)
@@ -344,11 +387,34 @@ void battstor::force_replacement()
 }
 
 
-void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, double PV /* [kWh] */, double LOAD /* [kWh] */ )
+void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, size_t year, double PV /* [kWh] */, double LOAD /* [kWh] */ )
 {
 	if (PV < 0){ PV = 0; }
-	dispatch_model->dispatch( hour_of_year, PV, LOAD );
+	
+	if (automated_dispatch)
+	{
+		int mode = automated_dispatch->get_mode();
+		// look ahead
+		if (mode == 0)
+			automated_dispatch->update_dispatch(hour_of_year, idx);
+		// look behind
+		else if (mode == 1)
+		{
+			int nrec = 24 * step_per_hour;
+			// start on day 2 (or perhaps run full simulation and use last day of year first)
+			bool first_day = (year == 0 && hour_of_year == 0);
 
+			if ((hour_of_year) % 24 == 0 && (!first_day ) )
+			{
+				automated_dispatch->update_dispatch(hour_of_year, 0);
+				prediction_index = 0;
+			}
+			pv_prediction[prediction_index] = PV / _dt_hour;
+			load_prediction[prediction_index] = LOAD / _dt_hour;
+			prediction_index++;
+		}
+	}
+	dispatch_model->dispatch( hour_of_year, step, PV, LOAD );
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
@@ -410,7 +476,8 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 
 	// average battery eff
 	cm.assign("average_cycle_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
-
+	// battery capacity installed
+	cm.assign("batt_bank_installed_capacity", cm.as_double("batt_computed_bank_capacity"));
 	// monthly outputs
 	cm.accumulate_monthly_for_year( "pv_to_load",   "monthly_pv_to_load",   _dt_hour, step_per_hour );
 	cm.accumulate_monthly_for_year( "batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour );
@@ -471,7 +538,7 @@ public:
 			// Loop over subhourly
 			for (size_t jj = 0; jj<step_per_hour; jj++)
 			{
-				batt.advance( *this, count, hour, jj, hourly_energy[count], e_load[count] );
+				batt.advance( *this, count, hour, jj, 0, hourly_energy[count], e_load[count] );
 				count++;
 			}	// End loop over subhourly
 		} // End loop over hourly
