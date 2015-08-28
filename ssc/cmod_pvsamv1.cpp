@@ -1559,20 +1559,21 @@ public:
 		size_t nreports = 50 * nyears;
 		size_t ireport = 0;
 		size_t ireplast = 0;
-		size_t insteps = nyears * 8760;
+		size_t insteps = look_ahead ? 2*nyears * 8760 : nyears * 8760;
 		size_t irepfreq = insteps/nreports;
 
 		size_t idx = 0;
 		size_t hour = 0;
 
-		// for loss diagram
+		bool prediction_generated = false;
 		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0;
 
-		bool prediction_generated = false;
-		
 		// run at least once
 		do {
 			
+			// for loss diagram
+			annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[0] = 0, dc_gross[1] = 0, dc_gross[2] = 0, dc_gross[3] = 0, annual_mppt_window_clipping = 0;
+
 			idx = 0;
 			// lifetime analysis over nyears
 			for (size_t iyear = 0; iyear < nyears; iyear++)
