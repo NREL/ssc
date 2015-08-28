@@ -39,7 +39,8 @@ struct battstor
 	capacity_t *capacity_model;
 	battery_t *battery_model;
 	dispatch_manual_t *dispatch_model;
-	automate_dispatch_t *automated_dispatch=0;
+	//automate_dispatch_t *automated_dispatch=0;
+	automate_dispatch_t *automated_dispatch;
 	losses_t *losses_model;
 
 	bool en;
@@ -57,8 +58,10 @@ struct battstor
 	double e_charge;
 	double e_discharge;
 
-	double * pv_prediction=0;
-	double * load_prediction=0;
+	//double * pv_prediction=0;
+	double * pv_prediction;
+	//double * load_prediction=0;
+	double * load_prediction;
 	int prediction_index;
 	// outputs
 	ssc_number_t 
