@@ -1084,7 +1084,7 @@ Manual Dispatch
 */
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
 	double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
-	int mode, util::matrix_t<float> dm_dynamic_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int,double>  dm_percent_discharge)
+	int mode, util::matrix_t<float> dm_dynamic_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max, 
 				t_min, ac_or_dc, dc_dc, ac_dc, dc_ac)
 {
@@ -1094,9 +1094,9 @@ dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_
 		_charge_array.push_back(dm_charge[i]);
 		_discharge_array.push_back(dm_discharge[i]);
 		_gridcharge_array.push_back(dm_gridcharge[i]);
-		_percent_charge_array[i] = 100;
 	}
-	_percent_discharge_array = dm_percent_discharge;
+	_percent_discharge_array = dm_percent_discharge; 
+	_percent_charge_array = dm_percent_gridcharge;
 	_mode = mode;
 }
 void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, double e_load)
