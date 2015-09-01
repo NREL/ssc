@@ -69,8 +69,8 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
-		
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                              "0/1/2",    "",                    "Battery",       "?=0",                        "",                             "" },
 
 
@@ -125,7 +125,11 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	battery_model = 0;
 	capacity_model = 0;
 	dispatch_model = 0;
+	automated_dispatch = 0;
 	losses_model = 0;
+
+	pv_prediction = 0;
+	load_prediction = 0;
 
 	// outputs
 	outTotalCharge = 0;
@@ -164,15 +168,17 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 
 	chem = cm.as_integer( "batt_chem" );
 
-	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent;
+	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent, ngridcharge_percent;
 	ssc_number_t *pcharge = cm.as_array( "dispatch_manual_charge", &ncharge );
 	ssc_number_t *pdischarge = cm.as_array( "dispatch_manual_discharge", &ndischarge );
 	ssc_number_t *pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &ndischarge_percent);
+	ssc_number_t *pgridcharge_percent = cm.as_array("dispatch_manual_percent_gridcharge", &ngridcharge_percent);
 	ssc_number_t *pgridcharge = cm.as_array( "dispatch_manual_gridcharge", &ngridcharge );
 	if ( ncharge != 6 || ndischarge != 6 || ngridcharge != 6 )
 		throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
 
 	int discharge_index = 0;
+	int gridcharge_index = 0;
 	for( size_t i=0;i<6;i++ )
 	{
 		dm_charge[i] = pcharge[i]!=0.0f ? 1 : 0;
@@ -184,6 +190,16 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			{
 				dm_percent_discharge[i] = pdischarge_percent[discharge_index];
 				discharge_index++;
+			}
+			else
+				throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
+		}
+		if (dm_gridcharge[i])
+		{
+			if (gridcharge_index < ngridcharge_percent)
+			{
+				dm_percent_gridcharge[i] = pgridcharge_percent[gridcharge_index];
+				gridcharge_index++;
 			}
 			else
 				throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
@@ -311,7 +327,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
 		batt_dispatch,
-		dm_dynamic_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge);
+		dm_dynamic_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 } 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
 {

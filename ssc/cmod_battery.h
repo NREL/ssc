@@ -39,7 +39,6 @@ struct battstor
 	capacity_t *capacity_model;
 	battery_t *battery_model;
 	dispatch_manual_t *dispatch_model;
-	//automate_dispatch_t *automated_dispatch=0;
 	automate_dispatch_t *automated_dispatch;
 	losses_t *losses_model;
 
@@ -50,6 +49,7 @@ struct battstor
 	int batt_dispatch;
 	bool dm_charge[6], dm_discharge[6], dm_gridcharge[6]; // manual dispatch
 	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
+	std::map<int, double> dm_percent_gridcharge; // <profile, gridcharge_percent>
 	util::matrix_t<float> dm_dynamic_sched;
 	
 	bool ac_or_dc;
@@ -58,11 +58,10 @@ struct battstor
 	double e_charge;
 	double e_discharge;
 
-	//double * pv_prediction=0;
 	double * pv_prediction;
-	//double * load_prediction=0;
 	double * load_prediction;
 	int prediction_index;
+
 	// outputs
 	ssc_number_t 
 		*outTotalCharge,
