@@ -35,9 +35,10 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	
-	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Retail and wholesale rates", "", "?=1", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_excess_monthly_energy_or_dollars", "Net metering handling of monthly excess", "0=Rollover energy,1=Rollover dollars", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_excess_monthly_energy_or_dollars", "Net metering handling of monthly excess", "0=Rollover energy,1=Rollover dollars", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Net metering rollover monthly excess energy (kWh),1=Net metering rollover monthly excess dollars ($),2=Non-net metering monthly reconciliation,3=Non-net metering hourly reconciliation", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
@@ -2264,7 +2265,9 @@ public:
 
 			// false = 2 meters, load and system treated separately
 			// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
-			bool enable_nm = as_boolean("ur_enable_net_metering");
+//			bool enable_nm = as_boolean("ur_enable_net_metering");
+			int metering_option = as_integer("ur_metering_option");
+			bool enable_nm = (metering_option==0 || metering_option==1);
 
 
 
@@ -2716,7 +2719,9 @@ public:
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
 //		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-		bool enable_nm = as_boolean("ur_enable_net_metering");
+//			bool enable_nm = as_boolean("ur_enable_net_metering");
+		int metering_option = as_integer("ur_metering_option");
+		bool enable_nm = (metering_option == 0 || metering_option == 1);
 
 
 		for (m=0;m<12;m++)
@@ -2791,17 +2796,23 @@ public:
 
 		//bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
-		
+	
+
 		// false = 2 meters, load and system treated separately
 		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
-		bool enable_nm = as_boolean("ur_enable_net_metering");
+//		bool enable_nm = as_boolean("ur_enable_net_metering");
+		//			bool enable_nm = as_boolean("ur_enable_net_metering");
+		int metering_option = as_integer("ur_metering_option");
+		bool enable_nm = (metering_option == 0 || metering_option == 1);
+
 		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
 		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
-		bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
-//		bool apply_excess_to_flat_rate = !ec_enabled;
+		//bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
+		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 1);
+		//		bool apply_excess_to_flat_rate = !ec_enabled;
 
 		if (sell_eq_buy)
 			sell = buy;
