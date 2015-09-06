@@ -2255,7 +2255,6 @@ public:
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
 				assign("year1_monthly_ec_charge_flat_without_system", var_data(&monthly_ec_flat_charges[0], 12));
-				//assign( "year1_monthly_ec_rate_without_system", var_data(&monthly_ec_rates[0], 12) );
 
 				// sign reversal based on 9/5/13 meeting, reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
@@ -2520,7 +2519,6 @@ public:
 				assign("year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12));
 				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
 				assign("year1_monthly_ec_charge_flat_with_system", var_data(&monthly_ec_flat_charges[0], 12));
-				//assign( "year1_monthly_ec_rate_with_system", var_data(&monthly_ec_rates[0], 12) );
 			}
 
 			// determine net-revenue benefit due to solar for year 'i'
@@ -3458,28 +3456,10 @@ public:
 		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
 		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
 
-		//bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-
-
-
-		// false = 2 meters, load and system treated separately
-		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
-		//		bool enable_nm = as_boolean("ur_enable_net_metering");
-		//			bool enable_nm = as_boolean("ur_enable_net_metering");
-		int metering_option = as_integer("ur_metering_option");
-		bool enable_nm = (metering_option == 0 || metering_option == 1);
-
-		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
 		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
-		//bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
-		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 1);
-		//		bool apply_excess_to_flat_rate = !ec_enabled;
-
-		if (sell_eq_buy)
-			sell = buy;
 
 		// calculate the monthly net energy and monthly hours
 		int m, d, h;
@@ -3504,18 +3484,6 @@ public:
 			}
 		}
 
-		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
-		if (enable_nm && !excess_monthly_dollars)
-		{
-			ssc_number_t prev_value = 0;
-			for (m = 0; m < 12; m++)
-			{
-				prev_value = (m > 0) ? monthly_cumulative_excess_energy[m - 1] : 0;
-				monthly_cumulative_excess_energy[m] = ((prev_value + monthly_energy_net[m]) > 0) ? (prev_value + monthly_energy_net[m]) : 0;
-			}
-		}
-
-
 
 		// TODO schedules can be initialized outside of ur_calc once!
 		// 12 periods with 6 tiers each rates 3rd index = 0 = buy and 1=sell
@@ -3525,6 +3493,7 @@ public:
 		int period, tier;
 		ssc_number_t ec_monthly_energy_net[12][12]; // 12 months, 12 periods
 		int ec_hours_per_month_per_period[12][12];
+		int ec_tod[8760];
 
 		if (ec_enabled)
 		{
@@ -3548,7 +3517,6 @@ public:
 			util::matrix_t<float> ec_schedwkend(12, 24);
 			ec_schedwkend.assign(ec_weekend, nrows, ncols);
 
-			int ec_tod[8760];
 
 			if (!util::translate_schedule(ec_tod, ec_schedwkday, ec_schedwkend, 1, 12))
 				throw general_error("could not translate weekday and weekend schedules for energy charges");
@@ -3566,7 +3534,8 @@ public:
 					std::string str_tier = util::to_string(tier + 1);
 
 					ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
-					ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc;
+					// TODO: overwrite with single sell rate?
+					ec_rates[period][tier][1] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc;
 					ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
 				}
 			}
@@ -3598,23 +3567,6 @@ public:
 						// hours per period per month
 						ec_hours_per_month_per_period[m][todp]++;
 						c++;
-					}
-				}
-			}
-		}
-		// adjust net energy if net metering with monthly rollover
-		if (enable_nm && !excess_monthly_dollars)
-		{
-			for (m = 1; m < 12; m++)
-			{
-				if (monthly_energy_net[m] < 0)
-					monthly_energy_net[m] += monthly_cumulative_excess_energy[m - 1];
-				for (period = 0; period < 12; period++)
-				{
-					if (monthly_energy_net[m] != 0 && (ec_monthly_energy_net[m][period]<0))
-					{
-						ssc_number_t reduction = fabs(monthly_cumulative_excess_energy[m - 1] * ec_monthly_energy_net[m][period] / monthly_energy_net[m]);
-						ec_monthly_energy_net[m][period] += reduction;
 					}
 				}
 			}
@@ -3744,7 +3696,7 @@ public:
 		}
 
 
-		c = 0;
+		c = 0; // hourly count
 		// process one month at a time
 		for (m = 0; m < 12; m++)
 		{
@@ -3754,139 +3706,105 @@ public:
 			{
 				for (h = 0; h<24; h++)
 				{
-					if (d == util::nday[m] - 1 && h == 23)
+					// flat rate
+					if (e_in[c] < 0) // must buy from grid
 					{
-						if (enable_nm)
-						{
-							if (monthly_energy_net[m] < 0)
-							{
-								payment[c] += -monthly_energy_net[m] * buy;
-								monthly_ec_flat_charges[m] += payment[c];
-							}
-						}
-						else // no net metering - so no rollover.
-						{
-							if (monthly_energy_net[m] < 0) // must buy from grid
-							{
-								payment[c] += -monthly_energy_net[m] * buy;
-								monthly_ec_flat_charges[m] += payment[c];
-							}
-							else
-							{
-								income[c] += monthly_energy_net[m] * sell;
-								monthly_ec_flat_charges[m] -= income[c];
-							}
-						}
-						// added for Mike Gleason 
-						energy_charge[c] += monthly_ec_flat_charges[m];
-						// Price ?
+						payment[c] += -e_in[c] * buy;
+						energy_charge[c] += payment[c];
+						price[c] += buy;
+					}
+					else
+					{
+						income[c] += e_in[c] * sell;
+						energy_charge[c] -= income[c];
+						price[c] += sell;
+					}
+					monthly_ec_flat_charges[m] += energy_charge[c];
+					// end of flat rate
 
-						// end of flat rate
-
-						// energy charge
-						if (ec_enabled)
-						{
-							ssc_number_t monthly_energy = 0;
-							for (period = 0; period<12; period++)
+					// energy charge
+					if (ec_enabled)
+					{
+						int period = ec_tod[c] - 1;
+						if (e_in[c] >= 0.0)
+						{ // calculate income or credit
+							ssc_number_t credit_amt = 0;
+							ssc_number_t energy_surplus = e_in[c];
+							tier = 0;
+							while (tier<6)
 							{
-								//				charge[m][period]=0;
-								//				credit[m][period]=0;
+								ssc_number_t tier_energy = 0;
+								ssc_number_t tier_credit = 0;
+								// add up the charge amount for this block
+								ssc_number_t e_upper = ec_energy_ub[period][tier];
+								ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
 
-								if (ec_monthly_energy_net[m][period] >= 0.0)
-								{ // calculate income or credit
-									ssc_number_t credit_amt = 0;
-									ssc_number_t energy_surplus = ec_monthly_energy_net[m][period];
-									tier = 0;
-									while (tier < 6)
-									{
-										ssc_number_t tier_energy = 0;
-										ssc_number_t tier_credit = 0;
-										// add up the charge amount for this block
-										ssc_number_t e_upper = ec_energy_ub[period][tier];
-										ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
-
-										if (energy_surplus > e_upper)
-										{
-											tier_energy = e_upper - e_lower;
-											tier_credit = tier_energy*ec_rates[period][tier][1];
-										}
-										else
-										{
-											tier_energy = energy_surplus - e_lower;
-											tier_credit = tier_energy*ec_rates[period][tier][1];
-										}
-										credit_amt += tier_credit;
-										monthly_e_use_period_tier[m][period][tier] -= tier_energy;
-										monthly_charge_period_tier[m][period][tier] -= tier_credit;
-										if (energy_surplus < e_upper)
-											break;
-										tier++;
-									}
-									//					credit[m][period] = credit_amt;
-									monthly_ec_charges[m] -= credit_amt;
-									monthly_energy += energy_surplus;
+								if (energy_surplus > e_upper)
+								{
+									tier_energy = e_upper - e_lower;
+									tier_credit = tier_energy*ec_rates[period][tier][1];
 								}
 								else
-								{ // calculate payment or charge
-									ssc_number_t charge_amt = 0;
-									ssc_number_t energy_deficit = -ec_monthly_energy_net[m][period];
-
-									tier = 0;
-									while (tier < 6)
-									{
-										ssc_number_t tier_energy = 0;
-										ssc_number_t tier_charge = 0;
-										// add up the charge amount for this block
-										ssc_number_t e_upper = ec_energy_ub[period][tier];
-										ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
-
-										if (energy_deficit > e_upper)
-										{
-											tier_energy = e_upper - e_lower;
-											tier_charge = tier_energy*ec_rates[period][tier][0];
-										}
-										else
-										{
-											tier_energy = energy_deficit - e_lower;
-											tier_charge = tier_energy*ec_rates[period][tier][0];
-										}
-										charge_amt += tier_charge;
-										monthly_e_use_period_tier[m][period][tier] += tier_energy;
-										monthly_charge_period_tier[m][period][tier] += tier_charge;
-										if (energy_deficit < e_upper)
-											break;
-										tier++;
-									}
-									//					charge[m][period] = charge_amt;
-									monthly_ec_charges[m] += charge_amt;
-									monthly_energy -= energy_deficit;
+								{
+									tier_energy = energy_surplus - e_lower;
+									tier_credit = tier_energy*ec_rates[period][tier][1];
 								}
-								//monthly_energy += energy_net[m][period];
+								credit_amt += tier_credit;
+								monthly_e_use_period_tier[m][period][tier] -= tier_energy;
+								monthly_charge_period_tier[m][period][tier] -= tier_credit;
+
+								if (energy_surplus < e_upper)
+									break;
+								tier++;
 							}
-							monthly_ec_rates[m] = monthly_energy != 0 ? monthly_ec_charges[m] / monthly_energy : (ssc_number_t)0.0;
-
-
-							// monthly rollover with year end sell at reduced rate
-							if (enable_nm)
-							{
-								payment[c] += monthly_ec_charges[m];
-							}
-							else // non-net metering - no rollover 
-							{
-								if (monthly_energy_net[m] < 0) // must buy from grid
-									payment[c] += monthly_ec_charges[m];
-								else // surplus - sell to grid
-									income[c] -= monthly_ec_charges[m]; // charge is negative for income!
-							}
-
-							// Price ?
-							// added for Mike Gleason 
-							energy_charge[c] += monthly_ec_charges[m];
-
-							// end of energy charge
-
+							income[c] += credit_amt;
+							monthly_ec_charges[m] -= credit_amt;
+							price[c] += credit_amt;
+							energy_charge[c] -= credit_amt;
 						}
+						else
+						{ // calculate payment or charge
+							ssc_number_t charge_amt = 0;
+							ssc_number_t energy_deficit = -e_in[c];
+							tier = 0;
+							while (tier<6)
+							{
+								ssc_number_t tier_energy = 0;
+								ssc_number_t tier_charge = 0;
+								// add up the charge amount for this block
+								ssc_number_t e_upper = ec_energy_ub[period][tier];
+								ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
 
+								if (energy_deficit > e_upper)
+								{
+									tier_energy = e_upper - e_lower;
+									tier_charge = tier_energy*ec_rates[period][tier][0];
+								}
+								else
+								{
+									tier_energy = energy_deficit - e_lower;
+									tier_charge = tier_energy*ec_rates[period][tier][0];
+								}
+								charge_amt += tier_charge;
+								monthly_e_use_period_tier[m][period][tier] += tier_energy;
+								monthly_charge_period_tier[m][period][tier] += tier_charge;
+								if (energy_deficit < e_upper)
+									break;
+								tier++;
+							}
+							payment[c] += charge_amt;
+							monthly_ec_charges[m] += charge_amt;
+							price[c] += charge_amt;
+							energy_charge[c] += charge_amt;
+						}
+					}
+					// end of energy charge
+
+
+
+					// demand charge - end of month only
+					if (d == util::nday[m] - 1 && h == 23)
+					{
 
 						if (dc_enabled)
 						{
@@ -3917,8 +3835,6 @@ public:
 							payment[c] += monthly_dc_fixed[m];
 							demand_charge[c] = charge;
 							dc_hourly_peak[peak_hour[m]] = peak_demand;
-
-
 							// end of fixed demand charge
 
 
@@ -3926,7 +3842,7 @@ public:
 							charge = 0;
 							peak_demand = 0;
 							int peak_hour = 0;
-							for (period = 0; period<12; period++)
+							for (period = 0; period < 12; period++)
 							{
 								tier = 0;
 								peak_demand = -monthly_period_peak[m][period];
@@ -3955,27 +3871,15 @@ public:
 							demand_charge[c] += charge; // add TOU charge to hourly demand charge
 
 							// end of TOU demand charge
-						}
+						} // if demand charges enabled (dc_enabled)
+					}	// end of demand charges at end of month
 
-
-					} // end of if end of month
 					c++;
 				}  // h loop
 			} // d loop
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
-			monthly_bill[m] = payment[c - 1] - income[c - 1];
-			if (enable_nm)
-			{
-				if (m > 0) monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
-				if (monthly_bill[m] < 0)
-				{
-					if (excess_monthly_dollars)
-						monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
-					monthly_bill[m] = 0;
-					payment[c - 1] = 0; // fixed charges applied below
-				}
-			}
+			monthly_bill[m] = monthly_ec_flat_charges[m] + monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 		} // end of month m (m loop)
 
 
@@ -4013,7 +3917,7 @@ public:
 							payment[c] += mon_fixed;
 							monthly_fixed_charges[m] += mon_fixed;
 						}
-						mon_bill = payment[c] - income[c];
+						mon_bill = monthly_bill[m] + monthly_fixed_charges[m];
 						// apply monthly minimum
 						if (include_min)
 						{
@@ -4035,19 +3939,10 @@ public:
 									payment[c] += ann_min_charge - ann_bill;
 								}
 							}
-							// apply annual rollovers AFTER minimum calculations
-							if (enable_nm)
-							{
-								// monthly rollover with year end sell at reduced rate
-								if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[11] > 0))
-									income[8759] += monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
-								else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[11] > 0))
-									income[8759] += monthly_cumulative_excess_dollars[11];
-							}
 						}
-						revenue[c] = income[c] - payment[c];
-						monthly_bill[m] = -revenue[c];
+						monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];
 					}
+					revenue[c] = income[c] - payment[c];
 					c++;
 				}
 			}
