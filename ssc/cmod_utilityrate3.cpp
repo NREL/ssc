@@ -43,7 +43,7 @@ static var_info vtab_utility_rate3[] = {
 	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 1 to user daily kWh e.g. PG&E baseline rates.
 	{ SSC_INPUT, SSC_NUMBER, "ur_ec_ub_units", "Energy charge tier upper bound units", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
 	// 0 to use previous version sell rates and 1 to use single sell rate, namely flat sell rate
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at flat sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at specified sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_ec_single_sell_rate", "Single TOU sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 
