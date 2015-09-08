@@ -45,6 +45,7 @@ static var_info vtab_utility_rate3[] = {
 	// 0 to use previous version sell rates and 1 to use single sell rate, namely flat sell rate
 	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at flat sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "ur_ec_single_sell_rate", "Single TOU sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
@@ -2841,6 +2842,7 @@ public:
 		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
 		// 0=sell at ec sell rates, 1= sell at flat sell rate
 		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option==0);
+		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
 
 		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
@@ -2939,7 +2941,7 @@ public:
 					std::string str_tier = util::to_string(tier + 1);
 
 					ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
-					ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : (ur_ec_sell_at_ec_rates ? as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc : sell );
+					ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : (ur_ec_sell_at_ec_rates ? as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc : ur_ec_single_sell_rate);
 					ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
 				}
 			}
@@ -3387,6 +3389,7 @@ public:
 							monthly_fixed_charges[m] += mon_fixed;
 						}
 						mon_bill = payment[c] - income[c];
+						if (mon_bill < 0) mon_bill = 0; // for calculating min charge when monthly surplus.
 						// apply monthly minimum
 						if (include_min)
 						{
@@ -3475,11 +3478,15 @@ public:
 		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
 		// 0=sell at ec sell rates, 1= sell at flat sell rate
 		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
+		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
+
 
 		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates).
 		int ur_ec_ub_units = as_integer("ur_ec_ub_units");
-		double daily_energy_per_period[12]; // accumulates in day loop as energy charges computed for each period
-		double monthly_energy_per_period[12]; // accumulates in month loop as energy charges computed for each period
+		double daily_surplus_energy_per_period[12]; // accumulates in day loop as energy charges computed for each period used to determine tiered energy sell rate
+		double monthly_surplus_energy_per_period[12]; // accumulates in month loop as energy charges computed for each period used to determine tiered energy sell rate
+		double daily_deficit_energy_per_period[12]; // accumulates in day loop as energy charges computed for each period used to determine tiered energy buy rate
+		double monthly_deficit_energy_per_period[12]; // accumulates in month loop as energy charges computed for each period used to determine tiered energy buy rate
 
 		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool dc_enabled = as_boolean("ur_dc_enable");
@@ -3554,7 +3561,7 @@ public:
 					std::string str_tier = util::to_string(tier + 1);
 
 					ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
-					ec_rates[period][tier][1] = ur_ec_sell_at_ec_rates ? as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc : sell;
+					ec_rates[period][tier][1] = ur_ec_sell_at_ec_rates ? as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc : ur_ec_single_sell_rate;
 					ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
 				}
 			}
@@ -3720,11 +3727,17 @@ public:
 		for (m = 0; m < 12; m++)
 		{
 			for (period = 0; period < 12; period++)
-				monthly_energy_per_period[period] = 0;
+			{
+				monthly_surplus_energy_per_period[period] = 0;
+				monthly_deficit_energy_per_period[period] = 0;
+			}
 			for (d = 0; d<util::nday[m]; d++)
 			{
 				for (period = 0; period < 12; period++)
-					daily_energy_per_period[period] = 0;
+				{
+					daily_surplus_energy_per_period[period] = 0;
+					daily_deficit_energy_per_period[period] = 0;
+				}
 				for (h = 0; h<24; h++)
 				{
 					// flat rate
@@ -3751,29 +3764,27 @@ public:
 						if ((period < 0) || (period > 11))
 							throw exec_error("utilityrate3", util::format("invalid number of period (%d): must be bewtween 0 and 11", period));
 
-						monthly_energy_per_period[period] += e_in[c];
-						daily_energy_per_period[period] += e_in[c];
-
-						// base period charge on units specified
-						ssc_number_t ec_energy = e_in[c];
-						if (ur_ec_ub_units == 1)
-							ec_energy = monthly_energy_per_period[period];
-						else if (ur_ec_ub_units == 2)
-							ec_energy = daily_energy_per_period[period];
-
-
-						if (ec_energy >= 0.0)
+						if (e_in[c] >= 0.0)
 						{ // calculate income or credit
-							ssc_number_t credit_amt = 0;
-							ssc_number_t energy_surplus = ec_energy;
+							monthly_surplus_energy_per_period[period] += e_in[c];
+							daily_surplus_energy_per_period[period] += e_in[c];
+
+							// base period charge on units specified
+							double energy_surplus = e_in[c];
+							if (ur_ec_ub_units == 1)
+								energy_surplus = monthly_surplus_energy_per_period[period];
+							else if (ur_ec_ub_units == 2)
+								energy_surplus = daily_surplus_energy_per_period[period];
+
+							double credit_amt = 0;
 							tier = 0;
 							while (tier<6)
 							{
-								ssc_number_t tier_energy = 0;
-								ssc_number_t tier_credit = 0;
+								double tier_energy = 0;
+								double tier_credit = 0;
 								// add up the charge amount for this block
-								ssc_number_t e_upper = ec_energy_ub[period][tier];
-								ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
+								double e_upper = ec_energy_ub[period][tier];
+								double e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : 0.0;
 
 								if (energy_surplus > e_upper)
 								{
@@ -3786,30 +3797,39 @@ public:
 									tier_credit = tier_energy*ec_rates[period][tier][1];
 								}
 								credit_amt += tier_credit;
-								monthly_e_use_period_tier[m][period][tier] -= tier_energy;
-								monthly_charge_period_tier[m][period][tier] -= tier_credit;
+								monthly_e_use_period_tier[m][period][tier] -= (ssc_number_t)tier_energy;
+								monthly_charge_period_tier[m][period][tier] -= (ssc_number_t)tier_credit;
 
 								if (energy_surplus < e_upper)
 									break;
 								tier++;
 							}
-							income[c] += credit_amt;
-							monthly_ec_charges[m] -= credit_amt;
-							price[c] += credit_amt;
-							energy_charge[c] -= credit_amt;
+							income[c] += (ssc_number_t)credit_amt;
+							monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
+							price[c] += (ssc_number_t)credit_amt;
+							energy_charge[c] -= (ssc_number_t)credit_amt;
 						}
 						else
 						{ // calculate payment or charge
-							ssc_number_t charge_amt = 0;
-							ssc_number_t energy_deficit = -ec_energy;
+							monthly_deficit_energy_per_period[period] -= e_in[c];
+							daily_deficit_energy_per_period[period] -= e_in[c];
+
+							// base period charge on units specified
+							double energy_deficit = -e_in[c];
+							if (ur_ec_ub_units == 1)
+								energy_deficit = monthly_deficit_energy_per_period[period];
+							else if (ur_ec_ub_units == 2)
+								energy_deficit = daily_deficit_energy_per_period[period];
+
+							double charge_amt = 0;
 							tier = 0;
 							while (tier<6)
 							{
-								ssc_number_t tier_energy = 0;
-								ssc_number_t tier_charge = 0;
+								double tier_energy = 0;
+								double tier_charge = 0;
 								// add up the charge amount for this block
-								ssc_number_t e_upper = ec_energy_ub[period][tier];
-								ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
+								double e_upper = ec_energy_ub[period][tier];
+								double e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : 0.0;
 
 								if (energy_deficit > e_upper)
 								{
@@ -3822,16 +3842,16 @@ public:
 									tier_charge = tier_energy*ec_rates[period][tier][0];
 								}
 								charge_amt += tier_charge;
-								monthly_e_use_period_tier[m][period][tier] += tier_energy;
-								monthly_charge_period_tier[m][period][tier] += tier_charge;
+								monthly_e_use_period_tier[m][period][tier] += (ssc_number_t)tier_energy;
+								monthly_charge_period_tier[m][period][tier] += (ssc_number_t)tier_charge;
 								if (energy_deficit < e_upper)
 									break;
 								tier++;
 							}
-							payment[c] += charge_amt;
-							monthly_ec_charges[m] += charge_amt;
-							price[c] += charge_amt;
-							energy_charge[c] += charge_amt;
+							payment[c] += (ssc_number_t)charge_amt;
+							monthly_ec_charges[m] += (ssc_number_t)charge_amt;
+							price[c] += (ssc_number_t)charge_amt;
+							energy_charge[c] += (ssc_number_t)charge_amt;
 						}
 					}
 					// end of energy charge
@@ -3954,6 +3974,7 @@ public:
 							monthly_fixed_charges[m] += mon_fixed;
 						}
 						mon_bill = monthly_bill[m] + monthly_fixed_charges[m];
+						if (mon_bill < 0) mon_bill = 0; // for calculating min charge with monthly surplus
 						// apply monthly minimum
 						if (include_min)
 						{
