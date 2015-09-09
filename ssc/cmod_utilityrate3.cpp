@@ -3771,13 +3771,31 @@ public:
 
 							// base period charge on units specified
 							double energy_surplus = e_in[c];
+							double cumulative_energy = e_in[c];
 							if (ur_ec_ub_units == 1)
-								energy_surplus = monthly_surplus_energy_per_period[period];
+								cumulative_energy = monthly_surplus_energy_per_period[period];
 							else if (ur_ec_ub_units == 2)
-								energy_surplus = daily_surplus_energy_per_period[period];
+								cumulative_energy = daily_surplus_energy_per_period[period];
 
+
+							// cumulative energy used to determine tier for credit of entire surplus amount
 							double credit_amt = 0;
-							tier = 0;
+							tier = -1;
+							bool found = false;
+							while ((tier < 5) && !found)
+							{
+								tier++;
+								double e_upper = ec_energy_ub[period][tier];
+								if (cumulative_energy < e_upper)
+									found = true;
+							}
+							double tier_energy = energy_surplus;
+							double tier_credit = tier_energy*ec_rates[period][tier][1];
+							credit_amt += tier_credit;
+							monthly_e_use_period_tier[m][period][tier] -= (ssc_number_t)tier_energy;
+							monthly_charge_period_tier[m][period][tier] -= (ssc_number_t)tier_credit;
+
+							/*
 							while (tier<6)
 							{
 								double tier_energy = 0;
@@ -3804,6 +3822,7 @@ public:
 									break;
 								tier++;
 							}
+							*/
 							income[c] += (ssc_number_t)credit_amt;
 							monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
 							price[c] += (ssc_number_t)credit_amt;
@@ -3814,15 +3833,33 @@ public:
 							monthly_deficit_energy_per_period[period] -= e_in[c];
 							daily_deficit_energy_per_period[period] -= e_in[c];
 
-							// base period charge on units specified
-							double energy_deficit = -e_in[c];
-							if (ur_ec_ub_units == 1)
-								energy_deficit = monthly_deficit_energy_per_period[period];
-							else if (ur_ec_ub_units == 2)
-								energy_deficit = daily_deficit_energy_per_period[period];
-
 							double charge_amt = 0;
-							tier = 0;
+							double energy_deficit = -e_in[c];
+							// base period charge on units specified
+							double cumulative_deficit = -e_in[c];
+							if (ur_ec_ub_units == 1)
+								cumulative_deficit = monthly_deficit_energy_per_period[period];
+							else if (ur_ec_ub_units == 2)
+								cumulative_deficit = daily_deficit_energy_per_period[period];
+
+
+							// cumulative energy used to determine tier for credit of entire surplus amount
+							tier = -1;
+							bool found = false;
+							while ((tier < 5) && !found)
+							{
+								tier++;
+								double e_upper = ec_energy_ub[period][tier];
+								if (cumulative_deficit < e_upper)
+									found = true;
+							}
+							double tier_energy = energy_deficit;
+							double tier_charge = tier_energy*ec_rates[period][tier][0];
+							charge_amt += tier_charge;
+							monthly_e_use_period_tier[m][period][tier] += (ssc_number_t)tier_energy;
+							monthly_charge_period_tier[m][period][tier] += (ssc_number_t)tier_charge;
+
+						/*
 							while (tier<6)
 							{
 								double tier_energy = 0;
@@ -3848,6 +3885,7 @@ public:
 									break;
 								tier++;
 							}
+							*/
 							payment[c] += (ssc_number_t)charge_amt;
 							monthly_ec_charges[m] += (ssc_number_t)charge_amt;
 							price[c] += (ssc_number_t)charge_amt;
