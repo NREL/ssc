@@ -940,6 +940,7 @@ public:
 	double compute_payback( int cf_cpb, int cf_pb, int nyears )
 	{	
 //		double dPayback = 1e99; // report as > analysis period
+		// may need to determine last negative to positive transition for high replacement costs - see C:\Projects\SAM\Documentation\FinancialIssues\Payback_2015.9.8
 		double dPayback = std::numeric_limits<double>::quiet_NaN(); // report as > analysis period
 		bool bolPayback = false;
 		int iPayback = 0;
