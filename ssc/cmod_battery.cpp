@@ -247,13 +247,13 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		outMaxCharge = cm.allocate("batt_qmax", nrec*nyears);
 		outCellVoltage = cm.allocate("batt_voltage_cell", nrec*nyears);
 		outCurrent = cm.allocate("batt_I", nrec*nyears);
-		outCycles = cm.allocate("batt_cycles", nrec*nyears);
 		outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
 		outBatteryTemperature = cm.allocate("batt_temperature", nrec*nyears);
 		outCapacityThermalPercent = cm.allocate("batt_capacity_thermal_percent", nrec*nyears);
 
 	}
-	 
+	
+	outCycles = cm.allocate("batt_cycles", nrec*nyears);
 	outSOC = cm.allocate("batt_SOC", nrec*nyears);
 	outDOD = cm.allocate("batt_DOD", nrec*nyears);
 	outCapacityPercent = cm.allocate("batt_capacity_percent", nrec*nyears);
@@ -445,13 +445,13 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 		outCurrent[idx] = (capacity_model->I());
 		outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
 		outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
-		outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
 		outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent());
 
 	}
 	
 	// Lifetime outputs
+	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
