@@ -341,6 +341,8 @@ public:
 	double cell_voltage();
 	double battery_voltage();
 
+	double timestep_hour();
+
 private:
 	capacity_t * _capacity;
 	lifetime_t * _lifetime;
@@ -446,6 +448,9 @@ public:
 	void dispatch(size_t hour_of_year, size_t step, double e_pv, double e_load);
 
 protected:
+	
+	void reset();
+	
 	util::matrix_t < float > _sched;
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
@@ -457,6 +462,7 @@ protected:
 	bool  _can_grid_charge;
 	
 	int _mode; // 0 = look ahead, 1 = look behind, 2 = manual dispatch
+	enum {LOOK_AHEAD, LOOK_BEHIND, MANUAL};
 };
 /*
 Automate dispatch class
@@ -474,7 +480,7 @@ public:
 	int get_mode();
 
 protected:
-	void initialize(int hour_of_year, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps);
+	void initialize(int hour_of_year, int idx , double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps );
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
 	void sort_grid(FILE *p, bool debug, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps);
 	void compute_energy(FILE *p, bool debug, double & E_useful, double & E_max);
@@ -493,6 +499,11 @@ protected:
 	int _num_steps;
 	int _nyears;
 	int _mode;
+
+	double_vec grid;	 	// [kW] - unsorted grid calculations for current window
+	double_vec sorted_grid;	// [kW] - sorted grid calculations for current window (high to low)
+	int_vec sorted_hours;    // sorted hours corresponding to sorted_grid (range 1-24)
+	int_vec sorted_steps;	// sorted sub-hourly steps corresponding to grid calculations (range 0-59, depending on timestep)
 };
 
 /*
