@@ -1250,7 +1250,6 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 		double E_useful;	// [kWh] - the cyclable energy available in the battery
 		double E_max;     // [kWh] - the maximum energy that can be cycled
 		double P_target;  // [kW] - the target power
-		bool debug;
 
 		// setup vectors
 		initialize(hour_of_year, idx, grid, sorted_grid, sorted_hours, sorted_steps);
@@ -1292,9 +1291,12 @@ void automate_dispatch_t::initialize(int hour_of_year, int idx, double_vec & gri
 }
 void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
 {
+	// for now, don't enable
+	debug = false;
+
 	if (hour_of_year == 0 && idx == 0)
 	{
-		debug = true;
+		// debug = true;
 		p = fopen("dispatch.txt", "w");
 		fprintf(p, "Hour of Year: %d\t Hour Last Updated: %d \t Steps per Hour: %d\n", hour_of_year, _hour_last_updated, _steps_per_hour);
 		// failed for some reason
