@@ -884,6 +884,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				else if (lowname == "ghi" || lowname == "gh" || lowname == "global" || lowname == "global horizontal" || lowname == "global horizontal irradiance") m_columns[GHI].index = i;
 				else if (lowname == "dni" || lowname == "dn" || lowname == "beam" || lowname == "direct normal" || lowname == "direct normal irradiance") m_columns[DNI].index = i;
 				else if (lowname == "dhi" || lowname == "df" || lowname == "diffuse" || lowname == "diffuse horizontal" || lowname == "diffuse horizontal irradiance") m_columns[DHI].index = i;
+				else if (lowname == "poa" || lowname == "pa" || lowname == "plane" || lowname == "plane of array" || lowname == "plane of array irradiance") m_columns[POA].index = i;
 				else if (lowname == "tdry" || lowname == "dry bulb" || lowname == "dry bulb temp" || lowname == "temperature" || lowname == "ambient" || lowname == "ambient temp") m_columns[TDRY].index = i;
 				else if (lowname == "twet" || lowname == "wet bulb" || lowname == "wet bulb temperature") m_columns[TWET].index = i;
 				else if (lowname == "tdew" || lowname == "dew point" || lowname == "dew point temperature") m_columns[TDEW].index = i;
@@ -967,6 +968,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[GHI].data[i] = (double)d1*1.0;
 				m_columns[DNI].data[i] = (double)d2;           /* Direct radiation */
 				m_columns[DHI].data[i] = (double)d3;           /* Diffuse radiation */
+				m_columns[POA].data[i] = (double)(-999);       /* No POA in TMY2 */
 				m_columns[TDRY].data[i] = (double)d10 / 10.0;       /* Ambient dry bulb temperature(C) */
 				m_columns[TDEW].data[i] = (double)d11 / 10.0; /* dew point temp */
 				m_columns[WSPD].data[i] = (double)d15 / 10.0;       /* Wind speed(m/s) */
@@ -1055,6 +1057,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[GHI].data[i] = (double)atof(cols[4]);
 				m_columns[DNI].data[i] = (double)atof(cols[7]);
 				m_columns[DHI].data[i] = (double)atof(cols[10]);
+				m_columns[POA].data[i] = (double)(-999);       /* No POA in TMY3 */
 
 				m_columns[TDRY].data[i] = (double)atof(cols[31]);
 				m_columns[TWET].data[i] = (double)atof(cols[34]);
@@ -1114,6 +1117,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[GHI].data[i] = (double)atof(cols[13]);
 				m_columns[DNI].data[i] = (double)atof(cols[14]);
 				m_columns[DHI].data[i] = (double)atof(cols[15]);
+				m_columns[POA].data[i] = (double)(-999);       /* No POA in EPW */
 
 				m_columns[WSPD].data[i] = (double)atof(cols[21]);
 				m_columns[WDIR].data[i] = (double)atof(cols[20]);
@@ -1164,6 +1168,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			m_columns[GHI].data[i] = (float)atof(cols[7]);
 			m_columns[DNI].data[i] = (float)atof(cols[8]);
 			m_columns[DHI].data[i] = (float)atof(cols[9]);
+			m_columns[POA].data[i] = (double)(-999);       /* No POA in SMW */
 
 			m_columns[WSPD].data[i] = (float)atof(cols[4]);
 			m_columns[WDIR].data[i] = (float)atof(cols[5]);
@@ -1352,6 +1357,7 @@ bool weatherfile::read( weather_record *r )
 		r->gh = m_columns[GHI].data[m_index];
 		r->dn = m_columns[DNI].data[m_index];
 		r->df = m_columns[DHI].data[m_index];
+		r->poa = m_columns[POA].data[m_index];
 		r->wspd = m_columns[WSPD].data[m_index];
 		r->wdir = m_columns[WDIR].data[m_index];
 		r->tdry = m_columns[TDRY].data[m_index];

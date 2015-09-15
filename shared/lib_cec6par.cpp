@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 #include "lib_cec6par.h"
 
@@ -114,38 +115,49 @@ double air_mass_modifier( double Zenith_deg, double Elev_m, double a[5] )
 bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &out )
 {
 	double muIsc = alpha_isc * (1-Adj/100);
-	double muVoc = beta_voc * (1+Adj/100);
+	//double muVoc = beta_voc * (1+Adj/100);
 	
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	double G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
+	double G_total, Geff_total;
+
+	if( input.radmode < 3){
+		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
+	
+		Geff_total = irradiance_through_cover(
+			input.IncAng,
+			input.Zenith,
+			input.Tilt,
+			input.Ibeam,
+			input.Idiff,
+			input.Ignd );
+
+	
+		double theta_z = input.Zenith;
+		if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
+		if (theta_z < 0) theta_z = 0; // Zenith angle must be >= 0
+		/*
+		double W_spd = input.Wspd;
+		if (W_spd < 0.001) W_spd = 0.001;
+	
+		double tau_al = fabs(TauAlpha);  // why is this fab'd??
+		if (G_total > 0)
+			tau_al *= Geff_total/G_total;
+				
+		// TODO - shouldn't tau_al above include AM correction below?
+		*/
 		
-	double Geff_total = irradiance_through_cover(
-		input.IncAng,
-		input.Zenith,
-		input.Tilt,
-		input.Ibeam,
-		input.Idiff,
-		input.Ignd );	
+		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );
+	
+	} else {
 
-	double theta_z = input.Zenith;
-	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
-	if (theta_z < 0) theta_z = 0; // Zenith angle must be >= 0
-	
-	double W_spd = input.Wspd;
-	if (W_spd < 0.001) W_spd = 0.001;
-	
-	double tau_al = fabs(TauAlpha);
-	if (G_total > 0)
-		tau_al *= Geff_total/G_total;
-			
-	// TODO - shouldn't tau_al above include AM correction below?
+		G_total = Geff_total = input.Ipoa;
 
-	Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );	
-	
+	}
+
 	double T_cell = input.Tdry + 273.15;
-	if ( Geff_total >= 1.0 )
+	if ( Geff_total >= 1.0 )  // Sev: Why is this check here?
 	{
 		T_cell = TcellC + 273.15; // want cell temp in kelvin
 
@@ -198,15 +210,8 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 
 bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
 {
-	double G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
-		
-	double Geff_total = irradiance_through_cover(
-		input.IncAng,
-		input.Zenith,
-		input.Tilt,
-		input.Ibeam,
-		input.Idiff,
-		input.Ignd );	
+	double G_total, Geff_total;
+	double tau_al = fabs(TauAlpha);
 
 	double theta_z = input.Zenith;
 	if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
@@ -215,15 +220,29 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double W_spd = input.Wspd;
 	if (W_spd < 0.001) W_spd = 0.001;
 	
-	double tau_al = fabs(TauAlpha);
-	if (G_total > 0)
-		tau_al *= Geff_total/G_total;
+	if(input.radmode < 3){
+		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 			
+		Geff_total = irradiance_through_cover(
+			input.IncAng,
+			input.Zenith,
+			input.Tilt,
+			input.Ibeam,
+			input.Idiff,
+			input.Ignd );
+
+		if (G_total > 0)
+			tau_al *= Geff_total/G_total;
+			
+		// !Calculation of Air Mass Modifier
+		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );	
+
+	} else {
+		G_total = Geff_total = input.Ipoa;
+	}
+
 	// TODO - shouldn't tau_al above include AM correction below?
 	
-	// !Calculation of Air Mass Modifier
-	Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );	
-
 	if (Geff_total > 0)
 	{
 		double Imp = module.ImpRef();
@@ -231,9 +250,9 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		double Area = module.AreaRef();
 
 		// calculate cell temperature, kelvin
-		double G_total = input.Ibeam + input.Idiff + input.Ignd;		
+		//double G_total = input.Ibeam + input.Idiff + input.Ignd;		
 		double eff_ref = Imp *Vmp / ( I_ref*Area );
-		double tau_al = fabs(TauAlpha);
+		double tau_al = fabs(TauAlpha);  // Sev: What's the point of recalculating this??
 
 		double W_spd = input.Wspd * ffv_wind; //added 1/11/12 to account for FFV_wind correction factor internally
 		if (W_spd < 0.001) W_spd = 0.001;		

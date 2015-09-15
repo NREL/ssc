@@ -72,6 +72,7 @@ struct weather_record {
 	double gh;     // global (W/m2)
 	double dn;     // direct (W/m2)
 	double df;     // diffuse (W/m2)
+	double poa;    // plane of array (W/m2)
 	double wspd;   // wind speed (m/s)
 	double wdir;   // wind direction (deg: N = 0 or 360, E = 90, S = 180,W = 270 )
 	double tdry;   // dry bulb temp (C)
@@ -91,7 +92,7 @@ class weather_data_provider
 public:
 	
 	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
-		GHI, DNI, DHI, 
+		GHI, DNI, DHI, POA, 
 		TDRY, TWET, TDEW, 
 		WSPD, WDIR, 
 		RH, PRES, SNOW, ALB, AOD,

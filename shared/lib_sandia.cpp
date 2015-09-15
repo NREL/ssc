@@ -238,7 +238,12 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	out.CellTemp = TcellC;
 	
-	double Gtotal = in.Ibeam + in.Idiff + in.Ignd;
+	double Gtotal;
+	if( in.radmode < 3)
+		Gtotal = in.Ibeam + in.Idiff + in.Ignd;
+	else
+		Gtotal = in.Ipoa;
+
 	if ( Gtotal > 0.0 )
 	{
 		//C Calculate Air Mass
@@ -381,7 +386,7 @@ bool sandia_inverter_t::acpower(
 
 
 
-double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double Ibc, double Idc, double fd, double DT0)
+double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double Ipoa, double fd, double DT0)
 {
 	/*
 C Returns cell temperature, deg C
@@ -394,11 +399,11 @@ C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
 
 //C Update from Chris Cameron - email 4/28/10  
 //C        E = Ibc + fd * Idc
-	double E = Ibc + Idc;
+	double E = Ipoa;
 	return Tm + E / 1000.0 * DT0;
 }
 
-double sandia_celltemp_t::sandia_module_temperature( double Ibc, double Idc, double Ws, double Ta, double fd, double a, double b )
+double sandia_celltemp_t::sandia_module_temperature( double Ipoa, double Ws, double Ta, double fd, double a, double b )
 {
 	/*
 C Returns back-of-module temperature, deg C
@@ -413,14 +418,20 @@ C b   = empirical constant
 
 //C Update from Chris Cameron - email 4/28/10  
 //C        E = Ibc + fd * Idc
-	double E = Ibc + Idc;
+	double E = Ipoa;
 	return E * exp(a + b * Ws) + Ta;
 }
 
 bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
 {
-	double tmod = sandia_module_temperature( input.Ibeam,
-		input.Idiff + input.Ignd, input.Wspd, input.Tdry, fd, a, b );
-	Tcell = sandia_tcell_from_tmodule( tmod, input.Ibeam, input.Idiff + input.Ignd, fd, DT0 );
+	//Sev 2015-09-14: changed to permit direct poa data
+	double Itotal;
+	if( input.radmode < 3)
+		Itotal = input.Ibeam + input.Idiff + input.Ignd;
+	else
+		Itotal = input.Ipoa;
+
+	double tmod = sandia_module_temperature( Itotal, input.Wspd, input.Tdry, fd, a, b );
+	Tcell = sandia_tcell_from_tmodule( tmod, Itotal, fd, DT0 );
 	return true;
 }

@@ -55,7 +55,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "use_wf_albedo",                               "Use albedo in weather file if provided",               "0/1",      "",                              "pvsamv1",              "?=1",                      "BOOLEAN",                       "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                    "",         "0=beam&diffuse,1=total&beam,2=total&diffuse",   "pvsamv1",              "?=0",      "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                    "",         "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer",   "pvsamv1",              "?=0",      "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                    "",         "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "ac_loss",                                     "Interconnection AC loss",                               "%",       "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
@@ -367,6 +367,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Global horizontal irradiance",                                      "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Beam irradiance",                                                   "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Diffuse irradiance",                                                "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "POA irradiance from weather file",                                  "W/m2",   "",                      "Time Series",       "*" ,                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_zen",                                    "Solar zenith angle",                                                "deg",    "",                      "Time Series",       "*",                    "",                              "" },
@@ -804,7 +805,7 @@ public:
 
 		bool use_wf_alb = (as_integer("use_wf_albedo") > 0); // weather file albedo
 
-		int radmode = as_integer("irrad_mode"); // 0=B&D, 1=G&B, 2=G&D
+		int radmode = as_integer("irrad_mode"); // 0=B&D, 1=G&B, 2=G&D, 3=POA-Ref, 4=POA-Pyra
 		int skymodel = as_integer("sky_model"); // 0=isotropic, 1=hdkr, 2=perez
 
 		// load the subarray parameter information
@@ -1410,6 +1411,7 @@ public:
 		ssc_number_t *p_glob = allocate( "gh", nrec );
 		ssc_number_t *p_beam = allocate("dn", nrec);
 		ssc_number_t *p_diff = allocate("df", nrec);
+		ssc_number_t *p_wfpoa = allocate("wfpoa", nrec);    // POA irradiance from weather file
 		ssc_number_t *p_wspd = allocate("wspd", nrec);
 		ssc_number_t *p_tdry = allocate("tdry", nrec);
 		ssc_number_t *p_albedo = allocate("alb", nrec);
@@ -1658,6 +1660,12 @@ public:
 								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.df = 0;
 						}
+						if ( (wf.poa < 0 || wf.poa > IRRMAX) && (radmode == 3 || radmode == 4) )
+						{
+							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
 
 						irrad irr;
 						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
@@ -1667,6 +1675,8 @@ public:
 						if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
 						else if (radmode == 1) irr.set_global_beam(wf.gh, wf.dn);
 						else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
+						else if (radmode == 3) irr.set_poa_reference(wf.poa);
+						else if (radmode == 4) irr.set_poa_pyranometer(wf.poa);
 
 						irr.set_surface(sa[nn].track_mode,
 							sa[nn].tilt,
@@ -1681,6 +1691,9 @@ public:
 							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]",
 							nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
+						if( radmode == 3 || radmode == 4) {
+							irr.get_irrad(&wf.gh, &wf.dn, &wf.df);
+						}
 						double ibeam, iskydiff, ignddiff;
 						double aoi, stilt, sazi, rot, btd;
 
@@ -1807,11 +1820,12 @@ public:
 							{
 								if (!sa[nn].enable || sa[nn].nstrings < 1) continue; // skip disabled subarrays
 
-								pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff,
+								pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, wf.poa,
 									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 									solzen, sa[nn].poa.aoi, hdr.elev,
 									sa[nn].poa.stilt, sa[nn].poa.sazi,
-									((double)wf.hour) + wf.minute / 60.0);
+									((double)wf.hour) + wf.minute / 60.0,
+									radmode);
 								pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 								if (sa[nn].poa.sunup > 0)
 								{
@@ -1855,11 +1869,12 @@ public:
 							|| sa[nn].nstrings < 1)
 							continue; // skip disabled subarrays
 
-						pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff,
+						pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, wf.poa,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, sa[nn].poa.aoi, hdr.elev,
 							sa[nn].poa.stilt, sa[nn].poa.sazi,
-							((double)wf.hour) + wf.minute / 60.0);
+							((double)wf.hour) + wf.minute / 60.0,
+							radmode);
 						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 
 						double tcell = wf.tdry;
@@ -2033,6 +2048,9 @@ public:
 					// save array-level outputs	- year 1 only outputs
 					if (iyear == 0)
 					{
+						// Apply POA data from weather file (if it exists)
+						p_wfpoa[idx] = (ssc_number_t)wf.poa;
+
 						p_beam[idx] = (ssc_number_t)(wf.dn);
 						// calculate global if beam & diffuse are selected as inputs
 						if (radmode == 0)
