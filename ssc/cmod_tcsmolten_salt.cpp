@@ -1151,9 +1151,8 @@ public:
 			set_unit_value_ssc_double(type424_sco2, "T_htf_hot_des", as_double("T_htf_hot_ref"));
 			set_unit_value_ssc_double(type424_sco2, "T_htf_cold_est", as_double("T_htf_cold_ref"));
 			set_unit_value_ssc_double(type424_sco2, "eta_des", as_double("eta_ref"));
-			set_unit_value_ssc_double(type424_sco2, "rec_htf", as_double("HTF"));
+			set_unit_value_ssc_double(type424_sco2, "rec_htf");
 			set_unit_value_ssc_matrix(type424_sco2, "field_fl_props");
-			//set_unit_value_ssc_double(type424_sco2, "rec_fl_props" .... ?
 
 			set_unit_value_ssc_double(type424_sco2, "startup_time");
 			set_unit_value_ssc_double(type424_sco2, "startup_frac");
