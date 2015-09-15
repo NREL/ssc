@@ -37,6 +37,7 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,       "global",                  "Global Horizontal Irradiance",     "W/m2",   "",                      "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",                      "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "beam",                    "Beam Normal Irradiance",           "W/m2",   "",                      "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",                      "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "diffuse",                 "Diffuse Horizontal Irradiance",    "W/m2",   "",                      "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,       "poa",                     "Plane of Array Irradiance",        "W/m2",   "",                      "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,       "wspd",                    "Wind Speed",                       "m/s",   "",                       "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,       "wdir",                    "Wind Direction",                   "deg",   "0=N,E=90",               "Weather Reader",      "header_only=0",                        "LENGTH_EQUAL=year",     "" },
@@ -127,6 +128,7 @@ public:
 		ssc_number_t *p_global = allocate( "global", records );
 		ssc_number_t *p_beam = allocate( "beam", records );
 		ssc_number_t *p_diffuse = allocate( "diffuse", records );
+		ssc_number_t *p_poa = allocate( "poa", records );
 		
 		ssc_number_t *p_wspd = allocate( "wspd", records );
 		ssc_number_t *p_wdir = allocate( "wdir", records );
@@ -159,6 +161,7 @@ public:
 			p_global[i] = (ssc_number_t)wf.gh;
 			p_beam[i] = (ssc_number_t)wf.dn;
 			p_diffuse[i] = (ssc_number_t)wf.df;
+			p_poa[i] = (ssc_number_t)wf.poa;
 
 			p_wspd[i] = (ssc_number_t)wf.wspd;
 			p_wdir[i] = (ssc_number_t)wf.wdir;

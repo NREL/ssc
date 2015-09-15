@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include <limits>
+#include <iostream>
 
 #include "lib_irradproc.h"
 
@@ -495,6 +496,43 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 }
 
 
+void poaDecomp( double wfPOA, double inc, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
+/* added by Severin Ryberg. Decomposes POA into direct normal, ground diffuse, and sky diffuse
+	- currently this function is a stand-in until Bill Marion develops an actualy decomposition model
+
+	List of Parameters Passed to Function:
+	wfPOA  = Plane of array irradiance measured from weatherfile (W/m2)
+	inc    = incident angle of direct beam radiation to surface in radians
+
+	Variable Returned
+	dn     = Direct Normal Irradiance (W/m2)
+	df     = Diffuse Horizontal Irradiance (W/m2)
+	gh     = Global Horizontal Irradiance (W/m2)
+	poa    = plane-of-array irradiances (W/m2)
+				poa[0]: incident beam
+				poa[1]: incident sky diffuse
+				poa[2]: incident ground diffuse 
+				
+	diffc   = diffuse components, if an array is provided
+				diffc[0] = isotropic
+				diffc[1] = circumsolar
+				diffc[2] = horizon brightening
+*/
+
+	dn = (0.5 * wfPOA) / cos(inc);
+	df = (0.5 * wfPOA);
+	gh = dn + df;
+
+	poa[0] = (0.5 * wfPOA);
+	poa[1] = (0.25 * wfPOA);
+	poa[2] = (0.25 * wfPOA);
+
+	diffc[0] = poa[1];
+	diffc[1] = 0;
+	diffc[2] = 0;
+
+}
+
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* added aug2011 by aron dobos. Defines isotropic sky model for diffuse irradiance on a tilted surface
@@ -712,7 +750,7 @@ int irrad::check()
 {
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
-	if ( radmode < 0 || radmode > 2 || skymodel < 0 || skymodel > 2 ) return -3;
+	if ( radmode < 0 || radmode > 4 || skymodel < 0 || skymodel > 2 ) return -3;
 	if ( track < 0 || track > 3 ) return -4;
 	if ( radmode == 0 && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
 	if ( radmode == 1 && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
@@ -776,6 +814,12 @@ void irrad::get_poa( double *beam, double *skydiff, double *gnddiff,
 	if ( horizon != 0 ) *horizon = diffc[2];
 }
 
+void irrad::get_irrad (double *ghi, double *dni, double *dhi){
+	*ghi = gh;
+	*dni = dn;
+	*dhi = df;
+}
+
 void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
 {
 	this->year = year;
@@ -829,6 +873,16 @@ void irrad::set_global_diffuse(double global, double diffuse)
 	this->df = diffuse;
 	this->radmode = 2;
 }
+
+void irrad::set_poa_reference( double poa ){
+	this->wfpoa = poa;
+	this->radmode = 3;
+}
+void irrad::set_poa_pyranometer( double poa ){
+	this->wfpoa = poa;
+	this->radmode = 4;
+}
+
 
 int irrad::calc()
 {
@@ -919,57 +973,78 @@ int irrad::calc()
 		// compute incidence angles onto fixed or tracking surface
 		incidence( track, tilt, sazm, rlim, sun[1], sun[0], en_backtrack, gcr, angle );
 
-
-		double hextra = sun[8];
-		double hbeam = dn*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
+		if(radmode < 3){  // Sev 2015-09-11 - Run this code if no POA decomposition is required
+			double hextra = sun[8];
+			double hbeam = dn*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
 				
-		// check beam irradiance against extraterrestrial irradiance
-		if ( hbeam > hextra )
-		{
-			//beam irradiance on horizontal W/m2 exceeded calculated extraterrestrial irradiance
-			return -1;
-		}
+			// check beam irradiance against extraterrestrial irradiance
+			if ( hbeam > hextra )
+			{
+				//beam irradiance on horizontal W/m2 exceeded calculated extraterrestrial irradiance
+				return -1;
+			}
 
-		// compute beam and diffuse inputs based on irradiance inputs mode
-		double ibeam = dn;
-		double idiff = 0.0;
-		if (radmode == 0)  // Beam+Diffuse
-		{
-			idiff = df;
-			ibeam = dn;
-		}
-		else if (radmode == 1) // Total+Beam
-		{
-			idiff = gh - hbeam;
-			ibeam = dn;
-		}
-		else if (radmode == 2) //Total+Diffuse
-		{
-			idiff = df;
-			ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle
-			if (ibeam > 1500) ibeam = 1500; //error checking on computation
-			if (ibeam < 0) ibeam = 0; //error checking on computation
-		}
+			// compute beam and diffuse inputs based on irradiance inputs mode
+			double ibeam = dn;
+			double idiff = 0.0;
+			if (radmode == 0)  // Beam+Diffuse
+			{
+				idiff = df;
+				ibeam = dn;
+			}
+			else if (radmode == 1) // Total+Beam
+			{
+				idiff = gh - hbeam;
+				ibeam = dn;
+			}
+			else if (radmode == 2) //Total+Diffuse
+			{
+				idiff = df;
+				ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle
+				if (ibeam > 1500) ibeam = 1500; //error checking on computation
+				if (ibeam < 0) ibeam = 0; //error checking on computation
+			}
+			else
+				return -2; // just in case of a weird error
 
-		else
-			return -2; // just in case of a weird error
 
-		// compute incident irradiance on tilted surface
-		switch( skymodel )
-		{
-		case 0:
-			isotropic( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
-			break;
-		case 1:
-			hdkr( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
-			break;
-		default:
-			perez( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
-			break;
+			// compute incident irradiance on tilted surface
+			switch( skymodel )
+			{
+			case 0:
+				isotropic( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+				break;
+			case 1:
+				hdkr( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+				break;
+			default:
+				perez( hextra, ibeam, idiff, alb, angle[0], angle[1], sun[1], poa, diffc );
+				break;
+			} 
+
+			ghi = idiff;
+		} 
+		else { // Sev 2015/09/11 - perform a POA decomp.
+			if ( radmode == 3) { //POA Reference Cell
+				/*
+				idiff = 0.5*wfpoa;
+				ibeam = (0.5*wfpoa) / cos(angle[0]);
+
+				ibeam = ibeam<0 ? 0 : ibeam;
+
+				df = idiff;
+				dn = ibeam;
+				gh = idiff + ibeam;*/
+				poaDecomp( wfpoa, angle[0], dn, df, gh, poa, diffc );
+			}
+			else if ( radmode == 4) { //POA Pyranometer
+				poaDecomp( wfpoa, angle[0], dn, df, gh, poa, diffc );
+			}
+		
+			else
+				return -2; // just in case of a weird error
 		}
-
-		ghi = idiff;
-	}
+	} else { gh=0; dn=0; df=0;}
 
 	return 0;
 

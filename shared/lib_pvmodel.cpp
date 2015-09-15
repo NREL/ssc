@@ -1,6 +1,7 @@
 #include "lib_pvmodel.h"
 #include <math.h>
 #include <limits>
+#include <iostream>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -15,15 +16,16 @@ pvinput_t::pvinput_t()
 }
 
 
-pvinput_t::pvinput_t( double ib, double id, double ig, 
+pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
 		double elv, double tlt, double azi,
-		double hrday )
+		double hrday, int rmode )
 {
 	Ibeam = ib;
 	Idiff = id;
 	Ignd = ig;
+	Ipoa = ip;
 	Tdry = ta;
 	Tdew = td;
 	Wspd = ws;
@@ -35,6 +37,8 @@ pvinput_t::pvinput_t( double ib, double id, double ig,
 	Tilt = tlt;
 	Azimuth = azi;
 	HourOfDay = hrday;
+	radmode = rmode;
+
 }
 
 std::string pvcelltemp_t::error()
@@ -101,8 +105,18 @@ double spe_module_t::eff_interpolate( double irrad, double rad[5], double eff[5]
 bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output)
 {
 	double idiff = fd*(input.Idiff + input.Ignd);
-	double dceff = eff_interpolate( input.Ibeam + idiff, Rad, Eff );
-	double dcpwr = dceff*(input.Ibeam+idiff)*Area;	
+
+	// Sev 2015-09-14: Changed to allow POA data directly
+	double dceff, dcpwr;
+	if( input.radmode < 3 ){
+		dceff = eff_interpolate( input.Ibeam + idiff, Rad, Eff );
+		dcpwr = dceff*(input.Ibeam+idiff)*Area;	
+	}
+	else{
+		dceff = eff_interpolate( input.Ipoa, Rad, Eff );
+		dcpwr = dceff*(input.Ipoa)*Area;
+	}
+
 	dcpwr += dcpwr*(Gamma/100.0)*(TcellC - 25.0);
 	if (dcpwr < 0) dcpwr = 0;
 

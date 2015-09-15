@@ -12,7 +12,11 @@ void perez( double hextra, double dn,double df,double alb,double inc,double tilt
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
+// 2015/09/11 - Sev
+// Create function for POA decomposition
+//  - Currently a stand-in for Bill Marion's eventual model
 
+void poaDecomp( double wfPOA, double inc, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 
 
 class irrad
@@ -23,7 +27,7 @@ private:
 
 	double lat, lon, tz;
 	int radmode, skymodel, track;
-	double gh, dn, df, alb;
+	double gh, dn, df, wfpoa, alb;
 	double tilt, sazm, rlim, gcr;
 	bool en_backtrack;
 	double sun[9], angle[5], poa[3], diffc[3];
@@ -45,6 +49,8 @@ public:
 	void set_beam_diffuse( double beam, double diffuse );
 	void set_global_beam( double global, double beam );
 	void set_global_diffuse(double global, double diffuse);
+	void set_poa_reference( double poa );
+	void set_poa_pyranometer( double poa );
 
 	int calc();
 	
@@ -65,6 +71,7 @@ public:
 		double *btdiff );
 	void get_poa( double *beam, double *skydiff, double *gnddiff,
 		double *isotrop, double *circum, double *horizon );
+	void get_irrad (double *ghi, double *dni, double *dhi);
 	double get_ghi();
 };
 
