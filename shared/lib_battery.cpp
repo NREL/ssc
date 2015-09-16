@@ -1384,6 +1384,7 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx, double_vec & g
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_useful, double & E_max )
 {
 	E_useful = _dispatch->_Battery->battery_voltage() *(_dispatch->_Battery->battery_charge_total() - _dispatch->_Battery->battery_charge_maximum() *_dispatch->_SOC_min *0.01)*watt_to_kilowatt;
+	//E_useful = _dispatch->_Battery->battery_voltage() *_dispatch->_Battery->battery_charge_maximum()*(_dispatch->_SOC_max-_dispatch->_SOC_min) *0.01 *watt_to_kilowatt;
 	E_max = E_useful; // [kWh]
 
 	if (debug)
@@ -1395,7 +1396,42 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_useful,
 
 void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_grid, double & P_target, double E_useful )
 {
-	// Calculate target power
+	// First compute target power which will allow battery to charge up to E_useful over 24 hour period
+	if (debug)
+		fprintf(p, "Recharge target\t charge_energy\n");
+
+	double P_target_min = 1e16;
+	double E_charge = 0.;
+	double peak_shave_fraction = 0.7;
+	int index = _num_steps - 1;
+	while (E_charge < peak_shave_fraction* E_useful)
+	{
+		E_charge = 0.;
+		P_target_min = sorted_grid[index];
+		for (int ii = _num_steps - 1; ii >= 0; ii--)
+		{
+			if (sorted_grid[ii] > P_target_min)
+				break;
+
+			E_charge += (P_target_min - sorted_grid[ii])*_dt_hour;
+		}
+		if (debug)
+			fprintf(p, "%.3f\t %.3f\n", P_target_min, E_charge);
+		index--;
+
+		if (index < 0)
+			break;
+	}
+
+	// if we can't recharge the battery without exceeding the highest peak, there isn't enough peak to shave to justify dispatching
+	// still, we will try and shave peak by 30%
+	if (E_charge < peak_shave_fraction*E_useful)
+	{
+		P_target = peak_shave_fraction*sorted_grid[0];
+		return;
+	}
+
+	// Calculate target power 
 	std::vector<double> sorted_grid_diff;
 	sorted_grid_diff.reserve(_num_steps - 1);
 
@@ -1404,7 +1440,6 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_gri
 
 	P_target = sorted_grid[0]; // target power to shave to [kW]
 	double sum = 0;			   // energy [kWh];
-
 	if (debug)
 		fprintf(p, "Step\t Target Power\n");
 
@@ -1443,6 +1478,13 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_gri
 	// move target up by 1% to accomodate voltage differences
 	P_target += (0.01*P_target);
 
+	// Don't allow target to be lower than min target to partially recharge
+	if (P_target < P_target_min)
+	{
+		P_target = P_target_min;
+		if (debug)
+			fprintf(p, "Moved P_target to: %.3f\n",P_target);
+	}
 }
 void automate_dispatch_t::set_charge(int profile)
 {
@@ -1457,8 +1499,9 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 	// Assign profiles within dispatch controller
 	int profile = 1;
 	int m, h;
+	double discharge_energy = 0;
 	if (debug)
-		fprintf(p, "Step\t Profile\t Hour\t Step\t Discharge Percent\n");
+		fprintf(p, "Step\t Profile\t Hour\t Step\t Discharge Percent\t Discharge Energy\n");
 
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
@@ -1467,9 +1510,10 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 		if (energy_required > 0)
 		{
 			discharge_percent = 100 * (energy_required / E_max);
+			discharge_energy += energy_required;
 			profile++;
 			if (debug)
-				fprintf(p, "%d\t %d\t %d\t %d\t %.3f\n", ii, profile, sorted_hours[ii], sorted_steps[ii], discharge_percent);
+				fprintf(p, "%d\t %d\t %d\t %d\t %.3f\t %.3f\n", ii, profile, sorted_hours[ii], sorted_steps[ii], discharge_percent, discharge_energy);
 		}
 		else
 			break;
