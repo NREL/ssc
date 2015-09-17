@@ -754,22 +754,27 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	/* initialize output first */
 	out.Power = out.Voltage = out.Current = out.Efficiency = out.Voc_oper = out.Isc_oper = 0.0;
 	
-	// plane of array irradiance, W/m2
-	double poa = input.Ibeam + input.Idiff + input.Ignd; 
+	double poa, tpoa;
 
-	// transmitted poa through module cover
-	double tpoa = poa;
-	if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
-	{
-		double iamf = iam( input.IncAng, GlassAR );
-		tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
-		if( tpoa < 0.0 ) tpoa = 0.0;
-		if( tpoa > poa ) tpoa = poa;
-	}
+	if( input.radmode < 3 ){
+		// plane of array irradiance, W/m2
+		poa = input.Ibeam + input.Idiff + input.Ignd; 
+
+		// transmitted poa through module cover
+		tpoa = poa;
+		if ( input.IncAng > AOI_MIN && input.IncAng < AOI_MAX )
+		{
+			double iamf = iam( input.IncAng, GlassAR );
+			tpoa = poa - ( 1.0 - iamf )*input.Ibeam*cos(input.IncAng*3.1415926/180.0);
+			if( tpoa < 0.0 ) tpoa = 0.0;
+			if( tpoa > poa ) tpoa = poa;
+		}
 	
-	// spectral effect via AM modifier
-	double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
-	tpoa *= ama;	
+		// spectral effect via AM modifier
+		double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
+		tpoa *= ama;
+	} else 
+		tpoa = poa = input.Ipoa;
 	
 	double Tc = input.Tdry + 273.15;
 	if ( tpoa >= 1.0 )
