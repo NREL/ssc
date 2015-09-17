@@ -1642,19 +1642,45 @@ public:
 							|| sa[nn].nstrings < 1)
 							continue; // skip disabled subarrays
 #define IRRMAX 1500
-						if (wf.gh < 0 || wf.gh > IRRMAX)
+						// Sev 2015-09-15 Update check for bad irradiance values
+
+						// Check for missing data
+						// *note this method may not work for all compilers (lookin at you, MACs!)
+						if ( (wf.gh != wf.gh) && (radmode == 1 || radmode == 2)){
+							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;		
+						}
+						if ( (wf.dn != wf.dn) && (radmode == 0 || radmode == 1)){
+							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;		
+						}
+						if ( (wf.df != wf.df) && (radmode == 0 || radmode == 2)){
+							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;		
+						}
+						if ( (wf.poa != wf.poa) && (radmode == 3 || radmode == 4)){
+							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;		
+						}
+
+						// Check for bad data
+						if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == 1 || radmode == 2))
 						{
 							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.gh = 0;
 						}
-						if (wf.dn < 0 || wf.dn > IRRMAX)
+						if ((wf.dn < 0 || wf.dn > IRRMAX) && (radmode == 0 || radmode == 1))
 						{
 							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.dn = 0;
 						}
-						if (wf.df < 0 || wf.df > IRRMAX)
+						if ((wf.df < 0 || wf.df > IRRMAX) && (radmode == 0 || radmode == 2))
 						{
 							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
@@ -1662,11 +1688,12 @@ public:
 						}
 						if ( (wf.poa < 0 || wf.poa > IRRMAX) && (radmode == 3 || radmode == 4) )
 						{
-							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
-								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
-							return;
+							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+							wf.poa = 0;
 						}
 
+						
 						irrad irr;
 						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
 						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
