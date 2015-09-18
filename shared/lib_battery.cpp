@@ -1105,17 +1105,17 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 	int iprofile = -1;
 	getMonthHour(hour_of_year, m, h);
     _mode == 2 ? column = h - 1 : column = (h-1)/_dt_hour + step;
-	iprofile = _sched(m - 1, column) - 1; // sched returns 1-based values, need to translate to zero-based
+	iprofile = _sched(m - 1, column);  // 1-based
 
-	_can_charge = _charge_array[iprofile];
-	_can_discharge = _discharge_array[iprofile];
-	_can_grid_charge = _gridcharge_array[iprofile];
+	_can_charge = _charge_array[iprofile-1];
+	_can_discharge = _discharge_array[iprofile-1];
+	_can_grid_charge = _gridcharge_array[iprofile-1];
 	_percent_discharge = 0.;
 	_percent_charge = 0.;
 
-	if (_can_discharge){ _percent_discharge = _percent_discharge_array[iprofile+1]; }
+	if (_can_discharge){ _percent_discharge = _percent_discharge_array[iprofile]; }
 	if (_can_charge){ _percent_charge = 100.; }
-	if (_can_grid_charge){ _percent_charge = _percent_charge_array[iprofile+1]; }
+	if (_can_grid_charge){ _percent_charge = _percent_charge_array[iprofile]; }
 
 	// current charge state of battery from last time step.  
 	double battery_voltage = _Battery->battery_voltage();								// [V] 
@@ -1523,12 +1523,12 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 		int column = (h - 1)*_steps_per_hour + min;
 
 		// have set profile 0 as charge from solar only as default, start from 1
-		_dispatch->_sched.set_value(profile, m - 1, column); // in hourly case, column is hour-1
+		_dispatch->_sched.set_value(profile, m - 1, column); // in hourly case, column is hour-1, sched is 1-based
 		_dispatch->_charge_array.push_back(true);
 		_dispatch->_discharge_array.push_back(true);
 		_dispatch->_gridcharge_array.push_back(false);
 		_dispatch->_percent_discharge_array[profile] = discharge_percent;
-		_dispatch->_percent_charge_array[profile] = 100.;
+		_dispatch->_percent_charge_array[profile] = 100.; 
 	}
 	return profile;
 }
