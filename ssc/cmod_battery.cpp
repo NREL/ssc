@@ -193,7 +193,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		{
 			if (discharge_index < ndischarge_percent)
 			{
-				dm_percent_discharge[i] = pdischarge_percent[discharge_index];
+				dm_percent_discharge[i+1] = pdischarge_percent[discharge_index];
 				discharge_index++;
 			}
 			else
@@ -203,7 +203,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		{
 			if (gridcharge_index < ngridcharge_percent)
 			{
-				dm_percent_gridcharge[i] = pgridcharge_percent[gridcharge_index];
+				dm_percent_gridcharge[i+1] = pgridcharge_percent[gridcharge_index];
 				gridcharge_index++;
 			}
 			else
