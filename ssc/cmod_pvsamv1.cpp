@@ -713,6 +713,7 @@ struct subarray
 		double ibeam;
 		double iskydiff;
 		double ignddiff;
+		double ipoa;
 		int sunup;
 		double aoi;
 		double stilt;
@@ -1722,7 +1723,12 @@ public:
 							irr.get_irrad(&wf.gh, &wf.dn, &wf.df);
 						}
 						double ibeam, iskydiff, ignddiff;
+						double ipoa; // Container for direct POA measurements
 						double aoi, stilt, sazi, rot, btd;
+
+
+						if( radmode == 3 || radmode == 4)
+							ipoa = wf.poa;
 
 						irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
 						irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -1730,12 +1736,18 @@ public:
 
 						// record sub-array plane of array output before computing shading and soiling
 						if (iyear==0)
-							p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));							
+							if(radmode < 3)
+								p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
+							else
+								p_poanom[nn][idx] = (ssc_number_t)((ipoa));
 
 						// note: ibeam, iskydiff, ignddiff are in units of W/m2
 
 						// record sub-array contribution to total POA power for this time step  (W)
-						ts_accum_poa_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						if(radmode < 3)
+							ts_accum_poa_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						else
+							ts_accum_poa_nom += (ipoa) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 						// record sub-array contribution to total POA beam power for this time step (W)
 						ts_accum_poa_beam_nom += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
@@ -1792,6 +1804,11 @@ public:
 							ibeam *= soiling_factor;
 							iskydiff *= soiling_factor;
 							ignddiff *= soiling_factor;
+							if(radmode == 3 || radmode == 4){
+								ipoa *= soiling_factor;
+								if(soiling_factor > 0 && idx == 0)
+									log("Both a poa sky model has been selected and soiling losses have been applied.", SSC_WARNING);
+							}
 							beam_shad_factor *= soiling_factor;
 						}
 							
@@ -1821,6 +1838,7 @@ public:
 						sa[nn].poa.ibeam = ibeam;
 						sa[nn].poa.iskydiff = iskydiff;
 						sa[nn].poa.ignddiff = ignddiff;
+						sa[nn].poa.ipoa = ipoa;
 						sa[nn].poa.aoi = aoi;
 						sa[nn].poa.sunup = sunup;
 						sa[nn].poa.stilt = stilt;
@@ -1847,7 +1865,7 @@ public:
 							{
 								if (!sa[nn].enable || sa[nn].nstrings < 1) continue; // skip disabled subarrays
 
-								pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, wf.poa,
+								pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, sa[nn].poa.ipoa,
 									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 									solzen, sa[nn].poa.aoi, hdr.elev,
 									sa[nn].poa.stilt, sa[nn].poa.sazi,
@@ -1896,7 +1914,7 @@ public:
 							|| sa[nn].nstrings < 1)
 							continue; // skip disabled subarrays
 
-						pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, wf.poa,
+						pvinput_t in(sa[nn].poa.ibeam, sa[nn].poa.iskydiff, sa[nn].poa.ignddiff, sa[nn].poa.ipoa,
 							wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
 							solzen, sa[nn].poa.aoi, hdr.elev,
 							sa[nn].poa.stilt, sa[nn].poa.sazi,
