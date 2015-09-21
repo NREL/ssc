@@ -523,14 +523,15 @@ void poaDecomp( double wfPOA, double inc, double &dn, double &df, double &gh, do
 	df = (0.5 * wfPOA);
 	gh = dn + df;
 
-	poa[0] = (0.5 * wfPOA);
-	poa[1] = (0.25 * wfPOA);
-	poa[2] = (0.25 * wfPOA);
+	poa[0] = (0.5 * wfPOA);    // Direct
+/*
+	poa[1] = (0.25 * wfPOA);   // Sky Diffuse
+	poa[2] = (0.25 * wfPOA);   // Gnd Diffuse
 
 	diffc[0] = poa[1];
 	diffc[1] = 0;
 	diffc[2] = 0;
-
+*/
 }
 
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )

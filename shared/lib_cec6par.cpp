@@ -92,7 +92,7 @@ static double irradiance_through_cover(
 	
 	// total effective irradiance absorbed by solar cell
 	double Geff_total = G_beam*Kta_beam + G_sky*Kta_sky + G_gnd*Kta_gnd;
-	
+
 	if (Geff_total < 0) Geff_total = 0;
 	
 	return Geff_total;
@@ -125,6 +125,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	if( input.radmode < 3){
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 	
+		Geff_total = G_total;
 		Geff_total = irradiance_through_cover(
 			input.IncAng,
 			input.Zenith,
@@ -223,6 +224,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	if(input.radmode < 3){
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 			
+		Geff_total = G_total;
 		Geff_total = irradiance_through_cover(
 			input.IncAng,
 			input.Zenith,
