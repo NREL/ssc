@@ -78,7 +78,7 @@ C c4,c5 = empirical module-specIFic constants
 	return Ix0*(C4*Ee+C5*Ee*Ee)*(1.0+((aIsc+aImp)/2.0*(Tc-25.0)));
 }
 
-static double sandia_isc( double Tc, double Isc0, double Ibc, double Idc, double F1, double F2, double fd, double aIsc )
+static double sandia_isc( double Tc, double Isc0, double Ibc, double Idc, double F1, double F2, double fd, double aIsc, int radmode, double Ipoa )
 {
 	/*
 C Returns Short-Circuit Current
@@ -93,7 +93,18 @@ C Tc   = cell temperature */
 
 // CNB UPDATED 12-3-07 BASED ON INFO FROM UPDATED CODE FROM GREG BARKER
 // C       Isc0*((Ibc*F1*F2+fd*Idc)/1000.0)*(1.0+aIsc*(Tc-25.0))
-	return Isc0*F1*((Ibc*F2+fd*Idc)/1000.0)*(1.0+aIsc*(Tc-25.0));
+
+//JMF updated 9/21/15 to account for POA input per email from Cliff Hansen on 9/21/15
+// Cliff stated: "If POA is broadband use GPOA in place of f2(AOI)Eb + fd Ediff in the equation for Isc. If POA is a matched reference cell you also drop the F1(AMa) factor."
+	double Isc;
+	if (radmode == 3) //reference cell
+		Isc = Isc0*(Ipoa / 1000.0)*(1.0 + aIsc*(Tc - 25.0)); //per Cliff: 
+	else if (radmode == 4) //POA irradiance sensor ("broadband" in Cliff's email)
+		Isc = Isc0*F1*(Ipoa / 1000.0)*(1.0 + aIsc*(Tc - 25.0));
+	else
+		Isc = Isc0*F1*((Ibc*F2+fd*Idc)/1000.0)*(1.0+aIsc*(Tc-25.0));
+
+	return Isc;
 }
 
 static double sandia_imp(double Tc, double Ee, double Imp0, double aImp, double C0, double C1)
@@ -256,7 +267,7 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 		double F2 = sandia_f2(in.IncAng,B0,B1,B2,B3,B4,B5);
 
 		//C Calculate short-circuit current:
-		double Isc = sandia_isc(TcellC,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc);
+		double Isc = sandia_isc(TcellC,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc, in.radmode, in.Ipoa);
 
 		//C Calculate effective irradiance:
 		double Ee = sandia_effective_irradiance(TcellC,Isc,Isc0,aIsc);
