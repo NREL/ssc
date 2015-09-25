@@ -48,16 +48,19 @@ public:
 	double qmax(); 
 	double I();
 	bool chargeChanged();
+	double I_loss();
 
 protected:
 	double _q0;  // [Ah] - Total capacity at timestep 
 	double _qmax; // [Ah] - maximum possible capacity
 	double _qmax0; // [Ah] - original maximum capacity
 	double _I;   // [A]  - Current draw during last step
+	double _I_loss; // [A] - Lifetime and thermal losses
 	double _SOC; // [%] - State of Charge
 	double _SOC_max; // [%] - Maximum SOC
 	double _DOD; // [%] - Depth of Discharge
 	double _DOD_prev; // [%] - Depth of Discharge of previous step
+	double _dt_hour; // [hr] - Timestep in hours
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
 	int _prev_charge; // {CHARGE, NO_CHARGE, DISCHARGE}
 
@@ -375,11 +378,13 @@ public:
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	
-	// Conversion losses at AC or DC connection points
+	// Losses at AC or DC connection points and internal loss
 	double conversion_loss_in(double);
 	double conversion_loss_out(double);
+	void total_loss(double, double,double);
 
 	// Outputs
+	void new_year();
 	double cycle_efficiency();
 	double average_efficiency();
 
@@ -389,6 +394,12 @@ public:
 	double pv_to_load();
 	double battery_to_load();
 	double grid_to_load();
+	double charge_annual();
+	double discharge_annual();
+	double grid_import_annual();
+	double grid_export_annual();
+	double energy_loss_annual();
+
 	void compute_grid_net( double e_pv, double e_load);
 protected:
 
@@ -407,6 +418,7 @@ protected:
 	double _e_tofrom_batt;
 	double _e_grid;
 	double _e_gen;
+	double _e_loss_annual; 
 	double _pv_to_load;
 	double _battery_to_load;
 	double _grid_to_load;
@@ -418,11 +430,13 @@ protected:
 	double _SOC_max;
 	double _Ic_max;
 	double _Id_max;
+	double _I_loss;
 	double _t_min;
 	double _e_max_discharge;
 	double _e_max_charge;
 	double _percent_discharge;
 	double _percent_charge;
+
 	// rapid charge change controller
 	int _t_at_mode; // [minutes]
 	bool _charging;
@@ -430,9 +444,13 @@ protected:
 	bool _grid_recharge;
 
 	// efficiency
-	double _charge_accumulated;		// [Kwh]
-	double _discharge_accumulated;  // [Kwh]
-	double _average_efficiency;		// [%]
+	double _charge_accumulated;		 // [Kwh]
+	double _discharge_accumulated;   // [Kwh]
+	double _charge_annual;			 // [Kwh]
+	double _discharge_annual;		 // [Kwh]
+	double _grid_import_annual;		 // [Kwh]
+	double _grid_export_annual;		 // [Kwh]
+	double _average_efficiency;		 // [%]
 };
 
 /*

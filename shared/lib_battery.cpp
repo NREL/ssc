@@ -13,6 +13,8 @@ capacity_t::capacity_t(double q, double SOC_max)
 	_qmax = q;
 	_qmax0 = q;
 	_I = 0.;
+	_I_loss = 0.;
+	_dt_hour = 0.;
 
 	// Initialize SOC, DOD
 	_SOC = SOC_max;
@@ -64,7 +66,7 @@ double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0;}
 double capacity_t::qmax(){ return _qmax; }
 double capacity_t::I(){ return _I; }
-
+double capacity_t::I_loss() { return _I_loss; }
 
 /*
 Define KiBam Capacity Model
@@ -175,7 +177,10 @@ void capacity_kibam_t::parameter_compute()
 void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 {
 	_DOD_prev = _DOD;							 
+	_I_loss = 0.;
 	_I = I;
+	_dt_hour = dt_hour;
+
 	double Idmax = 0.;
 	double Icmax = 0.;
 	double Id = 0.;
@@ -224,10 +229,12 @@ void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 	double qmax_tmp = _qmax*capacity_percent;
 	if (_q0 > qmax_tmp)
 	{
+		double q0_orig = _q0;
 		double p = qmax_tmp / _q0;
 		_q0 *= p;
 		_q1 *= p;
 		_q2 *= p;
+		_I_loss += (q0_orig - _q0) / _dt_hour;
 	}
 	update_SOC();
 }
@@ -240,10 +247,12 @@ void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
 	// scale to q0 = qmax if q0 > qmax
 	if (_q0 > _qmax)
 	{
+		double q0_orig = _q0;
 		double p = _qmax / _q0;
 		_q0 *= p;
 		_q1 *= p;
 		_q2 *= p;
+		_I_loss += (q0_orig - _q0) / _dt_hour;
 	}
 	update_SOC();
 }
@@ -267,6 +276,8 @@ void capacity_lithium_ion_t::replace_battery()
 void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 {
 	_DOD_prev = _DOD;
+	_I_loss = 0.;
+	_dt_hour = dt;
 	double q0_old = _q0;
 	_I = I;
 
@@ -295,7 +306,10 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
 	double qmax_tmp = _qmax*capacity_percent;
 	if (_q0 > qmax_tmp)
+	{
+		_I_loss += (_q0 - qmax_tmp) / _dt_hour;
 		_q0 = qmax_tmp;
+	}
 	update_SOC();
 
 }
@@ -306,7 +320,10 @@ void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 		_qmax = _qmax0* capacity_percent*0.01;
 	
 	if (_q0 > _qmax)
+	{
+		_I_loss += (_q0 - _qmax) / _dt_hour;
 		_q0 = _qmax;
+	}
 
 	update_SOC();
 }
@@ -902,6 +919,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_SOC_max = SOC_max;
 	_Ic_max = Ic_max;
 	_Id_max = Id_max;
+	_I_loss = 0;
 	_t_min = t_min;
 	_ac_or_dc = ac_or_dc;
 	_dc_dc = dc_dc;
@@ -932,6 +950,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	// efficiency
 	_charge_accumulated = _Battery->battery_charge_total()*_Battery->battery_voltage()*watt_to_kilowatt;
 	_discharge_accumulated = 0.;
+	_charge_annual = 0.;
+	_discharge_annual = 0.;
+	_grid_import_annual = 0.;
+	_grid_export_annual = 0.;
+	_e_loss_annual = 0.;
 	_average_efficiency = 100.;
 }
 double dispatch_t::energy_tofrom_battery(){ return _e_tofrom_batt; };
@@ -941,7 +964,20 @@ double dispatch_t::battery_to_load(){ return _battery_to_load; };
 double dispatch_t::grid_to_load(){ return _grid_to_load; };
 double dispatch_t::gen(){ return _e_gen; }
 double dispatch_t::average_efficiency(){ return _average_efficiency; }
+double dispatch_t::charge_annual(){ return _charge_annual; }
+double dispatch_t::discharge_annual(){ return _discharge_annual; }
+double dispatch_t::grid_import_annual(){ return _grid_import_annual; }
+double dispatch_t::grid_export_annual(){ return _grid_export_annual; }
+double dispatch_t::energy_loss_annual(){ return _e_loss_annual; };
 
+void dispatch_t::new_year()
+{
+	_charge_annual = 0.;
+	_discharge_annual = 0.;
+	_grid_import_annual = 0.;
+	_grid_export_annual = 0.;
+	_e_loss_annual = 0.;
+}
 
 
 void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
@@ -1027,10 +1063,15 @@ void dispatch_t::compute_efficiency()
 {
 	// average cycle efficiency
 	if (_e_tofrom_batt > 0.)
+	{
 		_discharge_accumulated += _e_tofrom_batt;
+		_discharge_annual += _e_tofrom_batt;
+	}
 	else if (_e_tofrom_batt < 0.)
+	{
 		_charge_accumulated += (-_e_tofrom_batt);
-
+		_charge_annual += (-_e_tofrom_batt);
+	}
 	_average_efficiency = 100.*(_discharge_accumulated / _charge_accumulated);
 	
 	// update for next step
@@ -1038,19 +1079,41 @@ void dispatch_t::compute_efficiency()
 }
 double dispatch_t::conversion_loss_in(double I)
 {
+	double I_in = I; 
 	if (_ac_or_dc == 0)
 		I*=_dc_dc*0.01;
 	else
 		I*=_ac_dc*0.01;
+	_I_loss += fabs(I_in - I);
 	return I;
 }
 double dispatch_t::conversion_loss_out(double I)
 {
+	double I_in = I;
 	if (_ac_or_dc == 0)
 		I*=_dc_dc*0.01;
 	else
 		I*=_dc_ac*0.01;
+	_I_loss += fabs(I_in - I);
 	return I;
+}
+void dispatch_t::total_loss(double I, double battery_voltage, double battery_voltage_new)
+{
+	double multiplier = 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;
+
+	// Apply conversion loss on AC or DC side
+	if (_charging) { conversion_loss_in(I); }
+	else { conversion_loss_out(I); }
+
+	// energy to battery already includes internal losses, add in conversion losses
+	 _e_tofrom_batt -= _I_loss*multiplier; 
+
+	// Add internal capacity losses due to lifetime and thermal effects onto conversion losses
+	 // This would be a way to isolate voltage losses, conversion losses, and internal losses
+	// _I_loss += _Battery->capacity_model()->I_loss();
+	// _e_loss_annual += fabs(_I_loss*multiplier); // [kWh]
+
+	_e_loss_annual = _charge_annual - _discharge_annual;
 }
 void dispatch_t::compute_grid_net(double e_gen, double e_load)
 {
@@ -1060,6 +1123,12 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 	double e_pv = e_gen*_pv_fraction;
 	double e_tofrom_battery = e_gen*_battery_fraction;
 	_e_grid = e_gen - e_load;
+
+	// accumulate annual
+	if (_e_grid > 0)
+		_grid_export_annual += _e_grid;
+	else
+		_grid_import_annual += (-_e_grid);
 
 	// Next, get how much of each component will meet the load.  
 	// PV always meets load before battery
@@ -1124,6 +1193,9 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 	double charge_total = _Battery->battery_charge_total();								// [Ah]
 	double charge_max = _Battery->battery_charge_maximum();								// [Ah]
 	double diff = 0.;																	// [%]
+	double I = 0.;															            // [A] - The  current input/draw from battery after losses
+	double e_loss;																		// [kWh] Conversion loss and internal capacity loss due to thermal and lifetime effects
+	_I_loss = 0.;																        // [A] - The current reduction due to AC/DC conversion
 	_e_grid = 0.;																		// [KWh] energy needed from grid to charge battery.  Positive indicates sending to grid.  Negative pulling from grid.
 	_e_tofrom_batt = 0.;																// [KWh] energy transferred to/from the battery.     Positive indicates discharging, Negative indicates charging
 	_pv_to_load = 0.;
@@ -1177,24 +1249,20 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 	// Controllers
 	SOC_controller(battery_voltage, charge_total, charge_max );
 	switch_controller();
-	double I = current_controller(battery_voltage);
+	I = current_controller(battery_voltage);
 
-	// Apply conversion loss on AC or DC side
-	if (_charging)
-		I = conversion_loss_in(I);
 
 	// Run Battery Model to update charge based on charge/discharge
 	_Battery->run(I);
 
 	// Update how much power was actually used to/from battery
 	I = _Battery->capacity_model()->I();
-
-	if (!_charging)
-		I = conversion_loss_out(I);
-
 	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
 	_e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
 
+	// Compute total losses
+	total_loss(I,battery_voltage, battery_voltage_new);
+	 
 	// compute internal round-trip efficiency
 	compute_efficiency();
 	
