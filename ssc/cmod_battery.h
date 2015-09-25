@@ -63,7 +63,7 @@ struct battstor
 	int prediction_index;
 
 	// outputs
-	ssc_number_t 
+	ssc_number_t
 		*outTotalCharge,
 		*outAvailableCharge,
 		*outBoundCharge,
@@ -85,8 +85,14 @@ struct battstor
 		*outGenPower,
 		*outPVToLoad,
 		*outBatteryToLoad,
-		*outGridToLoad;
-	
+		*outGridToLoad,
+		*outAnnualChargeEnergy,
+		*outAnnualDischargeEnergy,
+		*outAnnualGridImportEnergy,
+		*outAnnualGridExportEnergy,
+		*outAnnualEnergyLoss;
+
+
 	double outAverageCycleEfficiency;
 };
 
