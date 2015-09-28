@@ -381,7 +381,10 @@ public:
 				else if (theta_eff_ground > M_PI / 3 && theta_eff_ground <= M_PI / 2) Kta_g = (1 - iam)*(theta_eff_ground - M_PI / 2.);
 				if (Kta_g < 0) Kta_g = 0;
 
-				double beam_loss_factor = shad.fbeam( hour, solalt, solazi );
+				// sub hourly update
+//				double beam_loss_factor = shad.fbeam( hour, solalt, solazi );
+				double beam_loss_factor = shad.fbeam(hour, solalt, solazi, jj, step_per_hour);
+
 
 				shading_loss[idx] = (ssc_number_t) (1-beam_loss_factor)*100;
 
