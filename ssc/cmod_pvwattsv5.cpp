@@ -438,7 +438,11 @@ public:
 				p_sunup[idx] = (ssc_number_t)sunup;
 				p_aoi[idx] = (ssc_number_t)aoi;
 				
-				double shad_beam = shad.fbeam( hour, solalt, solazi );
+				// sub hourly update
+//				double shad_beam = shad.fbeam( hour, solalt, solazi );
+				double shad_beam = shad.fbeam(hour, solalt, solazi, jj, step_per_hour);
+
+
 				p_shad_beam[idx] = (ssc_number_t)shad_beam ;
 				
 				if ( sunup > 0 )
