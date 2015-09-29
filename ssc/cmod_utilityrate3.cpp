@@ -2982,7 +2982,7 @@ public:
 		{
 			for (m = 1; m < 12; m++)
 			{
-// incorrectly applied to scale factor for reduction in following loop - should be applied after loop - issue reported by Paul 9/28/15. Incorrect after update after 2015.1.30 release
+// incorrectly applied to scale factor for reduction in following loop - should be applied after loop - issue reported by Paul 9/28/15. Incorrect after update after 2015.1.30 release made in monthly rewrite and checked in ssc rev 2905 on 6/24/15
 //				if (monthly_energy_net[m] < 0)
 //					monthly_energy_net[m] += monthly_cumulative_excess_energy[m - 1];
 				for (period = 0; period < 12; period++)
