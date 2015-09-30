@@ -21,6 +21,10 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
+	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
+	m_pipe_length_add = std::numeric_limits<double>::quiet_NaN();
+	m_pipe_length_mult = std::numeric_limits<double>::quiet_NaN();
+
 	m_id_tube = std::numeric_limits<double>::quiet_NaN();
 	m_A_tube = std::numeric_limits<double>::quiet_NaN();
 	m_n_t = -1;
@@ -40,6 +44,8 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_A_rec_proj = std::numeric_limits<double>::quiet_NaN();
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
+
+	m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 
 	m_itermode = -1;
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
@@ -160,6 +166,13 @@ void C_mspt_receiver_222::init()
 
 	m_T_salt_hot_target += 273.15;			//[K] convert from C
 	
+	// 8.10.2015 twn: Calculate constant thermal losses to the environment
+	if(m_pipe_loss_per_m > 0.0 && m_pipe_length_mult > 0.0)
+		m_Q_dot_piping_loss = m_pipe_loss_per_m*(m_h_tower*m_pipe_length_mult + m_pipe_length_add);		//[Wt]
+	else
+		m_Q_dot_piping_loss = 0.0;
+
+
 	// *******************************************************************
 	// *******************************************************************
 	//      Allocate the input array for the flux map!?!?!??! (line 418 type222)
@@ -345,6 +358,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		m_dot_htf_max = fmin(m_m_dot_htf_max, m_dot_iscc_max);
 	}
 
+	double q_abs_sum = 0.0;
 	double err_od = 999.0;	// Reset error before iteration
 
 	// 15 continue -> TRNSYS command - replace
@@ -504,6 +518,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		int qq_max = 50;
 		double m_dot_salt = std::numeric_limits<double>::quiet_NaN();
 		int qq = 0;
+		q_abs_sum = 0.0;
 
 		while( abs(err) > tol )
 		{
@@ -645,7 +660,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				break;
 
 			q_conv_sum = 0.0; q_rad_sum = 0.0; //q_inc_sum = 0.0;
-			double q_abs_sum = 0.0;
+			q_abs_sum = 0.0;
 			for( int i = 0; i < m_n_panels; i++ )
 			{
 				q_conv_sum += m_q_dot_conv.at(i);
@@ -660,16 +675,25 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				T_salt_hot_guess_sum += m_T_panel_out_guess.at(m_flow_pattern.at(j, m_n_panels / m_n_lines - 1));		//[K] Update the calculated hot salt outlet temp
 			T_salt_hot_guess = T_salt_hot_guess_sum / (double)m_n_lines;
 
-			if( q_dot_inc_sum > 0.0 )
-				eta_therm = q_abs_sum / (q_dot_inc_sum*1000.0);
-			else
-				eta_therm = 0.0;
+			// 8.10.2015 twn: Calculate outlet temperature after piping losses
+			if( m_Q_dot_piping_loss > 0.0 )
+			{
+				double m_dot_salt_tot_temp = m_dot_salt*m_n_lines;		//[kg/s]
+				double delta_T_piping = m_Q_dot_piping_loss / (m_dot_salt_tot_temp*c_p_coolant);	//[K]
+				T_salt_hot_guess = T_salt_hot_guess - m_Q_dot_piping_loss/(m_dot_salt_tot_temp*c_p_coolant);	//[K]
+			}
+
+			// 8.12.2015 twn: not using eta_therm in iteration loop - so move this calculation after loop
+			//if( q_dot_inc_sum > 0.0 )
+			//	eta_therm = q_abs_sum / (q_dot_inc_sum*1000.0);
+			//else
+			//	eta_therm = 0.0;
 
 			err = (T_salt_hot_guess - m_T_salt_hot_target) / m_T_salt_hot_target;
 
 			if( abs(err) > tol )
 			{
-				m_dot_salt_guess = q_abs_sum / (m_n_lines*c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));			//[kg/s]
+				m_dot_salt_guess = (q_abs_sum - m_Q_dot_piping_loss) / (m_n_lines*c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));			//[kg/s]
 
 				if( m_dot_salt_guess < 1.E-5 )
 				{
@@ -706,6 +730,12 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			}
 		}
 	} while( rec_is_defocusing );
+
+	// 8.12.2015 twn: not using eta_therm in iteration loop - so move this calculation after loop
+	if( q_dot_inc_sum > 0.0 )
+		eta_therm = q_abs_sum / (q_dot_inc_sum*1000.0);
+	else
+		eta_therm = 0.0;
 
 	double DELTAP, Pres_D, W_dot_pump, q_thermal, q_startup;
 	DELTAP = Pres_D = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
@@ -819,18 +849,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		}	// End switch() on input_operation_mode
 
 		// Pressure drop calculations
-		double L_e_45 = 16.0;						// The equivalent length produced by the 45 degree bends in the tubes - Into to Fluid Mechanics, Fox et al.
-		double L_e_90 = 30.0;						// The equivalent length produced by the 90 degree bends in the tubes
-		double DELTAP_tube = rho_coolant*(f*m_h_rec / m_id_tube*pow(u_coolant, 2) / 2.0);	//[Pa] Pressure drop across the tube, straight length
-		double DELTAP_45 = rho_coolant*(f*L_e_45*pow(u_coolant, 2) / 2.0);					//[Pa] Pressure drop across 45 degree bends
-		double DELTAP_90 = rho_coolant*(f*L_e_90*pow(u_coolant, 2) / 2.0);					//[Pa] Pressure drop across 90 degree bends
-		DELTAP = DELTAP_tube + 2 * DELTAP_45 + 4 * DELTAP_90;						//[Pa] Total pressure drop across the tube with (4) 90 degree bends, (2) 45 degree bends
-		double DELTAP_h_tower = rho_coolant*m_h_tower*CSP::grav;						//[Pa] The pressure drop from pumping up to the receiver
-		double DELTAP_net = DELTAP*m_n_panels / (double)m_n_lines + DELTAP_h_tower;		//[Pa] The new pressure drop across the receiver panels
-		Pres_D = DELTAP_net*1.E-6;			//[MPa]
-		double est_load = fmax(0.25, m_dot_salt_tot / m_m_dot_htf_des) * 100;		//[%] Relative pump load. Limit to 25%
-		double eta_pump_adj = m_eta_pump*(-2.8825E-9*pow(est_load, 4) + 6.0231E-7*pow(est_load, 3) - 1.3867E-4*pow(est_load, 2) + 2.0683E-2*est_load);	//[-] Adjusted pump efficiency
-		W_dot_pump = DELTAP_net*m_dot_salt_tot / rho_coolant / eta_pump_adj;
+        calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump);
+
 		q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
 		q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
 
@@ -871,7 +891,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	}
 
 	ms_outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
-	ms_outputs.m_eta_therm = eta_therm;							//[-]
+	ms_outputs.m_eta_therm = eta_therm;							//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
 	ms_outputs.m_W_dot_pump = W_dot_pump / 1.E6;				//[MW] convert from W
 	ms_outputs.m_q_conv_sum = q_conv_sum / 1.E6;				//[MW] convert from W
 	ms_outputs.m_q_rad_sum = q_rad_sum / 1.E6;					//[MW] convert from W
@@ -888,6 +908,10 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
 	ms_outputs.m_f_timestep = f_rec_timestep;					//[-]
 	ms_outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
+	if(q_thermal > 0.0)
+		ms_outputs.m_q_dot_piping_loss = m_Q_dot_piping_loss/1.E6;	//[MWt]
+	else
+		ms_outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
 
 }
 
@@ -946,3 +970,28 @@ void C_mspt_receiver_222::clear_outputs()
 		ms_outputs.m_f_timestep = std::numeric_limits<double>::quiet_NaN();
 }
 
+void C_mspt_receiver_222::calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc)
+{
+
+    // Pressure drop calculations
+	double u_coolant = mdot / (m_n_lines * m_n_t*rho_f* m_id_tube * m_id_tube * 0.25 * CSP::pi);	//[m/s] Average velocity of the coolant through the receiver tubes
+
+	double L_e_45 = 16.0;						// The equivalent length produced by the 45 degree bends in the tubes - Into to Fluid Mechanics, Fox et al.
+	double L_e_90 = 30.0;						// The equivalent length produced by the 90 degree bends in the tubes
+	double DELTAP_tube = rho_f*(ffact*m_h_rec / m_id_tube*pow(u_coolant, 2) / 2.0);	//[Pa] Pressure drop across the tube, straight length
+	double DELTAP_45 = rho_f*(ffact*L_e_45*pow(u_coolant, 2) / 2.0);					//[Pa] Pressure drop across 45 degree bends
+	double DELTAP_90 = rho_f*(ffact*L_e_90*pow(u_coolant, 2) / 2.0);					//[Pa] Pressure drop across 90 degree bends
+	double DELTAP = DELTAP_tube + 2 * DELTAP_45 + 4 * DELTAP_90;						//[Pa] Total pressure drop across the tube with (4) 90 degree bends, (2) 45 degree bends
+	double DELTAP_h_tower = rho_f*m_h_tower*CSP::grav;						//[Pa] The pressure drop from pumping up to the receiver
+	double DELTAP_net = DELTAP*m_n_panels / (double)m_n_lines + DELTAP_h_tower;		//[Pa] The new pressure drop across the receiver panels
+	PresDrop_calc = DELTAP_net*1.E-6;			//[MPa]
+	double est_load = fmax(0.25, mdot / m_m_dot_htf_des) * 100;		//[%] Relative pump load. Limit to 25%
+	double eta_pump_adj = m_eta_pump*(-2.8825E-9*pow(est_load, 4) + 6.0231E-7*pow(est_load, 3) - 1.3867E-4*pow(est_load, 2) + 2.0683E-2*est_load);	//[-] Adjusted pump efficiency
+	WdotPump_calc = DELTAP_net*mdot / rho_f / eta_pump_adj;
+
+}
+
+HTFProperties *C_mspt_receiver_222::get_htf_property_object()
+{
+    return &field_htfProps;
+}

@@ -30,11 +30,12 @@ enum{	//Parameters
 		P_m_dot_htf_max,
 		P_A_sf,
 		P_IS_DIRECT_ISCC,
-		P_CYCLE_CONFIG,
-//		P_fluxmap_angles,
-//		P_fluxmap,       
+		P_CYCLE_CONFIG,    
 		P_n_flux_x,
 		P_n_flux_y,
+		P_PIPING_LOSS_PER_M,
+		P_PIPE_LENGTH_ADD,
+		P_PIPE_LENGTH_MULT,
 
 
 		//Inputs
@@ -102,8 +103,9 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_CYCLE_CONFIG,     "cycle_config",     "Configuration of ISCC power cycle",                                        "-",        "", "", "1"},
 	{TCS_PARAM, TCS_NUMBER, P_n_flux_x,         "n_flux_x",         "Receiver flux map resolution - X",                                         "-",        "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_n_flux_y,         "n_flux_y",         "Receiver flux map resolution - Y",                                         "-",        "", "", ""},
-	//{TCS_PARAM, TCS_MATRIX, P_fluxmap_angles,   "fluxmap_angles",   "Matrix containing zenith and azimuth angles for flux maps",                "-",        "2 columns - azimuth angle, zenith angle. number of rows must equal number of flux maps provided", "", "" },
-	//{TCS_PARAM, TCS_MATRIX, P_fluxmap,          "fluxmap",          "Matrix containing flux map for various solar positions",                   "-",        "", "", "" },
+	{TCS_PARAM, TCS_NUMBER, P_PIPING_LOSS_PER_M,"piping_loss",      "Thermal losses per meter of calculated tower piping",                      "Wt/m",     "", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_PIPE_LENGTH_ADD,  "piping_length_add","Value added to product of tower height*piping length multiple",			"m"			"", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_PIPE_LENGTH_MULT, "piping_length_mult","Value multiplied to tower height",										"-"			"", "", ""},
 
 	//INPUTS
 	{TCS_INPUT, TCS_NUMBER, I_azimuth,			"azimuth",			"Solar azimuth angle",														"deg",		"", "", ""},
@@ -196,6 +198,13 @@ public:
 		mspt_receiver.m_rec_qf_delay = value(P_rec_qf_delay);		//[-] Energy-based receiver startup delay (fraction of rated thermal power)
 		mspt_receiver.m_m_dot_htf_max = value(P_m_dot_htf_max);		//[kg/hr] Maximum mass flow rate through receiver
 		mspt_receiver.m_A_sf = value(P_A_sf);						//[m^2] Solar field area
+
+		// 8.12.15 twn: have added tower piping thermal losses to receiver performance model
+		//  ....... if we want to be consistent with old model, need to set these parameters to 0 here
+		mspt_receiver.m_pipe_loss_per_m = value(P_PIPING_LOSS_PER_M);	//[Wt/m]
+		mspt_receiver.m_pipe_length_add = value(P_PIPE_LENGTH_ADD);		//[m]
+		mspt_receiver.m_pipe_length_mult = value(P_PIPE_LENGTH_MULT);	//[-]
+		// *************************************************************************************
 
 		mspt_receiver.m_n_flux_x = (int)value(P_n_flux_x);
 		mspt_receiver.m_n_flux_y = (int)value(P_n_flux_y);

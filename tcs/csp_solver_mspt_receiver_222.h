@@ -22,6 +22,8 @@ private:
 	double m_A_rec_proj;
 	double m_A_node;
 	
+	double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
+
 	int m_itermode;
 	double m_od_control;
 	double m_tol_od;
@@ -96,6 +98,11 @@ public:
 	double m_m_dot_htf_max;			//[kg/hr], convert to [kg/s] in init()
 	double m_A_sf;					//[m2]
 
+	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
+	double m_pipe_loss_per_m;		//[Wt/m]
+	double m_pipe_length_add;		//[m]
+	double m_pipe_length_mult;		//[-]
+
 	int m_n_flux_x;
 	int m_n_flux_y;
 
@@ -136,31 +143,32 @@ public:
 		// Let's put outputs in a structure...
 	struct S_outputs
 	{
-		double m_m_dot_salt_tot;
-		double m_eta_therm;
-		double m_W_dot_pump;
-		double m_q_conv_sum;
-		double m_q_rad_sum;
-		double m_Q_thermal;
-		double m_T_salt_hot;
-		double m_field_eff_adj;
-		double m_Q_solar_total;
+		double m_m_dot_salt_tot;		//[kg/hr] 
+		double m_eta_therm;				//[-] RECEIVER thermal efficiency
+		double m_W_dot_pump;			//[MW] 
+		double m_q_conv_sum;			//[MW] 
+		double m_q_rad_sum;				//[MW] 
+		double m_Q_thermal;				//[MW] Thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
+		double m_T_salt_hot;			//[C]
+		double m_field_eff_adj;			//[-]
+		double m_Q_solar_total;			//[MW] 
 		double m_q_startup;				//[MWt-hr]
-		double m_dP_receiver;
-		double m_dP_total;
-		double m_vel_htf;
-		double m_T_salt_cold;
-		double m_m_dot_ss;
-		double m_q_dot_ss;
-		double m_f_timestep;
+		double m_dP_receiver;			//[bar] receiver pressure drop
+		double m_dP_total;				//[bar] total pressure drop
+		double m_vel_htf;				//[m/s] HTF flow velocity through receiver tubes
+		double m_T_salt_cold;			//[C] 
+		double m_m_dot_ss;				//[kg/hr] 
+		double m_q_dot_ss;				//[MW] 
+		double m_f_timestep;			//[-]
 		double m_time_required_su;		//[s]
+		double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings 
 	
 		S_outputs()
 		{
 			m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
 				m_T_salt_hot = m_field_eff_adj = m_Q_solar_total = m_q_startup = m_dP_receiver = m_dP_total =
 				m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep = 
-				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
+				m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -183,6 +191,10 @@ public:
 		const C_csp_solver_sim_info &sim_info);
 
 	void converged();
+
+    void calc_pump_performance(double rho_f, double mdot, double ffact, double &PresDrop_calc, double &WdotPump_calc);
+
+    HTFProperties *get_htf_property_object();
 
 };
 

@@ -26,12 +26,16 @@ public:
 			m_type = -1;
 			msg[0] = NULL;
 		}
+
+        S_message_def(int type, std::string msgin)
+        {
+            m_type = type;
+            msg = msgin;
+        };
+
 	};
 
 	std::vector<S_message_def> m_message_list;	
-
-private:
-	S_message_def mS_placeholder;
 
 public:
 	C_csp_messages();

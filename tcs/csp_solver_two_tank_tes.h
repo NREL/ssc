@@ -144,6 +144,8 @@ public:
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
 
+		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+
 		S_params()
 		{
 			m_field_fl = m_tes_fl = m_is_hx = m_tank_pairs = -1;		
@@ -152,7 +154,7 @@ public:
 
 			m_q_pb_design = m_solarm = m_vol_tank = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
 				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_V_tank_hot_ini = m_T_tank_hot_ini =
-				m_T_tank_cold_ini = m_h_tank_min = std::numeric_limits<double>::quiet_NaN();
+				m_T_tank_cold_ini = m_h_tank_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -170,6 +172,14 @@ public:
 
 	virtual double get_cold_temp();
 	
+    virtual double get_initial_charge_energy(); //MWh
+
+    virtual double get_min_charge_energy(); //MWh
+
+    virtual double get_max_charge_energy(); //MWh
+
+    virtual double get_degradation_rate();  // s^-1
+
 	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est);
 
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est);
