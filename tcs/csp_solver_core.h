@@ -42,13 +42,17 @@ public:
 class C_csp_weatherreader
 {
 private:
-	weatherfile m_wf;
+	weatherfile m_wfile;
+	weather_header m_hdr;
+	weather_record m_rec;
 	bool m_first;		// flag to indicate whether this is the first call
 
 	// member string for exception messages
 	std::string m_error_msg;
 
 	int m_ncall;
+
+	int day_prev;
 
 public:
 	C_csp_weatherreader();
@@ -60,6 +64,10 @@ public:
 	void timestep_call(const C_csp_solver_sim_info &p_sim_info);
 
 	void converged();
+
+    bool read_time_step(int time_step, C_csp_solver_sim_info &p_sim_info);
+
+    int get_current_step();
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
@@ -94,12 +102,16 @@ public:
 		double m_shift;			//[deg]
 		double m_elev;			//[m]
 
+		double m_time_rise;		//[hr]
+		double m_time_set;		//[hr]
+
 		S_outputs()
 		{
 			m_year = m_month = m_day = m_hour = -1;
 
 			m_global = m_beam = m_diffuse = m_tdry = m_twet = m_tdew = m_wspd = m_wdir = m_rhum = m_pres = m_snow = m_albedo =
-				m_poa = m_solazi = m_solzen = m_lat = m_lon = m_tz = m_shift = m_elev = std::numeric_limits<double>::quiet_NaN();
+				m_poa = m_solazi = m_solzen = m_lat = m_lon = m_tz = m_shift = m_elev =
+				m_time_rise = m_time_set = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -110,6 +122,98 @@ public:
 	double m_azimuth;
 
 	S_outputs ms_outputs;
+};
+
+class C_csp_tou
+{
+
+public:
+
+    struct S_csp_tou_params
+    {
+		bool m_dispatch_optimize;
+        int m_optimize_frequency;
+        int m_optimize_horizon;
+        double m_solver_timeout;
+        double m_mip_gap;
+        int m_presolve_type;
+        int m_bb_type;
+        int m_scaling_type;
+        int m_max_iterations;
+
+		
+		
+		bool m_is_block_dispatch;
+
+		bool m_use_rule_1;
+		double m_standby_off_buffer;
+
+		bool m_use_rule_2;
+		double m_q_dot_rec_des_mult;
+		double m_f_q_dot_pc_overwrite;
+
+
+        S_csp_tou_params()
+        {
+            m_dispatch_optimize = false;        //Do dispatch optimization
+            m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
+            m_optimize_horizon = 48;            //[hr] Optimization time horizon
+            m_solver_timeout = 5.;
+            m_mip_gap = 0.055;
+            m_max_iterations = 10000;
+            m_bb_type = -1;
+            m_presolve_type = -1;
+            m_scaling_type = -1;
+
+			
+			
+			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
+			
+			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
+			m_use_rule_1 = false;				
+			m_standby_off_buffer = -1.23;		//[hr]
+
+
+			// Rule 2: If both:
+			//   1) Block Dispatch calls for PC OFF
+			//   2) Thermal storage charge capacity is less than the product of 'm_q_dot_rec_des_mult' and the receiver design output
+			//
+			//   THEN: Run power cycle at 'm_f_q_dot_pc_overwrite' until either:
+			//   1) the Block Dispatch target fraction calls for PC ON
+			//   2) the PC shuts off due to lack of thermal resource
+			//   
+			m_use_rule_2 = false;
+			m_q_dot_rec_des_mult = -1.23;
+			m_f_q_dot_pc_overwrite = 1.23;
+
+        };
+
+    } mc_dispatch_params;
+
+	struct S_csp_tou_outputs
+	{
+        size_t m_csp_op_tou;
+		size_t m_pricing_tou;
+		double m_f_turbine;
+		double m_price_mult;
+
+		S_csp_tou_outputs()
+		{
+            m_csp_op_tou = m_pricing_tou = -1;
+
+			m_f_turbine = m_price_mult = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	C_csp_tou(){};
+
+	~C_csp_tou(){};
+
+	void init_parent();
+
+	virtual void init() = 0;
+
+	virtual void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs) = 0;
 };
 
 class C_csp_collector_receiver
@@ -145,10 +249,11 @@ public:
 	{
 		double m_T_htf_cold_des;
 		double m_q_dot_rec_on_min;		//[MW]
+		double m_q_dot_rec_des;			//[MW]
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = m_q_dot_rec_on_min = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_q_dot_rec_on_min = m_q_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -159,8 +264,11 @@ public:
 		double m_eta_thermal;			//[-] Receiver thermal efficiency
 		double m_q_thermal;				//[MW] 'Available' receiver thermal output
 		double m_q_startup;				//[MWt-hr] Receiver thermal output
+		double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
+		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 
 		double m_time_required_su;		//[s] Time required for receiver to startup
 		//int m_mode_calculated;			//[-] Receiver operation mode after last performance CALL - could still change this timestep
@@ -169,7 +277,7 @@ public:
 		{
 			m_eta_field =  
 
-			m_eta_thermal = m_q_thermal = m_m_dot_salt_tot = m_T_salt_hot =
+			m_eta_thermal = m_q_thermal = m_q_startup = m_q_dot_piping_loss = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = m_W_dot_col_tracking =
 				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 
 			//m_mode_calculated = -1;
@@ -180,15 +288,26 @@ public:
 
 	virtual int get_operating_state() = 0;
 
+    virtual double get_startup_time() = 0;
+    virtual double get_startup_energy(double step /*sec*/) = 0; //MWh
+    virtual double get_pumping_parasitic_coef() = 0;  //MWe/MWt
+    virtual double get_min_power_delivery() = 0;    //MWt
+
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,
 		C_csp_solver_htf_state &htf_state,
 		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
+	virtual void converged() = 0;
+
 	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
-	virtual void converged() = 0;
+    virtual double calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim ) = 0;
+
+    virtual double calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_incident ) = 0; //very approximate thermal efficiency for optimization projections
+
+    virtual double get_collector_area() = 0;
 };
 
 
@@ -250,18 +369,19 @@ public:
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 		double m_P_ref;				//[MWe] Reference power level output at design
 		double m_f_hrsys;			//[-] Fraction of operating heat rejection system
-		double m_P_cond;			//[Pa] Condenser pressure
+		double m_P_cond;			//[Pa] Condenser pressure		
 		
-		double m_time_required_su;		//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
+		double m_time_required_su;	//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
 		double m_q_startup;			//[MWt-hr] Startup energy required
 		double m_q_dot_htf;			//[MWt] Thermal power from HTF (= thermal power into cycle)
+		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
 
 		S_csp_pc_outputs()
 		{
 			m_P_cycle = m_eta = m_T_htf_cold = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf = m_m_dot_htf_ref =
 				m_W_cool_par = m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
 			
-			m_time_required_su = m_q_startup = m_q_dot_htf = std::numeric_limits<double>::quiet_NaN();
+			m_time_required_su = m_q_startup = m_q_dot_htf = m_W_dot_htf_pump = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
@@ -270,6 +390,22 @@ public:
 	virtual int get_operating_state() = 0;
 
 	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params) = 0;
+
+    //required gets
+    virtual double get_cold_startup_time() = 0;
+    virtual double get_warm_startup_time() = 0;
+    virtual double get_hot_startup_time() = 0;
+    virtual double get_standby_energy_requirement() = 0; //[MW]
+    virtual double get_cold_startup_energy(double step /*sec*/) = 0;    //[MWh]
+    virtual double get_warm_startup_energy(double step /*sec*/) = 0;    //[MWh]
+    virtual double get_hot_startup_energy(double step /*sec*/) = 0;    //[MWh]
+    virtual double get_max_thermal_power() = 0;     //MW
+    virtual double get_min_thermal_power() = 0;     //MW
+    virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct) = 0; //-
+    virtual double get_efficiency_at_load(double load_frac) = 0;
+	
+	// This can vary between timesteps for Type224, depending on remaining startup energy and time
+	virtual double get_max_q_pc_startup() = 0;		//[MWt]
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,
 		C_csp_solver_htf_state &htf_state,
@@ -291,10 +427,11 @@ public:
 
 	struct S_csp_tes_outputs
 	{
-		double m_q_heater;		//[MW] Heating power required to keep tanks at a minimum temperature
-		double m_q_dot_loss;	//[MW] Storage thermal losses
-		double m_q_dot_dc_to_htf;	//[MW] Thermal power to the HTF from storage
-		double m_q_dot_ch_from_htf;	//[MW] Thermal power from the HTF to storage
+		double m_q_heater;			//[MWe] Heating power required to keep tanks at a minimum temperature
+		double m_W_dot_rhtf_pump;	//[MWe] Pumping power for Receiver HTF thru storage
+		double m_q_dot_loss;		//[MWt] Storage thermal losses
+		double m_q_dot_dc_to_htf;	//[MWt] Thermal power to the HTF from storage
+		double m_q_dot_ch_from_htf;	//[MWt] Thermal power from the HTF to storage
 		double m_T_hot_ave;		//[K] Average hot tank temperature over timestep
 		double m_T_cold_ave;	//[K] Average cold tank temperature over timestep
 		double m_T_hot_final;	//[K] Hot temperature at end of timestep
@@ -302,7 +439,7 @@ public:
 	
 		S_csp_tes_outputs()
 		{
-			m_q_heater = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = m_T_hot_ave = 
+			m_q_heater = m_W_dot_rhtf_pump = m_q_dot_loss = m_q_dot_dc_to_htf = m_q_dot_ch_from_htf = m_T_hot_ave = 
 			m_T_cold_ave = m_T_hot_final = m_T_cold_final = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -314,8 +451,16 @@ public:
 	virtual double get_hot_temp() = 0;
 
 	virtual double get_cold_temp() = 0;
-	
-	virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
+
+    virtual double get_initial_charge_energy() = 0; //MWh
+
+    virtual double get_min_charge_energy() = 0; //MWh
+
+    virtual double get_max_charge_energy() = 0; //MWh
+
+    virtual double get_degradation_rate() = 0;  // s^-1
+
+    virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
 	
 	virtual void charge_avail_est(double T_hot_K, double step_s, double &q_dot_ch_est, double &m_dot_field_est, double &T_cold_field_est) = 0;
 
@@ -335,11 +480,141 @@ public:
 class C_csp_solver
 {
 
+public:
+
+	enum E_post_proc_outputs
+	{
+		PC_Q_STARTUP,				//[MWt-hr] Receiver startup thermal energy consumed
+	
+		N_END_POST_PROC
+	};
+	
+	enum E_reported_outputs
+	{
+		// Ouputs that are NOT reported as weighted averages
+		TIME_FINAL,       //[hr]		
+		N_OP_MODES,       //[-]
+		ERR_M_DOT,        //[-] Relative mass conservation error
+		ERR_Q_DOT,        //[-] Relative energy conservation error
+		OP_MODE_1,        //[-] First operating mode in reporting timestep - always should be valid
+		OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
+		OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
+		
+
+		// **************************************************************
+		//      ONLY instantaneous outputs that are reported as the first value
+		//        if multiple csp-timesteps for one reporting timestep
+		// **************************************************************
+		TOU_PERIOD,       //[-] CSP operating TOU period
+		PRICING_MULT,     //[-] PPA price multiplier
+		PC_Q_DOT_SB,      //[MWt] PC required standby thermal power
+		PC_Q_DOT_MIN,     //[MWt] PC required min thermal power
+		PC_Q_DOT_TARGET,  //[MWt] PC target thermal power
+		PC_Q_DOT_MAX,     //[MWt] PC allowable max thermal power
+		CTRL_IS_REC_SU,   //[-] Control decision: is receiver startup allowed?
+		CTRL_IS_PC_SU,    //[-] Control decision: is power cycle startup allowed?
+		CTRL_IS_PC_SB,    //[-] Control decision: is power cycle standby allowed?
+		EST_Q_DOT_CR_SU,  //[MWt] Estimate receiver startup thermal power
+		EST_Q_DOT_CR_ON,  //[MWt] Estimate receiver thermal power to HTF
+		EST_Q_DOT_DC,     //[MWt] Estimate max TES dc thermal power
+		EST_Q_DOT_CH,     //[MWt] Estimate max TES ch thermal power
+		CTRL_OP_MODE_SEQ_A,   //[-] First 3 operating modes tried
+		CTRL_OP_MODE_SEQ_B,   //[-] Next 3 operating modes tried
+		CTRL_OP_MODE_SEQ_C,   //[-] Final 3 operating modes tried
+        DISPATCH_SOLVE_STATE,   //[-] The status of the dispatch optimization solver
+        DISPATCH_SOLVE_ITER,    //[-] Number of iterations before completing dispatch optimization
+        DISPATCH_SOLVE_OBJ,     //[?] Objective function value achieved by the dispatch optimization solver
+        DISPATCH_SOLVE_OBJ_RELAX,   //[?] Objective function value for the relaxed continuous problem 
+        DISPATCH_QSF_EXPECT,
+        DISPATCH_QSFPROD_EXPECT,
+        DISPATCH_QSFSU_EXPECT,
+        DISPATCH_TES_EXPECT,
+        DISPATCH_PCEFF_EXPECT,
+        DISPATCH_SFEFF_EXPECT,
+        DISPATCH_QPBSU_EXPECT,
+        DISPATCH_WPB_EXPECT,
+        DISPATCH_REV_EXPECT,
+
+		// **************************************************************
+		//      ONLY Outputs that are reported as weighted averages if 
+		//       multiple csp-timesteps for one reporting timestep
+		// **************************************************************
+		SOLZEN,			      //[deg] Solar zenith angle
+		BEAM,			      //[W/m^2] Resource beam normal irradiance
+		CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
+		CR_DEFOCUS,           //[-] Field optical focus fraction
+		REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
+		REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses
+		REC_M_DOT,            //[kg/hr] Receiver mass flow rate
+		REC_Q_DOT_STARTUP,    //[MWt] Receiver startup thermal power consumed
+		REC_T_IN,             //[C] Receiver HTF inlet temperature
+		REC_T_OUT,            //[C] Receiver HTF outlet temperature
+		CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
+		PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
+		PC_Q_DOT,             //[-] Cycle input thermal power
+		PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
+		PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
+		PC_W_DOT,             //[MWe] Cycle electric power output (gross)
+		PC_T_IN,              //[C] Cycle HTF inlet temperature
+		PC_T_OUT,             //[C] Cycle HTF outlet temperature
+		TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
+		TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
+		TES_T_HOT,            //[C] TES final hot tank temperature
+		TES_T_COLD,           //[C] TES final cold tank temperature
+		TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
+		TES_Q_DOT_CH,         //[MWt] TES charge thermal power
+        TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
+		TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
+		TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
+		COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
+		CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
+		SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
+		PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
+		SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
+		SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
+		W_DOT_NET,            //[MWe] System total electric power to grid
+
+		N_END	
+	};
+
+	struct S_sim_setup
+	{
+		double m_sim_time_start;
+		double m_sim_time_end;
+		double m_report_step;
+
+		S_sim_setup()
+		{
+			m_sim_time_start = m_sim_time_end = m_report_step = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	struct S_csp_system_params
+	{
+		double m_pb_fixed_par;		//[MWe/MWcap]
+		
+		double m_bop_par;			//[MWe/MWcap]
+		double m_bop_par_f;			//[-]
+		double m_bop_par_0;			//[-]
+		double m_bop_par_1;			//[-]
+		double m_bop_par_2;			//[-]
+
+		S_csp_system_params()
+		{
+			m_pb_fixed_par =
+
+			m_bop_par = m_bop_par_f = m_bop_par_0 = m_bop_par_1 = m_bop_par_2 = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 private:
 	C_csp_weatherreader &mc_weather;
 	C_csp_collector_receiver &mc_collector_receiver;
 	C_csp_power_cycle &mc_power_cycle;
 	C_csp_tes &mc_tes;
+	C_csp_tou &mc_tou;
+
+	S_csp_system_params & ms_system_params;
 
 	C_csp_solver_htf_state mc_cr_htf_state;
 	C_csp_collector_receiver::S_csp_cr_inputs mc_cr_inputs;
@@ -352,6 +627,8 @@ private:
 	C_csp_solver_htf_state mc_tes_ch_htf_state;
 	C_csp_solver_htf_state mc_tes_dc_htf_state;
 	C_csp_tes::S_csp_tes_outputs mc_tes_outputs;
+
+    C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
 	C_csp_solver_sim_info mc_sim_info;
 
@@ -380,12 +657,38 @@ private:
 	bool m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail;
 	bool m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
 
+	bool m_is_CR_ON__PC_SB__TES_CH__AUX_OFF_avail;
+	bool m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail;
+	bool m_is_CR_SU__PC_SB__TES_DC__AUX_OFF_avail;
+	bool m_is_CR_ON__PC_SB__TES_DC__AUX_OFF_avail;
+
+	bool m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail;
+	bool m_is_CR_SU__PC_TARGET__TES_DC__AUX_OFF_avail;
+	bool m_is_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF_avail;
+
+	bool m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail;
+
+	bool m_is_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF_avail;
+
+	bool m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail;
+
+	bool m_is_CR_ON__PC_SB__TES_FULL__AUX_OFF_avail;
+
+	bool m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail;
+
+	bool m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail;
+
+	bool m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail;
+
+	bool m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail;
+
 	// member string for exception messages
 	std::string error_msg;
 
 		// Collector receiver design parameters
 	double m_T_htf_cold_des;			//[K]
 	double m_q_dot_rec_on_min;			//[MW]
+	double m_q_dot_rec_des;				//[MW]
 
 		// Power cycle design parameters
 	double m_cycle_W_dot_des;			//[MW]
@@ -400,12 +703,54 @@ private:
 		// Storage logic
 	bool m_is_tes;			//[-] True: plant has storage
 
+		// Reporting and Output Tracking
+	int m_i_reporting;					//[-]
+	double m_sim_time_start;			//[s]
+	double m_sim_time_end;				//[s]
+	double m_sim_step_size_baseline;	//[s]
+	double m_report_time_start;			//[s]
+	double m_report_time_end;			//[s]
+	double m_report_step;				//[s]
+	 
+
 		// Reset hierarchy logic
 	void reset_hierarchy_logic();
 
 	void init_independent();
 
 	void solver_cr_to_pc_to_cr(double field_control_in, double tol, int &exit_mode, double &exit_tolerance);
+	 
+	void solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
+		double &time_pc_su /*s*/, 
+		int & exit_mode, double &T_pc_in_exit_tolerance);
+	
+	void solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode, 
+		double field_control_in, 
+		double tol, 
+		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
+		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
+
+	void solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
+		double field_control_in,
+		double tol,
+		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
+		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
+
+	void solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
+		double tol,
+		double & time_tes_dc,
+		int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
+		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
+
+	void solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
+		double tol,
+		int &T_cold_exit_mode, double &T_cold_exit_tolerance,
+		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
+
+	void solver_cr_on__pc_float__tes_full(int power_cycle_mode,
+		double field_control_in,
+		double tol,
+		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance);
 
 	enum E_solver_outcomes
 	{
@@ -414,7 +759,8 @@ private:
 		CONVERGED,			// Models solved; convergence within specified tolerance
 		KNOW_NEXT_MODE,		// Models did not solve, but failure mode allowed next mode to be determined
 		UNDER_TARGET_PC,	// Models solved, but could not converge because the operating mode did not allow enough thermal power to go to power cycle
-		OVER_TARGET_PC		// Models solved, but could not converge because the operating mode could not reduce the mass flow rate enough to the power cycle
+		OVER_TARGET_PC,		// Models solved, but could not converge because the operating mode could not reduce the mass flow rate enough to the power cycle
+		REC_IS_OFF			// Collector-receiver model did not produce power
 	};
 
 	// Solved Controller Variables
@@ -438,7 +784,6 @@ public:
 		CR_ON__PC_SU__TES_OFF__AUX_OFF,
 		CR_ON__PC_SB__TES_OFF__AUX_OFF,
 		
-		//CR_ON__PC_RM__TES_OFF__AUX_OFF,			// PC_RM = Resource Match
 		CR_ON__PC_RM_HI__TES_OFF__AUX_OFF,
 		CR_ON__PC_RM_LO__TES_OFF__AUX_OFF,
 		
@@ -458,72 +803,132 @@ public:
 		
 		CR_OFF__PC_SB__TES_DC__AUX_OFF,
 		CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF,
-		CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF
+		CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+		CR_ON__PC_SB__TES_CH__AUX_OFF,
+		CR_SU__PC_MIN__TES_EMPTY__AUX_OFF,
+
+		SKIP_20,
+
+		CR_SU__PC_SB__TES_DC__AUX_OFF,
+		CR_ON__PC_SB__TES_DC__AUX_OFF,
+		CR_OFF__PC_TARGET__TES_DC__AUX_OFF,
+		CR_SU__PC_TARGET__TES_DC__AUX_OFF,
+		CR_ON__PC_RM_HI__TES_FULL__AUX_OFF,
+
+		CR_ON__PC_MIN__TES_EMPTY__AUX_OFF,
+
+		CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF,
+
+		CR_DF__PC_MAX__TES_FULL__AUX_OFF,
+
+		CR_ON__PC_SB__TES_FULL__AUX_OFF,
+
+		SKIP_30,
+
+		CR_SU__PC_SU__TES_DC__AUX_OFF,
+
+		CR_ON__PC_SU__TES_CH__AUX_OFF,
+
+		CR_DF__PC_SU__TES_FULL__AUX_OFF,
+
+		CR_DF__PC_SU__TES_OFF__AUX_OFF
 	};
 
 	C_csp_solver(C_csp_weatherreader &weather,
 		C_csp_collector_receiver &collector_receiver,
 		C_csp_power_cycle &power_cycle,
-		C_csp_tes &tes);
+		C_csp_tes &tes,
+		C_csp_tou &tou,
+		S_csp_system_params &system);
 
 	~C_csp_solver(){};
 
 	void init();
 
-	void simulate();
+	void simulate(C_csp_solver::S_sim_setup & sim_setup, 
+					bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
+					float **ptr_array,
+					float **post_proc_array);
+
+	float **mp_reporting_array;
+	float **mp_post_proc_array;
+
+	void set_outputs_at_reporting_interval();
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
-	std::vector<double> mv_time_mid;		//[hr]
-	std::vector<double> mv_solzen;			//[deg]
-	std::vector<double> mv_beam;			//[W/m2]
-	std::vector<double> mv_eta_field;		//[-]
-	std::vector<double> mv_defocus;			//[-] = m_defocus 
-	std::vector<double> mv_rec_eta_thermal;	//[-] Receiver thermal efficiency
-	std::vector<double> mv_rec_q_thermal;	//[MWt-hr] Receiver thermal energy output over (perhaps varying length) timestep 
-	std::vector<double> mv_rec_q_startup;	//[MWt-hr] Receiver startup thermal energy
-	std::vector<double> mv_pc_eta;			//[-] Power cycle efficiency (gross - no parasitics outside of power block)
-	std::vector<double> mv_pc_W_gross;		//[MWe-hr] Power cycle electric gross energy (only parasitics baked into regression) over (perhaps varying length) timestep
-	std::vector<double> mv_pc_q_startup;	//[MWt-hr] Power cycle startup thermal energy
-	std::vector<double> mv_pc_q_thermal;	//[MWt-hr] Power cycle input thermal energy
-	std::vector<double> mv_tes_q_losses;	//[MWt-hr] TES thermal losses to environment
-	std::vector<double> mv_tes_q_heater;	//[MWt-hr] Energy into TES from heaters (hot+cold) to maintain tank temperatures
-	std::vector<double> mv_tes_T_hot;		//[C] TES hot temperature at end of timestep
-	std::vector<double> mv_tes_T_cold;		//[C] TES cold temperature at end of timestep
-	std::vector<double> mv_tes_dc_q_thermal;	//[MWt-hr] TES discharge thermal energy
-	std::vector<double> mv_tes_ch_q_thermal;	//[MWt-hr] TES charge thermal energy
+	std::vector< std::vector< double > > mvv_outputs_temp;
 
-	std::vector<double> mv_rec_m_dot;		//[kg/hr] Mass flow rate from receiver
-	std::vector<double> mv_pc_m_dot;		//[kg/hr] Mass flow rate to power cycle
-	std::vector<double> mv_tes_dc_m_dot;	//[kg/hr] Mass flow rate (HTF) discharged from TES
-	std::vector<double> mv_tes_ch_m_dot;	//[kg/hr] Mass flow rate (HTF) charging TES
-	std::vector<double> mv_m_dot_balance;	//[-] Are the sums of mass flow (close to) zero?
-
-	std::vector<double> mv_q_balance;		//[-] Is the 1st law satisfied?
-
-	std::vector<double> mv_operating_modes_a;	//[-] List of operating modes tried each timestep
-	std::vector<double> mv_operating_modes_b;	//[-] List of operating modes tried each timestep
-	std::vector<double> mv_operating_modes_c;	//[-] List of operating modes tried each timestep
-
-	// Controller logic info	
-	std::vector<double> mv_q_dot_pc_sb;		//[MW]
-	std::vector<double> mv_q_dot_pc_min;	//[MW]
-	std::vector<double> mv_q_dot_pc_max;	//[MW]
-	std::vector<double> mv_q_dot_pc_target;	//[MW]
-
-	std::vector<int> mv_is_rec_su_allowed;	//[-]
-	std::vector<int> mv_is_pc_su_allowed;	//[-]
-	std::vector<int> mv_is_pc_sb_allowed;	//[-]
-
-	std::vector<double> mv_q_dot_est_cr_su;	 //[MW]
-	std::vector<double> mv_q_dot_est_cr_on;	 //[MW]
-	std::vector<double> mv_q_dot_est_tes_dc; //[MW]
-	std::vector<double> mv_q_dot_est_tes_ch; //[MW]
+		// Simulation outputs
+	//std::vector<double> mv_time_final;		//[hr]
+	//std::vector<double> mv_step;			//[hr]
+	//std::vector<double> mv_solzen;			//[deg]
+	//std::vector<double> mv_beam;			//[W/m2]
 	
-	std::vector<double> mv_rec_q_dot_thermal;	//[MWt] Receiver thermal power output over (perhaps varying length) timestep 
-	std::vector<double> mv_pc_q_dot_thermal;	//[MWt] Power cycle input thermal power
-	std::vector<double> mv_tes_dc_q_dot_thermal;	//[MWt] TES discharge thermal power
-	std::vector<double> mv_tes_ch_q_dot_thermal;	//[MWt] TES charge thermal power
+	
+		// Collector-receiver ouputs
+	//std::vector<double> mv_eta_field;			//[-] Collector optical efficiency
+	//std::vector<double> mv_defocus;				//[-] = m_defocus 
+	//std::vector<double> mv_rec_eta_thermal;		//[-] Receiver thermal efficiency
+	//std::vector<double> mv_rec_q_dot_thermal;	//[MWt] Receiver thermal power output
+	//std::vector<double> mv_rec_m_dot;			//[kg/hr] Mass flow rate from receiver
+	//std::vector<double> mv_rec_q_dot_startup;	//[MWt] Receiver startup thermal power
+	//std::vector<double> mv_T_rec_in;			//[C] Receiver HTF inlet temperature
+	//std::vector<double> mv_T_rec_out;			//[C] Receiver HTF outlet temperature
+	//std::vector<double> mv_q_dot_piping_loss;	//[MWt] Tower piping thermal power losses
+	
+
+		// Power cycle outputs
+	//std::vector<double> mv_pc_eta;				//[-] Power cycle efficiency (gross - no parasitics outside of power block)
+	//std::vector<double> mv_pc_q_dot_thermal;	//[MWt] Power cycle input thermal power
+	//std::vector<double> mv_pc_m_dot;			//[kg/hr] Mass flow rate to power cycle
+	//std::vector<double> mv_pc_q_dot_startup;	//[MWt] Power cycle startup thermal power
+	//std::vector<double> mv_pc_W_dot_gross;		//[MWe] Power cycle electric gross power (only parasitics baked into regression)
+	//std::vector<double> mv_T_pc_in;				//[C] Power cycle HTF inlet temperature
+	//std::vector<double> mv_T_pc_out;			//[C] Power cycle HTF outlet temperature
+
+
+		// Thermal energy storage outputs
+	//std::vector<double> mv_tes_q_dot_loss;		//[MWt] TES thermal power losses to environment
+	//std::vector<double> mv_tes_q_dot_heater;	//[MWt] Thermal power TES from heaters (hot+cold) to maintain tank temperatures
+	//std::vector<double> mv_tes_T_hot;			//[C] TES hot temperature at end of timestep
+	//std::vector<double> mv_tes_T_cold;			//[C] TES cold temperature at end of timestep
+	//std::vector<double> mv_tes_dc_q_dot_thermal;	//[MWt] TES discharge thermal energy
+	//std::vector<double> mv_tes_ch_q_dot_thermal;	//[MWt] TES charge thermal energy
+	//std::vector<double> mv_tes_dc_m_dot;			//[kg/hr] Mass flow rate (HTF) discharged from TES
+	//std::vector<double> mv_tes_ch_m_dot;			//[kg/hr] Mass flow rate (HTF) charging TES
+
+
+		// Parasitics outputs
+	//std::vector<double> mv_W_dot_tracking;			//[MWe] Collector tracking, startup, stow power consumption
+	//std::vector<double> mv_W_dot_rec_htf_pump;		//[MWe] Receiver/tower HTF pumping power
+	//std::vector<double> mv_W_dot_tes_pc_htf_pump;	//[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)
+	//std::vector<double> mv_W_dot_cooling;			//[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
+	//std::vector<double> mv_W_dot_tes_fp_heater;		//[MWe] TES freeze protection heater power consumption
+	//std::vector<double> mv_W_dot_fixed;				//[MWe] Fixed electric parasitic power load
+	//std::vector<double> mv_W_dot_bop;				//[MWe] Balance-of-plant electric parasitic power load
+
+		// System outputs
+	//std::vector<double> mv_W_dot_net;				//[MWe] Total electric power output to grid
+
+		// Controller outputs
+	//std::vector<double> mv_q_dot_pc_sb;		//[MW]
+	//std::vector<double> mv_q_dot_pc_min;	//[MW]
+	//std::vector<double> mv_q_dot_pc_max;	//[MW]
+	//std::vector<double> mv_q_dot_pc_target;	//[MW]
+	//std::vector<int> mv_is_rec_su_allowed;	//[-]
+	//std::vector<int> mv_is_pc_su_allowed;	//[-]
+	//std::vector<int> mv_is_pc_sb_allowed;	//[-]
+	//std::vector<double> mv_q_dot_est_cr_su;	 //[MW]
+	//std::vector<double> mv_q_dot_est_cr_on;	 //[MW]
+	//std::vector<double> mv_q_dot_est_tes_dc; //[MW]
+	//std::vector<double> mv_q_dot_est_tes_ch; //[MW]
+	//std::vector<double> mv_operating_modes_a;	//[-] First list of operating modes tried each timestep
+	//std::vector<double> mv_operating_modes_b;	//[-] Second list of operating modes tried each timestep
+	//std::vector<double> mv_operating_modes_c;	//[-] Third list of operating modes tried each timestep
+	//std::vector<double> mv_m_dot_balance;	//[-] Are the sums of mass flow (close to) zero?
+	//std::vector<double> mv_q_balance;		//[-] Is the 1st law satisfied?
 
 };
 

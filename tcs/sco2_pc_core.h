@@ -1232,6 +1232,8 @@ private:
 	double m_eta_thermal_last;
 	double m_W_dot_net_last;
 	double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
+	double m_Q_dot_PHX, m_Q_dot_bypass, m_eta_bypass;
+	double m_W_dot_mc, m_W_dot_rc, m_W_dot_mc_bypass;
 	
 		// Structures and data for optimization
 	S_design_parameters ms_des_par_optimal;
@@ -1268,6 +1270,8 @@ private:
 	
 	void design_core_bypass(int & error_code);
 
+	void design_core_bypass150C(int & error_code);
+
 	void design_core_HTR_hs(int & error_code);
 
 	void opt_design_core(int & error_code);
@@ -1303,6 +1307,9 @@ public:
 		*/		
 
 		m_eta_thermal_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
+		m_Q_dot_PHX = m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();
+		m_W_dot_mc = m_W_dot_rc = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
+
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
 			
 		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();

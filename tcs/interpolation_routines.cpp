@@ -11,6 +11,9 @@ using std::max;
 
 bool Linear_Interp::Set_1D_Lookup_Table( const util::matrix_t<double> &table, int * ind_var_index, int n_ind_var, int & error_index )
 {
+	// 'ind_var_index': array of ints that list which columns are independent variables
+	// 'n_ind_var': length of 'ind_var_index' array
+	
 	//If a user defined fluid, check for minimum number of rows
 	if ( table.nrows() < 3 ) 
 	{
@@ -50,6 +53,12 @@ double Linear_Interp::linear_1D_interp( int x_col, int y_col, double x )
 	double y = m_userTable.at(j,y_col) + ((x - m_userTable.at(j,x_col))/(m_userTable.at(j+1,x_col)-m_userTable.at(j,x_col)))*(m_userTable.at(j+1,y_col) - m_userTable.at(j,y_col));
 
 	return y;
+}
+
+// If the x-column is always index 0, we can simplify linear_1D_interp
+double Linear_Interp::interpolate_x_col_0( int y_col, double x_val )
+{
+	return linear_1D_interp(0, y_col, x_val);
 }
 
 int Linear_Interp::Get_Index( int x_col, double x )

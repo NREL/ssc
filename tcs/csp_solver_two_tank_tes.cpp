@@ -272,7 +272,7 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 		a_coef += q_heater*1.E6 / cp;
 
 		m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef)*pow((timestep*c_coef / m_m_prev + 1), -b_coef / c_coef);
-		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), -b_coef / c_coef) - 1.0);
+		T_ave = a_coef / b_coef + m_m_prev*(m_T_prev - a_coef / b_coef) / ((c_coef - b_coef)*timestep)*(pow((timestep*c_coef / m_m_prev + 1.0), 1.0 -b_coef/c_coef) - 1.0);
 		q_dot_loss = m_UA*(T_ave - T_amb)/1.E6;		//[MW]
 
 	}
@@ -467,6 +467,41 @@ double C_csp_two_tank_tes::get_cold_temp()
 	return mc_cold_tank.get_m_T_prev();	//[K]
 }
 
+double C_csp_two_tank_tes::get_initial_charge_energy() 
+{
+    //MWh
+    return ms_params.m_q_pb_design * ms_params.m_ts_hours * ms_params.m_V_tank_hot_ini / ms_params.m_vol_tank *1.e-6;
+}
+
+double C_csp_two_tank_tes::get_min_charge_energy() 
+{
+    //MWh
+    return 0.; //ms_params.m_q_pb_design * ms_params.m_ts_hours * ms_params.m_h_tank_min / ms_params.m_h_tank*1.e-6;
+}
+
+double C_csp_two_tank_tes::get_max_charge_energy() 
+{
+    //MWh
+	double cp = mc_store_htfProps.Cp(ms_params.m_T_field_out_des);		//[kJ/kg-K] spec heat at average temperature during discharge from hot to cold
+    double rho = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.);
+
+    double fadj = (1. - ms_params.m_h_tank_min / ms_params.m_h_tank);
+
+    double vol_avail = ms_params.m_vol_tank * ms_params.m_tank_pairs * fadj;
+
+    double e_max = vol_avail * rho * cp * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des) / 3.6e6;   //MW-hr
+
+    return e_max;
+}
+
+double C_csp_two_tank_tes::get_degradation_rate()  
+{
+    //calculates an approximate "average" tank heat loss rate based on some assumptions. Good for simple optimization performance projections.
+    double d_tank = sqrt( ms_params.m_vol_tank / ( (double)ms_params.m_tank_pairs * ms_params.m_h_tank * 3.14159) );
+    double e_loss = ms_params.m_u_tank * 3.14159 * ms_params.m_tank_pairs * d_tank * ( ms_params.m_T_field_in_des + ms_params.m_T_field_out_des - 576.3 )*1.e-6;  //MJ/s  -- assumes full area for loss, Tamb = 15C
+    return e_loss / (ms_params.m_q_pb_design * ms_params.m_ts_hours * 3600.); //s^-1  -- fraction of heat loss per second based on full charge
+}
+
 void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) 
 {
 	double f_storage = 0.0;		// for now, hardcode such that storage always completely discharges
@@ -556,8 +591,10 @@ void C_csp_two_tank_tes::discharge_full(double timestep /*s*/, double T_amb /*K*
 
 	}
 
-	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;
+	outputs.m_W_dot_rhtf_pump = m_dot_htf_out*ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
+	
 	outputs.m_T_hot_ave = T_htf_hot_out;
 	outputs.m_T_cold_ave = T_cold_ave;
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
@@ -590,8 +627,11 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 	{
 		if(m_dot_htf_in > m_m_dot_tes_dc_max/timestep)
 		{
-			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_q_heater = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_q_dot_loss = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
+			outputs.m_q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_hot_ave = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_cold_ave = std::numeric_limits<double>::quiet_NaN();
 			outputs.m_T_hot_final = std::numeric_limits<double>::quiet_NaN();
@@ -612,8 +652,10 @@ bool C_csp_two_tank_tes::discharge(double timestep /*s*/, double T_amb /*K*/, do
 
 	}
 
-	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MWt]
+	outputs.m_W_dot_rhtf_pump = m_dot_htf_in*ms_params.m_htf_pump_coef/1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
+	
 	outputs.m_T_hot_ave = T_htf_hot_out;						//[K]
 	outputs.m_T_cold_ave = T_cold_ave;							//[K]
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
@@ -671,8 +713,11 @@ bool C_csp_two_tank_tes::charge(double timestep /*s*/, double T_amb /*K*/, doubl
 
 	}
 
-	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MW] Heating power required to keep tanks at a minimum temperature
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;			//[MW] Storage thermal losses
+	outputs.m_W_dot_rhtf_pump = m_dot_htf_in*ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MW] Heating power required to keep tanks at a minimum temperature
+	
+	
 	outputs.m_T_hot_ave = T_hot_ave;							//[K] Average hot tank temperature over timestep
 	outputs.m_T_cold_ave = T_htf_cold_out;						//[K] Average cold tank temperature over timestep
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K] Hot temperature at end of timestep
@@ -704,13 +749,13 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
 	// If no heat exchanger, no iteration is required between the heat exchanger and storage tank models
 	if( !ms_params.m_is_hx )
 	{
-		m_dot_htf_out = m_m_dot_tes_dc_max / timestep;		//[kg/s]
+		m_dot_htf_out = m_m_dot_tes_ch_max / timestep;		//[kg/s]
 
 		// Call energy balance on hot tank charge to track tank mass and temperature
-		mc_hot_tank.energy_balance(timestep, m_dot_htf_out, 0.0, T_amb, T_htf_hot_in, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+		mc_hot_tank.energy_balance(timestep, m_dot_htf_out, 0.0, T_htf_hot_in, T_amb, T_hot_ave, q_heater_hot, q_dot_loss_hot);
 
 		// Call energy balance on cold tank charge to calculate cold HTF return temperature
-		mc_cold_tank.energy_balance(timestep, 0.0, m_dot_htf_out, T_amb, 0.0, T_htf_cold_out, q_heater_cold, q_dot_loss_cold);
+		mc_cold_tank.energy_balance(timestep, 0.0, m_dot_htf_out, 0.0, T_amb, T_htf_cold_out, q_heater_cold, q_dot_loss_cold);
 	}
 
 	else
@@ -718,8 +763,10 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
 
 	}
 
-	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
 	outputs.m_q_heater = q_heater_cold + q_heater_hot;
+	outputs.m_W_dot_rhtf_pump = m_dot_htf_out*ms_params.m_htf_pump_coef / 1.E3;	//[MWe] Pumping power for Receiver HTF, convert from kW/kg/s*kg/s
+	outputs.m_q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;
+	
 	outputs.m_T_hot_ave = T_hot_ave;
 	outputs.m_T_cold_ave = T_htf_cold_out;
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]
@@ -728,8 +775,8 @@ void C_csp_two_tank_tes::charge_full(double timestep /*s*/, double T_amb /*K*/, 
 	// Calculate thermal power to HTF
 	double T_htf_ave = 0.5*(T_htf_hot_in + T_htf_cold_out);		//[K]
 	double cp_htf_ave = mc_field_htfProps.Cp(T_htf_ave);		//[kJ/kg-K]
-	outputs.m_q_dot_dc_to_htf = m_dot_htf_out*cp_htf_ave*(T_htf_hot_in - T_htf_cold_out) / 1000.0;		//[MWt]
-	outputs.m_q_dot_ch_from_htf = 0.0;							//[MWt]
+	outputs.m_q_dot_ch_from_htf = m_dot_htf_out*cp_htf_ave*(T_htf_hot_in - T_htf_cold_out) / 1000.0;		//[MWt]
+	outputs.m_q_dot_dc_to_htf = 0.0;							//[MWt]
 
 }
 
@@ -746,7 +793,9 @@ void C_csp_two_tank_tes::idle(double timestep, double T_amb, C_csp_tes::S_csp_te
 	mc_cold_tank.energy_balance(timestep, 0.0, 0.0, 0.0, T_amb, T_cold_ave, q_cold_heater, q_dot_cold_loss);
 
 	outputs.m_q_heater = q_cold_heater + q_hot_heater;			//[MJ]
+	outputs.m_W_dot_rhtf_pump = 0.0;							//[MWe]
 	outputs.m_q_dot_loss = q_dot_cold_loss + q_dot_hot_loss;	//[MW]
+	
 	outputs.m_T_hot_ave = T_hot_ave;							//[K]
 	outputs.m_T_cold_ave = T_cold_ave;							//[K]
 	outputs.m_T_hot_final = mc_hot_tank.get_m_T_calc();			//[K]

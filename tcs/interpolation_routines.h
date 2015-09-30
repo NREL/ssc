@@ -18,6 +18,10 @@ public:
 
 	int locate( int col, double T_C );		// Function for interpolation routine
 	int hunt( int col, double x );			// Function for interpolation routine
+
+	// If the x-column is always index 0, we can simplify linear_1D_interp
+	double interpolate_x_col_0(int y_col, double x_val);
+
 private:
 	static const int m_m = 2;		// Integer for interpolation routine
 

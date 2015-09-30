@@ -158,8 +158,8 @@ public:
 	struct S_outputs
 	{
 		util::matrix_t<double> m_flux_map_out;
-		double m_pparasi;
-		double m_eta_field;
+		double m_pparasi;		//[MWe]
+		double m_eta_field;		//[-]
 
 		S_outputs()
 		{

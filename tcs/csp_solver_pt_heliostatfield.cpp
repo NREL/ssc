@@ -269,7 +269,7 @@ void C_pt_heliostatfield::init()
 		m_flux_positions.resize(nfluxpos, VectDoub(nfposdim));
 		for( int i = 0; i<nfluxpos; i++ )
 		for( int j = 0; j<nfposdim; j++ )
-			m_flux_positions.at(i).at(j) = flux_positions[i * 2 + j];
+			m_flux_positions.at(i).at(j) = flux_positions.at(i, j); 
 
 		break;
 	default:
@@ -695,11 +695,11 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 		(field_control < 1.e-4 && m_eta_prev >= 1.e-4) ||			// OR Shutdown by setting of control paramter (Field_control 1->0 )
 		(field_control > 1.e-4 && v_wind >= m_v_wind_max) ||		// OR Shutdown by high wind speed
 		(m_eta_prev > 1.e-4 && m_v_wind_prev >= m_v_wind_max && v_wind < m_v_wind_max) )	// OR Startup after high wind speed
-		pparasi = m_N_hel * m_p_start / (step / 3600.0);			// kJ/hr 
+		pparasi = m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
 
 	// Parasitics for tracking      
 	if( v_wind < m_v_wind_max && m_v_wind_prev < m_v_wind_max )
-		pparasi += m_N_hel * m_p_track * field_control;	// kJ/hr
+		pparasi += m_N_hel * m_p_track * field_control;				// [kWe]
 
 	double eta_field = 0.;
 
@@ -763,7 +763,7 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 
 	}
 
-	ms_outputs.m_pparasi = pparasi / 3.E6;		//[MW], convert from kJ/hr: Parasitic power for tracking
+	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
 	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency
 
 }
