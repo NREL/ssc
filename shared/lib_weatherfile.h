@@ -161,6 +161,8 @@ public:
 
 	void reset();
 
+    void set_counter_to(int cur_index); 
+    int get_counter_value();
 	enum { INVALID, TMY2, TMY3, EPW, SMW, WFCSV };
 
 	bool ok();

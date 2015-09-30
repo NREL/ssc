@@ -1376,6 +1376,22 @@ bool weatherfile::read( weather_record *r )
 		return false;
 }
 
+
+void weatherfile::set_counter_to(int cur_index)
+{
+    //set the m_index to a specified value. next read will be at this time step index.
+    m_index = cur_index;
+}
+
+int weatherfile::get_counter_value()
+{
+    return m_index;
+}
+
+
+
+
+
 size_t weatherfile::start_sec() // start time in seconds, 0 = jan 1st midnight
 {
 	return m_startSec;
