@@ -70,6 +70,7 @@ bool solarpilot_invoke::run()
         opt.converge_tol = m_cmod->as_double("opt_conv_tol");
         opt.method = m_cmod->as_integer("opt_algorithm");
         opt.is_optimize_bound = false;
+        opt.flux_penalty = m_cmod->as_double("opt_flux_penalty");
     }
 
 	helios.front().width = m_cmod->as_double("helio_width");
