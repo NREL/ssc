@@ -171,7 +171,7 @@ bool DB8_mpp::decompress_file_to_uint8()
 
 	if (status == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED)
 	{
-		printf("tinfl_decompress_mem_to_mem() failed with status %i!\n", status);
+		printf("tinfl_decompress_mem_to_mem() failed with status %i!\n", (int)status);
 		return EXIT_FAILURE;
 	}
 
@@ -218,7 +218,9 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 					if (num_strings == 2)
 					{
 						counter++;
-						std::vector<int> cur_case{ s_max, i2 };
+						std::vector<int> cur_case; // not on OS X { s_max, i2 };
+						cur_case.push_back(s_max);
+						cur_case.push_back(i2);
 						if (str_shade == cur_case)
 							found = true;
 					}
@@ -229,7 +231,10 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 							if (num_strings == 3)
 							{
 								counter++;
-								std::vector<int> cur_case{ s_max, i2, i3 };
+								std::vector<int> cur_case; //{ s_max, i2, i3 };
+								cur_case.push_back(s_max);
+								cur_case.push_back(i2);
+								cur_case.push_back(i3);
 								if (str_shade == cur_case)
 									found = true;
 							}
@@ -240,7 +245,11 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 									if (num_strings == 4)
 									{
 										counter++;
-										std::vector<int> cur_case{ s_max, i2, i3, i4 };
+										std::vector<int> cur_case;// { s_max, i2, i3, i4 };
+										cur_case.push_back(s_max);
+										cur_case.push_back(i2);
+										cur_case.push_back(i3);
+										cur_case.push_back(i4);
 										if (str_shade == cur_case)
 											found = true;
 									}
@@ -251,7 +260,12 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 											if (num_strings == 5)
 											{
 												counter++;
-												std::vector<int> cur_case{ s_max, i2, i3, i4, i5 };
+												std::vector<int> cur_case;// { s_max, i2, i3, i4, i5 };
+												cur_case.push_back(s_max);
+												cur_case.push_back(i2);
+												cur_case.push_back(i3);
+												cur_case.push_back(i4);
+												cur_case.push_back(i5);
 												if (str_shade == cur_case)
 													found = true;
 											}
@@ -262,7 +276,13 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 													if (num_strings == 6)
 													{
 														counter++;
-														std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6 };
+														std::vector<int> cur_case;// { s_max, i2, i3, i4, i5, i6 };
+														cur_case.push_back(s_max);
+														cur_case.push_back(i2);
+														cur_case.push_back(i3);
+														cur_case.push_back(i4);
+														cur_case.push_back(i5);
+														cur_case.push_back(i6);
 														if (str_shade == cur_case)
 															found = true;
 													}
@@ -273,7 +293,14 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 															if (num_strings == 7)
 															{
 																counter++;
-																std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6, i7 };
+																std::vector<int> cur_case;// { s_max, i2, i3, i4, i5, i6, i7 };
+																cur_case.push_back(s_max);
+																cur_case.push_back(i2);
+																cur_case.push_back(i3);
+																cur_case.push_back(i4);
+																cur_case.push_back(i5);
+																cur_case.push_back(i6);
+																cur_case.push_back(i7);
 																if (str_shade == cur_case)
 																	found = true;
 															}
@@ -284,7 +311,15 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 																	if (num_strings == 8)
 																	{
 																		counter++;
-																		std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6, i7, i8 };
+																		std::vector<int> cur_case; // { s_max, i2, i3, i4, i5, i6, i7, i8 };
+																		cur_case.push_back(s_max);
+																		cur_case.push_back(i2);
+																		cur_case.push_back(i3);
+																		cur_case.push_back(i4);
+																		cur_case.push_back(i5);
+																		cur_case.push_back(i6);
+																		cur_case.push_back(i7);
+																		cur_case.push_back(i8);
 																		if (str_shade == cur_case)
 																			found = true;
 																	}
