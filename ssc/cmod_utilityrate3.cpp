@@ -2932,8 +2932,6 @@ public:
 		{
 			for (m = 1; m < 12; m++)
 			{
-				if (monthly_energy_net[m] < 0)
-					monthly_energy_net[m] += monthly_cumulative_excess_energy[m - 1];
 				for (period = 0; period < 12; period++)
 				{
 					if (monthly_energy_net[m] != 0 && (ec_monthly_energy_net[m][period]<0))
@@ -2942,6 +2940,8 @@ public:
 						ec_monthly_energy_net[m][period] += reduction;
 					}
 				}
+				if (monthly_energy_net[m] < 0)
+					monthly_energy_net[m] += monthly_cumulative_excess_energy[m - 1];
 			}
 		}
 
