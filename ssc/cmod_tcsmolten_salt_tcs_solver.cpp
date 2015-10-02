@@ -320,10 +320,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 	// Parasitics (type 228) parameters						     																	  
    // {SSC_INPUT,         SSC_NUMBER,      "P_storage_pump",       "Storage pump power, rated per MWt of storage use",                  "MWe/MWt",      "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "Piping_loss",          "Thermal loss per meter of piping",                                  "Wt/m",         "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "Piping_length",        "Total length of exposed piping",                                    "m",            "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_mult",     "Piping length multiplier",                             "",             "",            "parasitics",     "*",                       "",                      "" },
-    {SSC_INPUT,         SSC_NUMBER,      "csp.pt.par.piping_length_const",    "Piping constant length",                               "m",            "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "piping_loss",          "Thermal loss per meter of piping",                                  "Wt/m",         "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                    "m",            "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "piping_length_mult",   "Piping length multiplier",                                          "",             "",            "parasitics",     "*",                       "",                      "" },
+    {SSC_INPUT,         SSC_NUMBER,      "piping_length_const",  "Piping constant length",                                            "m",            "",            "parasitics",     "*",                       "",                      "" },
     //{SSC_INPUT,         SSC_NUMBER,      "Design_power",         "Power production at design conditions",                             "MWe",          "",            "parasitics",     "*",                       "",                      "" },
     //{SSC_INPUT,         SSC_NUMBER,      "recirc_htr_eff",       "Recirculation heater efficiency",                                   "none",         "",            "parasitics",     "*",                       "",                      "" },
     {SSC_INPUT,         SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "parasitics",     "*",                       "",                      "" },
@@ -665,7 +665,7 @@ public:
             A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
             //update piping length for parasitic calculation
-            double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
+            double piping_length = THT * as_double("piping_length_mult") + as_double("piping_length_const");
             
             //update assignments for cost model
 		    assign("H_rec", var_data((ssc_number_t)H_rec));
@@ -675,7 +675,7 @@ public:
 		    assign("THT", var_data((ssc_number_t)THT));
             assign("h_tower", var_data((ssc_number_t)THT));
 		    assign("A_sf", var_data((ssc_number_t)A_sf));
-            assign("Piping_length", var_data((ssc_number_t)piping_length) );
+            assign("piping_length", var_data((ssc_number_t)piping_length) );
 
             //Update the total installed cost
             double total_direct_cost = 0.;
@@ -851,9 +851,9 @@ public:
 			set_unit_value_ssc_double( type222_receiver, "A_sf", A_sf );
 			set_unit_value_ssc_double( type222_receiver, "n_flux_x" );
 			set_unit_value_ssc_double( type222_receiver, "n_flux_y" );
-			set_unit_value_ssc_double( type222_receiver, "piping_loss", "Piping_loss");
-			set_unit_value_ssc_double( type222_receiver, "piping_length_add", "csp.pt.par.piping_length_const");
-			set_unit_value_ssc_double( type222_receiver, "piping_length_mult", "csp.pt.par.piping_length_mult");
+			set_unit_value_ssc_double( type222_receiver, "piping_loss" );
+			set_unit_value_ssc_double( type222_receiver, "piping_length_add", "piping_length_const");
+			set_unit_value_ssc_double( type222_receiver, "piping_length_mult", "piping_length_mult");
 
 			// Constant inputs (so ... should be parameters??)
 			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target");
