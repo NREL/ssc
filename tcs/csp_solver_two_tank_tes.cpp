@@ -183,7 +183,7 @@ void C_storage_tank::init(HTFProperties htf_class_in, double V_tank_one_temp, do
 	double diameter = pow(A_cs / CSP::pi, 0.5)*2.0;		//[m] Diameter of a single tank
 
 	// Calculate tank conductance
-	m_UA = u_tank*(A_cs + CSP::pi*diameter*h_tank)*tank_pairs;
+	m_UA = u_tank*(A_cs + CSP::pi*diameter*h_tank)*tank_pairs;	//[W/K]
 
 	m_T_htr = T_htr;
 	m_max_q_htr = max_q_htr;
@@ -361,7 +361,7 @@ void C_csp_two_tank_tes::init()
 
 	// Declare instance of fluid class for STORAGE fluid.
 	// Set fluid number and copy over fluid matrix if it makes sense.
-	if( ms_params.m_tes_fl != HTFProperties::User_defined && ms_params.m_tes_fl_props < HTFProperties::End_Library_Fluids )
+	if( ms_params.m_tes_fl != HTFProperties::User_defined && ms_params.m_tes_fl < HTFProperties::End_Library_Fluids )
 	{
 		if( !mc_store_htfProps.SetFluid(ms_params.m_tes_fl) )
 		{
