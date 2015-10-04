@@ -1,6 +1,7 @@
 #include "core.h"
 #include "htf_props.h"
 #include "sam_csp_util.h"
+#include "csp_solver_two_tank_tes.h"
 
 static var_info _cm_vtab_ui_tes_calcs[] = {
 
@@ -22,6 +23,7 @@ static var_info _cm_vtab_ui_tes_calcs[] = {
 	{ SSC_OUTPUT,  SSC_NUMBER,   "vol_one_temp_total", "Total single temp storage volume",             "m^3",   "", "",  "*",  "", "" },
 	{ SSC_OUTPUT,  SSC_NUMBER,   "d_tank",             "Single tank diameter",                         "m",     "", "",  "*",  "", "" },
 	{ SSC_OUTPUT,  SSC_NUMBER,   "q_dot_loss",         "Estimated tank heat loss to env.",             "MWt",   "", "",  "*",  "", "" },
+	{ SSC_OUTPUT,  SSC_NUMBER,   "HTF_dens",           "HTF dens",                                     "kg/m^3","", "",  "*",  "", "" },
 
 	var_info_invalid};
 
@@ -37,7 +39,7 @@ public:
 	void exec() throw(general_error)
 	{
 		double W_dot_pb_des = as_double("W_dot_pb_des");		//[MWe] Power cycle output at design
-		double eta_pb_des = as_double("eta_pb_des");            //[-] Power cycle efficiency at design
+		double eta_pb_des = as_double("eta_pb_des");            //[-] Power cycle efficiency at design 
 		double q_dot_pb_des = W_dot_pb_des / eta_pb_des;		//[MWt] Power cycle thermal power at design
 
 		double tes_hrs = as_double("tes_hrs");                  //[hrs] Hours of TES relative to q_dot_pb_des
@@ -84,32 +86,50 @@ public:
 			throw exec_error("ui_tes_calcs", "Storage HTF code is not recognized");
 		}
 
-		double rho_ave = tes_htf_props.dens(T_HTF_ave+273.15, 1.0);		//[kg/m^3] Density at average temperature
-		double cp_ave = tes_htf_props.Cp(T_HTF_ave+273.15);				//[kJ/kg-K] Specific heat at average temperature
+		double h_min = as_double("h_tank_min");			//[m]
+		double h_tank = as_double("h_tank");			//[m]
+		double tank_pairs = as_double("tank_pairs");	//[-]
+		double u_tank = as_double("u_tank");			//[W/m^2-K]
 
-			//[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
-		double vol_one_temp_avail = Q_tes_des*3600.0 / (rho_ave * cp_ave/1000.0 * (T_HTF_hot - T_HTF_cold));
+		double vol_one_temp_avail, vol_one_temp_total, d_tank, q_dot_loss_des;
+		vol_one_temp_avail = vol_one_temp_total = d_tank = q_dot_loss_des = std::numeric_limits<double>::quiet_NaN();
+		two_tank_tes_sizing(tes_htf_props, Q_tes_des, T_HTF_hot+273.15, T_HTF_cold+273.15, 
+			h_min, h_tank, tank_pairs, u_tank,
+			vol_one_temp_avail, vol_one_temp_total, d_tank, q_dot_loss_des);
+
 		assign("vol_one_temp_avail", vol_one_temp_avail);
-
-		double h_min = as_double("h_tank_min");
-		double h_tank = as_double("h_tank");
-
-		double vol_one_temp_total = vol_one_temp_avail / (1.0 - h_min/h_tank);	//[m^3]
 		assign("vol_one_temp_total", vol_one_temp_total);
+		assign("d_tank", d_tank);
+		assign("q_dot_loss", q_dot_loss_des);
+		assign("HTF_dens", tes_htf_props.dens(T_HTF_ave+273.15,1.0));
 
-		double tank_pairs = as_double("tank_pairs");
-
-		double A_cs = vol_one_temp_total / (h_tank*tank_pairs);		//[m^2] Cross-sectional area of a single tank
-
-		double diameter = pow(A_cs / CSP::pi, 0.5)*2.0;			//[m] Diameter of a single tank
-		assign("d_tank", diameter);
-
-		double u_tank = as_double("u_tank");	//[W/m^2-K]
-
-		double UA = u_tank*(A_cs + CSP::pi*diameter*h_tank)*tank_pairs;		//[W/K]
-		double q_dot_loss = UA*(T_HTF_ave - 15.0)*1.E-6;	//[MWt]
-
-		assign("q_dot_loss",q_dot_loss);
+		//double rho_ave = tes_htf_props.dens(T_HTF_ave+273.15, 1.0);		//[kg/m^3] Density at average temperature
+		//double cp_ave = tes_htf_props.Cp(T_HTF_ave+273.15);				//[kJ/kg-K] Specific heat at average temperature
+		//
+		//	//[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
+		//double vol_one_temp_avail = Q_tes_des*3600.0 / (rho_ave * cp_ave/1000.0 * (T_HTF_hot - T_HTF_cold));
+		//assign("vol_one_temp_avail", vol_one_temp_avail);
+		//
+		//double h_min = as_double("h_tank_min");
+		//double h_tank = as_double("h_tank");
+		//
+		//double vol_one_temp_total = vol_one_temp_avail / (1.0 - h_min/h_tank);	//[m^3]
+		//assign("vol_one_temp_total", vol_one_temp_total);
+		//
+		//double tank_pairs = as_double("tank_pairs");
+		//
+		//double A_cs = vol_one_temp_total / (h_tank*tank_pairs);		//[m^2] Cross-sectional area of a single tank
+		//
+		//double diameter = pow(A_cs / CSP::pi, 0.5)*2.0;			//[m] Diameter of a single tank
+		////assign("d_tank", diameter);
+		//assign("d_tank", 1234.5);
+		//
+		//double u_tank = as_double("u_tank");	//[W/m^2-K]
+		//
+		//double UA = u_tank*(A_cs + CSP::pi*diameter*h_tank)*tank_pairs;		//[W/K]
+		//double q_dot_loss = UA*(T_HTF_ave - 15.0)*1.E-6;	//[MWt]
+		//
+		//assign("q_dot_loss",q_dot_loss);
 		
 		return;
 	}
