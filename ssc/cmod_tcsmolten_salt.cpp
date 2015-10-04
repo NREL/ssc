@@ -834,10 +834,12 @@ public:
 		tes->m_tes_fl = as_integer("field_fluid");
 		tes->m_tes_fl_props = as_matrix("field_fl_props");
 		tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
-		tes->m_q_pb_design = as_double("q_pb_design");
+		//tes->m_q_pb_design = as_double("q_pb_design");
+		tes->m_W_dot_pc_design = as_double("P_ref");		//[MWe]
+		tes->m_eta_pc = as_double("eta_ref");				//[-]
 		tes->m_solarm = as_double("solarm");
 		tes->m_ts_hours = as_double("tshours");
-		tes->m_vol_tank = as_double("vol_tank");
+		//tes->m_vol_tank = as_double("vol_tank");
 		tes->m_h_tank = as_double("h_tank");
 		tes->m_u_tank = as_double("u_tank");
 		tes->m_tank_pairs = as_integer("tank_pairs");
@@ -848,10 +850,11 @@ public:
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
 		tes->m_T_field_in_des = as_double("T_field_in_des");
 		tes->m_T_field_out_des = as_double("T_field_out_des");
-		tes->m_V_tank_hot_ini = as_double("V_tank_hot_ini");
+		//tes->m_V_tank_hot_ini = as_double("V_tank_hot_ini");
 		tes->m_T_tank_hot_ini = as_double("T_tank_hot_ini");
 		tes->m_T_tank_cold_ini = as_double("T_tank_cold_ini");
 		tes->m_h_tank_min = as_double("h_tank_min");
+		tes->m_f_V_hot_ini = 30.0;		//[%] Need this as an input!
 		tes->m_htf_pump_coef = as_double("pb_pump_coef");
 
 		// TOU parameters
