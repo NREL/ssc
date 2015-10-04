@@ -311,7 +311,7 @@ void C_storage_tank::energy_balance(double timestep /*s*/, double m_dot_in, doub
 
 C_csp_two_tank_tes::C_csp_two_tank_tes()
 {
-	m_V_tank_active = std::numeric_limits<double>::quiet_NaN();
+	m_vol_tank = m_V_tank_active = m_q_pb_design = m_V_tank_hot_ini = std::numeric_limits<double>::quiet_NaN();
 
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 }
@@ -412,8 +412,10 @@ void C_csp_two_tank_tes::init()
 		ms_params.m_is_hx = is_hx_calc;
 	}
 
+	// Calculate thermal power to PC at design
+	m_q_pb_design = ms_params.m_W_dot_pc_design/ms_params.m_eta_pc*1.E6;	//[Wt]
+
 	// Convert parameter units
-	ms_params.m_q_pb_design *= 1.E6;			//[W] convert from MW
 	ms_params.m_hot_tank_Thtr += 273.15;		//[K] convert from C
 	ms_params.m_cold_tank_Thtr += 273.15;		//[K] convert from C
 	ms_params.m_T_field_in_des += 273.15;		//[K] convert from C
@@ -421,8 +423,17 @@ void C_csp_two_tank_tes::init()
 	ms_params.m_T_tank_hot_ini += 273.15;		//[K] convert from C
 	ms_params.m_T_tank_cold_ini += 273.15;		//[K] convert from C
 
+
+	double Q_tes_des = m_q_pb_design / 1.E6 * ms_params.m_ts_hours;		//[MWt-hr] TES thermal capacity at design
+
+	double d_tank_temp = std::numeric_limits<double>::quiet_NaN();
+	double q_dot_loss_temp = std::numeric_limits<double>::quiet_NaN();
+	two_tank_tes_sizing(mc_store_htfProps, Q_tes_des, ms_params.m_T_field_out_des, ms_params.m_T_field_in_des,
+		ms_params.m_h_tank_min, ms_params.m_h_tank, ms_params.m_tank_pairs, ms_params.m_u_tank,
+		m_V_tank_active, m_vol_tank, d_tank_temp, q_dot_loss_temp);
+
 	// 5.13.15, twn: also be sure that hx is sized such that it can supply full load to power cycle, in cases of low solar multiples
-	double duty = ms_params.m_q_pb_design * fmax(1.0, ms_params.m_solarm);		//[W] Allow all energy from the field to go into storage at any time
+	double duty = m_q_pb_design * fmax(1.0, ms_params.m_solarm);		//[W] Allow all energy from the field to go into storage at any time
 
 	if( ms_params.m_ts_hours > 0.0 )
 	{
@@ -433,23 +444,22 @@ void C_csp_two_tank_tes::init()
 	// The 'duty' definition should allow the tanks to accept whatever the field and/or power cycle can provide...
 
 	// Calculate initial storage values
-	double V_hot_ini = ms_params.m_V_tank_hot_ini;			//[m^3]
-	double V_cold_ini = ms_params.m_vol_tank - V_hot_ini;	//[m^3]
+	double V_hot_ini = ms_params.m_f_V_hot_ini*0.01*m_V_tank_active;	//[m^3]
+	double V_cold_ini = m_V_tank_active - V_hot_ini;			//[m^3]
 
 	double T_hot_ini = ms_params.m_T_tank_hot_ini;		//[K]
 	double T_cold_ini = ms_params.m_T_tank_cold_ini;	//[K]
 
 		// Initialize cold and hot tanks
 			// Hot tank
-	mc_hot_tank.init(mc_store_htfProps, ms_params.m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min, 
+	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min, 
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_hot_tank_Thtr, ms_params.m_hot_tank_max_heat,
 		V_hot_ini, T_hot_ini);
 			// Cold tank
-	mc_cold_tank.init(mc_store_htfProps, ms_params.m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min, 
+	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, ms_params.m_h_tank, ms_params.m_h_tank_min, 
 		ms_params.m_u_tank, ms_params.m_tank_pairs, ms_params.m_cold_tank_Thtr, ms_params.m_cold_tank_max_heat,
 		V_cold_ini, T_cold_ini);
 
-	m_V_tank_active = ms_params.m_vol_tank*(1.0 - 2.0*ms_params.m_h_tank_min / ms_params.m_h_tank);
 }
 
 bool C_csp_two_tank_tes::does_tes_exist()
@@ -470,7 +480,7 @@ double C_csp_two_tank_tes::get_cold_temp()
 double C_csp_two_tank_tes::get_initial_charge_energy() 
 {
     //MWh
-    return ms_params.m_q_pb_design * ms_params.m_ts_hours * ms_params.m_V_tank_hot_ini / ms_params.m_vol_tank *1.e-6;
+	return m_q_pb_design * ms_params.m_ts_hours * m_V_tank_hot_ini / m_vol_tank *1.e-6;
 }
 
 double C_csp_two_tank_tes::get_min_charge_energy() 
@@ -487,7 +497,7 @@ double C_csp_two_tank_tes::get_max_charge_energy()
 
     double fadj = (1. - ms_params.m_h_tank_min / ms_params.m_h_tank);
 
-    double vol_avail = ms_params.m_vol_tank * ms_params.m_tank_pairs * fadj;
+    double vol_avail = m_vol_tank * ms_params.m_tank_pairs * fadj;
 
     double e_max = vol_avail * rho * cp * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des) / 3.6e6;   //MW-hr
 
@@ -497,9 +507,9 @@ double C_csp_two_tank_tes::get_max_charge_energy()
 double C_csp_two_tank_tes::get_degradation_rate()  
 {
     //calculates an approximate "average" tank heat loss rate based on some assumptions. Good for simple optimization performance projections.
-    double d_tank = sqrt( ms_params.m_vol_tank / ( (double)ms_params.m_tank_pairs * ms_params.m_h_tank * 3.14159) );
+    double d_tank = sqrt( m_vol_tank / ( (double)ms_params.m_tank_pairs * ms_params.m_h_tank * 3.14159) );
     double e_loss = ms_params.m_u_tank * 3.14159 * ms_params.m_tank_pairs * d_tank * ( ms_params.m_T_field_in_des + ms_params.m_T_field_out_des - 576.3 )*1.e-6;  //MJ/s  -- assumes full area for loss, Tamb = 15C
-    return e_loss / (ms_params.m_q_pb_design * ms_params.m_ts_hours * 3600.); //s^-1  -- fraction of heat loss per second based on full charge
+	return e_loss / (m_q_pb_design * ms_params.m_ts_hours * 3600.); //s^-1  -- fraction of heat loss per second based on full charge
 }
 
 void C_csp_two_tank_tes::discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) 
@@ -813,4 +823,31 @@ void C_csp_two_tank_tes::converged()
 	// The max charge and discharge flow rates should be set at the beginning of each timestep
 	//   during the q_dot_xx_avail_est calls
 	m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
+}
+
+void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
+	double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
+	double & vol_one_temp_avail /*m3*/, double & vol_one_temp_total /*m3*/, double & d_tank /*m*/,
+	double & q_dot_loss_des /*MWt*/)
+{
+	double T_tes_ave = 0.5*(T_tes_hot + T_tes_cold);		//[K]
+	
+	double rho_ave = tes_htf_props.dens(T_tes_ave, 1.0);		//[kg/m^3] Density at average temperature
+	double cp_ave = tes_htf_props.Cp(T_tes_ave);				//[kJ/kg-K] Specific heat at average temperature
+
+	// Volume required to supply design hours of thermal energy storage
+		//[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
+	vol_one_temp_avail = Q_tes_des*3600.0 / (rho_ave * cp_ave / 1000.0 * (T_tes_hot - T_tes_cold));
+
+	// Additional volume necessary due to minimum tank limits
+	vol_one_temp_total = vol_one_temp_avail / (1.0 - h_min / h_tank);	//[m^3]
+
+	double A_cs = vol_one_temp_total / (h_tank*tank_pairs);		//[m^2] Cross-sectional area of a single tank
+
+	d_tank = pow(A_cs / CSP::pi, 0.5)*2.0;			//[m] Diameter of a single tank
+
+	double UA_tank = u_tank*(A_cs + CSP::pi*d_tank*h_tank)*tank_pairs;		//[W/K]
+
+	q_dot_loss_des = UA_tank*(T_tes_ave - 15.0)*1.E-6;	//[MWt]
+		
 }

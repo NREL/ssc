@@ -95,10 +95,7 @@ private:
 	//Storage_HX mc_hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
 	
 	C_storage_tank mc_cold_tank;			// Instance of storage tank class for the cold tank
-	C_storage_tank mc_hot_tank;				// Instance of storage tank class for the hot tank
-
-	// Member data
-	double m_V_tank_active;				//[m^3]
+	C_storage_tank mc_hot_tank;				// Instance of storage tank class for the hot tank	
 
 	// member string for exception messages
 	std::string error_msg;
@@ -107,8 +104,12 @@ private:
 	double m_m_dot_tes_dc_max;
 	double m_m_dot_tes_ch_max;
 
-	// Storage info
+	// Member data
 	bool m_is_tes;
+	double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
+	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
+	double m_q_pb_design;		//[Wt] thermal power to power cycle at design
+	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
 
 public:
 
@@ -125,10 +126,10 @@ public:
 
 		bool m_is_hx;
 
-		double m_q_pb_design;		//[MW] thermal power to power cycle at design; convert to W in init()
+		double m_W_dot_pc_design;   //[MWe] Design point gross power cycle output
+		double m_eta_pc;            //[-] Design point power cycle thermal efficiency
 		double m_solarm;			//[-] solar multiple
-		double m_ts_hours;			//[hr] hours of storage at design power cycle operation
-		double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
+		double m_ts_hours;			//[hr] hours of storage at design power cycle operation		
 		double m_h_tank;			//[m] tank height
 		double m_u_tank;			//[W/m^2-K]
 		int m_tank_pairs;			//[-]
@@ -139,10 +140,10 @@ public:
 		double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
 		double m_T_field_in_des;	//[C] convert to K in init()
 		double m_T_field_out_des;	//[C] convert to K in init()
-		double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
 		double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
 		double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
 		double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
+		double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
 
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
 
@@ -152,9 +153,9 @@ public:
 
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
 
-			m_q_pb_design = m_solarm = m_vol_tank = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
-				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_V_tank_hot_ini = m_T_tank_hot_ini =
-				m_T_tank_cold_ini = m_h_tank_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_pc_design = m_eta_pc = m_solarm = m_h_tank = m_u_tank = m_hot_tank_Thtr = m_hot_tank_max_heat = m_cold_tank_Thtr =
+				m_cold_tank_max_heat = m_dt_hot = m_T_field_in_des = m_T_field_out_des = m_T_tank_hot_ini =
+				m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -199,6 +200,10 @@ public:
 };
 
 
+void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
+		double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
+		double & vol_one_temp_avail /*m3*/, double & vol_one_temp_total /*m3*/, double & d_tank /*m*/,
+		double & q_dot_loss_des /*MWt*/  );
 
 
 #endif   //__csp_solver_two_tank_tes_
