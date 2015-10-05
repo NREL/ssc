@@ -172,10 +172,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_max_aux",            "Max heat rate of auxiliary heater",                                 "MWt",          "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_set_aux",            "Aux heater outlet temp set point",                                  "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "V_tank_hot_ini",       "Initial hot tank fluid volume",                                     "m3",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",       "Initial hot tank fluid temperature",                                "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",      "Initial cold tank fluid tmeperature",                               "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "vol_tank",             "Total tank volume, including unusable HTF at bottom",               "m3",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "csp.pt.tes.init_hot_htf_percent", "Initial fraction of avail. vol that is hot",             "%",            "",            "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tank",               "Total height of tank (height of HTF when tank is full",             "m",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_tank_min",           "Minimum allowable HTF height in storage tank",                      "m",            "",            "controller",     "*",                       "",                      "" },
@@ -411,6 +409,12 @@ public:
 			log("The sCO2 power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
 
 			return;
+		}
+
+		int tes_type = as_integer("tes_type");
+		if( tes_type != 1 )
+		{
+			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
 		}
 
 		C_pt_heliostatfield heliostatfield;
@@ -835,12 +839,10 @@ public:
 		tes->m_tes_fl = as_integer("field_fluid");
 		tes->m_tes_fl_props = as_matrix("field_fl_props");
 		tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
-		//tes->m_q_pb_design = as_double("q_pb_design");
 		tes->m_W_dot_pc_design = as_double("P_ref");		//[MWe]
 		tes->m_eta_pc = as_double("eta_ref");				//[-]
 		tes->m_solarm = as_double("solarm");
 		tes->m_ts_hours = as_double("tshours");
-		//tes->m_vol_tank = as_double("vol_tank");
 		tes->m_h_tank = as_double("h_tank");
 		tes->m_u_tank = as_double("u_tank");
 		tes->m_tank_pairs = as_integer("tank_pairs");
@@ -851,7 +853,6 @@ public:
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
 		tes->m_T_field_in_des = as_double("T_field_in_des");
 		tes->m_T_field_out_des = as_double("T_field_out_des");
-		//tes->m_V_tank_hot_ini = as_double("V_tank_hot_ini");
 		tes->m_T_tank_hot_ini = as_double("T_tank_hot_ini");
 		tes->m_T_tank_cold_ini = as_double("T_tank_cold_ini");
 		tes->m_h_tank_min = as_double("h_tank_min");
