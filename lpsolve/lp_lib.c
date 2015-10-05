@@ -128,8 +128,8 @@ MYBOOL __WINAPI userabort(lprec *lp, int message)
 
 STATIC int yieldformessages(lprec *lp)
 {
-  if((lp->sectimeout > 0) &&
-     ((timeNow()-lp->timestart)-(REAL)lp->sectimeout>0))
+  if((lp->sectimeout > 0.) &&
+     ((timeNow()-lp->timestart)-lp->sectimeout>0.))
     lp->spx_status = TIMEOUT;
 
   if(lp->ctrlc != NULL) {
@@ -427,7 +427,7 @@ void __WINAPI reset_params(lprec *lp)
   lp->bb_heuristicOF    = my_chsign(is_maxim(lp), MAX(DEF_INFINITE, lp->infinite));
   lp->bb_breakOF        = -lp->bb_heuristicOF;
 
-  lp->sectimeout        = 0;
+  lp->sectimeout        = 0.;
   lp->solutionlimit     = 1;
 
   set_outputstream(lp, NULL);          /* Set to default output stream */
@@ -501,12 +501,12 @@ void __WINAPI print_str(lprec *lp, char *str)
 /* Parameter setting and retrieval functions                                          */
 /* ---------------------------------------------------------------------------------- */
 
-void __WINAPI set_timeout(lprec *lp, long sectimeout)
+void __WINAPI set_timeout(lprec *lp, double sectimeout)
 {
   lp->sectimeout = sectimeout;
 }
 
-long __WINAPI get_timeout(lprec *lp)
+double __WINAPI get_timeout(lprec *lp)
 {
   return(lp->sectimeout);
 }

@@ -565,7 +565,7 @@ int main(int argc, char *argv[])
   int crashmode = -1;
   char *guessbasis = NULL;
   /* short timeoutok = FALSE; */
-  long sectimeout = -1;
+  double sectimeout = -1;
   int result;
   MYBOOL preferdual = AUTOMATIC;
   int simplextype = -1;
@@ -891,7 +891,7 @@ int main(int argc, char *argv[])
     else if((strcmp(argv[i],"-Da") == 0) && (i + 1 < argc))
       debugdump_after = argv[++i];
     else if((strcmp(argv[i],"-timeout") == 0) && (i + 1 < argc))
-      sectimeout = atol(argv[++i]);
+      sectimeout = atof(argv[++i]);
     else if((strcmp(argv[i],"-trej") == 0) && (i + 1 < argc))
       epspivot = atof(argv[++i]);
     else if((strcmp(argv[i],"-epsp") == 0) && (i + 1 < argc))
@@ -1098,7 +1098,7 @@ int main(int argc, char *argv[])
   put_abortfunc(lp,(abortfunc *) myabortfunc, NULL);
 #endif
 
-  if(sectimeout > 0)
+  if(sectimeout > 0.)
     set_timeout(lp, sectimeout);
   if(print_sol >= 0)
     set_print_sol(lp, print_sol);
