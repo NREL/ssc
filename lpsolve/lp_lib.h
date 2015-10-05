@@ -1035,7 +1035,7 @@ typedef MYBOOL (__WINAPI set_semicont_func)(lprec *lp, int colnr, MYBOOL must_be
 typedef void (__WINAPI set_sense_func)(lprec *lp, MYBOOL maximize);
 typedef void (__WINAPI set_simplextype_func)(lprec *lp, int simplextype);
 typedef void (__WINAPI set_solutionlimit_func)(lprec *lp, int limit);
-typedef void (__WINAPI set_timeout_func)(lprec *lp, long sectimeout);
+typedef void (__WINAPI set_timeout_func)(lprec *lp, double sectimeout);
 typedef void (__WINAPI set_trace_func)(lprec *lp, MYBOOL trace);
 typedef MYBOOL (__WINAPI set_upbo_func)(lprec *lp, int colnr, REAL value);
 typedef MYBOOL (__WINAPI set_var_branch_func)(lprec *lp, int colnr, int branch_mode);
@@ -1620,7 +1620,7 @@ struct _lprec
   double    timeheuristic;
   double    timepresolved;
   double    timeend;
-  long      sectimeout;
+  double    sectimeout;
 
   /* Extended status message text set via explain() */
   char      *ex_status;
@@ -1988,8 +1988,8 @@ MYBOOL __EXPORT_TYPE __WINAPI set_outputfile(lprec *lp, char *filename);
 void __EXPORT_TYPE __WINAPI set_verbose(lprec *lp, int verbose);
 int __EXPORT_TYPE __WINAPI get_verbose(lprec *lp);
 
-void __EXPORT_TYPE __WINAPI set_timeout(lprec *lp, long sectimeout);
-long __EXPORT_TYPE __WINAPI get_timeout(lprec *lp);
+void __EXPORT_TYPE __WINAPI set_timeout(lprec *lp, double sectimeout);
+double __EXPORT_TYPE __WINAPI get_timeout(lprec *lp);
 
 void __EXPORT_TYPE __WINAPI set_print_sol(lprec *lp, int print_sol);
 int __EXPORT_TYPE __WINAPI get_print_sol(lprec *lp);
