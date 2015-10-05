@@ -190,7 +190,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "t_dis_out_min",        "Min allowable hot side outlet temp during discharge",               "C",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "t_ch_out_max",         "Max allowable cold side outlet temp during charge",                 "C",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nodes",                "Nodes modeled in the flow path",                                    "-",            "",            "TES_TC",         "tes_type=2",              "INTEGER",               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "f_tc_cold",            "0=entire tank is hot, 1=entire tank is cold",                       "-",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
 
 															     																	  															     																	  
     // Controller (type 251) parameters						     																	     
