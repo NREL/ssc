@@ -172,8 +172,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_max_aux",            "Max heat rate of auxiliary heater",                                 "MWt",          "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_set_aux",            "Aux heater outlet temp set point",                                  "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",       "Initial hot tank fluid temperature",                                "C",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",      "Initial cold tank fluid tmeperature",                               "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "csp.pt.tes.init_hot_htf_percent", "Initial fraction of avail. vol that is hot",             "%",            "",            "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tank",               "Total height of tank (height of HTF when tank is full",             "m",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_tank_min",           "Minimum allowable HTF height in storage tank",                      "m",            "",            "controller",     "*",                       "",                      "" },
@@ -853,8 +851,8 @@ public:
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
 		tes->m_T_field_in_des = as_double("T_field_in_des");
 		tes->m_T_field_out_des = as_double("T_field_out_des");
-		tes->m_T_tank_hot_ini = as_double("T_tank_hot_ini");
-		tes->m_T_tank_cold_ini = as_double("T_tank_cold_ini");
+		tes->m_T_tank_hot_ini = as_double("T_field_out_des");
+		tes->m_T_tank_cold_ini = as_double("T_field_in_des");
 		tes->m_h_tank_min = as_double("h_tank_min");
 		tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
 		tes->m_htf_pump_coef = as_double("pb_pump_coef");
