@@ -313,13 +313,17 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 {
 	bool ok = true;
 	m_diffFactor = 1.0;
-	m_en_shading_db = false;
+//	m_en_shading_db = false;
+	m_string_option = -1;// 0=shading db, 1=average, 2=max, 3=min, -1 not enabled.
 	m_steps_per_hour = 1;
 	m_db8 = NULL;
 
-	if (cm->is_assigned(prefix + "shading:shading_db_lookup"))
-		m_en_shading_db = cm->as_boolean(prefix + "shading:shading_db_lookup");
-	if (m_en_shading_db)
+	//	if (cm->is_assigned(prefix + "shading:shading_db_lookup"))
+	//		m_en_shading_db = cm->as_boolean(prefix + "shading:shading_db_lookup");
+	//	if (m_en_shading_db)
+	if (cm->is_assigned(prefix + "shading:string_option"))
+			m_string_option = cm->as_integer(prefix + "shading:string_option");
+	if (m_string_option == 0)
 	{
 		m_db8 = new DB8_mpp();
 		m_db8->init();
@@ -360,6 +364,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		if (nrows % 8760 == 0)
 		{
 			m_beamFactors.resize_fill(nrows, ncols, 1.0);
+			/*
 			if (m_en_shading_db) // use percent shaded to lookup in database
 			{
 				for (size_t r = 0; r < nrows; r++)
@@ -367,6 +372,68 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded 
 			}
 			else // use unshaded factors to apply to beam
+			{
+				for (size_t r = 0; r < nrows; r++)
+					for (size_t c = 0; c < ncols; c++)
+						m_beamFactors.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor unshaded for beam
+			}
+			*/
+			if (m_string_option==0) // use percent shaded to lookup in database
+			{
+				for (size_t r = 0; r < nrows; r++)
+					for (size_t c = 0; c < ncols; c++)
+						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded 
+			}
+			else if (m_string_option == 1) // use average of all strings in column zero
+			{
+				for (size_t r = 0; r < nrows; r++)
+				{
+					double sum_percent_shaded = 0;
+					for (size_t c = 0; c < ncols; c++)
+					{
+						sum_percent_shaded += mat[r*ncols + c];//entered in % shaded 
+					}
+					sum_percent_shaded /= ncols;
+					//cm->log(util::format("hour %d avg percent beam factor %lg",
+					//	r, sum_percent_shaded),
+					//	SSC_WARNING);
+					m_beamFactors.at(r, 0) = 1.0 - sum_percent_shaded / 100;
+				}
+			}
+			else if (m_string_option == 2) // use max of all strings in column zero
+			{
+				for (size_t r = 0; r < nrows; r++)
+				{
+					double max_percent_shaded = 0;
+					for (size_t c = 0; c < ncols; c++)
+					{
+						if (mat[r*ncols + c]>max_percent_shaded)
+							max_percent_shaded = mat[r*ncols + c];//entered in % shaded 
+					}
+					//cm->log(util::format("hour %d max percent beam factor %lg",
+					//	r, max_percent_shaded),
+					//	SSC_WARNING);
+
+					m_beamFactors.at(r, 0) = 1.0 - max_percent_shaded / 100;
+				}
+			}
+			else if (m_string_option == 3) // use min of all strings in column zero
+			{
+				for (size_t r = 0; r < nrows; r++)
+				{
+					double min_percent_shaded = 100;
+					for (size_t c = 0; c < ncols; c++)
+					{
+						if (mat[r*ncols + c]<min_percent_shaded)
+							min_percent_shaded = mat[r*ncols + c];//entered in % shaded 
+					}
+					//cm->log(util::format("hour %d min percent beam factor %lg",
+					//	r, min_percent_shaded),
+					//	SSC_WARNING);
+					m_beamFactors.at(r, 0) = 1.0 - min_percent_shaded / 100;
+				}
+			}
+			else // use unshaded factors to apply to beam ( column zero only is used)
 			{
 				for (size_t r = 0; r < nrows; r++)
 					for (size_t c = 0; c < ncols; c++)
@@ -381,8 +448,9 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		}
 	}
 
-	if (!m_en_shading_db)
-	{
+//	if (!m_en_shading_db)
+	if (m_string_option != 0) // can use other shading inputs if not using shading db
+		{
 		if (cm->is_assigned(prefix + "shading:mxh"))
 		{
 			size_t nrows, ncols;
@@ -461,14 +529,15 @@ double shading_factor_calculator::fbeam(size_t hour, double solalt, double solaz
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
 	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
 	{
-		if (m_en_shading_db) // shading database lookup
+//		if (m_en_shading_db) // shading database lookup
+		if (m_string_option==0) // shading database lookup
 		{
 			std::vector<double> shad_fracs;
 			for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
 				shad_fracs.push_back(m_beamFactors.at(irow, icol));
 			factor = 1.0-m_db8->get_shade_loss(gpoa, dpoa, shad_fracs);
 		}
-		else
+		else // use column zero value
 			//	if (hour >= 0 && hour < m_beamFactors.size())
 		{
 			factor = m_beamFactors.at(irow, 0);
