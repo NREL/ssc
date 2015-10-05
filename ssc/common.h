@@ -39,7 +39,8 @@ class shading_factor_calculator
 	double m_diffFactor;
 
 	// shading database mods
-	bool m_en_shading_db;
+	//	bool m_en_shading_db;
+	int m_string_option;// 0=shading db, 1=average, 2=max, 3=min
 	DB8_mpp *m_db8;
 	// subhourly modifications
 	int m_steps_per_hour;
