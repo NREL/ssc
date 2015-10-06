@@ -126,13 +126,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",       "Cold HTF inlet temperature at design conditions",                   "C",            "",            "system_design",  "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
     
-	{ SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",      "Field design outlet temperature",                                   "C",            "",            "controller",     "*",                       "",                      "" },
     
-	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "powerblock",     "*",                       "",                      "" },	
-    { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "parasitics",     "*",                       "",                      "" },    		
-	{ SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "controller",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "system_design",  "*",                       "",                      "" },	
+    { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "system_design",  "*",                       "",                      "" },    		
+	{ SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "system_design",  "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "system_design",  "*",                       "",                      "" },
 
 
 	// Which type of receiver model to use in the simulation     																	  
@@ -678,7 +677,7 @@ public:
 		receiver.m_n_flux_x = as_double("n_flux_x");
 		receiver.m_n_flux_y = as_double("n_flux_y");
 
-		receiver.m_T_salt_hot_target = as_double("T_salt_hot_target");
+		receiver.m_T_salt_hot_target = as_double("T_htf_hot_des");
 		receiver.m_eta_pump = as_double("eta_pump");
 		receiver.m_night_recirc = 0;					// 8.15.15 twn: this is hardcoded for now - need to check that it is functioning correctly and reporting correct parasitics
 		receiver.m_hel_stow_deploy = as_double("hel_stow_deploy");
