@@ -51,7 +51,7 @@ bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
 
 	if(baseTilt>45 || baseTilt < 10){
 		good = true;
-		msg = "The snow model was designed for systems with base tilt angle between 10 and 45 degrees. Snow loss estimations for systems outside this range are not guarenteed";
+		msg = "The snow model was designed for systems with base tilt angle between 10 and 45 degrees. Snow loss estimations for systems outside this range are not guaranteed.";
 		return false;
 	}
 
