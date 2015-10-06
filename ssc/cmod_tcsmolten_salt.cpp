@@ -117,7 +117,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// T_htf_hot_des
 	// T_htf_cold_des
 	// P_ref
-	// eta_pc_des
+	// design_eff
 	// tshours
 	// solarm
 
@@ -132,7 +132,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_ref",       "Reference HTF outlet temperature at design",                        "C",            "",            "powerblock",     "*",                       "",                      "" },
     
 	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "powerblock",     "*",                       "",                      "" },	
-    { SSC_INPUT,        SSC_NUMBER,      "eta_ref",              "Reference conversion efficiency at design condition",               "none",         "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "parasitics",     "*",                       "",                      "" },    		
 	{ SSC_INPUT,        SSC_NUMBER,      "q_pb_design",          "Design heat input to power block",                                  "MWt",          "",            "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Q_rec_des",            "Design-point receiver thermal power output",                        "MWt",          "",            "receiver",       "*",                       "",                      "" },
@@ -708,7 +707,7 @@ public:
 		C_pc_Rankine_indirect_224 power_cycle;
 		C_pc_Rankine_indirect_224::S_params *pc = &power_cycle.ms_params;
 		pc->m_P_ref = as_double("P_ref");
-		pc->m_eta_ref = as_double("eta_ref");
+		pc->m_eta_ref = as_double("design_eff");
 		pc->m_T_htf_hot_ref = as_double("T_htf_hot_ref");
 		pc->m_T_htf_cold_ref = as_double("T_htf_cold_ref");
 		pc->m_dT_cw_ref = as_double("dT_cw_ref");
@@ -843,7 +842,7 @@ public:
 		tes->m_tes_fl_props = as_matrix("field_fl_props");
 		tes->m_is_hx = false;									// MSPT assumes direct storage, so no user input required here: hardcode = false
 		tes->m_W_dot_pc_design = as_double("P_ref");		//[MWe]
-		tes->m_eta_pc = as_double("eta_ref");				//[-]
+		tes->m_eta_pc = as_double("design_eff");				//[-]
 		tes->m_solarm = as_double("solarm");
 		tes->m_ts_hours = as_double("tshours");
 		tes->m_h_tank = as_double("h_tank");
