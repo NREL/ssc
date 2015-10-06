@@ -5,6 +5,10 @@
 
 #define SOS_NONE
 //#define SOS_SEQUENCE
+//#define SOS_MANUAL
+//#define SOS_LPSOLVE
+
+
 /* 
 
 Careful with namespaces in this file.. importing the LPsolve library introduces new macro definitions
@@ -31,6 +35,8 @@ void __WINAPI opt_iter_function(lprec *lp, void *userhandle, int msg)
 {
     csp_dispatch_opt::s_solver_params* par = static_cast<csp_dispatch_opt::s_solver_params*>(userhandle);
 
+    /*if( get_timeout(lp) > 0 )
+        par->is_abort_flag = true;*/
 
     if( msg == MSG_MILPBETTER )
     {
@@ -89,6 +95,10 @@ csp_dispatch_opt::csp_dispatch_opt()
     outputs.objective_relaxed = 0.;
     outputs.solve_iter = 0;
     outputs.solve_state = NOTRUN;
+
+    outputs.presolve_nconstr = 0;
+    outputs.solve_time = 0.;
+    outputs.presolve_nvar = 0;
 
 }
 
@@ -262,7 +272,7 @@ bool csp_dispatch_opt::optimize()
         O.add_var("zhat", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_NT, nz-1, nt );
 #endif
 #ifdef SOS_SEQUENCE
-        O.add_var("z", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_NT, nz-1, nt, 0., 1.);
+        O.add_var("z", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_NT, nz-1, nt, 0.);
         O.add_var("yz", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_NT, nz-1, nt );
 #endif
 
@@ -336,7 +346,7 @@ bool csp_dispatch_opt::optimize()
 #else
                 col[t] = O.column("wdot", t);
 #endif
-                row[t] = price_signal.at(t) * outputs.eta_pb_expected.at(t); // * ((double)nt-0.5*t)/(double)nt;
+                row[t] = price_signal.at(t) * outputs.eta_pb_expected.at(t); // * ((double)nt-0.25*t)/(double)nt;
 
                 col[nt+t] = O.column("x^r", t);
                 row[nt+t] = -price_signal.at(t) * params.w_rec_pump;
@@ -664,6 +674,7 @@ bool csp_dispatch_opt::optimize()
 
             for(int t=0; t<nt; t++)
             {
+#ifndef SOS_SEQUENCE
                 //thermal input is equal to the weighted sum of the z's
                 row[0] = 1.;
                 col[0] = O.column("x", t);
@@ -689,30 +700,43 @@ bool csp_dispatch_opt::optimize()
                 }
 
                 add_constraintex(lp, nz+1, row, col, EQ, 0.);
+#endif 
 
 #ifdef SOS_SEQUENCE
                 //power is the summation of power segments
-                /*row[0] = 1.;
+                row[0] = 1.;
                 col[0] = O.column("wdot", t);
 
-                for(int z=0; z<nz; z++)
+                for(int z=0; z<nz-1; z++)
                 {
                     row[z+1] = -params.eff_table_load.get_point_eff(z);
                     col[z+1] = O.column("z", z, t);
                 }
 
-                add_constraintex(lp, nz+1, row, col, EQ, 0.);*/
+                add_constraintex(lp, nz, row, col, EQ, 0.);
+
+                //thermal input is equal to the sum of z's
+                row[0] = 1.;
+                col[0] = O.column("x", t);
+
+                for(int z=0; z<nz-1; z++)
+                {
+                    row[z+1] = -1.;
+                    col[z+1] = O.column("z", z, t);
+                }
+
+                add_constraintex(lp, nz, row, col, EQ, 0.);
 
                 //binary sequence
                 for(int z=0; z<nz-2; z++)
                 {
                     row[0] = 1.;
-                    col[0] = O.column("yz", z, t);
+                    col[0] = O.column("yz", z+1, t);
 
                     row[1] = -1.;
-                    col[1] = O.column("yz", z+1, t);
+                    col[1] = O.column("yz", z, t);
 
-                    add_constraintex(lp, 2, row, col, GE, 0.);
+                    add_constraintex(lp, 2, row, col, LE, 0.);
                 }
 
                 //power in a segment controlled by corresponding binary
@@ -733,7 +757,7 @@ bool csp_dispatch_opt::optimize()
                     row[0] = 1.;
                     col[0] = O.column("yz", z, t);
 
-                    row[1] = -1./(params.eff_table_load.get_point_x(z) - params.eff_table_load.get_point_x(z-1));
+                    row[1] = -1./(params.eff_table_load.get_point_x(z) - params.eff_table_load.get_point_x(z-1) - 0.1);
                     col[1] = O.column("z", z-1, t);
 
                     add_constraintex(lp, 2, row, col, LE, 0.);
@@ -906,16 +930,28 @@ bool csp_dispatch_opt::optimize()
         put_abortfunc(lp, opt_abortfunction, (void*)(&solver_params));
 
         /* 
-        The following solver settings can have a significant impact on performance and convergence. 
-        These settings have been tested with moderate extensiveness. Not all viable combinations have
-        been tested.
+        The presolve options have been tested and show that the optimal combination of options is as set below.
+
+        Optimality was measured by observing the number of constraints + number of variables that resulted an an 
+        annual-averaged basis from each combination.
+        */
+
+        /* 
+        From the genetic algorithm:
+
+        Presolve        512 
+        Branch&Bound    0 32 64 128 256 1024 
+        Scaling         7 16 32 64 128
+
         */
 
         //presolve
         if(solver_params.presolve_type > 0)
             set_presolve(lp, solver_params.presolve_type, get_presolveloops(lp));
         else
-            set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 /*+ PRESOLVE_SOS*/, get_presolveloops(lp) );
+            //set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 /*+ PRESOLVE_SOS*/, get_presolveloops(lp) );       //original
+            set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX /*+ PRESOLVE_IMPLIEDSLK*/, get_presolveloops(lp) );   //independent optimization
+            //set_presolve(lp, PRESOLVE_IMPLIEDFREE, get_presolveloops(lp) );     //genetic algorithm
 
         //Debugging parameters
         set_timeout(lp, solver_params.solution_timeout);  //max solution time
@@ -929,7 +965,10 @@ bool csp_dispatch_opt::optimize()
         if(solver_params.bb_type > 0)
             set_bb_rule(lp, solver_params.bb_type);
         else
-            set_bb_rule(lp, NODE_PSEUDOCOSTSELECT+NODE_RCOSTFIXING); //+NODE_DYNAMICMODE); //NODE_PSEUDOFEASSELECT); //NODE_PSEUDOCOSTSELECT);
+            //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING);        //original
+            //set_bb_rule(lp, NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE);  //original 2
+            set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE);    //independent optimization
+            //set_bb_rule(lp, NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE );  //genetic algorithm
  
        //Problem scaling loop
         int scaling_iter = 0;
@@ -950,16 +989,20 @@ bool csp_dispatch_opt::optimize()
                 set_scaling(lp, solver_params.scaling_type);
                 break;
             case 1:
-                set_scaling(lp,  SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
+                //set_scaling(lp,  SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
+                //set_scaling(lp, SCALE_EXTREME + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS + SCALE_DYNUPDATE + SCALE_ROWSONLY); //from noload run
+                set_scaling(lp, SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS );   //this works really well before trying modified bb weights
+                //set_scaling(lp, SCALE_CURTISREID + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS );   //genetic algorithm
                 break;
             case 2:
                 set_scaling(lp, SCALE_NONE);
                 break;
             case 3:
-                set_scaling(lp, SCALE_FUTURE1); 
+                set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE | SCALE_INTEGERS);
+                //set_scaling(lp, SCALE_FUTURE1); 
                 break;
             case 4:
-                set_scaling(lp, SCALE_CURTISREID | SCALE_LINEAR | SCALE_EQUILIBRATE | SCALE_INTEGERS);
+                set_scaling(lp,  SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
                 break;
             }
 
@@ -994,14 +1037,21 @@ bool csp_dispatch_opt::optimize()
             scaling_iter ++;
         }
 
-        /*set_outputfile(lp, "c://users//mwagner//documents//dropbox//nrel//formulation//setup.txt");
-        print_lp(lp);*/
-        //print_lp(lp); //, "c://users//mwagner//documents//dropbox//nrel//formulation//dump.txt");
-        /*set_outputfile(lp, "C:/Users/mwagner/Documents/NREL/SAM/Dev/ssc/branches/CSP_dev/build_vc2013/x64/solution.txt");
-        print_solution(lp, 1);*/
-        //write out a data file
+        //keep track of problem efficiency
+        outputs.presolve_nconstr = get_Nrows(lp);
+        outputs.presolve_nvar = get_Ncolumns(lp);
+        outputs.solve_time = time_elapsed(lp);
+
+        //set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\SAM\\Dev\\ssc\\branches\\CSP_dev\\build_vc2013\\x64\\setup.txt");
+        //print_lp(lp);
+
+        ////print_lp(lp); //, "c://users//mwagner//documents//dropbox//nrel//formulation//dump.txt");
+        //set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\SAM\\Dev\\ssc\\branches\\CSP_dev\\build_vc2013\\x64\\solution.txt");
+        //print_solution(lp, 1);
+        //int x=0;
         
 /*
+        //write out a data file
         ofstream fout("C://Users//mwagner//Documents//Dropbox//NREL//Formulation//f.dat");
 
         fout << "#data file\n\n";
@@ -1164,6 +1214,7 @@ bool csp_dispatch_opt::optimize()
         
         //get number of iterations
         outputs.solve_iter = (int)get_total_iter(lp);
+
 
         delete_lp(lp);
         lp = NULL;

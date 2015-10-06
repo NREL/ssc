@@ -193,6 +193,9 @@ public:
 
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
+        double solve_time;
+        int presolve_nconstr;
+        int presolve_nvar;
     } outputs;
     
     //----- public member functions ----
