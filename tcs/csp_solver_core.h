@@ -525,15 +525,18 @@ public:
         DISPATCH_SOLVE_ITER,    //[-] Number of iterations before completing dispatch optimization
         DISPATCH_SOLVE_OBJ,     //[?] Objective function value achieved by the dispatch optimization solver
         DISPATCH_SOLVE_OBJ_RELAX,   //[?] Objective function value for the relaxed continuous problem 
-        DISPATCH_QSF_EXPECT,
-        DISPATCH_QSFPROD_EXPECT,
-        DISPATCH_QSFSU_EXPECT,
-        DISPATCH_TES_EXPECT,
-        DISPATCH_PCEFF_EXPECT,
-        DISPATCH_SFEFF_EXPECT,
-        DISPATCH_QPBSU_EXPECT,
-        DISPATCH_WPB_EXPECT,
-        DISPATCH_REV_EXPECT,
+        DISPATCH_QSF_EXPECT,        //MWt Expected total solar field energy generation in dispatch model
+        DISPATCH_QSFPROD_EXPECT,    //MWt Expected useful solar field energy generation in dispatch model
+        DISPATCH_QSFSU_EXPECT,      //MWt Solar field startup energy in dispatch model
+        DISPATCH_TES_EXPECT,        //MWht Thermal energy storage charge state in dispatch model
+        DISPATCH_PCEFF_EXPECT,      //-  Expected power cycle efficiency adjustment in dispatch model
+        DISPATCH_SFEFF_EXPECT,      //-  Expected solar field thermal efficiency adjustment in dispatch model
+        DISPATCH_QPBSU_EXPECT,      //MWt   Power cycle startup energy consumption in dispatch model
+        DISPATCH_WPB_EXPECT,        //MWe   Power cycle electricity production in dispatch model
+        DISPATCH_REV_EXPECT,        //MWe*fact Power cycle electricity production times revenue factor in dispatch model
+        DISPATCH_PRES_NCONSTR,      //- Number of constraint relationships in dispatch model formulation
+        DISPATCH_PRES_NVAR,         //- Number of variables in dispatch model formulation
+        DISPATCH_SOLVE_TIME,        //sec   Time required to solve the dispatch model at each instance
 
 		// **************************************************************
 		//      ONLY Outputs that are reported as weighted averages if 

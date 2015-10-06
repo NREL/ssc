@@ -351,6 +351,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_qpbsu_expected",  "Dispatch expected power cycle startup energy",                 "MWht",         "",            "tou",            "*"                       "",            "" }, 
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_wpb_expected",    "Dispatch expected power generation",                           "MWe",          "",            "tou",            "*"                       "",            "" }, 
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_rev_expected",    "Dispatch expected revenue factor",                             "",             "",            "tou",            "*"                       "",            "" }, 
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr","Dispatch number of constraints in problem",                    "",             "",            "tou",            "*"                       "",            "" }, 
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",   "Dispatch number of variables in problem",                      "",             "",            "tou",            "*"                       "",            "" }, 
+    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",      "Dispatch solver time",                                         "sec",          "",            "tou",            "*"                       "",            "" }, 
 
 
 			// These outputs correspond to the first csp-solver timestep in the reporting timestep.
@@ -378,6 +381,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",    "Gross to Net Conversion Factor",                               "%",            "",            "PostProcess",    "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",      "Capacity factor",                                              "%",            "",            "PostProcess",    "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",           "First year kWh/kW",                                            "kWh/kW",       "",            "",               "*",                       "",           "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,      "disp_objective_ann",  "Annual sum of dispatch objective func. value",                 "",            "",             "",               "*",                       "",           "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "disp_iter_ann",       "Annual sum of dispatch solver iterations",                     "",            "",             "",               "*",                       "",           "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "disp_presolve_nconstr_ann",  "Annual sum of dispatch problem constraint count",       "",            "",             "",               "*",                       "",           "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "disp_presolve_nvar_ann",  "Annual sum of dispatch problem variable count",            "",            "",             "",               "*",                       "",           "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "disp_solve_time_ann",  "Annual sum of dispatch solver time",                          "",            "",             "",               "*",                       "",           "" },
+
 
 	var_info_invalid };
 
@@ -1053,6 +1063,9 @@ public:
         ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected", n_steps_fixed);
         ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected", n_steps_fixed);
         ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr", n_steps_fixed);
+        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar", n_steps_fixed);
+        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time", n_steps_fixed);
 
 		try
 		{
@@ -1110,6 +1123,12 @@ public:
 		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);
 		
 		accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour);		//[kWe-hr]
+
+        accumulate_annual_for_year("disp_objective", "disp_objective_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour);
+        accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nvar", "disp_presolve_nvar_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour);
+        accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step/3600. / as_double("disp_frequency"), steps_per_hour );
 
 		// Calculated Outputs
 		ssc_number_t ae = as_number("annual_energy");

@@ -7047,6 +7047,9 @@ void C_csp_solver::simulate(C_csp_solver::S_sim_setup & sim_setup,
         mvv_outputs_temp[E_reported_outputs::DISPATCH_WPB_EXPECT].push_back(disp_wpb_expect);
         mvv_outputs_temp[E_reported_outputs::DISPATCH_REV_EXPECT].push_back(disp_rev_expect);
 
+        mvv_outputs_temp[E_reported_outputs::DISPATCH_PRES_NCONSTR].push_back(dispatch.outputs.presolve_nconstr);
+        mvv_outputs_temp[E_reported_outputs::DISPATCH_PRES_NVAR].push_back(dispatch.outputs.presolve_nvar);
+        mvv_outputs_temp[E_reported_outputs::DISPATCH_SOLVE_TIME].push_back(dispatch.outputs.solve_time);
 
 
 			// Simulation outputs
