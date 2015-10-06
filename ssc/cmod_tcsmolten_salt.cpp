@@ -126,7 +126,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",       "Cold HTF inlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_in_des",       "Field design inlet temperature",                                    "C",            "",            "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",      "Field design outlet temperature",                                   "C",            "",            "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_ref",        "Reference HTF inlet temperature at design",                         "C",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_ref",       "Reference HTF outlet temperature at design",                        "C",            "",            "powerblock",     "*",                       "",                      "" },
@@ -862,10 +861,10 @@ public:
 		tes->m_cold_tank_Thtr = as_double("cold_tank_Thtr");
 		tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
-		tes->m_T_field_in_des = as_double("T_field_in_des");
+		tes->m_T_field_in_des = as_double("T_htf_cold_des");
 		tes->m_T_field_out_des = as_double("T_field_out_des");
 		tes->m_T_tank_hot_ini = as_double("T_field_out_des");
-		tes->m_T_tank_cold_ini = as_double("T_field_in_des");
+		tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
 		tes->m_h_tank_min = as_double("h_tank_min");
 		tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
 		tes->m_htf_pump_coef = as_double("pb_pump_coef");
