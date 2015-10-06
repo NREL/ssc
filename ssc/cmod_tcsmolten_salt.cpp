@@ -123,11 +123,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// System Design
+    { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",       "Cold HTF inlet temperature at design conditions",                   "C",            "",            "system_design",  "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",       "Cold HTF inlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
+    
+	{ SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",      "Field design outlet temperature",                                   "C",            "",            "controller",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_ref",        "Reference HTF inlet temperature at design",                         "C",            "",            "powerblock",     "*",                       "",                      "" },
     
 	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "powerblock",     "*",                       "",                      "" },	
     { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "parasitics",     "*",                       "",                      "" },    		
@@ -715,7 +715,7 @@ public:
 		C_pc_Rankine_indirect_224::S_params *pc = &power_cycle.ms_params;
 		pc->m_P_ref = as_double("P_ref");
 		pc->m_eta_ref = as_double("design_eff");
-		pc->m_T_htf_hot_ref = as_double("T_htf_hot_ref");
+		pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
 		pc->m_T_htf_cold_ref = as_double("T_htf_cold_des");
 		pc->m_dT_cw_ref = as_double("dT_cw_ref");
 		pc->m_T_amb_des = as_double("T_amb_des");
