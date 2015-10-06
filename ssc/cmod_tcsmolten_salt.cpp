@@ -114,25 +114,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",           "Total installed cost",                                    "$",            "",            "heliostat",       "*",                      "",                     "" },
 
 
-	// T_htf_hot_des
-	// T_htf_cold_des
-	// P_ref
-	// design_eff
-	// tshours
-	// solarm
-
-
 	// System Design
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",       "Cold HTF inlet temperature at design conditions",                   "C",            "",            "system_design",  "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
-    
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",      "Field design outlet temperature",                                   "C",            "",            "controller",     "*",                       "",                      "" },
-    
-	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "system_design",  "*",                       "",                      "" },	
+    { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "system_design",  "*",                       "",                      "" },
+  	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "system_design",  "*",                       "",                      "" },	
     { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "system_design",  "*",                       "",                      "" },    		
 	{ SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "system_design",  "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "system_design",  "*",                       "",                      "" },
-
 
 	// Which type of receiver model to use in the simulation     																	  
     { SSC_INPUT,        SSC_NUMBER,      "receiver_type",        "External=0, Cavity=1",                                              "",             "",            "receiver",       "*",                       "INTEGER",               "" },
@@ -859,8 +847,8 @@ public:
 		tes->m_cold_tank_max_heat = as_double("cold_tank_max_heat");
 		tes->m_dt_hot = 0.0;								// MSPT assumes direct storage, so no user input here: hardcode = 0.0
 		tes->m_T_field_in_des = as_double("T_htf_cold_des");
-		tes->m_T_field_out_des = as_double("T_field_out_des");
-		tes->m_T_tank_hot_ini = as_double("T_field_out_des");
+		tes->m_T_field_out_des = as_double("T_htf_hot_des");
+		tes->m_T_tank_hot_ini = as_double("T_htf_hot_des");
 		tes->m_T_tank_cold_ini = as_double("T_htf_cold_des");
 		tes->m_h_tank_min = as_double("h_tank_min");
 		tes->m_f_V_hot_ini = as_double("csp.pt.tes.init_hot_htf_percent");
