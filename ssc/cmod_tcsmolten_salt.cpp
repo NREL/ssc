@@ -240,9 +240,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",        "Max. no. dispatch optimization iterations",                         "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_timeout",         "Max. dispatch optimization solve duration",                         "s",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",         "Dispatch optimization solution tolerance",                          "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",         "Dispatch optimization B&B heuristic",                               "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",   "Dispatch optimization presolve heuristic",                          "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
-    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",    "Dispatch optimization scaling heuristic",                           "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",         "Dispatch optimization B&B heuristic",                               "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",   "Dispatch optimization presolve heuristic",                          "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",    "Dispatch optimization scaling heuristic",                           "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     
 
 	// Financial inputs
@@ -939,7 +939,7 @@ public:
 		sim_setup.m_sim_time_start = 0.0;			//[s] starting first hour of year
 		sim_setup.m_sim_time_end = nhoursim*3600.; //8760.0*3600.0;	//[s] full year simulation
 
-		int steps_per_hour = 1;		//[-]
+		int steps_per_hour = 60; //1;		//[-]
 		int n_steps_fixed = steps_per_hour * 8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
