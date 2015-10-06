@@ -133,7 +133,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     
 	{ SSC_INPUT,        SSC_NUMBER,      "P_ref",                "Reference output electric power at design condition",               "MW",           "",            "powerblock",     "*",                       "",                      "" },	
     { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "parasitics",     "*",                       "",                      "" },    		
-	{ SSC_INPUT,        SSC_NUMBER,      "q_pb_design",          "Design heat input to power block",                                  "MWt",          "",            "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "Q_rec_des",            "Design-point receiver thermal power output",                        "MWt",          "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "controller",     "*",                       "",                      "" },
@@ -520,7 +519,7 @@ public:
 			double receiver = as_double("rec_ref_cost")*pow(A_rec / as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
 
 			//storage cost
-			double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+			double storage = as_double("P_ref")/as_double("design_eff")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
 
 			//power block + BOP
 			double P_ref = as_double("P_ref") * 1000.;  //kWe
@@ -590,7 +589,7 @@ public:
 		heliostatfield.ms_params.m_rec_aspect = as_double("rec_aspect");
 		heliostatfield.ms_params.m_h_tower = as_double("h_tower");
 		heliostatfield.ms_params.m_rec_hl_perm2 = as_double("rec_hl_perm2");
-		heliostatfield.ms_params.m_q_design = as_double("Q_rec_des");
+		heliostatfield.ms_params.m_q_design = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
 		heliostatfield.ms_params.m_dni_des = as_double("dni_des");
 		heliostatfield.ms_params.m_weather_file = as_string("solar_resource_file");
 		heliostatfield.ms_params.m_land_bound_type = (int) as_double("land_bound_type");
@@ -668,7 +667,7 @@ public:
 		receiver.m_T_htf_hot_des = as_double("T_htf_hot_des");
 		receiver.m_T_htf_cold_des = as_double("T_htf_cold_des");
 		receiver.m_f_rec_min = as_double("f_rec_min");
-		receiver.m_q_rec_des = as_double("Q_rec_des");
+		receiver.m_q_rec_des = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
 		receiver.m_rec_su_delay = as_double("rec_su_delay");
 		receiver.m_rec_qf_delay = as_double("rec_qf_delay");
 		receiver.m_m_dot_htf_max = as_double("m_dot_htf_max");
