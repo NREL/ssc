@@ -7,15 +7,16 @@
 Define Capacity Model 
 */
 
-capacity_t::capacity_t(double q)
+capacity_t::capacity_t(double q, double SOC_max)
 {
-	_q0 = q;
+	_q0 = 0.01*SOC_max*q;;
 	_qmax = q;
 	_qmax0 = q;
-	_I = 0.;
+	_I = 0.; 
 
 	// Initialize SOC, DOD
-	_SOC = 100;
+	_SOC = SOC_max;
+	_SOC_max = SOC_max;
 	_DOD = 0;
 	_DOD_prev = 0;
 
@@ -35,7 +36,7 @@ void capacity_t::check_charge_change()
 
 	// Check if charge changed 
 	_chargeChange = false;
-	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE) /* && (fabs(_I) > 1) */ ) // not sure why the fabs check was in
+	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE)  ) 
 	{
 		_chargeChange = true;
 		_prev_charge = charging;
@@ -49,8 +50,8 @@ void capacity_t::update_SOC()
 		_SOC = 0.;
 
 	// due to dynamics, it's possible SOC could be slightly above 1 or below 0
-	if (_SOC > 100.)
-		_SOC = 100.;
+	if (_SOC > _SOC_max)
+		_SOC = _SOC_max;
 	else if (_SOC < 0.)
 		_SOC = 0.;
 
@@ -68,8 +69,8 @@ double capacity_t::I(){ return _I; }
 /*
 Define KiBam Capacity Model
 */
-capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10) :
-capacity_t(q20)
+capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max) :
+capacity_t(q20, SOC_max)
 {
 	_q10 = q10;
 	_q20 = q20;
@@ -256,7 +257,7 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q) :capacity_t(q){};
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max) :capacity_t(q,SOC_max){};
 capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
 void capacity_lithium_ion_t::replace_battery()
 {

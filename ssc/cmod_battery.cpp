@@ -272,12 +272,13 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			cm.as_double( "LeadAcid_q20_computed" ),
 			cm.as_double( "LeadAcid_tn" ),
 			cm.as_double( "LeadAcid_qn_computed" ),
-			cm.as_double("LeadAcid_q10_computed"));
+			cm.as_double("LeadAcid_q10_computed"),
+			cm.as_double("batt_maximum_soc"));
 	}
 	else if ( chem == 1 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			cm.as_double("batt_Qfull")*cm.as_integer("batt_computed_strings"));
+			cm.as_double("batt_Qfull")*cm.as_integer("batt_computed_strings"), cm.as_double("batt_maximum_soc"));
 	}
 	
 	losses_model = new losses_t(
