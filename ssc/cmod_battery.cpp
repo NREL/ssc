@@ -160,7 +160,11 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	step_per_hour = nrec / 8760;
 	if (cm.as_boolean("pv_lifetime_simulation"))
 		nyears = cm.as_integer("analysis_period");
-
+	else
+	{
+		if (replacement_option > 0)
+			cm.log("Replacements are enabled without running lifetime simulation, please run over lifetime to consider battery replacements", SSC_WARNING);
+	}
 	chem = cm.as_integer( "batt_chem" );
 
 	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent;
