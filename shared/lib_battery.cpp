@@ -744,14 +744,7 @@ void thermal_t::replace_battery()
 void thermal_t::updateTemperature(double I, double R, double dt)
 {
 	_R = R;
-	double T_new = _T_battery;
-
-	// use RK4 iff timestep is 5 minutes or less
-	if (dt <= 5./60)
-		T_new = rk4(I, dt*HR2SEC);
-	else
-		T_new = trapezoidal(I, dt*HR2SEC);
-	_T_battery = T_new;
+	_T_battery = trapezoidal(I, dt*HR2SEC);
 }
 double thermal_t::f(double T_battery, double I)
 {
