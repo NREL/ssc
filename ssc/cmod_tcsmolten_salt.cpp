@@ -183,11 +183,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 															     																	  															     																	  
     // Controller (type 251) parameters						     																	         
-    { SSC_INPUT,        SSC_ARRAY,       "tslogic_a",            "Dispatch logic without solar",                                      "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "tslogic_b",            "Dispatch logic with solar",                                         "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "tslogic_c",            "Dispatch logic for turbine load fraction",                          "-",            "",            "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "ffrac",                "Fossil dispatch logic",                                             "-",            "",            "controller",     "*",                       "",                      "" },					     																	
-															     																	  
+    { SSC_INPUT,        SSC_ARRAY,       "f_turb_tou_periods",   "Dispatch logic for turbine load fraction",                          "-",            "",            "controller",     "*",                       "",                      "" },
     					     																	  
     // Power Cycle Inputs
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",                  "kW/kg",        "",            "powerblock",     "*",                       "",                      "" },    
@@ -882,7 +878,7 @@ public:
 
 
 		size_t n_f_turbine = -1;
-		ssc_number_t *p_f_turbine = as_array("tslogic_c", &n_f_turbine);
+		ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine,0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
 		for( int i = 0; i < n_F_wc; i++ )
