@@ -394,6 +394,9 @@ public:
 	double pv_to_load();
 	double battery_to_load();
 	double grid_to_load();
+	double pv_to_batt();
+	double grid_to_batt();
+
 	double charge_annual();
 	double discharge_annual();
 	double grid_import_annual();
@@ -422,6 +425,8 @@ protected:
 	double _pv_to_load;
 	double _battery_to_load;
 	double _grid_to_load;
+	double _pv_to_batt;
+	double _grid_to_batt;
 	double _battery_fraction;
 	double _pv_fraction;
 
