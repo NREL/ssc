@@ -122,8 +122,6 @@ static var_info _cm_vtab_tcsiscc[] = {
     { SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",         "Energy-based rcvr startup delay (fraction of rated thermal power)", "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_max",        "Maximum receiver mass flow rate",                                   "kg/hr",        "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                  "m^2",          "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_salt_hot_target",    "Desired HTF outlet temperature",                                    "C",            "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_salt_cold",          "Desired HTF inlet temperature",                                     "C",            "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_pump",             "Receiver HTF pump efficiency",                                      "",             "",            "receiver",       "*",                       "",                      "" },
 
 	
@@ -204,7 +202,7 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",           "Parasitic power heliostat drives",                                "MWe",           "",             "Outputs",        "*",                      "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot","Parasitic power generation-dependent load",                      "MWe",           "",             "Outputs",        "*",                      "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",           "Parasitic power fixed load",                                      "MWe",           "",             "Outputs",        "*",                      "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",      "Parasitic power equiv. header pipe losses",                       "MWe",           "",             "Outputs",        "*",                      "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",      "Parasitic power equiv. header pipe losses",                       "MWe",           "",             "Outputs",        "*",                      "",           "" },
 
 
 //	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy",       "Hourly Energy",      "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
@@ -485,7 +483,7 @@ public:
 			set_unit_value_ssc_double(type222_receiver, "piping_length_mult", "piping_length_mult");
 
 			// Constant inputs (so ... should be parameters??)
-			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target"); //, 574.0 );
+			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target", as_double("T_htf_hot_des")); //, 574.0 );
 			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
 			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0.0); //, 0 );
 			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
@@ -529,10 +527,10 @@ public:
 		// Set ISCC Parasitic Parameters
 			// 8.15.15 twn: For MSPT, we're calculating piping losses in physical receiver model, so zero out tower piping parasitics here
 			// ...... still need this in Type 228 for DSGPT
-		set_unit_value_ssc_double(iscc_parasitics, "Piping_loss", 0.0);
-		set_unit_value_ssc_double(iscc_parasitics, "piping_length_add", 0.0);
-		set_unit_value_ssc_double(iscc_parasitics, "piping_length_mult", 0.0);
-		set_unit_value_ssc_double(iscc_parasitics, "THT", THT);
+		//set_unit_value_ssc_double(iscc_parasitics, "Piping_loss", 0.0);
+		//set_unit_value_ssc_double(iscc_parasitics, "piping_length_add", 0.0);
+		//set_unit_value_ssc_double(iscc_parasitics, "piping_length_mult", 0.0);
+		//set_unit_value_ssc_double(iscc_parasitics, "THT", THT);
 		
 		set_unit_value_ssc_double(iscc_parasitics, "W_htf_pc_pump", as_double("pb_pump_coef"));
 		set_unit_value_ssc_double(iscc_parasitics, "Q_sf_des", as_double("Q_rec_des"));
