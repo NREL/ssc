@@ -1,7 +1,7 @@
 VPATH = ../tcs
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../solarpilot
+CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
 CXXFLAGS = $(CFLAGS)
 
 OBJECTS = tcskernel.o \
@@ -63,8 +63,18 @@ OBJECTS = tcskernel.o \
     trnsys_weatherreader.o \
     typelib.o \
     waterprop.o \
-    weatherreader.o
-
+    weatherreader.o \
+    csp_solver_weatherreader.o \
+	csp_solver_util.o \
+	csp_solver_two_tank_tes.o \
+	csp_solver_tou_block_schedules.o \
+	csp_solver_pt_heliostatfield.o \
+	csp_solver_pc_Rankine_indirect_224.o \
+	csp_solver_mspt_receiver_222.o \
+	csp_solver_mspt_collector_receiver.o \
+	csp_solver_core.o \
+	user_defined_power_cycle.o \
+	csp_dispatch.o
 
 TARGET=tcs.a
 

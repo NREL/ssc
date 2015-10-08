@@ -57,7 +57,7 @@ double C_user_defined_pc::get_W_dot_gross_ND(double T_htf_hot /*C*/, double T_am
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
 	
-	return get_interpolated_ND_output(E_output_ME_index::i_W_dot_gross, T_htf_hot, T_amb, m_dot_htf_ND);
+	return get_interpolated_ND_output(i_W_dot_gross, T_htf_hot, T_amb, m_dot_htf_ND);
 
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
@@ -67,7 +67,7 @@ double C_user_defined_pc::get_Q_dot_HTF_ND(double T_htf_hot /*C*/, double T_amb 
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
 
-	return get_interpolated_ND_output(E_output_ME_index::i_Q_dot_HTF, T_htf_hot, T_amb, m_dot_htf_ND);
+	return get_interpolated_ND_output(i_Q_dot_HTF, T_htf_hot, T_amb, m_dot_htf_ND);
 
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
@@ -77,7 +77,7 @@ double C_user_defined_pc::get_W_dot_cooling_ND(double T_htf_hot /*C*/, double T_
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
 
-	return get_interpolated_ND_output(E_output_ME_index::i_W_dot_cooling, T_htf_hot, T_amb, m_dot_htf_ND);
+	return get_interpolated_ND_output(i_W_dot_cooling, T_htf_hot, T_amb, m_dot_htf_ND);
 
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
@@ -87,7 +87,7 @@ double C_user_defined_pc::get_m_dot_water_ND(double T_htf_hot /*C*/, double T_am
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
 
-	return get_interpolated_ND_output(E_output_ME_index::i_m_dot_water, T_htf_hot, T_amb, m_dot_htf_ND);
+	return get_interpolated_ND_output(i_m_dot_water, T_htf_hot, T_amb, m_dot_htf_ND);
 
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }

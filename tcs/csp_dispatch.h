@@ -1,7 +1,13 @@
 #include <vector>
 #include <string>
 #include "csp_solver_core.h"
+#ifdef _MSC_VER
 #include <unordered_map>
+using std::tr1::unordered_map;
+#else
+#include <tr1/unordered_map>
+using std::tr1::unordered_map;
+#endif
 #include "lp_lib.h" 
 //#include "glpk\src\glpk.h"
 
@@ -226,55 +232,6 @@ public:
 
 };
 
-template <class T>
-class Array_base
-{
-protected:
-    T *dat;
-    int *starts;
-    int dim_size;
-    int mem_size;
-    void index_exception();
-
-public:
-    string var_name;
-    Array_base();
-    Array_base(int n, string varname="");
-    T *data_array();
-    string getvarname();
-    int getmemsize();
-    void deallocate();
-
-    virtual void allocate(int n, bool zeros=true) = 0;
-    virtual T &at(int row, int col) = 0;
-};
-
-// ----------------------------------------
-template <class T>
-class Array_T : public Array_base<T>
-{
-public:
-    void allocate(int n, bool zeros=true);
-    T &at(int row, int col=0);
-    T &at(int row);
-};
-
-template <class T>
-class Array_2T : public Array_base<T>
-{
-public:
-    void allocate(int n, bool zeros=true);
-    T &at(int row, int col);
-};
-
-template <class T>
-class Array_2T_Tri : public Array_base<T>
-{
-public:
-    void allocate(int n, bool zeros=true);
-    T &at(int row, int col);
-};
-
 // ----------------------------------------
 
 
@@ -333,6 +290,7 @@ public:
     opt_var *get_var(char *varname);
     opt_var *get_var(int varindex);
 };
+
 
 
 
