@@ -86,11 +86,14 @@ struct battstor
 		*outPVToLoad,
 		*outBatteryToLoad,
 		*outGridToLoad,
+		*outPVToBatt,
+		*outGridToBatt,
 		*outAnnualChargeEnergy,
 		*outAnnualDischargeEnergy,
 		*outAnnualGridImportEnergy,
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergyLoss;
+
 
 
 	double outAverageCycleEfficiency;

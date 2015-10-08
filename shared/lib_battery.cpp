@@ -938,6 +938,8 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_e_gen = 0.;
 	_battery_fraction = 0.;
 	_pv_fraction = 0.;
+	_pv_to_batt = 0.;
+	_grid_to_batt = 0.;
 
 	// limit the switch from charging to discharge so that doesn't flip-flop subhourly
 	_t_at_mode = 1000; 
@@ -962,6 +964,8 @@ double dispatch_t::energy_tofrom_grid(){ return _e_grid; };
 double dispatch_t::pv_to_load(){ return _pv_to_load; };
 double dispatch_t::battery_to_load(){ return _battery_to_load; };
 double dispatch_t::grid_to_load(){ return _grid_to_load; };
+double dispatch_t::pv_to_batt(){ return _pv_to_batt; };
+double dispatch_t::grid_to_batt(){ return _grid_to_batt; };
 double dispatch_t::gen(){ return _e_gen; }
 double dispatch_t::average_efficiency(){ return _average_efficiency; }
 double dispatch_t::charge_annual(){ return _charge_annual; }
@@ -1147,6 +1151,14 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 
 		_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
 	}
+	
+	// Next, compute how much power went to battery from each component
+	if (_pv_to_batt > 0)
+	{
+		if (_pv_to_batt > fabs(_e_tofrom_batt))
+			_pv_to_batt = fabs(_e_tofrom_batt);
+	}
+	_grid_to_batt = fabs(_e_tofrom_batt) - _pv_to_batt;
 }
 /*
 Manual Dispatch
@@ -1201,6 +1213,8 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 	_pv_to_load = 0.;
 	_battery_to_load = 0.;
 	_grid_to_load = 0.;
+	_pv_to_batt = 0.;
+	_grid_to_batt = 0.;
 	_charging = true;
 
 	// Is there extra energy from array
@@ -1209,7 +1223,8 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 		if (_can_charge)
 		{
 			// use all energy available, it will only use what it can handle
-			_e_tofrom_batt = -(e_pv - e_load);
+			_pv_to_batt = e_pv - e_load;
+			_e_tofrom_batt = -_pv_to_batt;
 
 			if ( (e_pv - e_load < energyNeededToFill) && _can_grid_charge)
 				_e_tofrom_batt = -energyNeededToFill;
