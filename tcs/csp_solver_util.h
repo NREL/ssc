@@ -57,7 +57,9 @@ public:
 	// Useful in case exception goes uncatched
 	virtual const char* what();
 
+	C_csp_exception( const char *msg );
 	C_csp_exception(const std::string &error_message, const std::string &code_location);
+	virtual ~C_csp_exception() throw() { }
 
 };
 

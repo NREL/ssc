@@ -8,8 +8,7 @@
 //#define SOS_MANUAL
 //#define SOS_LPSOLVE
 
-
-/* 
+/*
 
 Careful with namespaces in this file.. importing the LPsolve library introduces new macro definitions
 and function definitions.
@@ -155,7 +154,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
     clear_output_arrays();
 
     if(! check_setup(m_nstep_opt) )
-        throw exception("Dispatch optimization precheck failed.");
+        throw C_csp_exception("Dispatch optimization precheck failed.");
 
     //create the sim info
     C_csp_solver_sim_info simloc;    // = *params.siminfo;
@@ -285,7 +284,7 @@ bool csp_dispatch_opt::optimize()
 
 
         if(lp == NULL)
-            throw exception("Failed to create a new CSP dispatch optimization problem context.");
+            throw C_csp_exception("Failed to create a new CSP dispatch optimization problem context.");
 
         //set variable names and types for each column
         for(int i=0; i<O.get_num_varobjs(); i++)
@@ -1321,143 +1320,6 @@ bool csp_dispatch_opt::optimize()
 
 // ----------------------------------------
 
-template <class T>
-Array_base<T>::Array_base()
-{
-    dat = 0;
-    starts = 0;
-}
-
-template <class T>
-Array_base<T>::Array_base(int n, string varname)
-{
-    var_name = varname;
-    allocate(n);
-}
-
-template <class T>
-string Array_base<T>::getvarname()
-{
-    return var_name;
-}
-
-
-template <class T>
-int Array_base<T>::getmemsize()
-{
-    return mem_size;
-}
-
-template <class T>
-void Array_base<T>::deallocate()
-{
-    if(dat != 0)
-        delete [] dat;
-    if(starts != 0)
-        delete [] starts;
-}
-
-template <class T>
-T *Array_base<T>::data_array()
-{
-    return dat;
-}
-
-template <class T>
-void Array_base<T>::index_exception()
-{
-    throw exception("Invalid index in matrix for optimization call");
-}
-
-// ----------------------------------------
-
-template <class T>
-void Array_T<T>::allocate(int n, bool zeros)
-{
-    dat = new T[n];
-    dim_size = n;
-    mem_size = n;
-    if(zeros)
-        for(int i=0; i<n; i++)
-            dat[i] = 0;
-}
-
-template <class T>
-T &Array_T<T>::at(int row)
-{
-    if(row > dim_size-1) index_exception();
-
-    return dat[row];
-}
-
-template <class T>
-T &Array_T<T>::at(int row, int col)
-{
-    throw exception("Single dimensional array cannot process 2 dimensional arguments.");
-}
-
-// ----------------------------------------
-
-template <class T>
-void Array_2T<T>::allocate(int n, bool zeros)
-{
-    dat = new T[n*n];
-    dim_size = n;
-    mem_size = n*n;
-    if(zeros)
-        for(int i=0; i<mem_size; i++)
-            dat[i] = 0;
-}
-
-template <class T>
-T &Array_2T<T>::at(int row, int col)
-{
-    int index = row*dim_size + col;
-    if(index > dim_size*dim_size-1)
-        index_exception();
-
-    return dat[index];
-}
-
-
-// ----------------------------------------
-
-
-template <class T>
-void Array_2T_Tri<T>::allocate(int n, bool zeros)
-{
-    dim_size = n;
-    
-    starts = new int[dim_size];
-
-    int nval = 0;
-    for(int i=0; i<n; i++)
-    {
-        starts[i] = nval;   //track the starting column position in each row
-
-        nval += n-i;    //upper right triangle matrix
-    }
-    
-    dat = new T[nval];
-    mem_size = nval;
-
-    if(zeros)
-    {
-        for(int i=0; i<nval; i++)
-            dat[i] = 0;
-    }
-
-}
-
-template <class T>
-T &Array_2T_Tri<T>::at(int row, int col)
-{
-    int index = starts[row] + col - row + 1;
-    if( row > dim_size-1 || col > dim_size-1 || index > (dim_size+1) * dim_size/2) 
-        index_exception();
- 
-    return dat[starts[row] + col - row + 1];
-}
 
 // ----------------------------------------
 // ----------------------------------------
@@ -1509,7 +1371,7 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
         mem_size = var_dim_size * var_dim_size2;
         break;
     case optimization_vars::VAR_DIM::DIM_T2:
-        throw exception("invalid var dimension in add_var");
+        throw C_csp_exception("invalid var dimension in add_var");
     case optimization_vars::VAR_DIM::DIM_2T_TRI:
         mem_size = (var_dim_size+1) * var_dim_size/2;
         break;
@@ -1527,7 +1389,7 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
 bool optimization_vars::construct()
 {
     if( current_mem_pos < 0 || current_mem_pos > 1000000 )
-        throw exception("Bad memory allocation when constructing variable table for dispatch optimization.");
+        throw C_csp_exception("Bad memory allocation when constructing variable table for dispatch optimization.");
 
     data = new REAL[current_mem_pos];
 
@@ -1541,7 +1403,7 @@ bool optimization_vars::construct()
 
 REAL &optimization_vars::operator()(char *varname, int ind)    //Access for 1D var
 {
-    return data[ var_by_name.at(varname)->ind_start + ind ];
+    return data[ var_by_name[varname]->ind_start + ind ];
 
 }
 
@@ -1564,16 +1426,16 @@ REAL &optimization_vars::operator()(int varind, int ind1, int ind2)     //Access
 
 int optimization_vars::column(char *varname, int ind)
 {
-    return var_by_name.at(varname)->ind_start + ind +1;
+    return var_by_name[varname]->ind_start + ind +1;
 }
 
 int optimization_vars::column(char *varname, int ind1, int ind2)
 {
-    opt_var *v = var_by_name.at((string)varname);
+    opt_var *v = var_by_name[ string(varname) ];
     switch (v->var_dim)
     {
     case VAR_DIM::DIM_T:
-        throw exception("Attempting to access optimization variable memory via 2D call when referenced variable is 1D.");
+        throw C_csp_exception("Attempting to access optimization variable memory via 2D call when referenced variable is 1D.");
     case VAR_DIM::DIM_NT:
         return v->ind_start + v->var_dim_size2 * ind1 + ind2 +1;
     default:
@@ -1587,26 +1449,23 @@ int optimization_vars::column(char *varname, int ind1, int ind2)
 
 int optimization_vars::column(int varindex, int ind)
 {
-    return var_objects.at(varindex).ind_start + ind +1;
+    return var_objects[varindex].ind_start + ind +1;
 }
 
 int optimization_vars::column(int varindex, int ind1, int ind2)
 {
-     opt_var *v = &var_objects.at(varindex);
+     opt_var *v = &var_objects[varindex];
     switch (v->var_dim)
     {
     case VAR_DIM::DIM_T:
-        throw exception("Attempting to access optimization variable memory via 2D call when referenced variable is 1D.");
-    case VAR_DIM::DIM_NT:
-        return v->ind_start + v->var_dim_size2 * ind1 + ind2 +1;
-    /*case VAR_DIM::DIM_T2:
-        return v->ind_start + v->var_dim_size * ind1 + ind2 +1;*/
-    default:
-    {
-        int ind = v->var_dim_size * ind1 + ind2 - ((ind1-1)*ind1/2);
-        return v->ind_start + ind +1;
-    }
-        break;
+        throw C_csp_exception("Attempting to access optimization variable memory via 2D call when referenced variable is 1D.");
+    case VAR_DIM::DIM_NT:        
+    	return v->ind_start + v->var_dim_size2 * ind1 + ind2 +1;  
+    default:   
+    	{       
+			int ind = v->var_dim_size * ind1 + ind2 - ((ind1-1)*ind1/2);
+			return v->ind_start + ind +1;
+    	} break;
     }
 }
 
@@ -1632,5 +1491,5 @@ optimization_vars::opt_var *optimization_vars::get_var(char *varname)
 
 optimization_vars::opt_var *optimization_vars::get_var(int varindex)
 {
-    return &var_objects.at(varindex);
+    return &var_objects[varindex];
 }

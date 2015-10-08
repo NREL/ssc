@@ -151,7 +151,7 @@ void C_mspt_receiver_222::init()
 	m_A_rec_proj = m_od_tube*m_h_rec*n_tubes;		//[m^2] The projected area of the tubes on a plane parallel to the center lines of the tubes
 	m_A_node = CSP::pi*m_d_rec / m_n_panels*m_h_rec; //[m^2] The area associated with each node
 
-	m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+	m_mode = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
 	m_itermode = 1;			//[-] 1: Solve for design temp, 2: solve to match mass flow restriction
 	m_od_control = 1.0;			//[-] Additional defocusing for over-design conditions
 	m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
@@ -323,7 +323,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	// Do an initial check to make sure the solar position called is valid
 	// If it's not, return the output equal to zeros. Also check to make sure
 	// the solar flux is at a certain level, otherwise the correlations aren't valid
-	if( input_operation_mode == C_csp_collector_receiver::E_csp_cr_modes::OFF )
+	if( input_operation_mode == C_csp_collector_receiver::OFF )
 	{
 		rec_is_off = true;
 	}
@@ -336,7 +336,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		}
 		else
 		{
-			m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+			m_mode = C_csp_collector_receiver::OFF;
 			rec_is_off = true;
 		}
 	}
@@ -528,7 +528,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			// ..the zero set can be returned
 			if( qq > qq_max )
 			{
-				m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;  // Set the startup mode
+				m_mode = C_csp_collector_receiver::OFF;  // Set the startup mode
 				rec_is_off = true;
 				break;
 			}
@@ -603,7 +603,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				CSP::PipeFlow(Re_inner, Pr_inner, m_LoverD, m_RelRough, Nusselt_t, f);
 				if( Nusselt_t <= 0.0 )
 				{
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;		// Set the startup mode
+					m_mode = C_csp_collector_receiver::OFF;		// Set the startup mode
 					rec_is_off = true;
 					break;
 				}
@@ -647,7 +647,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				if( m_T_s_guess.at(i_fp) < 1.0 )
 				{
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;  // Set the startup mode
+					m_mode = C_csp_collector_receiver::OFF;  // Set the startup mode
 					rec_is_off = true;
 				}
 
@@ -697,7 +697,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				if( m_dot_salt_guess < 1.E-5 )
 				{
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;				//[-] Set the startup mode
+					m_mode = C_csp_collector_receiver::OFF;				//[-] Set the startup mode
 					rec_is_off = true;
 				}
 			}
@@ -750,7 +750,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 		switch( input_operation_mode )
 		{
-		case C_csp_collector_receiver::E_csp_cr_modes::STARTUP:
+		case C_csp_collector_receiver::STARTUP:
 			{
 				double time_require_su_energy = m_E_su_prev / (m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in));	//[hr]
 				double time_require_su_ramping = m_t_su_prev;
@@ -762,13 +762,13 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				if( time_required_max  > time_step_hrs )		// Can't completely startup receiver in maximum allowable timestep
 				{											// Need to advance timestep and try again
 					time_required_su = time_step_hrs;		
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;
+					m_mode = C_csp_collector_receiver::STARTUP;
 					q_startup = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*step / 3600.0;
 				}
 				else
 				{
 					time_required_su = time_required_max;		//[hr]
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+					m_mode = C_csp_collector_receiver::ON;
 
 					double q_startup_energy_req = m_E_su_prev;	//[W-hr]
 					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*m_t_su;	//[W-hr]
@@ -783,7 +783,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 			break;
 
-		case C_csp_collector_receiver::E_csp_cr_modes::ON:
+		case C_csp_collector_receiver::ON:
 			
 			if( m_E_su_prev > 0.0 || m_t_su_prev > 0.0 )
 			{
@@ -793,7 +793,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				if( m_E_su + m_t_su > 0.0 )
 				{
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::STARTUP;		// If either are greater than 0, we're staring up but not finished
+					m_mode = C_csp_collector_receiver::STARTUP;		// If either are greater than 0, we're staring up but not finished
 					
 					// 4.28.15 twn: Startup energy also needs to consider energy consumed during time requirement, if that is greater than energy requirement
 						//q_startup = (m_E_su_prev - m_E_su) / (step / 3600.0)*1.E-6;
@@ -804,7 +804,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 				}
 				else
 				{
-					m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+					m_mode = C_csp_collector_receiver::ON;
 
 					double q_startup_energy_req = m_E_su_prev;	//[W-hr]
 					double q_startup_ramping_req = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in)*m_t_su;	//[W-hr]
@@ -821,7 +821,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			{
 				m_E_su = m_E_su_prev;
 				m_t_su = m_t_su_prev;
-				m_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
+				m_mode = C_csp_collector_receiver::ON;
 				q_startup = 0.0;
 
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
@@ -928,7 +928,7 @@ void C_mspt_receiver_222::converged()
 			"MSPT receiver converged method"));
 	}
 
-	if( m_mode == C_csp_collector_receiver::E_csp_cr_modes::OFF )
+	if( m_mode == C_csp_collector_receiver::OFF )
 	{
 		m_E_su = m_q_rec_des * m_rec_qf_delay;
 		m_t_su = m_rec_su_delay;

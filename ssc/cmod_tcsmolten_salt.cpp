@@ -943,112 +943,112 @@ public:
 		int n_steps_fixed = steps_per_hour * 8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
-		float **ptr_array = new float*[C_csp_solver::E_reported_outputs::N_END];
-		float **post_proc_array = new float*[C_csp_solver::E_post_proc_outputs::N_END_POST_PROC];
+		float **ptr_array = new float*[C_csp_solver::N_END];
+		float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
 
-		for( int i = 0; i < C_csp_solver::E_post_proc_outputs::N_END_POST_PROC; i++)
+		for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++)
 		{
 			post_proc_array[i] = 0;
 		}
 
-		post_proc_array[C_csp_solver::E_post_proc_outputs::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
+		post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
 
-		for( int i = 0; i < C_csp_solver::E_reported_outputs::N_END; i++ )
+		for( int i = 0; i < C_csp_solver::N_END; i++ )
 		{
 			ptr_array[i] = 0;
 		}
 
 			// Simulation outputs
-		ptr_array[C_csp_solver::E_reported_outputs::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::SOLZEN] = allocate("solzen", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::BEAM] = allocate("beam", n_steps_fixed);
+		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
+		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen", n_steps_fixed);
+		ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
 
 			// Collector-receiver outputs
-		ptr_array[C_csp_solver::E_reported_outputs::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::REC_M_DOT] = allocate("m_dot_rec", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
 
 			// Power cycle outputs
-		ptr_array[C_csp_solver::E_reported_outputs::PC_ETA_THERMAL] = allocate("eta", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_Q_DOT] = allocate("q_pb", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_M_DOT] = allocate("m_dot_pc", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_W_DOT] = allocate("P_cycle", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_T_IN] = allocate("T_pc_in", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_T_OUT] = allocate("T_pc_out", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out", n_steps_fixed);
 
 			// Thermal energy storage outputs
-		ptr_array[C_csp_solver::E_reported_outputs::TES_Q_DOT_LOSS] = allocate("tank_losses", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_W_DOT_HEATER] = allocate("q_heater", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_T_HOT] = allocate("T_tes_hot", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_T_COLD] = allocate("T_tes_cold", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_Q_DOT_DC] = allocate("q_dc_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_Q_DOT_CH] = allocate("q_ch_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_E_CH_STATE] = allocate("e_ch_tes", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::TES_M_DOT_DC] = allocate("m_dot_tes_dc", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::TES_M_DOT_CH] = allocate("m_dot_tes_ch", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes", n_steps_fixed);
+        ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch", n_steps_fixed);
 
 			// Parasitics outputs
-		ptr_array[C_csp_solver::E_reported_outputs::COL_W_DOT_TRACK] = allocate("pparasi", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CR_W_DOT_PUMP] = allocate("P_tower_pump", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::SYS_W_DOT_PUMP] = allocate("htf_pump_power", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::SYS_W_DOT_FIXED] = allocate("P_fixed", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot", n_steps_fixed);
+		ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot", n_steps_fixed);
 
 			// System outputs
-		ptr_array[C_csp_solver::E_reported_outputs::W_DOT_NET] = allocate("P_out_net", n_steps_fixed);
+		ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net", n_steps_fixed);
 		
 			// Controller outputs
-		ptr_array[C_csp_solver::E_reported_outputs::TOU_PERIOD] = allocate("tou_value", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PRICING_MULT] = allocate("pricing_mult", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::N_OP_MODES] = allocate("n_op_modes", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::OP_MODE_1] = allocate("op_mode_1", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::OP_MODE_2] = allocate("op_mode_2", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::OP_MODE_3] = allocate("op_mode_3", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::ERR_M_DOT] = allocate("m_dot_balance", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::ERR_Q_DOT] = allocate("q_balance", n_steps_fixed);
+		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value", n_steps_fixed);
+		ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult", n_steps_fixed);
+		ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_1", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_2", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_3", n_steps_fixed);
+		ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance", n_steps_fixed);
+		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance", n_steps_fixed);
 
 
-		ptr_array[C_csp_solver::E_reported_outputs::PC_Q_DOT_SB] = allocate("q_dot_pc_sb", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_Q_DOT_MIN] = allocate("q_dot_pc_min", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_Q_DOT_MAX] = allocate("q_dot_pc_max", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target", n_steps_fixed);
 
-		ptr_array[C_csp_solver::E_reported_outputs::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch", n_steps_fixed);
 
-		ptr_array[C_csp_solver::E_reported_outputs::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b", n_steps_fixed);
-		ptr_array[C_csp_solver::E_reported_outputs::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c", n_steps_fixed);
 
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SOLVE_OBJ] = allocate("disp_objective", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar", n_steps_fixed);
-        ptr_array[C_csp_solver::E_reported_outputs::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar", n_steps_fixed);
+        ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time", n_steps_fixed);
 
 		try
 		{

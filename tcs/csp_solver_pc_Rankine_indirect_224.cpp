@@ -482,7 +482,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	switch(standby_control)
 	{
-	case E_csp_power_cycle_modes::STARTUP:
+	case STARTUP:
 		{
 			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
 
@@ -497,13 +497,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			if( time_required_max > time_step_hrs )
 			{
 				time_required_su = time_step_hrs;		//[hr]
-				m_standby_control_calc = E_csp_power_cycle_modes::STARTUP;	//[-] Power cycle requires additional startup next timestep
+				m_standby_control_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
 				q_startup = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*time_step_hrs/3600.0;	//[kW-hr]
 			}
 			else
 			{
 				time_required_su = time_required_max;	//[hr]
-				m_standby_control_calc = E_csp_power_cycle_modes::ON;	//[-] Power cycle has started up, next time step it will be ON
+				m_standby_control_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
 				
 				double q_startup_energy_req = m_startup_energy_remain_prev;	//[kWt-hr]
 				double q_startup_ramping_req = m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)*m_startup_time_remain_prev/3600.0;	//[kWt-hr]
@@ -533,7 +533,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 		break;
 
-	case E_csp_power_cycle_modes::ON:
+	case ON:
 		
 		if( !ms_params.m_is_user_defined_pc )
 		{
@@ -623,7 +623,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 		break;
 
-	case E_csp_power_cycle_modes::STANDBY:
+	case STANDBY:
 		{
 			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));	//[kJ/kg-K]
 			// double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0), 1.0);
@@ -651,7 +651,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 		break;
 
-	case E_csp_power_cycle_modes::OFF:
+	case OFF:
 
 		// Set other output values
 		P_cycle = 0.0;
@@ -671,7 +671,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 		break;
 
-	case E_csp_power_cycle_modes::STARTUP_CONTROLLED:
+	case STARTUP_CONTROLLED:
 		// Thermal input can be controlled (e.g. TES mass flow rate is adjustable, rather than direct connection
 		//     to the receiver), so find the mass flow rate that results in the required energy input can be achieved
 		//     simultaneously with the required startup time. If the timestep is less than the required startup time
@@ -696,7 +696,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( time_required_max > step_hr )	// No: power cycle startup will required another timestep
 		{
 			time_required_su = step_hr;
-			m_standby_control_calc = E_csp_power_cycle_modes::STARTUP;	//[-] Power cycle requires additional startup next timestep
+			m_standby_control_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
 
 			double frac_su_time = fmin(1.0, time_required_su / fmax(0.01, m_startup_time_remain_prev));
 			double Q_timestep = frac_su_time*m_startup_energy_remain_prev;	//[kWt-hr]
@@ -705,7 +705,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		else	// Yes: the power cycle will complete startup within this timestep
 		{
 			time_required_su = time_required_max;
-			m_standby_control_calc = E_csp_power_cycle_modes::ON;	//[-] Power cycle has started up, next time step it will be ON
+			m_standby_control_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
 
 			if(time_required_su_energy)
 				q_startup = q_dot_to_pc_max*time_required_su;		//[kWt-hr]
