@@ -5,8 +5,8 @@ using namespace std;
 
 enum{	//Parameters
 		P_W_HTF_PC_PUMP,
-		P_PIPING_LOSS,
-		P_PIPING_LENGTH,
+		//P_PIPING_LOSS,
+		//P_PIPING_LENGTH,
 		P_Q_SF_DES,
 		P_PB_FIXED_PAR,
 		P_BOP_PAR,
@@ -37,7 +37,7 @@ enum{	//Parameters
 		O_ETA_FUEL,
 		O_SOLAR_FRACTION,
 		O_P_PLANT_BALANCE_TOT,
-		O_P_PIPING_TOT,
+		//O_P_PIPING_TOT,
 		O_P_FIXED,
 
 		//N_MAX
@@ -46,8 +46,8 @@ enum{	//Parameters
 tcsvarinfo sam_iscc_parasitics_variables[] = {
 	//PARAMETERS
 	{TCS_PARAM, TCS_NUMBER, P_W_HTF_PC_PUMP,      "W_htf_pc_pump",          "Required pumping power for HTF through power block",             "kJ/kg",     "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_PIPING_LOSS,        "Piping_loss",            "Thermal loss per meter of piping",                               "Wt/m",      "", "", ""},
-	{TCS_PARAM, TCS_NUMBER, P_PIPING_LENGTH,      "Piping_length",          "Total length of exposed piping",                                 "m",         "", "", ""},
+	//{TCS_PARAM, TCS_NUMBER, P_PIPING_LOSS,        "Piping_loss",            "Thermal loss per meter of piping",                               "Wt/m",      "", "", ""},
+	//{TCS_PARAM, TCS_NUMBER, P_PIPING_LENGTH,      "Piping_length",          "Total length of exposed piping",                                 "m",         "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_Q_SF_DES,           "Q_sf_des",               "Design point solar field thermal output",                        "MW",        "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_PB_FIXED_PAR,       "pb_fixed_par",           "Fixed parasitic load - runs at all times",                       "MWe/MWcap", "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_BOP_PAR,            "bop_par",                "Balance of plant parasitic power fraction",                      "MWe/MWcap", "", "", ""},
@@ -78,7 +78,7 @@ tcsvarinfo sam_iscc_parasitics_variables[] = {
 	{TCS_OUTPUT, TCS_NUMBER, O_ETA_FUEL,          "eta_fuel",               "Electrical efficiency of fossil only operation",           "%",        "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_SOLAR_FRACTION,    "solar_fraction",         "Solar contribution to total electrical power",             "-",        "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_P_PLANT_BALANCE_TOT, "P_plant_balance_tot",  "Total solar balance of plant parasitic power",             "MWe",      "", "", ""},
-	{TCS_OUTPUT, TCS_NUMBER, O_P_PIPING_TOT,      "P_piping_tot",           "Parasitic power estimated from piping thermal losses",     "MWe",      "", "", ""},
+	//{TCS_OUTPUT, TCS_NUMBER, O_P_PIPING_TOT,      "P_piping_tot",           "Parasitic power estimated from piping thermal losses",     "MWe",      "", "", ""},
 	{TCS_OUTPUT, TCS_NUMBER, O_P_FIXED,           "P_fixed",                "Total fixed parasitic losses",                             "MWe",      "", "", ""},
 
 	//N_MAX
@@ -129,8 +129,8 @@ public:
 	virtual int init()
 	{
 		W_htf_pc_pump = value( P_W_HTF_PC_PUMP );				//[kJ/kg]
-		Piping_loss = value( P_PIPING_LOSS );					//[Wt/m]
-		Piping_length = value( P_PIPING_LENGTH );				//[m]
+		//Piping_loss = value( P_PIPING_LOSS );					//[Wt/m]
+		//Piping_length = value( P_PIPING_LENGTH );				//[m]
 		q_solar_design = value( P_Q_SF_DES );					//[MWt]
 		pb_fixed_par = value( P_PB_FIXED_PAR );					//[-]
 		bop_par = value( P_BOP_PAR );							//[MWe/MWcap]
@@ -161,14 +161,14 @@ public:
 		//double W_htf = f_timestep*W_dot_htf*step/3600.0;				//[MW]*[s]*[hr/s] = [MWe-hr] HTF pumping energy considering timestep and fraction receiver is operational							
 
 		// Electric-equivalent tower piping heat loss
-		double eta_cycle_base = 0.0;
-		double W_dot_piping_tot = 0.0;
-		if( q_solar > 0.0 )
-		{
-			//eta_cycle_base = min(0.5, max(0.0, (W_dot_pc_hybrid - W_dot_pc_fossil) / (f_timestep*q_solar)));
-			eta_cycle_base = abs(W_dot_pc_hybrid - W_dot_pc_fossil) / (q_solar);
-			W_dot_piping_tot = Piping_loss * Piping_length * eta_cycle_base * (q_solar / q_solar_design)*1.E-6;	//[MWe] Electric equivalent loss from receiver piping heat loss
-		}
+		//double eta_cycle_base = 0.0;
+		//double W_dot_piping_tot = 0.0;
+		//if( q_solar > 0.0 )
+		//{
+		//	//eta_cycle_base = min(0.5, max(0.0, (W_dot_pc_hybrid - W_dot_pc_fossil) / (f_timestep*q_solar)));
+		//	eta_cycle_base = abs(W_dot_pc_hybrid - W_dot_pc_fossil) / (q_solar);
+		//	W_dot_piping_tot = Piping_loss * Piping_length * eta_cycle_base * (q_solar / q_solar_design)*1.E-6;	//[MWe] Electric equivalent loss from receiver piping heat loss
+		//}
 		//double W_piping_tot = f_timestep*W_dot_piping_tot*step / 3600.0;	//[MWe-hr] Energy considering timestep and fraction receiver operated
 
 		// Balance of plant parasitics
@@ -185,7 +185,7 @@ public:
 		// Calculate plant electrical power output for timestep
 		double W_dot_plant_hybrid = f_timestep*W_dot_pc_hybrid + (1.0-f_timestep)*W_dot_pc_fossil
 			                        - W_dot_rec_pump - W_dot_tracking - W_dot_fixed 
-									- f_timestep*(W_dot_htf + W_dot_piping_tot + W_dot_BOP);
+									- f_timestep*(W_dot_htf + /*W_dot_piping_tot +*/ W_dot_BOP);
 
 		// Calculate plant fossil power output for timestep
 		double W_dot_plant_fossil = W_dot_pc_fossil - W_dot_fixed;
@@ -214,7 +214,7 @@ public:
 		value(O_SOLAR_FRACTION, (W_dot_plant_hybrid - W_dot_plant_fossil) / W_dot_plant_hybrid);	//[-]
 
 		value(O_P_PLANT_BALANCE_TOT, W_dot_BOP);
-		value(O_P_PIPING_TOT, W_dot_piping_tot);
+		//value(O_P_PIPING_TOT, W_dot_piping_tot);
 		value(O_P_FIXED, W_dot_fixed);
 		
 		return 0;
