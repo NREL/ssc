@@ -68,21 +68,27 @@ public:
 
 	struct S_params
 	{
+			// Parameters with common SSCINPUT name for both Rankine Cycle and User Defined Cycle
 		double m_P_ref;				//[MW] design electric power output, converted to kW in init()
 		double m_eta_ref;			//[%] design conversion efficiency
 		double m_T_htf_hot_ref;		//[C] design HTF inlet temperature
 		double m_T_htf_cold_ref;	//[C] design HTF output temperature
+		double m_cycle_max_frac;	//[-] Maximum turbine over-design operation fraction
+		double m_cycle_cutoff_frac;	//[-] Minimum turbine operation fraction
+		double m_q_sby_frac;		//[-] fraction of thermal power required for standby mode
+		double m_startup_time;		//[hr] time needed for power block startup
+		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
+		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+
+			// Parameters that have different SSCINPUT names for Rankine Cycle and User Defined Cycle
 		double m_dT_cw_ref;			//[C] design temp difference between cooling water inlet/outlet
 		double m_T_amb_des;			//[C] design ambient temperature
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
-		double m_cycle_max_frac;	//[-] Maximum turbine over-design operation fraction
-		double m_cycle_cutoff_frac;	//[-] Minimum turbine operation fraction
-		double m_q_sby_frac;		//[-] fraction of thermal power required for standby mode
+		
 		double m_P_boil;			//[bar] boiler operating pressure
 		int m_CT;					//[-] integer flag for cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
-		double m_startup_time;		//[hr] time needed for power block startup
-		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
+		
 		int m_tech_type;			//[-] Flag indicating which coef. set to use. (1=tower,2=trough,3=user) 
 		double m_T_approach;		//[C] cooling tower approach temp
 		double m_T_ITD_des;			//[C] design ITD for dry system
@@ -90,7 +96,7 @@ public:
 		double m_pb_bd_frac;		//[-] blowdown steam fraction
 		double m_P_cond_min;		//[inHG] minimum condenser pressure, converted to Pa in code
 		int m_n_pl_inc;				//[-] Number of part-load increments for the heat rejection system
-		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+		
 		
 		std::vector<double> m_F_wc;		//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)	
 		
