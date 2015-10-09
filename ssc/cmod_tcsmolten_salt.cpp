@@ -180,40 +180,41 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "t_dis_out_min",        "Min allowable hot side outlet temp during discharge",               "C",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "t_ch_out_max",         "Max allowable cold side outlet temp during charge",                 "C",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nodes",                "Nodes modeled in the flow path",                                    "-",            "",            "TES_TC",         "tes_type=2",              "INTEGER",               "" },
-
-															     																	  															     																	  
-    // Controller (type 251) parameters						     																	         
-    { SSC_INPUT,        SSC_ARRAY,       "f_turb_tou_periods",   "Dispatch logic for turbine load fraction",                          "-",            "",            "controller",     "*",                       "",                      "" },
+					     																	         
     					     																	  
     // Power Cycle Inputs
-    { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",                  "kW/kg",        "",            "powerblock",     "*",                       "",                      "" },    
-	{ SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",            "Reference condenser cooling water inlet/outlet T diff",             "C",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",            "Reference ambient temperature at design point",                     "C",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil",               "Boiler operating pressure",                                         "bar",          "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "CT",                   "Flag for using dry cooling or wet cooling system",                  "none",         "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: user defined, 2: sCO2 Recompression (424)", "-",         "",            "powerblock",     "?=0",                     "INTEGER",               "" },    
+	{ SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",         "Pumping power to move 1kg of HTF through PB loop",                  "kW/kg",        "",            "powerblock",     "*",                       "",                      "" },    
     { SSC_INPUT,        SSC_NUMBER,      "startup_time",         "Time needed for power block startup",                               "hr",           "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_frac",         "Fraction of design thermal power needed for startup",               "none",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_approach",           "Cooling tower approach temperature",                                "C",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",            "ITD at design for dry system",                                      "C",            "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",         "Condenser pressure ratio",                                          "none",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",           "Power block blowdown steam fraction ",                              "none",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",           "Minimum condenser pressure",                                        "inHg",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",             "Number of part-load increments for the heat rejection system",      "none",         "",            "powerblock",     "*",                       "INTEGER",               "" },
-    { SSC_INPUT,        SSC_ARRAY,       "F_wc",                 "Fraction indicating wet cooling use for hybrid system",             "none",         "",            "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",       "Maximum turbine over design operation fraction",                    "-",            "",            "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",       "Maximum turbine over design operation fraction",                    "-",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac",    "Minimum turbine operation fraction before shutdown",                "-",            "",            "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",           "Fraction of thermal power required for standby",                    "-",            "",            "powerblock",     "*",                       "",                      "" },
+
 	
-	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",            "0: Steam Rankine (224), 1: sCO2 Recompression (424)",               "none",         "",            "powerblock",     "?=0",                       "INTEGER",               "" },
+		// Steam Rankine cycle
+	{ SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",            "Reference condenser cooling water inlet/outlet T diff",             "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",            "Reference ambient temperature at design point",                     "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_boil",               "Boiler operating pressure",                                         "bar",          "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "CT",                   "Flag for using dry cooling or wet cooling system",                  "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_approach",           "Cooling tower approach temperature",                                "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",            "ITD at design for dry system",                                      "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",         "Condenser pressure ratio",                                          "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",           "Power block blowdown steam fraction ",                              "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",           "Minimum condenser pressure",                                        "inHg",         "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",             "Number of part-load increments for the heat rejection system",      "none",         "",            "powerblock",     "pc_config=0",             "INTEGER",               "" },
+    { SSC_INPUT,        SSC_ARRAY,       "F_wc",                 "Fraction indicating wet cooling use for hybrid system",             "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
+   	
+		// User Defined cycle
 	
 																     																	  
-	// sCO2 Powerblock (type 424) inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "pc_config=1",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "powerblock",     "pc_config=1",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "powerblock",     "pc_config=1",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "deltaT_PHX",           "Design temperature difference in PHX",						      "C",	          "",            "powerblock",     "pc_config=1",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "powerblock",     "pc_config=1",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "elev",                 "Site elevation",                                                    "m",            "",            "powerblock",     "pc_config=1",                "",                      "" },
+		// sCO2 Powerblock (type 424) inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "powerblock",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "powerblock",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "deltaT_PHX",           "Design temperature difference in PHX",						      "C",	          "",            "powerblock",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "powerblock",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "elev",                 "Site elevation",                                                    "m",            "",            "powerblock",     "pc_config=2",                "",                      "" },
 	
 				     																	  
 	// System Control	
@@ -228,7 +229,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "bop_par_0",            "Balance of plant parasitic power fraction - const coeff",           "none",         "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "bop_par_1",            "Balance of plant parasitic power fraction - linear coeff",          "none",         "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "bop_par_2",            "Balance of plant parasitic power fraction - quadratic coeff",       "none",         "",            "sys_ctrl",          "*",                       "",                      "" },												     																	  
-    { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 CSP operation Time-of-Use Weekday schedule",                  "-",            "",            "sys_ctrl",          "*",                       "",                      "" }, 
+    { SSC_INPUT,        SSC_ARRAY,       "f_turb_tou_periods",   "Dispatch logic for turbine load fraction",                          "-",            "",            "sys_ctrl",          "*",                       "",                      "" },    
+	{ SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",     "12x24 CSP operation Time-of-Use Weekday schedule",                  "-",            "",            "sys_ctrl",          "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",     "12x24 CSP operation Time-of-Use Weekend schedule",                  "-",            "",            "sys_ctrl",          "*",                       "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",          "Allow dispatch optimization?",  /*TRUE=1*/                          "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_horizon",         "Time horizon for dispatch optimization",                            "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
@@ -388,19 +390,6 @@ public:
 
 	void exec() throw(general_error)
 	{
-
-		// Logic to choose between steam and sco2 power cycle 
-		bool is_steam_pc = true;
-		int pb_tech_type = as_integer("pc_config");
-		if( pb_tech_type == 1 )
-		{
-			pb_tech_type = 424;
-			is_steam_pc = false;
-
-			log("The sCO2 power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
-
-			return;
-		}
 
 		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )
@@ -693,31 +682,58 @@ public:
 
 
 		// Power cycle
+		// Logic to choose between steam and sco2 power cycle 
+		int pb_tech_type = as_integer("pc_config");
+		if( pb_tech_type == 1 )
+		{
+			log("The User Defined power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
+			return;
+		}
+		if( pb_tech_type == 2 )
+		{
+			log("The sCO2 power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
+			return;
+		}
+
 		C_pc_Rankine_indirect_224 power_cycle;
 		C_pc_Rankine_indirect_224::S_params *pc = &power_cycle.ms_params;
 		pc->m_P_ref = as_double("P_ref");
 		pc->m_eta_ref = as_double("design_eff");
 		pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
 		pc->m_T_htf_cold_ref = as_double("T_htf_cold_des");
-		pc->m_dT_cw_ref = as_double("dT_cw_ref");
-		pc->m_T_amb_des = as_double("T_amb_des");
-		pc->m_pc_fl = as_integer("rec_htf");					// power cycle HTF is same as receiver HTF
-		pc->m_pc_fl_props = as_matrix("field_fl_props");
 		pc->m_cycle_max_frac = as_double("cycle_max_frac");
 		pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
 		pc->m_q_sby_frac = as_double("q_sby_frac");
-		pc->m_P_boil = as_double("P_boil");
-		pc->m_CT = as_integer("CT");
 		pc->m_startup_time = as_double("startup_time");
 		pc->m_startup_frac = as_double("startup_frac");
-		pc->m_tech_type = 1;									// compute module is for MSPT, so hardcode tech type
-		pc->m_T_approach = as_double("T_approach");
-		pc->m_T_ITD_des = as_double("T_ITD_des");
-		pc->m_P_cond_ratio = as_double("P_cond_ratio");
-		pc->m_pb_bd_frac = as_double("pb_bd_frac");
-		pc->m_P_cond_min = as_double("P_cond_min");
 		pc->m_htf_pump_coef = as_double("pb_pump_coef");
-		pc->m_n_pl_inc = as_integer("n_pl_inc");
+
+		if( pb_tech_type == 0 )
+		{
+			pc->m_dT_cw_ref = as_double("dT_cw_ref");
+			pc->m_T_amb_des = as_double("T_amb_des");
+			pc->m_pc_fl = as_integer("rec_htf");					// power cycle HTF is same as receiver HTF
+			pc->m_pc_fl_props = as_matrix("field_fl_props");		
+			pc->m_P_boil = as_double("P_boil");
+			pc->m_CT = as_integer("CT");		
+			pc->m_tech_type = 1;									// compute module is for MSPT, so hardcode tech type
+			pc->m_T_approach = as_double("T_approach");
+			pc->m_T_ITD_des = as_double("T_ITD_des");
+			pc->m_P_cond_ratio = as_double("P_cond_ratio");
+			pc->m_pb_bd_frac = as_double("pb_bd_frac");
+			pc->m_P_cond_min = as_double("P_cond_min");		
+			pc->m_n_pl_inc = as_integer("n_pl_inc");
+
+			size_t n_F_wc = -1;
+			ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
+			pc->m_F_wc.resize(n_F_wc, 0.0);
+			for( int i = 0; i < n_F_wc; i++ )
+				pc->m_F_wc[i] = (double)p_F_wc[i];
+
+			// Set User Defined cycle parameters to appropriate values
+			pc->m_is_user_defined_pc = false;
+			pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
+		}
 
 		// ********************************************
 		// Test U.D. power cycle
@@ -812,11 +828,7 @@ public:
 
 
 
-		size_t n_F_wc = -1;
-		ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
-		pc->m_F_wc.resize(n_F_wc, 0.0);
-		for( int i = 0; i < n_F_wc; i++ )
-			pc->m_F_wc[i] = (double) p_F_wc[i];
+		
 
 		// Test power cycle initialization
 		//power_cycle.init();
@@ -881,7 +893,7 @@ public:
 		ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine,0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-		for( int i = 0; i < n_F_wc; i++ )
+		for( int i = 0; i < n_f_turbine; i++ )
 			tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
 		tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9,0.0);
