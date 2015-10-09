@@ -75,7 +75,7 @@ void C_block_schedule::check_arrays_for_tous(int n_arrays)
 		
 		if( (int)i_temp_max > mvv_tou_arrays[k].size() )
 		{
-			m_error_msg = util::format("TOU schedule contains TOU period = %d, while the %s array contains %d elements", (int)i_temp_max, mv_labels[k], mvv_tou_arrays[k].size());
+			m_error_msg = util::format("TOU schedule contains TOU period = %d, while the %s array contains %d elements", (int)i_temp_max, mv_labels[k].c_str(), mvv_tou_arrays[k].size());
 			throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 		}
 

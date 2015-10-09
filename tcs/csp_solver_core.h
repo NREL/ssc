@@ -1,6 +1,9 @@
 #ifndef __csp_solver_core_
 #define __csp_solver_core_
 
+#include <numeric>
+#include <limits>
+
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 

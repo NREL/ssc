@@ -22,7 +22,7 @@ void C_csp_weatherreader::init()
 {
 	if( !m_wfile.open(m_filename) )
 	{
-		m_error_msg = util::format("Could not open %s for reading", m_filename);
+		m_error_msg = util::format("Could not open %s for reading", m_filename.c_str());
 		throw(C_csp_exception(m_error_msg, ""));
 	}
 	
