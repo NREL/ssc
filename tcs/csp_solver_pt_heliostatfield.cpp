@@ -6,7 +6,7 @@
 #include "AutoPilot_API.h"
 #include "IOUtil.h"
 #include "sort_method.h"
-#include "heliostat.h"
+#include "Heliostat.h"
 
 #include "lib_weatherfile.h"
 
