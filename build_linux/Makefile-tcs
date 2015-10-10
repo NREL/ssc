@@ -76,7 +76,6 @@ OBJECTS = tcskernel.o \
 	user_defined_power_cycle.o \
 	csp_dispatch.o
 
-
 TARGET=tcs.a
 
 $(TARGET):$(OBJECTS)
