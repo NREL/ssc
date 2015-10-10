@@ -3,6 +3,8 @@
 //extern const unsigned char vs[60458400];
 //extern const unsigned char is[60458400];
 #include <vector>
+#include <stdlib.h>
+#include <cstring>
 
 extern const unsigned char pCmp_data[3133517];
 
