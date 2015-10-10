@@ -2,9 +2,10 @@
 #include <functional>   // std::greater
 #include <algorithm>    // std::sort
 #include <math.h> // logarithm function
+#include <cstring> // memcpy
 
 #include "lib_miniz.h" // decompression
-
+#include "lib_util.h" // error message formatting
 #include "DB8_vmpp_impp_uint8_bin.h" // char* of binary compressed file
 
 
@@ -135,6 +136,8 @@ std::vector<double> DB8_mpp::get_vector(const size_t &N, const size_t &d, const 
 
 void DB8_mpp::init()
 {
+	p_error_msg = "";
+	p_warning_msg = "";
 	p_vmpp_uint8_size = 12091680; // uint8 size from matlab
 	p_impp_uint8_size = 12091680; // uint8 size from matlab
 	p_vmpp = (unsigned char *)malloc(p_vmpp_uint8_size);//malloc(12091680); uint8 size
@@ -171,7 +174,7 @@ bool DB8_mpp::decompress_file_to_uint8()
 
 	if (status == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED)
 	{
-		printf("tinfl_decompress_mem_to_mem() failed with status %i!\n", (int)status);
+		p_error_msg = util::format("tinfl_decompress_mem_to_mem() failed with status %i!\n", (int)status);
 		return EXIT_FAILURE;
 	}
 
