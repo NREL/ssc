@@ -8,7 +8,6 @@ OBJECTS = \
 	lsqfit.o \
 	lib_snowmodel.o \
 	lib_iec61853.o \
-	lib_battery.o \
 	lib_cec6par.o \
 	lib_financial.o \
 	lib_geothermal.o \
@@ -23,7 +22,10 @@ OBJECTS = \
 	lib_util.o \
 	lib_weatherfile.o \
 	lib_windfile.o \
-	lib_windwatts.o
+	lib_windwatts.o \
+	lib_battery.o \
+	lib_miniz.o \
+	lib_pv_shade_loss_mpp.o
 
 
 TARGET=shared.a

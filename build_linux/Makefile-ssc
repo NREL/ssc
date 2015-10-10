@@ -2,9 +2,9 @@ VPATH=../ssc
 
 CC = gcc
 CXX = g++
-CFLAGS = -I../shared -I../lpsolve -I../nlopt -I../solarpilot -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O3
+CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__UNIX__ -fPIC -Wall -O3
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -lm -lstdc++ solarpilot.a tcs.a nlopt.a lpsolve.a shared.a
+LDFLAGS = -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
 
 
 CFLAGS += -D__64BIT__
@@ -78,7 +78,8 @@ OBJECTS = \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
-	$(CXX) $(LDFLAGS) -shared -o $@ $^ 
+#	$(CXX) $(LDFLAGS) -shared -o $@ $^ 
+	$(CXX) $(LDFLAGS) -shared -flat_namespace -o $@ $^
 	gcc $(CFLAGS) dltest.c -o dltest -ldl
 	./dltest ./$(TARGET)
 	cp $(TARGET) ../../SAMnt/linux_wx3
