@@ -1,10 +1,12 @@
+#ifndef pv_shade_loss_mpp_h
+#define pv_shade_loss_mpp_h
 //extern const unsigned char vmpp[12091680];
 //extern const unsigned char impp[12091680];
 //extern const unsigned char vs[60458400];
 //extern const unsigned char is[60458400];
 #include <vector>
 #include <stdlib.h>
-#include <cstring>
+#include <string>
 
 extern const unsigned char pCmp_data[3133517];
 
@@ -28,6 +30,9 @@ public:
 	bool get_index(const size_t &N, const size_t &d, const size_t &t, const size_t &S, const db_type &DB_TYPE, size_t* ret_ndx);
 
 	double get_shade_loss(double &ghi, double &dhi, std::vector<double> &shade_frac);
+	std::string get_warning() { return p_warning_msg; }
+	std::string get_error() { return p_error_msg; }
+
 
 private:
 	unsigned char *p_vmpp;
@@ -38,4 +43,8 @@ private:
 	size_t p_vmpp_uint8_size;
 	size_t p_impp_uint8_size;
 	size_t p_compressed_size;
+	std::string p_warning_msg;
+	std::string p_error_msg;
 };
+
+#endif
