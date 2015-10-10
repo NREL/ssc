@@ -78,8 +78,7 @@ OBJECTS = \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
-#	$(CXX) $(LDFLAGS) -shared -o $@ $^ 
-	$(CXX) $(LDFLAGS) -shared -flat_namespace -o $@ $^
+	$(CXX) $(LDFLAGS) -shared -o $@ $^ 
 	gcc $(CFLAGS) dltest.c -o dltest -ldl
 	./dltest ./$(TARGET)
 	cp $(TARGET) ../../SAMnt/linux_wx3
