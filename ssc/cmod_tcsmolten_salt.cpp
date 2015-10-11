@@ -1061,7 +1061,7 @@ public:
 		try
 		{
 			// Simulate !
-			csp_solver.simulate(sim_setup, 
+			csp_solver.Ssimulate(sim_setup, 
 									ssc_mspt_sim_progress, (void*)this, 
 									ptr_array,
 									post_proc_array);

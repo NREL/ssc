@@ -241,7 +241,7 @@ void C_csp_solver::init()
 }
 
 
-void C_csp_solver::simulate(C_csp_solver::S_sim_setup & sim_setup, 
+void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
 								bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
 								float **ptr_array,
 								float **post_proc_array)
