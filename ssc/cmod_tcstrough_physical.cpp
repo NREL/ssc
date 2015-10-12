@@ -201,7 +201,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                "inHg",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "mode",              "Cycle part load control, from plant controller",                            "none",         "",                             "powerblock",     "*",                       "",                      "" },
 																																												  
  //  enet calculator																																							  
     { SSC_INPUT,        SSC_NUMBER,      "eta_lhv",           "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",                             "enet",           "*",                       "",                      "" },
@@ -670,8 +669,6 @@ public:
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_m_dot_htf_ind_od");
 		}
 
-
-		set_unit_value_ssc_double(type224_powerblock, "mode" ); // , 2);	//Always set to 2 for type 251
 		//Connect inputs
 		bConnected &= connect(weather, "twet", type224_powerblock, "T_wb", 0);
 		bConnected &= connect(weather, "tdry", type224_powerblock, "T_db", 0);
