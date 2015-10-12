@@ -80,15 +80,17 @@ public:
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
 
+		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
+		util::matrix_t<double> m_pc_fl_props;
+
+		// Steam Rankine or User-Defined
+		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
+
 			// Parameters that have different SSCINPUT names for Rankine Cycle and User Defined Cycle
 		double m_dT_cw_ref;			//[C] design temp difference between cooling water inlet/outlet
 		double m_T_amb_des;			//[C] design ambient temperature
-		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
-		util::matrix_t<double> m_pc_fl_props;
-		
 		double m_P_boil;			//[bar] boiler operating pressure
 		int m_CT;					//[-] integer flag for cooling technology type {1=evaporative cooling, 2=air cooling, 3=hybrid cooling}
-		
 		int m_tech_type;			//[-] Flag indicating which coef. set to use. (1=tower,2=trough,3=user) 
 		double m_T_approach;		//[C] cooling tower approach temp
 		double m_T_ITD_des;			//[C] design ITD for dry system
@@ -101,7 +103,6 @@ public:
 		std::vector<double> m_F_wc;		//[-] hybrid cooling dispatch fractions 1 thru 9 (array index 0-8)	
 		
 		// Parameters for user-defined power cycle
-		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
 			// Lookup table with dependent variables corresponding to parametric on independent variable T_htf_hot [C] (first column)
 		util::matrix_t<double> mc_T_htf_ind;	// Interaction w/ m_dot_htf
 			// Lookup table with dependent variables corresponding to parametric on independent variable T_amb [C] (first column)
