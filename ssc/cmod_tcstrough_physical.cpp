@@ -202,13 +202,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mode",              "Cycle part load control, from plant controller",                            "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    // powerblock (type 224) initial conditions																					           												  
-    { SSC_INPUT,        SSC_NUMBER,      "T_wb",              "Ambient wet bulb temperature",                                              "C",            "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "rh",                "Relative humidity of the ambient air",                                      "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot",         "Hot HTF inlet temperature, from storage tank",                              "C",            "",                             "powerblock",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_init",    "HTF mass flow rate",                                                        "kg/hr",        "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "demand_var",        "Control signal indicating operational mode",                                "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "standby_control",   "Control signal indicating standby mode",                                    "none",         "",                             "powerblock",     "*",                       "",                      "" },
 																																												  
  //  enet calculator																																							  
     { SSC_INPUT,        SSC_NUMBER,      "eta_lhv",           "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",                             "enet",           "*",                       "",                      "" },
@@ -688,20 +681,11 @@ public:
 		bConnected &= connect(type251_controller, "m_dot_pb", type224_powerblock, "m_dot_htf");
 		bConnected &= connect(type251_controller, "m_dot_pb", type224_powerblock, "demand_var");
 		bConnected &= connect(type251_controller, "standby_control", type224_powerblock, "standby_control");
-		//bConnected &= connect(type251_controller, "TOU", type224_powerblock, "TOU");
 		bConnected &= connect(tou, "tou_value", type224_powerblock, "TOU");
 		
 		//Set initial values
-		set_unit_value_ssc_double(type224_powerblock, "T_wb" ); // , 10.);
-		set_unit_value_ssc_double(type224_powerblock, "T_db" ); // , 15.);
+		set_unit_value_ssc_double(type224_powerblock, "T_db" ); // , 15.); 
 		set_unit_value_ssc_double(type224_powerblock, "P_amb" ); // , 1.);
-		set_unit_value_ssc_double(type224_powerblock, "rh" ); // , 0.25);
-		set_unit_value_ssc_double(type224_powerblock, "T_htf_hot" ); // , 391.0);
-		// "m_dot_htf" is an output, so had to change the name of the SSC var used to initialize it
-		set_unit_value( type224_powerblock, "m_dot_htf", as_double("m_dot_htf_init") );// , 0.);
-		set_unit_value_ssc_double(type224_powerblock, "demand_var" ); // , 110.);
-		set_unit_value_ssc_double(type224_powerblock, "standby_control" ); // , 0);
-		//set_unit_value_ssc_double(type224_powerblock, "TOU" ); // , 1);
 
 		//Set enet calculator inputs and connect it to the parasitic values ===========================================
 		set_unit_value_ssc_double(sum_calculator, "eta_lhv" ); // , 0.9);
