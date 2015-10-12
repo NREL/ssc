@@ -13,7 +13,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "track_mode",                "Tracking mode",                                                                    "none",         "",             "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tilt",                      "Tilt angle of surface/axis",                                                       "none",         "",             "Weather",        "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "azimuth",                   "Azimuth angle of surface/axis",                                                    "none",         "",             "Weather",        "*",                       "",                      "" },
-	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "trough", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",           "Nameplate capacity",                                                               "kW",           "",             "trough",         "*",                       "",                      "" },
 
 //   solar field (type 250) inputs							          																	                  
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -44,8 +44,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "W/SCA",        "",               "solar_field",    "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrctrl",                  "Defocusing strategy",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "ColTilt",                   "Collector tilt angle",                                                             "deg",          "0=horiz,90=vert","solar_field",    "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "ColAz",                     "Collector azimuth angle",                                                          "deg",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_init",               "In acceptance testing mode - require steady-state startup",                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_loc",                "In acceptance testing mode - temperature sensor location",                         "1/2",          "hx/loop",        "solar_field",    "*",                       "",                      "" },
@@ -58,9 +56,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "CollectorType",             "Collector type (constant, not used)",                                              "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "W_aperture",                "The collector aperture width (Total structural area used for shadowing)",          "m",            "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "A_aperture",                "Reflective aperture area of the collector",                                        "m2",           "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_ARRAY,       "IamF0",                     "Incident angle modifier 0th order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_ARRAY,       "IamF1",                     "Incident angle modifier 1st order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_ARRAY,       "IamF2",                     "Incident angle modifier 2nd order term",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "reflectivity",              "Base solar-weighted mirror reflectivity value (constant, not used)",               "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "TrackingError",             "User-defined tracking error derate",                                               "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "GeomEffects",               "User-defined geometry effects derate",                                             "none",         "",             "solar_field",    "*",                       "",                      "" },
@@ -128,7 +123,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 															          
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
-  //{ SSC_INPUT,        SSC_NUMBER,      "field_fluid",               "Material number for the collector field",                        "-",            "",             "controller",     "*",                       "",                      "" },	
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                         "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                       "-",            "",             "controller",     "*",                       "",                      "" },    
 	{ SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                              "-",            "",             "controller",     "*",                       "",                      "" },
@@ -140,7 +134,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "q_max_aux",                 "Max heat rate of auxiliary heater",                              "MWt",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_set_aux",                 "Aux heater outlet temp set point",                               "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_tank_hot_ini",            "Initial hot tank fluid volume",                                  "m3",           "",             "controller",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Initial hot tank fluid temperature",                             "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Initial cold tank fluid tmeperature",                            "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "vol_tank",                  "Total tank volume, including unusable HTF at bottom",            "m3",           "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_tank",                    "Total height of tank (height of HTF when tank is full",          "m",            "",             "controller",     "*",                       "",                      "" },
@@ -150,22 +143,16 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "cold_tank_Thtr",            "Minimum allowable cold tank HTF temp",                           "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                            "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_max_heat",             "Rated heater capacity for tank heating",                         "MW",           "",             "controller",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_field_in_des",            "Field design inlet temperature",                                 "C",            "",             "controller",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_field_out_des",           "Field design outlet temperature",                                "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                               "MWt",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "W_pb_design",               "Rated plant capacity",                                           "MWe",          "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",            "Maximum turbine over design operation fraction",                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac",         "Minimum turbine operation fraction before shutdown",             "-",            "",             "controller",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "solarm",                    "Solar Multiple",                                                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/kg",        "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pump_coef",             "Pumping power to move 1kg of HTF through tes loop",              "kW/kg",        "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",              "Fraction of rated gross power constantly consumed",              "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "bop_array",                 "Coefficients for balance of plant parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "aux_array",                 "Coefficients for auxiliary heater parasitics calcs",             "-",            "",             "controller",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_startup",                 "Startup temperature",                                            "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fossil_mode",               "Fossil backup mode 1=Normal 2=Topping",                          "-",            "",             "controller",     "*",                       "INTEGER",               "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "fthr_ok",                   "Does the defocus control allow partial defocusing",              "-",            "",             "controller",     "*",                       "INTEGER",               "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Design point irradiation value",                                 "W/m2",         "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fc_on",                     "DNI forecasting enabled",                                        "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",                "Fraction of thermal power required for standby",                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "t_standby_reset",           "Maximum allowable time for PB standby operation",                "hr",           "",             "controller",     "*",                       "",                      "" },
@@ -198,13 +185,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 
 //   powerblock (type 224) inputs							          
 //   VARTYPE            DATATYPE          NAME                LABEL                                                                        UNITS           META                            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
-  //{ SSC_INPUT,        SSC_NUMBER,      "P_ref",             "Reference output electric power at design condition",                       "MW",           "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_ref",           "Reference conversion efficiency at design condition",                       "none",         "",                             "powerblock",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_ref",     "Reference HTF inlet temperature at design",                                 "C",            "",                             "powerblock",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_ref",    "Reference HTF outlet temperature at design",                                "C",            "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "HTF",               "Integer flag identifying HTF in power block",                               "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",        "Fraction of thermal power required for standby mode",                       "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "*",                       "",                      "" },
@@ -221,14 +204,11 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "mode",              "Cycle part load control, from plant controller",                            "none",         "",                             "powerblock",     "*",                       "",                      "" },
     // powerblock (type 224) initial conditions																					           												  
     { SSC_INPUT,        SSC_NUMBER,      "T_wb",              "Ambient wet bulb temperature",                                              "C",            "",                             "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "T_db",              "Label",                                                                     "",             "",                             "powerblock",     "*",                       "",                      "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "P_amb",             "Label",                                                                     "",             "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rh",                "Relative humidity of the ambient air",                                      "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot",         "Hot HTF inlet temperature, from storage tank",                              "C",            "",                             "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_init",    "HTF mass flow rate",                                                        "kg/hr",        "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "demand_var",        "Control signal indicating operational mode",                                "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "standby_control",   "Control signal indicating standby mode",                                    "none",         "",                             "powerblock",     "*",                       "",                      "" },
-  //{ SSC_INPUT,        SSC_NUMBER,      "TOU",               "Label",                                                                     "",             "",                             "powerblock",     "*",                       "",                      "" },
 																																												  
  //  enet calculator																																							  
     { SSC_INPUT,        SSC_NUMBER,      "eta_lhv",           "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",                             "enet",           "*",                       "",                      "" },
@@ -677,6 +657,27 @@ public:
 		set_unit_value_ssc_double(type224_powerblock, "P_cond_min" ); // , 1.25);
 		set_unit_value_ssc_double(type224_powerblock, "n_pl_inc" ); // , 2);
 		set_unit_value_ssc_array(type224_powerblock, "F_wc" ); // , [0,0,0,0,0,0,0,0,0]);
+
+		// Add parameters for user-defined power cycle and updates to 224 class for the CSP Solver
+		set_unit_value_ssc_double(type224_powerblock, "cycle_max_frac");
+		set_unit_value_ssc_double(type224_powerblock, "cycle_cutoff_frac");
+		set_unit_value_ssc_double(type224_powerblock, "pb_pump_coef");
+		
+		int pc_config = 0;
+
+		if(pc_config == 1)
+		{
+			set_unit_value_ssc_double(type224_powerblock, "pc_config", 0.0);
+
+			set_unit_value_ssc_double(type224_powerblock, "ud_T_amb_des");
+			set_unit_value_ssc_double(type224_powerblock, "ud_f_W_dot_cool_des");
+			set_unit_value_ssc_double(type224_powerblock, "ud_m_dot_water_cool_des");
+			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_htf_ind_od");
+			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_amb_ind_od");
+			set_unit_value_ssc_matrix(type224_powerblock, "ud_m_dot_htf_ind_od");
+		}
+
+
 		set_unit_value_ssc_double(type224_powerblock, "mode" ); // , 2);	//Always set to 2 for type 251
 		//Connect inputs
 		bConnected &= connect(weather, "twet", type224_powerblock, "T_wb", 0);
