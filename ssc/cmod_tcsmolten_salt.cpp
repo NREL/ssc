@@ -204,7 +204,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",           "Minimum condenser pressure",                                        "inHg",         "",            "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",             "Number of part-load increments for the heat rejection system",      "none",         "",            "powerblock",     "pc_config=0",             "INTEGER",               "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                 "Fraction indicating wet cooling use for hybrid system",             "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
-   	
+   	{ SSC_INPUT,        SSC_NUMBER,      "tech_type",            "Turbine inlet pressure control flag",                               "1/2/3",        "tower/trough/sliding", "powerblock", "pc_config=0",        "",                      "" },
+
 		// User Defined cycle
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",      "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",      "user_defined_PC", "pc_config=1",            "",                      "" },
@@ -721,7 +722,7 @@ public:
 			pc->m_T_amb_des = as_double("T_amb_des");					
 			pc->m_P_boil = as_double("P_boil");
 			pc->m_CT = as_integer("CT");		
-			pc->m_tech_type = 1;									// compute module is for MSPT, so hardcode tech type
+			pc->m_tech_type = as_double("tech_type");									// compute module is for MSPT, so hardcode tech type
 			pc->m_T_approach = as_double("T_approach");
 			pc->m_T_ITD_des = as_double("T_ITD_des");
 			pc->m_P_cond_ratio = as_double("P_cond_ratio");
