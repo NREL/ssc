@@ -33,6 +33,17 @@ enum{
 	P_P_COND_MIN,
 	P_N_PL_INC,
 	P_F_WC,
+	P_CYCLE_MAX_FRAC,
+	P_CYCLE_CUTOFF_FRAC,
+	P_PB_PUMP_COEF,
+	P_PC_CONFIG,
+
+	P_UD_T_AMB_DES,
+	P_UD_F_W_DOT_COOL_DES,
+	P_UD_M_DOT_WATER_COOL_DES,
+	P_UD_T_HTF_IND_OD,
+	P_UD_T_AMB_IND_OD,
+	P_UD_M_DOT_HTF_IND_OD,
 
 	I_MODE,
 	I_T_HTF_HOT,
@@ -85,6 +96,19 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,        P_P_COND_MIN,             "P_cond_min",                                                              "Minimum condenser pressure",         "inHg",             "",             "",         "1.25" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_N_PL_INC,               "n_pl_inc",                            "Number of part-load increments for the heat rejection system",         "none",             "",             "",            "2" },
 	{ TCS_PARAM,           TCS_ARRAY,              P_F_WC,                   "F_wc",                                   "Fraction indicating wet cooling use for hybrid system",         "none",             "",             "","0,0,0,0,0,0,0,0,0" },
+	{ TCS_PARAM,          TCS_NUMBER,    P_CYCLE_MAX_FRAC,         "cycle_max_frac",                                          "Maximum turbine over design operation fraction",            "-",             "",             "",            ""  },
+    { TCS_PARAM,          TCS_NUMBER, P_CYCLE_CUTOFF_FRAC,      "cycle_cutoff_frac",                                      "Minimum turbine operation fraction before shutdown",            "-",             "",             "",            ""  },
+    { TCS_PARAM,          TCS_NUMBER,      P_PB_PUMP_COEF,           "pb_pump_coef",                                        "Pumping power to move 1kg of HTF through PB loop",      "kW/kg/s",             "",             "",            ""  },
+    { TCS_PARAM,          TCS_NUMBER,         P_PC_CONFIG,              "pc_config",                                                       "0: Steam Rankine, 1: user defined",            "-",             "",             "",           "0"  },
+
+		// User Defined Cycle
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_AMB_DES,            "ud_T_amb_des",            "Ambient temperature at user-defined power cycle design point",                                      "C",	 "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_F_W_DOT_COOL_DES,     "ud_f_W_dot_cool_des",     "Percent of user-defined power cycle design gross output consumed by cooling",                       "%",	 "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_M_DOT_WATER_COOL_DES, "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",                         "kg/s",  "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_HTF_IND_OD,         "ud_T_htf_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]",  "",      "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_AMB_IND_OD,         "ud_T_amb_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	    "",      "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_MATRIX,      P_UD_M_DOT_HTF_IND_OD,     "ud_m_dot_htf_ind_od",     "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "",      "",            "",            ""  }, 
+		
 
 	{ TCS_INPUT,          TCS_NUMBER,              I_MODE,                   "mode",                                          "Cycle part load control, from plant controller",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,         I_T_HTF_HOT,              "T_htf_hot",                                            "Hot HTF inlet temperature, from storage tank",            "C",             "",             "",             "" },
@@ -143,10 +167,14 @@ public:
 		p_params->m_eta_ref = value(P_ETA_REF);					//Reference conversion efficiency at design condition [none]
 		p_params->m_T_htf_hot_ref = value(P_T_HTF_HOT_REF);		//Reference HTF inlet temperature at design [C]
 		p_params->m_T_htf_cold_ref = value(P_T_HTF_COLD_REF);	//Reference HTF outlet temperature at design [C]
-		p_params->m_dT_cw_ref = value(P_DT_CW_REF);				//Reference condenser cooling water inlet/outlet T diff [C]
-		p_params->m_T_amb_des = value(P_T_AMB_DES);				//Reference ambient temperature at design point [C]
+		p_params->m_cycle_max_frac = value(P_CYCLE_MAX_FRAC);	//[-] Max cycle operation fraction
+		p_params->m_cycle_cutoff_frac = value(P_CYCLE_CUTOFF_FRAC);		//[-] Cycle cutoff fraction
+		p_params->m_q_sby_frac = value(P_Q_SBY_FRAC);			//Fraction of thermal power required for standby mode [none]
+		p_params->m_startup_time = value(P_STARTUP_TIME);		//Time needed for power block startup [hr]
+		p_params->m_startup_frac = value(P_STARTUP_FRAC);		//Fraction of design thermal power needed for startup [none]
+		p_params->m_htf_pump_coef = value(P_PB_PUMP_COEF);		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
 		p_params->m_pc_fl = (int)value(P_HTF);					//Integer flag identifying HTF in power block [none]
-		
+
 		int n_rows = -1;
 		int n_cols = -1;
 		double *pc_fl_props = value(P_FIELD_FL_PROPS, &n_rows, &n_cols);
@@ -155,25 +183,57 @@ public:
 			for( int c = 0; c < n_cols; c++ )
 				p_params->m_pc_fl_props(r,c) = TCS_MATRIX_INDEX(var(P_FIELD_FL_PROPS),r,c);
 		
+		p_params->m_is_user_defined_pc = (int)value(P_PC_CONFIG)==1;	//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
 		
-		p_params->m_q_sby_frac = value(P_Q_SBY_FRAC);			//Fraction of thermal power required for standby mode [none]
-		p_params->m_P_boil = value(P_P_BOIL);					//Boiler operating pressure [bar]
-		p_params->m_CT = (int) value(P_CT);						//Flag for using dry cooling or wet cooling system                [none]
-		p_params->m_startup_time = value(P_STARTUP_TIME);		//Time needed for power block startup [hr]
-		p_params->m_startup_frac = value(P_STARTUP_FRAC);		//Fraction of design thermal power needed for startup [none]
-		p_params->m_tech_type = (int) value(P_TECH_TYPE);		//Flag indicating which coef. set to use. (1=tower,2=trough,3=user) [none]
-		p_params->m_T_approach = value(P_T_APPROACH);			//Cooling tower approach temperature [C]
-		p_params->m_T_ITD_des = value(P_T_ITD_DES);				//ITD at design for dry system [C]
-		p_params->m_P_cond_ratio = value(P_P_COND_RATIO);		//Condenser pressure ratio [none]
-		p_params->m_pb_bd_frac = value(P_PB_BD_FRAC);			//Power block blowdown steam fraction  [none]
-		p_params->m_P_cond_min = value(P_P_COND_MIN);			//Minimum condenser pressure [inHg]
-		p_params->m_n_pl_inc = (int) value(P_N_PL_INC);			//Number of part-load increments for the heat rejection system [none]
+		if( !p_params->m_is_user_defined_pc )
+		{
+			p_params->m_dT_cw_ref = value(P_DT_CW_REF);				//Reference condenser cooling water inlet/outlet T diff [C]
+			p_params->m_T_amb_des = value(P_T_AMB_DES);				//Reference ambient temperature at design point [C]
+			p_params->m_P_boil = value(P_P_BOIL);					//Boiler operating pressure [bar]
+			p_params->m_CT = (int) value(P_CT);						//Flag for using dry cooling or wet cooling system                [none]
+			p_params->m_tech_type = (int) value(P_TECH_TYPE);		//Flag indicating which coef. set to use. (1=tower,2=trough,3=user) [none]
+			p_params->m_T_approach = value(P_T_APPROACH);			//Cooling tower approach temperature [C]
+			p_params->m_T_ITD_des = value(P_T_ITD_DES);				//ITD at design for dry system [C]
+			p_params->m_P_cond_ratio = value(P_P_COND_RATIO);		//Condenser pressure ratio [none]
+			p_params->m_pb_bd_frac = value(P_PB_BD_FRAC);			//Power block blowdown steam fraction  [none]
+			p_params->m_P_cond_min = value(P_P_COND_MIN);			//Minimum condenser pressure [inHg]
+			p_params->m_n_pl_inc = (int) value(P_N_PL_INC);			//Number of part-load increments for the heat rejection system [none]
 		
-		int nval_F_wc = -1;
-		double *F_wc = value(P_F_WC, &nval_F_wc);		//Fraction indicating wet cooling use for hybrid system [none]
-		p_params->m_F_wc.resize(nval_F_wc);
-		for( int i = 0; i < nval_F_wc; i++ )
-			p_params->m_F_wc[i] = F_wc[i];
+			int nval_F_wc = -1;
+			double *F_wc = value(P_F_WC, &nval_F_wc);		//Fraction indicating wet cooling use for hybrid system [none]
+			p_params->m_F_wc.resize(nval_F_wc);
+			for( int i = 0; i < nval_F_wc; i++ )
+				p_params->m_F_wc[i] = F_wc[i];
+		}
+		else
+		{
+			
+			p_params->m_T_amb_des = value(P_UD_T_AMB_DES);						//[C]
+			p_params->m_W_dot_cooling_des = value(P_UD_F_W_DOT_COOL_DES)/100.0*p_params->m_P_ref;	//[MWe]
+			p_params->m_m_dot_water_des = value(P_UD_M_DOT_WATER_COOL_DES);		//[kg/s]
+
+			n_rows = n_cols = -1;
+			double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
+			p_params->mc_T_htf_ind.resize(n_rows, n_cols);
+			for( int r = 0; r < n_rows; r++ )
+				for( int c = 0; c < n_cols; c++ )
+					p_params->mc_T_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_HTF_IND_OD),r,c);
+
+			n_rows = n_cols = -1;
+			double *p_T_amb_ind = value(P_UD_T_AMB_IND_OD, &n_rows, &n_cols);
+			p_params->mc_T_amb_ind.resize(n_rows, n_cols);
+			for( int r = 0; r < n_rows; r++ )
+				for( int c = 0; c < n_cols; c++ )
+					p_params->mc_T_amb_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_AMB_IND_OD),r,c);
+
+			n_rows = n_cols = -1;
+			double *p_m_dot_htf_ind = value(P_UD_M_DOT_HTF_IND_OD, &n_rows, &n_cols);
+			p_params->mc_m_dot_htf_ind.resize(n_rows, n_cols);
+			for( int r = 0; r < n_rows; r++ )
+				for( int c = 0; c < n_cols; c++ )
+					p_params->mc_m_dot_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_M_DOT_HTF_IND_OD),r,c);
+
+		}
 
 		int out_type = -1;
 		std::string out_msg = "";
