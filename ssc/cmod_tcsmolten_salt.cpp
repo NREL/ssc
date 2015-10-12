@@ -206,7 +206,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                 "Fraction indicating wet cooling use for hybrid system",             "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
    	
 		// User Defined cycle
-	
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",      "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",      "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",      "user_defined_PC", "pc_config=1",            "",                      "" },
 																     																	  
 		// sCO2 Powerblock (type 424) inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "pc_config=2",                "",                      "" },
@@ -684,11 +686,11 @@ public:
 		// Power cycle
 		// Logic to choose between steam and sco2 power cycle 
 		int pb_tech_type = as_integer("pc_config");
-		if( pb_tech_type == 1 )
-		{
-			log("The User Defined power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
-			return;
-		}
+		//if( pb_tech_type == 1 )
+		//{
+		//	log("The User Defined power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
+		//	return;
+		//}
 		if( pb_tech_type == 2 )
 		{
 			log("The sCO2 power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
@@ -707,13 +709,13 @@ public:
 		pc->m_startup_time = as_double("startup_time");
 		pc->m_startup_frac = as_double("startup_frac");
 		pc->m_htf_pump_coef = as_double("pb_pump_coef");
+		pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
+		pc->m_pc_fl_props = as_matrix("field_fl_props");
 
 		if( pb_tech_type == 0 )
 		{
 			pc->m_dT_cw_ref = as_double("dT_cw_ref");
-			pc->m_T_amb_des = as_double("T_amb_des");
-			pc->m_pc_fl = as_integer("rec_htf");					// power cycle HTF is same as receiver HTF
-			pc->m_pc_fl_props = as_matrix("field_fl_props");		
+			pc->m_T_amb_des = as_double("T_amb_des");					
 			pc->m_P_boil = as_double("P_boil");
 			pc->m_CT = as_integer("CT");		
 			pc->m_tech_type = 1;									// compute module is for MSPT, so hardcode tech type
@@ -734,104 +736,92 @@ public:
 			pc->m_is_user_defined_pc = false;
 			pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
 		}
-
-		// ********************************************
-		// Test U.D. power cycle
-		// ********************************************
-		pc->m_is_user_defined_pc = false;
-
-			// Use Type224 Hardcoded values for T_HTF and m_dot
-			// Can't switch between condenser pressure and T_amb...
-					// (well, I guess we *could* by using the steam props...)
-		pc->mc_T_htf_ind.resize(20,9);
-		pc->mc_T_amb_ind.resize(3,9);
-		pc->mc_m_dot_htf_ind.resize(20,9);
-		pc->m_W_dot_cooling_des = pc->m_P_ref*0.02;		//[MW]
-		pc->m_m_dot_water_des = 0.0;					//[kg/s]
-
-		// Ok, so let's try assuming there is no dependence on T_amb
-		pc->mc_T_amb_ind(0, 0) = -50.0;
-		pc->mc_T_amb_ind(1, 0) = 20.0;
-		pc->mc_T_amb_ind(2, 0) = 200.0;
-
-		for( int i = 1; i < 9; i++ )
+		else if( pb_tech_type == 1 )
 		{
-			for( int j = 0; j < 3; j++ )
-			{				
-				pc->mc_T_amb_ind(j,i) = 1.0;
-			}
-		}
+			// User-Defined Cycle Parameters
+			pc->m_T_amb_des = as_double("ud_T_amb_des");	//[C]
+			pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des")/100.0*as_double("P_ref");	//[MWe]
+			pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
 
-		// Also, let's hardcode all effects to 1.0, then redefine as necessary
-		for( int i = 1; i < 9; i++ )
-		{
-			for( int j = 0; j < 20; j++ )
+			// ********************************************
+			// Test U.D. power cycle
+			// ********************************************
+			pc->m_is_user_defined_pc = true;
+
+				// Use Type224 Hardcoded values for T_HTF and m_dot
+				// Can't switch between condenser pressure and T_amb...
+						// (well, I guess we *could* by using the steam props...)
+			pc->mc_T_htf_ind.resize(20,9);
+			pc->mc_T_amb_ind.resize(3,9);
+			pc->mc_m_dot_htf_ind.resize(20,9);
+			//pc->m_W_dot_cooling_des = pc->m_P_ref*0.02;		//[MW]
+			//pc->m_m_dot_water_des = 0.0;					//[kg/s]
+
+			// Ok, so let's try assuming there is no dependence on T_amb
+			pc->mc_T_amb_ind(0, 0) = -50.0;
+			pc->mc_T_amb_ind(1, 0) = 20.0;
+			pc->mc_T_amb_ind(2, 0) = 200.0;
+
+			for( int i = 1; i < 9; i++ )
 			{
-				pc->mc_T_htf_ind(j, i) = 1.0;
-				pc->mc_m_dot_htf_ind(j, i) = 1.0;
+				for( int j = 0; j < 3; j++ )
+				{				
+					pc->mc_T_amb_ind(j,i) = 1.0;
+				}
 			}
+
+			// Also, let's hardcode all effects to 1.0, then redefine as necessary
+			for( int i = 1; i < 9; i++ )
+			{
+				for( int j = 0; j < 20; j++ )
+				{
+					pc->mc_T_htf_ind(j, i) = 1.0;
+					pc->mc_m_dot_htf_ind(j, i) = 1.0;
+				}
+			}
+
+			// Now, let's tackle T_HTF
+			// Need to re-dimensionalize the HTF temperature values...
+			// From 'csp_solver_pc_Rankine_indirect_224.cpp': "double T_htf_hot_ND = (T_htf_hot - T_ref) / (T_htf_hot_ref - T_ref);"
+			// So, what are T_ref and T_htf_hot_ref?, just run debug to figure this out... 
+			//		T_ref = 584.15 K in default case
+			//		T_htf_hot_ref = 847.15 K in default case
+			double T_ref_table = 584.15;
+			double T_htf_hot_ref_table = 847.15;
+				// Temperature values, row 1
+			double T_htf_hot_ND_table[20] = {0.20000, 0.25263, 0.30526, 0.35789, 0.41053, 0.46316, 0.51579, 0.56842, 0.62105, 0.67368, 0.72632, 0.77895, 0.83158, 0.88421, 0.93684, 0.98947, 1.04211, 1.09474, 1.14737, 1.20000};
+
+			// Get m_dot_ND values, row 7
+			double m_dot_htf_ND_table[20] = { 0.10000, 0.17368, 0.24737, 0.32105, 0.39474, 0.46842, 0.54211, 0.61579, 0.68947, 0.76316, 0.83684, 0.91053, 0.98421, 1.05789, 1.13158, 1.20526, 1.27895, 1.35263, 1.42632, 1.50000 };
+
+			// Now get HTF temp main effect on Power, row 2
+			double T_ME_on_Power_table[20] = {0.16759, 0.21750, 0.26932, 0.32275, 0.37743, 0.43300, 0.48910, 0.54545, 0.60181, 0.65815, 0.71431, 0.77018, 0.82541, 0.88019, 0.93444, 0.98886, 1.04378, 1.09890, 1.15425, 1.20982};
+			// .. and Heat Input, row 3
+			double T_ME_on_Heat_table[20] = {0.19656, 0.24969, 0.30325, 0.35710, 0.41106, 0.46497, 0.51869, 0.57215, 0.62529, 0.67822, 0.73091, 0.78333, 0.83526, 0.88694, 0.93838, 0.98960, 1.04065, 1.09154, 1.14230, 1.19294};
+
+			// Now get m_dot_htf main effect on Power, row 8
+			double m_dot_ME_on_Power_table[20] = {0.09403, 0.16542, 0.23861, 0.31328, 0.38901, 0.46540, 0.54203, 0.61849, 0.69437, 0.76928, 0.84282, 0.91458, 0.98470, 1.05517, 1.12536, 1.19531, 1.26502, 1.33450, 1.40376, 1.47282};
+			// ... and Heat Input, row 9
+			double m_dot_ME_on_Heat_table[20] = {0.10659, 0.18303, 0.25848, 0.33316, 0.40722, 0.48075, 0.55381, 0.62646, 0.69873, 0.77066, 0.84228, 0.91360, 0.98464, 1.05542, 1.12596, 1.19627, 1.26637, 1.33625, 1.40593, 1.47542};
+
+			// So now we can calculate temp values in C...
+			for( int i = 0; i < 20; i++ )
+			{
+				pc->mc_T_htf_ind(i,0) = T_htf_hot_ND_table[i] * (T_htf_hot_ref_table - T_ref_table) + T_ref_table - 273.15;
+				pc->mc_m_dot_htf_ind(i,0) = m_dot_htf_ND_table[i];
+
+				pc->mc_T_htf_ind(i,1) = T_ME_on_Power_table[i];
+				pc->mc_T_htf_ind(i,3) = T_ME_on_Heat_table[i];
+
+				pc->mc_m_dot_htf_ind(i,1) = m_dot_ME_on_Power_table[i];
+				pc->mc_m_dot_htf_ind(i,3) = m_dot_ME_on_Heat_table[i];
+
+				// Let's also say that cooling parasitics scale same as power...
+				pc->mc_T_htf_ind(i,5) = T_ME_on_Power_table[i];
+				pc->mc_m_dot_htf_ind(i,5) = m_dot_ME_on_Power_table[i];
+			}
+
 		}
-
-		// Now, let's tackle T_HTF
-		// Need to re-dimensionalize the HTF temperature values...
-		// From 'csp_solver_pc_Rankine_indirect_224.cpp': "double T_htf_hot_ND = (T_htf_hot - T_ref) / (T_htf_hot_ref - T_ref);"
-		// So, what are T_ref and T_htf_hot_ref?, just run debug to figure this out... 
-		//		T_ref = 584.15 K in default case
-		//		T_htf_hot_ref = 847.15 K in default case
-		double T_ref_table = 584.15;
-		double T_htf_hot_ref_table = 847.15;
-			// Temperature values, row 1
-		double T_htf_hot_ND_table[20] = {0.20000, 0.25263, 0.30526, 0.35789, 0.41053, 0.46316, 0.51579, 0.56842, 0.62105, 0.67368, 0.72632, 0.77895, 0.83158, 0.88421, 0.93684, 0.98947, 1.04211, 1.09474, 1.14737, 1.20000};
-
-		// Get m_dot_ND values, row 7
-		double m_dot_htf_ND_table[20] = { 0.10000, 0.17368, 0.24737, 0.32105, 0.39474, 0.46842, 0.54211, 0.61579, 0.68947, 0.76316, 0.83684, 0.91053, 0.98421, 1.05789, 1.13158, 1.20526, 1.27895, 1.35263, 1.42632, 1.50000 };
-
-		// Now get HTF temp main effect on Power, row 2
-		double T_ME_on_Power_table[20] = {0.16759, 0.21750, 0.26932, 0.32275, 0.37743, 0.43300, 0.48910, 0.54545, 0.60181, 0.65815, 0.71431, 0.77018, 0.82541, 0.88019, 0.93444, 0.98886, 1.04378, 1.09890, 1.15425, 1.20982};
-		// .. and Heat Input, row 3
-		double T_ME_on_Heat_table[20] = {0.19656, 0.24969, 0.30325, 0.35710, 0.41106, 0.46497, 0.51869, 0.57215, 0.62529, 0.67822, 0.73091, 0.78333, 0.83526, 0.88694, 0.93838, 0.98960, 1.04065, 1.09154, 1.14230, 1.19294};
-
-		// Now get m_dot_htf main effect on Power, row 8
-		double m_dot_ME_on_Power_table[20] = {0.09403, 0.16542, 0.23861, 0.31328, 0.38901, 0.46540, 0.54203, 0.61849, 0.69437, 0.76928, 0.84282, 0.91458, 0.98470, 1.05517, 1.12536, 1.19531, 1.26502, 1.33450, 1.40376, 1.47282};
-		// ... and Heat Input, row 9
-		double m_dot_ME_on_Heat_table[20] = {0.10659, 0.18303, 0.25848, 0.33316, 0.40722, 0.48075, 0.55381, 0.62646, 0.69873, 0.77066, 0.84228, 0.91360, 0.98464, 1.05542, 1.12596, 1.19627, 1.26637, 1.33625, 1.40593, 1.47542};
-
-		// So now we can calculate temp values in C...
-		for( int i = 0; i < 20; i++ )
-		{
-			pc->mc_T_htf_ind(i,0) = T_htf_hot_ND_table[i] * (T_htf_hot_ref_table - T_ref_table) + T_ref_table - 273.15;
-			pc->mc_m_dot_htf_ind(i,0) = m_dot_htf_ND_table[i];
-
-			pc->mc_T_htf_ind(i,1) = T_ME_on_Power_table[i];
-			pc->mc_T_htf_ind(i,3) = T_ME_on_Heat_table[i];
-
-			pc->mc_m_dot_htf_ind(i,1) = m_dot_ME_on_Power_table[i];
-			pc->mc_m_dot_htf_ind(i,3) = m_dot_ME_on_Heat_table[i];
-
-			// Let's also say that cooling parasitics scale same as power...
-			pc->mc_T_htf_ind(i,5) = T_ME_on_Power_table[i];
-			pc->mc_m_dot_htf_ind(i,5) = m_dot_ME_on_Power_table[i];
-		}
-
-
-		//pc->mc_T_htf_ind(0,0) = 0.0;
-		//pc->mc_T_htf_ind(1,0) = pc->m_T_htf_hot_ref;
-		//pc->mc_T_htf_ind(2,0) = 1500.0;
-		//
-		//pc->mc_m_dot_htf_ind(0,0) = 0.0;
-		//pc->mc_m_dot_htf_ind(1,0) = 1.0;
-		//pc->mc_m_dot_htf_ind(2,0) = 1.5;
-		
-		// ********************************************
-		// END Test U.D. power cycle
-		// ********************************************
-
-
-
-		
-
-		// Test power cycle initialization
-		//power_cycle.init();
 
 
 		// Thermal energy storage 
