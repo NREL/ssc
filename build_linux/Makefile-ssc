@@ -78,6 +78,8 @@ OBJECTS = \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
+# Following give undefined symbols tcskernel and ssc.co fails to load
+#	$(CXX) $(LDFLAGS) -shared -o $@ $^ 
 	$(CXX) -shared -o $@ $^ $(LDFLAGS)
 	gcc $(CFLAGS) dltest.c -o dltest -ldl
 	./dltest ./$(TARGET)
