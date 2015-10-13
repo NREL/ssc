@@ -208,7 +208,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
  //  enet calculator																																							  
     { SSC_INPUT,        SSC_NUMBER,      "eta_lhv",           "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",                             "enet",           "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_tes_htr",       "Thermal storage tank heater efficiency (fp_mode=1 only)",                   "none",         "",                             "enet",           "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fp_mode",           "Freeze protection mode (1=Electrical heating ; 2=Fossil heating)",          "none",         "",                             "enet",           "*",                       "",                      "" },
 
 
 
@@ -690,7 +689,7 @@ public:
 		//Set enet calculator inputs and connect it to the parasitic values ===========================================
 		set_unit_value_ssc_double(sum_calculator, "eta_lhv" ); // , 0.9);
 		set_unit_value_ssc_double(sum_calculator, "eta_tes_htr" ); // , 0.98);
-		set_unit_value_ssc_double(sum_calculator, "fp_mode" ); // , 1);
+		set_unit_value_ssc_double(sum_calculator, "fp_mode", 1.0 );				// 10.12.15 twn: hardcode this to Electric freeze protection as it wasn't exposed in the UI. Perhaps revisit allowing using control...
 		bConnected &= connect(type224_powerblock, "P_cycle", sum_calculator, "W_cycle_gross");
 		bConnected &= connect(type224_powerblock, "W_cool_par", sum_calculator, "W_par_heatrej");
 		bConnected &= connect(type250_solarfield, "W_dot_pump", sum_calculator, "W_par_sf_pump");
