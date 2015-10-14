@@ -1323,6 +1323,7 @@ automate_dispatch_t::automate_dispatch_t(dispatch_manual_t * Dispatch, int nyear
 		sorted_grid.push_back(0);
 		sorted_hours.push_back(0);
 		sorted_steps.push_back(0);
+		
 	}
 }
 void automate_dispatch_t::update_pv_load_data(double *pv, double *load)
@@ -1405,6 +1406,9 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 
 void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps)
 {
+	std::vector<grid_point> grid_full;
+	grid_full.reserve(_num_steps);
+
 	// compute grid net from pv and load (no battery)
 	int count = 0;
 	for (int hour = 0; hour != 24; hour++)
@@ -1415,55 +1419,19 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx, double_vec & g
 			sorted_grid[count] = _load[idx] - _pv[idx];
 			sorted_hours[count] = hour;
 			sorted_steps[count] = step;
-
+			grid_full.push_back(grid_point(grid[count], hour, step));
 			idx++;
 			count++;
 		}
 	}
-
-	// sort grid net and then find which hour/step each sorted value corresponds to
-	std::sort(sorted_grid.begin(),sorted_grid.end(), return_max);
-	std::vector<int> found_index;
-	found_index.reserve(_num_steps); 
-
-	if (debug)
-		fprintf(p, "Grid Power\t Hour\t Step\t Inner\n");
-
-	for (int outer = 0; outer != _num_steps; outer++)
+	std::sort(grid_full.begin(), grid_full.end(), byGrid());
+	for (int ii = 0; ii != _num_steps; ii++)
 	{
-		for (int inner = 0; inner != _num_steps; inner++)
-		{
-			// check if already found something at this index
-			bool contained = false;
-			for (int ind_check = 0; ind_check != found_index.size(); ind_check++)
-			{
-				if (inner == found_index[ind_check])
-					contained = true;
-			}
-
-			if (contained)
-				continue;
-
-			// found a match
-			if (sorted_grid[outer] == grid[inner])
-			{
-				float tmp = (float)(inner / _steps_per_hour);
-				int hour_computed = floor(tmp);
-				int step_computed = inner - (hour_computed*_steps_per_hour);
-
-				sorted_hours[outer] = hour_computed;
-				sorted_steps[outer] = step_computed;
-
-				if (debug)
-					fprintf(p, "%.3f\t %d\t %d\t %d\n", sorted_grid[outer], hour_computed, step_computed, inner);
-
-				found_index.push_back(inner);
-				break;
-			}
-		}
+		sorted_grid[ii] = grid_full[ii].Grid();
+		sorted_hours[ii] = grid_full[ii].Hour();
+		sorted_steps[ii] = grid_full[ii].Step();
 	}
 }
-
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_useful, double & E_max )
 {
 	E_useful = _dispatch->_Battery->battery_voltage() *(_dispatch->_Battery->battery_charge_total() - _dispatch->_Battery->battery_charge_maximum() *_dispatch->_SOC_min *0.01)*watt_to_kilowatt;
