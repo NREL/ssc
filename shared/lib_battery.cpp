@@ -1313,18 +1313,9 @@ automate_dispatch_t::automate_dispatch_t(dispatch_manual_t * Dispatch, int nyear
 	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
 
 	grid.reserve(_num_steps);
-	sorted_grid.reserve(_num_steps);
-	sorted_hours.reserve(_num_steps);
-	sorted_steps.reserve(_num_steps);
 
 	for (int ii = 0; ii != _num_steps; ii++)
-	{
-		grid.push_back(0);
-		sorted_grid.push_back(0);
-		sorted_hours.push_back(0);
-		sorted_steps.push_back(0);
-		
-	}
+		grid.push_back(grid_point(0.,0,0));
 }
 void automate_dispatch_t::update_pv_load_data(double *pv, double *load)
 {
@@ -1332,7 +1323,6 @@ void automate_dispatch_t::update_pv_load_data(double *pv, double *load)
 	_load = load;
 }
 int automate_dispatch_t::get_mode(){return _mode;}
-bool return_max(double i, double j){ return i > j; }
 void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 {
 	bool debug = false;
@@ -1346,10 +1336,10 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 		double P_target;  // [kW] - the target power
 
 		// setup vectors
-		initialize(hour_of_year, idx, grid, sorted_grid, sorted_hours, sorted_steps);
+		initialize(hour_of_year, idx);
 
 		// compute grid power, sort highest to lowest
-		sort_grid(p, debug, idx, grid, sorted_grid, sorted_hours, sorted_steps);
+		sort_grid(p, debug, idx);
 
 		// set period 1 as only PV charging
 		int profile = 1;
@@ -1357,17 +1347,17 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 		
 		// Peak shaving scheme
 		compute_energy(p, debug, E_useful, E_max);
-		target_power(p, debug, sorted_grid, P_target, E_useful);
+		target_power(p, debug, P_target, E_useful);
 
 		// Set discharge, gridcharge profiles
-		profile = set_discharge(p, debug, hour_of_year, sorted_grid, sorted_hours, sorted_steps ,P_target, E_max);
-		set_gridcharge(p, debug, hour_of_year, profile, grid, sorted_grid, sorted_hours, sorted_steps, P_target, E_max);
+		profile = set_discharge(p, debug, hour_of_year, P_target, E_max);
+		set_gridcharge(p, debug, hour_of_year, profile, P_target, E_max);
 	}
 	
 	if (debug)
 		fclose(p);
 }
-void automate_dispatch_t::initialize(int hour_of_year, int idx , double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps )
+void automate_dispatch_t::initialize(int hour_of_year, int idx )
 {
 	_hour_last_updated = hour_of_year;
 	_dispatch->_charge_array.clear();
@@ -1376,14 +1366,7 @@ void automate_dispatch_t::initialize(int hour_of_year, int idx , double_vec & gr
 
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
-	{
-		grid[ii] = 0;
-		sorted_grid[ii] = 0;
-		sorted_hours[ii] = 0;
-		sorted_steps[ii] = 0;
-	}
-	
-
+		grid[ii] = grid_point(0.,0,0);
 }
 void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
 {
@@ -1404,34 +1387,22 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	}
 }
 
-void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps)
+void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx )
 {
-	std::vector<grid_point> grid_full;
-	grid_full.reserve(_num_steps);
-
 	// compute grid net from pv and load (no battery)
 	int count = 0;
 	for (int hour = 0; hour != 24; hour++)
 	{
 		for (int step = 0; step != _steps_per_hour; step++)
 		{
-			grid[count] = _load[idx] - _pv[idx];
-			sorted_grid[count] = _load[idx] - _pv[idx];
-			sorted_hours[count] = hour;
-			sorted_steps[count] = step;
-			grid_full.push_back(grid_point(grid[count], hour, step));
+			grid[count] = grid_point(_load[idx] - _pv[idx], hour, step);
 			idx++;
 			count++;
 		}
 	}
-	std::sort(grid_full.begin(), grid_full.end(), byGrid());
-	for (int ii = 0; ii != _num_steps; ii++)
-	{
-		sorted_grid[ii] = grid_full[ii].Grid();
-		sorted_hours[ii] = grid_full[ii].Hour();
-		sorted_steps[ii] = grid_full[ii].Step();
-	}
+	std::sort(grid.begin(), grid.end(), byGrid());
 }
+
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_useful, double & E_max )
 {
 	E_useful = _dispatch->_Battery->battery_voltage() *(_dispatch->_Battery->battery_charge_total() - _dispatch->_Battery->battery_charge_maximum() *_dispatch->_SOC_min *0.01)*watt_to_kilowatt;
@@ -1445,7 +1416,7 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_useful,
 	}
 }
 
-void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_grid, double & P_target, double E_useful )
+void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, double E_useful )
 {
 	// First compute target power which will allow battery to charge up to E_useful over 24 hour period
 	if (debug)
@@ -1458,13 +1429,13 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_gri
 	while (E_charge < peak_shave_fraction* E_useful)
 	{
 		E_charge = 0.;
-		P_target_min = sorted_grid[index];
+		P_target_min = grid[index].Grid();
 		for (int ii = _num_steps - 1; ii >= 0; ii--)
 		{
-			if (sorted_grid[ii] > P_target_min)
+			if (grid[ii].Grid() > P_target_min)
 				break;
 
-			E_charge += (P_target_min - sorted_grid[ii])*_dt_hour;
+			E_charge += (P_target_min - grid[ii].Grid())*_dt_hour;
 		}
 		if (debug)
 			fprintf(p, "%.3f\t %.3f\n", P_target_min, E_charge);
@@ -1478,7 +1449,7 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_gri
 	// still, we will try and shave peak by 30%
 	if (E_charge < peak_shave_fraction*E_useful)
 	{
-		P_target = peak_shave_fraction*sorted_grid[0];
+		P_target = peak_shave_fraction*grid[0].Grid();
 		return;
 	}
 
@@ -1487,9 +1458,9 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_gri
 	sorted_grid_diff.reserve(_num_steps - 1);
 
 	for (int ii = 0; ii != _num_steps - 1; ii++)
-		sorted_grid_diff.push_back(sorted_grid[ii] - sorted_grid[ii + 1]);
+		sorted_grid_diff.push_back(grid[ii].Grid() - grid[ii + 1].Grid());
 
-	P_target = sorted_grid[0]; // target power to shave to [kW]
+	P_target = grid[0].Grid(); // target power to shave to [kW]
 	double sum = 0;			   // energy [kWh];
 	if (debug)
 		fprintf(p, "Step\t Target Power\n");
@@ -1497,11 +1468,11 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double_vec sorted_gri
 	for (int ii = 0; ii != _num_steps - 1; ii++)
 	{
 		// don't look at negative grid power
-		if (sorted_grid[ii + 1] < 0)
+		if (grid[ii + 1].Grid() < 0)
 			break;
 		// Update power target
 		else
-			P_target = sorted_grid[ii + 1];
+			P_target = grid[ii + 1].Grid();
 
 		if (debug)
 			fprintf(p, "%d\t %.3f\n", ii, P_target);
@@ -1545,7 +1516,7 @@ void automate_dispatch_t::set_charge(int profile)
 	_dispatch->_gridcharge_array.push_back(false);
 	_dispatch->_sched.fill(profile);
 }
-int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, double_vec sorted_grid, int_vec sorted_hours, int_vec sorted_steps, double P_target, double E_max)
+int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, double P_target, double E_max)
 {
 	// Assign profiles within dispatch controller
 	int profile = 1;
@@ -1557,20 +1528,20 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
 		double discharge_percent = 0;
-		double energy_required = (sorted_grid[ii] - P_target)*_dt_hour;
+		double energy_required = (grid[ii].Grid() - P_target)*_dt_hour;
 		if (energy_required > 0)
 		{
 			discharge_percent = 100 * (energy_required / E_max);
 			discharge_energy += energy_required;
 			profile++;
 			if (debug)
-				fprintf(p, "%d\t %d\t %d\t %d\t %.3f\t %.3f\n", ii, profile, sorted_hours[ii], sorted_steps[ii], discharge_percent, discharge_energy);
+				fprintf(p, "%d\t %d\t %d\t %d\t %.3f\t %.3f\n", ii, profile, grid[ii].Hour(), grid[ii].Step(), discharge_percent, discharge_energy);
 		}
 		else
 			break;
 
-		getMonthHour(hour_of_year + sorted_hours[ii], m, h);
-		int min = sorted_steps[ii];
+		getMonthHour(hour_of_year + grid[ii].Hour(), m, h);
+		int min = grid[ii].Step();
 		int column = (h - 1)*_steps_per_hour + min;
 
 		// have set profile 0 as charge from solar only as default, start from 1
@@ -1583,13 +1554,13 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 	}
 	return profile;
 }
-void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double_vec grid, double_vec sorted_grid, int_vec sorted_hours, int_vec sorted_steps, double P_target, double E_max)
+void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max)
 {
 	// grid charging scheme
 	profile++;
 	int m, h;
 	std::vector<int> grid_profiles;
-	int peak_hour = sorted_hours[0];
+	int peak_hour =grid[0].Hour();
 	double charge_energy = 0;
 	int steps_grid_charged = 0;
 	double charge_percent = 0;
@@ -1597,8 +1568,8 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 	// Count charge all day
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
-		if (grid[ii] < 0)
-			charge_energy += (-grid[ii]) * _dt_hour;
+		if (grid[ii].Grid() < 0)
+			charge_energy += (-grid[ii].Grid()) * _dt_hour;
 	}
 
 	if (charge_energy < E_max)
@@ -1608,16 +1579,16 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 
 		for (int ii = _num_steps - 1; ii >= 0; ii--)
 		{
-			if (sorted_grid[ii] > P_target)
+			if (grid[ii].Grid() > P_target)
 				break;
 
-			int hour = sorted_hours[ii];
-			int step = sorted_steps[ii];
-			charge_percent = 100 * ((P_target - sorted_grid[ii])*_dt_hour) / E_max;
-			charge_energy += (P_target - sorted_grid[ii])*_dt_hour;
+			int hour = grid[ii].Hour();
+			int step = grid[ii].Step();
+			charge_percent = 100 * ((P_target - grid[ii].Grid())*_dt_hour) / E_max;
+			charge_energy += (P_target - grid[ii].Grid())*_dt_hour;
 
 			if (debug)
-				fprintf(p, "%d\t %d\t %.3f\t %.3f\t %.3f\n", hour, step, sorted_grid[ii], charge_percent, charge_energy);
+				fprintf(p, "%d\t %d\t %.3f\t %.3f\t %.3f\n", hour, step, grid[ii].Grid(), charge_percent, charge_energy);
 
 			if (charge_percent < 0)
 				break;
