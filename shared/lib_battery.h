@@ -522,11 +522,36 @@ protected:
 	int _num_steps;
 	int _nyears;
 	int _mode;
-
+	
 	double_vec grid;	 	// [kW] - unsorted grid calculations for current window
 	double_vec sorted_grid;	// [kW] - sorted grid calculations for current window (high to low)
 	int_vec sorted_hours;    // sorted hours corresponding to sorted_grid (range 1-24)
 	int_vec sorted_steps;	// sorted sub-hourly steps corresponding to grid calculations (range 0-59, depending on timestep)
+	
+};
+
+class grid_point
+{
+
+public:
+	grid_point(double grid = 0., int hour = 0, int step = 0) : 
+		_grid(grid), _hour(hour), _step(step){}
+	double Grid(){ return _grid; }
+	int Hour(){ return _hour; }
+	int Step(){ return _step; }
+
+private:
+	double _grid;
+	int _hour;
+	int _step;
+};
+
+struct byGrid
+{
+	bool operator()(grid_point  &a, grid_point &b)
+	{
+		return a.Grid() > b.Grid();
+	}
 };
 
 /*
