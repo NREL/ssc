@@ -488,8 +488,34 @@ protected:
 	enum {LOOK_AHEAD, LOOK_BEHIND, MANUAL};
 };
 /*
-Automate dispatch class
+Automate dispatch classes
 */
+class grid_point
+{
+	// Class to encapsulate the required grid power, hour, and step, i.e
+	// grid_point = [grid_power, hour, step]
+public:
+	grid_point(double grid = 0., int hour = 0, int step = 0) :
+		_grid(grid), _hour(hour), _step(step){}
+	double Grid(){ return _grid; }
+	int Hour(){ return _hour; }
+	int Step(){ return _step; }
+
+private:
+	double _grid;
+	int _hour;
+	int _step;
+};
+typedef std::vector<grid_point> grid_vec;
+
+struct byGrid
+{
+	bool operator()(grid_point  &a, grid_point &b)
+	{
+		return a.Grid() > b.Grid();
+	}
+};
+
 class automate_dispatch_t
 {
 public:
@@ -503,14 +529,14 @@ public:
 	int get_mode();
 
 protected:
-	void initialize(int hour_of_year, int idx , double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps );
+	void initialize(int hour_of_year, int idx );
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
-	void sort_grid(FILE *p, bool debug, int idx, double_vec & grid, double_vec & sorted_grid, int_vec & sorted_hours, int_vec & sorted_steps);
+	void sort_grid(FILE *p, bool debug, int idx );
 	void compute_energy(FILE *p, bool debug, double & E_useful, double & E_max);
-	void target_power(FILE*p, bool debug, double_vec sorted_grid, double & P_target, double E_useful);
+	void target_power(FILE*p, bool debug, double & P_target, double E_useful);
 	void set_charge(int profile);
-	int set_discharge(FILE *p, bool debug, int hour_of_year, double_vec sorted_grid, int_vec sorted_hours, int_vec sorted_steps, double P_target, double E_max);
-	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double_vec grid, double_vec sorted_grid, int_vec sorted_hours, int_vec sorted_steps, double P_target, double E_max);
+	int set_discharge(FILE *p, bool debug, int hour_of_year, double P_target, double E_max);
+	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max);
 
 
 	dispatch_manual_t * _dispatch;
@@ -523,37 +549,8 @@ protected:
 	int _nyears;
 	int _mode;
 	
-	double_vec grid;	 	// [kW] - unsorted grid calculations for current window
-	double_vec sorted_grid;	// [kW] - sorted grid calculations for current window (high to low)
-	int_vec sorted_hours;    // sorted hours corresponding to sorted_grid (range 1-24)
-	int_vec sorted_steps;	// sorted sub-hourly steps corresponding to grid calculations (range 0-59, depending on timestep)
-	
+	grid_vec grid; // [grid_power, hour, step]
 };
-
-class grid_point
-{
-
-public:
-	grid_point(double grid = 0., int hour = 0, int step = 0) : 
-		_grid(grid), _hour(hour), _step(step){}
-	double Grid(){ return _grid; }
-	int Hour(){ return _hour; }
-	int Step(){ return _step; }
-
-private:
-	double _grid;
-	int _hour;
-	int _step;
-};
-
-struct byGrid
-{
-	bool operator()(grid_point  &a, grid_point &b)
-	{
-		return a.Grid() > b.Grid();
-	}
-};
-
 /*
 Non-class functions
 */
