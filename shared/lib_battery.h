@@ -497,9 +497,9 @@ class grid_point
 public:
 	grid_point(double grid = 0., int hour = 0, int step = 0) :
 		_grid(grid), _hour(hour), _step(step){}
-	double Grid(){ return _grid; }
-	int Hour(){ return _hour; }
-	int Step(){ return _step; }
+	double Grid() const { return _grid; }
+	int Hour() const { return _hour; }
+	int Step() const { return _step; }
 
 private:
 	double _grid;
@@ -510,7 +510,7 @@ typedef std::vector<grid_point> grid_vec;
 
 struct byGrid
 {
-	bool operator()(grid_point  &a, grid_point &b)
+	bool operator()(grid_point const  &a, grid_point const &b)
 	{
 		return a.Grid() > b.Grid();
 	}
