@@ -306,6 +306,7 @@ float adjustment_factors::operator()( size_t time )
 shading_factor_calculator::shading_factor_calculator()
 {
 	m_enAzAlt = false;
+	m_enMxH = false;
 	m_diffFactor = 1.0;
 }
 
@@ -313,14 +314,10 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 {
 	bool ok = true;
 	m_diffFactor = 1.0;
-//	m_en_shading_db = false;
 	m_string_option = -1;// 0=shading db, 1=average, 2=max, 3=min, -1 not enabled.
 	m_steps_per_hour = 1;
 	m_db8 = NULL;
 
-	//	if (cm->is_assigned(prefix + "shading:shading_db_lookup"))
-	//		m_en_shading_db = cm->as_boolean(prefix + "shading:shading_db_lookup");
-	//	if (m_en_shading_db)
 	if (cm->is_assigned(prefix + "shading:string_option"))
 			m_string_option = cm->as_integer(prefix + "shading:string_option");
 	if (m_string_option == 0)
@@ -330,31 +327,8 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	}
 
 	// initialize to 8760x1 for mxh and change based on shading:timestep
-	m_beamFactors.resize_fill(8760, 1, 1.0);
-
-	/*
-	m_beamFactors.resize( 8760, 1.0 );
-
-	
-	for ( size_t j=0;j<8760;j++)
-		m_beamFactors[j] = 1.0;
-
-	if ( cm->is_assigned( prefix+"shading:hourly" ) )
-	{
-		size_t len = 0;
-		ssc_number_t *vals = cm->as_array( prefix+"shading:hourly", &len );
-		if ( len == 8760 )
-		{
-			for ( size_t j=0;j<8760;j++)
-				m_beamFactors[j] = 1-vals[j]/100;
-		}
-		else
-		{
-			ok = false;
-			m_errors.push_back("hourly shading beam losses must have 8760 values");
-		}
-	}
-	*/
+	size_t nrecs = 8760;
+	m_beamFactors.resize_fill(nrecs, 1, 1.0);
 
 
 	if (cm->is_assigned(prefix + "shading:timestep"))
@@ -363,21 +337,8 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		ssc_number_t *mat = cm->as_matrix(prefix + "shading:timestep", &nrows, &ncols);
 		if (nrows % 8760 == 0)
 		{
+			nrecs = nrows;
 			m_beamFactors.resize_fill(nrows, ncols, 1.0);
-			/*
-			if (m_en_shading_db) // use percent shaded to lookup in database
-			{
-				for (size_t r = 0; r < nrows; r++)
-					for (size_t c = 0; c < ncols; c++)
-						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded 
-			}
-			else // use unshaded factors to apply to beam
-			{
-				for (size_t r = 0; r < nrows; r++)
-					for (size_t c = 0; c < ncols; c++)
-						m_beamFactors.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor unshaded for beam
-			}
-			*/
 			if (m_string_option==0) // use percent shaded to lookup in database
 			{
 				for (size_t r = 0; r < nrows; r++)
@@ -448,52 +409,53 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		}
 	}
 
-//	if (!m_en_shading_db)
-	if (m_string_option != 0) // can use other shading inputs if not using shading db
+ // initialize other shading inputs 
+	m_enMxH = false;
+	if (cm->is_assigned(prefix + "shading:mxh"))
+	{
+		m_mxhFactors.resize_fill(nrecs, 1, 1.0);
+		size_t nrows, ncols;
+		ssc_number_t *mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
+		if (nrows != 12 || ncols != 24)
 		{
-		if (cm->is_assigned(prefix + "shading:mxh"))
+			ok = false;
+			m_errors.push_back("month x hour shading losses must have 12 rows and 24 columns");
+		}
+		else
 		{
-			size_t nrows, ncols;
-			ssc_number_t *mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
-			{
-				ok = false;
-				m_errors.push_back("month x hour shading losses must have 12 rows and 24 columns");
-			}
-			else
-			{
-				int c = 0;
-				for (int m = 0; m < 12; m++)
-					for (int d = 0; d < util::nday[m]; d++)
-						for (int h = 0; h < 24; h++)
-							for (int jj = 0; jj < m_steps_per_hour; jj++)
-								m_beamFactors.at(c++,0) *= 1 - mat[m*ncols + h] / 100;
-			}
+			int c = 0;
+			for (int m = 0; m < 12; m++)
+				for (int d = 0; d < util::nday[m]; d++)
+					for (int h = 0; h < 24; h++)
+						for (int jj = 0; jj < m_steps_per_hour; jj++)
+							m_mxhFactors.at(c++, 0) = 1 - mat[m*ncols + h] / 100;
+		}
+		m_enMxH = true;
+	}
+
+	m_enAzAlt = false;
+	if (cm->is_assigned(prefix + "shading:azal"))
+	{
+		size_t nrows, ncols;
+		ssc_number_t *mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
+		if (nrows < 3 || ncols < 3)
+		{
+			ok = false;
+			m_errors.push_back("azimuth x altitude shading losses must have at least 3 rows and 3 columns");
 		}
 
-		m_enAzAlt = false;
-		if (cm->is_assigned(prefix + "shading:azal"))
+		m_azaltvals.resize_fill(nrows, ncols, 1.0);
+		for (size_t r = 0; r < nrows; r++)
 		{
-			size_t nrows, ncols;
-			ssc_number_t *mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
-			if (nrows < 3 || ncols < 3)
+			for (size_t c = 0; c < ncols; c++)
 			{
-				ok = false;
-				m_errors.push_back("azimuth x altitude shading losses must have at least 3 rows and 3 columns");
+				if (r == 0 || c == 0)
+					m_azaltvals.at(r, c) = mat[r*ncols + c]; //first row and column contain azimuth by altitude values
+				else
+					m_azaltvals.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor
 			}
-
-			m_azaltvals.resize_fill(nrows, ncols, 1.0);
-			for (size_t r = 0; r < nrows; r++)
-				for (size_t c = 0; c < ncols; c++)
-				{
-					if (r == 0 || c == 0)
-						m_azaltvals.at(r, c) = mat[r*ncols + c]; //first row and column contain azimuth by altitude values
-					else
-						m_azaltvals.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor
-				}
-
-			m_enAzAlt = true;
 		}
+		m_enAzAlt = true;
 	}
 
 
@@ -529,7 +491,6 @@ double shading_factor_calculator::fbeam(size_t hour, double solalt, double solaz
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
 	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
 	{
-//		if (m_en_shading_db) // shading database lookup
 		if (m_string_option==0) // shading database lookup
 		{
 			std::vector<double> shad_fracs;
@@ -538,13 +499,17 @@ double shading_factor_calculator::fbeam(size_t hour, double solalt, double solaz
 			factor = 1.0-m_db8->get_shade_loss(gpoa, dpoa, shad_fracs);
 		}
 		else // use column zero value
-			//	if (hour >= 0 && hour < m_beamFactors.size())
 		{
 			factor = m_beamFactors.at(irow, 0);
-			//		double factor = m_beamFactors[hour];
-			if (m_enAzAlt)
-				factor *= util::bilinear(solalt, solazi, m_azaltvals);
+//			if (m_enAzAlt)
+//				factor *= util::bilinear(solalt, solazi, m_azaltvals);
 		}
+		// apply mxh factor
+		if (m_enMxH && (irow < m_mxhFactors.nrows()))
+			factor *= m_mxhFactors(irow, 0);
+		// apply azi alt shading factor
+		if (m_enAzAlt)
+			factor *= util::bilinear(solalt, solazi, m_azaltvals);
 	}
 	return factor;
 }
