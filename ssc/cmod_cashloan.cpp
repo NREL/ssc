@@ -362,7 +362,14 @@ public:
 			else // user specified
 				batt_rep = as_array("batt_replacement_schedule", &count);
 			double batt_cap = as_double("batt_computed_bank_capacity");
-			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "batt_replacement_cost", inflation_rate, batt_cap, false, as_double("batt_replacement_cost_escal")*0.01);
+			// updated 10/17/15 per 10/14/15 meeting
+//			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "batt_replacement_cost", inflation_rate, batt_cap, false, as_double("batt_replacement_cost_escal")*0.01);
+			double batt_repl_cost = as_double("batt_replacement_cost");
+			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
+
+			for (int i = 0; i<nyears; i++)
+				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
+
 			for (int i = 0; i < nyears && i<count; i++)
 				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
