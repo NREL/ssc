@@ -28,8 +28,9 @@ var_info vtab_battery_replacement_cost[] = {
 		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_option", "Enable battery replacement?", "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0", "INTEGER,MIN=0,MAX=2", "" },
 		{ SSC_INPUT, SSC_NUMBER, "battery_per_kWh", "Battery cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Battery bank capacity", "kWh", "", "Battery", "?=0.0", "", "" },
-
-		{ SSC_INPUT, SSC_ARRAY, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
+		// changed 10/17/15 per 10/14/15 meeting.
+//		{ SSC_INPUT, SSC_ARRAY, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
+		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_cost", "Battery bank replacement cost", "$/kWh", "", "Battery", "?=0.0", "", "" },
 		{ SSC_INPUT, SSC_NUMBER, "batt_replacement_cost_escal", "Battery bank replacement cost escalation", "%/year", "", "Battery", "?=0.0", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost", "Battery replacement cost", "$", "", "Cash Flow", "*", "", "" },
 		{ SSC_OUTPUT, SSC_ARRAY, "cf_battery_replacement_cost_schedule", "Battery replacement cost schedule", "$/kWh", "", "Cash Flow", "*", "", "" },
