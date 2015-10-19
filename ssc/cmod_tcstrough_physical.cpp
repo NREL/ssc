@@ -29,7 +29,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "Row_Distance",              "Spacing between rows (centerline to centerline)",                                  "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "FieldConfig",               "Number of subfield headers",                                                       "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_startup",                 "Required temperature of the system before the power block can be switched on",     "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_rated_cap",              "Rated plant capacity",                                                             "MWe",          "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_ref",                     "Rated plant capacity",                                                             "MWe",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
@@ -184,26 +184,35 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 						          
 //   VARTYPE            DATATYPE          NAME                LABEL                                                                        UNITS           META                            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
 	// Power Cycle Inputs
-    { SSC_INPUT,        SSC_NUMBER,      "eta_ref",           "Reference conversion efficiency at design condition",                       "none",         "",                             "powerblock",     "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "pc_config",         "0: Steam Rankine (224), 1: user defined",                                   "-",            "",                             "powerblock",     "?=0",                     "INTEGER",               "" },        
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_ref",           "Reference conversion efficiency at design condition",                       "none",         "",                             "powerblock",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "startup_time",      "Time needed for power block startup",                                       "hr",           "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "startup_frac",      "Fraction of design thermal power needed for startup",                       "none",         "",                             "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",        "Fraction of thermal power required for standby mode",                       "none",         "",                             "powerblock",     "*",                       "",                      "" },
     
 
 	// Steam Rankine cycle
-    { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                  "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",        "Power block blowdown steam fraction ",                                      "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                "inHg",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                  "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",        "Power block blowdown steam fraction ",                                      "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                "inHg",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
 	
+		// User Defined cycle
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+		
 																																												  
  //  enet calculator																																							  
     { SSC_INPUT,        SSC_NUMBER,      "eta_lhv",           "Fossil fuel lower heating value - Thermal power generated per unit fuel",   "MW/MMBTU",     "",                             "enet",           "*",                       "",                      "" },
@@ -444,7 +453,7 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "Row_Distance" ); // , 15);
         set_unit_value_ssc_double(type250_solarfield, "FieldConfig" ); // , 2);
         set_unit_value_ssc_double(type250_solarfield, "T_startup" ); // , 300);
-        set_unit_value_ssc_double(type250_solarfield, "pb_rated_cap" ); // , 111);
+        set_unit_value_ssc_double(type250_solarfield, "P_ref" ); // , 111);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmin" ); // , 1);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmax" ); // , 12);
         set_unit_value_ssc_double(type250_solarfield, "T_loop_in_des" ); // , 293);
@@ -634,41 +643,50 @@ public:
 		set_unit_value_ssc_double(type224_powerblock, "eta_ref" ); // , 0.3774);
 		set_unit_value_ssc_double(type224_powerblock, "T_htf_hot_ref", as_double("T_loop_out") ); // , 391);
 		set_unit_value_ssc_double(type224_powerblock, "T_htf_cold_ref", as_double("T_loop_in_des") ); // , 293);
-		set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref" ); // , 10);
-		set_unit_value_ssc_double(type224_powerblock, "T_amb_des" ); // , 20);
-		set_unit_value_ssc_double(type224_powerblock, "HTF", as_double("Fluid") ); // , 21);
-		set_unit_value_ssc_matrix(type224_powerblock, "field_fl_props");
-		set_unit_value_ssc_double(type224_powerblock, "q_sby_frac" ); // , 0.2);
-		set_unit_value_ssc_double(type224_powerblock, "P_boil" ); // , 100);
-		set_unit_value_ssc_double(type224_powerblock, "CT" ); // , 1);
-		set_unit_value_ssc_double(type224_powerblock, "startup_time" ); // , 0.5);
-		set_unit_value_ssc_double(type224_powerblock, "startup_frac" ); // , 0.2);
-		set_unit_value_ssc_double(type224_powerblock, "tech_type" ); // , 2);
-		set_unit_value_ssc_double(type224_powerblock, "T_approach" ); // , 5);
-		set_unit_value_ssc_double(type224_powerblock, "T_ITD_des" ); // , 16);
-		set_unit_value_ssc_double(type224_powerblock, "P_cond_ratio" ); // , 1.0028);
-		set_unit_value_ssc_double(type224_powerblock, "pb_bd_frac" ); // , 0.02);
-		set_unit_value_ssc_double(type224_powerblock, "P_cond_min" ); // , 1.25);
-		set_unit_value_ssc_double(type224_powerblock, "n_pl_inc" ); // , 2);
-		set_unit_value_ssc_array(type224_powerblock, "F_wc" ); // , [0,0,0,0,0,0,0,0,0]);
-
-		// Add parameters for user-defined power cycle and updates to 224 class for the CSP Solver
 		set_unit_value_ssc_double(type224_powerblock, "cycle_max_frac");
 		set_unit_value_ssc_double(type224_powerblock, "cycle_cutoff_frac");
+		set_unit_value_ssc_double(type224_powerblock, "q_sby_frac"); // , 0.2);
+		set_unit_value_ssc_double(type224_powerblock, "startup_time"); // , 0.5);
+		set_unit_value_ssc_double(type224_powerblock, "startup_frac"); // , 0.2);
 		set_unit_value_ssc_double(type224_powerblock, "pb_pump_coef");
-		
-		int pc_config = 0;
+		set_unit_value_ssc_double(type224_powerblock, "HTF", as_double("Fluid")); // , 21);
+		set_unit_value_ssc_matrix(type224_powerblock, "field_fl_props");
 
-		if(pc_config == 1)
+
+		set_unit_value_ssc_double(type224_powerblock, "pc_config");
+
+		int pc_config = as_integer("pc_config");
+
+		if(pc_config == 0)
 		{
-			set_unit_value_ssc_double(type224_powerblock, "pc_config", 0.0);
-
+			set_unit_value_ssc_double(type224_powerblock, "dT_cw_ref" ); // , 10);
+			set_unit_value_ssc_double(type224_powerblock, "T_amb_des" ); // , 20);
+		
+			set_unit_value_ssc_double(type224_powerblock, "P_boil" ); // , 100);
+			set_unit_value_ssc_double(type224_powerblock, "CT" ); // , 1);
+		
+			set_unit_value_ssc_double(type224_powerblock, "tech_type" ); // , 2);
+			set_unit_value_ssc_double(type224_powerblock, "T_approach" ); // , 5);
+			set_unit_value_ssc_double(type224_powerblock, "T_ITD_des" ); // , 16);
+			set_unit_value_ssc_double(type224_powerblock, "P_cond_ratio" ); // , 1.0028);
+			set_unit_value_ssc_double(type224_powerblock, "pb_bd_frac" ); // , 0.02);
+			set_unit_value_ssc_double(type224_powerblock, "P_cond_min" ); // , 1.25);
+			set_unit_value_ssc_double(type224_powerblock, "n_pl_inc" ); // , 2);
+			set_unit_value_ssc_array(type224_powerblock, "F_wc" ); // , [0,0,0,0,0,0,0,0,0]);
+		}
+		else if(pc_config == 1)
+		{			
 			set_unit_value_ssc_double(type224_powerblock, "ud_T_amb_des");
 			set_unit_value_ssc_double(type224_powerblock, "ud_f_W_dot_cool_des");
 			set_unit_value_ssc_double(type224_powerblock, "ud_m_dot_water_cool_des");
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_htf_ind_od");
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_T_amb_ind_od");
 			set_unit_value_ssc_matrix(type224_powerblock, "ud_m_dot_htf_ind_od");
+		}
+		else
+		{
+			log("The 'pc_config' must be either 0 or 1.\n", SSC_WARNING);
+			return;
 		}
 
 		//Connect inputs
