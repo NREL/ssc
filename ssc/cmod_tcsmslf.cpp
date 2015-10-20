@@ -191,13 +191,6 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
 																															
-			
-		// To Be Deleted: check that UI variables aren't used in Equations or Callbacks
-    { SSC_INPUT,    SSC_NUMBER,         "HTF",                    "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "demand_var",             "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-     
-			
-
 																																				
 		// System / Other / Extra...																																	
 	{ SSC_INPUT,    SSC_NUMBER,         "T_htf_hot_ref",          "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
