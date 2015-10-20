@@ -141,7 +141,6 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "fthr_ok",                "Label",                                                                                 "",              "",  "controller",            "*",        "INTEGER",       ""},
     { SSC_INPUT,    SSC_NUMBER,         "nSCA",                   "Label",                                                                                 "",              "",  "controller",           "*",         "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "fc_on",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "q_sby_frac",             "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "t_standby_reset",        "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "sf_type",                "Solar field type",                                                                      "-",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "tes_type",               "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
@@ -168,37 +167,48 @@ static var_info _cm_vtab_tcsmslf[] = {
 
 
 
-    //   powerblock (type 224) inputs
-    //VARTYPE      DATATYPE           NAME                      LABEL                                                                                    UNITS           META  GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
-    { SSC_INPUT,    SSC_NUMBER,         "P_ref",                  "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "eta_ref",                "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_htf_hot_ref",          "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_htf_cold_ref",         "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "dT_cw_ref",              "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_amb_des",              "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "HTF",                    "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "q_sby_frac",             "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "P_boil",                 "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "CT",                     "Label",                                                                                 "",              "",  "powerblock",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_NUMBER,         "startup_time",           "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "startup_frac",           "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "tech_type",              "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_approach",             "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_ITD_des",              "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "P_cond_ratio",           "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "pb_bd_frac",             "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "P_cond_min",             "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "n_pl_inc",               "Label",                                                                                 "",              "",  "powerblock",            "*",        "INTEGER",       ""},
-    { SSC_INPUT,    SSC_ARRAY,          "F_wc",                   "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "mode",                   "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_wb",                   "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "rh",                     "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "demand_var",             "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "standby_control",        "Label",                                                                                 "",              "",  "powerblock",            "*",        "",              ""},
-    //  enet calculator
-    { SSC_INPUT,    SSC_NUMBER,         "eta_lhv",                "Label",                                                                                 "",              "",  "enet",                  "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "eta_tes_htr",            "Label",                                                                                 "",              "",  "enet",                  "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "fp_mode",                "Label",                                                                                 "",              "",  "enet",                  "*",        "",              ""},
+
+    //VARTYPE      DATATYPE           NAME                      LABEL                                                                          UNITS           META     GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
+		// Power Cycle Inputs
+	{ SSC_INPUT,    SSC_NUMBER,         "pc_config",              "0: Steam Rankine (224), 1: user defined",                                   "-",              "",  "powerblock",         "?=0",      "INTEGER",       ""},            	
+	{ SSC_INPUT,    SSC_NUMBER,         "P_ref",                  "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "eta_ref",                "Cycle thermal efficiency at design point",                                  "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "startup_time",           "Time needed for power block startup",                                       "hr",             "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "startup_frac",           "Fraction of design thermal power needed for startup",                       "none",           "",  "powerblock",         "*",        "",              ""},    
+	{ SSC_INPUT,    SSC_NUMBER,         "q_sby_frac",             "Fraction of thermal power required for standby mode",                       "none",           "",  "powerblock",         "*",        "",              ""},
+    																																		
+		// Steam Rankine Cycle																												
+    { SSC_INPUT,    SSC_NUMBER,      "dT_cw_ref",         "Reference condenser cooling water inlet/outlet T diff",                     "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "T_amb_des",         "Reference ambient temperature at design point",                             "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "P_boil",            "Boiler operating pressure",                                                 "bar",          "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "CT",                "Flag for using dry cooling or wet cooling system",                          "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "T_approach",        "Cooling tower approach temperature",                                        "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "T_ITD_des",         "ITD at design for dry system",                                              "C",            "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "P_cond_ratio",      "Condenser pressure ratio",                                                  "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "pb_bd_frac",        "Power block blowdown steam fraction ",                                      "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "P_cond_min",        "Minimum condenser pressure",                                                "inHg",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,    SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
+																															
+			
+		// To Be Deleted: check that UI variables aren't used in Equations or Callbacks
+    { SSC_INPUT,    SSC_NUMBER,         "HTF",                    "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "T_wb",                   "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "rh",                     "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "demand_var",             "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "standby_control",        "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    
+			
+
+																																				
+		// System / Other / Extra...																																	
+	{ SSC_INPUT,    SSC_NUMBER,         "T_htf_hot_ref",          "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "T_htf_cold_ref",         "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
+    //  enet calculator																															
+    { SSC_INPUT,    SSC_NUMBER,         "eta_lhv",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "eta_tes_htr",            "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "fp_mode",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
 
     // OUTPUTS
     // The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
@@ -579,7 +589,7 @@ public:
 		set_unit_value_ssc_double(powerblock, "T_htf_cold_ref" ); // T_cold_des);
 		set_unit_value_ssc_double(powerblock, "dT_cw_ref" ); // 10);
 		set_unit_value_ssc_double(powerblock, "T_amb_des" ); // 20);
-		set_unit_value_ssc_double(powerblock, "HTF" ); // field_fluid);
+		set_unit_value_ssc_double(powerblock, "HTF", as_double("Fluid") ); // field_fluid);
 		set_unit_value_ssc_matrix(powerblock, "field_fl_props");
 		set_unit_value_ssc_double(powerblock, "q_sby_frac" ); // 0.2);
 		set_unit_value_ssc_double(powerblock, "P_boil" ); // 100);
@@ -597,15 +607,12 @@ public:
 
 		set_unit_value_ssc_double(powerblock, "mode", 2);	//Always set to 2 for type 251
 		//Set initial values
-		set_unit_value_ssc_double(powerblock, "T_wb" ); // 10.);
 		set_unit_value_ssc_double(powerblock, "T_db" ); // 15.);
 		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
-		set_unit_value_ssc_double(powerblock, "rh" ); // 0.25);
 //		set_unit_value_ssc_double(powerblock, "T_htf_hot" ); // T_hot_des);
 //		set_unit_value(controller, "T_htf_hot", as_double("T_loop_out"));
 //		set_unit_value_ssc_double(powerblock, "m_dot_htf_init"); // 0.);
-		set_unit_value_ssc_double(powerblock, "demand_var" ); // E_gross);
-		set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
+		//set_unit_value_ssc_double(powerblock, "standby_control" ); // 0);
 
 		//Connect the enet calculator to the parasitic values
 		set_unit_value_ssc_double(enet, "eta_lhv" ); // 0.9);
