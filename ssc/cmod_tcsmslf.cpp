@@ -176,6 +176,27 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,      "n_pl_inc",          "Number of part-load increments for the heat rejection system",              "none",         "",                             "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_ARRAY,       "F_wc",              "Fraction indicating wet cooling use for hybrid system",                     "none",         "constant=[0,0,0,0,0,0,0,0,0]", "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,    SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
+		
+	
+		// User Defined cycle
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+		
+
+
+		//  enet calculator																															
+    { SSC_INPUT,    SSC_NUMBER,         "eta_lhv",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "eta_tes_htr",            "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
+    { SSC_INPUT,    SSC_NUMBER,         "fp_mode",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
+
+
+
+
+
 																															
 																																				
 		// System Temperatures...																																	
@@ -183,11 +204,7 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "T_htf_cold_ref",         "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
     
 	
-		//  enet calculator																															
-    { SSC_INPUT,    SSC_NUMBER,         "eta_lhv",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "eta_tes_htr",            "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "fp_mode",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
-
+	
     // OUTPUTS
     // The names of the output variables should match the parameter names for the TCS units in order to signal to the TCS kernel to store the values by timestep
 
@@ -548,30 +565,60 @@ public:
 		set_unit_value_ssc_double(controller, "m_pb_demand", 0.0);
 
 
-		//Set the parameters for the power block type 224
-		set_unit_value_ssc_double(powerblock, "P_ref" ); // E_gross);
-		set_unit_value_ssc_double(powerblock, "eta_ref" ); // eta_cycle_des);
-		set_unit_value_ssc_double(powerblock, "T_htf_hot_ref" ); // T_hot_des);
-		set_unit_value_ssc_double(powerblock, "T_htf_cold_ref" ); // T_cold_des);
-		set_unit_value_ssc_double(powerblock, "dT_cw_ref" ); // 10);
-		set_unit_value_ssc_double(powerblock, "T_amb_des" ); // 20);
-		set_unit_value_ssc_double(powerblock, "HTF", as_double("Fluid") ); // field_fluid);
+		// Set Common Type 224 Power Cycle Parameters
+		set_unit_value_ssc_double(powerblock, "P_ref" );
+		set_unit_value_ssc_double(powerblock, "eta_ref" );
+		set_unit_value_ssc_double(powerblock, "T_htf_hot_ref" );
+		set_unit_value_ssc_double(powerblock, "T_htf_cold_ref" );
+		set_unit_value_ssc_double(powerblock, "cycle_max_frac");
+		set_unit_value_ssc_double(powerblock, "cycle_cutoff_frac");
+		set_unit_value_ssc_double(powerblock, "q_sby_frac");
+		set_unit_value_ssc_double(powerblock, "startup_time");
+		set_unit_value_ssc_double(powerblock, "startup_frac");
+		set_unit_value_ssc_double(powerblock, "pb_pump_coef");
+		set_unit_value_ssc_double(powerblock, "HTF", as_double("Fluid"));
 		set_unit_value_ssc_matrix(powerblock, "field_fl_props");
-		set_unit_value_ssc_double(powerblock, "q_sby_frac" ); // 0.2);
-		set_unit_value_ssc_double(powerblock, "P_boil" ); // 100);
-		set_unit_value_ssc_double(powerblock, "CT" ); // 1);
-		set_unit_value_ssc_double(powerblock, "startup_time" ); // 0.5);
-		set_unit_value_ssc_double(powerblock, "startup_frac" ); // 0.2);
-		set_unit_value_ssc_double(powerblock, "tech_type" ); // 2);
-		set_unit_value_ssc_double(powerblock, "T_approach" ); // 5);
-		set_unit_value_ssc_double(powerblock, "T_ITD_des" ); // 16);
-		set_unit_value_ssc_double(powerblock, "P_cond_ratio" ); // 1.0028);
-		set_unit_value_ssc_double(powerblock, "pb_bd_frac" ); // 0.02);
-		set_unit_value_ssc_double(powerblock, "P_cond_min" ); // 1.25);
-		set_unit_value_ssc_double(powerblock, "n_pl_inc" ); // 2);
-		set_unit_value_ssc_array(powerblock, "F_wc" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-		set_unit_value_ssc_double(powerblock, "mode", 2);	//Always set to 2 for type 251
+		set_unit_value_ssc_double(powerblock, "pc_config");
+
+		int pc_config = as_integer("pc_config");
+
+		if(pc_config == 0)
+		{
+			set_unit_value_ssc_double(powerblock, "dT_cw_ref");
+			set_unit_value_ssc_double(powerblock, "T_amb_des");
+		
+			set_unit_value_ssc_double(powerblock, "P_boil");
+			set_unit_value_ssc_double(powerblock, "CT");
+
+			set_unit_value_ssc_double(powerblock, "tech_type");
+			set_unit_value_ssc_double(powerblock, "T_approach");
+			set_unit_value_ssc_double(powerblock, "T_ITD_des"); 
+			set_unit_value_ssc_double(powerblock, "P_cond_ratio"); 
+			set_unit_value_ssc_double(powerblock, "pb_bd_frac"); 
+			set_unit_value_ssc_double(powerblock, "P_cond_min"); 
+			set_unit_value_ssc_double(powerblock, "n_pl_inc"); 
+			set_unit_value_ssc_array(powerblock, "F_wc"); 
+
+		}
+		else if(pc_config == 1)
+		{
+			set_unit_value_ssc_double(powerblock, "ud_T_amb_des");
+			set_unit_value_ssc_double(powerblock, "ud_f_W_dot_cool_des");
+			set_unit_value_ssc_double(powerblock, "ud_m_dot_water_cool_des");
+			set_unit_value_ssc_matrix(powerblock, "ud_T_htf_ind_od");
+			set_unit_value_ssc_matrix(powerblock, "ud_T_amb_ind_od");
+			set_unit_value_ssc_matrix(powerblock, "ud_m_dot_htf_ind_od");
+		}
+		else
+		{
+			log("The 'pc_config' must be either 0 or 1.\n", SSC_WARNING);
+			return;
+		}
+
+
+
+
 		//Set initial values
 		set_unit_value_ssc_double(powerblock, "T_db" ); // 15.);
 		set_unit_value_ssc_double(powerblock, "P_amb" ); // 1.);
