@@ -102,7 +102,6 @@ static var_info _cm_vtab_tcsmslf[] = {
 
     //   controller (type 251) inputs
     //VARTYPE      DATATYPE           NAME                      LABEL                                                                                    UNITS           META  GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
-    { SSC_INPUT,    SSC_NUMBER,         "T_pb_out_init",          "Fluid temperature from the power block",                                                "C",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "field_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_MATRIX,         "store_fl_props",         "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
 	{ SSC_INPUT,    SSC_NUMBER,         "store_fluid",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
@@ -154,15 +153,18 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "nodes",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "f_tc_cold",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     // controller (type 251)  initial conditions
-    { SSC_INPUT,    SSC_NUMBER,         "I_bn",                   "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_amb",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "m_dot_field",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htf_ref",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_field_out",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_pb_out_init",          "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "m_pb_demand",            "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "q_startup",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
 
+
+	// Inputs To Be Deleted
+	//{SSC_INPUT, SSC_NUMBER, "I_bn", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "T_amb", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "m_dot_field", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "m_dot_htf_ref", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "T_field_out", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "T_pb_out_init", "Fluid temperature from the power block", "C", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "T_pb_out_init", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "m_pb_demand", "Label", "", "", "controller", "*", "", ""},
+	//{SSC_INPUT, SSC_NUMBER, "q_startup", "Label", "", "", "controller", "*", "", ""},
 
 
 
@@ -556,21 +558,9 @@ public:
 		set_unit_value_ssc_matrix(tou_translator, "weekend_schedule");
 
 
-
-
-		//Set initial values
-		set_unit_value_ssc_double(controller, "I_bn" ); // 0.);
-		set_unit_value_ssc_double(controller, "T_amb" ); // 15.);
-		set_unit_value_ssc_double(controller, "m_dot_field" ); // 0.);
-	//	set_unit_value_ssc_double(controller, "m_dot_htf_ref" ); // 0.);
-		// T_hot_des=T_loop_out
-		//set_unit_value_ssc_double(controller, "T_field_out" ); // T_hot_des);
 		set_unit_value(controller, "T_field_out", as_double("T_loop_out"));
-		// T_cold_des=T_loop_in_des
-		//set_unit_value_ssc_double(controller, "T_pb_out_init"); // T_cold_des);
 		set_unit_value(controller, "T_pb_out", as_double("T_loop_in_des"));
-		set_unit_value_ssc_double(controller, "m_pb_demand"); // 100000.);
-		set_unit_value_ssc_double(controller, "q_startup" ); // 0.);
+		set_unit_value_ssc_double(controller, "m_pb_demand", 0.0);
 
 
 		//Set the parameters for the power block type 224
