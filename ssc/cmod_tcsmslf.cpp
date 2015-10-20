@@ -152,21 +152,6 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "t_ch_out_max",           "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "nodes",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "f_tc_cold",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    // controller (type 251)  initial conditions
-
-
-	// Inputs To Be Deleted
-	//{SSC_INPUT, SSC_NUMBER, "I_bn", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "T_amb", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "m_dot_field", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "m_dot_htf_ref", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "T_field_out", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "T_pb_out_init", "Fluid temperature from the power block", "C", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "T_pb_out_init", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "m_pb_demand", "Label", "", "", "controller", "*", "", ""},
-	//{SSC_INPUT, SSC_NUMBER, "q_startup", "Label", "", "", "controller", "*", "", ""},
-
-
 
 
     //VARTYPE      DATATYPE           NAME                      LABEL                                                                          UNITS           META     GROUP                   REQUIRED_IF  CONSTRAINTS      UI_HINTS
