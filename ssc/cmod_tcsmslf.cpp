@@ -194,11 +194,8 @@ static var_info _cm_vtab_tcsmslf[] = {
 			
 		// To Be Deleted: check that UI variables aren't used in Equations or Callbacks
     { SSC_INPUT,    SSC_NUMBER,         "HTF",                    "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "T_wb",                   "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "rh",                     "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "demand_var",             "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "standby_control",        "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    
+     
 			
 
 																																				
