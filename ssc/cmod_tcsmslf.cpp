@@ -142,7 +142,6 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "nSCA",                   "Label",                                                                                 "",              "",  "controller",           "*",         "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "fc_on",                  "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "t_standby_reset",        "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
-    { SSC_INPUT,    SSC_NUMBER,         "sf_type",                "Solar field type",                                                                      "-",             "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "tes_type",               "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_ARRAY,          "tslogic_a",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_ARRAY,          "tslogic_b",              "Label",                                                                                 "",              "",  "controller",            "*",        "",              ""},
@@ -192,10 +191,12 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,      "tech_type",         "Turbine inlet pressure control flag (sliding=user, fixed=trough)",          "1/2/3",         "tower/trough/user",           "powerblock",     "pc_config=0",             "",                      "" },
 																															
 																																				
-		// System / Other / Extra...																																	
+		// System Temperatures...																																	
 	{ SSC_INPUT,    SSC_NUMBER,         "T_htf_hot_ref",          "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "T_htf_cold_ref",         "Label",                                                                     "-",              "",  "powerblock",         "*",        "",              ""},
-    //  enet calculator																															
+    
+	
+		//  enet calculator																															
     { SSC_INPUT,    SSC_NUMBER,         "eta_lhv",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "eta_tes_htr",            "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "fp_mode",                "Label",                                                                     "-",              "",  "enet",               "*",        "",              ""},
@@ -536,7 +537,7 @@ public:
 		set_unit_value_ssc_double(controller, "fc_on" ); // 0);
 		set_unit_value_ssc_double(controller, "q_sby_frac" ); // 0.2);
 		set_unit_value_ssc_double(controller, "t_standby_reset" ); // 2);
-		set_unit_value_ssc_double(controller, "sf_type");
+		set_unit_value_ssc_double(controller, "sf_type", 1);		// 10.19.15, twn: MSLF will also be 1
 		set_unit_value_ssc_double(controller, "tes_type" ); // 1);
 		set_unit_value_ssc_array(controller, "tslogic_a" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
 		set_unit_value_ssc_array(controller, "tslogic_b" ); // [0, 0, 0, 0, 0, 0, 0, 0, 0]);
