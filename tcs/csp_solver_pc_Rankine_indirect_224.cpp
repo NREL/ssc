@@ -1060,7 +1060,7 @@ void C_pc_Rankine_indirect_224::RankineCycle(/*double time,*/double P_ref, doubl
 
 		P_cond = P_cond_guess;
 
-		err = abs(err);
+		err = fabs(err);
 
 		if( qq == 99 )
 		{

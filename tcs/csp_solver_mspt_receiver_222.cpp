@@ -520,7 +520,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		int qq = 0;
 		q_abs_sum = 0.0;
 
-		while( abs(err) > tol )
+		while( fabs(err) > tol )
 		{
 			qq++;
 
@@ -691,7 +691,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 			err = (T_salt_hot_guess - m_T_salt_hot_target) / m_T_salt_hot_target;
 
-			if( abs(err) > tol )
+			if( fabs(err) > tol )
 			{
 				m_dot_salt_guess = (q_abs_sum - m_Q_dot_piping_loss) / (m_n_lines*c_p_coolant*(m_T_salt_hot_target - T_salt_cold_in));			//[kg/s]
 
