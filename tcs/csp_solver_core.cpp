@@ -1404,7 +1404,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int iter_defocus = 0;
 
 				// Start iteration loop
-				while( abs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
+				while( fabs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
 				{
 					iter_defocus++;			// First iteration = 1
 
@@ -1540,7 +1540,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check here...?
 				if( cr_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(cr_pc_exit_tol) > relaxed_tol_cr_pc )
+					if( fabs(cr_pc_exit_tol) > relaxed_tol_cr_pc )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -1560,7 +1560,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 				if( defocus_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(diff_q_dot) > relax_tol )
+					if( fabs(diff_q_dot) > relax_tol )
 					{	// Defocus did not converge within Relaxed Tolerance, shut off CR & PC
 
 						// update defocus Exit Mode
@@ -1656,7 +1656,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// check whether achieved convergence is "good enough" to report and continue
 				if( exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(exit_tolerance) > relaxed_tol )
+					if( fabs(exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC						
 
 						// update 'exit_mode'
@@ -2148,7 +2148,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration loop
-				while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+				while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 				{
 					iter_T_rec_in++;		// First iteration = 1
 
@@ -2337,7 +2337,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Reached convergence on defocus, but it is *possible* that the CR-PC iteration only solved at POOR CONVERGENCE
 				if( exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(exit_tolerance) > relaxed_tol )
+					if( fabs(exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -2438,7 +2438,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					// If inner nest (power cycle thermal power iteration) causes exit, then we know CR solved with *some* inputs
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -2455,7 +2455,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -2525,7 +2525,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes from outer and inner loops
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -2544,7 +2544,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -2623,7 +2623,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration loop
-				while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+				while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 				{
 					iter_T_rec_in++;		// First iteration = 1
 
@@ -2883,7 +2883,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes
 				if( exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(exit_tolerance) > relaxed_tol )
+					if( fabs(exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						// update 'exit_mode'
@@ -2998,7 +2998,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Iterate on defocus to fully charge storage
-				while( abs(diff_m_dot) > tol || diff_m_dot != diff_m_dot )
+				while( fabs(diff_m_dot) > tol || diff_m_dot != diff_m_dot )
 				{
 					iter_defocus++;			// First iteration = 1
 
@@ -3111,7 +3111,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_rec_in
-					while( abs(diff_T_rec_in) > tol_T_rec_in || diff_T_rec_in != diff_T_rec_in )
+					while( fabs(diff_T_rec_in) > tol_T_rec_in || diff_T_rec_in != diff_T_rec_in )
 					{
 						iter_T_rec_in++;
 						
@@ -3312,7 +3312,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -3331,7 +3331,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( defocus_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(defocus_exit_tolerance) > relaxed_tol )
+					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						defocus_exit_mode = NO_SOLUTION;
@@ -3497,7 +3497,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration on discharge mass flow rate
-				while( abs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
+				while( fabs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
 				{
 					iter_q_dot++;		// First iteration = 1
 
@@ -3610,7 +3610,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes
 				if( q_dot_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(exit_tolerance) > relaxed_tol )
+					if( fabs(exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						// update 'exit_mode'
@@ -3707,7 +3707,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes from outer and inner loops
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 						
 						q_pc_exit_mode = NO_SOLUTION;
@@ -3725,7 +3725,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				
 				if( T_tes_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_tes_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						T_tes_in_exit_mode = NO_SOLUTION;
@@ -3871,7 +3871,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration loop
-				while( abs(diff_T_tes_cold) > tol || diff_T_tes_cold != diff_T_tes_cold )
+				while( fabs(diff_T_tes_cold) > tol || diff_T_tes_cold != diff_T_tes_cold )
 				{
 					iter_T_tes_cold++;
 
@@ -3997,7 +3997,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(exit_tolerance) > relaxed_tol )
+					if( fabs(exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						exit_mode = NO_SOLUTION;
@@ -4079,7 +4079,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Inner nest exit modes...
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 					
 						// update T_rec_in_exit_mode
@@ -4098,7 +4098,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 					
 						// update T_rec_in_exit_mode
@@ -4190,7 +4190,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes from outer and inner loops
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						q_pc_exit_mode = NO_SOLUTION;
@@ -4208,7 +4208,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_tes_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_tes_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						T_tes_in_exit_mode = NO_SOLUTION;
@@ -4308,7 +4308,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Handle exit modes from outer and inner loops
 						if( q_pc_exit_mode == POOR_CONVERGENCE )
 						{
-							if( abs(q_pc_exit_tolerance) > relaxed_tol )
+							if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 							{	// Did not converge within Relaxed Tolerance
 
 								q_pc_exit_mode = NO_SOLUTION;
@@ -4326,7 +4326,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						if( T_tes_in_exit_mode == POOR_CONVERGENCE )
 						{
-							if( abs(T_tes_in_exit_tolerance) > relaxed_tol )
+							if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
 							{	// Did not converge within Relaxed Tolerance
 
 								T_tes_in_exit_mode = NO_SOLUTION;
@@ -4416,7 +4416,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes from outer and inner loops
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -4435,7 +4435,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
@@ -4553,7 +4553,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes from outer and inner loops
 				if( q_pc_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(q_pc_exit_tolerance) > relaxed_tol )
+					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						q_pc_exit_mode = NO_SOLUTION;
@@ -4581,7 +4581,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_cold_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_cold_exit_tolerance) > relaxed_tol )
+					if( fabs(T_cold_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						T_cold_exit_mode = NO_SOLUTION;
@@ -4669,7 +4669,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check if solver converged or a new operating mode is required
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -4748,7 +4748,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				C_csp_solver_sim_info temp_sim_info = mc_sim_info;
 
 				// Start iteration on timestep duration to achieve PC target
-				while( abs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
+				while( fabs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
 				{
 					iter_q_dot++;		// First iteration = 1
 
@@ -4872,7 +4872,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_cold
-					while( abs(diff_T_cold) > tol_T_cold || diff_T_cold != diff_T_cold )
+					while( fabs(diff_T_cold) > tol_T_cold || diff_T_cold != diff_T_cold )
 					{
 						iter_T_cold++;		// First iteration = 1
 
@@ -5135,7 +5135,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( T_cold_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_cold_exit_tolerance) > relaxed_tol )
+					if( fabs(T_cold_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						T_cold_exit_mode = NO_SOLUTION;
@@ -5221,7 +5221,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Iterate on defocus to fully charge storage
-				while( abs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
+				while( fabs(diff_q_dot) > tol || diff_q_dot != diff_q_dot )
 				{
 					iter_defocus++;		// First iteration = 1
 
@@ -5361,7 +5361,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -5380,7 +5380,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( defocus_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(defocus_exit_tolerance) > relaxed_tol )
+					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						defocus_exit_mode = NO_SOLUTION;
@@ -5447,7 +5447,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check if solver converged or a new operating mode is required
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -5675,7 +5675,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration on T_rec_in
-				while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+				while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 				{
 					iter_T_rec_in++;			// First iteration = 1
 
@@ -5916,7 +5916,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check if solver converged or a new operating mode is required
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -6012,7 +6012,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double m_dot_tes_ch_balance = std::numeric_limits<double>::quiet_NaN();
 
 				// Iterate on defocus to fully charge storage
-				while( abs(diff_m_dot) > tol || diff_m_dot != diff_m_dot )
+				while( fabs(diff_m_dot) > tol || diff_m_dot != diff_m_dot )
 				{
 					iter_defocus++;		// First iteration = 1
 
@@ -6133,7 +6133,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_rec_in
-					while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+					while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 					{
 						iter_T_rec_in++;		// First iteration = 1
 
@@ -6376,7 +6376,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -6395,7 +6395,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( defocus_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(defocus_exit_tolerance) > relaxed_tol )
+					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						defocus_exit_mode = NO_SOLUTION;
@@ -6503,7 +6503,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
 				// Iterate on defocus so maximum power cycle thermal power is not exceeded
-				while( abs(diff_m_dot) > tol || diff_m_dot != diff_m_dot )
+				while( fabs(diff_m_dot) > tol || diff_m_dot != diff_m_dot )
 				{
 					iter_defocus++;			// First iteration = 1
 
@@ -6623,7 +6623,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_rec_in
-					while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+					while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 					{
 						iter_T_rec_in++;		// First iteration = 1
 
@@ -6826,7 +6826,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Handle exit modes
 				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(T_rec_in_exit_tolerance) > relaxed_tol )
+					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						T_rec_in_exit_mode = NO_SOLUTION;
@@ -6845,7 +6845,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( defocus_exit_mode == POOR_CONVERGENCE )
 				{
-					if( abs(defocus_exit_tolerance) > relaxed_tol )
+					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
 						defocus_exit_mode = NO_SOLUTION;
@@ -7401,7 +7401,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 
 	double T_pc_in_calc = std::numeric_limits<double>::quiet_NaN();
 
-	while( abs(diff_T_pc_in) > tol || diff_T_pc_in != diff_T_pc_in )
+	while( fabs(diff_T_pc_in) > tol || diff_T_pc_in != diff_T_pc_in )
 	{
 		iter_T_pc_in++;			// First iteration = 1
 
@@ -7623,7 +7623,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration on T_rec_in
-	while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+	while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 	{
 		iter_T_rec_in++;		// First iteration = 1
 
@@ -7922,7 +7922,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration loop
-	while( abs(diff_T_cold) > tol || diff_T_cold != diff_T_cold )
+	while( fabs(diff_T_cold) > tol || diff_T_cold != diff_T_cold )
 	{
 		iter_T_cold++;		// First iteration = 1
 
@@ -8047,7 +8047,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Start loop to iteration on mass flow rate to PC that results in target q_dot to PC
-		while( abs(diff_q_pc) > tol_q_pc || diff_q_pc != diff_q_pc )
+		while( fabs(diff_q_pc) > tol_q_pc || diff_q_pc != diff_q_pc )
 		{
 			iter_q_pc++;		// First iteration = 1
 
@@ -8303,7 +8303,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration on cold PC return temperature to TES
-	while( abs(diff_T_tes_cold) > tol || diff_T_tes_cold != diff_T_tes_cold )
+	while( fabs(diff_T_tes_cold) > tol || diff_T_tes_cold != diff_T_tes_cold )
 	{
 		iter_T_tes_cold++;
 
@@ -8420,7 +8420,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		double T_htf_tes_hot, m_dot_tes_dc;
 		T_htf_tes_hot = m_dot_tes_dc = std::numeric_limits<double>::quiet_NaN();
 
-		while( abs(diff_q_dot) > tol_q_dot || diff_q_dot != diff_q_dot )
+		while( fabs(diff_q_dot) > tol_q_dot || diff_q_dot != diff_q_dot )
 		{
 			iter_q_dot++;		// First iteration = 1
 
@@ -8590,7 +8590,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration loop
-	while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+	while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 	{
 		iter_T_rec_in++;		// First iteration = 1
 
@@ -8782,7 +8782,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Start loop to iteration on mass flow rate to PC that results in target q_dot to PC
-		while( abs(diff_q_pc) > tol_q_pc || diff_q_pc != diff_q_pc )
+		while( fabs(diff_q_pc) > tol_q_pc || diff_q_pc != diff_q_pc )
 		{
 			iter_q_pc++;		// First iteration = 1
 
@@ -9038,7 +9038,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration on T_rec_in
-	while( abs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+	while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
 	{
 		iter_T_rec_in++;		// First iteration = 1
 
@@ -9230,7 +9230,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Start iteration loop
-		while( abs(diff_q_pc) > tol_q_pc || diff_q_pc != diff_q_pc )
+		while( fabs(diff_q_pc) > tol_q_pc || diff_q_pc != diff_q_pc )
 		{
 			iter_q_pc++;		// First iteration = 1
 
@@ -9475,7 +9475,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 	int iter_T_in = 0;
 
 	// Start iteration loop
-	while( abs(diff_T_in) > tol || diff_T_in != diff_T_in )
+	while( fabs(diff_T_in) > tol || diff_T_in != diff_T_in )
 	{
 		iter_T_in++;			// First iteration = 1
 

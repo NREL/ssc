@@ -1165,13 +1165,13 @@ bool csp_dispatch_opt::optimize()
                 }
                 else if(strcmp(root, "y^csu") == 0)     //Cycle start up
                 {
-                    bool su = (abs(1 - vars[ c-1 ]) < 0.001);
+                    bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
                     outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
                     outputs.q_pb_startup.at(t) = su ? dq_csu : 0.;
                 }
                 else if(strcmp(root, "y") == 0)     //Cycle operation
                 {
-                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( abs(1. - vars[ c-1 ]) < 0.001 );
+                    outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || ( fabs(1. - vars[ c-1 ]) < 0.001 );
                 }
                 else if(strcmp(root, "x") == 0)     //Cycle thermal energy consumption
                 {
@@ -1179,7 +1179,7 @@ bool csp_dispatch_opt::optimize()
                 }
                 else if(strcmp(root, "y^rsu") == 0)     //Receiver start up
                 {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (abs(1 - vars[ c-1 ]) < 0.001);
+                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
                 }
                 else if(strcmp(root, "x^rsu") == 0)
                 {
@@ -1187,7 +1187,7 @@ bool csp_dispatch_opt::optimize()
                 }
                 else if(strcmp(root, "y^r") == 0)
                 {
-                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (abs(1 - vars[ c-1 ]) < 0.001);
+                    outputs.rec_operation.at(t) = outputs.rec_operation.at(t) || (fabs(1 - vars[ c-1 ]) < 0.001);
                 }
                 else if(strcmp(root, "s") == 0)         //Thermal storage charge state
                 {
