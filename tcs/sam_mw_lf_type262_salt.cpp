@@ -1479,7 +1479,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		// ******************************************************************************************************************************
 		//                   Iterative section
 		// ******************************************************************************************************************************
-		while ((abs(err) > t_tol) && (qq < 30)){
+		while ((fabs(err) > t_tol) && (qq < 30)){
 		
 			qq++; //Iteration counter
 			q_loss_SCAtot.fill(0.); 
@@ -1584,7 +1584,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					}
 					//iterate to improve heat loss estimate
 					errhl = 999.;
-					while(abs(errhl) > .1){
+					while(fabs(errhl) > .1){
 						dT_loc = T_node_ave - T_db;
 						q_loss_SCAtot[i] = L_mod * CSP::poly_eval(dT_loc, HL_T_coefs, nval_HL_T_coefs) * CSP::poly_eval(V_wind, HL_w_coefs, nval_HL_w_coefs);	//W loss
 						q_abs_SCAtot[i] = q_SCA[i] * L_mod * ColOptEff.at(i) - q_loss_SCAtot[i];
@@ -1682,7 +1682,7 @@ freeze_prot_flag: //resume on freeze protection iteration
         
 				err = (T_fp - T_sys_h)/T_fp;
         
-				if(abs(err) <= t_tol) goto freeze_prot_ok; //goto 9
+				if(fabs(err) <= t_tol) goto freeze_prot_ok; //goto 9
 
 				if((fp_lowflag) && (fp_upflag)){
 					if(err > 0.0){      //Outlet too low, set lower limit of inlet temperature
@@ -2304,7 +2304,7 @@ set_outputs_and_return:
 		
 		if(P_a[hv] != reguess_args[1]) goto lab_reguess;                   //Reguess for different annulus pressure
 		
-		if(abs(reguess_args[2]-T_1_in) > 50.) goto lab_reguess;
+		if(fabs(reguess_args[2]-T_1_in) > 50.) goto lab_reguess;
 		
 		for(int i=0; i<5; i++){ if(T_save[i] < T_sky - 1.) goto lab_reguess; } 
 		
@@ -2419,7 +2419,7 @@ lab_keep_guess:
 		double T3_adjust = 0.0;
 		double T3_prev_qq = 0.0;
 
-		while( ( (abs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
+		while( ( (fabs(Diff_T3)>T3_tol) && (qq<100) ) || (qq<2)){    //Outer loop: Find T_3 such than energy balance is satisfied
 			qq=qq+1; //loop counter
 
 			T3_prev_qq = T_3;
@@ -2483,7 +2483,7 @@ lab_keep_guess:
 				// } 
 				// else {                                            //For additional iterations:
 				// 	T_lower = T_lower - max(abs_diffT3,0.0);       //If diff_T3 is + then new T3 < old T3 so adjust lower limit
-				// 	T_upper = T_upper + abs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
+				// 	T_upper = T_upper + fabs(min(abs_diffT3,0.0));  //If diff_T3 is (-) then new T3 > old T3 so adjust upper limit
 				// 	q5_tol_1= q5_tol;        //For remaining T3 iterations, use specified tolerance (note that 2 iterations for T3 are gauranteed)                   
 				// }
 				if( qq == 1 )
@@ -2519,7 +2519,7 @@ lab_keep_guess:
 				//***********************************************************************************
 				//************* Begin Bisection/False Position Iteration method *********************
 				//***********************************************************************************
-				while( (abs(diff_q5)>q5_tol_1) && (q5_iter<100) ){       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
+				while( (fabs(diff_q5)>q5_tol_1) && (q5_iter<100) ){       //Determine T_4 such that energy balance from T_3 to surroundings is satisfied
             
 					q5_iter = q5_iter + 1;                       //Increase iteration counter
 
@@ -2644,7 +2644,7 @@ lab_keep_guess:
 				diff_T1 = T1_tol + 1.0;                                 //Set diff > tolerance
 				T1_iter = 0;                                             //Set iteration counter    
         
-				while( (abs(diff_T1)>T1_tol) && (T1_iter<100)){       //Find correct cp& rho and solve for T_1_ave
+				while( (fabs(diff_T1)>T1_tol) && (T1_iter<100)){       //Find correct cp& rho and solve for T_1_ave
         
 					T1_iter ++;                   //Increase iteration counter
 					T_1_ave = (T_1_out + T_1_in) / 2.0;     //Average fluid temperature
@@ -2677,7 +2677,7 @@ lab_keep_guess:
 			double T2_up = max(T_1_ave, T_3);
 
 			//Ensure convective calculations are correct (converge on T_2)
-			while( (abs(diff_T2)>T2_tol) && (q_conv_iter<100)){
+			while( (fabs(diff_T2)>T2_tol) && (q_conv_iter<100)){
  
 				q_conv_iter ++;       //Increase iteration counter
 
@@ -3091,7 +3091,7 @@ lab_keep_guess:
 				nu_36 = mu_36 / rho_36;  //[m**2/s] kinematic viscosity, AIR
 				alpha_36 = k_36 / (cp_36 * rho_36);  //[m**2/s], thermal diffusivity, AIR
 				beta_36 =  1.0 / T_36;  //[1/K]
-				Ra_D3 = grav * beta_36 * abs(T_3 - T_6) * pow(D_abs_out[hv],3) / (alpha_36 * nu_36);
+				Ra_D3 = grav * beta_36 * fabs(T_3 - T_6) * pow(D_abs_out[hv],3) / (alpha_36 * nu_36);
 
 				// Warning Statement if following Nusselt Number correlation is used out of recommended range //
 				//If ((Ra_D3 <= 1.e-5) || (Ra_D3 >= 1.e12)) continue
@@ -3177,8 +3177,8 @@ lab_keep_guess:
 			Alpha_34 = k_34 /(Cp_34 * rho_34);  //[m**2/s]//
 			nu_34 = mu_34 / rho_34;  //[m**2/s]//
 			Beta_34 = 1. / max(T_34,1.0);  //[1/K]//
-			Ra_D3 = grav * Beta_34 * abs(T_3 - T_4) * pow(D_abs_out[hv],3) / (Alpha_34 * nu_34);
-			Ra_D4 = grav * Beta_34 * abs(T_3 - T_4) * pow(D_glass_in[hv],3) / (Alpha_34 * nu_34);
+			Ra_D3 = grav * Beta_34 * fabs(T_3 - T_4) * pow(D_abs_out[hv],3) / (Alpha_34 * nu_34);
+			Ra_D4 = grav * Beta_34 * fabs(T_3 - T_4) * pow(D_glass_in[hv],3) / (Alpha_34 * nu_34);
 			Pr_34 = nu_34 / Alpha_34;
 			Natq_34conv = 2.425 * k_34 * (T_3 - T_4) / pow(1 + pow(D_abs_out[hv]/ D_glass_in[hv], 0.6), 1.25) * pow(Pr_34 * Ra_D3 / (0.861 + Pr_34),0.25);  //[W/m]//	
 			P = P_a[hv];  //[mmHg] (note that 1 torr = 1 mmHg by definition)
@@ -3317,7 +3317,7 @@ lab_keep_guess:
 				nu_56 = mu_56 / rho_56;  //[m^2/s]
 				alpha_56 = k_56 / (Cp_56 * rho_56 );  //[m^2/s]
 				beta_56 =  1.0 / T_56;  //[1/K]
-				Ra_D5 = g *beta_56 * abs(T_5 - T_6) * pow(D_glass_out[hv],3) / (alpha_56 * nu_56);
+				Ra_D5 = g *beta_56 * fabs(T_5 - T_6) * pow(D_glass_out[hv],3) / (alpha_56 * nu_56);
 
 				// Warning Statement if following Nusselt Number correlation is used out of range //
 				//If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
@@ -3433,7 +3433,7 @@ lab_keep_guess:
 			nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 			Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 			Beta_brac6 =  1.0 / T_brac6;  //[1/K]
-			Ra_Dbrac = g * Beta_brac6 * abs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
+			Ra_Dbrac = g * Beta_brac6 * fabs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
 
 			// Warning Statement if following Nusselt Number correlation is used out of recommended range 
 			//If ((Ra_Dbrac <= 1.e-5)) || (Ra_Dbrac >= 1.e12) Then CALL WARNING('The result may not be accurate, 
@@ -3786,7 +3786,7 @@ lab_keep_guess:
 		while(NumTries < 21){
 			NumTries ++;
 			Test = X + 2 * log10(Rough / 3.7 + 2.51 * X / Reynold);
-			if (abs(Test - TestOld) <= Acc) {
+			if (fabs(Test - TestOld) <= Acc) {
 				return 1. / (X * X);
 			}
 

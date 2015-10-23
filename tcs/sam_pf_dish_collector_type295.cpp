@@ -429,7 +429,7 @@ public:
 
 		// Diagonal shade
 		double phi_diag = atan(L_NS/L_EW);
-		double phi_diag_pt = CSP::pi/2.0 - abs(phi_A) - phi_diag;
+		double phi_diag_pt = CSP::pi/2.0 - fabs(phi_A) - phi_diag;
 		double x_A_diag = sin(phi_diag_pt) * pow( pow(L_EW,2)+pow(L_NS,2), 0.5 );
 		double y_B_diag = pow( pow(L_EW,2)+pow(L_NS,2) - pow(x_A_diag,2), 0.5 );   
 

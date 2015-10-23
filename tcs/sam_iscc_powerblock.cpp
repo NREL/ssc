@@ -470,7 +470,7 @@ public:
 		// ***************************************
 		// Calculate m_dot_ms
 		// ***************************************
-		while( abs(diff_UA) > 0.0001 && iter_UA < 50 )
+		while( fabs(diff_UA) > 0.0001 && iter_UA < 50 )
 		{
 			iter_UA++;
 

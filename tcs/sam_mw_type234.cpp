@@ -779,7 +779,7 @@ public:
 
 		// Do a quick check to see if there is actually a mass flow being supplied to the cycle
 		// If not, go to the end
-		if( abs(m_dot_ND) < 1.E-3 )
+		if( fabs(m_dot_ND) < 1.E-3 )
 		{
 			P_cycle = 0.0;
 			eta = 0.0;
@@ -888,7 +888,7 @@ public:
 				water_PH( check_pressure.P_check( P_turb_in )*100.0, h_cold, &wp );
 				T_cold = wp.temp - 273.15;
 				water_TP(T_cold + 273.15, P_turb_in*100.0, &wp);
-				if( abs(wp.enth - h_cold)/h_cold < 0.01 )
+				if( fabs(wp.enth - h_cold)/h_cold < 0.01 )
 				{					
 					break;
 				}
@@ -922,7 +922,7 @@ public:
 			if( mode == 1 )
 			{
 				ADJ = ( demand_var - P_cycle ) / demand_var;		//MJW 10.31.2010 Adjustment factor
-				err = abs(ADJ);										//MJW 10.31.2010 Take absolute value of the error...
+				err = fabs(ADJ);										//MJW 10.31.2010 Take absolute value of the error...
 				m_dot_ND = m_dot_ND + ADJ*0.75;						//MJW 10.31.2010 Iterate the mass flow rate. Take a step smaller than the calculated adjustment
 			}
 			else
@@ -945,7 +945,7 @@ public:
 
 			P_cond = P_cond_guess;
 
-			err = abs(err);
+			err = fabs(err);
 
 
 			if( qq == 99 )

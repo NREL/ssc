@@ -723,7 +723,7 @@ public:
 			else
 				break;
 
-			T_difference = abs(T_res - T_cool_out);
+			T_difference = fabs(T_res - T_cool_out);
 		}
 
 		// =================================================================

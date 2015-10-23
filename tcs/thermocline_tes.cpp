@@ -297,7 +297,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	double T_disch_avail = std::numeric_limits<double>::quiet_NaN();
 	double T_charge_avail = std::numeric_limits<double>::quiet_NaN();
 
-	while( (abs(diff_q_target)>q_tol || TC_limit != 0) && q_iter < 40 )
+	while( (fabs(diff_q_target)>q_tol || TC_limit != 0) && q_iter < 40 )
 	{
 		q_iter++;		//[-] Increase iteration counter
 		full = true;	//[-] Reset target energy flag
@@ -525,7 +525,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 					}
 
 					m_T_end[i] = T_final;
-					max_T_diff = max( max_T_diff, abs( m_T_ave[i] - T_average ) );		//[C] Difference between old average node temp and new average node temp
+					max_T_diff = max( max_T_diff, fabs( m_T_ave[i] - T_average ) );		//[C] Difference between old average node temp and new average node temp
 					m_T_ave[i] = T_average;											//[C] Update guess on average node temp now that difference is calculated
 					m_T_ts_ave[tcn] += T_average;										//[C] Add average node temps
 					m_Q_losses[tcn] += UA_hl*(T_average - T_env);						//[kJ/hr-K]*[K] -> [kJ/hr] Heat loss
@@ -704,7 +704,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		}
 	}	// End of iteration on mass flow rate
 
-	if( q_iter == 40 && ( abs(diff_q_target) > q_tol || TC_limit != 0 ) )
+	if( q_iter == 40 && ( fabs(diff_q_target) > q_tol || TC_limit != 0 ) )
 		full = false;
 
 	if( full )		// If within tolerance on target energy rate, then set to target => this is beneficial to the solver (Type 251)
@@ -728,7 +728,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		q_charge = delt*m_dot*m_cp_a*(T_hot - T_charge_avail);		//[hr]*[kg/hr]*[kJ/kg-K]*[K]->[kJ] 
 		q_stored = m_cap*(m_T_final_ave - m_T_final_ave_prev);		//[kJ/K]*[K]->[kJ]
 		//[-] Relative difference. Scale by m_dot such that the losses don't create huge errors on timesteps with no mass flow rate
-		q_error = (q_charge - q_stored - Q_loss_total)/max(0.01,abs(q_stored));
+		q_error = (q_charge - q_stored - Q_loss_total)/max(0.01,fabs(q_stored));
 	}
 	else	// Discharging
 	{
@@ -737,7 +737,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		// Energy balance calculations
 		q_discharge = delt*m_dot*m_cp_a*(T_disch_avail - T_cold);		//[hr]*[kg/hr]*[kJ/kg-K]*[K]->[kJ]
 		q_stored = m_cap*(m_T_final_ave - m_T_final_ave_prev);			//[kJ/K]*[K]->[kJ]
-		q_error = (-q_stored - q_discharge - Q_loss_total)/max(0.01,abs(q_stored));
+		q_error = (-q_stored - q_discharge - Q_loss_total)/max(0.01,fabs(q_stored));
 	}
 
 	double Q_htr_total = 0.0;

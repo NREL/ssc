@@ -227,7 +227,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	double m_dot_air_total = std::numeric_limits<double>::quiet_NaN();
 	double A_surf_node = std::numeric_limits<double>::quiet_NaN();
 
-	while( abs(diff_T_hot_out) > tol )
+	while( fabs(diff_T_hot_out) > tol )
 	{
 		iter_W_par++;		// Increase iteration counter
 
@@ -319,7 +319,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 		bool is_updiff_L_tube = false;
 		double y_upper_L_tube = numeric_limits<double>::quiet_NaN();
 
-		while( abs(diff_deltaP) > tol_L_tube )
+		while( fabs(diff_deltaP) > tol_L_tube )
 		{
 			iter_L_tube++;
 			
@@ -388,7 +388,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 			// Variable solved in additional nests that are required at this level
 			h_conv_air = numeric_limits<double>::quiet_NaN();
 
-			while( abs(diff_W_dot_fan) > tol_m_dot )
+			while( fabs(diff_W_dot_fan) > tol_m_dot )
 			{
 				iter_m_dot++;
 
@@ -510,7 +510,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 					// Values solved in inner nest required later in code
 					double Q_dot_node = numeric_limits<double>::quiet_NaN();
 
-					while( abs(diff_T_in) > tol_T_in )
+					while( fabs(diff_T_in) > tol_T_in )
 					{
 						iter_T_in++;
 
@@ -828,7 +828,7 @@ void compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_
 				// Values solved in inner nest required later in code
 				double Q_dot_node = numeric_limits<double>::quiet_NaN();
 
-				while( abs(diff_T_in) > tol_T_in )
+				while( fabs(diff_T_in) > tol_T_in )
 				{
 					iter_T_in++;
 

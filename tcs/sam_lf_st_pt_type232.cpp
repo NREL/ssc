@@ -790,7 +790,7 @@ public:
 							sum		= (1.0 - e_band_array.at( l, k ))*F_view.at( i, l )*F_hat.at( l, j, k );
 						}
 						F_hat_guess.at( i, j, k )	= F_view.at( i, j ) + sum;
-						error_array.at( i, j )		= abs( F_hat.at( i, j, k) - F_hat_guess.at( i, j, k) );
+						error_array.at( i, j )		= fabs( F_hat.at( i, j, k) - F_hat_guess.at( i, j, k) );
 						F_hat.at( i, j, k )			= F_hat_guess.at( i, j, k );
 					}
 				}
@@ -1553,7 +1553,7 @@ public:
 
 			cycle_out_loop = false;		// Logic to break out of qq loop and reset gamma. Should default to false unless switch in qq loop
 
-			while( abs(err_coupled_conv) > 1.E-8 && iter_coupled_conv < 100 )
+			while( fabs(err_coupled_conv) > 1.E-8 && iter_coupled_conv < 100 )
 			{
 				// 222 continue
 				//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -2117,8 +2117,8 @@ public:
 							else
 							{
 								// Temperature error for each flow path
-								error_temp.at(j,0) = abs( (T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot );
-								error_flow.at(j,0) = abs( (m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) );
+								error_temp.at(j,0) = fabs( (T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot );
+								error_flow.at(j,0) = fabs( (m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) );
 							}
 							errorsum_temp = max( errorsum_temp, error_temp.at(j,0) );
 							errorsum_flow = max( errorsum_flow, error_flow.at(j,0) );
@@ -2129,8 +2129,8 @@ public:
 
 					case 3:
 					case 4:
-						errorsum_temp = abs( (T_htf_hot_guess.at(0,0) - T_htf_hot)/T_htf_hot );
-						errorsum_flow = abs( (m_htf.at(0,0) - m_htf_guess.at(0,0))/m_htf_guess.at(0,0) );
+						errorsum_temp = fabs( (T_htf_hot_guess.at(0,0) - T_htf_hot)/T_htf_hot );
+						errorsum_flow = fabs( (m_htf.at(0,0) - m_htf_guess.at(0,0))/m_htf_guess.at(0,0) );
 
 						break;	// flow_pattern = 3 & 4
 
@@ -2140,8 +2140,8 @@ public:
 					case 8:
 						for( int j = 0; j < 2; j++ )
 						{
-							errorsum_temp = max( errorsum_temp, abs((T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot) );
-							errorsum_flow = max( errorsum_flow, abs( abs(m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) ) );
+							errorsum_temp = max( errorsum_temp, fabs((T_htf_hot_guess.at(j,0) - T_htf_hot)/T_htf_hot) );
+							errorsum_flow = max( errorsum_flow, fabs( fabs(m_htf.at(j,0) - m_htf_guess.at(j,0))/m_htf_guess.at(j,0) ) );
 						}
 						break;	// flow_pattern = 6
 					}
@@ -2248,9 +2248,9 @@ public:
 
 				// Calculate the total radiation losses out of the aperature
 				// twn: only Q_radiation_loss is used in this loop, the rest of these calculations could be moved to after loop
-				Q_radiation_loss = abs(q_rad_semi_gray_net.at(m_n_panels*m_n_nodes+3,0));
-				Q_radiation_loss_solar = abs(q_rad_solar_net.at(m_n_panels*m_n_nodes+3,0));
-				Q_radiation_loss_therm = abs(q_rad_therm_net.at(m_n_panels*m_n_nodes+3,0));
+				Q_radiation_loss = fabs(q_rad_semi_gray_net.at(m_n_panels*m_n_nodes+3,0));
+				Q_radiation_loss_solar = fabs(q_rad_solar_net.at(m_n_panels*m_n_nodes+3,0));
+				Q_radiation_loss_therm = fabs(q_rad_therm_net.at(m_n_panels*m_n_nodes+3,0));
 				Q_radiation_loss_semi_sum = Q_radiation_loss_therm + Q_radiation_loss_solar;
 
 				// ST: area averaged surface temperature determined
@@ -2496,7 +2496,7 @@ public:
 		value( O_Q_rad_loss, Q_radiation_loss/1.0E6 );   
 		value( O_Q_thermal, Q_thermal/1.0E6 );    
 		value( O_T_htf_hot, T_htf_hot_out - 273.15 );    
-		value( O_Q_rec_abs, value( O_Q_thermal ) + abs( value( O_Q_rad_loss ) + value( O_Q_conv_loss ) ) );    
+		value( O_Q_rec_abs, value( O_Q_thermal ) + fabs( value( O_Q_rad_loss ) + value( O_Q_conv_loss ) ) );    
 		value( O_field_eff_adj, field_eff_adj );
 		value( O_Q_solar_total, q_solar_total/1.0E6 );				// 1.10.14, twn: Change to pre-defocus?
 		value( O_Q_startup, q_startup );   

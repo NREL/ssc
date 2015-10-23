@@ -856,8 +856,8 @@ public:
 		double result = 0;
 		if (count1 != 0 && boiler_percent != 100)
 		{
-			double spread1 = abs(rad_col[count1 - 1] - rad_col[count1]);
-			double spread2 = abs(rad_row[count2 - 1] - rad_row[count2]);
+			double spread1 = fabs(rad_col[count1 - 1] - rad_col[count1]);
+			double spread2 = fabs(rad_row[count2 - 1] - rad_row[count2]);
 			double frac1 = fmod(boiler_output, spread1) / spread1;
 			double frac2 = fmod(boiler_percent, spread2) / spread2;
 			double val1 = rad_table[count1 - 1][count2 - 1];
@@ -870,7 +870,7 @@ public:
 		}
 		else if (count1 == 0 && boiler_percent != 100)
 		{
-			double spread2 = abs(rad_row[count2 - 1] - rad_row[count2]);
+			double spread2 = fabs(rad_row[count2 - 1] - rad_row[count2]);
 			double frac2 = fmod(boiler_percent, spread2) / spread2;
 			double val3 = rad_table[count1][count2 - 1];
 			double val4 = rad_table[count1][count2];
@@ -878,7 +878,7 @@ public:
 		}
 		else if (count1 != 0 && boiler_percent == 100)
 		{
-			double spread1 = abs(rad_col[count1 - 1] - rad_col[count1]);
+			double spread1 = fabs(rad_col[count1 - 1] - rad_col[count1]);
 			double frac1 = fmod(boiler_output, spread1) / spread1;
 			double val2 = rad_table[count1 - 1][count2 - 1];
 			double val4 = rad_table[count1][count2 - 1];

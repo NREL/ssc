@@ -57,11 +57,11 @@ public:
 
 	void get_table_range(double & T_amb_low, double & T_amb_high, double & P_amb_low, double & P_amb_high )
 	{
-		T_amb_low = m_T_amb_start + 0.001*abs(m_delta_T);
-		T_amb_high = m_T_amb_end - 0.001*abs(m_delta_T);
+		T_amb_low = m_T_amb_start + 0.001*fabs(m_delta_T);
+		T_amb_high = m_T_amb_end - 0.001*fabs(m_delta_T);
 
-		P_amb_low = m_P_amb_end + 0.001*abs(m_delta_P);
-		P_amb_high = m_P_amb_start - 0.001*abs(m_delta_P);
+		P_amb_low = m_P_amb_end + 0.001*fabs(m_delta_P);
+		P_amb_high = m_P_amb_start - 0.001*fabs(m_delta_P);
 	}
 
 	/*
