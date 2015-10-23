@@ -132,7 +132,7 @@ public:
 			}
 
 			// Get solved maximum cycle efficiency and subtract delta_eta to get "reasonable" efficiency
-			eta_thermal_des = rc_cycle.get_design_solved()->m_eta_thermal - abs(eta_thermal_des);		//[-]
+			eta_thermal_des = rc_cycle.get_design_solved()->m_eta_thermal - fabs(eta_thermal_des);		//[-]
 		}		
 
 		C_RecompCycle::S_auto_opt_design_hit_eta_parameters rc_params;

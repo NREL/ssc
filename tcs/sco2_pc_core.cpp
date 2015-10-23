@@ -2024,7 +2024,7 @@ void C_RecompCycle::design_core_HTR_hs(int & error_code)
 
 		double diff_q_hs_frac = Q_hs_frac - Q_hs_frac_target;
 
-		if( abs(diff_q_hs_frac) > ms_des_par.m_tol )
+		if( fabs(diff_q_hs_frac) > ms_des_par.m_tol )
 		{
 			if(diff_q_hs_frac > 0.0)
 			{
@@ -3166,7 +3166,7 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 
 	int opt_des_calls = 1;		// We've already called the auto optimization method once...
 
-	while( abs(diff_eta) > ms_auto_opt_des_par.m_tol )
+	while( fabs(diff_eta) > ms_auto_opt_des_par.m_tol )
 	{
 		opt_des_calls++;
 

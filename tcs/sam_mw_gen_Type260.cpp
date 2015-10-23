@@ -980,7 +980,7 @@ public:
 		omega = (soltime - 12.0)*15.0*pi/180.0;
 		// B. Stine equation for Solar Altitude angle in radians
 		solalt = asin(sin(dec)*sin(latitude)+cos(latitude)*cos(dec)*cos(omega));
-		solaz = (omega < 0. ? -1. : 1.)*abs(acos(min(1.0,(cos(pi/2.-solalt)*sin(latitude)-sin(dec))/(sin(pi/2.-solalt)*cos(latitude)))));
+		solaz = (omega < 0. ? -1. : 1.)*fabs(acos(min(1.0,(cos(pi/2.-solalt)*sin(latitude)-sin(dec))/(sin(pi/2.-solalt)*cos(latitude)))));
 
 		//Get the current optical efficiency
 		double opt_val;

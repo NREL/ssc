@@ -299,7 +299,7 @@ public:
 			double tol = 0.001;
 			double Ta3_0, Id0;
 			int qi = 0;			//iteration
-			while (abs(err) > tol){
+			while (fabs(err) > tol){
 				Ta5 = Ta3 * 0.75;
 
 				/*

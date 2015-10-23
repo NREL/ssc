@@ -3482,7 +3482,7 @@ double SolarField::clouds::ShadowLoss(Point &hloc){
 			break;
 		}
 		case SolarField::clouds::SHAPE::RECTANGULAR:
-			if( fabs(hloc_rot.x) < _cloud_width/2. && abs(hloc_rot.y) < _cloud_depth/2.)
+			if( fabs(hloc_rot.x) < _cloud_width/2. && fabs(hloc_rot.y) < _cloud_depth/2.)
 				shadowed = true;
 
 			break;

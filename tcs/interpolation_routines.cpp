@@ -429,14 +429,14 @@ LUdcmp::LUdcmp(MatDoub &a)
     for (i=0;i<n;i++) {
         big=0.0;
         for (j=0;j<n;j++)
-            if ((temp=abs(lu.at(i).at(j))) > big) big=temp;
+            if ((temp=fabs(lu.at(i).at(j))) > big) big=temp;
         if (big == 0.0) throw("Singular matrix in LUdcmp");
         vv[i]=1.0/big;
     }
     for (k=0;k<n;k++) {
         big=0.0;
         for (i=k;i<n;i++) {
-            temp=vv[i]*abs(lu.at(i).at(k));
+            temp=vv[i]*fabs(lu.at(i).at(k));
             if (temp > big) {
                 big=temp;
                 imax=i;

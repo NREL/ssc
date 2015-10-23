@@ -1379,7 +1379,7 @@ public:
 				bool break_to_rh_iter = false;
 				bool break_rec_calcs = false;
 				// 93
-				while( (abs(diff_T_rh) > m_tol_T_rh || (high_tol) ) && (iter_T_rh < 20) )
+				while( (fabs(diff_T_rh) > m_tol_T_rh || (high_tol) ) && (iter_T_rh < 20) )
 				{
 					iter_T_rh++;							//[-] Increase iteration counter
 					break_to_rh_iter = false;				//[-] Flag to restart this loop
@@ -1516,7 +1516,7 @@ public:
 						}
 					}	// End convergence logic
 				
-					if( abs(diff_frh_b)<0.0051 || iter_T_rh== 20 )
+					if( fabs(diff_frh_b)<0.0051 || iter_T_rh== 20 )
 					{
 						if( f_rh_upper < 0.01 && rh_br_lower == 0 )		rh_br_lower = 5;
 
@@ -1563,7 +1563,7 @@ public:
 						}
 
 						// Need to continue iterating, may have to slightly adjust limits due to relaxed sh exit tolerance at early f_rh iterations
-						else if( rh_br_lower==4 && rh_br_upper==3 && abs(diff_frh_b) < 0.0005 )
+						else if( rh_br_lower==4 && rh_br_upper==3 && fabs(diff_frh_b) < 0.0005 )
 						{
 							if(diff_T_rh < 0.0)
 							{
@@ -1634,7 +1634,7 @@ public:
 					// *********************************************************************************************
 
 					// 184 -> Fortran GOTO loop
-					while( abs(diff_T_sh)>tol_T_sh && iter_T_sh<20 )
+					while( fabs(diff_T_sh)>tol_T_sh && iter_T_sh<20 )
 					{
 						iter_T_sh++;							//[-] Add to iteration counter
 						diff_f_bracket = f_upper - f_lower;		//[-] Difference between upper and lower bracket guesses
@@ -1735,7 +1735,7 @@ public:
 						boiler_exit = sh_exit = 0;
 
 						// End of boiler convergence
-						if( abs(diff_f_bracket)<m_bracket_tol && iter_T_sh<20 )
+						if( fabs(diff_f_bracket)<m_bracket_tol && iter_T_sh<20 )
 						{
 							if( f_lower>0.99 && br_upper==0 )	br_upper = 4;
 
@@ -1899,7 +1899,7 @@ public:
 
 					}	// End iteration on boiler mass flow rate and superheater outlet temperature
 
-					if( iter_T_sh==20 && abs(diff_T_sh)>tol_T_sh )
+					if( iter_T_sh==20 && fabs(diff_T_sh)>tol_T_sh )
 					{
 						m_success = false;
 						// message: "The receiver model did not converge at this timestep (SH)"
@@ -1949,7 +1949,7 @@ public:
 					diff_T_rh = (m_T_rh_out_des - T_rh_out)/m_T_rh_out_des;	//[K]
 
 					// Logic that allows code to solve on first iteration if SH and RH are both winthin final tolerance
-					if( high_tol && abs(diff_T_sh)<m_tol_T_sh_base && abs(diff_T_rh)>m_tol_T_rh )
+					if( high_tol && fabs(diff_T_sh)<m_tol_T_sh_base && fabs(diff_T_rh)>m_tol_T_rh )
 						high_tol = false;
 
 				}	// end iteration on flux and outlet temperature of reheater
@@ -1957,7 +1957,7 @@ public:
 				if( break_def_calcs )
 					break;
 
-				if( iter_T_rh==20 && abs(diff_T_rh)>m_tol_T_rh )
+				if( iter_T_rh==20 && fabs(diff_T_rh)>m_tol_T_rh )
 				{
 					m_success = false;
 					// Message: "The receiver model did not converge at this timestep (RH)"
@@ -2182,7 +2182,7 @@ public:
 		{
 			if( m_diff_m_dot_old_ncall > m_diff_m_dot_out_ncall )
 			{
-				if( abs(m_diff_m_dot_old_ncall + m_diff_m_dot_out_ncall) < 0.01 )
+				if( fabs(m_diff_m_dot_old_ncall + m_diff_m_dot_out_ncall) < 0.01 )
 				{
 					m_dot_toPB = 0.5*m_m_dot_prev_ncall + 0.5*m_dot_toPB;
 					m_diff_m_dot_out_ncall = m_dot_toPB - m_m_dot_prev_ncall;
@@ -2190,7 +2190,7 @@ public:
 			}
 			else if( m_diff_m_dot_out_ncall > m_diff_m_dot_old_ncall )
 			{
-				if( abs(m_diff_m_dot_out_ncall + m_diff_m_dot_old_ncall) < 0.01 )
+				if( fabs(m_diff_m_dot_out_ncall + m_diff_m_dot_old_ncall) < 0.01 )
 				{
 					m_dot_toPB = 0.5*m_m_dot_prev_ncall + 0.5*m_dot_toPB;
 					m_diff_m_dot_out_ncall = m_dot_toPB - m_m_dot_prev_ncall;
@@ -2198,7 +2198,7 @@ public:
 			}
 		}
 
-		if( ncall > 0 && abs(m_diff_m_dot_out_ncall/m_dot_toPB) < 0.005 && abs(diff_dp_b) < 0.005 && abs(diff_dp_sh) < 0.005 && abs(diff_dp_rh) < 0.005 )
+		if( ncall > 0 && fabs(m_diff_m_dot_out_ncall/m_dot_toPB) < 0.005 && fabs(diff_dp_b) < 0.005 && fabs(diff_dp_sh) < 0.005 && fabs(diff_dp_rh) < 0.005 )
 		{
 			m_dot_toPB = m_m_dot_prev_ncall;
 			f_timestep = f_timestep_prev_ncall;

@@ -1601,7 +1601,7 @@ public:
 				err = sqrt(
 						pow( ((ms_charge + m_dot_pb - ms_disch) - m_dot_field)/max(m_dot_field, 1.e-6), 2) + 
 						pow( ((T_field_in - T_field_in_guess)/T_field_in), 2));
-				derr = abs((err - err_prev_iter)/err_prev_iter);
+				derr = fabs((err - err_prev_iter)/err_prev_iter);
 				err_prev_iter = err;
 
 				iterate_mass_temp = true;
@@ -1783,11 +1783,11 @@ public:
 		double htf_pump_power;
 		if(is_hx)
 		{
-			htf_pump_power = (tes_pump_coef*abs(m_tank_disch - m_tank_charge) + pb_pump_coef*(abs(ms_disch-ms_charge) + m_dot_pb))/1000.0;	//[MW]
+			htf_pump_power = (tes_pump_coef*fabs(m_tank_disch - m_tank_charge) + pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb))/1000.0;	//[MW]
 		}
 		else
 		{
-			htf_pump_power = pb_pump_coef*(abs(ms_disch-ms_charge) + m_dot_pb)/1000.0;	//[MW]
+			htf_pump_power = pb_pump_coef*(fabs(ms_disch-ms_charge) + m_dot_pb)/1000.0;	//[MW]
 		}
 
 		// Variable parasitic power

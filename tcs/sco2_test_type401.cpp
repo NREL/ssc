@@ -719,7 +719,7 @@ public:
 
 						P_node_out_diff = (Pres[i] - P_node_out_guess)/P_node_out_guess;
 					
-					} while( abs(P_node_out_diff)>P_node_out_tolerance );
+					} while( fabs(P_node_out_diff)>P_node_out_tolerance );
 					// End iteration on local node pressure
 
 					// Pressure drops in one of the nodes was too large, so set outlet pressure to minimum and break out of loop iteration
@@ -735,7 +735,7 @@ public:
 				P_tube_out_diff = (Pres[n_temps-1] - P_tube_out_guess)/P_tube_out_guess;
 				P_tube_out_prev = Pres[n_temps-1];
 
-			} while(abs(P_tube_out_diff)>P_tube_out_tolerance);
+			} while(fabs(P_tube_out_diff)>P_tube_out_tolerance);
 			// End iteration on tube outlet pressure and dependent mass flow rate calculation
 
 			// If pressure drop is too large, then increasing thickness will further increase pressure drop

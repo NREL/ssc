@@ -345,7 +345,7 @@ double N_sco2_rec::C_rec_des_props::haynes230_cycles_to_failure(int enum_T_C, do
 			N_allowable = pow(10, 0.5*log10(N_low) + 0.5*log10(N_high));
 			eps_guess = 2 * (OF_E*pow(N_allowable, -b) + e_f*pow(N_allowable, -c));
 			double eps_err = (eps_guess - eps_equiv) / eps_equiv;
-			if( abs(eps_err) < 1.E-8 )
+			if( fabs(eps_err) < 1.E-8 )
 				return N_allowable;
 			else
 			{
@@ -778,7 +778,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 
 					P_node_out_diff = (m_Pres[i] - P_node_out_guess) / P_node_out_guess;
 
-				} while( abs(P_node_out_diff)>P_node_out_tolerance );
+				} while( fabs(P_node_out_diff)>P_node_out_tolerance );
 				// End iteration on local node pressure
 
 				// Pressure drops in one of the nodes was too large, so set outlet pressure to minimum and break out of loop iteration
@@ -794,7 +794,7 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 			P_tube_out_diff = (m_Pres[m_n_temps - 1] - P_tube_out_guess) / P_tube_out_guess;
 			P_tube_out_prev = m_Pres[m_n_temps - 1];
 
-		} while( abs(P_tube_out_diff)>P_tube_out_tolerance );
+		} while( fabs(P_tube_out_diff)>P_tube_out_tolerance );
 		// End iteration on tube outlet pressure and dependent mass flow rate calculation
 
 		// Set pressure and thickness result vectors here
@@ -1094,7 +1094,7 @@ void N_sco2_rec::C_tube_slice::radial_ss_E_bal()
         if( T_surf_out_err != T_surf_out_err ) 
             throw sco2_exception("Convergence failed in the sCO2 receiver tube model: radial_ss_E_bal().");
 
-		if( abs(T_surf_out_err) < 1.E-10 )
+		if( fabs(T_surf_out_err) < 1.E-10 )
 			break;
 		else
 		{

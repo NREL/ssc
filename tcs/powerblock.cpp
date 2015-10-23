@@ -864,7 +864,7 @@ void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, d
 
 		P_cond = P_cond_guess;
 
-		err = abs(err);
+		err = fabs(err);
 
 		if(qq == 99)
 		{

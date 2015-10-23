@@ -761,7 +761,7 @@ double Cavity_Calcs::calG( double x, double y, double eta, double xi_1, double x
         else		vexp = v1;
 
         // Determine the relative error in the predicted value
-        err = abs( (vexp-v1)/v1 )/tol;
+        err = fabs( (vexp-v1)/v1 )/tol;
         
         // If the error exceeds a certain value, we need to recalculate
 		if( err > 1.0  && step > min_step )
@@ -823,10 +823,10 @@ bool Cavity_Calcs::Ray_Intersects_Seg( point p, point a0, point b0 )
 		return true;
 	else
 	{
-		if( abs(a.x - b.x) > DBL_MIN )	m_red = (b.y - a.y)/(b.x - a.x);
+		if( fabs(a.x - b.x) > DBL_MIN )	m_red = (b.y - a.y)/(b.x - a.x);
 		else							m_red = DBL_MAX;
 
-		if( abs(a.x - p.x) > DBL_MIN )	m_blue = (p.y - a.y)/(p.x - a.x);
+		if( fabs(a.x - p.x) > DBL_MIN )	m_blue = (p.y - a.y)/(p.x - a.x);
 		else							m_blue = DBL_MAX;
 
 		if( m_blue >= m_red )	return true;
@@ -937,7 +937,7 @@ void Cavity_Calcs::ConvectionClausing1983( int n_panels, util::matrix_t<double> 
 	while( error > 1.E-12 && iter < 50 )
 	{
 		iter++;
-	    error=abs((q_convection_Clausing1983X-q_convection_Clausing1983)/q_convection_Clausing1983);
+	    error=fabs((q_convection_Clausing1983X-q_convection_Clausing1983)/q_convection_Clausing1983);
 	    q_convection_Clausing1983=q_convection_Clausing1983X;
 	 
 	    T_bulk=(T_c+T_amb)/2.0;
@@ -984,9 +984,9 @@ void Cavity_Calcs::ConvectionClausing1983( int n_panels, util::matrix_t<double> 
 	    Gr_avg=((grav*beta_avg*(T_avg-T_bulk)*pow((m_h_rec-m_h_lip),3))/(pow((mu_avg/rho_avg),2)));
 	
 	    // Rayleigh number
-	    Ra_F = abs(Gr_F*Pr_F);
-	    Ra_stag = abs(Gr_stag*Pr_stag);
-	    Ra_avg = abs(Gr_avg*Pr_avg);
+	    Ra_F = fabs(Gr_F*Pr_F);
+	    Ra_stag = fabs(Gr_stag*Pr_stag);
+	    Ra_avg = fabs(Gr_avg*Pr_avg);
 	
 	    // Nusselt number
 	    Nusselt_F=(0.082*pow(Ra_F,(1./3.))*(-0.9+2.4*(T_F_calc/T_amb)-0.5*pow((T_F_calc/T_amb),2)));
@@ -1140,7 +1140,7 @@ void Cavity_Calcs::ConvectionClausing1987( int n_panels, util::matrix_t<double> 
 	{
 		bX = 1 - 1.57*pow(((g*f*b*k_film/k_amb)/(pow((Ra_amb*Pr_amb*L_a/L_c),0.5)*m_A_o/A_cz)),(2.0/3.0));
 		//bX = 1-1.57*((g*f*b*k_film/k_amb)/((Ra_amb*Pr_amb*L_a/L_c)**0.5*A_O/A_cz))**(2.0/3.0)
-		error = abs(b-bX)/b;
+		error = fabs(b-bX)/b;
 		b = bX;
 	}
 
