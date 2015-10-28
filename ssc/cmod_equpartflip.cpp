@@ -2172,7 +2172,13 @@ public:
 			cf.at(CF_tax_investor_aftertax_tax,0);
 
 		cf.at(CF_tax_investor_aftertax_irr,0) = irr(CF_tax_investor_aftertax,0)*100.0;
-		cf.at(CF_tax_investor_aftertax_max_irr,0) = cf.at(CF_tax_investor_aftertax_irr,0);
+		// issue with NaN - if NaN then max =0 by convention - addresses ITC issue email 10/27/15
+		if (cf.at(CF_tax_investor_aftertax_irr, 0) != cf.at(CF_tax_investor_aftertax_irr, 0))
+			// then NaN
+			cf.at(CF_tax_investor_aftertax_max_irr, 0) = 0;
+		else
+			cf.at(CF_tax_investor_aftertax_max_irr, 0) = cf.at(CF_tax_investor_aftertax_irr, 0);
+
 		cf.at(CF_tax_investor_aftertax_npv,0) = cf.at(CF_tax_investor_aftertax,0) ;
 
 		cf.at(CF_tax_investor_pretax,0) = cf.at(CF_tax_investor_aftertax_cash,0);
