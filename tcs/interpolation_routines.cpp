@@ -81,6 +81,40 @@ double Linear_Interp::Get_Value( int col, int index)
 
 }
 
+double Linear_Interp::get_min_x_value_x_col_0()
+{
+	int index = 0;	// Min x value is always in first row, with monotonically increasing x values
+
+	return Get_Value(0, index);
+}
+
+double Linear_Interp::get_max_x_value_x_col_0()
+{
+	int index = m_rows - 1;		// Max x value is always last row, with monotonically increasing x values
+
+	return Get_Value(0, index);
+}
+
+bool Linear_Interp::check_x_value_x_col_0(double x_val)
+{
+	double min_val = get_min_x_value_x_col_0();
+	double max_val = get_max_x_value_x_col_0();
+
+	if(x_val < min_val)
+	{
+		m_error_msg = util::format("The minimum value is &lg", min_val);
+		return false;
+	}
+
+	if(x_val > max_val)
+	{
+		m_error_msg = util::format("The maximum value is &lg", max_val);
+		return false;
+	}
+
+	return true;
+}
+
 int Linear_Interp::locate( int col, double x )
 {
 	/* Given a value x, return a value j such that x is (insofar as possible) centered in the   

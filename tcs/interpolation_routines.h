@@ -22,8 +22,21 @@ public:
 	// If the x-column is always index 0, we can simplify linear_1D_interp
 	double interpolate_x_col_0(int y_col, double x_val);
 
+	double get_min_x_value_x_col_0();
+	double get_max_x_value_x_col_0();
+	double get_x_value_x_col_0(int index){return Get_Value(0, index);};
+
+	bool check_x_value_x_col_0(double x_val);
+
+	std::string get_error_msg(){ return m_error_msg; };
+
+	int get_number_of_rows(){ return m_rows; };
+
 private:
 	static const int m_m = 2;		// Integer for interpolation routine
+
+	// member string for messages
+	std::string m_error_msg;
 
 	util::matrix_t<double> m_userTable; // 1D User table
 
