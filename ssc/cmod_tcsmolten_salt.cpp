@@ -714,7 +714,7 @@ public:
 		pc->m_startup_frac = as_double("startup_frac");
 		pc->m_htf_pump_coef = as_double("pb_pump_coef");
 		pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
-		pc->m_pc_fl_props = as_matrix("field_fl_props");
+		pc->m_pc_fl_props = as_matrix("field_fl_props");		
 
 		if( pb_tech_type == 0 )
 		{
@@ -749,10 +749,213 @@ public:
 			pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des")/100.0*as_double("P_ref");	//[MWe]
 			pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
 
+			// Also need lower and upper levels for the 3 independent variables...
+			pc->m_T_htf_low = 535.0;			//[C]
+			pc->m_T_htf_high = 590.0;			//[C]
+			pc->m_T_amb_low = -10.0;			//[C]
+			pc->m_T_amb_high = 55.0;			//[C]
+			pc->m_m_dot_htf_low = 0.3;			//[-]
+			pc->m_m_dot_htf_high = 1.1;			//[-]
+
+			double T_htf_return = as_double("T_htf_cold_des");		//[C]
+			double eta_ref = as_double("design_eff");				//[-]
+			double W_dot_ref = eta_ref;								//[MW]
+			double Q_dot_ref = W_dot_ref / eta_ref;					//[MW]
+			double T_htf_ref = as_double("T_htf_hot_des");			//[C]
+			double T_amb_ref = as_double("ud_T_amb_des");			//[C]
+			double m_dot_ref = 1.0;									//[-]
+
+			double cp = Q_dot_ref / (m_dot_ref*(T_htf_ref - T_htf_return));
+			double eta_endorev_ref = 1.0 - sqrt((T_amb_ref + 273.15) / (T_htf_ref + 273.15));
+
+			int N_runs = 20;
+			util::matrix_t<double> mt_T_htf(N_runs, 13, 1.0);
+			util::matrix_t<double> mt_T_amb(N_runs, 13, 1.0);
+			util::matrix_t<double> mt_m_dot_htf(N_runs, 13, 1.0);
+
+
+			// T_htf_parametric
+			for(int i = 0; i < N_runs; i++)
+			{
+				for(int j = 0; j < 3; j++)
+				{
+					
+					if( j == 0 )
+					{
+						if( i == 0 )
+						{
+							mt_T_htf(i,0) = pc->m_T_htf_low;
+						}
+						else if( i == N_runs - 1)
+						{
+							mt_T_htf(i,0) = pc->m_T_htf_high;
+						}
+						else
+						{
+							mt_T_htf(i, 0) = pc->m_T_htf_low + (pc->m_T_htf_high - pc->m_T_htf_low) / (double)(N_runs - 1)*i;
+						}
+					}
+
+					// Parametric variable
+					double T_htf_od = mt_T_htf(i,0);
+
+					// Level variable
+					double m_dot_od = -1.0;
+					if(j == 0)
+					{
+						m_dot_od = pc->m_m_dot_htf_low;
+					}
+					else if(j == 1)
+					{
+						m_dot_od = m_dot_ref;
+					}
+					else if(j == 2)
+					{
+						m_dot_od = pc->m_m_dot_htf_high;
+					}
+
+					// Constant variable
+					double T_amb_od = T_amb_ref;
+
+					double Q_dot_od = m_dot_od*cp*(T_htf_od - T_htf_return);
+
+					double eta_endorev_od = 1.0 - sqrt((T_amb_od+273.15)/(T_htf_od+273.15));
+
+					double eta_od = pow((m_dot_ref-fabs(m_dot_ref-m_dot_od))/m_dot_ref, 0.3)*(eta_endorev_od/eta_endorev_ref)*eta_ref;
+
+					double W_dot_od = eta_od * Q_dot_od;
+
+					mt_T_htf(i, 1+j) = W_dot_od/W_dot_ref;
+					mt_T_htf(i, 7+j) = W_dot_od/W_dot_ref;
+					mt_T_htf(i, 4+j) = Q_dot_od/Q_dot_ref;
+					mt_T_htf(i, 10+j) = W_dot_od/W_dot_ref;
+				}
+			}
+
+			// T_amb_parametric
+			for( int i = 0; i < N_runs; i++ )
+			{
+				for( int j = 0; j < 3; j++ )
+				{
+
+					if( j == 0 )
+					{
+						if( i == 0 )
+						{
+							mt_T_amb(i,0) = pc->m_T_amb_low;
+						}
+						else if( i == N_runs - 1 )
+						{
+							mt_T_amb(i,0) = pc->m_T_amb_high;
+						}
+						else
+						{
+							mt_T_amb(i, 0) = pc->m_T_amb_low + (pc->m_T_amb_high - pc->m_T_amb_low) / (double)(N_runs - 1)*i;
+						}
+					}
+
+					// Parametric variable
+					double T_amb_od = mt_T_amb(i, 0);
+
+					// Level variable
+					double T_htf_od = -1.0;
+					if( j == 0 )
+					{
+						T_htf_od = pc->m_T_htf_low;
+					}
+					else if( j == 1 )
+					{
+						T_htf_od = T_htf_ref;
+					}
+					else if( j == 2 )
+					{
+						T_htf_od = pc->m_T_htf_high;
+					}
+
+					// Constant variable
+					double m_dot_od = m_dot_ref;
+
+					double Q_dot_od = m_dot_od*cp*(T_htf_od - T_htf_return);
+
+					double eta_endorev_od = 1.0 - sqrt((T_amb_od + 273.15) / (T_htf_od + 273.15));
+
+					double eta_od = pow((m_dot_ref - fabs(m_dot_ref - m_dot_od)) / m_dot_ref, 0.3)*(eta_endorev_od / eta_endorev_ref)*eta_ref;
+
+					double W_dot_od = eta_od * Q_dot_od;
+
+					mt_T_amb(i, 1 + j) = W_dot_od / W_dot_ref;
+					mt_T_amb(i, 7 + j) = W_dot_od / W_dot_ref;
+					mt_T_amb(i, 4 + j) = Q_dot_od / Q_dot_ref;
+					mt_T_amb(i, 10 + j) = W_dot_od / W_dot_ref;
+				}
+			}
+
+			// m_dot_parametric
+			for( int i = 0; i < N_runs; i++ )
+			{
+				for( int j = 0; j < 3; j++ )
+				{
+
+					if( j == 0 )
+					{
+						if( i == 0 )
+						{
+							mt_m_dot_htf(i,0) = pc->m_m_dot_htf_low;
+						}
+						else if( i == N_runs - 1 )
+						{
+							mt_m_dot_htf(i,0) = pc->m_m_dot_htf_high;
+						}
+						else
+						{
+							mt_m_dot_htf(i, 0) = pc->m_m_dot_htf_low + (pc->m_m_dot_htf_high - pc->m_m_dot_htf_low) / (double)(N_runs - 1)*i;
+						}
+					}
+
+					// Parametric variable
+					double m_dot_od = mt_m_dot_htf(i, 0);
+
+					// Level variable
+					double T_amb_od = -1.0;
+					if( j == 0 )
+					{
+						T_amb_od = pc->m_T_amb_low;
+					}
+					else if( j == 1 )
+					{
+						T_amb_od = T_amb_ref;
+					}
+					else if( j == 2 )
+					{
+						T_amb_od = pc->m_T_amb_high;
+					}
+
+					// Constant variable
+					double T_htf_od = T_htf_ref;
+
+					double Q_dot_od = m_dot_od*cp*(T_htf_od - T_htf_return);
+
+					double eta_endorev_od = 1.0 - sqrt((T_amb_od + 273.15) / (T_htf_od + 273.15));
+
+					double eta_od = pow((m_dot_ref - fabs(m_dot_ref - m_dot_od)) / m_dot_ref, 0.3)*(eta_endorev_od / eta_endorev_ref)*eta_ref;
+
+					double W_dot_od = eta_od * Q_dot_od;
+
+					mt_m_dot_htf(i, 1 + j) = W_dot_od / W_dot_ref;
+					mt_m_dot_htf(i, 7 + j) = W_dot_od / W_dot_ref;
+					mt_m_dot_htf(i, 4 + j) = Q_dot_od / Q_dot_ref;
+					mt_m_dot_htf(i, 10 + j) = W_dot_od / W_dot_ref;
+				}
+			}
+
+			pc->mc_T_htf_ind = mt_T_htf;
+			pc->mc_T_amb_ind = mt_T_amb;
+			pc->mc_m_dot_htf_ind = mt_m_dot_htf;
+
 			// User-Defined Cycle Off-Design Tables 
-			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
-			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
-			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+			//pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
+			//pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
+			//pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
 		}
 
 
