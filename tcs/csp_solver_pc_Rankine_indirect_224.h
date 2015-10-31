@@ -7,7 +7,7 @@
 #include "lib_util.h"
 #include "htf_props.h"
 
-#include "user_defined_power_cycle.h"
+#include "ud_power_cycle.h"
 
 class C_pc_Rankine_indirect_224 : public C_csp_power_cycle
 {
@@ -40,7 +40,7 @@ private:
 	std::string m_error_msg;
 
 	// member class for User Defined Power Cycle
-	C_user_defined_pc mc_user_defined_pc;
+	C_ud_power_cycle mc_user_defined_pc;
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
@@ -104,11 +104,17 @@ public:
 		
 		// Parameters for user-defined power cycle
 			// Lookup table with dependent variables corresponding to parametric on independent variable T_htf_hot [C] (first column)
-		util::matrix_t<double> mc_T_htf_ind;	// Interaction w/ m_dot_htf
+		util::matrix_t<double> mc_T_htf_ind;	// At m_dot_htf levels (-, 0, +)
+		double m_T_htf_low;			//[C] Low level of T_htf corresponding to ambient temperature parametric (also must be included within range of independent T_HTF values)
+		double m_T_htf_high;		//[C] High level of T_htf corresponding to ambient temperature parametric (also must be included within range of independent T_HTF values)
 			// Lookup table with dependent variables corresponding to parametric on independent variable T_amb [C] (first column)
-		util::matrix_t<double> mc_T_amb_ind;	// Interaction w/ T_htf
+		util::matrix_t<double> mc_T_amb_ind;	// At T_htf levels (-, 0, +)
+		double m_T_amb_low;			//[C] Low level of T_amb corresponding to m_dot_HTF parametric (also must be included within range of independent T_amb values)
+		double m_T_amb_high;		//[C] High level of T_amb corresponding to m_dot_HTF parametric (also must be included within range of independent T_amb values)
 			// Lookup table with dependent variables corresponding to parametric on independent variable m_dot_htf [ND] (first column)
-		util::matrix_t<double> mc_m_dot_htf_ind;	// Interaction w/ T_amb
+		util::matrix_t<double> mc_m_dot_htf_ind;	// At T_amb levels (-, 0, +)
+		double m_m_dot_htf_low;		//[-] Low level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf values)
+		double m_m_dot_htf_high;	//[-] High level of m_dot_htf corresponding to T_HTF parametric (also must be included within range of independent T_htf_values)
 
 		double m_W_dot_cooling_des;		//[MW] Cooling parasitic at design conditions
 		double m_m_dot_water_des;		//[kg/s] Power cycle water use at design conditions
@@ -123,7 +129,11 @@ public:
 
 			// Initialize parameters for user-defined power cycle
 			m_is_user_defined_pc = false;
-			m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
+			
+			m_T_htf_low = m_T_htf_high =
+				m_T_amb_low = m_T_amb_high =
+				m_m_dot_htf_low = m_m_dot_htf_high =				
+				m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
