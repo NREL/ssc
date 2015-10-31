@@ -42,7 +42,7 @@
     <ClCompile Include="..\tcs\sam_type250_input_generator.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
     <ClCompile Include="..\tcs\tou_translator_csp_solver.cpp" />
-    <ClCompile Include="..\tcs\user_defined_power_cycle.cpp" />
+    <ClCompile Include="..\tcs\ud_power_cycle.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
     <ClCompile Include="..\tcs\fmin.cpp" />
     <ClCompile Include="..\tcs\Heliostat_AzElAod.cpp" />
@@ -103,7 +103,7 @@
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
     <ClInclude Include="..\tcs\sco2_pc_core.h" />
-    <ClInclude Include="..\tcs\user_defined_power_cycle.h" />
+    <ClInclude Include="..\tcs\ud_power_cycle.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
     <ClInclude Include="..\tcs\fmin.h" />
     <ClInclude Include="..\tcs\htf_props.h" />
