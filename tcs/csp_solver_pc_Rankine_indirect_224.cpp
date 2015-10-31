@@ -262,7 +262,9 @@ void C_pc_Rankine_indirect_224::init()
 
 		// Load tables into user defined power cycle member class
 			// .init method will throw an error if initialization fails, so catch upstream
-		mc_user_defined_pc.init( ms_params.mc_T_htf_ind, ms_params.mc_T_amb_ind, ms_params.mc_m_dot_htf_ind );
+		mc_user_defined_pc.init( ms_params.mc_T_htf_ind, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_low, ms_params.m_T_htf_high, 
+								ms_params.mc_T_amb_ind, ms_params.m_T_amb_des, ms_params.m_T_amb_low, ms_params.m_T_amb_high,
+								ms_params.mc_m_dot_htf_ind, 1.0, ms_params.m_m_dot_htf_low, ms_params.m_m_dot_htf_high );
 
 		if(ms_params.m_W_dot_cooling_des != ms_params.m_W_dot_cooling_des || ms_params.m_W_dot_cooling_des < 0.0 )
 		{

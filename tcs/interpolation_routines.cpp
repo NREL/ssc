@@ -102,13 +102,13 @@ bool Linear_Interp::check_x_value_x_col_0(double x_val)
 
 	if(x_val < min_val)
 	{
-		m_error_msg = util::format("The minimum value is &lg", min_val);
+		m_error_msg = util::format("The minimum value is %lg", min_val);
 		return false;
 	}
 
 	if(x_val > max_val)
 	{
-		m_error_msg = util::format("The maximum value is &lg", max_val);
+		m_error_msg = util::format("The maximum value is %lg", max_val);
 		return false;
 	}
 
