@@ -73,7 +73,7 @@ OBJECTS = tcskernel.o \
 	csp_solver_mspt_receiver_222.o \
 	csp_solver_mspt_collector_receiver.o \
 	csp_solver_core.o \
-	user_defined_power_cycle.o \
+	ud_power_cycle.o \
 	csp_dispatch.o
 
 TARGET=tcs.a
