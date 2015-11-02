@@ -179,12 +179,18 @@ static var_info _cm_vtab_tcsmslf[] = {
 		
 	
 		// User Defined cycle
-	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",               "user_defined_PC", "pc_config=1",            "",                      "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
-	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",   "kg/s",  "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_htf_low",         "Low level HTF inlet temperature for T_amb parametric",                           "C",     "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_htf_high",        "High level HTF inlet temperature for T_amb parametric",                          "C",		"",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_low",         "Low level ambient temperature for HTF mass flow rate parametric",                "C",		"",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_high",        "High level ambient temperature for HTF mass flow rate parametric",               "C",		"",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_low",     "Low level normalized HTF mass flow rate for T_HTF parametric",                   "-",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_htf_high",    "High level normalized HTF mass flow rate for T_HTF parametric",                  "-",	    "",                        "user_defined_PC", "pc_config=1",            "",                      "" },		
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_htf_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]", "", "",           "user_defined_PC", "pc_config=1",            "",                      "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_T_amb_ind_od",      "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	 "", "",           "user_defined_PC", "pc_config=1",            "",                      "" }, 
+	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",           "user_defined_PC", "pc_config=1",            "",                      "" }, 
 		
 
 
@@ -606,6 +612,14 @@ public:
 			set_unit_value_ssc_double(powerblock, "ud_T_amb_des");
 			set_unit_value_ssc_double(powerblock, "ud_f_W_dot_cool_des");
 			set_unit_value_ssc_double(powerblock, "ud_m_dot_water_cool_des");
+
+			set_unit_value_ssc_double(powerblock, "ud_T_htf_low");
+			set_unit_value_ssc_double(powerblock, "ud_T_htf_high");
+			set_unit_value_ssc_double(powerblock, "ud_T_amb_low");
+			set_unit_value_ssc_double(powerblock, "ud_T_amb_high");
+			set_unit_value_ssc_double(powerblock, "ud_m_dot_htf_low");
+			set_unit_value_ssc_double(powerblock, "ud_m_dot_htf_high");
+
 			set_unit_value_ssc_matrix(powerblock, "ud_T_htf_ind_od");
 			set_unit_value_ssc_matrix(powerblock, "ud_T_amb_ind_od");
 			set_unit_value_ssc_matrix(powerblock, "ud_m_dot_htf_ind_od");
