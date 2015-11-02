@@ -41,6 +41,12 @@ enum{
 	P_UD_T_AMB_DES,
 	P_UD_F_W_DOT_COOL_DES,
 	P_UD_M_DOT_WATER_COOL_DES,
+	P_UD_T_HTF_LOW,
+	P_UD_T_HTF_HIGH,
+	P_UD_T_AMB_LOW,
+	P_UD_T_AMB_HIGH,
+	P_UD_M_DOT_HTF_LOW,
+	P_UD_M_DOT_HTF_HIGH,
 	P_UD_T_HTF_IND_OD,
 	P_UD_T_AMB_IND_OD,
 	P_UD_M_DOT_HTF_IND_OD,
@@ -105,6 +111,12 @@ tcsvarinfo sam_mw_pt_type224_variables[] = {
 	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_AMB_DES,            "ud_T_amb_des",            "Ambient temperature at user-defined power cycle design point",                                      "C",	 "",            "",            ""  }, 
 	{ TCS_PARAM,        TCS_NUMBER,      P_UD_F_W_DOT_COOL_DES,     "ud_f_W_dot_cool_des",     "Percent of user-defined power cycle design gross output consumed by cooling",                       "%",	 "",            "",            ""  }, 
 	{ TCS_PARAM,        TCS_NUMBER,      P_UD_M_DOT_WATER_COOL_DES, "ud_m_dot_water_cool_des", "Mass flow rate of water required at user-defined power cycle design point",                         "kg/s",  "",            "",            ""  }, 
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_HTF_LOW,            "ud_T_htf_low",            "Low level HTF inlet temperature for T_amb parametric",                                              "C",     "",            "",            ""  },
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_HTF_HIGH,           "ud_T_htf_high",           "High level HTF inlet temperature for T_amb parametric",                                             "C",	 "",            "",            ""  },
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_AMB_LOW,            "ud_T_amb_low",            "Low level ambient temperature for HTF mass flow rate parametric",                                   "C",	 "",            "",            ""  },
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_T_AMB_HIGH,           "ud_T_amb_high",           "High level ambient temperature for HTF mass flow rate parametric",                                  "C",	 "",            "",            ""  },
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_M_DOT_HTF_LOW,        "ud_m_dot_htf_low",        "Low level normalized HTF mass flow rate for T_HTF parametric",                                      "-",	 "",            "",            ""  },
+	{ TCS_PARAM,        TCS_NUMBER,      P_UD_M_DOT_HTF_HIGH,       "ud_m_dot_htf_high",       "High level normalized HTF mass flow rate for T_HTF parametric",                                     "-",	 "",            "",            ""  },
 	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_HTF_IND_OD,         "ud_T_htf_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_htf_hot [C]",  "",      "",            "",            ""  }, 
 	{ TCS_PARAM,        TCS_MATRIX,      P_UD_T_AMB_IND_OD,         "ud_T_amb_ind_od",         "Off design table of user-defined power cycle performance formed from parametric on T_amb [C]",	    "",      "",            "",            ""  }, 
 	{ TCS_PARAM,        TCS_MATRIX,      P_UD_M_DOT_HTF_IND_OD,     "ud_m_dot_htf_ind_od",     "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]", "",      "",            "",            ""  }, 
@@ -211,6 +223,14 @@ public:
 			p_params->m_T_amb_des = value(P_UD_T_AMB_DES);						//[C]
 			p_params->m_W_dot_cooling_des = value(P_UD_F_W_DOT_COOL_DES)/100.0*p_params->m_P_ref;	//[MWe]
 			p_params->m_m_dot_water_des = value(P_UD_M_DOT_WATER_COOL_DES);		//[kg/s]
+
+			// Set lower and upper levels for the 3 independent variables...
+			p_params->m_T_htf_low = value(P_UD_T_HTF_LOW);		//[C]
+			p_params->m_T_htf_high = value(P_UD_T_HTF_HIGH);	//[C]
+			p_params->m_T_amb_low = value(P_UD_T_AMB_LOW);		//[C]
+			p_params->m_T_amb_high = value(P_UD_T_AMB_HIGH);	//[C]
+			p_params->m_m_dot_htf_low = value(P_UD_M_DOT_HTF_LOW);	//[-]
+			p_params->m_m_dot_htf_high = value(P_UD_M_DOT_HTF_HIGH);//[-]
 
 			n_rows = n_cols = -1;
 			double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
