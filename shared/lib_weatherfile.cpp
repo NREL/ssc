@@ -1060,8 +1060,8 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[POA].data[i] = (double)(-999);       /* No POA in TMY3 */
 
 				m_columns[TDRY].data[i] = (double)atof(cols[31]);
-				m_columns[TWET].data[i] = (double)atof(cols[34]);
-
+				m_columns[TDEW].data[i] = (double)atof(cols[34]);
+				
 				m_columns[WSPD].data[i] = (double)atof(cols[46]);
 				m_columns[WDIR].data[i] = (double)atof(cols[43]);
 
@@ -1071,7 +1071,11 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[ALB].data[i] = (double)atof(cols[61]);
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
-				m_columns[TDEW].data[i] = wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
+				m_columns[TWET].data[i] 
+					= calc_twet( 
+						m_columns[TDRY].data[i], 
+						m_columns[RH].data[i], 
+						m_columns[PRES].data[i] ); /* must calculate wet bulb */
 
 				break;
 			}
@@ -1443,13 +1447,13 @@ bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string 
 		fprintf(fp, "Source,Location ID,City,State,Country,Latitude,Longitude,Time Zone,Elevation\n");
 		fprintf(fp, "TMY3,%s,%s,%s,USA,%.6lf,%.6lf,%lg,%lg\n", hdr.location.c_str(),
 			normalize_city(hdr.city).c_str(), hdr.state.c_str(), hdr.lat, hdr.lon, hdr.tz, hdr.elev );
-		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Twet,RH,Pres,Wspd,Wdir,Albedo\n" );
+		fprintf(fp, "Year,Month,Day,Hour,GHI,DNI,DHI,Tdry,Tdew,RH,Pres,Wspd,Wdir,Albedo\n" );
 		for( size_t i=0;i<8760;i++ )
 		{
 			if (!wf.read( &rec )) return false;
 			fprintf(fp, "%d,%d,%d,%d,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg\n",
 				rec.year, rec.month, rec.day, rec.hour,
-				rec.gh, rec.dn, rec.df, rec.tdry, rec.twet, rec.rhum, rec.pres, rec.wspd, rec.wdir, rec.alb );
+				rec.gh, rec.dn, rec.df, rec.tdry, rec.tdew, rec.rhum, rec.pres, rec.wspd, rec.wdir, rec.alb );
 		}
 	}
 	else if ( wf.type() == weatherfile::EPW )
