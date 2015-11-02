@@ -69,19 +69,19 @@ void C_ud_power_cycle::init(const util::matrix_t<double> & T_htf_ind, double T_h
 	if( !mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_ref) )
 	{
 		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
-		"must contain the design HTF temperature %lg [C]. %s [C]", m_T_htf_ref, mc_T_htf_ind.get_error_msg());
+		" must contain the design HTF temperature %lg [C]. %s [C]", m_T_htf_ref, mc_T_htf_ind.get_error_msg());
 		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
 	}
 	if( !mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_low) )
 	{
 		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
-			"must contain the lower level HTF temperature %lg [C]. %s [C]", m_T_htf_low, mc_T_htf_ind.get_error_msg());
+			" must contain the lower level HTF temperature %lg [C]. %s [C]", m_T_htf_low, mc_T_htf_ind.get_error_msg());
 		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
 	}
 	if( !mc_T_htf_ind.check_x_value_x_col_0(m_T_htf_high) )
 	{
 		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the hot HTF temperature"
-			"must contain the upper level HTF temperature %lg [C]. %s [C]", m_T_htf_high, mc_T_htf_ind.get_error_msg());
+			" must contain the upper level HTF temperature %lg [C]. %s [C]", m_T_htf_high, mc_T_htf_ind.get_error_msg());
 		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
 	}
 
@@ -89,7 +89,7 @@ void C_ud_power_cycle::init(const util::matrix_t<double> & T_htf_ind, double T_h
 	if( !mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_ref) )
 	{
 		m_error_msg = util::format("The user defined power cycle table containing parametric runs on the ambient temperature"
-		"must contain the design ambient temperature %lg [C]. %s [C]", m_T_amb_ref, mc_T_amb_ind.get_error_msg());
+		" must contain the design ambient temperature %lg [C]. %s [C]", m_T_amb_ref, mc_T_amb_ind.get_error_msg());
 		throw(C_csp_exception(m_error_msg, "User defined power cycle initialization"));
 	}
 	if( !mc_T_amb_ind.check_x_value_x_col_0(m_T_amb_low) )
