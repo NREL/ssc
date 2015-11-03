@@ -94,8 +94,6 @@ struct battstor
 		*outAnnualGridExportEnergy,
 		*outAnnualEnergyLoss;
 
-
-
 	double outAverageCycleEfficiency;
 };
 
