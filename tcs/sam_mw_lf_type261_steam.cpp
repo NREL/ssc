@@ -2705,9 +2705,14 @@ public:
 		q_loss_piping = q_loss_piping/1000.0;			//[MW] Thermal losses from the receiver
 		double q_loss_sf = q_loss_rec + q_loss_piping;	//[MW] Total solar field losses, receiver + piping loss
 		double q_field_delivered = m_dot_field*max( h_to_pb - h_pb_out, 0.0 );	//[kW] Energy balance indicating total energy delivered from the solar field
-		double q_dump = (1.0 - m_defocus)*q_rec_tot;	//[MW] Total amount of energy dumped by collector defocusing
 		double h_field_out = h_to_pb;					// h_field_out is corrected later if fossil energy is supplied in topping mode
 		
+		// 11.2.15 twn: user support question about how q_dump is calculated
+		// ... appears that there is a difference in how m_q_rec is calculated depending on whether empirical or first-principles model is applied
+		//double q_dump = (1.0 - m_defocus)*q_rec_tot;	//[MW] Total amount of energy dumped by collector defocusing
+		double q_dump = (1.0 - m_defocus)*q_inc_tot;	//[MW] Total amount of energy dumped by collector defocusing
+
+
 		double eta_thermal = 0.0;
 		if( q_rec_tot > 0.0 )
 			eta_thermal = 1.0 - min( max( q_loss_sf/q_rec_tot, 0.0 ), 1.0 );	//[-] thermal efficiency after reflection
