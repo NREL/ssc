@@ -115,6 +115,9 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "annual_import_to_grid_energy",               "Annual energy imported from grid",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average battery cycle efficiency",                      "%",        "",                      "Annual",        "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
+
+	{ SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                         "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
+
 var_info_invalid };
 
 
@@ -223,6 +226,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	size_t m,n;
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
+	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_sched", 12, 24);
 
 	if (batt_dispatch == 2)
 	{
@@ -230,11 +234,13 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		if (m != 12 || n != 24)
 			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
 		dm_dynamic_sched.resize(m, n);
-		for (size_t i = 0; i < 12; i++)
-			for (size_t j = 0; j < 24; j++)
-				dm_dynamic_sched(i, j) = psched[i * 24 + j];
 
-	}
+		for (size_t i = 0; i < 12; i++)
+			for (size_t j = 0; j < 24; j++){
+				dm_dynamic_sched(i, j) = psched[i * 24 + j];
+				schedule(i, j) = psched[i * 24 + j];
+			} 
+		}
 	else 
 	{
 		m = 12;
@@ -244,6 +250,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	util::matrix_t<double>  batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
 		throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
+
 
 	/* **********************************************************************
 	Initialize outputs
@@ -292,6 +299,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outAnnualGridImportEnergy = cm.allocate("annual_import_to_grid_energy", annual_size);
 	outAnnualGridExportEnergy = cm.allocate("annual_export_to_grid_energy", annual_size);
 	outAnnualEnergyLoss = cm.allocate("batt_annual_energy_loss", annual_size);
+
 
 	outBatteryBankReplacement[0] = 0;
 	outAnnualChargeEnergy[0] = 0;
