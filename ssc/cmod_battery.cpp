@@ -226,7 +226,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	size_t m,n;
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
-	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_sched", 12, 24);
+	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
 
 	if (batt_dispatch == 2)
 	{
