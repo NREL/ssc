@@ -2707,10 +2707,10 @@ public:
 		double q_field_delivered = m_dot_field*max( h_to_pb - h_pb_out, 0.0 );	//[kW] Energy balance indicating total energy delivered from the solar field
 		double h_field_out = h_to_pb;					// h_field_out is corrected later if fossil energy is supplied in topping mode
 		
-		// 11.2.15 twn: user support question about how q_dump is calculated
-		// ... appears that there is a difference in how m_q_rec is calculated depending on whether empirical or first-principles model is applied
-		//double q_dump = (1.0 - m_defocus)*q_rec_tot;	//[MW] Total amount of energy dumped by collector defocusing
+		// 11.2.15 twn: corrected q_dump equation
 		double q_dump = (1.0 - m_defocus)*q_inc_tot;	//[MW] Total amount of energy dumped by collector defocusing
+			// this also works, assuming defocus is last multiplier before q_rec_tot:
+		//double q_dump = q_inc_tot*(1.0/m_defocus - 1.0);
 
 
 		double eta_thermal = 0.0;
