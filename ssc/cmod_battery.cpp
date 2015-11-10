@@ -116,7 +116,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average battery cycle efficiency",                      "%",        "",                      "Annual",        "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
 
-	{ SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                         "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
+	
 
 var_info_invalid };
 
@@ -532,7 +533,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD)
 {
 	dispatch_model->compute_grid_net(PV, LOAD);
-	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid())/_dt_hour;
+	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid())/_dt_hour; 
 	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
