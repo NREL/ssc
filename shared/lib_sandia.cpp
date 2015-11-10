@@ -97,6 +97,7 @@ C Tc   = cell temperature */
 //JMF updated 9/21/15 to account for POA input per email from Cliff Hansen on 9/21/15
 // Cliff stated: "If POA is broadband use GPOA in place of f2(AOI)Eb + fd Ediff in the equation for Isc. If POA is a matched reference cell you also drop the F1(AMa) factor."
 	double Isc;
+
 	if (radmode == 3) //reference cell
 		Isc = Isc0*(Ipoa / 1000.0)*(1.0 + aIsc*(Tc - 25.0)); //per Cliff: 
 	else if (radmode == 4) //POA irradiance sensor ("broadband" in Cliff's email)
@@ -250,7 +251,7 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 	out.CellTemp = TcellC;
 	
 	double Gtotal;
-	if( in.radmode < 3)
+	if( in.radmode != 3 || !in.usePOA )
 		Gtotal = in.Ibeam + in.Idiff + in.Ignd;
 	else
 		Gtotal = in.Ipoa;
@@ -437,7 +438,7 @@ bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, doubl
 {
 	//Sev 2015-09-14: changed to permit direct poa data
 	double Itotal;
-	if( input.radmode < 3)
+	if( input.radmode != 3 || !input.usePOA)
 		Itotal = input.Ibeam + input.Idiff + input.Ignd;
 	else
 		Itotal = input.Ipoa;
