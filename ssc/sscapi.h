@@ -228,7 +228,7 @@ SSCEXPORT const char *ssc_info_required( ssc_info_t p_inf );
 /** Returns constraints on the values accepted.  For example, MIN, MAX, BOOLEAN, INTEGER, POSITIVE are possible constraints. */
 SSCEXPORT const char *ssc_info_constraints( ssc_info_t p_inf );
 
-/** Returns additional information for use in a target application about how to show the variable to the user.  Not used currently. */
+/** Returns additional information for use in a target application about how to show the variable to the user. */
 SSCEXPORT const char *ssc_info_uihint( ssc_info_t p_inf );
 
 /** Specify whether the built-in execution handler prints messages and progress updates to the command line console. */
