@@ -692,11 +692,14 @@ struct subarray
 		poa.stilt = 0;
 		poa.sazi = 0;
 		poa.nonlinear_dc_shading_derate = 1.0;
+		poa.usePOA = false;
+		poa.poaShadWarningCount = 0;
 
 		module.dcpwr = 0;
 		module.dcv = 0;
 		module.dceff = 0;
 		module.tcell = 0;
+
 	}
 
 	bool enable;
@@ -731,6 +734,9 @@ struct subarray
 		double stilt;
 		double sazi;
 		double nonlinear_dc_shading_derate;
+		bool usePOA;
+		int poaShadWarningCount;
+		poaDataAll poaAll;
 	} poa;
 
 	// calculated by module model
@@ -742,7 +748,8 @@ struct subarray
 	} module;
 		
 };
-	
+
+
 class cm_pvsamv1 : public compute_module
 {
 public:
@@ -889,6 +896,8 @@ public:
 						return; 
 					}
 				}
+
+			sa[nn].poa.usePOA = false;
 		}
 		// loop over subarrays AGAIN to calculate shading inputs because nstrings in subarray 1 isn't correct until AFTER the previous loop
 		for (size_t nn = 0; nn < 4; nn++)
@@ -967,6 +976,11 @@ public:
 			&& mod_type != 1 && mod_type != 2 && mod_type != 4 )
 			throw exec_error( "pvsamv1", "String level subarray mismatch can only be calculated using a single-diode based module model.");
 
+
+		bool speForceNoPOA = false;		// SEV 151002 - Set these flags to avoid calling as_integer(...) repeatedly later on
+		bool mcspForceNoPOA = false;    //   These flags are used to ensure that the usePOA flag for each sub array will be force
+										//   to false
+
 		if ( mod_type == 0 )
 		{
 			spe.VmpNominal = as_double("spe_vmp");
@@ -1023,6 +1037,9 @@ public:
 			spe.fd = as_double("spe_fd");
 			spe_tc.fd = spe.fd;
 			
+			if(spe.fd < 1.0)
+				speForceNoPOA = true;
+
 			celltemp_model = &spe_tc;
 			module_model = &spe;
 			module_watts_stc = spe.WattsStc();
@@ -1091,6 +1108,7 @@ public:
 				mcsp_tc.TbackInteg = as_double("cec_backside_temp");
 
 				celltemp_model = &mcsp_tc;
+				mcspForceNoPOA = true;
 			}
 			
 			module_model = &cec;
@@ -1583,8 +1601,126 @@ public:
 		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0;
 
 		idx = 0;
+
+		// Check if a POA model is used, if so load all POA data into the poaData struct
+		poaDataAll poaAll[4];
+		if (radmode == 3 || radmode == 4 ){
+			for (int nn = 0; nn < 4; nn++){
+				if (!sa[nn].enable) continue;
+				
+				sa[nn].poa.poaAll.elev = hdr.elev;
+
+				if( step_per_hour > 1) {
+					sa[nn].poa.poaAll.stepScale = 'm';
+					sa[nn].poa.poaAll.stepSize = 60.0 / step_per_hour;
+				}
+
+				sa[nn].poa.poaAll.POA = new double[ 8760*step_per_hour ];
+				sa[nn].poa.poaAll.inc = new double[ 8760*step_per_hour ];
+				sa[nn].poa.poaAll.tilt = new double[ 8760*step_per_hour ];
+				sa[nn].poa.poaAll.zen = new double[ 8760*step_per_hour ];
+				sa[nn].poa.poaAll.exTer = new double[ 8760*step_per_hour ];
+					
+				for (int h=0; h<8760; h++){
+					for	(int m=0; m < step_per_hour; m++){
+						int ii = h * step_per_hour + m;
+						
+						if (!wdprov->read( &wf ))
+							throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file while loading POA data");
+						
+						// save POA data
+						if(wf.poa > 0)
+							sa[nn].poa.poaAll.POA[ii] = wf.poa;
+						else
+							sa[nn].poa.poaAll.POA[ii] = -999;
+						
+						// Calculate incident angle
+						double t_cur = wf.hour + wf.minute/60;
+						
+						// Calculate sunrise and sunset hours in local standard time for the current day
+						double sun[9], angle[5];
+						int tms[3];
+						
+						solarpos( wf.year, wf.month, wf.day, 12, 0.0, hdr.lat, hdr.lon, hdr.tz, sun );
+					
+						double t_sunrise = sun[4];
+						double t_sunset = sun[5];
+					
+						if ( t_cur >= t_sunrise - ts_hour/2.0
+							&& t_cur < t_sunrise + ts_hour/2.0 )
+						{
+							// time step encompasses the sunrise
+							double t_calc = (t_sunrise + (t_cur+ts_hour/2.0))/2.0; // midpoint of sunrise and end of timestep
+							int hr_calc = (int)t_calc;
+							double min_calc = (t_calc-hr_calc)*60.0;
+					
+							tms[0] = hr_calc;
+							tms[1] = (int)min_calc;
+									
+							solarpos( wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun );
+					
+							tms[2] = 2;				
+						}
+						else if (t_cur > t_sunset - ts_hour/2.0
+							&& t_cur <= t_sunset + ts_hour/2.0 )
+						{
+							// timestep encompasses the sunset
+							double t_calc = ( (t_cur-ts_hour/2.0) + t_sunset )/2.0; // midpoint of beginning of timestep and sunset
+							int hr_calc = (int)t_calc;
+							double min_calc = (t_calc-hr_calc)*60.0;
+					
+							tms[0] = hr_calc;
+							tms[1] = (int)min_calc;
+									
+							solarpos( wf.year, wf.month, wf.day, hr_calc, min_calc, hdr.lat, hdr.lon, hdr.tz, sun );
+					
+							tms[2] = 3;
+						}
+						else if (t_cur >= t_sunrise && t_cur <= t_sunset)
+						{
+							// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)			
+							tms[0] = wf.hour;
+							tms[1] = (int)wf.minute;
+							solarpos( wf.year, wf.month, wf.day, wf.hour, wf.minute, hdr.lat, hdr.lon, hdr.tz, sun );
+							tms[2] = 1;
+						}
+						else
+						{	
+							// sun is down, assign sundown values
+							sun[0] = -999; //avoid returning a junk azimuth angle
+							sun[1] = -999; //avoid returning a junk zenith angle
+							sun[2] = -999; //avoid returning a junk elevation angle
+							tms[0] = -1;
+							tms[1] = -1;
+							tms[2] = 0;
+						}
+
+
+						if( tms[2] > 0){
+							incidence( sa[nn].track_mode, sa[nn].tilt, sa[nn].azimuth, sa[nn].rotlim, sun[1], sun[0], sa[nn].backtrack, sa[nn].gcr, angle );
+						} else {
+							angle[0] = -999;
+							angle[1] = -999;
+							angle[2] = -999;
+							angle[3] = -999;
+							angle[4] = -999;	
+						}
+
+
+						sa[nn].poa.poaAll.inc[ii] = angle[ 0 ];
+						sa[nn].poa.poaAll.tilt[ii] = angle[ 1 ];
+						sa[nn].poa.poaAll.zen[ii] = sun[ 1 ];
+						sa[nn].poa.poaAll.exTer[ii] = sun[ 8 ];
+
+					}
+				}
+			}
+			wdprov->rewind();
+		}
+
 		// lifetime analysis over nyears
 		for (size_t iyear = 0; iyear < nyears; iyear++)
+
 		{
 			// begin 8760 loop through each timestep
 			hour = 0;
@@ -1611,6 +1747,7 @@ public:
 					
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
+
 					// electric load is subhourly
 					// if no load profile supplied, load = 0
 					if (p_load_in != 0 && nload == nrec)
@@ -1624,6 +1761,21 @@ public:
 
 					if (!wdprov->read( &wf ))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
+
+					//update POA data structure indicies if radmode is POA model is enabled
+					if(radmode == 3 || radmode==4){
+						for( int nn=0; nn<4; nn++){
+							if( !sa[nn].enable ) continue;
+						
+							sa[nn].poa.poaAll.tDew = wf.tdew;
+							sa[nn].poa.poaAll.i = idx;
+							if( jj == 0 && wf.hour == 0) {
+								sa[nn].poa.poaAll.dayStart = idx;
+								sa[nn].poa.poaAll.doy += 1;
+							}
+
+						}
+					}
 
 					double solazi = 0, solzen = 0, solalt = 0;
 					int sunup = 0;
@@ -1710,13 +1862,13 @@ public:
 						irrad irr;
 						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
 						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
-
+						 
 						irr.set_sky_model(skymodel, alb);
 						if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
 						else if (radmode == 1) irr.set_global_beam(wf.gh, wf.dn);
 						else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
-						else if (radmode == 3) irr.set_poa_reference(wf.poa);
-						else if (radmode == 4) irr.set_poa_pyranometer(wf.poa);
+						else if (radmode == 3) irr.set_poa_reference(wf.poa, &sa[nn].poa.poaAll);
+						else if (radmode == 4) irr.set_poa_pyranometer(wf.poa, &sa[nn].poa.poaAll);
 
 						irr.set_surface(sa[nn].track_mode,
 							sa[nn].tilt,
@@ -1726,6 +1878,7 @@ public:
 							sa[nn].gcr);
 
 						int code = irr.calc();
+
 						if (code != 0)
 							throw exec_error("pvsamv1",
 							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]",
@@ -1734,13 +1887,37 @@ public:
 						if( radmode == 3 || radmode == 4) {
 							irr.get_irrad(&wf.gh, &wf.dn, &wf.df);
 						}
+
 						double ibeam, iskydiff, ignddiff;
 						double ipoa; // Container for direct POA measurements
 						double aoi, stilt, sazi, rot, btd;
 
 
-						if( radmode == 3 || radmode == 4)
+						// Ensure that the usePOA flag is false unless a reference cell has been used. 
+						//  This will later get forced to false if any shading has been applied (in any scenario)
+						//  also this will also be forced to false if using the cec mcsp thermal model OR if using the spe module model with a diffuse util. factor < 1.0
+						sa[nn].poa.usePOA = false;
+						if( radmode == 3){
 							ipoa = wf.poa;
+							sa[nn].poa.usePOA = true;
+						}else if( radmode == 4 ){
+							ipoa = wf.poa;
+						}
+
+						if( speForceNoPOA && ( radmode == 3 || radmode == 4)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
+							sa[nn].poa.usePOA = false;
+							if( idx == 0 )
+								log("A poa sky model, spe module model, and diffuse utilization factor less than one have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+						}
+
+						if( mcspForceNoPOA && (radmode == 3 || radmode == 4)){
+							sa[nn].poa.usePOA = false;
+							if( idx == 0 )
+								log("A poa sky model and the MCSP Thermal Model have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+						}
+
+
+						// Get Incidend angles and irradiances
 
 						irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
 						irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
@@ -1748,7 +1925,7 @@ public:
 
 						// record sub-array plane of array output before computing shading and soiling
 						if (iyear==0)
-							if(radmode < 3)
+							if(radmode != 3)
 								p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 							else
 								p_poanom[nn][idx] = (ssc_number_t)((ipoa));
@@ -1756,7 +1933,7 @@ public:
 						// note: ibeam, iskydiff, ignddiff are in units of W/m2
 
 						// record sub-array contribution to total POA power for this time step  (W)
-						if(radmode < 3)
+						if(radmode != 3)
 							ts_accum_poa_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 						else
 							ts_accum_poa_nom += (ipoa) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
@@ -1776,15 +1953,42 @@ public:
 
 
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-						ibeam *= beam_shad_factor;
+						if( beam_shad_factor < 1.0 ){
+							ibeam *= beam_shad_factor;
+							if( radmode == 3 || radmode ==4 ){
+								sa[nn].poa.usePOA = false;
+								if( sa[nn].poa.poaShadWarningCount == 0){
+									log(util::format("Both a poa sky model has been selected and non-zero beam shading losses have been applied at time [y:%d m:%d d:%d h:%d]. This will force SAM to employ a POA decomposition model",
+									wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								}
+								else{ 
+									log(util::format("Both a poa sky model has been selected and non-zero beam shading losses have been applied at time [y:%d m:%d d:%d h:%d]. This will force SAM to employ a POA decomposition model",
+									wf.year, wf.month, wf.day, wf.hour), SSC_NOTICE, (float)idx);
+								}
+								sa[nn].poa.poaShadWarningCount++;
+							}
+						}
 
 						// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-						iskydiff *= sa[nn].shad.fdiff();
+						if( sa[nn].shad.fdiff() < 1.0 ){
+							iskydiff *= sa[nn].shad.fdiff();
+							if( radmode == 3 || radmode ==4 ){
+								sa[nn].poa.usePOA = false;
+								if( idx == 0 )
+									log("Both a poa sky model has been selected and diffuse shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+							}
+						}
 
 						//self-shading calculations
 						if ((sa[nn].track_mode == 0 && sa[nn].shade_mode == 0) //fixed tilt, self-shading OR
 							|| (sa[nn].track_mode == 1 && sa[nn].shade_mode == 0 && sa[nn].backtrack == 0)) //one-axis tracking, self-shading, not backtracking
 						{
+
+							if( radmode == 3 || radmode == 4 ){
+								log("Both a poa sky model has been selected and self-shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+								sa[nn].poa.usePOA = false;
+							}
+
 							// info to be passed to self-shading function for one-axis trackers
 							bool trackbool = (sa[nn].track_mode == 1);	// 0 for fixed tilt, 1 for one-axis
 							double shad1xf = 0;
@@ -1890,7 +2094,7 @@ public:
 									solzen, sa[nn].poa.aoi, hdr.elev,
 									sa[nn].poa.stilt, sa[nn].poa.sazi,
 									((double)wf.hour) + wf.minute / 60.0,
-									radmode);
+									radmode, sa[nn].poa.usePOA);
 								pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 								if (sa[nn].poa.sunup > 0)
 								{
@@ -1939,7 +2143,7 @@ public:
 							solzen, sa[nn].poa.aoi, hdr.elev,
 							sa[nn].poa.stilt, sa[nn].poa.sazi,
 							((double)wf.hour) + wf.minute / 60.0,
-							radmode);
+							radmode, sa[nn].poa.usePOA);
 						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 
 						double tcell = wf.tdry;

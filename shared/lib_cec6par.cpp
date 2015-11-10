@@ -122,7 +122,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	
 	double G_total, Geff_total;
 
-	if( input.radmode < 3){
+	if( input.radmode != 3){
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 	
 		Geff_total = G_total;
@@ -152,8 +152,12 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );
 	
 	} else {
-
-		G_total = Geff_total = input.Ipoa;
+		if( input.usePOA)
+			G_total = Geff_total = input.Ipoa;
+		else{
+			G_total = input.Ipoa;
+			Geff_total = input.Ibeam + input.Idiff + input.Ignd;
+		}
 
 	}
 
@@ -221,7 +225,7 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double W_spd = input.Wspd;
 	if (W_spd < 0.001) W_spd = 0.001;
 	
-	if(input.radmode < 3){
+	if(input.radmode != 3){
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 			
 		Geff_total = G_total;
@@ -240,7 +244,12 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );	
 
 	} else {
-		G_total = Geff_total = input.Ipoa;
+		if( input.usePOA )
+			G_total = Geff_total = input.Ipoa;
+		else{
+			G_total = Geff_total = input.Ibeam + input.Idiff + input.Ignd;
+		}
+
 	}
 
 	// TODO - shouldn't tau_al above include AM correction below?

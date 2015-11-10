@@ -12,11 +12,28 @@ void perez( double hextra, double dn,double df,double alb,double inc,double tilt
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
-// 2015/09/11 - Sev
-// Create function for POA decomposition
-//  - Currently a stand-in for Bill Marion's eventual model
+// 2015-10-25: Added by Sev to allow for the poa decomp model to take all daily POA measurements into consideration
+struct poaDataAll {
+	size_t i = 0; // Current time index
+	size_t dayStart = 0; // time index corresponding to the start of the current day
+	double stepSize = 1;
+	char stepScale = 'h'; // indicates whether time steps are hours (h) or minutes (m)
+	double* POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
+	double* inc; // Pointer to angle of incident array (same size as POA)
+	double* tilt; // Pointer to angle of incident array (same size as POA)
+	double* zen; // Pointer to angle of incident array (same size as POA)
+	double* exTer; // Pointer to angle of incident array (same size as POA)
+	double tDew;
+	int doy = -1;
+	double elev;
+};
 
-void poaDecomp( double wfPOA, double inc, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+// 2015/09/11 - Sev
+// Create functions for POA decomposition
+
+void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDataAll* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn);
+void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 
 
 class irrad
@@ -34,7 +51,7 @@ private:
 	int tms[3];
 	double ghi;
 
-	
+	poaDataAll* poaAll;
 
 public:
 
@@ -42,15 +59,15 @@ public:
 	int check();
 
 	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
-	void set_location( double lat, double lon, double tz );
+	void set_location( double lat, double lon, double tz);
 	//skymodel: 0 is isotropic, 1 is hdkr, 2 is perez
 	void set_sky_model( int skymodel, double albedo );
 	void set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr );
 	void set_beam_diffuse( double beam, double diffuse );
 	void set_global_beam( double global, double beam );
 	void set_global_diffuse(double global, double diffuse);
-	void set_poa_reference( double poa );
-	void set_poa_pyranometer( double poa );
+	void set_poa_reference( double poa, poaDataAll* );
+	void set_poa_pyranometer( double poa, poaDataAll* );
 
 	int calc();
 	
