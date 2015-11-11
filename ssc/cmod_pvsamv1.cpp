@@ -2189,7 +2189,7 @@ public:
 							out.CellTemp = tcell;
 							log(util::format("Non-finite power output calculated at [mdhm: %d %d %d %lg], set to zero.\n"
 								"could be due to anomolous equation behavior at very low irradiances (poa: %lg W/m2)",
-								wf.month, wf.day, wf.hour, wf.minute, sa[nn].poa), SSC_NOTICE);
+								wf.month, wf.day, wf.hour, wf.minute, sa[nn].poa.ipoa), SSC_NOTICE);
 						}
 
 						// save DC module outputs for this subarray
