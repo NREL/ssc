@@ -2031,7 +2031,7 @@ public:
 							if(radmode == 3 || radmode == 4){
 								ipoa *= soiling_factor;
 								if(soiling_factor < 1 && idx == 0)
-									log("Both a poa sky model has been selected and soiling losses have been applied.", SSC_WARNING);
+									log("Soiling may already be accounted for in the input POA data. Please confirm that the input data does not contain soiling effects, or remove the additional losses on the Losses page.", SSC_WARNING);
 							}
 							beam_shad_factor *= soiling_factor;
 						}
