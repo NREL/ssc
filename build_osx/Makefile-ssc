@@ -77,7 +77,7 @@ OBJECTS = \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
-	$(CXX) $(LDFLAGS) -dynamiclib -flat_namespace -o $@ $^
+	$(CXX) $(LDFLAGS) -dynamiclib  -o $@ $^
 	gcc $(CFLAGS) dltest.c -o dltest -ldl
 	./dltest ./$(TARGET)
 
