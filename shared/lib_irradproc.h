@@ -14,17 +14,18 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 
 // 2015-10-25: Added by Sev to allow for the poa decomp model to take all daily POA measurements into consideration
 struct poaDataAll {
-	size_t i = 0; // Current time index
-	size_t dayStart = 0; // time index corresponding to the start of the current day
-	double stepSize = 1;
-	char stepScale = 'h'; // indicates whether time steps are hours (h) or minutes (m)
+	poaDataAll() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
+	size_t i; // Current time index
+	size_t dayStart; // time index corresponding to the start of the current day
+	double stepSize;
+	char stepScale; // indicates whether time steps are hours (h) or minutes (m)
 	double* POA; // Pointer to entire POA array (will have size 8760 if time step is 1 hour)
 	double* inc; // Pointer to angle of incident array (same size as POA)
 	double* tilt; // Pointer to angle of incident array (same size as POA)
 	double* zen; // Pointer to angle of incident array (same size as POA)
 	double* exTer; // Pointer to angle of incident array (same size as POA)
 	double tDew;
-	int doy = -1;
+	int doy;
 	double elev;
 };
 
