@@ -158,7 +158,7 @@ public:
 		weatherfile wfile(file);
 		if (!wfile.ok()) throw exec_error("swh", wfile.message());
 		if( wfile.has_message() ) log( wfile.message(), SSC_WARNING);
-
+		
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
 		********************************************************************** */
@@ -433,6 +433,7 @@ public:
 			Calculate hourly mains water temperature
 			********************************************************************** */
 			size_t idx=0;
+			double tmain = 0;
 			for ( size_t i=0; i<8760; i++)
 			{
 				// calculate hour of day  ( goes 1..24 )
@@ -450,9 +451,16 @@ public:
 					hour = (i + 1) - (julian_day * 24);
 					julian_day++;
 				}
-
-				double tmain = (annual_avg_temp + 6. + mains_ratio * ((avg_temp_high_f - avg_temp_low_f) / 2.)
-					* sin(M_PI / 180 * (0.986*(julian_day - 15 - lag) - 90.)));
+				if (wfile.lat() > 0.)
+				{
+					tmain = (annual_avg_temp + 6. + mains_ratio * ((avg_temp_high_f - avg_temp_low_f) / 2.)
+						* sin(M_PI / 180 * (0.986*(julian_day - 15 - lag) - 90.)));
+				}
+				else
+				{
+					tmain = (annual_avg_temp + 6. + mains_ratio * ((avg_temp_high_f - avg_temp_low_f) / 2.)
+						* sin(M_PI / 180 * (0.986*(julian_day - 15 - lag) + 90.)));
+				}
 				tmain = ((tmain - 32) / 1.8); // convert to 'C
 
 				// load into mains temp array
