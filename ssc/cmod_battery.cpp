@@ -69,7 +69,9 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                 "",         "",                     "Battery",       "",                           "",                             "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                              "0/1/2",    "",                    "Battery",       "?=0",                        "",                             "" },
 
 
@@ -228,7 +230,6 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	size_t m,n;
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
-
 	if (batt_dispatch == 2)
 	{
 		ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
@@ -236,9 +237,13 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			throw compute_module::exec_error("battery", "invalid manual dispatch schedule matrix dimensions, must be 12 x 24");
 		dm_dynamic_sched.resize(m, n);
 
+		ssc_number_t *psched_weekend = cm.as_matrix("dispatch_manual_sched_weekend", &m, &n);
+		dm_dynamic_sched_weekend.resize(m, n);
+
 		for (size_t i = 0; i < 12; i++)
 			for (size_t j = 0; j < 24; j++){
 				dm_dynamic_sched(i, j) = psched[i * 24 + j];
+				dm_dynamic_sched_weekend(i, j) = psched_weekend[i * 24 + j];
 				schedule(i, j) = psched[i * 24 + j];
 			} 
 		}
@@ -247,6 +252,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		m = 12;
 		n = 24 * step_per_hour;
 		dm_dynamic_sched.resize_fill(m,n,1);
+		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
 	}
 	util::matrix_t<double>  batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
 	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
@@ -370,7 +376,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
 		batt_dispatch,
-		dm_dynamic_sched, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+		dm_dynamic_sched, dm_dynamic_sched_weekend,
+		dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 } 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
 {

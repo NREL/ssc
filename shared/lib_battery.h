@@ -467,7 +467,8 @@ public:
 	friend class automate_dispatch_t;
 	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
 					 double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
-					 int mode, util::matrix_t<float> dm_dynamic_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double> dm_percent_discharge, std::map<int, double> dm_percent_gridcharge);
+					 int mode, util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
+					 bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double> dm_percent_discharge, std::map<int, double> dm_percent_gridcharge);
 	void dispatch(size_t hour_of_year, size_t step, double e_pv, double e_load);
 
 protected:
@@ -475,6 +476,7 @@ protected:
 	void reset();
 	
 	util::matrix_t < float > _sched;
+	util::matrix_t < float > _sched_weekend;
 	std::vector<bool> _charge_array;
 	std::vector<bool> _discharge_array;
 	std::vector<bool> _gridcharge_array;
@@ -551,8 +553,4 @@ protected:
 	
 	grid_vec grid; // [grid_power, hour, step]
 };
-/*
-Non-class functions
-*/
-void getMonthHour(int hourOfYear, int & month, int & hour);
 #endif
