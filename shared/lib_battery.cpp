@@ -1165,11 +1165,13 @@ Manual Dispatch
 */
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
 	double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
-	int mode, util::matrix_t<float> dm_dynamic_sched, bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
+	int mode, util::matrix_t<float> dm_dynamic_sched,  util::matrix_t<float> dm_dynamic_sched_weekend,
+	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max, 
 				t_min, ac_or_dc, dc_dc, ac_dc, dc_ac)
 {
 	_sched = dm_dynamic_sched;
+	_sched_weekend = dm_dynamic_sched_weekend;
 	for (int i = 0; i != 6; i++)
 	{
 		_charge_array.push_back(dm_charge[i]);
@@ -1184,9 +1186,14 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 {
 	int m, h, column;
 	int iprofile = -1;
-	getMonthHour(hour_of_year, m, h);
+	util::month_hour(hour_of_year, m, h);
+	bool is_weekday = util::weekday(hour_of_year);
     _mode == 2 ? column = h - 1 : column = (h-1)/_dt_hour + step;
-	iprofile = _sched(m - 1, column);  // 1-based
+
+	if (!is_weekday & _mode == 2)
+		iprofile = _sched_weekend(m - 1, column);
+	else
+		iprofile = _sched(m - 1, column);  // 1-based
 
 	_can_charge = _charge_array[iprofile-1];
 	_can_discharge = _discharge_array[iprofile-1];
@@ -1540,7 +1547,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 		else
 			break;
 
-		getMonthHour(hour_of_year + grid[ii].Hour(), m, h);
+		util::month_hour(hour_of_year + grid[ii].Hour(), m, h);
 		int min = grid[ii].Step();
 		int column = (h - 1)*_steps_per_hour + min;
 
@@ -1593,7 +1600,7 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 			if (charge_percent < 0)
 				break;
 
-			getMonthHour(hour_of_year + hour, m, h);
+			util::month_hour(hour_of_year + hour, m, h);
 			int column = (h - 1)*_steps_per_hour + step;
 			_dispatch->_sched.set_value(profile, m - 1, column); // hourly, column is h-1
 			_dispatch->_charge_array.push_back(true);
@@ -1604,32 +1611,4 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 		}
 	}
 }
-/*
-Non-class functions
-*/
 
-void getMonthHour(int hourOfYear, int & out_month, int & out_hour)
-{
-	int tmpSum = 0;
-	int hour = 0;
-	int month;
-
-	for ( month = 1; month <= 12; month++)
-	{
-		int hoursInMonth = util::hours_in_month(month);
-		tmpSum += hoursInMonth;
-
-		// found the month
-		if (hourOfYear + 1 <= tmpSum)
-		{
-			// get the day of the month
-			int tmp = floor((float)(hourOfYear) / 24);
-			hour = (hourOfYear + 1) - (tmp * 24);
-			break;
-		}
-	}
-
-	out_month = month;
-	out_hour = hour;
-
-}

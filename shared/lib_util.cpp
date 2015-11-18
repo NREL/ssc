@@ -805,6 +805,42 @@ int util::day_of_month(int month, double time)
 	return daynum;
 }
 
+void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
+{
+	int tmpSum = 0;
+	int hour = 0;
+	int month;
+
+	for (month = 1; month <= 12; month++)
+	{
+		int hours_in_month = util::hours_in_month(month);
+		tmpSum += hours_in_month;
+
+		// found the month
+		if (hour_of_year + 1 <= tmpSum)
+		{
+			// get the day of the month
+			int tmp = floor((float)(hour_of_year) / 24);
+			hour = (hour_of_year + 1) - (tmp * 24);
+			break;
+		}
+	}
+	out_month = month;
+	out_hour = hour;
+}
+bool util::weekday(int hour_of_year)
+{
+	int day_of_year = floor((float)(hour_of_year) / 24);
+	int day_of_week = day_of_year;
+
+	if (day_of_week > 6)
+		day_of_week = day_of_year % 7;
+
+	if (day_of_week < 5)
+		return true;
+	else
+		return false;
+}
 
 int util::schedule_char_to_int( char c )
 {
