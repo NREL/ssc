@@ -54,7 +54,9 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_beam",             "Average daily beam normal",        "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_diffuse",          "Average daily diffuse",            "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_tdry",             "Average dry bulb temperature",     "'C",           "",                "Weather Reader",      "header_only=0",                        "",     "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_wspd",             "Average wind speed",               "m/s",          "",                "Weather Reader",      "header_only=0",                        "",     "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_wspd", "Average wind speed", "m/s", "", "Weather Reader", "header_only=0", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_snow", "Average snow depth", "cm", "", "Weather Reader", "header_only=0", "", "" },
 
 var_info_invalid };
 
@@ -141,7 +143,7 @@ public:
 		ssc_number_t *p_albedo = allocate( "albedo", records );
 
 		double gh_sum = 0.0, dn_sum = 0.0, df_sum = 0.0;
-		double temp_sum = 0.0, wind_sum = 0.0;
+		double temp_sum = 0.0, wind_sum = 0.0, snow_sum=0.0;
 
 		double ts_hour = wfile.step_sec() / 3600.0;
 
@@ -178,13 +180,15 @@ public:
 			df_sum += wf.df * ts_hour;
 			temp_sum += wf.tdry;
 			wind_sum += wf.wspd; 
+			snow_sum += wf.snow;
 		}
 		
 		assign( "annual_global", var_data( 0.001 * gh_sum / 365 ));
 		assign( "annual_beam", var_data( 0.001 * dn_sum / 365 ));
 		assign( "annual_diffuse", var_data( 0.001 * df_sum / 365 ));
 		assign( "annual_tdry", var_data( temp_sum / records ));
-		assign( "annual_wspd", var_data( wind_sum / records ));
+		assign("annual_wspd", var_data(wind_sum / records));
+		assign("annual_snow", var_data(snow_sum / records));
 	}
 };
 
