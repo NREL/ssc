@@ -835,6 +835,10 @@ static var_info vtab_utility_rate3_tab[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou_dec", "Demand charge with system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
+
+
+	// energy charges
+
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jan",            "Energy charge with system (TOU) in Jan",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_feb",            "Energy charge with system (TOU) in Feb",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_mar",            "Energy charge with system (TOU) in Mar",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
@@ -930,6 +934,8 @@ static var_info vtab_utility_rate3_tab[] = {
 // first year outputs only per email from Paul 8/9/15
 
 // charge wo system
+	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jan_pt", "Energy charge without system (TOU) Jan, per and tier", "$", "", "Charges by Month", "*", "", "ROW_LABEL=PERIODS,COL_LABEL=TIERS" },
+	/*
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1", "Energy charge without system (TOU) in Jan for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2", "Energy charge without system (TOU) in Jan for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3", "Energy charge without system (TOU) in Jan for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
@@ -942,7 +948,7 @@ static var_info vtab_utility_rate3_tab[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10", "Energy charge without system (TOU) in Jan for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11", "Energy charge without system (TOU) in Jan for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12", "Energy charge without system (TOU) in Jan for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
-
+	*/
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1", "Energy charge without system (TOU) in Feb for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2", "Energy charge without system (TOU) in Feb for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3", "Energy charge without system (TOU) in Feb for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
@@ -1968,6 +1974,8 @@ public:
 			}
 		}
 
+		ssc_number_t *charge_wo_sys_ec_jan_pt = allocate("charge_wo_sys_ec_jan_pt", 12,6); // 12 periods with 6 tiers
+
 
 		// lifetime hourly load
 		ssc_number_t *lifetime_hourly_load = allocate("lifetime_load", nrec_gen);
@@ -2247,6 +2255,9 @@ public:
 						{
 							p_charge_wo_sys_ec_m_p[m][p][t] = monthly_charge_period_tier[m][p][t];
 							p_energy_wo_sys_ec_m_p[m][p][t] = monthly_e_use_period_tier[m][p][t];
+							//testing 
+							if (m==0)
+								charge_wo_sys_ec_jan_pt[p*6+t] = monthly_charge_period_tier[m][p][t];
 						}
 					}
 				}
