@@ -934,7 +934,7 @@ static var_info vtab_utility_rate3_tab[] = {
 // first year outputs only per email from Paul 8/9/15
 
 // charge wo system
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jan_pt", "Energy charge without system (TOU) Jan, per and tier", "$", "", "Charges by Month", "*", "", "ROW_LABEL=PERIODS,COL_LABEL=TIERS" },
+	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jan_pt", "Energy charge without system (TOU) Jan, per and tier", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODS,COL_LABEL=UR_TIERS" },
 	/*
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1", "Energy charge without system (TOU) in Jan for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2", "Energy charge without system (TOU) in Jan for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
