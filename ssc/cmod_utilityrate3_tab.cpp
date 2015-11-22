@@ -934,7 +934,7 @@ static var_info vtab_utility_rate3_tab[] = {
 // first year outputs only per email from Paul 8/9/15
 
 // charge wo system
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jan_pt", "Energy charge without system (TOU) Jan, per and tier", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODS,COL_LABEL=UR_TIERS" },
+	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jan_tp", "Energy charge without system (TOU) Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_TIERS,COL_LABEL=UR_PERIODS,FORMAT_SPEC=CURRENCY" },
 	/*
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1", "Energy charge without system (TOU) in Jan for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2", "Energy charge without system (TOU) in Jan for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
@@ -1974,7 +1974,8 @@ public:
 			}
 		}
 
-		ssc_number_t *charge_wo_sys_ec_jan_pt = allocate("charge_wo_sys_ec_jan_pt", 12,6); // 12 periods with 6 tiers
+//		ssc_number_t *charge_wo_sys_ec_jan_pt = allocate("charge_wo_sys_ec_jan_pt", 12, 6); // 12 periods with 6 tiers
+		ssc_number_t *charge_wo_sys_ec_jan_tp = allocate("charge_wo_sys_ec_jan_tp", 6, 12); // 12 periods with 6 tiers
 
 
 		// lifetime hourly load
@@ -2257,7 +2258,8 @@ public:
 							p_energy_wo_sys_ec_m_p[m][p][t] = monthly_e_use_period_tier[m][p][t];
 							//testing 
 							if (m==0)
-								charge_wo_sys_ec_jan_pt[p*6+t] = monthly_charge_period_tier[m][p][t];
+								charge_wo_sys_ec_jan_tp[t * 12 + p] = monthly_charge_period_tier[m][p][t];
+//							charge_wo_sys_ec_jan_pt[p * 6 + t] = monthly_charge_period_tier[m][p][t];
 						}
 					}
 				}
