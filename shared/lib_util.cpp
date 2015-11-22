@@ -16,6 +16,7 @@
 
 #include "lib_util.h"
 
+#include <cmath>
 #ifdef _MSC_VER
 /* taken from wxMSW-2.9.1/include/wx/defs.h - appropriate for Win32/Win64 */
 #define va_copy(d, s) ((d)=(s))
