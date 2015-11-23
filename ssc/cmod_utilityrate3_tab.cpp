@@ -713,7 +713,12 @@ static var_info vtab_utility_rate3_tab[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_wo_sys", "Utility bill without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 
+	// convert annual outputs from Arrays to Matrices years x months
+	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_w_sys_ym", "Utility bill with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+
+	
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jan", "Utility bill with system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	/*
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_feb", "Utility bill with system in Feb", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_mar", "Utility bill with system in Mar", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_apr", "Utility bill with system in Apr", "$", "", "Charges by Month", "*", "", "" },
@@ -725,6 +730,8 @@ static var_info vtab_utility_rate3_tab[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_oct", "Utility bill with system in Oct", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_nov", "Utility bill with system in Nov", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_dec", "Utility bill with system in Dec", "$", "", "Charges by Month", "*", "", "" },
+	*/
+
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys", "Utility bill with system", "$", "", "Charges by Month", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jan", "Utility bill without system in Jan", "$", "", "Charges by Month", "*", "", "" },
@@ -851,6 +858,7 @@ static var_info vtab_utility_rate3_tab[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_oct",            "Energy charge with system (TOU) in Oct",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_nov",            "Energy charge with system (TOU) in Nov",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec", "Energy charge with system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
 
@@ -1174,7 +1182,10 @@ public:
 		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears+1);
 		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears+1);
 
+		ssc_number_t *utility_bill_w_sys_ym = allocate("utility_bill_w_sys_ym", nyears + 1,12);
+		
 		ssc_number_t *utility_bill_w_sys_jan = allocate("utility_bill_w_sys_jan", nyears + 1);
+		/*
 		ssc_number_t *utility_bill_w_sys_feb = allocate("utility_bill_w_sys_feb", nyears + 1);
 		ssc_number_t *utility_bill_w_sys_mar = allocate("utility_bill_w_sys_mar", nyears + 1);
 		ssc_number_t *utility_bill_w_sys_apr = allocate("utility_bill_w_sys_apr", nyears + 1);
@@ -1186,8 +1197,9 @@ public:
 		ssc_number_t *utility_bill_w_sys_oct = allocate("utility_bill_w_sys_oct", nyears + 1);
 		ssc_number_t *utility_bill_w_sys_nov = allocate("utility_bill_w_sys_nov", nyears + 1);
 		ssc_number_t *utility_bill_w_sys_dec = allocate("utility_bill_w_sys_dec", nyears + 1);
+		*/
 		ssc_number_t *utility_bill_w_sys = allocate("utility_bill_w_sys", nyears + 1);
-
+		
 
 		ssc_number_t *utility_bill_wo_sys_jan = allocate("utility_bill_wo_sys_jan", nyears + 1);
 		ssc_number_t *utility_bill_wo_sys_feb = allocate("utility_bill_wo_sys_feb", nyears + 1);
@@ -2119,9 +2131,15 @@ public:
 			annual_elec_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
 
 
+			for (j = 0; j < 12; j++)
+			{
+				utility_bill_w_sys_ym[(i+1)*12 + j] = monthly_bill[j];
+				utility_bill_w_sys[i + 1] += monthly_bill[j];
+			}
 
-
+			
 			utility_bill_w_sys_jan[i + 1] = monthly_bill[0];
+			/*
 			utility_bill_w_sys_feb[i + 1] = monthly_bill[1];
 			utility_bill_w_sys_mar[i + 1] = monthly_bill[2];
 			utility_bill_w_sys_apr[i + 1] = monthly_bill[3];
@@ -2145,7 +2163,7 @@ public:
 				+ utility_bill_w_sys_oct[i + 1]
 				+ utility_bill_w_sys_nov[i + 1]
 				+ utility_bill_w_sys_dec[i + 1];
-
+				*/
 
 
 
