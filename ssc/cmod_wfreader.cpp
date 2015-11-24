@@ -56,7 +56,7 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_tdry",             "Average dry bulb temperature",     "'C",           "",                "Weather Reader",      "header_only=0",                        "",     "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_wspd", "Average wind speed", "m/s", "", "Weather Reader", "header_only=0", "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_snow", "Average snow depth", "cm", "", "Weather Reader", "header_only=0", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_snow", "Maximum snow depth", "cm", "", "Weather Reader", "header_only=0", "", "" },
 
 var_info_invalid };
 
