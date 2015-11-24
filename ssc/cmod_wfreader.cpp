@@ -143,7 +143,8 @@ public:
 		ssc_number_t *p_albedo = allocate( "albedo", records );
 
 		double gh_sum = 0.0, dn_sum = 0.0, df_sum = 0.0;
-		double temp_sum = 0.0, wind_sum = 0.0, snow_sum=0.0;
+		double temp_sum = 0.0, wind_sum = 0.0;
+		double snow_max = -1;
 
 		double ts_hour = wfile.step_sec() / 3600.0;
 
@@ -180,15 +181,20 @@ public:
 			df_sum += wf.df * ts_hour;
 			temp_sum += wf.tdry;
 			wind_sum += wf.wspd; 
-			snow_sum += wf.snow;
+			if (!std::isnan(wf.snow) && (wf.snow > snow_max))
+				snow_max = wf.snow;
 		}
 		
+		if (snow_max < 0)
+			snow_max = snow_max = std::numeric_limits<double>::quiet_NaN();
+
+
 		assign( "annual_global", var_data( 0.001 * gh_sum / 365 ));
 		assign( "annual_beam", var_data( 0.001 * dn_sum / 365 ));
 		assign( "annual_diffuse", var_data( 0.001 * df_sum / 365 ));
 		assign( "annual_tdry", var_data( temp_sum / records ));
 		assign("annual_wspd", var_data(wind_sum / records));
-		assign("annual_snow", var_data(snow_sum / records));
+		assign("annual_snow", var_data(snow_max));
 	}
 };
 
