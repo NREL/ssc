@@ -375,6 +375,7 @@ public:
 
 	// Controllers
 	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
+	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	
@@ -441,6 +442,7 @@ protected:
 	double _e_max_charge;
 	double _percent_discharge;
 	double _percent_charge;
+	double _P_target;
 
 	// rapid charge change controller
 	int _t_at_mode; // [minutes]
@@ -486,8 +488,8 @@ protected:
 	bool  _can_discharge;
 	bool  _can_grid_charge;
 	
-	int _mode; // 0 = look ahead, 1 = look behind, 2 = manual dispatch
-	enum {LOOK_AHEAD, LOOK_BEHIND, MANUAL};
+	int _mode; // 0 = look ahead, 1 = look behind, 2 = maintain target power, 3 = manual dispatch
+	enum {LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
 };
 /*
 Automate dispatch classes
@@ -528,22 +530,24 @@ public:
 		int mode);				   // 0/1/2
 	void update_pv_load_data(double *pv, double *load);
 	void update_dispatch(int hour_of_year, int idx);
+	void set_target_power(std::vector<double> target_power);
 	int get_mode();
 
 protected:
 	void initialize(int hour_of_year, int idx );
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
 	void sort_grid(FILE *p, bool debug, int idx );
-	void compute_energy(FILE *p, bool debug, double & E_useful, double & E_max);
-	void target_power(FILE*p, bool debug, double & P_target, double E_useful);
+	void compute_energy(FILE *p, bool debug, double & E_max);
+	void target_power(FILE*p, bool debug, double & P_target, double E_max, int idx);
 	void set_charge(int profile);
 	int set_discharge(FILE *p, bool debug, int hour_of_year, double P_target, double E_max);
 	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max);
 
 
 	dispatch_manual_t * _dispatch;
-	double * _pv;   // [kW]
-	double * _load; // [kW]
+	double * _pv;						 // [kW]
+	double * _load;                      // [kW]
+	std::vector<double> _target_power;   // [kW]
 	int _hour_last_updated;
 	double _dt_hour;
 	int _steps_per_hour;

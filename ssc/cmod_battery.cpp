@@ -70,9 +70,9 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                 "",         "",                     "Battery",       "",                           "",                             "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                              "0/1/2",    "",                    "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power",                                      "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2",    "",                     "Battery",       "?=0",                        "",                             "" },
 
 
 	// Capacity, Voltage, Charge outputs
@@ -190,17 +190,19 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 
 	chem = cm.as_integer( "batt_chem" );
 
-	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent, ngridcharge_percent;
+	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent, ngridcharge_percent, ntarget_powers;
 	ssc_number_t *pcharge = cm.as_array( "dispatch_manual_charge", &ncharge );
 	ssc_number_t *pdischarge = cm.as_array( "dispatch_manual_discharge", &ndischarge );
 	ssc_number_t *pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &ndischarge_percent);
 	ssc_number_t *pgridcharge_percent = cm.as_array("dispatch_manual_percent_gridcharge", &ngridcharge_percent);
 	ssc_number_t *pgridcharge = cm.as_array( "dispatch_manual_gridcharge", &ngridcharge );
+
 	if ( ncharge != 6 || ndischarge != 6 || ngridcharge != 6 )
 		throw compute_module::exec_error("battery", "invalid manual dispatch control vector lengths");
 
 	int discharge_index = 0;
 	int gridcharge_index = 0;
+	;
 	for( size_t i=0;i<6;i++ )
 	{
 		dm_charge[i] = pcharge[i]!=0.0f ? 1 : 0;
@@ -230,7 +232,16 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	size_t m,n;
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
-	if (batt_dispatch == 2)
+	if (batt_dispatch < 3)
+	{
+		m = 12;
+		n = 24 * step_per_hour;
+		dm_dynamic_sched.resize_fill(m, n, 1);
+		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
+		if (batt_dispatch == 2)
+			target_power = cm.as_doublevec("batt_target_power");
+	}
+	else if (batt_dispatch == 3)
 	{
 		ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
 		if (m != 12 || n != 24)
@@ -247,16 +258,10 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 				schedule(i, j) = psched[i * 24 + j];
 			} 
 		}
-	else 
-	{
-		m = 12;
-		n = 24 * step_per_hour;
-		dm_dynamic_sched.resize_fill(m,n,1);
-		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
-	}
-	util::matrix_t<double>  batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
-	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
-		throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
+
+		util::matrix_t<double>  batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
+		if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
+			throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
 
 
 	/* **********************************************************************
@@ -384,7 +389,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 	int nrec;
 	prediction_index = 0;
 	// automatic look ahead
-	if (mode == 0)
+	if (mode == 0 || mode == 2)
 		nrec = nyears * 8760 * step_per_hour;
 	// look behind
 	else if (mode == 1)
@@ -393,7 +398,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 	pv_prediction = new double[nrec];
 	load_prediction = new double[nrec];
 
-	if (mode == 0)
+	if (mode == 0 || mode == 2)
 	{
 		for (int idx = 0; idx != nrec; idx++)
 		{
@@ -402,6 +407,8 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		}
 	}
 	automated_dispatch = new automate_dispatch_t(dispatch_model, nyears, _dt_hour, pv_prediction, load_prediction, mode);
+	if (mode == 2)
+		automated_dispatch->set_target_power(target_power);
 
 }
 battstor::~battstor()
@@ -461,7 +468,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 	{
 		int mode = automated_dispatch->get_mode();
 		// look ahead
-		if (mode == 0)
+		if (mode == 0 || mode == 2)
 			automated_dispatch->update_dispatch(hour_of_year, idx);
 		// look behind
 		else if (mode == 1)

@@ -1188,9 +1188,9 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 	int iprofile = -1;
 	util::month_hour(hour_of_year, m, h);
 	bool is_weekday = util::weekday(hour_of_year);
-    _mode == 2 ? column = h - 1 : column = (h-1)/_dt_hour + step;
+    _mode == MANUAL ? column = h - 1 : column = (h-1)/_dt_hour + step;
 
-	if (!is_weekday & _mode == 2)
+	if (!is_weekday & _mode == MANUAL)
 		iprofile = _sched_weekend(m - 1, column);
 	else
 		iprofile = _sched(m - 1, column);  // 1-based
@@ -1226,21 +1226,21 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 
 	// Is there extra energy from array
 	if (e_pv > e_load)
-	{
+	{	
 		if (_can_charge)
 		{
 			// use all energy available, it will only use what it can handle
 			_pv_to_batt = e_pv - e_load;
 			_e_tofrom_batt = -_pv_to_batt;
 
-			if ( (e_pv - e_load < energyNeededToFill) && _can_grid_charge)
+			if ((e_pv - e_load < energyNeededToFill) && _can_grid_charge)
 				_e_tofrom_batt = -energyNeededToFill;
 		}
 		// if we want to charge from grid without charging from array
 		else if (_can_grid_charge)
 			_e_tofrom_batt = -energyNeededToFill;
 	}
-	// Or, is the demand greater than or equal to what the array provides
+		// Or, is the demand greater than or equal to what the array provides
 	else if (e_load >= e_pv)
 	{
 		// try to discharge full amount.  Will only use what battery can provide
@@ -1248,7 +1248,7 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 		{
 			_e_tofrom_batt = e_load - e_pv;
 			diff = fabs(_Battery->capacity_model()->SOC() - _SOC_min);
-			if ( (diff < tolerance) || _grid_recharge)
+			if ((diff < tolerance) || _grid_recharge)
 			{
 				if (_can_grid_charge)
 				{
@@ -1259,7 +1259,7 @@ void dispatch_manual_t::dispatch(size_t hour_of_year, size_t step, double e_pv, 
 						_grid_recharge = false;
 				}
 			}
-			
+
 		}
 		// if we want to charge from grid
 		else if (_can_grid_charge)
@@ -1330,6 +1330,7 @@ void automate_dispatch_t::update_pv_load_data(double *pv, double *load)
 	_load = load;
 }
 int automate_dispatch_t::get_mode(){return _mode;}
+void automate_dispatch_t::set_target_power(std::vector<double> target_power){ _target_power = target_power; }
 void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 {
 	bool debug = false;
@@ -1353,8 +1354,8 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 		set_charge(profile);
 		
 		// Peak shaving scheme
-		compute_energy(p, debug, E_useful, E_max);
-		target_power(p, debug, P_target, E_useful);
+		compute_energy(p, debug, E_max);
+		target_power(p, debug, P_target, E_max, idx);
 
 		// Set discharge, gridcharge profiles
 		profile = set_discharge(p, debug, hour_of_year, P_target, E_max);
@@ -1380,9 +1381,9 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 0 && idx == 0)
+	if (hour_of_year == 4152 /*&& idx == 0*/)
 	{
-		// debug = true;
+		debug = true;
 		p = fopen("dispatch.txt", "w");
 		fprintf(p, "Hour of Year: %d\t Hour Last Updated: %d \t Steps per Hour: %d\n", hour_of_year, _hour_last_updated, _steps_per_hour);
 		// failed for some reason
@@ -1410,21 +1411,26 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx )
 	std::sort(grid.begin(), grid.end(), byGrid());
 }
 
-void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_useful, double & E_max )
+void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max )
 {
-	E_useful = _dispatch->_Battery->battery_voltage() *(_dispatch->_Battery->battery_charge_total() - _dispatch->_Battery->battery_charge_maximum() *_dispatch->_SOC_min *0.01)*watt_to_kilowatt;
-	//E_useful = _dispatch->_Battery->battery_voltage() *_dispatch->_Battery->battery_charge_maximum()*(_dispatch->_SOC_max-_dispatch->_SOC_min) *0.01 *watt_to_kilowatt;
-	E_max = E_useful; // [kWh]
+	E_max = _dispatch->_Battery->battery_voltage() *_dispatch->_Battery->battery_charge_maximum()*(_dispatch->_SOC_max-_dispatch->_SOC_min) *0.01 *watt_to_kilowatt;
 
 	if (debug)
 	{
-		fprintf(p, "Energy Useful: %.3f\t", E_useful);
+		fprintf(p, "Energy Max: %.3f\t", E_max);
 		fprintf(p, "Battery Voltage: %.3f\n", _dispatch->_Battery->battery_voltage());
 	}
 }
 
-void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, double E_useful )
+void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, double E_useful, int idx)
 {
+	// if target power set, use that
+	if (_target_power.size() > idx && _target_power[idx] > 0)
+	{
+		P_target = _target_power[idx];
+		return;
+	}
+
 	// First compute target power which will allow battery to charge up to E_useful over 24 hour period
 	if (debug)
 		fprintf(p, "Recharge target\t charge_energy\n");

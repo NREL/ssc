@@ -1555,7 +1555,7 @@ public:
 		// setup battery model
 		bool en_batt = as_boolean("en_batt");
 		int batt_dispatch = as_integer("batt_dispatch_choice");
-		bool look_ahead = batt_dispatch == 0;
+		bool look_ahead =  (batt_dispatch == 0 || batt_dispatch == 2);
 		bool look_behind = batt_dispatch == 1;
 		int batt_replacement_option = as_integer("batt_replacement_option");
 		int ac_or_dc = 1; // hard code to ac for now
