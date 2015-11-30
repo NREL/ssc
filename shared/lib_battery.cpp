@@ -1383,7 +1383,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 
 	if (hour_of_year == 4152 /*&& idx == 0*/)
 	{
-		debug = true;
+		// debug = true;
 		p = fopen("dispatch.txt", "w");
 		fprintf(p, "Hour of Year: %d\t Hour Last Updated: %d \t Steps per Hour: %d\n", hour_of_year, _hour_last_updated, _steps_per_hour);
 		// failed for some reason
