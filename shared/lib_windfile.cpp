@@ -113,7 +113,162 @@ static int cmp_ext(const char *file, const char *ext)
 
 #define MBUFLEN 4096
 
+
+winddata_provider::winddata_provider()
+{
+	year = 1900;
+	lat = lon = elev = 0;
+}
+winddata_provider::~winddata_provider()
+{
+	// nothing to do
+}
+
+bool winddata_provider::find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude /* = -1 */ )
+{
+	closest_index = -1;
+	double height_diff = 1e99;
+	for ( size_t i=0;i<m_dataid.size();i++ )
+	{
+		if ( (m_dataid[i] == id) && (i != index_to_exclude) )
+		{
+			if ( fabs(m_heights[i] - requested_height) < height_diff )
+			{
+				if ( index_to_exclude>=0 ) // we're looking for the next closest column for interpolation
+				{	// the next closest measurement height can't be on the same side of requested_height as index_to_exclude
+					if ( (m_heights[i] > requested_height) && (m_heights[index_to_exclude] > requested_height) ) continue;
+					if ( (m_heights[i] < requested_height) && (m_heights[index_to_exclude] < requested_height) ) continue;
+				}
+				closest_index = i;
+				height_diff = fabs(m_heights[i] - requested_height);
+			}
+		}
+	}
+
+	return (closest_index >= 0 && closest_index < ncols);
+}
+
+bool winddata_provider::can_interpolate( int index1, int index2, int ncols, double requested_height )
+{
+	if ( index1<0 || index2<0 ) return false;
+	if ( index1>=ncols || index2>=ncols ) return false;
+	if ( m_heights[index1]<requested_height && requested_height<m_heights[index2] ) return true; // height 1 < height 2
+	if ( m_heights[index1]>requested_height && requested_height>m_heights[index2] ) return true; // height 1 > height 2
+
+	return false;
+}
+
+bool winddata_provider::read( double requested_height,
+	double *speed,
+	double *direction,
+	double *temperature,
+	double *pressure,
+	double *closest_speed_meas_height_in_file,
+	double *closest_dir_meas_height_in_file,
+	bool bInterpolate /*= false*/)
+{	
+	std::vector<double> values;
+	if ( !read_line( values ) )
+		return false;
+	
+	if (values.size() < m_heights.size() || values.size() < m_dataid.size())
+		return false;
+
+	size_t ncols = values.size();
+
+	*speed = *direction = *temperature = *pressure = *closest_speed_meas_height_in_file = *closest_dir_meas_height_in_file = std::numeric_limits<double>::quiet_NaN();
+
+	int index = -1, index2 = -1;
+	if ( find_closest(index, SPEED, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, SPEED, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+		{
+			*speed = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+			*closest_speed_meas_height_in_file = requested_height;
+		}
+		else
+		{
+			*speed = values[index];
+			*closest_speed_meas_height_in_file = m_heights[index];
+		}
+	}
+
+	if (find_closest(index, DIR, ncols, requested_height) )
+	{
+		// interpolating direction is a little more complicated
+		double dir1, dir2, angle;
+		double ht1, ht2;
+		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
+		if ( interp_direction )
+		{
+			dir1 = (values[index]<360) ? values[index] : 0; // set any 360 deg values to zero
+			dir2 = (values[index2]<360) ? values[index2] : 0;
+			ht1 = m_heights[index];
+			ht2 = m_heights[index2];
+			if (dir1>dir2)
+			{	// swap
+				double temp = dir2;
+				dir2=dir1;
+				dir1 = temp;
+				temp = ht2;
+				ht2 = ht1;
+				ht1 = temp;
+			}
+			angle = ( (dir2-dir1) < 180 ) ? (dir2-dir1) : 360.0 - (dir2-dir1);
+			interp_direction &= (angle <= 180 ); // not sure if it makes sense to 'interpolate' between directions that are 180 deg apart?
+		}
+		
+		if (interp_direction)
+		{
+			// special case when interpolating across straight north (0 degrees)
+			if (dir1<90 && dir2>270) 
+			{
+				*direction = util::interpolate(ht1, dir1+90.0, ht2, dir2-270.0, requested_height)-90.0;
+				if (*direction<0) *direction += 360.0;
+			}
+			else
+				*direction = util::interpolate(ht1, dir1, ht2, dir2, requested_height);
+
+			*closest_dir_meas_height_in_file = requested_height;
+		}
+		else
+		{
+			*direction = values[index];
+			*closest_dir_meas_height_in_file = m_heights[index];
+		}
+	}
+
+	if ( find_closest(index, TEMP, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, TEMP, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+			*temperature = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+		else
+			*temperature = values[index];
+	}
+
+	if ( find_closest(index, PRES, ncols, requested_height) )
+	{
+		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, PRES, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
+			*pressure = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
+		else
+			*pressure = values[index];
+	}
+
+	bool found_all 
+		= !my_isnan( *speed )
+		&& !my_isnan( *direction )
+		&& !my_isnan( *temperature )
+		&& !my_isnan( *pressure );
+
+	return found_all;
+
+}
+
+
+
+
 windfile::windfile()
+	: winddata_provider()
 {
 	m_buf = new char[MBUFLEN];
 	m_fp = 0;
@@ -121,6 +276,7 @@ windfile::windfile()
 }
 
 windfile::windfile( const std::string &file )
+	: winddata_provider()
 {
 	m_buf = new char[MBUFLEN];
 	m_fp = 0;
@@ -267,167 +423,22 @@ void windfile::close()
 	lat = lon = elev = 0.0;
 }
 
-
-std::vector<double> windfile::read()
+bool windfile::read_line( std::vector<double> &values )
 {
-	char *cols[128];	
-	std::vector<double> values;
+	if ( !ok() ) return false;
+
+	char *cols[128];
 	fgets( m_buf, MBUFLEN-1, m_fp );
-	int ncols = locate2( m_buf, cols, 128, ',' );
-	
+	int ncols = locate2( m_buf, cols, 128, ',' );	
 	if (ncols >= m_heights.size() 
 		&& ncols >= m_dataid.size())
 	{
 		values.resize( m_heights.size(), 0.0 );
 		for (size_t i=0;i<m_heights.size();i++)
 			values[i] = atof( cols[i] );
+
+		return true;
 	}
-
-	return values;
-}
-
-bool windfile::read( double requested_height,
-	double *speed,
-	double *direction,
-	double *temperature,
-	double *pressure,
-	double *closest_speed_meas_height_in_file,
-	double *closest_dir_meas_height_in_file,
-	bool bInterpolate /*= false*/)
-{
-	char *cols[128];	
-	double values[128];
-	if ( !ok() ) return false;
-	
-	fgets( m_buf, MBUFLEN-1, m_fp );
-	int ncols = locate2( m_buf, cols, 128, ',' );
-
-	if (ncols < (int)m_heights.size() || ncols < (int)m_dataid.size())
+	else
 		return false;
-
-	ncols = m_heights.size();
-
-	for ( int i=0;i<ncols;i++ )
-		values[i] = atof( cols[i] );
-
-	*speed = *direction = *temperature = *pressure = *closest_speed_meas_height_in_file = *closest_dir_meas_height_in_file = std::numeric_limits<double>::quiet_NaN();
-
-	int index = -1, index2 = -1;
-	if ( find_closest(index, SPEED, ncols, requested_height) )
-	{
-		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, SPEED, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
-		{
-			*speed = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
-			*closest_speed_meas_height_in_file = requested_height;
-		}
-		else
-		{
-			*speed = values[index];
-			*closest_speed_meas_height_in_file = m_heights[index];
-		}
-	}
-
-	if (find_closest(index, DIR, ncols, requested_height) )
-	{
-		// interpolating direction is a little more complicated
-		double dir1, dir2, angle;
-		double ht1, ht2;
-		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
-		if ( interp_direction )
-		{
-			dir1 = (values[index]<360) ? values[index] : 0; // set any 360 deg values to zero
-			dir2 = (values[index2]<360) ? values[index2] : 0;
-			ht1 = m_heights[index];
-			ht2 = m_heights[index2];
-			if (dir1>dir2)
-			{	// swap
-				double temp = dir2;
-				dir2=dir1;
-				dir1 = temp;
-				temp = ht2;
-				ht2 = ht1;
-				ht1 = temp;
-			}
-			angle = ( (dir2-dir1) < 180 ) ? (dir2-dir1) : 360.0 - (dir2-dir1);
-			interp_direction &= (angle <= 180 ); // not sure if it makes sense to 'interpolate' between directions that are 180 deg apart?
-		}
-		
-		if (interp_direction)
-		{
-			// special case when interpolating across straight north (0 degrees)
-			if (dir1<90 && dir2>270) 
-			{
-				*direction = util::interpolate(ht1, dir1+90.0, ht2, dir2-270.0, requested_height)-90.0;
-				if (*direction<0) *direction += 360.0;
-			}
-			else
-				*direction = util::interpolate(ht1, dir1, ht2, dir2, requested_height);
-
-			*closest_dir_meas_height_in_file = requested_height;
-		}
-		else
-		{
-			*direction = values[index];
-			*closest_dir_meas_height_in_file = m_heights[index];
-		}
-	}
-
-	if ( find_closest(index, TEMP, ncols, requested_height) )
-	{
-		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, TEMP, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
-			*temperature = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
-		else
-			*temperature = values[index];
-	}
-
-	if ( find_closest(index, PRES, ncols, requested_height) )
-	{
-		if ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, PRES, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  )
-			*pressure = util::interpolate(m_heights[index], values[index], m_heights[index2], values[index2], requested_height);
-		else
-			*pressure = values[index];
-	}
-
-	bool found_all 
-		= !my_isnan( *speed )
-		&& !my_isnan( *direction )
-		&& !my_isnan( *temperature )
-		&& !my_isnan( *pressure );
-
-	return found_all;
-
-}
-
-bool windfile::find_closest( int& closest_index, int id, int ncols, double requested_height, int index_to_exclude /* = -1 */ )
-{
-	closest_index = -1;
-	double height_diff = 1e99;
-	for ( size_t i=0;i<m_dataid.size();i++ )
-	{
-		if ( (m_dataid[i] == id) && (i != index_to_exclude) )
-		{
-			if ( fabs(m_heights[i] - requested_height) < height_diff )
-			{
-				if ( index_to_exclude>=0 ) // we're looking for the next closest column for interpolation
-				{	// the next closest measurement height can't be on the same side of requested_height as index_to_exclude
-					if ( (m_heights[i] > requested_height) && (m_heights[index_to_exclude] > requested_height) ) continue;
-					if ( (m_heights[i] < requested_height) && (m_heights[index_to_exclude] < requested_height) ) continue;
-				}
-				closest_index = i;
-				height_diff = fabs(m_heights[i] - requested_height);
-			}
-		}
-	}
-
-	return (closest_index >= 0 && closest_index < ncols);
-}
-
-bool windfile::can_interpolate( int index1, int index2, int ncols, double requested_height )
-{
-	if ( index1<0 || index2<0 ) return false;
-	if ( index1>=ncols || index2>=ncols ) return false;
-	if ( m_heights[index1]<requested_height && requested_height<m_heights[index2] ) return true; // height 1 < height 2
-	if ( m_heights[index1]>requested_height && requested_height>m_heights[index2] ) return true; // height 1 > height 2
-
-	return false;
 }

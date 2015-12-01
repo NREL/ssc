@@ -6,7 +6,9 @@
 
 static var_info _cm_vtab_windpower[] = {
 //	  VARTYPE           DATATYPE         NAME                                       LABEL                                  UNITS     META     GROUP             REQUIRED_IF                                 CONSTRAINTS                                        UI_HINTS
-	{ SSC_INPUT,        SSC_STRING,      "wind_resource_filename",                  "local SWRF file path",		           "",       "",      "WindPower",      "*",                                        "LOCAL_FILE",                                       "" },
+	{ SSC_INPUT,        SSC_STRING,      "wind_resource_filename",                  "local wind data file path",           "",       "",      "WindPower",      "?",                                        "LOCAL_FILE",                                       "" },
+	{ SSC_INPUT,        SSC_TABLE,       "wind_resource_data",                      "wind resouce data in memory",         "",       "",      "WindPower",      "?",                                        "",                                                 "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_shear",                     "Shear exponent",                      "",       "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_turbulence_coeff",          "Turbulence coefficient",              "%",      "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "system_capacity",							"Nameplate capacity",				   "kW",	 "",	  "WindPower",		"*",										"",													"" },
@@ -54,6 +56,91 @@ static var_info _cm_vtab_windpower[] = {
 
 
 var_info_invalid };
+
+class winddata : public winddata_provider
+{
+	size_t irecord;
+	util::matrix_t<float> data;
+public:
+	winddata( var_data *data_table )
+	{
+		irecord = 0;
+
+		if ( data_table->type != SSC_TABLE ) 
+		{
+			m_errorMsg = "wind data must be an SSC table variable with fields: "
+				"(number): lat, lon, elev, year, "
+				"(array): heights, fields (temp=1,pres=2,speed=3,dir=4), "
+				"(matrix): data (8760 x Nheights)";
+			return;
+		}
+		
+		lat = get_number( data_table, "lat" );
+		lon = get_number( data_table, "lon" );
+		elev = get_number( data_table, "elev" );
+		year = get_number( data_table, "year" );
+
+		size_t len = 0;
+		ssc_number_t *p = get_vector( data_table, "heights", &len );
+		for( size_t i=0;i<len;i++ )
+			m_heights.push_back( (double)p[i] );
+
+		p = get_vector( data_table, "fields", &len );
+		for( size_t i=0;i<len;i++ )
+			m_dataid.push_back( (int)p[i] );
+
+		if ( m_dataid.size() != m_heights.size() || m_heights.size() == 0 ) return;
+
+		if ( var_data *D = data_table->table.lookup("data") )
+			if ( D->type == SSC_MATRIX )
+				data = D->num;
+	}
+	
+	ssc_number_t get_number( var_data *v, const char *name )
+	{
+		if ( var_data *value = v->table.lookup( name ) )
+		{
+			if ( value->type == SSC_NUMBER )
+				return value->num;
+		}
+
+		return std::numeric_limits<ssc_number_t>::quiet_NaN();
+	}
+
+	ssc_number_t *get_vector( var_data *v, const char *name, size_t *len )
+	{
+		ssc_number_t *p = 0;
+		*len = 0;
+		if ( var_data *value = v->table.lookup( name ) )
+		{
+			if ( value->type == SSC_ARRAY )
+			{
+				*len = value->num.length();
+				p = value->num.data();
+			}
+		}
+		return p;
+	}
+
+	virtual ~winddata()
+	{
+		// nothing to do
+	}
+	
+	virtual bool read_line( std::vector<double> &values )
+	{
+		if (irecord >= data.nrows() 
+			|| data.ncols() == 0 
+			|| data.nrows() == 0 ) return false;
+
+		values.resize( data.ncols(), 0.0 );
+		for( int j=0;j<data.ncols();j++ )
+			values[j] = (double) data(irecord,j);
+
+		irecord++;
+		return true;
+	}
+};
 
 class cm_windpower : public compute_module
 {
@@ -158,10 +245,28 @@ public:
 			return;
 		}
 
-		const char *file = as_string("wind_resource_filename");
-		windfile wf(file);		
-		if (!wf.ok()) 
-			throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wf.error());
+		std::auto_ptr<winddata_provider> wdprov;
+		if ( is_assigned( "wind_resource_filename" ) )
+		{
+			const char *file = as_string("wind_resource_filename");
+
+			// read the wind data file
+			windfile *wp = new windfile(file);
+
+			// assign the pointer
+			wdprov = std::auto_ptr<winddata_provider>( wp );
+
+			// make sure it's OK
+			if (!wp->ok()) 
+				throw exec_error("windpower", "failed to read local weather file: " + std::string(file) + " " + wp->error());
+		}
+		else if ( is_assigned( "wind_resource_data" ) )
+		{
+			wdprov = std::auto_ptr<winddata_provider>( new winddata( lookup("wind_resource_data") ) );
+		}
+		else
+			throw exec_error("windpower", "no wind resource data supplied");
+
 		
 		/* wind_turbine_ctl_mode hardwired to '2'.  apparently not implemented
 		  correctly for modes 0 and 1, so no point exposing it.
@@ -215,8 +320,8 @@ public:
 			// if wf.read is set to interpolate (last input), and it's able to do so, then it will set wpc.m_dMeasurementHeight equal to hub_ht
 			// direction will not be interpolated, pressure and temperature will be if possible
 			double wind, dir, temp, pres, closest_dir_meas_ht;
-			if (!wf.read( wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
-				throw exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wf.error() );
+			if (!wdprov->read( wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
+				throw exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error() );
 
 			if ( fabs(wpc.m_dMeasurementHeight - wpc.m_dHubHeight) > 35.0 )
 				throw exec_error( "windpower", util::format("the closest wind speed measurement height (%lg m) found is more than 35 m from the hub height specified (%lg m)", wpc.m_dMeasurementHeight, wpc.m_dHubHeight ));
