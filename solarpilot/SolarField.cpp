@@ -14,10 +14,6 @@
 #include <algorithm>
 #include "exceptions.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
 
 //-------Access functions
 //"GETS"
@@ -30,6 +26,7 @@ Land *SolarField::getLandObject(){return &_land;}
 Ambient *SolarField::getAmbientObject(){return &_ambient;}
 Flux *SolarField::getFluxObject(){return _flux;}
 Financial *SolarField::getFinancialObject(){return &_financial;}
+FluxSimData *SolarField::getFluxSimObject(){return &_fluxsim;}
 Plant *SolarField::getPlantObject(){return &_plant;}
 htemp_map *SolarField::getHeliostatTemplates(){return &_helio_templates;}
 Hvector *SolarField::getHeliostats(){return &_heliostats;}
@@ -170,11 +167,14 @@ SolarField::SolarField( const SolarField &sf )
 	_zone_div_tol( sf._zone_div_tol ),
 	_estimated_annual_power( sf._estimated_annual_power ),
 	_q_des_withloss( sf._q_des_withloss ),
+    _temp_which( sf._temp_which ),
+    _trans_limit_fact( sf._trans_limit_fact),
 
 	//classes
 	_ambient( sf._ambient ),
 	_land( sf._land ),
 	_financial( sf._financial ),
+    _fluxsim( sf._fluxsim ),
 	_plant( sf._plant )
 {
 	//------- Reconstruct pointer maps, etc ----------
@@ -322,7 +322,8 @@ void SolarField::Create(var_set &V, int var_index){
 	setVar("sun_loc_des_el", _sun_loc_des_el, V["solarfield"][var_index], 85., "[0.,90]");		//Solar elevation angle at the design point
 	setVar("az_spacing", _az_spacing, V["solarfield"][var_index], 2., "[1.,1000.]");		//Azimuthal spacing factor for the first row of heliostats after a reset. Heliostats separated by heliostat width times this factor.
 	setVar("spacing_reset", _spacing_reset, V["solarfield"][var_index], 1.33, "(1.,1000.]");		//For heliostat layout - ratio of maximum to initial azimuthal spacing before starting new compressed row
-	setVar("layout_method", _layout_method, V["solarfield"][var_index], 1, "[0,99]");		//Field layout method
+	setVar("trans_limit_fact", _trans_limit_fact, V["solarfield"][var_index], 0.92, "[0,999]");		//Determines the point at which close-packing switches to standard layout. =1 at no-blocking transition limit.
+    setVar("layout_method", _layout_method, V["solarfield"][var_index], 1, "[0,99]");		//Field layout method
 	setVar("layout_data", _layout_data, V["solarfield"][var_index], "");		//Layout data in string form
 	setVar("max_zone_size_rad", _max_zone_size_rad, V["solarfield"][var_index], 1., "(0,100]");		//Maximum zone size (radial direction) for grouping optical intercept factor calculations
 	setVar("max_zone_size_az", _max_zone_size_az, V["solarfield"][var_index], 1., "(0,100]");		//Maximum zone size (azimuthal direction) for grouping optical intercept factor calculations
@@ -352,7 +353,8 @@ void SolarField::Create(var_set &V, int var_index){
 	setVar("is_power_restrict", _is_power_restrict, V["solarfield"][var_index], false);		//Restrict the search range for power output to the indicated limits
 	setVar("is_tht_restrict", _is_tht_restrict, V["solarfield"][var_index], true);		//Restrict the search range for tower height to the indicated limits
 	setVar("template_rule", _template_rule, V["solarfield"][var_index], 0);		//Method for distributing heliostat geometry templates in the field
-	setVar("hsort_method", _hsort_method, V["solarfield"][var_index], 7);		//Select the criteria by which heliostats will be included in the solar field layout.
+	setVar("temp_which", _temp_which, V["solarfield"][var_index], 0);		//Select the heliostat geometry template that will be used in the layout
+    setVar("hsort_method", _hsort_method, V["solarfield"][var_index], 7);		//Select the criteria by which heliostats will be included in the solar field layout.
 
 	//Unit conversions
 	_accept_max *= d2r;
@@ -360,11 +362,29 @@ void SolarField::Create(var_set &V, int var_index){
 	
 	setAimpointStatus(false);	//the aimpoints have not yet been calculated
 	
-	//Heliostat variables
-	int i=0, nh = V["heliostat"].size();
-	_helio_template_objects.resize(nh);
+	//-- Heliostat variables --
+    //establish template order, if needed
+    vector<int> 
+        tnum,
+        tord;
+    int i=0;
+    //create vectors of the template numbers and template orders
 	for(map<int, var_map>::iterator it=V["heliostat"].begin(); it != V["heliostat"].end(); it++){
-		_helio_template_objects.at(i).Create(V["heliostat"][ it->first ]);
+        tnum.push_back(it->first);
+        tord.push_back(it->second["template_order"].value_int() );
+    }
+    //Sort by template order, correlate with template number vector
+    if(tord.size() > 1 )
+        quicksort(tord, tnum, 0, (int)tord.size()-1 );
+
+    //Instantiate the template objects in order
+	i=0;
+    int nh = V["heliostat"].size();
+	_helio_template_objects.resize(nh);
+    for(int j=0; j<nh; j++)
+    {
+		_helio_template_objects.at(i).Create(V["heliostat"][ tnum.at(j) ]);
+        _helio_template_objects.at(i).setType( tnum.at(j) ); //assign the template type integer
 		_helio_templates[ i ] = &_helio_template_objects.at(i);
 		i++;
 	}
@@ -405,6 +425,9 @@ void SolarField::Create(var_set &V, int var_index){
 	double ext[2];
 	_land.getExtents(ext, _tht);
 	_clouds.Create(V["fluxsim"][0], ext);
+
+    //Fluxsim
+    _fluxsim.Create(V["fluxsim"][0]);
 
 	_is_created = true;
 	
@@ -835,8 +858,12 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 	Ambient *ambient = SF.getAmbientObject();
 	SF.getFluxObject()->initHermiteCoefs( *ambient );
 	//Calculate the Hermite geometry coefficients for each template
-	for(htemp_map::iterator it=SF.getHeliostatTemplates()->begin(); it != SF.getHeliostatTemplates()->end(); it++){
-		SF.getFluxObject()->hermiteMirrorCoefs(*it->second, SF.getTowerHeight() );
+	for(htemp_map::iterator htemp=SF.getHeliostatTemplates()->begin(); 
+                            htemp != SF.getHeliostatTemplates()->end(); 
+                            htemp++)
+    {
+        if( htemp->second->IsEnabled() )
+		    SF.getFluxObject()->hermiteMirrorCoefs(*htemp->second, SF.getTowerHeight() );
 	}
 
 	//Calculate available heliostat positions
@@ -885,7 +912,96 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		for(int i=0; i<nd; i++){
 			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
 		}
+
+        //check for problems here
+        if(HelPos.size() == 0 )
+            throw spexception("The specified land boundaries resulted in an infeasible design. "
+                              "No heliostats could be placed in the layout set. Please review "
+                              "your settings for land constraints.");
 	}
+    /* 
+    
+    enforce other exclusions (receiver acceptance, receiver cylinder
+    
+    */
+
+    //receiver diameter - delete heliostats that fall within the diameter of the receiver
+    if(SF.getReceivers()->size() == 1 
+        && SF.getReceivers()->front()->getReceiverType() == Receiver::REC_TYPE::CYLINDRICAL)
+    {
+        vector<int> dels;
+        for(size_t j=0; j<HelPos.size(); j++){
+            double x = HelPos.at(j).x;
+            double y = HelPos.at(j).y;
+            double h_rad = sqrt(x*x + y*y);
+
+            if( h_rad < SF.getReceivers()->front()->getReceiverWidth()/2.)
+                dels.push_back(j);                        
+        }
+        //Delete in reverse order
+		int nd = dels.size();
+		for(int i=0; i<nd; i++){
+			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
+		}
+    }
+    //Receiver span angles
+    if(SF.getReceivers()->size() == 1){
+        vector<int> dels;
+        //receiver acceptance angle
+        Receiver *Rec = SF.getReceivers()->front();
+
+        int rectype = Rec->getReceiverType();
+        int j=0;
+        for(vector<Point>::iterator hpos = HelPos.begin(); hpos != HelPos.end(); hpos++){
+
+            if(rectype == Receiver::REC_TYPE::FLAT_PLATE || rectype == Receiver::REC_TYPE::CAVITY){
+		        PointVect rnv;
+		        Rec->CalculateNormalVector(rnv);
+
+                //calculate the vector from the receiver to the heliostat
+                Point offset;
+                double tht = Rec->getOpticalHeight(); //SF.getTowerHeight();
+                Rec->getReceiverOffset(offset);
+                Vect hv_r;
+                hv_r.i = hpos->x - offset.x;
+                hv_r.j = hpos->y - offset.y;
+                hv_r.k = hpos->z - tht;
+                Toolbox::unitvect(hv_r);
+
+                //Rotate into receiver aperture coordinates
+		        double raz = Rec->getReceiverAzimuth();
+		        double rel = Rec->getReceiverElevation();
+		        
+                Toolbox::rotation(SF.pi - raz, 2, hv_r);
+		        Toolbox::rotation(SF.pi - rel, 0, hv_r);
+
+		        double theta_x = atan2(hv_r.i, hv_r.j);
+		        double theta_y = atan2(hv_r.k, sqrt(hv_r.i*hv_r.i + hv_r.j*hv_r.j));
+
+		        //check whether the angles are within the allowable range
+		        double acc_x, acc_y;
+		        Rec->getAcceptAngles(acc_x, acc_y);
+		        acc_x *= 0.5;
+		        acc_y *= 0.5;
+		        if(Rec->getAcceptAngleType() == 0){ //Rectangular
+			        if(! (fabs(theta_x) < acc_x && fabs(theta_y) < acc_y))
+				        dels.push_back(j);
+		        }
+		        else{	//Elliptical
+			        if( (theta_x*theta_x / (acc_x * acc_x) + theta_y*theta_y / (acc_y * acc_y)) > 1. )
+				        dels.push_back(j);
+		        }
+	        }
+            j++;
+        }
+        //Delete in reverse order
+		int nd = dels.size();
+		for(int i=0; i<nd; i++){
+			HelPos.erase( HelPos.begin()+ dels.at(nd-1-i) );
+		}
+    }
+
+    //--------------------
 
 	if(layout_method == 3 || refresh_only)
 		//update the layout positions in the land object here since the post-process call isn't made after this
@@ -939,7 +1055,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		else{
 			//User defined layouts - need to check for user defined canting and focusing
 			if(layout->at(i).is_user_cant) {
-				cant_method = Heliostat::CANT_METHOD::USER;
+				cant_method = Heliostat::CANT_TYPE::USER_VECTOR;
 				hptr->IsUserCant( true );
 			}
 			else{
@@ -948,7 +1064,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 			}
 
 			if(layout->at(i).is_user_focus) {
-				focus_method = Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR;	//user defined
+				focus_method = 3;	//user defined
 			}
 			else{
 				focus_method = hptr->getFocusMethod();
@@ -968,6 +1084,8 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 				SF.getFluxObject()->simpleAimPoint(*hptr, SF); //Calculate simple aim point first to associate heliostat with receiver.
 				Aim = layout->at(i).aim;	//Assign the specified aim point
 				hptr->setAimPoint(Aim);		
+                //update the image plan aim point
+                SF.getFluxObject()->keepExistingAimPoint(*hptr, SF, 0);
 			}
 			else{	
 				SF.getFluxObject()->simpleAimPoint(*hptr, SF);
@@ -983,8 +1101,19 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		//Aim points have been set
 		SF.setAimpointStatus(true);
 
+        //calculate and update the heliostat-to-tower vector
+        Vect htow;
+        htow.Set( Aim.x - hpx, Aim.y - hpy, Aim.z - hpz);
+        
 		//Calculate the slant range.. This should be the exact slant range.
-		double slant = sqrt(pow(Aim.x - hpx,2) + pow(Aim.y - hpy,2) + pow(Aim.z - hpz,2));
+		//double slant = sqrt(pow(Aim.x - hpx,2) + pow(Aim.y - hpy,2) + pow(Aim.z - hpz,2));
+        double slant = Toolbox::vectmag( htow );
+
+        //update the tower vector as a unit vector
+        Toolbox::unitvect(htow);
+        //Set the tower vector
+        hptr->setTowerVector( htow );
+
 		double crad;
 		Reflector *cpanel;
 		Point *pos;
@@ -992,45 +1121,63 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 
 		hptr->setSlantRange( slant );
 		
-		//Choose how to cant the heliostat
         switch (cant_method)
         {
-        case Heliostat::CANT_METHOD::NONE:
+        case Heliostat::CANT_TYPE::FLAT:
 			hptr->setCantRadius( 9.e99 );
             break;
-        case Heliostat::CANT_METHOD::AT_SLANT:
+        case Heliostat::CANT_TYPE::AT_SLANT:
 			hptr->setCantRadius( slant );
             break;
-        case Heliostat::CANT_METHOD::ON_AXIS_UD:    //User-defined on axis canting, length in meters
-        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
+        case Heliostat::CANT_TYPE::ON_AXIS_USER:
             //do nothing
             break;
-        case Heliostat::CANT_METHOD::USER:
+        case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+            break;
+        case Heliostat::CANT_TYPE::USER_VECTOR:
         {
-            crad = sqrt( pow(layout->at(i).cant.i, 2) + pow(layout->at(i).cant.j,2) + pow(layout->at(i).cant.k,2) );
-			hptr->setCantRadius( crad );
-			hptr->IsUserCant( true );
-			//Calculate the cant vector for each panel
-			for(unsigned int j=0; j<hptr->getPanels()->nrows(); j++){
-				for(unsigned int m=0; m<hptr->getPanels()->ncols(); m++){
-					cpanel = &hptr->getPanels()->at(j,m);	//Point to the panel
-					pos = cpanel->getOrientation()->point();	//Get the panel position object
-					//un-normalized vector from the cant location to the aim point (relative to heliostat coordinates)
-					vec.Set( layout->at(i).cant.i - pos->x, layout->at(i).cant.j - pos->y, layout->at(i).cant.k - pos->z );	
-					//normalize the vector
-					Toolbox::unitvect( vec );
-					cpanel->setAim( vec );
-				}
-			}
+                   //     if(layout_method == 3 || refresh_only)
+       //     {
+			    //crad = sqrt( pow(layout->at(i).cant.i, 2) + pow(layout->at(i).cant.j,2) + pow(layout->at(i).cant.k,2) );
+			    //hptr->setCantRadius( crad );
+			    //hptr->IsUserCant( true );
+			    ////Calculate the cant vector for each panel
+			    //for(unsigned int j=0; j<hptr->getPanels()->nrows(); j++){
+				   // for(unsigned int m=0; m<hptr->getPanels()->ncols(); m++){
+					  //  cpanel = &hptr->getPanels()->at(j,m);	//Point to the panel
+					  //  pos = cpanel->getOrientation()->point();	//Get the panel position object
+					  //  //un-normalized vector from the cant location to the aim point (relative to heliostat coordinates)
+					  //  vec.Set( layout->at(i).cant.i - pos->x, layout->at(i).cant.j - pos->y, layout->at(i).cant.k - pos->z );	
+					  //  //normalize the vector
+					  //  Toolbox::unitvect( vec );
+					  //  cpanel->setAim( vec );
+				   // }
+			    //}
+       //     }
+       //     else
+            //{
+                double crad = hptr->getCantVectScale();
+                hptr->setCantRadius( crad );
+                hptr->IsUserCant(false);
+
+                //Calculate the cant vector for each panel
+			    for(unsigned int j=0; j<hptr->getPanels()->nrows(); j++){
+				    for(unsigned int m=0; m<hptr->getPanels()->ncols(); m++){
+					    cpanel = &hptr->getPanels()->at(j,m);	//Point to the panel
+					    pos = cpanel->getOrientation()->point();	//Get the panel position object
+					    //un-normalized vector from the cant location to the aim point (relative to heliostat coordinates)
+                        Vect* hcant = hptr->getCantVector();
+					    vec.Set( hcant->i - pos->x, hcant->j - pos->y, hcant->k - pos->z );	
+					    //normalize the vector
+					    Toolbox::unitvect( vec );
+					    cpanel->setAim( vec );
+				    }
+			    }
+            //}
             break;
         }
         default:
-            {   
-            stringstream msg;
-            msg << "Invalid Cant Method specified in PrepareFieldLayout algorithm. Method specified: " << cant_method << ".";
-            throw spexception(msg.str());
             break;
-            }   
         }
 
 
@@ -1052,8 +1199,10 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 			break;
 		}
 
+        
+
 		//Construct the panel(s) on the heliostat
-		hptr->installPanels();
+        hptr->installPanels();
 
 		//Assign a unique ID to the heliostat
 		hptr->setId(i);
@@ -1287,17 +1436,27 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	int rid = getHelioSortMethod();
 	
 	int nresults = (int)results->size();
-	for(int i=0; i<Npos; i++){
+
+    //compile the results from each simulation by heliostat
+    for(int i=0; i<Npos; i++){
 		int hid = _heliostats.at(i)->getId();	//use the heliostat ID from the first result to collect all of the other results
-		rmet = 0.;
-		for(int j=0; j<nresults; j++){
-			rmet += results->at(j).data_by_helio[ hid ].getDataByIndex( rid )/(float)nresults;
-		}
-		_helio_by_id[hid]->setRankingMetricValue(rmet);
-		hsort.at(i) = rmet;
+		rmet = 0.;      //ranking metric
+		for(int j=0; j<nresults; j++)
+            rmet += results->at(j).data_by_helio[ hid ].getDataByIndex( rid );      //accumulate ranking metric as specified in rid
+
+        //normalize for available heliostat power if applicable
+        double afact = 1.;
+        if( rid == helio_perf_data::PERF_VALUES::POWER_TO_REC || rid == helio_perf_data::PERF_VALUES::POWER_VALUE )
+            afact = _heliostats.at(i)->getArea();
+        
+        double rank_val = rmet / (afact*(float)nresults);       //Calculate the normalized ranking metric. Divide by heliostat area if needed
+		
+        _helio_by_id[hid]->setRankingMetricValue( rank_val );   //store the value
+		hsort.at(i) = rank_val;                                 //also store in the sort array
 		
 	}
 
+    //quicksort by ranking metric value. Correlate _heliostats vector
 	quicksort(hsort, _heliostats, 0, Npos-1);
 
     //Simulate the default design point to ensure equal comparison
@@ -1310,25 +1469,6 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         return;
     }
 	
-
-    /*ofstream fout("C:/Users/mwagner/Documents/NREL/SAM/Tower development/Generic-Tower-Macro/Mark2/hdata.csv");
-    fout.clear();
-    
-    fout << "X,Y,Atten,Block,Shad,Cos,Int,Tot,Pow\n";
-
-    for(int i=0; i<Npos; i++){
-        fout << _heliostats.at(i)->getLocation()->x << ","
-             << _heliostats.at(i)->getLocation()->y << ","
-             << _heliostats.at(i)->getEfficiencyAtten() << "," 
-             << _heliostats.at(i)->getEfficiencyBlock() << ","
-             << _heliostats.at(i)->getEfficiencyShading() << ","
-             << _heliostats.at(i)->getEfficiencyCosine() << ","
-             << _heliostats.at(i)->getEfficiencyIntercept() << ","
-             << _heliostats.at(i)->getEfficiencyTotal() << ","
-             << _heliostats.at(i)->getPowerToReceiver() << "\n";
-    }
-
-    fout.close();*/
 
 	_q_to_rec = 0.;
 	for(int i=0; i<Npos; i++){
@@ -1423,6 +1563,17 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
 	//Delete all of the entries up to isave-1.
 	_heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
+
+    //Remove any heliostat in the layout that does not deliver any power to the receiver
+    isave = 0;
+    for(size_t i=0; i<_heliostats.size(); i++){
+        if(_heliostats.at(i)->getPowerToReceiver() > 0.) {
+            isave = i;
+            break;
+        }
+    }
+    if(isave > 0)
+        _heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
 	Npos = _heliostats.size();
 
 	//Save the heliostats in an array by ID#
@@ -1670,6 +1821,12 @@ Heliostat *SolarField::whichTemplate(int method, Point &pos){
 	*/
 
 	int Nht = _helio_templates.size();
+    //count the number of enabled templates
+    int Nht_active = 0;
+    for(int i=0; i<(int)_helio_templates.size(); i++)
+        if( _helio_templates.at(i)->IsEnabled() )
+            Nht_active++;
+
 	//get the field limits from the land class
 	double rad[2];
 	
@@ -1681,14 +1838,19 @@ Heliostat *SolarField::whichTemplate(int method, Point &pos){
 	double
 		radmin = rad[0],
 		radmax = rad[1];
-		
+	
 	switch(method)
-	{
-	case 0:	//Use single template
-		return _helio_templates.begin()->second;
-		break;
-	case 1:	//Specified range
-	{
+    {
+    case SolarField::TEMPLATE_RULE::SINGLE:
+        //Use single template
+        return _helio_templates.find( _temp_which )->second;
+        /*for(int i=0; i<(int)_helio_templates.size(); i++)
+        {
+            if( _temp_which == _helio_templates.at(i)->getId() )
+                return _helio_templates.at(i);
+        }*/
+    case SolarField::TEMPLATE_RULE::SPEC_RANGE:
+ 	{
 		double tradmax, tradmin, tazmax, tazmin;
 		for(int i=0; i<Nht; i++){
 			_helio_templates.at(i)->getTemplateRange(tradmin, tradmax, tazmin, tazmax);
@@ -1699,20 +1861,30 @@ Heliostat *SolarField::whichTemplate(int method, Point &pos){
 		return _helio_templates.at(0);
 		break;
 	}
-	case 2:	//equal spatial separation
+    case SolarField::TEMPLATE_RULE::EVEN_DIST:
 	{
-		int ht = int(floor((rpos - radmin)/( (radmax+0.0001-radmin)/double(Nht) )));
-		if(ht>Nht-1){ht=Nht-1;}
-		if(ht<0){ht=0;}
-		return _helio_templates.at(ht);
-		break;
-	}
-	default:
-		break;
-	}
+        //calculate which template is being used by comparing the current position to the radial range of each template.
+		int ht = int(floor((rpos - radmin)/( (radmax+0.0001-radmin)/double(Nht_active) )));
+        int ht_ct = -1;     //Counter for number of enabled templates
+        int ht_save = 0;    //Save the value of the applicable template
+        for(int i=0; i<Nht; i++)
+        {
+            if( _helio_templates.at(i)->IsEnabled() )
+                ht_ct++;    //only count enabled templates
+            if( ht_ct == ht )
+            {               //once the template count matches the calculated number, save and move on
+                ht_save = i;
+                break;
+            }
+        }
 
-	//return &_helio_templates.at(ht);
-	return _helio_templates.begin()->second;	//Need to implement this.
+		return _helio_templates.at(ht_save);
+	}
+    default:
+        break;
+    }
+
+    throw spexception("An error occurred while calculating heliostat template placement. Please contact support for debugging help.");
 
 }
 
@@ -1815,8 +1987,6 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 	//any declarations
 	int Nht; //heliostat templates in the radial directions
 	int i,j;
-	double r_coll_min, fr, dr_min;	//heliostat dimensions
-	double r_row;
 	int N_max;   //Upper estimate for the number of heliostats in the field, sizes the arrays
 
 	//Calculate limits in meters
@@ -1831,32 +2001,46 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 	Nht = _helio_templates.size();	//Number in the radial direction
 
 	//Calculate an upper estimate of the size of the heliostat positions array to avoid resizing all the time
-	double r_coll_temp;
-	r_coll_min = 9.e9; 
-	for(htemp_map::iterator it=_helio_templates.begin(); it != _helio_templates.end(); it++){
-		r_coll_temp = it->second->getCollisionRadius();
-		if(r_coll_temp < r_coll_min) r_coll_min = r_coll_temp; //minimum collision radius in any combination
-	}
-	
-	int nr_max = int((radmaxt - radmint)/(r_coll_min*2.)); 
-	int	naz_max = int((radmaxt + radmint)/2.*(_accept_max - _accept_min)/(r_coll_min*2.));
-	N_max = nr_max * naz_max;  //Estimate the array size
+    {   //ensure local scope for these temporary variables
+	    double r_coll_temp;
+	    double r_coll_min = 9.e9; 
+	    for(htemp_map::iterator it=_helio_templates.begin(); it != _helio_templates.end(); it++){
+		    r_coll_temp = it->second->getCollisionRadius();
+		    if(r_coll_temp < r_coll_min) r_coll_min = r_coll_temp; //minimum collision radius in any combination
+	    }
+	    int nr_max = int((radmaxt - radmint)/(r_coll_min*2.)); 
+	    int naz_max = int((radmaxt + radmint)/2.*(_accept_max - _accept_min)/(r_coll_min*2.));
+	    N_max = nr_max * naz_max;  //Estimate the array size
+    }
 
 	HelPos.reserve(N_max);
 
-	//how much radial distance does each heliostat template cover?
-	double dr_template = (radmaxt - radmint)/double(Nht);
-	int nr;	//actual number of rows/columns
-	vector<double> rowpos;
-	vector<bool> slips;
-	double r_c, r_0;	//row position value, current and previous row
-	double phi_0, phi_0s, tan_phi_0s, z_0u, r_0u, H2, err, tol, tan_phi_0sX;
-	int iter;
-	Point hloc;
+    //choose which (initial) template to use to lay out the positions
+    Heliostat *Htemp=0;
+    switch (_template_rule)
+    {
+    case SolarField::TEMPLATE_RULE::SINGLE:
+        Htemp = _helio_templates.find( _temp_which )->second;
+        break;
+    case SolarField::TEMPLATE_RULE::SPEC_RANGE:
+    case SolarField::TEMPLATE_RULE::EVEN_DIST:
+        // Use the first enabled template in the list
+        for(int i=0; i<(int)_helio_templates.size(); i++)
+        {
+            if( _helio_templates.at(i)->IsEnabled() )
+            {
+                Htemp = _helio_templates.at(i);
+                break;
+            }
+        }
+        break;
+    default:
+        throw spexception("An invalid heliostat template rule was specified. Please contact support for debugging help.");
+    }
 
 	//how to calculate radial spacing of the rows?
-	if(_rad_spacing_method == HELIO_SPACING_METHOD::DELSOL_EMPIRICAL){	//use the empirical relationship from delsol
-
+	if(_rad_spacing_method == HELIO_SPACING_METHOD::DELSOL_EMPIRICAL)	//use the empirical relationship from delsol
+    {
 		/* 
 		Documentation on these methods is from Kistler (1986), pages 39-41.
 		DELSOL3 code lines 1223-1286.
@@ -1871,41 +2055,22 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 
 		/*----------Calculate the row positions----------*/
 
-		nr = 1; //row counter
-		r_c = radmint; //initialize
-		//rowpos.clear(); slips.clear();
-		//rowpos.push_back(r_0);	//Add the first row
-		//slips.push_back(true);	//The first row counts as a slip plane
-		bool is_slip = true;
+		int nr = 1; //row counter
+		double r_c = radmint; //current row position
+		bool is_slip = true;    //initialize
 
 		//Calculate the pointing angle for the first row
-		phi_0 = atan(_tht/r_c);	//Elevation angle from the heliostats in the first row to the receiver
+		double phi_0 = atan(_tht/r_c);	//Elevation angle from the heliostats in the first row to the receiver
 		double tan_phi_0 = _tht/r_c;
 		double r_reset = r_c; //Hold on to the radius where the spacing has reset
 
-		Heliostat *Htemp = _helio_templates.at(0);
-
-		bool is_round = Htemp->IsRound();
-
-		if(is_round) {
-			//round
-			H2 = Htemp->getWidth()/2.;	//equals diameter/2
-		}
-		else{
-			//Rectangular
-			H2 = Htemp->getHeight()/2.;			
-		}
-
-		//Get the minimum separation between heliostats that ensures no collision
-		dr_min = Htemp->getCollisionRadius();
-
-		//Calculate azimuthal spacing variables
+        //Calculate azimuthal spacing variables
 		double daz_init;	//The initial physical spacing between heliostats azimuthally
 		double az_ang, azmin, azmid, haz, dr_c;
-		int Nhelio = 0, hpr;
-		double hw = Htemp->getWidth();
+        int Nhelio = 0;
 		
 		azmid = (_accept_max + _accept_min)/2.;	//[rad] The midpoint of the acceptance window
+        int hpr=-1;  //heliostats per row are calculated after slip planes
 
 		while(r_c < radmaxt){
 			/* 
@@ -1914,6 +2079,30 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 			phi_0 that is consistent with r_c. These should be initialized and are updated 
 			at the end of the loop.
 			*/
+
+            //Choose the heliostat template based on the current row position, updating only after slip planes
+            if(is_slip)
+            {
+                Point cpos;
+                cpos.Set( 0., r_c, 0. );
+                Htemp = whichTemplate(_template_rule, cpos );
+            }
+
+            bool is_round = Htemp->IsRound();
+
+            double H2; //heliostat half-height
+		    if(is_round) {
+			    //round
+			    H2 = Htemp->getWidth()/2.;	//equals diameter/2
+		    }
+		    else{
+			    //Rectangular
+			    H2 = Htemp->getHeight()/2.;			
+		    }
+
+		    //Get the minimum separation between heliostats that ensures no collision
+		    double r_coll = Htemp->getCollisionRadius();    //Collision radius for current template
+		    double hw = Htemp->getWidth();
 
 			//The radial separation formula is the same for both round and rectangular heliostats
 			double rsep = 1.1442399/tan_phi_0-1.093519+3.0683558*phi_0-1.1255617*pow(phi_0,2);
@@ -1939,12 +2128,11 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 			//If the collision radius limit is exceeded, remove heliostats. 
 			//daz_init = Azimuthal straight-line distance
 			daz_init = hw*asep;	//Normal spacing
-			int col_factor;
-			if( r_coll_min*2. > hw*asep){ col_factor = 2; }
-			else{ col_factor = 1; }
+			int col_factor = r_coll*2. > hw*asep ? 2 : 1; 
 			
 			//Should this row reset the spacing? 
-			if( is_slip ){
+			if( is_slip )
+            {
 				az_ang = 2.*atan2(daz_init, 2.*r_c);	//The angular spacing of the heliostats in the row
 				
 				//How many heliostats are in this row?
@@ -1959,6 +2147,9 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 				azmin = azmid - az_ang*hpr/2.;
 			}
 
+            if( hpr < 0 )
+                throw spexception("An algorithmic error occurred during heliostat placement. Please contact support for debugging help.");
+
 			j=0;
 			while(j<hpr){	//For the heliostats in the row
 				haz = azmin + az_ang*double(j) + az_ang/2.*double(nr%2);	//heliostat azimuth angle
@@ -1971,7 +2162,7 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 			}
 
 			//Increment to the next row, but make sure there's enough room to avoid collision
-			r_c += max(dr_c, dr_min*2.);
+			r_c += max(dr_c, r_coll*2.);
 
 			//Is the next row a slip plane?
 			if(r_c/r_reset > _spacing_reset){
@@ -1990,46 +2181,59 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 
 
 	}
-	else if(_rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCKING 
-            && _helio_templates.at(0)->IsRound()){
+	else if( (_rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCKING || _rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCK_DENSE)
+            && Htemp->IsRound()){
 		/* 
 		Space using radial stagger with the row position chosen for "close packing"
 		from the perspective of the receiver.
 		*/
 
-		nr=1;	//row counter
-		r_c = radmint; //Initialize
+		int nr=1;	//row counter
+		double r_c = radmint; //Initialize
 		bool is_slip = true;
 
 
 		//For round heliostats, all heliostats must be round (no multiple templates. Macro-level geometry
 		//will use the first heliostat (excludes specific canting, aiming, focusing etc.).
 
-		phi_0 = atan(_tht/r_c);	//elevation angle of the heliostats in the first row
+        double phi_0 = atan(_tht/r_c);	//elevation angle of the heliostats in the first row
 
 		double r_reset = r_c;	//Hold on to the radius where the spacing has been reset
+		
 
-		double Hd = _helio_templates.at(0)->getWidth();	//Heliostat diameter
-		double Hrad = Hd/2.;
-
+		
 		//Calculate azimuthal spacing variables
 		double daz_init;	//The initial physical spacing between heliostats azimuthally
 		double az_ang, azmin, azmid, haz, dr_c;
-		int Nhelio = 0, hpr;
+		int Nhelio = 0;
 		
 		azmid = (_accept_max + _accept_min)/2.;	//[rad] The midpoint of the acceptance window
 
 		//Keep track of the row positions
-		rowpos.clear(); rowpos.push_back(r_c);
+		vector<double> rowpos; 
+        rowpos.push_back(r_c);
 		//keep track of whether each row was a slip plane
-		slips.clear(); slips.push_back(true);
+		vector<bool> slips; 
+        slips.push_back(true);
 
 
 		while(r_c < radmaxt){
 
+            //Choose the heliostat template based on the current row position, updating only after slip planes
+            if(is_slip)
+            {
+                Point cpos;
+                cpos.Set( 0., r_c, 0. );
+                Htemp = whichTemplate(_template_rule, cpos );
+            }
+
+            double Hd = Htemp->getWidth();	//Heliostat diameter
+		    double Hrad = Hd/2.;
+
 			//----Add heliostats to this row----
 			
 			//Should this row reset the spacing? 
+            int hpr=-1;  //heliostats per row are calculated after slip planes
 			if( is_slip ){
 				//daz_init = Azimuthal straight-line distance
 				daz_init = Hd*max(1.,_az_spacing);	//Normal spacing
@@ -2047,6 +2251,8 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 				//Calculate the starting minimum azimuth angle
 				azmin = azmid - az_ang*hpr/2.;
 			}
+            if( hpr < 0 )
+                throw spexception("An algorithmic error occurred during heliostat placement. Please contact support for debugging help.");
 
 			j=0;
 			while(j<hpr){	//For the heliostats in the row
@@ -2090,95 +2296,190 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 		}
 
 	}
-	else if(_rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCKING 
-            && !_helio_templates.at(0)->IsRound()){	//Space to eliminate blocking - rectangular heliostats
+	else if( (_rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCKING || _rad_spacing_method == HELIO_SPACING_METHOD::NO_BLOCK_DENSE)
+            && !Htemp->IsRound()){	//Space to eliminate blocking - rectangular heliostats
 		//***calculate the row positions***
 		
-		nr=1;	//row counter
-		r_0 = radmint; r_c = r_0;	//initialize
-		rowpos.clear(); slips.clear();
+		int nr=1;	//row counter
+		double r_0 = radmint; 
+        double r_c = r_0;	//initialize
+		
+        vector<double> rowpos; 
+        vector<bool> slips;
+        vector<bool> is_compact;
+
 		rowpos.push_back(r_0);	//add the first row
 		slips.push_back(true);
 		
 		//Calculate the minimum row separation distance, depends on default azimuthal spacing
 		//..The azimuthal separation factor - the ratio of the actual separation azimuthally to the collision radius
-		hloc.Set(r_c, 0., 0.);	//use hloc to determine which template to use
-		H2 = whichTemplate(_template_rule,hloc)->getHeight()/2.;  //Heliostat half-height
+		double H2 = Htemp->getHeight()/2.;  //Heliostat half-height
 		
-		fr = H2*2.*_az_spacing/r_coll_min;
-		dr_min = 2.*sqrt( pow(2.*r_coll_min, 2) - pow(r_coll_min * fr/2.,2) );
+        
 
 		//calculate pointing angle for the first row
-		phi_0 = atan(_tht/r_0);	//elevation angle of the heliostats in the first row
+		double phi_0 = atan(_tht/r_0);	//elevation angle of the heliostats in the first row
 		
 		double r_reset = r_c;	//Hold on to the radius where the spacing has reset
-	
+	    
+        Point hloc;
 		while(r_c < radmaxt){
 			
-			hloc.Set(r_c,0.,0.);	//Radial position (y-component doesn't matter with this layout in terms of the template to use)
-			H2 = whichTemplate(1,hloc)->getHeight()/2.;  //Heliostat half-height
+            //get the new template
+            hloc.Set(r_0,0.,0.);	//Radial position (y-component doesn't matter with this layout in terms of the template to use)
+            Htemp = whichTemplate(_template_rule, hloc );
+            H2 = Htemp->getHeight()/2.;  //Heliostat half-height
+            double W2 = Htemp->getWidth()/2.;   //heliostat half-width
+
+            double r_coll = Htemp->getCollisionRadius();
+            double fr = H2*2.*_az_spacing/r_coll;
+		    //double dr_min = 2.*sqrt( pow(2.*r_coll, 2) - pow(r_coll * fr/2.,2) );
+            double dr_min = 2. * sqrt( 4 * r_coll * r_coll - pow(_az_spacing*W2, 2) );
 
 			//from pointing angle, calculate other needed info
-			z_0u = cos(phi_0)*H2;	//height of the upper heliostat edge
-			r_0u = r_0 + sin(phi_0)*H2;	//Radial position of the upper heliostat edge
-			tan_phi_0s = (_tht - z_0u)/r_0u;	//This is the result we're iterating towards
-			phi_0s = atan(tan_phi_0s);	//Elevation angle of the line pointing from the upper heliostat edge to the receiver 
+			double z_0u = cos(phi_0)*H2;	//height of the upper heliostat edge
+			double r_0u = r_0 + sin(phi_0)*H2;	//Radial position of the upper heliostat edge
 
-			//Solve the implicit equation for radial position
-			tan_phi_0sX = 999.; err=999.; tol = 0.00001; iter=0;
-			//Guess the next radial position
-			r_c = r_0 + 3.*H2;
-			while(fabs(err) > tol && iter<25){
-				double xslant = sqrt(_tht*_tht + r_c*r_c);
-				//Equation to calculte r_c implicitly
-				//tan_phi_0sX = (z_0u + H2*cos(atan(_tht/r_c)))/(r_c - H2*sin(atan(_tht/r_c)) - r_0u);
-				tan_phi_0sX = (z_0u + H2*r_c/xslant)/(r_c - H2*_tht/xslant - r_0u);
-				err = (tan_phi_0sX - tan_phi_0s)/tan_phi_0s;
+            //Calculate the next row position based on similar triangles between tower and upper/lower corners of adjacent heliostats.
+            r_c = r_0u * (_tht + z_0u) / (_tht - z_0u) + sin(phi_0)*H2;
 
-				//Based on the error, adjust the radius guess. If the guess is too close, the error will be negative
-				r_c += err*(r_c - r_0)/2.;
-				iter++;
-			}
+            //Is this row in the inner compact region?
+            bool row_compact = r_c - r_0 < 2.* r_coll *_trans_limit_fact;
+            if( _rad_spacing_method != HELIO_SPACING_METHOD::NO_BLOCK_DENSE )
+                row_compact = false;    //only allow compact layout if requested
+
+            //Has the row compact flag just changed?
+            bool row_compact_switch = false;
+            
+            //retroactively handle the first row
+            if( is_compact.empty() ){
+                if( row_compact )
+                {
+                    //The next row is compact, therefore the first must also be
+                    is_compact.push_back( true );
+                }
+                else{
+                    is_compact.push_back( false );
+                }
+            }
+            else{
+                if( is_compact.back() && !row_compact )
+                    row_compact_switch = true;
+            }
 			
-			
-			//Increment to the next row, but make sure there's enough room to avoid collision
+            //Increment to the next row, but make sure there's enough room to avoid collision
 			r_c = r_0 + max(r_c - r_0, dr_min);
+            
+            bool is_slip = (r_c+r_0)/2./r_reset > _spacing_reset || row_compact_switch;
 
 			//check whether the next row is outside the max bounds
 			if(r_c > radmaxt) break;
 
-			//Check to see if we have a slip plane at either of the next two rows
-			if( (r_c+r_0)/2./r_reset > _spacing_reset ){	//The intermediate row incurs a slip plane
-				nr++;
-				//Make the row as close as possible and remove shadowed/blocked heliostats. 
-				//Multiply by the _slip_offset factor specified by the user
-				//rowpos.push_back(r_0 + 2.*r_coll_min*_slip_offset);	
-				rowpos.push_back((r_c+r_0)/2.);
-				slips.push_back(true);
-				nr++;
-				//r_c = r_0 + 2.*r_coll_min*_slip_offset + (r_c - r_0)/2.;	//Put the next row out according to the shadowing
-				rowpos.push_back(r_c);
+            //manage the next two rows. Call the template check for each subsequent row to ensure
+            //the correct template is used for each position.
+            Point hpos;
+            hpos.Set( (r_c + r_0)/2., 0., 0. );
+            Heliostat *Htemp_r1 = whichTemplate( _template_rule, hpos );
+            hpos.Set( r_c, 0., 0. );
+            Heliostat *Htemp_r2 = whichTemplate( _template_rule, hpos );
+
+            //first handle the case where the intermediate row uses a different template
+            if( Htemp != Htemp_r1 )
+            {
+                //the intermediate row causes a template switch. min spacing enforced
+                nr++;
+                H2 = Htemp_r1->getHeight()/2.;  //Heliostat half-height
+
+                //update the calculations
+                r_coll = Htemp_r1->getCollisionRadius();
+                fr = H2*2.*_az_spacing/r_coll;
+			    
+                dr_min = sqrt( pow(2.*r_coll, 2) - pow(r_coll * fr/2.,2) ); //update calculation
+                //r_c = r_0 + max( (r_c - r_0)/2., dr_min );
+                r_c = r_0 + max( (r_c - r_0)/2., r_coll * 2. );
+                rowpos.push_back( r_c );
+                slips.push_back( true );
+                is_compact.push_back( false );  //not sure how else to handle this scenario
+                r_reset = r_c;
+
+            }
+            //next handle the case where the "current" row uses a different template, but the intermediate row does not
+            else if( Htemp != Htemp_r2 )
+            {
+                //the current row causes a template switch. 
+                nr++;	//next row
+                double r_half = (r_c+r_0)/2.;
+				rowpos.push_back(r_half);	//In radial stagger, there's a shifted row halfway between each aligned row
 				slips.push_back(false);
+				
+                //regular spacing on current row, but maintain at least the collision radius
+                r_c = max( r_c, r_half + Htemp_r2->getCollisionRadius() );
+                rowpos.push_back(r_c);
+				slips.push_back(true);
+                is_compact.push_back( false );  //not sure how else to handle this scenario
+				r_reset = r_c;
+            }
+            //Is this an inner compact row?
+            else if( row_compact )
+            {
+                nr++;
+                r_c = r_0 + r_coll * 2.;
+                rowpos.push_back( r_c );
+                slips.push_back(true);
+                is_compact.push_back( true );
+                r_reset = r_c;
+
+            }
+            //Check to see if we have a slip plane at the interediate row
+			else if( is_slip )	//The intermediate row incurs a slip plane
+            {
+               
+				if(! row_compact_switch){
+                    nr++; 
+                    
+                    //make sure the next 2 rows are at least the collision radius away
+                    r_c = max(r_0 + 4.*r_coll, r_c);
+
+				    //Make the row as close as possible and remove shadowed/blocked heliostats. 
+				    //Multiply by the _slip_offset factor specified by the user
+				    rowpos.push_back((r_c+r_0)/2.);
+				    slips.push_back(true);
+                    is_compact.push_back(false);
+                }
+                else
+                {
+                    r_c = max(r_0 + 2.*r_coll, r_c );
+                }
+
+				nr++;
+                rowpos.push_back(r_c);
+				slips.push_back(false || row_compact_switch);
+                is_compact.push_back(false);
 				r_reset = r_c;
 			}
+            //The intermediate row isn't a slip plane, so add the intermediate row and then check the current row
 			else{
-				//the intermediate row isn't a slip plane, just add this row
-				nr++;	//next row
+                //add intermediate row
+				nr++;	
 				rowpos.push_back((r_c+r_0)/2.);	//In radial stagger, there's a shifted row halfway between each aligned row
 				slips.push_back(false);
-				if(r_c/r_reset > _spacing_reset ){	//Does the next inline row incurs a slip plane?
+                is_compact.push_back(false);
+                //determine whether current row is a slip plane
+				if( r_c/r_reset > _spacing_reset){	//Does the next inline row incurs a slip plane?
 					nr++;
 					//Put this row as close as possible to the intermediate row. include _slip_offset factor
-					//r_c = (r_c + r_0)/2. + 2.*r_coll_min*_slip_offset;
-					rowpos.push_back( r_c );
+                    r_c = max(rowpos.back() + 2.*r_coll, r_c );
+                    rowpos.push_back( r_c );
 					slips.push_back(true);
 					r_reset = r_c;
 				}
 				else{
+                    //current row is not a slip plane, just add as-is
 					nr++;
 					rowpos.push_back( r_c );
 					slips.push_back(false);
 				}
+                is_compact.push_back(false);
 			}
 			//now with the solved radius, prepare for the next radius
 			phi_0 = atan(_tht/r_c);
@@ -2190,25 +2491,41 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 		double daz_init;	//The initial physical spacing between heliostats azimuthally
 		double az_ang, azmin, azmid, haz;
 		int Nhelio = 0, hpr;
-		double hw =_helio_templates.at(0)->getWidth();
-		double hw0;
+        //initialize the heliostat template again
+        {
+            Point hpos;
+            hpos.Set(0., rowpos.front(), 0. );
+            Htemp = whichTemplate( _template_rule, hpos );
+        }
+		double hw = Htemp->getWidth();
+        double r_coll = Htemp->getCollisionRadius();
+
 		r_reset = .001; //rowpos.at(0);	//Hold on to the radius where the spacing has reset
-		//vector<int> hel_per_row(nr,0);
 	
 		azmid = (_accept_max + _accept_min)/2.;	//[rad] The midpoint of the acceptance window
 		
 		for(i=0; i<nr; i++){	//For each row
-			r_row = rowpos.at(i);	
-			//Figure out which template to use
-			hloc.Set(r_row,0.,0.);
-			hw0 = hw;	//Keep track of the last heliostat width that was used
-			hw = whichTemplate(_template_rule,hloc)->getWidth();	//The heliostat width
-			daz_init = max(r_coll_min*2, hw*_az_spacing);	//Azimuthal straight-line distance
+			double r_row = rowpos.at(i);	
+			
+            //Figure out which template to use
+            if( slips.at(i) )
+            {
+                //update template-dependent values
+                hloc.Set(r_row,0.,0.);
+                Htemp = whichTemplate(_template_rule, hloc);
+			    hw = Htemp->getWidth();	//The heliostat width
+                r_coll = Htemp->getCollisionRadius();
+            }
+
+            if( is_compact.at(i) ){
+                daz_init = r_coll * 2.;     //Compact rows have minimum spacing
+            }
+            else{
+			    daz_init = max(r_coll*2, hw*_az_spacing);	//Azimuthal straight-line distance
+            }
 			//Should this row reset the spacing? It will reset if beyond the spacing ratio limit or a new heliostat width is used
-			//if((r_row/r_reset) >= _spacing_reset || hw0 != hw){
 			if( slips.at(i) ){
 				az_ang = 2.*atan2(daz_init, 2.*r_row);	//The angular spacing of the heliostats in the row
-				//r_reset = r_row;	//track this row as the new basis
 		
 				//How many heliostats are in this row?
 				hpr = int(floor(fmin((_accept_max - _accept_min), 2.*pi)/az_ang));
@@ -2221,8 +2538,6 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 				//Calculate the starting minimum azimuth angle
 				azmin = azmid - az_ang*hpr/2.;
 			}
-			//if(i%2==1) hel_per_row.at(i) = hpr-1;	//The hpr value is the maximum heliostats per row for this section
-			//if(i%2==0) hel_per_row.at(i) = hpr;
 
 			for(j=0; j<hpr; j++){	//For the heliostats in the row
 				haz = azmin + az_ang*double(j) + az_ang/2.*double(i%2);	//heliostat azimuth angle
@@ -2623,6 +2938,8 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect *sunvector, He
 	//Intercept
 	if(! (is_layout && SF->isOpticalZoning()) ){	//For layout simulations, the simulation method that calls this method handles image intercept
 		double eta_int = SF->getFluxObject()->imagePlaneIntercept(*helios, *SF, Rec);
+        if(eta_int != eta_int)
+            throw spexception("An error occurred when calculating heliostat intercept factor. Please contact support for help resolving this issue.");
 		if(eta_int>1.) eta_int = 1.;
 		helios->setEfficiencyIntercept(eta_int);
 	}
@@ -2648,47 +2965,12 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect *sunvector, He
 	if(block_tot > 1.) block_tot = 1.;
 	helios->setEfficiencyBlocking(block_tot);
 	
-	//receiver acceptance angle
-	double eta_rec_acc = 1.;
-	if(Rec->getReceiverType() == Receiver::REC_TYPE::FLAT_PLATE){
-		PointVect rnv;
-		Rec->CalculateNormalVector(rnv);
-		Vect *hv = helios->getTowerVector();
-		//reverse
-		Vect hv_r = {-hv->i, -hv->j, -hv->k};
-		//Rotate into receiver aperture coordinates
-		double raz = Rec->getReceiverAzimuth();
-		double rel = Rec->getReceiverElevation();
-		
-		Toolbox::rotation(SF->pi - raz, 2, hv_r);
-		Toolbox::rotation(SF->pi - rel, 0, hv_r);
-
-		double theta_x = atan2(hv_r.i, hv_r.j);
-		double theta_y = atan2(hv_r.k, sqrt(hv_r.i*hv_r.i + hv_r.j*hv_r.j));
-
-		//check whether the angles are within the allowable range
-		double acc_x, acc_y;
-		Rec->getAcceptAngles(acc_x, acc_y);
-		acc_x *= 0.5;
-		acc_y *= 0.5;
-		if(Rec->getAcceptAngleType() == 0){ //Rectangular
-			if(! (fabs(theta_x) < acc_x && fabs(theta_y) < acc_y))
-				eta_rec_acc = 0.;
-		}
-		else{	//Elliptical
-			if( (theta_x*theta_x / (acc_x * acc_x) + theta_y*theta_y / (acc_y * acc_y)) > 1. )
-				eta_rec_acc = 0.;
-		}
-	}
-		
 	//Soiling, reflectivity, and receiver absorptance factors are included in the total calculation
-		
-	double 
-		eta_rec_abs = Rec->getAbsorptance() * eta_rec_acc,
-		eta_total = helios->calcTotalEfficiency(),
-		pow = eta_total * dni * helios->getArea() * eta_rec_abs;
-	helios->setPowerToReceiver( pow );
-	helios->setPowerValue( pow * payfactor * Rec->getReceiverThermalEfficiency());
+	double eta_rec_abs = Rec->getAbsorptance(); // * eta_rec_acc,
+	double eta_total = helios->calcTotalEfficiency();
+	double power = eta_total * dni * helios->getArea() * eta_rec_abs;
+	helios->setPowerToReceiver( power );
+	helios->setPowerValue( power * payfactor * Rec->getReceiverThermalEfficiency());
 
 	return;
 	
@@ -2927,7 +3209,11 @@ double *SolarField::getPlotBounds(bool use_land){
 
 
 void SolarField::updateAllTrackVectors(){
-	int npos = _heliostats.size();
+    //update all tracking vectors according to the current sun position
+    if(_fluxsim._aim_method == FluxSimData::AIM_STRATEGY::FREEZE )
+        return;
+    
+    int npos = _heliostats.size();
 	for(int i=0; i<npos; i++){
 		_heliostats.at(i)->updateTrackVector(*_ambient.getSunVector());
 	}
@@ -3028,7 +3314,7 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 	//for methods that require sorted heliostats, create the sorted data
 	Hvector hsort;
 	vector<double> ysize;
-	if(method == 3){
+	if(method == FluxSimData::AIM_STRATEGY::IMAGE_SIZE){
 		//Create a list of heliostats sorted by their Y image size
 		int nh = _heliostats.size();
 		for(int i=0; i<nh; i++){
@@ -3045,18 +3331,18 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 		
 		switch(method)
 		{
-		case Flux::AIM_STRATEGY::SIMPLE:	//Simple aim points
+		case FluxSimData::AIM_STRATEGY::SIMPLE:	//Simple aim points
 			//Determine the simple aim point - doesn't account for flux limitations
 			_flux->simpleAimPoint(*_heliostats.at(i), *this);
 			break;
-		case Flux::AIM_STRATEGY::SIGMA:
+		case FluxSimData::AIM_STRATEGY::SIGMA:
 			args[1] = -args[1];
 			_flux->sigmaAimPoint(*_heliostats.at(i), *this, args);
 			break;
-		case Flux::AIM_STRATEGY::PROBABILITY:
+		case FluxSimData::AIM_STRATEGY::PROBABILITY:
 			_flux->probabilityShiftAimPoint(*_heliostats.at(i), *this, args);
 			break;
-		case Flux::AIM_STRATEGY::IMAGE_SIZE:
+		case FluxSimData::AIM_STRATEGY::IMAGE_SIZE:
 			try{
 				args[1] = i == 0 ? 1. : 0.;
 				_flux->imageSizeAimPoint(*hsort.at(nh-i-1), *this, args, i==nh-1);	//Send in descending order
@@ -3065,10 +3351,17 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 				return;
 			}
 			break;
-		case Flux::AIM_STRATEGY::EXISTING:
-			//Keep existing. Do nothing.
+		case FluxSimData::AIM_STRATEGY::EXISTING:
+			//Keep existing aim point, but we still need to update the image plane flux point (geometry may have changed)
+        {
+            _flux->keepExistingAimPoint(*_heliostats.at(i), *this, 0);
 			break;
-		default:
+        }
+        case FluxSimData::AIM_STRATEGY::FREEZE:
+            //update the aim point based on the movement of the sun and the resulting shift in the reflected image
+            _flux->frozenAimPoint(*_heliostats.at(i), *this, args);
+            break;
+        default:
 			return; 
 		}		
 
@@ -3259,12 +3552,22 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 			//Take the normalized flux values and multiply to get flux density [kW/m2]
 			FluxGrid *grid = fs->getFluxMap();
 			double fmax=0.;
+            double maxbin=0.;
+            double ftot=0.;
+            double ftot2 = 0.;
 			int nfy = fs->getFluxNY(), nfx = fs->getFluxNX();
 			double nfynfx = (double)(nfy*nfx);
+            double anode = Arec / nfynfx;
 			for(int j=0; j<nfy; j++){
 				for(int k=0; k<nfx; k++){
 					double *pt = &grid->at(k).at(j).flux;
-					*pt *= q_rec_spec*nfynfx;
+                    ftot += *pt;
+                    if(*pt > maxbin)
+                        maxbin = *pt;
+                    *pt *= q_to_rec / anode;
+
+					//*pt *= q_rec_spec*nfynfx;
+                    ftot2 += *pt;
 					if(*pt > fmax)
 						fmax = *pt;	
 				}
@@ -3301,9 +3604,9 @@ bool SolarField::CalcDesignPtSunPosition(int sun_loc_des, double &az_des, double
     Calculate the design-point sun position given a design point specified by the user.
 
     sun_loc_des:
-        0   Summer Solstice (June 21)
+        0   Summer Solstice (June 21 N, Dec 21 S)
         1   Equinox (March 20, = Sept 20)
-        2   Winter solstice (Dec 21)
+        2   Winter solstice (Dec 21 N, June 21 S)
         3   Zenith (180, 90 elev)
         4   User specified
 
@@ -3316,6 +3619,9 @@ bool SolarField::CalcDesignPtSunPosition(int sun_loc_des, double &az_des, double
     */
 
     int month, day;
+
+        
+    bool N_hemis = this->getAmbientObject()->getPlantLatitude() > 0.;
 
     switch (sun_loc_des)
     {
@@ -3331,7 +3637,7 @@ bool SolarField::CalcDesignPtSunPosition(int sun_loc_des, double &az_des, double
     // ^^^^ these methods are done and have returned without calling sun position 
 
     case SolarField::SUNPOS_DESIGN::SOLSTICE_S:
-        month = 6;
+        month = N_hemis ? 6 : 12;
         day = 21;
         break;
     case SolarField::SUNPOS_DESIGN::EQUINOX:
@@ -3339,7 +3645,7 @@ bool SolarField::CalcDesignPtSunPosition(int sun_loc_des, double &az_des, double
         day = 20;
         break;
     case SolarField::SUNPOS_DESIGN::SOLSTICE_W:
-        month = 12;
+        month = N_hemis ? 12 : 6;
         day = 21;
         break;
     default:
@@ -3482,7 +3788,7 @@ double SolarField::clouds::ShadowLoss(Point &hloc){
 			break;
 		}
 		case SolarField::clouds::SHAPE::RECTANGULAR:
-			if( fabs(hloc_rot.x) < _cloud_width/2. && fabs(hloc_rot.y) < _cloud_depth/2.)
+			if( fabs(hloc_rot.x) < _cloud_width/2. && abs(hloc_rot.y) < _cloud_depth/2.)
 				shadowed = true;
 
 			break;

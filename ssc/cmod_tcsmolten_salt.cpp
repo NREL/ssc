@@ -97,6 +97,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                  "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",         "Optimization convergence tol",                                      "",             "",            "heliostat",       "?=0.001",                "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_flux_penalty",     "Optimization flux overage penalty",                                 "",             "",            "heliostat",       "*",                      "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",        "Optimization algorithm",                                            "",             "",            "heliostat",       "?=0",                    "",                     "" },
 
     //other costs needed for optimization update
@@ -883,7 +884,7 @@ public:
 		sim_setup.m_sim_time_start = 0.0;			//[s] starting first hour of year
 		sim_setup.m_sim_time_end = nhoursim*3600.; //8760.0*3600.0;	//[s] full year simulation
 
-		int steps_per_hour = 60; //1;		//[-]
+		int steps_per_hour = 1;		//60; //[-]
 		int n_steps_fixed = steps_per_hour * 8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 

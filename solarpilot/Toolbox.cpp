@@ -90,6 +90,13 @@ void Vect::Add(double _i, double _j, double _k)
 	k+=_k;
 }
 
+void Vect::Scale( double m )
+{
+    i *= m;
+    j *= m;
+    k *= m;
+}
+
 double &Vect::operator[](int index){
 	if( index == 0) return i;
 	if( index == 1) return j;
@@ -277,7 +284,7 @@ int DateTime::GetDayOfYear(int year, int month, int mday){
 	//Day of the year runs from 1-365
 
 	int doy=0;
- 	if(month>2) { for (int i=0; i<month-1; i++) {doy+=monthLength[i];}; };
+ 	if(month>1) { for (int i=0; i<month-1; i++) {doy+=monthLength[i];}; };
 	doy+= mday; 
 	return doy;
 }
@@ -296,7 +303,7 @@ int DateTime::CalculateDayOfYear( int year, int month, int mday ){	//Static vers
 		else {monthLength[1]=28;} 
 	};
 	int doy=0;
- 	if(month>2) { for (int i=0; i<month-1; i++) {doy+=monthLength[i];}; };
+ 	if(month>1) { for (int i=0; i<month-1; i++) {doy+=monthLength[i];}; };
 	doy+= mday; 
 	return doy;
 
@@ -814,11 +821,12 @@ void Toolbox::rotation(double theta, int axis, Point &P){
 	*/
 
 	//the 3x3 rotation matrix
-	vector<Vect> MR(3);
-	double 
-		costheta = cos(theta),
-		sintheta = sin(theta);
-	switch(axis)
+    double MR0i, MR0j, MR0k, MR1i, MR1j, MR1k, MR2i, MR2j, MR2k;
+
+	double costheta = cos(theta);
+	double sintheta = sin(theta);
+       
+    switch(axis)
 	{
 		/*
 		The rotation vectors are entered in as the transverse for convenience of multiplication.
@@ -842,33 +850,35 @@ void Toolbox::rotation(double theta, int axis, Point &P){
 		*/
 	case 0:	//X axis
 		//Fill in the x-rotation matrix for this angle theta
-		MR.at(0).Set(1., 0., 0.);
-		MR.at(1).Set(0., costheta, sintheta);
-		MR.at(2).Set(0., -sintheta, costheta);
+        MR0i = 1; MR0j = 0; MR0k = 0;
+		MR1i = 0; MR1j = costheta; MR1k = sintheta; 
+        MR2i = 0; MR2j = -sintheta; MR2k = costheta;
 		break;
 	case 1:	//Y axis
 		//Fill in the y-rotation matrix for this angle theta
-		MR.at(0).Set(costheta, 0., -sintheta);
-		MR.at(1).Set(0., 1., 0.);
-		MR.at(2).Set(sintheta, 0., costheta);
+        MR0i = costheta; MR0j = 0; MR0k = -sintheta;
+        MR1i = 0; MR1j = 1; MR1k = 0;
+        MR2i = sintheta; MR2j = 0; MR2k = costheta;
 		break;
 	case 2:	//Z axis
 		//Fill in the z-rotation matrix for this angle theta
-		MR.at(0).Set(costheta, sintheta, 0.);
-		MR.at(1).Set(-sintheta, costheta, 0.);
-		MR.at(2).Set(0., 0., 1.);
+        MR0i = costheta; MR0j = sintheta; MR0k = 0;
+		MR1i = -sintheta; MR1j = costheta; MR1k = 0;
+		MR2i = 0; MR2j = 0; MR2k = 1;
 		break;
 	default:
 		;
 	}
 
 	//Create a copy of the point
-	Point Pc(P);
-	
+	double Pcx = P.x;
+    double Pcy = P.y; 
+    double Pcz = P.z;
+
 	//Do the rotation. The A matrix is the rotation vector and the B matrix is the point vector
-	P.x = dotprod(MR.at(0), Pc);
-	P.y = dotprod(MR.at(1), Pc);
-	P.z = dotprod(MR.at(2), Pc);
+	P.x = MR0i*Pcx + MR0j*Pcy + MR0k*Pcz; //dotprod(MR0, Pc);        //do the dotprod's here to avoid function call
+	P.y = MR1i*Pcx + MR1j*Pcy + MR1k*Pcz; //dotprod(MR1, Pc);
+	P.z = MR2i*Pcx + MR2j*Pcy + MR2k*Pcz; //dotprod(MR2, Pc);
 	return;
 
 }
@@ -989,7 +999,7 @@ bool Toolbox::line_norm_intersect(Point &line_p0, Point &line_p1, Point &P, Poin
 
 void Toolbox::ellipse_bounding_box(double &A, double &B, double &phi, double sides[4], double cx, double cy){
 	/* 
-	This algorithm takes an ellipse in a plane at location {cx,cy} and with unrorated X axis 
+	This algorithm takes an ellipse in a plane at location {cx,cy} and with unrotated X axis 
 	size A, unrotated Y axis size B, and with angle of rotation 'phi' [radians] and calculates 
 	the bounding box edge locations in the coordinate system of the plane.
 

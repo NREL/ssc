@@ -65,10 +65,9 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 	/*
 	Given the receiver geometry in "_parent", create a grid of flux hit test points.
 
-	The flux points defined here are relative to the "offset" position. i.e., they are in 
-	receiver panel coordinates.
+	Flux points are in the global coordinate system but do not include receiver offset or tower height.
 
-	*/
+    */
 	if(nx > 0) _nflux_x = nx;
 	if(ny > 0) _nflux_y = ny;
 
@@ -80,6 +79,7 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 	{			//0 | Continuous closed cylinder - external
 		
 		//The flux for this geometry assumes that the cylinder is vertical (no zenith displacement)
+        //Flux points are stored beginning lower edge, clockwise extent. Final entry upper edge counterclockwise extent
 
 		_area = _height * _radius * pi * 2.;
 
@@ -92,10 +92,11 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		double faz;
 		Point floc;
 		Vect fnorm;
+		double dz = _height/double(_nflux_y);	//height of each flux node
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 
-			faz = _span_ccw + daz*(0.5 + double(i));	//The azimuth angle of the point
+            faz = _span_cw - daz*(0.5 + (double)i); //The azimuth angle of the point
 			//Calculate the normal vector
 			fnorm.i = sin(faz);
 			fnorm.j = cos(faz);
@@ -104,9 +105,8 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 			floc.x = fnorm.i * _radius;
 			floc.y = fnorm.j * _radius;
 			//Calculate the z position
-			double dz = _height/double(_nflux_y);	//height of each flux node
 			for(int j=0; j<_nflux_y; j++){
-				floc.z = -_height/2.+dz*(0.5 + double(j));
+				floc.z = -_height/2.+dz*(0.5 + (double)j);
 				//Set the location
 				_flux_grid.at(i).at(j).Setup(floc, fnorm, _max_flux);
 			}
@@ -123,7 +123,10 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		The flux map for this geometry allows an angling in the zenith direction of the surface.
 		The coordinates of the flux map are with respect to the xyz location of the receiver centroid.
 		These coordinates account for zenith rotation of the receiver. 
-		*/
+        
+        Flux points are stored beginning lower edge, clockwise extent. Final entry upper edge counterclockwise extent
+		
+        */
         
         double intmult = ( rec_geom == Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV ? -1. : 1. );   //-1 multiplier for values that are inverted on the internal face of a cylinder
         double spansize = (_span_cw - _span_ccw) * intmult;
@@ -145,7 +148,7 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 
-			faz = _span_ccw + daz*(0.5+double(i));
+			faz = _span_cw - daz*(0.5+double(i));
 			fzen = rec_zen*cos(rec_az - faz);	//Local receiver zenith angle
 			for(int j=0; j<_nflux_y; j++){
 				//Calculate the xyz position assuming no rotation, then rotate into the position of the receiver
@@ -161,7 +164,8 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 				Toolbox::rotation(rec_zen, 0, floc);	//Rotate the actual point
 				Toolbox::rotation(rec_zen, 0, fnorm);	//rotate the normal vector
 				//rotate about the z axis (azimuth)
-				Toolbox::rotation(rec_az, 2, floc);
+				Toolbox::rotation(rec_az, 2, floc);     //point
+                Toolbox::rotation(rec_az, 2, fnorm);    //normal vector
 
 				//the point "floc" is now rotated into the receiver coordinates
 				_flux_grid.at(i).at(j).Setup(floc, fnorm, _max_flux);
@@ -194,9 +198,9 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 				floc.z = 0.;
 				
 				//Rotate about the x axis (zenith)
-				Toolbox::rotation(rec_zen, 0, floc);
+				Toolbox::rotation(-rec_zen, 0, floc);
 				//Rotate about the z axis (azimuth)
-				Toolbox::rotation(rec_az, 2, floc);
+				Toolbox::rotation(pi + rec_az, 2, floc);
 
 				//Set up the point
 				_flux_grid.at(i).at(j).Setup(floc, _normal, _max_flux);
@@ -234,9 +238,9 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 				double afactor = fmin(fmax(Toolbox::intersect_ellipse_rect(rect, ellipse)/(rec_dw*rec_dh), 0.), 1.);
 
 				//Rotate about the x axis (zenith)
-				Toolbox::rotation(rec_zen, 0, floc);
+				Toolbox::rotation(-rec_zen + pi/2., 0, floc);       //unlike plane rect, the points start in X-Z plane
 				//Rotate about the z axis (azimuth)
-				Toolbox::rotation(rec_az, 2, floc);
+				Toolbox::rotation(pi + rec_az, 2, floc);
 
 				//Set up the point
 				_flux_grid.at(i).at(j).Setup(floc, _normal, _max_flux, afactor);
@@ -268,16 +272,22 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		vector<double> panel_radii(npanels);
 		vector<double> panel_azimuths(npanels);
 		
-
+        double rec_az = atan2(_normal.i, _normal.j);	//The azimuth angle of the receiver
+		double rec_zen = acos(_normal.k);	//The zenith angle of the receiver at rec_az
+		
 		for(int i=0; i<npanels; i++){
-			double paz = (i + 0.5)*panel_az_span + _span_ccw;
+			double paz = _span_cw - (i + 0.5)*panel_az_span;
 			double 
 				sinpaz = sin(paz),
 				cospaz = cos(paz);
 			panel_normals.at(i).Set(sinpaz, cospaz, 0.);
 			panel_radii.at(i) = _radius*cos(panel_az_span/2.) ;
-			panel_azimuths.at(i) = paz;
-			
+			panel_azimuths.at(i) = paz + rec_az;
+
+            //rotate panels according to receiver elevation/azimuth
+            Toolbox::rotation(rec_zen + pi/2., 0, panel_normals.at(i));
+            Toolbox::rotation(rec_az, 2, panel_normals.at(i));
+
 		}
 
 		double faz;
@@ -285,7 +295,7 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 
-			faz = _span_ccw + daz*(0.5 + double(i));	//The azimuth angle of the point
+			faz = _span_cw - daz*(0.5 + double(i)) + rec_az;	//The azimuth angle of the point
 
 			//which panel does this flux point belong to?
 			int ipanl = (int)(floor(faz / panel_az_span));
@@ -295,17 +305,22 @@ void FluxSurface::DefineFluxPoints(int rec_geom, int nx, int ny){
 			
 			//Determine the flux point position, which must lie along an existing panel
 			
-			double h = panel_radii.at(i)/cos( panel_azimuths.at(i) - faz );
+			double h = panel_radii.at(i)/cos( panel_azimuths.at(i) - faz ); //hypotenuse 
 
 			//x-y location of flux point
 			Point floc;
-			floc.x = h * sin(faz);
-			floc.y = h * cos(faz);
+			floc.x = h * sin(faz - rec_az);
+			floc.y = h * cos(faz - rec_az);
 
 			//Calculate the z position
 			double dz = _height/double(_nflux_y);	//height of each flux node
 			for(int j=0; j<_nflux_y; j++){
 				floc.z = -_height/2.+dz*(0.5 + double(j));
+
+                // rotate
+                Toolbox::rotation(rec_zen + pi/2., 0, floc);
+                Toolbox::rotation(rec_az, 2, floc);
+
 				//Set the location
 				_flux_grid.at(i).at(j).Setup(floc, fnorm, _max_flux);
 			}

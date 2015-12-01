@@ -329,30 +329,31 @@ bool Ambient::readWeatherFile(WeatherData &data, std::string &file_name, Ambient
 	*/	
 
 	//Open the file
-	weatherfile wfile;
-	if(! wfile.open(file_name)) return false;	//Error
-	
+	weatherfile wf_reader;
+	if(! wf_reader.open(file_name)) return false;	//Error
 	//Read the header info
 	if(Amb != (Ambient*)NULL){
+        weather_header wh;
+        wf_reader.header(&wh);
 		//If the ambient class reference is provided, set the local values in that class
 		double d2r = acos(-1.)/180.;
-		Amb->setPlantLocation(wfile.lat()*d2r, wfile.lon()*d2r, wfile.tz());
-		Amb->setElevation(wfile.elev());
+		Amb->setPlantLocation(wh.lat*d2r, wh.lon*d2r, wh.tz);
+		Amb->setElevation(wh.elev);
 	}
-
+    
 	//Read in the weather data
-	int nrec = (int)wfile.nrecords();
-	weather_record rec;
+	int nrec = (int)wf_reader.nrecords();
 	data.resizeAll(nrec);
+    weather_record wrec;
 	for(int i=0; i<nrec; i++){
-		if(! wfile.read( &rec ) ) return false; //Error
-		data.Day.at(i) = (double)rec.day;
-		data.DNI.at(i) = (double)rec.dn;
-		data.Hour.at(i) = (double)rec.hour;
-		data.Month.at(i) = (double)rec.month;
-		data.Pres.at(i) = rec.pres/1000.;	//bar
-		data.T_db.at(i) = rec.tdry;		//C
-		data.V_wind.at(i) = rec.wspd;	//m/s
+		if(! wf_reader.read(&wrec) ) return false; //Error
+		data.Day.at(i) = (double)wrec.day;
+		data.DNI.at(i) = (double)wrec.dn;
+		data.Hour.at(i) = (double)wrec.hour;
+		data.Month.at(i) = (double)wrec.month;
+		data.Pres.at(i) = wrec.pres/1000.;	//bar
+		data.T_db.at(i) = wrec.tdry;		//C
+		data.V_wind.at(i) = wrec.wspd;	//m/s
 		data.Step_weight.at(i) = 1.;	//default step
 	}
 	//wf_reader.close();
@@ -380,8 +381,7 @@ double Ambient::calcAttenuation(double &len){
 	}
 	else if(_atm_model == 3){
 		//Sengupta model
-		//error("Attenuation Model", "The Sengupta/Wagner attenuation model is not yet implemented.");
-		return 0.;
+		throw spexception("The Sengupta/Wagner attenuation model is not yet implemented.");
 	}
 
 	return 1.-att;

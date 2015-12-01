@@ -77,6 +77,7 @@ static var_info _cm_vtab_solarpilot[] = {
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",              "Max. number iteration steps",                "",       "",         "SolarPILOT",   "?=200",            "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",              "Optimization convergence tol",               "",       "",         "SolarPILOT",   "?=0.001",          "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",             "Optimization algorithm",                     "",       "",         "SolarPILOT",   "?=0",              "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_flux_penalty",          "Optimization flux overage penalty",          "",       "",         "SolarPILOT",   "*",                "",                "" },
 
 
 	/* outputs */

@@ -318,7 +318,7 @@ bool spvar::value_bool(){
 	if(dattype == "bool")
 		return lower_case(value) == "true";
 	else
-		return false;
+        throw spexception("Value error: Attempting to convert non-boolean data to bool. (" + this->varpath + ").");
 }
 
 int spvar::value_int(){
@@ -327,7 +327,9 @@ int spvar::value_int(){
 		to_integer(value, &d);
 		return d;
 	}
-	else{ return 0; }
+	else{ 
+        throw spexception("Value error: Attempting to convert non-integer data to integer. (" + this->varpath + ").");
+    }
 }
 
 double spvar::value_double(){
@@ -336,7 +338,9 @@ double spvar::value_double(){
 		to_double(value, &d);
 		return d;
 	}
-	else{ return 0.; }
+	else{ 
+        throw spexception("Value error: Attempting to convert non-float data to float. (" + this->varpath + ").");
+    }
 }
 
 #include <sstream>

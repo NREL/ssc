@@ -81,9 +81,9 @@ bool solarpilot_invoke::run()
 	helios.front().npanels_h = m_cmod->as_integer("n_facet_y");
 	helios.front().npanels_w = m_cmod->as_integer("n_facet_x");
 	int cmap[5];
-    cmap[0] = Heliostat::CANT_METHOD::NONE;
-    cmap[1] = Heliostat::CANT_METHOD::AT_SLANT;
-    cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR;
+    cmap[0] = Heliostat::CANT_TYPE::FLAT;
+    cmap[1] = Heliostat::CANT_TYPE::AT_SLANT;
+    cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_TYPE::AT_DAY_HOUR;
 	
 	int cant_type = m_cmod->as_integer("cant_type");
 

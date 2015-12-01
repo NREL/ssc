@@ -5,12 +5,13 @@
 
 using namespace std;
 	
-void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
+void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
 	int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
 {
 	/* 
 	Assign all of the arguments to local memory
 	*/
+    _thread_id = tname;
 	_SF = SF;
 	_results = results;
 	_wdata = wdata;
@@ -28,7 +29,7 @@ void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results,
 	_is_flux_normalized = true;
 };
 
-void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
+void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
 	double *args, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
 {
 	/* 
@@ -48,6 +49,7 @@ void LayoutSimThread::Setup(SolarField *SF, var_set *vset, sim_results *results,
 	args[3]	|	Pres	|	bar
 
 	*/
+    _thread_id = tname;
 	_SF = SF;
 	_results = results;
 	_wdata = nullptr;
@@ -97,6 +99,15 @@ bool LayoutSimThread::IsFinished()
 	return f;
 }
 
+bool LayoutSimThread::IsFinishedWithErrors()
+{
+    bool f;
+    FinErrLock.lock();
+    f = FinishedWithErrors;
+    FinErrLock.unlock();
+    return f;
+}
+
 void LayoutSimThread::UpdateStatus(int nsim_complete, int nsim_total)
 {
 	StatusLock.lock();
@@ -113,6 +124,11 @@ void LayoutSimThread::GetStatus( int *nsim_complete, int *nsim_total)
 	StatusLock.unlock();
 }
 
+vector<string> *LayoutSimThread::GetSimMessages()
+{
+    return &_sim_messages;
+}
+
 void LayoutSimThread::StartThread() //Entry()
 {
 	/* 
@@ -124,126 +140,169 @@ void LayoutSimThread::StartThread() //Entry()
 	objects as there are threads. Call this method for each duplicate object.
 
 	*/
-	double pi = acos(-1.);
-	//Run the simulation 
-	double dni, dom, doy, hour, month, tdb, pres, wind, step_weight;
-	double az, zen, azzen[2];
+    try{
+        
+        FinErrLock.lock();
+        FinishedWithErrors = false;
+        FinErrLock.unlock();
+        _sim_messages.clear();
+
+	    double pi = acos(-1.);
+	    //Run the simulation 
+	    double dni, dom, doy, hour, month, tdb, pres, wind, step_weight;
+	    double az, zen, azzen[2];
 			
-	int Npos = _SF->getHeliostats()->size();
+	    int Npos = _SF->getHeliostats()->size();
 				
-	//Simulate for each time
-	StatusLock.lock();
-	bool is_cancel = this->CancelFlag; //check for cancelled simulation
-	StatusLock.unlock();
-	if(is_cancel){
-		FinishedLock.lock();
-		Finished = true;
-		FinishedLock.unlock();
-		return; // (wxThread::ExitCode)-1;
-	}
+	    //Simulate for each time
+	    StatusLock.lock();
+	    bool is_cancel = this->CancelFlag; //check for cancelled simulation
+	    StatusLock.unlock();
+	    if(is_cancel){
+		    FinishedLock.lock();
+		    Finished = true;
+		    FinishedLock.unlock();
+		    return; // (wxThread::ExitCode)-1;
+	    }
 
-	if(_sim_first < 0) _sim_first = 0;
-	if(_sim_last < 0) _sim_last = _wdata->size();
+	    if(_sim_first < 0) _sim_first = 0;
+	    if(_sim_last < 0) _sim_last = _wdata->size();
 
-	int nsim = _sim_last - _sim_first + 1;
-	for(int i=_sim_first; i<_sim_last; i++){
-		//_SF->getSimInfoObject()->setCurrentSimulation(i+1);
-		double args[5];
+	    int nsim = _sim_last - _sim_first + 1;
+	    for(int i=_sim_first; i<_sim_last; i++){
+		    //_SF->getSimInfoObject()->setCurrentSimulation(i+1);
+		    double args[5];
 
-		//either calculate the sun position based on weather data steps, or use user-defined values
-		if(! _is_user_sun_pos){
+		    //either calculate the sun position based on weather data steps, or use user-defined values
+		    if(! _is_user_sun_pos){
 
-			//---- Calculate sun positions
+			    //---- Calculate sun positions
 
-			//Get the design-point day, hour, and DNI
-			_wdata->getStep(i, dom, hour, month, dni, tdb, pres, wind, step_weight);
+			    //Get the design-point day, hour, and DNI
+			    _wdata->getStep(i, dom, hour, month, dni, tdb, pres, wind, step_weight);
 
-			//Convert the day of the month to a day of year
-			doy = _SF->getAmbientObject()->getDateTimeObj()->GetDayOfYear(2011,int(month),int(dom));
+			    //Convert the day of the month to a day of year
+			    doy = _SF->getAmbientObject()->getDateTimeObj()->GetDayOfYear(2011,int(month),int(dom));
 				
 
-			//Calculate the sun position
-			_SF->getAmbientObject()->setDateTime(hour, doy);
-			//latitude, longitude, and elevation should be set in the input file
-			_SF->getAmbientObject()->calcSunPosition(azzen);
-			az = azzen[0]; 
-			zen = azzen[1];
-			//If the sun is not above the horizon, don't continue
-			if( zen > pi*0.5 ) 
-					continue;
+			    //Calculate the sun position
+			    _SF->getAmbientObject()->setDateTime(hour, doy);
+			    //latitude, longitude, and elevation should be set in the input file
+			    _SF->getAmbientObject()->calcSunPosition(azzen);
+			    az = azzen[0]; 
+			    zen = azzen[1];
+			    //If the sun is not above the horizon, don't continue
+			    if( zen > pi*0.5 ) 
+					    continue;
 				
-			//Simulate field performance
-			args[0] = dni;
-			args[1] = tdb;
-			args[2] = wind;
-			args[3] = pres/1000.;
-			args[4] = step_weight;
-		}
-		else{
-			//set the user-specified values
-			az = _sol_azzen->at(i,0);
-			zen = _sol_azzen->at(i,1);
+			    //Simulate field performance
+			    args[0] = dni;
+			    args[1] = tdb;
+			    args[2] = wind;
+			    args[3] = pres/1000.;
+			    args[4] = step_weight;
+		    }
+		    else{
+			    //set the user-specified values
+			    az = _sol_azzen->at(i,0);
+			    zen = _sol_azzen->at(i,1);
 
-			//Update the solar field to match specified sun position
-			_SF->getAmbientObject()->setSolarPosition(az, zen);
+			    //Update the solar field to match specified sun position
+			    _SF->getAmbientObject()->setSolarPosition(az, zen);
 
-			for(int j=0; j<4; j++)
-				args[j] = _user_args[j];
-		}
+			    for(int j=0; j<4; j++)
+				    args[j] = _user_args[j];
+		    }
 
-		bool is_cancel;
+		    bool is_cancel;
 
-		StatusLock.lock();
-		is_cancel = this->CancelFlag; 
-		StatusLock.unlock();
+		    StatusLock.lock();
+		    is_cancel = this->CancelFlag; 
+		    StatusLock.unlock();
 
-		if( (_is_shadow_detail || _is_flux_detail ) && !is_cancel)
-			interop::AimpointUpdateHandler(*_SF, *_vset);
+		    if( (_is_shadow_detail || _is_flux_detail ) && !is_cancel)
+			    interop::AimpointUpdateHandler(*_SF);
 		
-		StatusLock.lock();
-		is_cancel = this->CancelFlag; 
-		StatusLock.unlock();
+		    StatusLock.lock();
+		    is_cancel = this->CancelFlag; 
+		    StatusLock.unlock();
 
-		if(! is_cancel)
-			_SF->Simulate(args, 5, !_is_shadow_detail);
+		    if(! is_cancel)
+			    _SF->Simulate(args, 5, !_is_shadow_detail);
 
-		if((! is_cancel) && _is_flux_detail)
-			_SF->HermiteFluxSimulation( *_SF->getHeliostats() );
+		    if((! is_cancel) && _is_flux_detail)
+			    _SF->HermiteFluxSimulation( *_SF->getHeliostats() );
 							
 		
 
-		StatusLock.lock();
-		is_cancel = this->CancelFlag; 
-		StatusLock.unlock();
+		    StatusLock.lock();
+		    is_cancel = this->CancelFlag; 
+		    StatusLock.unlock();
 
-		//store the _results
-		if(! is_cancel)
-			_results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0); //2);
+		    //store the _results
+		    if(! is_cancel)
+			    _results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0); //2);
 		
-		StatusLock.lock();
-		is_cancel = this->CancelFlag; 
-		StatusLock.unlock();
+		    StatusLock.lock();
+		    is_cancel = this->CancelFlag; 
+		    StatusLock.unlock();
 
-		//optionally post-process the flux results as well
-		if(_is_flux_detail && !is_cancel)
-			_results->at(i).process_flux(_SF, _is_flux_normalized);
+		    //optionally post-process the flux results as well
+		    if(_is_flux_detail && !is_cancel)
+			    _results->at(i).process_flux(_SF, _is_flux_normalized);
 
-		//Update progress
-		UpdateStatus(i-_sim_first+1,nsim);
-		//Check for user cancel
-		StatusLock.lock();
-		is_cancel = this->CancelFlag; 
+		    //Update progress
+		    UpdateStatus(i-_sim_first+1,nsim);
+		    //Check for user cancel
+		    StatusLock.lock();
+		    is_cancel = this->CancelFlag; 
+		    StatusLock.unlock();
+		    if(is_cancel){
+			    FinishedLock.lock();
+			    Finished = true;
+			    FinishedLock.unlock();
+			    return;
+		    }			
+	    }
+	    FinishedLock.lock();
+	    Finished = true;
+	    FinishedLock.unlock();
+
+    }
+    catch(spexception &e)
+    {
+        /* Handle exceptions within a thread by adding the exception to a list and returning normally */
+        StatusLock.lock();
+		this->CancelFlag = true; 
 		StatusLock.unlock();
-		if(is_cancel){
-			FinishedLock.lock();
-			Finished = true;
-			FinishedLock.unlock();
-			return;
-		}			
-	}
-	FinishedLock.lock();
-	Finished = true;
-	FinishedLock.unlock();
+        
+        FinishedLock.lock();
+		Finished = true;
+		FinishedLock.unlock();
+        
+        FinErrLock.lock();
+        FinishedWithErrors = true;
+        FinErrLock.unlock();
+
+        _sim_messages.push_back( "Thread " + this->_thread_id + ": " +  e.what() );
+    }
+    catch(...)
+    {
+        /* Handle exceptions within a thread by adding the exception to a list and returning normally */
+        StatusLock.lock();
+		this->CancelFlag = true; 
+		StatusLock.unlock();
+        
+        FinishedLock.lock();
+		Finished = true;
+		FinishedLock.unlock();
+        
+        FinErrLock.lock();
+        FinishedWithErrors = true;
+        FinErrLock.unlock();        
+        
+        _sim_messages.push_back( "Thread " + this->_thread_id + ": " +  "Caught unspecified error in a simulation thread. Simulation was not successful." );
+    }
 
 	return;
 

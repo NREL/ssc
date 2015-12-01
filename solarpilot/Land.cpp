@@ -61,7 +61,13 @@ bool Land::InBounds(Point &P, double tht){
 			if( Toolbox::pointInPolygon(_exclusions.at(i), P) ) return false;	//if the point is in any exclusion, stop
 		}
 		//Test all of the inclusions polygons. The point must lie in one or more inclusion.
-		bool intest = false;
+		bool intest = _inclusions.size() == 0;  //If there aren't any inclusions, all points are included. Otherwise initialize as false
+
+        //check to make sure we aren't missing inclusion regions
+        if( intest && !( _is_bounds_scaled || _is_bounds_fixed) )
+            throw spexception("The land area in which heliostats may be placed is undefined. "
+                              "Please specify the layout bounds where heliostats are allowed.");
+
 		for(unsigned int i=0; i<_inclusions.size(); i++){
 			if( Toolbox::pointInPolygon(_inclusions.at(i), P) ){ intest = true; break;}
 		}

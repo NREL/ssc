@@ -84,16 +84,24 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 		V["heliostat"][ind]["r_collision"].value = my_to_string( dc);
 		
 		//Heliostat cant radius
-		int cant_method = V["heliostat"][ind]["cant_method"].value_int(); 
-			
-        switch (cant_method)
+		int cant_type = V["heliostat"][ind]["cant_method"].value_int(); 
+			/* 
+			No canting=0
+			On-axis at slant=-1
+			On-axis, user-defined=1
+			Off-axis, day and hour=3
+			User-defined vector=4 
+			*/
+        switch (cant_type)
         {
-        case Heliostat::CANT_METHOD::NONE:
-        case Heliostat::CANT_METHOD::AT_SLANT:
+        case Heliostat::CANT_TYPE::FLAT:
+        case Heliostat::CANT_TYPE::AT_SLANT:
+            //nothing to calculate
             break;
-        case Heliostat::CANT_METHOD::ON_AXIS_UD:
+        case Heliostat::CANT_TYPE::ON_AXIS_USER:
         {
-            bool is_scaled = V["heliostat"][ind]["is_cant_rad_scaled"].value_bool(); 
+            //On-axis, user-defined
+			bool is_scaled = V["heliostat"][ind]["is_cant_rad_scaled"].value_bool(); 
 			double cant_radius, 
 				cant_rad_scaled = V["heliostat"][ind]["cant_rad_scaled"].value_double();
 			
@@ -102,9 +110,10 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 			V["heliostat"][ind]["cant_radius"].value = my_to_string( cant_radius );
             break;
         }
-        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
+        case Heliostat::CANT_TYPE::AT_DAY_HOUR:
         {
-                                                         /* Calculate the sun position at this day and hour */
+            //Off-axis, day and hour
+			/* Calculate the sun position at this day and hour */
 			double cant_hour, lat, lon, tmz;
 			int cant_day =  V["heliostat"][ind]["cant_day"].value_int();
 			to_double( V["heliostat"][ind]["cant_hour"].value, &cant_hour);
@@ -155,12 +164,11 @@ void interop::UpdateCalculatedMapValues(var_set &V){
 
 			V["heliostat"][ind]["cant_sun_el"].value = my_to_string( 90. - SP.zenetr);
 			V["heliostat"][ind]["cant_sun_az"].value = my_to_string( SP.azim );
-
             break;
         }
-        case Heliostat::CANT_METHOD::USER:
+        case Heliostat::CANT_TYPE::USER_VECTOR:
         {
-            //Calculate the magnitude of the vector components
+			//Calculate the magnitude of the vector components
 			double i, j, k, scale, cmag;
 			to_double(V["heliostat"][ind]["cant_vect_i"].value, &i);
 			to_double(V["heliostat"][ind]["cant_vect_j"].value, &j);
@@ -176,10 +184,9 @@ void interop::UpdateCalculatedMapValues(var_set &V){
             break;
         }
         default:
-            throw spexception("Invalid cant method specified in UpdateCalculatedMapValues algorithm.");
             break;
         }
-
+		
 
 		//calculate the total error
 		double err_elevation, err_azimuth, err_surface_x, err_surface_y, err_reflect_x, err_reflect_y;
@@ -597,9 +604,22 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 
 			//Handle the "limited annual.." and "representative profile" options differently
 			if(design_method == LAYOUT_DETAIL::LIMITED_ANNUAL){	//Limited annual simulation
-				//preprocess the day's weather
-				vector<double>
-					all_time, all_dni, all_tdry, all_pres, all_wind, all_weights;
+				
+                //weighting fractions for DNI
+				double fthis = fmin(0.5, hr_st - floor(hr_st)) + fmin(0.5, ceil(hr_st) - hr_st);
+				//double fthis = all_time.front() - floor(all_time.front());
+				double fcomp = 1.-fthis;
+
+				//for integration, which way should we go?
+				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
+				//int iind = fthis < 0.5 ? -1 : 1;
+
+
+
+                
+                //preprocess the day's weather
+				/*vector<double>
+					all_time, all_dni, all_tdry, all_pres, all_wind, all_weights;*/
 				double jd = hr_st;
 				while(jd<hr_end+.001){	//include hr_end
 					//index associated with time jd
@@ -611,11 +631,11 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 					to_double(tsdat.at(5), &pres);
 					to_double(tsdat.at(6), &wind);
 
-					all_time.push_back(jd);
+					/*all_time.push_back(jd);
 					all_dni.push_back(dni);
 					all_tdry.push_back(tdry);
 					all_pres.push_back(pres);
-					all_wind.push_back(wind);
+					all_wind.push_back(wind);*/
 
 					//Calculate weighting factor for this hour
 					double hod = fmod(jd,24.);
@@ -630,36 +650,39 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 						step_weight = hrs[1] - hod + nskip/2.;
 					}
 					step_weight *= Toolbox::round(delta_day);
-					all_weights.push_back( step_weight );
+					//all_weights.push_back( step_weight );
 
-					jd += (double)nskip;	
-				}
+					//jd += (double)nskip;	
+				//}
 
-				int ndatpt = (int)all_time.size();
+				//int ndatpt = (int)all_time.size();
 
-				//weighting fractions for DNI
-				double fthis = all_time.front() - floor(all_time.front());
-				double fcomp = 1.-fthis;
-
-				//for integration, which way should we go?
-				int iind = fthis < 0.5 ? -1 : 1;
 				
-				for(int i=0; i<ndatpt; i++){
+				
+				//for(int i=0; i<ndatpt; i++){
 
 					//calculate the adjusted DNI based on the time surrounding the simulation position
 					double dnimod, dnicomp;
 					if(iind > 0)
-						dnicomp = i < ndatpt - 1 ? all_dni.at(i+1) : 0.;
+					    tsdat = split(wf_entries.at(min(8759,jind+1)), ",");
+						//dnicomp = i < ndatpt - 1 ? all_dni.at(i+1) : 0.;
 					else
-						dnicomp = i > 0 ? all_dni.at(i-1) : 0.;
+					    tsdat = split(wf_entries.at(max(0,jind-1)), ",");
+						//dnicomp = i > 0 ? all_dni.at(i-1) : 0.;
+					to_double(tsdat.at(3), &dnicomp);
 
-					dnimod = all_dni.at(i)*fthis + dnicomp * fcomp;
+					//dnimod = all_dni.at(i)*fthis + dnicomp * fcomp;
+					dnimod = dni*fthis + dnicomp * fcomp;
 
-					double hod = fmod(all_time.at(i),24.);
+					//double hod = fmod(jd,24.);
 
 					char ts[150];
-					sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dnimod, all_tdry.at(i), all_pres.at(i),all_wind.at(i), all_weights.at(i) );
+					sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dnimod, tdry, pres, wind, step_weight );
+					//sprintf(ts,"[P]%d,%f,%d,%f,%f,%f,%f,%f", int(dom), hod, int(month), dnimod, all_tdry.at(i), all_pres.at(i),all_wind.at(i), all_weights.at(i) );
 					wdatvar->append(ts);
+					
+                    jd += (double)nskip;	
+
 				}
 
 			}
@@ -685,11 +708,11 @@ void interop::GenerateSimulationWeatherData(var_set &vset, int design_method, Ar
 				int range = range_end - range_start;
 
 				//weighting fractions for DNI
-				double fthis = hr_st - floor(hr_st);
+				double fthis = fmin(0.5, hr_st - floor(hr_st)) + fmin(0.5, ceil(hr_st) - hr_st);
 				double fcomp = 1.-fthis;
 
 				//for integration, which way should we go?
-				int iind = fthis < 0.5 ? -1 : 1;
+				int iind = (hr_st - floor(hr_st)) < 0.5 ? -1 : 1;
 
 				int dayind=0;
 				int nwf = wf_entries.size();
@@ -895,7 +918,7 @@ bool interop::ticker_increment(int lengths[], int indices[], bool changed[], int
 
 //Simulation methods
 
-void interop::AimpointUpdateHandler(SolarField &SF, var_set &vset){
+void interop::AimpointUpdateHandler(SolarField &SF){
 	/* 
 	Update the calculated aim points for each heliostat in the field depending on the 
 	selection of the aiming method "aim_method". 
@@ -904,48 +927,61 @@ void interop::AimpointUpdateHandler(SolarField &SF, var_set &vset){
 	intermediary in setting those relevant parameters.
 	*/
 
+    FluxSimData *fd = SF.getFluxSimObject();
 	//Which type of simulation is this?
-	int simtype;
-	to_integer(vset["fluxsim"][0]["flux_model"].value, &simtype);	//0=Delsol, 1=Soltrace
+	int flux_model = fd->_flux_model;	//0=Delsol, 1=Soltrace
 	
 	/*--- calculate aim points ---*/
 
-	int aim_method;
-	to_integer(vset["fluxsim"][0]["aim_method"].value, &aim_method);
-	if(aim_method == 0){	//Simple aim points
+	if(fd->_aim_method == FluxSimData::AIM_STRATEGY::SIMPLE){	//Simple aim points
 		SF.calcAllAimPoints(0,(double*)NULL);
 	}
-	else if(aim_method == 1 || simtype==1){	//Sigma aim points=1, SolTrace can only handle this type right now.
+	else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::SIGMA || fd->_flux_model== FluxSimData::FLUX_MODEL::SOLTRACE){	//Sigma aim points=1, SolTrace can only handle this type right now.
 		//Alternative aim points
 		double sigma, args[2];
-		to_double(vset["fluxsim"][0]["sigma_limit"].value, &sigma);
-		args[0] = sigma;
-		SF.calcAllAimPoints(aim_method,args,1);
+		args[0] = fd->_sigma_limit;
+		SF.calcAllAimPoints(fd->_aim_method,args,1);
 	}
-	else if(aim_method == 2){	//probability shift=2 
-		double sigma, args[3];
-		to_double(vset["fluxsim"][0]["sigma_limit"].value, &sigma);
-		double dist;
-		to_double(vset["fluxsim"][0]["flux_dist"].value, &dist);
-		if(dist == 1.){
+	else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::PROBABILITY){	//probability shift=2 
+		double args[3];
+		if(fd->_flux_dist == 1.){
 			//Normal dist, get the standard dev of the sampling distribution
-			to_double(vset["fluxsim"][0]["norm_dist_sigma"].value, &args[2]);
+			args[2] = fd->_norm_dist_sigma;
 		}
-		args[0] = sigma;
-		args[1] = dist;	//the distribution type
-		SF.calcAllAimPoints(aim_method,args,3);
+		args[0] = fd->_sigma_limit;
+		args[1] = fd->_flux_dist;	//the distribution type
+		SF.calcAllAimPoints(fd->_aim_method,args,3);
 	}
-	else if(aim_method == 3){ //Image size priority
-		double sigma, args[2];	//args[0] = sigma, args[1] = reset flux grid flag
-		to_double(vset["fluxsim"][0]["sigma_limit"].value, &sigma);
-		args[0] = sigma;
-		SF.calcAllAimPoints(aim_method, args, 1);
+	else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::IMAGE_SIZE){ //Image size priority
+		double args[2];	//args[0] = sigma, args[1] = reset flux grid flag
+		args[0] = fd->_sigma_limit;
+		SF.calcAllAimPoints(fd->_aim_method, args, 1);
 	}
-	else if(aim_method == 4){ //Don't update the aim points
-		//do nothing
+	else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::EXISTING)
+    { 
+        //Don't update aimpoints, but still update flux plane aim point
+        SF.calcAllAimPoints(fd->_aim_method, (double*)NULL);
 	}
+    else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::FREEZE)
+    {
+        /* 
+        when we "freeze" the tracking vector, we need to update the heliostat aim point on the receiver according to the amount it's moved
 
-	else{ return; }
+        Get the sun tracking vector, then adjust each heliostat aim point based on the difference
+        */
+        
+        Vect *sun = SF.getAmbientObject()->getSunVector();
+        double args[3]; //add the sun position vector components
+        args[0] = sun->i;
+        args[1] = sun->j;
+        args[2] = sun->k;
+
+        SF.calcAllAimPoints( fd->_aim_method, args, 3);
+
+    }
+	else{ 
+        throw spexception("An invalid aimpoint argument was provided to the AimpointUpdateHandler algorithm. Please contact support for help resolving this issue.");
+    }
 }
 
 bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &helios, int sim_method){
@@ -964,13 +1000,13 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 	*/
 	
 	//Update the receiver surface flux densities
-	int nx, ny;
-	to_integer(vset["fluxsim"][0]["x_res"].value, &nx);
-	to_integer(vset["fluxsim"][0]["y_res"].value, &ny);
+    FluxSimData *fd = SF.getFluxSimObject();
+    //make sure simulation data is up to date
+    fd->Create(vset["fluxsim"][0]);
 	vector<Receiver*> *recs = SF.getReceivers();
 	
 	for(unsigned int i=0; i<recs->size(); i++){
-		recs->at(i)->DefineReceiverGeometry(nx, ny);
+		recs->at(i)->DefineReceiverGeometry(fd->_x_res, fd->_y_res);
 	}
 
 	//update clouds
@@ -989,10 +1025,10 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 
 
 	//need to update the SF sun position before continuing
-	if(vset["fluxsim"][0]["flux_time_type"].value == "0"){	//Sun position specified
-		double az,el,d2r=acos(-1.)/180.;
-		to_double(vset["fluxsim"][0]["flux_solar_az_in"].value, &az);
-		to_double(vset["fluxsim"][0]["flux_solar_el_in"].value, &el);
+	if(fd->_flux_time_type == FluxSimData::FLUX_TIME::POSITION){	//Sun position specified
+		double az = fd->_flux_solar_az_in;
+        double el = fd->_flux_solar_el_in;
+        double d2r = acos(-1.)/180.;
 		SF.getAmbientObject()->setSolarPosition(az*d2r,(90.-el)*d2r);
 	}
 	else{
@@ -1001,9 +1037,9 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 		//Run a simulation for the specified conditions
 		//<day of the month>, <hour of the day>, <month (1-12)>, <dni [W/m2]>,<amb. temperature [C]>, <atm. pressure [atm]>, <wind velocity [m/s]>
 	
-		int flux_day = vset["fluxsim"][0]["flux_day"].value_int();
-		double flux_hour = vset["fluxsim"][0]["flux_hour"].value_double();
-		int flux_month = vset["fluxsim"][0]["flux_month"].value_int();
+		int flux_day = fd->_flux_day;
+		double flux_hour = fd->_flux_hour;
+		int flux_month = fd->_flux_month;
 		
 		int doy = SF.getAmbientObject()->getDateTimeObj()->GetDayOfYear(2011,flux_month, flux_day);
 		SF.getAmbientObject()->setDateTime(flux_hour, doy);
@@ -1019,7 +1055,7 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 	If the performance simulation requires detailed flux information, do an initial calculation with simple aimpoints.
 	This allows for accurate (optimistic) power delivery values from each heliostat.
 	*/
-	if( vset["fluxsim"][0]["aim_method"].value_int() == Flux::AIM_STRATEGY::IMAGE_SIZE ){
+	if( fd->_aim_method == FluxSimData::AIM_STRATEGY::IMAGE_SIZE ){
 		//update aim points to simple position
 		SF.calcAllAimPoints(0,(double*)NULL);
 		//Simulate with simple aimpoints to update heliostat efficiency
@@ -1028,9 +1064,9 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 
 	//if we're using a SolTrace simulation, the options are simple aim points or to use 
 	//the previously calculated values using Delsol
-	if(! (sim_method==1 && SF.getAimpointStatus()) ){
+	if(! (sim_method==FluxSimData::FLUX_MODEL::SOLTRACE && SF.getAimpointStatus()) ){
 		//calculate aim points according to specified options
-		AimpointUpdateHandler(SF, vset);
+		AimpointUpdateHandler(SF);
 	}
 	//After updating the aim points, run a performance simulation to determine actual heliostat efficiencies
 	SF.Simulate(args, 4);
@@ -1042,7 +1078,8 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &
 #ifdef SP_USE_SOLTRACE
 bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &ST,
 										int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
-										void *par)
+										void *par,
+                                        vector<vector<double> > *st0data, vector<vector<double> > *st1data, bool save_stage_data, bool load_stage_data)
 {
 	/* 
 	This method requires that a SolTrace context "st_context_t" has already been created and passed to 
@@ -1061,21 +1098,27 @@ bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &S
 	//simulate, setting the UI callback and a pointer to the UI class
 	
 	st_sim_params( cxt, minrays, maxrays );
-	return st_sim_run(cxt, seed, callback, par) != -1;
+    if(load_stage_data)
+        return st_sim_run_data(cxt, seed, st0data, st1data, false, callback, par) != -1;
+    else if(save_stage_data)
+        return st_sim_run_data(cxt, seed, st0data, st1data, true, callback, par) != -1;
+    else
+	    return st_sim_run(cxt, seed, callback, par) != -1;
 }
 
 
 bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, var_set &vset, Hvector &helios,
 							   int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
-							   void *par)
+							   void *par,
+                               vector<vector<double> > *st0data, vector<vector<double> > *st1data, bool save_stage_data, bool load_stage_data)
 {
 	//Overload to be called when maintaining ST_System is not important
 	
 	ST_System STSim;
-	STSim.CreateSTSystem(vset, SF, helios);
+	STSim.CreateSTSystem(SF, helios);
 	ST_System::LoadIntoContext(&STSim, cxt);
 	int seed = SF.getFluxObject()->getRandomObject()->integer();
-	return SolTraceFluxSimulation_ST(cxt, seed, STSim, callback, par);
+	return SolTraceFluxSimulation_ST(cxt, seed, STSim, callback, par, st0data, st1data, save_stage_data, load_stage_data);
 }
 #endif
 
@@ -1500,14 +1543,14 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, Hvec
 
 		power_on_field = total_heliostat_area *dni;	//[kW]
 		power_absorbed = qray * nrabs;
-		eff_total_sf.ave = power_absorbed / power_on_field;
-		eff_cosine.ave = (double)nhin/(double)nsunrays*Abox/total_heliostat_area;
-		eff_blocking.ave = 1.-(double)nhblock/(double)(nhin-nhabs);
-		eff_attenuation.ave = 1.;	//Not currently accounted for
-		eff_reflect.ave = (double)(nhin - nhabs)/(double)nhin;
-		eff_intercept.ave = (double)nrin/(double)nhout;
-		eff_absorption.ave = (double)nrabs/(double)nrin;
-		eff_total_heliostat.ave = (double)nrabs/(double)nhin;
+        eff_total_sf.set(0,0, power_absorbed / power_on_field, 0, 0.);
+        eff_cosine.set(0.,0., (double)nhin/(double)nsunrays*Abox/total_heliostat_area, 0., 0.);
+		eff_blocking.set(0.,0., 1.-(double)nhblock/(double)(nhin-nhabs), 0., 0.);
+		eff_attenuation.set(0., 0., 1., 0., 0.);	//Not currently accounted for
+		eff_reflect.set(0., 0., (double)(nhin - nhabs)/(double)nhin, 0., 0.);
+		eff_intercept.set(0., 0., (double)nrin/(double)nhout, 0., 0.);
+		eff_absorption.set(0., 0., (double)nrabs/(double)nrin, 0., 0.);
+		eff_total_heliostat.set(0., 0., (double)nrabs/(double)nhin, 0., 0.);
 
 		total_receiver_area = SF.getReceiverTotalArea();
 		solar_az = SF.getAmbientObject()->getSolarAzimuth();

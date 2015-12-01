@@ -9,6 +9,7 @@ using namespace std;
 
  /*------------------ Quicksort for two vectors -------------------- */
 
+
 /**
  * Return median of left, center, and right.
  * Order these and hide the pivot.
@@ -32,30 +33,7 @@ const Comparable & median3( vector<Comparable> & a, vector<Tag> &b, int left, in
 	swap( b[ center ], b[ right - 1 ] );
     return a[ right - 1 ];
 }
-/**
-* Internal insertion sort routine for subarrays
-* that is used by quicksort.
-* a is an array of Comparable items.
-* left is the left-most index of the subarray.
-* right is the right-most index of the subarray.
-*/
-template <typename Comparable, typename Tag>
-void insertionSort(vector<Comparable> & a, vector<Tag> & b, int left, int right)
-{
-	for (int p = left + 1; p <= right; p++)
-	{
-		Comparable tmp = a[p];
-		Tag tmp2 = b[p];
-		int j;
 
-		for (j = p; j > left && tmp < a[j - 1]; j--){
-			a[j] = a[j - 1];
-			b[j] = b[j - 1];
-		}
-		a[j] = tmp;
-		b[j] = tmp2;
-	}
-}
 /**
  * Internal quicksort method that makes recursive calls.
  * Uses median-of-three partitioning and a cutoff of 10.
@@ -93,6 +71,32 @@ void quicksort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
         insertionSort( a, b, left, right );
 	}
 }
+
+/**
+ * Internal insertion sort routine for subarrays
+ * that is used by quicksort.
+ * a is an array of Comparable items.
+ * left is the left-most index of the subarray.
+ * right is the right-most index of the subarray.
+ */
+template <typename Comparable, typename Tag>
+void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
+{
+    for( int p = left + 1; p <= right; p++ )
+    {
+        Comparable tmp = a[ p ];
+		Tag tmp2 = b[ p ];
+        int j;
+
+        for( j = p; j > left && tmp < a[ j - 1 ]; j-- ){
+            a[ j ] = a[ j - 1 ];
+			b[ j ] = b[ j - 1 ];
+		}
+        a[ j ] = tmp;
+		b[ j ] = tmp2;
+    }
+}
+
 /*------------------ Quicksort for one vector -------------------- */
 
 template <typename Comparable>

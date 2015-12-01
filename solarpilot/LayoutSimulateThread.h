@@ -26,8 +26,11 @@ class LayoutSimThread
 	
 	bool
 		Finished,
-		CancelFlag;
+		CancelFlag,
+        FinishedWithErrors;
+    
 	int Nsim_complete, Nsim_total;
+    string _thread_id;
 
 	SolarField *_SF;
 	int _sim_first, _sim_last, _sort_metric;
@@ -36,19 +39,21 @@ class LayoutSimThread
 	matrix_t<double> *_sol_azzen;
 	double _user_args[4];
 	var_set *_vset;
+    vector<string> _sim_messages;
 
 	//wxMutex
 	mutex
 		StatusLock,
 		CancelLock,
-		FinishedLock;
+		FinishedLock,
+        FinErrLock;
 
 public:
 
-	void Setup(SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
+	void Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
 		int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
-	void Setup(SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
+	void Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
 		double *args, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
 	void IsFluxmapNormalized(bool is_normal);	//set whether the fluxmap should be normalized (default TRUE)
@@ -59,9 +64,13 @@ public:
 
 	bool IsFinished();
 
+    bool IsFinishedWithErrors();
+
 	void UpdateStatus(int nsim_complete, int nsim_total);
 
 	void GetStatus( int *nsim_complete, int *nsim_total);
+
+    vector<string> *GetSimMessages();    //can be called only after simulation is terminated
 
 	void StartThread();
 //private:

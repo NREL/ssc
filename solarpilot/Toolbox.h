@@ -565,6 +565,7 @@ struct Vect {
 	void Add( Vect &V );
 	void Subtract( Vect &V );
 	void Add(double _i, double _j, double _k);
+    void Scale( double m );
 	double &operator[](int index);
 };
 
@@ -710,7 +711,7 @@ namespace Toolbox
 	
     //computational geometry 
 	//Intersection of a vector on a plane
-	bool plane_intersect(Point &P, Vect &N, Point &C, Vect &L, Point &Int);
+	bool plane_intersect(Point &pt_on_plane, Vect &vect_plane, Point &pt_line_start, Vect &vect_line, Point &int_on_plane);
 	//Point on a line closest to external point
 	bool line_norm_intersect(Point &line_p0, Point &line_p1, Point &P, Point &N, double &rad);
 	//Intersection area of a rectangle and an ellipse

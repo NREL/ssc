@@ -8,8 +8,11 @@
 #include "Land.h"
 #include <vector>
 #include <iostream>
-#include <sstream>
 #include <algorithm>
+
+#include <iostream>
+#include <fstream>
+
 using namespace std;
 using namespace Toolbox;
 
@@ -31,6 +34,7 @@ in DELSOL3. These algorithms are publicly available through the following public
 
 
 */
+
 
 // ----------------- random class -------------
 Random::Random()
@@ -633,11 +637,19 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 	else {
 		//----Rectangular heliostats ----
 		
-		for(k=1; k<_n_terms+1; k+=2){
-			for(l=1; l<_n_terms+1; l+=2){
+        double wm2sk = wm2s;        //is pow(wm2s,k)
+        double wm2s2 = wm2s*wm2s;
+		for(k=1; k<_n_terms+1; k+=2)
+        {
+            wm2sk *= wm2s2;
+
+            double hm2sl = hm2s;    //is pos(hm2s,l)
+            double hm2s2 = hm2s*hm2s;
+            for(l=1; l<_n_terms+1; l+=2){
 				kl = k*l;
 				//Calculate the moments
-				errMM->at(k-1,l-1) = 4./double(kl)*pow(wm2s, k)*pow(hm2s, l);
+                hm2sl *= hm2s2;
+				errMM->at(k-1,l-1) = 4./double(kl)*wm2sk*hm2sl;
 			}
 		}
 		//Potentially add other geometries here. No other geometries are defined in DELSOL3.
@@ -721,11 +733,12 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	if(Rec->getReceiverType() == 0){	//External cylindrical 
 		double rec_width = Rec->getReceiverWidth();
 		double rec_opt_ht = Rec->getOpticalHeight();
-		slant = sqrt( pow(h_rad - rec_width*0.5 , 2) + pow(rec_opt_ht, 2) ) / tht;	//[tht] the distance to the receiver
+        double hmr = h_rad - rec_width*0.5;
+		slant = sqrt( hmr*hmr + rec_opt_ht*rec_opt_ht ) / tht;	//[tht] the distance to the receiver
 	}
 	else{
 		double rec_opt_ht = Rec->getOpticalHeight();
-		slant = sqrt( pow(h_rad, 2) + pow(rec_opt_ht, 2) )/tht;	//normalized. This is the default for all cavity/flat-plate type receivers
+		slant = sqrt( h_rad*h_rad + rec_opt_ht*rec_opt_ht )/tht;	//normalized. This is the default for all cavity/flat-plate type receivers
 	}
 
 	matrix_t<double> srange; srange.resize_fill(1, _n_terms, 0.);
@@ -865,8 +878,8 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 
 	//get error terms - See Kistler pp. 184 for definition
 	double err_angular[2], err_surface[2], err_reflected[2];
-	H.getErrorAngular(err_angular),		//(sigaz, sigel)
-	H.getErrorSurface(err_surface),		//(sigsx, sigsy)
+	H.getErrorAngular(err_angular);		//(sigaz, sigel)
+	H.getErrorSurface(err_surface);		//(sigsx, sigsy)
 	H.getErrorReflected(err_reflected);	//(sigtx, sigty)
 	
 	//Depending on the canting method, calculate the A[], B[] arrays differently.
@@ -876,17 +889,20 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	
 	//reused terms:
 	//SAVE=SIGAZ2*SNP**2+SIGSX2 | 8304
-	double term1 = pow(err_angular[0] * sin_n_zen, 2) + pow(err_surface[0], 2); //first reused term
+	double term1 = err_angular[0] * sin_n_zen; //first reused term
+    term1 *= term1;
+    term1 += err_surface[0]*err_surface[0];
+
 	//SAVE2=SIGEL2+SIGSY2
-	double term2 = pow(err_angular[1], 2) + pow(err_surface[1], 2);  //second reused term
-	
+	double term2 = err_angular[1]*err_angular[1] + err_surface[1] * err_surface[1];  //second reused term
+    
     switch (cant_method)
     {
-    case Heliostat::CANT_METHOD::NONE:
-    case Heliostat::CANT_METHOD::AT_SLANT:
-    case Heliostat::CANT_METHOD::ON_AXIS_UD:
+    case Heliostat::CANT_TYPE::FLAT:
+    case Heliostat::CANT_TYPE::AT_SLANT:
+    case Heliostat::CANT_TYPE::ON_AXIS_USER:
     {
-        //Everything except individual off-axis canting 
+        //Everything except individual off-axis canting and vector canting
 
 		//A(1,1)=CBNT 
 		A11 = cos_t_az * cos_n_az + sin_n_az * sin_t_az;
@@ -902,34 +918,35 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		B12 = -2.*A21;
 		B21 = -2.*A12;
 		B22 = 2.*A11;
-		break;
+
+        break;
     }
-    case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
-    case Heliostat::CANT_METHOD::USER:
+    case Heliostat::CANT_TYPE::AT_DAY_HOUR:
     {
         //case 3: individual off-axis canting at defined time
 		//Calculate sun angles at canting time 7097
-		double
-			cant_day = H.getCantDay(),
-			cant_hour = H.getCantHour();
-		double 
-			pi = acos(-1.),
-			dtemp = 2. * pi / 365.24 * (cant_day + 284.);
+		double cant_day = H.getCantDay();
+		double cant_hour = H.getCantHour();
+		double pi2 = pi/180.;
+
+		double dtemp = 2. * Pi / 365.24 * (cant_day + 284.);
 		dtemp += 0.007133*sin(dtemp) + 0.032680*cos(dtemp) - 0.00318*sin(2.*dtemp)+0.000145*cos(2.*dtemp);
-		double
-			sdec = sin(23.442274*pi/180.)*sin(dtemp),
-			cdec = sqrt(1.-pow(sdec, 2)),
-			ct = cos(cant_hour*15.*pi/180.),
-			st = sin(cant_hour*15.*pi/180.),
-			lat = SF.getAmbientObject()->getPlantLatitude(),
-			slat = sin(lat),
-			clat = cos(lat),
-			cspcan =  slat * sdec + clat * cdec * ct,
-			sspcan = sqrt(1. - pow(cspcan, 2)),
-			ssacan = 0., csacan;		
+		
+        double sdec = sin(23.442274*pi2)*sin(dtemp);
+        double cdec = sqrt(1.-sdec*sdec);
+        double ct = cos(cant_hour*15.*pi2);
+        double st = sin(cant_hour*15.*pi2);
+        double lat = SF.getAmbientObject()->getPlantLatitude();
+        double slat = sin(lat);
+        double clat = cos(lat);
+        double cspcan =  slat * sdec + clat * cdec * ct;
+        double sspcan = sqrt(1. - cspcan*cspcan);
+        double ssacan = 0.;
+        double csacan;		
+
 		if(sspcan > 1.e-5) ssacan = st * cdec / sspcan;
-		csacan = sqrt(1.-pow(ssacan, 2));
-		if(pow(ssacan,2) > 1.e-4) csacan = ssacan * (slat*ct - clat*sdec/cdec)/(st+1.e-8);
+		csacan = sqrt(1.-ssacan*ssacan);
+		if(ssacan*ssacan > 1.e-4) csacan = ssacan * (slat*ct - clat*sdec/cdec)/(st+1.e-8);
 				
 		//7352
 		//	CSP=CSPCAN
@@ -945,7 +962,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		//	CNP=(CSP+CTP)/HCOS/2.
 		cos_n_zen = (cos_s_zen + cos_t_zen)/eta_cosine/2.;
 		//	SNP=SQRT(1.-CNP**2)
-		sin_n_zen = sqrt(1.-pow(cos_n_zen, 2));
+		sin_n_zen = sqrt(1.-cos_n_zen*cos_n_zen);
 		//	CNA=CTA
 		cos_n_az = cos_t_az;
 		//	SNA=STA
@@ -978,27 +995,33 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		B21 = -A12*2.;
 		//	B(2,2)=2.*A(1,1)
 		B22 = 2.*A11;
-        break;
-    }
-    default:
-    {   
-        stringstream msg;
-        msg << "Invalid Cant Method specified in ImagePlaneIntercept algorithm. Method specified: " << cant_method << ".";
-        throw spexception(msg.str());
-        break;
-    }
-    }
 
-	
+
+        break;
+    }
+    case Heliostat::CANT_TYPE::USER_VECTOR:
+        throw spexception("User-vector cant method is not fully implemented (imagePlaneIntercept()).");
+
+
+
+
+
+
+        break;
+    default:
+        throw spexception("Unspecified cant method is not implemented (imagePlaneIntercept()).");
+        break;
+    }
+    	
 	//if the focal distance of the heliostat is not equal to the slant range, do additional 
 	//calculations here
 	//FLAG 
 
 	double delta_1, delta_2, delta_a, sigma_x, sigma_y;
 	//DELTA1=SIGTX2+SAVE*B(1,1)**2+SAVE2*B(1,2)**2
-	delta_1 = pow(err_reflected[0], 2) + term1 * pow(B11, 2) + term2 * pow(B12, 2);
+	delta_1 = err_reflected[0]*err_reflected[0] + term1 * B11 * B11 + term2 * B12 * B12;
 	//DELTA2=SIGTY2+SAVE*B(2,1)**2+SAVE2*B(2,2)**2
-	delta_2 = pow(err_reflected[1], 2) + term1 * pow(B21, 2) + term2 * pow(B22, 2);
+	delta_2 = err_reflected[1]*err_reflected[1] + term1 * B21 * B21 + term2 * B22 * B22;
 	//DELTAA=SAVE*B(1,1)*B(2,1)+SAVE2*B(2,2)*B(1,2)
 	delta_a = term1 * B11 * B21 + term2 * B22 * B12;
 	//SIGX=SRANGE(2)*SQRT(DELTA1)
@@ -1012,7 +1035,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	matrix_t<double>* mu_G = H.getErrorDistCoefObject();
 	mu_G->resize_fill(_n_terms, _n_terms, 0.0);
 
-	if(pow(delta_a, 2) < 1.e-20 ) {
+	if(delta_a*delta_a < 1.e-20 ) {
 		//The argument delta_a^2 is very close to zero, handle separately
 		double fact1, fact2;
 		//Calculate the factorial terms
@@ -1043,7 +1066,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	}
 	else {
 		rho_tmp = delta_a / sqrt(delta_1 * delta_2) + 1.e-10;
-		rho_sq = pow(rho_tmp, 2);	//used later
+		rho_sq = rho_tmp*rho_tmp;	//used later
 		rho = (1. - rho_sq)/2.;
 		
 		for(i=1; i<_n_terms+1; i++) {
@@ -1109,7 +1132,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 		E21 = A21+B21*xfocal*srange[1]/2.+1.e-10,
 		E22 = A22+B22*yfocal*srange[1]/2.+1.e-10;
 
-	double step = pow(E21/E22, 2);
+	double step = E21*E21/(E22*E22);
 	double temp_res, e_ratio, start[2], binoms;	//temporary result, updated in iteration
 	double S11, S22;	//s terms, not sure what these represent but seem to be cross terms- check Dellin
 	
@@ -1159,46 +1182,44 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	if(H.IsFacetDetail()){
 		//No canting=0;On-axis at slant=-1;On-axis, user-defined=1;Off-axis, day and hour=3; User-defined vector=4
 		//Are the heliostats canted on or off axis?
-		switch(cant_method)
-		{
-        case Heliostat::CANT_METHOD::AT_SLANT:
-			//method -1 for on-axis at default slant range (6 tht)
+        switch (cant_method)
+        {
+        case Heliostat::CANT_TYPE::FLAT:
+            //No canting
+			gcanta = 0.;
+			gcantx = 0.;
+			gcantb = 0.;
+			gcanty = 0.;
+            break;
+        case Heliostat::CANT_TYPE::AT_SLANT:
+            //method -1 for on-axis at default slant range (6 tht)
 			gcanta = 0.;
 			gcanty = 0.;
 			//gcantx = -.5/6.*srange[1];	//default range is 6.0 -- see DELSOL 835
 			gcantx = -.5*tht/H.getSlantRange()*srange[1];
 			gcantb = gcantx;
-			break;
-        case Heliostat::CANT_METHOD::ON_AXIS_UD:
-			//method 1 for on-axis at user defined length
+            break;
+        case Heliostat::CANT_TYPE::ON_AXIS_USER:
+            //method 1 for on-axis at user defined length
 			gcanta = 0.;
 			gcanty = 0.;
 			gcantx = -.5*tht/H.getCantRadius()*srange[1];	
 			gcantb = gcantx;
-			break;
-        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
-			//off-axis user defined time
+            break;
+        case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+            //off-axis user defined time
 			tempmult = 1./(4.*eta_cosine*slant)*srange[1];
 			gcantx = (A21*B12 - A11*B22)*tempmult;
 			gcanta = (A22*B12 - A12*B22)*tempmult;
 			gcanty = (A11*B21 - A21*B11)*tempmult;
 			gcantb = (A12*B21 - A22*B11)*tempmult;
-			break;
-        case Heliostat::CANT_METHOD::NONE:
-			//No canting
-			gcanta = 0.;
-			gcantx = 0.;
-			gcantb = 0.;
-			gcanty = 0.;
-			break;
-		default:
-        {
-            stringstream msg;
-            msg << "Invalid Cant Method specified in ImagePlaneIntercept algorithm. Method specified: " << cant_method << ".";
-            throw spexception(msg.str());
+            break;
+        case Heliostat::CANT_TYPE::USER_VECTOR:
+            throw spexception("User-vector cant method is not fully implemented (imagePlaneIntercept()).");
+        default:
+            throw spexception("Unspecified cant method is not implemented (imagePlaneIntercept()).");
         }
-        }
-
+        
 		matrix_t<double> xcent, ycent;
 		xcent.resize(ncanty,ncantx);
 		ycent.resize(ncanty,ncantx);
@@ -1273,12 +1294,12 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 	//DELSOL3 8412-8450
 	matrix_t<double>* mu_F = H.getFluxMomentsObject();
 	mu_F->resize_fill(_n_terms, _n_terms, 0.0);
-	int nrf=0;
+	/*int nrf=0;
 	for(i=1;i<_n_terms+1;i++){ for(j=JMN(i-1); j<JMX(i-1)+1; j+=2){nrf++;} }
 	matrix_t<double>* hc_tht = H.getHermiteNormCoefObject();
-	hc_tht->resize_fill(nrf,4,0.0);	//Hermite coef. dependence on tower height
+	hc_tht->resize_fill(nrf,4,0.0);	//Hermite coef. dependence on tower height*/
 
-	double tsave[7];
+	//double tsave[7];
 	double binom_temp0, binom_temp1, ugs;
 	int ipak=0, nmin, nmax, lmin, mk, ki, kp1, km1;
 	double comb_ord = mu_S->at(0,0) * mu_G->at(0,0) * mu_M->at(0,0);	//combined moments at the ordinate
@@ -1294,10 +1315,10 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 			ipak ++;
 			temp_res = 0.;
 
-			tsave[0] = 0.;
+			/*tsave[0] = 0.;
 			tsave[2] = 0.;
 			tsave[4] = 0.;
-			tsave[6] = 0.;
+			tsave[6] = 0.;*/
 
 			if(n>1){mstep=1;} else {mstep=2;}
 
@@ -1319,7 +1340,7 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 							muS = mu_S->at(i-1,j-1);
 							muM = mu_M->at(ki-1,l-j);
 							term1 = _binomials.at(l-1,j-1)*binom_temp1*muS*muM*ugs;
-							tsave[ki+l-j-1] += term1*comb_ord_inv;
+							//tsave[ki+l-j-1] += term1*comb_ord_inv;
 							temp_res += term1;
 						}
 					}
@@ -1327,10 +1348,10 @@ double Flux::imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) {
 			}
 			//normalize for unit flux
 			mu_F->at(m-1,n-1) = temp_res*comb_ord_inv;
-			hc_tht->at(ipak-1, 0) = tsave[0];
+			/*hc_tht->at(ipak-1, 0) = tsave[0];
 			hc_tht->at(ipak-1, 1) = tsave[2];
 			hc_tht->at(ipak-1, 2) = tsave[4];
-			hc_tht->at(ipak-1, 3) = tsave[6];	//save these coefficients for use in other optimization runs
+			hc_tht->at(ipak-1, 3) = tsave[6];*/	//save these coefficients for use in other optimization runs
 		}
 	}
 	
@@ -1372,9 +1393,18 @@ double Flux::hermiteIntEval(SolarField &SF, Heliostat &H, Receiver *Rec)
 	Returns spillage efficiency (1=no spillage)
 
 	*/
-	matrix_t<double>
-		*mu_F = H.getFluxMomentsObject(),
-		*hc_tht = H.getHermiteNormCoefObject();
+	matrix_t<double> *mu_F = H.getFluxMomentsObject();
+	//matrix_t<double> *hc_tht = H.getHermiteNormCoefObject();  //this structure isn't actually used here
+
+    int nrf=0;
+	for(int i=1;i<_n_terms+1;i++)
+    { 
+        for(int j=JMN(i-1); j<JMX(i-1)+1; j+=2)
+        {
+            nrf++;
+        } 
+    }
+
 	double 
 		eta_spill,		//Spillage efficiency
 		sig_x2 = sqrt(mu_F->at(2,0)),	//x-direction image standard deviation
@@ -1383,11 +1413,11 @@ double Flux::hermiteIntEval(SolarField &SF, Heliostat &H, Receiver *Rec)
 	//Set the standard deviation of the image (scaled by tower height) for the heliostat
 	H.setImageSize(sig_x2, sig_y2);
 
-	int npak = (int)hc_tht->ncells();
+	int npak = nrf*4; //(int)hc_tht->ncells();
 
 	//for optimization runs, don't do spillage calculations
 	matrix_t<double> h_spill, axi, ayi;
-	h_spill.resize_fill(1, hc_tht->nrows(), 0.0);
+	h_spill.resize_fill(1, nrf, 0.0); // hc_tht->nrows(), 0.0);
 	axi.resize_fill(1, _n_terms, 0.0);
 	ayi.resize_fill(1, _n_terms, 0.0);
 
@@ -1414,10 +1444,14 @@ double Flux::hermiteIntEval(SolarField &SF, Heliostat &H, Receiver *Rec)
 	int jmin, jmax, kmin, lmin, i, j, k, l;
 	double temp_res;
 	int ipak = 0;
+    double save1 = axi.at(1)*ayi.at(1)/6.2832;
 	for(i=1; i<_n_terms+1; i++){
 		jmin = JMN(i-1);
 		jmax = JMX(i-1);
 		kmin = jmin;	//small difference in calculation method, but the hard-coded values appear to always give the same results. DELSOL 1393
+
+        double save2 = save1 / _fact_d.at(i-1);
+
 		for(j=jmin; j<jmax+1; j+=2){
 			lmin = JMN(j-1);
 			ipak ++;
@@ -1429,7 +1463,7 @@ double Flux::hermiteIntEval(SolarField &SF, Heliostat &H, Receiver *Rec)
 				}
 			}
 			
-			temp_res = temp_res / (_fact_d.at(i-1) * _fact_d.at(j-1) * 6.2832) * axi.at(1) * ayi.at(1);
+			temp_res = temp_res / _fact_d.at(j-1) * save2;
 			eta_spill += h_spill.at(ipak-1)*temp_res;
 			hcoef->at(ipak-1) = temp_res;	//This array is used to evaluate the flux density
 		}
@@ -1500,6 +1534,7 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 		F[2] = G[2];
 		X[1] = w2;	//xmax Normalized maximum x-extent of the receiver
 		X[0] = -X[1];		//xmin Normalized minimum x-extent of the receiver
+        //DELSOL limits the integral based on the size of the receiver vs image size (sig_x)
 		if(X[1]/sig_x > 4.) {X[1] = 4.*sig_x;}
 		if(X[0]/sig_x < -4.) {X[0] = -4.*sig_x;}
 				
@@ -1511,8 +1546,7 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 		TA[0] = H.getAimPointFluxPlane()->x/tht;		//aim at the center of the flux plane (horizontally)
 		TA[1] = H.getAimPointFluxPlane()->y * sin_t_zen / tht;		//DELSOL -> YTAP(I)*sin_t_zen | the aim point is vertically scaled according to the severity of the view angle
 
-		G[3] = pow(X[1], 2);
-		F[3] = G[3];
+		G[3] = F[3] = X[1]*X[1];
 
 		//Call the flux integral
 		hermiteIntegral(G, F, X, A, TA, 1.0, hspill);
@@ -1533,80 +1567,50 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 						|| Rec->getReceiverGeomType() == Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE;	//0=Rectangular, 1=elliptical
 		
 		//Set up for cavity model | 2362
-		double hloc_az = atan2(H.getLocation()->x, H.getLocation()->y);	//Azimuth angle of the heliostat location, receiver is abscissa
-		double
-			rxn = Rec->getReceiverWidth()/tht/2.,		//Normalized half-width of the aperture
-			ryn = Rec->getReceiverHeight()/tht/2.,		//Normalized half-height of the aperture
-			rec_az = Rec->getReceiverAzimuth()+pi,			//In DELSOL, user input for RAZM is 180=N, but later adjusted to 0=N
-			rec_zen = pi/2. - Rec->getReceiverElevation(),		//Receiver zenith angle {90 = horizontal, >90 downward facing
-			hloc_az_i = cos(hloc_az),		//Cosine of the heliostat position azimuth angle
-			hloc_az_j = sin(hloc_az),		//Sine ""
-			rec_az_i = cos(rec_az),		//Cosine receiver aperture azimuth angle
-			rec_az_j = sin(rec_az),		//Sine ""
-			rec_zen_k = cos(rec_zen),	//Cosine receiver aperture zenith angle
-			rec_zen_j = sin(rec_zen),
-			cos_view_az = hloc_az_i*rec_az_i + hloc_az_j*rec_az_j,		//cosine of angle between rec. azimuth and helio position azimuth
-			sin_view_az = hloc_az_i*rec_az_j - hloc_az_j*rec_az_i,		//sine of angle between rec. azimuth and helio position azimuth - sign maintained
-			r11 = cos_view_az,
-			r12 = sin_view_az * rec_zen_k,
-			r21 = -cos_t_zen * sin_view_az,
-			r22 = sin_t_zen * rec_zen_j + cos_t_zen * rec_zen_k * cos_view_az;
+        Point *hloc = H.getLocation();
+		double hloc_az = atan2(hloc->x, hloc->y);	//Azimuth angle of the heliostat location, receiver is abscissa
+		double rxn = Rec->getReceiverWidth()/tht/2.;		//Normalized half-width of the aperture
+		double ryn = Rec->getReceiverHeight()/tht/2.;		//Normalized half-height of the aperture
+		double rec_az = Rec->getReceiverAzimuth()+pi;			//In DELSOL; user input for RAZM is 180=N; but later adjusted to 0=N
+		double rec_zen = pi/2. - Rec->getReceiverElevation();		//Receiver zenith angle {90 = horizontal; >90 downward facing
+		double hloc_az_i = cos(hloc_az);		//Cosine of the heliostat position azimuth angle
+		double hloc_az_j = sin(hloc_az);		//Sine ""
+		double rec_az_i = cos(rec_az);		//Cosine receiver aperture azimuth angle
+		double rec_az_j = sin(rec_az);		//Sine ""
+		double rec_zen_k = cos(rec_zen);	//Cosine receiver aperture zenith angle
+		double rec_zen_j = sin(rec_zen);
+		double cos_view_az = hloc_az_i*rec_az_i + hloc_az_j*rec_az_j;		//cosine of angle between rec. azimuth and helio position azimuth
+		double sin_view_az = hloc_az_i*rec_az_j - hloc_az_j*rec_az_i;		//sine of angle between rec. azimuth and helio position azimuth - sign maintained
 		
-		/* 
-		The DELSOL Hermite integral is inaccurate for heliostat images that are significantly smaller than
-		the receiver. Perform the integral over a subsection of the receiver if the image is much smaller than 
-		the receiver.
-
-		More information on the coordinate system rotation matrix rXX can be found in Dellin, T. A. (1979), pp 28.
-		*/
+        /* 
+        Coordinate system transform factors 'r'
+        See Eq. A-2 in Dellin (1979)
+        */
+        
+        double r11 = cos_view_az;       //base apparent width due to non-normal view of receiver
+		double r12 = sin_view_az * rec_zen_k;   //extension of apparent width at corners due to non-normal view of a tilted receiver plane                              
+                                                                                                                                                            //             /|
+		double r21 = -cos_t_zen * sin_view_az;  //apparent vertical displacement of image plane corners due to azimuthal and upward severity of heliostat's viewpoint.  <-|-|
+                                                                                                                                                            //            |/
+		double r22 = sin_t_zen * rec_zen_j + cos_t_zen * rec_zen_k * cos_view_az;   //apparent vertical height of the receiver at the centerline
+		
 		Point *aim = H.getAimPointFluxPlane();		//In X and Y coordinates, Y being vertical
-		double 
-			sig_x5 = sig_x * 5.,
-			sig_y5 = sig_y * 5.;
-		double rx_ip = rxn*r11 + ryn*r12;	//Receiver half-width projected into the image plane
-		double ry_ip = rxn*r21 + ryn*r22;	//Receiver half-height projected into the image plane
-		
-		if(fabs(rx_ip) > sig_x5 || fabs(ry_ip) > sig_y5){
-			double 
-				aimx = aim->x/tht,			//Original aim point in receiver plane coordinates
-				aimy = aim->y/tht;
-			double
-				rxn_l = -fmin(sig_x5, fabs(-rxn - aimx)),		//Left and right bounds of the integration region
-				rxn_r = fmin(sig_x5, fabs(rxn - aimx)),
-				rxn_adj = rxn_r - rxn_l,					//Width of the integration region in receiver plane coordinates
-				ryn_l = -fmin(sig_y5, fabs(-ryn - aimy)),		//Lower and upper bounds of the integration region
-				ryn_u = fmin(sig_y5, fabs(ryn - aimy)),
-				ryn_adj = ryn_u - ryn_l;					//Height of the integration region in receiver plane coordinates
-			
-			double 
-				aimx_adj = (-rxn_adj/2. - rxn_l),		//Aim point within the revised integration region
-				aimy_adj = (-ryn_adj/2. - ryn_l);
 
-			TA[0] = aimx_adj*r11 + r12 * aimy_adj;
-			TA[1] = aimx_adj*r21 + r22 * aimy_adj;
-			rxn = rxn_adj/2.;
-			ryn = ryn_adj/2.;
-
-		}
-		else{
-
-			//Get the aim point in the flux plane
-			TA[0] = aim->x/tht * r11 + r12 * aim->y/tht;
-			TA[1] = aim->x/tht * r21 + r22 * aim->y/tht;
-		}
 
 		if(is_elliptical){
 			//Elliptical receiver aperture | 2382
-			
+			TA[0] = aim->x*r11 + r12 * aim->y;
+            TA[1] = aim->x*r21 + r22 * aim->y;
 			double
-				ar2 = pow(rxn, 2),
-				br2 = pow(ryn, 2),
-				aa = pow(r12, 2)/ar2 + pow(r11,2)/br2,
+				ar2 = rxn*rxn,
+				br2 = ryn*ryn,
+				aa = r12*r12/ar2 + r11*r11/br2,
 				bb = -2.*(r12*r22/ar2 + r11*r21/br2),
-				cc = pow(r22,2)/ar2 + pow(r21,2)/br2,
+                bb2 = bb*bb,
+				cc = r22*r22/ar2 + r21*r21/br2,
 				dd = -pow(r11*r22-r12*r21,2),
-				term_1 = bb*bb - 4.*aa*cc,
-				xmax = dd*pow(bb,2)/aa/term_1,
+				term_1 = bb2 - 4.*aa*cc,
+				xmax = dd*bb2/(aa*term_1),
 				xmin = sqrt(xmax);
 			if(bb > 0) xmin = - xmin;
 			xmax = fabs(-bb*xmin/2./cc + sqrt(xmax*term_1 - 4.*cc*dd)/2./cc);
@@ -1617,7 +1621,7 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 			F[1] = G[1];
 			G[2] = -.5/aa;
 			F[2] = -G[2];
-			G[4] = pow(bb,2) - 4.*aa*cc;
+			G[4] = bb2 - 4.*aa*cc;
 			F[4] = G[4];
 			G[3] = -4.*aa*dd;
 			F[3] = G[3];
@@ -1639,21 +1643,178 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 				U[4], V[4];
 			if(r11 < 0.) rxn_temp = -rxn;
 			if(r12 < 0.) ryn_temp = -ryn;
+            
 
-			U[0] = r11 * rxn_temp + r12 * ryn_temp;
-			V[0] = r21 * rxn_temp + r22 * ryn_temp;
-			U[1] = -r11 * rxn_temp + r12 * ryn_temp;
-			V[1] = -r21 * rxn_temp + r22 * ryn_temp;
-			U[2] = -U[0];
-			V[2] = -V[0];
-			U[3] = -U[1];
-			V[3] = -V[1];
-			G[2] = G[3] = G[4] = 0.;
+
+            /* 
+		    The DELSOL Hermite integral is inaccurate for heliostat images that are significantly smaller than
+		    the receiver. Perform the integral over a subsection of the receiver if the image is much smaller than 
+		    the receiver.
+
+		    More information on the coordinate system rotation matrix rXX can be found in Dellin, T. A. (1979), pp 28.
+		    */
+		    double sig_x5 = sig_x * 5;        //6/23/2015 -- Seems to work better with 10x. Adjusted for bug-fixed algorithm below
+		    double sig_y5 = sig_y * 5;
+		    double sig_max5 = max(sig_y5, sig_x5);
+            
+
+            /* 
+            First calculate the original image plane receiver corner points.
+
+            The U and V vectors represent the corner positions of the receiver in the heliostat view plane. U are x coords, V are Y.
+            In other words, these coordinates map the receiver corner positions when projected onto a plane normal to the heliostat-
+            to-receiver vector. The points are subject to rotation and scaling according to the orientation of the heliostat and the
+            receiver.
+            */
+
+            //                                                                                                                                         ____ 
+			U[0] = r11 * rxn_temp + r12 * ryn_temp;     //apparent width at outer (or inner) corner of flat plate receiver projected onto image plane /_|_/ ^^
+            //                                                                                                                                         ____ 
+            U[1] = -r11 * rxn_temp + r12 * ryn_temp;    //apparent width at outer (or inner) corner of flat plate receiver projected onto image plane /_|_/ vv
+			U[2] = -U[0];                               //opposite corner from U[0] (x)
+			U[3] = -U[1];                               //opposite corner from U[1] (x)
+
+			V[0] = r21 * rxn_temp + r22 * ryn_temp;     //apparent height at outer (or inner) corner of flat plate receiver projected onto image plane
+			V[1] = -r21 * rxn_temp + r22 * ryn_temp;    //apparent height at inner (or outer) corner of flat plate receiver projected onto image plane
+			V[2] = -V[0];                               //opposite corner from V[0] (y)
+			V[3] = -V[1];                               //opposite corner from V[1] (y)
+
+            /* 
+            We now want to determine whether the image is likely to be much smaller than the projected receiver quadrilateral. 
+            Calculate the apparent space between parallel edges.
+            */
+
+            //Dot product of 0-3-2 scales receiver height and width
+            double lx03 = U[0]-U[3];
+            double ly03 = V[0]-V[3];
+            double lx23 = U[2]-U[3];
+            double ly23 = V[2]-V[3];
+            double l03 = sqrt( ly03*ly03 + lx03*lx03 );     //height component
+            double l23 = sqrt( ly23*ly23 + lx23*lx23 );     //width component
+            //take dot product
+            double dp = (lx03 * lx23 + ly03 * ly23)/(l03 * l23);
+            //sine product gives final scale due to skewness
+            double sdp = sqrt(1. - dp*dp);
+
+            //if the scaled width/height are greater than the maximum image size, move into receiver scaling mode
+            double aimy_adj = aim->y/tht;   //aimpoint in global coordinate system
+            double aimx_adj = aim->x/tht;
+            if( sdp * l03 > 2.*sig_max5 || sdp * l23 > 2.*sig_max5 )
+            {
+
+                /* 
+                The image of the heliostat can be modeled approximately using the normalizing constants sig_x and sig_y as an
+                ellipsoid. When viewed from the heliostat, the image appears to be oriented such that sig_y falls along the
+                vertical axis and sig_x along the horizontal axis. 
+
+                When projected on to the receiver, the ellipsoid must be scaled and rotated according to the orientation of 
+                the receiver relative to the heliostat image plane. For this analysis, we only care about scaling down the 
+                receiver size (virtually) so that the integral can be evaluated using quadrature. Therefore, we can avoid having 
+                to project and rotate the ellipsoid onto the receiver plane by solving for tangent lines to the ellipsoid in 
+                the heliostat image plane where the tangent lines are parallel with the edge lines of the projected receiver. 
+                These tangent lines form the new scaled receiver bounds.
+
+                Use the equation of an ellipse:
+                (x/sig_x)^2 + (y/sig_y)^2 = 1
+                
+                We wish to know where the derivative of this equation dy/dx equals the slope of the tangent line:
+                dy/dx = - (sig_x * x) / sqrt(b - a b x^2 )
+                In terms of x-position:
+                x = -dy/dx / sqrt( sig_x^2 sig_y + sig_x (dy/dx)^2 )
+
+                The apparent half-width and half-height of the scaled receiver in projected coordinates are given by the 
+                radius of the ellipse at x,y. Substituting the above expression for x and the equation of the ellipse solved 
+                for y into the radius equation:
+                r = sqrt(x^2 + y^2)
+                
+                we have:
+                r = sqrt[ (sig_x^4 sig_y^3 + (sig_x^2 + (sig_x^3 - 1) sig_y^2) (dy/dx)^2) / (sig_x^3 (sig_x sig_y + (dy/dx)^2) ) ]
+                (valid first quadrant)
+                */
+
+                double dydx_w = abs(lx23)>1e-6 ? ly23/lx23 : 1e6;
+                if(U[3] > U[0]) dydx_w *= -1.;  //always work 3->0 positive
+
+                double dydx_w2 = dydx_w * dydx_w;
+
+                double dydx_h = abs(lx03)>1e-6 ? ly03/lx03 : 1e6;
+                if(U[3] > U[2]) dydx_h *= -1;   //always work 3->2 positive
+
+                double dydx_h2 = dydx_h * dydx_h;
+
+                double a = sig_x / sig_y;
+                double b = 1.;
+
+                double a2 = a * a;
+                double a3 = a2 * a;
+                //Solve for the width at each slope
+                double t1 = a2 + a3 - 1.;
+                double radw = sqrt( (a3 + t1*dydx_w2) / (a3 * (a + dydx_w2) ) );
+                double radh = sqrt( (a3 + t1*dydx_h2) / (a3 * (a + dydx_h2) ) );
+                //Translate back to original receiver coordinates
+                double rx_ip = 2. * radw * sig_y5 * rxn / (sdp * l23);
+                double ry_ip = 2. * radh * sig_y5 * ryn / (sdp * l03);
+
+                if(ry_ip < ryn || rx_ip < rxn)
+                {
+                    //move the quadrature rectangle to be as close as possible to the aim point without moving outside
+                    //the original reciever bounds
+                    double delta_x_q = aimx_adj; 
+                    double signx = aimx_adj < 0 ? -1. : 1.;
+                    double dshiftx = max(rxn - rx_ip, 0.);      //maximum allowable shift in x, zero if rx_ip > rxn
+                    if( abs(delta_x_q) > rxn - rx_ip ) delta_x_q = signx * dshiftx;
+
+                    double delta_y_q = aimy_adj; 
+                    double signy = aimy_adj < 0 ? -1. : 1.;
+                    double dshifty = max(ryn - ry_ip, 0.);
+                    if( abs(delta_y_q) > ryn - ry_ip ) delta_y_q = signy * dshifty;
+
+                    //the aim point is now closer to the (0,0) centroid of the quadrature grid. Adjust
+                    aimx_adj += -delta_x_q;
+                    aimy_adj += -delta_y_q;
+
+                    //update receiver width
+                    if( rx_ip < rxn ) rxn = rx_ip;
+                    if( ry_ip < ryn ) ryn = ry_ip;
+                }
+                
+                //Recalculate U and V vectors with new widths
+                rxn_temp = rxn;
+				ryn_temp = ryn;
+			    if(r11 < 0.) rxn_temp = -rxn;
+			    if(r12 < 0.) ryn_temp = -ryn;
+                
+                U[0] = r11 * rxn_temp + r12 * ryn_temp;     
+                U[1] = -r11 * rxn_temp + r12 * ryn_temp;    
+			    U[2] = -U[0];                               
+			    U[3] = -U[1];                               
+
+			    V[0] = r21 * rxn_temp + r22 * ryn_temp;     
+			    V[1] = -r21 * rxn_temp + r22 * ryn_temp;    
+			    V[2] = -V[0];                               
+			    V[3] = -V[1];                               
+
+            }
+            else
+            {
+                aimy_adj = aim->y/tht;
+                aimx_adj = aim->x/tht;
+            }
+
+        
+            //Set aimpoints
+            TA[0] = aimx_adj*r11 + r12 * aimy_adj;
+            TA[1] = aimx_adj*r21 + r22 * aimy_adj;
+            
+
+			//finish setting up arrays
+            G[2] = G[3] = G[4] = 0.;
 			F[2] = F[3] = F[4] = 0.;
-			
-			double
+
+            double
 				csmall = 1.e-8;
 
+            //if the X position of the 2nd point is greater than the 4th point, assume symmetry and swap points to make the sign of the integral consistent.
 			if(! (U[1] +csmall < U[3])){
 				swap(U[1], U[3]);
 				swap(V[1], V[3]);
@@ -1661,13 +1822,14 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 
 			//Evaluate the integral based on the values of X
 			if(! (pow(U[0] - U[3],2) > csmall)){
-				X[0] = U[2];
+                X[0] = U[2];
 				X[1] = U[0];
 				G[0] = (U[1]*V[0] - U[0]*V[1])/(U[1]-U[0]);
 				G[1] = (V[1] - V[0])/(U[1] - U[0]);
 				F[1] = (V[2] - V[3])/(U[2] - U[3]);
 				F[0] = (U[2]*V[3] - U[3]*V[2])/(U[2]-U[3]);
-				if(!( (F[0] + F[1]*U[1]) >= (G[0] + G[1]*U[1]) ) ){
+
+                if(!( (F[0] + F[1]*U[1]) >= (G[0] + G[1]*U[1]) ) ){
 					//Switch stuff
 					swap(G[0], F[0]);
 					swap(G[1], F[1]);
@@ -1687,11 +1849,11 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 				F[1] = (V[2]-V[3])/(U[2]-U[3]);
 				G[0] = (U[1]*V[2]-U[2]*V[1])/(U[1]-U[2]);
 				G[1] = (V[1]-V[2])/(U[1]-U[2]);
-				if(!( (F[0] + F[1]*U[1]) >= (G[0] + G[1]*U[1]) ) ){
+				if((F[0] + F[1]*U[1]) < (G[0] + G[1]*U[1]) ){
 					swap(G[0], F[0]);
 					swap(G[1], F[1]);
 				}
-
+                
 				//Call the flux integral 2469
 				hermiteIntegral(G, F, X, A, TA, 1.0, hspill);
 			}
@@ -1741,6 +1903,7 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 	
 
 }
+//#define _WRITE_FILE 
 
 void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], double TA[2], double WT, matrix_t<double> &hspill){
 	/*
@@ -1803,23 +1966,59 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 	//declare other temp variables
 	double xx, x12, x[3], xsq[3], fk, s2, s3, sign2, sign3;
 	int ipak, i, j, k, n, jmin, jmax;
-
+#ifdef _WRITE_FILE
+    string name = "C:\\Users\\mwagner\\Documents\\NREL\\Field optimization\\Misc sim files\\int\\hdat.csv";
+    ofstream fout(name.c_str());
+    fout << "x0,x1,x2,xsq1,2,3,sign2,3,s2,s3,h-->\n";
+    fout.clear();
+#endif 
+    //Evaluate each of the quadrature points
 	for(n=1; n<17; n++){
+        //move through abscissas (positive receiver extent to negative). Each _xg is Gauss-Hermite abscissa.
 		xx = xmin+xdiff*(1.+_xg[n-1]);
-		x12 = pow(xx, 2);
+		x12 = xx * xx;
+        //I don't know what these values represent
+
+        /* 
+        Cylindrical
+        -------------
+        G[0] - More negative the smaller either width/height are, closer theta_t_zen to 45deg
+        F[0] - Positive if width*cos_t_zen is smaller than height*sin_t_zen
+        G[1] = F[1] - 0
+        G[2] = F[2] - helio-to-tower zenith angle cosine (cos_t_zen)
+        G[3] = F[3] - w2^2
+        G[4] = F[4] - -1
+
+        Plate
+        -------------
+        */
+
 		x[1] = (G[0]+G[1]*xx+G[2]*sqrt(G[3]+G[4]*x12))*A[1]-yta*A[1];
 		x[2] = (F[0]+F[1]*xx+F[2]*sqrt(F[3]+F[4]*x12))*A[1]-yta*A[1];
+        //The distance between the current abscissa and the aim point (X) in # of std-dev's
 		x[0] = (xx-xta)*A[0];
+        //Initialize the Hermite coefficient array
 		h.at(0,0) = 0.;
 		h.at(1,0) = 0.;
 		h.at(2,0) = 0.;
-		for(i=0; i<3; i++){xsq[i] = pow(x[i], 2);}
+		for(i=0; i<3; i++){xsq[i] = x[i]*x[i];}
+        //Calculate the quadrature weights. If the xsq value is large, don't bother since it will be zero.
 		if(xsq[0] < 100.) {h.at(0,0) = exp( -xsq[0]/2. )*WT/A[1]*xdiff;}
 		if(xsq[1] < 100.) {h.at(1,0) = exp( -xsq[1]/2. );}
 		if(xsq[2] < 100.) {h.at(2,0) = exp( -xsq[2]/2. );}
+#ifdef _WRITE_FILE
+        fout << x[0] << "," << x[1] << "," << x[2] << ",";
+        fout << xsq[0] << "," << xsq[1] << "," << xsq[2] << ",";
+#endif
+        //Initialize
 		h.at(1,1) = 0.;
 		fk = -2.;
-		//writeMatD("H",h);
+        /* 
+        Evaluate the hermite polynomial series coefficients. 
+        
+        The recurrence relationship is used: 
+        H_n = x * H_n-1 - (n-1)*H_n-2
+        */
 		for(k=3; k<_n_terms+3; k++){
 			fk += 1.;
 			h.at(0,k-1) = x[0]*h.at(0,k-2) - fk*h.at(0,k-3);
@@ -1831,14 +2030,25 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 		sign3 = (x[2]+dsmall)/fabs(x[2]+dsmall);
 		x[1] = fabs(x[1]);
 		x[2] = fabs(x[2]);
+        //
 		for(j=1; j<5; j++){
 			s2 += _ci[j-1]*pow(x[1], j);
 			s3 += _ci[j-1]*pow(x[2], j);
 		}
 		s2 = ss*((sign2 - 1.)/(-2.) + sign2*(1.-.5*pow(s2, -4)));
 		s3 = ss*((sign3 - 1.)/(-2.) + sign3*(1.-.5*pow(s3, -4)));
-			
+		
 		h.at(1,1) = s3 - s2;
+
+#ifdef _WRITE_FILE
+        fout << sign2 << "," << sign3 << "," << s2 << "," << s3 << ",";
+
+        for(int rr =0; rr<h.nrows(); rr++)
+            for(int cc=0; cc<h.ncols(); cc++)
+               fout << h.at(rr,cc) << ",";
+        
+        fout << "\n";
+#endif
 		ipak = 0;
 		for(i=1; i<_n_terms+1; i++){
 			int im1 = i-1;
@@ -1846,10 +2056,13 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 			jmax = _n_terms - im1; //jmax = JMX(i-1);
 			for(j=jmin; j<jmax+1; j+=2){
 				ipak++;
-				hspill.at(ipak-1) += _ag[n-1]*(h.at(0,i+1)*(h.at(1,j) - h.at(2,j)));
+				hspill.at(ipak-1) += _ag[n-1]*h.at(0,i+1)*(h.at(1,j) - h.at(2,j));
 			}
 		}	
 	}
+#ifdef _WRITE_FILE
+    fout.close();
+#endif
 }
 
 void Flux::fluxDensity(FluxSurface &flux_surface, SolarField &SF, Hvector &helios, bool clear_grid, bool norm_grid, bool show_progress){
@@ -1930,7 +2143,7 @@ void Flux::fluxDensity(FluxSurface &flux_surface, SolarField &SF, Hvector &helio
 		//Calculate the normalizing constant. This is equal to the normalized power delivered by the heliostat to the
 		//reciever divided by the tower height squared. (the tht^2 term falls out of the normalizing procedure
 		//that we previously used in defining the Hermite moments). See DELSOL 7634.
-		double cnorm = helios.at(i)->getArea() * helios.at(i)->getEfficiencyTotal()/pow(tht,2);
+		double cnorm = helios.at(i)->getArea() * helios.at(i)->getEfficiencyTotal()/(tht*tht);
 		//Loop through each flux point
 		//Rows
 		for(int j=0; j<nfx; j++){
@@ -1952,7 +2165,7 @@ void Flux::fluxDensity(FluxSurface &flux_surface, SolarField &SF, Hvector &helio
 				}
 				//Translate the flux point location into global coordinates
 				Point pt_g;
-				pt_g.Set(pt->location.x + offset->x, pt->location.y + offset->y, pt->location.z + offset->z + tht);
+				pt_g.Set(pt->location.x + offset->x, pt->location.y + offset->y, pt->location.z + tht); //tht include z offset
 
 				//Project the current flux point into the image plane as defined by the 
 				//aim point and the heliostat-to-receiver vector.
@@ -1965,18 +2178,21 @@ void Flux::fluxDensity(FluxSurface &flux_surface, SolarField &SF, Hvector &helio
 				pt_ip.Subtract( *aim );
 				
 				//Express this point in image plane coordinates
-				Toolbox::rotation(-atan2(tvr.i, tvr.j), 2, pt_ip);
-				Toolbox::rotation(-acos(tvr.k), 0, pt_ip);
+                double azpt = atan2(tvr.i, tvr.j);
+                double zenpt = acos(tvr.k);
+
+				Toolbox::rotation(pi-azpt, 2, pt_ip);
+				Toolbox::rotation(zenpt, 0, pt_ip);
 
 				//This rotation now expresses pt_ip in x,y coordinates of the image plane.
 
 				//Normalize the x,y coordinates with respect to the image error size
 				double
-					xn = pt_ip.x/tht / sigx,
+					xn = -pt_ip.x/tht / sigx,       //with delsol formulation, image is flipped in x direction. Not sure why.
 					yn = pt_ip.y/tht / sigy;
 				
 				//Calculate the flux
-				pt->flux += f_dot_t * hermiteFluxEval(helios.at(i), xn, yn) * exp( -0.5 *( pow(xn, 2) + pow(yn, 2)) ) * cnorm;
+				pt->flux += f_dot_t * hermiteFluxEval(helios.at(i), xn, yn) * exp( -0.5 *( xn*xn + yn*yn) ) * cnorm;
 			}
 		}
 	}
@@ -2072,7 +2288,6 @@ void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
 	vector<Receiver*> *Recs = SF.getReceivers();
 
 	Point *hpos = H.getLocation();
-	int cant_method = H.getCantMethod();
 	
 	double tht = SF.getTowerHeight();
 	
@@ -2087,7 +2302,7 @@ void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
 	H.setWhichReceiver(rec);
 
 	double
-		opt_height = rec->getOpticalHeight() + rec->getOffsetZ(),
+		opt_height = rec->getOpticalHeight(), // + rec->getOffsetZ(),       << optical height already includes Z offset
 		y_offset = rec->getOffsetY(),
 		x_offset = rec->getOffsetX();
 	double view_az, w2;
@@ -2175,7 +2390,7 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 	simpleAimPoint(&saim, &saimf, H, SF);
 	
 	double sigx,sigy;
-	Vect aimpos;
+	Point aimpos;
 
 	switch (recgeom)
 	{
@@ -2200,13 +2415,9 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 		//-- now calculate the aim point position in the flux plane
 		//vector from simple aim point to mod aim point
 		aimpos.Set(Aim->x - saim.x, Aim->y - saim.y, Aim->z - saim.z);
-		//rotate into flux plane coordinates
-		Toolbox::rotation(Pi-view_az,2,aimpos);
-		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
-		//The z component should be very small, so zero out
-		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
-		//The X and Y coordinates now indicate the image plane position
-		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
+
+        H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
+
 		break;
 		/*
 		else if(recgeom == 1){		//1	|	Continuous open cylinder - external	
@@ -2332,15 +2543,9 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 
 		//-- now calculate the aim point position in the flux plane
 		//vector from simple aim point to mod aim point
-		Vect aimpos;
+		Point aimpos;
 		aimpos.Set(Aim->x - saim.x, Aim->y - saim.y, Aim->z - saim.z);
-		//rotate into flux plane coordinates
-		Toolbox::rotation(Pi-view_az,2,aimpos);
-		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
-		//The z component should be very small, so zero out
-		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
-		//The X and Y coordinates now indicate the image plane position
-		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
+		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 		break;
 	
 		/*else if(recgeom == 1){		//1	|	Continuous open cylinder - external	
@@ -2412,8 +2617,8 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	FluxSurface *FS;
 	FluxGrid *FG;
 	FluxPoint *Fp;
-	Vect f_to_h, *fnorm, aimpos, vtemp;
-	Point *fpos, fint, Fpp;
+	Vect f_to_h, *fnorm, vtemp;
+    Point *fpos, fint, Fpp, aimpos;
 	Hvector HV;
 	double dpsave, dprod, sigx, sigy, dx, dy, fsave, imsizex, imsizey, theta_img, rnaz, rnel, stretch_factor, ftmp;
 	double e_bound_box[4];
@@ -2507,22 +2712,16 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		Aim->Set(Fp->location.x, Fp->location.y, Fp->location.z+opt_height);
 		
 		//The azimuth angle of the view from the receiver to the heliostat
-		view_az = atan2(r_to_h.i, r_to_h.j);	
+		//view_az = atan2(r_to_h.i, r_to_h.j);	
 		
 		//-- now calculate the aim point position in the flux plane
 		//Bring the flux point into the image plane
-		Fpp.Set(Fp->location.x, Fp->location.y, Fp->location.z + opt_height); 
+		Fpp.Set(*Aim); 
 
 		Toolbox::plane_intersect(saim, *NV.vect(), Fpp, *NV.vect(), fint);
 		//vector from simple aim point to mod aim point
 		aimpos.Set(fint.x - saim.x, fint.y - saim.y, fint.z - saim.z);
-		//rotate into flux plane coordinates
-		Toolbox::rotation(Pi-view_az,2,aimpos);
-		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
-		//The z component should be very small, so zero out
-		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
-		//The X and Y coordinates now indicate the image plane position
-		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
+		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 
 		//The flux grid needs to be updated after each heliostat
 		HV.clear();
@@ -2564,8 +2763,8 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		rnaz = rec->getReceiverAzimuth();
 		rnel = rec->getReceiverElevation();
 		vtemp.Set(r_to_h);
-		Toolbox::rotation(-rnel, 0, vtemp);
 		Toolbox::rotation(Pi-rnaz, 2, vtemp);
+		Toolbox::rotation(-rnel, 0, vtemp);
 		
 		//Calculate the skew angle of the image
 		theta_img = atan2(-vtemp.i, -vtemp.k);
@@ -2635,13 +2834,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 			rec->getOffsetY() + FS->getSurfaceOffset()->y - Aim->y, 
 			rec->getOffsetZ() + FS->getSurfaceOffset()->z +tht - Aim->z);
 		
-		//rotate into flux plane coordinates
-		Toolbox::rotation(Pi-rec->getReceiverAzimuth(),2,aimpos);
-		Toolbox::rotation(Pi/2.-rec->getReceiverElevation(),0,aimpos);
-		//The z component should be very small, so zero out
-		if( fabs(aimpos.k) < 1.e-6 ) aimpos.k = 0.;
-		//The X and Y coordinates now indicate the image plane position
-		H.setAimPointFluxPlane(aimpos.i, aimpos.j, aimpos.k);
+		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 		
 		//The flux grid needs to be updated after each heliostat
 		HV.clear();
@@ -2661,6 +2854,177 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	}
 
 	return;
+
+}
+
+void Flux::frozenAimPoint(Heliostat &H, SolarField &SF, double args[] )
+{
+    /* 
+    The heliostat tracking vector is "frozen", but because of the way the flux density and intercept algorithms 
+    implement based on aim point, we just need to update the receiver aim point for the new solar position as
+    if the heliostat hadn't moved but the image on the receiver has.
+
+    args [0,1,2] = sun position i,j,k (unit vector)
+    */
+
+    //which receiver is the heliostat currently associated with?
+    Receiver *Rec = H.getWhichReceiver(); 
+
+    Point *hpos = H.getLocation();
+    //the current tracking vector
+    Vect *track = H.getTrackVector();
+    Vect sun;
+    sun.Set( args[0], args[1], args[2] );
+
+    //Calculate the reflected vector using the existing tracking as the normal vector
+    //R = D - 2(D . N)N
+    Vect R;
+    Vect D;
+    D.Set( -args[0], -args[1], -args[2] );
+    Vect N( *track );
+    R.Set( D );
+    double DdN = 2. * Toolbox::dotprod(D,N);
+    Vect arg( N );
+    arg.Scale( DdN );
+    R.Subtract( arg );
+
+    //figure out where on the image plane this aim point lies
+	int recgeom = Rec->getReceiverGeomType();
+    
+    //Get the receiver normal vector
+    PointVect norm;
+    Point hloc;
+    hloc.Set( *H.getLocation() );
+    Rec->CalculateNormalVector(hloc, norm);
+
+    Point aim_ip;
+    Toolbox::plane_intersect(*norm.point(), *norm.vect(), hloc, R, aim_ip);
+
+    switch (recgeom)
+    {
+    case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED:
+    case Receiver::REC_GEOM_TYPE::POLYGON_CLOSED:
+    {
+        
+        //Set the heliostat aim point in tower coordinates
+        Point aim_adj( aim_ip );
+        aim_adj.Add( -Rec->getOffsetX(), -Rec->getOffsetY(), -Rec->getOffsetZ() - SF.getTowerHeight() );
+        H.setAimPoint( aim_adj );
+
+        //Move the aim point into receiver coordinates, accounting for any receiver rotation
+        Vect *h_to_r = H.getTowerVector();
+        Vect r_to_h( *h_to_r );
+        r_to_h.Scale( -1. );
+		double view_az = atan2(r_to_h.i, r_to_h.j);	
+        Toolbox::rotation( Pi - view_az, 2, aim_adj );
+        Toolbox::rotation( Pi/2. - Rec->getReceiverElevation(), 0, aim_adj );
+		if( fabs(aim_adj.z) < 1.e-6 ) aim_adj.z = 0.;
+		//The X and Y coordinates now indicate the image plane position
+		H.setAimPointFluxPlane(aim_adj);
+        
+        break;
+    }
+    case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV:
+    case Receiver::REC_GEOM_TYPE::PLANE_RECT:
+    case Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE:
+    {
+
+        throw spexception("Specified aim point method is not available for this geometry.");
+
+        break;
+    }
+    case Receiver::REC_GEOM_TYPE::POLYGON_OPEN:
+    case Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN:
+    case Receiver::REC_GEOM_TYPE::POLYGON_CAV:
+    default:
+        throw spexception("Specified aim point method is not available for this geometry.");
+        break;
+    }
+
+
+
+}
+
+void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
+{
+
+    Receiver *rec = H.getWhichReceiver();
+    
+    int rec_geom = rec->getReceiverGeomType();
+
+    switch (rec_geom)
+    {
+    case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED:
+    case Receiver::REC_GEOM_TYPE::POLYGON_CLOSED:
+    case Receiver::REC_GEOM_TYPE::PLANE_RECT:
+    {
+        //get the aimpoint, the heliostat location and vector to the aimpoint, and then calculate
+        //the relative position of the intersection on the image plain
+        Point *aim = H.getAimPoint();       //global coordinates
+        Point *hloc = H.getLocation();
+
+        Vect h_to_r;
+        h_to_r.Set(aim->x - hloc->x, aim->y - hloc->y, aim->z - hloc->z);   //vector from heliostat to receiver -- aimpoint line
+        Toolbox::unitvect( h_to_r );    //unit vector
+
+        //calculate the position of the receiver image plane
+        Receiver *rec = H.getWhichReceiver();
+        PointVect NV;
+        rec->CalculateNormalVector(*hloc, NV);
+        /*Point fluxplanept = *NV.point();
+        Vect fluxplanevect = *NV.vect();*/
+        
+        //calculate the intersection point
+        Point int_pt;
+        Toolbox::plane_intersect(*NV.point() /* global coordinates */, *NV.vect(), *aim, h_to_r, int_pt);
+
+        //Get the simple aim point
+	    Point saim, saimf;
+	    simpleAimPoint(&saim, &saimf, H, SF);
+
+        //Move into receiver coordinates
+        Point aim_rec(int_pt);
+        aim_rec.Subtract(saim);
+
+        //Rotate the intersection point into receiver coordinates
+		H.calcAndSetAimPointFluxPlane(aim_rec, *rec, H);
+
+
+        break;
+    }
+    case Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE:
+    case Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN:
+    case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV:
+    case Receiver::REC_GEOM_TYPE::POLYGON_OPEN:
+    case Receiver::REC_GEOM_TYPE::POLYGON_CAV:
+    default:
+		throw spexception("Receiver geometry not supported for Keep Existing Aimpoint calculation");
+        break;
+    }
+
+
+
+
+
+
+    
+    //Point *fs = rec->getFluxSurfaces()->front().getSurfaceOffset();
+    //Point *hp = h->getAimPoint();
+
+    //Point aim;        //The current aim point in receiver coordinates
+    //aim.Set(*hp);
+    //aim.z = -aim.z +_tht;
+    //aim.Add(*fs);
+
+    ////A point on the image plane
+    //       
+    ////Get receiver normal vector
+    //PointVect NV;
+    //rec->CalculateNormalVector(*h->getLocation(), NV);
+    //Point pint;
+    //Toolbox::plane_intersect(aim, *NV.vect(), Fpp, *NV.vect(), pint);
+
+    //Heliostat::calcAndSetAimPointFluxPlane(pint, *h->getWhichReceiver(), *h);
 
 }
 
@@ -2684,7 +3048,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 	//If we only have 1 receiver, don't bother
 	if(Nrec==1){
 		isave = 0;
-		slant = sqrt(pow(tht,2) + pow(hpos->x,2) + pow(hpos->y, 2)); // A very approximate slant range
+		slant = sqrt(tht*tht + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
 		r_to_h.i = hpos->x/slant;
 		r_to_h.j = hpos->y/slant;
 		r_to_h.k = (hpos->z - tht)/slant;
@@ -2696,7 +3060,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 		isave = 0; projarea_max = -9.e99;
 		for(i=0; i<Nrec; i++){
 			//Calculate a rough receiver-to-heliostat vector
-			slant = sqrt(pow(tht-hpos->z,2) + pow(hpos->x,2) + pow(hpos->y, 2)); // A very approximate slant range
+			slant = sqrt(pow(tht-hpos->z,2) + hpos->x*hpos->x + hpos->y*hpos->y); // A very approximate slant range
 			r_to_h.i = hpos->x/slant;
 			r_to_h.j = hpos->y/slant;
 			r_to_h.k = (hpos->z - tht)/slant;
