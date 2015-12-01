@@ -313,9 +313,9 @@ void C_pt_heliostatfield::init()
 			helios.front().active_fraction = helio_active_fraction * dens_mirror;   //availability * mirror area fraction
 			helios.front().reflectance = helio_reflectance;
 			int cmap[5];
-			cmap[0] = Heliostat::CANT_METHOD::NONE;
-            cmap[1] = Heliostat::CANT_METHOD::AT_SLANT;
-            cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR;
+			cmap[0] = Heliostat::CANT_TYPE::FLAT;
+            cmap[1] = Heliostat::CANT_TYPE::AT_SLANT;
+            cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_TYPE::AT_DAY_HOUR;
 			helios.front().cant_type = cmap[ cant_type ];
 
             switch (cant_type)

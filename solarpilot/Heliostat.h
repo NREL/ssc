@@ -61,12 +61,16 @@ class Heliostat : public mod_base
 	int 
 		_id, //Unique ID number for the heliostat/surface
 		_type,	//Integer used to group heliostats into geometries within a field, (e.g. 5 different focal length designs)
+        _template_order,    //internal variable used to track the order of the heliostat templates relative to each other. Used for multi-template layouts
 		_group[2],	//Integers {row,col} used to determine which local group the heliostat is in. 
 		_cant_method,	//Integer to specify the canting method {0=none, -1=Cant on-axis equal to slant range, 1=user-defined on-axis, 3=user-defined off-axis at hour + day}
 		_focus_method,		//The focusing method {0=Flat, 1=Each at slant, 2=Average of group, 3=User defined}
 		_ncantx, //Number of cant panels in the X direction
 		_ncanty, //Number of cant panels in the Y direction
-		_nrotax; //Number of rotational axes on the tracker (1 for LFresnel, 2 for heliostat)
+		_nrotax, //Number of rotational axes on the tracker (1 for LFresnel, 2 for heliostat)
+		_dcant, //[day] ...'dcant' day of the year.
+    	_track_method;		//Specify how often heliostats update their tracking position 
+
 	double
 		_temp_rad_min,		//Minimum radius at which this heliostat geometry can be used
 		_temp_rad_max,		//Maximum radius at which this heliostat geometry can be used
@@ -77,7 +81,6 @@ class Heliostat : public mod_base
 		_wgap,	//[m] Separation between panels in the horizontal direction
 		_hgap,	//[m] Separation between panels in the vertical direction
 		_hcant, //[hr] Mirror panels are canted at 'hcant' hours past noon on...
-		_dcant, //[day] ...'dcant' day of the year.
 		_rcant, //[m] Radius for canting focal point assuming on-axis canting
 		_densmr, //[-] Ratio of mirror area to total area of the heliostat defined by wm x hm
 		_sigel, //[rad] Standard deviation of the normal error dist. of the elevation angle
@@ -94,7 +97,9 @@ class Heliostat : public mod_base
 		_area, //[m2] reflective aperture area
 		_dm,	//Diameter of the heliostat structure (round heliostats only)
 		_rcant_scaled,	//Canting radius - scaled by tower height
-		_cant_vect_scale;	//Value to scale the canting unit vector to determine actual canting magnitude
+		_cant_vect_scale,	//Value to scale the canting unit vector to determine actual canting magnitude
+	    _track_period,		//The amount of time between tracking updates for each heliostat (PERIODIC only)
+        _track_queue;       //The fractional time from -1 to 1 at which this heliostat updates its tracking position (PERIODIC only, otherwise 0)
 
 	helio_perf_data
 		eff_data;
@@ -111,8 +116,8 @@ public:
 	//constructor and destructor
 	/*Heliostat(){};
 	~Heliostat(){};*/
-
-    struct CANT_METHOD {enum A {NONE=0, AT_SLANT=-1, ON_AXIS_UD=1, OFF_AXIS_DAYHOUR=3, USER=4};};
+	struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, ON_AXIS_USER=1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
+    struct TRACK_METHOD { enum A {CONTINUOUS, PERIODIC}; };
 
 	//Declare other subroutines
 	void installPanels();	//Define the cant panel locations, pointing vectors, and shape
@@ -120,6 +125,7 @@ public:
 	void Create(var_map &V);
 	void updateTrackVector(Vect &sunvect);	//Update the tracking vector for the heliostat
 	double calcTotalEfficiency();
+    static void calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, Heliostat &H);
 	void resetMetrics();
 	void CopyImageData(const Heliostat *Hsrc);
 
@@ -138,12 +144,14 @@ public:
 	double getFocalY();
 	double getSlantRange();
 	double getCantRadius();
-	double getCantDay();
+	int getCantDay();
 	double getCantHour();
+    double getCantVectScale();
 	int getNumCantY();
 	int getNumCantX();
 	int getCantMethod();
 	int getFocusMethod();
+    int getTemplateOrder();
 	Receiver *getWhichReceiver();
 	int getType();
 	double getRadialPos();
@@ -199,6 +207,7 @@ public:
 	void IsUserFocus(bool setting);
 	bool IsFacetDetail();	//Is characterization of multiple facets required?
 	void IsFacetDetail(bool setting);
+    bool IsEnabled(); //fetch
 
 	void setId(int id);
 	void setGroupId(int row, int col);
@@ -226,6 +235,7 @@ public:
 	void setTrackAngleZenith(double zenith);
 	void setTrackAngleAzimuth(double azimuth);
 	void setTrackAngles(double azimuth, double zenith);
+    void setTemplateOrder(int tord);
 	void setCantMethod(int method);
 	void setCantVector(Vect &cant);
 	void setCantVector(double cant[3]);

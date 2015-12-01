@@ -474,7 +474,7 @@ void ST_System::ClearAll()
 	StageList.clear();
 }
 
-bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &helios){
+bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	/* 
 	Take the geometry specified in the SolarField SF and the heliostats listed in helios and create a 
 	SolTrace simulation object.
@@ -489,11 +489,9 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 	}
 	
 	/*--- Configure sun shape ---*/
-	int sun_type;
-	double sigma;
+	int sun_type = SF.getAmbientObject()->getSunType();
+	double sigma = SF.getAmbientObject()->getSunRadLimit();
 	char shape = 'i';	//invalid
-	to_integer(variables["ambient"][0]["sun_type"].value, &sun_type );
-	to_double(variables["ambient"][0]["sun_rad_limit"].value, &sigma);
 	Sun.PointSource = sun_type == 0;
 	if(sun_type == 2){ shape = 'p'; }	//Pillbox sun
 	else if(sun_type == 4){	shape = 'g'; }		//Gaussian sun
@@ -529,7 +527,7 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 		double
 			kappa, gamma, theta, chi;
 		//calculate coefficients
-		chi = variables["ambient"][0]["sun_csr"].value_double(); 
+        chi = SF.getAmbientObject()->getSunCSR();
 		kappa = 0.9*log(13.5 * chi)*pow(chi, -0.3);
 		gamma = 2.2*log(0.52 * chi)*pow(chi, 0.43) - 0.1;
 
@@ -643,15 +641,16 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 		//Note that the reflected energy is also reduced by the fraction of inactive heliostat aperture. Since
 		//we input the actual heliostat dimensions into soltrace, apply this derate on the reflectivity.
 		refl *= H->getReflectiveAreaDerate();
-		//calculate total error about the normal vector. Dimensionality effects in X and Y are combined through convolution.
-		double err[2], errnorm=0., errsurf;
-		H->getErrorAngular(err);
-		errnorm = (pow(err[0], 2) + pow(err[1], 2))/2.;
-		H->getErrorSurface(err);
-		errnorm += (pow(err[0], 2) + pow(err[1], 2))/2.;
-		errnorm = sqrt(errnorm)*1000.; //mrad - normal vector error
-		H->getErrorReflected(err);
-		errsurf = sqrt( (pow(err[0], 2) + pow(err[1], 2))/2. )*1000.;	//mrad - reflected vector error
+
+        double errang[2], errsurf[2], errrefl[2];
+        H->getErrorAngular(errang);
+        H->getErrorSurface(errsurf);
+        H->getErrorReflected(errrefl);
+
+        double 
+            errnorm = (sqrt( errang[0]*errang[0] + errang[1]*errang[1] ) 
+                    + sqrt( errsurf[0]*errsurf[0] + errsurf[1]*errsurf[1] ) )*1000.;          //mrad  normal vector error
+        double errsurface = sqrt( errrefl[0]*errrefl[0] + errrefl[1]*errrefl[1] ) * 1000.;      //mrad - reflected vector error (specularity)
 				
 		/* 
 		st_optic(st_context_t pcxt, 
@@ -683,7 +682,7 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 		OpticsList.at(ii)->Front.Transmissivity = 0.;
 		for(int j=0; j<4; j++) OpticsList.at(ii)->Front.Grating[j] = 0.;
 		OpticsList.at(ii)->Front.RMSSlopeError = errnorm;
-		OpticsList.at(ii)->Front.RMSSpecError = errsurf;
+		OpticsList.at(ii)->Front.RMSSpecError = errsurface;
 		//st_optic(cxt, optic[ii], 1, 'g', 0, 0, 0, 0., 0., refl, 0., grating, errnorm, errsurf, 0, 0, NULL, NULL);
 		//add the back
 		OpticsList.at(ii)->Back.DistributionType = 'g';
@@ -956,7 +955,7 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 			element->Enabled = true;
 			pos.x = rec->getOffsetX();
 			pos.y = rec->getOffsetY() - diam/2.;
-			pos.z = rec->getOffsetZ() + rec->getOpticalHeight();
+			pos.z = rec->getOpticalHeight();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
 			element->Origin[2] = pos.z;
@@ -1032,7 +1031,7 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 			element->Enabled = true;
 			pos.x = rec->getOffsetX();
 			pos.y = rec->getOffsetY();
-			pos.z = rec->getOffsetZ() + rec->getOpticalHeight();
+			pos.z = rec->getOpticalHeight();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
 			element->Origin[2] = pos.z;
@@ -1046,7 +1045,7 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 			element->AimPoint[1] = pos.y + aim.j*1000.;
 			element->AimPoint[2] = pos.z + aim.k*1000.;
 			
-			element->ZRot = 0.;
+			element->ZRot = r2d*Toolbox::ZRotationTransform(aim);
 			
 			//Set up the aperture arguments array
 			element->Ap_A = width;
@@ -1071,12 +1070,11 @@ bool ST_System::CreateSTSystem(var_set &variables, SolarField &SF, Hvector &heli
 	}
 
 	//Simulation options
-	int maxrays, minrays, seed;
-	to_integer(variables["fluxsim"][0]["min_rays"].value, &minrays);
-	to_integer(variables["fluxsim"][0]["max_rays"].value, &maxrays);
-	to_integer(variables["fluxsim"][0]["seed"].value, &seed);
-	sim_errors_sunshape = lower_case(variables["fluxsim"][0]["is_sunshape_err"].value) == "true";
-	sim_errors_optical = lower_case(variables["fluxsim"][0]["is_optical_err"].value) == "true";
+	int minrays = SF.getFluxSimObject()->_min_rays;
+    int maxrays = SF.getFluxSimObject()->_max_rays;
+    int seed = SF.getFluxSimObject()->_seed;
+    sim_errors_sunshape = SF.getFluxSimObject()->_is_sunshape_err;
+	sim_errors_optical = SF.getFluxSimObject()->_is_optical_err; 
 	
 	sim_raycount = minrays;
 	sim_raymax = maxrays;
@@ -1170,6 +1168,8 @@ void ST_System::LoadIntoContext(ST_System *System, st_context_t spcxt){
 
 	}
 
+    //set sim error flags
+    st_sim_errors(spcxt, System->sim_errors_sunshape ? 1 : 0, System->sim_errors_optical ? 1 : 0);
 
 
 }

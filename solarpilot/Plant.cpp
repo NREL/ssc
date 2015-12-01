@@ -4,11 +4,30 @@
 using namespace std;
 
 //
-double Plant::getPlantGrossPower(){return _power_gross;}
-double Plant::getPlantNetPower(){return _power_net;}
-double Plant::getTESThermalCapacity(){return _power_gross * _hours_tes;}
-double Plant::getCycleEfficiency(){return _eta_cycle;}
-double Plant::getGrossToNetFactor(){return _par_factor;}
+double Plant::getPlantGrossPower()
+{
+    return _power_gross;
+}
+
+double Plant::getPlantNetPower()
+{
+    return _power_net;
+}
+
+double Plant::getTESThermalCapacity()
+{
+    return _power_gross / _eta_cycle * _hours_tes;
+}
+
+double Plant::getCycleEfficiency()
+{
+    return _eta_cycle;
+}
+
+double Plant::getGrossToNetFactor()
+{
+    return _par_factor;
+}
 
 void Plant::Create(var_map &V)
 {

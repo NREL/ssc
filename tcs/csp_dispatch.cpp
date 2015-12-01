@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 
+#define _WRITE_AMPL_DATA 0
 #define SOS_NONE
 //#define SOS_SEQUENCE
 //#define SOS_MANUAL
@@ -1049,50 +1050,6 @@ bool csp_dispatch_opt::optimize()
         //print_solution(lp, 1);
         //int x=0;
         
-/*
-        //write out a data file
-        ofstream fout("C://Users//mwagner//Documents//Dropbox//NREL//Formulation//f.dat");
-
-        fout << "#data file\n\n";
-
-        fout << "param nt := " << nt << ";\n";
-        fout << "param Eu := " << params.e_tes_max << ";\n";
-        fout << "param El := " << params.e_tes_min << ";\n";
-        fout << "param Er := " << params.e_rec_startup << ";\n";
-        fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
-        fout << "param Esinit := " << params.e_tes_init << ";\n";
-        fout << "param Cu := " << params.q_pb_max << ";\n";
-        fout << "param Cl := " << params.q_pb_min << ";\n";
-        fout << "param Qr := " << dq_rsu << ";\n";
-        fout << "param Qc := " << dq_csu << ";\n";
-        fout << "param Qb := " << params.q_pb_standby << ";\n";
-        fout << "param is_rec_operating := " << (params.is_rec_operating0 ? 1 : 0) << ";\n";
-        fout << "param is_pc_operating := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
-        fout << "param is_pc_standby := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
-
-        fout << "\nparam Q := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << esf_predict.at(t) << "\n";
-        fout << ";\n\n";
-
-        fout << "param P := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << price_signal.at(t) << "\n";
-        fout << ";\n\n";
-
-        fout << "param eta := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << eta_pb_predict.at(t) << "\n";
-        fout << ";";
-
-        fout.close();*/
-
-        //write the log file
-        /*ofstream flog("C://Users//mwagner//Documents//Dropbox//NREL//Formulation//f.log");
-        flog << solver_params.log_message;
-        flog.close();*/
-
-
 
         if(return_ok)
         {
@@ -1280,6 +1237,56 @@ bool csp_dispatch_opt::optimize()
 
         params.messages->add_message(type, s.str() );
         
+
+                //write out a data file
+#if _WRITE_AMPL_DATA==1
+        int day = params.siminfo->m_time / 3600/24;
+        ofstream fout("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".dat");
+
+        fout << "#data file\n\n";
+
+        fout << "param nt := " << nt << ";\n";
+        fout << "param Eu := " << params.e_tes_max << ";\n";
+        fout << "param El := " << params.e_tes_min << ";\n";
+        fout << "param Er := " << params.e_rec_startup << ";\n";
+        fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
+        fout << "param Esinit := " << params.e_tes_init << ";\n";
+        fout << "param Cu := " << params.q_pb_max << ";\n";
+        fout << "param Cl := " << params.q_pb_min << ";\n";
+        fout << "param Qr := " << dq_rsu << ";\n";
+        fout << "param Qc := " << dq_csu << ";\n";
+        fout << "param Qb := " << params.q_pb_standby << ";\n";
+        fout << "param is_rec_operating := " << (params.is_rec_operating0 ? 1 : 0) << ";\n";
+        fout << "param is_pc_operating := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
+        fout << "param is_pc_standby := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
+
+        fout << "\nparam Q := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.q_sf_expected.at(t) << "\n";
+        fout << ";\n\n";
+
+        fout << "param P := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << price_signal.at(t) << "\n";
+        fout << ";\n\n";
+
+        fout << "param eta := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.q_sf_expected.at(t) << "\n";
+        fout << ";";
+
+        fout.close();
+
+        //write the log file
+        /*ofstream flog("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".log");
+        flog << solver_params.log_message;
+        flog.close();*/
+#endif
+
+
+
+
+
         return return_ok;
 
     }

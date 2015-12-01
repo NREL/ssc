@@ -133,15 +133,17 @@ namespace interop
 	bool ticker_increment(int lengths[], int indices[], bool changed[], int n);
 
 	//Simulation setup methods
-	void AimpointUpdateHandler(SolarField &SF, var_set &vset);
+	void AimpointUpdateHandler(SolarField &SF);
 	bool PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &helios, int sim_method);
 #ifdef SP_USE_SOLTRACE
 	bool SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, var_set &vset, Hvector &helios,
-							   int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
-							   void *par);
+                                int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
+                                void *par, 
+                                vector<vector<double> > *st0data, vector<vector<double> > *st1data, bool save_stage_data, bool load_stage_data);
 	bool SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &ST,
-								int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
-								void *par);
+                                int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
+                                void *par, 
+vector<vector<double> > *st0data, vector<vector<double> > *st1data, bool save_stage_data, bool load_stage_data);
 #endif
 	void UpdateMapLayoutData(var_set &vset, Hvector *helios);
 };

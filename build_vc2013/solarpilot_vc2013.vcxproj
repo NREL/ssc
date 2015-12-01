@@ -25,6 +25,7 @@
     <ClCompile Include="..\solarpilot\definitions.cpp" />
     <ClCompile Include="..\solarpilot\Financial.cpp" />
     <ClCompile Include="..\solarpilot\Flux.cpp" />
+    <ClCompile Include="..\solarpilot\fluxsim.cpp" />
     <ClCompile Include="..\solarpilot\heliodata.cpp" />
     <ClCompile Include="..\solarpilot\Heliostat.cpp" />
     <ClCompile Include="..\solarpilot\interop.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="..\solarpilot\exceptions.hpp" />
     <ClInclude Include="..\solarpilot\Financial.h" />
     <ClInclude Include="..\solarpilot\Flux.h" />
+    <ClInclude Include="..\solarpilot\fluxsim.h" />
     <ClInclude Include="..\solarpilot\heliodata.h" />
     <ClInclude Include="..\solarpilot\Heliostat.h" />
     <ClInclude Include="..\solarpilot\interop.h" />

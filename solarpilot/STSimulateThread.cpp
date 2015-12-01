@@ -8,19 +8,54 @@ int STSimThread::GetResultCode(){ return ResultCode; }
 
 st_context_t STSimThread::GetContextId() { return ContextId; }
 
-void STSimThread::Setup( st_context_t spcxt, int thd_num, int seed )
+void STSimThread::Setup( st_context_t spcxt, int thd_num, int seed, bool is_load_st0, bool is_save_st0 )
 {
 	ThreadNum = thd_num;
 	CancelFlag = false;
 	Finished = false;
 	SeedVal = seed;
 	ContextId = spcxt;
+    LoadStage0Data = is_load_st0;
+    SaveStage0Data = is_save_st0;
 	ResultCode = -1;
 	NToTrace = 0;
 	NTraced = 0; 
 	NTraceTotal = 0;
 	CurStage = 0;
 	NStages = 0;
+}
+
+void STSimThread::CopyStageRayData( vector<vector<double> > &src, int which_stage /*0 or 1*/, int istart, int iend )
+{
+    vector<vector<double> > *which_raydat;
+    if(which_stage==0)
+        which_raydat = &raydata_st0;
+    else
+        which_raydat = &raydata_st1;
+
+    which_raydat->clear();
+    try{
+        which_raydat->reserve(iend-istart);
+    }
+    catch(std::exception &e)
+    {
+        string msg = "Error resizing raytrace data array";
+        throw exception(msg.c_str());
+    }
+
+    for(int i=istart; i<iend; i++)
+        which_raydat->push_back(src.at(i));
+
+}
+
+vector<vector< double > > *STSimThread::GetStage0RayDataObject()
+{
+    return &raydata_st0;
+}
+
+vector<vector< double > > *STSimThread::GetStage1RayDataObject()
+{
+    return &raydata_st1;
 }
 
 STSimThread::~STSimThread()
@@ -88,7 +123,13 @@ void STSimThread::GetStatus(int *total, int *traced, int *ntotrace, int *stage, 
 
 void STSimThread::StartThread()
 {
-	ResultCode = st_sim_run( ContextId, (unsigned int)SeedVal, STCallback_MT, (void*) this );
+    if(LoadStage0Data)
+        ResultCode = st_sim_run_data(ContextId, (unsigned int)SeedVal, &raydata_st0, &raydata_st1, false, STCallback_MT, (void*) this);
+    else if(SaveStage0Data)
+        ResultCode = st_sim_run_data(ContextId, (unsigned int)SeedVal, &raydata_st0, &raydata_st1, true, STCallback_MT, (void*) this);
+    else
+	    ResultCode = st_sim_run( ContextId, (unsigned int)SeedVal, STCallback_MT, (void*) this );
+
 	FinishedLock.lock();
 	Finished = true;
 	FinishedLock.unlock();

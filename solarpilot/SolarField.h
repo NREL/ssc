@@ -16,6 +16,7 @@
 #include "Land.h"
 #include "Plant.h"
 #include "Flux.h"
+#include "fluxsim.h"
 #include "OpticalMesh.h"
 
 
@@ -97,6 +98,7 @@ protected:
 		_sun_loc_des_el, 	//Solar elevation angle at the design point
 		_az_spacing,	//[-] Azimuthal spacing factor of the first row after reset, multiply by heliostat width to get actual spacing
 		_spacing_reset,	//[-] Heliostat azimuthal spacing ratio.. Indicates how much spacing should expand before starting a new compact row
+        _trans_limit_fact, //[-] Determines the point at which close-packing switches to standard layout. =1 at no-blocking transition limit.
 		_row_spacing_x,		//Separation between adjacent heliostats in the X-direction, multiplies heliostat radius
 		_row_spacing_y,		//Separation between adjacent heliostats in the Y-direction, multiplies heliostat radius
 		_xy_rect_aspect,		//Aspect ratio of the rectangular field layout (height in Y / width in X)
@@ -137,7 +139,8 @@ protected:
 		_xy_field_shape,		//Enforced shape of the heliostat field
 		_template_rule,		//Method for distributing heliostat geometry templates in the field
 		_hsort_method,		//method for sorting the heliostats during layout
-		_des_sim_nhours;	//Limit the number of simulation hours to this
+		_des_sim_nhours,	//Limit the number of simulation hours to this
+        _temp_which;		//Select the heliostat geometry template that will be used in the layout
 	string
 		_layout_data;	//Layout data in string form. Refer to the parseHeliostatXYZFile() method
 	WeatherData
@@ -162,6 +165,7 @@ protected:
 	Ambient _ambient;
 	Land _land;
 	Financial _financial;
+    FluxSimData _fluxsim;
 	Plant _plant;
 	Flux *_flux;	/*This object is a pointer because it has a recursive relationship to the SolarField object.
 					  See the SolarField constructor for the associated _flux constructor. Also, the object must
@@ -200,8 +204,9 @@ protected:
 
 public:
 
-    struct HELIO_SPACING_METHOD { enum A {DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
+    struct HELIO_SPACING_METHOD { enum A {NO_BLOCK_DENSE=3, DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
     struct SUNPOS_DESIGN { enum A {SOLSTICE_S, EQUINOX, SOLSTICE_W, ZENITH, USER }; };
+    struct TEMPLATE_RULE{ enum A {SINGLE=0, SPEC_RANGE=1, EVEN_DIST=2}; };
 
 	//Constructors - destructor
 	SolarField (); //constructor
@@ -220,6 +225,7 @@ public:
 	Ambient *getAmbientObject();
 	Flux *getFluxObject();
 	Financial *getFinancialObject();
+    FluxSimData *getFluxSimObject();
 	Plant *getPlantObject();
 	htemp_map *getHeliostatTemplates();
 	Hvector *getHeliostats();

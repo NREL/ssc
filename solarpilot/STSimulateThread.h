@@ -7,6 +7,7 @@
 //#include <wx/wx.h>
 #include <thread>
 #include <mutex>
+#include <vector>
 #include "stapi.h"
 using namespace std;
 typedef void* st_context_t;
@@ -16,7 +17,9 @@ class STSimThread
 	
 	bool
 		Finished,
-		CancelFlag;
+		CancelFlag,
+        SaveStage0Data,
+        LoadStage0Data;
 	int NToTrace, 
 		NTraced, 
 		NTraceTotal, 
@@ -33,12 +36,21 @@ class STSimThread
 		CancelLock,
 		FinishedLock;
 
+    vector<vector<double> > raydata_st0;
+    vector<vector<double> > raydata_st1;
+
 public:
 
 	STSimThread(){};
 
-	void Setup( st_context_t spcxt, int thd_num, int seed );
+	void Setup( st_context_t spcxt, int thd_num, int seed, bool is_load_st0data = false, bool is_save_st0data = false );
 	
+    void CopyStageRayData( vector<vector<double> > &src_dat, int which_stage /*0 or 1*/, int ind_start, int ind_end );
+    
+    vector<vector< double > > *GetStage0RayDataObject();
+    vector<vector< double > > *GetStage1RayDataObject();
+
+
 	~STSimThread();
 
 	void CancelTrace();

@@ -75,7 +75,6 @@ class Flux
 
  public:
 
-	 struct AIM_STRATEGY { enum A { SIMPLE, SIGMA, PROBABILITY, IMAGE_SIZE, EXISTING }; };
 
 	 Flux();
 	~Flux();
@@ -146,6 +145,9 @@ class Flux
 
 	void imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool islast);
 
+    void frozenAimPoint(Heliostat &H, SolarField &SF, double args[]);
+
+    void keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[]);
  } ;
 
 #endif

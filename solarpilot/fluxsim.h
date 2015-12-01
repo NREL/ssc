@@ -52,6 +52,7 @@ public:
     struct FLUX_DIST { enum A {TRIANGULAR, NORMAL, UNIFORM};};
     struct FLUX_MODEL { enum A {HERMITE, SOLTRACE}; };
     struct FLUX_TIME { enum A {POSITION, CALENDAR}; };
+	struct AIM_STRATEGY { enum A { SIMPLE, SIGMA, PROBABILITY, IMAGE_SIZE, EXISTING, FREEZE }; };
 
     void Create(var_map &V);
 

@@ -397,8 +397,14 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 
 	//skip any header lines for now
 
+    //Clean out the variable map
+    V.clear();
+    V = Defs;   //makes sure all structures are represented
+    
 	//Read in all of the variables
 	xml_node<> *var_node = top_node->first_node("variable");
+    std::string component0 = "";
+    int inst0 = -1;
 	while(var_node != 0){
 		//get the variable name composition
 		std::string
@@ -408,6 +414,13 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 			units = (char*)var_node->first_node("units")->value();
 		int inst;
 		to_integer(sinst, &inst);
+
+        //if parsing a new component or instance, first copy the defaults as a basis
+        if(component != component0 || inst != inst0 )
+            V[component][inst] = Defs[component][0];
+
+        component0 = component;
+        inst0 = inst;
 
 		//Set up variable attributes according to the variable definitions. File data overwritten below...
 		V[component][inst][varname] = Defs[component][0][varname];

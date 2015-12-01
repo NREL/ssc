@@ -532,10 +532,10 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	
 	//make sure the aiming strategy is correct
 	if(recs.front().type == sp_receiver::TYPE::CYLINDRICAL && !for_optimize)
-		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::SIMPLE );
+		_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::SIMPLE );
 	else
     {
-		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::IMAGE_SIZE );
+		_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::IMAGE_SIZE );
         _variables["fluxsim"][0]["sigma_limit"].set(2.5);
     }
 
@@ -888,16 +888,40 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 
 		//Canting
 		_variables["heliostat"][h]["cant_method"].set(helio->cant_type);
+        
+        switch (helio->cant_type)
+        {
+        case sp_heliostat::CANT_TYPE::NONE:
+        case sp_heliostat::CANT_TYPE::ON_AXIS:
+            //do nothing
+            break;
+        case sp_heliostat::CANT_TYPE::EQUINOX:
+        case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
+        case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
+            //set the day
+            _variables["heliostat"][h]["cant_day"].set(helio->cant_settings.point_day);
+			_variables["heliostat"][h]["cant_hour"].set(helio->cant_settings.point_hour);
+            break;
+        case -99:
+            //this one isn't handled right now. This will be a placeholder
+            _variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
+			_variables["heliostat"][h]["cant_vect_i"].set(helio->cant_settings.point_vector.i);
+			_variables["heliostat"][h]["cant_vect_j"].set(helio->cant_settings.point_vector.j);
+			_variables["heliostat"][h]["cant_vect_k"].set(helio->cant_settings.point_vector.k);
+        default:
+            break;
+        }
+/*
 		switch (helio->focus_type)
 		{
-        case Heliostat::CANT_METHOD::NONE:
-        case Heliostat::CANT_METHOD::AT_SLANT:
+		case sp_heliostat::CANT_TYPE::FLAT:
+		case sp_heliostat::CANT_TYPE::AT_SLANT:
 			break;
-        case Heliostat::CANT_METHOD::OFF_AXIS_DAYHOUR:
+		case sp_heliostat::CANT_TYPE::AT_DAY_HOUR:
 			_variables["heliostat"][h]["cant_day"].set(helio->cant_settings.point_day);
 			_variables["heliostat"][h]["cant_hour"].set(helio->cant_settings.point_hour);
 			break;
-        case Heliostat::CANT_METHOD::USER:
+		case sp_heliostat::CANT_TYPE::USER_VECTOR:
 			_variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
 			_variables["heliostat"][h]["cant_vect_i"].set(helio->cant_settings.point_vector.i);
 			_variables["heliostat"][h]["cant_vect_j"].set(helio->cant_settings.point_vector.j);
@@ -905,7 +929,7 @@ void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
 			break;
 		default:
 			break;
-		}
+		}*/
 
 		//Focusing
 		_variables["heliostat"][h]["focus_method"].set(helio->focus_type);
@@ -1084,7 +1108,8 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	to_integer(_variables["parametric"][0]["fluxmap_format"].value, &fluxmap_format);
 	
 	if(flux_res_y > 1)
-		_variables["fluxsim"][0]["aim_method"].set( Flux::AIM_STRATEGY::IMAGE_SIZE );
+        _SF->getFluxSimObject()->_aim_method = FluxSimData::AIM_STRATEGY::IMAGE_SIZE;
+		//_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::IMAGE_SIZE );
 
 	//Shape the flux surface files to match
 	for(unsigned int i=0; i<rec_to_sim.size(); i++){
@@ -1280,15 +1305,16 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 
 		double d2r = acos(-1.)/180.;
 		_SF->getAmbientObject()->setSolarPosition( az_des*d2r, zen_des*d2r );
-		_variables["fluxsim"][0]["flux_solar_az_in"].set( az_des );	//[deg]
-		_variables["fluxsim"][0]["flux_solar_el_in"].set( 90.0 - zen_des );
-		_variables["fluxsim"][0]["flux_time_type"].set( 0 );	//sun position specified
+        FluxSimData *fd = _SF->getFluxSimObject();
+		fd->_flux_solar_az_in = az_des;	//[deg]
+		fd->_flux_solar_el_in = 90.0 - zen_des;
+		fd->_flux_time_type = FluxSimData::FLUX_TIME::POSITION;	//sun position specified
 
 		//prep for performance simulation (aim points, etc.)
 		interop::PerformanceSimulationPrep(*_SF, _variables, *_SF->getHeliostats(), 0 /*analytical*/);
 		
 		//do flux simulation
-		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), _variables["fluxsim"][0]["aim_method"].value_int() == Flux::AIM_STRATEGY::IMAGE_SIZE);	
+		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), fd->_aim_method == FluxSimData::AIM_STRATEGY::IMAGE_SIZE);	
 		if(_SF->ErrCheck()){return false;}		
 	}
 	
@@ -2232,7 +2258,7 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 				_SF->getAmbientObject()->setSolarPosition((opttab.azimuths.at(i)-180.)*d2r, opttab.zeniths.at(j)*d2r);	
 			//Update the aim points and images based on the new solar position and tracking angles
 			if(! _cancel_simulation)
-				interop::AimpointUpdateHandler(*_SF, _variables);	
+				interop::AimpointUpdateHandler(*_SF);	
 			//Run the performance simulation
 			if(! _cancel_simulation)
 				_SF->Simulate(args, 4);
@@ -2320,7 +2346,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 
 		if(! _cancel_simulation){
 			_SF->getAmbientObject()->setSolarPosition( fluxtab.azimuths.at(i), fluxtab.zeniths.at(i) );
-			interop::AimpointUpdateHandler(*_SF, _variables);	//update the aim points and image properties
+			interop::AimpointUpdateHandler(*_SF);	//update the aim points and image properties
 		}
 
 		if(! _cancel_simulation)
@@ -2436,7 +2462,7 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 					sim_first = 0,
 					sim_last = npert;
 				for(int i=0; i<nthreads; i++){
-					_simthread[i].Setup(SFarr[i], &_variables, &results, &wdata, sim_first, sim_last, false, false);
+					_simthread[i].Setup(my_to_string(i+1), SFarr[i], &_variables, &results, &wdata, sim_first, sim_last, false, false);
 					sim_first = sim_last;
 					sim_last = min(sim_last+npert, nsim_req);
 				}
@@ -2485,19 +2511,38 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 				for(int i=0; i<nthreads; i++){
 					cancelled = cancelled || _simthread[i].IsSimulationCancelled();
 				}
-			
-				//Clean up dynamic memory
-				for(int i=0; i<nthreads; i++){
-					delete SFarr[i];
-				}
-				delete [] SFarr;
-				delete [] _simthread;
-				_simthread = 0;
+			    //check to see whether simulation errored out
+                bool errored_out = false;
+                for(int i=0; i<_n_threads; i++){
+                    errored_out = errored_out || _simthread[i].IsFinishedWithErrors();
+                }
+                if( errored_out )
+                {
+                    CancelSimulation();
+                    //Get the error messages, if any
+                    string errmsgs;
+                    for(int i=0; i<_n_threads; i++){
+                        for(int j=0; j<_simthread[i].GetSimMessages()->size(); j++)
+                            errmsgs.append( _simthread[i].GetSimMessages()->at(j) + "\n");
+                    }
+                    //Display error messages
+                    if(! errmsgs.empty() && _has_summary_callback)
+                        _summary_siminfo->addSimulationNotice( errmsgs.c_str() );
+            
+                }
 
-				//If the simulation was cancelled per the check above, exit out
-				if(cancelled){
-					return false;
-				}
+	            //Clean up dynamic memory
+	            for(int i=0; i<_n_threads; i++){
+		            delete SFarr[i];
+	            }
+	            delete [] SFarr;
+	            delete [] _simthread;
+	            _simthread = 0;
+
+	            //If the simulation was cancelled per the check above, exit out
+	            if(cancelled || errored_out){
+		            return false;
+	            }
 			
 				//For the map-to-annual case, run a simulation here
 				if(_variables["solarfield"][0]["des_sim_detail"].value_int() == LAYOUT_DETAIL::MAP_TO_ANNUAL)	
@@ -2632,7 +2677,7 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 		sim_first = 0,
 		sim_last = npert;
 	for(int i=0; i<_n_threads; i++){
-		_simthread[i].Setup(SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, false);
+		_simthread[i].Setup(my_to_string(i), SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, false);
 		sim_first = sim_last;
 		sim_last = min(sim_last+npert, _sim_total);
 	}
@@ -2668,7 +2713,27 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	for(int i=0; i<_n_threads; i++){
 		cancelled = cancelled || _simthread[i].IsSimulationCancelled();
 	}
-			
+    
+    //check to see whether simulation errored out
+    bool errored_out = false;
+    for(int i=0; i<_n_threads; i++){
+        errored_out = errored_out || _simthread[i].IsFinishedWithErrors();
+    }
+    if( errored_out )
+    {
+        CancelSimulation();
+        //Get the error messages, if any
+        string errmsgs;
+        for(int i=0; i<_n_threads; i++){
+            for(int j=0; j<_simthread[i].GetSimMessages()->size(); j++)
+                errmsgs.append( _simthread[i].GetSimMessages()->at(j) + "\n");
+        }
+        //Display error messages
+        if(! errmsgs.empty() && _has_summary_callback)
+            _summary_siminfo->addSimulationNotice( errmsgs.c_str() );
+            
+    }
+
 	//Clean up dynamic memory
 	for(int i=0; i<_n_threads; i++){
 		delete SFarr[i];
@@ -2678,7 +2743,7 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	_simthread = 0;
 
 	//If the simulation was cancelled per the check above, exit out
-	if(cancelled){
+	if(cancelled || errored_out){
 		return false;
 	}
 
@@ -2779,7 +2844,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 		sim_first = 0,
 		sim_last = npert;
 	for(int i=0; i<_n_threads; i++){
-		_simthread[i].Setup(SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, true);
+		_simthread[i].Setup(my_to_string(i), SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, true);
 		_simthread[i].IsFluxmapNormalized(is_normalized);
 		sim_first = sim_last;
 		sim_last = min(sim_last+npert, _sim_total);
@@ -2816,7 +2881,26 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	for(int i=0; i<_n_threads; i++){
 		cancelled = cancelled || _simthread[i].IsSimulationCancelled();
 	}
-			
+	//check to see whether simulation errored out
+    bool errored_out = false;
+    for(int i=0; i<_n_threads; i++){
+        errored_out = errored_out || _simthread[i].IsFinishedWithErrors();
+    }
+    if( errored_out )
+    {
+        CancelSimulation();
+        //Get the error messages, if any
+        string errmsgs;
+        for(int i=0; i<_n_threads; i++){
+            for(int j=0; j<_simthread[i].GetSimMessages()->size(); j++)
+                errmsgs.append( _simthread[i].GetSimMessages()->at(j) + "\n");
+        }
+        //Display error messages
+        if(! errmsgs.empty() && _has_summary_callback)
+            _summary_siminfo->addSimulationNotice( errmsgs.c_str() );
+            
+    }
+
 	//Clean up dynamic memory
 	for(int i=0; i<_n_threads; i++){
 		delete SFarr[i];
@@ -2826,7 +2910,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	_simthread = 0;
 
 	//If the simulation was cancelled per the check above, exit out
-	if(cancelled){
+	if(cancelled || errored_out){
 		return false;
 	}
 

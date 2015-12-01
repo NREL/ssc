@@ -241,7 +241,7 @@ struct ST_System
 	st_uint_t SunRayCount;
 
 	//method for loading the solar field geometry into the ST_System object
-	bool CreateSTSystem(var_set &variables, SolarField &SF, Hvector &helios);
+	bool CreateSTSystem(SolarField &SF, Hvector &helios);
 
 	static void LoadIntoContext(ST_System *System, st_context_t spcxt);
 	void Write(FILE *fdat);
