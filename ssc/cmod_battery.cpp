@@ -239,7 +239,11 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		dm_dynamic_sched.resize_fill(m, n, 1);
 		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
 		if (batt_dispatch == 2)
+		{
 			target_power = cm.as_doublevec("batt_target_power");
+			if (target_power.size() != nrec)
+				throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
+		}
 	}
 	else if (batt_dispatch == 3)
 	{
