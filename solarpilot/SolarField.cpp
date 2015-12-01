@@ -1446,7 +1446,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
         //normalize for available heliostat power if applicable
         double afact = 1.;
-        if( rid == helio_perf_data::PERF_VALUES::POWER_TO_REC || rid == helio_perf_data::PERF_VALUES::POWER_VALUE )
+        if( rid == helio_perf_data::POWER_TO_REC || rid == helio_perf_data::POWER_VALUE )
             afact = _heliostats.at(i)->getArea();
         
         double rank_val = rmet / (afact*(float)nresults);       //Calculate the normalized ranking metric. Divide by heliostat area if needed
