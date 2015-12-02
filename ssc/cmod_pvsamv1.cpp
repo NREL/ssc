@@ -57,8 +57,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "albedo",                                      "User specified ground albedo",                         "0..1",     "",                              "pvsamv1",              "*",						  "LENGTH=12",					  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",                                  "Irradiance input translation mode",                    "",         "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer",   "pvsamv1",              "?=0",      "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",                                   "Diffuse sky model",                                    "",         "0=isotropic,1=hkdr,2=perez",    "pvsamv1",              "?=2",                      "INTEGER,MIN=0,MAX=2",           "" },
-
-	{ SSC_INPUT,        SSC_NUMBER,      "ac_loss",                                     "Interconnection AC loss",                               "%",       "",                              "pvsamv1",              "*",                        "MIN=0,MAX=100",                   "" },
 	 
 	{ SSC_INPUT,        SSC_NUMBER,      "modules_per_string",                          "Modules per string",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "strings_in_parallel",                         "String in parallel",                                    "",        "",                              "pvsamv1",              "*",                        "INTEGER,POSITIVE",              "" },
@@ -81,9 +79,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading losses",    "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_shading:diff",                      "Sub-array 1 Diffuse shading loss",                      "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_soiling",                           "Sub-array 1 Monthly soiling loss",                      "%",       "",                              "pvsamv1",              "*",                        "LENGTH=12",                      "" },         
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 DC power loss",                             "%",       "",                              "pvsamv1",              "*",                        "MIN=-5,MAX=100",                   "" },
 
-	// loss diagram outputs
+	// loss diagram outputs, also used to calculate total dc derate
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_mismatch_loss", "Sub-array 1 DC mismatch loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_diodeconn_loss", "Sub-array 1 DC diodes and connections loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "subarray1_dcwiring_loss", "Sub-array 1 DC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
@@ -139,7 +136,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:azal",                      "Sub-array 2 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_shading:diff",                      "Sub-array 2 Diffuse shading loss",                       "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_soiling",                           "Sub-array 2 Monthly soiling loss",                       "%",   "",                              "pvsamv1",              "subarray2_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_dcloss",                            "Sub-array 2 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray2_enable=1",       "MIN=-5,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_mod_orient",                        "Sub-array 2 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmodx",                             "Sub-array 2 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_nmody",                             "Sub-array 2 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray2_shade_mode=0",  "INTEGER,POSITIVE",              "" },
@@ -162,7 +158,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:azal",                      "Sub-array 3 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_shading:diff",                      "Sub-array 3 Diffuse shading loss",                       "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_soiling",                           "Sub-array 3 Monthly soiling loss",                       "%",   "",                              "pvsamv1",              "subarray3_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_dcloss",                            "Sub-array 3 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray3_enable=1",       "MIN=-5,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_mod_orient",                        "Sub-array 3 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray1_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmodx",                             "Sub-array 3 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray3_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_nmody",                             "Sub-array 3 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray3_shade_mode=0", "INTEGER,POSITIVE",              "" },
@@ -185,7 +180,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:azal",                      "Sub-array 4 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_shading:diff",                      "Sub-array 4 Diffuse shading loss",                       "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_soiling",                           "Sub-array 4 Monthly soiling loss",                       "%",   "",                              "pvsamv1",              "subarray4_enable=1",       "LENGTH=12",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_dcloss",                            "Sub-array 4 DC power loss",                             "%",   "",                              "pvsamv1",              "subarray4_enable=1",       "MIN=-5,MAX=100",                   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_mod_orient",                        "Sub-array 4 Module orientation for self-shading",         "0/1",    "0=portrait,1=landscape",        "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,MIN=0,MAX=1",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmodx",                             "Sub-array 4 no. of modules along bottom for self-shading","",       "",                              "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,POSITIVE",              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_nmody",                             "Sub-array 4 no. of modules along side for self-shading",  "",       "",                              "pvsamv1",              "subarray4_shade_mode=0", "INTEGER,POSITIVE",              "" },
@@ -554,7 +548,13 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Gross ac energy",                                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                         "Nameplate system dc rating",                             "kW",     "",                      "Miscellaneous",       "*",                    "",                              "" },
 
-	 
+	//total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 Total DC power loss",                        "%",   "",                        "Annual",              "*",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray2_dcloss",                            "Sub-array 2 Total DC power loss",                        "%",   "",                        "Annual",              "subarray2_enable=1",       "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray3_dcloss",                            "Sub-array 3 Total DC power loss",                        "%",   "",                        "Annual",              "subarray3_enable=1",       "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray4_dcloss",                            "Sub-array 4 Total DC power loss",                        "%",   "",                        "Annual",              "subarray4_enable=1",       "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ac_loss",                                     "Interconnection AC loss",                                "%",   "",                        "Annual",              "*",                        "",                   "" },
+
 	// loss diagram - order applied
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 gross DC energy", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_mismatch_loss", "Subarray 1 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
@@ -818,7 +818,9 @@ public:
 		int modules_per_string = as_integer("modules_per_string");
 		int strings_in_parallel = as_integer("strings_in_parallel");
 		int num_inverters = as_integer("inverter_count");
-		double ac_derate = 1 - as_double("ac_loss")/100;	//convert from loss to derate
+		double ac_derate = (1 - as_double("acwiring_loss") / 100) * (1 - as_double("transformer_loss") / 100);	//calculate using ac wiring and step up transformer losses
+		//assign ac loss output since we just calculated it
+		assign("ac_loss", var_data((ssc_number_t)(1 - ac_derate) * 100));
 
 		size_t alb_len = 0;
 		ssc_number_t *alb_array = as_array("albedo", &alb_len); // monthly albedo array
@@ -863,7 +865,17 @@ public:
 			for (int k=0;k<12;k++)
 				sa[nn].soiling[k] = 1- (double) soiling[k]/100; //convert from % to derate
 	
-			sa[nn].derate = 1 - as_double( prefix+"dcloss" )/100;	// convert from % (passed in) to derate
+			sa[nn].derate =  /* combine all input losses into one derate, not a percentage */
+				(1 - as_double(prefix + "mismatch_loss") / 100) *
+				(1 - as_double(prefix + "diodeconn_loss") / 100) *
+				(1 - as_double(prefix + "dcwiring_loss") / 100) *
+				(1 - as_double(prefix + "tracking_loss") / 100) *
+				(1 - as_double(prefix + "nameplate_loss") / 100) *
+				(1 - as_double("dcoptimizer_loss") / 100);
+			//assign output dc loss since we just calculated it
+			double temploss = (1 - sa[nn].derate) * 100;
+			assign(prefix + "dcloss", var_data((ssc_number_t)temploss));
+
 			sa[nn].track_mode = as_integer( prefix+"track_mode"); // 0=fixed, 1=1axis, 2=2axis, 3=aziaxis
 
 			sa[nn].tilt = fabs(hdr.lat);
