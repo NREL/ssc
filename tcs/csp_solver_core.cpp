@@ -6990,6 +6990,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[BEAM].push_back(mc_weather.ms_outputs.m_beam);		    //[W/m2] DNI
 
 			// Collector-receiver outputs
+		mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_outputs.m_q_dot_field_inc);	//[MWt] Field incident thermal power
 		mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_outputs.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
 		mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
 		mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_outputs.m_eta_thermal);   //[-] Receiver thermal efficiency    

@@ -651,6 +651,10 @@ void C_pt_heliostatfield::init()
 			mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 			//message(TCS_WARNING, "The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
 		}
+		
+		// Calculate the total solar field reflective area
+		ms_params.m_A_sf = ms_params.m_helio_height*ms_params.m_helio_width*ms_params.m_dens_mirror*m_N_hel;		//[m^2]
+		
 		// Initialize stored variables
 		m_eta_prev = 0.0;
 		m_v_wind_prev = 0.0;
@@ -762,6 +766,8 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 		}
 
 	}
+
+	ms_outputs.m_q_dot_field_inc = weather.m_beam*ms_params.m_A_sf*1.E-6;		//[MWt]
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
 	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency

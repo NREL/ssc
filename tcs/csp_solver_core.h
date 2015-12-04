@@ -262,6 +262,7 @@ public:
 
 	struct S_csp_cr_outputs
 	{
+		double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
 		double m_eta_field;				//[-] Field optical efficiency
 		
 		double m_eta_thermal;			//[-] Receiver thermal efficiency
@@ -278,7 +279,7 @@ public:
 
 		S_csp_cr_outputs()
 		{
-			m_eta_field =  
+			m_q_dot_field_inc = m_eta_field =  
 
 			m_eta_thermal = m_q_thermal = m_q_startup = m_q_dot_piping_loss = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = m_W_dot_col_tracking =
 				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
@@ -547,6 +548,7 @@ public:
 		// **************************************************************
 		SOLZEN,			      //[deg] Solar zenith angle
 		BEAM,			      //[W/m^2] Resource beam normal irradiance
+		CR_Q_INC,             //[MWt] Field incident thermal power
 		CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
 		CR_DEFOCUS,           //[-] Field optical focus fraction
 		REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
