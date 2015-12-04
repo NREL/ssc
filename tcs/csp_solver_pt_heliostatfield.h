@@ -57,8 +57,8 @@ public:
 	struct S_params
 	{
 		int m_run_type;
-		double m_helio_width;
-		double m_helio_height;
+		double m_helio_width;				//[m]
+		double m_helio_height;				//[m]
 		double m_helio_optical_error;
 		double m_helio_active_fraction;
 		double m_dens_mirror;
@@ -133,6 +133,8 @@ public:
 		double m_dni_des;
 		double m_land_area;
 
+		double m_A_sf;		//[m2]
+
 		S_params()
 		{
 			// Integers
@@ -143,7 +145,7 @@ public:
 			// Doubles
 			m_helio_width = m_helio_height = m_helio_optical_error = m_helio_active_fraction = m_dens_mirror = m_helio_reflectance = m_rec_absorptance = m_rec_height = m_rec_aspect =
 				m_rec_hl_perm2 = m_q_design = m_h_tower = m_land_max = m_land_min = m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = m_interp_nug =
-				m_interp_beta = m_c_atm_0 = m_c_atm_1 = m_c_atm_2 = m_c_atm_3 = m_dni_des = m_land_area = std::numeric_limits<double>::quiet_NaN();
+				m_interp_beta = m_c_atm_0 = m_c_atm_1 = m_c_atm_2 = m_c_atm_3 = m_dni_des = m_land_area = m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
 			// double *
 			/*m_land_bound_table = m_land_bound_list = m_helio_positions = */ /*m_helio_aim_points =*/ /*m_eta_map =*/ /*m_flux_positions =*/ /*m_flux_maps =*/ /*NULL;*/
@@ -157,13 +159,15 @@ public:
 
 	struct S_outputs
 	{
+		double m_q_dot_field_inc;	//[MWt] Field incident thermal power (from the sun!)
+
 		util::matrix_t<double> m_flux_map_out;
 		double m_pparasi;		//[MWe]
 		double m_eta_field;		//[-]
 
 		S_outputs()
 		{
-			m_pparasi = m_eta_field = std::numeric_limits<double>::quiet_NaN();
+			m_q_dot_field_inc = m_pparasi = m_eta_field = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
