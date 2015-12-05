@@ -9562,7 +9562,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 		// CR: ON
 		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C], convert from [K]
-		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
+		mc_cr_inputs.m_field_control = field_control_in;	//[-] apply defocus from method input 
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,
