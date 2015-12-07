@@ -898,7 +898,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	ms_outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
 	ms_outputs.m_field_eff_adj = field_eff_adj;					//[-]
-	ms_outputs.m_Q_solar_total = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
+	ms_outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
 	ms_outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	ms_outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
 	ms_outputs.m_dP_total = Pres_D*10.0;						//[bar] total pressure drop, convert from MPa
@@ -959,7 +959,7 @@ void C_mspt_receiver_222::clear_outputs()
 		ms_outputs.m_Q_thermal =
 		ms_outputs.m_T_salt_hot = 
 		ms_outputs.m_field_eff_adj = 
-		ms_outputs.m_Q_solar_total = 
+		ms_outputs.m_q_dot_rec_inc = 
 		ms_outputs.m_q_startup = 
 		ms_outputs.m_dP_receiver = 
 		ms_outputs.m_dP_total =
