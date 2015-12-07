@@ -1381,7 +1381,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 4152 /*&& idx == 0*/)
+	if (hour_of_year == 0 && idx == 0)
 	{
 		// debug = true;
 		p = fopen("dispatch.txt", "w");
@@ -1437,9 +1437,8 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 
 	double P_target_min = 1e16;
 	double E_charge = 0.;
-	double peak_shave_fraction = 0.7;
 	int index = _num_steps - 1;
-	while (E_charge < peak_shave_fraction* E_useful)
+	while (E_charge <  E_useful)
 	{
 		E_charge = 0.;
 		P_target_min = grid[index].Grid();
@@ -1459,10 +1458,9 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 	}
 
 	// if we can't recharge the battery without exceeding the highest peak, there isn't enough peak to shave to justify dispatching
-	// still, we will try and shave peak by 30%
-	if (E_charge < peak_shave_fraction*E_useful)
+	if (E_charge < E_useful)
 	{
-		P_target = peak_shave_fraction*grid[0].Grid();
+		P_target = grid[0].Grid();
 		return;
 	}
 
@@ -1510,8 +1508,8 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 		}
 	}
 
-	// move target up by 1% to accomodate voltage differences
-	P_target += (0.01*P_target);
+	// move target up by 2% to accomodate voltage differences
+	P_target += (0.02*P_target);
 
 	// Don't allow target to be lower than min target to partially recharge
 	if (P_target < P_target_min)
