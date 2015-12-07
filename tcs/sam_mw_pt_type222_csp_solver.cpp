@@ -341,7 +341,7 @@ public:
 		value(O_Q_thermal, mspt_receiver.ms_outputs.m_Q_thermal);				//[MW]
 		value(O_T_salt_hot, mspt_receiver.ms_outputs.m_T_salt_hot);			//[C] 
 		value(O_field_eff_adj, mspt_receiver.ms_outputs.m_field_eff_adj);		//[-]
-		value(O_q_solar_total, mspt_receiver.ms_outputs.m_Q_solar_total);		//[MW]
+		value(O_q_solar_total, mspt_receiver.ms_outputs.m_q_dot_rec_inc);		//[MW]
 		value(O_q_startup, mspt_receiver.ms_outputs.m_q_startup);				//[MW]
 		value(O_dP_receiver, mspt_receiver.ms_outputs.m_dP_receiver);			//[bar]
 		value(O_dP_total, mspt_receiver.ms_outputs.m_dP_total);				//[bar]
