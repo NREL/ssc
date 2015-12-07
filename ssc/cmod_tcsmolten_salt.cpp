@@ -283,6 +283,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Controller",     "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",        "Rec. incident thermal power",                                  "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Rec. thermal power to HTF less piping loss",                   "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Rec. mass flow rate",                                          "kg/hr",        "",            "CR",             "*",                       "",           "" },	
@@ -913,6 +914,7 @@ public:
 		ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
 		ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
 		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec", n_steps_fixed);
