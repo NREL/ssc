@@ -53,6 +53,7 @@ struct battstor
 	util::matrix_t<float> dm_dynamic_sched;
 	util::matrix_t<float> dm_dynamic_sched_weekend;
 	std::vector<double> target_power;
+	std::vector<double> target_power_monthly;
 	
 	bool ac_or_dc;
 	double dc_dc, ac_dc, dc_ac;

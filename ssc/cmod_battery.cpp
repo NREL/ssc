@@ -71,7 +71,9 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power",                                      "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power for every time step",                  "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",    "",                       "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2",    "",                     "Battery",       "?=0",                        "",                             "" },
 
 
@@ -232,20 +234,38 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	size_t m,n;
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
-	if (batt_dispatch < 3)
+	if (batt_dispatch != dispatch_t::MODES::MANUAL)
 	{
 		m = 12;
 		n = 24 * step_per_hour;
 		dm_dynamic_sched.resize_fill(m, n, 1);
 		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
-		if (batt_dispatch == 2)
+		if (batt_dispatch == dispatch_t::MODES::MAINTAIN_TARGET)
 		{
-			target_power = cm.as_doublevec("batt_target_power");
+			int target_dispatch = cm.as_integer("batt_target_choice");
+			if (target_dispatch == 0)
+			{
+				target_power_monthly = cm.as_doublevec("batt_target_power_monthly");
+				target_power.clear();
+				target_power.reserve(8760 * step_per_hour);
+				for (int month = 0; month != 12; month++)
+				{
+					double target = target_power_monthly[month];
+					for (int hour = 0; hour != util::hours_in_month(month+1); hour++)
+					{
+						for (int step = 0; step != step_per_hour; step++)
+							target_power.push_back(target);
+					}
+				}
+			}
+			else
+				target_power = cm.as_doublevec("batt_target_power");
+			
 			if (target_power.size() != nrec)
 				throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
 		}
 	}
-	else if (batt_dispatch == 3)
+	else if (batt_dispatch == dispatch_t::MODES::MANUAL)
 	{
 		ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
 		if (m != 12 || n != 24)
@@ -392,17 +412,19 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 {
 	int nrec;
 	prediction_index = 0;
+	bool look_ahead = ((mode == dispatch_t::MODES::LOOK_AHEAD || mode == dispatch_t::MODES::MAINTAIN_TARGET));
+
 	// automatic look ahead
-	if (mode == 0 || mode == 2)
+	if (look_ahead)
 		nrec = nyears * 8760 * step_per_hour;
 	// look behind
-	else if (mode == 1)
+	else if (mode == dispatch_t::MODES::LOOK_BEHIND)
 		nrec = 24 * step_per_hour;
 
 	pv_prediction = new double[nrec];
 	load_prediction = new double[nrec];
 
-	if (mode == 0 || mode == 2)
+	if (look_ahead)
 	{
 		for (int idx = 0; idx != nrec; idx++)
 		{
@@ -411,7 +433,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		}
 	}
 	automated_dispatch = new automate_dispatch_t(dispatch_model, nyears, _dt_hour, pv_prediction, load_prediction, mode);
-	if (mode == 2)
+	if (mode == dispatch_t::MODES::MAINTAIN_TARGET)
 		automated_dispatch->set_target_power(target_power);
 
 }
