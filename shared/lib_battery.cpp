@@ -1437,7 +1437,7 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 
 	double P_target_min = 1e16;
 	double E_charge = 0.;
-	int index = _num_steps - 1;
+	int index = _num_steps - 1; 
 	while (E_charge <  E_useful)
 	{
 		E_charge = 0.;

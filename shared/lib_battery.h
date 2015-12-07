@@ -405,6 +405,12 @@ public:
 	double energy_loss_annual();
 
 	void compute_grid_net( double e_pv, double e_load);
+
+	const enum MODES
+	{
+		LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL
+	};
+
 protected:
 
 	void compute_efficiency();
@@ -489,7 +495,7 @@ protected:
 	bool  _can_grid_charge;
 	
 	int _mode; // 0 = look ahead, 1 = look behind, 2 = maintain target power, 3 = manual dispatch
-	enum {LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
+	
 };
 /*
 Automate dispatch classes
