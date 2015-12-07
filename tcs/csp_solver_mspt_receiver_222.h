@@ -143,6 +143,7 @@ public:
 		// Let's put outputs in a structure...
 	struct S_outputs
 	{
+		
 		double m_m_dot_salt_tot;		//[kg/hr] 
 		double m_eta_therm;				//[-] RECEIVER thermal efficiency
 		double m_W_dot_pump;			//[MW] 
@@ -151,7 +152,7 @@ public:
 		double m_Q_thermal;				//[MW] Thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
 		double m_T_salt_hot;			//[C]
 		double m_field_eff_adj;			//[-]
-		double m_Q_solar_total;			//[MW] 
+		double m_q_dot_rec_inc;			//[MWt] Receiver incident thermal power (after reflection losses)
 		double m_q_startup;				//[MWt-hr]
 		double m_dP_receiver;			//[bar] receiver pressure drop
 		double m_dP_total;				//[bar] total pressure drop
@@ -166,7 +167,7 @@ public:
 		S_outputs()
 		{
 			m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
-				m_T_salt_hot = m_field_eff_adj = m_Q_solar_total = m_q_startup = m_dP_receiver = m_dP_total =
+				m_T_salt_hot = m_field_eff_adj = m_q_dot_rec_inc = m_q_startup = m_dP_receiver = m_dP_total =
 				m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep = 
 				m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 		}

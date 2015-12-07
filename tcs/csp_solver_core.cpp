@@ -6993,6 +6993,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_outputs.m_q_dot_field_inc);	//[MWt] Field incident thermal power
 		mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_outputs.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
 		mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
+		mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_outputs.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
 		mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_outputs.m_eta_thermal);   //[-] Receiver thermal efficiency    
 		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_outputs.m_q_thermal);           //[MWt] Receiver thermal power output  
 		mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_outputs.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          

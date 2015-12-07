@@ -105,6 +105,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	cr_outputs.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
 	cr_outputs.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 
+	cr_outputs.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
 	cr_outputs.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
 	cr_outputs.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
 	cr_outputs.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				//[MWt-hr]

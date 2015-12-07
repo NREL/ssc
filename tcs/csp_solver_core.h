@@ -265,6 +265,7 @@ public:
 		double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
 		double m_eta_field;				//[-] Field optical efficiency
 		
+		double m_q_dot_rec_inc;         //[MWt] Receiver incident thermal power (after reflection losses)
 		double m_eta_thermal;			//[-] Receiver thermal efficiency
 		double m_q_thermal;				//[MW] 'Available' receiver thermal output
 		double m_q_startup;				//[MWt-hr] Receiver thermal output
@@ -281,7 +282,7 @@ public:
 		{
 			m_q_dot_field_inc = m_eta_field =  
 
-			m_eta_thermal = m_q_thermal = m_q_startup = m_q_dot_piping_loss = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = m_W_dot_col_tracking =
+			m_q_dot_rec_inc = m_eta_thermal = m_q_thermal = m_q_startup = m_q_dot_piping_loss = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = m_W_dot_col_tracking =
 				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 
 			//m_mode_calculated = -1;
@@ -551,6 +552,7 @@ public:
 		CR_Q_INC,             //[MWt] Field incident thermal power
 		CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
 		CR_DEFOCUS,           //[-] Field optical focus fraction
+		REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
 		REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
 		REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses
 		REC_M_DOT,            //[kg/hr] Receiver mass flow rate
