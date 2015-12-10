@@ -341,13 +341,7 @@ public:
 		: wxLKScriptCtrl( parent, id, wxDefaultPosition, wxDefaultSize, wxLK_STDLIB_ALL|wxLK_STDLIB_SOUT )
 	{
 	}
-
-	virtual bool OnEval( int line )
-	{
-		wxGetApp().Yield( true );
-		return true;
-	}
-
+	
 	virtual void OnOutput( const wxString &tt )
 	{
 		Output( tt );
