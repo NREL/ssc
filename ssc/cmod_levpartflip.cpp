@@ -2447,11 +2447,10 @@ public:
 		cf.at(CF_tax_investor_pretax_irr,0) = irr(CF_tax_investor_pretax,0)*100.0;
 		cf.at(CF_tax_investor_pretax_npv,0) = cf.at(CF_tax_investor_pretax,0) ;
 
-
 		cf.at(CF_sponsor_aftertax_cash,0) = sponsor_pretax_equity_investment + sponsor_pretax_development_fee;
 		cf.at(CF_sponsor_aftertax,0) = cf.at(CF_sponsor_aftertax_cash,0);
 		cf.at(CF_sponsor_pretax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
-		cf.at(CF_sponsor_pretax_npv,0) = cf.at(CF_sponsor_aftertax,0) ;
+		cf.at(CF_sponsor_pretax_npv,0) = cf.at(CF_sponsor_aftertax,0);
 		cf.at(CF_sponsor_aftertax_irr,0) = irr(CF_sponsor_aftertax_tax,0)*100.0;
 		cf.at(CF_sponsor_aftertax_npv,0) = cf.at(CF_sponsor_aftertax,0) ;
 
