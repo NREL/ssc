@@ -711,7 +711,7 @@ static var_info _cm_vtab_singleowner[] = {
 
 	// metrics table 
 //	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "% of installed cost", "", "Metrics", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "%", "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "",                    "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "year",                    "", "Metrics", "*", "", "" },
