@@ -184,7 +184,7 @@ void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, dou
 		}
 
 		// Track the minimum temperature difference in the heat exchanger
-		min_DT = min(min_DT, T_h - T_c);
+		min_DT = fmin(min_DT, T_h - T_c);
 
 		// Perform effectiveness-NTU and UA calculations 
 		if( i > 0 )
