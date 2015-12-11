@@ -1369,7 +1369,7 @@ void dispatch_manual_t::compute_energy_battery_priority(double e_pv, double e_lo
 {
 	
 	double SOC = _Battery->capacity_model()->SOC();
-	bool charged = SOC == _SOC_max;
+	bool charged = (round(SOC) == _SOC_max);
 
 	if (_can_charge && !charged > 0 && e_pv > 0)
 	{
@@ -1383,11 +1383,11 @@ void dispatch_manual_t::compute_energy_battery_priority(double e_pv, double e_lo
 		if (_can_grid_charge)
 			_e_tofrom_batt = -energy_needed;
 	}
-	// if we want to charge from grid without charging from array
 	else if (_can_grid_charge && !charged > 0)
 		_e_tofrom_batt = -energy_needed;
 	else if (_can_discharge && e_load > 0)
-		_e_tofrom_batt = e_load - (e_pv - _pv_to_batt);	
+		_e_tofrom_batt = e_load - e_pv;
+	
 }
 automate_dispatch_t::automate_dispatch_t(dispatch_manual_t * Dispatch, int nyears, double dt_hour, double * pv, double * load, int mode)
 {
