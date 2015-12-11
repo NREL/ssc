@@ -3,7 +3,8 @@
 #include "htf_props.h"
 //#include <vector>
 #include "CO2_properties.h"
-#include "compact_hx_discretized.h"
+
+#include "heat_exchangers.h"
 
 #include "sco2_pc_core.h"
 
