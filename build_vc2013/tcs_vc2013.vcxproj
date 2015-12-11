@@ -22,7 +22,6 @@
     <ClCompile Include="..\tcs\atmospheric_aod.cpp" />
     <ClCompile Include="..\tcs\cavity_calcs.cpp" />
     <ClCompile Include="..\tcs\co2_compressor_library.cpp" />
-    <ClCompile Include="..\tcs\compact_hx_discretized.cpp" />
     <ClCompile Include="..\tcs\csp_dispatch.cpp" />
     <ClCompile Include="..\tcs\csp_solver_core.cpp" />
     <ClCompile Include="..\tcs\csp_solver_mspt_collector_receiver.cpp" />
@@ -36,6 +35,7 @@
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
+    <ClCompile Include="..\tcs\heat_exchangers.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_heliostatfield_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type222_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type224_csp_solver.cpp" />
@@ -90,7 +90,6 @@
     <ClInclude Include="..\tcs\atmospheric_aod.h" />
     <ClInclude Include="..\tcs\cavity_calcs.h" />
     <ClInclude Include="..\tcs\co2_compressor_library.h" />
-    <ClInclude Include="..\tcs\compact_hx_discretized.h" />
     <ClInclude Include="..\tcs\csp_dispatch.h" />
     <ClInclude Include="..\tcs\csp_solver_core.h" />
     <ClInclude Include="..\tcs\csp_solver_mspt_collector_receiver.h" />
@@ -102,6 +101,7 @@
     <ClInclude Include="..\tcs\csp_solver_util.h" />
     <ClInclude Include="..\tcs\direct_steam_receivers.h" />
     <ClInclude Include="..\tcs\CO2_properties.h" />
+    <ClInclude Include="..\tcs\heat_exchangers.h" />
     <ClInclude Include="..\tcs\sco2_pc_core.h" />
     <ClInclude Include="..\tcs\ud_power_cycle.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
