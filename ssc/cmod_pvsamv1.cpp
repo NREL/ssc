@@ -2010,6 +2010,7 @@ public:
 							}
 
 							//execute self-shading calculations
+							//IF DN IS NOT IN WEATHER FILE, THEN THE SS_EXEC WILL RETURN NAN BECAUSE OF WF.DN INPUT ??
 							if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, wf.dn, ibeam, (iskydiff + ignddiff), alb, trackbool, shad1xf, sa[nn].ssout))
 							{
 								p_ss_diffuse_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_diffuse_derate;

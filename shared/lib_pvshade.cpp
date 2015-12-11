@@ -159,7 +159,7 @@ void diffuse_reduce(
 {
 	if (Gd_poa < 0.1)
 	{
-		Fskydiff = Fgnddiff = 1.0;
+		Fskydiff = Fgnddiff = 1.0; //NEED TO ALSO SET REDUCED SKYDIFF AND REDUCED GROUND DIFF HERE??
 		return;
 	}
 
