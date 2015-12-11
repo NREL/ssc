@@ -43,9 +43,17 @@ C_csp_exception::C_csp_exception(const char *cmsg)
 {
 	m_error_message = cmsg;
 	m_code_location = "unknown";
+	m_error_code = -1;
 }
 C_csp_exception::C_csp_exception(const std::string &error_message, const std::string &code_location)
 {
 	m_error_message = error_message;
 	m_code_location = code_location;
+	m_error_code = -1;
+}
+C_csp_exception::C_csp_exception(const std::string &error_message, const std::string &code_location, int error_code)
+{
+	m_error_message = error_message;
+	m_code_location = code_location;
+	m_error_code = error_code;
 }
