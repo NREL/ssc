@@ -53,12 +53,14 @@ class C_csp_exception : public std::exception
 public:
 	std::string m_error_message;
 	std::string m_code_location;
+	int m_error_code;
 	
 	// Useful in case exception goes uncatched
 	virtual const char* what();
 
 	C_csp_exception( const char *msg );
 	C_csp_exception(const std::string &error_message, const std::string &code_location);
+	C_csp_exception(const std::string &error_message, const std::string &code_location, int error_code);
 	virtual ~C_csp_exception() throw() { }
 
 };
