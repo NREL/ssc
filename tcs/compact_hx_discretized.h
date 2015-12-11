@@ -18,23 +18,27 @@ Design Parameters:
 	* Fan power
 */
 
-using namespace std;
+//using namespace std;
 
 //config$ = 'fc_tubes_s80_38T'
 
-enum compact_hx_configs
+namespace N_compact_hx
 {
-	fc_tubes_s80_38T = 1,
-	fc_tubes_sCF_88_10Jb
+	enum
+	{
+		fc_tubes_s80_38T = 1,
+		fc_tubes_sCF_88_10Jb
+	};
+
+	bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
+		double & fin_thk, double & sigma, double & alpha, double & A_fin_to_surf,
+		double & s_h, double & s_v, double & fin_V_per_m);
+
+	bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H);
+
 };
 
-bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
-	double & fin_thk, double & sigma, double & alpha, double & A_fin_to_surf,
-	double & s_h, double & s_v, double & fin_V_per_m);
-
-bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H);
-
-class compact_hx
+class C_CO2_to_air_cooler
 {
 
 public:
@@ -44,7 +48,7 @@ public:
 
 		S_hx_design_solved()
 		{
-			m_material_V = numeric_limits<double>::quiet_NaN();
+			m_material_V = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -117,9 +121,9 @@ private:
 
 public:	
 
-	compact_hx();
+	C_CO2_to_air_cooler();
 
-	~compact_hx(){};
+	~C_CO2_to_air_cooler(){};
 
 	bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, 
 		double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);

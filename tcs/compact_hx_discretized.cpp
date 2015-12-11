@@ -9,9 +9,8 @@
 #include "lib_util.h"
 #include "sam_csp_util.h"
 
-using namespace std;
 
-bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
+bool N_compact_hx::get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fin_pitch, double & D_h,
 	double & fin_thk, double & sigma, double & alpha, double & A_fin_to_surf,
 	double & s_h, double & s_v, double & fin_V_per_m)
 {
@@ -52,7 +51,7 @@ bool get_compact_hx_geom(int enum_compact_hx_config, double & d_out, double & fi
 
 };
 
-bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H)
+bool N_compact_hx::get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, double & j_H)
 {
 	double Re_mm = max(0.001, Re*1e-3);
 
@@ -74,7 +73,7 @@ bool get_compact_hx_f_j(int enum_compact_hx_config, double Re, double & f, doubl
 
 };
 
-compact_hx::compact_hx()
+C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 {
 	m_th = m_eta_fan = m_roughness = 
 		m_d_in = m_A_cs = m_relRough = m_Depth = m_W_par = m_N_par = m_N_tubes = m_L_tube = m_L_path = m_A_surf_total = m_UA_total = m_V_total =
@@ -87,17 +86,17 @@ compact_hx::compact_hx()
 	mc_air.SetFluid(mc_air.Air);
 }
 
-bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, 
+bool C_CO2_to_air_cooler::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
 	double m_dot_hot_kg_s, 	double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K)
 {
 	// double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa, double m_dot_hot_kg_s
 	// double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K
 
 	//m_enum_compact_hx_config = fc_tubes_s80_38T;
-	m_enum_compact_hx_config = fc_tubes_sCF_88_10Jb;
+	m_enum_compact_hx_config = N_compact_hx::fc_tubes_sCF_88_10Jb;
 
 	// Get HX Geometry
-	get_compact_hx_geom(m_enum_compact_hx_config, m_d_out, m_fin_pitch, m_D_h, m_fin_thk,
+	N_compact_hx::get_compact_hx_geom(m_enum_compact_hx_config, m_d_out, m_fin_pitch, m_D_h, m_fin_thk,
 		m_sigma, m_alpha, m_A_fin_to_surf, m_s_h, m_s_v, m_fin_V_per_m);
 
 	// Thickness should really be tied to HX config
@@ -436,7 +435,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 				double f_air, j_H_air;
 				f_air, j_H_air = numeric_limits<double>::quiet_NaN();
 
-				if( !get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
+				if( !N_compact_hx::get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
 					return false;
 
 				double deltaP_air = pow(G_air, 2.0)*v_air*0.5*f_air*m_alpha*V_total / (m_sigma*L_tube*W_par);
@@ -654,7 +653,7 @@ bool compact_hx::design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, d
 	return true;
 };
 
-void compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
 	double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code)
 {
 	double T_amb = T_amb_K;
@@ -765,7 +764,7 @@ void compact_hx::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_
 		double f_air, j_H_air;
 		f_air, j_H_air = numeric_limits<double>::quiet_NaN();
 
-		if( !get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
+		if( !N_compact_hx::get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
 		{
 			W_dot_fan_MW = -999.9;
 			error_code = 1;
