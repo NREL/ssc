@@ -2,11 +2,6 @@
 #ifndef __HTF_PROPS_
 #define __HTF_PROPS_
 
-#include <numeric>
-#include <limits>
-
-//#include <shared/lib_util.h>
-
 #include "interpolation_routines.h"
 
 class HTFProperties
@@ -75,6 +70,10 @@ public:
 	double Re( double T_K, double P, double vel, double d );
 	double temp( double H );
 	double enth( double T_K );
+
+	// 12.11.15 twn: Add method to calculate Cp as average of values throughout temperature range
+	//               rather than at the range's midpoint
+	double Cp_ave(double T_cold_K, double T_hot_K, int n_points);
 
 	const util::matrix_t<double> *get_prop_table();
 	//bool equals(const util::matrix_t<double> *comp_table);
