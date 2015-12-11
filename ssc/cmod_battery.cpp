@@ -73,8 +73,9 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power for every time step",                  "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",    "",                       "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2",    "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_pv_choice",                              "Prioritize PV usage for load or battery",                "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 
 
 	// Capacity, Voltage, Charge outputs
@@ -111,15 +112,21 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_load",                       "Energy to load from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 	
-	// Efficiency outputs													          
+	// annual metrics													          
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_pv",                 "Battery annual energy charged from pv",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_grid",               "Battery annual energy charged from grid",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_energy_loss",                    "Battery annual energy loss",                            "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "annual_export_to_grid_energy",               "Annual energy exported to grid",                        "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "annual_import_to_grid_energy",               "Annual energy imported from grid",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Average battery cycle efficiency",                      "%",        "",                      "Annual",        "",                           "",                               "" },
+	
+	// single value metrics
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Battery average cycle efficiency",                      "%",        "",                      "Annual",        "",                           "",                               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_pv_charge_percent",                     "Battery percent energy charged from PV",                "%",        "",                      "Annual",        "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
 
+	// test matrix output
 	{ SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
 	
 
@@ -130,8 +137,6 @@ var_info_invalid };
 
 battstor::battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr )
 {
-
-
 	// component models
 	voltage_model = 0;
 	lifetime_model = 0;
@@ -169,6 +174,9 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outPVToBatt = 0;
 	outGridToBatt = 0;
 	outAverageCycleEfficiency = 0;
+	outPVChargePercent = 0;
+	outAnnualPVChargeEnergy = 0;
+	outAnnualGridChargeEnergy = 0;
 	outAnnualChargeEnergy = 0;
 	outAnnualDischargeEnergy = 0;
 	outAnnualGridImportEnergy = 0;
@@ -233,6 +241,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	size_t m,n;
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
+	bool pv_dispatch = cm.as_boolean("batt_pv_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
 	if (batt_dispatch != dispatch_t::MODES::MANUAL)
 	{
@@ -335,7 +344,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outAnnualGridImportEnergy = cm.allocate("annual_import_to_grid_energy", annual_size);
 	outAnnualGridExportEnergy = cm.allocate("annual_export_to_grid_energy", annual_size);
 	outAnnualEnergyLoss = cm.allocate("batt_annual_energy_loss", annual_size);
-
+	outAnnualPVChargeEnergy = cm.allocate("batt_annual_charge_from_pv", annual_size);
+	outAnnualGridChargeEnergy = cm.allocate("batt_annual_charge_from_grid", annual_size);
 
 	outBatteryBankReplacement[0] = 0;
 	outAnnualChargeEnergy[0] = 0;
@@ -404,7 +414,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
 		cm.as_double("batt_minimum_modetime"), 
 		ac_or_dc, dc_dc, ac_dc, dc_ac,
-		batt_dispatch,
+		batt_dispatch, pv_dispatch,
 		dm_dynamic_sched, dm_dynamic_sched_weekend,
 		dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 } 
@@ -547,6 +557,8 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 		lifetime_model->reset_replacements();
 		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(dispatch_model->grid_import_annual());
 		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(dispatch_model->grid_export_annual());
+		outAnnualPVChargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->pv_charge_annual());
+		outAnnualGridChargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->grid_charge_annual());
 		outAnnualChargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->charge_annual());
 		outAnnualDischargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->discharge_annual()); 
 		outAnnualEnergyLoss[annual_index] = (ssc_number_t)(dispatch_model->energy_loss_annual());
@@ -569,6 +581,14 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 		outAverageCycleEfficiency = 100;
 	else if (outAverageCycleEfficiency < 0)
 		outAverageCycleEfficiency = 0;
+
+	// PV charge ratio
+	outPVChargePercent = (ssc_number_t)dispatch_model->pv_charge_percent();
+	if (outPVChargePercent > 100)
+		outPVChargePercent = 100;
+	else if (outPVChargePercent < 0)
+		outPVChargePercent = 0;
+
 }
 void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD)
 {
@@ -583,11 +603,11 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 {
 	int step_per_hour = (int)( 1.0 / _dt_hour );
 
-	// average battery eff
+	// single value metrics
 	cm.assign("average_cycle_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
-
-	// battery capacity installed
+	cm.assign("batt_pv_charge_percent", var_data((ssc_number_t)outPVChargePercent));
 	cm.assign("batt_bank_installed_capacity", cm.as_double("batt_computed_bank_capacity"));
+
 	// monthly outputs
 	cm.accumulate_monthly_for_year( "pv_to_load",   "monthly_pv_to_load",   _dt_hour, step_per_hour );
 	cm.accumulate_monthly_for_year( "batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour );
