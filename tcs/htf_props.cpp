@@ -1,14 +1,5 @@
-// Functions containing HTF property calls
-
-#include <string>
-#include <numeric>
-#include <limits>
-#include <algorithm>
-#include <cmath>
-
 #include "htf_props.h"
-
-using namespace std;
+#include "csp_solver_util.h"
 
 HTFProperties::HTFProperties()
 {
@@ -62,6 +53,39 @@ bool HTFProperties::equals(HTFProperties *comp_class)
 	return m_userTable.equals(	(*comp_class->get_prop_table()) );
 }
 
+double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K, int n_points)
+{
+	// Check that temperatures are at least positive values
+	if(T_cold_K <= 0.0)
+	{
+		throw(C_csp_exception("Cold temperature must be greater than 0.0", 
+		"HTFProperties::Cp_ave",1));
+	}
+	if(T_hot_K <= 0.0)
+	{
+		throw(C_csp_exception("Hot temperature must be greater than 0.0",
+		"HTFProperties::Cp_ave",1));
+	}
+	
+	// Check that 2 < n_points < 500
+	if(n_points < 2)
+		n_points = 2;
+
+	if(n_points > 500)
+		n_points = 500;
+
+	double cp_sum = 0.0;
+	double T_i = std::numeric_limits<double>::quiet_NaN();
+	double delta_T = (T_hot_K - T_cold_K)/double(n_points-1);
+	for(int i = 0; i < n_points; i++)
+	{
+		T_i = T_cold_K + delta_T*i;
+		cp_sum += Cp(T_i);
+	}
+
+	return cp_sum/double(n_points);
+}
+
 double HTFProperties::Cp( double T_K )
 {
 	/* Inputs: temperature [K]
@@ -108,7 +132,7 @@ double HTFProperties::Cp( double T_K )
 	case Caloria_HT_43:
 		return (3.88 * (T_K-273.15) + 1606.0)/1000.0;
 	case Hitec_XL:
-		return max(1536.0 - 0.2624 * T_C- 0.0001139 * T_C * T_C,1000.0)/1000.0;
+		return fmax(1536.0 - 0.2624 * T_C- 0.0001139 * T_C * T_C,1000.0)/1000.0;
 	case Therminol_VP1:
 		return (1.509 + 0.002496 * T_C + 0.0000007888 * T_C*T_C);
 	case Hitec:
@@ -120,7 +144,7 @@ double HTFProperties::Cp( double T_K )
 	case Argon_ideal:
 		return 0.5203;	// Cp only, Cv is different
 	case Hydrogen_ideal:
-		return min(max(-45.4022 + 0.690156*T_K - 0.00327354*T_K*T_K + 0.00000817326*T_K*T_K*T_K - 1.13234E-08*T_K*T_K*T_K*T_K + 8.24995E-12*T_K*T_K*T_K*T_K*T_K - 2.46804E-15*T_K*T_K*T_K*T_K*T_K*T_K,11.3),14.7);
+		return fmin(fmax(-45.4022 + 0.690156*T_K - 0.00327354*T_K*T_K + 0.00000817326*T_K*T_K*T_K - 1.13234E-08*T_K*T_K*T_K*T_K + 8.24995E-12*T_K*T_K*T_K*T_K*T_K - 2.46804E-15*T_K*T_K*T_K*T_K*T_K*T_K,11.3),14.7);
 	case T91_Steel:
 		return 0.0004*T_C*T_C + 0.2473*T_C + 450.08;
 	case Therminol_66:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
@@ -180,25 +204,25 @@ double HTFProperties::dens(double T_K, double P)
 		case Salt_595_NaF_405_ZrF4:
 			return -5E-09*T_K*T_K*T_K + 2E-05*T_K*T_K - 0.9144*T_K + 3837.0;
 		case Salt_60_NaNO3_40_KNO3:
-			return max(-1E-07*T_K*T_K*T_K + 0.0002*T_K*T_K - 0.7875*T_K + 2299.4,1000.0);
+			return fmax(-1E-07*T_K*T_K*T_K + 0.0002*T_K*T_K - 0.7875*T_K + 2299.4,1000.0);
 		case Nitrate_Salt:
-			return max(2090.0 - 0.636 * (T_K-273.15),1000.0);
+			return fmax(2090.0 - 0.636 * (T_K-273.15),1000.0);
 		case Caloria_HT_43:
-			return max(885.0 - 0.6617 * T_C - 0.0001265 * T_C*T_C,100.0);
+			return fmax(885.0 - 0.6617 * T_C - 0.0001265 * T_C*T_C,100.0);
 		case Hitec_XL:
-			return max(2240.0 - 0.8266 * T_C,800.0);
+			return fmax(2240.0 - 0.8266 * T_C,800.0);
 		case Therminol_VP1:
-			return max(1074.0 - 0.6367 * T_C - 0.0007762 * T_C*T_C,400.0);
+			return fmax(1074.0 - 0.6367 * T_C - 0.0007762 * T_C*T_C,400.0);
 		case Hitec:
-			return max(2080.0 - 0.733 * T_C,1000.0);
+			return fmax(2080.0 - 0.733 * T_C,1000.0);
 		case Dowtherm_Q:
-			return max(-0.757332 * T_C + 980.787,100.0);						// Russ 10-2-03
+			return fmax(-0.757332 * T_C + 980.787,100.0);						// Russ 10-2-03
 		case Dowtherm_RP:
-			return max(-0.000186495 * T_C*T_C - 0.668337 * T_C + 1042.11,200.0);		// Russ 10-2-03
+			return fmax(-0.000186495 * T_C*T_C - 0.668337 * T_C + 1042.11,200.0);		// Russ 10-2-03
 		case Argon_ideal:
-			return max(P/(208.13*T_K),1.E-10);
+			return fmax(P/(208.13*T_K),1.E-10);
 		case Hydrogen_ideal:
-			return max(P/(4124.0*T_K),1.E-10);
+			return fmax(P/(4124.0*T_K),1.E-10);
 		case T91_Steel: //"Thermo hydraulic optimisation of the EURISOL DS target" - Paul Scherrer Institut
 			return -0.3289*T_C + 7742.5;
 		case Therminol_66:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
@@ -228,7 +252,7 @@ double HTFProperties::visc(double T_K)
 	switch(m_fluid)
 	{
 	case Air:
-		return max(0.0000010765 + 7.15173E-08*T_K - 5.03525E-11*T_K*T_K + 2.02799E-14*T_K*T_K*T_K,1.E-6);
+		return fmax(0.0000010765 + 7.15173E-08*T_K - 5.03525E-11*T_K*T_K + 2.02799E-14*T_K*T_K*T_K,1.E-6);
 	case Salt_68_KCl_32_MgCl2:
 		return .0146*exp(2230.0/T_K)*0.001;			// Convert cP to kg/m-s
 	case Salt_8_NaF_92_NaBF4:
@@ -252,17 +276,17 @@ double HTFProperties::visc(double T_K)
 	case Salt_595_NaF_405_ZrF4:
 		return .0767*exp(3977./T_K)*0.001;			// convert cP to kg/m-s
 	case Salt_60_NaNO3_40_KNO3:
-		return max(-1.473302E-10*pow(T_C,3) + 2.279989E-07*pow(T_C,2) - 1.199514E-04*T_C + 2.270616E-02,.0001);
+		return fmax(-1.473302E-10*pow(T_C,3) + 2.279989E-07*pow(T_C,2) - 1.199514E-04*T_C + 2.270616E-02,.0001);
 	case Nitrate_Salt:
-		return max((22.714 - 0.12 * T_C + 0.0002281 *T_C*T_C - 0.0000001474 * pow(T_C,3)) / 1000.0,1.e-6);
+		return fmax((22.714 - 0.12 * T_C + 0.0002281 *T_C*T_C - 0.0000001474 * pow(T_C,3)) / 1000.0,1.e-6);
 	case Caloria_HT_43:		
-		return (0.040439268 * pow(max(T_C,10.0),-1.946401872)) * dens(T_K, 0.0); 
+		return (0.040439268 * pow(fmax(T_C,10.0),-1.946401872)) * dens(T_K, 0.0); 
 	case Hitec_XL:  
 		return 1372000. * pow(T_C,-3.364);
 	case Therminol_VP1:
-		return 0.001 * (pow(10.,0.8703)*pow(max(T_C,20.),(0.2877 + log10(pow(max(T_C,20.),-0.3638)))));
+		return 0.001 * (pow(10.,0.8703)*pow(fmax(T_C,20.),(0.2877 + log10(pow(fmax(T_C,20.),-0.3638)))));
 	case Hitec:
-		return max(0.00622 - 0.0000102 * T_C,1.e-6);
+		return fmax(0.00622 - 0.0000102 * T_C,1.e-6);
 	case Dowtherm_Q:
 		return 1. / (132.40658 + 4.36107 * T_C + 0.0781417*T_C*T_C - 0.00011035416*pow(T_C,3));		// Hank 10-2-03
 	case Dowtherm_RP:
@@ -313,7 +337,7 @@ double HTFProperties::cond(double T_K)
 	switch(m_fluid)
 	{
 	case Air:
-		return max(0.00145453 + 0.0000872152*T_K - 2.20614E-08*T_K*T_K,1.e-4);
+		return fmax(0.00145453 + 0.0000872152*T_K - 2.20614E-08*T_K*T_K,1.e-4);
 	case Stainless_AISI316:
 		return 3E-09*pow(T_K,3) - 8E-06*pow(T_K,2) + 0.0177*T_K + 7.7765;
 	case Salt_68_KCl_32_MgCl2:
@@ -343,21 +367,21 @@ double HTFProperties::cond(double T_K)
 	case Nitrate_Salt:
 		return 0.443 + 0.00019 * T_C;
 	case Caloria_HT_43:
-		return max(-0.00014 * T_C + 0.1245,.01);
+		return fmax(-0.00014 * T_C + 0.1245,.01);
 	case Hitec_XL:
 		return 0.519;
 	case Therminol_VP1:
-		return max(0.1381 - 0.00008708 * T_C - 0.0000001729 * pow(T_C,2),.001);
+		return fmax(0.1381 - 0.00008708 * T_C - 0.0000001729 * pow(T_C,2),.001);
 	case Hitec:
 		return 0.588 - 0.000647 * T_C;
 	case Dowtherm_Q:
-		return max(-0.0000000626555 * pow(T_C,2) - 0.000124864 * T_C + 0.124379,1.e-5);		// Russ 10-2-03
+		return fmax(-0.0000000626555 * pow(T_C,2) - 0.000124864 * T_C + 0.124379,1.e-5);		// Russ 10-2-03
 	case Dowtherm_RP:
 		return -0.00012963 * T_C + 0.13397;			// Russ 10-2-03
 	case Argon_ideal:
 		return 0.00548 + 0.0000438969*T_K - 6.81410E-09*T_K*T_K;
 	case Hydrogen_ideal:
-		return max(0.0302888 + 0.00053634*T_K - 1.59604E-07*T_K*T_K,.01);
+		return fmax(0.0302888 + 0.00053634*T_K - 1.59604E-07*T_K*T_K,.01);
 	case T91_Steel:	//"Thermo hydraulic optimisation of the EURISOL DS target" - Paul Scherrer Institut
 		return -2.E-5*T_C*T_C + 0.017*T_C + 25.535;
 	case Therminol_66:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
@@ -471,7 +495,7 @@ double HTFProperties::Cv(double T_K)
 	case Argon_ideal:
 		return 0.3122;
 	case Hydrogen_ideal:
-		return min(max(-49.5264 + 0.690156*T_K - 0.00327354*T_K*T_K + 0.00000817326*pow(T_K,3) - 1.13234E-08*pow(T_K,4) + 8.24995E-12*pow(T_K,5) - 2.46804E-15*pow(T_K,6),7.20),10.60);
+		return fmin(fmax(-49.5264 + 0.690156*T_K - 0.00327354*T_K*T_K + 0.00000817326*pow(T_K,3) - 1.13234E-08*pow(T_K,4) + 8.24995E-12*pow(T_K,5) - 2.46804E-15*pow(T_K,6),7.20),10.60);
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
