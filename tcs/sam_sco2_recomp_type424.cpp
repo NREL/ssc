@@ -235,7 +235,7 @@ private:
 
 	HTFProperties rec_htfProps;		// Instance of HTFProperties class for field HTF
 	CO2_state co2_props;
-	compact_hx ACC;
+	C_CO2_to_air_cooler ACC;
 	int co2_error;
 	
 	// Cycle Design Parameters
