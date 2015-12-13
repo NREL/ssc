@@ -1239,8 +1239,8 @@ public:
 					tier--;
 					ec_energy_ub[period][tier] = ec_tou_mat.at(r, 2);
 					ec_energy_ub_units[period][tier] = ec_tou_mat.at(r, 3);
-					ec_rates[period][tier][0] = ec_tou_mat.at(r, 4);
-					ec_rates[period][tier][1] = ec_tou_mat.at(r, 5);
+					ec_rates[period][tier][0] = ec_tou_mat.at(r, 4)*rate_esc;
+					ec_rates[period][tier][1] = ec_tou_mat.at(r, 5)*rate_esc;
 				}
 			}
 
@@ -1327,7 +1327,7 @@ public:
 			{
 				tier--;
 				dc_fixed_energy_ub[month][tier] = dc_flat_mat.at(r, 2);
-				dc_fixed_charges[month][tier] = dc_flat_mat.at(r, 3);
+				dc_fixed_charges[month][tier] = dc_flat_mat.at(r, 3)*rate_esc;
 			}
 		}
 
@@ -1434,7 +1434,7 @@ public:
 					period--;
 					tier--;
 					dc_energy_ub[period][tier] = dc_tou_mat.at(r, 2);
-					dc_charges[period][tier] = dc_tou_mat.at(r, 3);
+					dc_charges[period][tier] = dc_tou_mat.at(r, 3)*rate_esc;
 				}
 			}
 
@@ -1934,8 +1934,8 @@ public:
 					tier--;
 					ec_energy_ub[period][tier] = ec_tou_mat.at(r, 2);
 					ec_energy_ub_units[period][tier] = ec_tou_mat.at(r, 3);
-					ec_rates[period][tier][0] = ec_tou_mat.at(r, 4);
-					ec_rates[period][tier][1] = ec_tou_mat.at(r, 5);
+					ec_rates[period][tier][0] = ec_tou_mat.at(r, 4)*rate_esc;
+					ec_rates[period][tier][1] = ec_tou_mat.at(r, 5)*rate_esc;
 				}
 			}
 
@@ -2003,7 +2003,7 @@ public:
 			{
 				tier--;
 				dc_fixed_energy_ub[month][tier] = dc_flat_mat.at(r, 2);
-				dc_fixed_charges[month][tier] = dc_flat_mat.at(r, 3);
+				dc_fixed_charges[month][tier] = dc_flat_mat.at(r, 3)*rate_esc;
 			}
 		}
 
@@ -2108,7 +2108,7 @@ public:
 					period--;
 					tier--;
 					dc_energy_ub[period][tier] = dc_tou_mat.at(r, 2);
-					dc_charges[period][tier] = dc_tou_mat.at(r, 3);
+					dc_charges[period][tier] = dc_tou_mat.at(r, 3)*rate_esc;
 				}
 			}
 
