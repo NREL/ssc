@@ -52,7 +52,7 @@
 #define __DEBUG__ 0
 #endif
 
-#include "lib_util.h"
+#include "../shared/lib_util.h"
 #include "vartab.h"
 #include "sscapi.h"
 

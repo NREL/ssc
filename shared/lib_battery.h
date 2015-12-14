@@ -411,7 +411,7 @@ public:
 
 	void compute_grid_net( double e_pv, double e_load);
 
-	const enum MODES
+	enum MODES
 	{
 		LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL
 	};
