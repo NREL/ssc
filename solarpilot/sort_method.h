@@ -3,6 +3,8 @@
 
 #include <vector>
 using namespace std;
+template <typename Comparable, typename Tag>
+void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right );
 /**
  * Quicksort algorithm (driver).
  */

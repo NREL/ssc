@@ -243,13 +243,13 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
 	bool pv_dispatch = cm.as_boolean("batt_pv_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
-	if (batt_dispatch != dispatch_t::MODES::MANUAL)
+	if (batt_dispatch != dispatch_t::MANUAL)
 	{
 		m = 12;
 		n = 24 * step_per_hour;
 		dm_dynamic_sched.resize_fill(m, n, 1);
 		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
-		if (batt_dispatch == dispatch_t::MODES::MAINTAIN_TARGET)
+		if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
 		{
 			int target_dispatch = cm.as_integer("batt_target_choice");
 			if (target_dispatch == 0)
@@ -274,7 +274,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 				throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
 		}
 	}
-	else if (batt_dispatch == dispatch_t::MODES::MANUAL)
+	else if (batt_dispatch == dispatch_t::MANUAL)
 	{
 		ssc_number_t *psched = cm.as_matrix("dispatch_manual_sched", &m, &n);
 		if (m != 12 || n != 24)
@@ -422,13 +422,13 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 {
 	int nrec;
 	prediction_index = 0;
-	bool look_ahead = ((mode == dispatch_t::MODES::LOOK_AHEAD || mode == dispatch_t::MODES::MAINTAIN_TARGET));
+	bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
 
 	// automatic look ahead
 	if (look_ahead)
 		nrec = nyears * 8760 * step_per_hour;
 	// look behind
-	else if (mode == dispatch_t::MODES::LOOK_BEHIND)
+	else if (mode == dispatch_t::LOOK_BEHIND)
 		nrec = 24 * step_per_hour;
 
 	pv_prediction = new double[nrec];
@@ -443,7 +443,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		}
 	}
 	automated_dispatch = new automate_dispatch_t(dispatch_model, nyears, _dt_hour, pv_prediction, load_prediction, mode);
-	if (mode == dispatch_t::MODES::MAINTAIN_TARGET)
+	if (mode == dispatch_t::MAINTAIN_TARGET)
 		automated_dispatch->set_target_power(target_power);
 
 }
