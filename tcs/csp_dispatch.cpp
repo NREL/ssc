@@ -1240,27 +1240,36 @@ bool csp_dispatch_opt::optimize()
 
                 //write out a data file
 #if _WRITE_AMPL_DATA==1
+        if( !return_ok )
+            return return_ok;
         int day = params.siminfo->m_time / 3600/24;
         ofstream fout("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".dat");
 
         fout << "#data file\n\n";
-
-        fout << "param nt := " << nt << ";\n";
+        fout << "# --- scalar parameters ----\n";
+        fout << "param T := " << nt << ";\n";
         fout << "param Eu := " << params.e_tes_max << ";\n";
-        fout << "param El := " << params.e_tes_min << ";\n";
+        //fout << "param El := " << params.e_tes_min << ";\n";
         fout << "param Er := " << params.e_rec_startup << ";\n";
         fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
-        fout << "param Esinit := " << params.e_tes_init << ";\n";
-        fout << "param Cu := " << params.q_pb_max << ";\n";
-        fout << "param Cl := " << params.q_pb_min << ";\n";
-        fout << "param Qr := " << dq_rsu << ";\n";
+        fout << "param Qu := " << params.q_pb_max << ";\n";
+        fout << "param Ql := " << params.q_pb_min << ";\n";
+        fout << "param Qru := " << dq_rsu << ";\n";
+        fout << "param Qrl := " << params.q_rec_min << ";\n";
         fout << "param Qc := " << dq_csu << ";\n";
         fout << "param Qb := " << params.q_pb_standby << ";\n";
-        fout << "param is_rec_operating := " << (params.is_rec_operating0 ? 1 : 0) << ";\n";
-        fout << "param is_pc_operating := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
-        fout << "param is_pc_standby := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
+        fout << "param Lr := " << params.w_rec_pump << ";\n";
+        fout << "param delta := 1;\n";
 
-        fout << "\nparam Q := \n";
+        fout << "# --- variale initialization parameters ---\n";
+        fout << "param s0 := " << params.e_tes_init << ";\n";
+        fout << "param ursu0 := 0.;\n";
+        fout << "param ucsu0 := 0.;\n";
+        fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
+        fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
+
+        fout << "# --- indexed parameters ---\n";
+        fout << "param Qin := \n";
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << outputs.q_sf_expected.at(t) << "\n";
         fout << ";\n\n";
@@ -1270,9 +1279,9 @@ bool csp_dispatch_opt::optimize()
             fout << t+1 << "\t" << price_signal.at(t) << "\n";
         fout << ";\n\n";
 
-        fout << "param eta := \n";
+        fout << "param etaamb := \n";   //power block ambient adjustment
         for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.q_sf_expected.at(t) << "\n";
+            fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
         fout << ";";
 
         fout.close();

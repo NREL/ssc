@@ -3,6 +3,7 @@
 #define __HTF_PROPS_
 
 #include "interpolation_routines.h"
+#include <limits>
 
 class HTFProperties
 {

@@ -1,5 +1,6 @@
 #include "htf_props.h"
 #include "csp_solver_util.h"
+#include <cmath>
 
 HTFProperties::HTFProperties()
 {
