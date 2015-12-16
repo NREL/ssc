@@ -505,7 +505,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 		int mode = automated_dispatch->get_mode();
 		// look ahead
 		if (mode == 0 || mode == 2)
-			automated_dispatch->update_dispatch(hour_of_year, idx);
+			automated_dispatch->update_dispatch(hour_of_year, step, idx);
 		// look behind
 		else if (mode == 1)
 		{
@@ -515,7 +515,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 
 			if ((hour_of_year) % 24 == 0 && (!first_day ) )
 			{
-				automated_dispatch->update_dispatch(hour_of_year, 0);
+				automated_dispatch->update_dispatch(hour_of_year, step, 0);
 				prediction_index = 0;
 			}
 			pv_prediction[prediction_index] = PV / _dt_hour;

@@ -1400,7 +1400,8 @@ automate_dispatch_t::automate_dispatch_t(dispatch_manual_t * Dispatch, int nyear
 	_nyears = nyears;
 	_mode = mode;
 	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
-
+	_target_power_month = -1e16;
+	_month = 1;
 	grid.reserve(_num_steps);
 
 	for (int ii = 0; ii != _num_steps; ii++)
@@ -1413,7 +1414,7 @@ void automate_dispatch_t::update_pv_load_data(double *pv, double *load)
 }
 int automate_dispatch_t::get_mode(){return _mode;}
 void automate_dispatch_t::set_target_power(std::vector<double> target_power){ _target_power = target_power; }
-void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
+void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 {
 	bool debug = false;
 	FILE *p;
@@ -1424,6 +1425,8 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int idx)
 		double E_useful;	// [kWh] - the cyclable energy available in the battery
 		double E_max;     // [kWh] - the maximum energy that can be cycled
 		double P_target;  // [kW] - the target power
+
+		check_new_month(hour_of_year, step);
 
 		// setup vectors
 		initialize(hour_of_year, idx);
@@ -1457,6 +1460,21 @@ void automate_dispatch_t::initialize(int hour_of_year, int idx )
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
 		grid[ii] = grid_point(0.,0,0);
+}
+void automate_dispatch_t::check_new_month(int hour_of_year, int step)
+{
+	int hours = 0;
+	for (int month = 1; month <= _month; month++)
+		hours += util::hours_in_month(month);
+
+	if (hours == 8760)
+		hours = 0;
+
+	if ((hour_of_year == hours) && step == 0)
+	{
+		_target_power_month = -1e16;
+		_month < 12 ? _month++ : _month = 1;
+	}
 }
 void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
 {
@@ -1510,6 +1528,13 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 	if (_target_power.size() > idx && _target_power[idx] > 0)
 	{
 		P_target = _target_power[idx];
+		return;
+	}
+
+	// don't calculate if peak grid demand is less than a previous target in the month
+	if (grid[0].Grid() < _target_power_month)
+	{
+		P_target = _target_power_month;
 		return;
 	}
 
@@ -1600,6 +1625,11 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 		if (debug)
 			fprintf(p, "Moved P_target to: %.3f\n",P_target);
 	}
+
+	if (P_target < _target_power_month)
+		P_target = _target_power_month;
+	else
+		_target_power_month = P_target;
 }
 void automate_dispatch_t::set_charge(int profile)
 {
