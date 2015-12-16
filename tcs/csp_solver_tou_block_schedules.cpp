@@ -1,5 +1,6 @@
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_util.h"
+#include <algorithm>
 
 void C_block_schedule::check_dimensions()
 {
@@ -43,21 +44,21 @@ void C_block_schedule::check_arrays_for_tous(int n_arrays)
 
 	// Check that all TOU periods represented in the schedules are available in the tou arrays
 	
-	double i_tou_min = 1;
-	double i_tou_max = 1;
-	double i_tou_day = -1;
-	double i_tou_end = -1;
-	double i_temp_max = -1;
-	double i_temp_min = -1;
+	int i_tou_min = 1;
+	int i_tou_max = 1;
+	int i_tou_day = -1;
+	int i_tou_end = -1;
+	int i_temp_max = -1;
+	int i_temp_min = -1;
 
 	for( int i = 0; i < 12; i++ )
 	{
 		for( int j = 0; j < 24; j++ )
 		{
-			i_tou_day = mc_weekdays(i, j) - 1;
-			i_tou_end = mc_weekends(i, j) - 1;
-			i_temp_max = fmax(i_tou_day, i_tou_end);
-			i_temp_min = fmin(i_tou_day, i_tou_end);
+			i_tou_day = (int) mc_weekdays(i, j) - 1;
+			i_tou_end = (int) mc_weekends(i, j) - 1;
+			i_temp_max = std::max(i_tou_day, i_tou_end);
+			i_temp_min = std::min(i_tou_day, i_tou_end);
 			if( i_temp_max > i_tou_max )
 				i_tou_max = i_temp_max;
 			if( i_temp_min < i_tou_min )
@@ -65,15 +66,15 @@ void C_block_schedule::check_arrays_for_tous(int n_arrays)
 		}
 	}
 
-	if( (int)i_temp_min < 1 )
+	if( i_tou_min < 0 )
 	{
 		throw(C_csp_exception("Smallest TOU period cannot be less than 1", "TOU block schedule initialization"));
 	}
-
+	
 	for( int k = 0; k < n_arrays; k++ )
 	{
 		
-		if( (int)i_temp_max > mvv_tou_arrays[k].size() )
+		if( i_tou_max + 1 > mvv_tou_arrays[k].size() )
 		{
 			m_error_msg = util::format("TOU schedule contains TOU period = %d, while the %s array contains %d elements", (int)i_temp_max, mv_labels[k].c_str(), mvv_tou_arrays[k].size());
 			throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
