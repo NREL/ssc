@@ -552,7 +552,7 @@ public:
 		double * pv, double *load, // input as power [kW] not energy
 		int mode);				   // 0/1/2
 	void update_pv_load_data(double *pv, double *load);
-	void update_dispatch(int hour_of_year, int idx);
+	void update_dispatch(int hour_of_year, int step, int idx);
 	void set_target_power(std::vector<double> target_power);
 	int get_mode();
 
@@ -565,17 +565,20 @@ protected:
 	void set_charge(int profile);
 	int set_discharge(FILE *p, bool debug, int hour_of_year, double P_target, double E_max);
 	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max);
-
+	void check_new_month(int hour_of_year, int step);
+	
 
 	dispatch_manual_t * _dispatch;
 	double * _pv;						 // [kW]
 	double * _load;                      // [kW]
 	std::vector<double> _target_power;   // [kW]
+	double _target_power_month;	    	 // [kW]
+	int _month;							 // [0-11]
 	int _hour_last_updated;
 	double _dt_hour;
 	int _steps_per_hour;
 	int _num_steps;
-	int _nyears;
+	int _nyears; 
 	int _mode;
 	
 	grid_vec grid; // [grid_power, hour, step]
