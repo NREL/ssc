@@ -1481,7 +1481,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 0 && idx == 0)
+	if (hour_of_year == 744 && idx == 744)
 	{
 		// debug = true;
 		p = fopen("dispatch.txt", "w");
@@ -1540,7 +1540,7 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 
 	// First compute target power which will allow battery to charge up to E_useful over 24 hour period
 	if (debug)
-		fprintf(p, "Recharge target\t charge_energy\n");
+		fprintf(p, "Recharge_target\t charge_energy\n");
 
 	double P_target_min = 1e16;
 	double E_charge = 0.;
@@ -1581,7 +1581,7 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 	P_target = grid[0].Grid(); // target power to shave to [kW]
 	double sum = 0;			   // energy [kWh];
 	if (debug)
-		fprintf(p, "Step\t Target Power\n");
+		fprintf(p, "Step\t Target_Power\t Energy_Sum\n");
 
 	for (int ii = 0; ii != _num_steps - 1; ii++)
 	{
@@ -1593,7 +1593,7 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 			P_target = grid[ii + 1].Grid();
 
 		if (debug)
-			fprintf(p, "%d\t %.3f\n", ii, P_target);
+			fprintf(p, "%d\t %.3f\t", ii, P_target);
 
 		// implies a repeated power
 		if (sorted_grid_diff[ii] == 0)
@@ -1602,6 +1602,8 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 		else
 			sum += sorted_grid_diff[ii] * (ii + 1)*_dt_hour;
 
+		if (debug)
+			fprintf(p, "%.3f\n", sum);
 
 		if (sum < E_useful)
 			continue;
@@ -1609,25 +1611,35 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 		else
 		{
 			P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
+			sum = E_useful;
 			if (debug)
-				fprintf(p, "%d\t %.3f\n", ii, P_target);
+				fprintf(p, "%d\t %.3f\t%.3f\n", ii, P_target, sum );
 			break;
 		}
 	}
 
-	// move target up by 2% to accomodate voltage differences
-	P_target += (0.02*P_target);
+	
+	// move target up by 1% to accomodate voltage differences
+	double adjust = 0.01;
+	P_target += (adjust*P_target);
+	if (debug)
+		fprintf(p, "Adjust %.3f\t%.3f\n", P_target, (1-adjust)*sum);
+	
 
 	// Don't allow target to be lower than min target to partially recharge
 	if (P_target < P_target_min)
 	{
 		P_target = P_target_min;
 		if (debug)
-			fprintf(p, "Moved P_target to: %.3f\n",P_target);
+			fprintf(p, "P_target moved to: %.3f\ for charging\n",P_target);
 	}
 
 	if (P_target < _target_power_month)
+	{
 		P_target = _target_power_month;
+		if (debug)
+			fprintf(p, "P_target exceeds monthly target, move to  %.3f\n", P_target);
+	}
 	else
 		_target_power_month = P_target;
 }
@@ -1646,7 +1658,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 	int m, h;
 	double discharge_energy = 0;
 	if (debug)
-		fprintf(p, "Step\t Profile\t Hour\t Step\t Discharge Percent\t Discharge Energy\n");
+		fprintf(p, "Profile\t Hour\t Step\t Discharge_Percent\t Discharge_Energy\t E_required\t Grid\n");
 
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
@@ -1658,7 +1670,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 			discharge_energy += energy_required;
 			profile++;
 			if (debug)
-				fprintf(p, "%d\t %d\t %d\t %d\t %.3f\t %.3f\n", ii, profile, grid[ii].Hour(), grid[ii].Step(), discharge_percent, discharge_energy);
+				fprintf(p, "%d\t %d\t %d\t %.3f\t %.3f\t %.3f\t %.3f\n", profile, grid[ii].Hour(), grid[ii].Step(), discharge_percent, discharge_energy, energy_required, grid[ii].Grid());
 		}
 		else
 			break;
