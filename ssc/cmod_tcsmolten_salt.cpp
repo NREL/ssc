@@ -74,7 +74,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     
 	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                      "m",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",             "Receiver thermal design power",                                     "MW",           "",            "heliostat",      "*",                       "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",        "Include fluxmap calculations",                                      "",             "",            "heliostat",      "?=1",                     "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",        "Include fluxmap calculations",                                      "",             "",            "heliostat",      "?=0",                     "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",     "Tower fixed cost",                                                  "$",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",            "Tower cost scaling exponent",                                       "",             "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",         "Receiver reference cost",                                           "$",            "",            "heliostat",      "*",                       "",                     "" },
@@ -431,35 +431,38 @@ public:
 		*/
 		double H_rec, D_rec, rec_aspect, THT, A_sf;
 
-		if( is_optimize )
+		if( is_optimize || heliostatfield.ms_params.m_run_type == 0 )
 		{
 			//Run solarpilot right away to update values as needed
 			solarpilot_invoke spi(this);
 			spi.run();
 			//AutoPilot_S *sapi = spi.GetSAPI();
 
-			//Optimization iteration history
-			vector<vector<double> > steps;
-			vector<double> obj, flux;
-			spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
-			int nr = steps.size();
-			int nc = steps.front().size() + 2;
-			ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-			for( size_t i = 0; i<nr; i++ ){
+            if(is_optimize)
+            {
+			    //Optimization iteration history
+			    vector<vector<double> > steps;
+			    vector<double> obj, flux;
+			    spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
+			    int nr = steps.size();
+			    int nc = steps.front().size() + 2;
+			    ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
+			    for( size_t i = 0; i<nr; i++ ){
 
-				for( size_t j = 0; j<steps.front().size(); j++ )
-					ssc_hist[i*nc + j] = steps.at(i).at(j);
-				ssc_hist[i*nc + nc - 2] = obj.at(i);
-				ssc_hist[i*nc + nc - 1] = flux.at(i);
+				    for( size_t j = 0; j<steps.front().size(); j++ )
+					    ssc_hist[i*nc + j] = steps.at(i).at(j);
+				    ssc_hist[i*nc + nc - 2] = obj.at(i);
+				    ssc_hist[i*nc + nc - 1] = flux.at(i);
 
-			}
+			    }
+            }
 		
 			//receiver calculations
 			H_rec = spi.recs.front().height;
 			rec_aspect = spi.recs.front().aspect;
 			THT = spi.layout.h_tower;
 			//update heliostat position table
-			nr = (int)spi.layout.heliostat_positions.size();
+			int nr = (int)spi.layout.heliostat_positions.size();
 			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
 			for( int i = 0; i<nr; i++ ){
 				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
@@ -488,10 +491,10 @@ public:
 			{
 			case sp_receiver::TYPE::CYLINDRICAL:
 			{
-												   double h = spi.recs.front().height;
-												   double d = h / spi.recs.front().aspect;
-												   A_rec = h*d*3.1415926;
-												   break;
+                double h = spi.recs.front().height;
+                double d = h / spi.recs.front().aspect;
+                A_rec = h*d*3.1415926;
+                break;
 			}
 			case sp_receiver::TYPE::CAVITY:
 			case sp_receiver::TYPE::FLAT:
@@ -598,7 +601,7 @@ public:
 
 		int run_type = heliostatfield.ms_params.m_run_type;
 
-		if( run_type == 1 )
+		if( run_type == 1 || run_type == 0 )
 		{
 			heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
 		}
@@ -610,7 +613,7 @@ public:
 		}
 		else
 		{
-			string msg = util::format("SSC INPUT 'run_type' must be set to either 1 or 2. Its input value is %d", run_type);
+			string msg = util::format("SSC INPUT 'run_type' must be set to either 0, 1 or 2. Its input value is %d", run_type);
 
 			throw exec_error("MSPT CSP Solver", msg);
 		}
