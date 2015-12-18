@@ -687,12 +687,13 @@ struct subarray
 		poa.ibeam = 0;
 		poa.iskydiff = 0;
 		poa.ignddiff = 0;
+		poa.ipoa = 0;
 		poa.sunup = 0;
 		poa.aoi = 0;
 		poa.stilt = 0;
 		poa.sazi = 0;
 		poa.nonlinear_dc_shading_derate = 1.0;
-		poa.usePOA = false;
+		poa.usePOAFromWF = false;
 		poa.poaShadWarningCount = 0;
 
 		module.dcpwr = 0;
@@ -734,7 +735,7 @@ struct subarray
 		double stilt;
 		double sazi;
 		double nonlinear_dc_shading_derate;
-		bool usePOA;
+		bool usePOAFromWF;
 		int poaShadWarningCount;
 		poaDataAll poaAll;
 	} poa;
@@ -909,7 +910,7 @@ public:
 					}
 				}
 
-			sa[nn].poa.usePOA = false;
+			sa[nn].poa.usePOAFromWF = false;
 		}
 		// loop over subarrays AGAIN to calculate shading inputs because nstrings in subarray 1 isn't correct until AFTER the previous loop
 		for (size_t nn = 0; nn < 4; nn++)
@@ -990,7 +991,7 @@ public:
 
 
 		bool speForceNoPOA = false;		// SEV 151002 - Set these flags to avoid calling as_integer(...) repeatedly later on
-		bool mcspForceNoPOA = false;    //   These flags are used to ensure that the usePOA flag for each sub array will be force
+		bool mcspForceNoPOA = false;    //   These flags are used to ensure that the usePOAFromWF flag for each sub array will be force
 										//   to false
 
 		if ( mod_type == 0 )
@@ -1616,7 +1617,7 @@ public:
 
 		// Check if a POA model is used, if so load all POA data into the poaData struct
 		poaDataAll poaAll[4];
-		if (radmode == 3 || radmode == 4 ){
+		if (radmode == POA_R || radmode == POA_P ){
 			for (int nn = 0; nn < 4; nn++){
 				if (!sa[nn].enable) continue;
 				
@@ -1775,7 +1776,7 @@ public:
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
 
 					//update POA data structure indicies if radmode is POA model is enabled
-					if(radmode == 3 || radmode==4){
+					if(radmode == POA_R || radmode == POA_P){
 						for( int nn=0; nn<4; nn++){
 							if( !sa[nn].enable ) continue;
 						
@@ -1823,47 +1824,47 @@ public:
 
 						// Check for missing data
 						// *note this method may not work for all compilers (lookin at you, MACs!)
-						if ( (wf.gh != wf.gh) && (radmode == 1 || radmode == 2)){
+						if ( (wf.gh != wf.gh) && (radmode == DN_GH || radmode == GH_DF)){
 							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
-						if ( (wf.dn != wf.dn) && (radmode == 0 || radmode == 1)){
+						if ( (wf.dn != wf.dn) && (radmode == DN_DF || radmode == DN_GH)){
 							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
-						if ( (wf.df != wf.df) && (radmode == 0 || radmode == 2)){
+						if ( (wf.df != wf.df) && (radmode == DN_DF || radmode == GH_DF)){
 							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
-						if ( (wf.poa != wf.poa) && (radmode == 3 || radmode == 4)){
+						if ( (wf.poa != wf.poa) && (radmode == POA_R || radmode == POA_P)){
 							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
 
 						// Check for bad data
-						if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == 1 || radmode == 2))
+						if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == DN_GH || radmode == GH_DF))
 						{
 							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.gh = 0;
 						}
-						if ((wf.dn < 0 || wf.dn > IRRMAX) && (radmode == 0 || radmode == 1))
+						if ((wf.dn < 0 || wf.dn > IRRMAX) && (radmode == DN_DF || radmode == DN_GH))
 						{
 							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.dn = 0;
 						}
-						if ((wf.df < 0 || wf.df > IRRMAX) && (radmode == 0 || radmode == 2))
+						if ((wf.df < 0 || wf.df > IRRMAX) && (radmode == DN_DF || radmode == GH_DF))
 						{
 							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.df = 0;
 						}
-						if ( (wf.poa < 0 || wf.poa > IRRMAX) && (radmode == 3 || radmode == 4) )
+						if ( (wf.poa < 0 || wf.poa > IRRMAX) && (radmode == POA_R || radmode == POA_P) )
 						{
 							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
@@ -1876,11 +1877,11 @@ public:
 						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 						 
 						irr.set_sky_model(skymodel, alb);
-						if (radmode == 0) irr.set_beam_diffuse(wf.dn, wf.df);
-						else if (radmode == 1) irr.set_global_beam(wf.gh, wf.dn);
-						else if (radmode == 2) irr.set_global_diffuse(wf.gh, wf.df);
-						else if (radmode == 3) irr.set_poa_reference(wf.poa, &sa[nn].poa.poaAll);
-						else if (radmode == 4) irr.set_poa_pyranometer(wf.poa, &sa[nn].poa.poaAll);
+						if (radmode == DN_DF) irr.set_beam_diffuse(wf.dn, wf.df);
+						else if (radmode == DN_GH) irr.set_global_beam(wf.gh, wf.dn);
+						else if (radmode == GH_DF) irr.set_global_diffuse(wf.gh, wf.df);
+						else if (radmode == POA_R) irr.set_poa_reference(wf.poa, &sa[nn].poa.poaAll);
+						else if (radmode == POA_P) irr.set_poa_pyranometer(wf.poa, &sa[nn].poa.poaAll);
 
 						irr.set_surface(sa[nn].track_mode,
 							sa[nn].tilt,
@@ -1896,7 +1897,7 @@ public:
 							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]",
 							nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
-						if( radmode == 3 || radmode == 4) {
+						if( radmode == POA_R || radmode == POA_P) {
 							irr.get_irrad(&wf.gh, &wf.dn, &wf.df);
 						}
 
@@ -1905,25 +1906,25 @@ public:
 						double aoi, stilt, sazi, rot, btd;
 
 
-						// Ensure that the usePOA flag is false unless a reference cell has been used. 
+						// Ensure that the usePOAFromWF flag is false unless a reference cell has been used. 
 						//  This will later get forced to false if any shading has been applied (in any scenario)
 						//  also this will also be forced to false if using the cec mcsp thermal model OR if using the spe module model with a diffuse util. factor < 1.0
-						sa[nn].poa.usePOA = false;
-						if( radmode == 3){
+						sa[nn].poa.usePOAFromWF = false;
+						if( radmode == POA_R){
 							ipoa = wf.poa;
-							sa[nn].poa.usePOA = true;
-						}else if( radmode == 4 ){
+							sa[nn].poa.usePOAFromWF = true;
+						}else if( radmode == POA_P ){
 							ipoa = wf.poa;
 						}
 
-						if( speForceNoPOA && ( radmode == 3 || radmode == 4)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
-							sa[nn].poa.usePOA = false;
+						if( speForceNoPOA && ( radmode == POA_R || radmode == POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
+							sa[nn].poa.usePOAFromWF = false;
 							if( idx == 0 )
 								log("A poa sky model, spe module model, and diffuse utilization factor less than one have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
 						}
 
-						if( mcspForceNoPOA && (radmode == 3 || radmode == 4)){
-							sa[nn].poa.usePOA = false;
+						if( mcspForceNoPOA && (radmode == POA_R || radmode == POA_P)){
+							sa[nn].poa.usePOAFromWF = false;
 							if( idx == 0 )
 								log("A poa sky model and the MCSP Thermal Model have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
 						}
@@ -1937,7 +1938,7 @@ public:
 
 						// record sub-array plane of array output before computing shading and soiling
 						if (iyear==0)
-							if(radmode != 3)
+							if(radmode != POA_R)
 								p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 							else
 								p_poanom[nn][idx] = (ssc_number_t)((ipoa));
@@ -1945,7 +1946,7 @@ public:
 						// note: ibeam, iskydiff, ignddiff are in units of W/m2
 
 						// record sub-array contribution to total POA power for this time step  (W)
-						if(radmode != 3)
+						if(radmode != POA_R)
 							ts_accum_poa_nom += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 						else
 							ts_accum_poa_nom += (ipoa) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
@@ -1967,8 +1968,8 @@ public:
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0)
 						if( beam_shad_factor < 1.0 ){
 							ibeam *= beam_shad_factor;
-							if( radmode == 3 || radmode ==4 ){
-								sa[nn].poa.usePOA = false;
+							if( radmode == POA_R || radmode == POA_P ){
+								sa[nn].poa.usePOAFromWF = false;
 								if( sa[nn].poa.poaShadWarningCount == 0){
 									log(util::format("Both a poa sky model has been selected and non-zero beam shading losses have been applied at time [y:%d m:%d d:%d h:%d]. This will force SAM to employ a POA decomposition model",
 									wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
@@ -1984,10 +1985,10 @@ public:
 						// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
 						if( sa[nn].shad.fdiff() < 1.0 ){
 							iskydiff *= sa[nn].shad.fdiff();
-							if( radmode == 3 || radmode ==4 ){
-								sa[nn].poa.usePOA = false;
+							if( radmode == POA_R || radmode == POA_P ){
 								if( idx == 0 )
 									log("Both a poa sky model has been selected and diffuse shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+								sa[nn].poa.usePOAFromWF = false;
 							}
 						}
 
@@ -1996,9 +1997,10 @@ public:
 							|| (sa[nn].track_mode == 1 && sa[nn].shade_mode == 0 && sa[nn].backtrack == 0)) //one-axis tracking, self-shading, not backtracking
 						{
 
-							if( radmode == 3 || radmode == 4 ){
-								log("Both a poa sky model has been selected and self-shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
-								sa[nn].poa.usePOA = false;
+							if( radmode == POA_R || radmode == POA_P ){
+								if( idx == 0 )
+									log("Both a poa sky model has been selected and self-shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+								sa[nn].poa.usePOAFromWF = false;
 							}
 
 							// info to be passed to self-shading function for one-axis trackers
@@ -2041,7 +2043,7 @@ public:
 							ibeam *= soiling_factor;
 							iskydiff *= soiling_factor;
 							ignddiff *= soiling_factor;
-							if(radmode == 3 || radmode == 4){
+							if(radmode == POA_R || radmode == POA_P){
 								ipoa *= soiling_factor;
 								if(soiling_factor < 1 && idx == 0)
 									log("Soiling may already be accounted for in the input POA data. Please confirm that the input data does not contain soiling effects, or remove the additional losses on the Losses page.", SSC_WARNING);
@@ -2107,7 +2109,7 @@ public:
 									solzen, sa[nn].poa.aoi, hdr.elev,
 									sa[nn].poa.stilt, sa[nn].poa.sazi,
 									((double)wf.hour) + wf.minute / 60.0,
-									radmode, sa[nn].poa.usePOA);
+									radmode, sa[nn].poa.usePOAFromWF);
 								pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 								if (sa[nn].poa.sunup > 0)
 								{
@@ -2156,7 +2158,7 @@ public:
 							solzen, sa[nn].poa.aoi, hdr.elev,
 							sa[nn].poa.stilt, sa[nn].poa.sazi,
 							((double)wf.hour) + wf.minute / 60.0,
-							radmode, sa[nn].poa.usePOA);
+							radmode, sa[nn].poa.usePOAFromWF);
 						pvoutput_t out(0, 0, 0, 0, 0, 0, 0);
 
 						double tcell = wf.tdry;
@@ -2335,13 +2337,13 @@ public:
 
 						p_beam[idx] = (ssc_number_t)(wf.dn);
 						// calculate global if beam & diffuse are selected as inputs
-						if (radmode == 0)
+						if (radmode == DN_DF)
 							p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
 						else
 							p_glob[idx] = (ssc_number_t)(wf.gh);
 
 						// calculate diffuse if total & beam are selected as inputs
-						if (radmode == 1)
+						if (radmode == DN_GH)
 							p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
 						else
 							p_diff[idx] = (ssc_number_t)(wf.df);
