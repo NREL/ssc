@@ -2327,23 +2327,53 @@ public:
 					// if dc connected battery, update post-inverted quantities
 					if (en_batt && (ac_or_dc == 0) )
 						batt.update_post_inverted(*this, idx, acpwr_gross*0.001*ts_hour, cur_load*ts_hour);
-							
+					
+					// why are these happening again here, instead of using irradproc outputs or saving the irradproc outputs before this point???
 					// save array-level outputs	- year 1 only outputs
 					if (iyear == 0)
 					{
 						// Apply POA data from weather file (if it exists)
 						p_wfpoa[idx] = (ssc_number_t)wf.poa;
 
-						p_beam[idx] = (ssc_number_t)(wf.dn);
+						// calculate beam if global & diffuse are selected as inputs
+						if (radmode == GH_DF)
+						{
+							p_beam[idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
+							if (p_beam[idx] < 0)
+							{
+								log(util::format("SAM calculated negative Direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+									p_beam[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								p_beam[idx] = 0;
+							}
+						}
+						else
+							p_beam[idx] = (ssc_number_t)(wf.dn);
+
 						// calculate global if beam & diffuse are selected as inputs
 						if (radmode == DN_DF)
+						{
 							p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
+							if (p_glob[idx] < 0)
+							{
+								log(util::format("SAM calculated negative Global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+									p_glob[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								p_glob[idx] = 0;
+							}
+						}
 						else
 							p_glob[idx] = (ssc_number_t)(wf.gh);
 
 						// calculate diffuse if total & beam are selected as inputs
 						if (radmode == DN_GH)
+						{
 							p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
+							if (p_diff[idx] < 0)
+							{
+								log(util::format("SAM calculated negative Diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+									p_diff[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+								p_diff[idx] = 0;
+							}
+						}
 						else
 							p_diff[idx] = (ssc_number_t)(wf.df);
 

@@ -1170,14 +1170,15 @@ int irrad::calc()
 			else if (radmode == DN_GH) // Total+Beam
 			{
 				idiff = gh - hbeam;
+				if (idiff < 0) idiff = 0; //error checking added 12/18/15 jmf to prevent negative dh values if input data is bad ADD SIMULATION WARNINGS ??
 				ibeam = dn;
 			}
 			else if (radmode == GH_DF) //Total+Diffuse
 			{
 				idiff = df;
 				ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle
-				if (ibeam > 1500) ibeam = 1500; //error checking on computation
-				if (ibeam < 0) ibeam = 0; //error checking on computation
+				if (ibeam > 1500) ibeam = 1500; //error checking on computation ADD SIMULATION WARNINGS ??
+				if (ibeam < 0) ibeam = 0; //error checking on computation ADD SIMULATION WARNINGS ??
 			}
 			else
 				return -2; // just in case of a weird error
