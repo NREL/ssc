@@ -78,7 +78,7 @@ C c4,c5 = empirical module-specIFic constants
 	return Ix0*(C4*Ee+C5*Ee*Ee)*(1.0+((aIsc+aImp)/2.0*(Tc-25.0)));
 }
 
-static double sandia_isc( double Tc, double Isc0, double Ibc, double Idc, double F1, double F2, double fd, double aIsc, int radmode, double Ipoa )
+static double sandia_isc( double Tc, double Isc0, double Ibc, double Idc, double F1, double F2, double fd, double aIsc, int radmode, double poaIrr )
 {
 	/*
 C Returns Short-Circuit Current
@@ -99,9 +99,9 @@ C Tc   = cell temperature */
 	double Isc;
 
 	if (radmode == 3) //reference cell
-		Isc = Isc0*(Ipoa / 1000.0)*(1.0 + aIsc*(Tc - 25.0)); //per Cliff: 
+		Isc = Isc0*(poaIrr / 1000.0)*(1.0 + aIsc*(Tc - 25.0)); //per Cliff: 
 	else if (radmode == 4) //POA irradiance sensor ("broadband" in Cliff's email)
-		Isc = Isc0*F1*(Ipoa / 1000.0)*(1.0 + aIsc*(Tc - 25.0));
+		Isc = Isc0*F1*(poaIrr / 1000.0)*(1.0 + aIsc*(Tc - 25.0));
 	else
 		Isc = Isc0*F1*((Ibc*F2+fd*Idc)/1000.0)*(1.0+aIsc*(Tc-25.0));
 
@@ -251,10 +251,10 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 	out.CellTemp = TcellC;
 	
 	double Gtotal;
-	if( in.radmode != 3 || !in.usePOA )
+	if( in.radmode != 3 || !in.usePOAFromWF )
 		Gtotal = in.Ibeam + in.Idiff + in.Ignd;
 	else
-		Gtotal = in.Ipoa;
+		Gtotal = in.poaIrr;
 
 	if ( Gtotal > 0.0 )
 	{
@@ -268,7 +268,7 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 		double F2 = sandia_f2(in.IncAng,B0,B1,B2,B3,B4,B5);
 
 		//C Calculate short-circuit current:
-		double Isc = sandia_isc(TcellC,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc, in.radmode, in.Ipoa);
+		double Isc = sandia_isc(TcellC,Isc0,in.Ibeam, in.Idiff+in.Ignd,F1,F2,fd,aIsc, in.radmode, Gtotal);
 
 		//C Calculate effective irradiance:
 		double Ee = sandia_effective_irradiance(TcellC,Isc,Isc0,aIsc);
@@ -398,7 +398,7 @@ bool sandia_inverter_t::acpower(
 
 
 
-double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double Ipoa, double fd, double DT0)
+double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double poaIrr, double fd, double DT0)
 {
 	/*
 C Returns cell temperature, deg C
@@ -411,11 +411,11 @@ C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
 
 //C Update from Chris Cameron - email 4/28/10  
 //C        E = Ibc + fd * Idc
-	double E = Ipoa;
+	double E = poaIrr;
 	return Tm + E / 1000.0 * DT0;
 }
 
-double sandia_celltemp_t::sandia_module_temperature( double Ipoa, double Ws, double Ta, double fd, double a, double b )
+double sandia_celltemp_t::sandia_module_temperature( double poaIrr, double Ws, double Ta, double fd, double a, double b )
 {
 	/*
 C Returns back-of-module temperature, deg C
@@ -430,7 +430,7 @@ C b   = empirical constant
 
 //C Update from Chris Cameron - email 4/28/10  
 //C        E = Ibc + fd * Idc
-	double E = Ipoa;
+	double E = poaIrr;
 	return E * exp(a + b * Ws) + Ta;
 }
 
@@ -438,10 +438,10 @@ bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, doubl
 {
 	//Sev 2015-09-14: changed to permit direct poa data
 	double Itotal;
-	if( input.radmode != 3 || !input.usePOA)
+	if( input.radmode != 3 || !input.usePOAFromWF)
 		Itotal = input.Ibeam + input.Idiff + input.Ignd;
 	else
-		Itotal = input.Ipoa;
+		Itotal = input.poaIrr;
 
 	double tmod = sandia_module_temperature( Itotal, input.Wspd, input.Tdry, fd, a, b );
 	Tcell = sandia_tcell_from_tmodule( tmod, Itotal, fd, DT0 );

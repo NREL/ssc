@@ -122,7 +122,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 	
 	double G_total, Geff_total;
 
-	if( input.radmode != 3){
+	if( input.radmode != 3){ // Determine if the model needs to skip the cover effects (will only be skipped if the user is using POA reference cell data) 
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 	
 		Geff_total = G_total;
@@ -138,31 +138,21 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 		double theta_z = input.Zenith;
 		if (theta_z > 86.0) theta_z = 86.0; // !Zenith angle must be < 90 (?? why 86?)
 		if (theta_z < 0) theta_z = 0; // Zenith angle must be >= 0
-		/*
-		double W_spd = input.Wspd;
-		if (W_spd < 0.001) W_spd = 0.001;
-	
-		double tau_al = fabs(TauAlpha);  // why is this fab'd??
-		if (G_total > 0)
-			tau_al *= Geff_total/G_total;
-				
-		// TODO - shouldn't tau_al above include AM correction below?
-		*/
-		
+
 		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );
 	
-	} else {
-		if( input.usePOA)
-			G_total = Geff_total = input.Ipoa;
+	} else { // Even though we're using POA ref. data, we may still need to use the decomposed poa
+		if( input.usePOAFromWF)
+			G_total = Geff_total = input.poaIrr;
 		else{
-			G_total = input.Ipoa;
+			G_total = input.poaIrr;
 			Geff_total = input.Ibeam + input.Idiff + input.Ignd;
 		}
 
 	}
 
 	double T_cell = input.Tdry + 273.15;
-	if ( Geff_total >= 1.0 )  // Sev: Why is this check here?
+	if ( Geff_total >= 1.0 ) 
 	{
 		T_cell = TcellC + 273.15; // want cell temp in kelvin
 
@@ -224,8 +214,8 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	
 	double W_spd = input.Wspd;
 	if (W_spd < 0.001) W_spd = 0.001;
-	
-	if(input.radmode != 3){
+
+	if( input.radmode != 3){ // Determine if the model needs to skip the cover effects (will only be skipped if the user is using POA reference cell data) 
 		G_total = input.Ibeam + input.Idiff + input.Ignd; // total incident irradiance on tilted surface, W/m2
 			
 		Geff_total = G_total;
@@ -243,9 +233,9 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		// !Calculation of Air Mass Modifier
 		Geff_total *= air_mass_modifier( theta_z, input.Elev, amavec );	
 
-	} else {
-		if( input.usePOA )
-			G_total = Geff_total = input.Ipoa;
+	} else { // Even though we're using POA ref. data, we may still need to use the decomposed poa
+		if( input.usePOAFromWF )
+			G_total = Geff_total = input.poaIrr;
 		else{
 			G_total = Geff_total = input.Ibeam + input.Idiff + input.Ignd;
 		}

@@ -44,8 +44,8 @@ public:
 	double a, b, DT0, fd;	
 	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
 		
-	static double sandia_tcell_from_tmodule( double Tm, double Ipoa, double fd, double DT0);
-	static double sandia_module_temperature( double Ipoa, double Ws, double Ta, double fd, double a, double b );
+	static double sandia_tcell_from_tmodule( double Tm, double poaIrr, double fd, double DT0);
+	static double sandia_module_temperature( double poaIrr, double Ws, double Ta, double fd, double a, double b );
 };
 
 

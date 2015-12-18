@@ -601,7 +601,7 @@ void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDataA
 	 angle[4] = btdiff = (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 	sun		  = array of elements to return sun position angles to calling function
 	 sun[1]   = zeninth angle
-	 sun[8]   = ??
+	 sun[8]   = extraterrestrial radiation
 	alb       = albedo
 
 
@@ -643,7 +643,7 @@ void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDataA
 		size_t noon = pA->dayStart + stepsInDay/2;
 		size_t start, stop;
 		// Check for a morning value or evening, set looping bounds accordingly
-		if( pA->i < noon ){ // Calculate moring value
+		if( pA->i < noon ){ // Calculate morning value
 			start = pA->dayStart;
 			stop = noon;
 		} else {
@@ -922,15 +922,15 @@ int irrad::check()
 {
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
-	if ( radmode < 0 || radmode > 4 || skymodel < 0 || skymodel > 2 ) return -3;
+	if ( radmode < DN_DF || radmode > POA_P || skymodel < 0 || skymodel > 2 ) return -3;
 	if ( track < 0 || track > 3 ) return -4;
-	if ( radmode == 0 && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
-	if ( radmode == 1 && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
+	if ( radmode == DN_DF && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
+	if ( radmode == DN_GH && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
 	if ( alb < 0 || alb > 1 ) return -7;
 	if ( tilt < 0 || tilt > 90 ) return -8;
 	if ( sazm < 0 || sazm >= 360 ) return -9;
 	if ( rlim < -90 || rlim > 90 ) return -10;
-	if ( radmode == 2 && (gh < 0 || gh > 1500 || df < 0 || df > 1500)) return -11;
+	if ( radmode == GH_DF && (gh < 0 || gh > 1500 || df < 0 || df > 1500)) return -11;
 	return 0;
 }
 
@@ -1029,31 +1029,31 @@ void irrad::set_beam_diffuse( double beam, double diffuse )
 {
 	this->dn = beam;
 	this->df = diffuse;
-	this->radmode = 0;
+	this->radmode = DN_DF;
 }
 
 void irrad::set_global_beam( double global, double beam )
 {
 	this->gh = global;
 	this->dn = beam;
-	this->radmode = 1;
+	this->radmode = DN_GH;
 }
 
 void irrad::set_global_diffuse(double global, double diffuse)
 {
 	this->gh = global;
 	this->df = diffuse;
-	this->radmode = 2;
+	this->radmode = GH_DF;
 }
 
 void irrad::set_poa_reference( double poa, poaDataAll* pA){
 	this->wfpoa = poa;
-	this->radmode = 3;
+	this->radmode = POA_R;
 	this->poaAll = pA;
 }
 void irrad::set_poa_pyranometer( double poa, poaDataAll* pA ){
 	this->wfpoa = poa;
-	this->radmode = 4;
+	this->radmode = POA_P;
 	this->poaAll = pA;
 }
 
@@ -1148,7 +1148,7 @@ int irrad::calc()
 		// compute incidence angles onto fixed or tracking surface
 		incidence( track, tilt, sazm, rlim, sun[1], sun[0], en_backtrack, gcr, angle );
 
-		if(radmode < 3){  // Sev 2015-09-11 - Run this code if no POA decomposition is required
+		if(radmode < POA_R){  // Sev 2015-09-11 - Run this code if no POA decomposition is required
 			double hextra = sun[8];
 			double hbeam = dn*cos( sun[1] ); // calculated beam on horizontal surface: sun[1]=zenith
 				
@@ -1162,17 +1162,17 @@ int irrad::calc()
 			// compute beam and diffuse inputs based on irradiance inputs mode
 			double ibeam = dn;
 			double idiff = 0.0;
-			if (radmode == 0)  // Beam+Diffuse
+			if (radmode == DN_DF)  // Beam+Diffuse
 			{
 				idiff = df;
 				ibeam = dn;
 			}
-			else if (radmode == 1) // Total+Beam
+			else if (radmode == DN_GH) // Total+Beam
 			{
 				idiff = gh - hbeam;
 				ibeam = dn;
 			}
-			else if (radmode == 2) //Total+Diffuse
+			else if (radmode == GH_DF) //Total+Diffuse
 			{
 				idiff = df;
 				ibeam = (gh - df) / cos(sun[1]); //compute beam from total, diffuse, and zenith angle
@@ -1201,10 +1201,10 @@ int irrad::calc()
 		} 
 		else { // Sev 2015/09/11 - perform a POA decomp.
 
-			if ( radmode == 3) { //POA Reference Cell
+			if ( radmode == POA_R) { //POA Reference Cell
 				poaDecomp( wfpoa, angle, sun, alb, poaAll, dn, df, gh, poa, diffc);
 			}
-			else if ( radmode == 4) { //POA Pyranometer
+			else if ( radmode == POA_P) { //POA Pyranometer
 				poaDecomp( wfpoa, angle, sun, alb, poaAll, dn, df, gh, poa, diffc);
 			}
 		

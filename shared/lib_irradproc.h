@@ -12,6 +12,9 @@ void perez( double hextra, double dn,double df,double alb,double inc,double tilt
 void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 void hdkr( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */ );
 
+// Sev: 2015-11-24 Added to keep track of what each radmode interger means
+enum RADMODE {DN_DF, DN_GH, GH_DF, POA_R, POA_P};
+
 // 2015-10-25: Added by Sev to allow for the poa decomp model to take all daily POA measurements into consideration
 struct poaDataAll {
 	poaDataAll() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
