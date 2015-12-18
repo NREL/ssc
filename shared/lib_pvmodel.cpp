@@ -10,12 +10,12 @@
 
 pvinput_t::pvinput_t()
 {
-	Ibeam = Idiff = Ignd = Tdry = Ipoa= Tdew = Wspd = Wdir = Patm
+	Ibeam = Idiff = Ignd = Tdry = poaIrr= Tdew = Wspd = Wdir = Patm
 		= Zenith = IncAng = Elev 
 		= Tilt = Azimuth = HourOfDay = std::numeric_limits<double>::quiet_NaN();
 
 	radmode = 0;
-	usePOA = false;
+	usePOAFromWF = false;
 }
 
 
@@ -28,7 +28,7 @@ pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
 	Ibeam = ib;
 	Idiff = id;
 	Ignd = ig;
-	Ipoa = ip;
+	poaIrr = ip;
 	Tdry = ta;
 	Tdew = td;
 	Wspd = ws;
@@ -41,7 +41,7 @@ pvinput_t::pvinput_t( double ib, double id, double ig, double ip,
 	Azimuth = azi;
 	HourOfDay = hrday;
 	radmode = rmode;
-	usePOA = up;
+	usePOAFromWF = up;
 }
 
 std::string pvcelltemp_t::error()
@@ -111,18 +111,13 @@ bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltag
 
 	// Sev 2015-09-14: Changed to allow POA data directly
 	double dceff, dcpwr;
-	if( input.radmode != 3 ){
+	if( input.radmode != 3  || !input.usePOAFromWF){
 		dceff = eff_interpolate( input.Ibeam + idiff, Rad, Eff );
 		dcpwr = dceff*(input.Ibeam+idiff)*Area;	
 	}
 	else{
-		if(input.usePOA){
-			dceff = eff_interpolate( input.Ipoa, Rad, Eff );
-			dcpwr = dceff*(input.Ipoa)*Area;
-		} else { 
-			dceff = eff_interpolate( input.Ibeam + idiff, Rad, Eff );
-			dcpwr = dceff*(input.Ibeam + idiff)*Area;
-		}
+		dceff = eff_interpolate( input.poaIrr, Rad, Eff );
+		dcpwr = dceff*(input.poaIrr)*Area;
 	}
 
 	dcpwr += dcpwr*(Gamma/100.0)*(TcellC - 25.0);

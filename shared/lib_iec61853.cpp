@@ -756,7 +756,7 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 	
 	double poa, tpoa;
 
-	if( input.radmode < 3 ){
+	if( input.radmode != 3 ){ // Skip module cover effects if using POA reference cell data 
 		// plane of array irradiance, W/m2
 		poa = input.Ibeam + input.Idiff + input.Ignd; 
 
@@ -773,8 +773,13 @@ bool iec61853_module_t::operator() ( pvinput_t &input, double TcellC, double opv
 		// spectral effect via AM modifier
 		double ama = air_mass_modifier( input.Zenith, input.Elev, AMA );
 		tpoa *= ama;
-	} else 
-		tpoa = poa = input.Ipoa;
+	} 
+	else if(input.usePOAFromWF){ // Check if decomposed POA is required, if not use weather file POA directly
+		tpoa = poa = input.poaIrr;
+	} 
+	else { // Otherwise use decomposed POA
+		tpoa = poa = input.Ibeam + input.Idiff + input.Ignd;
+	}
 	
 	double Tc = input.Tdry + 273.15;
 	if ( tpoa >= 1.0 )

@@ -19,7 +19,7 @@ public:
 	double Ibeam; // beam irradiance, W/m2
 	double Idiff; // sky diffuse irradiance, W/m2
 	double Ignd; // ground reflected irradiance, W/m2
-	double Ipoa; // plane of array irradiance, W/m2
+	double poaIrr; // plane of array irradiance, W/m2
 	double Tdry; // dry bulb temp, C
 	double Tdew; // dew point temp, C
 	double Wspd; // wind speed, m/s
@@ -32,7 +32,7 @@ public:
 	double Azimuth; // surface azimuth angle, deg +from north (E=90,S=180)
 	double HourOfDay; // hour of the day 0=12am, 23=11pm
 	int radmode; //radiation mode
-	bool usePOA; // use poa directly flag
+	bool usePOAFromWF; // use poa directly flag
 };
 
 class pvoutput_t
