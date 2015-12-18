@@ -16,8 +16,8 @@ void hdkr( double hextra, double dn, double df, double alb, double inc, double t
 enum RADMODE {DN_DF, DN_GH, GH_DF, POA_R, POA_P};
 
 // 2015-10-25: Added by Sev to allow for the poa decomp model to take all daily POA measurements into consideration
-struct poaDataAll {
-	poaDataAll() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
+struct poaDecompReq {
+	poaDecompReq() : i(0), dayStart(0), stepSize(1), stepScale('h'), doy(-1) {}
 	size_t i; // Current time index
 	size_t dayStart; // time index corresponding to the start of the current day
 	double stepSize;
@@ -35,7 +35,7 @@ struct poaDataAll {
 // 2015/09/11 - Sev
 // Create functions for POA decomposition
 
-void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDataAll* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 
@@ -55,7 +55,7 @@ private:
 	int tms[3];
 	double ghi;
 
-	poaDataAll* poaAll;
+	poaDecompReq* poaAll;
 
 public:
 
@@ -70,8 +70,8 @@ public:
 	void set_beam_diffuse( double beam, double diffuse );
 	void set_global_beam( double global, double beam );
 	void set_global_diffuse(double global, double diffuse);
-	void set_poa_reference( double poa, poaDataAll* );
-	void set_poa_pyranometer( double poa, poaDataAll* );
+	void set_poa_reference( double poa, poaDecompReq* );
+	void set_poa_pyranometer( double poa, poaDecompReq* );
 
 	int calc();
 	

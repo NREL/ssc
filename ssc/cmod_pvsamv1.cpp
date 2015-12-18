@@ -737,7 +737,7 @@ struct subarray
 		double nonlinear_dc_shading_derate;
 		bool usePOAFromWF;
 		int poaShadWarningCount;
-		poaDataAll poaAll;
+		poaDecompReq poaAll;
 	} poa;
 
 	// calculated by module model
@@ -1616,7 +1616,6 @@ public:
 		idx = 0;
 
 		// Check if a POA model is used, if so load all POA data into the poaData struct
-		poaDataAll poaAll[4];
 		if (radmode == POA_R || radmode == POA_P ){
 			for (int nn = 0; nn < 4; nn++){
 				if (!sa[nn].enable) continue;
