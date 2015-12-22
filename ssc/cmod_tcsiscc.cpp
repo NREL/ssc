@@ -56,9 +56,7 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cant_type",            "Heliostat cant method",                                             "",             "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_flux_days",          "No. days in flux map lookup",                                       "",             "",            "heliostat",      "?=8",                     "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",       "Hourly frequency in flux map lookup",                               "",             "",            "heliostat",      "?=1",                     "",                     "" },
-    
-    
-	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "heliostat",   "*",                "",                "" },
+        
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "heliostat",   "*",                "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "heliostat",   "?=0",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "heliostat",   "*",                "",                "" },
@@ -243,7 +241,7 @@ public:
 
 		//Set weatherreader parameters
 		set_unit_value(weather, "file_name", as_string("solar_resource_file"));
-		set_unit_value(weather, "track_mode", 0.0);
+		set_unit_value(weather, "track_mode", 0.0); 
 		set_unit_value(weather, "tilt", 0.0);
 		set_unit_value(weather, "azimuth", 0.0);
 
@@ -310,8 +308,7 @@ public:
 			assign("rec_height", var_data((ssc_number_t)H_rec));
 			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
 			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
-			assign("THT", var_data((ssc_number_t)THT));
-			assign("h_tower", var_data((ssc_number_t)THT));
+			assign("THT", var_data((ssc_number_t)THT));			
 			assign("A_sf", var_data((ssc_number_t)A_sf));
 			assign("piping_length", var_data((ssc_number_t)piping_length));
 
