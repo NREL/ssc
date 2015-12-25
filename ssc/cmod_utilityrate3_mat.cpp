@@ -1,4 +1,5 @@
 #include "core.h"
+#include <algorithm>
 #include <sstream>
 
 
@@ -276,19 +277,14 @@ static var_info vtab_utility_rate3_mat[] = {
 
 class ur_month
 {
-	// energy tou charges
-	std::vector<util::matrix_t<double> > ec_tou_ub;
-	std::vector<util::matrix_t<double> > ec_tou_br;
-	std::vector<util::matrix_t<double> > ec_tou_sr;
-	std::vector<util::matrix_t<int> > ec_tou_units;
-	// demand tou charges
-	std::vector<util::matrix_t<double> > dc_tou_ub;
-	std::vector<util::matrix_t<double> > dc_tou_ch;
-	// demand flat charges
-	std::vector<util::matrix_t<double> > dc_flat_ub;
-	std::vector<util::matrix_t<double> > dc_flat_ch;
+public:
 	// period numbers
-	std::vector<int> periods;
+	std::vector<int> ec_periods;
+	std::vector<int> dc_periods;
+	// net energy
+	std::vector<util::matrix_t<double> > ec_energy;
+	// peak demand
+	std::vector<util::matrix_t<double> > dc_peak;
 };
 
 class cm_utilityrate3_mat : public compute_module
@@ -297,6 +293,21 @@ private:
 	// schedule outputs
 	std::vector<int> m_ec_tou_sched;
 	std::vector<int> m_dc_tou_sched;
+	std::vector<ur_month> m_month;
+	// energy tou charges
+	util::matrix_t<double>  m_ec_tou_ub;
+	util::matrix_t<double>  m_ec_tou_br;
+	util::matrix_t<double>  m_ec_tou_sr;
+	util::matrix_t<int>  m_ec_tou_units;
+	// demand tou charges
+	util::matrix_t<double>  m_dc_tou_ub;
+	util::matrix_t<double>  m_dc_tou_ch;
+	// demand flat charges
+	util::matrix_t<double>  m_dc_flat_ub;
+	util::matrix_t<double>  m_dc_flat_ch;
+	// tiers per period - check that all months have same tier ub
+	util::matrix_t<double>  m_period_tier;
+
 
 public:
 	cm_utilityrate3_mat()
@@ -1066,16 +1077,16 @@ public:
 		}
 	}
 
-	void initialize_energy_charges()
+	void setup()
 	{
-		// 12 periods with 6 tiers each rates 3rd index = 0 = buy and 1=sell
-		size_t nrows, ncols;
+		size_t nrows, ncols,r,c;
 		int period, tier;
-		ssc_number_t ec_monthly_energy_net[12][12]; // 12 months, 12 periods
-		int ec_hours_per_month_per_period[12][12];
+		util::matrix_t<float> dc_schedwkday(12, 24, 1);
+		util::matrix_t<float> dc_schedwkend(12, 24, 1);
 
 
 		bool ec_enabled = as_boolean("ur_ec_enable");
+		bool dc_enabled = as_boolean("ur_dc_enable");
 
 		if (ec_enabled)
 		{
@@ -1125,14 +1136,58 @@ public:
 			util::matrix_t<float> ec_tou_mat(nrows, ncols);
 			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
 
+			// find all periods for each month m through schedules
 			for (int m = 0; m < 12; m++)
 			{
 				ur_month urm;
-				// find all periods for each month
-
-
+				// energy charges
+				for (c = 0; c < ec_schedwkday.ncols(); c++)
+				{
+					if (std::find(std::begin(urm.ec_periods), std::end(urm.ec_periods), ec_schedwkday.at(m, c)) == std::end(urm.ec_periods))
+						urm.ec_periods.push_back((int)ec_schedwkday.at(m, c));
+				}
+				for (c = 0; c < ec_schedwkend.ncols(); c++)
+				{
+					if (std::find(std::begin(urm.ec_periods), std::end(urm.ec_periods), ec_schedwkend.at(m, c)) == std::end(urm.ec_periods))
+						urm.ec_periods.push_back((int)ec_schedwkend.at(m, c));
+				}
+				// demand charges
+				for (c = 0; c < dc_schedwkday.ncols(); c++)
+				{
+					if (std::find(std::begin(urm.dc_periods), std::end(urm.dc_periods), dc_schedwkday.at(m, c)) == std::end(urm.dc_periods))
+						urm.dc_periods.push_back((int)dc_schedwkday.at(m, c));
+				}
+				for (c = 0; c < dc_schedwkend.ncols(); c++)
+				{
+					if (std::find(std::begin(urm.dc_periods), std::end(urm.dc_periods), dc_schedwkend.at(m, c)) == std::end(urm.dc_periods))
+						urm.dc_periods.push_back((int)dc_schedwkend.at(m, c));
+				}
 			}
-			for (size_t r = 0; r < nrows; r++)
+
+			// tiers per period - check that all months have same tier ub
+			std::vector<int>  periods;
+
+			for (r = 0; r < nrows; r++)
+			{
+				period = (int)ec_tou_mat.at(r, 0);
+				tier = (int)ec_tou_mat.at(r, 1);
+				if (std::find(std::begin(periods), std::end(periods), period) == std::end(periods))
+					periods.push_back(period);
+			}
+			// assumption that tiers are numbered 1 through n
+			std::sort(periods.begin(), periods.end());
+			m_period_tier.resize(periods.size(), 2);
+			for (r = 0; r < nrows; r++)
+			{
+				period = (int)ec_tou_mat.at(r, 0);
+				tier = (int)ec_tou_mat.at(r, 1);
+				if (std::find(std::begin(periods), std::end(periods), period) == std::end(periods))
+					periods.push_back(period);
+			}
+
+
+			// tiers per period
+			for (r = 0; r < nrows; r++)
 			{
 				period = (int)ec_tou_mat.at(r, 0);
 				tier = (int)ec_tou_mat.at(r, 1);
@@ -2224,34 +2279,6 @@ public:
 							monthly_e_use_period_tier[m][period][tier] -= (ssc_number_t)tier_energy;
 							monthly_charge_period_tier[m][period][tier] -= (ssc_number_t)tier_credit;
 
-							/*
-							while (tier<6)
-							{
-								double tier_energy = 0;
-								double tier_credit = 0;
-								// add up the charge amount for this block
-								double e_upper = ec_energy_ub[period][tier];
-								double e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : 0.0;
-
-								if (energy_surplus > e_upper)
-								{
-									tier_energy = e_upper - e_lower;
-									tier_credit = tier_energy*ec_rates[period][tier][1];
-								}
-								else
-								{
-									tier_energy = energy_surplus - e_lower;
-									tier_credit = tier_energy*ec_rates[period][tier][1];
-								}
-								credit_amt += tier_credit;
-								monthly_e_use_period_tier[m][period][tier] -= (ssc_number_t)tier_energy;
-								monthly_charge_period_tier[m][period][tier] -= (ssc_number_t)tier_credit;
-
-								if (energy_surplus < e_upper)
-									break;
-								tier++;
-							}
-							*/
 							income[c] += (ssc_number_t)credit_amt;
 							monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
 							price[c] += (ssc_number_t)credit_amt;
@@ -2288,33 +2315,6 @@ public:
 							monthly_e_use_period_tier[m][period][tier] += (ssc_number_t)tier_energy;
 							monthly_charge_period_tier[m][period][tier] += (ssc_number_t)tier_charge;
 
-						/*
-							while (tier<6)
-							{
-								double tier_energy = 0;
-								double tier_charge = 0;
-								// add up the charge amount for this block
-								double e_upper = ec_energy_ub[period][tier];
-								double e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : 0.0;
-
-								if (energy_deficit > e_upper)
-								{
-									tier_energy = e_upper - e_lower;
-									tier_charge = tier_energy*ec_rates[period][tier][0];
-								}
-								else
-								{
-									tier_energy = energy_deficit - e_lower;
-									tier_charge = tier_energy*ec_rates[period][tier][0];
-								}
-								charge_amt += tier_charge;
-								monthly_e_use_period_tier[m][period][tier] += (ssc_number_t)tier_energy;
-								monthly_charge_period_tier[m][period][tier] += (ssc_number_t)tier_charge;
-								if (energy_deficit < e_upper)
-									break;
-								tier++;
-							}
-							*/
 							payment[c] += (ssc_number_t)charge_amt;
 							monthly_ec_charges[m] += (ssc_number_t)charge_amt;
 							price[c] += (ssc_number_t)charge_amt;
