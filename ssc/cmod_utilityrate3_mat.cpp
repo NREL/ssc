@@ -306,7 +306,9 @@ private:
 	util::matrix_t<double>  m_dc_flat_ub;
 	util::matrix_t<double>  m_dc_flat_ch;
 	// tiers per period - check that all months have same tier ub
-	util::matrix_t<double>  m_period_tier;
+//	util::matrix_t<double>  m_period_tier;
+	std::vector<int> m_ec_periods; // period number
+	std::vector<std::vector<int> >  m_ec_periods_tiers; // tier numbers
 
 
 public:
@@ -1165,25 +1167,43 @@ public:
 			}
 
 			// tiers per period - check that all months have same tier ub
-			std::vector<int>  periods;
+
+			for (r = 0; r < nrows; r++)
+			{
+				period = (int)ec_tou_mat.at(r, 0);
+				if (std::find(std::begin(m_ec_periods), std::end(m_ec_periods), period) == std::end(m_ec_periods))
+					m_ec_periods.push_back(period);
+			}
+			// sorted periods smallest to largest
+			std::sort(m_ec_periods.begin(), m_ec_periods.end());
+			// for each period, get list of tier numbers and then sort and construct 
+			//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
+
+
+			for (r = 0; r < m_ec_periods.size(); r++)
+			{
+				m_ec_periods_tiers.push_back(std::vector<int>());
+			}
 
 			for (r = 0; r < nrows; r++)
 			{
 				period = (int)ec_tou_mat.at(r, 0);
 				tier = (int)ec_tou_mat.at(r, 1);
-				if (std::find(std::begin(periods), std::end(periods), period) == std::end(periods))
-					periods.push_back(period);
+				std::vector<int>::iterator result = std::find(std::begin(m_ec_periods), std::end(m_ec_periods), period);
+				if (result == std::end(m_ec_periods))
+				{
+					std::ostringstream ss;
+					ss << "energy charge period not found " << period;
+					throw exec_error("utilityrate3", ss.str());
+				}
+				m_ec_periods_tiers[(*result)].push_back(tier);
 			}
-			// assumption that tiers are numbered 1 through n
-			std::sort(periods.begin(), periods.end());
-			m_period_tier.resize(periods.size(), 2);
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)ec_tou_mat.at(r, 0);
-				tier = (int)ec_tou_mat.at(r, 1);
-				if (std::find(std::begin(periods), std::end(periods), period) == std::end(periods))
-					periods.push_back(period);
-			}
+			// sort tier values for each period
+			for (r = 0; r < m_ec_periods_tiers.size(); r++)
+				std::sort(m_ec_periods_tiers[r].begin(), m_ec_periods_tiers[r].end());
+
+
+			// periods are rows and tiers are columns - note that columns can change based on rows
 
 
 			// tiers per period
