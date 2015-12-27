@@ -1168,8 +1168,6 @@ public:
 				m_month.push_back(urm);
 			}
 
-			// tiers per period - check that all months have same tier ub
-
 			for (r = 0; r < nrows; r++)
 			{
 				period = (int)ec_tou_mat.at(r, 0);
@@ -1180,8 +1178,6 @@ public:
 			std::sort(m_ec_periods.begin(), m_ec_periods.end());
 			// for each period, get list of tier numbers and then sort and construct 
 			//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
-
-
 			for (r = 0; r < m_ec_periods.size(); r++)
 			{
 				m_ec_periods_tiers.push_back(std::vector<int>());
