@@ -1197,12 +1197,12 @@ public:
 			std::sort(m_ec_periods.begin(), m_ec_periods.end());
 			// for each period, get list of tier numbers and then sort and construct 
 			//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
-			/*
+			
 			for (r = 0; r < m_ec_periods.size(); r++)
 			{
 				m_ec_periods_tiers.push_back(std::vector<int>());
 			}
-			*/
+			
 			for (r = 0; r < nrows; r++)
 			{
 				period = (int)ec_tou_mat.at(r, 0);
@@ -1214,7 +1214,8 @@ public:
 					ss << "energy charge period not found " << period;
 					throw exec_error("utilityrate3", ss.str());
 				}
-				m_ec_periods_tiers[(*result)].push_back(tier);
+				int ndx = result - m_ec_periods.begin();
+				m_ec_periods_tiers[ndx].push_back(tier);
 			}
 			// sort tier values for each period
 			for (r = 0; r < m_ec_periods_tiers.size(); r++)
@@ -1239,11 +1240,12 @@ public:
 						throw exec_error("utilityrate3", ss.str());
 					}
 					period = (*per_num);
+					int ndx = per_num - m_ec_periods.begin();
 					if (i == 0)
 					{
 						// redimension ec_ field of ur_month class
 						num_periods = (int)m_month[m].ec_periods.size();
-						num_tiers = (int)m_ec_periods_tiers[period].size();
+						num_tiers = (int)m_ec_periods_tiers[ndx].size();
 						m_month[m].ec_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e+38);
 						m_month[m].ec_tou_units.resize_fill(num_periods, num_tiers, 0); // kWh
 						m_month[m].ec_tou_br.resize_fill(num_periods, num_tiers, 0);
@@ -1251,16 +1253,16 @@ public:
 					}
 					else
 					{
-						if (m_ec_periods_tiers[period].size() != num_tiers)
+						if (m_ec_periods_tiers[ndx].size() != num_tiers)
 						{
 							std::ostringstream ss;
-							ss << "energy charge number of tiers " << m_ec_periods_tiers[period].size() << ", incorrect for month " << m << " and period " << m_month[m].ec_periods[i] << " should be " << num_tiers;
+							ss << "energy charge number of tiers " << m_ec_periods_tiers[ndx].size() << ", incorrect for month " << m << " and period " << m_month[m].ec_periods[i] << " should be " << num_tiers;
 							throw exec_error("utilityrate3", ss.str());
 						}
 					}
-					for (j = 0; j < m_ec_periods_tiers[period].size(); j++)
+					for (j = 0; j < m_ec_periods_tiers[ndx].size(); j++)
 					{
-						tier = m_ec_periods_tiers[period][j];
+						tier = m_ec_periods_tiers[ndx][j];
 						// initialize for each period and tier
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
@@ -1373,7 +1375,8 @@ public:
 					ss << "demand charge period not found " << period;
 					throw exec_error("utilityrate3", ss.str());
 				}
-				m_dc_tou_periods_tiers[(*result)].push_back(tier);
+				int ndx = result - m_dc_tou_periods.begin();
+				m_dc_tou_periods_tiers[ndx].push_back(tier);
 			}
 			// sort tier values for each period
 			for (r = 0; r < m_dc_tou_periods_tiers.size(); r++)
@@ -1398,26 +1401,27 @@ public:
 						throw exec_error("utilityrate3", ss.str());
 					}
 					period = (*per_num);
+					int ndx = per_num - m_dc_tou_periods.begin();
 					if (i == 0)
 					{
 						// redimension dc_ field of ur_month class
 						num_periods = (int)m_month[m].dc_periods.size();
-						num_tiers = (int)m_dc_tou_periods_tiers[period].size();
+						num_tiers = (int)m_dc_tou_periods_tiers[ndx].size();
 						m_month[m].dc_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e38);
 						m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
 					}
 					else
 					{
-						if (m_dc_tou_periods_tiers[period].size() != num_tiers)
+						if (m_dc_tou_periods_tiers[ndx].size() != num_tiers)
 						{
 							std::ostringstream ss;
-							ss << "demand charge number of tiers " << m_dc_tou_periods_tiers[period].size() << ", incorrect for month " << m << " and period " << m_month[m].dc_periods[i] << " should be " << num_tiers;
+							ss << "demand charge number of tiers " << m_dc_tou_periods_tiers[ndx].size() << ", incorrect for month " << m << " and period " << m_month[m].dc_periods[i] << " should be " << num_tiers;
 							throw exec_error("utilityrate3", ss.str());
 						}
 					}
-					for (j = 0; j < m_dc_tou_periods_tiers[period].size(); j++)
+					for (j = 0; j < m_dc_tou_periods_tiers[ndx].size(); j++)
 					{
-						tier = m_dc_tou_periods_tiers[period][j];
+						tier = m_dc_tou_periods_tiers[ndx][j];
 						// initialize for each period and tier
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
@@ -1433,7 +1437,7 @@ public:
 
 					}
 				}
-
+			}
 				// flat demand charge
 				// 4 columns month, tier, max usage, charge
 				ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
@@ -1453,8 +1457,8 @@ public:
 
 				for (r = 0; r < nrows; r++)
 				{
-					month = (int)dc_tou_mat.at(r, 0);
-					tier = (int)dc_tou_mat.at(r, 1);
+					month = (int)dc_flat_mat.at(r, 0);
+					tier = (int)dc_flat_mat.at(r, 1);
 					if ((month < 0) || (month >= m_month.size()))
 					{
 						std::ostringstream ss;
@@ -1484,11 +1488,11 @@ public:
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
 						{
-							if ((m == (int)dc_tou_mat.at(r, 0))
-								&& (tier == (int)dc_tou_mat.at(r, 1)))
+							if ((m == (int)dc_flat_mat.at(r, 0))
+								&& (tier == (int)dc_flat_mat.at(r, 1)))
 							{
-								m_month[m].dc_flat_ub.push_back( dc_tou_mat.at(r, 2));
-								m_month[m].dc_flat_ch.push_back(dc_tou_mat.at(r, 3));//rate_esc;
+								m_month[m].dc_flat_ub.push_back(dc_flat_mat.at(r, 2));
+								m_month[m].dc_flat_ch.push_back(dc_flat_mat.at(r, 3));//rate_esc;
 								found = true;
 							}
 						}
@@ -1496,7 +1500,6 @@ public:
 					}
 				}
 
-			}
 		}
 
 
@@ -1684,7 +1687,7 @@ public:
 				{
 					for (h = 0; h < 24; h++)
 					{
-						int todp = m_dc_tou_periods[c];
+						int todp = m_dc_tou_sched[c];
 						std::vector<int>::iterator per_num = std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), todp);
 						if (per_num == m_month[m].dc_periods.end())
 						{
@@ -1802,9 +1805,9 @@ public:
 						if (dc_enabled)
 						{
 							// fixed demand charge
-							
 							// compute charge based on tier structure for the month
 							ssc_number_t charge = 0;
+							ssc_number_t d_lower = 0;
 							ssc_number_t demand = m_month[m].dc_flat_peak;
 							bool found = false;
 							for (tier = 0; tier < m_month[m].dc_flat_ub.size() && !found; tier++)
@@ -1812,8 +1815,15 @@ public:
 								if (demand < m_month[m].dc_flat_ub[tier])
 								{
 									found = true;
-									charge = demand*m_month[m].dc_flat_ch[tier]*rate_esc;
+									charge += (demand - d_lower) * 
+										m_month[m].dc_flat_ch[tier] * rate_esc;
 									m_month[m].dc_flat_charge = charge;
+								}
+								else
+								{
+									charge += (m_month[m].dc_flat_ub[tier] - d_lower) *
+										m_month[m].dc_flat_ch[tier] * rate_esc;
+									d_lower = m_month[m].dc_flat_ub[tier];
 								}
 							}
 							
@@ -1827,12 +1837,14 @@ public:
 
 
 							// TOU demand charge for each period find correct tier
-							charge = 0;
 							demand = 0;
+							d_lower = 0;
 							int peak_hour = 0;
 							m_month[m].dc_tou_charge.clear();
 							for (period = 0; period < m_month[m].dc_tou_ub.nrows(); period++)
 							{
+								charge = 0;
+								d_lower = 0;
 								demand = m_month[m].dc_tou_peak[period];
 								// find tier corresponding to peak demand
 								bool found = false;
@@ -1841,8 +1853,14 @@ public:
 									if (demand < m_month[m].dc_tou_ub.at(period, tier))
 									{
 										found = true;
-										charge = demand * m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
+										charge += (demand - d_lower) * 
+											m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
 										m_month[m].dc_tou_charge.push_back(charge);
+									}
+									else
+									{
+										charge += (m_month[m].dc_tou_ub.at(period, tier) - d_lower) * m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
+										d_lower = m_month[m].dc_tou_ub.at(period, tier);
 									}
 								}
 
@@ -2145,7 +2163,7 @@ public:
 				}
 			}
 		}
-
+		
 
 		// fixed demand charge initialization
 		ssc_number_t dc_fixed_charges[12][6];
