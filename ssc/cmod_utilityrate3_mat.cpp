@@ -582,7 +582,9 @@ public:
 		ssc_number_t *charge_wo_sys_ec_nov_tp = allocate("charge_wo_sys_ec_nov_tp", 6, 12);
 		ssc_number_t *charge_wo_sys_ec_dec_tp = allocate("charge_wo_sys_ec_dec_tp", 6, 12);
 
-		ssc_number_t *energy_wo_sys_ec_jan_tp = allocate("energy_wo_sys_ec_jan_tp", 6, 12);
+		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_jan_tp = allocate_matrix("energy_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows(), m_month[0].ec_charge.ncols());
+
+//		ssc_number_t *energy_wo_sys_ec_jan_tp = allocate("energy_wo_sys_ec_jan_tp", 6, 12);
 		ssc_number_t *energy_wo_sys_ec_feb_tp = allocate("energy_wo_sys_ec_feb_tp", 6, 12);
 		ssc_number_t *energy_wo_sys_ec_mar_tp = allocate("energy_wo_sys_ec_mar_tp", 6, 12);
 		ssc_number_t *energy_wo_sys_ec_apr_tp = allocate("energy_wo_sys_ec_apr_tp", 6, 12);
@@ -739,6 +741,7 @@ public:
 
 
 				charge_wo_sys_ec_jan_tp.copy(m_month[0].ec_charge);
+				energy_wo_sys_ec_jan_tp.copy(m_month[0].ec_energy);
 
 
 
@@ -759,7 +762,7 @@ public:
 						charge_wo_sys_ec_nov_tp[t * 12 + p] = monthly_charge_period_tier[10][p][t];
 						charge_wo_sys_ec_dec_tp[t * 12 + p] = monthly_charge_period_tier[11][p][t];
 
-						energy_wo_sys_ec_jan_tp[t * 12 + p] = monthly_e_use_period_tier[0][p][t];
+//						energy_wo_sys_ec_jan_tp[t * 12 + p] = monthly_e_use_period_tier[0][p][t];
 						energy_wo_sys_ec_feb_tp[t * 12 + p] = monthly_e_use_period_tier[1][p][t];
 						energy_wo_sys_ec_mar_tp[t * 12 + p] = monthly_e_use_period_tier[2][p][t];
 						energy_wo_sys_ec_apr_tp[t * 12 + p] = monthly_e_use_period_tier[3][p][t];
@@ -1214,7 +1217,7 @@ public:
 					ss << "energy charge period not found " << period;
 					throw exec_error("utilityrate3", ss.str());
 				}
-				int ndx = result - m_ec_periods.begin();
+				int ndx = (int)(result - m_ec_periods.begin());
 				m_ec_periods_tiers[ndx].push_back(tier);
 			}
 			// sort tier values for each period
@@ -1240,7 +1243,7 @@ public:
 						throw exec_error("utilityrate3", ss.str());
 					}
 					period = (*per_num);
-					int ndx = per_num - m_ec_periods.begin();
+					int ndx = (int)(per_num - m_ec_periods.begin());
 					if (i == 0)
 					{
 						// redimension ec_ field of ur_month class
@@ -1375,7 +1378,7 @@ public:
 					ss << "demand charge period not found " << period;
 					throw exec_error("utilityrate3", ss.str());
 				}
-				int ndx = result - m_dc_tou_periods.begin();
+				int ndx = (int)(result - m_dc_tou_periods.begin());
 				m_dc_tou_periods_tiers[ndx].push_back(tier);
 			}
 			// sort tier values for each period
@@ -1401,7 +1404,7 @@ public:
 						throw exec_error("utilityrate3", ss.str());
 					}
 					period = (*per_num);
-					int ndx = per_num - m_dc_tou_periods.begin();
+					int ndx = (int)(per_num - m_dc_tou_periods.begin());
 					if (i == 0)
 					{
 						// redimension dc_ field of ur_month class
@@ -1659,7 +1662,7 @@ public:
 							int row = (int)(per_num - m_month[m].ec_periods.begin());
 							// look at energy accumulation and tier ub to determine where energy goes in matrix
 							tier = 0;
-							while ((tier <  m_month[m].ec_tou_ub.ncols() - 1) && (mon_e_net >  m_month[m].ec_tou_ub.at(row, tier)))
+							while ((tier <  m_month[m].ec_tou_ub.ncols() - 1) && (-mon_e_net >  m_month[m].ec_tou_ub.at(row, tier)))
 								tier++;
 							m_month[m].ec_energy.at(row, tier) -= e_in[c]; // load negative
 						}
