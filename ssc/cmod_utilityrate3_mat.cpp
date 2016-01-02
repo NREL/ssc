@@ -566,7 +566,7 @@ public:
 
 		setup();
 
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_jan_tp = allocate_matrix("charge_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows(), m_month[0].ec_charge.ncols());
+		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_jan_tp = allocate_matrix("charge_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows()+2, m_month[0].ec_charge.ncols()+2);
 
 
 
@@ -582,7 +582,7 @@ public:
 		ssc_number_t *charge_wo_sys_ec_nov_tp = allocate("charge_wo_sys_ec_nov_tp", 6, 12);
 		ssc_number_t *charge_wo_sys_ec_dec_tp = allocate("charge_wo_sys_ec_dec_tp", 6, 12);
 
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_jan_tp = allocate_matrix("energy_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows(), m_month[0].ec_charge.ncols());
+		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_jan_tp = allocate_matrix("energy_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows()+2, m_month[0].ec_charge.ncols()+2);
 
 //		ssc_number_t *energy_wo_sys_ec_jan_tp = allocate("energy_wo_sys_ec_jan_tp", 6, 12);
 		ssc_number_t *energy_wo_sys_ec_feb_tp = allocate("energy_wo_sys_ec_feb_tp", 6, 12);
@@ -738,10 +738,71 @@ public:
 			if (i == 0)
 			{
 				// IRENA
-
-
-				charge_wo_sys_ec_jan_tp.copy(m_month[0].ec_charge);
-				energy_wo_sys_ec_jan_tp.copy(m_month[0].ec_energy);
+				charge_wo_sys_ec_jan_tp.resize_fill(m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2, 0);
+				energy_wo_sys_ec_jan_tp.resize_fill(m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2, 0);
+				// test output with tier column headings and period row labels 
+				// and totals for rows and columns.
+				int ndx = -1;
+				int period = 0;
+				if ((m_month[0].ec_periods.size() > 0) && (m_ec_periods.size() > 0))
+				{
+					period = m_month[0].ec_periods[0];
+					std::vector<int>::iterator result = std::find(std::begin(m_ec_periods), std::end(m_ec_periods), period);
+					if (result == std::end(m_ec_periods))
+					{
+						std::ostringstream ss;
+						ss << "energy charge period not found " << period;
+						throw exec_error("utilityrate3", ss.str());
+					}
+					ndx = (int)(result - m_ec_periods.begin());
+				}
+				if (ndx > -1)
+				{
+					for (int ic = 0; ic < m_month[0].ec_charge.ncols(); ic++)
+					{
+						charge_wo_sys_ec_jan_tp.at(0, ic + 1) = m_ec_periods_tiers[ndx][ic];
+						energy_wo_sys_ec_jan_tp.at(0, ic + 1) = m_ec_periods_tiers[ndx][ic];
+					}
+					for (int ir = 0; ir < m_month[0].ec_charge.nrows(); ir++)
+					{
+						charge_wo_sys_ec_jan_tp.at(ir + 1, 0) = m_month[0].ec_periods[ir];
+						energy_wo_sys_ec_jan_tp.at(ir + 1, 0) = m_month[0].ec_periods[ir];
+					}
+					float c_total = 0;
+					float e_total = 0;
+					for (int ir = 0; ir < m_month[0].ec_charge.nrows(); ir++)
+					{
+						float c_row_total = 0;
+						float e_row_total = 0;
+						for (int ic = 0; ic < m_month[0].ec_charge.ncols(); ic++)
+						{
+							charge_wo_sys_ec_jan_tp.at(ir + 1, ic + 1) = m_month[0].ec_charge.at(ir, ic);
+							c_row_total += m_month[0].ec_charge.at(ir, ic);
+							energy_wo_sys_ec_jan_tp.at(ir + 1, ic + 1) = m_month[0].ec_energy.at(ir, ic);
+							e_row_total += m_month[0].ec_energy.at(ir, ic);
+						}
+						charge_wo_sys_ec_jan_tp.at(ir + 1, m_month[0].ec_charge.ncols() + 1) = c_row_total;
+						energy_wo_sys_ec_jan_tp.at(ir + 1, m_month[0].ec_charge.ncols() + 1) = e_row_total;
+						c_total += c_row_total;
+						e_total += e_row_total;
+					}
+					for (int ic = 0; ic < m_month[0].ec_charge.ncols(); ic++)
+					{
+						float c_col_total = 0;
+						float e_col_total = 0;
+						for (int ir = 0; ir < m_month[0].ec_charge.nrows(); ir++)
+						{
+							c_col_total += m_month[0].ec_charge.at(ir, ic);
+							e_col_total += m_month[0].ec_energy.at(ir, ic);
+						}
+						charge_wo_sys_ec_jan_tp.at(m_month[0].ec_charge.nrows() + 1, ic + 1) = c_col_total;
+						energy_wo_sys_ec_jan_tp.at(m_month[0].ec_energy.nrows() + 1, ic + 1) = e_col_total;
+					}
+					charge_wo_sys_ec_jan_tp.at(m_month[0].ec_charge.nrows() + 1, m_month[0].ec_charge.ncols() + 1) = c_total;
+					energy_wo_sys_ec_jan_tp.at(m_month[0].ec_energy.nrows() + 1, m_month[0].ec_energy.ncols() + 1) = e_total;
+				}
+				//charge_wo_sys_ec_jan_tp.copy(m_month[0].ec_charge);
+				//energy_wo_sys_ec_jan_tp.copy(m_month[0].ec_energy);
 
 
 
@@ -1116,6 +1177,17 @@ public:
 		util::matrix_t<float> dc_schedwkday(12, 24, 1);
 		util::matrix_t<float> dc_schedwkend(12, 24, 1);
 
+		for (i = 0; i < m_ec_periods_tiers.size(); i++)
+			m_ec_periods_tiers[i].clear();
+		m_ec_periods.clear();
+
+		for (i = 0; i < m_dc_tou_periods_tiers.size(); i++)
+			m_dc_tou_periods_tiers[i].clear();
+		m_dc_tou_periods.clear();
+
+		for (i = 0; i < m_dc_flat_tiers.size(); i++)
+			m_dc_flat_tiers[i].clear();
+
 		m_month.clear();
 		for (m = 0; m < 12; m++)
 		{
@@ -1188,6 +1260,7 @@ public:
 					if (std::find(std::begin(m_month[m].ec_periods), std::end(m_month[m].ec_periods), ec_schedwkend.at(m, c)) == std::end(m_month[m].ec_periods))
 						m_month[m].ec_periods.push_back((int)ec_schedwkend.at(m, c));
 				}
+				std::sort(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end());
 			}
 
 			for (r = 0; r < nrows; r++)
@@ -1350,6 +1423,7 @@ public:
 					if (std::find(std::begin(m_month[m].dc_periods), std::end(m_month[m].dc_periods), dc_schedwkend.at(m, c)) == std::end(m_month[m].dc_periods))
 						m_month[m].dc_periods.push_back((int)dc_schedwkend.at(m, c));
 				}
+				std::sort(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end());
 			}
 
 			for (r = 0; r < nrows; r++)
