@@ -15,7 +15,7 @@ struct battstor
 	~battstor();
 
 	// Note, PV & LOAD are energy quantities, not power
-	void advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, size_t year, double PV, double LOAD );
+	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double PV, double LOAD);
 	void update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD);
 
 	// for user schedule
@@ -39,7 +39,6 @@ struct battstor
 	capacity_t *capacity_model;
 	battery_t *battery_model;
 	dispatch_manual_t *dispatch_model;
-	automate_dispatch_t *automated_dispatch;
 	losses_t *losses_model;
 
 	bool en;
@@ -61,8 +60,8 @@ struct battstor
 	double e_charge;
 	double e_discharge;
 
-	double * pv_prediction;
-	double * load_prediction;
+	std::vector<double> pv_prediction;
+	std::vector<double> load_prediction;
 	int prediction_index;
 
 	// outputs

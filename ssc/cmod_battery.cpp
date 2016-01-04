@@ -144,11 +144,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	battery_model = 0;
 	capacity_model = 0;
 	dispatch_model = 0;
-	automated_dispatch = 0;
 	losses_model = 0;
-
-	pv_prediction = 0;
-	load_prediction = 0;
 
 	// outputs
 	outTotalCharge = 0;
@@ -240,7 +236,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		}
 	}
 	size_t m,n;
-	int batt_dispatch = cm.as_integer("batt_dispatch_choice");
+	batt_dispatch = cm.as_integer("batt_dispatch_choice");
 	bool pv_dispatch = cm.as_boolean("batt_pv_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
 	if (batt_dispatch != dispatch_t::MANUAL)
@@ -410,42 +406,56 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	ac_dc = cm.as_double("batt_ac_dc_efficiency");
 	dc_ac = cm.as_double("batt_dc_ac_efficiency");
 	
-	dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"), 
-		cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
-		cm.as_double("batt_minimum_modetime"), 
-		ac_or_dc, dc_dc, ac_dc, dc_ac,
-		batt_dispatch, pv_dispatch,
-		dm_dynamic_sched, dm_dynamic_sched_weekend,
-		dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+	if (batt_dispatch == dispatch_t::MANUAL)
+	{
+		dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
+			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
+			cm.as_double("batt_minimum_modetime"),
+			ac_or_dc, dc_dc, ac_dc, dc_ac,
+			batt_dispatch, pv_dispatch,
+			dm_dynamic_sched, dm_dynamic_sched_weekend,
+			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+	}
+	else
+	{
+		dispatch_model = new automate_dispatch_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
+			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
+			cm.as_double("batt_minimum_modetime"),
+			ac_or_dc, dc_dc, ac_dc, dc_ac,
+			batt_dispatch, pv_dispatch,
+			dm_dynamic_sched, dm_dynamic_sched_weekend,
+			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
+			nyears);
+	}
 } 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
 {
-	int nrec;
-	prediction_index = 0;
-	bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
-
-	// automatic look ahead
-	if (look_ahead)
-		nrec = nyears * 8760 * step_per_hour;
-	// look behind
-	else if (mode == dispatch_t::LOOK_BEHIND)
-		nrec = 24 * step_per_hour;
-
-	pv_prediction = new double[nrec];
-	load_prediction = new double[nrec];
-
-	if (look_ahead)
+	
+	if (batt_dispatch != dispatch_t::MANUAL)
 	{
+		int nrec;
+		prediction_index = 0;
+		bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
+		bool look_behind = ((mode == dispatch_t::LOOK_BEHIND));
+		automate_dispatch_t * automated_dispatch = dynamic_cast<automate_dispatch_t*>(dispatch_model);
+
+
+		// automatic look ahead
+		if (look_ahead)
+			nrec = nyears * 8760 * step_per_hour;
+		// look behind
+		else if (look_behind)
+			nrec = 24 * step_per_hour;
+
 		for (int idx = 0; idx != nrec; idx++)
 		{
-			pv_prediction[idx] = pv[idx];
-			load_prediction[idx] = load[idx];
-		}
+			pv_prediction.push_back(pv[idx]);
+			load_prediction.push_back(load[idx]);
+		}		
+		automated_dispatch->update_pv_load_data(pv_prediction, load_prediction);
+		if (mode == dispatch_t::MAINTAIN_TARGET)
+			automated_dispatch->set_target_power(target_power);
 	}
-	automated_dispatch = new automate_dispatch_t(dispatch_model, nyears, _dt_hour, pv_prediction, load_prediction, mode);
-	if (mode == dispatch_t::MAINTAIN_TARGET)
-		automated_dispatch->set_target_power(target_power);
-
 }
 battstor::~battstor()
 {
@@ -456,12 +466,7 @@ battstor::~battstor()
 	if( capacity_model ) delete capacity_model;
 	if (losses_model) delete losses_model;
 	if( dispatch_model ) delete dispatch_model;
-	if (automated_dispatch)
-	{
-		delete automated_dispatch;
-		delete[] pv_prediction;
-		delete[] load_prediction;
-	}
+
 }
 
 void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step)
@@ -496,34 +501,13 @@ void battstor::force_replacement()
 }
 
 
-void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, size_t step, size_t year, double PV /* [kWh] */, double LOAD /* [kWh] */ )
+void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double PV /* [kWh] */, double LOAD /* [kWh] */)
 {
 	if (PV < 0){ PV = 0; }
+	dispatch_model->dispatch(year, hour_of_year, step, PV, LOAD);
 	
-	if (automated_dispatch)
-	{
-		int mode = automated_dispatch->get_mode();
-		// look ahead
-		if (mode == 0 || mode == 2)
-			automated_dispatch->update_dispatch(hour_of_year, step, idx);
-		// look behind
-		else if (mode == 1)
-		{
-			int nrec = 24 * step_per_hour;
-			// start on day 2 (or perhaps run full simulation and use last day of year first)
-			bool first_day = (year == 0 && hour_of_year == 0);
+	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
-			if ((hour_of_year) % 24 == 0 && (!first_day ) )
-			{
-				automated_dispatch->update_dispatch(hour_of_year, step, 0);
-				prediction_index = 0;
-			}
-			pv_prediction[prediction_index] = PV / _dt_hour;
-			load_prediction[prediction_index] = LOAD / _dt_hour;
-			prediction_index++;
-		}
-	}
-	dispatch_model->dispatch( hour_of_year, step, PV, LOAD );
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
@@ -565,7 +549,7 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 		dispatch_model->new_year();
 		year++;
 	}
-	// Dispatch output (all Powers in kW)
+	// dispatch_model output (all Powers in kW)
 	outBatteryPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery())/_dt_hour;
 	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid()) / _dt_hour;
 	outGenPower[idx] = (ssc_number_t)(dispatch_model->gen()) / _dt_hour;
@@ -593,10 +577,10 @@ void battstor::advance( compute_module &cm, size_t idx, size_t hour_of_year, siz
 void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD)
 {
 	dispatch_model->compute_grid_net(PV, LOAD);
-	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid())/_dt_hour; 
-	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
-	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
-	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
+	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid()) / _dt_hour;
+	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load()) / _dt_hour;
+	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load()) / _dt_hour;
+	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load()) / _dt_hour;
 }
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
@@ -665,13 +649,12 @@ public:
 		int count = 0;
 		for (hour = 0; hour < 8760; hour++)
 		{
-			// Loop over subhourly
-			for (size_t jj = 0; jj<step_per_hour; jj++)
+			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
-				batt.advance( *this, count, hour, jj, 0, hourly_energy[count], e_load[count] );
+				batt.advance(*this, 0, hour, jj, hourly_energy[count], e_load[count]);
 				count++;
-			}	// End loop over subhourly
-		} // End loop over hourly
+			}
+		} 
 	}
 
 };

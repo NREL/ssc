@@ -367,23 +367,14 @@ public:
 		double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac, int mode, bool pv_dispatch);
 
 	// Public APIs
-	virtual void dispatch(size_t hour_of_year, 
-						  size_t step, 
-						  double e_pv,     // PV energy [kWh]
-						  double e_load)   // Load energy [kWh]
-						  = 0;
-	void initialize_dispatch(size_t hour_of_year, size_t step);
-
-	// Controllers
-	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
-	void energy_controller();
-	void switch_controller();
-	double current_controller(double battery_voltage);
-	
-	// Losses at AC or DC connection points and internal loss
-	double conversion_loss_in(double);
-	double conversion_loss_out(double);
-	void compute_loss(double, double,double);
+	virtual void dispatch(size_t year,
+		size_t hour_of_year,
+		size_t step,
+		double e_pv,     // PV energy [kWh]
+		double e_load)=0;   // Load energy [kWh]
+						  
+	void compute_grid_net(double e_pv, double e_load);
+	enum MODES{LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
 
 	// Outputs
 	void new_year();
@@ -409,17 +400,23 @@ public:
 	double grid_export_annual();
 	double energy_loss_annual();
 
-	void compute_grid_net( double e_pv, double e_load);
-
-	enum MODES
-	{
-		LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL
-	};
-
 protected:
 
+	// Controllers
+	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
+	void energy_controller();
+	void switch_controller();
+	double current_controller(double battery_voltage);
+	
+	// Losses at AC or DC connection points and internal loss
+	double conversion_loss_in(double);
+	double conversion_loss_out(double);
+	void compute_loss(double, double,double);
+
+	// compute metrics
 	void compute_metrics();
 	void compute_generation(double e_pv);
+
 
 	battery_t * _Battery;
 	double _dt_hour;
@@ -487,17 +484,32 @@ Manual dispatch class
 class dispatch_manual_t : public dispatch_t
 {
 public:
-	friend class automate_dispatch_t;
-	dispatch_manual_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
-					 double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac,
-					 int mode, bool pv_dispatch,
-					 util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
-					 bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double> dm_percent_discharge, std::map<int, double> dm_percent_gridcharge);
-	void initialize_dispatch(size_t hour_of_year, size_t step);
-	void dispatch(size_t hour_of_year, size_t step, double e_pv, double e_load);
+	dispatch_manual_t(battery_t * Battery, 
+					  double dt_hour, 
+					  double SOC_min, 
+					  double SOC_max, 
+					  double Ic_max, 
+					  double Id_max, 
+					  double t_min, 
+					  bool ac_or_dc, 
+					  double dc_dc, 
+					  double ac_dc, 
+					  double dc_ac,
+					  int mode, 
+					  bool pv_dispatch,
+					  util::matrix_t<float> dm_dynamic_sched, 
+					  util::matrix_t<float> dm_dynamic_sched_weekend,
+					  bool * dm_charge, 
+					  bool *dm_discharge, 
+					  bool * dm_gridcharge, 
+					  std::map<int, double> dm_percent_discharge, 
+					  std::map<int, double> dm_percent_gridcharge);
+
+	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double e_pv, double e_load);
 
 protected:
 	
+	void initialize_dispatch(size_t hour_of_year, size_t step);
 	void reset();
 	void compute_energy_load_priority(double pv, double load, double energy_needed);
 	void compute_energy_battery_priority(double pv, double load, double energy_needed);
@@ -515,7 +527,7 @@ protected:
 		
 };
 /*
-Automate dispatch classes
+Automated dispatch classes
 */
 class grid_point
 {
@@ -533,7 +545,6 @@ private:
 	int _hour;
 	int _step;
 };
-typedef std::vector<grid_point> grid_vec;
 
 struct byGrid
 {
@@ -542,22 +553,43 @@ struct byGrid
 		return a.Grid() > b.Grid();
 	}
 };
-
-class automate_dispatch_t
+typedef std::vector<grid_point> grid_vec;
+class automate_dispatch_t : public dispatch_manual_t
 {
 public:
-	automate_dispatch_t(dispatch_manual_t * Dispatch,
-		int nyears,
-		double dt_hour,			   // [hr]
-		double * pv, double *load, // input as power [kW] not energy
-		int mode);				   // 0/1/2
-	void update_pv_load_data(double *pv, double *load);
-	void update_dispatch(int hour_of_year, int step, int idx);
+	automate_dispatch_t(
+		battery_t * Battery, 
+		double dt_hour, 
+		double SOC_min, 
+		double SOC_max, 
+		double Ic_max, 
+		double Id_max,
+		double t_min, 
+		bool ac_or_dc, 
+		double dc_dc, 
+		double ac_dc, 
+		double dc_ac,
+		int mode,   // 0/1/2
+		bool pv_dispatch,
+		util::matrix_t<float> dm_dynamic_sched, 
+		util::matrix_t<float> dm_dynamic_sched_weekend,
+		bool * dm_charge, 
+		bool *dm_discharge, 
+		bool * dm_gridcharge, 
+		std::map<int, double> dm_percent_discharge, 
+		std::map<int, double> dm_percent_gridcharge,
+		int nyears
+		);				  
+
+	void dispatch(size_t year, size_t hour_of_year, size_t step, double e_pv, double e_load);
+	
+	void update_pv_load_data(std::vector<double> pv, std::vector<double> load);
 	void set_target_power(std::vector<double> target_power);
-	int get_mode();
 
 protected:
-	void initialize(int hour_of_year, int idx );
+	void update_dispatch(int hour_of_year, int step, int idx);
+	int get_mode();
+	void initialize(int hour_of_year);
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
 	void sort_grid(FILE *p, bool debug, int idx );
 	void compute_energy(FILE *p, bool debug, double & E_max);
@@ -567,10 +599,8 @@ protected:
 	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max);
 	void check_new_month(int hour_of_year, int step);
 	
-
-	dispatch_manual_t * _dispatch;
-	double * _pv;						 // [kW]
-	double * _load;                      // [kW]
+	std::vector<double> _pv;			 // [kW]
+	std::vector<double> _load;           // [kW]
 	std::vector<double> _target_power;   // [kW]
 	double _target_power_month;	    	 // [kW]
 	int _month;							 // [0-11]
@@ -583,4 +613,7 @@ protected:
 	
 	grid_vec grid; // [grid_power, hour, step]
 };
+
+
+
 #endif
