@@ -2291,7 +2291,7 @@ public:
 					// Note for all battery inputs, PV & LOAD must be converted to energy in [kWh]
 					if (en_batt && (ac_or_dc == 0) )
 					{
-						batt.advance(*this, idx, hour, jj, iyear, dcpwr_net*0.001*ts_hour, cur_load*ts_hour);
+						batt.advance(*this, iyear, hour, jj, dcpwr_net*0.001*ts_hour, cur_load*ts_hour);
 						dcpwr_net = 1000*batt.outGenPower[idx];
 
 						// inverter can't handle negative dcpwr
@@ -2411,7 +2411,7 @@ public:
 
 					if (en_batt && ac_or_dc == 1)
 					{
-						batt.advance(*this, idx, hour, jj, iyear, p_gen[idx] * ts_hour, cur_load*ts_hour);
+						batt.advance(*this, iyear, hour, jj, p_gen[idx] * ts_hour, cur_load*ts_hour);
 						p_gen[idx] = batt.outGenPower[idx];
 					}
 
@@ -2472,7 +2472,7 @@ public:
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour, jj);
 
 						// AC battery
-						batt.advance(*this, idx, hour, jj, iyear, p_gen[idx] * ts_hour, p_load_full[idx]*ts_hour);
+						batt.advance(*this, iyear, hour, jj, p_gen[idx] * ts_hour, p_load_full[idx]*ts_hour);
 						p_gen[idx] = batt.outGenPower[idx];
 
 						if (iyear == 0)
@@ -2482,13 +2482,8 @@ public:
 					}
 					hour++;
 				}
-
 			}
 		}
-
-
-
-
 
 		// Check the snow models and if neccessary report a warning
 		//  *This only needs to be done for subarray1 since all of the activated subarrays should 
