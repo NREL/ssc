@@ -77,6 +77,7 @@ extern module_entry_info
 	cm_entry_sco2_design_cycle,
 	cm_entry_user_htf_comparison,
 	cm_entry_ui_tes_calcs,
+	cm_entry_cb_mspt_system_costs,
 	cm_entry_iscc_design_point,
 	cm_entry_battery,
     cm_entry_lcoefcr;
@@ -138,6 +139,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_sco2_design_cycle,
 	&cm_entry_user_htf_comparison,
 	&cm_entry_ui_tes_calcs,
+	&cm_entry_cb_mspt_system_costs,
 	&cm_entry_iscc_design_point,
 	&cm_entry_battery,
 	&cm_entry_lcoefcr,
