@@ -1900,6 +1900,7 @@ public:
 							irr.get_irrad(&wf.gh, &wf.dn, &wf.df);
 						}
 
+						// beam, skydiff, and grounddiff IN THE PLANE OF ARRAY
 						double ibeam, iskydiff, ignddiff;
 						double ipoa; // Container for direct POA measurements
 						double aoi, stilt, sazi, rot, btd;
@@ -1929,11 +1930,63 @@ public:
 						}
 
 
-						// Get Incidend angles and irradiances
+						// Get Incident angles and irradiances
 
 						irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
 						irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
 						irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+
+						// save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
+						/*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array
+						we'll have to fix this redundancy in the pvsamv1 rewrite. it will require allowing irradproc to report the errors below
+						and deciding what to do if the weather file DOES contain the third component but it's not being used in the calculations.*/
+						if (iyear == 0)
+						{
+							// Apply POA data from weather file (if it exists)
+							p_wfpoa[idx] = (ssc_number_t)wf.poa;
+
+							// calculate beam if global & diffuse are selected as inputs
+							if (radmode == GH_DF)
+							{
+								p_beam[idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
+								if (p_beam[idx] < 0)
+								{
+									log(util::format("SAM calculated negative Direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+										p_beam[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									p_beam[idx] = 0;
+								}
+							}
+							else
+								p_beam[idx] = (ssc_number_t)(wf.dn);
+
+							// calculate global if beam & diffuse are selected as inputs
+							if (radmode == DN_DF)
+							{
+								p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
+								if (p_glob[idx] < 0)
+								{
+									log(util::format("SAM calculated negative Global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+										p_glob[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									p_glob[idx] = 0;
+								}
+							}
+							else
+								p_glob[idx] = (ssc_number_t)(wf.gh);
+
+							// calculate diffuse if total & beam are selected as inputs
+							if (radmode == DN_GH)
+							{
+								p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
+								if (p_diff[idx] < 0)
+								{
+									log(util::format("SAM calculated negative Diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+										p_diff[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									p_diff[idx] = 0;
+								}
+							}
+							else
+								p_diff[idx] = (ssc_number_t)(wf.df);
+						}
 
 						// record sub-array plane of array output before computing shading and soiling
 						if (iyear==0)
@@ -2011,8 +2064,7 @@ public:
 							}
 
 							//execute self-shading calculations
-							//IF DN IS NOT IN WEATHER FILE, THEN THE SS_EXEC WILL RETURN NAN BECAUSE OF WF.DN INPUT ??
-							if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, wf.dn, ibeam, (iskydiff + ignddiff), alb, trackbool, shad1xf, sa[nn].ssout))
+							if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, p_beam[idx], ibeam, (iskydiff + ignddiff), alb, trackbool, shad1xf, sa[nn].ssout))
 							{
 								p_ss_diffuse_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_diffuse_derate;
 								p_ss_reflected_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_reflected_derate;
@@ -2328,55 +2380,9 @@ public:
 					if (en_batt && (ac_or_dc == 0) )
 						batt.update_post_inverted(*this, idx, acpwr_gross*0.001*ts_hour, cur_load*ts_hour);
 					
-					// why are these happening again here, instead of using irradproc outputs or saving the irradproc outputs before this point???
-					// save array-level outputs	- year 1 only outputs
+					// save other array-level environmental and irradiance outputs	- year 1 only outputs
 					if (iyear == 0)
 					{
-						// Apply POA data from weather file (if it exists)
-						p_wfpoa[idx] = (ssc_number_t)wf.poa;
-
-						// calculate beam if global & diffuse are selected as inputs
-						if (radmode == GH_DF)
-						{
-							p_beam[idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
-							if (p_beam[idx] < 0)
-							{
-								log(util::format("SAM calculated negative Direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-									p_beam[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-								p_beam[idx] = 0;
-							}
-						}
-						else
-							p_beam[idx] = (ssc_number_t)(wf.dn);
-
-						// calculate global if beam & diffuse are selected as inputs
-						if (radmode == DN_DF)
-						{
-							p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
-							if (p_glob[idx] < 0)
-							{
-								log(util::format("SAM calculated negative Global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-									p_glob[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-								p_glob[idx] = 0;
-							}
-						}
-						else
-							p_glob[idx] = (ssc_number_t)(wf.gh);
-
-						// calculate diffuse if total & beam are selected as inputs
-						if (radmode == DN_GH)
-						{
-							p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
-							if (p_diff[idx] < 0)
-							{
-								log(util::format("SAM calculated negative Diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-									p_diff[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-								p_diff[idx] = 0;
-							}
-						}
-						else
-							p_diff[idx] = (ssc_number_t)(wf.df);
-
 						p_wspd[idx] = (ssc_number_t)wf.wspd;
 						p_tdry[idx] = (ssc_number_t)wf.tdry;
 						p_albedo[idx] = (ssc_number_t)alb;
