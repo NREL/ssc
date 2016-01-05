@@ -32,6 +32,7 @@
     <ClCompile Include="..\tcs\csp_solver_two_tank_tes.cpp" />
     <ClCompile Include="..\tcs\csp_solver_util.cpp" />
     <ClCompile Include="..\tcs\csp_solver_weatherreader.cpp" />
+    <ClCompile Include="..\tcs\csp_system_costs.cpp" />
     <ClCompile Include="..\tcs\datatest.cpp" />
     <ClCompile Include="..\tcs\direct_steam_receivers.cpp" />
     <ClCompile Include="..\tcs\CO2_properties.cpp" />
