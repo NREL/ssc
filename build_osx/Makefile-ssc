@@ -73,6 +73,7 @@ OBJECTS = \
 	cmod_tcsmslf.o \
 	cmod_battery.o \
 	cmod_user_htf_comparison.o \
+	cmod_cb_mspt_system_costs.o \
 	cmod_sco2_design_cycle.o \
 	tckernel.o 
 
