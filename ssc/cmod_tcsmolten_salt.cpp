@@ -98,11 +98,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
     //other costs needed for optimization update
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_acre",       "EPC cost per acre",                                       "$/acre",       "",            "heliostat",       "*",                      "",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",        "EPC cost percent of direct",                              "",             "",            "heliostat",       "*",                      "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",        "EPC cost percent of direct",                              "%",            "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_watt",       "EPC cost per watt",                                       "$/W",          "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.fixed",          "EPC fixed",                                               "$",            "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_acre",       "PLM cost per acre",                                       "$/acre",       "",            "heliostat",       "*",                      "",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.percent",        "PLM cost percent of direct",                              "",             "",            "heliostat",       "*",                      "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.percent",        "PLM cost percent of direct",                              "%",            "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_watt",       "PLM cost per watt",                                       "$/W",          "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.fixed",          "PLM fixed",                                               "$",            "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.fixed_land_area",      "Fixed land area",                                         "acre",         "",            "heliostat",       "*",                      "",                     "" },
@@ -264,16 +264,16 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// optimized outputs updated depending on run type 
-	{ SSC_INPUT, SSC_NUMBER, "H_rec", "The height of the receiver", "m", "", "receiver", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "rec_height", "Receiver height", "m", "", "heliostat", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "rec_aspect", "Receiver aspect ratio", "-", "", "heliostat", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "D_rec", "The overall outer diameter of the receiver", "m", "", "receiver", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "THT", "The height of the tower (hel. pivot to rec equator)", "m", "", "receiver", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "h_tower", "Tower height", "m", "", "heliostat", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "A_sf", "Solar Field Area", "m^2", "", "receiver", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "piping_length", "Total length of exposed piping", "m", "", "tower", "*", "", "" },
-	{ SSC_INOUT, SSC_NUMBER, "total_installed_cost", "Total installed cost", "$", "", "heliostat", "*", "", "" },
-	{ SSC_INOUT, SSC_MATRIX, "helio_positions", "Heliostat position table", "m", "", "heliostat", "run_type=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                          "m",   "", "receiver",  "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                     "m",   "", "heliostat", "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                               "-",   "", "heliostat", "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",          "m",   "", "receiver",  "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "THT",                  "The height of the tower (hel. pivot to rec equator)", "m",   "", "receiver",  "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                        "m",   "", "heliostat", "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                    "m^2", "", "receiver",  "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                      "m",   "", "tower",     "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "total_installed_cost", "Total installed cost",                                "$",   "", "heliostat", "*",          "", "" },
+	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "" },
 
 
 
