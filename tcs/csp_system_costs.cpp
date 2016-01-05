@@ -135,12 +135,12 @@ double N_mspt::heliostat_cost(double A_refl /*m^2*/, double heliostat_spec_cost 
 
 double N_mspt::tower_cost(double h_tower /*m*/, double h_rec /*m*/, double h_helio /*m*/, double tower_fixed_cost /*$*/, double tower_cost_scaling_exp /*-*/)
 {
-	return tower_fixed_cost + exp(tower_cost_scaling_exp * (h_tower - h_rec / 2.0 + h_helio / 2.0));	//[$]
+	return tower_fixed_cost * exp(tower_cost_scaling_exp * (h_tower - h_rec / 2.0 + h_helio / 2.0));	//[$]
 }
 
 double N_mspt::receiver_cost(double A_rec /*m^2*/, double rec_ref_cost /*$*/, double rec_ref_area /*m^2*/, double rec_cost_scaling_exp /*-*/)
 {
-	return pow(rec_ref_cost*(A_rec / rec_ref_area), rec_cost_scaling_exp);	//[$]
+	return rec_ref_cost*pow(A_rec/rec_ref_area, rec_cost_scaling_exp);	//[$]
 }
 
 double N_mspt::tes_cost(double Q_storage /*MWt-hr*/, double tes_spec_cost /*$/kWt-hr*/)
@@ -175,6 +175,7 @@ double N_mspt::direct_capital_precontingency_cost(double site_improvement_cost /
 	return site_improvement_cost +
 		heliostat_cost +
 		tower_cost +
+		receiver_cost +
 		tes_cost +
 		power_cycle_cost +
 		bop_cost +
