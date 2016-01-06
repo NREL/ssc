@@ -36,7 +36,7 @@ static var_info _cm_vtab_cb_mspt_system_costs[] = {
 
 	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",            "Contingency for cost overrun",                   "%",            "",            "system_costs",   "*",        "",  "" },
 
-	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.sf.fixed_land_area",   "Fixed land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Fixed land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",             "Nameplate capacity",                             "kWe",          "",            "system_design",  "*",        "",  "" },    
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_acre",    "EPC cost per acre",                              "$/acre",       "",            "system_costs",   "*",        "",  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",     "EPC cost percent of direct",                     "%",            "",            "system_costs",   "*",        "",  "" },
@@ -112,7 +112,7 @@ public:
 
 		sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
 
-		sys_costs.ms_par.total_land_area = as_double("csp.pt.sf.fixed_land_area");
+		sys_costs.ms_par.total_land_area = as_double("csp.pt.cost.total_land_area");
 		sys_costs.ms_par.plant_net_capacity = as_double("system_capacity");
 		sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
 		sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");

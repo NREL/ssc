@@ -561,7 +561,9 @@ public:
 
 			sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
 
-			sys_costs.ms_par.total_land_area = as_double("csp.pt.sf.fixed_land_area");
+			//land area
+			sys_costs.ms_par.total_land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+			
 			sys_costs.ms_par.plant_net_capacity = as_double("system_capacity")/1000.0;			//[MWe], convert from kWe
 			sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
 			sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
@@ -601,7 +603,6 @@ public:
 			assign("csp.pt.cost.plm.total", sys_costs.ms_out.total_land_cost);
 			assign("csp.pt.cost.sales_tax.total", sys_costs.ms_out.sales_tax_cost);
 			assign("total_indirect_cost", sys_costs.ms_out.total_indirect_cost);
-			assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
 			assign("csp.pt.cost.installed_per_capacity", sys_costs.ms_out.estimated_installed_cost_per_cap);
 		}
 		else
