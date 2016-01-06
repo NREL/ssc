@@ -276,6 +276,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                      "m",   "", "tower",     "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "total_installed_cost", "Total installed cost",                                "$",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
+
 
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.site_improvements",	    "Site improvement cost",                  "$",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.heliostats",	            "Heliostat cost",                         "$",            "",            "system_costs",   "*",        "",  "" },
@@ -563,7 +565,8 @@ public:
 
 			//land area
 			sys_costs.ms_par.total_land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
-			
+			assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
+
 			sys_costs.ms_par.plant_net_capacity = as_double("system_capacity")/1000.0;			//[MWe], convert from kWe
 			sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
 			sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
