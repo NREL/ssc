@@ -19,6 +19,8 @@
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 
+#include "csp_system_costs.h"
+
 
 static bool ssc_mspt_solarpilot_callback(simulation_info *siminfo, void *data);
 
@@ -275,8 +277,23 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "total_installed_cost", "Total installed cost",                                "$",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "" },
 
-
-
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.site_improvements",	    "Site improvement cost",                  "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.heliostats",	            "Heliostat cost",                         "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.tower",	                "Tower cost",                             "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.receiver",	            "Receiver cost",                          "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.storage",	                "TES cost",                               "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.power_block",	            "Power cycle cost",                       "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.bop",	                    "BOP cost",                               "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.fossil",	                "Fossil backup cost",                     "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "ui_direct_subtotal",	                "Direct capital precontingency cost",     "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.contingency",	            "Contingency cost",                       "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "total_direct_cost",	                "Total direct cost",                      "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.epc.total",	            "EPC and owner cost",                     "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.plm.total",	            "Total land cost",                        "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.sales_tax.total",	        "Sales tax cost",                         "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "total_indirect_cost",	                "Total indirect cost",                    "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "total_installed_cost",	            "Total installed cost",                   "$",            "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.installed_per_capacity",  "Estimated installed cost per cap",       "$",            "",            "system_costs",   "*",        "",  "" },
 
 
 	// ****************************************************************************************************************************************
@@ -511,64 +528,81 @@ public:
 				A_rec = h*w;
 				break;
 			}
-			double receiver = as_double("rec_ref_cost")*pow(A_rec / as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
+			
+			
+			// ******* Re-calculate system costs here ************
+			C_mspt_system_costs sys_costs;
+			
+			sys_costs.ms_par.A_sf_refl = A_sf;
+			sys_costs.ms_par.site_improv_spec_cost = as_double("site_spec_cost");
+			sys_costs.ms_par.heliostat_spec_cost = as_double("heliostat_spec_cost");
+			sys_costs.ms_par.heliostat_fixed_cost = as_double("cost_sf_fixed");
 
-			//storage cost
-			double storage = as_double("P_ref")/as_double("design_eff")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+			sys_costs.ms_par.h_tower = THT;
+			sys_costs.ms_par.h_rec = H_rec;
+			sys_costs.ms_par.h_helio = as_double("helio_height");
+			sys_costs.ms_par.tower_fixed_cost = as_double("tower_fixed_cost");
+			sys_costs.ms_par.tower_cost_scaling_exp = as_double("tower_exp");
 
-			//power block + BOP
-			double P_ref = as_double("P_ref") * 1000.;  //kWe
-			double power_block = P_ref * (as_double("plant_spec_cost") + as_double("bop_spec_cost")); //$/kWe --> $
+			sys_costs.ms_par.A_rec = A_rec;
+			sys_costs.ms_par.rec_ref_cost = as_double("rec_ref_cost");
+			sys_costs.ms_par.A_rec_ref = as_double("rec_ref_area");
+			sys_costs.ms_par.rec_cost_scaling_exp = as_double("rec_cost_exp");
 
-			//site improvements
-			double site_improvements = A_sf * as_double("site_spec_cost");
+			sys_costs.ms_par.Q_storage = as_double("P_ref") / as_double("design_eff")*as_double("tshours");
+			sys_costs.ms_par.tes_spec_cost = as_double("tes_spec_cost");
 
-			//heliostats
-			double heliostats = A_sf * as_double("heliostat_spec_cost");
+			sys_costs.ms_par.W_dot_design = as_double("P_ref");
+			sys_costs.ms_par.power_cycle_spec_cost = as_double("plant_spec_cost");
 
-			//fixed cost
-			double cost_fixed = as_double("cost_sf_fixed");
+			sys_costs.ms_par.bop_spec_cost = as_double("bop_spec_cost");
 
-			//fossil
-			double fossil = P_ref * as_double("fossil_spec_cost");
+			sys_costs.ms_par.fossil_backup_spec_cost = as_double("fossil_spec_cost");
 
-			//tower cost
-			double tower = as_double("tower_fixed_cost") * exp(as_double("tower_exp") * (THT + 0.5*(-H_rec + as_double("helio_height"))));
+			sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
 
-			//---- total direct cost -----
-			total_direct_cost = (1. + as_double("contingency_rate") / 100.) * (
-				site_improvements + heliostats + power_block +
-				cost_fixed + storage + fossil + tower + receiver);
-			//-----
+			sys_costs.ms_par.total_land_area = as_double("csp.pt.sf.fixed_land_area");
+			sys_costs.ms_par.plant_net_capacity = as_double("system_capacity")/1000.0;			//[MWe], convert from kWe
+			sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
+			sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
+			sys_costs.ms_par.EPC_land_per_power_cost = as_double("csp.pt.cost.epc.per_watt");
+			sys_costs.ms_par.EPC_land_fixed_cost = as_double("csp.pt.cost.epc.fixed");
+			sys_costs.ms_par.total_land_spec_cost = as_double("csp.pt.cost.plm.per_acre");
+			sys_costs.ms_par.total_land_perc_direct_cost = as_double("csp.pt.cost.plm.percent");
+			sys_costs.ms_par.total_land_per_power_cost = as_double("csp.pt.cost.plm.per_watt");
+			sys_costs.ms_par.total_land_fixed_cost = as_double("csp.pt.cost.plm.fixed");
+			sys_costs.ms_par.sales_tax_basis = as_double("sales_tax_frac");
+			sys_costs.ms_par.sales_tax_rate = as_double("sales_tax_rate");
 
-			//land area
-			double land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+			try
+			{
+				sys_costs.calculate_costs();
+			}
+			catch( C_csp_exception &csp_exception )
+			{
+				throw exec_error("MSPT system costs", util::format("System cost calculations failed. Check that all inputs are properly defined"));
+			}
 
-			//EPC
-			double cost_epc =
-				as_double("csp.pt.cost.epc.per_acre") * land_area
-				+ as_double("csp.pt.cost.epc.percent") * total_direct_cost / 100.
-				+ P_ref * 1000. * as_double("csp.pt.cost.epc.per_watt")
-				+ as_double("csp.pt.cost.epc.fixed");
-
-			//PLM
-			double cost_plm =
-				as_double("csp.pt.cost.plm.per_acre") * land_area
-				+ as_double("csp.pt.cost.plm.percent") * total_direct_cost / 100.
-				+ P_ref * 1000. * as_double("csp.pt.cost.plm.per_watt")
-				+ as_double("csp.pt.cost.plm.fixed");
-
-			//sales tax
-			//return ${csp.pt.cost.sales_tax.value}/100*${total_direct_cost}*${csp.pt.cost.sales_tax.percent}/100; };
-			double cost_sales_tax = as_double("sales_tax_rate") / 100. * total_direct_cost * as_double("sales_tax_frac") / 100.;
-
-			//----- indirect cost
-			double total_indirect_cost = cost_epc + cost_plm + cost_sales_tax;
-
-			//----- total installed cost!
-			double total_installed_cost = total_direct_cost + total_indirect_cost;
-			assign("total_installed_cost", var_data((ssc_number_t)total_installed_cost));
-
+			// 1.5.2016 twn: financial model needs an updated total_installed_cost, remaining are for reporting only
+			assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
+			
+			assign("csp.pt.cost.site_improvements", sys_costs.ms_out.site_improvement_cost);
+			assign("csp.pt.cost.heliostats", sys_costs.ms_out.heliostat_cost);
+			assign("csp.pt.cost.tower", sys_costs.ms_out.tower_cost);
+			assign("csp.pt.cost.receiver", sys_costs.ms_out.receiver_cost);
+			assign("csp.pt.cost.storage", sys_costs.ms_out.tes_cost);
+			assign("csp.pt.cost.power_block", sys_costs.ms_out.power_cycle_cost);
+			assign("csp.pt.cost.bop", sys_costs.ms_out.bop_cost);
+			assign("csp.pt.cost.fossil", sys_costs.ms_out.fossil_backup_cost);
+			assign("ui_direct_subtotal", sys_costs.ms_out.direct_capital_precontingency_cost);
+			assign("csp.pt.cost.contingency", sys_costs.ms_out.contingency_cost);
+			assign("total_direct_cost", sys_costs.ms_out.total_direct_cost);
+			assign("csp.pt.cost.epc.total", sys_costs.ms_out.epc_and_owner_cost);
+			assign("csp.pt.cost.plm.total", sys_costs.ms_out.total_land_cost);
+			assign("csp.pt.cost.sales_tax.total", sys_costs.ms_out.sales_tax_cost);
+			assign("total_indirect_cost", sys_costs.ms_out.total_indirect_cost);
+			assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
+			assign("csp.pt.cost.installed_per_capacity", sys_costs.ms_out.estimated_installed_cost_per_cap);
 		}
 		else
 		{
