@@ -100,6 +100,7 @@ var_info vtab_battery[] = {
 	// Energy outputs	- Power outputs at native time step													        
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Power to/from battery",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from grid",                                    "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery",                                   "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_load",                                 "Power to load from PV",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_load",                               "Power to load from battery",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Power to load from grid",                               "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -322,6 +323,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outCapacityPercent = cm.allocate("batt_capacity_percent", nrec*nyears);
 	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
+	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
 	outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
 	outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
 	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
@@ -551,6 +553,7 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 	outBatteryPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery())/_dt_hour;
 	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid()) / _dt_hour;
 	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
+	outGenPower[idx] = (ssc_number_t)(dispatch_model->gen()) / _dt_hour;
 	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
 	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
 	outPVToBatt[idx] = (ssc_number_t)(dispatch_model->pv_to_batt()) / _dt_hour;
