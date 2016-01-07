@@ -1100,7 +1100,7 @@ void dispatch_t::compute_metrics()
 	// update for next step
 	_prev_charging = _charging;
 }
-double dispatch_t::conversion_loss_in(double I)
+void dispatch_t::conversion_loss_in(double &I)
 {
 	double I_in = I; 
 	if (_ac_or_dc == 0)
@@ -1108,9 +1108,8 @@ double dispatch_t::conversion_loss_in(double I)
 	else
 		I*=_ac_dc*0.01;
 	_I_loss += fabs(I_in - I);
-	return I;
 }
-double dispatch_t::conversion_loss_out(double I)
+void dispatch_t::conversion_loss_out(double &I)
 {
 	double I_in = I;
 	if (_ac_or_dc == 0)
@@ -1118,18 +1117,18 @@ double dispatch_t::conversion_loss_out(double I)
 	else
 		I*=_dc_ac*0.01;
 	_I_loss += fabs(I_in - I);
-	return I;
 }
 void dispatch_t::compute_loss(double I, double battery_voltage, double battery_voltage_new)
 {
 	double multiplier = 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;
 
-	// Apply conversion loss on AC or DC side
-	if (_charging) { conversion_loss_in(I); }
-	else { conversion_loss_out(I); }
-
 	// energy to battery already includes internal losses, add in conversion losses
-	 _e_tofrom_batt -= _I_loss*multiplier; 
+	if (_charging) 
+		conversion_loss_in(I);
+	else
+		conversion_loss_out(I);
+	
+	_e_tofrom_batt = I*multiplier;
 
 	// Add internal capacity losses due to lifetime and thermal effects onto conversion losses
 	 // This would be a way to isolate voltage losses, conversion losses, and internal losses
@@ -1138,45 +1137,27 @@ void dispatch_t::compute_loss(double I, double battery_voltage, double battery_v
 
 	_e_loss_annual = _charge_annual - _discharge_annual;
 }
-void dispatch_t::compute_generation(double e_pv)
+void dispatch_t::accumulate_grid_annual()
 {
-	_e_gen = e_pv + _e_tofrom_batt;
+	// e_grid > 0 (export to grid) 
+	// e_grid < 0 (import from grid)
 
-	if (fabs(_e_gen) > 0)
-	{
-		_battery_fraction = _e_tofrom_batt / _e_gen;
-		_pv_fraction = e_pv / _e_gen;
-	}
-	else
-	{
-		_battery_fraction = 0.;
-		_pv_fraction = 0.;
-	}
-}
-void dispatch_t::compute_grid_net(double e_gen, double e_load)
-{
-	// Update net grid energy
-	// e_tofrom_batt > 0 -> more energy available to send to grid or meet load (discharge)
-	// e_grid > 0 (sending to grid) e_grid < 0 (pulling from grid)
-	double e_pv = e_gen*_pv_fraction;
-	double e_tofrom_battery = e_gen*_battery_fraction;
-	_e_grid = e_gen - e_load;
-
-	// accumulate annual
 	if (_e_grid > 0)
 		_grid_export_annual += _e_grid;
 	else
 		_grid_import_annual += (-_e_grid);
-
+}
+void dispatch_t::compute_to_batt(double e_pv)
+{
 	// Compute how much power went to battery from each component
-	if (e_tofrom_battery < 0)
+	if (_e_tofrom_batt < 0)
 	{
 		if (_pv_to_batt > 0)
 		{
 			// in event less energy dispatched than requested
 			if (_pv_to_batt > fabs(_e_tofrom_batt))
 				_pv_to_batt = fabs(_e_tofrom_batt);
-			
+
 			// in event more energy dispatched than requested
 			if (_pv_dispatch_to_battery_first)
 			{
@@ -1193,8 +1174,9 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 		}
 		_grid_to_batt = fabs(_e_tofrom_batt) - _pv_to_batt;
 	}
-
-
+}
+void dispatch_t::compute_to_load(double e_pv, double e_load, double e_tofrom_battery)
+{
 	// Compute how much of each component will meet the load.  
 	if (!_pv_dispatch_to_battery_first)
 	{
@@ -1206,7 +1188,7 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 	}
 	else
 		_pv_to_load = e_pv - _pv_to_batt;
-	
+
 	if (_pv_to_load > e_load)
 		_pv_to_load = e_load;
 
@@ -1214,10 +1196,36 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 		_battery_to_load = e_tofrom_battery;
 
 	// could have slightly more dispatched than needed
-	if (_battery_to_load > e_load || (_battery_to_load + _pv_to_load > e_load)) 
+	if (_battery_to_load > e_load || (_battery_to_load + _pv_to_load > e_load))
 		_battery_to_load = e_load - _pv_to_load;
 
 	_grid_to_load = e_load - (_pv_to_load + _battery_to_load);
+}
+void dispatch_t::compute_generation(double e_pv)
+{
+	_e_gen = e_pv + _e_tofrom_batt;
+
+	if (_e_gen > 0)
+	{
+		_battery_fraction = _e_tofrom_batt / _e_gen;
+		_pv_fraction = e_pv / _e_gen;
+	}
+	else
+	{
+		_battery_fraction = 0.;
+		_pv_fraction = 0.;
+	}
+}
+void dispatch_t::compute_grid_net(double e_gen, double e_load)
+{
+	_e_grid = e_gen - e_load;
+	accumulate_grid_annual();
+
+	double e_pv = e_gen*_pv_fraction;
+	double e_tofrom_battery = e_gen*_battery_fraction;
+
+	compute_to_batt(e_pv);
+	compute_to_load(e_pv, e_load, e_tofrom_battery);
 }
 /*
 Manual Dispatch
@@ -1303,7 +1311,7 @@ void dispatch_manual_t::dispatch(size_t year, size_t hour_of_year, size_t step, 
 	// Update how much power was actually used to/from battery
 	I = _Battery->capacity_model()->I();
 	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
-	double e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
+	_e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
 
 	// Compute total losses
 	compute_loss(I,battery_voltage, battery_voltage_new);
