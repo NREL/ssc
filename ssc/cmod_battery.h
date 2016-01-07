@@ -83,6 +83,7 @@ struct battstor
 		*outCapacityThermalPercent,
 		*outDispatchMode,
 		*outBatteryPower,
+		*outGenPower,
 		*outGridPower,
 		*outPVToLoad,
 		*outBatteryToLoad,
