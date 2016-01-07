@@ -409,12 +409,15 @@ protected:
 	double current_controller(double battery_voltage);
 	
 	// Losses at AC or DC connection points and internal loss
-	double conversion_loss_in(double);
-	double conversion_loss_out(double);
+	void conversion_loss_in(double &I);
+	void conversion_loss_out(double &I);
 	void compute_loss(double, double,double);
 
 	// compute metrics
 	void compute_metrics();
+	void accumulate_grid_annual();
+	void compute_to_batt(double e_pv);
+	void compute_to_load(double e_pv, double e_load, double e_tofrom_battery);
 	void compute_generation(double e_pv);
 
 
