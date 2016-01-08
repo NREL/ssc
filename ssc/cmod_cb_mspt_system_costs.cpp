@@ -37,7 +37,7 @@ static var_info _cm_vtab_cb_mspt_system_costs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",            "Contingency for cost overrun",                   "%",            "",            "system_costs",   "*",        "",  "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",             "Nameplate capacity",                             "kWe",          "",            "system_design",  "*",        "",  "" },    
+	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",             "Nameplate capacity",                             "MWe",          "",            "system_design",  "*",        "",  "" },    
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_acre",    "EPC cost per acre",                              "$/acre",       "",            "system_costs",   "*",        "",  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",     "EPC cost percent of direct",                     "%",            "",            "system_costs",   "*",        "",  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_watt",    "EPC cost per watt",                              "$/W",          "",            "system_costs",   "*",        "",  "" },
