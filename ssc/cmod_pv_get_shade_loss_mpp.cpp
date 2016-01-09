@@ -259,7 +259,7 @@ public:
 		}
 
 		/*
-
+		  
 			Veemax = TcVmps(Pmaxind);
 		if and(VStrMPPT(1) <= Veemax, VStrMPPT(2) >= Veemax)
 			% The global max power point is in range!
