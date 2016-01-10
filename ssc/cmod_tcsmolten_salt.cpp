@@ -266,7 +266,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// optimized outputs updated depending on run type 
-	{ SSC_INPUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                          "m",   "", "receiver",  "*",          "", "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                          "m",   "", "receiver",  "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                     "m",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                               "-",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",          "m",   "", "receiver",  "*",          "", "" },
@@ -274,7 +274,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                        "m",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                    "m^2", "", "receiver",  "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                      "m",   "", "tower",     "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "total_installed_cost", "Total installed cost",                                "$",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
 
@@ -397,6 +396,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_c",    "Final 3 operating modes tried",                                "",             "",            "Solver",         "*",                       "",           "" },
 	
 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                  "Total electric power to grid w/ avail. derate",                                 "kWe",          "",            "System",         "*",                       "",           "" },
 
 	// Annual single-value outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",        "Annual total electric power to grid",                          "kWhe",       "",            "System",         "*",                       "",           "" },
