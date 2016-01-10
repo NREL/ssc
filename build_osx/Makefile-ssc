@@ -74,6 +74,7 @@ OBJECTS = \
 	cmod_battery.o \
 	cmod_user_htf_comparison.o \
 	cmod_cb_mspt_system_costs.o \
+	cmod_cb_construction_financing.o \
 	cmod_sco2_design_cycle.o \
 	tckernel.o 
 
