@@ -229,3 +229,53 @@ double N_mspt::estimated_installed_cost_per_cap(double total_installed_cost /*$*
 {
 	return total_installed_cost/(plant_net_capacity*1.E3);
 }
+
+void N_financial_parameters::construction_financing_total_cost(double total_installed_cost /*$*/,
+	double const_per_interest_rate1 /*%*/, double const_per_interest_rate2 /*%*/, double const_per_interest_rate3 /*%*/, double const_per_interest_rate4 /*%*/, double const_per_interest_rate5 /*%*/,
+	double const_per_months1 /*-*/, double const_per_months2 /*-*/, double const_per_months3 /*-*/, double const_per_months4 /*-*/, double const_per_months5 /*-*/,
+	double const_per_percent1 /*%*/, double const_per_percent2 /*%*/, double const_per_percent3 /*%*/, double const_per_percent4 /*%*/, double const_per_percent5 /*%*/,
+	double const_per_upfront_rate1 /*%*/, double const_per_upfront_rate2 /*%*/, double const_per_upfront_rate3 /*%*/, double const_per_upfront_rate4 /*%*/, double const_per_upfront_rate5 /*%*/,
+	double & const_per_principal1 /*$*/, double & const_per_principal2 /*$*/, double & const_per_principal3 /*$*/, double & const_per_principal4 /*$*/, double & const_per_principal5 /*$*/,
+	double & const_per_interest1 /*$*/, double & const_per_interest2 /*$*/, double & const_per_interest3 /*$*/, double & const_per_interest4 /*$*/, double & const_per_interest5 /*$*/,
+	double & const_per_total1 /*$*/, double & const_per_total2 /*$*/, double & const_per_total3 /*$*/, double & const_per_total4 /*$*/, double & const_per_total5 /*$*/,
+	double & const_per_percent_total /*%*/, double & const_per_principal_total /*$*/, double & const_per_interest_total /*$*/, double & construction_financing_cost /*$*/)
+{
+	// Loan 1
+	const_per_principal1 = const_per_percent1*total_installed_cost;
+	construction_financing_loan_cost(const_per_principal1, const_per_interest_rate1, const_per_months1, const_per_upfront_rate1, 
+		const_per_interest1, const_per_total1);
+
+	const_per_principal2 = const_per_percent2*total_installed_cost;
+	construction_financing_loan_cost(const_per_principal2, const_per_interest_rate2, const_per_months2, const_per_upfront_rate2,
+		const_per_interest2, const_per_total2);
+
+	const_per_principal3 = const_per_percent3*total_installed_cost;
+	construction_financing_loan_cost(const_per_principal3, const_per_interest_rate3, const_per_months3, const_per_upfront_rate3,
+		const_per_interest3, const_per_total3);
+
+	const_per_principal4 = const_per_percent4*total_installed_cost;
+	construction_financing_loan_cost(const_per_principal4, const_per_interest_rate4, const_per_months4, const_per_upfront_rate4,
+		const_per_interest4, const_per_total4);
+
+	const_per_principal5 = const_per_percent5*total_installed_cost;
+	construction_financing_loan_cost(const_per_principal5, const_per_interest_rate5, const_per_months5, const_per_upfront_rate5,
+		const_per_interest5, const_per_total5);
+
+	const_per_percent_total = const_per_percent1 + const_per_percent2 + const_per_percent3 + const_per_percent4 + const_per_percent5;
+	const_per_principal_total = const_per_principal1 + const_per_principal2 + const_per_principal3 + const_per_principal4 + const_per_principal5;
+	const_per_interest_total = const_per_interest1 + const_per_interest2 + const_per_interest3 + const_per_interest4 + const_per_interest5;
+	construction_financing_cost = const_per_total1 + const_per_total2 + const_per_total3 + const_per_total4 + const_per_total5;
+
+}
+
+void N_financial_parameters::construction_financing_loan_cost(double principal /*$*/, double interest_rate /*%*/, double term_months /*-*/, double upfront_rate /*%*/,
+	double & interest /*$*/, double & total_cost /*$*/)
+{
+	double r = interest_rate/100.0;		//[-] annual loan rate
+
+	interest = principal * r / 12.0 * term_months / 2.0;	//[$] loan interest
+
+	double u = upfront_rate/100.0;		//[-] up-front rate
+
+	total_cost = principal*u + interest;
+}
