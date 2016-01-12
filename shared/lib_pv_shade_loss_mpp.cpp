@@ -181,14 +181,14 @@ bool DB8_mpp::decompress_file_to_uint8()
 	return true;
 };
 
-double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &shade_frac)
+double DB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<double> &shade_frac, bool use_pv_cell_temp, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
-	double shade_loss = 1;
+	double shade_loss = 0;
 	// shading fractions for each string
 	size_t num_strings = shade_frac.size();
 	// check for valid DB values
-	if (dhi > ghi)
-		dhi = ghi;
+	if (dpoa > gpoa)
+		dpoa = gpoa;
 	if (num_strings > 0)
 	{
 		//Sort in descending order of shading
@@ -207,9 +207,9 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 			s_sum += str_shade[i];
 		}
 		//Now get the indices for the DB
-		if ((s_sum > 0) && (ghi > 0))
+		if ((s_sum > 0) && (gpoa > 0))
 		{
-			int diffuse_frac = (int)round(dhi * 10.0 / ghi);
+			int diffuse_frac = (int)round(dpoa * 10.0 / gpoa);
 			if (diffuse_frac < 1) diffuse_frac = 1;
 			int counter = 1;
 			bool found = false;
@@ -359,17 +359,78 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 			std::vector<double>vmpp = get_vector(num_strings, diffuse_frac, s_max, counter, DB8_mpp::VMPP);
 			std::vector<double>impp = get_vector(num_strings, diffuse_frac, s_max, counter, DB8_mpp::IMPP);
 			double p_max_frac = 0;
+
+			// temp correction and out of global MPP
 			int p_max_ind = 0;
+			std::vector<double> pmp_fracs;
+
 			for (size_t i = 0; i < vmpp.size() && i < impp.size(); i++)
 			{
 				double pmp = vmpp[i] * impp[i];
+				if (use_pv_cell_temp) pmp_fracs.push_back(pmp);
 				if (pmp > p_max_frac)
 				{
 					p_max_frac = pmp;
+					if (use_pv_cell_temp) p_max_ind = (int)i;
 				}
 			}
-			// The global max power point is in range!
-			shade_loss = (1.0 - p_max_frac);
+
+			if (use_pv_cell_temp)
+			{
+				/*
+				%Try scaling the voltages using the Sandia model.Taking numbers from
+				%their database for the Yingli YL230.It's a similar module (mc-si,60 cell, etc)to the
+				%Trina 250 PA05 which the database was build from.But user may need more
+				%input into this!!!
+				*/
+				double n = 1.263;
+				double BetaVmp = -0.137*mods_per_str; //mult by ModsPerString because it's in V
+				double Ns = 60 * mods_per_str; //X modules, each with 60 cells
+				double C2 = -0.05871;
+				double C3 = 8.35334;
+				double k = 1.38066E-23; //J / K, Boltzmann's constant
+				double q = 1.60218E-19;  // Coulomb, elementary charge
+				double Tc = pv_cell_temp;
+				double deltaTc = n*k*(Tc + 273.15) / q; //Thermal voltage
+				double VMaxSTCStrUnshaded = str_vmp_stc;
+				double scale_g = gpoa / 1000.0;
+				double TcVmpMax = vmpp[p_max_ind] * VMaxSTCStrUnshaded + C2*Ns*deltaTc*::log(scale_g) + C3*Ns*pow((deltaTc*::log(scale_g)), 2) + BetaVmp*(Tc - 25);
+				double TcVmpScale = TcVmpMax / vmpp[p_max_ind] / VMaxSTCStrUnshaded;
+
+				std::vector<double> TcVmps;
+
+				for (size_t i = 0; i < vmpp.size(); i++)
+					TcVmps.push_back(vmpp[i] * VMaxSTCStrUnshaded + C2*Ns*deltaTc*::log(scale_g) + C3*Ns*pow((deltaTc*::log(scale_g)), 2) + BetaVmp*(Tc - 25));
+				/*
+				%Now want to choose the point with a V in range and highest power
+				%First, figure out which max power point gives lowest loss
+				*/
+				double Veemax = TcVmps[p_max_ind];
+				if ((Veemax >= mppt_lo) && (Veemax <= mppt_hi))
+					// The global max power point is in range!
+					shade_loss = 1.0 - p_max_frac;
+				else
+				{
+					//	The global max power point is NOT in range
+					double p_frac = 0;
+
+					for (size_t i = 0; i < TcVmps.size() && i < pmp_fracs.size(); i++)
+					{
+						if ((TcVmps[i] >= mppt_lo) && (TcVmps[i] <= mppt_hi))
+						{
+							if (pmp_fracs[i] > p_frac)
+								p_frac = pmp_fracs[i];
+						}
+					}
+
+					shade_loss = 1.0 - p_frac;
+				}
+
+			}
+			else // assume global max power point
+			{
+				shade_loss = 1.0 - p_max_frac;
+			}
 
 		} //(sum >0)
 		else // either shade frac sum = 0 or global = 0
@@ -377,7 +438,7 @@ double DB8_mpp::get_shade_loss(double &ghi, double &dhi, std::vector<double> &sh
 			if (s_sum <= 0) // to match with Matlab results
 				shade_loss = 0.0;
 			else
-				shade_loss = 1.0;
+				shade_loss = 0.0;
 		}
 	}
 	return shade_loss;
