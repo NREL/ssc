@@ -497,8 +497,8 @@ double shading_factor_calculator::fbeam(size_t hour, double solalt, double solaz
 			std::vector<double> shad_fracs;
 			for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
 				shad_fracs.push_back(m_beamFactors.at(irow, icol));
-			factor = 1.0-m_db8->get_shade_loss(gpoa, dpoa, shad_fracs);
-		}
+			factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs);
+		} 
 		else // use column zero value
 		{
 			factor = m_beamFactors.at(irow, 0);

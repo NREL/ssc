@@ -29,7 +29,7 @@ public:
 	size_t n_choose_k(size_t n, size_t k);
 	bool get_index(const size_t &N, const size_t &d, const size_t &t, const size_t &S, const db_type &DB_TYPE, size_t* ret_ndx);
 
-	double get_shade_loss(double &ghi, double &dhi, std::vector<double> &shade_frac);
+	double get_shade_loss(double &gpoa, double &dpoa, std::vector<double> &shade_frac, bool use_pv_cell_temp = false, double pv_cell_temp = 0, int mods_per_str = 0, double str_vmp_stc = 0, double mppt_lo = 0, double mppt_hi = 0);
 	std::string get_warning() { return p_warning_msg; }
 	std::string get_error() { return p_error_msg; }
 
