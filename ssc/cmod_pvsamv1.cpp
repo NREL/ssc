@@ -2079,8 +2079,8 @@ public:
 							else
 								throw exec_error("pvsamv1", util::format("Self-shading calculation failed at %d", (int)idx));
 						}
-							
-						double poashad = ibeam + iskydiff + ignddiff;
+						
+						double poashad = (radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
 
 						// determine sub-array contribution to total shaded plane of array for this hour
 						ts_accum_poa_shaded += poashad * ref_area_m2 * modules_per_string * sa[nn].nstrings;
@@ -2108,7 +2108,7 @@ public:
 							p_poashaded[nn][idx] = (ssc_number_t)poashad;	
 							p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
 							p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
-							p_poaeff[nn][idx] = (ssc_number_t)(ibeam + iskydiff + ignddiff);
+							p_poaeff[nn][idx] = (ssc_number_t) (radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
 							p_shad[nn][idx] = (ssc_number_t)beam_shad_factor;
 							p_rot[nn][idx] = (ssc_number_t)rot;
 							p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
@@ -2121,7 +2121,7 @@ public:
 						}
 							
 						// accumulate incident total radiation (W) in this timestep (all subarrays)
-						ts_accum_poa_eff += (ibeam + iskydiff + ignddiff) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
+						ts_accum_poa_eff += ((radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff)) * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 						ts_accum_poa_beam_eff += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 
 						// save the required irradiance inputs on array plane for the module output calculations.
