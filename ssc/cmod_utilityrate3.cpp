@@ -1188,12 +1188,12 @@ public:
 				// energy charges
 				for (c = 0; c < ec_schedwkday.ncols(); c++)
 				{
-					if (std::find(std::begin(m_month[m].ec_periods), std::end(m_month[m].ec_periods), ec_schedwkday.at(m, c)) == std::end(m_month[m].ec_periods))
-						m_month[m].ec_periods.push_back((int)ec_schedwkday.at(m, c));
+					if (std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), ec_schedwkday.at(m, c)) == m_month[m].ec_periods.end())
+							m_month[m].ec_periods.push_back((int)ec_schedwkday.at(m, c));
 				}
 				for (c = 0; c < ec_schedwkend.ncols(); c++)
 				{
-					if (std::find(std::begin(m_month[m].ec_periods), std::end(m_month[m].ec_periods), ec_schedwkend.at(m, c)) == std::end(m_month[m].ec_periods))
+					if (std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), ec_schedwkend.at(m, c)) == m_month[m].ec_periods.end())
 						m_month[m].ec_periods.push_back((int)ec_schedwkend.at(m, c));
 				}
 				std::sort(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end());
@@ -1202,7 +1202,7 @@ public:
 			for (r = 0; r < nrows; r++)
 			{
 				period = (int)ec_tou_mat.at(r, 0);
-				if (std::find(std::begin(m_ec_periods), std::end(m_ec_periods), period) == std::end(m_ec_periods))
+				if (std::find(m_ec_periods.begin(), m_ec_periods.end(),period) == m_ec_periods.end())
 					m_ec_periods.push_back(period);
 			}
 			// sorted periods smallest to largest
@@ -1219,8 +1219,8 @@ public:
 			{
 				period = (int)ec_tou_mat.at(r, 0);
 				tier = (int)ec_tou_mat.at(r, 1);
-				std::vector<int>::iterator result = std::find(std::begin(m_ec_periods), std::end(m_ec_periods), period);
-				if (result == std::end(m_ec_periods))
+				std::vector<int>::iterator result = std::find(m_ec_periods.begin(), m_ec_periods.end(), period);
+				if (result == m_ec_periods.end())
 				{
 					std::ostringstream ss;
 					ss << "energy charge period not found " << period;
@@ -1244,8 +1244,8 @@ public:
 				for (i = 0; i < m_month[m].ec_periods.size(); i++)
 				{
 					// find all periods and check that number of tiers the same for all for the month, if not through error
-					std::vector<int>::iterator per_num = std::find(std::begin(m_ec_periods), std::end(m_ec_periods), m_month[m].ec_periods[i]);
-					if (per_num == std::end(m_ec_periods))
+					std::vector<int>::iterator per_num = std::find(m_ec_periods.begin(), m_ec_periods.end(), m_month[m].ec_periods[i]);
+					if (per_num == m_ec_periods.end())
 					{
 						std::ostringstream ss;
 						ss << "energy charge period not found for month " << " m and period " << m_month[m].ec_periods[i];
@@ -1357,12 +1357,12 @@ public:
 				// demand charges
 				for (c = 0; c < dc_schedwkday.ncols(); c++)
 				{
-					if (std::find(std::begin(m_month[m].dc_periods), std::end(m_month[m].dc_periods), dc_schedwkday.at(m, c)) == std::end(m_month[m].dc_periods))
+					if (std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), dc_schedwkday.at(m, c)) == m_month[m].dc_periods.end())
 						m_month[m].dc_periods.push_back((int)dc_schedwkday.at(m, c));
 				}
 				for (c = 0; c < dc_schedwkend.ncols(); c++)
 				{
-					if (std::find(std::begin(m_month[m].dc_periods), std::end(m_month[m].dc_periods), dc_schedwkend.at(m, c)) == std::end(m_month[m].dc_periods))
+					if (std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), dc_schedwkend.at(m, c)) == m_month[m].dc_periods.end())
 						m_month[m].dc_periods.push_back((int)dc_schedwkend.at(m, c));
 				}
 				std::sort(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end());
@@ -1371,7 +1371,7 @@ public:
 			for (r = 0; r < nrows; r++)
 			{
 				period = (int)dc_tou_mat.at(r, 0);
-				if (std::find(std::begin(m_dc_tou_periods), std::end(m_dc_tou_periods), period) == std::end(m_dc_tou_periods))
+				if (std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), period) == m_dc_tou_periods.end())
 					m_dc_tou_periods.push_back(period);
 			}
 			// sorted periods smallest to largest
@@ -1387,8 +1387,8 @@ public:
 			{
 				period = (int)dc_tou_mat.at(r, 0);
 				tier = (int)dc_tou_mat.at(r, 1);
-				std::vector<int>::iterator result = std::find(std::begin(m_dc_tou_periods), std::end(m_dc_tou_periods), period);
-				if (result == std::end(m_dc_tou_periods))
+				std::vector<int>::iterator result = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), period);
+				if (result == m_dc_tou_periods.end())
 				{
 					std::ostringstream ss;
 					ss << "demand charge period not found " << period;
@@ -1412,8 +1412,8 @@ public:
 				for (i = 0; i < m_month[m].dc_periods.size(); i++)
 				{
 					// find all periods and check that number of tiers the same for all for the month, if not through error
-					std::vector<int>::iterator per_num = std::find(std::begin(m_dc_tou_periods), std::end(m_dc_tou_periods), m_month[m].dc_periods[i]);
-					if (per_num == std::end(m_dc_tou_periods))
+					std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
+					if (per_num == m_dc_tou_periods.end())
 					{
 						std::ostringstream ss;
 						ss << "demand charge period not found for month " << " m and period " << m_month[m].dc_periods[i];
@@ -2450,8 +2450,8 @@ public:
 		{
 			// note that all monthly periods have same tiers (checked in setup)
 			period = m_month[month].ec_periods[0];
-			std::vector<int>::iterator result = std::find(std::begin(m_ec_periods), std::end(m_ec_periods), period);
-			if (result == std::end(m_ec_periods))
+			std::vector<int>::iterator result = std::find(m_ec_periods.begin(), m_ec_periods.end(), period);
+			if (result == m_ec_periods.end())
 			{
 				std::ostringstream ss;
 				ss << "energy charge period not found " << period;
