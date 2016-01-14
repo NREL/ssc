@@ -72,6 +72,7 @@
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate2.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate3.cpp" />
+    <ClCompile Include="..\ssc\cmod_utilityrate4.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcheck.cpp" />
     <ClCompile Include="..\ssc\cmod_wfcsv.cpp" />
     <ClCompile Include="..\ssc\cmod_wfreader.cpp" />

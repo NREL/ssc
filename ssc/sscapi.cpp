@@ -38,6 +38,7 @@ extern module_entry_info
 	cm_entry_utilityrate,
 	cm_entry_utilityrate2,
 	cm_entry_utilityrate3,
+	cm_entry_utilityrate4,
 	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
@@ -80,7 +81,7 @@ extern module_entry_info
 	cm_entry_cb_construction_financing,
 	cm_entry_iscc_design_point,
 	cm_entry_battery,
-    	cm_entry_lcoefcr;
+   	cm_entry_lcoefcr;
 //	cm_entry_pv_get_shade_loss_mpp;
 
 /* official module table */
@@ -101,6 +102,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate,
 	&cm_entry_utilityrate2,
 	&cm_entry_utilityrate3,
+	&cm_entry_utilityrate4,
 	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
