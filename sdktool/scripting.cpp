@@ -234,7 +234,7 @@ void fcall_run( lk::invoke_t &cxt )
 	LK_DOC( "run", 
 		"Starts the computation sequence defined.  If no parameter is given, it runs the currently defined list of compute modules. "
 		"Passing a comma-separated list of compute module names changes the list.", 
-		"([string:compute modules list]):none");
+		"([string:compute modules list]):array of booleans");
 
 	if (cxt.arg_count() > 0)
 		app_frame->SetCurrentCM( cxt.arg(0).as_string() );
