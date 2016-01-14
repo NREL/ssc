@@ -1,9 +1,8 @@
 #include "core.h"
-#include <algorithm>
 #include <sstream>
 
 
-  
+
 static var_info vtab_utility_rate3[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -11,26 +10,34 @@ static var_info vtab_utility_rate3[] = {
 
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "", "*", "INTEGER,MIN=0,MAX=1", "" },
 
-	// First year or lifetime hourly or subhourly
+	/* change to load, grid and gen per 4/9/15 meeting
+	{ SSC_INPUT,        SSC_ARRAY,      "hourly_energy",            "Energy at grid with system",                "kWh",    "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT,        SSC_ARRAY,      "p_with_system",            "Max power at grid with system",                 "kW",     "",                      "",             "?",                         "LENGTH=8760",                   "" },
+	{ SSC_INPUT, SSC_ARRAY, "e_load", "Energy at grid without system (load only)", "kWh", "", "", "?", "LENGTH=8760", "" },
+	{ SSC_INPUT, SSC_ARRAY, "p_load", "Max power at grid without system (load only)", "kW", "", "", "?", "LENGTH=8760", "" },
+	*/
+	// First year hourly or subhourly
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_INPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
+	// optional
+//	{ SSC_INPUT, SSC_ARRAY, "grid", "System power delivered to grid", "kW", "", "Time Series", "", "", "" },
+
+// 4/16/15 meeting update
+// load can be subhourly but hourly_grid is hourly from performance models.
+//	{ SSC_INPUT, SSC_ARRAY, "load", "Electric load", "kW", "", "Time Series", "*", "", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "hourly_grid", "Net grid power", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
 
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Net metering rollover monthly excess energy (kWh),1=Net metering rollover monthly excess dollars ($),2=Non-net metering monthly reconciliation,3=Non-net metering hourly reconciliation", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
-
-	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 1 to user daily kWh e.g. PG&E baseline rates.
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_ub_units", "Energy charge tier upper bound units", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
-	// 0 to use previous version sell rates and 1 to use single sell rate, namely flat sell rate
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at specified sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
-
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_single_sell_rate", "Single TOU sell rate", "$/kWh", "", "", "?=0.0", "", "" },
-
+	
+	{ SSC_INPUT, SSC_NUMBER, "ur_enable_net_metering", "Enable net metering", "0/1", "Enforce net metering", "", "?=1", "BOOLEAN", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Retail and wholesale rates", "", "?=1", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_excess_monthly_energy_or_dollars", "Net metering handling of monthly excess", "0=Rollover energy,1=Rollover dollars", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
@@ -49,26 +56,559 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
 
-	// ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
-	// replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy Charge TOU Inputs", "", "", "", "ur_ec_enable=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_br",       "Period 1 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_sr",       "Period 1 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t1_ub",       "Period 1 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t2_br",       "Period 1 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t2_sr",       "Period 1 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t2_ub",       "Period 1 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t3_br",       "Period 1 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t3_sr",       "Period 1 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t3_ub",       "Period 1 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t4_br",       "Period 1 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t4_sr",       "Period 1 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t4_ub",       "Period 1 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t5_br",       "Period 1 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t5_sr",       "Period 1 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t5_ub",       "Period 1 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t6_br",       "Period 1 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t6_sr",       "Period 1 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p1_t6_ub",       "Period 1 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t1_br",       "Period 2 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t1_sr",       "Period 2 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t1_ub",       "Period 2 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t2_br",       "Period 2 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t2_sr",       "Period 2 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t2_ub",       "Period 2 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t3_br",       "Period 2 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t3_sr",       "Period 2 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t3_ub",       "Period 2 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t4_br",       "Period 2 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t4_sr",       "Period 2 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t4_ub",       "Period 2 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t5_br",       "Period 2 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t5_sr",       "Period 2 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t5_ub",       "Period 2 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t6_br",       "Period 2 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t6_sr",       "Period 2 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p2_t6_ub",       "Period 2 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t1_br",       "Period 3 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t1_sr",       "Period 3 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t1_ub",       "Period 3 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t2_br",       "Period 3 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t2_sr",       "Period 3 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t2_ub",       "Period 3 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t3_br",       "Period 3 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t3_sr",       "Period 3 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t3_ub",       "Period 3 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t4_br",       "Period 3 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t4_sr",       "Period 3 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t4_ub",       "Period 3 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t5_br",       "Period 3 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t5_sr",       "Period 3 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t5_ub",       "Period 3 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t6_br",       "Period 3 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t6_sr",       "Period 3 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p3_t6_ub",       "Period 3 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t1_br",       "Period 4 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t1_sr",       "Period 4 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t1_ub",       "Period 4 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t2_br",       "Period 4 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t2_sr",       "Period 4 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t2_ub",       "Period 4 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t3_br",       "Period 4 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t3_sr",       "Period 4 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t3_ub",       "Period 4 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t4_br",       "Period 4 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t4_sr",       "Period 4 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t4_ub",       "Period 4 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t5_br",       "Period 4 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t5_sr",       "Period 4 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t5_ub",       "Period 4 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t6_br",       "Period 4 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t6_sr",       "Period 4 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p4_t6_ub",       "Period 4 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t1_br",       "Period 5 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t1_sr",       "Period 5 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t1_ub",       "Period 5 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t2_br",       "Period 5 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t2_sr",       "Period 5 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t2_ub",       "Period 5 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t3_br",       "Period 5 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t3_sr",       "Period 5 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t3_ub",       "Period 5 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t4_br",       "Period 5 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t4_sr",       "Period 5 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t4_ub",       "Period 5 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t5_br",       "Period 5 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t5_sr",       "Period 5 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t5_ub",       "Period 5 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t6_br",       "Period 5 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t6_sr",       "Period 5 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p5_t6_ub",       "Period 5 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t1_br",       "Period 6 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t1_sr",       "Period 6 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t1_ub",       "Period 6 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t2_br",       "Period 6 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t2_sr",       "Period 6 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t2_ub",       "Period 6 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t3_br",       "Period 6 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t3_sr",       "Period 6 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t3_ub",       "Period 6 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t4_br",       "Period 6 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t4_sr",       "Period 6 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t4_ub",       "Period 6 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t5_br",       "Period 6 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t5_sr",       "Period 6 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t5_ub",       "Period 6 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t6_br",       "Period 6 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t6_sr",       "Period 6 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p6_t6_ub",       "Period 6 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t1_br",       "Period 7 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t1_sr",       "Period 7 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t1_ub",       "Period 7 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t2_br",       "Period 7 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t2_sr",       "Period 7 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t2_ub",       "Period 7 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t3_br",       "Period 7 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t3_sr",       "Period 7 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t3_ub",       "Period 7 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t4_br",       "Period 7 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t4_sr",       "Period 7 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t4_ub",       "Period 7 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t5_br",       "Period 7 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t5_sr",       "Period 7 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t5_ub",       "Period 7 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t6_br",       "Period 7 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t6_sr",       "Period 7 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p7_t6_ub",       "Period 7 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t1_br",       "Period 8 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t1_sr",       "Period 8 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t1_ub",       "Period 8 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t2_br",       "Period 8 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t2_sr",       "Period 8 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t2_ub",       "Period 8 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t3_br",       "Period 8 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t3_sr",       "Period 8 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t3_ub",       "Period 8 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t4_br",       "Period 8 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t4_sr",       "Period 8 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t4_ub",       "Period 8 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t5_br",       "Period 8 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t5_sr",       "Period 8 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t5_ub",       "Period 8 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t6_br",       "Period 8 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t6_sr",       "Period 8 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p8_t6_ub",       "Period 8 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t1_br",       "Period 9 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t1_sr",       "Period 9 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t1_ub",       "Period 9 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t2_br",       "Period 9 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t2_sr",       "Period 9 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t2_ub",       "Period 9 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t3_br",       "Period 9 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t3_sr",       "Period 9 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t3_ub",       "Period 9 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t4_br",       "Period 9 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t4_sr",       "Period 9 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t4_ub",       "Period 9 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t5_br",       "Period 9 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t5_sr",       "Period 9 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t5_ub",       "Period 9 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t6_br",       "Period 9 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t6_sr",       "Period 9 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p9_t6_ub",       "Period 9 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t1_br",       "Period 10 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t1_sr",       "Period 10 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t1_ub",       "Period 10 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t2_br",       "Period 10 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t2_sr",       "Period 10 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t2_ub",       "Period 10 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t3_br",       "Period 10 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t3_sr",       "Period 10 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t3_ub",       "Period 10 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t4_br",       "Period 10 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t4_sr",       "Period 10 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t4_ub",       "Period 10 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t5_br",       "Period 10 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t5_sr",       "Period 10 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t5_ub",       "Period 10 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t6_br",       "Period 10 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t6_sr",       "Period 10 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p10_t6_ub",       "Period 10 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t1_br",       "Period 11 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t1_sr",       "Period 11 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t1_ub",       "Period 11 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t2_br",       "Period 11 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t2_sr",       "Period 11 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t2_ub",       "Period 11 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t3_br",       "Period 11 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t3_sr",       "Period 11 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t3_ub",       "Period 11 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t4_br",       "Period 11 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t4_sr",       "Period 11 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t4_ub",       "Period 11 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t5_br",       "Period 11 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t5_sr",       "Period 11 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t5_ub",       "Period 11 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t6_br",       "Period 11 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t6_sr",       "Period 11 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p11_t6_ub",       "Period 11 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t1_br",       "Period 12 Tier 1 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t1_sr",       "Period 12 Tier 1 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t1_ub",       "Period 12 Tier 1 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t2_br",       "Period 12 Tier 2 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t2_sr",       "Period 12 Tier 2 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t2_ub",       "Period 12 Tier 2 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t3_br",       "Period 12 Tier 3 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t3_sr",       "Period 12 Tier 3 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t3_ub",       "Period 12 Tier 3 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t4_br",       "Period 12 Tier 4 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t4_sr",       "Period 12 Tier 4 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t4_ub",       "Period 12 Tier 4 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t5_br",       "Period 12 Tier 5 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t5_sr",       "Period 12 Tier 5 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t5_ub",       "Period 12 Tier 5 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t6_br",       "Period 12 Tier 6 Energy Buy Rate",         "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t6_sr",       "Period 12 Tier 6 Energy Sell Rate",        "$/kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_p12_t6_ub",       "Period 12 Tier 6 Maximum Energy Usage",         "kWh",  "",                      "",             "?=0.0",                     "",                              "" },
+
+
+
 	// Demand Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable Demand Charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
-	// TOU demand charge
+
+//	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
+//	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "ur_dc_enable=1", "", "" },
+// optional input for flat monthly demand charge per email from Mike Gleason 1/16/15
 	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "", "", "" },
 
-	// ur_dc_tou_mat has 4 columns period, tier, peak demand (kW), demand charge
-	// replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_tou_mat", "Demand Charge TOU Inputs", "", "", "", "ur_dc_enable=1", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t1_dc",       "Period 1 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t1_ub",       "Period 1 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t2_dc",       "Period 1 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t2_ub",       "Period 1 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t3_dc",       "Period 1 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t3_ub",       "Period 1 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t4_dc",       "Period 1 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t4_ub",       "Period 1 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t5_dc",       "Period 1 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t5_ub",       "Period 1 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t6_dc",       "Period 1 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p1_t6_ub",       "Period 1 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t1_dc",       "Period 2 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t1_ub",       "Period 2 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t2_dc",       "Period 2 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t2_ub",       "Period 2 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t3_dc",       "Period 2 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t3_ub",       "Period 2 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t4_dc",       "Period 2 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t4_ub",       "Period 2 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t5_dc",       "Period 2 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t5_ub",       "Period 2 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t6_dc",       "Period 2 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p2_t6_ub",       "Period 2 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t1_dc",       "Period 3 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t1_ub",       "Period 3 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t2_dc",       "Period 3 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t2_ub",       "Period 3 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t3_dc",       "Period 3 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t3_ub",       "Period 3 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t4_dc",       "Period 3 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t4_ub",       "Period 3 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t5_dc",       "Period 3 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t5_ub",       "Period 3 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t6_dc",       "Period 3 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p3_t6_ub",       "Period 3 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t1_dc",       "Period 4 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t1_ub",       "Period 4 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t2_dc",       "Period 4 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t2_ub",       "Period 4 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t3_dc",       "Period 4 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t3_ub",       "Period 4 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t4_dc",       "Period 4 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t4_ub",       "Period 4 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t5_dc",       "Period 4 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t5_ub",       "Period 4 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t6_dc",       "Period 4 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p4_t6_ub",       "Period 4 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t1_dc",       "Period 5 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t1_ub",       "Period 5 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t2_dc",       "Period 5 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t2_ub",       "Period 5 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t3_dc",       "Period 5 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t3_ub",       "Period 5 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t4_dc",       "Period 5 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t4_ub",       "Period 5 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t5_dc",       "Period 5 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t5_ub",       "Period 5 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t6_dc",       "Period 5 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p5_t6_ub",       "Period 5 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t1_dc",       "Period 6 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t1_ub",       "Period 6 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t2_dc",       "Period 6 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t2_ub",       "Period 6 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t3_dc",       "Period 6 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t3_ub",       "Period 6 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t4_dc",       "Period 6 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t4_ub",       "Period 6 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t5_dc",       "Period 6 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t5_ub",       "Period 6 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t6_dc",       "Period 6 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p6_t6_ub",       "Period 6 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t1_dc",       "Period 7 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t1_ub",       "Period 7 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t2_dc",       "Period 7 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t2_ub",       "Period 7 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t3_dc",       "Period 7 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t3_ub",       "Period 7 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t4_dc",       "Period 7 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t4_ub",       "Period 7 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t5_dc",       "Period 7 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t5_ub",       "Period 7 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t6_dc",       "Period 7 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p7_t6_ub",       "Period 7 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t1_dc",       "Period 8 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t1_ub",       "Period 8 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t2_dc",       "Period 8 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t2_ub",       "Period 8 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t3_dc",       "Period 8 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t3_ub",       "Period 8 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t4_dc",       "Period 8 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t4_ub",       "Period 8 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t5_dc",       "Period 8 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t5_ub",       "Period 8 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t6_dc",       "Period 8 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p8_t6_ub",       "Period 8 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t1_dc",       "Period 9 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t1_ub",       "Period 9 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t2_dc",       "Period 9 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t2_ub",       "Period 9 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t3_dc",       "Period 9 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t3_ub",       "Period 9 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t4_dc",       "Period 9 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t4_ub",       "Period 9 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t5_dc",       "Period 9 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t5_ub",       "Period 9 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t6_dc",       "Period 9 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p9_t6_ub",       "Period 9 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t1_dc",       "Period 10 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t1_ub",       "Period 10 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t2_dc",       "Period 10 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t2_ub",       "Period 10 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t3_dc",       "Period 10 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t3_ub",       "Period 10 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t4_dc",       "Period 10 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t4_ub",       "Period 10 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t5_dc",       "Period 10 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t5_ub",       "Period 10 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t6_dc",       "Period 10 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p10_t6_ub",       "Period 10 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t1_dc",       "Period 11 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t1_ub",       "Period 11 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t2_dc",       "Period 11 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t2_ub",       "Period 11 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t3_dc",       "Period 11 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t3_ub",       "Period 11 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t4_dc",       "Period 11 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t4_ub",       "Period 11 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t5_dc",       "Period 11 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t5_ub",       "Period 11 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t6_dc",       "Period 11 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p11_t6_ub",       "Period 11 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t1_dc",       "Period 12 Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t1_ub",       "Period 12 Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t2_dc",       "Period 12 Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t2_ub",       "Period 12 Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t3_dc",       "Period 12 Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t3_ub",       "Period 12 Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t4_dc",       "Period 12 Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t4_ub",       "Period 12 Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t5_dc",       "Period 12 Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t5_ub",       "Period 12 Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t6_dc",       "Period 12 Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_p12_t6_ub",       "Period 12 Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t1_dc",       "January Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t1_ub",       "January Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t2_dc",       "January Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t2_ub",       "January Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t3_dc",       "January Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t3_ub",       "January Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t4_dc",       "January Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t4_ub",       "January Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t5_dc",       "January Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t5_ub",       "January Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t6_dc",       "January Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jan_t6_ub",       "January Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t1_dc",       "February Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t1_ub",       "February Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t2_dc",       "February Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t2_ub",       "February Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t3_dc",       "February Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t3_ub",       "February Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t4_dc",       "February Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t4_ub",       "February Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t5_dc",       "February Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t5_ub",       "February Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t6_dc",       "February Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_feb_t6_ub",       "February Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t1_dc",       "March Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t1_ub",       "March Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t2_dc",       "March Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t2_ub",       "March Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t3_dc",       "March Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t3_ub",       "March Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t4_dc",       "March Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t4_ub",       "March Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t5_dc",       "March Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t5_ub",       "March Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t6_dc",       "March Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_mar_t6_ub",       "March Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t1_dc",       "April Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t1_ub",       "April Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t2_dc",       "April Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t2_ub",       "April Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t3_dc",       "April Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t3_ub",       "April Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t4_dc",       "April Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t4_ub",       "April Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t5_dc",       "April Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t5_ub",       "April Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t6_dc",       "April Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_apr_t6_ub",       "April Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t1_dc",       "May Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t1_ub",       "May Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t2_dc",       "May Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t2_ub",       "May Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t3_dc",       "May Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t3_ub",       "May Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t4_dc",       "May Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t4_ub",       "May Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t5_dc",       "May Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t5_ub",       "May Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t6_dc",       "May Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_may_t6_ub",       "May Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t1_dc",       "June Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t1_ub",       "June Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t2_dc",       "June Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t2_ub",       "June Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t3_dc",       "June Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t3_ub",       "June Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t4_dc",       "June Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t4_ub",       "June Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t5_dc",       "June Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t5_ub",       "June Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t6_dc",       "June Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jun_t6_ub",       "June Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t1_dc",       "July Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t1_ub",       "July Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t2_dc",       "July Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t2_ub",       "July Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t3_dc",       "July Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t3_ub",       "July Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t4_dc",       "July Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t4_ub",       "July Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t5_dc",       "July Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t5_ub",       "July Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t6_dc",       "July Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_jul_t6_ub",       "July Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t1_dc",       "August Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t1_ub",       "August Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t2_dc",       "August Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t2_ub",       "August Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t3_dc",       "August Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t3_ub",       "August Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t4_dc",       "August Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t4_ub",       "August Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t5_dc",       "August Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t5_ub",       "August Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t6_dc",       "August Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_aug_t6_ub",       "August Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t1_dc",       "September Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t1_ub",       "September Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t2_dc",       "September Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t2_ub",       "September Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t3_dc",       "September Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t3_ub",       "September Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t4_dc",       "September Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t4_ub",       "September Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t5_dc",       "September Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t5_ub",       "September Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t6_dc",       "September Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_sep_t6_ub",       "September Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t1_dc",       "October Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t1_ub",       "October Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t2_dc",       "October Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t2_ub",       "October Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t3_dc",       "October Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t3_ub",       "October Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t4_dc",       "October Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t4_ub",       "October Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t5_dc",       "October Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t5_ub",       "October Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t6_dc",       "October Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_oct_t6_ub",       "October Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t1_dc",       "November Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t1_ub",       "November Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t2_dc",       "November Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t2_ub",       "November Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t3_dc",       "November Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t3_ub",       "November Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t4_dc",       "November Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t4_ub",       "November Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t5_dc",       "November Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t5_ub",       "November Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t6_dc",       "November Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_nov_t6_ub",       "November Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t1_dc",       "December Tier 1 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t1_ub",       "December Tier 1 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t2_dc",       "December Tier 2 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t2_ub",       "December Tier 2 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t3_dc",       "December Tier 3 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t3_ub",       "December Tier 3 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t4_dc",       "December Tier 4 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t4_ub",       "December Tier 4 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t5_dc",       "December Tier 5 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t5_ub",       "December Tier 5 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t6_dc",       "December Tier 6 Demand Charge",         "$/kW",  "",                      "",             "?=0.0",                     "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_dec_t6_ub",       "December Tier 6 Peak Demand",         "kW",  "",                      "",             "?=0.0",                     "",                              "" },
 
 
-	// flat demand charge
-	// ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
-	// replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_flat_mat", "Demand Charge Flat Inputs", "", "", "", "ur_dc_enable=1", "", "" },
 	
-
 	// outputs
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Energy value in each year",     "$",    "",                      "",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Energy value in each year",     "$",    "",                      "Annual",             "*",                         "",   "" },
@@ -164,167 +704,862 @@ static var_info vtab_utility_rate3[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_wo_sys", "Utility bill without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 
-	// convert annual outputs from Arrays to Matrices years x months
-	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_w_sys_ym", "Utility bill with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_wo_sys_ym", "Utility bill without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_fixed_ym", "Fixed charge with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_fixed_ym", "Fixed charge without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_minimum_ym", "Minimum charge with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_minimum_ym", "Minimum charge without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_dc_fixed_ym", "Demand charge with system (fixed)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_dc_tou_ym", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_dc_fixed_ym", "Demand charge without system (fixed)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_dc_tou_ym", "Demand charge without system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_ym", "Energy charge with system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_flat_ym", "Energy charge with system (flat)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_ym", "Energy charge without system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_flat_ym", "Energy charge without system (flat)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-
-
-	// annual sums
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jan", "Utility bill with system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_feb", "Utility bill with system in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_mar", "Utility bill with system in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_apr", "Utility bill with system in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_may", "Utility bill with system in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jun", "Utility bill with system in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_jul", "Utility bill with system in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_aug", "Utility bill with system in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_sep", "Utility bill with system in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_oct", "Utility bill with system in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_nov", "Utility bill with system in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys_dec", "Utility bill with system in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys", "Utility bill with system", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jan", "Utility bill without system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_feb", "Utility bill without system in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_mar", "Utility bill without system in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_apr", "Utility bill without system in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_may", "Utility bill without system in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jun", "Utility bill without system in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_jul", "Utility bill without system in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_aug", "Utility bill without system in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_sep", "Utility bill without system in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_oct", "Utility bill without system in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_nov", "Utility bill without system in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys_dec", "Utility bill without system in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys", "Utility bill without system", "$", "", "Charges by Month", "*", "", "" },
 
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_jan", "Fixed charge with system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_feb", "Fixed charge with system in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_mar", "Fixed charge with system in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_apr", "Fixed charge with system in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_may", "Fixed charge with system in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_jun", "Fixed charge with system in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_jul", "Fixed charge with system in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_aug", "Fixed charge with system in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_sep", "Fixed charge with system in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_oct", "Fixed charge with system in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_nov", "Fixed charge with system in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed_dec", "Fixed charge with system in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed", "Fixed charge with system", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_jan", "Fixed charge without system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_feb", "Fixed charge without system in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_mar", "Fixed charge without system in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_apr", "Fixed charge without system in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_may", "Fixed charge without system in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_jun", "Fixed charge without system in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_jul", "Fixed charge without system in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_aug", "Fixed charge without system in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_sep", "Fixed charge without system in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_oct", "Fixed charge without system in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_nov", "Fixed charge without system in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed_dec", "Fixed charge without system in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed", "Fixed charge without system", "$", "", "Charges by Month", "*", "", "" },
 
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_jan", "Minimum charge with system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_feb", "Minimum charge with system in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_mar", "Minimum charge with system in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_apr", "Minimum charge with system in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_may", "Minimum charge with system in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_jun", "Minimum charge with system in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_jul", "Minimum charge with system in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_aug", "Minimum charge with system in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_sep", "Minimum charge with system in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_oct", "Minimum charge with system in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_nov", "Minimum charge with system in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum_dec", "Minimum charge with system in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum", "Minimum charge with system", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_jan", "Minimum charge without system in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_feb", "Minimum charge without system in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_mar", "Minimum charge without system in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_apr", "Minimum charge without system in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_may", "Minimum charge without system in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_jun", "Minimum charge without system in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_jul", "Minimum charge without system in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_aug", "Minimum charge without system in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_sep", "Minimum charge without system in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_oct", "Minimum charge without system in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_nov", "Minimum charge without system in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum_dec", "Minimum charge without system in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum", "Minimum charge without system", "$", "", "Charges by Month", "*", "", "" },
 
+
+
+
+
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_jan",      "Demand charge with system (fixed) in Jan",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_feb",      "Demand charge with system (fixed) in Feb",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_mar",      "Demand charge with system (fixed) in Mar",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_apr",      "Demand charge with system (fixed) in Apr",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_may",      "Demand charge with system (fixed) in May",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_jun",      "Demand charge with system (fixed) in Jun",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_jul",      "Demand charge with system (fixed) in Jul",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_aug",      "Demand charge with system (fixed) in Aug",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_sep",      "Demand charge with system (fixed) in Sep",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_oct",      "Demand charge with system (fixed) in Oct",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_fixed_nov",      "Demand charge with system (fixed) in Nov",    "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_fixed_dec", "Demand charge with system (fixed) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_fixed", "Demand charge with system (fixed)", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_jan",        "Demand charge with system (TOU) in Jan",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_feb",        "Demand charge with system (TOU) in Feb",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_mar",        "Demand charge with system (TOU) in Mar",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_apr",        "Demand charge with system (TOU) in Apr",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_may",        "Demand charge with system (TOU) in May",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_jun",        "Demand charge with system (TOU) in Jun",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_jul",        "Demand charge with system (TOU) in Jul",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_aug",        "Demand charge with system (TOU) in Aug",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_sep",        "Demand charge with system (TOU) in Sep",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_oct",        "Demand charge with system (TOU) in Oct",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_dc_tou_nov",        "Demand charge with system (TOU) in Nov",      "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou_dec", "Demand charge with system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jan",            "Energy charge with system (TOU) in Jan",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_feb",            "Energy charge with system (TOU) in Feb",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_mar",            "Energy charge with system (TOU) in Mar",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_apr",            "Energy charge with system (TOU) in Apr",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_may",            "Energy charge with system (TOU) in May",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jun",            "Energy charge with system (TOU) in Jun",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_jul",            "Energy charge with system (TOU) in Jul",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_aug",            "Energy charge with system (TOU) in Aug",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_sep",            "Energy charge with system (TOU) in Sep",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_oct",            "Energy charge with system (TOU) in Oct",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "charge_w_sys_ec_nov",            "Energy charge with system (TOU) in Nov",       "$",      "",                      "Charges by Month",             "*",                         "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec", "Energy charge with system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_jan", "Energy charge with system (flat) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_feb", "Energy charge with system (flat) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_mar", "Energy charge with system (flat) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_apr", "Energy charge with system (flat) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_may", "Energy charge with system (flat) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_jun", "Energy charge with system (flat) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_jul", "Energy charge with system (flat) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_aug", "Energy charge with system (flat) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_sep", "Energy charge with system (flat) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_oct", "Energy charge with system (flat) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_nov", "Energy charge with system (flat) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat_dec", "Energy charge with system (flat) in Dec", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat", "Energy charge with system (flat)", "$", "", "Charges by Month", "*", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_jan", "Demand charge without system (fixed) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_feb", "Demand charge without system (fixed) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_mar", "Demand charge without system (fixed) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_apr", "Demand charge without system (fixed) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_may", "Demand charge without system (fixed) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_jun", "Demand charge without system (fixed) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_jul", "Demand charge without system (fixed) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_aug", "Demand charge without system (fixed) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_sep", "Demand charge without system (fixed) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_oct", "Demand charge without system (fixed) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_nov", "Demand charge without system (fixed) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed_dec", "Demand charge without system (fixed) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed", "Demand charge without system (fixed)", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_jan", "Demand charge without system (TOU) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_feb", "Demand charge without system (TOU) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_mar", "Demand charge without system (TOU) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_apr", "Demand charge without system (TOU) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_may", "Demand charge without system (TOU) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_jun", "Demand charge without system (TOU) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_jul", "Demand charge without system (TOU) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_aug", "Demand charge without system (TOU) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_sep", "Demand charge without system (TOU) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_oct", "Demand charge without system (TOU) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_nov", "Demand charge without system (TOU) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou_dec", "Demand charge without system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou", "Demand charge without system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_flat", "Energy charge with system (flat)", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan", "Energy charge without system (TOU) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb", "Energy charge without system (TOU) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar", "Energy charge without system (TOU) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr", "Energy charge without system (TOU) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may", "Energy charge without system (TOU) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun", "Energy charge without system (TOU) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul", "Energy charge without system (TOU) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug", "Energy charge without system (TOU) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep", "Energy charge without system (TOU) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct", "Energy charge without system (TOU) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov", "Energy charge without system (TOU) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec", "Energy charge without system (TOU) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec", "Energy charge without system (TOU)", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_jan", "Energy charge without system (flat) in Jan", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_feb", "Energy charge without system (flat) in Feb", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_mar", "Energy charge without system (flat) in Mar", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_apr", "Energy charge without system (flat) in Apr", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_may", "Energy charge without system (flat) in May", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_jun", "Energy charge without system (flat) in Jun", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_jul", "Energy charge without system (flat) in Jul", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_aug", "Energy charge without system (flat) in Aug", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_sep", "Energy charge without system (flat) in Sep", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_oct", "Energy charge without system (flat) in Oct", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_nov", "Energy charge without system (flat) in Nov", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat_dec", "Energy charge without system (flat) in Dec", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_flat", "Energy charge without system (flat)", "$", "", "Charges by Month", "*", "", "" },
 
 
 
-
-
-
 // for Pablo at IRENA 8/8/15
+// 72 outputs per month for energy
+// 72 outputs per month for charges
+// repeat with and without system for total of 144*2*12=3456 outputs!
 // first year outputs only per email from Paul 8/9/15
 
-// energy charge wo system
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jan_tp", "Energy charge without system (TOU) Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_feb_tp", "Energy charge without system (TOU) Feb", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_mar_tp", "Energy charge without system (TOU) Mar", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_apr_tp", "Energy charge without system (TOU) Apr", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_may_tp", "Energy charge without system (TOU) May", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jun_tp", "Energy charge without system (TOU) Jun", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_jul_tp", "Energy charge without system (TOU) Jul", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_aug_tp", "Energy charge without system (TOU) Aug", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_sep_tp", "Energy charge without system (TOU) Sep", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_oct_tp", "Energy charge without system (TOU) Oct", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_nov_tp", "Energy charge without system (TOU) Nov", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_ec_dec_tp", "Energy charge without system (TOU) Dec", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+// charge wo system
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p1", "Energy charge without system (TOU) in Jan for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p2", "Energy charge without system (TOU) in Jan for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p3", "Energy charge without system (TOU) in Jan for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p4", "Energy charge without system (TOU) in Jan for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p5", "Energy charge without system (TOU) in Jan for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p6", "Energy charge without system (TOU) in Jan for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p7", "Energy charge without system (TOU) in Jan for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p8", "Energy charge without system (TOU) in Jan for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p9", "Energy charge without system (TOU) in Jan for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p10", "Energy charge without system (TOU) in Jan for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p11", "Energy charge without system (TOU) in Jan for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jan_p12", "Energy charge without system (TOU) in Jan for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 
-	// energy use wo system
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_jan_tp", "Energy use without system (TOU) Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_feb_tp", "Energy use without system (TOU) Feb", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_mar_tp", "Energy use without system (TOU) Mar", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_apr_tp", "Energy use without system (TOU) Apr", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_may_tp", "Energy use without system (TOU) May", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_jun_tp", "Energy use without system (TOU) Jun", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_jul_tp", "Energy use without system (TOU) Jul", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_aug_tp", "Energy use without system (TOU) Aug", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_sep_tp", "Energy use without system (TOU) Sep", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_oct_tp", "Energy use without system (TOU) Oct", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_nov_tp", "Energy use without system (TOU) Nov", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_dec_tp", "Energy use without system (TOU) Dec", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p1", "Energy charge without system (TOU) in Feb for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p2", "Energy charge without system (TOU) in Feb for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p3", "Energy charge without system (TOU) in Feb for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p4", "Energy charge without system (TOU) in Feb for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p5", "Energy charge without system (TOU) in Feb for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p6", "Energy charge without system (TOU) in Feb for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p7", "Energy charge without system (TOU) in Feb for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p8", "Energy charge without system (TOU) in Feb for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p9", "Energy charge without system (TOU) in Feb for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p10", "Energy charge without system (TOU) in Feb for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p11", "Energy charge without system (TOU) in Feb for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_feb_p12", "Energy charge without system (TOU) in Feb for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p1", "Energy charge without system (TOU) in Mar for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p2", "Energy charge without system (TOU) in Mar for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p3", "Energy charge without system (TOU) in Mar for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p4", "Energy charge without system (TOU) in Mar for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p5", "Energy charge without system (TOU) in Mar for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p6", "Energy charge without system (TOU) in Mar for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p7", "Energy charge without system (TOU) in Mar for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p8", "Energy charge without system (TOU) in Mar for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p9", "Energy charge without system (TOU) in Mar for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p10", "Energy charge without system (TOU) in Mar for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p11", "Energy charge without system (TOU) in Mar for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_mar_p12", "Energy charge without system (TOU) in Mar for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p1", "Energy charge without system (TOU) in Apr for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p2", "Energy charge without system (TOU) in Apr for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p3", "Energy charge without system (TOU) in Apr for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p4", "Energy charge without system (TOU) in Apr for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p5", "Energy charge without system (TOU) in Apr for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p6", "Energy charge without system (TOU) in Apr for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p7", "Energy charge without system (TOU) in Apr for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p8", "Energy charge without system (TOU) in Apr for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p9", "Energy charge without system (TOU) in Apr for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p10", "Energy charge without system (TOU) in Apr for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p11", "Energy charge without system (TOU) in Apr for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_apr_p12", "Energy charge without system (TOU) in Apr for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p1", "Energy charge without system (TOU) in May for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p2", "Energy charge without system (TOU) in May for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p3", "Energy charge without system (TOU) in May for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p4", "Energy charge without system (TOU) in May for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p5", "Energy charge without system (TOU) in May for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p6", "Energy charge without system (TOU) in May for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p7", "Energy charge without system (TOU) in May for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p8", "Energy charge without system (TOU) in May for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p9", "Energy charge without system (TOU) in May for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p10", "Energy charge without system (TOU) in May for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p11", "Energy charge without system (TOU) in May for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_may_p12", "Energy charge without system (TOU) in May for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p1", "Energy charge without system (TOU) in Jun for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p2", "Energy charge without system (TOU) in Jun for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p3", "Energy charge without system (TOU) in Jun for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p4", "Energy charge without system (TOU) in Jun for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p5", "Energy charge without system (TOU) in Jun for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p6", "Energy charge without system (TOU) in Jun for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p7", "Energy charge without system (TOU) in Jun for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p8", "Energy charge without system (TOU) in Jun for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p9", "Energy charge without system (TOU) in Jun for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p10", "Energy charge without system (TOU) in Jun for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p11", "Energy charge without system (TOU) in Jun for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jun_p12", "Energy charge without system (TOU) in Jun for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p1", "Energy charge without system (TOU) in Jul for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p2", "Energy charge without system (TOU) in Jul for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p3", "Energy charge without system (TOU) in Jul for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p4", "Energy charge without system (TOU) in Jul for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p5", "Energy charge without system (TOU) in Jul for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p6", "Energy charge without system (TOU) in Jul for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p7", "Energy charge without system (TOU) in Jul for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p8", "Energy charge without system (TOU) in Jul for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p9", "Energy charge without system (TOU) in Jul for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p10", "Energy charge without system (TOU) in Jul for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p11", "Energy charge without system (TOU) in Jul for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_jul_p12", "Energy charge without system (TOU) in Jul for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p1", "Energy charge without system (TOU) in Aug for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p2", "Energy charge without system (TOU) in Aug for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p3", "Energy charge without system (TOU) in Aug for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p4", "Energy charge without system (TOU) in Aug for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p5", "Energy charge without system (TOU) in Aug for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p6", "Energy charge without system (TOU) in Aug for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p7", "Energy charge without system (TOU) in Aug for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p8", "Energy charge without system (TOU) in Aug for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p9", "Energy charge without system (TOU) in Aug for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p10", "Energy charge without system (TOU) in Aug for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p11", "Energy charge without system (TOU) in Aug for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_aug_p12", "Energy charge without system (TOU) in Aug for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p1", "Energy charge without system (TOU) in Sep for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p2", "Energy charge without system (TOU) in Sep for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p3", "Energy charge without system (TOU) in Sep for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p4", "Energy charge without system (TOU) in Sep for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p5", "Energy charge without system (TOU) in Sep for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p6", "Energy charge without system (TOU) in Sep for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p7", "Energy charge without system (TOU) in Sep for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p8", "Energy charge without system (TOU) in Sep for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p9", "Energy charge without system (TOU) in Sep for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p10", "Energy charge without system (TOU) in Sep for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p11", "Energy charge without system (TOU) in Sep for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_sep_p12", "Energy charge without system (TOU) in Sep for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p1", "Energy charge without system (TOU) in Oct for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p2", "Energy charge without system (TOU) in Oct for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p3", "Energy charge without system (TOU) in Oct for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p4", "Energy charge without system (TOU) in Oct for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p5", "Energy charge without system (TOU) in Oct for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p6", "Energy charge without system (TOU) in Oct for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p7", "Energy charge without system (TOU) in Oct for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p8", "Energy charge without system (TOU) in Oct for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p9", "Energy charge without system (TOU) in Oct for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p10", "Energy charge without system (TOU) in Oct for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p11", "Energy charge without system (TOU) in Oct for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_oct_p12", "Energy charge without system (TOU) in Oct for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p1", "Energy charge without system (TOU) in Nov for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p2", "Energy charge without system (TOU) in Nov for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p3", "Energy charge without system (TOU) in Nov for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p4", "Energy charge without system (TOU) in Nov for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p5", "Energy charge without system (TOU) in Nov for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p6", "Energy charge without system (TOU) in Nov for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p7", "Energy charge without system (TOU) in Nov for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p8", "Energy charge without system (TOU) in Nov for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p9", "Energy charge without system (TOU) in Nov for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p10", "Energy charge without system (TOU) in Nov for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p11", "Energy charge without system (TOU) in Nov for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_nov_p12", "Energy charge without system (TOU) in Nov for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p1", "Energy charge without system (TOU) in Dec for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p2", "Energy charge without system (TOU) in Dec for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p3", "Energy charge without system (TOU) in Dec for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p4", "Energy charge without system (TOU) in Dec for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p5", "Energy charge without system (TOU) in Dec for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p6", "Energy charge without system (TOU) in Dec for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p7", "Energy charge without system (TOU) in Dec for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p8", "Energy charge without system (TOU) in Dec for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p9", "Energy charge without system (TOU) in Dec for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p10", "Energy charge without system (TOU) in Dec for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p11", "Energy charge without system (TOU) in Dec for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_ec_dec_p12", "Energy charge without system (TOU) in Dec for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
 
 
-	// energy charge w system
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_jan_tp", "Energy charge with system (TOU) Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_feb_tp", "Energy charge with system (TOU) Feb", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_mar_tp", "Energy charge with system (TOU) Mar", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_apr_tp", "Energy charge with system (TOU) Apr", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_may_tp", "Energy charge with system (TOU) May", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_jun_tp", "Energy charge with system (TOU) Jun", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_jul_tp", "Energy charge with system (TOU) Jul", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_aug_tp", "Energy charge with system (TOU) Aug", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_sep_tp", "Energy charge with system (TOU) Sep", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_oct_tp", "Energy charge with system (TOU) Oct", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_nov_tp", "Energy charge with system (TOU) Nov", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_dec_tp", "Energy charge with system (TOU) Dec", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+// energy wo system
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p1", "Energy without system (TOU) in Jan for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p2", "Energy without system (TOU) in Jan for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p3", "Energy without system (TOU) in Jan for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p4", "Energy without system (TOU) in Jan for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p5", "Energy without system (TOU) in Jan for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p6", "Energy without system (TOU) in Jan for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p7", "Energy without system (TOU) in Jan for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p8", "Energy without system (TOU) in Jan for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p9", "Energy without system (TOU) in Jan for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p10", "Energy without system (TOU) in Jan for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p11", "Energy without system (TOU) in Jan for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jan_p12", "Energy without system (TOU) in Jan for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
 
-	// energy use w system
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jan_tp", "Energy use with system (TOU) Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_feb_tp", "Energy use with system (TOU) Feb", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_mar_tp", "Energy use with system (TOU) Mar", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_apr_tp", "Energy use with system (TOU) Apr", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_may_tp", "Energy use with system (TOU) May", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jun_tp", "Energy use with system (TOU) Jun", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jul_tp", "Energy use with system (TOU) Jul", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_aug_tp", "Energy use with system (TOU) Aug", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_sep_tp", "Energy use with system (TOU) Sep", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_oct_tp", "Energy use with system (TOU) Oct", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_nov_tp", "Energy use with system (TOU) Nov", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_dec_tp", "Energy use with system (TOU) Dec", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p1", "Energy without system (TOU) in Feb for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p2", "Energy without system (TOU) in Feb for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p3", "Energy without system (TOU) in Feb for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p4", "Energy without system (TOU) in Feb for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p5", "Energy without system (TOU) in Feb for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p6", "Energy without system (TOU) in Feb for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p7", "Energy without system (TOU) in Feb for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p8", "Energy without system (TOU) in Feb for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p9", "Energy without system (TOU) in Feb for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p10", "Energy without system (TOU) in Feb for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p11", "Energy without system (TOU) in Feb for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_feb_p12", "Energy without system (TOU) in Feb for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p1", "Energy without system (TOU) in Mar for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p2", "Energy without system (TOU) in Mar for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p3", "Energy without system (TOU) in Mar for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p4", "Energy without system (TOU) in Mar for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p5", "Energy without system (TOU) in Mar for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p6", "Energy without system (TOU) in Mar for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p7", "Energy without system (TOU) in Mar for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p8", "Energy without system (TOU) in Mar for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p9", "Energy without system (TOU) in Mar for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p10", "Energy without system (TOU) in Mar for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p11", "Energy without system (TOU) in Mar for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_mar_p12", "Energy without system (TOU) in Mar for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p1", "Energy without system (TOU) in Apr for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p2", "Energy without system (TOU) in Apr for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p3", "Energy without system (TOU) in Apr for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p4", "Energy without system (TOU) in Apr for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p5", "Energy without system (TOU) in Apr for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p6", "Energy without system (TOU) in Apr for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p7", "Energy without system (TOU) in Apr for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p8", "Energy without system (TOU) in Apr for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p9", "Energy without system (TOU) in Apr for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p10", "Energy without system (TOU) in Apr for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p11", "Energy without system (TOU) in Apr for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_apr_p12", "Energy without system (TOU) in Apr for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p1", "Energy without system (TOU) in May for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p2", "Energy without system (TOU) in May for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p3", "Energy without system (TOU) in May for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p4", "Energy without system (TOU) in May for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p5", "Energy without system (TOU) in May for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p6", "Energy without system (TOU) in May for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p7", "Energy without system (TOU) in May for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p8", "Energy without system (TOU) in May for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p9", "Energy without system (TOU) in May for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p10", "Energy without system (TOU) in May for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p11", "Energy without system (TOU) in May for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_may_p12", "Energy without system (TOU) in May for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p1", "Energy without system (TOU) in Jun for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p2", "Energy without system (TOU) in Jun for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p3", "Energy without system (TOU) in Jun for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p4", "Energy without system (TOU) in Jun for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p5", "Energy without system (TOU) in Jun for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p6", "Energy without system (TOU) in Jun for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p7", "Energy without system (TOU) in Jun for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p8", "Energy without system (TOU) in Jun for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p9", "Energy without system (TOU) in Jun for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p10", "Energy without system (TOU) in Jun for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p11", "Energy without system (TOU) in Jun for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jun_p12", "Energy without system (TOU) in Jun for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p1", "Energy without system (TOU) in Jul for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p2", "Energy without system (TOU) in Jul for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p3", "Energy without system (TOU) in Jul for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p4", "Energy without system (TOU) in Jul for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p5", "Energy without system (TOU) in Jul for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p6", "Energy without system (TOU) in Jul for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p7", "Energy without system (TOU) in Jul for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p8", "Energy without system (TOU) in Jul for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p9", "Energy without system (TOU) in Jul for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p10", "Energy without system (TOU) in Jul for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p11", "Energy without system (TOU) in Jul for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_jul_p12", "Energy without system (TOU) in Jul for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p1", "Energy without system (TOU) in Aug for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p2", "Energy without system (TOU) in Aug for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p3", "Energy without system (TOU) in Aug for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p4", "Energy without system (TOU) in Aug for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p5", "Energy without system (TOU) in Aug for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p6", "Energy without system (TOU) in Aug for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p7", "Energy without system (TOU) in Aug for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p8", "Energy without system (TOU) in Aug for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p9", "Energy without system (TOU) in Aug for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p10", "Energy without system (TOU) in Aug for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p11", "Energy without system (TOU) in Aug for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_aug_p12", "Energy without system (TOU) in Aug for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p1", "Energy without system (TOU) in Sep for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p2", "Energy without system (TOU) in Sep for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p3", "Energy without system (TOU) in Sep for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p4", "Energy without system (TOU) in Sep for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p5", "Energy without system (TOU) in Sep for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p6", "Energy without system (TOU) in Sep for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p7", "Energy without system (TOU) in Sep for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p8", "Energy without system (TOU) in Sep for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p9", "Energy without system (TOU) in Sep for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p10", "Energy without system (TOU) in Sep for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p11", "Energy without system (TOU) in Sep for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_sep_p12", "Energy without system (TOU) in Sep for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p1", "Energy without system (TOU) in Oct for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p2", "Energy without system (TOU) in Oct for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p3", "Energy without system (TOU) in Oct for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p4", "Energy without system (TOU) in Oct for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p5", "Energy without system (TOU) in Oct for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p6", "Energy without system (TOU) in Oct for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p7", "Energy without system (TOU) in Oct for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p8", "Energy without system (TOU) in Oct for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p9", "Energy without system (TOU) in Oct for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p10", "Energy without system (TOU) in Oct for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p11", "Energy without system (TOU) in Oct for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_oct_p12", "Energy without system (TOU) in Oct for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p1", "Energy without system (TOU) in Nov for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p2", "Energy without system (TOU) in Nov for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p3", "Energy without system (TOU) in Nov for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p4", "Energy without system (TOU) in Nov for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p5", "Energy without system (TOU) in Nov for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p6", "Energy without system (TOU) in Nov for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p7", "Energy without system (TOU) in Nov for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p8", "Energy without system (TOU) in Nov for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p9", "Energy without system (TOU) in Nov for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p10", "Energy without system (TOU) in Nov for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p11", "Energy without system (TOU) in Nov for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_nov_p12", "Energy without system (TOU) in Nov for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p1", "Energy without system (TOU) in Dec for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p2", "Energy without system (TOU) in Dec for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p3", "Energy without system (TOU) in Dec for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p4", "Energy without system (TOU) in Dec for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p5", "Energy without system (TOU) in Dec for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p6", "Energy without system (TOU) in Dec for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p7", "Energy without system (TOU) in Dec for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p8", "Energy without system (TOU) in Dec for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p9", "Energy without system (TOU) in Dec for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p10", "Energy without system (TOU) in Dec for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p11", "Energy without system (TOU) in Dec for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_wo_sys_ec_dec_p12", "Energy without system (TOU) in Dec for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	// charge w system
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p1", "Energy charge with system (TOU) in Jan for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p2", "Energy charge with system (TOU) in Jan for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p3", "Energy charge with system (TOU) in Jan for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p4", "Energy charge with system (TOU) in Jan for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p5", "Energy charge with system (TOU) in Jan for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p6", "Energy charge with system (TOU) in Jan for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p7", "Energy charge with system (TOU) in Jan for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p8", "Energy charge with system (TOU) in Jan for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p9", "Energy charge with system (TOU) in Jan for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p10", "Energy charge with system (TOU) in Jan for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p11", "Energy charge with system (TOU) in Jan for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jan_p12", "Energy charge with system (TOU) in Jan for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p1", "Energy charge with system (TOU) in Feb for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p2", "Energy charge with system (TOU) in Feb for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p3", "Energy charge with system (TOU) in Feb for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p4", "Energy charge with system (TOU) in Feb for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p5", "Energy charge with system (TOU) in Feb for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p6", "Energy charge with system (TOU) in Feb for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p7", "Energy charge with system (TOU) in Feb for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p8", "Energy charge with system (TOU) in Feb for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p9", "Energy charge with system (TOU) in Feb for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p10", "Energy charge with system (TOU) in Feb for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p11", "Energy charge with system (TOU) in Feb for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_feb_p12", "Energy charge with system (TOU) in Feb for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p1", "Energy charge with system (TOU) in Mar for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p2", "Energy charge with system (TOU) in Mar for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p3", "Energy charge with system (TOU) in Mar for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p4", "Energy charge with system (TOU) in Mar for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p5", "Energy charge with system (TOU) in Mar for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p6", "Energy charge with system (TOU) in Mar for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p7", "Energy charge with system (TOU) in Mar for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p8", "Energy charge with system (TOU) in Mar for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p9", "Energy charge with system (TOU) in Mar for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p10", "Energy charge with system (TOU) in Mar for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p11", "Energy charge with system (TOU) in Mar for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_mar_p12", "Energy charge with system (TOU) in Mar for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p1", "Energy charge with system (TOU) in Apr for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p2", "Energy charge with system (TOU) in Apr for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p3", "Energy charge with system (TOU) in Apr for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p4", "Energy charge with system (TOU) in Apr for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p5", "Energy charge with system (TOU) in Apr for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p6", "Energy charge with system (TOU) in Apr for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p7", "Energy charge with system (TOU) in Apr for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p8", "Energy charge with system (TOU) in Apr for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p9", "Energy charge with system (TOU) in Apr for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p10", "Energy charge with system (TOU) in Apr for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p11", "Energy charge with system (TOU) in Apr for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_apr_p12", "Energy charge with system (TOU) in Apr for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p1", "Energy charge with system (TOU) in May for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p2", "Energy charge with system (TOU) in May for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p3", "Energy charge with system (TOU) in May for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p4", "Energy charge with system (TOU) in May for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p5", "Energy charge with system (TOU) in May for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p6", "Energy charge with system (TOU) in May for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p7", "Energy charge with system (TOU) in May for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p8", "Energy charge with system (TOU) in May for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p9", "Energy charge with system (TOU) in May for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p10", "Energy charge with system (TOU) in May for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p11", "Energy charge with system (TOU) in May for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_may_p12", "Energy charge with system (TOU) in May for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p1", "Energy charge with system (TOU) in Jun for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p2", "Energy charge with system (TOU) in Jun for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p3", "Energy charge with system (TOU) in Jun for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p4", "Energy charge with system (TOU) in Jun for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p5", "Energy charge with system (TOU) in Jun for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p6", "Energy charge with system (TOU) in Jun for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p7", "Energy charge with system (TOU) in Jun for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p8", "Energy charge with system (TOU) in Jun for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p9", "Energy charge with system (TOU) in Jun for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p10", "Energy charge with system (TOU) in Jun for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p11", "Energy charge with system (TOU) in Jun for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jun_p12", "Energy charge with system (TOU) in Jun for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p1", "Energy charge with system (TOU) in Jul for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p2", "Energy charge with system (TOU) in Jul for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p3", "Energy charge with system (TOU) in Jul for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p4", "Energy charge with system (TOU) in Jul for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p5", "Energy charge with system (TOU) in Jul for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p6", "Energy charge with system (TOU) in Jul for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p7", "Energy charge with system (TOU) in Jul for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p8", "Energy charge with system (TOU) in Jul for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p9", "Energy charge with system (TOU) in Jul for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p10", "Energy charge with system (TOU) in Jul for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p11", "Energy charge with system (TOU) in Jul for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_jul_p12", "Energy charge with system (TOU) in Jul for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p1", "Energy charge with system (TOU) in Aug for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p2", "Energy charge with system (TOU) in Aug for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p3", "Energy charge with system (TOU) in Aug for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p4", "Energy charge with system (TOU) in Aug for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p5", "Energy charge with system (TOU) in Aug for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p6", "Energy charge with system (TOU) in Aug for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p7", "Energy charge with system (TOU) in Aug for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p8", "Energy charge with system (TOU) in Aug for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p9", "Energy charge with system (TOU) in Aug for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p10", "Energy charge with system (TOU) in Aug for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p11", "Energy charge with system (TOU) in Aug for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_aug_p12", "Energy charge with system (TOU) in Aug for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p1", "Energy charge with system (TOU) in Sep for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p2", "Energy charge with system (TOU) in Sep for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p3", "Energy charge with system (TOU) in Sep for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p4", "Energy charge with system (TOU) in Sep for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p5", "Energy charge with system (TOU) in Sep for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p6", "Energy charge with system (TOU) in Sep for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p7", "Energy charge with system (TOU) in Sep for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p8", "Energy charge with system (TOU) in Sep for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p9", "Energy charge with system (TOU) in Sep for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p10", "Energy charge with system (TOU) in Sep for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p11", "Energy charge with system (TOU) in Sep for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_sep_p12", "Energy charge with system (TOU) in Sep for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p1", "Energy charge with system (TOU) in Oct for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p2", "Energy charge with system (TOU) in Oct for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p3", "Energy charge with system (TOU) in Oct for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p4", "Energy charge with system (TOU) in Oct for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p5", "Energy charge with system (TOU) in Oct for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p6", "Energy charge with system (TOU) in Oct for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p7", "Energy charge with system (TOU) in Oct for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p8", "Energy charge with system (TOU) in Oct for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p9", "Energy charge with system (TOU) in Oct for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p10", "Energy charge with system (TOU) in Oct for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p11", "Energy charge with system (TOU) in Oct for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_oct_p12", "Energy charge with system (TOU) in Oct for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p1", "Energy charge with system (TOU) in Nov for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p2", "Energy charge with system (TOU) in Nov for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p3", "Energy charge with system (TOU) in Nov for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p4", "Energy charge with system (TOU) in Nov for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p5", "Energy charge with system (TOU) in Nov for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p6", "Energy charge with system (TOU) in Nov for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p7", "Energy charge with system (TOU) in Nov for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p8", "Energy charge with system (TOU) in Nov for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p9", "Energy charge with system (TOU) in Nov for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p10", "Energy charge with system (TOU) in Nov for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p11", "Energy charge with system (TOU) in Nov for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_nov_p12", "Energy charge with system (TOU) in Nov for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p1", "Energy charge with system (TOU) in Dec for period 1 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p2", "Energy charge with system (TOU) in Dec for period 2 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p3", "Energy charge with system (TOU) in Dec for period 3 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p4", "Energy charge with system (TOU) in Dec for period 4 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p5", "Energy charge with system (TOU) in Dec for period 5 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p6", "Energy charge with system (TOU) in Dec for period 6 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p7", "Energy charge with system (TOU) in Dec for period 7 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p8", "Energy charge with system (TOU) in Dec for period 8 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p9", "Energy charge with system (TOU) in Dec for period 9 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p10", "Energy charge with system (TOU) in Dec for period 10 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p11", "Energy charge with system (TOU) in Dec for period 11 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec_dec_p12", "Energy charge with system (TOU) in Dec for period 12 and tiers 1 through 6", "$", "", "Charges by Month", "*", "", "" },
+
+
+	// energy w system
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p1", "Energy with system (TOU) in Jan for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p2", "Energy with system (TOU) in Jan for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p3", "Energy with system (TOU) in Jan for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p4", "Energy with system (TOU) in Jan for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p5", "Energy with system (TOU) in Jan for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p6", "Energy with system (TOU) in Jan for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p7", "Energy with system (TOU) in Jan for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p8", "Energy with system (TOU) in Jan for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p9", "Energy with system (TOU) in Jan for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p10", "Energy with system (TOU) in Jan for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p11", "Energy with system (TOU) in Jan for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jan_p12", "Energy with system (TOU) in Jan for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p1", "Energy with system (TOU) in Feb for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p2", "Energy with system (TOU) in Feb for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p3", "Energy with system (TOU) in Feb for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p4", "Energy with system (TOU) in Feb for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p5", "Energy with system (TOU) in Feb for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p6", "Energy with system (TOU) in Feb for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p7", "Energy with system (TOU) in Feb for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p8", "Energy with system (TOU) in Feb for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p9", "Energy with system (TOU) in Feb for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p10", "Energy with system (TOU) in Feb for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p11", "Energy with system (TOU) in Feb for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_feb_p12", "Energy with system (TOU) in Feb for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p1", "Energy with system (TOU) in Mar for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p2", "Energy with system (TOU) in Mar for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p3", "Energy with system (TOU) in Mar for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p4", "Energy with system (TOU) in Mar for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p5", "Energy with system (TOU) in Mar for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p6", "Energy with system (TOU) in Mar for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p7", "Energy with system (TOU) in Mar for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p8", "Energy with system (TOU) in Mar for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p9", "Energy with system (TOU) in Mar for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p10", "Energy with system (TOU) in Mar for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p11", "Energy with system (TOU) in Mar for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_mar_p12", "Energy with system (TOU) in Mar for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p1", "Energy with system (TOU) in Apr for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p2", "Energy with system (TOU) in Apr for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p3", "Energy with system (TOU) in Apr for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p4", "Energy with system (TOU) in Apr for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p5", "Energy with system (TOU) in Apr for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p6", "Energy with system (TOU) in Apr for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p7", "Energy with system (TOU) in Apr for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p8", "Energy with system (TOU) in Apr for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p9", "Energy with system (TOU) in Apr for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p10", "Energy with system (TOU) in Apr for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p11", "Energy with system (TOU) in Apr for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_apr_p12", "Energy with system (TOU) in Apr for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p1", "Energy with system (TOU) in May for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p2", "Energy with system (TOU) in May for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p3", "Energy with system (TOU) in May for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p4", "Energy with system (TOU) in May for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p5", "Energy with system (TOU) in May for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p6", "Energy with system (TOU) in May for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p7", "Energy with system (TOU) in May for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p8", "Energy with system (TOU) in May for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p9", "Energy with system (TOU) in May for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p10", "Energy with system (TOU) in May for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p11", "Energy with system (TOU) in May for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_may_p12", "Energy with system (TOU) in May for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p1", "Energy with system (TOU) in Jun for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p2", "Energy with system (TOU) in Jun for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p3", "Energy with system (TOU) in Jun for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p4", "Energy with system (TOU) in Jun for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p5", "Energy with system (TOU) in Jun for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p6", "Energy with system (TOU) in Jun for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p7", "Energy with system (TOU) in Jun for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p8", "Energy with system (TOU) in Jun for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p9", "Energy with system (TOU) in Jun for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p10", "Energy with system (TOU) in Jun for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p11", "Energy with system (TOU) in Jun for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jun_p12", "Energy with system (TOU) in Jun for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p1", "Energy with system (TOU) in Jul for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p2", "Energy with system (TOU) in Jul for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p3", "Energy with system (TOU) in Jul for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p4", "Energy with system (TOU) in Jul for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p5", "Energy with system (TOU) in Jul for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p6", "Energy with system (TOU) in Jul for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p7", "Energy with system (TOU) in Jul for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p8", "Energy with system (TOU) in Jul for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p9", "Energy with system (TOU) in Jul for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p10", "Energy with system (TOU) in Jul for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p11", "Energy with system (TOU) in Jul for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_jul_p12", "Energy with system (TOU) in Jul for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p1", "Energy with system (TOU) in Aug for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p2", "Energy with system (TOU) in Aug for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p3", "Energy with system (TOU) in Aug for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p4", "Energy with system (TOU) in Aug for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p5", "Energy with system (TOU) in Aug for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p6", "Energy with system (TOU) in Aug for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p7", "Energy with system (TOU) in Aug for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p8", "Energy with system (TOU) in Aug for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p9", "Energy with system (TOU) in Aug for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p10", "Energy with system (TOU) in Aug for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p11", "Energy with system (TOU) in Aug for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_aug_p12", "Energy with system (TOU) in Aug for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p1", "Energy with system (TOU) in Sep for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p2", "Energy with system (TOU) in Sep for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p3", "Energy with system (TOU) in Sep for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p4", "Energy with system (TOU) in Sep for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p5", "Energy with system (TOU) in Sep for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p6", "Energy with system (TOU) in Sep for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p7", "Energy with system (TOU) in Sep for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p8", "Energy with system (TOU) in Sep for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p9", "Energy with system (TOU) in Sep for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p10", "Energy with system (TOU) in Sep for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p11", "Energy with system (TOU) in Sep for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_sep_p12", "Energy with system (TOU) in Sep for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p1", "Energy with system (TOU) in Oct for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p2", "Energy with system (TOU) in Oct for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p3", "Energy with system (TOU) in Oct for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p4", "Energy with system (TOU) in Oct for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p5", "Energy with system (TOU) in Oct for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p6", "Energy with system (TOU) in Oct for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p7", "Energy with system (TOU) in Oct for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p8", "Energy with system (TOU) in Oct for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p9", "Energy with system (TOU) in Oct for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p10", "Energy with system (TOU) in Oct for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p11", "Energy with system (TOU) in Oct for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_oct_p12", "Energy with system (TOU) in Oct for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p1", "Energy with system (TOU) in Nov for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p2", "Energy with system (TOU) in Nov for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p3", "Energy with system (TOU) in Nov for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p4", "Energy with system (TOU) in Nov for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p5", "Energy with system (TOU) in Nov for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p6", "Energy with system (TOU) in Nov for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p7", "Energy with system (TOU) in Nov for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p8", "Energy with system (TOU) in Nov for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p9", "Energy with system (TOU) in Nov for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p10", "Energy with system (TOU) in Nov for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p11", "Energy with system (TOU) in Nov for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_nov_p12", "Energy with system (TOU) in Nov for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p1", "Energy with system (TOU) in Dec for period 1 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p2", "Energy with system (TOU) in Dec for period 2 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p3", "Energy with system (TOU) in Dec for period 3 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p4", "Energy with system (TOU) in Dec for period 4 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p5", "Energy with system (TOU) in Dec for period 5 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p6", "Energy with system (TOU) in Dec for period 6 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p7", "Energy with system (TOU) in Dec for period 7 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p8", "Energy with system (TOU) in Dec for period 8 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p9", "Energy with system (TOU) in Dec for period 9 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p10", "Energy with system (TOU) in Dec for period 10 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p11", "Energy with system (TOU) in Dec for period 11 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "energy_w_sys_ec_dec_p12", "Energy with system (TOU) in Dec for period 12 and tiers 1 through 6", "kWh", "", "Charges by Month", "*", "", "" },
 
 
 
 	var_info_invalid };
 
 
-class ur_month
-{
-public:
-	// period numbers
-	std::vector<int> ec_periods;
-	std::vector<int> dc_periods;
-	// monthly values
-	// net energy use per month
-	ssc_number_t energy_net;
-	// hours per period per month
-	int hours_per_month;
-	// energy use period and tier
-	util::matrix_t<ssc_number_t> ec_energy_use;
-	// peak demand per period
-	std::vector<ssc_number_t> dc_tou_peak;
-	std::vector<int> dc_tou_peak_hour;
-	ssc_number_t dc_flat_peak;
-	int dc_flat_peak_hour;
-	// energy tou charges
-	util::matrix_t<ssc_number_t>  ec_tou_ub;
-	util::matrix_t<ssc_number_t>  ec_tou_br;
-	util::matrix_t<ssc_number_t>  ec_tou_sr;
-	util::matrix_t<int>  ec_tou_units;
-	// calculated charges per period and tier
-	util::matrix_t<ssc_number_t>  ec_charge;
-	// demand tou charges
-	util::matrix_t<ssc_number_t>  dc_tou_ub;
-	util::matrix_t<ssc_number_t>  dc_tou_ch;
-	// demand flat charges
-	std::vector<ssc_number_t>  dc_flat_ub;
-	std::vector<ssc_number_t>  dc_flat_ch;
-	// calculated charges per period
-	std::vector<double>  dc_tou_charge;
-	ssc_number_t dc_flat_charge;
-};
+
 
 class cm_utilityrate3 : public compute_module
 {
 private:
-	// schedule outputs
-	std::vector<int> m_ec_tou_sched;
-	std::vector<int> m_dc_tou_sched;
-	std::vector<ur_month> m_month;
-	std::vector<int> m_ec_periods; // period number
-	std::vector<std::vector<int> >  m_ec_periods_tiers; // tier numbers
-	std::vector<int> m_dc_tou_periods; // period number
-	std::vector<std::vector<int> >  m_dc_tou_periods_tiers; // tier numbers
-	std::vector<std::vector<int> >  m_dc_flat_tiers; // tier numbers for each month of flat demand charge
-
-
 public:
 	cm_utilityrate3()
 	{
@@ -429,7 +1664,7 @@ public:
 
 
 		if (is_assigned("load"))
-		{ // hourly or sub hourly loads for single year
+		{ // hourly or sub hourly loads for single yer
 			bload = true;
 			pload = as_array("load", &nrec_load);
 			step_per_hour_load = nrec_load / 8760;
@@ -490,6 +1725,8 @@ public:
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
 			monthly_elec_needed_from_grid(12),
 			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12);
+		ssc_number_t monthly_e_use_period_tier[12][12][6],
+			monthly_charge_period_tier[12][12][6];
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
@@ -500,122 +1737,231 @@ public:
 		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears+1);
 		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears+1);
 
-		// matrices
-		ssc_number_t *utility_bill_w_sys_ym = allocate("utility_bill_w_sys_ym", nyears + 1, 12);
-		ssc_number_t *utility_bill_wo_sys_ym = allocate("utility_bill_wo_sys_ym", nyears + 1, 12);
-		ssc_number_t *ch_w_sys_dc_fixed_ym = allocate("charge_w_sys_dc_fixed_ym", nyears + 1, 12);
-		ssc_number_t *ch_w_sys_dc_tou_ym = allocate("charge_w_sys_dc_tou_ym", nyears + 1, 12);
-		ssc_number_t *ch_w_sys_ec_ym = allocate("charge_w_sys_ec_ym", nyears + 1, 12);
-		ssc_number_t *ch_w_sys_ec_flat_ym = allocate("charge_w_sys_ec_flat_ym", nyears + 1, 12);
-		ssc_number_t *ch_wo_sys_dc_fixed_ym = allocate("charge_wo_sys_dc_fixed_ym", nyears + 1, 12);
-		ssc_number_t *ch_wo_sys_dc_tou_ym = allocate("charge_wo_sys_dc_tou_ym", nyears + 1, 12);
-		ssc_number_t *ch_wo_sys_ec_ym = allocate("charge_wo_sys_ec_ym", nyears + 1, 12);
-		ssc_number_t *ch_wo_sys_ec_flat_ym = allocate("charge_wo_sys_ec_flat_ym", nyears + 1, 12);
-		ssc_number_t *ch_w_sys_fixed_ym = allocate("charge_w_sys_fixed_ym", nyears + 1, 12);
-		ssc_number_t *ch_wo_sys_fixed_ym = allocate("charge_wo_sys_fixed_ym", nyears + 1, 12);
-		ssc_number_t *ch_w_sys_minimum_ym = allocate("charge_w_sys_minimum_ym", nyears + 1, 12);
-		ssc_number_t *ch_wo_sys_minimum_ym = allocate("charge_wo_sys_minimum_ym", nyears + 1, 12);
-
-
-		// annual sums
+		ssc_number_t *utility_bill_w_sys_jan = allocate("utility_bill_w_sys_jan", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_feb = allocate("utility_bill_w_sys_feb", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_mar = allocate("utility_bill_w_sys_mar", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_apr = allocate("utility_bill_w_sys_apr", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_may = allocate("utility_bill_w_sys_may", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_jun = allocate("utility_bill_w_sys_jun", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_jul = allocate("utility_bill_w_sys_jul", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_aug = allocate("utility_bill_w_sys_aug", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_sep = allocate("utility_bill_w_sys_sep", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_oct = allocate("utility_bill_w_sys_oct", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_nov = allocate("utility_bill_w_sys_nov", nyears + 1);
+		ssc_number_t *utility_bill_w_sys_dec = allocate("utility_bill_w_sys_dec", nyears + 1);
 		ssc_number_t *utility_bill_w_sys = allocate("utility_bill_w_sys", nyears + 1);
+
+
+		ssc_number_t *utility_bill_wo_sys_jan = allocate("utility_bill_wo_sys_jan", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_feb = allocate("utility_bill_wo_sys_feb", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_mar = allocate("utility_bill_wo_sys_mar", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_apr = allocate("utility_bill_wo_sys_apr", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_may = allocate("utility_bill_wo_sys_may", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_jun = allocate("utility_bill_wo_sys_jun", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_jul = allocate("utility_bill_wo_sys_jul", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_aug = allocate("utility_bill_wo_sys_aug", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_sep = allocate("utility_bill_wo_sys_sep", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_oct = allocate("utility_bill_wo_sys_oct", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_nov = allocate("utility_bill_wo_sys_nov", nyears + 1);
+		ssc_number_t *utility_bill_wo_sys_dec = allocate("utility_bill_wo_sys_dec", nyears + 1);
 		ssc_number_t *utility_bill_wo_sys = allocate("utility_bill_wo_sys", nyears + 1);
+
+
+		ssc_number_t *ch_w_sys_dc_fixed_jan = allocate("charge_w_sys_dc_fixed_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_dc_fixed_feb = allocate("charge_w_sys_dc_fixed_feb", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_mar = allocate("charge_w_sys_dc_fixed_mar", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_apr = allocate("charge_w_sys_dc_fixed_apr", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_may = allocate("charge_w_sys_dc_fixed_may", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_jun = allocate("charge_w_sys_dc_fixed_jun", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_jul = allocate("charge_w_sys_dc_fixed_jul", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_aug = allocate("charge_w_sys_dc_fixed_aug", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_sep = allocate("charge_w_sys_dc_fixed_sep", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_oct = allocate("charge_w_sys_dc_fixed_oct", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_nov = allocate("charge_w_sys_dc_fixed_nov", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_fixed_dec = allocate("charge_w_sys_dc_fixed_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_fixed = allocate("charge_w_sys_dc_fixed", nyears + 1);
+
+		ssc_number_t *ch_w_sys_dc_tou_jan = allocate("charge_w_sys_dc_tou_jan", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_feb = allocate("charge_w_sys_dc_tou_feb", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_mar = allocate("charge_w_sys_dc_tou_mar", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_apr = allocate("charge_w_sys_dc_tou_apr", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_may = allocate("charge_w_sys_dc_tou_may", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_jun = allocate("charge_w_sys_dc_tou_jun", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_jul = allocate("charge_w_sys_dc_tou_jul", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_aug = allocate("charge_w_sys_dc_tou_aug", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_sep = allocate("charge_w_sys_dc_tou_sep", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_oct = allocate("charge_w_sys_dc_tou_oct", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_nov = allocate("charge_w_sys_dc_tou_nov", nyears+1 );
+		ssc_number_t *ch_w_sys_dc_tou_dec = allocate("charge_w_sys_dc_tou_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_tou = allocate("charge_w_sys_dc_tou", nyears + 1);
+
+		ssc_number_t *ch_w_sys_ec_jan = allocate("charge_w_sys_ec_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_feb = allocate("charge_w_sys_ec_feb", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_mar = allocate("charge_w_sys_ec_mar", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_apr = allocate("charge_w_sys_ec_apr", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_may = allocate("charge_w_sys_ec_may", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_jun = allocate("charge_w_sys_ec_jun", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_jul = allocate("charge_w_sys_ec_jul", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_aug = allocate("charge_w_sys_ec_aug", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_sep = allocate("charge_w_sys_ec_sep", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_oct = allocate("charge_w_sys_ec_oct", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_nov = allocate("charge_w_sys_ec_nov", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_dec = allocate("charge_w_sys_ec_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_ec = allocate("charge_w_sys_ec", nyears + 1);
+
+		ssc_number_t *ch_w_sys_ec_flat_jan = allocate("charge_w_sys_ec_flat_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_feb = allocate("charge_w_sys_ec_flat_feb", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_mar = allocate("charge_w_sys_ec_flat_mar", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_apr = allocate("charge_w_sys_ec_flat_apr", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_may = allocate("charge_w_sys_ec_flat_may", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_jun = allocate("charge_w_sys_ec_flat_jun", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_jul = allocate("charge_w_sys_ec_flat_jul", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_aug = allocate("charge_w_sys_ec_flat_aug", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_sep = allocate("charge_w_sys_ec_flat_sep", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_oct = allocate("charge_w_sys_ec_flat_oct", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_nov = allocate("charge_w_sys_ec_flat_nov", nyears + 1);
+		ssc_number_t *ch_w_sys_ec_flat_dec = allocate("charge_w_sys_ec_flat_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_ec_flat = allocate("charge_w_sys_ec_flat", nyears + 1);
+
+		ssc_number_t *ch_wo_sys_dc_fixed_jan = allocate("charge_wo_sys_dc_fixed_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_feb = allocate("charge_wo_sys_dc_fixed_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_mar = allocate("charge_wo_sys_dc_fixed_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_apr = allocate("charge_wo_sys_dc_fixed_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_may = allocate("charge_wo_sys_dc_fixed_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_jun = allocate("charge_wo_sys_dc_fixed_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_jul = allocate("charge_wo_sys_dc_fixed_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_aug = allocate("charge_wo_sys_dc_fixed_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_sep = allocate("charge_wo_sys_dc_fixed_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_oct = allocate("charge_wo_sys_dc_fixed_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_nov = allocate("charge_wo_sys_dc_fixed_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_fixed_dec = allocate("charge_wo_sys_dc_fixed_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_dc_fixed = allocate("charge_wo_sys_dc_fixed", nyears + 1);
+
+		ssc_number_t *ch_wo_sys_dc_tou_jan = allocate("charge_wo_sys_dc_tou_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_feb = allocate("charge_wo_sys_dc_tou_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_mar = allocate("charge_wo_sys_dc_tou_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_apr = allocate("charge_wo_sys_dc_tou_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_may = allocate("charge_wo_sys_dc_tou_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_jun = allocate("charge_wo_sys_dc_tou_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_jul = allocate("charge_wo_sys_dc_tou_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_aug = allocate("charge_wo_sys_dc_tou_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_sep = allocate("charge_wo_sys_dc_tou_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_oct = allocate("charge_wo_sys_dc_tou_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_nov = allocate("charge_wo_sys_dc_tou_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_dc_tou_dec = allocate("charge_wo_sys_dc_tou_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_dc_tou = allocate("charge_wo_sys_dc_tou", nyears + 1);
+
+		ssc_number_t *ch_wo_sys_ec_jan = allocate("charge_wo_sys_ec_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_feb = allocate("charge_wo_sys_ec_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_mar = allocate("charge_wo_sys_ec_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_apr = allocate("charge_wo_sys_ec_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_may = allocate("charge_wo_sys_ec_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_jun = allocate("charge_wo_sys_ec_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_jul = allocate("charge_wo_sys_ec_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_aug = allocate("charge_wo_sys_ec_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_sep = allocate("charge_wo_sys_ec_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_oct = allocate("charge_wo_sys_ec_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_nov = allocate("charge_wo_sys_ec_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_dec = allocate("charge_wo_sys_ec_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_ec = allocate("charge_wo_sys_ec", nyears + 1);
+
+		ssc_number_t *ch_wo_sys_ec_flat_jan = allocate("charge_wo_sys_ec_flat_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_feb = allocate("charge_wo_sys_ec_flat_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_mar = allocate("charge_wo_sys_ec_flat_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_apr = allocate("charge_wo_sys_ec_flat_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_may = allocate("charge_wo_sys_ec_flat_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_jun = allocate("charge_wo_sys_ec_flat_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_jul = allocate("charge_wo_sys_ec_flat_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_aug = allocate("charge_wo_sys_ec_flat_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_sep = allocate("charge_wo_sys_ec_flat_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_oct = allocate("charge_wo_sys_ec_flat_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_nov = allocate("charge_wo_sys_ec_flat_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_ec_flat_dec = allocate("charge_wo_sys_ec_flat_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_ec_flat = allocate("charge_wo_sys_ec_flat", nyears + 1);
+
+		ssc_number_t *ch_w_sys_fixed_jan = allocate("charge_w_sys_fixed_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_feb = allocate("charge_w_sys_fixed_feb", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_mar = allocate("charge_w_sys_fixed_mar", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_apr = allocate("charge_w_sys_fixed_apr", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_may = allocate("charge_w_sys_fixed_may", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_jun = allocate("charge_w_sys_fixed_jun", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_jul = allocate("charge_w_sys_fixed_jul", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_aug = allocate("charge_w_sys_fixed_aug", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_sep = allocate("charge_w_sys_fixed_sep", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_oct = allocate("charge_w_sys_fixed_oct", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_nov = allocate("charge_w_sys_fixed_nov", nyears + 1);
+		ssc_number_t *ch_w_sys_fixed_dec = allocate("charge_w_sys_fixed_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_fixed = allocate("charge_w_sys_fixed", nyears + 1);
+
+
+		ssc_number_t *ch_wo_sys_fixed_jan = allocate("charge_wo_sys_fixed_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_feb = allocate("charge_wo_sys_fixed_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_mar = allocate("charge_wo_sys_fixed_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_apr = allocate("charge_wo_sys_fixed_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_may = allocate("charge_wo_sys_fixed_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_jun = allocate("charge_wo_sys_fixed_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_jul = allocate("charge_wo_sys_fixed_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_aug = allocate("charge_wo_sys_fixed_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_sep = allocate("charge_wo_sys_fixed_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_oct = allocate("charge_wo_sys_fixed_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_nov = allocate("charge_wo_sys_fixed_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_fixed_dec = allocate("charge_wo_sys_fixed_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_fixed = allocate("charge_wo_sys_fixed", nyears + 1);
+
+		ssc_number_t *ch_w_sys_minimum_jan = allocate("charge_w_sys_minimum_jan", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_feb = allocate("charge_w_sys_minimum_feb", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_mar = allocate("charge_w_sys_minimum_mar", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_apr = allocate("charge_w_sys_minimum_apr", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_may = allocate("charge_w_sys_minimum_may", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_jun = allocate("charge_w_sys_minimum_jun", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_jul = allocate("charge_w_sys_minimum_jul", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_aug = allocate("charge_w_sys_minimum_aug", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_sep = allocate("charge_w_sys_minimum_sep", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_oct = allocate("charge_w_sys_minimum_oct", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_nov = allocate("charge_w_sys_minimum_nov", nyears + 1);
+		ssc_number_t *ch_w_sys_minimum_dec = allocate("charge_w_sys_minimum_dec", nyears + 1);
 		ssc_number_t *ch_w_sys_minimum = allocate("charge_w_sys_minimum", nyears + 1);
+
+
+		ssc_number_t *ch_wo_sys_minimum_jan = allocate("charge_wo_sys_minimum_jan", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_feb = allocate("charge_wo_sys_minimum_feb", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_mar = allocate("charge_wo_sys_minimum_mar", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_apr = allocate("charge_wo_sys_minimum_apr", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_may = allocate("charge_wo_sys_minimum_may", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_jun = allocate("charge_wo_sys_minimum_jun", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_jul = allocate("charge_wo_sys_minimum_jul", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_aug = allocate("charge_wo_sys_minimum_aug", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_sep = allocate("charge_wo_sys_minimum_sep", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_oct = allocate("charge_wo_sys_minimum_oct", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_nov = allocate("charge_wo_sys_minimum_nov", nyears + 1);
+		ssc_number_t *ch_wo_sys_minimum_dec = allocate("charge_wo_sys_minimum_dec", nyears + 1);
 		ssc_number_t *ch_wo_sys_minimum = allocate("charge_wo_sys_minimum", nyears + 1);
 
 
 
 
 		// IRENA outputs array of tier values
-		// reverse to tiers columns and periods are rows based on IRENA desired output.
-		// tiers and periods determined by input matrices 
-
-		setup();
-
-
-		// note that ec_charge and not ec_energy_use have the correct dimensions after setup
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_jan_tp = allocate_matrix("charge_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_feb_tp = allocate_matrix("charge_wo_sys_ec_feb_tp", m_month[1].ec_charge.nrows() + 2, m_month[1].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_mar_tp = allocate_matrix("charge_wo_sys_ec_mar_tp", m_month[2].ec_charge.nrows() + 2, m_month[2].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_apr_tp = allocate_matrix("charge_wo_sys_ec_apr_tp", m_month[3].ec_charge.nrows() + 2, m_month[3].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_may_tp = allocate_matrix("charge_wo_sys_ec_may_tp", m_month[4].ec_charge.nrows() + 2, m_month[4].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_jun_tp = allocate_matrix("charge_wo_sys_ec_jun_tp", m_month[5].ec_charge.nrows() + 2, m_month[5].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_jul_tp = allocate_matrix("charge_wo_sys_ec_jul_tp", m_month[6].ec_charge.nrows() + 2, m_month[6].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_aug_tp = allocate_matrix("charge_wo_sys_ec_aug_tp", m_month[7].ec_charge.nrows() + 2, m_month[7].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_sep_tp = allocate_matrix("charge_wo_sys_ec_sep_tp", m_month[8].ec_charge.nrows() + 2, m_month[8].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_oct_tp = allocate_matrix("charge_wo_sys_ec_oct_tp", m_month[9].ec_charge.nrows() + 2, m_month[9].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_nov_tp = allocate_matrix("charge_wo_sys_ec_nov_tp", m_month[10].ec_charge.nrows() + 2, m_month[10].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_wo_sys_ec_dec_tp = allocate_matrix("charge_wo_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
-
-
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_jan_tp = allocate_matrix("energy_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_feb_tp = allocate_matrix("energy_wo_sys_ec_feb_tp", m_month[1].ec_charge.nrows() + 2, m_month[1].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_mar_tp = allocate_matrix("energy_wo_sys_ec_mar_tp", m_month[2].ec_charge.nrows() + 2, m_month[2].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_apr_tp = allocate_matrix("energy_wo_sys_ec_apr_tp", m_month[3].ec_charge.nrows() + 2, m_month[3].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_may_tp = allocate_matrix("energy_wo_sys_ec_may_tp", m_month[4].ec_charge.nrows() + 2, m_month[4].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_jun_tp = allocate_matrix("energy_wo_sys_ec_jun_tp", m_month[5].ec_charge.nrows() + 2, m_month[5].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_jul_tp = allocate_matrix("energy_wo_sys_ec_jul_tp", m_month[6].ec_charge.nrows() + 2, m_month[6].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_aug_tp = allocate_matrix("energy_wo_sys_ec_aug_tp", m_month[7].ec_charge.nrows() + 2, m_month[7].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_sep_tp = allocate_matrix("energy_wo_sys_ec_sep_tp", m_month[8].ec_charge.nrows() + 2, m_month[8].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_oct_tp = allocate_matrix("energy_wo_sys_ec_oct_tp", m_month[9].ec_charge.nrows() + 2, m_month[9].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_nov_tp = allocate_matrix("energy_wo_sys_ec_nov_tp", m_month[10].ec_charge.nrows() + 2, m_month[10].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_dec_tp = allocate_matrix("energy_wo_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
-
-
-
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_jan_tp = allocate_matrix("charge_w_sys_ec_jan_tp", m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_feb_tp = allocate_matrix("charge_w_sys_ec_feb_tp", m_month[1].ec_charge.nrows() + 2, m_month[1].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_mar_tp = allocate_matrix("charge_w_sys_ec_mar_tp", m_month[2].ec_charge.nrows() + 2, m_month[2].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_apr_tp = allocate_matrix("charge_w_sys_ec_apr_tp", m_month[3].ec_charge.nrows() + 2, m_month[3].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_may_tp = allocate_matrix("charge_w_sys_ec_may_tp", m_month[4].ec_charge.nrows() + 2, m_month[4].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_jun_tp = allocate_matrix("charge_w_sys_ec_jun_tp", m_month[5].ec_charge.nrows() + 2, m_month[5].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_jul_tp = allocate_matrix("charge_w_sys_ec_jul_tp", m_month[6].ec_charge.nrows() + 2, m_month[6].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_aug_tp = allocate_matrix("charge_w_sys_ec_aug_tp", m_month[7].ec_charge.nrows() + 2, m_month[7].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_sep_tp = allocate_matrix("charge_w_sys_ec_sep_tp", m_month[8].ec_charge.nrows() + 2, m_month[8].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_oct_tp = allocate_matrix("charge_w_sys_ec_oct_tp", m_month[9].ec_charge.nrows() + 2, m_month[9].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_nov_tp = allocate_matrix("charge_w_sys_ec_nov_tp", m_month[10].ec_charge.nrows() + 2, m_month[10].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &charge_w_sys_ec_dec_tp = allocate_matrix("charge_w_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
-
-
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_jan_tp = allocate_matrix("energy_w_sys_ec_jan_tp", m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_feb_tp = allocate_matrix("energy_w_sys_ec_feb_tp", m_month[1].ec_charge.nrows() + 2, m_month[1].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_mar_tp = allocate_matrix("energy_w_sys_ec_mar_tp", m_month[2].ec_charge.nrows() + 2, m_month[2].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_apr_tp = allocate_matrix("energy_w_sys_ec_apr_tp", m_month[3].ec_charge.nrows() + 2, m_month[3].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_may_tp = allocate_matrix("energy_w_sys_ec_may_tp", m_month[4].ec_charge.nrows() + 2, m_month[4].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_jun_tp = allocate_matrix("energy_w_sys_ec_jun_tp", m_month[5].ec_charge.nrows() + 2, m_month[5].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_jul_tp = allocate_matrix("energy_w_sys_ec_jul_tp", m_month[6].ec_charge.nrows() + 2, m_month[6].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_aug_tp = allocate_matrix("energy_w_sys_ec_aug_tp", m_month[7].ec_charge.nrows() + 2, m_month[7].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_sep_tp = allocate_matrix("energy_w_sys_ec_sep_tp", m_month[8].ec_charge.nrows() + 2, m_month[8].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_oct_tp = allocate_matrix("energy_w_sys_ec_oct_tp", m_month[9].ec_charge.nrows() + 2, m_month[9].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_nov_tp = allocate_matrix("energy_w_sys_ec_nov_tp", m_month[10].ec_charge.nrows() + 2, m_month[10].ec_charge.ncols() + 2);
-		util::matrix_t<ssc_number_t> &energy_w_sys_ec_dec_tp = allocate_matrix("energy_w_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
-
-
+		ssc_number_t *p_charge_wo_sys_ec_m_p[12][12];
+		ssc_number_t *p_charge_w_sys_ec_m_p[12][12];
+		ssc_number_t *p_energy_wo_sys_ec_m_p[12][12];
+		ssc_number_t *p_energy_w_sys_ec_m_p[12][12];
+		std::string postfix;
+		// e.g. energy_w_sys_ec_dec_p12
+		for (int m = 0; m < 12; m++)
+		{
+			for (int p = 0; p < 12; p++)
+			{
+				postfix = util::schedule_int_to_month(m) + "_p" + util::to_string((int)(p + 1));
+				p_charge_wo_sys_ec_m_p[m][p] = allocate("charge_wo_sys_ec_" + postfix, 6);
+				p_charge_w_sys_ec_m_p[m][p] = allocate("charge_w_sys_ec_" + postfix, 6);
+				p_energy_wo_sys_ec_m_p[m][p] = allocate("energy_wo_sys_ec_" + postfix, 6);
+				p_energy_w_sys_ec_m_p[m][p] = allocate("energy_w_sys_ec_" + postfix, 6);
+			}
+		}
 
 
 		// lifetime hourly load
 		ssc_number_t *lifetime_hourly_load = allocate("lifetime_load", nrec_gen);
-
-
-
-
-		// false = 2 meters, load and system treated separately
-		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
-		//			bool enable_nm = as_boolean("ur_enable_net_metering");
-		int metering_option = as_integer("ur_metering_option");
-		bool enable_nm = (metering_option == 0 || metering_option == 1);
-		bool hourly_reconciliation = (metering_option == 3);
-
 
 		idx = 0;
 		for (i=0;i<nyears;i++)
@@ -669,44 +2015,190 @@ public:
 			}
 
 			// now calculate revenue without solar system (using load only)
-			if (hourly_reconciliation)
-			{
-				ur_calc_hourly(&e_load_cy[0], &p_load_cy[0],
-					&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
-					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
-			}
-			else
-			{
-				ur_calc(&e_load_cy[0], &p_load_cy[0],
-					&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
-					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
-			}
+			ur_calc( &e_load_cy[0], &p_load_cy[0],
+				&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
+				&monthly_fixed_charges[0], &monthly_minimum_charges[0],
+				&monthly_dc_fixed[0], &monthly_dc_tou[0],
+				&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], &monthly_e_use_period_tier[0], &monthly_charge_period_tier[0], rate_scale[i]);
+
 	
+			utility_bill_wo_sys_jan[i + 1] = monthly_bill[0];
+			utility_bill_wo_sys_feb[i + 1] = monthly_bill[1];
+			utility_bill_wo_sys_mar[i + 1] = monthly_bill[2];
+			utility_bill_wo_sys_apr[i + 1] = monthly_bill[3];
+			utility_bill_wo_sys_may[i + 1] = monthly_bill[4];
+			utility_bill_wo_sys_jun[i + 1] = monthly_bill[5];
+			utility_bill_wo_sys_jul[i + 1] = monthly_bill[6];
+			utility_bill_wo_sys_aug[i + 1] = monthly_bill[7];
+			utility_bill_wo_sys_sep[i + 1] = monthly_bill[8];
+			utility_bill_wo_sys_oct[i + 1] = monthly_bill[9];
+			utility_bill_wo_sys_nov[i + 1] = monthly_bill[10];
+			utility_bill_wo_sys_dec[i + 1] = monthly_bill[11];
+			utility_bill_wo_sys[i + 1] = utility_bill_wo_sys_jan[i + 1]
+				+ utility_bill_wo_sys_feb[i + 1]
+				+ utility_bill_wo_sys_mar[i + 1]
+				+ utility_bill_wo_sys_apr[i + 1]
+				+ utility_bill_wo_sys_may[i + 1]
+				+ utility_bill_wo_sys_jun[i + 1]
+				+ utility_bill_wo_sys_jul[i + 1]
+				+ utility_bill_wo_sys_aug[i + 1]
+				+ utility_bill_wo_sys_sep[i + 1]
+				+ utility_bill_wo_sys_oct[i + 1]
+				+ utility_bill_wo_sys_nov[i + 1]
+				+ utility_bill_wo_sys_dec[i + 1];
 
 
-			for (j = 0; j < 12; j++)
-			{
-				utility_bill_wo_sys_ym[(i + 1) * 12 + j] = monthly_bill[j];
-				ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j] = monthly_dc_fixed[j];
-				ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j] = monthly_dc_tou[j];
-				ch_wo_sys_ec_ym[(i + 1) * 12 + j] = monthly_ec_charges[j];
-				ch_wo_sys_ec_flat_ym[(i + 1) * 12 + j] = monthly_ec_flat_charges[j];
-				ch_wo_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
-				ch_wo_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-				utility_bill_wo_sys[i + 1] += monthly_bill[j];
-				ch_wo_sys_dc_fixed[i + 1] += monthly_dc_fixed[j];
-				ch_wo_sys_dc_tou[i + 1] += monthly_dc_tou[j];
-				ch_wo_sys_ec[i + 1] += monthly_ec_charges[j];
-				ch_wo_sys_ec_flat[i + 1] += monthly_ec_flat_charges[j];
-				ch_wo_sys_fixed[i + 1] += monthly_fixed_charges[j];
-				ch_wo_sys_minimum[i + 1] += monthly_minimum_charges[j];
-			}
+			ch_wo_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0];
+			ch_wo_sys_dc_fixed_feb[i + 1] = monthly_dc_fixed[1];
+			ch_wo_sys_dc_fixed_mar[i + 1] = monthly_dc_fixed[2];
+			ch_wo_sys_dc_fixed_apr[i + 1] = monthly_dc_fixed[3];
+			ch_wo_sys_dc_fixed_may[i + 1] = monthly_dc_fixed[4];
+			ch_wo_sys_dc_fixed_jun[i + 1] = monthly_dc_fixed[5];
+			ch_wo_sys_dc_fixed_jul[i + 1] = monthly_dc_fixed[6];
+			ch_wo_sys_dc_fixed_aug[i + 1] = monthly_dc_fixed[7];
+			ch_wo_sys_dc_fixed_sep[i + 1] = monthly_dc_fixed[8];
+			ch_wo_sys_dc_fixed_oct[i + 1] = monthly_dc_fixed[9];
+			ch_wo_sys_dc_fixed_nov[i + 1] = monthly_dc_fixed[10];
+			ch_wo_sys_dc_fixed_dec[i + 1] = monthly_dc_fixed[11];
+			ch_wo_sys_dc_fixed[i + 1] = ch_wo_sys_dc_fixed_jan[i + 1]
+				+ ch_wo_sys_dc_fixed_feb[i + 1]
+				+ ch_wo_sys_dc_fixed_mar[i + 1]
+				+ ch_wo_sys_dc_fixed_apr[i + 1]
+				+ ch_wo_sys_dc_fixed_may[i + 1]
+				+ ch_wo_sys_dc_fixed_jun[i + 1]
+				+ ch_wo_sys_dc_fixed_jul[i + 1]
+				+ ch_wo_sys_dc_fixed_aug[i + 1]
+				+ ch_wo_sys_dc_fixed_sep[i + 1]
+				+ ch_wo_sys_dc_fixed_oct[i + 1]
+				+ ch_wo_sys_dc_fixed_nov[i + 1]
+				+ ch_wo_sys_dc_fixed_dec[i + 1];
 
+
+			ch_wo_sys_dc_tou_jan[i + 1] = monthly_dc_tou[0];
+			ch_wo_sys_dc_tou_feb[i + 1] = monthly_dc_tou[1];
+			ch_wo_sys_dc_tou_mar[i + 1] = monthly_dc_tou[2];
+			ch_wo_sys_dc_tou_apr[i + 1] = monthly_dc_tou[3];
+			ch_wo_sys_dc_tou_may[i + 1] = monthly_dc_tou[4];
+			ch_wo_sys_dc_tou_jun[i + 1] = monthly_dc_tou[5];
+			ch_wo_sys_dc_tou_jul[i + 1] = monthly_dc_tou[6];
+			ch_wo_sys_dc_tou_aug[i + 1] = monthly_dc_tou[7];
+			ch_wo_sys_dc_tou_sep[i + 1] = monthly_dc_tou[8];
+			ch_wo_sys_dc_tou_oct[i + 1] = monthly_dc_tou[9];
+			ch_wo_sys_dc_tou_nov[i + 1] = monthly_dc_tou[10];
+			ch_wo_sys_dc_tou_dec[i + 1] = monthly_dc_tou[11];
+			ch_wo_sys_dc_tou[i + 1] = ch_wo_sys_dc_tou_jan[i + 1]
+				+ ch_wo_sys_dc_tou_feb[i + 1]
+				+ ch_wo_sys_dc_tou_mar[i + 1]
+				+ ch_wo_sys_dc_tou_apr[i + 1]
+				+ ch_wo_sys_dc_tou_may[i + 1]
+				+ ch_wo_sys_dc_tou_jun[i + 1]
+				+ ch_wo_sys_dc_tou_jul[i + 1]
+				+ ch_wo_sys_dc_tou_aug[i + 1]
+				+ ch_wo_sys_dc_tou_sep[i + 1]
+				+ ch_wo_sys_dc_tou_oct[i + 1]
+				+ ch_wo_sys_dc_tou_nov[i + 1]
+				+ ch_wo_sys_dc_tou_dec[i + 1];
+
+			ch_wo_sys_ec_jan[i + 1] = monthly_ec_charges[0];
+			ch_wo_sys_ec_feb[i + 1] = monthly_ec_charges[1];
+			ch_wo_sys_ec_mar[i + 1] = monthly_ec_charges[2];
+			ch_wo_sys_ec_apr[i + 1] = monthly_ec_charges[3];
+			ch_wo_sys_ec_may[i + 1] = monthly_ec_charges[4];
+			ch_wo_sys_ec_jun[i + 1] = monthly_ec_charges[5];
+			ch_wo_sys_ec_jul[i + 1] = monthly_ec_charges[6];
+			ch_wo_sys_ec_aug[i + 1] = monthly_ec_charges[7];
+			ch_wo_sys_ec_sep[i + 1] = monthly_ec_charges[8];
+			ch_wo_sys_ec_oct[i + 1] = monthly_ec_charges[9];
+			ch_wo_sys_ec_nov[i + 1] = monthly_ec_charges[10];
+			ch_wo_sys_ec_dec[i + 1] = monthly_ec_charges[11];
+			ch_wo_sys_ec[i + 1] = ch_wo_sys_ec_jan[i + 1]
+				+ ch_wo_sys_ec_feb[i + 1]
+				+ ch_wo_sys_ec_mar[i + 1]
+				+ ch_wo_sys_ec_apr[i + 1]
+				+ ch_wo_sys_ec_may[i + 1]
+				+ ch_wo_sys_ec_jun[i + 1]
+				+ ch_wo_sys_ec_jul[i + 1]
+				+ ch_wo_sys_ec_aug[i + 1]
+				+ ch_wo_sys_ec_sep[i + 1]
+				+ ch_wo_sys_ec_oct[i + 1]
+				+ ch_wo_sys_ec_nov[i + 1]
+				+ ch_wo_sys_ec_dec[i + 1];
+
+			ch_wo_sys_ec_flat_jan[i + 1] = monthly_ec_flat_charges[0];
+			ch_wo_sys_ec_flat_feb[i + 1] = monthly_ec_flat_charges[1];
+			ch_wo_sys_ec_flat_mar[i + 1] = monthly_ec_flat_charges[2];
+			ch_wo_sys_ec_flat_apr[i + 1] = monthly_ec_flat_charges[3];
+			ch_wo_sys_ec_flat_may[i + 1] = monthly_ec_flat_charges[4];
+			ch_wo_sys_ec_flat_jun[i + 1] = monthly_ec_flat_charges[5];
+			ch_wo_sys_ec_flat_jul[i + 1] = monthly_ec_flat_charges[6];
+			ch_wo_sys_ec_flat_aug[i + 1] = monthly_ec_flat_charges[7];
+			ch_wo_sys_ec_flat_sep[i + 1] = monthly_ec_flat_charges[8];
+			ch_wo_sys_ec_flat_oct[i + 1] = monthly_ec_flat_charges[9];
+			ch_wo_sys_ec_flat_nov[i + 1] = monthly_ec_flat_charges[10];
+			ch_wo_sys_ec_flat_dec[i + 1] = monthly_ec_flat_charges[11];
+			ch_wo_sys_ec_flat[i + 1] = ch_wo_sys_ec_flat_jan[i + 1]
+				+ ch_wo_sys_ec_flat_feb[i + 1]
+				+ ch_wo_sys_ec_flat_mar[i + 1]
+				+ ch_wo_sys_ec_flat_apr[i + 1]
+				+ ch_wo_sys_ec_flat_may[i + 1]
+				+ ch_wo_sys_ec_flat_jun[i + 1]
+				+ ch_wo_sys_ec_flat_jul[i + 1]
+				+ ch_wo_sys_ec_flat_aug[i + 1]
+				+ ch_wo_sys_ec_flat_sep[i + 1]
+				+ ch_wo_sys_ec_flat_oct[i + 1]
+				+ ch_wo_sys_ec_flat_nov[i + 1]
+				+ ch_wo_sys_ec_flat_dec[i + 1];
+
+			ch_wo_sys_fixed_jan[i + 1] = monthly_fixed_charges[0];
+			ch_wo_sys_fixed_feb[i + 1] = monthly_fixed_charges[1];
+			ch_wo_sys_fixed_mar[i + 1] = monthly_fixed_charges[2];
+			ch_wo_sys_fixed_apr[i + 1] = monthly_fixed_charges[3];
+			ch_wo_sys_fixed_may[i + 1] = monthly_fixed_charges[4];
+			ch_wo_sys_fixed_jun[i + 1] = monthly_fixed_charges[5];
+			ch_wo_sys_fixed_jul[i + 1] = monthly_fixed_charges[6];
+			ch_wo_sys_fixed_aug[i + 1] = monthly_fixed_charges[7];
+			ch_wo_sys_fixed_sep[i + 1] = monthly_fixed_charges[8];
+			ch_wo_sys_fixed_oct[i + 1] = monthly_fixed_charges[9];
+			ch_wo_sys_fixed_nov[i + 1] = monthly_fixed_charges[10];
+			ch_wo_sys_fixed_dec[i + 1] = monthly_fixed_charges[11];
+			ch_wo_sys_fixed[i + 1] = ch_wo_sys_fixed_jan[i + 1]
+				+ ch_wo_sys_fixed_feb[i + 1]
+				+ ch_wo_sys_fixed_mar[i + 1]
+				+ ch_wo_sys_fixed_apr[i + 1]
+				+ ch_wo_sys_fixed_may[i + 1]
+				+ ch_wo_sys_fixed_jun[i + 1]
+				+ ch_wo_sys_fixed_jul[i + 1]
+				+ ch_wo_sys_fixed_aug[i + 1]
+				+ ch_wo_sys_fixed_sep[i + 1]
+				+ ch_wo_sys_fixed_oct[i + 1]
+				+ ch_wo_sys_fixed_nov[i + 1]
+				+ ch_wo_sys_fixed_dec[i + 1];
+
+			ch_wo_sys_minimum_jan[i + 1] = monthly_minimum_charges[0];
+			ch_wo_sys_minimum_feb[i + 1] = monthly_minimum_charges[1];
+			ch_wo_sys_minimum_mar[i + 1] = monthly_minimum_charges[2];
+			ch_wo_sys_minimum_apr[i + 1] = monthly_minimum_charges[3];
+			ch_wo_sys_minimum_may[i + 1] = monthly_minimum_charges[4];
+			ch_wo_sys_minimum_jun[i + 1] = monthly_minimum_charges[5];
+			ch_wo_sys_minimum_jul[i + 1] = monthly_minimum_charges[6];
+			ch_wo_sys_minimum_aug[i + 1] = monthly_minimum_charges[7];
+			ch_wo_sys_minimum_sep[i + 1] = monthly_minimum_charges[8];
+			ch_wo_sys_minimum_oct[i + 1] = monthly_minimum_charges[9];
+			ch_wo_sys_minimum_nov[i + 1] = monthly_minimum_charges[10];
+			ch_wo_sys_minimum_dec[i + 1] = monthly_minimum_charges[11];
+			ch_wo_sys_minimum[i + 1] = ch_wo_sys_minimum_jan[i + 1]
+				+ ch_wo_sys_minimum_feb[i + 1]
+				+ ch_wo_sys_minimum_mar[i + 1]
+				+ ch_wo_sys_minimum_apr[i + 1]
+				+ ch_wo_sys_minimum_may[i + 1]
+				+ ch_wo_sys_minimum_jun[i + 1]
+				+ ch_wo_sys_minimum_jul[i + 1]
+				+ ch_wo_sys_minimum_aug[i + 1]
+				+ ch_wo_sys_minimum_sep[i + 1]
+				+ ch_wo_sys_minimum_oct[i + 1]
+				+ ch_wo_sys_minimum_nov[i + 1]
+				+ ch_wo_sys_minimum_dec[i + 1];
 
 
 
@@ -716,18 +2208,19 @@ public:
 
 			if (i == 0)
 			{
-				ur_update_ec_monthly(0, charge_wo_sys_ec_jan_tp, energy_wo_sys_ec_jan_tp);
-				ur_update_ec_monthly(1, charge_wo_sys_ec_feb_tp, energy_wo_sys_ec_feb_tp);
-				ur_update_ec_monthly(2, charge_wo_sys_ec_mar_tp, energy_wo_sys_ec_mar_tp);
-				ur_update_ec_monthly(3, charge_wo_sys_ec_apr_tp, energy_wo_sys_ec_apr_tp);
-				ur_update_ec_monthly(4, charge_wo_sys_ec_may_tp, energy_wo_sys_ec_may_tp);
-				ur_update_ec_monthly(5, charge_wo_sys_ec_jun_tp, energy_wo_sys_ec_jun_tp);
-				ur_update_ec_monthly(6, charge_wo_sys_ec_jul_tp, energy_wo_sys_ec_jul_tp);
-				ur_update_ec_monthly(7, charge_wo_sys_ec_aug_tp, energy_wo_sys_ec_aug_tp);
-				ur_update_ec_monthly(8, charge_wo_sys_ec_sep_tp, energy_wo_sys_ec_sep_tp);
-				ur_update_ec_monthly(9, charge_wo_sys_ec_oct_tp, energy_wo_sys_ec_oct_tp);
-				ur_update_ec_monthly(10, charge_wo_sys_ec_nov_tp, energy_wo_sys_ec_nov_tp);
-				ur_update_ec_monthly(11, charge_wo_sys_ec_dec_tp, energy_wo_sys_ec_dec_tp);
+				// IRENA
+				for (int m = 0; m < 12; m++)
+				{
+					for (int p = 0; p < 12; p++)
+					{
+						for (int t = 0; t < 6; t++)
+						{
+							p_charge_wo_sys_ec_m_p[m][p][t] = monthly_charge_period_tier[m][p][t];
+							p_energy_wo_sys_ec_m_p[m][p][t] = monthly_e_use_period_tier[m][p][t];
+						}
+					}
+				}
+
 
 				//assign( "year1_hourly_revenue_without_system", var_data( &revenue_wo_sys[0], 8760 ) );
 				//assign( "year1_hourly_payment_without_system", var_data( &payment[0], 8760 ) );
@@ -740,6 +2233,7 @@ public:
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
 				assign("year1_monthly_ec_charge_without_system", var_data(&monthly_ec_charges[0], 12));
 				assign("year1_monthly_ec_charge_flat_without_system", var_data(&monthly_ec_flat_charges[0], 12));
+				//assign( "year1_monthly_ec_rate_without_system", var_data(&monthly_ec_rates[0], 12) );
 
 				// sign reversal based on 9/5/13 meeting, reverse again 9/6/13
 				for (int ii=0;ii<8760;ii++) 
@@ -767,161 +2261,165 @@ public:
 			}
 
 
-// with system
 
-			if (hourly_reconciliation)
+			// false = 2 meters, load and system treated separately
+			// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
+			bool enable_nm = as_boolean("ur_enable_net_metering");
+
+
+
+			if (enable_nm)
 			{
-				ur_calc_hourly(&e_grid[0], &p_grid[0],
+				// calculate revenue with solar system (using net grid energy & maxpower)
+				ur_calc(&e_grid[0], &p_grid[0],
 					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 					&energy_charge[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], &monthly_e_use_period_tier[0], &monthly_charge_period_tier[0], rate_scale[i]);
 			}
-			else // monthly reconciliation per 2015.6.30 release
+			else
 			{
-
-				if (enable_nm)
+				// calculate revenue with solar system (using system energy & maxpower)
+				ur_calc(&e_sys_cy[0], &p_sys_cy[0],
+					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+					&energy_charge[0],
+					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
+					&monthly_dc_fixed[0], &monthly_dc_tou[0],
+					&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &monthly_ec_rates[0], &ec_tou_sched[0], &dc_tou_sched[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], &monthly_e_use_period_tier[0], &monthly_charge_period_tier[0], rate_scale[i], false, false);
+				// TODO - remove annual_revenue and just use annual bill
+				// Two meters - adjust output accordingly
+				for (j = 0; j<8760; j++)
 				{
-					// calculate revenue with solar system (using net grid energy & maxpower)
-					ur_calc(&e_grid[0], &p_grid[0],
-						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-						&energy_charge[0],
-						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-						&monthly_dc_fixed[0], &monthly_dc_tou[0],
-						&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],  rate_scale[i]);
+					revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
+					annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
 				}
-				else
+				// adjust monthly outputs as sum of both meters = system meter + load meter 
+				monthly_dc_fixed[0] += ch_wo_sys_dc_fixed_jan[i + 1];
+				monthly_dc_fixed[1] += ch_wo_sys_dc_fixed_feb[i + 1];
+				monthly_dc_fixed[2] += ch_wo_sys_dc_fixed_mar[i + 1];
+				monthly_dc_fixed[3] += ch_wo_sys_dc_fixed_apr[i + 1];
+				monthly_dc_fixed[4] += ch_wo_sys_dc_fixed_may[i + 1];
+				monthly_dc_fixed[5] += ch_wo_sys_dc_fixed_jun[i + 1];
+				monthly_dc_fixed[6] += ch_wo_sys_dc_fixed_jul[i + 1];
+				monthly_dc_fixed[7] += ch_wo_sys_dc_fixed_aug[i + 1];
+				monthly_dc_fixed[8] += ch_wo_sys_dc_fixed_sep[i + 1];
+				monthly_dc_fixed[9] += ch_wo_sys_dc_fixed_oct[i + 1];
+				monthly_dc_fixed[10] += ch_wo_sys_dc_fixed_nov[i + 1];
+				monthly_dc_fixed[11] += ch_wo_sys_dc_fixed_dec[i + 1];
+
+				monthly_dc_tou[0] += ch_wo_sys_dc_tou_jan[i + 1];
+				monthly_dc_tou[1] += ch_wo_sys_dc_tou_feb[i + 1];
+				monthly_dc_tou[2] += ch_wo_sys_dc_tou_mar[i + 1];
+				monthly_dc_tou[3] += ch_wo_sys_dc_tou_apr[i + 1];
+				monthly_dc_tou[4] += ch_wo_sys_dc_tou_may[i + 1];
+				monthly_dc_tou[5] += ch_wo_sys_dc_tou_jun[i + 1];
+				monthly_dc_tou[6] += ch_wo_sys_dc_tou_jul[i + 1];
+				monthly_dc_tou[7] += ch_wo_sys_dc_tou_aug[i + 1];
+				monthly_dc_tou[8] += ch_wo_sys_dc_tou_sep[i + 1];
+				monthly_dc_tou[9] += ch_wo_sys_dc_tou_oct[i + 1];
+				monthly_dc_tou[10] += ch_wo_sys_dc_tou_nov[i + 1];
+				monthly_dc_tou[11] += ch_wo_sys_dc_tou_dec[i + 1];
+
+				monthly_ec_charges[0] += ch_wo_sys_ec_jan[i + 1];
+				monthly_ec_charges[1] += ch_wo_sys_ec_feb[i + 1];
+				monthly_ec_charges[2] += ch_wo_sys_ec_mar[i + 1];
+				monthly_ec_charges[3] += ch_wo_sys_ec_apr[i + 1];
+				monthly_ec_charges[4] += ch_wo_sys_ec_may[i + 1];
+				monthly_ec_charges[5] += ch_wo_sys_ec_jun[i + 1];
+				monthly_ec_charges[6] += ch_wo_sys_ec_jul[i + 1];
+				monthly_ec_charges[7] += ch_wo_sys_ec_aug[i + 1];
+				monthly_ec_charges[8] += ch_wo_sys_ec_sep[i + 1];
+				monthly_ec_charges[9] += ch_wo_sys_ec_oct[i + 1];
+				monthly_ec_charges[10] += ch_wo_sys_ec_nov[i + 1];
+				monthly_ec_charges[11] += ch_wo_sys_ec_dec[i + 1];
+
+				monthly_ec_flat_charges[0] += ch_wo_sys_ec_flat_jan[i + 1];
+				monthly_ec_flat_charges[1] += ch_wo_sys_ec_flat_feb[i + 1];
+				monthly_ec_flat_charges[2] += ch_wo_sys_ec_flat_mar[i + 1];
+				monthly_ec_flat_charges[3] += ch_wo_sys_ec_flat_apr[i + 1];
+				monthly_ec_flat_charges[4] += ch_wo_sys_ec_flat_may[i + 1];
+				monthly_ec_flat_charges[5] += ch_wo_sys_ec_flat_jun[i + 1];
+				monthly_ec_flat_charges[6] += ch_wo_sys_ec_flat_jul[i + 1];
+				monthly_ec_flat_charges[7] += ch_wo_sys_ec_flat_aug[i + 1];
+				monthly_ec_flat_charges[8] += ch_wo_sys_ec_flat_sep[i + 1];
+				monthly_ec_flat_charges[9] += ch_wo_sys_ec_flat_oct[i + 1];
+				monthly_ec_flat_charges[10] += ch_wo_sys_ec_flat_nov[i + 1];
+				monthly_ec_flat_charges[11] += ch_wo_sys_ec_flat_dec[i + 1];
+
+				monthly_fixed_charges[0] += ch_wo_sys_fixed_jan[i + 1];
+				monthly_fixed_charges[1] += ch_wo_sys_fixed_feb[i + 1];
+				monthly_fixed_charges[2] += ch_wo_sys_fixed_mar[i + 1];
+				monthly_fixed_charges[3] += ch_wo_sys_fixed_apr[i + 1];
+				monthly_fixed_charges[4] += ch_wo_sys_fixed_may[i + 1];
+				monthly_fixed_charges[5] += ch_wo_sys_fixed_jun[i + 1];
+				monthly_fixed_charges[6] += ch_wo_sys_fixed_jul[i + 1];
+				monthly_fixed_charges[7] += ch_wo_sys_fixed_aug[i + 1];
+				monthly_fixed_charges[8] += ch_wo_sys_fixed_sep[i + 1];
+				monthly_fixed_charges[9] += ch_wo_sys_fixed_oct[i + 1];
+				monthly_fixed_charges[10] += ch_wo_sys_fixed_nov[i + 1];
+				monthly_fixed_charges[11] += ch_wo_sys_fixed_dec[i + 1];
+
+				monthly_minimum_charges[0] += ch_wo_sys_minimum_jan[i + 1];
+				monthly_minimum_charges[1] += ch_wo_sys_minimum_feb[i + 1];
+				monthly_minimum_charges[2] += ch_wo_sys_minimum_mar[i + 1];
+				monthly_minimum_charges[3] += ch_wo_sys_minimum_apr[i + 1];
+				monthly_minimum_charges[4] += ch_wo_sys_minimum_may[i + 1];
+				monthly_minimum_charges[5] += ch_wo_sys_minimum_jun[i + 1];
+				monthly_minimum_charges[6] += ch_wo_sys_minimum_jul[i + 1];
+				monthly_minimum_charges[7] += ch_wo_sys_minimum_aug[i + 1];
+				monthly_minimum_charges[8] += ch_wo_sys_minimum_sep[i + 1];
+				monthly_minimum_charges[9] += ch_wo_sys_minimum_oct[i + 1];
+				monthly_minimum_charges[10] += ch_wo_sys_minimum_nov[i + 1];
+				monthly_minimum_charges[11] += ch_wo_sys_minimum_dec[i + 1];
+
+				monthly_bill[0] += utility_bill_wo_sys_jan[i + 1];
+				monthly_bill[1] += utility_bill_wo_sys_feb[i + 1];
+				monthly_bill[2] += utility_bill_wo_sys_mar[i + 1];
+				monthly_bill[3] += utility_bill_wo_sys_apr[i + 1];
+				monthly_bill[4] += utility_bill_wo_sys_may[i + 1];
+				monthly_bill[5] += utility_bill_wo_sys_jun[i + 1];
+				monthly_bill[6] += utility_bill_wo_sys_jul[i + 1];
+				monthly_bill[7] += utility_bill_wo_sys_aug[i + 1];
+				monthly_bill[8] += utility_bill_wo_sys_sep[i + 1];
+				monthly_bill[9] += utility_bill_wo_sys_oct[i + 1];
+				monthly_bill[10] += utility_bill_wo_sys_nov[i + 1];
+				monthly_bill[11] += utility_bill_wo_sys_dec[i + 1];
+
+				if (i == 0)
 				{
-					// calculate revenue with solar system (using system energy & maxpower)
-					ur_calc(&e_sys_cy[0], &p_sys_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-						&energy_charge[0],
-						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-						&monthly_dc_fixed[0], &monthly_dc_tou[0],
-						&monthly_ec_charges[0], &monthly_ec_flat_charges[0], &dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],  rate_scale[i], false, false);
-					// TODO - remove annual_revenue and just use annual bill
-					// Two meters - adjust output accordingly
-					for (j = 0; j < 8760; j++)
+					// IRENA
+					for (int m = 0; m < 12; m++)
 					{
-						revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
-						annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
-					}
-					// adjust monthly outputs as sum of both meters = system meter + load meter 
-
-					for (j = 0; j < 12; j++)
-					{
-						monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
-						monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
-						monthly_ec_charges[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
-						monthly_ec_flat_charges[j] += ch_wo_sys_ec_flat_ym[(i + 1) * 12 + j];
-						monthly_fixed_charges[j] += ch_wo_sys_fixed_ym[(i + 1) * 12 + j];
-						monthly_minimum_charges[j] += ch_wo_sys_minimum_ym[(i + 1) * 12 + j];
-						monthly_bill[j] += utility_bill_wo_sys_ym[(i + 1) * 12 + j];
-					}
-
-					if (i == 0)
-					{
-
-						// for each month add the wo system charge and energy
-						// not that first row contains tier num and first column contains period numbers in the charge_wo_sys_ec and energy_wo_sys_ec matrices
-						for (int m = 0; m < (int)m_month.size(); m++)
-						{
-							for (int ir = 0; ir < (int)m_month[m].ec_charge.nrows(); ir++)
-							{
-								for (int ic = 0; ic < (int)m_month[m].ec_charge.ncols(); ic++)
-								{
-									ssc_number_t charge_adj = 0;
-									ssc_number_t energy_adj = 0;
-									switch (m)
-									{
-									case 0:
-										charge_adj = charge_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
-										break;
-									case 1:
-										charge_adj = charge_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
-										break;
-									case 2:
-										charge_adj = charge_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
-										break;
-									case 3:
-										charge_adj = charge_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
-										break;
-									case 4:
-										charge_adj = charge_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
-										break;
-									case 5:
-										charge_adj = charge_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
-										break;
-									case 6:
-										charge_adj = charge_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
-										break;
-									case 7:
-										charge_adj = charge_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
-										break;
-									case 8:
-										charge_adj = charge_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
-										break;
-									case 9:
-										charge_adj = charge_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
-										break;
-									case 10:
-										charge_adj = charge_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
-										break;
-									case 11:
-										charge_adj = charge_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
-										break;
-									}
-									m_month[m].ec_charge.at(ir, ic) += charge_adj;
-									m_month[m].ec_energy_use.at(ir, ic) += energy_adj;
-								}
-							}
-						}
-
-						/* 
 						for (int p = 0; p < 12; p++)
 						{
 							for (int t = 0; t < 6; t++)
 							{
-//								monthly_charge_period_tier[0][p][t] += charge_wo_sys_ec_jan_tp[t * 12 + p];
-								monthly_e_use_period_tier[0][p][t] += energy_wo_sys_ec_jan_tp[t * 12 + p];
+								monthly_charge_period_tier[m][p][t] += p_charge_wo_sys_ec_m_p[m][p][t];
+								monthly_e_use_period_tier[m][p][t] += p_energy_wo_sys_ec_m_p[m][p][t];
 							}
 						}
-						*/
-
-
 					}
-				} // non net metering with monthly reconciliation
-			} // monthly reconciliation
+				}
+
+
+			}
+
 
 			if (i == 0)
 			{
-				ur_update_ec_monthly(0, charge_w_sys_ec_jan_tp, energy_w_sys_ec_jan_tp);
-				ur_update_ec_monthly(1, charge_w_sys_ec_feb_tp, energy_w_sys_ec_feb_tp);
-				ur_update_ec_monthly(2, charge_w_sys_ec_mar_tp, energy_w_sys_ec_mar_tp);
-				ur_update_ec_monthly(3, charge_w_sys_ec_apr_tp, energy_w_sys_ec_apr_tp);
-				ur_update_ec_monthly(4, charge_w_sys_ec_may_tp, energy_w_sys_ec_may_tp);
-				ur_update_ec_monthly(5, charge_w_sys_ec_jun_tp, energy_w_sys_ec_jun_tp);
-				ur_update_ec_monthly(6, charge_w_sys_ec_jul_tp, energy_w_sys_ec_jul_tp);
-				ur_update_ec_monthly(7, charge_w_sys_ec_aug_tp, energy_w_sys_ec_aug_tp);
-				ur_update_ec_monthly(8, charge_w_sys_ec_sep_tp, energy_w_sys_ec_sep_tp);
-				ur_update_ec_monthly(9, charge_w_sys_ec_oct_tp, energy_w_sys_ec_oct_tp);
-				ur_update_ec_monthly(10, charge_w_sys_ec_nov_tp, energy_w_sys_ec_nov_tp);
-				ur_update_ec_monthly(11, charge_w_sys_ec_dec_tp, energy_w_sys_ec_dec_tp);
-
-
+				// IRENA
+				for (int m = 0; m < 12; m++)
+				{
+					for (int p = 0; p < 12; p++)
+					{
+						for (int t = 0; t < 6; t++)
+						{
+							p_charge_w_sys_ec_m_p[m][p][t] = monthly_charge_period_tier[m][p][t];
+							p_energy_w_sys_ec_m_p[m][p][t] = monthly_e_use_period_tier[m][p][t];
+						}
+					}
+				}
 				//assign( "year1_hourly_revenue_with_system", var_data( &revenue_w_sys[0], 8760 ) );
 				//assign( "year1_hourly_payment_with_system", var_data( &payment[0], 8760 ) );
 				//assign( "year1_hourly_income_with_system", var_data( &income[0], 8760 ) );
@@ -994,6 +2492,7 @@ public:
 				assign("year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12));
 				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
 				assign("year1_monthly_ec_charge_flat_with_system", var_data(&monthly_ec_flat_charges[0], 12));
+				//assign( "year1_monthly_ec_rate_with_system", var_data(&monthly_ec_rates[0], 12) );
 			}
 
 			// determine net-revenue benefit due to solar for year 'i'
@@ -1018,24 +2517,189 @@ public:
 			annual_elec_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
 
 
-			for (j = 0; j < 12; j++)
-			{
-				utility_bill_w_sys_ym[(i+1)*12 + j] = monthly_bill[j];
-				ch_w_sys_dc_fixed_ym[(i + 1) * 12 + j] = monthly_dc_fixed[j];
-				ch_w_sys_dc_tou_ym[(i + 1) * 12 + j] = monthly_dc_tou[j];
-				ch_w_sys_ec_ym[(i + 1) * 12 + j] = monthly_ec_charges[j];
-				ch_w_sys_ec_flat_ym[(i + 1) * 12 + j] = monthly_ec_flat_charges[j];
-				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
-				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
-				utility_bill_w_sys[i + 1] += monthly_bill[j];
-				ch_w_sys_dc_fixed[i + 1] += monthly_dc_fixed[j];
-				ch_w_sys_dc_tou[i + 1] += monthly_dc_tou[j];
-				ch_w_sys_ec[i + 1] += monthly_ec_charges[j];
-				ch_w_sys_ec_flat[i + 1] += monthly_ec_flat_charges[j];
-				ch_w_sys_fixed[i + 1] += monthly_fixed_charges[j];
-				ch_w_sys_minimum[i + 1] += monthly_minimum_charges[j];
-			}
+
+			utility_bill_w_sys_jan[i + 1] = monthly_bill[0];
+			utility_bill_w_sys_feb[i + 1] = monthly_bill[1];
+			utility_bill_w_sys_mar[i + 1] = monthly_bill[2];
+			utility_bill_w_sys_apr[i + 1] = monthly_bill[3];
+			utility_bill_w_sys_may[i + 1] = monthly_bill[4];
+			utility_bill_w_sys_jun[i + 1] = monthly_bill[5];
+			utility_bill_w_sys_jul[i + 1] = monthly_bill[6];
+			utility_bill_w_sys_aug[i + 1] = monthly_bill[7];
+			utility_bill_w_sys_sep[i + 1] = monthly_bill[8];
+			utility_bill_w_sys_oct[i + 1] = monthly_bill[9];
+			utility_bill_w_sys_nov[i + 1] = monthly_bill[10];
+			utility_bill_w_sys_dec[i + 1] = monthly_bill[11];
+			utility_bill_w_sys[i + 1] = utility_bill_w_sys_jan[i + 1]
+				+ utility_bill_w_sys_feb[i + 1]
+				+ utility_bill_w_sys_mar[i + 1]
+				+ utility_bill_w_sys_apr[i + 1]
+				+ utility_bill_w_sys_may[i + 1]
+				+ utility_bill_w_sys_jun[i + 1]
+				+ utility_bill_w_sys_jul[i + 1]
+				+ utility_bill_w_sys_aug[i + 1]
+				+ utility_bill_w_sys_sep[i + 1]
+				+ utility_bill_w_sys_oct[i + 1]
+				+ utility_bill_w_sys_nov[i + 1]
+				+ utility_bill_w_sys_dec[i + 1];
+
+
+
+
+			ch_w_sys_dc_fixed_jan[i + 1] = monthly_dc_fixed[0] ;
+			ch_w_sys_dc_fixed_feb[i + 1] = monthly_dc_fixed[1] ;
+			ch_w_sys_dc_fixed_mar[i + 1] = monthly_dc_fixed[2] ;
+			ch_w_sys_dc_fixed_apr[i + 1] = monthly_dc_fixed[3] ;
+			ch_w_sys_dc_fixed_may[i + 1] = monthly_dc_fixed[4] ;
+			ch_w_sys_dc_fixed_jun[i + 1] = monthly_dc_fixed[5] ;
+			ch_w_sys_dc_fixed_jul[i + 1] = monthly_dc_fixed[6] ;
+			ch_w_sys_dc_fixed_aug[i + 1] = monthly_dc_fixed[7] ;
+			ch_w_sys_dc_fixed_sep[i + 1] = monthly_dc_fixed[8] ;
+			ch_w_sys_dc_fixed_oct[i + 1] = monthly_dc_fixed[9] ;
+			ch_w_sys_dc_fixed_nov[i + 1] = monthly_dc_fixed[10] ;
+			ch_w_sys_dc_fixed_dec[i + 1] = monthly_dc_fixed[11] ;
+			ch_w_sys_dc_fixed[i + 1] = ch_w_sys_dc_fixed_jan[i + 1]
+				+ ch_w_sys_dc_fixed_feb[i + 1]
+				+ ch_w_sys_dc_fixed_mar[i + 1]
+				+ ch_w_sys_dc_fixed_apr[i + 1]
+				+ ch_w_sys_dc_fixed_may[i + 1]
+				+ ch_w_sys_dc_fixed_jun[i + 1]
+				+ ch_w_sys_dc_fixed_jul[i + 1]
+				+ ch_w_sys_dc_fixed_aug[i + 1]
+				+ ch_w_sys_dc_fixed_sep[i + 1]
+				+ ch_w_sys_dc_fixed_oct[i + 1]
+				+ ch_w_sys_dc_fixed_nov[i + 1]
+				+ ch_w_sys_dc_fixed_dec[i + 1];
+
+		
+			ch_w_sys_dc_tou_jan[i + 1] = monthly_dc_tou[0] ;
+			ch_w_sys_dc_tou_feb[i + 1] = monthly_dc_tou[1] ;
+			ch_w_sys_dc_tou_mar[i + 1] = monthly_dc_tou[2] ;
+			ch_w_sys_dc_tou_apr[i + 1] = monthly_dc_tou[3] ;
+			ch_w_sys_dc_tou_may[i + 1] = monthly_dc_tou[4] ;
+			ch_w_sys_dc_tou_jun[i + 1] = monthly_dc_tou[5] ;
+			ch_w_sys_dc_tou_jul[i + 1] = monthly_dc_tou[6] ;
+			ch_w_sys_dc_tou_aug[i + 1] = monthly_dc_tou[7] ;
+			ch_w_sys_dc_tou_sep[i + 1] = monthly_dc_tou[8] ;
+			ch_w_sys_dc_tou_oct[i + 1] = monthly_dc_tou[9] ;
+			ch_w_sys_dc_tou_nov[i + 1] = monthly_dc_tou[10] ;
+			ch_w_sys_dc_tou_dec[i + 1] = monthly_dc_tou[11] ;
+			ch_w_sys_dc_tou[i + 1] = ch_w_sys_dc_tou_jan[i + 1]
+				+ ch_w_sys_dc_tou_feb[i + 1]
+				+ ch_w_sys_dc_tou_mar[i + 1]
+				+ ch_w_sys_dc_tou_apr[i + 1]
+				+ ch_w_sys_dc_tou_may[i + 1]
+				+ ch_w_sys_dc_tou_jun[i + 1]
+				+ ch_w_sys_dc_tou_jul[i + 1]
+				+ ch_w_sys_dc_tou_aug[i + 1]
+				+ ch_w_sys_dc_tou_sep[i + 1]
+				+ ch_w_sys_dc_tou_oct[i + 1]
+				+ ch_w_sys_dc_tou_nov[i + 1]
+				+ ch_w_sys_dc_tou_dec[i + 1];
+
+			ch_w_sys_ec_jan[i + 1] = monthly_ec_charges[0] ;
+			ch_w_sys_ec_feb[i + 1] = monthly_ec_charges[1] ;
+			ch_w_sys_ec_mar[i + 1] = monthly_ec_charges[2] ;
+			ch_w_sys_ec_apr[i + 1] = monthly_ec_charges[3] ;
+			ch_w_sys_ec_may[i + 1] = monthly_ec_charges[4] ;
+			ch_w_sys_ec_jun[i + 1] = monthly_ec_charges[5] ;
+			ch_w_sys_ec_jul[i + 1] = monthly_ec_charges[6] ;
+			ch_w_sys_ec_aug[i + 1] = monthly_ec_charges[7] ;
+			ch_w_sys_ec_sep[i + 1] = monthly_ec_charges[8] ;
+			ch_w_sys_ec_oct[i + 1] = monthly_ec_charges[9] ;
+			ch_w_sys_ec_nov[i + 1] = monthly_ec_charges[10] ;
+			ch_w_sys_ec_dec[i + 1] = monthly_ec_charges[11] ;			
+			ch_w_sys_ec[i + 1] = ch_w_sys_ec_jan[i + 1]
+				+ ch_w_sys_ec_feb[i + 1]
+				+ ch_w_sys_ec_mar[i + 1]
+				+ ch_w_sys_ec_apr[i + 1]
+				+ ch_w_sys_ec_may[i + 1]
+				+ ch_w_sys_ec_jun[i + 1]
+				+ ch_w_sys_ec_jul[i + 1]
+				+ ch_w_sys_ec_aug[i + 1]
+				+ ch_w_sys_ec_sep[i + 1]
+				+ ch_w_sys_ec_oct[i + 1]
+				+ ch_w_sys_ec_nov[i + 1]
+				+ ch_w_sys_ec_dec[i + 1];
+
+
+			ch_w_sys_ec_flat_jan[i + 1] = monthly_ec_flat_charges[0];
+			ch_w_sys_ec_flat_feb[i + 1] = monthly_ec_flat_charges[1];
+			ch_w_sys_ec_flat_mar[i + 1] = monthly_ec_flat_charges[2];
+			ch_w_sys_ec_flat_apr[i + 1] = monthly_ec_flat_charges[3];
+			ch_w_sys_ec_flat_may[i + 1] = monthly_ec_flat_charges[4];
+			ch_w_sys_ec_flat_jun[i + 1] = monthly_ec_flat_charges[5];
+			ch_w_sys_ec_flat_jul[i + 1] = monthly_ec_flat_charges[6];
+			ch_w_sys_ec_flat_aug[i + 1] = monthly_ec_flat_charges[7];
+			ch_w_sys_ec_flat_sep[i + 1] = monthly_ec_flat_charges[8];
+			ch_w_sys_ec_flat_oct[i + 1] = monthly_ec_flat_charges[9];
+			ch_w_sys_ec_flat_nov[i + 1] = monthly_ec_flat_charges[10];
+			ch_w_sys_ec_flat_dec[i + 1] = monthly_ec_flat_charges[11];
+			ch_w_sys_ec_flat[i + 1] = ch_w_sys_ec_flat_jan[i + 1]
+				+ ch_w_sys_ec_flat_feb[i + 1]
+				+ ch_w_sys_ec_flat_mar[i + 1]
+				+ ch_w_sys_ec_flat_apr[i + 1]
+				+ ch_w_sys_ec_flat_may[i + 1]
+				+ ch_w_sys_ec_flat_jun[i + 1]
+				+ ch_w_sys_ec_flat_jul[i + 1]
+				+ ch_w_sys_ec_flat_aug[i + 1]
+				+ ch_w_sys_ec_flat_sep[i + 1]
+				+ ch_w_sys_ec_flat_oct[i + 1]
+				+ ch_w_sys_ec_flat_nov[i + 1]
+				+ ch_w_sys_ec_flat_dec[i + 1];
+
+
+			ch_w_sys_fixed_jan[i + 1] = monthly_fixed_charges[0];
+			ch_w_sys_fixed_feb[i + 1] = monthly_fixed_charges[1];
+			ch_w_sys_fixed_mar[i + 1] = monthly_fixed_charges[2];
+			ch_w_sys_fixed_apr[i + 1] = monthly_fixed_charges[3];
+			ch_w_sys_fixed_may[i + 1] = monthly_fixed_charges[4];
+			ch_w_sys_fixed_jun[i + 1] = monthly_fixed_charges[5];
+			ch_w_sys_fixed_jul[i + 1] = monthly_fixed_charges[6];
+			ch_w_sys_fixed_aug[i + 1] = monthly_fixed_charges[7];
+			ch_w_sys_fixed_sep[i + 1] = monthly_fixed_charges[8];
+			ch_w_sys_fixed_oct[i + 1] = monthly_fixed_charges[9];
+			ch_w_sys_fixed_nov[i + 1] = monthly_fixed_charges[10];
+			ch_w_sys_fixed_dec[i + 1] = monthly_fixed_charges[11];
+			ch_w_sys_fixed[i + 1] = ch_w_sys_fixed_jan[i + 1]
+				+ ch_w_sys_fixed_feb[i + 1]
+				+ ch_w_sys_fixed_mar[i + 1]
+				+ ch_w_sys_fixed_apr[i + 1]
+				+ ch_w_sys_fixed_may[i + 1]
+				+ ch_w_sys_fixed_jun[i + 1]
+				+ ch_w_sys_fixed_jul[i + 1]
+				+ ch_w_sys_fixed_aug[i + 1]
+				+ ch_w_sys_fixed_sep[i + 1]
+				+ ch_w_sys_fixed_oct[i + 1]
+				+ ch_w_sys_fixed_nov[i + 1]
+				+ ch_w_sys_fixed_dec[i + 1];
+
+			ch_w_sys_minimum_jan[i + 1] = monthly_minimum_charges[0];
+			ch_w_sys_minimum_feb[i + 1] = monthly_minimum_charges[1];
+			ch_w_sys_minimum_mar[i + 1] = monthly_minimum_charges[2];
+			ch_w_sys_minimum_apr[i + 1] = monthly_minimum_charges[3];
+			ch_w_sys_minimum_may[i + 1] = monthly_minimum_charges[4];
+			ch_w_sys_minimum_jun[i + 1] = monthly_minimum_charges[5];
+			ch_w_sys_minimum_jul[i + 1] = monthly_minimum_charges[6];
+			ch_w_sys_minimum_aug[i + 1] = monthly_minimum_charges[7];
+			ch_w_sys_minimum_sep[i + 1] = monthly_minimum_charges[8];
+			ch_w_sys_minimum_oct[i + 1] = monthly_minimum_charges[9];
+			ch_w_sys_minimum_nov[i + 1] = monthly_minimum_charges[10];
+			ch_w_sys_minimum_dec[i + 1] = monthly_minimum_charges[11];
+			ch_w_sys_minimum[i + 1] = ch_w_sys_minimum_jan[i + 1]
+				+ ch_w_sys_minimum_feb[i + 1]
+				+ ch_w_sys_minimum_mar[i + 1]
+				+ ch_w_sys_minimum_apr[i + 1]
+				+ ch_w_sys_minimum_may[i + 1]
+				+ ch_w_sys_minimum_jun[i + 1]
+				+ ch_w_sys_minimum_jul[i + 1]
+				+ ch_w_sys_minimum_aug[i + 1]
+				+ ch_w_sys_minimum_sep[i + 1]
+				+ ch_w_sys_minimum_oct[i + 1]
+				+ ch_w_sys_minimum_nov[i + 1]
+				+ ch_w_sys_minimum_dec[i + 1];
+
 
 
 		}
@@ -1052,9 +2716,7 @@ public:
 		ssc_number_t energy_use[12]; // 12 months
 		int c=0;
 //		bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-//			bool enable_nm = as_boolean("ur_enable_net_metering");
-//		int metering_option = as_integer("ur_metering_option");
-//		bool enable_nm = (metering_option == 0 || metering_option == 1);
+		bool enable_nm = as_boolean("ur_enable_net_metering");
 
 
 		for (m=0;m<12;m++)
@@ -1091,34 +2753,103 @@ public:
 		}
 	}
 
-	void setup()
+
+	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
+		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], 
+		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
+		ssc_number_t energy_charge[8760],
+		ssc_number_t monthly_fixed_charges[12], ssc_number_t monthly_minimum_charges[12],
+		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
+		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_flat_charges[12],
+		ssc_number_t monthly_ec_rates[12],
+		ssc_number_t ec_tou_sched[8760], ssc_number_t dc_tou_sched[8760], 
+		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], 
+		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], 
+		ssc_number_t monthly_e_use_period_tier[12][12][6], 
+		ssc_number_t monthly_charge_period_tier[12][12][6],
+		ssc_number_t rate_esc, bool include_fixed=true, bool include_min=true) 
+		throw(general_error)
 	{
-		size_t nrows, ncols, r, c, m, i, j;
-		int period, tier, month;
-		util::matrix_t<float> dc_schedwkday(12, 24, 1);
-		util::matrix_t<float> dc_schedwkend(12, 24, 1);
+		int i;
 
-		for (i = 0; i < m_ec_periods_tiers.size(); i++)
-			m_ec_periods_tiers[i].clear();
-		m_ec_periods.clear();
+		for (i=0;i<8760;i++)
+			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
 
-		for (i = 0; i < m_dc_tou_periods_tiers.size(); i++)
-			m_dc_tou_periods_tiers[i].clear();
-		m_dc_tou_periods.clear();
-
-		for (i = 0; i < m_dc_flat_tiers.size(); i++)
-			m_dc_flat_tiers[i].clear();
-
-		m_month.clear();
-		for (m = 0; m < 12; m++)
+		for (i=0;i<12;i++)
 		{
-			ur_month urm;
-			m_month.push_back(urm);
+			monthly_fixed_charges[i] = monthly_minimum_charges[i]
+				= monthly_ec_flat_charges[i]
+				= monthly_dc_fixed[i] = monthly_dc_tou[i] 
+				= monthly_ec_charges[i] = monthly_ec_rates[i] 
+				= monthly_cumulative_excess_energy[i] 
+				= monthly_cumulative_excess_dollars[i] 
+				= monthly_bill[i] = 0.0;
 		}
+		// initialize all montly values
+		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
+		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
 
+		//bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+
+		
+		// false = 2 meters, load and system treated separately
+		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
+		bool enable_nm = as_boolean("ur_enable_net_metering");
+		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
 		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool dc_enabled = as_boolean("ur_dc_enable");
+
+		bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
+//		bool apply_excess_to_flat_rate = !ec_enabled;
+
+		if (sell_eq_buy)
+			sell = buy;
+
+		// calculate the monthly net energy and monthly hours
+		int m, d, h;
+		ssc_number_t monthly_energy_net[12]; // 12 months
+		// calculate the monthly net energy per month
+		int hours_per_month[12];
+		int c = 0;
+		for (m = 0; m < 12; m++)
+		{
+			monthly_energy_net[m] = 0;
+			hours_per_month[m] = 0;
+			for (d = 0; d < util::nday[m]; d++)
+			{
+				for (h = 0; h < 24; h++)
+				{
+					// net energy use per month
+					monthly_energy_net[m] += e_in[c];
+					// hours per period per month
+					hours_per_month[m]++;
+					c++;
+				}
+			}
+		}
+
+		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
+		if (enable_nm && !excess_monthly_dollars)
+		{
+			ssc_number_t prev_value = 0;
+			for (m = 0; m < 12; m++)
+			{
+				prev_value = (m > 0) ? monthly_cumulative_excess_energy[m - 1] : 0;
+				monthly_cumulative_excess_energy[m] = ((prev_value + monthly_energy_net[m]) > 0) ? (prev_value + monthly_energy_net[m]) : 0;
+			}
+		}
+
+
+
+// TODO schedules can be initialized outside of ur_calc once!
+		// 12 periods with 6 tiers each rates 3rd index = 0 = buy and 1=sell
+		ssc_number_t ec_rates[12][6][2];
+		ssc_number_t ec_energy_ub[12][6];
+		size_t nrows, ncols;
+		int period, tier;
+		ssc_number_t ec_monthly_energy_net[12][12]; // 12 months, 12 periods
+		int ec_hours_per_month_per_period[12][12];
 
 		if (ec_enabled)
 		{
@@ -1137,592 +2868,199 @@ public:
 				ss << "energy charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
 				throw exec_error("utilityrate3", ss.str());
 			}
-			util::matrix_t<float> ec_schedwkday(nrows, ncols);
+			util::matrix_t<float> ec_schedwkday(12, 24);
 			ec_schedwkday.assign(ec_weekday, nrows, ncols);
-			util::matrix_t<float> ec_schedwkend(nrows, ncols);
+			util::matrix_t<float> ec_schedwkend(12, 24);
 			ec_schedwkend.assign(ec_weekend, nrows, ncols);
-
-			// for each row (month) determine periods in the month
-			// m_monthly_ec_tou_ub max of period tier matrix of period xtier +1
-			// columns are period, tier1 max, tier 2 max, ..., tier n max
-
 
 			int ec_tod[8760];
 
 			if (!util::translate_schedule(ec_tod, ec_schedwkday, ec_schedwkend, 1, 12))
 				throw general_error("could not translate weekday and weekend schedules for energy charges");
 
-			for (i = 0; i < 8760; i++) 
-				m_ec_tou_sched.push_back(ec_tod[i]);
+			for (int i = 0; i < 8760; i++) ec_tou_sched[i] = (ssc_number_t)(ec_tod[i]);
 
+			// tiered rates for all 6 tiers in each of the 12 periods
 
-			// 6 columns period, tier, max usage, max usage units, buy, sell
-			ssc_number_t *ec_tou_in = as_matrix("ur_ec_tou_mat", &nrows, &ncols);
-			if (ncols != 6)
+			for (period = 0; period < 12; period++)
 			{
-				std::ostringstream ss;
-				ss << "energy tou inputs must have 6 columns, input has " << ncols << "columns";
-				throw exec_error("utilityrate3", ss.str());
-			}
-			util::matrix_t<float> ec_tou_mat(nrows, ncols);
-			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
+				std::string str_period = util::to_string(period + 1);
 
-
-			// adjust sell rate based on input selections
-			int metering_option = as_integer("ur_metering_option");
-			bool enable_nm = (metering_option == 0 || metering_option == 1);
-			// 0 = net metering energy rollover, 1=net metering dollar rollover
-			// 2= non-net metering monthly, 3= non-net metering hourly
-
-			// non net metering only
-			int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
-			// 0=sell at ec sell rates, 1= sell at flat sell rate
-			bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
-			ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate");
-
-			bool sell_eq_buy = enable_nm;
-
-			// find all periods for each month m through schedules
-			for (m = 0; m < m_month.size(); m++)
-			{
-				// energy charges
-				for (c = 0; c < ec_schedwkday.ncols(); c++)
+				for (tier = 0; tier < 6; tier++)
 				{
-					if (std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), ec_schedwkday.at(m, c)) == m_month[m].ec_periods.end())
-							m_month[m].ec_periods.push_back((int)ec_schedwkday.at(m, c));
-				}
-				for (c = 0; c < ec_schedwkend.ncols(); c++)
-				{
-					if (std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), ec_schedwkend.at(m, c)) == m_month[m].ec_periods.end())
-						m_month[m].ec_periods.push_back((int)ec_schedwkend.at(m, c));
-				}
-				std::sort(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end());
-			}
+					std::string str_tier = util::to_string(tier + 1);
 
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)ec_tou_mat.at(r, 0);
-				if (std::find(m_ec_periods.begin(), m_ec_periods.end(),period) == m_ec_periods.end())
-					m_ec_periods.push_back(period);
-			}
-			// sorted periods smallest to largest
-			std::sort(m_ec_periods.begin(), m_ec_periods.end());
-			// for each period, get list of tier numbers and then sort and construct 
-			//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
-			
-			for (r = 0; r < m_ec_periods.size(); r++)
-			{
-				m_ec_periods_tiers.push_back(std::vector<int>());
-			}
-			
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)ec_tou_mat.at(r, 0);
-				tier = (int)ec_tou_mat.at(r, 1);
-				std::vector<int>::iterator result = std::find(m_ec_periods.begin(), m_ec_periods.end(), period);
-				if (result == m_ec_periods.end())
-				{
-					std::ostringstream ss;
-					ss << "energy charge period not found " << period;
-					throw exec_error("utilityrate3", ss.str());
-				}
-				int ndx = (int)(result - m_ec_periods.begin());
-				m_ec_periods_tiers[ndx].push_back(tier);
-			}
-			// sort tier values for each period
-			for (r = 0; r < m_ec_periods_tiers.size(); r++)
-				std::sort(m_ec_periods_tiers[r].begin(), m_ec_periods_tiers[r].end());
-
-
-			// periods are rows and tiers are columns - note that columns can change based on rows
-			// Initialize each month variables that are constant over the simulation
-
-			for (m = 0; m < m_month.size(); m++)
-			{
-				int num_periods=0;
-				int num_tiers = 0;
-				for (i = 0; i < m_month[m].ec_periods.size(); i++)
-				{
-					// find all periods and check that number of tiers the same for all for the month, if not through error
-					std::vector<int>::iterator per_num = std::find(m_ec_periods.begin(), m_ec_periods.end(), m_month[m].ec_periods[i]);
-					if (per_num == m_ec_periods.end())
-					{
-						std::ostringstream ss;
-						ss << "energy charge period not found for month " << " m and period " << m_month[m].ec_periods[i];
-						throw exec_error("utilityrate3", ss.str());
-					}
-					period = (*per_num);
-					int ndx = (int)(per_num - m_ec_periods.begin());
-					if (i == 0)
-					{
-						// redimension ec_ field of ur_month class
-						num_periods = (int)m_month[m].ec_periods.size();
-						num_tiers = (int)m_ec_periods_tiers[ndx].size();
-						m_month[m].ec_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e+38);
-						m_month[m].ec_tou_units.resize_fill(num_periods, num_tiers, 0); // kWh
-						m_month[m].ec_tou_br.resize_fill(num_periods, num_tiers, 0);
-						m_month[m].ec_tou_sr.resize_fill(num_periods, num_tiers, 0);
-					}
-					else
-					{
-						if ((int)m_ec_periods_tiers[ndx].size() != num_tiers)
-						{
-							std::ostringstream ss;
-							ss << "energy charge number of tiers " << m_ec_periods_tiers[ndx].size() << ", incorrect for month " << m << " and period " << m_month[m].ec_periods[i] << " should be " << num_tiers;
-							throw exec_error("utilityrate3", ss.str());
-						}
-					}
-					for (j = 0; j < m_ec_periods_tiers[ndx].size(); j++)
-					{
-						tier = m_ec_periods_tiers[ndx][j];
-						// initialize for each period and tier
-						bool found = false;
-						for (r = 0; (r < nrows) && !found; r++)
-						{
-							if ((period == (int)ec_tou_mat.at(r, 0)) 
-								&& (tier == (int)ec_tou_mat.at(r, 1)))
-							{
-								m_month[m].ec_tou_ub.at(i,j) = ec_tou_mat.at(r, 2);
-								m_month[m].ec_tou_units.at(i, j) = (int)ec_tou_mat.at(r, 3);
-								m_month[m].ec_tou_br.at(i, j) = ec_tou_mat.at(r, 4);
-								// adjust sell rate based on input selections
-								ssc_number_t sell = ec_tou_mat.at(r, 5);
-								if (sell_eq_buy)
-									sell = ec_tou_mat.at(r, 4);
-								else if (!ur_ec_sell_at_ec_rates)
-									sell = ur_ec_single_sell_rate;
-								m_month[m].ec_tou_sr.at(i, j) = sell;
-								found = true;
-							}
-						}
-
-					}
+					ec_rates[period][tier][0] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_br")*rate_esc;
+					ec_rates[period][tier][1] = sell_eq_buy ? ec_rates[period][tier][0] : as_number("ur_ec_p" + str_period + "_t" + str_tier + "_sr")*rate_esc;
+					ec_energy_ub[period][tier] = as_number("ur_ec_p" + str_period + "_t" + str_tier + "_ub");
 				}
 			}
 
+
+
+			// calculate the monthly net energy per period
+			c = 0;
+			for (m = 0; m < 12; m++)
+			{
+				for (period = 0; period < 12; period++)
+				{
+					ec_monthly_energy_net[m][period] = 0;
+					ec_hours_per_month_per_period[m][period] = 0;
+					for (tier = 0; tier < 6; tier++)
+					{
+						monthly_e_use_period_tier[m][period][tier] = 0;
+						monthly_charge_period_tier[m][period][tier] = 0;
+					}
+				}
+
+				for (d = 0; d < util::nday[m]; d++)
+				{
+					for (h = 0; h < 24; h++)
+					{
+						int todp = ec_tod[c] - 1;
+						// net energy use per period per month
+						ec_monthly_energy_net[m][todp] += e_in[c];
+						// hours per period per month
+						ec_hours_per_month_per_period[m][todp]++;
+						c++;
+					}
+				}
+			}
+		}
+// adjust net energy if net metering with monthly rollover
+		if (enable_nm && !excess_monthly_dollars)
+		{
+			for (m = 1; m < 12; m++)
+			{
+				for (period = 0; period < 12; period++)
+				{
+					if (monthly_energy_net[m] != 0 && (ec_monthly_energy_net[m][period]<0))
+					{
+						ssc_number_t reduction = fabs(monthly_cumulative_excess_energy[m - 1] * ec_monthly_energy_net[m][period] / monthly_energy_net[m]);
+						ec_monthly_energy_net[m][period] += reduction;
+					}
+				}
+				if (monthly_energy_net[m] < 0)
+					monthly_energy_net[m] += monthly_cumulative_excess_energy[m - 1];
+			}
 		}
 
 
-// demand charge initialization
-		if (dc_enabled)
+// fixed demand charge initialization
+		ssc_number_t dc_fixed_charges[12][6];
+		ssc_number_t dc_fixed_energy_ub[12][6];
+
+		for (m = 0; m<12; m++)
 		{
-
-			ssc_number_t *dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
+			for (tier = 0; tier<6; tier++)
 			{
-				std::ostringstream ss;
-				ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
-				throw exec_error("utilityrate3", ss.str());
+				std::string str_tier = util::to_string(tier + 1);
+				dc_fixed_charges[m][tier] = as_number("ur_dc_" + util::schedule_int_to_month(m) + "_t" + str_tier + "_dc")*rate_esc;
+				dc_fixed_energy_ub[m][tier] = as_number("ur_dc_" + util::schedule_int_to_month(m) + "_t" + str_tier + "_ub");
 			}
-			ssc_number_t *dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
-			if (nrows != 12 || ncols != 24)
-			{
-				std::ostringstream ss;
-				ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
-				throw exec_error("utilityrate3", ss.str());
-			}
-			util::matrix_t<float> dc_schedwkday(nrows, ncols);
-			dc_schedwkday.assign(dc_weekday, nrows, ncols);
-			util::matrix_t<float> dc_schedwkend(nrows, ncols);
-			dc_schedwkend.assign(dc_weekend, nrows, ncols);
-
-			// for each row (month) determine periods in the month
-			// m_monthly_dc_tou_ub max of period tier matrix of period xtier +1
-			// columns are period, tier1 max, tier 2 max, ..., tier n max
-
-
-			int dc_tod[8760];
-
-			if (!util::translate_schedule(dc_tod, dc_schedwkday, dc_schedwkend, 1, 12))
-				throw general_error("could not translate weekday and weekend schedules for demand charges");
-
-			for (i = 0; i < 8760; i++)
-				m_dc_tou_sched.push_back(dc_tod[i]);
-
-
-			// 4 columns period, tier, max usage, charge
-			ssc_number_t *dc_tou_in = as_matrix("ur_dc_tou_mat", &nrows, &ncols);
-			if (ncols != 4)
-			{
-				std::ostringstream ss;
-				ss << "demand tou inputs must have 4 columns, input has " << ncols << "columns";
-				throw exec_error("utilityrate3", ss.str());
-			}
-			util::matrix_t<float> dc_tou_mat(nrows, ncols);
-			dc_tou_mat.assign(dc_tou_in, nrows, ncols);
-
-			// find all periods for each month m through schedules
-			for (m = 0; m < m_month.size(); m++)
-			{
-				// demand charges
-				for (c = 0; c < dc_schedwkday.ncols(); c++)
-				{
-					if (std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), dc_schedwkday.at(m, c)) == m_month[m].dc_periods.end())
-						m_month[m].dc_periods.push_back((int)dc_schedwkday.at(m, c));
-				}
-				for (c = 0; c < dc_schedwkend.ncols(); c++)
-				{
-					if (std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), dc_schedwkend.at(m, c)) == m_month[m].dc_periods.end())
-						m_month[m].dc_periods.push_back((int)dc_schedwkend.at(m, c));
-				}
-				std::sort(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end());
-			}
-
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)dc_tou_mat.at(r, 0);
-				if (std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), period) == m_dc_tou_periods.end())
-					m_dc_tou_periods.push_back(period);
-			}
-			// sorted periods smallest to largest
-			std::sort(m_dc_tou_periods.begin(), m_dc_tou_periods.end());
-			// for each period, get list of tier numbers and then sort and construct 
-			//m_dc_tou_ub, m_dc_tou_units, m_dc_tou_br, dc_tou_sr vectors of vectors
-			for (r = 0; r < m_dc_tou_periods.size(); r++)
-			{
-				m_dc_tou_periods_tiers.push_back(std::vector<int>());
-			}
-
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)dc_tou_mat.at(r, 0);
-				tier = (int)dc_tou_mat.at(r, 1);
-				std::vector<int>::iterator result = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), period);
-				if (result == m_dc_tou_periods.end())
-				{
-					std::ostringstream ss;
-					ss << "demand charge period not found " << period;
-					throw exec_error("utilityrate3", ss.str());
-				}
-				int ndx = (int)(result - m_dc_tou_periods.begin());
-				m_dc_tou_periods_tiers[ndx].push_back(tier);
-			}
-			// sort tier values for each period
-			for (r = 0; r < m_dc_tou_periods_tiers.size(); r++)
-				std::sort(m_dc_tou_periods_tiers[r].begin(), m_dc_tou_periods_tiers[r].end());
-
-
-			// periods are rows and tiers are columns - note that columns can change based on rows
-			// Initialize each month variables that are constant over the simulation
-
-			for (m = 0; m < m_month.size(); m++)
-			{
-				int num_periods = 0;
-				int num_tiers = 0;
-				for (i = 0; i < m_month[m].dc_periods.size(); i++)
-				{
-					// find all periods and check that number of tiers the same for all for the month, if not through error
-					std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
-					if (per_num == m_dc_tou_periods.end())
-					{
-						std::ostringstream ss;
-						ss << "demand charge period not found for month " << " m and period " << m_month[m].dc_periods[i];
-						throw exec_error("utilityrate3", ss.str());
-					}
-					period = (*per_num);
-					int ndx = (int)(per_num - m_dc_tou_periods.begin());
-					if (i == 0)
-					{
-						// redimension dc_ field of ur_month class
-						num_periods = (int)m_month[m].dc_periods.size();
-						num_tiers = (int)m_dc_tou_periods_tiers[ndx].size();
-						m_month[m].dc_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e38);
-						m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
-					}
-					else
-					{
-						if ((int)m_dc_tou_periods_tiers[ndx].size() != num_tiers)
-						{
-							std::ostringstream ss;
-							ss << "demand charge number of tiers " << m_dc_tou_periods_tiers[ndx].size() << ", incorrect for month " << m << " and period " << m_month[m].dc_periods[i] << " should be " << num_tiers;
-							throw exec_error("utilityrate3", ss.str());
-						}
-					}
-					for (j = 0; j < m_dc_tou_periods_tiers[ndx].size(); j++)
-					{
-						tier = m_dc_tou_periods_tiers[ndx][j];
-						// initialize for each period and tier
-						bool found = false;
-						for (r = 0; (r < nrows) && !found; r++)
-						{
-							if ((period == (int)dc_tou_mat.at(r, 0))
-								&& (tier == (int)dc_tou_mat.at(r, 1)))
-							{
-								m_month[m].dc_tou_ub.at(i, j) = dc_tou_mat.at(r, 2);
-								m_month[m].dc_tou_ch.at(i, j) = dc_tou_mat.at(r, 3);//rate_esc;
-								found = true;
-							}
-						}
-
-					}
-				}
-			}
-				// flat demand charge
-				// 4 columns month, tier, max usage, charge
-				ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
-				if (ncols != 4)
-				{
-					std::ostringstream ss;
-					ss << "demand flat inputs must have 4 columns, input has " << ncols << "columns";
-					throw exec_error("utilityrate3", ss.str());
-				}
-				util::matrix_t<float> dc_flat_mat(nrows, ncols);
-				dc_flat_mat.assign(dc_flat_in, nrows, ncols);
-
-				for (r = 0; r < m_month.size(); r++)
-				{
-					m_dc_flat_tiers.push_back(std::vector<int>());
-				}
-
-				for (r = 0; r < nrows; r++)
-				{
-					month = (int)dc_flat_mat.at(r, 0);
-					tier = (int)dc_flat_mat.at(r, 1);
-					if ((month < 0) || (month >= (int)m_month.size()))
-					{
-						std::ostringstream ss;
-						ss << "demand flt month not found " << month;
-						throw exec_error("utilityrate3", ss.str());
-					}
-					m_dc_flat_tiers[month].push_back(tier);
-				}
-				// sort tier values for each period
-				for (r = 0; r < m_dc_flat_tiers.size(); r++)
-					std::sort(m_dc_flat_tiers[r].begin(), m_dc_flat_tiers[r].end());
-
-
-				// months are rows and tiers are columns - note that columns can change based on rows
-				// Initialize each month variables that are constant over the simulation
-
-
-
-				for (m = 0; m < m_month.size(); m++)
-				{
-					for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
-					{
-						tier = m_dc_flat_tiers[m][j];
-						m_month[m].dc_flat_ub.clear();
-						m_month[m].dc_flat_ch.clear();
-						// initialize for each period and tier
-						bool found = false;
-						for (r = 0; (r < nrows) && !found; r++)
-						{
-							if ((m == dc_flat_mat.at(r, 0))
-								&& (tier == (int)dc_flat_mat.at(r, 1)))
-							{
-								m_month[m].dc_flat_ub.push_back(dc_flat_mat.at(r, 2));
-								m_month[m].dc_flat_ch.push_back(dc_flat_mat.at(r, 3));//rate_esc;
-								found = true;
-							}
-						}
-
-					}
-				}
-
 		}
 
 
-
-
-	}
-
-
-
-
-	void ur_calc( ssc_number_t e_in[8760], ssc_number_t p_in[8760],
-		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760], 
-		ssc_number_t price[8760], ssc_number_t demand_charge[8760], 
-		ssc_number_t energy_charge[8760],
-		ssc_number_t monthly_fixed_charges[12], ssc_number_t monthly_minimum_charges[12],
-		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
-		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_flat_charges[12],
-		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12], 
-		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12], 
-		ssc_number_t rate_esc, bool include_fixed=true, bool include_min=true) 
-		throw(general_error)
-	{
-		int i;
-
-		for (i=0;i<8760;i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
-
-		for (i=0;i<12;i++)
+// monthly fixed demand charge peaks
+		ssc_number_t monthly_peak[12];  // peak usage for the month (negative value)
+		ssc_number_t peak_demand = 0;
+		ssc_number_t charge = 0;
+		int peak_hour[12];
+		c = 0;
+		for (m = 0; m < 12; m++)
 		{
-			monthly_fixed_charges[i] = monthly_minimum_charges[i]
-				= monthly_ec_flat_charges[i]
-				= monthly_dc_fixed[i] = monthly_dc_tou[i] 
-				= monthly_ec_charges[i]
-				= monthly_cumulative_excess_energy[i] 
-				= monthly_cumulative_excess_dollars[i] 
-				= monthly_bill[i] = 0.0;
-		}
-		// initialize all montly values
-		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
-		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
-
-		//bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
-
-	
-
-		// false = 2 meters, load and system treated separately
-		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
-//		bool enable_nm = as_boolean("ur_enable_net_metering");
-		//			bool enable_nm = as_boolean("ur_enable_net_metering");
-		int metering_option = as_integer("ur_metering_option");
-		bool enable_nm = (metering_option == 0 || metering_option == 1);
-		// 0 = net metering energy rollover, 1=net metering dollar rollover
-		// 2= non-net metering monthly, 3= non-net metering hourly
-
-		// non net metering only
-		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
-		// 0=sell at ec sell rates, 1= sell at flat sell rate
-		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option==0);
-		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
-
-		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
-
-		bool ec_enabled = as_boolean("ur_ec_enable");
-		bool dc_enabled = as_boolean("ur_dc_enable");
-
-		//bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
-		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 1);
-		//		bool apply_excess_to_flat_rate = !ec_enabled;
-
-		if (sell_eq_buy)
-			sell = buy;
-		else if (!ur_ec_sell_at_ec_rates)
-			sell = ur_ec_single_sell_rate*rate_esc;
-
-		// calculate the monthly net energy and monthly hours
-		int m, d, h, period, tier;
-		int c = 0;
-		for (m = 0; m < (int)m_month.size(); m++)
-		{
-			m_month[m].energy_net = 0;
-			m_month[m].hours_per_month = 0;
-			m_month[m].dc_flat_peak = 0;
-			m_month[m].dc_flat_peak_hour = 0;
+			monthly_peak[m] = 0;
+			peak_hour[m] = 0;
 			for (d = 0; d < util::nday[m]; d++)
 			{
 				for (h = 0; h < 24; h++)
 				{
-					// net energy use per month
-					m_month[m].energy_net += e_in[c]; // -load and +gen
-					// hours per period per month
-					m_month[m].hours_per_month++;
-					// peak
-					if (p_in[c] < 0 && p_in[c] < -m_month[m].dc_flat_peak)
+					if (p_in[c] < 0 && p_in[c] < monthly_peak[m])
 					{
-						m_month[m].dc_flat_peak = -p_in[c];
-						m_month[m].dc_flat_peak_hour = c;
+						monthly_peak[m] = p_in[c];
+						peak_hour[m] = c;
 					}
 					c++;
 				}
 			}
 		}
 
-		// monthly cumulative excess energy (positive = excess energy, negative = excess load)
-		if (enable_nm && !excess_monthly_dollars)
-		{
-			ssc_number_t prev_value = 0;
-			for (m = 0; m < 12; m++)
-			{
-				prev_value = (m > 0) ? monthly_cumulative_excess_energy[m - 1] : 0;
-				monthly_cumulative_excess_energy[m] = ((prev_value + m_month[m].energy_net) > 0) ? (prev_value + m_month[m].energy_net) : 0;
-			}
-		}
-
-	
-		// adjust net energy if net metering with monthly rollover
-		if (enable_nm && !excess_monthly_dollars)
-		{
-			for (m = 1; m < (int)m_month.size(); m++)
-			{
-				if (m_month[m].energy_net < 0)
-					m_month[m].energy_net += monthly_cumulative_excess_energy[m - 1];
-			}
-		}
+// demand charge schedules
+		ssc_number_t *dc_weekday;
+		ssc_number_t *dc_weekend;
+		// initialize to diurnal all 1 if only flat monthly demand charge specified per Mike Gleason 1/16/15
+		util::matrix_t<float> dc_schedwkday(12, 24, 1);
+		util::matrix_t<float> dc_schedwkend(12, 24, 1);
+		ssc_number_t monthly_period_peak[12][12];  // peak usage for period for the month (negative value)
+		int peak_period_hour[12][12];
+		ssc_number_t dc_charges[12][6];
+		ssc_number_t dc_energy_ub[12][6];
+		int dc_tod[8760];
 
 
-		if (ec_enabled)
-		{
-			// calculate the monthly net energy per tier and period based on units
-			c = 0;
-			ssc_number_t mon_e_net = 0;
-			if (m>0 && enable_nm && !excess_monthly_dollars)
-			{
-				mon_e_net = monthly_cumulative_excess_energy[m - 1]; // rollover
-			}
-			for (m = 0; m < (int)m_month.size(); m++)
-			{
-				// assume kWh here initially and will update for other units
-				int num_periods = (int)m_month[m].ec_tou_ub.nrows();
-				int num_tiers = (int)m_month[m].ec_tou_ub.ncols();
-				m_month[m].ec_energy_use.resize_fill(num_periods, num_tiers, 0);
-				m_month[m].ec_charge.resize_fill(num_periods, num_tiers, 0);
-
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						mon_e_net += e_in[c];
-						int toup = m_ec_tou_sched[c];
-						std::vector<int>::iterator per_num = std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), toup);
-						if (per_num == m_month[m].ec_periods.end())
-						{
-							std::ostringstream ss;
-							ss << "energy charge period " << toup << " not found for month " << m;
-							throw exec_error("utilityrate3", ss.str());
-						}
-						int row = (int)(per_num - m_month[m].ec_periods.begin());
-						// look at energy accumulation and tier ub to determine where energy goes in matrix
-						tier = 0;
-						// translate to energy use for tier determination
-						// update energy per tier for charges
-						ssc_number_t ub = -mon_e_net;
-						if (mon_e_net > 0) 
-							ub = mon_e_net;
-
-						while ((tier <  (int)(m_month[m].ec_tou_ub.ncols() - 1)) && (ub >  m_month[m].ec_tou_ub.at(row, tier)))
-							tier++;
-						m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
-						c++;
-					}
-				}
-			}
-		}
-
-
-		// set peak per period - no tier accumulation
 		if (dc_enabled)
 		{
-			c = 0;
-			for (m = 0; m < (int)m_month.size(); m++)
+			if (is_assigned("ur_dc_sched_weekday"))
 			{
-				m_month[m].dc_tou_peak.clear();
-				m_month[m].dc_tou_peak_hour.clear();
-				for (i = 0; i < (int)m_month[m].dc_periods.size(); i++)
+				dc_weekday = as_matrix("ur_dc_sched_weekday", &nrows, &ncols);
+				if (nrows != 12 || ncols != 24)
 				{
-					m_month[m].dc_tou_peak.push_back(0);
-					m_month[m].dc_tou_peak_hour.push_back(0);
+					std::ostringstream ss;
+					ss << "demand charge weekday schedule must be 12x24, input is " << nrows << "x" << ncols;
+					throw exec_error("utilityrate3", ss.str());
 				}
+				dc_schedwkday.assign(dc_weekday, nrows, ncols);
+			}
+			if (is_assigned("ur_dc_sched_weekend"))
+			{
+				dc_weekend = as_matrix("ur_dc_sched_weekend", &nrows, &ncols);
+				if (nrows != 12 || ncols != 24)
+				{
+					std::ostringstream ss;
+					ss << "demand charge weekend schedule must be 12x24, input is " << nrows << "x" << ncols;
+					throw exec_error("utilityrate3", ss.str());
+				}
+				dc_schedwkend.assign(dc_weekend, nrows, ncols);
+			}
+
+
+
+			if (!util::translate_schedule(dc_tod, dc_schedwkday, dc_schedwkend, 1, 12))
+				throw general_error("could not translate weekday and weekend schedules for demand charge time-of-use rate");
+
+			for (i = 0; i < 8760; i++) dc_tou_sched[i] = (ssc_number_t)(dc_tod[i]);
+
+
+			// extract rate info
+			for (period = 0; period < 12; period++)
+			{
+				std::string str_period = util::to_string(period + 1);
+				for (tier = 0; tier < 6; tier++)
+				{
+					std::string str_tier = util::to_string(tier + 1);
+					dc_charges[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_dc")*rate_esc;
+					dc_energy_ub[period][tier] = as_number("ur_dc_p" + str_period + "_t" + str_tier + "_ub");
+				}
+			}
+
+			c = 0;
+			for (m = 0; m < 12; m++)
+			{
+				for (i = 0; i < 12; i++) // TOU periods
+				{
+					monthly_period_peak[m][i] = 0;
+					peak_period_hour[m][i] = 0;
+				}
+
 				for (d = 0; d < util::nday[m]; d++)
 				{
 					for (h = 0; h < 24; h++)
 					{
-						int todp = m_dc_tou_sched[c];
-						std::vector<int>::iterator per_num = std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), todp);
-						if (per_num == m_month[m].dc_periods.end())
+						int todp = dc_tod[c] - 1;
+						if (p_in[c] < 0 && p_in[c] < monthly_period_peak[m][todp])
 						{
-							std::ostringstream ss;
-							ss << "demand charge period " << todp << " not found for month " << m;
-							throw exec_error("utilityrate3", ss.str());
-						}
-						int row = (int)(per_num - m_month[m].dc_periods.begin());
-						if (p_in[c] < 0 && p_in[c] < -m_month[m].dc_tou_peak[row])
-						{
-							m_month[m].dc_tou_peak[row] = -p_in[c];
-							m_month[m].dc_tou_peak_hour[row] = c;
+							monthly_period_peak[m][todp] = p_in[c];
+							peak_period_hour[m][todp] = c;
 						}
 						c++;
 					}
@@ -1731,15 +3069,12 @@ public:
 		}
 
 
-		
-		
-// main loop
 		c = 0;
 		// process one month at a time
-		for (m = 0; m < (int)m_month.size(); m++)
+		for (m = 0; m < 12; m++)
 		{
 // flat rate
-			if (m_month[m].hours_per_month <= 0) break;
+			if (hours_per_month[m] <= 0) break;
 			for (d = 0; d<util::nday[m]; d++)
 			{
 				for (h = 0; h<24; h++)
@@ -1748,64 +3083,112 @@ public:
 					{
 						if (enable_nm)
 						{
-							if (m_month[m].energy_net < 0)
+							if (monthly_energy_net[m] < 0)
 							{
-								payment[c] += -m_month[m].energy_net * buy;
+								payment[c] += -monthly_energy_net[m] * buy;
 								monthly_ec_flat_charges[m] += payment[c];
 							}
 						}
 						else // no net metering - so no rollover.
 						{
-							if (m_month[m].energy_net < 0) // must buy from grid
+							if (monthly_energy_net[m] < 0) // must buy from grid
 							{
-								payment[c] += -m_month[m].energy_net * buy;
+								payment[c] += -monthly_energy_net[m] * buy;
 								monthly_ec_flat_charges[m] += payment[c];
 							}
 							else
 							{
-								income[c] += m_month[m].energy_net * sell;
+								income[c] += monthly_energy_net[m] * sell;
 								monthly_ec_flat_charges[m] -= income[c];
 							}
 						}
 						// added for Mike Gleason 
 						energy_charge[c] += monthly_ec_flat_charges[m];
+// Price ?
+
 // end of flat rate
 
 // energy charge
 						if (ec_enabled)
 						{
+							ssc_number_t monthly_energy = 0;
+							for (period = 0; period<12; period++)
+							{
+								//				charge[m][period]=0;
+								//				credit[m][period]=0;
 
-							if (m_month[m].energy_net >= 0.0)
-							{ // calculate income or credit
-								ssc_number_t credit_amt = 0;
-
-								for (period = 0; period < (int)m_month[m].ec_tou_sr.nrows(); period++)
-								{
-									for (tier = 0; tier < (int)m_month[m].ec_tou_sr.ncols(); tier++)
+								if (ec_monthly_energy_net[m][period] >= 0.0)
+								{ // calculate income or credit
+									ssc_number_t credit_amt = 0;
+									ssc_number_t energy_surplus = ec_monthly_energy_net[m][period];
+									tier = 0;
+									while (tier < 6)
 									{
-										ssc_number_t cr = -m_month[m].ec_energy_use.at(period, tier) * m_month[m].ec_tou_sr.at(period, tier) * rate_esc;
-										m_month[m].ec_charge.at(period, tier) = -cr;
-										credit_amt += cr;
-									}
-								}
-								monthly_ec_charges[m] -= credit_amt;
-							}
-							else
-	
-							{ // calculate payment or charge
+										ssc_number_t tier_energy = 0;
+										ssc_number_t tier_credit = 0;
+										// add up the charge amount for this block
+										ssc_number_t e_upper = ec_energy_ub[period][tier];
+										ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
 
-								ssc_number_t charge_amt = 0;
-								for (period = 0; period < (int)m_month[m].ec_tou_sr.nrows(); period++)
-								{
-									for (tier = 0; tier < (int)m_month[m].ec_tou_sr.ncols(); tier++)
-									{
-										ssc_number_t ch = m_month[m].ec_energy_use.at(period, tier) * m_month[m].ec_tou_br.at(period, tier) * rate_esc;
-										m_month[m].ec_charge.at(period, tier) = ch;
-										charge_amt += ch;
+										if (energy_surplus > e_upper)
+										{
+											tier_energy = e_upper - e_lower;
+											tier_credit = tier_energy*ec_rates[period][tier][1];
+										}
+										else
+										{
+											tier_energy = energy_surplus - e_lower;
+											tier_credit = tier_energy*ec_rates[period][tier][1];
+										}
+										credit_amt += tier_credit;
+										monthly_e_use_period_tier[m][period][tier] -= tier_energy;
+										monthly_charge_period_tier[m][period][tier] -= tier_credit;
+										if (energy_surplus < e_upper)
+											break;
+										tier++;
 									}
+									//					credit[m][period] = credit_amt;
+									monthly_ec_charges[m] -= credit_amt;
+									monthly_energy += energy_surplus;
 								}
-								monthly_ec_charges[m] += charge_amt;
+								else
+								{ // calculate payment or charge
+									ssc_number_t charge_amt = 0;
+									ssc_number_t energy_deficit = -ec_monthly_energy_net[m][period];
+
+									tier = 0;
+									while (tier < 6)
+									{
+										ssc_number_t tier_energy = 0;
+										ssc_number_t tier_charge = 0;
+										// add up the charge amount for this block
+										ssc_number_t e_upper = ec_energy_ub[period][tier];
+										ssc_number_t e_lower = tier > 0 ? ec_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
+
+										if (energy_deficit > e_upper)
+										{
+											tier_energy = e_upper - e_lower;
+											tier_charge = tier_energy*ec_rates[period][tier][0];
+										}
+										else
+										{
+											tier_energy = energy_deficit - e_lower;
+											tier_charge = tier_energy*ec_rates[period][tier][0];
+										}
+										charge_amt += tier_charge;
+										monthly_e_use_period_tier[m][period][tier] += tier_energy;
+										monthly_charge_period_tier[m][period][tier] += tier_charge;
+										if (energy_deficit < e_upper)
+											break;
+										tier++;
+									}
+									//					charge[m][period] = charge_amt;
+									monthly_ec_charges[m] += charge_amt;
+									monthly_energy -= energy_deficit;
+								}
+								//monthly_energy += energy_net[m][period];
 							}
+							monthly_ec_rates[m] = monthly_energy != 0 ? monthly_ec_charges[m] / monthly_energy : (ssc_number_t)0.0;
 
 
 							// monthly rollover with year end sell at reduced rate
@@ -1815,12 +3198,14 @@ public:
 							}
 							else // non-net metering - no rollover 
 							{
-								if (m_month[m].energy_net < 0) // must buy from grid
+								if (monthly_energy_net[m] < 0) // must buy from grid
 									payment[c] += monthly_ec_charges[m];
 								else // surplus - sell to grid
 									income[c] -= monthly_ec_charges[m]; // charge is negative for income!
 							}
 
+							// Price ?
+							// added for Mike Gleason 
 							energy_charge[c] += monthly_ec_charges[m];
 
 							// end of energy charge
@@ -1831,74 +3216,69 @@ public:
 						if (dc_enabled)
 						{
 							// fixed demand charge
+
 							// compute charge based on tier structure for the month
-							ssc_number_t charge = 0;
-							ssc_number_t d_lower = 0;
-							ssc_number_t demand = m_month[m].dc_flat_peak;
-							bool found = false;
-							for (tier = 0; tier < (int)m_month[m].dc_flat_ub.size() && !found; tier++)
+							tier = 0;
+							charge = 0;
+							peak_demand = -monthly_peak[m]; // energy demands are negative.
+							while (tier < 6)
 							{
-								if (demand < m_month[m].dc_flat_ub[tier])
-								{
-									found = true;
-									charge += (demand - d_lower) * 
-										m_month[m].dc_flat_ch[tier] * rate_esc;
-									m_month[m].dc_flat_charge = charge;
-								}
+								// add up the charge amount for this block
+								ssc_number_t e_upper = dc_fixed_energy_ub[m][tier];
+								ssc_number_t e_lower = tier > 0 ? dc_fixed_energy_ub[m][tier - 1] : (ssc_number_t)0.0;
+
+								if (peak_demand > e_upper)
+									charge += (e_upper - e_lower)*dc_fixed_charges[m][tier];
 								else
-								{
-									charge += (m_month[m].dc_flat_ub[tier] - d_lower) *
-										m_month[m].dc_flat_ch[tier] * rate_esc;
-									d_lower = m_month[m].dc_flat_ub[tier];
-								}
+									charge += (peak_demand - e_lower)*dc_fixed_charges[m][tier];
+
+//								log(util::format("Demand fixed, month %d, tier %d, lower %lg, upper %lg, charge %lg, peak %lg", m, tier, e_lower, e_upper, charge, peak_demand),2);
+								if (peak_demand < e_upper)
+									break;
+								tier++;
 							}
-							
-							monthly_dc_fixed[m] = charge; // redundant...
+
+							monthly_dc_fixed[m] = charge;
 							payment[c] += monthly_dc_fixed[m];
 							demand_charge[c] = charge;
-							dc_hourly_peak[m_month[m].dc_flat_peak_hour] = demand;
-							
+							dc_hourly_peak[peak_hour[m]] = peak_demand;
+
 
 							// end of fixed demand charge
 
 
-							// TOU demand charge for each period find correct tier
-							demand = 0;
-							d_lower = 0;
+							// TOU demand charge
+							charge = 0;
+							peak_demand = 0;
 							int peak_hour = 0;
-							m_month[m].dc_tou_charge.clear();
-							for (period = 0; period < (int)m_month[m].dc_tou_ub.nrows(); period++)
+							for (period = 0; period<12; period++)
 							{
-								charge = 0;
-								d_lower = 0;
-								demand = m_month[m].dc_tou_peak[period];
-								// find tier corresponding to peak demand
-								bool found = false;
-								for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
+								tier = 0;
+								peak_demand = -monthly_period_peak[m][period];
+								peak_hour = peak_period_hour[m][period];
+								while (tier < 6)
 								{
-									if (demand < m_month[m].dc_tou_ub.at(period, tier))
-									{
-										found = true;
-										charge += (demand - d_lower) * 
-											m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
-										m_month[m].dc_tou_charge.push_back(charge);
-									}
+									// add up the charge amount for this block
+									ssc_number_t e_upper = dc_energy_ub[period][tier];
+									ssc_number_t e_lower = tier > 0 ? dc_energy_ub[period][tier - 1] : (ssc_number_t)0.0;
+									if (peak_demand > e_upper)
+										charge += (e_upper - e_lower)*dc_charges[period][tier];
 									else
-									{
-										charge += (m_month[m].dc_tou_ub.at(period, tier) - d_lower) * m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
-										d_lower = m_month[m].dc_tou_ub.at(period, tier);
-									}
+										charge += (peak_demand - e_lower)*dc_charges[period][tier];
+
+//									log(util::format("TOU demand, month %d, hour %d, peak hour %d, period %d, tier %d, lower %lg, upper %lg, charge %lg, rate %lg, peak %lg", m, c, peak_hour, period, tier, e_lower, e_upper, charge, dc_charges[period][tier], peak_demand), 2);
+									if (peak_demand < e_upper)
+										break;
+
+									tier++;
 								}
-
-								dc_hourly_peak[peak_hour] = demand;
-								// add to payments
-								monthly_dc_tou[m] += charge;
-								payment[c] += charge; // apply to last hour of the month
-								demand_charge[c] += charge; // add TOU charge to hourly demand charge
+								dc_hourly_peak[peak_hour] = peak_demand;
 							}
+							// add to payments
+							monthly_dc_tou[m] = charge;
+							payment[c] += monthly_dc_tou[m]; // apply to last hour of the month
+							demand_charge[c] += charge; // add TOU charge to hourly demand charge
 
-
-							
 							// end of TOU demand charge
 						}
 
@@ -1959,7 +3339,6 @@ public:
 							monthly_fixed_charges[m] += mon_fixed;
 						}
 						mon_bill = payment[c] - income[c];
-						if (mon_bill < 0) mon_bill = 0; // for calculating min charge when monthly surplus.
 						// apply monthly minimum
 						if (include_min)
 						{
@@ -2002,508 +3381,6 @@ public:
 
 
 
-
-	}
-
-
-
-	// will be used for non net metering case to match 2015.1.30 release
-	void ur_calc_hourly(ssc_number_t e_in[8760], ssc_number_t p_in[8760],
-		ssc_number_t revenue[8760], ssc_number_t payment[8760], ssc_number_t income[8760],
-		ssc_number_t price[8760], ssc_number_t demand_charge[8760],
-		ssc_number_t energy_charge[8760],
-		ssc_number_t monthly_fixed_charges[12], ssc_number_t monthly_minimum_charges[12],
-		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
-		ssc_number_t monthly_ec_charges[12], ssc_number_t monthly_ec_flat_charges[12],
-		ssc_number_t dc_hourly_peak[8760], ssc_number_t monthly_cumulative_excess_energy[12],
-		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
-		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true)
-		throw(general_error)
-	{
-		int i;
-
-		for (i = 0; i<8760; i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
-
-		for (i = 0; i<12; i++)
-		{
-			monthly_fixed_charges[i] = monthly_minimum_charges[i]
-				= monthly_ec_flat_charges[i]
-				= monthly_dc_fixed[i] = monthly_dc_tou[i]
-				= monthly_ec_charges[i] 
-				= monthly_cumulative_excess_energy[i]
-				= monthly_cumulative_excess_dollars[i]
-				= monthly_bill[i] = 0.0;
-		}
-		// initialize all montly values
-		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
-		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
-
-
-		// non net metering only
-		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
-		// 0=sell at ec sell rates, 1= sell at flat sell rate
-		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
-		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
-
-		 
-		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates).
-		int ur_ec_ub_units = as_integer("ur_ec_ub_units");
-		double daily_surplus_energy; 
-		double monthly_surplus_energy; 
-		double daily_deficit_energy; 
-		double monthly_deficit_energy;
-
-		bool ec_enabled = as_boolean("ur_ec_enable");
-		bool dc_enabled = as_boolean("ur_dc_enable");
-
-
-		if (!ur_ec_sell_at_ec_rates)
-			sell = ur_ec_single_sell_rate*rate_esc;
-
-		// calculate the monthly net energy and monthly hours
-		int m, d, h, period, tier;
-		int c = 0;
-		for (m = 0; m < (int)m_month.size(); m++)
-		{
-			m_month[m].energy_net = 0;
-			m_month[m].hours_per_month = 0;
-			m_month[m].dc_flat_peak = 0;
-			m_month[m].dc_flat_peak_hour = 0;
-			for (d = 0; d < util::nday[m]; d++)
-			{
-				for (h = 0; h < 24; h++)
-				{
-					// net energy use per month
-					m_month[m].energy_net += e_in[c]; // -load and +gen
-					// hours per period per month
-					m_month[m].hours_per_month++;
-					// peak
-					if (p_in[c] < 0 && p_in[c] < -m_month[m].dc_flat_peak)
-					{
-						m_month[m].dc_flat_peak = -p_in[c];
-						m_month[m].dc_flat_peak_hour = c;
-					}
-					c++;
-				}
-			}
-		}
-
-
-
-		if (ec_enabled)
-		{
-			// calculate the monthly net energy per tier and period based on units
-			c = 0;
-			for (m = 0; m < (int)m_month.size(); m++)
-			{
-				// assume kWh here initially and will update for other units
-				int num_periods = (int)m_month[m].ec_tou_ub.nrows();
-				int num_tiers = (int)m_month[m].ec_tou_ub.ncols();
-				m_month[m].ec_energy_use.resize_fill(num_periods, num_tiers, 0);
-				m_month[m].ec_charge.resize_fill(num_periods, num_tiers, 0);
-
-			}
-		}
-
-
-		// set peak per period - no tier accumulation
-		if (dc_enabled)
-		{
-			c = 0;
-			for (m = 0; m < (int)m_month.size(); m++)
-			{
-				m_month[m].dc_tou_peak.clear();
-				m_month[m].dc_tou_peak_hour.clear();
-				for (i = 0; i < (int)m_month[m].dc_periods.size(); i++)
-				{
-					m_month[m].dc_tou_peak.push_back(0);
-					m_month[m].dc_tou_peak_hour.push_back(0);
-				}
-				for (d = 0; d < util::nday[m]; d++)
-				{
-					for (h = 0; h < 24; h++)
-					{
-						int todp = m_dc_tou_sched[c];
-						std::vector<int>::iterator per_num = std::find(m_month[m].dc_periods.begin(), m_month[m].dc_periods.end(), todp);
-						if (per_num == m_month[m].dc_periods.end())
-						{
-							std::ostringstream ss;
-							ss << "demand charge period " << todp << " not found for month " << m;
-							throw exec_error("utilityrate3", ss.str());
-						}
-						int row = (int)(per_num - m_month[m].dc_periods.begin());
-						if (p_in[c] < 0 && p_in[c] < -m_month[m].dc_tou_peak[row])
-						{
-							m_month[m].dc_tou_peak[row] = -p_in[c];
-							m_month[m].dc_tou_peak_hour[row] = c;
-						}
-						c++;
-					}
-				}
-			}
-		}
-
-
-
-
-
-
-// main loop
-		c = 0; // hourly count
-		// process one hour at a time
-		for (m = 0; m < 12; m++)
-		{
-			monthly_surplus_energy = 0;
-			monthly_deficit_energy = 0;
-			for (d = 0; d<util::nday[m]; d++)
-			{
-				daily_surplus_energy = 0;
-				daily_deficit_energy = 0;
-				for (h = 0; h<24; h++)
-				{
-					// flat rate
-					if (e_in[c] < 0) // must buy from grid
-					{
-						payment[c] += -e_in[c] * buy;
-						energy_charge[c] += payment[c];
-						price[c] += buy;
-					}
-					else
-					{
-						income[c] += e_in[c] * sell;
-						energy_charge[c] -= income[c];
-						price[c] += sell;
-					}
-					monthly_ec_flat_charges[m] += energy_charge[c];
-					// end of flat rate
-
-					// energy charge
-					if (ec_enabled)
-					{
-						period = m_ec_tou_sched[c];
-						// find corresponding monthly period
-						// check for valid period
-						std::vector<int>::iterator per_num = std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), period);
-						if (per_num == m_month[m].ec_periods.end())
-						{
-							std::ostringstream ss;
-							ss << "energy charge period " << period << " not found for month " << m;
-							throw exec_error("utilityrate3", ss.str());
-						}
-						int row = (int)(per_num - m_month[m].ec_periods.begin());
-
-						if (e_in[c] >= 0.0)
-						{ // calculate income or credit
-							monthly_surplus_energy += e_in[c];
-							daily_surplus_energy += e_in[c];
-
-							// base period charge on units specified
-							double energy_surplus = e_in[c];
-							double cumulative_energy = e_in[c];
-							if (ur_ec_ub_units == 1)
-								cumulative_energy = monthly_surplus_energy;
-							else if (ur_ec_ub_units == 2)
-								cumulative_energy = daily_surplus_energy;
-
-
-							// cumulative energy used to determine tier for credit of entire surplus amount
-							double credit_amt = 0;
-							tier = -1;
-							bool found = false;
-							while ((tier < 5) && !found)
-							{
-								tier++;
-								double e_upper = m_month[m].ec_tou_ub.at(row,tier);
-								if (cumulative_energy < e_upper)
-									found = true;
-							}
-							double tier_energy = energy_surplus;
-							double tier_credit = tier_energy*m_month[m].ec_tou_sr.at(row, tier);
-							credit_amt += tier_credit;
-							m_month[m].ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
-							m_month[m].ec_energy_use.at(row, tier) -= (ssc_number_t)tier_energy;
-
-							income[c] += (ssc_number_t)credit_amt;
-							monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
-							price[c] += (ssc_number_t)credit_amt;
-							energy_charge[c] -= (ssc_number_t)credit_amt;
-						}
-						else
-						{ // calculate payment or charge
-							monthly_deficit_energy -= e_in[c];
-							daily_deficit_energy -= e_in[c];
-
-							double charge_amt = 0;
-							double energy_deficit = -e_in[c];
-							// base period charge on units specified
-							double cumulative_deficit = -e_in[c];
-							if (ur_ec_ub_units == 1)
-								cumulative_deficit = monthly_deficit_energy;
-							else if (ur_ec_ub_units == 2)
-								cumulative_deficit = daily_deficit_energy;
-
-
-							// cumulative energy used to determine tier for credit of entire surplus amount
-							tier = -1;
-							bool found = false;
-							while ((tier < 5) && !found)
-							{
-								tier++;
-								double e_upper = m_month[m].ec_tou_ub.at(row, tier);
-								if (cumulative_deficit < e_upper)
-									found = true;
-							}
-							double tier_energy = energy_deficit;
-							double tier_charge = tier_energy*m_month[m].ec_tou_br.at(row, tier);
-							charge_amt += tier_charge;
-							m_month[m].ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
-							m_month[m].ec_charge.at(row, tier) += (ssc_number_t)tier_charge;
-
-							payment[c] += (ssc_number_t)charge_amt;
-							monthly_ec_charges[m] += (ssc_number_t)charge_amt;
-							price[c] += (ssc_number_t)charge_amt;
-							energy_charge[c] += (ssc_number_t)charge_amt;
-						}
-					}
-					// end of energy charge
-
-
-					// demand charge - end of month only
-					if (d == util::nday[m] - 1 && h == 23)
-					{
-
-						if (dc_enabled)
-						{
-							// fixed demand charge
-							// compute charge based on tier structure for the month
-							ssc_number_t charge = 0;
-							ssc_number_t d_lower = 0;
-							ssc_number_t demand = m_month[m].dc_flat_peak;
-							bool found = false;
-							for (tier = 0; tier < (int)m_month[m].dc_flat_ub.size() && !found; tier++)
-							{
-								if (demand < m_month[m].dc_flat_ub[tier])
-								{
-									found = true;
-									charge += (demand - d_lower) *
-										m_month[m].dc_flat_ch[tier] * rate_esc;
-									m_month[m].dc_flat_charge = charge;
-								}
-								else
-								{
-									charge += (m_month[m].dc_flat_ub[tier] - d_lower) *
-										m_month[m].dc_flat_ch[tier] * rate_esc;
-									d_lower = m_month[m].dc_flat_ub[tier];
-								}
-							}
-
-							monthly_dc_fixed[m] = charge; // redundant...
-							payment[c] += monthly_dc_fixed[m];
-							demand_charge[c] = charge;
-							dc_hourly_peak[m_month[m].dc_flat_peak_hour] = demand;
-
-
-							// end of fixed demand charge
-
-
-							// TOU demand charge for each period find correct tier
-							demand = 0;
-							d_lower = 0;
-							int peak_hour = 0;
-							m_month[m].dc_tou_charge.clear();
-							for (period = 0; period < (int)m_month[m].dc_tou_ub.nrows(); period++)
-							{
-								charge = 0;
-								d_lower = 0;
-								demand = m_month[m].dc_tou_peak[period];
-								// find tier corresponding to peak demand
-								bool found = false;
-								for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols() && !found; tier++)
-								{
-									if (demand < m_month[m].dc_tou_ub.at(period, tier))
-									{
-										found = true;
-										charge += (demand - d_lower) *
-											m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
-										m_month[m].dc_tou_charge.push_back(charge);
-									}
-									else
-									{
-										charge += (m_month[m].dc_tou_ub.at(period, tier) - d_lower) * m_month[m].dc_tou_ch.at(period, tier)* rate_esc;
-										d_lower = m_month[m].dc_tou_ub.at(period, tier);
-									}
-								}
-
-								dc_hourly_peak[peak_hour] = demand;
-								// add to payments
-								monthly_dc_tou[m] += charge;
-								payment[c] += charge; // apply to last hour of the month
-								demand_charge[c] += charge; // add TOU charge to hourly demand charge
-							}
-
-
-
-							// end of TOU demand charge
-							// end of TOU demand charge
-						} // if demand charges enabled (dc_enabled)
-					}	// end of demand charges at end of month
-
-					c++;
-				}  // h loop
-			} // d loop
-
-			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
-			monthly_bill[m] = monthly_ec_flat_charges[m] + monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
-		} // end of month m (m loop)
-
-
-		// Assumption that fixed and minimum charges independent of rollovers kWh or $
-		// process monthly fixed charges
-		/*
-		if (include_fixed)
-		process_monthly_charge(payment, monthly_fixed_charges, rate_esc);
-		// process min charges
-		if (include_min)
-		{
-		process_monthly_min(payment, monthly_minimum_charges, rate_esc);
-		process_annual_min(payment, monthly_minimum_charges, rate_esc);
-		}
-		*/
-		// compute revenue ( = income - payment ) and monthly bill ( = payment - income) and apply fixed and minimum charges
-		c = 0;
-		ssc_number_t mon_bill = 0, ann_bill = 0;
-		ssc_number_t ann_min_charge = as_number("ur_annual_min_charge")*rate_esc;
-		ssc_number_t mon_min_charge = as_number("ur_monthly_min_charge")*rate_esc;
-		ssc_number_t mon_fixed = as_number("ur_monthly_fixed_charge")*rate_esc;
-
-		// process one month at a time
-		for (m = 0; m < 12; m++)
-		{
-			for (d = 0; d < util::nday[m]; d++)
-			{
-				for (h = 0; h < 24; h++)
-				{
-					if (d == util::nday[m] - 1 && h == 23)
-					{
-						// apply fixed first
-						if (include_fixed)
-						{
-							payment[c] += mon_fixed;
-							monthly_fixed_charges[m] += mon_fixed;
-						}
-						mon_bill = monthly_bill[m] + monthly_fixed_charges[m];
-						if (mon_bill < 0) mon_bill = 0; // for calculating min charge with monthly surplus
-						// apply monthly minimum
-						if (include_min)
-						{
-							if (mon_bill < mon_min_charge)
-							{
-								monthly_minimum_charges[m] += mon_min_charge - mon_bill;
-								payment[c] += mon_min_charge - mon_bill;
-							}
-						}
-						ann_bill += mon_bill;
-						if (m == 11)
-						{
-							// apply annual minimum
-							if (include_min)
-							{
-								if (ann_bill < ann_min_charge)
-								{
-									monthly_minimum_charges[m] += ann_min_charge - ann_bill;
-									payment[c] += ann_min_charge - ann_bill;
-								}
-							}
-						}
-						monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];
-					}
-					revenue[c] = income[c] - payment[c];
-					c++;
-				}
-			}
-		}
-
-
-
-
-
-	}
-
-
-	void ur_update_ec_monthly(int month, util::matrix_t<float>& charge, util::matrix_t<float>& energy)
-		throw(general_error)
-	{
-		if (month < 0 || month > (int)m_month.size())
-		{
-			std::ostringstream ss;
-			ss << "ur_update_ec_monthly month not found " << month;
-			throw exec_error("utilityrate3", ss.str());
-		}
-		charge.resize_fill(m_month[month].ec_charge.nrows() + 2, m_month[month].ec_charge.ncols() + 2, 0);
-		energy.resize_fill(m_month[month].ec_charge.nrows() + 2, m_month[month].ec_charge.ncols() + 2, 0);
-		// output with tier column headings and period row labels 
-		// and totals for rows and columns.
-		int ndx = -1;
-		int period = 0;
-		if ((m_month[month].ec_periods.size() > 0) && (m_ec_periods.size() > 0))
-		{
-			// note that all monthly periods have same tiers (checked in setup)
-			period = m_month[month].ec_periods[0];
-			std::vector<int>::iterator result = std::find(m_ec_periods.begin(), m_ec_periods.end(), period);
-			if (result == m_ec_periods.end())
-			{
-				std::ostringstream ss;
-				ss << "energy charge period not found " << period;
-				throw exec_error("utilityrate3", ss.str());
-			}
-			ndx = (int)(result - m_ec_periods.begin());
-		}
-		if (ndx > -1)
-		{
-			for (int ic = 0; ic < (int)m_month[month].ec_charge.ncols(); ic++)
-			{
-				charge.at(0, ic + 1) = (float)m_ec_periods_tiers[ndx][ic];
-				energy.at(0, ic + 1) = (float)m_ec_periods_tiers[ndx][ic];
-			}
-			for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
-			{
-				charge.at(ir + 1, 0) = (float)m_month[month].ec_periods[ir];
-				energy.at(ir + 1, 0) = (float)m_month[month].ec_periods[ir];
-			}
-			float c_total = 0;
-			float e_total = 0;
-			for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
-			{
-				float c_row_total = 0;
-				float e_row_total = 0;
-				for (int ic = 0; ic <(int)m_month[month].ec_charge.ncols(); ic++)
-				{
-					charge.at(ir + 1, ic + 1) = m_month[month].ec_charge.at(ir, ic);
-					c_row_total += m_month[month].ec_charge.at(ir, ic);
-					energy.at(ir + 1, ic + 1) = m_month[month].ec_energy_use.at(ir, ic);
-					e_row_total += m_month[month].ec_energy_use.at(ir, ic);
-				}
-				charge.at(ir + 1, m_month[month].ec_charge.ncols() + 1) = c_row_total;
-				energy.at(ir + 1, m_month[month].ec_charge.ncols() + 1) = e_row_total;
-				c_total += c_row_total;
-				e_total += e_row_total;
-			}
-			for (int ic = 0; ic < (int)m_month[month].ec_charge.ncols(); ic++)
-			{
-				float c_col_total = 0;
-				float e_col_total = 0;
-				for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
-				{
-					c_col_total += m_month[month].ec_charge.at(ir, ic);
-					e_col_total += m_month[month].ec_energy_use.at(ir, ic);
-				}
-				charge.at(m_month[month].ec_charge.nrows() + 1, ic + 1) = c_col_total;
-				energy.at(m_month[month].ec_energy_use.nrows() + 1, ic + 1) = e_col_total;
-			}
-			charge.at(m_month[month].ec_charge.nrows() + 1, m_month[month].ec_charge.ncols() + 1) = c_total;
-			energy.at(m_month[month].ec_energy_use.nrows() + 1, m_month[month].ec_energy_use.ncols() + 1) = e_total;
-		}
 
 	}
 
