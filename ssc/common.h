@@ -53,7 +53,7 @@ public:
 	std::string get_error(size_t i=0);
 	
 	// beam and diffuse loss factors (0: full loss, 1: no loss )
-	double fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour=1, double ghi=0.0, double dhi=0.0);
+	double fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp=0.0, int mods_per_str=0, double str_vmp_stc=0.0, double mppt_lo=0.0, double mppt_hi=0.0);
 	size_t get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour);
 
 

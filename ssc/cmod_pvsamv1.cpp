@@ -73,7 +73,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_gcr",                               "Sub-array 1 Ground coverage ratio",                     "0..1",    "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
 //	{ SSC_INPUT, SSC_ARRAY, "subarray1_shading:hourly", "Sub-array 1 Hourly beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray1_shading:shading_db_lookup", "Sub-array 1 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray1_shading:string_option", "Sub-array 1 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "subarray1_shading:string_option", "Sub-array 1 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray1_shading:string_option", "Sub-array 1 shading string option", "", "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=4", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray1_shading:timestep", "Sub-array 1 timestep beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray1_shading:mxh", "Sub-array 1 Month x Hour beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray1_shading:azal",                      "Sub-array 1 Azimuth x altitude beam shading losses",    "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -130,7 +131,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_gcr",                               "Sub-array 2 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading:hourly",                    "Sub-array 2 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray2_shading:shading_db_lookup", "Sub-array 2 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray2_shading:string_option", "Sub-array 2 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "subarray2_shading:string_option", "Sub-array 2 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray2_shading:string_option", "Sub-array 2 shading string option", "", "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=4", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray2_shading:timestep", "Sub-array 2 timestep beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray2_shading:mxh", "Sub-array 2 Month x Hour beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray2_shading:azal",                      "Sub-array 2 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -152,7 +154,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_gcr",                               "Sub-array 3 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading:hourly",                    "Sub-array 3 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray3_shading:shading_db_lookup", "Sub-array 3 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray3_shading:string_option", "Sub-array 3 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "subarray3_shading:string_option", "Sub-array 3 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray3_shading:string_option", "Sub-array 3 shading string option", "", "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=4", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray3_shading:timestep", "Sub-array 3 timestep beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray3_shading:mxh", "Sub-array 3 Month x Hour beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray3_shading:azal",                      "Sub-array 3 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -174,7 +177,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_gcr",                               "Sub-array 4 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading:hourly",                    "Sub-array 4 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray4_shading:shading_db_lookup", "Sub-array 4 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
-	{ SSC_INPUT, SSC_NUMBER, "subarray4_shading:string_option", "Sub-array 4 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "subarray4_shading:string_option", "Sub-array 4 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
+	{ SSC_INPUT, SSC_NUMBER, "subarray4_shading:string_option", "Sub-array 4 shading string option", "", "0=shadingdb,1=shadingdb_notc,2=average,3=maximum,4=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=4", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray4_shading:timestep", "Sub-array 4 timestep beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT, SSC_MATRIX, "subarray4_shading:mxh", "Sub-array 4 Month x Hour beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "subarray4_shading:azal",                      "Sub-array 4 Azimuth x altitude beam shading losses",     "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
@@ -500,6 +504,50 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
+
+
+
+
+	// ShadeDB validation
+
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_gpoa", "ShadeDB subarray 1 global poa input", "W/m2", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_dpoa", "ShadeDB subarray 1 diffuse poa input", "W/m2", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_pv_cell_temp", "ShadeDB subarray 1 pv cell temp input", "C", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_mods_per_str", "ShadeDB subarray 1 modules per string input", "", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_str_vmp_stc", "ShadeDB subarray 1 string Vmp at STC input", "V", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_mppt_lo", "ShadeDB subarray 1 MPPT low input", "V", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_mppt_hi", "ShadeDB subarray 1 MPPT high input", "V", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_shade_frac", "ShadeDB subarray 1 shade fraction output", "", "", "Time Series (Subarray 1)", "", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_gpoa", "ShadeDB subarray 2 global poa input", "W/m2", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_dpoa", "ShadeDB subarray 2 diffuse poa input", "W/m2", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_pv_cell_temp", "ShadeDB subarray 2 pv cell temp input", "C", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_mods_per_str", "ShadeDB subarray 2 modules per string input", "", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_str_vmp_stc", "ShadeDB subarray 2 string Vmp at STC input", "V", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_mppt_lo", "ShadeDB subarray 2 MPPT low input", "V", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_mppt_hi", "ShadeDB subarray 2 MPPT high input", "V", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_shade_frac", "ShadeDB subarray 2 shade fraction output", "", "", "Time Series (Subarray 2)", "", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_gpoa", "ShadeDB subarray 3 global poa input", "W/m2", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_dpoa", "ShadeDB subarray 3 diffuse poa input", "W/m2", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_pv_cell_temp", "ShadeDB subarray 3 pv cell temp input", "C", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_mods_per_str", "ShadeDB subarray 3 modules per string input", "", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_str_vmp_stc", "ShadeDB subarray 3 string Vmp at STC input", "V", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_mppt_lo", "ShadeDB subarray 3 MPPT low input", "V", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_mppt_hi", "ShadeDB subarray 3 MPPT high input", "V", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_shade_frac", "ShadeDB subarray 3 shade fraction output", "", "", "Time Series (Subarray 3)", "", "", "" },
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_gpoa", "ShadeDB subarray 4 global poa input", "W/m2", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_dpoa", "ShadeDB subarray 4 diffuse poa input", "W/m2", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_pv_cell_temp", "ShadeDB subarray 4 pv cell temp input", "C", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_mods_per_str", "ShadeDB subarray 4 modules per string input", "", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_str_vmp_stc", "ShadeDB subarray 4 string Vmp at STC input", "V", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_mppt_lo", "ShadeDB subarray 4 MPPT low input", "V", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_mppt_hi", "ShadeDB subarray 4 MPPT high input", "V", "", "Time Series (Subarray 4)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_shade_frac", "ShadeDB subarray 4 shade fraction output", "", "", "Time Series (Subarray 4)", "", "", "" },
+
+
 
 
 
@@ -1056,6 +1104,7 @@ public:
 			celltemp_model = &spe_tc;
 			module_model = &spe;
 			module_watts_stc = spe.WattsStc();
+			ssVmp = spe.VmpNominal;
 		}
 		else if ( mod_type == 1 )
 		{
@@ -1505,6 +1554,20 @@ public:
 		ssc_number_t *p_snowloss[4];
 		ssc_number_t *p_snowcoverage[4];
 
+
+
+		// ShadeDB validation
+		ssc_number_t *p_shadedb_gpoa[4];
+		ssc_number_t *p_shadedb_dpoa[4];
+		ssc_number_t *p_shadedb_pv_cell_temp[4];
+		ssc_number_t *p_shadedb_mods_per_str[4];
+		ssc_number_t *p_shadedb_str_vmp_stc[4];
+		ssc_number_t *p_shadedb_mppt_lo[4];
+		ssc_number_t *p_shadedb_mppt_hi[4];
+		ssc_number_t *p_shadedb_shade_frac[4];
+
+
+
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
 		{
@@ -1535,6 +1598,18 @@ public:
 					p_snowloss[nn] = allocate(prefix + "snow_loss", nrec);
 					p_snowcoverage[nn] = allocate(prefix + "snow_coverage", nrec);
 				}
+
+				// ShadeDB validation
+				p_shadedb_gpoa[nn] = allocate("shadedb_" + prefix + "gpoa", nrec);
+				p_shadedb_dpoa[nn] = allocate("shadedb_" + prefix + "dpoa", nrec);
+				p_shadedb_pv_cell_temp[nn] = allocate("shadedb_" + prefix + "pv_cell_temp", nrec);
+				p_shadedb_mods_per_str[nn] = allocate("shadedb_" + prefix + "mods_per_str", nrec);
+				p_shadedb_str_vmp_stc[nn] = allocate("shadedb_" + prefix + "str_vmp_stc", nrec);
+				p_shadedb_mppt_lo[nn] = allocate("shadedb_" + prefix + "mppt_lo", nrec);
+				p_shadedb_mppt_hi[nn] = allocate("shadedb_" + prefix + "mppt_hi", nrec);
+
+				p_shadedb_shade_frac[nn] = allocate("shadedb_" + prefix + "shade_frac", nrec);
+
 			}
 		}
 		
@@ -2013,8 +2088,32 @@ public:
 // also need timestep and timesteps per hour to handle different user entered timestep shading fraactions. 
 						// note: shading factors are still hourly inputs
 						// TODO: check global poa and diffuse poa inputs with Sara and Aron
-						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi,jj, step_per_hour, ibeam, iskydiff+ignddiff);
+						//double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, ibeam, iskydiff + ignddiff);
+						// ShadeDB validation
+						//p_shadedb_gpoa[nn][idx] = ibeam;
+						//p_shadedb_dpoa[nn][idx] = iskydiff + ignddiff;
+						// from Validation.docx
+						p_shadedb_gpoa[nn][idx] = ibeam + iskydiff + ignddiff;
+						p_shadedb_dpoa[nn][idx] = iskydiff + ignddiff;
 
+						//p_poaeff[nn][idx] = (ssc_number_t)(radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
+
+						//?? 
+						// should be from line 2412 below
+						//p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
+						//p_shadedb_pv_cell_temp[nn][idx] = wf.tdry; 
+						p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
+						p_shadedb_mods_per_str[nn][idx] = modules_per_string;
+						p_shadedb_str_vmp_stc[nn][idx] = modules_per_string* ssVmp;
+						p_shadedb_mppt_lo[nn][idx] = V_mppt_lo_1module*modules_per_string;
+						p_shadedb_mppt_hi[nn][idx] = V_mppt_hi_1module*modules_per_string;
+
+
+						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, p_shadedb_gpoa[nn][idx], p_shadedb_dpoa[nn][idx], p_shadedb_pv_cell_temp[nn][idx], p_shadedb_mods_per_str[nn][idx], p_shadedb_str_vmp_stc[nn][idx], p_shadedb_mppt_lo[nn][idx], p_shadedb_mppt_hi[nn][idx]);
+						// fraction shaded for comparison
+						p_shadedb_shade_frac[nn][idx] = 1.0-beam_shad_factor;
+
+//						double fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
 
 
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0)
