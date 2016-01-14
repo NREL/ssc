@@ -430,7 +430,12 @@ public:
 				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
 					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb );
 
-				if ( 0 != code )
+				if ( -1 == code )
+				{
+					log(  util::format("beam irradiance exceeded extraterrestrial value at record [y:%d m:%d d:%d h:%d]", 
+							 wf.year, wf.month, wf.day, wf.hour) );
+				}
+				else if ( 0 != code )
 					throw exec_error( "pvwattsv5", 
 						util::format("failed to process irradiation on surface (code: %d) [y:%d m:%d d:%d h:%d]", 
 							code, wf.year, wf.month, wf.day, wf.hour));
