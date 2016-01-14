@@ -532,6 +532,9 @@ void EditorWindow::Exec()
 	Layout();
 	wxGetApp().Yield(true);
 	
+	wxLKSetToplevelParentForPlots( app_frame );
+	wxLKSetPlotTarget( NULL );
+
 	m_editor->Execute();
 
 	if ( m_stopButton->IsShown() )
