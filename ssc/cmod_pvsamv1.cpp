@@ -2090,19 +2090,26 @@ public:
 						// TODO: check global poa and diffuse poa inputs with Sara and Aron
 						//double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, ibeam, iskydiff + ignddiff);
 						// ShadeDB validation
-						//p_shadedb_gpoa[nn][idx] = ibeam;
-						//p_shadedb_dpoa[nn][idx] = iskydiff + ignddiff;
 						// from Validation.docx
 						p_shadedb_gpoa[nn][idx] = ibeam + iskydiff + ignddiff;
 						p_shadedb_dpoa[nn][idx] = iskydiff + ignddiff;
 
 						//p_poaeff[nn][idx] = (ssc_number_t)(radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
 
-						//?? 
-						// should be from line 2412 below
-						//p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
-						//p_shadedb_pv_cell_temp[nn][idx] = wf.tdry; 
-						p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
+						double tcell = wf.tdry;
+						if (sunup > 0)
+						{
+							// calculate cell temperature using selected temperature model
+							pvinput_t in(ibeam, iskydiff, ignddiff, ipoa,
+								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+								solzen, aoi, hdr.elev,
+								stilt, sazi,
+								((double)wf.hour) + wf.minute / 60.0,
+								radmode, sa[nn].poa.usePOAFromWF);
+							// voltage set to -1 for max power
+							(*celltemp_model)(in, *module_model, -1.0, tcell);
+						}
+						p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
 						p_shadedb_mods_per_str[nn][idx] = modules_per_string;
 						p_shadedb_str_vmp_stc[nn][idx] = modules_per_string* ssVmp;
 						p_shadedb_mppt_lo[nn][idx] = V_mppt_lo_1module*modules_per_string;
