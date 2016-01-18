@@ -447,10 +447,20 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		else if (look_behind)
 			nrec = 24 * step_per_hour;
 
-		for (int idx = 0; idx != nrec; idx++)
+		if (pv != 0) {
+			for (int idx = 0; idx != nrec; idx++)
+			{
+				pv_prediction.push_back(pv[idx]);
+				load_prediction.push_back(load[idx]);
+			}
+		}
+		else
 		{
-			pv_prediction.push_back(pv[idx]);
-			load_prediction.push_back(load[idx]);
+			for (int idx = 0; idx != nrec; idx++)
+			{
+				pv_prediction.push_back(0.);
+				load_prediction.push_back(0.);
+			}
 		}		
 		automated_dispatch->update_pv_load_data(pv_prediction, load_prediction);
 		if (mode == dispatch_t::MAINTAIN_TARGET)
