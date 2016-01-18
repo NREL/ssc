@@ -186,7 +186,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",            "PPA solution maximum number of iterations",                "",   "", "DHF",         "?=100",                     "INTEGER,MIN=1",            "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			"Initial year PPA price",			"$/kWh",	 "",			  "DHF",			 "?=10",         "",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "MIN=0,MAX=100",      			"" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",           "PPA escalation",					"%",	 "",					  "DHF",             "?=0",                     "",      			"" },
 
 /* DHF construction period */
 	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	"Construction financing total",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },

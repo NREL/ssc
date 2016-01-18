@@ -164,8 +164,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",                     "",   "", "Solution Mode",         "?=100",                     "INTEGER,MIN=1",            "" },
                                                                                   
 	{ SSC_INPUT,        SSC_NUMBER,     "ppa_price_input",			              "PPA price in first year",			                               "$/kWh",	 "",			  "PPA Price",			 "?=10",         "",      			"" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",                         "PPA escalation rate",					                               "%/year",	 "",					  "PPA Price",             "?=0",                     "MIN=0,MAX=100",      			"" },
-                                                                                  
+	{ SSC_INPUT, SSC_NUMBER, "ppa_escalation", "PPA escalation rate", "%/year", "", "PPA Price", "?=0", "", "" },
+
 /* DHF construction period */                                                     
 	{ SSC_INPUT,       SSC_NUMBER,      "construction_financing_cost",	          "Construction financing total",	                                "$",	 "",					  "Construction Financing",			 "*",                         "",                             "" },
                                                                                   
