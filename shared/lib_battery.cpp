@@ -1536,7 +1536,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 744 && idx == 744)
+	if (hour_of_year == 0 && idx == 0)
 	{
 		// debug = true;
 		if (debug)
@@ -1595,12 +1595,13 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 
 	// First compute target power which will allow battery to charge up to E_useful over 24 hour period
 	if (debug)
-		fprintf(p, "Recharge_target\t charge_energy\n");
+		fprintf(p, "Index\tRecharge_target\t charge_energy\n");
 
 	double P_target_min = 1e16;
 	double E_charge = 0.;
 	int index = _num_steps - 1; 
-	while (E_charge <  E_useful)
+	std::vector<double> E_charge_vec;
+	for (int jj = _num_steps - 1; jj >= 0; jj--)
 	{
 		E_charge = 0.;
 		P_target_min = grid[index].Grid();
@@ -1611,20 +1612,15 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 
 			E_charge += (P_target_min - grid[ii].Grid())*_dt_hour;
 		}
+		E_charge_vec.push_back(E_charge);
 		if (debug)
-			fprintf(p, "%.3f\t %.3f\n", P_target_min, E_charge);
+			fprintf(p, "%d: index\t%.3f\t %.3f\n",index,P_target_min, E_charge);
 		index--;
 
 		if (index < 0)
 			break;
 	}
-
-	// if we can't recharge the battery without exceeding the highest peak, there isn't enough peak to shave to justify dispatching
-	if (E_charge < E_useful)
-	{
-		P_target = grid[0].Grid();
-		return;
-	}
+	std::reverse(E_charge_vec.begin(), E_charge_vec.end());
 
 	// Calculate target power 
 	std::vector<double> sorted_grid_diff;
@@ -1636,7 +1632,7 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 	P_target = grid[0].Grid(); // target power to shave to [kW]
 	double sum = 0;			   // energy [kWh];
 	if (debug)
-		fprintf(p, "Step\t Target_Power\t Energy_Sum\n");
+		fprintf(p, "Step\tTarget_Power\tEnergy_Sum\tEnergy_charged\n");
 
 	for (int ii = 0; ii != _num_steps - 1; ii++)
 	{
@@ -1658,35 +1654,19 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 			sum += sorted_grid_diff[ii] * (ii + 1)*_dt_hour;
 
 		if (debug)
-			fprintf(p, "%.3f\n", sum);
+			fprintf(p, "%.3f\t%.3f\n", sum, E_charge_vec[ii+1]);
 
-		if (sum < E_useful)
+		if (sum < E_charge_vec[ii+1])
 			continue;
 		// we have limited power, we'll shave what more we can
 		else
 		{
-			P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
-			sum = E_useful;
+			P_target += (sum - E_charge_vec[ii]) / ((ii+1)*_dt_hour);
+			sum = E_charge_vec[ii];
 			if (debug)
-				fprintf(p, "%d\t %.3f\t%.3f\n", ii, P_target, sum );
+				fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii] );
 			break;
 		}
-	}
-
-	
-	// move target up by 1% to accomodate voltage differences
-	double adjust = 0.01;
-	P_target += (adjust*P_target);
-	if (debug)
-		fprintf(p, "Adjust %.3f\t%.3f\n", P_target, (1-adjust)*sum);
-	
-
-	// Don't allow target to be lower than min target to partially recharge
-	if (P_target < P_target_min)
-	{
-		P_target = P_target_min;
-		if (debug)
-			fprintf(p, "P_target moved to: %.3f\ for charging\n",P_target);
 	}
 
 	if (P_target < _target_power_month)
