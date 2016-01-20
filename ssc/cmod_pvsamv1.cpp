@@ -2091,11 +2091,12 @@ public:
 						//double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, ibeam, iskydiff + ignddiff);
 						// ShadeDB validation
 						// from Validation.docx
-						p_shadedb_gpoa[nn][idx] = ibeam + iskydiff + ignddiff;
-						p_shadedb_dpoa[nn][idx] = iskydiff + ignddiff;
+						double shadedb_gpoa = ibeam + iskydiff + ignddiff;
+						double shadedb_dpoa = iskydiff + ignddiff;
+
 
 						//p_poaeff[nn][idx] = (ssc_number_t)(radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
-
+						// update cell temperature
 						double tcell = wf.tdry;
 						if (sunup > 0)
 						{
@@ -2109,18 +2110,24 @@ public:
 							// voltage set to -1 for max power
 							(*celltemp_model)(in, *module_model, -1.0, tcell);
 						}
-						p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
-						p_shadedb_mods_per_str[nn][idx] = modules_per_string;
-						p_shadedb_str_vmp_stc[nn][idx] = modules_per_string* ssVmp;
-						p_shadedb_mppt_lo[nn][idx] = V_mppt_lo_1module*modules_per_string;
-						p_shadedb_mppt_hi[nn][idx] = V_mppt_hi_1module*modules_per_string;
+						double shadedb_str_vmp_stc = modules_per_string * ssVmp;
+						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
+						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
 
+						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi);
 
-						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, p_shadedb_gpoa[nn][idx], p_shadedb_dpoa[nn][idx], p_shadedb_pv_cell_temp[nn][idx], p_shadedb_mods_per_str[nn][idx], p_shadedb_str_vmp_stc[nn][idx], p_shadedb_mppt_lo[nn][idx], p_shadedb_mppt_hi[nn][idx]);
-						// fraction shaded for comparison
-						p_shadedb_shade_frac[nn][idx] = 1.0-beam_shad_factor;
-
-//						double fbeam(size_t hour, double solalt, double solazi, size_t hour_step = 0, size_t steps_per_hour = 1, double gpoa = 0.0, double dpoa = 0.0, double pv_cell_temp = 0.0, int mods_per_str = 0, double str_vmp_stc = 0.0, double mppt_lo = 0.0, double mppt_hi = 0.0);
+						if (iyear == 0)
+						{
+							p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
+							p_shadedb_dpoa[nn][idx] = (ssc_number_t)shadedb_dpoa;
+							p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
+							p_shadedb_mods_per_str[nn][idx] = (ssc_number_t)modules_per_string;
+							p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
+							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
+							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
+							// fraction shaded for comparison
+							p_shadedb_shade_frac[nn][idx] = (ssc_number_t)( 1.0 - beam_shad_factor);
+						}
 
 
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0)
