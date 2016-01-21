@@ -290,6 +290,7 @@
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <StackReserveSize>4000000</StackReserveSize>
     </Link>
     <Bscmake>
       <OutputFile>vc_mswu\dev_vc9.bsc</OutputFile>
