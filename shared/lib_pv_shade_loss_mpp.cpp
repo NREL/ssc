@@ -148,10 +148,8 @@ void DB8_mpp::init()
 
 DB8_mpp::~DB8_mpp()
 {
-	if (p_vmpp)
-		free(p_vmpp);
-	if (p_impp)
-		free(p_impp);
+	free(p_vmpp);
+	free(p_impp);
 }
 
 
