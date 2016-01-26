@@ -2087,16 +2087,13 @@ public:
 //     global_poa_irrad, diffuse_irrad, (str shade fractions in shading calculator class)
 // also need timestep and timesteps per hour to handle different user entered timestep shading fraactions. 
 						// note: shading factors are still hourly inputs
-						// TODO: check global poa and diffuse poa inputs with Sara and Aron
 						//double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, ibeam, iskydiff + ignddiff);
 						// ShadeDB validation
 						// from Validation.docx
 						double shadedb_gpoa = ibeam + iskydiff + ignddiff;
 						double shadedb_dpoa = iskydiff + ignddiff;
 
-
-						//p_poaeff[nn][idx] = (ssc_number_t)(radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
-						// update cell temperature
+						// update cell temperature - unshaded value per Sara 1/25/16
 						double tcell = wf.tdry;
 						if (sunup > 0)
 						{
@@ -2114,7 +2111,10 @@ public:
 						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
 						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
 
-						double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi);
+						if (!sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+						{
+							throw exec_error("pvsamv1",	util::format("Error calculating shading factor for subarray %d", nn));
+						}
 
 						if (iyear == 0)
 						{
@@ -2126,13 +2126,15 @@ public:
 							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
 							// fraction shaded for comparison
-							p_shadedb_shade_frac[nn][idx] = (ssc_number_t)( 1.0 - beam_shad_factor);
+							p_shadedb_shade_frac[nn][idx] = (ssc_number_t)( 1.0 - sa[nn].shad.dc_shade_factor());
 						}
 
 
-						// apply hourly shading factors to beam (if none enabled, factors are 1.0)
-						if( beam_shad_factor < 1.0 ){
-							ibeam *= beam_shad_factor;
+						// apply hourly shading factors to beam (if none enabled, factors are 1.0) 
+						if (sa[nn].shad.beam_shade_factor() < 1.0){
+							// Sara 1/25/16 - shading database derate applied to dc only
+							// shading loss applied to beam if not from shading database
+							ibeam *= sa[nn].shad.beam_shade_factor();
 							if( radmode == POA_R || radmode == POA_P ){
 								sa[nn].poa.usePOAFromWF = false;
 								if( sa[nn].poa.poaShadWarningCount == 0){
@@ -2201,6 +2203,7 @@ public:
 
 						// apply soiling derate to all components of irradiance
 						double soiling_factor = 1.0;
+						double beam_shading_factor = sa[nn].shad.beam_shade_factor();
 						if (month_idx >= 0 && month_idx < 12)
 						{
 							soiling_factor = sa[nn].soiling[month_idx];
@@ -2212,7 +2215,7 @@ public:
 								if(soiling_factor < 1 && idx == 0)
 									log("Soiling may already be accounted for in the input POA data. Please confirm that the input data does not contain soiling effects, or remove the additional losses on the Losses page.", SSC_WARNING);
 							}
-							beam_shad_factor *= soiling_factor;
+							beam_shading_factor *= soiling_factor;
 						}
 							
 						if (iyear == 0)
@@ -2222,7 +2225,7 @@ public:
 							p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
 							p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
 							p_poaeff[nn][idx] = (ssc_number_t) (radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
-							p_shad[nn][idx] = (ssc_number_t)beam_shad_factor;
+							p_shad[nn][idx] = (ssc_number_t)beam_shading_factor;
 							p_rot[nn][idx] = (ssc_number_t)rot;
 							p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
 							p_aoi[nn][idx] = (ssc_number_t)aoi;
@@ -2439,6 +2442,9 @@ public:
 							p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
 							p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
 						}
+						// Sara 1/25/16 - shading database derate applied to dc only
+						// shading loss applied to beam if not from shading database
+						sa[nn].module.dcpwr *= sa[nn].shad.dc_shade_factor();
 
 
 						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;

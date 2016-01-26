@@ -311,12 +311,25 @@ shading_factor_calculator::shading_factor_calculator()
 	m_diffFactor = 1.0;
 }
 
+
+shading_factor_calculator::~shading_factor_calculator()
+{
+//	if (m_db8)
+//		delete m_db8;
+}
+
 bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )
 {
 	bool ok = true;
 	m_diffFactor = 1.0;
 //	m_string_option = -1;// 0=shading db, 1=average, 2=max, 3=min, -1 not enabled.
 	m_string_option = -1;// 0=shading db, 1=shading db no Tc, 2=average, 3=max, 4=min, -1 not enabled.
+	// Sara 1/25/16 - shading database derate applied to dc only
+	// shading loss applied to beam if not from shading database
+	m_beam_shade_factor = 1.0;
+	m_dc_shade_factor = 1.0;
+
+
 	m_steps_per_hour = 1;
 	m_db8 = NULL;
 
@@ -487,20 +500,19 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t ho
 	return ndx;
 }
 
-double shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
+	bool ok = false;
 	double factor = 1.0;
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
 	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
 	{
-//		if (m_string_option == 0) // shading database lookup
 		if ((m_string_option == 0) // 0=shading database lookup with temp correction
 			|| (m_string_option == 1)) // 1=shading database lookup without temp correction
 		{
 			std::vector<double> shad_fracs;
 			for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
 				shad_fracs.push_back(m_beamFactors.at(irow, icol));
-//			factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs);
 			if (m_string_option == 0)
 				factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
 			else // as before taking default arguments
@@ -509,8 +521,6 @@ double shading_factor_calculator::fbeam(size_t hour, double solalt, double solaz
 		else // use column zero value
 		{
 			factor = m_beamFactors.at(irow, 0);
-//			if (m_enAzAlt)
-//				factor *= util::bilinear(solalt, solazi, m_azaltvals);
 		}
 		// apply mxh factor
 		if (m_enMxH && (irow < m_mxhFactors.nrows()))
@@ -518,13 +528,38 @@ double shading_factor_calculator::fbeam(size_t hour, double solalt, double solaz
 		// apply azi alt shading factor
 		if (m_enAzAlt)
 			factor *= util::bilinear(solalt, solazi, m_azaltvals);
+
+		if ((m_string_option == 0) // 0=shading database lookup with temp correction
+			|| (m_string_option == 1)) // 1=shading database lookup without temp correction
+			m_dc_shade_factor = factor;
+		else
+			m_beam_shade_factor = factor;
+
+		ok = true;
 	}
-	return factor;
+	return ok;
 }
 
 double shading_factor_calculator::fdiff()
 {
 	return m_diffFactor;
+}
+
+
+
+
+double shading_factor_calculator::beam_shade_factor()
+{
+	// Sara 1/25/16 - shading database derate applied to dc only
+	// shading loss applied to beam if not from shading database
+	return (m_beam_shade_factor);
+}
+
+double shading_factor_calculator::dc_shade_factor()
+{
+	// Sara 1/25/16 - shading database derate applied to dc only
+	// shading loss applied to beam if not from shading database
+	return (m_dc_shade_factor);
 }
 
 weatherdata::weatherdata( var_data *data_table )
