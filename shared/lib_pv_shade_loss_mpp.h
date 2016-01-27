@@ -14,9 +14,10 @@ class DB8_mpp
 {
 public:
 	enum db_type{VMPP, IMPP};
-	//	DB8() {
-	//		init();
-	//	};
+//	DB8_mpp() {
+//		p_vmpp = NULL;
+//		p_impp=NULL ;
+//	};
 	~DB8_mpp();
 	void init();
 	short vmpp(size_t ndx){

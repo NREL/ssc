@@ -768,7 +768,8 @@ struct subarray
 	ssinputs sscalc;
 	ssoutputs ssout;
 	
-	shading_factor_calculator shad;
+	std::auto_ptr<shading_factor_calculator> shad;
+	//shading_factor_calculator shad;
 
 	pvsnowmodel sm;
 
@@ -938,9 +939,9 @@ public:
 			if (sa[nn].gcr < 0.01)
 				throw exec_error("pvsamv1", "array ground coverage ratio must obey 0.01 < gcr");
 			
-
-			if (!sa[nn].shad.setup( this, prefix ))
-				throw exec_error("pvsamv1", prefix + "_shading: " + sa[nn].shad.get_error() );
+			sa[nn].shad = std::auto_ptr<shading_factor_calculator>(new shading_factor_calculator());
+			if (!sa[nn].shad->setup( this, prefix ))
+				throw exec_error("pvsamv1", prefix + "_shading: " + sa[nn].shad->get_error() );
 
 			// backtracking- only required if one-axis tracker
 			if (sa[nn].track_mode == 1)
@@ -2111,7 +2112,7 @@ public:
 						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
 						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
 
-						if (!sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+						if (!sa[nn].shad->fbeam(hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
 						{
 							throw exec_error("pvsamv1",	util::format("Error calculating shading factor for subarray %d", nn));
 						}
@@ -2126,15 +2127,15 @@ public:
 							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
 							// fraction shaded for comparison
-							p_shadedb_shade_frac[nn][idx] = (ssc_number_t)( 1.0 - sa[nn].shad.dc_shade_factor());
+							p_shadedb_shade_frac[nn][idx] = (ssc_number_t)( 1.0 - sa[nn].shad->dc_shade_factor());
 						}
 
 
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0) 
-						if (sa[nn].shad.beam_shade_factor() < 1.0){
+						if (sa[nn].shad->beam_shade_factor() < 1.0){
 							// Sara 1/25/16 - shading database derate applied to dc only
 							// shading loss applied to beam if not from shading database
-							ibeam *= sa[nn].shad.beam_shade_factor();
+							ibeam *= sa[nn].shad->beam_shade_factor();
 							if( radmode == POA_R || radmode == POA_P ){
 								sa[nn].poa.usePOAFromWF = false;
 								if( sa[nn].poa.poaShadWarningCount == 0){
@@ -2150,8 +2151,8 @@ public:
 						}
 
 						// apply sky diffuse shading factor (specified as constant, nominally 1.0 if disabled in UI)
-						if( sa[nn].shad.fdiff() < 1.0 ){
-							iskydiff *= sa[nn].shad.fdiff();
+						if( sa[nn].shad->fdiff() < 1.0 ){
+							iskydiff *= sa[nn].shad->fdiff();
 							if( radmode == POA_R || radmode == POA_P ){
 								if( idx == 0 )
 									log("Both a poa sky model has been selected and diffuse shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
@@ -2203,7 +2204,7 @@ public:
 
 						// apply soiling derate to all components of irradiance
 						double soiling_factor = 1.0;
-						double beam_shading_factor = sa[nn].shad.beam_shade_factor();
+						double beam_shading_factor = sa[nn].shad->beam_shade_factor();
 						if (month_idx >= 0 && month_idx < 12)
 						{
 							soiling_factor = sa[nn].soiling[month_idx];
@@ -2444,7 +2445,7 @@ public:
 						}
 						// Sara 1/25/16 - shading database derate applied to dc only
 						// shading loss applied to beam if not from shading database
-						sa[nn].module.dcpwr *= sa[nn].shad.dc_shade_factor();
+						sa[nn].module.dcpwr *= sa[nn].shad->dc_shade_factor();
 
 
 						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
