@@ -314,8 +314,8 @@ shading_factor_calculator::shading_factor_calculator()
 
 shading_factor_calculator::~shading_factor_calculator()
 {
-//	if (m_db8)
-//		delete m_db8;
+	if (m_db8)
+		delete m_db8;
 }
 
 bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )
