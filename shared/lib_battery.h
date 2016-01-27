@@ -409,8 +409,8 @@ protected:
 	double current_controller(double battery_voltage);
 	
 	// Losses at AC or DC connection points and internal loss
-	void conversion_loss_in(double &I);
-	void conversion_loss_out(double &I);
+	void conversion_loss_in(double &I, double multiplier);
+	void conversion_loss_out(double &I, double multiplier);
 	void compute_loss(double, double,double);
 
 	// compute metrics
@@ -433,15 +433,18 @@ protected:
 	bool _pv_dispatch_to_battery_first; // 0 = meet load first, 1 = meet battery first
 
 	// energy quantities
-	double _e_tofrom_batt;
-	double _e_grid;
-	double _e_gen;
-	double _e_loss_annual; 
-	double _pv_to_load;
-	double _battery_to_load;
-	double _grid_to_load;
-	double _pv_to_batt;
-	double _grid_to_batt;
+	double _e_tofrom_batt;		 // AC
+	double _e_grid;              // AC
+	double _e_gen;				 // AC
+	double _e_loss_annual;		 
+	double _pv_to_load;		     // AC
+	double _battery_to_load;     // AC
+	double _grid_to_load;        // AC
+	double _pv_to_batt;	         // post conversion losses
+	double _grid_to_batt;        
+	double _batt_charge_loss;    // Loss from AC to DC
+	double _batt_discharge_loss; // Loss from DC to AC
+	double _pv_loss;			 // Loss of PV due to conversion loss
 	double _battery_fraction;
 	double _pv_fraction;
 
