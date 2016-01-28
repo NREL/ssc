@@ -95,8 +95,8 @@ capacity_t(q20, SOC_max)
 }
 void capacity_kibam_t::replace_battery()
 {
-	// Assume initial charge is 20 capacity
-	_q0 = _q20;
+	// Assume initial charge is max capacity
+	_q0 = _qmax*_SOC_max*0.01;
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
 	_qmax = _qmax0;
@@ -1164,11 +1164,11 @@ void dispatch_t::compute_to_batt(double e_pv)
 	if (_e_tofrom_batt < 0)
 	{
 		if (_pv_to_batt > 0)
-		{		
+		{
 			// in event less energy dispatched than requested
 			if (_pv_to_batt > fabs(_e_tofrom_batt))
 				_pv_to_batt = fabs(_e_tofrom_batt);
-			
+
 			// in event more energy dispatched than requested
 			if (_pv_dispatch_to_battery_first)
 			{
@@ -1189,8 +1189,13 @@ void dispatch_t::compute_to_batt(double e_pv)
 
 		if (_pv_to_batt == e_pv_dc)
 			_pv_loss = e_pv - e_pv_dc;
-		else 
+		else
 			_pv_loss = _pv_to_batt * (1 - _ac_dc * 0.01); // if AC-connected
+	}
+	else
+	{
+		_pv_to_batt = 0;
+		_grid_to_batt = 0;
 	}
 }
 void dispatch_t::compute_to_load(double e_pv, double e_load, double e_tofrom_battery)
