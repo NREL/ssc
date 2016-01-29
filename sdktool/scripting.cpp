@@ -13,11 +13,11 @@
 #include <wex/dview/dvplotctrl.h>
 #include <wex/dview/dvtimeseriesdataset.h>
 
-#include <lk_lex.h>
-#include <lk_parse.h>
-#include <lk_eval.h>
-#include <lk_invoke.h>
-#include <lk_stdlib.h>
+#include <lk/lex.h>
+#include <lk/parse.h>
+#include <lk/eval.h>
+#include <lk/invoke.h>
+#include <lk/stdlib.h>
 
 #include "sscdev.h"
 #include "dataview.h"

@@ -4,8 +4,8 @@
 #include <wx/wx.h>
 #include "dllinvoke.h"
 
-#include <lk_absyn.h>
-#include <lk_env.h>
+#include <lk/absyn.h>
+#include <lk/env.h>
 
 class wxLKScriptCtrl;
 
