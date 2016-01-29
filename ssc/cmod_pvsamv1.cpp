@@ -2528,7 +2528,11 @@ public:
 					}
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
-					p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
+					//jmf 1-29-16 bug fix: ac_derate should subtract further power from negative nighttime values, not reduce the negative nighttime values!
+					if (p_gen[idx] <= 0)
+						p_gen[idx] = (ssc_number_t)(acpwr_gross * (1 + (1 - ac_derate)) * 0.001);
+					else
+						p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
 					if (iyear == 0)
 						annual_ac_pre_avail += p_gen[idx] * ts_hour; //have to multiply by timestep to keep from adding too much of the same value
 
