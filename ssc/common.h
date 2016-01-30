@@ -40,7 +40,8 @@ class shading_factor_calculator
 
 	// shading database mods
 	int m_string_option;// 0=shading db, 1=average, 2=max, 3=min
-	DB8_mpp *m_db8;
+	//DB8_mpp *m_db8;
+	std::auto_ptr<DB8_mpp> m_db8;
 	double m_beam_shade_factor;
 	double m_dc_shade_factor;
 
@@ -53,7 +54,6 @@ class shading_factor_calculator
 
 public:
 	shading_factor_calculator();
-	~shading_factor_calculator();
 	bool setup(compute_module *cm, const std::string &prefix = "");
 	std::string get_error(size_t i=0);
 	
