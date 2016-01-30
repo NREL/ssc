@@ -309,21 +309,16 @@ shading_factor_calculator::shading_factor_calculator()
 	m_enAzAlt = false;
 	m_enMxH = false;
 	m_diffFactor = 1.0;
+	m_beam_shade_factor = 1.0;
+	m_dc_shade_factor = 1.0;
 }
 
 
-shading_factor_calculator::~shading_factor_calculator()
-{
-	if (m_db8)
-		delete m_db8;
-}
 
 bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )
 {
 	bool ok = true;
 	m_diffFactor = 1.0;
-//	m_string_option = -1;// 0=shading db, 1=average, 2=max, 3=min, -1 not enabled.
-//	m_string_option = -1;// 0=shading db, 1=shading db no Tc, 2=average, 3=max, 4=min, -1 not enabled
 	m_string_option = -1;// 0=shading db, 1=average, 1=max, 3=min, -1 not enabled.
 	// Sara 1/25/16 - shading database derate applied to dc only
 	// shading loss applied to beam if not from shading database
@@ -332,13 +327,13 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
 
 	m_steps_per_hour = 1;
-	m_db8 = NULL;
+//	m_db8 = NULL;
 
 	if (cm->is_assigned(prefix + "shading:string_option"))
 			m_string_option = cm->as_integer(prefix + "shading:string_option");
-	if ((m_string_option == 0) || (m_string_option == 1))
+	if (m_string_option == 0)
 	{
-		m_db8 = new DB8_mpp();
+		m_db8 = std::auto_ptr<DB8_mpp>(new DB8_mpp());
 		m_db8->init();
 	}
 
