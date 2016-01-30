@@ -323,7 +323,8 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 	bool ok = true;
 	m_diffFactor = 1.0;
 //	m_string_option = -1;// 0=shading db, 1=average, 2=max, 3=min, -1 not enabled.
-	m_string_option = -1;// 0=shading db, 1=shading db no Tc, 2=average, 3=max, 4=min, -1 not enabled.
+//	m_string_option = -1;// 0=shading db, 1=shading db no Tc, 2=average, 3=max, 4=min, -1 not enabled
+	m_string_option = -1;// 0=shading db, 1=average, 1=max, 3=min, -1 not enabled.
 	// Sara 1/25/16 - shading database derate applied to dc only
 	// shading loss applied to beam if not from shading database
 	m_beam_shade_factor = 1.0;
@@ -354,13 +355,13 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 		{
 			nrecs = nrows;
 			m_beamFactors.resize_fill(nrows, ncols, 1.0);
-			if ((m_string_option == 0) || (m_string_option == 1)) // use percent shaded to lookup in database
+			if (m_string_option == 0) // use percent shaded to lookup in database
 			{
 				for (size_t r = 0; r < nrows; r++)
 					for (size_t c = 0; c < ncols; c++)
 						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded 
 			}
-			else if (m_string_option == 2) // use average of all strings in column zero
+			else if (m_string_option == 1) // use average of all strings in column zero
 			{
 				for (size_t r = 0; r < nrows; r++)
 				{
@@ -376,7 +377,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 					m_beamFactors.at(r, 0) = 1.0 - sum_percent_shaded / 100;
 				}
 			}
-			else if (m_string_option == 3) // use max of all strings in column zero
+			else if (m_string_option == 2) // use max of all strings in column zero
 			{
 				for (size_t r = 0; r < nrows; r++)
 				{
@@ -393,7 +394,7 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 					m_beamFactors.at(r, 0) = 1.0 - max_percent_shaded / 100;
 				}
 			}
-			else if (m_string_option == 4) // use min of all strings in column zero
+			else if (m_string_option == 3) // use min of all strings in column zero
 			{
 				for (size_t r = 0; r < nrows; r++)
 				{
@@ -507,16 +508,12 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
 	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
 	{
-		if ((m_string_option == 0) // 0=shading database lookup with temp correction
-			|| (m_string_option == 1)) // 1=shading database lookup without temp correction
+		if (m_string_option == 0) // 0=shading database lookup with temp correction
 		{
 			std::vector<double> shad_fracs;
 			for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
 				shad_fracs.push_back(m_beamFactors.at(irow, icol));
-			if (m_string_option == 0)
-				factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
-			else // as before taking default arguments
-				factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs);
+			factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
 		}
 		else // use column zero value
 		{
@@ -529,8 +526,7 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 		if (m_enAzAlt)
 			factor *= util::bilinear(solalt, solazi, m_azaltvals);
 
-		if ((m_string_option == 0) // 0=shading database lookup with temp correction
-			|| (m_string_option == 1)) // 1=shading database lookup without temp correction
+		if (m_string_option == 0) // 0=shading database lookup with temp correction
 			m_dc_shade_factor = factor;
 		else
 			m_beam_shade_factor = factor;
