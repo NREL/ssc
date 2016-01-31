@@ -13,7 +13,7 @@ typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint;
 
-short DB8_mpp::get_vmpp(size_t i)
+short ShadeDB8_mpp::get_vmpp(size_t i)
 {
 	if (i >= 0 && i<6045840) // uint16 check
 		return (short)((p_vmpp[2 * i + 1] << 8) | p_vmpp[2 * i]); 
@@ -21,7 +21,7 @@ short DB8_mpp::get_vmpp(size_t i)
 		return -1;
 };
 
-short DB8_mpp::get_impp(size_t i)
+short ShadeDB8_mpp::get_impp(size_t i)
 { 
 	if (i >= 0 && i<6045840) // uint16 check
 		return (short)((p_impp[2 * i + 1] << 8) | p_impp[2 * i]); 
@@ -30,7 +30,7 @@ short DB8_mpp::get_impp(size_t i)
 };
 
 
-bool DB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t, const size_t &S, const  db_type &DB_TYPE, size_t* ret_ndx)
+bool ShadeDB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t, const size_t &S, const  db_type &DB_TYPE, size_t* ret_ndx)
 {
 	bool ret_val = false;
 	//size_t ret_ndx=-1;
@@ -92,7 +92,7 @@ bool DB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t, cons
 	return ret_val;
 }
 
-size_t DB8_mpp::n_choose_k(size_t n, size_t k)
+size_t ShadeDB8_mpp::n_choose_k(size_t n, size_t k)
 {
 	if (k > n) return 0;
 	if (k * 2 > n) k = n - k;
@@ -106,7 +106,7 @@ size_t DB8_mpp::n_choose_k(size_t n, size_t k)
 	return result;
 }
 
-std::vector<double> DB8_mpp::get_vector(const size_t &N, const size_t &d, const size_t &t, const size_t &S, const db_type &DB_TYPE)
+std::vector<double> ShadeDB8_mpp::get_vector(const size_t &N, const size_t &d, const size_t &t, const size_t &S, const db_type &DB_TYPE)
 {
 	std::vector<double> ret_vec;
 	size_t length = 0;
@@ -134,7 +134,7 @@ std::vector<double> DB8_mpp::get_vector(const size_t &N, const size_t &d, const 
 	return ret_vec;
 }
 
-void DB8_mpp::init()
+void ShadeDB8_mpp::init()
 {
 	p_error_msg = "";
 	p_warning_msg = "";
@@ -146,7 +146,7 @@ void DB8_mpp::init()
 	decompress_file_to_uint8();
 }
 
-DB8_mpp::~DB8_mpp()
+ShadeDB8_mpp::~ShadeDB8_mpp()
 {
 	if (p_vmpp)
 		free(p_vmpp);
@@ -156,7 +156,7 @@ DB8_mpp::~DB8_mpp()
 
 
 
-bool DB8_mpp::decompress_file_to_uint8()
+bool ShadeDB8_mpp::decompress_file_to_uint8()
 {
 	size_t status;
 	uint8 *pTmp_data;
@@ -181,7 +181,7 @@ bool DB8_mpp::decompress_file_to_uint8()
 	return true;
 };
 
-double DB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<double> &shade_frac, bool use_pv_cell_temp, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<double> &shade_frac, bool use_pv_cell_temp, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
 {
 	double shade_loss = 0;
 	// shading fractions for each string
@@ -356,8 +356,8 @@ double DB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<double> &
 
 
 
-			std::vector<double>vmpp = get_vector(num_strings, diffuse_frac, s_max, counter, DB8_mpp::VMPP);
-			std::vector<double>impp = get_vector(num_strings, diffuse_frac, s_max, counter, DB8_mpp::IMPP);
+			std::vector<double>vmpp = get_vector(num_strings, diffuse_frac, s_max, counter, ShadeDB8_mpp::VMPP);
+			std::vector<double>impp = get_vector(num_strings, diffuse_frac, s_max, counter, ShadeDB8_mpp::IMPP);
 			double p_max_frac = 0;
 
 			// temp correction and out of global MPP

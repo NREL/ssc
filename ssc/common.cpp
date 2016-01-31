@@ -327,15 +327,9 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
 
 	m_steps_per_hour = 1;
-//	m_db8 = NULL;
 
 	if (cm->is_assigned(prefix + "shading:string_option"))
 			m_string_option = cm->as_integer(prefix + "shading:string_option");
-	if (m_string_option == 0)
-	{
-		m_db8 = std::auto_ptr<DB8_mpp>(new DB8_mpp());
-		m_db8->init();
-	}
 
 	// initialize to 8760x1 for mxh and change based on shading:timestep
 	size_t nrecs = 8760;
@@ -483,6 +477,11 @@ std::string shading_factor_calculator::get_error(size_t i)
 }
 
 
+bool shading_factor_calculator::use_shade_db()
+{
+	return (m_string_option == 0); // determine which fbeam function to call
+}
+
 size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t hour_step, size_t steps_per_hour)
 {
 	// handle different simulation timesteps and shading input timesteps
@@ -496,24 +495,14 @@ size_t shading_factor_calculator::get_row_index_for_input(size_t hour, size_t ho
 	return ndx;
 }
 
-bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour)
 {
 	bool ok = false;
 	double factor = 1.0;
 	size_t irow = get_row_index_for_input(hour,hour_step,steps_per_hour);
 	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
 	{
-		if (m_string_option == 0) // 0=shading database lookup with temp correction
-		{
-			std::vector<double> shad_fracs;
-			for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
-				shad_fracs.push_back(m_beamFactors.at(irow, icol));
-			factor = 1.0 - m_db8->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
-		}
-		else // use column zero value
-		{
-			factor = m_beamFactors.at(irow, 0);
-		}
+		factor = m_beamFactors.at(irow, 0);
 		// apply mxh factor
 		if (m_enMxH && (irow < m_mxhFactors.nrows()))
 			factor *= m_mxhFactors(irow, 0);
@@ -521,15 +510,39 @@ bool shading_factor_calculator::fbeam(size_t hour, double solalt, double solazi,
 		if (m_enAzAlt)
 			factor *= util::bilinear(solalt, solazi, m_azaltvals);
 
-		if (m_string_option == 0) // 0=shading database lookup with temp correction
-			m_dc_shade_factor = factor;
-		else
-			m_beam_shade_factor = factor;
+		m_beam_shade_factor = factor;
 
 		ok = true;
 	}
 	return ok;
 }
+
+
+bool shading_factor_calculator::fbeam_shade_db(std::unique_ptr<ShadeDB8_mpp> & p_shadedb, size_t hour, double solalt, double solazi, size_t hour_step, size_t steps_per_hour, double gpoa, double dpoa, double pv_cell_temp, int mods_per_str, double str_vmp_stc, double mppt_lo, double mppt_hi)
+{
+	bool ok = false;
+	double factor = 1.0;
+	size_t irow = get_row_index_for_input(hour, hour_step, steps_per_hour);
+	if ((irow >= 0) && (irow < m_beamFactors.nrows()))
+	{
+		std::vector<double> shad_fracs;
+		for (size_t icol = 0; icol < m_beamFactors.ncols(); icol++)
+			shad_fracs.push_back(m_beamFactors.at(irow, icol));
+		factor = 1.0 - p_shadedb->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
+		// apply mxh factor
+		if (m_enMxH && (irow < m_mxhFactors.nrows()))
+			factor *= m_mxhFactors(irow, 0);
+		// apply azi alt shading factor
+		if (m_enAzAlt)
+			factor *= util::bilinear(solalt, solazi, m_azaltvals);
+
+		m_dc_shade_factor = factor;
+
+		ok = true;
+	}
+	return ok;
+}
+
 
 double shading_factor_calculator::fdiff()
 {

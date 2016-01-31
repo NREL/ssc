@@ -9,16 +9,16 @@
 #include <string>
 
 extern const unsigned char pCmp_data[3133517];
-
-class DB8_mpp
+// shading database with up to 8 strings
+class ShadeDB8_mpp
 {
 public:
 	enum db_type{VMPP, IMPP};
-//	DB8_mpp() {
-//		p_vmpp = NULL;
-//		p_impp=NULL ;
-//	};
-	~DB8_mpp();
+	ShadeDB8_mpp() {
+		p_vmpp = NULL;
+		p_impp=NULL ;
+	};
+	~ShadeDB8_mpp();
 	void init();
 	short vmpp(size_t ndx){
 		return get_vmpp(ndx);

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <memory>
 
 #include "core.h"
 // for adjustment factors
@@ -27,6 +28,9 @@
 #include "lib_iec61853.h"
 
 #include "lib_util.h"
+
+// non linear shading database
+#include "lib_pv_shade_loss_mpp.h"
 
 
 #ifndef M_PI
@@ -768,7 +772,6 @@ struct subarray
 	ssinputs sscalc;
 	ssoutputs ssout;
 	
-//	std::auto_ptr<shading_factor_calculator> shad;
 	shading_factor_calculator shad;
 
 	pvsnowmodel sm;
@@ -860,7 +863,9 @@ public:
 			throw exec_error( "pvsamv1", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
 		
 		double ts_hour = 1.0/step_per_hour;
-		
+		// shading database if necessary
+		std::unique_ptr<ShadeDB8_mpp>  p_shade_db; // (new ShadeDB8_mpp());
+
 		// Sev 04/08
 		bool en_snow_model = (as_integer("en_snow_model") > 0); // snow model activation
 		double annual_snow_loss = 0;
@@ -885,6 +890,8 @@ public:
 		int num_subarrays = 1;
 
 
+		// check to see if shading database needs to be created;
+		bool create_shade_db = true;
 		// loop over subarrays
 		for ( size_t nn=0;nn<4;nn++ )
 		{
@@ -939,9 +946,10 @@ public:
 			if (sa[nn].gcr < 0.01)
 				throw exec_error("pvsamv1", "array ground coverage ratio must obey 0.01 < gcr");
 			
-//			sa[nn].shad = std::auto_ptr<shading_factor_calculator>(new shading_factor_calculator());
 			if (!sa[nn].shad.setup( this, prefix ))
 				throw exec_error("pvsamv1", prefix + "_shading: " + sa[nn].shad.get_error() );
+
+			create_shade_db = (create_shade_db && sa[nn].shad.use_shade_db());
 
 			// backtracking- only required if one-axis tracker
 			if (sa[nn].track_mode == 1)
@@ -961,6 +969,15 @@ public:
 
 			sa[nn].poa.usePOAFromWF = false;
 		}
+
+		// create single instance of shading database if necessary
+		if (create_shade_db)
+		{
+			p_shade_db = std::unique_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
+			p_shade_db->init();
+		}
+
+
 		// loop over subarrays AGAIN to calculate shading inputs because nstrings in subarray 1 isn't correct until AFTER the previous loop
 		for (size_t nn = 0; nn < 4; nn++)
 		{
@@ -2082,54 +2099,55 @@ public:
 						// record sub-array contribution to total POA beam power for this time step (W)
 						ts_accum_poa_beam_nom += ibeam * ref_area_m2 * modules_per_string * sa[nn].nstrings;
 						
-// for non-linear shading from shading database, need 
-//     global_poa_irrad, diffuse_irrad, pv_cell_temp, mods_per_string, str_vmp_stc, v_mppt_low, v_mppt_high
-// with the string voltage assumed between power point values, then we only need
-//     global_poa_irrad, diffuse_irrad, (str shade fractions in shading calculator class)
-// also need timestep and timesteps per hour to handle different user entered timestep shading fraactions. 
-						// note: shading factors are still hourly inputs
-						//double beam_shad_factor = sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, ibeam, iskydiff + ignddiff);
-						// ShadeDB validation
-						// from Validation.docx
-						double shadedb_gpoa = ibeam + iskydiff + ignddiff;
-						double shadedb_dpoa = iskydiff + ignddiff;
-
-						// update cell temperature - unshaded value per Sara 1/25/16
-						double tcell = wf.tdry;
-						if (sunup > 0)
+// for non-linear shading from shading database
+						if (sa[nn].shad.use_shade_db())
 						{
-							// calculate cell temperature using selected temperature model
-							pvinput_t in(ibeam, iskydiff, ignddiff, ipoa,
-								wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-								solzen, aoi, hdr.elev,
-								stilt, sazi,
-								((double)wf.hour) + wf.minute / 60.0,
-								radmode, sa[nn].poa.usePOAFromWF);
-							// voltage set to -1 for max power
-							(*celltemp_model)(in, *module_model, -1.0, tcell);
-						}
-						double shadedb_str_vmp_stc = modules_per_string * ssVmp;
-						double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
-						double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
+							double shadedb_gpoa = ibeam + iskydiff + ignddiff;
+							double shadedb_dpoa = iskydiff + ignddiff;
 
-						if (!sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+							// update cell temperature - unshaded value per Sara 1/25/16
+							double tcell = wf.tdry;
+							if (sunup > 0)
+							{
+								// calculate cell temperature using selected temperature model
+								pvinput_t in(ibeam, iskydiff, ignddiff, ipoa,
+									wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+									solzen, aoi, hdr.elev,
+									stilt, sazi,
+									((double)wf.hour) + wf.minute / 60.0,
+									radmode, sa[nn].poa.usePOAFromWF);
+								// voltage set to -1 for max power
+								(*celltemp_model)(in, *module_model, -1.0, tcell);
+							}
+							double shadedb_str_vmp_stc = modules_per_string * ssVmp;
+							double shadedb_mppt_lo = V_mppt_lo_1module * modules_per_string;;
+							double shadedb_mppt_hi = V_mppt_hi_1module * modules_per_string;;
+
+							if (!sa[nn].shad.fbeam_shade_db(p_shade_db,hour, solalt, solazi, jj, step_per_hour, shadedb_gpoa, shadedb_dpoa, tcell, modules_per_string, shadedb_str_vmp_stc, shadedb_mppt_lo, shadedb_mppt_hi))
+							{
+								throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
+							}
+
+							if (iyear == 0)
+							{
+								p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
+								p_shadedb_dpoa[nn][idx] = (ssc_number_t)shadedb_dpoa;
+								p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
+								p_shadedb_mods_per_str[nn][idx] = (ssc_number_t)modules_per_string;
+								p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
+								p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
+								p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
+								// fraction shaded for comparison
+								p_shadedb_shade_frac[nn][idx] = (ssc_number_t)(1.0 - sa[nn].shad.dc_shade_factor());
+							}
+						}
+						else
 						{
-							throw exec_error("pvsamv1",	util::format("Error calculating shading factor for subarray %d", nn));
+							if (!sa[nn].shad.fbeam(hour, solalt, solazi, jj, step_per_hour))
+							{
+								throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
+							}
 						}
-
-						if (iyear == 0)
-						{
-							p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
-							p_shadedb_dpoa[nn][idx] = (ssc_number_t)shadedb_dpoa;
-							p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
-							p_shadedb_mods_per_str[nn][idx] = (ssc_number_t)modules_per_string;
-							p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
-							p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
-							p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
-							// fraction shaded for comparison
-							p_shadedb_shade_frac[nn][idx] = (ssc_number_t)( 1.0 - sa[nn].shad.dc_shade_factor());
-						}
-
 
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0) 
 						if (sa[nn].shad.beam_shade_factor() < 1.0){
