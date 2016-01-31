@@ -116,7 +116,7 @@ public:
 
 		if (num_strings > 0)
 		{
-			DB8_mpp db8;
+			ShadeDB8_mpp db8;
 			db8.init();
 
 			for (size_t irec = 0; irec < nrec; irec++)
@@ -266,8 +266,8 @@ public:
 						t[irec] = (ssc_number_t)s_max;
 						S[irec] = (ssc_number_t)counter;
 
-						std::vector<double>vmpp = db8.get_vector(num_strings, diffuse_frac, s_max, counter, DB8_mpp::VMPP);
-						std::vector<double>impp = db8.get_vector(num_strings, diffuse_frac, s_max, counter, DB8_mpp::IMPP);
+						std::vector<double>vmpp = db8.get_vector(num_strings, diffuse_frac, s_max, counter, ShadeDB8_mpp::VMPP);
+						std::vector<double>impp = db8.get_vector(num_strings, diffuse_frac, s_max, counter, ShadeDB8_mpp::IMPP);
 						double p_max_frac = 0;
 
 
