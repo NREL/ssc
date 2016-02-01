@@ -383,7 +383,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Global horizontal irradiance",                                      "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Direct normal irradiance",                                          "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Diffuse horizontal irradiance",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "POA irradiance from weather file",                                  "W/m2",   "",                      "Time Series",       "*" ,                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "POA irradiance from weather file",                                  "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	//not all of these three calculated values will be reported, based on irrad_mode selection
+	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Calculated global horizontal irradiance",                           "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Calculated direct normal irradiance",                               "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "df_calc",                                    "Calculated diffuse horizontal irradiance",                          "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_zen",                                    "Solar zenith angle",                                                "deg",    "",                      "Time Series",       "*",                    "",                              "" },
@@ -876,8 +880,9 @@ public:
 		int strings_in_parallel = as_integer("strings_in_parallel");
 		int num_inverters = as_integer("inverter_count");
 		double ac_derate = (1 - as_double("acwiring_loss") / 100) * (1 - as_double("transformer_loss") / 100);	//calculate using ac wiring and step up transformer losses
+		double ac_loss_percent = (1 - ac_derate) * 100;
 		//assign ac loss output since we just calculated it
-		assign("ac_loss", var_data((ssc_number_t)(1 - ac_derate) * 100));
+		assign("ac_loss", var_data((ssc_number_t)ac_loss_percent));
 
 		size_t alb_len = 0;
 		ssc_number_t *alb_array = as_array("albedo", &alb_len); // monthly albedo array
@@ -1530,6 +1535,13 @@ public:
 		ssc_number_t *p_albedo = allocate("alb", nrec);
 		ssc_number_t *p_snowdepth = allocate("snowdepth", nrec);
 
+		//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
+		//three possible calculated irradiance: gh, df, dn
+		ssc_number_t *p_irrad_calc[3]; 
+		if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec);
+		if (radmode == DN_GH || radmode == POA_P || radmode == POA_R) p_irrad_calc[1] = allocate("df_calc", nrec);
+		if (radmode == GH_DF || radmode == POA_P || radmode == POA_R) p_irrad_calc[2] = allocate("dn_calc", nrec);
+
 		//output arrays for solar position calculations- same for all four subarrays
 		ssc_number_t *p_solzen = allocate("sol_zen", nrec);
 		ssc_number_t *p_solalt = allocate("sol_alt", nrec);
@@ -2038,50 +2050,47 @@ public:
 						and deciding what to do if the weather file DOES contain the third component but it's not being used in the calculations.*/
 						if (iyear == 0)
 						{
-							// Apply POA data from weather file (if it exists)
+							// Apply all irradiance component data from weather file (if it exists)
 							p_wfpoa[idx] = (ssc_number_t)wf.poa;
+							p_beam[idx] = (ssc_number_t)wf.dn;
+							p_glob[idx] = (ssc_number_t)(wf.gh);
+							p_diff[idx] = (ssc_number_t)(wf.df);
 
 							// calculate beam if global & diffuse are selected as inputs
 							if (radmode == GH_DF)
 							{
-								p_beam[idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
-								if (p_beam[idx] < 0)
+								p_irrad_calc[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
+								if (p_irrad_calc[2][idx] < 0)
 								{
 									log(util::format("SAM calculated negative Direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-										p_beam[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-									p_beam[idx] = 0;
+										p_irrad_calc[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									p_irrad_calc[2][idx] = 0;
 								}
 							}
-							else
-								p_beam[idx] = (ssc_number_t)(wf.dn);
 
 							// calculate global if beam & diffuse are selected as inputs
 							if (radmode == DN_DF)
 							{
-								p_glob[idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
-								if (p_glob[idx] < 0)
+								p_irrad_calc[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
+								if (p_irrad_calc[0][idx] < 0)
 								{
 									log(util::format("SAM calculated negative Global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-										p_glob[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-									p_glob[idx] = 0;
+										p_irrad_calc[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									p_irrad_calc[0][idx] = 0;
 								}
 							}
-							else
-								p_glob[idx] = (ssc_number_t)(wf.gh);
 
 							// calculate diffuse if total & beam are selected as inputs
 							if (radmode == DN_GH)
 							{
-								p_diff[idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
-								if (p_diff[idx] < 0)
+								p_irrad_calc[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
+								if (p_irrad_calc[1][idx] < 0)
 								{
 									log(util::format("SAM calculated negative Diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
-										p_diff[idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
-									p_diff[idx] = 0;
+										p_irrad_calc[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
+									p_irrad_calc[1][idx] = 0;
 								}
 							}
-							else
-								p_diff[idx] = (ssc_number_t)(wf.df);
 						}
 
 						// record sub-array plane of array output before computing shading and soiling
@@ -2551,10 +2560,13 @@ public:
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
 					//jmf 1-29-16 bug fix: ac_derate should subtract further power from negative nighttime values, not reduce the negative nighttime values!
-					if (p_gen[idx] <= 0)
-						p_gen[idx] = (ssc_number_t)(acpwr_gross * (1 + (1 - ac_derate)) * 0.001);
-					else
-						p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
+					//if (p_gen[idx] <= 0)
+						//p_gen[idx] = (ssc_number_t)(acpwr_gross * (1 + (1 - ac_derate)) * 0.001);
+					//else
+						//p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
+					//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
+					p_gen[idx] = (ssc_number_t)((acpwr_gross - (fabs(acpwr_gross) * ac_loss_percent / 100)) * 0.001); //acpwr_gross is in W, p_gen is in kW
+
 					if (iyear == 0)
 						annual_ac_pre_avail += p_gen[idx] * ts_hour; //have to multiply by timestep to keep from adding too much of the same value
 
