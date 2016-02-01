@@ -1018,7 +1018,7 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 		if (_charging != _prev_charging)
 			_e_max_discharge = e_max_discharge;
 
-		// implement discharge percent
+		//  discharge percent
 		double e_percent = _e_max_discharge*_percent_discharge*0.01;
 
 		if (_e_tofrom_batt > e_percent)
@@ -1037,7 +1037,8 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 
 		if (_charging != _prev_charging)
 			_e_max_charge = e_max_charge;
-		// implement charge percent for automated grid charging
+
+		//  charge percent for automated grid charging
 		double e_percent = _e_max_charge*_percent_charge*0.01;
 
 		if (fabs(_e_tofrom_batt) > fabs(e_percent))
@@ -1185,6 +1186,9 @@ void dispatch_t::compute_to_batt(double e_pv)
 				}
 			}
 		}
+		if (_pv_to_batt < 0)
+			_pv_to_batt = 0;
+
 		_grid_to_batt = fabs(_e_tofrom_batt) - _pv_to_batt;
 
 		if (_pv_to_batt == e_pv_dc)
@@ -1247,11 +1251,11 @@ void dispatch_t::compute_generation(double e_pv)
 }
 void dispatch_t::compute_grid_net(double e_gen, double e_load)
 {
-	_e_grid = e_gen - e_load;
 	accumulate_grid_annual();
 
 	double e_pv = e_gen;
 	double e_tofrom_battery = _e_tofrom_batt;
+	_e_grid = e_pv + _e_tofrom_batt - e_load;
 
 	// dc connected - need to revisit
 	if (_ac_or_dc == 0)
@@ -1433,6 +1437,7 @@ void dispatch_manual_t::compute_energy_battery_priority(double e_pv, double e_lo
 
 		if (_can_grid_charge)
 			_e_tofrom_batt = -energy_needed;
+
 	}
 	else if (_can_grid_charge && !charged > 0)
 		_e_tofrom_batt = -energy_needed;
@@ -1691,7 +1696,11 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 
 		// implies a repeated power
 		if (sorted_grid_diff[ii] == 0)
+		{
+			if (debug)
+				fprintf(p, "\n");
 			continue;
+		}
 		// add to energy we are trimming
 		else
 			sum += sorted_grid_diff[ii] * (ii + 1)*_dt_hour;
@@ -1699,10 +1708,10 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 		if (debug)
 			fprintf(p, "%.3f\t%.3f\n", sum, E_charge_vec[ii+1]);
 
-		if (sum < E_charge_vec[ii+1])
+		if (sum < E_charge_vec[ii+1] && sum < E_useful)
 			continue;
 		// we have limited power, we'll shave what more we can
-		else
+		else if (sum > E_charge_vec[ii+1])
 		{
 			P_target += (sum - E_charge_vec[ii]) / ((ii+1)*_dt_hour);
 			sum = E_charge_vec[ii];
@@ -1710,8 +1719,17 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 				fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii] );
 			break;
 		}
+		// only allow one cycle per day
+		else if (sum > E_useful)
+		{
+			P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
+			sum = E_useful;
+			if (debug)
+				fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+			break;
+		}
 	}
-
+	// don't set target lower than previous high in month
 	if (P_target < _target_power_month)
 	{
 		P_target = _target_power_month;
