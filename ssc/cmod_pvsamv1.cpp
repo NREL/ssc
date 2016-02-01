@@ -31,6 +31,8 @@
 
 // non linear shading database
 #include "lib_pv_shade_loss_mpp.h"
+// comment following define if do not want shading database validation outputs
+//#define SHADE_DB_OUTPUTS
 
 
 #ifndef M_PI
@@ -511,7 +513,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 
 
-
+#ifdef SHADE_DB_OUTPUTS
 	// ShadeDB validation
 
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_gpoa", "ShadeDB subarray 1 global poa input", "W/m2", "", "Time Series (Subarray 1)", "", "", "" },
@@ -551,7 +553,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_mppt_hi", "ShadeDB subarray 4 MPPT high input", "V", "", "Time Series (Subarray 4)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_shade_frac", "ShadeDB subarray 4 shade fraction output", "", "", "Time Series (Subarray 4)", "", "", "" },
 
-
+#endif
 
 
 
@@ -1573,7 +1575,7 @@ public:
 		ssc_number_t *p_snowcoverage[4];
 
 
-
+#ifdef SHADE_DB_OUTPUTS
 		// ShadeDB validation
 		ssc_number_t *p_shadedb_gpoa[4];
 		ssc_number_t *p_shadedb_dpoa[4];
@@ -1583,7 +1585,7 @@ public:
 		ssc_number_t *p_shadedb_mppt_lo[4];
 		ssc_number_t *p_shadedb_mppt_hi[4];
 		ssc_number_t *p_shadedb_shade_frac[4];
-
+#endif
 
 
 		// allocate output arrays for all subarray-specific parameters
@@ -1617,6 +1619,7 @@ public:
 					p_snowcoverage[nn] = allocate(prefix + "snow_coverage", nrec);
 				}
 
+#ifdef SHADE_DB_OUTPUTS
 				// ShadeDB validation
 				p_shadedb_gpoa[nn] = allocate("shadedb_" + prefix + "gpoa", nrec);
 				p_shadedb_dpoa[nn] = allocate("shadedb_" + prefix + "dpoa", nrec);
@@ -1627,7 +1630,7 @@ public:
 				p_shadedb_mppt_hi[nn] = allocate("shadedb_" + prefix + "mppt_hi", nrec);
 
 				p_shadedb_shade_frac[nn] = allocate("shadedb_" + prefix + "shade_frac", nrec);
-
+#endif
 			}
 		}
 		
@@ -2127,7 +2130,7 @@ public:
 							{
 								throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 							}
-
+#ifdef SHADE_DB_OUPUTS
 							if (iyear == 0)
 							{
 								p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
@@ -2140,6 +2143,7 @@ public:
 								// fraction shaded for comparison
 								p_shadedb_shade_frac[nn][idx] = (ssc_number_t)(1.0 - sa[nn].shad.dc_shade_factor());
 							}
+#endif
 						}
 						else
 						{
