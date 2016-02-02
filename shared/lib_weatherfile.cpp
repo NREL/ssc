@@ -679,7 +679,11 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 		if (ncols != ncols1
 			|| pbuf != buf
-			|| pbuf1 != buf1) return -3; // first two lines must have same number of items
+			|| pbuf1 != buf1)
+		{
+			m_message = "first two header lines must have same number of columns";
+			return false;
+		}
 
 		for (size_t i = 0; i<ncols; i++)
 		{
@@ -746,6 +750,12 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			{
 				hdr_step_sec = atoi(value);
 			}
+		}
+
+		if ( !std::isfinite(m_hdr.lat) || !std::isfinite(m_hdr.lon) )
+		{
+			m_message = "latitude and longitude required but not specified";
+			return false;
 		}
 
 
