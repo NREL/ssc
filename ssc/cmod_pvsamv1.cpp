@@ -870,7 +870,7 @@ public:
 		
 		double ts_hour = 1.0/step_per_hour;
 		// shading database if necessary
-		std::unique_ptr<ShadeDB8_mpp>  p_shade_db; // (new ShadeDB8_mpp());
+		std::auto_ptr<ShadeDB8_mpp>  p_shade_db; // (new ShadeDB8_mpp());
 
 		// Sev 04/08
 		bool en_snow_model = (as_integer("en_snow_model") > 0); // snow model activation
@@ -980,7 +980,7 @@ public:
 		// create single instance of shading database if necessary
 		if (create_shade_db)
 		{
-			p_shade_db = std::unique_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
+			p_shade_db = std::auto_ptr<ShadeDB8_mpp>(new ShadeDB8_mpp());
 			p_shade_db->init();
 		}
 
