@@ -488,8 +488,8 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		*cols[128], *cols1[128];
 
 
-	FILE *fp = fopen(file.c_str(), "r");
-	if (!fp)
+	util::stdfile fp( file.c_str(), "r" );
+	if ( !fp.ok() )
 	{
 		m_message = "could not open file for reading: " + file;
 		m_type = INVALID;
@@ -550,7 +550,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			m_message = "invalid TMY3 header: must contain 7 fields.  station,city,state,tz,lat,lon,elev";
 			m_ok = false;
-			fclose(fp);
 			return false;
 		}
 
@@ -580,7 +579,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			m_message = "invalid EPW header: must contain 10 fields. LOCATION,city,state,country,source,station,lat,lon,tz,elev";
 			m_ok = false;
-			fclose(fp);
 			return false;
 		}
 
@@ -617,7 +615,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		if (10 != nhdr)
 		{
 			m_message = "invalid SMW header format, 10 fields required";
-			fclose(fp);
 			m_ok = false;
 			return false;
 		}
@@ -667,7 +664,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				// if so, exit out with an error 
 				m_message = "could not determine timestep in CSV weather file. Does the file contain a leap day?";
 				m_ok = false;
-				fclose(fp);
 				return false;
 			}
 		}
@@ -780,7 +776,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			{
 				m_message = "could not determine number of records in CSV weather file";
 				m_ok = false;
-				fclose(fp);
 				return false;
 			}
 
@@ -810,7 +805,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			{
 				m_message = "could not determine timestep in CSV weather file";
 				m_ok = false;
-				fclose(fp);
 				return false;
 			}
 		}
@@ -819,13 +813,11 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	else
 	{
 		m_message = "could not detect file format";
-		fclose(fp);
 		return false;
 	}
 
 	if (header_only)
 	{
-		fclose(fp);
 		return true;
 	}
 
@@ -844,7 +836,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		if (pbuf != buf)
 		{
 			m_message = "could not read column names";
-			fclose(fp);
 			return false;
 		}
 
@@ -856,14 +847,12 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			if (pbuf1 != buf1)
 			{
 				m_message = "could not read column units";
-				fclose(fp);
 				return false;
 			}
 			int ncols1 = locate(buf1, cols1, NCOL, ',');
 
 			if (ncols != ncols1) {
 				m_message = "column names and units must have the same number of fields";
-				fclose(fp);
 				return false;
 			}
 		}
@@ -991,7 +980,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			if ( nread != 79 || pret != buf )
 			{
 				m_message = "TMY2: data line does not have at exactly 79 characters at record " + util::to_string(i);
-				fclose(fp);
 				return false;
 			}
 
@@ -1007,7 +995,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				if (ncols < 68)
 				{
 					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
-					fclose(fp);
 					return false;
 				}
 
@@ -1018,7 +1005,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				if (!p)
 				{
 					m_message = "TMY3: invalid date format at record " + util::to_string(i);
-					fclose(fp);
 					return false;
 				}
 				p++;
@@ -1027,7 +1013,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				if (!p)
 				{
 					m_message = "TMY3: invalid date format at record " + util::to_string(i);
-					fclose(fp);
 					return false;
 				}
 				p++;
@@ -1083,7 +1068,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			if (pret != buf)
 			{
 				m_message = "TMY3: data line formatting error at record " + util::to_string(i);
-				fclose(fp);
 				return false;
 			}
 		}
@@ -1099,7 +1083,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				if (ncols < 32)
 				{
 					m_message = "EPW: data line does not have at least 32 fields at record " + util::to_string(i);
-					fclose(fp);
 					return false;
 				}
 
@@ -1143,7 +1126,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			if ( pret!=buf )
 			{
 				m_message = "EPW: data line formatting error at record " + util::to_string(i);
-				fclose(fp);
 				return false;
 			}
 		}
@@ -1155,7 +1137,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			if (ncols < 12)
 			{
 				m_message = "SMW: data line does not have at least 12 fields at record " + util::to_string(i);
-				fclose(fp);
 				return false;
 			}
 
@@ -1190,7 +1171,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			if ( pret!=buf )
 			{
 				m_message = "SMW: data line formatting error at record " + util::to_string(i);
-				fclose(fp);
 				return false;
 			}
 		}
@@ -1205,7 +1185,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				if (!pbuf || !*pbuf)
 				{
 					m_message = "CSV: data line formatting error at record " + util::to_string(i);
-					fclose(fp);
 					return false;
 				}
 
@@ -1234,8 +1213,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 	}
 
-	fclose(fp);
-	
 	if( n_leap_data_removed > 0 )
 		m_message = util::format("Skipped %d data lines for February 29th (leap day).", n_leap_data_removed );
 
