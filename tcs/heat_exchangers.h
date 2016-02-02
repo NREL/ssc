@@ -5,10 +5,18 @@
 #include "htf_props.h"
 #include "lib_util.h"
 
+//namespace N_energy_balance_solvers
+//{
+//	void calculate_cold_outlet_state(double T_in /*K*/, double m_dot /*kg/s*/, double Q_dot /*kWt*/, double T_cold_limit /*K*/,
+//				double &T_out /*K*/, double &h_out /*kJ/kg*/);
+//};
+
 class C_HX_counterflow
 {
 
-private:
+protected:
+	bool m_is_HX_initialized;		//[-] True = yes!
+	bool m_is_HX_designed;			//[-] True = yes!
 
 public:
 
@@ -59,9 +67,6 @@ public:
 				m_T_h_out = m_T_c_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
-
-	bool m_is_HX_initialized;		//[-] True = yes!
-	bool m_is_HX_designed;			//[-] True = yes!
 
 	S_des_par ms_des_par;
 	S_des_solved ms_des_solved;

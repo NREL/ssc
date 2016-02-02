@@ -1,6 +1,7 @@
 #include "heat_exchangers.h"
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
+#include <algorithm>
 
 C_HX_counterflow::C_HX_counterflow()
 {
@@ -162,9 +163,8 @@ void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, dou
 	// Calculate inlet enthalpies from known state points
 	double cp_cold_ave = std::numeric_limits<double>::quiet_NaN();
 	double cp_hot_ave = std::numeric_limits<double>::quiet_NaN();
-	double T_cold_ave = std::numeric_limits<double>::quiet_NaN();
-	double T_hot_ave = std::numeric_limits<double>::quiet_NaN();
 	double h_c_in = std::numeric_limits<double>::quiet_NaN();
+	double h_h_in = std::numeric_limits<double>::quiet_NaN();
 	double h_c_out = std::numeric_limits<double>::quiet_NaN();
 	double h_h_out = std::numeric_limits<double>::quiet_NaN();
 	int prop_error_code = 0;
@@ -226,8 +226,7 @@ void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, dou
 					}
 				}
 			}
-			T_cold_ave = (T_c_out_guess + T_c_in)*0.5;
-			cp_cold_ave = mc_cold_fl.Cp(T_cold_ave);
+			cp_cold_ave = mc_cold_fl.Cp_ave(T_c_in, T_c_out_guess, ms_des_par.m_N_sub_hx);
 			T_c_out_calc = T_c_in + Q_dot / (m_dot_c*cp_cold_ave);
 			err = T_c_out_calc - T_c_out_guess;
 			h_c_in = cp_cold_ave*(T_c_out_calc - T_c_in);
@@ -236,7 +235,6 @@ void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, dou
 		ms_des_solved.m_T_c_out = T_c_out_guess;
 	}
 
-	double h_h_in = std::numeric_limits<double>::quiet_NaN();
 	if( ms_des_par.m_hot_fl == CO2 )
 	{
 		prop_error_code = CO2_TP(T_h_in, P_h_in, &mc_co2_props);
@@ -294,9 +292,7 @@ void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, dou
 					T_h_out_guess = 0.5*(T_h_out_upper + T_h_out_lower);
 				}
 			}
-
-			T_hot_ave = (T_h_out_guess + T_h_in)*0.5;
-			cp_hot_ave = mc_hot_fl.Cp(T_hot_ave);
+			cp_hot_ave = mc_hot_fl.Cp_ave(T_h_out_guess, T_h_in, ms_des_par.m_N_sub_hx);
 			T_h_out_calc = T_h_in - Q_dot / (m_dot_h*cp_hot_ave);
 			err = T_h_out_calc - T_h_out_guess;
 			h_h_in = cp_hot_ave*(T_h_in - T_h_out_calc);
