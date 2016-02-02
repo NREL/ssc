@@ -1271,7 +1271,7 @@ bool csp_dispatch_opt::optimize()
         fout << "# --- indexed parameters ---\n";
         fout << "param Qin := \n";
         for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.q_sf_expected.at(t) << "\n";
+            fout << t+1 << "\t" << outputs.q_sfavail_expected.at(t) << "\n";
         fout << ";\n\n";
 
         fout << "param P := \n";
