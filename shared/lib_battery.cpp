@@ -1584,7 +1584,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 0 && idx == 0)
+	if (hour_of_year == 6648 && hour_of_year != _hour_last_updated)
 	{
 		// debug = true;
 		if (debug)
@@ -1616,7 +1616,10 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx )
 
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max )
 {
-	E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max-_SOC_min) *0.01 *watt_to_kilowatt;
+	if (capacity_kibam_t * capacity = dynamic_cast<capacity_kibam_t *>(_Battery->capacity_model()))
+		E_max = _Battery->battery_voltage() *_Battery->capacity_model()->q1()*watt_to_kilowatt;
+	else
+		E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max-_SOC_min) *0.01 *watt_to_kilowatt;
 
 	if (debug)
 	{
