@@ -420,7 +420,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	{
 		dispatch_model = new automate_dispatch_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
 			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
-			cm.as_double("batt_minimum_modetime"),
+			1, // minimum mode time allowed as 1 minute for auto dispatch
 			ac_or_dc, dc_dc, ac_dc, dc_ac,
 			batt_dispatch, pv_dispatch,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
