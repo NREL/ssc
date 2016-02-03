@@ -6,6 +6,15 @@ HTFProperties::HTFProperties()
 {
 	m_fluid = 0;
 	uf_err_msg = "The user-defined htf property table is invalid (rows=%d cols=%d)";
+
+	m_is_temp_enth_avail = false;
+}
+
+bool HTFProperties::SetUserDefinedFluid(const util::matrix_t<double> &table, bool calc_temp_enth_table)
+{
+	m_is_temp_enth_avail = calc_temp_enth_table;
+
+	return SetUserDefinedFluid(table);
 }
 
 bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
@@ -34,13 +43,110 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 		return false;
 	}
 
+	if(m_is_temp_enth_avail)
+	{
+		set_temp_enth_lookup();
+	}
+
 	return true;
+}
+
+void HTFProperties::set_temp_enth_lookup()
+{
+	double T_low = 270.0 + 273.15;
+	double T_high = 600.0 + 273.15;
+
+	double delta_T_target = 5.0;
+
+	int n_rows = ceil((T_high - T_low)/delta_T_target) + 1.0;
+	double delta_T = (T_high - T_low)/double(n_rows-1);
+
+	util::matrix_t<double> table(n_rows, 2);
+
+	double T, T_next, cp, h, h_next;
+	T_next = T_low;
+	h_next = 0.0;	// specific heat[kJ / kg - K]
+	table(0, 0) = T_next;		//[K]
+	table(0, 1) = h_next;		//[kJ/kg-K]
+	for(int i = 0; i<n_rows-1; i++)
+	{
+		h = h_next;
+		T = T_next;
+
+		T_next = T + delta_T;
+	
+		cp = Cp(0.5*(T+T_next));	// specific heat[kJ / kg - K]
+
+		h_next = h + cp*delta_T;
+
+		table(i+1,0) = T_next;		//[K]
+		table(i+1,1) = h_next;		//[kJ/kg-K]
+	}
+
+	// Specific which columns are used as the independent variable; these must be monotonically increasing
+	int ind_var_index[2] = {0, 1};
+	int n_ind_var = 2;
+	int error_index = -99;
+	if( !mc_temp_enth_lookup.Set_1D_Lookup_Table(table,ind_var_index,n_ind_var,error_index) )
+	{
+		if(error_index == -1)
+		{
+			throw(C_csp_exception("Interpolation table must have at least 3 rows (rows=%d cols=%d)", 
+				"HTFProperties::set_temp_enth_lookup"));
+		}
+		if(error_index == 0)
+		{
+			throw(C_csp_exception("Temperature must monotonically increase (rows=%d cols=%d)",
+				"HTFProperties::set_temp_enth_lookup"));
+		}
+		if(error_index == 1)
+		{
+			throw(C_csp_exception("Enthalpy must monotonically increase (rows=%d cols=%d)",
+				"HTFProperties::set_temp_enth_lookup"));
+		}
+	}
+
+}
+
+double HTFProperties::temp_lookup( double enth /*kJ/kg*/)
+{
+	if(!m_is_temp_enth_avail)
+	{
+		set_temp_enth_lookup();
+		m_is_temp_enth_avail = true;
+	}
+
+	return mc_temp_enth_lookup.linear_1D_interp(1, 0, enth);	//[K]
+}
+
+double HTFProperties::enth_lookup( double temp /*K*/)
+{
+	if( !m_is_temp_enth_avail )
+	{
+		set_temp_enth_lookup();
+		m_is_temp_enth_avail = true;
+	}
+
+	return mc_temp_enth_lookup.linear_1D_interp(0, 1, temp);	//[kJ/kg]
+}
+
+bool HTFProperties::SetFluid( int fluid, bool calc_temp_enth_table)
+{
+	m_is_temp_enth_avail = calc_temp_enth_table;
+	
+	return SetFluid(fluid);
 }
 
 bool HTFProperties::SetFluid( int fluid )
 {
 	// If using stored fluid properties, set member fluid number
 	m_fluid = fluid;
+
+	if( m_is_temp_enth_avail )
+	{
+		set_temp_enth_lookup();
+	}
+
 	return true;
 }
 

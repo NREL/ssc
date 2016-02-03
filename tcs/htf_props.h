@@ -57,8 +57,10 @@ public:
 	
 	const char *UserFluidErrMessage(){return uf_err_msg.c_str();}
 	bool SetFluid( int fluid );
+	bool SetFluid( int fluid, bool calc_temp_enth_table);
 	int GetFluid() { return m_fluid; }
 	bool SetUserDefinedFluid( const util::matrix_t<double> &table );
+	bool SetUserDefinedFluid(const util::matrix_t<double> &table, bool calc_temp_enth_table);
 
 	double Cp( double T_K );
 	double dens( double T_K, double P );
@@ -71,6 +73,9 @@ public:
 	double Re( double T_K, double P, double vel, double d );
 	double temp( double H );
 	double enth( double T_K );
+
+	double temp_lookup( double enth /*kJ/kg*/ );
+	double enth_lookup( double temp /*K*/ );
 
 	// 12.11.15 twn: Add method to calculate Cp as average of values throughout temperature range
 	//               rather than at the range's midpoint
@@ -85,10 +90,15 @@ private:
 
 	Linear_Interp User_Defined_Props;		// Define interpolation class in case user defined propeties are required
 
+	Linear_Interp mc_temp_enth_lookup;		// Enthalpy-temperature relationship, populated by pre-processor: 'set_temp_enth_lookup' 
+	void set_temp_enth_lookup();
+	bool m_is_temp_enth_avail;
+
 	int m_fluid;	// Store fluid number as member integer
 	util::matrix_t<double> m_userTable;	// User table of properties
 
-	std::string uf_err_msg;	//Error message when the user HTF table is invalid	
+	std::string uf_err_msg;	//Error message when the user HTF table is invalid
+	
 };
 
 class AbsorberProps
