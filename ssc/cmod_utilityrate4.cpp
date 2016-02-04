@@ -1285,8 +1285,9 @@ public:
 								m_month[m].ec_tou_ub.at(i,j) = ec_tou_mat.at(r, 2);
 								// units kWh, kWh/kW, kWh daily, kWh/kW daily
 								m_month[m].ec_tou_units.at(i, j) = (int)ec_tou_mat.at(r, 3);
-								if (m_month[m].ec_tou_units.at(i, j) == 2)
-								{// kWh daily - adjust max usage by day of month (or billing cycle per Eric 12/14/15
+								if ((m_month[m].ec_tou_units.at(i, j) == 2)
+									|| (m_month[m].ec_tou_units.at(i, j) == 3))
+									{// kWh daily or kWh/kW daily - adjust max usage by number of days in month (or billing cycle per Eric 12/14/15
 									m_month[m].ec_tou_ub.at(i, j) *= util::nday[m];
 								}
 								m_month[m].ec_tou_br.at(i, j) = ec_tou_mat.at(r, 4);
@@ -1655,9 +1656,71 @@ public:
 			c = 0;
 			for (m = 0; m < (int)m_month.size(); m++)
 			{
-				// assume kWh here initially and will update for other units
+				// assume kWh 
+
+				// check for kWh/kW
+				bool kWhperkW = false;
+				int start_tier = 0;
+				int end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 				int num_periods = (int)m_month[m].ec_tou_ub.nrows();
-				int num_tiers = (int)m_month[m].ec_tou_ub.ncols();
+				int num_tiers = end_tier - start_tier + 1;
+
+				// kWh/kW (kWh/kW daily handled in Setup)
+				// 1. find kWh/kW tier
+				// 2. set min tier and max tier based on next item in ec_tou matrix
+				// 3. resize use and chart based on number of tiers in kWh/kW section
+				// 4. assumption is that all periods in same month have same tier breakdown
+				// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
+				// That is, first tier must be kWh/kW
+				if ((m_month[m].ec_tou_units.ncols()>0 && m_month[m].ec_tou_units.nrows() > 0)
+					&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
+				{
+					kWhperkW = true;
+					// monthly total energy / monthly peak to determine which kWh/kW tier
+					double mon_kWhperkW = m_month[m].energy_net;
+					if (m_month[m].dc_flat_peak != 0)
+						mon_kWhperkW /= m_month[m].dc_flat_peak;
+					// find start tier
+					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_ub.ncols(); i_tier++)
+					{ 
+						int units = m_month[m].ec_tou_units.at(0, i_tier);
+						if ((units == 1) || (units == 3))
+						{
+							if (mon_kWhperkW > m_month[m].ec_tou_ub.at(0, i_tier))
+								start_tier = (int)i_tier + 1;
+							if (mon_kWhperkW < m_month[m].ec_tou_ub.at(0, i_tier))
+								end_tier = (int)i_tier - 1;
+						}
+					}
+					if (start_tier >= m_month[m].ec_tou_ub.ncols())
+						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
+					if (end_tier < start_tier)
+						end_tier = start_tier;
+					// resize sr, br and ub for use in energy charge calculations below
+					num_tiers = end_tier - start_tier + 1;
+					util::matrix_t<float> br(num_periods, num_tiers);
+					util::matrix_t<float> sr(num_periods, num_tiers);
+					util::matrix_t<float> ub(num_periods, num_tiers);
+					// assign appropriate values.
+					for (period = 0; period < num_periods; period++)
+					{
+						for (tier = 0; tier < num_tiers; tier++)
+						{
+							br.at(period, tier) = m_month[m].ec_tou_br.at(period, start_tier + tier);
+							sr.at(period, tier) = m_month[m].ec_tou_sr.at(period, start_tier + tier);
+							ub.at(period, tier) = m_month[m].ec_tou_ub.at(period, start_tier + tier);
+						}
+					}
+
+					m_month[m].ec_tou_br = br;
+					m_month[m].ec_tou_sr = sr;
+					m_month[m].ec_tou_ub = ub;
+				}
+
+				// reset now resized
+				start_tier = 0;
+				end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
+
 				m_month[m].ec_energy_use.resize_fill(num_periods, num_tiers, 0);
 				m_month[m].ec_charge.resize_fill(num_periods, num_tiers, 0);
 
@@ -1684,14 +1747,13 @@ public:
 						}
 						int row = (int)(per_num - m_month[m].ec_periods.begin());
 						// look at energy accumulation and tier ub to determine where energy goes in matrix
-						tier = 0;
+						tier = start_tier;
 						// translate to energy use for tier determination
 						// update energy per tier for charges
 						ssc_number_t ub = -mon_e_net;
 						if (mon_e_net > 0) 
 							ub = mon_e_net;
-
-						while ((tier <  (int)(m_month[m].ec_tou_ub.ncols() - 1)) && (ub >  m_month[m].ec_tou_ub.at(row, tier)))
+						while ((tier <  end_tier) && (ub >  m_month[m].ec_tou_ub.at(row, tier)))
 							tier++;
 						m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
 						c++;
