@@ -380,14 +380,14 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// outputs
 
 /* environmental conditions */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Global horizontal irradiance",                                      "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Direct normal irradiance",                                          "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Diffuse horizontal irradiance",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "POA irradiance from weather file",                                  "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Irradiance- GHI- weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Irradiance- DNI- weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Irradiance- DHI- weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "Irradiance- POA- weather file",                                     "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	//not all of these three calculated values will be reported, based on irrad_mode selection
-	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Calculated global horizontal irradiance",                           "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Calculated direct normal irradiance",                               "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "df_calc",                                    "Calculated diffuse horizontal irradiance",                          "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Irradiance- GHI- calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Irradiance- DNI- calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "df_calc",                                    "Irradiance- DHI- calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_zen",                                    "Solar zenith angle",                                                "deg",    "",                      "Time Series",       "*",                    "",                              "" },
@@ -579,7 +579,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                                 "Inverter power consumption loss",                        "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                                 "Inverter night time loss",                               "kW",    "",                      "Time Series",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",                      "Inverter clipping loss DC MPPT voltage limits",           "kWh",    "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",                      "Inverter clipping loss DC MPPT voltage limits",          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                         "Inverter clipping loss AC power limit",                  "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                          "Inverter power consumption loss",                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                          "Inverter night time loss",                               "kWh",    "",                      "Annual",       "*",                    "",                              "" },
@@ -592,7 +592,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array energy (DC)",                                   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "System energy (AC)",                                     "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Global horizontal irradiance",                           "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Irradiance- GHI- annual",                                "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA total radiation (nominal)",                          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA beam radiation (nominal)",                           "kWh",    "",                      "Annual",       "*",                    "",                              "" },
@@ -1538,9 +1538,9 @@ public:
 		//set up the calculated components of irradiance such that they aren't reported if they aren't assigned
 		//three possible calculated irradiance: gh, df, dn
 		ssc_number_t *p_irrad_calc[3]; 
-		if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec);
-		if (radmode == DN_GH || radmode == POA_P || radmode == POA_R) p_irrad_calc[1] = allocate("df_calc", nrec);
-		if (radmode == GH_DF || radmode == POA_P || radmode == POA_R) p_irrad_calc[2] = allocate("dn_calc", nrec);
+		if (radmode == DN_DF) p_irrad_calc[0] = allocate("gh_calc", nrec); //don't calculate global for POA models
+		if (radmode == DN_GH || radmode == POA_R || radmode == POA_P) p_irrad_calc[1] = allocate("df_calc", nrec);
+		if (radmode == GH_DF || radmode == POA_R || radmode == POA_P) p_irrad_calc[2] = allocate("dn_calc", nrec);
 
 		//output arrays for solar position calculations- same for all four subarrays
 		ssc_number_t *p_solzen = allocate("sol_zen", nrec);
@@ -2005,7 +2005,11 @@ public:
 							nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
 						if( radmode == POA_R || radmode == POA_P) {
-							irr.get_irrad(&wf.gh, &wf.dn, &wf.df);
+							double gh_temp, df_temp, dn_temp;
+							gh_temp = df_temp = dn_temp = 0;
+							irr.get_irrad(&gh_temp, &dn_temp, &df_temp); 
+							p_irrad_calc[1][idx] = (ssc_number_t)df_temp;
+							p_irrad_calc[2][idx] = (ssc_number_t)dn_temp;
 						}
 
 						// beam, skydiff, and grounddiff IN THE PLANE OF ARRAY
