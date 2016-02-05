@@ -380,16 +380,16 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// outputs
 
 /* environmental conditions */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Irradiance- GHI- weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Irradiance- DNI- weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Irradiance- DHI- weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "Irradiance- POA- weather file",                                     "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Irradiance GHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Irradiance DNI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Irradiance DHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "Irradiance POA from weather file",                                     "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	//not all of these three calculated values will be reported, based on irrad_mode selection
-	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Irradiance- GHI- calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Irradiance- DNI- calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "df_calc",                                    "Irradiance- DHI- calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Irradiance GHI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Irradiance DNI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "df_calc",                                    "Irradiance DHI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed from weather file",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature from weather file",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_zen",                                    "Solar zenith angle",                                                "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_alt",                                    "Solar altitude angle",                                              "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_azi",                                    "Solar azimuth angle",                                               "deg",    "",                      "Time Series",       "*",                    "",                              "" },
@@ -397,7 +397,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "airmass",                                    "Absolute air mass",                                                 "",       "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Albedo",							                                 "",       "",                     "Time Series",       "*",                    "",                              "" },
 	//SEV: snow depth output
-	{ SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Snow depth",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Snow depth from weather file",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
 
 	/* sub-array level outputs */
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_aoi",                        "Subarray 1 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -2066,7 +2066,7 @@ public:
 								p_irrad_calc[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
 								if (p_irrad_calc[2][idx] < 0)
 								{
-									log(util::format("SAM calculated negative Direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+									log(util::format("SAM calculated negative direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
 										p_irrad_calc[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 									p_irrad_calc[2][idx] = 0;
 								}
@@ -2078,7 +2078,7 @@ public:
 								p_irrad_calc[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
 								if (p_irrad_calc[0][idx] < 0)
 								{
-									log(util::format("SAM calculated negative Global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+									log(util::format("SAM calculated negative global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
 										p_irrad_calc[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 									p_irrad_calc[0][idx] = 0;
 								}
@@ -2090,7 +2090,7 @@ public:
 								p_irrad_calc[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
 								if (p_irrad_calc[1][idx] < 0)
 								{
-									log(util::format("SAM calculated negative Diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
+									log(util::format("SAM calculated negative diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
 										p_irrad_calc[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 									p_irrad_calc[1][idx] = 0;
 								}
