@@ -583,7 +583,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 	poaCompOut[1] = poaBest[1];
 	poaCompOut[2] = poaBest[2];
 
-	ghOut = dnOut * cos(inc[1]) + dnOut;
+	ghOut = dnOut * cos(inc[1]) + dfOut;
 
 	return Ktp;
 }
