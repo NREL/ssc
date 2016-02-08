@@ -206,7 +206,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
-      <StackReserveSize>4000000</StackReserveSize>
+      <StackReserveSize>2000000</StackReserveSize>
     </Link>
     <Bscmake>
       <OutputFile>vc_mswud\dev_vc9.bsc</OutputFile>
