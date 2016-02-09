@@ -1,8 +1,48 @@
 #include <math.h>
 #include <cmath>
 #include <cfloat>
+#include <sstream>
 
 #include "lib_battery.h"
+
+/*
+Message class
+*/
+void message::add(std::string message)
+{
+	std::vector<std::string>::iterator it;
+	it = std::find(messages.begin(), messages.end(), message);
+	if (it == messages.end())
+	{
+		messages.push_back(message);
+		count.push_back(1);
+	}
+	else
+		count[it - messages.begin()]++;
+
+}
+int message::total_message_count(){ return messages.size(); }
+int message::message_count(int index)
+{
+	if (index < messages.size())
+		return count[index];
+	else
+		return 0;
+}
+std::string message::get_message(int index)
+{
+	if (index < messages.size())
+		return messages[index];
+	else
+		return NULL;
+}
+std::string message::construct_log_count_string(int index)
+{
+	std::string message_count = static_cast<std::ostringstream*>(&(std::ostringstream() << count[index]))->str();
+	std::string log = messages[index] + " - warning occurred: " + message_count + " times";
+	return log;
+}
+
 /* 
 Define Capacity Model 
 */
@@ -226,7 +266,7 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 }
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
-	double qmax_tmp = _qmax*capacity_percent;
+	double qmax_tmp = _qmax*capacity_percent*0.01;
 	if (_q0 > qmax_tmp)
 	{
 		double q0_orig = _q0;
@@ -304,7 +344,7 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 }
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
-	double qmax_tmp = _qmax*capacity_percent;
+	double qmax_tmp = _qmax*capacity_percent*0.01;
 	if (_q0 > qmax_tmp)
 	{
 		_I_loss += (_q0 - qmax_tmp) / _dt_hour;
@@ -761,7 +801,14 @@ void thermal_t::replace_battery()
 void thermal_t::updateTemperature(double I, double R, double dt)
 {
 	_R = R;
-	_T_battery = trapezoidal(I, dt*HR2SEC);
+	if (trapezoidal(I, dt*HR2SEC) < _T_max && trapezoidal(I, dt*HR2SEC) > 0)
+		_T_battery = trapezoidal(I, dt*HR2SEC);
+	else if (rk4(I, dt*HR2SEC) < _T_max && rk4(I, dt*HR2SEC) > 0)
+		_T_battery = rk4(I, dt*HR2SEC);
+	else if (implicit_euler(I, dt*HR2SEC) < _T_max && implicit_euler(I, dt*HR2SEC) > 0)
+		_T_battery = implicit_euler(I, dt*HR2SEC);
+	else
+		_message.add("Computed battery temperature below zero or greater than max allowed, consider reducing C-rate");
 }
 
 double thermal_t::f(double T_battery, double I)
@@ -785,10 +832,27 @@ double thermal_t::trapezoidal(double I, double dt)
 
 	return (_T_battery + 0.5*dt*(T_prime + B*(C*_T_room + D))) / (1 + 0.5*dt*B*C);
 } 
+double thermal_t::implicit_euler(double I, double dt)
+{
+	double B = 1 / (_mass*_Cp); // [K/J]
+	double C = _h*_A;			// [W/K]
+	double D = pow(I, 2)*_R;	// [Ohm A*A]
+	double T_prime = f(_T_battery, I);	// [K]
+
+	return (_T_battery + dt*(B*C*_T_room + D)) / (1 + dt*B*C);
+}
 double thermal_t::T_battery(){ return _T_battery; }
 double thermal_t::capacity_percent()
 { 
-	return util::linterp_col(_cap_vs_temp, 0, _T_battery, 1); 
+	double percent = util::linterp_col(_cap_vs_temp, 0, _T_battery, 1); 
+
+	if (percent < 0 || percent > 100)
+	{
+		percent = 100;
+		_message.add("Unable to determine capacity adjustment for temperature, ignoring");
+	}
+
+	return percent;
 }
 /*
 Define Losses
@@ -988,6 +1052,7 @@ double dispatch_t::discharge_annual(){ return _discharge_annual; }
 double dispatch_t::grid_import_annual(){ return _grid_import_annual; }
 double dispatch_t::grid_export_annual(){ return _grid_export_annual; }
 double dispatch_t::energy_loss_annual(){ return _e_loss_annual; };
+message dispatch_t::get_messages(){ return _message; };
 
 void dispatch_t::new_year()
 {
@@ -1479,7 +1544,6 @@ automate_dispatch_t::automate_dispatch_t(
 	_target_power_month = -1e16;
 	_month = 1;
 	grid.reserve(_num_steps);
-
 	for (int ii = 0; ii != _num_steps; ii++)
 		grid.push_back(grid_point(0.,0,0));
 }
@@ -1559,7 +1623,7 @@ void automate_dispatch_t::initialize(int hour_of_year)
 	_charge_array.clear();
 	_discharge_array.clear();
 	_gridcharge_array.clear();	
-
+	
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
 		grid[ii] = grid_point(0.,0,0);
@@ -1617,7 +1681,11 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx )
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max )
 {
 	if (capacity_kibam_t * capacity = dynamic_cast<capacity_kibam_t *>(_Battery->capacity_model()))
+	{
 		E_max = _Battery->battery_voltage() *_Battery->capacity_model()->q1()*watt_to_kilowatt;
+		if (E_max < 0)
+			E_max = 0;
+	}
 	else
 		E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max-_SOC_min) *0.01 *watt_to_kilowatt;
 
@@ -1770,6 +1838,9 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 			profile++;
 			if (debug)
 				fprintf(p, "%d\t %d\t %d\t %.3f\t %.3f\t %.3f\t %.3f\n", profile, grid[ii].Hour(), grid[ii].Step(), discharge_percent, discharge_energy, energy_required, grid[ii].Grid());
+
+			if (discharge_percent > 100 && _mode == MAINTAIN_TARGET)
+				_message.add("Unable to discharge enough to meet power target.  Increase power target.");
 		}
 		else
 			break;
@@ -1837,5 +1908,7 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 			profile++;
 		}
 	}
+	if (charge_energy == 0 && _mode == MAINTAIN_TARGET )
+		_message.add("Power target too low, unable to charge battery.  Increase target power.");
 }
 

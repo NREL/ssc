@@ -17,6 +17,26 @@ const double tolerance = 0.001;
 
 typedef std::vector<double> double_vec;
 typedef std::vector<int> int_vec;
+
+// Messages
+class message
+{
+public:
+	message(){};
+	virtual ~message(){};
+
+
+	void add(std::string message);
+	int total_message_count();
+	int message_count(int index);
+	std::string get_message(int index);
+	std::string construct_log_count_string(int index);
+
+protected:
+	std::vector<std::string> messages;
+	std::vector<int> count;
+};
+
 /*
 Base class from which capacity models derive
 Note, all capacity models are based on the capacity of one battery
@@ -271,11 +291,13 @@ public:
 	// outputs
 	double T_battery();
 	double capacity_percent();
+	message get_messages(){ return _message; }
 
 protected:
 	double f(double T_battery, double I);
 	double rk4(double I, double dt);
 	double trapezoidal(double I, double dt);
+	double implicit_euler(double I, double dt);
 
 protected:
 
@@ -292,6 +314,8 @@ protected:
 	double _A;			// [m2] - exposed surface area
 	double _T_battery;   // [K]
 	double _capacity_percent; //[%]
+	message _message;
+	const double _T_max = 400;
 };
 /*
 Losses Base class
@@ -400,6 +424,8 @@ public:
 	double grid_export_annual();
 	double energy_loss_annual();
 
+	message get_messages();
+
 protected:
 
 	// Controllers
@@ -482,6 +508,10 @@ protected:
 	double _discharge_annual;		 // [Kwh]
 	double _grid_import_annual;		 // [Kwh]
 	double _grid_export_annual;		 // [Kwh]
+
+	// messages
+	message _message;
+
 };
 
 /*
@@ -616,6 +646,7 @@ protected:
 	int _num_steps;
 	int _nyears; 
 	int _mode;
+	
 	
 	grid_vec grid; // [grid_power, hour, step]
 };
