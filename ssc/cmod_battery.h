@@ -17,12 +17,11 @@ struct battstor
 	// Note, PV & LOAD are energy quantities, not power
 	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double PV, double LOAD);
 	void update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD);
+	void process_messages(compute_module &cm);
 
 	// for user schedule
 	void force_replacement();
 	void check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step);
-
-
 	void calculate_monthly_and_annual_outputs( compute_module &cm );
 
 
@@ -30,6 +29,7 @@ struct battstor
 	int year;
 	size_t step_per_hour;
 	size_t nyears;
+	size_t total_steps;
 	double _dt_hour;
 
 	// member data

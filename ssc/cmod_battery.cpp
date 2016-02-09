@@ -193,7 +193,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		if (replacement_option > 0)
 			cm.log("Replacements are enabled without running lifetime simulation, please run over lifetime to consider battery replacements", SSC_WARNING);
 	}
-
+	total_steps = nyears * 8760 * step_per_hour;
 	chem = cm.as_integer( "batt_chem" );
 
 	size_t ncharge, ndischarge, ngridcharge, ndischarge_percent, ngridcharge_percent, ntarget_powers;
@@ -518,6 +518,9 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 	
 	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
+	if (idx == total_steps - 1)
+		process_messages(cm);
+
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
@@ -606,6 +609,16 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	cm.accumulate_monthly_for_year( "pv_to_load",   "monthly_pv_to_load",   _dt_hour, step_per_hour );
 	cm.accumulate_monthly_for_year( "batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour );
 	cm.accumulate_monthly_for_year( "grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour );
+}
+void battstor::process_messages(compute_module &cm)
+{
+	message dispatch_messages = dispatch_model->get_messages();
+	message thermal_messages = thermal_model->get_messages();
+
+	for (int i = 0; i != dispatch_messages.total_message_count(); i++)
+		cm.log(dispatch_messages.construct_log_count_string(i), SSC_WARNING);
+	for (int i = 0; i != thermal_messages.total_message_count(); i++)
+		cm.log(thermal_messages.construct_log_count_string(i), SSC_WARNING);
 }
 
 ///////////////////////////////////////////////////
