@@ -1397,7 +1397,7 @@ static void sun_unit( double sazm, double szen, double sun[3] )
 
 
 //Pass a PV system, sun zenith, sun azimuth
-//Return true if system is shaded
+//Return fraction shaded [0...1] if system is shaded
 //False otherwise
 double shade_fraction_1x( double solazi, double solzen, 
 						 double axis_tilt, double axis_azimuth, 
