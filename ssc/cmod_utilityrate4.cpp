@@ -93,12 +93,14 @@ static var_info vtab_utility_rate4[] = {
 
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_tofromgrid",         "Electricity to/from grid",       "kWh", "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly electricity from system",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_e_tofromgrid", "Electricity to/from grid", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_e_togrid", "Electricity to grid", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_e_fromgrid", "Electricity from grid", "kWh", "", "Time Series", "*", "LENGTH=8760", "" },
+	//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly electricity from system",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_demand",       "Year 1 hourly electricity from grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Year 1 hourly electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Year 1 hourly system electricity to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 // lifetime load (optional for lifetime analysis)
@@ -534,6 +536,10 @@ public:
 		ssc_number_t *ch_wo_sys_minimum = allocate("charge_wo_sys_minimum", nyears + 1);
 
 
+		// Enphase outputs requested - see emails 2/12/16- first year system to grid and from grid
+		ssc_number_t *year1_hourly_e_togrid = allocate("year1_hourly_e_togrid", 8760);
+		ssc_number_t *year1_hourly_e_fromgrid = allocate("year1_hourly_e_fromgrid", 8760);
+
 
 
 		// IRENA outputs array of tier values
@@ -939,6 +945,16 @@ public:
 				{
 					load[ii] = -e_load[ii];
 					e_tofromgrid[ii] = e_grid[ii];
+					if (e_tofromgrid[ii] > 0)
+					{
+						year1_hourly_e_togrid[ii] = e_tofromgrid[ii];
+						year1_hourly_e_fromgrid[ii] = 0.0;
+					}
+					else
+					{
+						year1_hourly_e_togrid[ii] = 0.0;
+						year1_hourly_e_fromgrid[ii] = -e_tofromgrid[ii];
+					}
 					p_tofromgrid[ii] = p_grid[ii];
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
