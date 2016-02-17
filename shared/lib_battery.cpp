@@ -1151,18 +1151,26 @@ double dispatch_t::current_controller(double battery_voltage)
 	}
 	return I;
 }
-void dispatch_t::compute_metrics()
+void dispatch_t::accumulate_charge()
 {
-	// average cycle efficiency
+	if (_e_tofrom_batt < 0.)
+	{
+		_charge_accumulated += (-_e_tofrom_batt);
+		_charge_annual += (-_e_tofrom_batt);
+	}
+}
+void dispatch_t::accumulate_discharge()
+{
 	if (_e_tofrom_batt > 0.)
 	{
 		_discharge_accumulated += _e_tofrom_batt;
 		_discharge_annual += _e_tofrom_batt;
 	}
-	else if (_e_tofrom_batt < 0.)
+}
+void dispatch_t::compute_metrics()
+{	
+	if (_e_tofrom_batt < 0.)
 	{
-		_charge_accumulated += (-_e_tofrom_batt);
-		_charge_annual += (-_e_tofrom_batt);
 		_charge_from_pv += _pv_to_batt;
 		_charge_from_pv_annual += _pv_to_batt;
 		_charge_from_grid += _grid_to_batt;
@@ -1425,6 +1433,9 @@ void dispatch_manual_t::dispatch(size_t year, size_t hour_of_year, size_t step, 
 	I = _Battery->capacity_model()->I();
 	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
 	_e_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new)* _dt_hour * watt_to_kilowatt;// [kWh]
+	
+	// Count charging before losses applied
+	accumulate_charge();
 
 	// Compute total losses
 	compute_loss(I,battery_voltage, battery_voltage_new);
@@ -1435,6 +1446,8 @@ void dispatch_manual_t::dispatch(size_t year, size_t hour_of_year, size_t step, 
 		compute_grid_net(e_pv , e_load);
 	// else dc connected, must compute post inverter
 
+	// Count discharging after losses applied 
+	accumulate_discharge();
 	compute_metrics();
 
 }

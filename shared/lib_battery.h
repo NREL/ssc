@@ -440,12 +440,13 @@ protected:
 	void compute_loss(double, double,double);
 
 	// compute metrics
+	void accumulate_charge();
+	void accumulate_discharge();
 	void compute_metrics();
 	void accumulate_grid_annual();
 	void compute_to_batt(double e_pv);
 	void compute_to_load(double e_pv, double e_load, double e_tofrom_battery);
 	void compute_generation(double e_pv);
-
 
 	battery_t * _Battery;
 	double _dt_hour;
