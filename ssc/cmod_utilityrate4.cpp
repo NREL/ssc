@@ -1693,10 +1693,11 @@ public:
 				{
 					kWhperkW = true;
 					// monthly total energy / monthly peak to determine which kWh/kW tier
-					double mon_kWhperkW = m_month[m].energy_net;
+					double mon_kWhperkW = -m_month[m].energy_net; // load negative
 					if (m_month[m].dc_flat_peak != 0)
 						mon_kWhperkW /= m_month[m].dc_flat_peak;
 					// find start tier
+					start_tier = 1;
 					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_ub.ncols(); i_tier++)
 					{ 
 						int units = m_month[m].ec_tou_units.at(0, i_tier);
