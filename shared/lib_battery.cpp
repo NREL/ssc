@@ -784,6 +784,9 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	// initialize to room temperature
 	_T_battery = T_room;
 
+	//initialize maximum temperature
+	_T_max = 400.;
+
 	// curve fit
 	int n = _cap_vs_temp.nrows();
 	for (int i = 0; i < n; i++)
