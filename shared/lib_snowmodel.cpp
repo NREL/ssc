@@ -51,7 +51,7 @@ bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
 
 	if(baseTilt>45 || baseTilt < 10){
 		good = true;
-		msg = "The snow model was designed for systems with base tilt angle between 10 and 45 degrees. Snow loss estimations for systems outside this range are not guaranteed.";
+		msg = "The snow cover model is for PV arrays with a tilt angle between 10 and 45 degrees. Snow loss estimates for tilt angles outside of this range may not be accurate.";
 		return false;
 	}
 
@@ -72,7 +72,7 @@ bool pvsnowmodel::getLoss(float poa, float tilt, float wspd, float tdry, float s
 		badValues++;
 		if (badValues == maxBadValues){
 			good = false;
-			msg = util::format("The maximum acceptable number of bad snow depth values (%d) has been reached. Terminating...", maxBadValues);
+			msg = util::format("The weather file contains no snow depth data or the data is not valid. Found (%d) bad snow depth values.", maxBadValues);
 			return false;
 		} 
 	}
