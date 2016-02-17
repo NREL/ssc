@@ -220,7 +220,7 @@ SolarField::SolarField( const SolarField &sf )
 	int nr, nc;
 	nr = sf._helio_groups.nrows();
 	nc = sf._helio_groups.ncols();
-	_helio_groups.resize_fill(nr, nc, Hvector(NULL));
+	_helio_groups.resize_fill(nr, nc, Hvector());
 	for(int i=0; i<nr; i++){
 		for(int j=0; j<nc; j++){
 			int nh = sf._helio_groups.at(i,j).size();
@@ -245,7 +245,7 @@ SolarField::SolarField( const SolarField &sf )
 	//Neighbors
 	nr = sf._neighbors.nrows();
 	nc = sf._neighbors.ncols();
-	_neighbors.resize_fill(nr, nc, Hvector(0, NULL));
+	_neighbors.resize_fill(nr, nc, Hvector()); //0, (Heliostat*)0));
 	for(int i=0; i<nr; i++){
 		for(int j=0; j<nc; j++){
 			int nh = sf._neighbors.at(i,j).size();
@@ -548,7 +548,7 @@ bool SolarField::UpdateNeighborList(double lims[4], double zen){
 	drow = (ymax - ymin)/float(nrow);			//The column and row node width
 
 	//resize the mesh array accordingly
-	_helio_groups.resize_fill(nrow, ncol, Hvector(NULL));
+	_helio_groups.resize_fill(nrow, ncol, Hvector());
 
 	int col, row;	//indicates which node the heliostat is in
 	int Npos = _helio_objects.size();
@@ -568,7 +568,7 @@ bool SolarField::UpdateNeighborList(double lims[4], double zen){
 	//Go over each node and compile a list of neighbors from the block of 9 adjacent cells.
 	if(CheckCancelStatus()) return false;	//check for cancelled simulation
 	int nh;
-	_neighbors.resize_fill(nrow, ncol, Hvector(0,NULL));
+	_neighbors.resize_fill(nrow, ncol, Hvector());
 	for(int i=0; i<nrow; i++){		//Loop over each row
 		for(int j=0; j<ncol; j++){	//Loop over each column
 			for(int k=i-1;k<i+2;k++){	//At each node position, get the surrounding nodes in the +/-y direction
