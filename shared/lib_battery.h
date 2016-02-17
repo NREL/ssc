@@ -28,7 +28,7 @@ public:
 
 	void add(std::string message);
 	int total_message_count();
-	int message_count(int index);
+	size_t message_count(int index);
 	std::string get_message(int index);
 	std::string construct_log_count_string(int index);
 

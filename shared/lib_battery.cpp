@@ -22,7 +22,7 @@ void message::add(std::string message)
 
 }
 int message::total_message_count(){ return messages.size(); }
-int message::message_count(int index)
+size_t message::message_count(int index)
 {
 	if (index < messages.size())
 		return count[index];
@@ -275,6 +275,7 @@ void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 		_q1 *= p;
 		_q2 *= p;
 		_I_loss += (q0_orig - _q0) / _dt_hour;
+		_I += (_q0 - qmax_tmp) / _dt_hour;
 	}
 	update_SOC();
 }
@@ -348,6 +349,7 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 	if (_q0 > qmax_tmp)
 	{
 		_I_loss += (_q0 - qmax_tmp) / _dt_hour;
+		_I += (_q0 - qmax_tmp) / _dt_hour;
 		_q0 = qmax_tmp;
 	}
 	update_SOC();
@@ -1316,8 +1318,6 @@ void dispatch_t::compute_generation(double e_pv)
 }
 void dispatch_t::compute_grid_net(double e_gen, double e_load)
 {
-	accumulate_grid_annual();
-
 	double e_pv = e_gen;
 	double e_tofrom_battery = _e_tofrom_batt;
 	_e_grid = e_pv + _e_tofrom_batt - e_load;
@@ -1331,6 +1331,8 @@ void dispatch_t::compute_grid_net(double e_gen, double e_load)
 
 	compute_to_batt(e_pv);
 	compute_to_load(e_pv, e_load, e_tofrom_battery);
+
+	accumulate_grid_annual();
 }
 /*
 Manual Dispatch
@@ -1648,7 +1650,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 6648 && hour_of_year != _hour_last_updated)
+	if (hour_of_year == 4584 && hour_of_year != _hour_last_updated)
 	{
 		// debug = true;
 		if (debug)
