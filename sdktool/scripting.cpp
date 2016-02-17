@@ -534,8 +534,18 @@ void EditorWindow::Exec()
 	
 	wxLKSetToplevelParentForPlots( app_frame );
 	wxLKSetPlotTarget( NULL );
+	
+	wxString svar;
+	if( !m_fileName.IsEmpty() )
+	{
+		svar = wxPathOnly( m_fileName );
+	}
+	else
+	{
+		svar = wxEmptyString;
+	}
 
-	m_editor->Execute( !m_fileName.IsEmpty() ? wxPathOnly( m_fileName ) : wxEmptyString );
+	m_editor->Execute( svar );
 
 	if ( m_stopButton->IsShown() )
 	{

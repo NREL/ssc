@@ -315,7 +315,7 @@ protected:
 	double _T_battery;   // [K]
 	double _capacity_percent; //[%]
 	message _message;
-	const double _T_max = 400;
+	double _T_max;    //(mw) can't initialize here - breaks on gcc 
 };
 /*
 Losses Base class
