@@ -296,6 +296,10 @@ public:
 	ssc_number_t dc_flat_peak;
 	int dc_flat_peak_hour;
 	// energy tou charges
+	util::matrix_t<ssc_number_t>  ec_tou_ub_init;
+	util::matrix_t<ssc_number_t>  ec_tou_br_init;
+	util::matrix_t<ssc_number_t>  ec_tou_sr_init;
+	// may change based on units and year
 	util::matrix_t<ssc_number_t>  ec_tou_ub;
 	util::matrix_t<ssc_number_t>  ec_tou_br;
 	util::matrix_t<ssc_number_t>  ec_tou_sr;
@@ -321,6 +325,8 @@ private:
 	std::vector<int> m_dc_tou_sched;
 	std::vector<ur_month> m_month;
 	std::vector<int> m_ec_periods; // period number
+	// track initial values - may change based on units
+	std::vector<std::vector<int> >  m_ec_periods_tiers_init; // tier numbers
 	std::vector<std::vector<int> >  m_ec_periods_tiers; // tier numbers
 	std::vector<int> m_dc_tou_periods; // period number
 	std::vector<std::vector<int> >  m_dc_tou_periods_tiers; // tier numbers
@@ -936,13 +942,13 @@ public:
 				assign("year1_hourly_ec_with_system", var_data(&energy_charge[0], 8760));
 				//				assign( "year1_hourly_e_grid", var_data( &e_grid[0], 8760 ) );
 				//				assign( "year1_hourly_p_grid", var_data( &p_grid[0], 8760 ) );
-				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], 8760));
-				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], 8760));
 				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], 8760));
 
 				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
 				for (int ii = 0; ii<8760; ii++)
 				{
+					ec_tou_sched[ii] = (ssc_number_t)m_ec_tou_sched[ii];
+					dc_tou_sched[ii] = (ssc_number_t)m_dc_tou_sched[ii];
 					load[ii] = -e_load[ii];
 					e_tofromgrid[ii] = e_grid[ii];
 					if (e_tofromgrid[ii] > 0)
@@ -958,6 +964,8 @@ public:
 					p_tofromgrid[ii] = p_grid[ii];
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
+				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], 8760));
+				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], 8760));
 				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13 and 9/10/13
 				monthly_outputs(&e_load[0], &e_sys_cy[0], &e_grid[0], &salespurchases[0],
 					&monthly_load[0], &monthly_system_generation[0], &monthly_elec_to_grid[0],
@@ -1136,6 +1144,12 @@ public:
 		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
+		// for reporting purposes
+		for (i = 0; i < 8760; i++)
+		{
+			m_ec_tou_sched.push_back(1);
+			m_dc_tou_sched.push_back(1);
+		}
 		if (ec_enabled)
 		{
 
@@ -1169,7 +1183,7 @@ public:
 				throw general_error("could not translate weekday and weekend schedules for energy charges");
 
 			for (i = 0; i < 8760; i++) 
-				m_ec_tou_sched.push_back(ec_tod[i]);
+				m_ec_tou_sched[i] = ec_tod[i];
 
 
 			// 6 columns period, tier, max usage, max usage units, buy, sell
@@ -1229,6 +1243,7 @@ public:
 			for (r = 0; r < m_ec_periods.size(); r++)
 			{
 				m_ec_periods_tiers.push_back(std::vector<int>());
+				m_ec_periods_tiers_init.push_back(std::vector<int>());
 			}
 			
 			for (r = 0; r < nrows; r++)
@@ -1244,11 +1259,11 @@ public:
 				}
 				int ndx = (int)(result - m_ec_periods.begin());
 				m_ec_periods_tiers[ndx].push_back(tier);
+				m_ec_periods_tiers_init[ndx].push_back(tier);
 			}
 			// sort tier values for each period
 			for (r = 0; r < m_ec_periods_tiers.size(); r++)
 				std::sort(m_ec_periods_tiers[r].begin(), m_ec_periods_tiers[r].end());
-
 
 			// periods are rows and tiers are columns - note that columns can change based on rows
 			// Initialize each month variables that are constant over the simulation
@@ -1319,6 +1334,11 @@ public:
 						}
 
 					}
+					// copy all sr, br, ub for ec in case units force change
+					// copy not same memory location
+					m_month[m].ec_tou_ub_init = m_month[m].ec_tou_ub;
+					m_month[m].ec_tou_br_init = m_month[m].ec_tou_br;
+					m_month[m].ec_tou_sr_init = m_month[m].ec_tou_sr;
 				}
 			}
 
@@ -1359,7 +1379,7 @@ public:
 				throw general_error("could not translate weekday and weekend schedules for demand charges");
 
 			for (i = 0; i < 8760; i++)
-				m_dc_tou_sched.push_back(dc_tod[i]);
+				m_dc_tou_sched[i] = dc_tod[i];
 
 
 			// 4 columns period, tier, max usage, charge
@@ -1713,8 +1733,9 @@ public:
 						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 					if (end_tier < start_tier)
 						end_tier = start_tier;
-					// resize sr, br and ub for use in energy charge calculations below
 					num_tiers = end_tier - start_tier + 1;
+					// resize everytime to handle load and energy changes
+					// resize sr, br and ub for use in energy charge calculations below
 					util::matrix_t<float> br(num_periods, num_tiers);
 					util::matrix_t<float> sr(num_periods, num_tiers);
 					util::matrix_t<float> ub(num_periods, num_tiers);
@@ -1723,9 +1744,11 @@ public:
 					{
 						for (tier = 0; tier < num_tiers; tier++)
 						{
-							br.at(period, tier) = m_month[m].ec_tou_br.at(period, start_tier + tier);
-							sr.at(period, tier) = m_month[m].ec_tou_sr.at(period, start_tier + tier);
-							ub.at(period, tier) = m_month[m].ec_tou_ub.at(period, start_tier + tier);
+							br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, start_tier + tier);
+							sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
+							ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
+							// update for correct tier number column headings
+							m_ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
 						}
 					}
 
