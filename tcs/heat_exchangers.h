@@ -192,6 +192,36 @@ class C_CO2_to_air_cooler
 {
 
 public:
+	
+	// Design parameters that are independent of the cycle-side inputs
+	struct S_des_par_ind
+	{
+		double m_T_amb_des;		//[K] Design point ambient temperature
+		double m_P_amb_des;		//[Pa] Design point ambient pressure
+		double m_W_dot_fan_des;	//[MW] Design point fan power
+
+		S_des_par_ind()
+		{
+			m_T_amb_des = m_P_amb_des = m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	// Design parameters that are dependent on the cycle-side performance
+	struct S_des_par_cycle_dep
+	{
+		double m_T_hot_in_des;		//[K] sCO2 hot side (inlet) temperature
+		double m_P_hot_in_des;		//[kPa] sCO2 hot side (inlet) pressure
+		double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
+		double m_delta_P_des;		//[kPa] sCO2 pressure drop
+		double m_T_hot_out_des;		//[K] sCO2 cold outlet temperature
+
+		S_des_par_cycle_dep()
+		{
+			m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total =
+				m_delta_P_des = m_T_hot_out_des = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_hx_design_solved
 	{
 		double m_material_V;	//[m^3]		Total Material volume - no headers
@@ -231,18 +261,18 @@ private:
 	double m_A_surf_node;	//[m^2]
 
 	// Design Ambient Conditions
-	double m_T_amb_des;		//[K]
-	double m_P_amb_des;		//[Pa]
+	//double m_T_amb_des;		//[K]
+	//double m_P_amb_des;		//[Pa]
 
 	// Hot-side Inlet Conditions
-	double m_T_hot_in_des;		//[K]
-	double m_P_hot_in_des;		//[kPa]
-	double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
+	//double m_T_hot_in_des;		//[K]
+	//double m_P_hot_in_des;		//[kPa]
+	//double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
 
 	// Design Performance Targets
-	double m_W_dot_fan_des;		//[MW]
-	double m_delta_P_des;		//[kPa]
-	double m_T_hot_out_des;		//[K]
+	//double m_W_dot_fan_des;		//[MW]
+	//double m_delta_P_des;		//[kPa]
+	//double m_T_hot_out_des;		//[K]
 	double m_m_dot_air_des;		//[kg/s]
 	double m_Q_dot_des;			//[W]
 
@@ -267,6 +297,8 @@ private:
 	int m_final_outlet_index;
 
 	// Structures
+	S_des_par_ind ms_des_par_ind;
+	S_des_par_cycle_dep ms_des_par_cycle_dep;
 	S_hx_design_solved m_hx_design_solved;
 
 public:
@@ -275,8 +307,10 @@ public:
 
 	~C_CO2_to_air_cooler(){};
 
-	bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
-		double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
+	//bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
+	//	double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
+
+	bool design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_dep des_par_cycle_dep);
 
 	void off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
 		double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code);
