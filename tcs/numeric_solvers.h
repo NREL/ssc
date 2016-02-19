@@ -1,9 +1,45 @@
 #ifndef __NUMERIC_SOLVERS_
 #define __NUMERIC_SOLVERS_
 
+class C_monotonic_equation
+{
+public:
+	C_monotonic_equation()
+	{
+	}
+	~C_monotonic_equation()
+	{
+	}
+
+	virtual int operator()(double x, double *y) = 0;
+};
+
+class C_import_mono_eq : public C_monotonic_equation
+{
+
+private:
+	int(*mf_monotonic_function)(double x, double *y);
+
+public:
+
+	
+	//C_import_mono_eq()
+	C_import_mono_eq(int(*f)(double x, double *y))
+	{
+		mf_monotonic_function = f;
+	}
+
+	~C_import_mono_eq(){}
+
+	virtual int operator()(double x, double *y);
+};
+
+
 class C_monotonic_eq_solver
 {
 private:
+
+	C_monotonic_equation &mf_mono_eq;
 
 	// Values set in solver
 	bool m_is_pos_bound;
@@ -21,7 +57,7 @@ private:
 
 	double m_y_err;
 	int m_iter;
-	int m_iter_limit;
+	//int m_iter_limit;
 
 	double check_against_limits(double x);
 
@@ -38,23 +74,123 @@ protected:
 
 	// Pointer to a 1D monotonic function
 	// Returns a value
-	double(*mf_monotonic_function)(double x);
+	// double(*mf_monotonic_function)(double x, void *data);	
 
 public:
 
-	C_monotonic_eq_solver();
+	enum solver_exit_modes
+	{
+		EQUAL_GUESS_VALUES,
+		NO_SOLUTION,
+
+		CONVERGED,
+
+		SLOPE_POS_NO_NEG_ERR,
+		SLOPE_NEG_NO_NEG_ERR,
+
+		SLOPE_POS_NO_POS_ERR,
+		SLOPE_NEG_NO_POS_ERR,
+
+		SLOPE_POS_BOTH_ERRS,
+		SLOPE_NEG_BOTH_ERRS,
+
+		MAX_ITER_SLOPE_POS_NO_NEG_ERR,
+		MAX_ITER_SLOPE_NEG_NO_NEG_ERR,
+
+		MAX_ITER_SLOPE_POS_NO_POS_ERR,
+		MAX_ITER_SLOPE_NEG_NO_POS_ERR,
+
+		MAX_ITER_SLOPE_POS_BOTH_ERRS,
+		MAX_ITER_SLOPE_NEG_BOTH_ERRS,
+	};
+	
+	C_monotonic_eq_solver(C_monotonic_equation & f);
 
 	~C_monotonic_eq_solver(){}
 
-	virtual void initialize(double(*monotonic_function)(double x), double tol, int iter_limit, double x_lower, double x_upper, bool is_err_rel);
+	virtual void settings(double tol, int iter_limit, double x_lower, double x_upper, bool is_err_rel);
 
-	void solve(double x_guess_1, double x_guess_2, double y_target,
+	int solve(double x_guess_1, double x_guess_2, double y_target,
 		bool &is_converged, bool &is_real_error, double &x_solved, double &tol_solved, int &iter_solved);
 
-	double test_member_function(double x_guess);
+	int test_member_function(double x, double *y);
 };
 
 
+//class monotonic_solver
+//{
+//public:
+//
+//	// f(x) = 0
+//	static int solve(monotonic_equation &f,
+//		double *result, double xmin, double xmax)
+//	{
+//		double x = xmin;
+//		while( x <= xmax )
+//		{
+//			double y;
+//			int err = f(x, &y);
+//			if( err != 0 )
+//				return err;
+//
+//			if( y > 0 )
+//			{
+//				*result = x;
+//				return true;
+//			}
+//			x++;
+//		}
+//		return false;
+//	}
+//};
+//
+//class HX_object// : public monotonic_equation
+//{
+//	double call_equation(double x)
+//	{
+//		return x;
+//	}
+//
+//public:
+//	// ty's CSP code
+//	class yequalsZxM1 : public monotonic_equation
+//	{
+//	private:
+//		HX_object *m_z;
+//	public:
+//		yequalsZxM1(HX_object *z)
+//		{
+//			m_z = z;
+//		}
+//		virtual ~yequalsZxM1() { }
+//		virtual int operator()(double x, double *y)
+//		{
+//			*y = m_z->call_equation(x);
+//			return 0;
+//		}
+//	};
+//
+//	//virtual int operator()(double x, double *y) const {
+//	//	*y = x*103894;
+//	//	return 0;
+//	//}
+//
+//
+//	// some code ...
+//	int myfunction(double &result)
+//	{
+//		HX_object::yequalsZxM1 eqn1(this);
+//		
+//		return monotonic_solver::solve(eqn1, &result, -10, 10);
+//		//if( !monotonic_solver::solve(eqn1, &result, -10, 10) )
+//		//{
+//		//	printf("error!");
+//		//}
+//
+//		// monotonic_solver::solve( *this, &result, -10, 10 );
+//	}
+//
+//};
 
 
 
