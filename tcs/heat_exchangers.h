@@ -31,7 +31,7 @@ public:
 		CO2 = 200
 	};
 
-	struct S_des_par
+	struct S_init_par
 	{
 		int m_N_sub_hx;				//[-] Number of sub-heat exchangers used in the model
 
@@ -41,35 +41,46 @@ public:
 		int m_cold_fl;				//[-] Integer code for cold fluid - assumed be HTF in library or w/ lookup unless = CO2 enumeration
 		util::matrix_t<double> mc_cold_fl_props;	//[-] If applicable, user-defined properties
 
-
-
-		S_des_par()
+		S_init_par()
 		{
 			m_N_sub_hx = m_hot_fl = m_cold_fl = -1;
 		}
 	};
 
+	struct S_des_par
+	{
+		double m_Q_dot_design;		//[kW] Design-point heat transfer
+		double m_T_h_in;			//[K] Design-point hot inlet temperature
+		double m_P_h_in;			//[kPa] Hot fluid inlet pressure
+		double m_P_h_out;			//[kPa] Hot fluid outlet pressure
+		double m_m_dot_hot_des;		//[kg/s] hot fluid design mass flow rate
+		double m_T_c_in;			//[K] Design-point cold inlet temperature
+		double m_P_c_in;			//[kPa] Cold fluid inlet temperature
+		double m_P_c_out;			//[kPa] Cold fluid outlet temperature
+		double m_m_dot_cold_des;	//[kg/s] cold fluid design mass flow rate
+
+		S_des_par()
+		{
+			m_Q_dot_design = m_T_h_in = m_P_h_in = m_P_h_out = m_m_dot_hot_des = 
+				m_T_c_in = m_P_c_in = m_P_c_out = m_m_dot_cold_des = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_des_solved
 	{
-		double m_T_h_in;						//[K] Design-point hot inlet temperature
-		double m_T_c_in;						//[K] Design-point cold inlet temperature
-		double m_m_dot_cold_des;				//[kg/s] cold fluid design mass flow rate
-		double m_m_dot_hot_des;					//[kg/s] hot fluid design mass flow rate
-		double m_DP_cold_des;					//[kPa] cold fluid design pressure drop
-		double m_DP_hot_des;					//[kPa] hot fluid design pressure drop
-		double m_UA_design_total;				//[kW/K] Design-point conductance
-		double m_Q_dot_design;					//[kW] Design-point heat transfer
-		double m_min_DT_design;					//[K] Minimum temperature difference in heat exchanger
-		double m_eff_design;					//[-] Effectiveness at design
-		double m_T_h_out;						//[K] Design-point hot outlet temperature
-		double m_T_c_out;						//[K] Design-point cold outlet temperature
+		double m_UA_design_total;		//[kW/K] Design-point conductance
+		double m_min_DT_design;			//[K] Minimum temperature difference in heat exchanger
+		double m_eff_design;			//[-] Effectiveness at design
+		double m_T_h_out;				//[K] Design-point hot outlet temperature
+		double m_T_c_out;				//[K] Design-point cold outlet temperature
+		double m_DP_cold_des;			//[kPa] cold fluid design pressure drop
+		double m_DP_hot_des;			//[kPa] hot fluid design pressure drop
 
 		S_des_solved()
 		{
-			m_T_h_in = m_T_c_in = m_m_dot_cold_des = m_m_dot_hot_des = 
-				m_DP_cold_des = m_DP_hot_des =
-				m_UA_design_total = m_Q_dot_design = m_min_DT_design = m_eff_design =
-				m_T_h_out = m_T_c_out = std::numeric_limits<double>::quiet_NaN();
+			m_UA_design_total = m_min_DT_design = m_eff_design =
+				m_T_h_out = m_T_c_out =
+				m_DP_cold_des = m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -122,6 +133,7 @@ public:
 		virtual int operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/);
 	};
 
+	S_init_par ms_init_par;
 	S_des_par ms_des_par;
 	S_des_solved ms_des_solved;
 	S_od_par ms_od_par;
@@ -133,9 +145,11 @@ public:
 
 	C_HX_counterflow();
 
-	void design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
-		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
-		double & UA /*kW/K*/, double & min_DT /*C*/);
+	//void design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
+	//	double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
+	//	double & UA /*kW/K*/, double & min_DT /*C*/);
+
+	void design(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved);
 
 	void calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
 		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
@@ -151,7 +165,7 @@ public:
 
 	double od_UA_frac(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/);
 
-	virtual void initialize(const S_des_par & des_par_in);
+	virtual void initialize(const S_init_par & init_par);
 
 };
 
