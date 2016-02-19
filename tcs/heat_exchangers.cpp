@@ -10,28 +10,28 @@ C_HX_counterflow::C_HX_counterflow()
 	m_is_HX_designed = false;
 }
 
-void C_HX_counterflow::initialize(const S_des_par & des_par_in)
+void C_HX_counterflow::initialize(const S_init_par & init_par_in)
 {
 	// Set member structure
-	ms_des_par = des_par_in;
+	ms_init_par = init_par_in;
 
 	// Set up HTFProperties for the hot fluid
-	if( ms_des_par.m_hot_fl != CO2 )
+	if( ms_init_par.m_hot_fl != CO2 )
 	{
-		if( ms_des_par.m_hot_fl != HTFProperties::User_defined && ms_des_par.m_hot_fl < HTFProperties::End_Library_Fluids )
+		if( ms_init_par.m_hot_fl != HTFProperties::User_defined && ms_init_par.m_hot_fl < HTFProperties::End_Library_Fluids )
 		{
-			if( !mc_hot_fl.SetFluid(ms_des_par.m_hot_fl, true) )
+			if( !mc_hot_fl.SetFluid(ms_init_par.m_hot_fl, true) )
 			{
 				throw(C_csp_exception("Hot fluid code is not recognized", "Counter flow heat exchanger initialization"));
 			}
 		}
-		else if( ms_des_par.m_hot_fl == HTFProperties::User_defined )
+		else if( ms_init_par.m_hot_fl == HTFProperties::User_defined )
 		{
-			int n_rows = ms_des_par.mc_hot_fl_props.nrows();
-			int n_cols = ms_des_par.mc_hot_fl_props.ncols();
+			int n_rows = ms_init_par.mc_hot_fl_props.nrows();
+			int n_cols = ms_init_par.mc_hot_fl_props.ncols();
 			if( n_rows > 2 && n_cols == 7 )
 			{
-				if( !mc_hot_fl.SetUserDefinedFluid(ms_des_par.mc_hot_fl_props, true) )
+				if( !mc_hot_fl.SetUserDefinedFluid(ms_init_par.mc_hot_fl_props, true) )
 				{
 					std::string error_msg = util::format(mc_hot_fl.UserFluidErrMessage(), n_rows, n_cols);
 					throw(C_csp_exception(error_msg, "Counter flow heat exchanger initialization"));
@@ -50,22 +50,22 @@ void C_HX_counterflow::initialize(const S_des_par & des_par_in)
 	}
 
 	// Set up HTFProperties for the cold fluid
-	if( ms_des_par.m_cold_fl != CO2 )
+	if( ms_init_par.m_cold_fl != CO2 )
 	{
-		if( ms_des_par.m_cold_fl != HTFProperties::User_defined && ms_des_par.m_cold_fl < HTFProperties::End_Library_Fluids )
+		if( ms_init_par.m_cold_fl != HTFProperties::User_defined && ms_init_par.m_cold_fl < HTFProperties::End_Library_Fluids )
 		{
-			if( !mc_cold_fl.SetFluid(ms_des_par.m_cold_fl, true) )
+			if( !mc_cold_fl.SetFluid(ms_init_par.m_cold_fl, true) )
 			{
 				throw(C_csp_exception("Cold fluid code is not recognized", "Counter flow heat exchanger initialization"));
 			}
 		}
-		else if( ms_des_par.m_cold_fl == HTFProperties::User_defined )
+		else if( ms_init_par.m_cold_fl == HTFProperties::User_defined )
 		{
-			int n_rows = ms_des_par.mc_cold_fl_props.nrows();
-			int n_cols = ms_des_par.mc_hot_fl_props.ncols();
+			int n_rows = ms_init_par.mc_cold_fl_props.nrows();
+			int n_cols = ms_init_par.mc_hot_fl_props.ncols();
 			if( n_rows > 2 && n_cols == 7 )
 			{
-				if( !mc_cold_fl.SetUserDefinedFluid(ms_des_par.mc_cold_fl_props, true) )
+				if( !mc_cold_fl.SetUserDefinedFluid(ms_init_par.mc_cold_fl_props, true) )
 				{
 					std::string error_msg = util::format(mc_cold_fl.UserFluidErrMessage(), n_rows, n_cols);
 					throw(C_csp_exception(error_msg, "Counter flow heat exchanger initialization"));
@@ -144,7 +144,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 	double h_h_out = std::numeric_limits<double>::quiet_NaN();
 	int prop_error_code = 0;
 
-	if( ms_des_par.m_cold_fl == CO2 )
+	if( ms_init_par.m_cold_fl == CO2 )
 	{
 		prop_error_code = CO2_TP(T_c_in, P_c_in, &mc_co2_props);
 		if( prop_error_code != 0 )
@@ -169,7 +169,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 		T_c_out = mc_cold_fl.temp_lookup(h_c_out);		//[K]
 	}
 
-	if( ms_des_par.m_hot_fl == CO2 )
+	if( ms_init_par.m_hot_fl == CO2 )
 	{
 		prop_error_code = CO2_TP(T_h_in, P_h_in, &mc_co2_props);
 		if( prop_error_code != 0 )
@@ -194,7 +194,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 		T_h_out = mc_hot_fl.temp_lookup(h_h_out);	//[K]
 	}
 
-	int N_nodes = ms_des_par.m_N_sub_hx + 1;
+	int N_nodes = ms_init_par.m_N_sub_hx + 1;
 	double h_h_prev = 0.0;
 	double T_h_prev = 0.0;
 	double h_c_prev = 0.0;
@@ -215,7 +215,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 		// ****************************************************
 		// Calculate the hot and cold temperatures at the node
 		double T_h = std::numeric_limits<double>::quiet_NaN();
-		if( ms_des_par.m_hot_fl == CO2 )
+		if( ms_init_par.m_hot_fl == CO2 )
 		{
 			prop_error_code = CO2_PH(P_h, h_h, &mc_co2_props);
 			if( prop_error_code != 0 )
@@ -231,7 +231,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 		}
 
 		double T_c = std::numeric_limits<double>::quiet_NaN();
-		if( ms_des_par.m_cold_fl == CO2 )
+		if( ms_init_par.m_cold_fl == CO2 )
 		{
 			prop_error_code = CO2_PH(P_c, h_c, &mc_co2_props);
 			if( prop_error_code != 0 )
@@ -268,7 +268,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 			double C_dot_min = fmin(C_dot_h, C_dot_c);				// [kW/K] Minimum capacitance stream
 			double C_dot_max = fmax(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
 			double C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
-			double eff = (q_dot / (double)ms_des_par.m_N_sub_hx) / (C_dot_min*(T_h_prev - T_c));	// [-] Effectiveness of each sub-heat exchanger
+			double eff = (q_dot / (double)ms_init_par.m_N_sub_hx) / (C_dot_min*(T_h_prev - T_c));	// [-] Effectiveness of each sub-heat exchanger
 			double NTU = 0.0;
 			if( C_R != 1.0 )
 				NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
@@ -307,7 +307,7 @@ double C_HX_counterflow::calc_max_q_dot(double T_h_in, double P_h_in, double P_h
 {
 	double Q_dot_cold_max = std::numeric_limits<double>::quiet_NaN();
 	int prop_error_code = 0;
-	if( ms_des_par.m_cold_fl == CO2 )
+	if( ms_init_par.m_cold_fl == CO2 )
 	{
 		prop_error_code = CO2_TP(T_c_in, P_c_in, &mc_co2_props);
 		if( prop_error_code != 0 )
@@ -333,7 +333,7 @@ double C_HX_counterflow::calc_max_q_dot(double T_h_in, double P_h_in, double P_h
 	}
 
 	double Q_dot_hot_max = std::numeric_limits<double>::quiet_NaN();
-	if( ms_des_par.m_hot_fl == CO2 )
+	if( ms_init_par.m_hot_fl == CO2 )
 	{
 		prop_error_code = CO2_TP(T_h_in, P_h_in, &mc_co2_props);
 		if( prop_error_code != 0 )
@@ -361,20 +361,16 @@ double C_HX_counterflow::calc_max_q_dot(double T_h_in, double P_h_in, double P_h
 	return std::min(Q_dot_hot_max, Q_dot_cold_max);
 }
 
-void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
-	double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
-	double & UA /*kW/K*/, double & min_DT /*C*/)
+//void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
+//	double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
+//	double & UA /*kW/K*/, double & min_DT /*C*/)
+void C_HX_counterflow::design(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved)
 {
 	/*Designs heat exchanger given its mass flow rates, inlet temperatures, and a heat transfer rate.
 	Note: the heat transfer rate must be positive.*/
-
-	// Set 'S_des_solved' members that are known
-	ms_des_solved.m_T_h_in = T_h_in;			//[K]
-	ms_des_solved.m_T_c_in = T_c_in;			//[K]
-	ms_des_solved.m_m_dot_cold_des = m_dot_c;	//[kg/s]
-	ms_des_solved.m_m_dot_hot_des = m_dot_h;	//[kg/s]
-	ms_des_solved.m_DP_cold_des = P_c_in - P_c_out;	//[kPa]
-	ms_des_solved.m_DP_hot_des = P_h_in - P_h_out;	//[kPa]
+	ms_des_par = des_par;
+	ms_des_solved.m_DP_cold_des = des_par.m_P_c_in - des_par.m_P_c_out;		//[kPa]
+	ms_des_solved.m_DP_hot_des = des_par.m_P_h_in - des_par.m_P_h_out;		//[kPa]
 
 	// Trying to solve design point, so set boolean to false until method solves successfully
 	m_is_HX_designed = false;
@@ -389,18 +385,20 @@ void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, dou
 	double UA_calc, min_DT_calc, eff_calc, T_h_out_calc, T_c_out_calc, q_dot_calc;
 	UA_calc = min_DT_calc = eff_calc = T_h_out_calc = T_c_out_calc = q_dot_calc = std::numeric_limits<double>::quiet_NaN();
 	
-	calc_req_UA(Q_dot, m_dot_c, m_dot_h, T_c_in, T_h_in, P_c_in, P_c_out, P_h_in, P_h_out,
+	calc_req_UA(ms_des_par.m_Q_dot_design, ms_des_par.m_m_dot_cold_des, ms_des_par.m_m_dot_hot_des, 
+		ms_des_par.m_T_c_in, ms_des_par.m_T_h_in, ms_des_par.m_P_c_in, ms_des_par.m_P_c_out, ms_des_par.m_P_h_in, ms_des_par.m_P_h_out,
 		UA_calc, min_DT_calc, eff_calc, T_h_out_calc, T_c_out_calc, q_dot_calc);
 
-	ms_des_solved.m_UA_design_total = UA = UA_calc;
-	ms_des_solved.m_min_DT_design = min_DT = min_DT_calc;
+	ms_des_solved.m_UA_design_total = UA_calc;
+	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
-	ms_des_solved.m_Q_dot_design = q_dot_calc;
 
 	// Specify that method solved successfully
 	m_is_HX_designed = true;
+
+	des_solved = ms_des_solved;
 
 	return;
 }
@@ -501,45 +499,45 @@ void C_HX_counterflow::od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/
 
 double C_HX_counterflow::od_delta_p_cold_frac(double m_dot_c /*kg/s*/)
 {
-	return pow(m_dot_c/ms_des_solved.m_m_dot_cold_des, 1.75);
+	return pow(m_dot_c/ms_des_par.m_m_dot_cold_des, 1.75);
 }
 
 double C_HX_counterflow::od_delta_p_hot_frac(double m_dot_h /*kg/s*/)
 {
-	return pow(m_dot_h/ms_des_solved.m_m_dot_hot_des, 1.75);
+	return pow(m_dot_h/ms_des_par.m_m_dot_hot_des, 1.75);
 }
 
 double C_HX_counterflow::od_UA_frac(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/)
 {
-	double m_dot_ratio = 0.5*(m_dot_c/ms_des_solved.m_m_dot_cold_des + m_dot_h/ms_des_solved.m_m_dot_hot_des);
+	double m_dot_ratio = 0.5*(m_dot_c/ms_des_par.m_m_dot_cold_des + m_dot_h/ms_des_par.m_m_dot_hot_des);
 	return pow(m_dot_ratio, 0.8);
 }
 
 void C_HX_co2_to_htf::initialize(int hot_fl, util::matrix_t<double> hot_fl_props)
 {
 	// Hard-code some of the design parameters
-	ms_des_par.m_N_sub_hx = 5;
-	ms_des_par.m_cold_fl = CO2;
+	ms_init_par.m_N_sub_hx = 5;
+	ms_init_par.m_cold_fl = CO2;
 
 	// Read-in hot side HTF props
-	ms_des_par.m_hot_fl = hot_fl;
-	ms_des_par.mc_hot_fl_props = hot_fl_props;
+	ms_init_par.m_hot_fl = hot_fl;
+	ms_init_par.mc_hot_fl_props = hot_fl_props;
 
 	// Set up HTFProperties for the hot fluid
-	if( ms_des_par.m_hot_fl != HTFProperties::User_defined && ms_des_par.m_hot_fl < HTFProperties::End_Library_Fluids )
+	if( ms_init_par.m_hot_fl != HTFProperties::User_defined && ms_init_par.m_hot_fl < HTFProperties::End_Library_Fluids )
 	{
-		if( !mc_hot_fl.SetFluid(ms_des_par.m_hot_fl, true) )
+		if( !mc_hot_fl.SetFluid(ms_init_par.m_hot_fl, true) )
 		{
 			throw(C_csp_exception("Hot fluid code is not recognized", "C_HX_co2_to_htf::initialization"));
 		}
 	}
-	else if( ms_des_par.m_hot_fl == HTFProperties::User_defined )
+	else if( ms_init_par.m_hot_fl == HTFProperties::User_defined )
 	{
-		int n_rows = ms_des_par.mc_hot_fl_props.nrows();
-		int n_cols = ms_des_par.mc_hot_fl_props.ncols();
+		int n_rows = ms_init_par.mc_hot_fl_props.nrows();
+		int n_cols = ms_init_par.mc_hot_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
-			if( !mc_hot_fl.SetUserDefinedFluid(ms_des_par.mc_hot_fl_props, true) )
+			if( !mc_hot_fl.SetUserDefinedFluid(ms_init_par.mc_hot_fl_props, true) )
 			{
 				std::string error_msg = util::format(mc_hot_fl.UserFluidErrMessage(), n_rows, n_cols);
 				throw(C_csp_exception(error_msg, "C_HX_co2_to_htf::initialization"));
