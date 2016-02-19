@@ -1,14 +1,18 @@
 #include "numeric_solvers.h"
+#include "csp_solver_util.h"
 
 #include <algorithm>
 
-C_monotonic_eq_solver::C_monotonic_eq_solver()
+int C_import_mono_eq::operator()(double x, double *y)
+{
+	return mf_monotonic_function(x, y);
+}
+
+C_monotonic_eq_solver::C_monotonic_eq_solver(C_monotonic_equation & f): mf_mono_eq(f)
 {
 	m_x_guess = m_x_neg_err = m_x_pos_err = m_y_err_pos = m_y_err_neg =
-		//m_x_neg_err_prev = m_x_pos_err_prev = m_y_err_neg_prev = m_y_err_pos_prev =
-		m_tol = m_y_err = std::numeric_limits<double>::quiet_NaN();
-
-	m_is_err_rel = true;
+		m_y_err = 
+		m_func_x_lower = m_func_x_upper = std::numeric_limits<double>::quiet_NaN();
 
 	m_is_pos_bound = m_is_neg_bound =
 		m_is_pos_error = m_is_neg_error =
@@ -16,20 +20,22 @@ C_monotonic_eq_solver::C_monotonic_eq_solver()
 		false;
 
 	m_iter = -1;
-	m_iter_limit = -1;
+
+	// Set default settings:
+	m_tol = 0.001;
+	m_is_err_rel = true;
+	m_iter_max = 50;
 }
 
-void C_monotonic_eq_solver::initialize(double(*monotonic_function)(double x), double tol, int iter_limit, double x_lower, double x_upper, bool is_err_rel)
+void C_monotonic_eq_solver::settings( double tol, int iter_limit, double x_lower, double x_upper, bool is_err_rel)
 {
-	mf_monotonic_function = monotonic_function;
-
 	m_tol = tol;
 	m_func_x_lower = x_lower;
 	m_func_x_upper = x_upper;
 
 	m_is_err_rel = is_err_rel;
 
-	m_iter_limit = std::max(1, iter_limit);
+	m_iter_max = std::max(1, iter_limit);
 }
 
 double C_monotonic_eq_solver::check_against_limits(double x)
@@ -57,7 +63,7 @@ double C_monotonic_eq_solver::calc_x_intercept(double x1, double y1, double x2, 
 	return (x2 - x1) / (y2 - y1)*(-y1) + x1;
 }
 
-void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_target,
+int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_target,
 	bool &is_converged, bool &is_real_error, double &x_solved, double &tol_solved, int &iter_solved)
 {
 	// Check that x guesses fall with bounds (set during initialization)
@@ -71,12 +77,19 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 		is_real_error = false;
 		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		iter_solved = 0;
-		return;
+		return EQUAL_GUESS_VALUES;
 	}
 
 	// Call function with x guesses
-	double y1 = mf_monotonic_function(x_guess_1);
-	double y2 = mf_monotonic_function(x_guess_2);
+	double y1, y2;
+	if(mf_mono_eq(x_guess_1,&y1) != 0)
+	{
+		y1 = std::numeric_limits<double>::quiet_NaN();
+	}
+	if(mf_mono_eq(x_guess_2,&y2) != 0)
+	{
+		y2 = std::numeric_limits<double>::quiet_NaN();
+	}
 
 	// Check whether function returned real results
 	if( y1 != y1 && y2 != y2 )
@@ -86,7 +99,7 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 		is_real_error = false;
 		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		iter_solved = 0;
-		return;
+		return NO_SOLUTION;
 	}
 	else if( y1 != y1 )
 	{
@@ -102,9 +115,13 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 			is_real_error = false;
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
-			return;
+			return NO_SOLUTION;
 		}
-		y1 = mf_monotonic_function(x_guess_1);
+
+		if( mf_mono_eq(x_guess_1, &y1) != 0 )
+		{
+			y1 = std::numeric_limits<double>::quiet_NaN();
+		}
 
 		// Check if this worked...
 		if( y1 != y1 )
@@ -113,7 +130,7 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 			is_real_error = false;
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
-			return;
+			return NO_SOLUTION;
 		}
 	}
 	else if( y2 != y2 )
@@ -130,9 +147,13 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 			is_real_error = false;
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
-			return;
+			return NO_SOLUTION;
 		}
-		y2 = mf_monotonic_function(x_guess_2);
+		
+		if( mf_mono_eq(x_guess_2, &y2) != 0 )
+		{
+			y2 = std::numeric_limits<double>::quiet_NaN();
+		}
 
 		// Check if this worked...
 		if( y2 != y2 )
@@ -141,7 +162,7 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 			is_real_error = false;
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
-			return;
+			return NO_SOLUTION;
 		}
 	}
 
@@ -161,12 +182,15 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 	// x guesses might be lucky, check against tolerance
 	if( abs(E1) < m_tol )
 	{
+		// Last call to equation was with x_guess_2, so call again here...
+		// ... if equation is setting member data, this is required to have outputs matching calculated solution
+		mf_mono_eq(x_guess_1, &y1);
 		is_converged = true;
 		is_real_error = true;
 		x_solved = x_guess_1;
 		tol_solved = E1;
 		iter_solved = 0;
-		return;
+		return CONVERGED;
 	}
 	if( abs(E2) < m_tol )
 	{
@@ -175,7 +199,7 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 		x_solved = x_guess_2;
 		tol_solved = E2;
 		iter_solved = 0;
-		return;
+		return CONVERGED;
 	}
 	// ***************************************************
 
@@ -289,8 +313,6 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 	// Start iteration loop
 	while( fabs(m_y_err) > m_tol || m_y_err != m_y_err )
 	{
-
-
 		m_iter++;		// First iteration = 1
 
 		// Check if distance between bounds is too small
@@ -330,17 +352,45 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 			diff_x_bounds = diff_x_bounds / std::max(m_x_neg_err, m_x_pos_err);
 		}
 		if( fabs(diff_x_bounds) < m_tol / 10.0 )
-		{	// Assumes if x values are too close, then convergence errors inside of function
-			//    are preventing convergence
+		{	// Assumes if x values are too close, then *something* is preventing convergence
 
-			if( diff_x_bounds != diff_x_bounds )
-			{	// Function isn't returning a real value with which to calculate an error
+			// 1) Solver can't find a negative error
+			if( !m_is_neg_error && m_is_pos_error )
+			{
 				is_converged = false;
-				is_real_error = false;
-				x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+				is_real_error = true;
+				x_solved = m_x_pos_err;
+				tol_solved = m_y_err_pos;
 				iter_solved = m_iter;
-				return;
+
+				// Call function again with value we know produces a result
+				double y_eq;
+				mf_mono_eq(x_solved, &y_eq);
+
+				if(E_slope > 0.0)
+					return SLOPE_POS_NO_NEG_ERR;
+				else
+					return SLOPE_NEG_NO_NEG_ERR;
 			}
+			// 2) Solver can't find a positive error
+			else if( m_is_neg_error && !m_is_pos_error )
+			{
+				is_converged = false;
+				is_real_error = true;
+				x_solved = m_x_neg_err;
+				tol_solved = m_y_err_neg;
+				iter_solved = m_iter;
+
+				// Call function again with value we know produces a result
+				double y_eq;
+				mf_mono_eq(x_solved, &y_eq);
+
+				if(E_slope > 0.0)
+					return SLOPE_POS_NO_POS_ERR;
+				else
+					return SLOPE_NEG_NO_POS_ERR;
+			}
+			// 3) Solver has bound both negative and positive errors
 			else
 			{	// Function is returning a value, but solver hasn't converged within tolerance
 				is_converged = false;
@@ -348,9 +398,76 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 				x_solved = m_x_guess;
 				tol_solved = m_y_err;
 				iter_solved = m_iter;
-				return;
+				
+				// Call function again with value we know produces a result
+				double y_eq;
+				mf_mono_eq(x_solved, &y_eq);
+
+				if(E_slope > 0.0)
+					return SLOPE_POS_BOTH_ERRS;
+				else
+					return SLOPE_NEG_BOTH_ERRS;
 			}
 		}
+		// Also check against iteration limit
+		if( m_iter > m_iter_max )
+		{
+			// 1) Solver can't find a negative error
+			if( !m_is_neg_error && m_is_pos_error )
+			{
+				is_converged = false;
+				is_real_error = true;
+				x_solved = m_x_pos_err;
+				tol_solved = m_y_err_pos;
+				iter_solved = m_iter;
+
+				// Call function again with value we know produces a result
+				double y_eq;
+				mf_mono_eq(x_solved, &y_eq);
+
+				if(E_slope > 0.0)
+					return MAX_ITER_SLOPE_POS_NO_NEG_ERR;
+				else
+					return MAX_ITER_SLOPE_NEG_NO_NEG_ERR;
+			}
+			// 2) Solver can't find a positive error
+			else if( m_is_neg_error && !m_is_pos_error )
+			{
+				is_converged = false;
+				is_real_error = true;
+				x_solved = m_x_neg_err;
+				tol_solved = m_y_err_neg;
+				iter_solved = m_iter;
+
+				// Call function again with value we know produces a result
+				double y_eq;
+				mf_mono_eq(x_solved, &y_eq);
+
+				if(E_slope > 0.0)
+					return MAX_ITER_SLOPE_POS_NO_POS_ERR;
+				else
+					return MAX_ITER_SLOPE_NEG_NO_POS_ERR;
+			}
+			// 3) Solver has bound both negative and positive errors
+			else
+			{	// Function is returning a value, but solver hasn't converged within tolerance
+				is_converged = false;
+				is_real_error = true;
+				x_solved = m_x_guess;
+				tol_solved = m_y_err;
+				iter_solved = m_iter;
+
+				// Call function again with value we know produces a result
+				double y_eq;
+				mf_mono_eq(x_solved, &y_eq);
+
+				if(E_slope > 0.0)
+					return MAX_ITER_SLOPE_POS_BOTH_ERRS;
+				else
+					return MAX_ITER_SLOPE_NEG_BOTH_ERRS;
+			}
+		}
+
 		// **************************************************************
 		// **************************************************************
 
@@ -365,7 +482,7 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 					is_real_error = false;
 					x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 					iter_solved = m_iter;
-					return;
+					return NO_SOLUTION;
 				}
 				else if( m_is_neg_bound && !m_is_pos_bound )
 				{	// know that we have a negative error bound, so assume that x that caused NaN is pos err bound
@@ -385,9 +502,21 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 					m_x_guess = 0.5*(m_x_pos_err + m_x_neg_err);
 					// Should need to check against bounds if both 'is_bounds' = true
 				}
-				else
-				{	// Know both bounds, so keep using bisection and hopefully get a real number out of function
+				else if( m_is_neg_error && !m_is_pos_error )
+				{	// Know both bounds, but don't have positive error, so assume that x that caused NaN is pos error bound
+					// so keep using bisection and hopefully get a real number out of function
+					m_x_pos_err = m_x_guess;
 					m_x_guess = 0.5*(m_x_pos_err + m_x_neg_err);
+				}
+				else if( !m_is_neg_error && m_is_pos_error )
+				{	// Know both bounds, but don't have negative error, so assume that x that caused NaN is neg error bound
+					// so keep using bisection and hopefully get a real number out of function
+					m_x_neg_err = m_x_guess;
+					m_x_guess = 0.5*(m_x_pos_err + m_x_neg_err);
+				}
+				else
+				{	// This shouldn't happen, so let's throw an exception
+					throw(C_csp_exception("Numerical solver iteration with a NaN error found an unexpected case"));
 				}
 			}
 			else if( m_y_err > 0.0 )
@@ -480,7 +609,13 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 		}
 
 		// Call function with new x_guess
-		m_y_err = mf_monotonic_function(m_x_guess) - y_target;
+		double y_calc;
+		if(mf_mono_eq(m_x_guess, &y_calc) != 0)
+		{
+			y_calc = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		m_y_err = y_calc - y_target;
 
 		if( m_is_err_rel )
 			m_y_err = m_y_err / fabs(y_target);
@@ -493,10 +628,11 @@ void C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_t
 	tol_solved = m_y_err;
 	iter_solved = m_iter;
 
-	return;
+	return CONVERGED;
 }
 
-double C_monotonic_eq_solver::test_member_function(double x_guess)
+int C_monotonic_eq_solver::test_member_function(double x, double *y)
 {
-	return mf_monotonic_function(x_guess);
+	return mf_mono_eq(x,y);
 }
+
