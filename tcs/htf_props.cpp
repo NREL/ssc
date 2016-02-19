@@ -56,7 +56,7 @@ void HTFProperties::set_temp_enth_lookup()
 	double T_low = 270.0 + 273.15;
 	double T_high = 600.0 + 273.15;
 
-	double delta_T_target = 5.0;
+	double delta_T_target = 1.0;
 
 	int n_rows = ceil((T_high - T_low)/delta_T_target) + 1.0;
 	double delta_T = (T_high - T_low)/double(n_rows-1);
@@ -112,8 +112,9 @@ double HTFProperties::temp_lookup( double enth /*kJ/kg*/)
 {
 	if(!m_is_temp_enth_avail)
 	{
-		set_temp_enth_lookup();
-		m_is_temp_enth_avail = true;
+		/*set_temp_enth_lookup();
+		m_is_temp_enth_avail = true;*/
+		throw(C_csp_exception("The enth-temp-lookup method is only available if fluid is set with optional Boolean to enable it"));
 	}
 
 	return mc_temp_enth_lookup.linear_1D_interp(1, 0, enth);	//[K]
@@ -123,8 +124,9 @@ double HTFProperties::enth_lookup( double temp /*K*/)
 {
 	if( !m_is_temp_enth_avail )
 	{
-		set_temp_enth_lookup();
-		m_is_temp_enth_avail = true;
+		/*set_temp_enth_lookup();
+		m_is_temp_enth_avail = true;*/
+		throw(C_csp_exception("This enth-temp-lookup method is only available if fluid is set with optional Boolean to enable it"));
 	}
 
 	return mc_temp_enth_lookup.linear_1D_interp(0, 1, temp);	//[kJ/kg]
