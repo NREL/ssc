@@ -430,7 +430,11 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-	_cell_voltage = voltage_model_tremblay_hybrid(Q / _num_strings, I/_num_strings , q0 / _num_strings);
+	double cell_voltage = voltage_model_tremblay_hybrid(Q / _num_strings, I/_num_strings , q0 / _num_strings);
+
+	// the cell voltage should not increase when the battery is discharging
+	if (I <= 0 || (I > 0 && cell_voltage <= _cell_voltage) )
+		_cell_voltage = cell_voltage;
 }
 double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
 {
