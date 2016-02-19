@@ -57,7 +57,6 @@ private:
 
 	double m_y_err;
 	int m_iter;
-	//int m_iter_limit;
 
 	double check_against_limits(double x);
 
@@ -71,10 +70,6 @@ protected:
 	int m_iter_max;			// Maximum number of iterations allowed
 
 	bool m_is_err_rel;		// Should error be calculated relative (true) or absolute (false)?
-
-	// Pointer to a 1D monotonic function
-	// Returns a value
-	// double(*mf_monotonic_function)(double x, void *data);	
 
 public:
 
@@ -111,7 +106,7 @@ public:
 	virtual void settings(double tol, int iter_limit, double x_lower, double x_upper, bool is_err_rel);
 
 	int solve(double x_guess_1, double x_guess_2, double y_target,
-		bool &is_converged, bool &is_real_error, double &x_solved, double &tol_solved, int &iter_solved);
+		double &x_solved, double &tol_solved, int &iter_solved);
 
 	int test_member_function(double x, double *y);
 };

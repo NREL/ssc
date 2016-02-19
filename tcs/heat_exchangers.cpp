@@ -480,13 +480,12 @@ void C_HX_counterflow::od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/
 	od_hx_solver.settings(tol, 100, q_dot_lower, q_dot_upper, true);
 
 	// Solve
-	bool is_converged, is_real_error;
 	double x_solved, tol_solved;
 	x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 	int iter_solved = -1;
 	
 	int od_hx_code = od_hx_solver.solve(q_dot_guess_lower, q_dot_guess_upper, UA_target,
-		is_converged, is_real_error, x_solved, tol_solved, iter_solved);
+		x_solved, tol_solved, iter_solved);
 
 	if( !(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR) )
 	{
