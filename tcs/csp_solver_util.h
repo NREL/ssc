@@ -42,6 +42,8 @@ public:
 
 	void add_message(int type, std::string msg);
 
+	void add_notice(std::string msg);
+
 	bool get_message(int *type, std::string *msg);
 
 	bool get_message(std::string *msg);

@@ -13,6 +13,11 @@ void C_csp_messages::add_message(int type, std::string msg)
 
 }
 
+void C_csp_messages::add_notice(std::string msg)
+{
+	add_message(C_csp_messages::NOTICE, msg);
+}
+
 bool C_csp_messages::get_message(int *type, std::string *msg)
 {
     if(m_message_list.size() == 0)
