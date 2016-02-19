@@ -95,6 +95,7 @@ struct ssoutputs	// self-shading outputs
 	double m_reduced_reflected;
 	double m_diffuse_derate;
 	double m_reflected_derate;
+	double m_shade_frac_fixed;
 };
 
 //performs shading calculation and returns outputs
@@ -110,6 +111,7 @@ bool ss_exec(
 	double Gd_poa,		// POA diffuse, sky+gnd (W/m2)
 	double albedo,		// used to calculate reduced relected irradiance
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
+	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
 	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt 
 	
 	ssoutputs &outputs);

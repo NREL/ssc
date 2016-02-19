@@ -300,6 +300,7 @@ bool ss_exec(
 	double Gd_poa,		// POA diffuse, sky+gnd (W/m2)
 	double albedo,		// used to calculate reduced relected irradiance
 	bool trackmode,		// 0 for fixed tilt, 1 for one-axis tracking
+	bool linear,		// 0 for non-linear shading (C. Deline's full algorithm), 1 to stop at linear shading
 	double shade_frac_1x,	// geometric calculation of the fraction of one-axis row that is shaded (0-1), not used if fixed tilt 
 
 	ssoutputs &outputs)
@@ -326,6 +327,11 @@ bool ss_exec(
 	double m_B;
 	if (inputs.mod_orient == 0) m_B = m_L * m_m;	// Portrait Mode
 	else m_B = m_W * m_m;	// Landscape Mode
+
+	// calculate the length of the row also
+	double m_row_length;
+	if (inputs.mod_orient == 0) m_row_length = m_n * m_W; //Portrait Mode
+	else m_row_length = m_n * m_L; //Landscape Mode
 
 	double a = 0.0, b = m_B;
 	
@@ -386,8 +392,8 @@ bool ss_exec(
 		g = m_R * px / py;
 
 	// Additional constraints from Chris 4/11/12
-	g = fabs(g);	//g must be positive
-	g = min(g, m_A);	//g can't be greater than the length of the row
+	g = max(g, 0); //fabs(g);	//g must be positive
+	g = min(g, m_row_length);	//g can't be greater than the length of the row
 
 	// if number of modules across bottom > number in string and horizontal wiring then g=0
 	// Chris Deline email 4/19/12
@@ -411,6 +417,14 @@ bool ss_exec(
 	// Additional constraints from Chris 4/11/12
 	Hs = max( Hs, 0.0);	// Hs must be positive
 	Hs = min( Hs, m_B);	// Hs cannot be greater than the height of the row
+
+	if (linear)
+	{
+		//relative shaded area, Applebaum equation A15
+		double relative_shaded_area = Hs * (m_row_length - g) / (m_A * m_row_length); //numerator is shadow area, denom is row area
+		outputs.m_shade_frac_fixed = relative_shaded_area;
+		return true;
+	}
 
 	// X and S from Chris Deline 4/23/12
 	if ( inputs.str_orient == 1 ) // Horizontal wiring
