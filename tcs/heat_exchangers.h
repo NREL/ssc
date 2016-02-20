@@ -49,7 +49,7 @@ public:
 
 	struct S_des_par
 	{
-		double m_Q_dot_design;		//[kW] Design-point heat transfer
+		double m_Q_dot_design;		//[kWt] Design-point heat transfer
 		double m_T_h_in;			//[K] Design-point hot inlet temperature
 		double m_P_h_in;			//[kPa] Hot fluid inlet pressure
 		double m_P_h_out;			//[kPa] Hot fluid outlet pressure
@@ -178,10 +178,14 @@ private:
 
 public:
 
+	// This method calculates the HTF mass flow rate (m_m_dot_hot_des) that results in CR = 1
+	void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
+
 	virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props);
 
 	virtual void initialize(int hot_fl);
 
+	
 
 };
 

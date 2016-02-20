@@ -403,6 +403,16 @@ void C_HX_counterflow::design(C_HX_counterflow::S_des_par des_par, C_HX_counterf
 	return;
 }
 
+void C_HX_co2_to_htf::design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved)
+{
+	double h_htf_hot = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg-K]
+	double h_htf_cold = mc_hot_fl.enth_lookup(T_htf_cold);		//[kJ/kg-K]
+
+	des_par.m_m_dot_hot_des = des_par.m_Q_dot_design/(h_htf_hot - h_htf_cold);	//[kg/s]
+
+	design(des_par, des_solved);
+}
+
 int C_HX_counterflow::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/)
 {
 	// Using ms_od_par!!! Must be defined upstream!
