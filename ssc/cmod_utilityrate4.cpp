@@ -1692,7 +1692,6 @@ public:
 			c = 0;
 			for (m = 0; m < (int)m_month.size(); m++)
 			{
-				// assume kWh 
 
 				// check for kWh/kW
 				bool kWhperkW = false;
@@ -1905,9 +1904,9 @@ public:
 							{ // calculate payment or charge
 
 								ssc_number_t charge_amt = 0;
-								for (period = 0; period < (int)m_month[m].ec_tou_sr.nrows(); period++)
+								for (period = 0; period < (int)m_month[m].ec_tou_br.nrows(); period++)
 								{
-									for (tier = 0; tier < (int)m_month[m].ec_tou_sr.ncols(); tier++)
+									for (tier = 0; tier < (int)m_month[m].ec_tou_br.ncols(); tier++)
 									{
 										ssc_number_t ch = m_month[m].ec_energy_use.at(period, tier) * m_month[m].ec_tou_br.at(period, tier) * rate_esc;
 										m_month[m].ec_charge.at(period, tier) = ch;
@@ -2157,7 +2156,7 @@ public:
 		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
 
 		 
-		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates).
+		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates). Currently hidden in UI and set to zero
 		int ur_ec_ub_units = as_integer("ur_ec_ub_units");
 		double daily_surplus_energy; 
 		double monthly_surplus_energy; 
@@ -2207,9 +2206,73 @@ public:
 			c = 0;
 			for (m = 0; m < (int)m_month.size(); m++)
 			{
-				// assume kWh here initially and will update for other units
+				// check for kWh/kW
+				bool kWhperkW = false;
+				int start_tier = 0;
+				int end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 				int num_periods = (int)m_month[m].ec_tou_ub.nrows();
-				int num_tiers = (int)m_month[m].ec_tou_ub.ncols();
+				int num_tiers = end_tier - start_tier + 1;
+
+				// kWh/kW (kWh/kW daily handled in Setup)
+				// 1. find kWh/kW tier
+				// 2. set min tier and max tier based on next item in ec_tou matrix
+				// 3. resize use and chart based on number of tiers in kWh/kW section
+				// 4. assumption is that all periods in same month have same tier breakdown
+				// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
+				// That is, first tier must be kWh/kW
+				if ((m_month[m].ec_tou_units.ncols()>0 && m_month[m].ec_tou_units.nrows() > 0)
+					&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
+				{
+					kWhperkW = true;
+					// monthly total energy / monthly peak to determine which kWh/kW tier
+					double mon_kWhperkW = -m_month[m].energy_net; // load negative
+					if (m_month[m].dc_flat_peak != 0)
+						mon_kWhperkW /= m_month[m].dc_flat_peak;
+					// find start tier
+					start_tier = 1;
+					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_ub.ncols(); i_tier++)
+					{
+						int units = m_month[m].ec_tou_units.at(0, i_tier);
+						if ((units == 1) || (units == 3))
+						{
+							if (mon_kWhperkW > m_month[m].ec_tou_ub.at(0, i_tier))
+								start_tier = (int)i_tier + 1;
+							if (mon_kWhperkW < m_month[m].ec_tou_ub.at(0, i_tier))
+								end_tier = (int)i_tier - 1;
+						}
+					}
+					if (start_tier >= m_month[m].ec_tou_ub.ncols())
+						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
+					if (end_tier < start_tier)
+						end_tier = start_tier;
+					num_tiers = end_tier - start_tier + 1;
+					// resize everytime to handle load and energy changes
+					// resize sr, br and ub for use in energy charge calculations below
+					util::matrix_t<float> br(num_periods, num_tiers);
+					util::matrix_t<float> sr(num_periods, num_tiers);
+					util::matrix_t<float> ub(num_periods, num_tiers);
+					// assign appropriate values.
+					for (period = 0; period < num_periods; period++)
+					{
+						for (tier = 0; tier < num_tiers; tier++)
+						{
+							br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, start_tier + tier);
+							sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
+							ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
+							// update for correct tier number column headings
+							m_ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
+						}
+					}
+
+					m_month[m].ec_tou_br = br;
+					m_month[m].ec_tou_sr = sr;
+					m_month[m].ec_tou_ub = ub;
+				}
+
+				// reset now resized
+				start_tier = 0;
+				end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
+
 				m_month[m].ec_energy_use.resize_fill(num_periods, num_tiers, 0);
 				m_month[m].ec_charge.resize_fill(num_periods, num_tiers, 0);
 
@@ -2319,15 +2382,14 @@ public:
 
 							// cumulative energy used to determine tier for credit of entire surplus amount
 							double credit_amt = 0;
-							tier = -1;
-							bool found = false;
-							while ((tier < 5) && !found)
+							for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols(); tier++)
 							{
-								tier++;
-								double e_upper = m_month[m].ec_tou_ub.at(row,tier);
+								double e_upper = m_month[m].ec_tou_ub.at(row, tier);
 								if (cumulative_energy < e_upper)
-									found = true;
+									break;
 							}
+							if (tier >= (int)m_month[m].dc_tou_ub.ncols())
+								tier = (int)m_month[m].dc_tou_ub.ncols() - 1;
 							double tier_energy = energy_surplus;
 							double tier_credit = tier_energy*m_month[m].ec_tou_sr.at(row, tier);
 							credit_amt += tier_credit;
@@ -2355,15 +2417,14 @@ public:
 
 
 							// cumulative energy used to determine tier for credit of entire surplus amount
-							tier = -1;
-							bool found = false;
-							while ((tier < 5) && !found)
+							for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols(); tier++)
 							{
-								tier++;
 								double e_upper = m_month[m].ec_tou_ub.at(row, tier);
 								if (cumulative_deficit < e_upper)
-									found = true;
+									break;
 							}
+							if (tier >= (int)m_month[m].dc_tou_ub.ncols())
+								tier = (int)m_month[m].dc_tou_ub.ncols() - 1;
 							double tier_energy = energy_deficit;
 							double tier_charge = tier_energy*m_month[m].ec_tou_br.at(row, tier);
 							charge_amt += tier_charge;
