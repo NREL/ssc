@@ -2,6 +2,8 @@
 #include "csp_solver_util.h"
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 int C_import_mono_eq::operator()(double x, double *y)
 {
