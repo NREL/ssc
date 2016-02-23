@@ -57,6 +57,7 @@ static var_info _cm_vtab_tcsiscc[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_flux_days",          "No. days in flux map lookup",                                       "",             "",            "heliostat",      "?=8",                     "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",       "Hourly frequency in flux map lookup",                               "",             "",            "heliostat",      "?=1",                     "",                     "" },
         
+	{ SSC_INPUT,        SSC_NUMBER,      "h_tower",                   "Tower height",                               "m",      "",         "heliostat",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "heliostat",   "*",                "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "heliostat",   "?=0",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "heliostat",   "*",                "",                "" },
@@ -81,6 +82,7 @@ static var_info _cm_vtab_tcsiscc[] = {
     { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                 "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",         "Optimization convergence tol",                                      "",             "",            "heliostat",       "?=0.001",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_flux_penalty",     "Optimization flux overage penalty",                                 "",             "",            "heliostat",       "*",                      "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",        "Optimization algorithm",                                            "",             "",            "heliostat",       "?=0",                    "",                "" },
 
     //other costs needed for optimization update
@@ -263,6 +265,9 @@ public:
 		*/
 		double H_rec, D_rec, rec_aspect, THT, A_sf;
 
+		// Assume ISCC has no storage!!!
+		double tshours = 0.0;
+
 		if( is_optimize )
 		{
 			//Run solarpilot right away to update values as needed
@@ -301,7 +306,7 @@ public:
 			A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
 			//update piping length for parasitic calculation
-			double piping_length = THT * as_double("csp.pt.par.piping_length_mult") + as_double("csp.pt.par.piping_length_const");
+			double piping_length = THT *  as_double("piping_length_mult") + as_double("piping_length_const");
 
 			//update assignments for cost model
 			assign("H_rec", var_data((ssc_number_t)H_rec));
@@ -309,6 +314,7 @@ public:
 			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
 			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
 			assign("THT", var_data((ssc_number_t)THT));			
+			assign("h_tower", var_data((ssc_number_t)THT));
 			assign("A_sf", var_data((ssc_number_t)A_sf));
 			assign("piping_length", var_data((ssc_number_t)piping_length));
 
@@ -334,10 +340,11 @@ public:
 			double receiver = as_double("rec_ref_cost")*pow(A_rec / as_double("rec_ref_area"), as_double("rec_cost_exp"));     //receiver cost
 
 			//storage cost
-			double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+			//double storage = as_double("q_pb_design")*as_double("tshours")*as_double("tes_spec_cost")*1000.;
+			double storage = 0.0;
 
 			//power block + BOP
-			double P_ref = as_double("P_ref") * 1000.;  //kWe
+			double P_ref = as_double("W_dot_solar_des") * 1000.;  //kWe
 			double power_block = P_ref * (as_double("plant_spec_cost") + as_double("bop_spec_cost")); //$/kWe --> $
 
 			//site improvements
