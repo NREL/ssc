@@ -1,3 +1,7 @@
+#include <numeric>
+#include <limits>
+#include <math.h>
+
 #include "numeric_solvers.h"
 #include "csp_solver_util.h"
 
