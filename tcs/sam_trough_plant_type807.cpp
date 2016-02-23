@@ -93,7 +93,7 @@ tcsvarinfo sam_trough_plant_type807_variables[] = {
 	{ TCS_INPUT,  TCS_NUMBER, I_E2TPLF2,	    "E2TPLF2", 	      "Turbine Part Load Elec  to Thermal (for fossil backup)", 		   "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_E2TPLF3,	    "E2TPLF3", 	      "Turbine Part Load Elec  to Thermal (for fossil backup)", 		   "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_E2TPLF4,	    "E2TPLF4", 	      "Turbine Part Load Elec  to Thermal (for fossil backup)", 		   "",      "",      "",     "" },
-	{ TCS_INPUT,  TCS_NUMBER, I_TempCorrF,	    "TempCorrF",      "Temperature Correction Mode (1=wetbulb 2=drybulb basis)", 		   "",      "",      "",     "" },
+	{ TCS_INPUT,  TCS_NUMBER, I_TempCorrF,	    "TempCorrF",      "Temperature Correction Mode (0=wetbulb 1=drybulb basis)", 		   "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_TempCorr0,	    "TempCorr0",      "Temperature Correction Coefficient 0", 					   "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_TempCorr1,	    "TempCorr1",      "Temperature Correction Coefficient 1", 					   "",      "",      "",     "" },
 	{ TCS_INPUT,  TCS_NUMBER, I_TempCorr2,	    "TempCorr2",      "Temperature Correction Coefficient 2", 					   "",      "",      "",     "" },
@@ -224,7 +224,7 @@ public:
 		double E2TPLF2 = value(I_E2TPLF2);
 		double E2TPLF3 = value(I_E2TPLF3);
 		double E2TPLF4 = value(I_E2TPLF4);
-		double TempCorrF = value(I_TempCorrF);
+		double TempCorrF = value(I_TempCorrF) + 1;	// Input table convention is 0=wet, 1=dry, so add 1 for calculations
 		double TempCorr0 = value(I_TempCorr0);
 		double TempCorr1 = value(I_TempCorr1);
 		double TempCorr2 = value(I_TempCorr2);
