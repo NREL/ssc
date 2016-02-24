@@ -1379,7 +1379,7 @@ void dispatch_manual_t::initialize_dispatch(size_t hour_of_year, size_t step)
 	bool is_weekday = util::weekday(hour_of_year);
 	_mode == MANUAL ? column = h - 1 : column = (h - 1) / _dt_hour + step;
 
-	if (!is_weekday & _mode == MANUAL)
+	if (!is_weekday && _mode == MANUAL)
 		iprofile = _sched_weekend(m - 1, column);
 	else
 		iprofile = _sched(m - 1, column);  // 1-based
