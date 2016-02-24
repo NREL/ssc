@@ -11,6 +11,7 @@ OBJECTS = tcskernel.o \
 	CO2_properties.o \
 	co2_compressor_library.o \
 	nlopt_callbacks.o \
+	numeric_solvers.o \
 	heat_exchangers.o \
 	sco2_rec_util.o \
 	sco2_power_cycle.o \
@@ -35,11 +36,11 @@ OBJECTS = tcskernel.o \
     sam_dsg_controller_type265.o \
     sam_lf_st_pt_type232.o \
     sam_mw_csp_SumCalcs.o \
+	sam_mw_pt_heliostatfield_csp_solver.o \
     sam_mw_gen_Type260.o \
     sam_mw_lf_type261_steam.o \
     sam_mw_lf_type261_Wnet.o \
     sam_mw_lf_type262_salt.o \
-    sam_mw_pt_heliostatfield_csp_solver.o\
     sam_mw_pt_type221.o \
     sam_mw_pt_type222.o \
     sam_mw_pt_type224.o \
