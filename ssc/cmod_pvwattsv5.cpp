@@ -424,7 +424,7 @@ public:
 				p_tcell[idx] = (ssc_number_t)wf.tdry;
 				
 				double alb = 0.2; // do not increase albedo if snow exists in TMY2			
-				if ( std::isfinite( wf.alb ) && wf.alb >= 0 && wf.alb < 1 )
+				if ( std::isfinite( wf.alb ) && wf.alb > 0 && wf.alb < 1 )
 					alb = wf.alb;
 				
 				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,

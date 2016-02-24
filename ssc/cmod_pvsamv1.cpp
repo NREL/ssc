@@ -1918,7 +1918,7 @@ public:
 
 					int month_idx = wf.month - 1;
 
-					if (use_wf_alb && wf.alb >= 0 && wf.alb <= 1)
+					if (use_wf_alb && std::isfinite( wf.alb ) && wf.alb > 0 && wf.alb < 1)
 						alb = wf.alb;
 					else if (month_idx >= 0 && month_idx < 12)
 						alb = alb_array[month_idx];
