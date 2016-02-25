@@ -24,8 +24,8 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
 	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Net metering rollover monthly excess energy (kWh),1=Net metering rollover monthly excess dollars ($),2=Non-net metering monthly reconciliation,3=Non-net metering hourly reconciliation", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
 
-	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 1 to user daily kWh e.g. PG&E baseline rates.
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_ub_units", "Energy charge tier upper bound units", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
+	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 2 to use daily kWh 
+	{ SSC_INPUT, SSC_NUMBER, "ur_ec_hourly_acc_period", "Energy charge hourly reconciliation period", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
 	// 0 to use previous version sell rates and 1 to use single sell rate, namely flat sell rate
 	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at specified sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
 
@@ -901,18 +901,6 @@ public:
 								}
 							}
 						}
-
-						/* 
-						for (int p = 0; p < 12; p++)
-						{
-							for (int t = 0; t < 6; t++)
-							{
-//								monthly_charge_period_tier[0][p][t] += charge_wo_sys_ec_jan_tp[t * 12 + p];
-								monthly_e_use_period_tier[0][p][t] += energy_wo_sys_ec_jan_tp[t * 12 + p];
-							}
-						}
-						*/
-
 
 					}
 				} // non net metering with monthly reconciliation
@@ -2157,7 +2145,7 @@ public:
 
 		 
 		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates). Currently hidden in UI and set to zero
-		int ur_ec_ub_units = as_integer("ur_ec_ub_units");
+		int ur_ec_hourly_acc_period = as_integer("ur_ec_hourly_acc_period");
 		double daily_surplus_energy; 
 		double monthly_surplus_energy; 
 		double daily_deficit_energy; 
@@ -2374,22 +2362,22 @@ public:
 							// base period charge on units specified
 							double energy_surplus = e_in[c];
 							double cumulative_energy = e_in[c];
-							if (ur_ec_ub_units == 1)
+							if (ur_ec_hourly_acc_period == 1)
 								cumulative_energy = monthly_surplus_energy;
-							else if (ur_ec_ub_units == 2)
+							else if (ur_ec_hourly_acc_period == 2)
 								cumulative_energy = daily_surplus_energy;
 
 
 							// cumulative energy used to determine tier for credit of entire surplus amount
 							double credit_amt = 0;
-							for (tier = 0; tier < (int)m_month[m].dc_tou_ub.ncols(); tier++)
+							for (tier = 0; tier < (int)m_month[m].ec_tou_ub.ncols(); tier++)
 							{
 								double e_upper = m_month[m].ec_tou_ub.at(row, tier);
 								if (cumulative_energy < e_upper)
 									break;
 							}
-							if (tier >= (int)m_month[m].dc_tou_ub.ncols())
-								tier = (int)m_month[m].dc_tou_ub.ncols() - 1;
+							if (tier >= (int)m_month[m].ec_tou_ub.ncols())
+								tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 							double tier_energy = energy_surplus;
 							double tier_credit = tier_energy*m_month[m].ec_tou_sr.at(row, tier);
 							credit_amt += tier_credit;
@@ -2410,9 +2398,9 @@ public:
 							double energy_deficit = -e_in[c];
 							// base period charge on units specified
 							double cumulative_deficit = -e_in[c];
-							if (ur_ec_ub_units == 1)
+							if (ur_ec_hourly_acc_period == 1)
 								cumulative_deficit = monthly_deficit_energy;
-							else if (ur_ec_ub_units == 2)
+							else if (ur_ec_hourly_acc_period == 2)
 								cumulative_deficit = daily_deficit_energy;
 
 
@@ -2423,8 +2411,8 @@ public:
 								if (cumulative_deficit < e_upper)
 									break;
 							}
-							if (tier >= (int)m_month[m].dc_tou_ub.ncols())
-								tier = (int)m_month[m].dc_tou_ub.ncols() - 1;
+							if (tier >= (int)m_month[m].ec_tou_ub.ncols())
+								tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 							double tier_energy = energy_deficit;
 							double tier_charge = tier_energy*m_month[m].ec_tou_br.at(row, tier);
 							charge_amt += tier_charge;
