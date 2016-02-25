@@ -459,7 +459,6 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "Row_Distance" ); // , 15);
         set_unit_value_ssc_double(type250_solarfield, "FieldConfig" ); // , 2);
         set_unit_value_ssc_double(type250_solarfield, "T_startup" ); // , 300);
-        set_unit_value_ssc_double(type250_solarfield, "P_ref" ); // , 111);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmin" ); // , 1);
         set_unit_value_ssc_double(type250_solarfield, "m_dot_htfmax" ); // , 12);
         set_unit_value_ssc_double(type250_solarfield, "T_loop_in_des" ); // , 293);
