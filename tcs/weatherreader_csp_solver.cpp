@@ -221,7 +221,7 @@ public:
 		value(O_LAT, m_wf->m_lat);
 		value(O_LON, m_wf->m_lon);
 		value(O_TZ, m_wf->m_tz);
-		value(O_SHIFT, m_wf->m_tz);
+		value(O_SHIFT, m_wf->m_shift);
 		value(O_ELEV, m_wf->m_elev);
 
 		return 0;
