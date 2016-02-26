@@ -2060,6 +2060,19 @@ freeze_prot_flag: //7   continue
 			    
 			if(SolveMode==4)
 			{
+				// Check if HTF inlet temperature is already greater than or equal to the cold header temperature
+				if( T_cold_in_1 >= T_sys_c_last )
+				{
+					goto freeze_prot_ok;
+				}
+				
+				no_fp = false;
+				
+				// Set HTF inlet temperature to temperature of cold header
+				T_cold_in_1 = T_sys_c_last;		//[C]
+			}
+			else if(SolveMode==14)
+			{
 				// assumptions...
 				// 1) solver won't enter both modes 3 & 4 in the SAME CALL. so, don't need unique flags or to reset flags
 								
@@ -2205,7 +2218,11 @@ freeze_prot_flag: //7   continue
 						}
 						else                             //if not, recalculate value based on approximate energy balance
 						{
-							T_cold_in_1 = T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature  
+							if(T_cold_in_1 - T_cold_in > 60.0)
+							{
+								goto freeze_prot_ok;
+							}
+							T_cold_in_1 = T_cold_in_1 + 10.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature  
 							qq = 0;
 						}
 					}
