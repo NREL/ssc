@@ -22,20 +22,21 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual utility rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Net metering rollover monthly excess energy (kWh),1=Net metering rollover monthly excess dollars ($),2=Non-net metering monthly reconciliation,3=Non-net metering hourly reconciliation", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
 
 	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 2 to use daily kWh 
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_hourly_acc_period", "Energy charge hourly reconciliation period", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_ec_hourly_acc_period", "Energy charge hourly reconciliation period", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
 	// 0 to use previous version sell rates and 1 to use single sell rate, namely flat sell rate
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at specified sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at specified sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "ur_ec_single_sell_rate", "Single TOU sell rate", "$/kWh", "", "", "?=0.0", "", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "ur_ec_single_sell_rate", "Single TOU sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",      "" },
+
+//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
+//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",      "" },
 
 	// urdb minimums
 	{ SSC_INPUT, SSC_NUMBER, "ur_monthly_min_charge", "Monthly minimum charge", "$", "", "", "?=0.0", "", "" },
@@ -44,14 +45,14 @@ static var_info vtab_utility_rate4[] = {
 
 
 	// Energy Charge Inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_ec_enable",            "Enable energy charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
-
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "12x24", "", "ur_ec_enable=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "12x24", "", "*", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "12x24", "", "*", "", "" },
 
 	// ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
 	// replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy Charge TOU Inputs", "", "", "", "ur_ec_enable=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy Charge TOU Inputs", "", "", "", "*", "", "" },
+
+
 	// Demand Charge Inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable Demand Charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 	// TOU demand charge
@@ -626,7 +627,8 @@ public:
 		//			bool enable_nm = as_boolean("ur_enable_net_metering");
 		int metering_option = as_integer("ur_metering_option");
 		bool enable_nm = (metering_option == 0 || metering_option == 1);
-		bool hourly_reconciliation = (metering_option == 3);
+//		bool hourly_reconciliation = (metering_option == 3);
+		bool hourly_reconciliation = (metering_option == 2); // per 2/25/16 meeting
 
 
 		idx = 0;
@@ -1129,7 +1131,8 @@ public:
 		}
 
 
-		bool ec_enabled = as_boolean("ur_ec_enable");
+//		bool ec_enabled = as_boolean("ur_ec_enable");
+		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
 		// for reporting purposes
@@ -1193,10 +1196,10 @@ public:
 			// 2= non-net metering monthly, 3= non-net metering hourly
 
 			// non net metering only
-			int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
+//			int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
 			// 0=sell at ec sell rates, 1= sell at flat sell rate
-			bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
-			ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate");
+//			bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
+//			ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate");
 
 			bool sell_eq_buy = enable_nm;
 
@@ -1314,8 +1317,8 @@ public:
 								ssc_number_t sell = ec_tou_mat.at(r, 5);
 								if (sell_eq_buy)
 									sell = ec_tou_mat.at(r, 4);
-								else if (!ur_ec_sell_at_ec_rates)
-									sell = ur_ec_single_sell_rate;
+//								else if (!ur_ec_sell_at_ec_rates)
+//									sell = ur_ec_single_sell_rate;
 								m_month[m].ec_tou_sr.at(i, j) = sell;
 								found = true;
 							}
@@ -1587,8 +1590,8 @@ public:
 				= monthly_bill[i] = 0.0;
 		}
 		// initialize all montly values
-		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
-		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
+//		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
+//		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
 
 		//bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
@@ -1604,24 +1607,25 @@ public:
 		// 2= non-net metering monthly, 3= non-net metering hourly
 
 		// non net metering only
-		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
+//		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
 		// 0=sell at ec sell rates, 1= sell at flat sell rate
-		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option==0);
-		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
+//		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option==0);
+//		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
 
 		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
-		bool ec_enabled = as_boolean("ur_ec_enable");
+//		bool ec_enabled = as_boolean("ur_ec_enable");
+		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
 		//bool excess_monthly_dollars = (as_integer("ur_excess_monthly_energy_or_dollars") == 1);
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 1);
 		//		bool apply_excess_to_flat_rate = !ec_enabled;
 
-		if (sell_eq_buy)
-			sell = buy;
-		else if (!ur_ec_sell_at_ec_rates)
-			sell = ur_ec_single_sell_rate*rate_esc;
+//		if (sell_eq_buy)
+//			sell = buy;
+//		else if (!ur_ec_sell_at_ec_rates)
+//			sell = ur_ec_single_sell_rate*rate_esc;
 
 		// calculate the monthly net energy and monthly hours
 		int m, d, h, period, tier;
@@ -1835,7 +1839,6 @@ public:
 		// process one month at a time
 		for (m = 0; m < (int)m_month.size(); m++)
 		{
-// flat rate
 			if (m_month[m].hours_per_month <= 0) break;
 			for (d = 0; d<util::nday[m]; d++)
 			{
@@ -1843,6 +1846,8 @@ public:
 				{
 					if (d == util::nday[m] - 1 && h == 23)
 					{
+						/*
+						// flat rate
 						if (enable_nm)
 						{
 							if (m_month[m].energy_net < 0)
@@ -1867,7 +1872,7 @@ public:
 						// added for Mike Gleason 
 						energy_charge[c] += monthly_ec_flat_charges[m];
 // end of flat rate
-
+*/
 // energy charge
 						if (ec_enabled)
 						{
@@ -2133,30 +2138,32 @@ public:
 				= monthly_bill[i] = 0.0;
 		}
 		// initialize all montly values
-		ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
-		ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
+		//ssc_number_t buy = as_number("ur_flat_buy_rate")*rate_esc;
+		//ssc_number_t sell = as_number("ur_flat_sell_rate")*rate_esc;
 
 
 		// non net metering only
-		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
+		//int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
 		// 0=sell at ec sell rates, 1= sell at flat sell rate
-		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
-		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
+		//bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
+		//ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
 
 		 
 		// 0=hourly (match with 2015.1.30 release, 1=monthly (most common unit in URDB), 2=daily (used for PG&E baseline rates). Currently hidden in UI and set to zero
-		int ur_ec_hourly_acc_period = as_integer("ur_ec_hourly_acc_period");
-		double daily_surplus_energy; 
+//		int ur_ec_hourly_acc_period = as_integer("ur_ec_hourly_acc_period");
+		int ur_ec_hourly_acc_period = 1; // monthly per 2/25/16 meeting
+		double daily_surplus_energy;
 		double monthly_surplus_energy; 
 		double daily_deficit_energy; 
 		double monthly_deficit_energy;
 
-		bool ec_enabled = as_boolean("ur_ec_enable");
+//		bool ec_enabled = as_boolean("ur_ec_enable");
+		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
 
-		if (!ur_ec_sell_at_ec_rates)
-			sell = ur_ec_single_sell_rate*rate_esc;
+		//if (!ur_ec_sell_at_ec_rates)
+		//	sell = ur_ec_single_sell_rate*rate_esc;
 
 		// calculate the monthly net energy and monthly hours
 		int m, d, h, period, tier;
@@ -2323,6 +2330,7 @@ public:
 				daily_deficit_energy = 0;
 				for (h = 0; h<24; h++)
 				{
+					/*
 					// flat rate
 					if (e_in[c] < 0) // must buy from grid
 					{
@@ -2338,7 +2346,7 @@ public:
 					}
 					monthly_ec_flat_charges[m] += energy_charge[c];
 					// end of flat rate
-
+					*/
 					// energy charge
 					if (ec_enabled)
 					{
