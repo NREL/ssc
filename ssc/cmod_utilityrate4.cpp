@@ -1627,9 +1627,6 @@ public:
 
 		}
 
-
-
-
 	}
 
 
@@ -1677,7 +1674,7 @@ public:
 		int metering_option = as_integer("ur_metering_option");
 		bool enable_nm = (metering_option == 0 || metering_option == 1);
 		// 0 = net metering energy rollover, 1=net metering dollar rollover
-		// 2= non-net metering monthly, 3= non-net metering hourly
+		// 3= non-net metering monthly, 2= non-net metering hourly
 
 		// non net metering only
 //		int ur_ec_sell_rate_option = as_integer("ur_ec_sell_rate_option");
@@ -1860,14 +1857,32 @@ public:
 							ub = mon_e_net;
 						while ((tier <  end_tier) && (ub >  m_month[m].ec_tou_ub.at(row, tier)))
 							tier++;
+
+						m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
+						/*
 						if (e_in[c]>=0)
 							m_month[m].ec_energy_surplus.at(row, tier) += e_in[c]; 
 						else
 							m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
+							*/
 						c++;
 					}
 				}
-			}
+				// with output surplus, go through and set if any use <= 0
+				for (size_t ir = 0; ir < m_month[m].ec_energy_use.nrows(); ir++)
+				{
+					for (size_t ic = 0; ic < m_month[m].ec_energy_use.ncols(); ic++)
+					{
+						if (m_month[m].ec_energy_use.at(ir, ic) < 0)
+						{
+							m_month[m].ec_energy_surplus.at(ir, ic) = -m_month[m].ec_energy_use.at(ir, ic);
+							m_month[m].ec_energy_use.at(ir, ic) = 0;
+						}
+					}
+				}
+
+
+			} // end month
 		}
 
 
@@ -1957,14 +1972,18 @@ public:
 							if (m_month[m].energy_net >= 0.0)
 							{ // calculate income or credit
 								ssc_number_t credit_amt = 0;
-
 								for (period = 0; period < (int)m_month[m].ec_tou_sr.nrows(); period++)
 								{
 									for (tier = 0; tier < (int)m_month[m].ec_tou_sr.ncols(); tier++)
 									{
 										ssc_number_t cr = m_month[m].ec_energy_surplus.at(period, tier) * m_month[m].ec_tou_sr.at(period, tier) * rate_esc;
-										m_month[m].ec_charge.at(period, tier) = -cr;
-										credit_amt += cr;
+										if (!enable_nm)
+										{
+											credit_amt += cr;
+											m_month[m].ec_charge.at(period, tier) = -cr;
+										}
+										else if (excess_monthly_dollars)
+											monthly_cumulative_excess_dollars[m] += cr;
 									}
 								}
 								monthly_ec_charges[m] -= credit_amt;
@@ -2095,7 +2114,7 @@ public:
 				if (monthly_bill[m] < 0)
 				{
 					if (excess_monthly_dollars)
-						monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
 					monthly_bill[m] = 0;
 					payment[c - 1] = 0; // fixed charges applied below
 				}
@@ -2230,8 +2249,6 @@ public:
 //		int ur_ec_hourly_acc_period = as_integer("ur_ec_hourly_acc_period");
 		int ur_ec_hourly_acc_period = 1; // monthly per 2/25/16 meeting
 		// single meter so single net accumulation
-//		double daily_net_energy;
-//		double monthly_net_energy;
 		double daily_surplus_energy;
 		double monthly_surplus_energy; 
 		double daily_deficit_energy; 
@@ -2405,7 +2422,6 @@ public:
 		{
 			monthly_surplus_energy = 0;
 			monthly_deficit_energy = 0;
-			//monthly_net_energy = 0;
 			for (d = 0; d<util::nday[m]; d++)
 			{
 				daily_surplus_energy = 0;
@@ -2449,8 +2465,6 @@ public:
 						{ // calculate income or credit
 							monthly_surplus_energy += e_in[c];
 							daily_surplus_energy += e_in[c];
-							//monthly_net_energy += e_in[c];
-							//daily_net_energy += e_in[c];
 
 							// base period charge on units specified
 							double energy_surplus = e_in[c];
@@ -2486,8 +2500,6 @@ public:
 						{ // calculate payment or charge
 							monthly_deficit_energy -= e_in[c];
 							daily_deficit_energy -= e_in[c];
-//							monthly_net_energy += e_in[c];
-//							daily_net_energy += e_in[c];
 
 							double charge_amt = 0;
 							double energy_deficit = -e_in[c];
