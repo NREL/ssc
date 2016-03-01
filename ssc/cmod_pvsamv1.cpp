@@ -2105,10 +2105,12 @@ public:
 
 						// record sub-array plane of array output before computing shading and soiling
 						if (iyear==0)
+						{
 							if(radmode != POA_R)
 								p_poanom[nn][idx] = (ssc_number_t)((ibeam + iskydiff + ignddiff));
 							else
 								p_poanom[nn][idx] = (ssc_number_t)((ipoa));
+						}
 
 						// note: ibeam, iskydiff, ignddiff are in units of W/m2
 
@@ -2231,10 +2233,13 @@ public:
 							{
 								ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
 								beam_shading_factor *= (1 - shad1xf);
-								p_ss_derate[nn][idx] = (ssc_number_t)1;
-								p_linear_derate[nn][idx] = (ssc_number_t)(1 - shad1xf);
-								p_ss_diffuse_derate[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-								p_ss_reflected_derate[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+								if ( iyear == 0 )
+								{
+									p_ss_derate[nn][idx] = (ssc_number_t)1;
+									p_linear_derate[nn][idx] = (ssc_number_t)(1 - shad1xf);
+									p_ss_diffuse_derate[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
+									p_ss_reflected_derate[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+								}
 							}
 
 							else if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, p_beam[idx], ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, sa[nn].ssout)) 
@@ -2243,17 +2248,23 @@ public:
 								{
 									ibeam *= (1 - sa[nn].ssout.m_shade_frac_fixed);
 									beam_shading_factor *= (1 - sa[nn].ssout.m_shade_frac_fixed);
-									p_ss_derate[nn][idx] = (ssc_number_t)1;
-									p_linear_derate[nn][idx] = (ssc_number_t)(1 - sa[nn].ssout.m_shade_frac_fixed);
-									p_ss_diffuse_derate[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
-									p_ss_reflected_derate[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+									if ( iyear == 0 )
+									{
+										p_ss_derate[nn][idx] = (ssc_number_t)1;
+										p_linear_derate[nn][idx] = (ssc_number_t)(1 - sa[nn].ssout.m_shade_frac_fixed);
+										p_ss_diffuse_derate[nn][idx] = (ssc_number_t)1; //no diffuse derate for linear shading
+										p_ss_reflected_derate[nn][idx] = (ssc_number_t)1; //no reflected derate for linear shading
+									}
 								}
 								else //non-linear: fixed tilt AND one-axis
 								{
-									p_ss_diffuse_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_diffuse_derate;
-									p_ss_reflected_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_reflected_derate;
-									p_ss_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_dc_derate;
-									p_linear_derate[nn][idx] = (ssc_number_t)1;
+									if ( iyear == 0 )
+									{
+										p_ss_diffuse_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_diffuse_derate;
+										p_ss_reflected_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_reflected_derate;
+										p_ss_derate[nn][idx] = (ssc_number_t)sa[nn].ssout.m_dc_derate;
+										p_linear_derate[nn][idx] = (ssc_number_t)1;
+									}
 
 									// Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
 									iskydiff *= sa[nn].ssout.m_diffuse_derate;
