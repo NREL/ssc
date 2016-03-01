@@ -1826,13 +1826,16 @@ public:
 				m_month[m].ec_energy_surplus.resize_fill(num_periods, num_tiers, 0);
 				m_month[m].ec_charge.resize_fill(num_periods, num_tiers, 0);
 
+				/*  hour by hour accumulation - changed to monthly per meeting with Paul 2/29/16 */
 				// monthly accumulation of energy
 				ssc_number_t mon_e_net = 0;
+				ssc_number_t ub_old = 0; // tier boundaries
+				ssc_number_t ub = 0; // tier boundaries
+				int tier_old = start_tier; // tier boundary
 				if (m>0 && enable_nm && !excess_monthly_dollars)
 				{
 					mon_e_net = monthly_cumulative_excess_energy[m - 1]; // rollover
 				}
-
 
 				for (d = 0; d < util::nday[m]; d++)
 				{
@@ -1852,20 +1855,58 @@ public:
 						tier = start_tier;
 						// translate to energy use for tier determination
 						// update energy per tier for charges
-						ssc_number_t ub = -mon_e_net;
-						if (mon_e_net > 0) 
+						ub = -mon_e_net;
+						// sign change for load
+						if (mon_e_net > 0)
 							ub = mon_e_net;
 						while ((tier <  end_tier) && (ub >  m_month[m].ec_tou_ub.at(row, tier)))
 							tier++;
+ 
+						ssc_number_t e_net_tier = e_in[c];
+						// handle tier boundaries
+						if (tier > tier_old) // change boundary
+						{
+//							e_net_tier = ub - m_month[m].ec_tou_ub.at(row, tier_old);
+							// rounding issues
+							ssc_number_t e_net_tier_old = m_month[m].ec_tou_ub.at(row, tier_old) - ub_old;
+							e_net_tier = fabs(e_in[c]) - e_net_tier_old;
 
-						m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
-						/*
-						if (e_in[c]>=0)
-							m_month[m].ec_energy_surplus.at(row, tier) += e_in[c]; 
+//							ssc_number_t e_net_tier_old = fabs(e_in[c]) - e_net_tier;
+							// loads are negative and gen is positive - want sign of e_in[c]
+							if (e_in[c] < 0)
+							{
+								e_net_tier = -e_net_tier;
+								e_net_tier_old = -e_net_tier_old;
+							}
+							m_month[m].ec_energy_use.at(row, tier) -= e_net_tier;
+							m_month[m].ec_energy_use.at(row, tier_old) -= e_net_tier_old;
+						}
+						else if (tier < tier_old) // change boundary
+						{
+							e_net_tier = ub - m_month[m].ec_tou_ub.at(row, tier);
+							// rounding issues
+							//ssc_number_t e_net_tier_old = m_month[m].ec_tou_ub.at(row, tier_old) - ub_old;
+							//e_net_tier = fabs(e_in[c]) - e_net_tier_old;
+
+							ssc_number_t e_net_tier_old = fabs(e_in[c]) - e_net_tier;
+							// loads are negative and gen is positive - want sign of e_in[c]
+							if (e_in[c] > 0)
+							{
+								e_net_tier = -e_net_tier;
+								e_net_tier_old = -e_net_tier_old;
+							}
+							m_month[m].ec_energy_use.at(row, tier) -= e_net_tier;
+							m_month[m].ec_energy_use.at(row, tier_old) -= e_net_tier_old;
+						}
+
 						else
-							m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
-							*/
+						{
+							//						m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
+							m_month[m].ec_energy_use.at(row, tier) -= e_net_tier;
+						}
 						c++;
+						ub_old = ub;
+						tier_old = tier;
 					}
 				}
 				// with output surplus, go through and set if any use <= 0
@@ -1880,8 +1921,6 @@ public:
 						}
 					}
 				}
-
-
 			} // end month
 		}
 
