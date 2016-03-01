@@ -518,8 +518,11 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 	
 	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
-	if (idx == total_steps - 1)
-		process_messages(cm);
+	if (__DEBUG__)
+	{
+		if (idx == total_steps - 1)
+			process_messages(cm);
+	}
 
 	// non-lifetime outputs
 	if (nyears <= 1)
