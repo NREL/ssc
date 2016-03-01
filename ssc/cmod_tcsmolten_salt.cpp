@@ -55,7 +55,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_flux_x",             "Flux map X resolution",                                             "-",            "",            "heliostat",      "?=12",                    "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_flux_y",             "Flux map Y resolution",                                             "-",            "",            "heliostat",      "?=1",                     "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "helio_aim_points",     "Heliostat aim point table",                                         "m",            "",            "heliostat",      "?",                       "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency array",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_positions",       "Flux map sun positions",                                            "deg",          "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_maps",            "Flux map intensities",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
@@ -266,16 +265,18 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// optimized outputs updated depending on run type 
-	{ SSC_INOUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                          "m",   "", "receiver",  "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                     "m",   "", "heliostat", "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                               "-",   "", "heliostat", "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",          "m",   "", "receiver",  "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "THT",                  "The height of the tower (hel. pivot to rec equator)", "m",   "", "receiver",  "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                        "m",   "", "heliostat", "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                    "m^2", "", "receiver",  "*",          "", "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                      "m",   "", "tower",     "*",          "", "" },
-	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "COL_LABEL=XY_POSITION" },
-	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                                       "m",             "",            "receiver",       "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                  "m",             "",            "heliostat",      "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                            "-",             "",            "heliostat",      "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                       "m",             "",            "receiver",       "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "THT",                  "The height of the tower (hel. pivot to rec equator)",              "m",             "",            "receiver",       "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                 "m^2",           "",            "receiver",       "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
+    { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "?",                       "",                      "" },
+	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                         "",              "",            "heliostat",      "run_type=1",              "",                      "COL_LABEL=XY_POSITION" },
+	{ SSC_INOUT,        SSC_NUMBER,      "land_area_base",       "Base land area occupied by heliostats",                            "acre",          "",            "heliostat",      "*",                       "",                      "" },
+	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                           "acre",          "",            "system_costs",   "*",                       "",                      "" },
 
 
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.site_improvements",	    "Site improvement cost",                  "$",            "",            "system_costs",   "*",        "",  "" },
@@ -349,6 +350,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Resource Beam normal irradiance",                              "W/m2",         "",            "weather",        "*",                       "",           "" },
 	
 		// Collector-receiver outputs
+			// Eventually want to make this INOUT, but will have to add 'eta_map' to UI...
+    { SSC_OUTPUT,       SSC_MATRIX,      "eta_map_out",          "Field efficiency array used in simulation",                    "",             "",            "heliostat",      "*",                       "",           "COL_LABEL=OPTICAL_EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
+	
+
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Controller",     "*",                       "",           "" },
@@ -533,6 +538,7 @@ public:
 			THT = spi.layout.h_tower;
 			//update heliostat position table
 			int nr = (int)spi.layout.heliostat_positions.size();
+			assign("N_hel", nr);
 			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
 			for( int i = 0; i<nr; i++ ){
 				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
@@ -607,8 +613,11 @@ public:
 			sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
 
 			//land area
+			double land_area_base = spi.layout.land_area;		//[acres] Land area occupied by heliostats
 			sys_costs.ms_par.total_land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+			assign("land_area_base", land_area_base);
 			assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
+			
 
 			sys_costs.ms_par.plant_net_capacity = as_double("system_capacity")/1000.0;			//[MWe], convert from kWe
 			sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
@@ -1189,6 +1198,16 @@ public:
 		while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
 		{
 			log(out_msg);
+		}
+
+		// Set output data from heliostat class
+		int n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();
+		ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
+		for( int i = 0; i < n_rows_eta_map; i++ )
+		{
+			eta_map_out[3*i] = heliostatfield.ms_params.m_eta_map(i,0);		//[deg] Solar azimuth angle
+			eta_map_out[3*i+1] = heliostatfield.ms_params.m_eta_map(i,1);	//[deg] Solar zenith angle
+			eta_map_out[3*i+2] = heliostatfield.ms_params.m_eta_map(i,2);	//[deg] Solar field optical efficiency
 		}
 
 		size_t count;
