@@ -8,8 +8,8 @@
 class C_csp_mspt_collector_receiver : public C_csp_collector_receiver
 {
 private:
-	C_pt_heliostatfield mc_pt_heliostatfield;
-	C_mspt_receiver_222 mc_mspt_receiver_222;
+	C_pt_heliostatfield &mc_pt_heliostatfield;
+	C_mspt_receiver_222 &mc_mspt_receiver_222;
 
 public:
 	C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield, 

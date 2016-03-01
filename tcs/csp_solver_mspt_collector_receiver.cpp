@@ -2,10 +2,11 @@
 #include <algorithm>
 
 C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield,
-	C_mspt_receiver_222 & mspt_receiver_222)
+	C_mspt_receiver_222 & mspt_receiver_222):
+	mc_pt_heliostatfield(pt_heliostatfield),
+	mc_mspt_receiver_222(mspt_receiver_222)
 {
-	mc_pt_heliostatfield = pt_heliostatfield;
-	mc_mspt_receiver_222 = mspt_receiver_222;
+	
 }
 
 C_csp_mspt_collector_receiver::~C_csp_mspt_collector_receiver()
