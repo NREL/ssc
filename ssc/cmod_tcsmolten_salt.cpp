@@ -274,7 +274,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                        "m",   "", "heliostat", "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                    "m^2", "", "receiver",  "*",          "", "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                      "m",   "", "tower",     "*",          "", "" },
-	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "" },
+	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                            "m",   "", "heliostat", "run_type=1", "", "COL_LABEL=XY_POSITION" },
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                "acre",         "",            "system_costs",   "*",        "",  "" },
 
 
