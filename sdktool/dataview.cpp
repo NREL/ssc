@@ -543,10 +543,7 @@ void DataView::OnCommand(wxCommandEvent &evt)
 		}
 		break;
 	case ID_COPY_CLIPBOARD:
-		{
-			wxBusyInfo busy("Copying to clipboard...");
-			m_grid->Copy(true, true);
-		}
+		m_grid->Copy( m_grid->NumCellsSelected() == 1, true);
 		break;
 	}
 }
