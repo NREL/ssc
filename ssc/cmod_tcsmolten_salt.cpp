@@ -351,7 +351,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	
 		// Collector-receiver outputs
 			// Eventually want to make this INOUT, but will have to add 'eta_map' to UI...
-    { SSC_OUTPUT,       SSC_MATRIX,      "eta_map_out",          "Field efficiency array used in simulation",                    "",             "",            "heliostat",      "*",                       "",           "COL_LABEL=OPTICAL_EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
+    { SSC_OUTPUT,       SSC_MATRIX,      "eta_map_out",          "Solar field optical efficiencies",                             "",             "",            "heliostat",      "*",                       "",           "COL_LABEL=OPTICAL_EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
+    { SSC_OUTPUT,       SSC_MATRIX,      "flux_maps_out",        "Flux map intensities",                                         "",             "",            "heliostat",      "*",                       "",           "COL_LABEL=FLUX_MAPS,ROW_LABEL=NO_ROW_LABEL" },
 	
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "*",                       "",           "" },
@@ -1203,11 +1204,29 @@ public:
 		// Set output data from heliostat class
 		int n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();
 		ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
+		int n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();
+		int n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
+		ssc_number_t *flux_maps_out = allocate("flux_maps_out", n_rows_eta_map, n_cols_flux_maps);
+
+		if(n_rows_eta_map != n_rows_flux_maps)
+		{
+			log("The number of rows in the field efficiency and receiver flux map matrices are not equal. This is unexpected, and the flux maps may be inaccurate.");
+		}
+
+		double flux_scaling_mult = heliostatfield.ms_params.m_dni_des*heliostatfield.ms_params.m_A_sf / 1000.0 /
+			(CSP::pi*heliostatfield.ms_params.m_rec_height*
+			heliostatfield.ms_params.m_rec_height / heliostatfield.ms_params.m_rec_aspect /
+			double(heliostatfield.ms_params.m_n_flux_x));
+
 		for( int i = 0; i < n_rows_eta_map; i++ )
 		{
-			eta_map_out[3*i] = heliostatfield.ms_params.m_eta_map(i,0);		//[deg] Solar azimuth angle
-			eta_map_out[3*i+1] = heliostatfield.ms_params.m_eta_map(i,1);	//[deg] Solar zenith angle
-			eta_map_out[3*i+2] = heliostatfield.ms_params.m_eta_map(i,2);	//[deg] Solar field optical efficiency
+			flux_maps_out[n_cols_flux_maps*i] = eta_map_out[3*i] = heliostatfield.ms_params.m_eta_map(i,0);		//[deg] Solar azimuth angle
+			flux_maps_out[n_cols_flux_maps*i + 1] = eta_map_out[3 * i + 1] = heliostatfield.ms_params.m_eta_map(i, 1);	//[deg] Solar zenith angle
+			eta_map_out[3*i+2] = heliostatfield.ms_params.m_eta_map(i,2);							//[deg] Solar field optical efficiency
+			for( int j = 2; j < n_cols_flux_maps; j++ )
+			{
+				flux_maps_out[n_cols_flux_maps*i + j] = heliostatfield.ms_params.m_flux_maps(i,j)*heliostatfield.ms_params.m_eta_map(i,2)*flux_scaling_mult;		//[kW/m^2]
+			}
 		}
 
 		size_t count;
