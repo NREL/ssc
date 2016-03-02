@@ -1015,11 +1015,11 @@ public:
 					sa[nn].sscalc.nrows = (int)floor((sa[nn].nstrings * modules_per_string) / (sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody));
 					//if nrows comes out to be zero, this will cause a divide by zero error. Give an error in this case.
 					if (sa[nn].sscalc.nrows == 0 && sa[nn].nstrings != 0) //no need to give an error if the subarray has 0 strings
-						throw exec_error("pvsamv1", "Self-shading: Number of rows calculated for subarray " + util::to_string(to_double(nn + 1)) + " was zero. Please check your inputs.");
+						throw exec_error("pvsamv1", "Self shading: Number of rows calculated for subarray " + util::to_string(to_double(nn + 1)) + " was zero. Please check your inputs.");
 					// Otherwise, if self-shading configuration does not have equal number of modules as specified on system design page for that subarray,
 					// compute dc derate using the self-shading configuration and apply it to the whole subarray. Give warning.
 					if ((sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody * sa[nn].sscalc.nrows) != (sa[nn].nstrings * modules_per_string))
-						log(util::format("The self-shading configuration for subarray %d does not match the number of modules specified on the System Design page. Please check your inputs.",
+						log(util::format("The product of number of modules along side and bottom for subarray %d is not equal to the number of modules in the subarray. Check your inputs for self shading.",
 						(nn + 1)), SSC_WARNING);
 					// assume aspect ratio of 1.7 (see variable "aspect_ratio" below to change this assumption)
 					sa[nn].sscalc.str_orient = 1;	//assume horizontal wiring
