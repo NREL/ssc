@@ -31,43 +31,43 @@ double helio_perf_data::getDataByIndex(const int id){
 	double rval;
 	switch(id)
 	{
-		case helio_perf_data::POWER_TO_REC:
+		case helio_perf_data::PERF_VALUES::POWER_TO_REC:
 			rval = power_to_rec;
 			break;
-		case helio_perf_data::ETA_TOT:
+		case helio_perf_data::PERF_VALUES::ETA_TOT:
 			rval = eta_tot;
 			break;
-		case helio_perf_data::ETA_COS:
+		case helio_perf_data::PERF_VALUES::ETA_COS:
 			rval = eta_cos;
 			break;
-		case helio_perf_data::ETA_ATT:
+		case helio_perf_data::PERF_VALUES::ETA_ATT:
 			rval = eta_att;
 			break;
-		case helio_perf_data::ETA_INT:
+		case helio_perf_data::PERF_VALUES::ETA_INT:
 			rval = eta_int;
 			break;
-		case helio_perf_data::ETA_BLOCK:
+		case helio_perf_data::PERF_VALUES::ETA_BLOCK:
 			rval = eta_block;
 			break;
-		case helio_perf_data::ETA_SHADOW:
+		case helio_perf_data::PERF_VALUES::ETA_SHADOW:
 			rval = eta_shadow;
 			break;
-		case helio_perf_data::POWER_VALUE:
+		case helio_perf_data::PERF_VALUES::POWER_VALUE:
 			rval = power_value;
 			break;
-		case helio_perf_data::REFLECTIVITY:
+		case helio_perf_data::PERF_VALUES::REFLECTIVITY:
 			rval = reflectivity;
 			break;
-		case helio_perf_data::SOILING:
+		case helio_perf_data::PERF_VALUES::SOILING:
 			rval = soiling;
 			break;
-		case helio_perf_data::RANK_METRIC:
+		case helio_perf_data::PERF_VALUES::RANK_METRIC:
 			rval = rank_metric;
 			break;
-		case helio_perf_data::REC_ABSORPTANCE:
+		case helio_perf_data::PERF_VALUES::REC_ABSORPTANCE:
 			rval = rec_absorptance;
 			break;
-		case helio_perf_data::ETA_CLOUD:
+		case helio_perf_data::PERF_VALUES::ETA_CLOUD:
 			rval = eta_cloud;
 			break;
 		default:
@@ -80,43 +80,43 @@ void helio_perf_data::setDataByIndex(const int id, double value){
 	
 	switch(id)
 	{
-		case helio_perf_data::ETA_ATT:
+		case helio_perf_data::PERF_VALUES::ETA_ATT:
 			eta_att = value;
 			break;
-		case helio_perf_data::ETA_BLOCK:
+		case helio_perf_data::PERF_VALUES::ETA_BLOCK:
 			eta_block = value;
 			break;
-		case helio_perf_data::ETA_COS:
+		case helio_perf_data::PERF_VALUES::ETA_COS:
 			eta_cos = value;
 			break;
-		case helio_perf_data::ETA_INT:
+		case helio_perf_data::PERF_VALUES::ETA_INT:
 			eta_int = value;
 			break;
-		case helio_perf_data::ETA_SHADOW:
+		case helio_perf_data::PERF_VALUES::ETA_SHADOW:
 			eta_shadow = value;
 			break;
-		case helio_perf_data::ETA_TOT:
+		case helio_perf_data::PERF_VALUES::ETA_TOT:
 			eta_tot = value;
 			break;
-		case helio_perf_data::REFLECTIVITY:
+		case helio_perf_data::PERF_VALUES::REFLECTIVITY:
 			reflectivity = value;
 			break;
-		case helio_perf_data::SOILING:
+		case helio_perf_data::PERF_VALUES::SOILING:
 			soiling = value;
 			break;
-		case helio_perf_data::POWER_TO_REC:
+		case helio_perf_data::PERF_VALUES::POWER_TO_REC:
 			power_to_rec = value;
 			break;
-		case helio_perf_data::POWER_VALUE:
+		case helio_perf_data::PERF_VALUES::POWER_VALUE:
 			power_value = value;
 			break;
-		case helio_perf_data::RANK_METRIC:
+		case helio_perf_data::PERF_VALUES::RANK_METRIC:
 			rank_metric = value;
 			break;
-		case helio_perf_data::REC_ABSORPTANCE:
+		case helio_perf_data::PERF_VALUES::REC_ABSORPTANCE:
 			rec_absorptance = value;
 			break;
-		case helio_perf_data::ETA_CLOUD:
+		case helio_perf_data::PERF_VALUES::ETA_CLOUD:
 			eta_cloud = value;
 			break;
 	}	

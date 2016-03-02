@@ -621,7 +621,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	//double grating[] = {0.,0.,0.};
 	
 	//map the optics pointer to the heliostat template name
-	unordered_map<std::string, ST_OpticalPropertySet*> optics_map;
+	std::unordered_map<std::string, ST_OpticalPropertySet*> optics_map;
 
 	int ii=0;
 	for(htemp_map::iterator it = SF.getHeliostatTemplates()->begin(); it != SF.getHeliostatTemplates()->end(); it++){
@@ -648,8 +648,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
         H->getErrorReflected(errrefl);
 
         double 
-            errnorm = (sqrt( errang[0]*errang[0] + errang[1]*errang[1] ) 
-                    + sqrt( errsurf[0]*errsurf[0] + errsurf[1]*errsurf[1] ) )*1000.;          //mrad  normal vector error
+            errnorm = sqrt( errang[0]*errang[0] + errang[1]*errang[1]  
+                    + errsurf[0]*errsurf[0] + errsurf[1]*errsurf[1] )*1000.;          //mrad  normal vector error
         double errsurface = sqrt( errrefl[0]*errrefl[0] + errrefl[1]*errrefl[1] ) * 1000.;      //mrad - reflected vector error (specularity)
 				
 		/* 
@@ -902,7 +902,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 
 	vector<Receiver*> *recs = SF.getReceivers();
 	int nrecs = recs->size();
-	unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
+	std::unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
 	
 	if(r_stage->ElementList.size() > 0){
 		return false;	//Error

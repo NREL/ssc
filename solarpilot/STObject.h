@@ -212,7 +212,7 @@ struct ST_Stage
 	double RRefToLoc[3][3];
 	double RLocToRef[3][3];
 	string Name;
-	ST_RayData ST_RayData;
+	//ST_RayData ST_RayData;
 	void Write(FILE *fdat);
 };
 

@@ -36,7 +36,7 @@ struct LAYOUT_DETAIL
 	};
 };
 
-using namespace std;
+//using namespace std;
 
 //Declare any referenced classes first
 class Receiver;
@@ -327,8 +327,8 @@ public:
 	static bool parseHeliostatXYZFile(const std::string &filedat, layout_shell &layout );
 	int calcNumRequiredSimulations();
 	//double calcLandArea();
-	double calcPipingHeatLoss();
-	double calcTotalHeatLoss();
+	double getReceiverPipingHeatLoss(); //kWt
+	double getReceiverTotalHeatLoss();  //kWt
 	void HermiteFluxSimulation(Hvector &helios, bool keep_existing_profile = false);
 	void AnalyticalFluxSimulation(Hvector &helios);
 	void CalcDimensionalFluxProfiles(Hvector &helios);

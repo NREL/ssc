@@ -1,5 +1,6 @@
 #include "STSimulateThread.h"
 #include "definitions.h"
+#include "exceptions.hpp"
 
 #ifdef SP_USE_SOLTRACE
 using namespace std;
@@ -40,7 +41,7 @@ void STSimThread::CopyStageRayData( vector<vector<double> > &src, int which_stag
     catch(std::exception &e)
     {
         string msg = "Error resizing raytrace data array";
-        throw exception(msg.c_str());
+        throw spexception(msg.c_str());
     }
 
     for(int i=istart; i<iend; i++)

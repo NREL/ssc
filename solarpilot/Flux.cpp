@@ -1967,7 +1967,7 @@ void Flux::hermiteIntegral(double G[5], double F[5], double X[2], double A[2], d
 	double xx, x12, x[3], xsq[3], fk, s2, s3, sign2, sign3;
 	int ipak, i, j, k, n, jmin, jmax;
 #ifdef _WRITE_FILE
-    string name = "C:\\Users\\mwagner\\Documents\\NREL\\Field optimization\\Misc sim files\\int\\hdat.csv";
+    string name = "C:/Users/mwagner/Documents/NREL/Field optimization/Misc sim files/int/hdat.csv";
     ofstream fout(name.c_str());
     fout << "x0,x1,x2,xsq1,2,3,sign2,3,s2,s3,h-->\n";
     fout.clear();
@@ -2726,7 +2726,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		//The flux grid needs to be updated after each heliostat
 		HV.clear();
 		HV.push_back(&H);
-		fluxDensity(*FS, SF, HV, args[1] == 1.? true : false, islast);
+		fluxDensity(*FS, SF, HV, args[2] == 1.? true : false, islast);
 		break;
 	}
 	case Receiver::REC_GEOM_TYPE::PLANE_RECT:
@@ -2773,7 +2773,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		stretch_factor = Toolbox::dotprod(r_to_h, *NV.vect());
 
 		//Stretch the major vertical axis of the ellipse
-		imsizey = sigy*args[0]/stretch_factor;	
+		imsizey = sigy*args[1]/stretch_factor;	
 		imsizex = sigx*args[0];
 
 		/* 
@@ -2839,7 +2839,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		//The flux grid needs to be updated after each heliostat
 		HV.clear();
 		HV.push_back(&H);
-		fluxDensity(*FS, SF, HV, args[1] == 1.? true : false, islast);
+		fluxDensity(*FS, SF, HV, args[2] == 1.? true : false, islast);
 
 		break;
 	}

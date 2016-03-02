@@ -37,10 +37,15 @@ void FluxSimData::Create(var_map &V)
 	setVar("save_data_loc", _save_data_loc, V, "soltrace_ray_data.csv");		//Choose a location to save the ray data
 	setVar("seed", _seed, V, -1, "[-1, 9e9]");		//The seed for the random number generator
 	setVar("sigma_limit", _sigma_limit, V, 2., "[0.,1000]");		//Image positioning cutoff - desired distance of each image in standard deviations from the receiver edge
-	setVar("x_res", _x_res, V, 25, "[1,1000]");		//Number of flux test points per panel (maximum) in the vertical direction for the flux simulation
+	setVar("sigma_limit_y", _sigma_limit_y, V, -1., "[0.,1000]");		//Image positioning cutoff in the Y direction (flat plate receivers only)
+    setVar("x_res", _x_res, V, 25, "[1,1000]");		//Number of flux test points per panel (maximum) in the vertical direction for the flux simulation
 	setVar("y_res", _y_res, V, 25, "[1,1000]");		//Number of flux test points per panel (maximum) in the horizontal direction for the flux simulation
 	setVar("is_autoscale", _is_autoscale, V, true);		//Autoscale the Z-axis of the contour plot
 	setVar("plot_zmax", _plot_zmax, V, 1000.);		//Z-axis maximum value
 	setVar("plot_zmin", _plot_zmin, V, 0.);		//Z-axis minimum value
 	setVar("flux_data", _flux_data, V, "");		//2D matrix of flux data
+
+    if(_sigma_limit_y < 0. )
+        _sigma_limit_y = _sigma_limit;
+
 }

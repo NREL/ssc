@@ -30,6 +30,7 @@ public:
     double _flux_dni;
     double _norm_dist_sigma;
     double _sigma_limit;
+    double _sigma_limit_y;
     double _plot_zmax;
     double _plot_zmin;
     int _aim_method;
