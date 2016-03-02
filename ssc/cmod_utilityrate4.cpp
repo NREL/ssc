@@ -275,18 +275,18 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_dec_tp", "Energy charge with system (TOU) Dec", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 
 	// energy use w system
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jan_tp", "Energy use with system (TOU) Jan", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_feb_tp", "Energy use with system (TOU) Feb", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_mar_tp", "Energy use with system (TOU) Mar", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_apr_tp", "Energy use with system (TOU) Apr", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_may_tp", "Energy use with system (TOU) May", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jun_tp", "Energy use with system (TOU) Jun", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jul_tp", "Energy use with system (TOU) Jul", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_aug_tp", "Energy use with system (TOU) Aug", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_sep_tp", "Energy use with system (TOU) Sep", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_oct_tp", "Energy use with system (TOU) Oct", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_nov_tp", "Energy use with system (TOU) Nov", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_dec_tp", "Energy use with system (TOU) Dec", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jan_tp", "Electricity use with system (TOU) Jan", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_feb_tp", "Electricity use with system (TOU) Feb", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_mar_tp", "Electricity use with system (TOU) Mar", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_apr_tp", "Electricity use with system (TOU) Apr", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_may_tp", "Electricity use with system (TOU) May", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jun_tp", "Electricity use with system (TOU) Jun", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_jul_tp", "Electricity use with system (TOU) Jul", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_aug_tp", "Electricity use with system (TOU) Aug", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_sep_tp", "Electricity use with system (TOU) Sep", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_oct_tp", "Electricity use with system (TOU) Oct", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_nov_tp", "Electricity use with system (TOU) Nov", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
+	{ SSC_OUTPUT, SSC_MATRIX, "energy_w_sys_ec_dec_tp", "Electricity use with system (TOU) Dec", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 
 	// energy surplus w system
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_w_sys_ec_jan_tp", "Electricity surplus with system (TOU) Jan", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
@@ -1826,6 +1826,13 @@ public:
 				m_month[m].ec_energy_surplus.resize_fill(num_periods, num_tiers, 0);
 				m_month[m].ec_charge.resize_fill(num_periods, num_tiers, 0);
 
+
+
+
+
+				// accumulate energy per period - place all in tier 0 initially and then
+				// break up according to tier boundaries and number of periods
+
 				/*  hour by hour accumulation - changed to monthly per meeting with Paul 2/29/16 */
 				// monthly accumulation of energy
 				ssc_number_t mon_e_net = 0;
@@ -1851,76 +1858,104 @@ public:
 							throw exec_error("utilityrate4", ss.str());
 						}
 						int row = (int)(per_num - m_month[m].ec_periods.begin());
-						// look at energy accumulation and tier ub to determine where energy goes in matrix
-						tier = start_tier;
-						// translate to energy use for tier determination
-						// update energy per tier for charges
-						ub = -mon_e_net;
-						// sign change for load
-						if (mon_e_net > 0)
-							ub = mon_e_net;
-						while ((tier <  end_tier) && (ub >  m_month[m].ec_tou_ub.at(row, tier)))
-							tier++;
- 
-						ssc_number_t e_net_tier = e_in[c];
-						// handle tier boundaries
-						if (tier > tier_old) // change boundary
-						{
-//							e_net_tier = ub - m_month[m].ec_tou_ub.at(row, tier_old);
-							// rounding issues
-							ssc_number_t e_net_tier_old = m_month[m].ec_tou_ub.at(row, tier_old) - ub_old;
-							e_net_tier = fabs(e_in[c]) - e_net_tier_old;
-
-//							ssc_number_t e_net_tier_old = fabs(e_in[c]) - e_net_tier;
-							// loads are negative and gen is positive - want sign of e_in[c]
-							if (e_in[c] < 0)
-							{
-								e_net_tier = -e_net_tier;
-								e_net_tier_old = -e_net_tier_old;
-							}
-							m_month[m].ec_energy_use.at(row, tier) -= e_net_tier;
-							m_month[m].ec_energy_use.at(row, tier_old) -= e_net_tier_old;
-						}
-						else if (tier < tier_old) // change boundary
-						{
-							e_net_tier = ub - m_month[m].ec_tou_ub.at(row, tier);
-							// rounding issues
-							//ssc_number_t e_net_tier_old = m_month[m].ec_tou_ub.at(row, tier_old) - ub_old;
-							//e_net_tier = fabs(e_in[c]) - e_net_tier_old;
-
-							ssc_number_t e_net_tier_old = fabs(e_in[c]) - e_net_tier;
-							// loads are negative and gen is positive - want sign of e_in[c]
-							if (e_in[c] > 0)
-							{
-								e_net_tier = -e_net_tier;
-								e_net_tier_old = -e_net_tier_old;
-							}
-							m_month[m].ec_energy_use.at(row, tier) -= e_net_tier;
-							m_month[m].ec_energy_use.at(row, tier_old) -= e_net_tier_old;
-						}
-
-						else
-						{
-							//						m_month[m].ec_energy_use.at(row, tier) -= e_in[c]; // energy use - load negative and generation positive
-							m_month[m].ec_energy_use.at(row, tier) -= e_net_tier;
-						}
+						// place all in tier 0 initially and then update appropriately
+						// net energy per period per month
+						m_month[m].ec_energy_use(row, 0) += e_in[c];
 						c++;
-						ub_old = ub;
-						tier_old = tier;
 					}
 				}
-				// with output surplus, go through and set if any use <= 0
+
+				// rollover energy from correct period
+				if (m > 0)
+				{
+					// check for surplus in previous month for same period
+					for (size_t ir = 0; ir < m_month[m - 1].ec_energy_surplus.nrows(); ir++)
+					{
+						if (m_month[m - 1].ec_energy_surplus.at(ir, 0) > 0) // surplus - check period
+						{
+							int toup = m_month[m - 1].ec_periods[ir]; // number of rows of previous month
+							std::vector<int>::iterator per_num = std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), toup);
+							if (per_num == m_month[m].ec_periods.end())
+							{
+								std::ostringstream ss;
+								ss << "utilityrate4: energy charge rollover for period " << toup << " not found for month " << m;
+								log(ss.str(), SSC_NOTICE);
+							}
+							else
+							{
+								ssc_number_t extra = 0;
+								int row = (int)(per_num - m_month[m].ec_periods.begin());
+								for (size_t ic = 0; ic < m_month[m - 1].ec_energy_surplus.ncols(); ic++)
+									extra += m_month[m - 1].ec_energy_surplus.at(ir, ic);
+
+								m_month[m].ec_energy_use(row, 0) += extra;
+							}
+						}
+					}
+				}
+				// set surplus or use
 				for (size_t ir = 0; ir < m_month[m].ec_energy_use.nrows(); ir++)
 				{
-					for (size_t ic = 0; ic < m_month[m].ec_energy_use.ncols(); ic++)
+					if (m_month[m].ec_energy_use.at(ir, 0) > 0)
 					{
-						if (m_month[m].ec_energy_use.at(ir, ic) < 0)
+						m_month[m].ec_energy_surplus.at(ir, 0) = m_month[m].ec_energy_use.at(ir, 0);
+						m_month[m].ec_energy_use.at(ir, 0) = 0;
+					}
+					else
+						m_month[m].ec_energy_use.at(ir, 0) = -m_month[m].ec_energy_use.at(ir, 0);
+				}
+				// now ditribute across tier boundaries - upper bounds equally across periods
+				ssc_number_t num_per = (ssc_number_t)m_month[m].ec_energy_use.nrows();
+				for (size_t ir = 0; ir < m_month[m].ec_energy_use.nrows(); ir++)
+				{
+					if (m_month[m].ec_energy_use.at(ir, 0) > 0)
+					{
+						ssc_number_t energy = m_month[m].ec_energy_use.at(ir, 0);
+						for (size_t ic = 0; ic < m_month[m].ec_tou_ub.ncols(); ic++)
 						{
-							m_month[m].ec_energy_surplus.at(ir, ic) = -m_month[m].ec_energy_use.at(ir, ic);
-							m_month[m].ec_energy_use.at(ir, ic) = 0;
+							ssc_number_t ub_per = m_month[m].ec_tou_ub.at(ir, ic) / num_per;
+							if (energy > ub_per)
+							{
+								m_month[m].ec_energy_use.at(ir, ic) = ub_per;
+								if (ic>0)
+									m_month[m].ec_energy_use.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic-1) / num_per;
+							}
+							else
+							{
+								m_month[m].ec_energy_use.at(ir, ic) = energy;
+								if (ic>0)
+									m_month[m].ec_energy_use.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic - 1) / num_per;
+								break;
+							}
 						}
 					}
 				}
+				// repeat for surplus
+				for (size_t ir = 0; ir < m_month[m].ec_energy_surplus.nrows(); ir++)
+				{
+					if (m_month[m].ec_energy_surplus.at(ir, 0) > 0)
+					{
+						ssc_number_t energy = m_month[m].ec_energy_surplus.at(ir, 0);
+						for (size_t ic = 0; ic < m_month[m].ec_tou_ub.ncols(); ic++)
+						{
+							ssc_number_t ub_per = m_month[m].ec_tou_ub.at(ir, ic) / num_per;
+							if (energy > ub_per)
+							{
+								m_month[m].ec_energy_surplus.at(ir, ic) = ub_per;
+								if (ic > 0)
+									m_month[m].ec_energy_surplus.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic - 1) / num_per;
+							}
+							else
+							{
+								m_month[m].ec_energy_surplus.at(ir, ic) = energy;
+								if (ic > 0)
+									m_month[m].ec_energy_surplus.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic - 1) / num_per;
+								break;
+							}
+						}
+					}
+				}
+
 			} // end month
 		}
 
