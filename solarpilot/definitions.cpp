@@ -113,6 +113,7 @@ vardefs variable_definition_array[] = {
 	{"fluxsim", "save_data_loc", "_save_data_loc", "string", "soltrace_ray_data.csv", "", "", "FALSE", "", "", "", "ray data", "Choose a location to save the ray data"},
 	{"fluxsim", "seed", "_seed", "int", "-1", "none", "[-1, 9e9]", "FALSE", "", "", "", "Seed value (-1 for automatic selection)", "The seed for the random number generator"},
 	{"fluxsim", "sigma_limit", "_sigma_limit", "double", "2", "", "[0.,1000]", "TRUE", "", "", "", "Positioning cutoff (standard deviations)", "Image positioning cutoff - desired distance of each image in standard deviations from the receiver edge"},
+	{"fluxsim", "sigma_limit_y", "_sigma_limit_y", "double", "-99", "none", "[0.,1000]", "TRUE", "", "", "X", "Positioning cutoff in second direction", "Image positioning cutoff in the secondary direction (flat plate receivers only)"},
 	{"fluxsim", "x_res", "_x_res", "int", "25", "none", "[1,1000]", "FALSE", "", "", "", "Flux grid resolution - Horizontal", "Number of flux test points per panel (maximum) in the vertical direction for the flux simulation"},
 	{"fluxsim", "y_res", "_y_res", "int", "25", "none", "[1,1000]", "FALSE", "", "", "", "Flux grid resolution - Vertical", "Number of flux test points per panel (maximum) in the horizontal direction for the flux simulation"},
 	{"fluxsim", "is_autoscale", "_is_autoscale", "bool", "TRUE", "none", "", "FALSE", "checkbox", "", "", "Autoscale", "Autoscale the Z-axis of the contour plot"},

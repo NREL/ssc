@@ -21,7 +21,7 @@ typedef vector<FluxSurface> FluxSurfaces;
 typedef vector<Heliostat*> Hvector;
 //struct helio_perf_data;
 
-using namespace std;
+//using namespace std;
 
 /* 
 NOTE
@@ -198,6 +198,9 @@ public:
 		total_land_area,
 		power_on_field,
 		power_absorbed,
+        power_thermal_loss, 
+        power_piping_loss,
+        power_to_htf,
 		power_to_cycle,
 		power_gross,
 		power_net,

@@ -17,12 +17,15 @@
 #define _DEMO 0	//Is this a demo version?
 const int _demo_date[] = {2014,8,1};
 //Include Coretrace (relevant to fieldcore only! Disabling this option will cause SolarPILOT compilation to fail.).
-//#define SP_USE_SOLTRACE
-//Compile without threading functionality? Comment out to remove.
-//#define SP_USE_THREADS
-//crete local make-dir functions
-//#define SP_USE_MKDIR
-
+#ifdef SP_STANDALONE
+	#define SP_USE_SOLTRACE
+	//Compile without threading functionality? Comment out to remove.
+	#define SP_USE_THREADS
+	//crete local make-dir functions
+	#ifdef _WIN32 
+	    #define SP_USE_MKDIR
+	#endif
+#endif
 
 struct vardefs
 {
@@ -30,5 +33,5 @@ struct vardefs
 				*isparam, *control, *special, *disable, *label, *description;
 };
 
-extern vardefs variable_definition_array[327];
+extern vardefs variable_definition_array[328];
 #endif

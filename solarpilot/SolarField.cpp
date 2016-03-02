@@ -9,11 +9,11 @@
 #include "Land.h"
 #include "Plant.h"
 #include "Flux.h"
+#include "heliodata.h"
 
 #include "OpticalMesh.h"
 #include <algorithm>
 #include "exceptions.hpp"
-
 
 //-------Access functions
 //"GETS"
@@ -220,7 +220,7 @@ SolarField::SolarField( const SolarField &sf )
 	int nr, nc;
 	nr = sf._helio_groups.nrows();
 	nc = sf._helio_groups.ncols();
-	_helio_groups.resize_fill(nr, nc, Hvector());
+	_helio_groups.resize_fill(nr, nc, Hvector()); //NULL));
 	for(int i=0; i<nr; i++){
 		for(int j=0; j<nc; j++){
 			int nh = sf._helio_groups.at(i,j).size();
@@ -245,7 +245,7 @@ SolarField::SolarField( const SolarField &sf )
 	//Neighbors
 	nr = sf._neighbors.nrows();
 	nc = sf._neighbors.ncols();
-	_neighbors.resize_fill(nr, nc, Hvector()); //0, (Heliostat*)0));
+	_neighbors.resize_fill(nr, nc, Hvector()); //0, NULL));
 	for(int i=0; i<nr; i++){
 		for(int j=0; j<nc; j++){
 			int nh = sf._neighbors.at(i,j).size();
@@ -1446,7 +1446,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
         //normalize for available heliostat power if applicable
         double afact = 1.;
-        if( rid == helio_perf_data::POWER_TO_REC || rid == helio_perf_data::POWER_VALUE )
+        if( rid == helio_perf_data::PERF_VALUES::POWER_TO_REC || rid == helio_perf_data::PERF_VALUES::POWER_VALUE )
             afact = _heliostats.at(i)->getArea();
         
         double rank_val = rmet / (afact*(float)nresults);       //Calculate the normalized ranking metric. Divide by heliostat area if needed
@@ -1608,7 +1608,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	for(int i=0; i<Npos; i++){
         int hid = _heliostats.at(i)->getId();
 	    for(int j=0; j<nresults; j++){
-			_estimated_annual_power += results->at(j).data_by_helio[ hid ].getDataByIndex( helio_perf_data::POWER_VALUE );  //this include receiver efficiency penalty
+			_estimated_annual_power += results->at(j).data_by_helio[ hid ].getDataByIndex( helio_perf_data::PERF_VALUES::POWER_VALUE );  //this include receiver efficiency penalty
 		}
 	}
 
@@ -1662,7 +1662,7 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 
 	//If the ranking requires TOD factors, get the array now
 	matrix_t<int> *TOD;
-	if(rindex == helio_perf_data::POWER_VALUE)
+	if(rindex == helio_perf_data::PERF_VALUES::POWER_VALUE)
 		TOD = SF->getFinancialObject()->getHourlyTODSchedule();
 	double *pfs = SF->getFinancialObject()->getPaymentFactors();
 	bool is_pmt_factors = SF->getFinancialObject()->isPaymentFactors();
@@ -1775,10 +1775,10 @@ void SolarField::AnnualEfficiencySimulation( string weather_file, SolarField *SF
 			double payfactor = 1., zval ;
 			switch(rindex)
 			{
-			case helio_perf_data::POWER_VALUE:
+			case helio_perf_data::PERF_VALUES::POWER_VALUE:
 				if(is_pmt_factors)
 					payfactor = pfs[TOD->at(i)-1];
-			case helio_perf_data::POWER_TO_REC:
+			case helio_perf_data::PERF_VALUES::POWER_TO_REC:
 				zval = dni/dni_des * payfactor * z_interp * nsimd;
 				break;
 			default:
@@ -3293,7 +3293,14 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 		-> For this method, args[0] = limiting sigma factor. This determines the distance away from the edge
 									  in standard deviations of each image.
 							args[1] = alternation flag indicating which receiver edge the offset should reference (+1 or -1)
-	
+    2   |   Probability         |   
+    3   |   Image SIze          |
+        ->  args[0] = limiting sigma factor
+            args[1] = limiting sigma factor y
+            args[2] = First image flag
+    4   |   Keep Existing       |
+    5   |   Freeze              |
+		
 	When calculating the aim points, the heliostat images should be updated. Call the flux image updator for methods other
 	than simple aim points.
 
@@ -3303,10 +3310,11 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 
 	int nh = _heliostats.size();
 
-	if(method == 1) args[1] = 1.;
+	if(method == FluxSimData::AIM_STRATEGY::SIGMA) 
+        args[1] = 1.;
 
 	//If the method requires image size, update the analytical estimates of the image
-	if(method != 0){
+	if(method != FluxSimData::AIM_STRATEGY::SIMPLE){
 		//updateAllTrackVectors(); //Do we need to update the tracking vectors to evaluate image size?
 		RefactorHeliostatImages();
 	}
@@ -3344,7 +3352,7 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 			break;
 		case FluxSimData::AIM_STRATEGY::IMAGE_SIZE:
 			try{
-				args[1] = i == 0 ? 1. : 0.;
+				args[2] = i == 0 ? 1. : 0.;
 				_flux->imageSizeAimPoint(*hsort.at(nh-i-1), *this, args, i==nh-1);	//Send in descending order
 			}
 			catch(...){
@@ -3500,6 +3508,31 @@ int SolarField::calcNumRequiredSimulations(){
 	}
 	return nsim;
 }
+
+double SolarField::getReceiverTotalHeatLoss()
+{
+    double qloss = 0.;
+
+    for(int i=0; i<(int)_receivers.size(); i++)
+    {
+        qloss = _receivers.at(i)->getReceiverThermalLoss()*1000.;   //kWt
+    }
+
+    return qloss;
+}
+
+double SolarField::getReceiverPipingHeatLoss()
+{
+	double qloss = 0.;
+
+    for(int i=0; i<(int)_receivers.size(); i++)
+    {
+        qloss = _receivers.at(i)->getReceiverPipingLoss()*1000.;   //kWt
+    }
+
+    return qloss;
+}
+
 
 void SolarField::HermiteFluxSimulation(Hvector &helios, bool keep_existing_profile){
 	if( ! keep_existing_profile )

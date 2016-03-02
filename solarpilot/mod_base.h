@@ -7,7 +7,7 @@ These components can use the methods and variable declarations provided here.
 */
 #ifdef _MSC_VER
 #include <unordered_map>
-using std::tr1::unordered_map;
+using std::unordered_map;
 #else
 #include <tr1/unordered_map>
 using std::tr1::unordered_map;
@@ -20,7 +20,7 @@ using std::tr1::unordered_map;
 #include "string_util.h"
 #include "Toolbox.h"
 
-using namespace std;
+//using namespace std;
 
 #pragma warning(disable:4503)	//warning for name length - VS2010 compiler
 #pragma warning(disable:4505)	//warning for removing unused method

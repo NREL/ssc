@@ -953,9 +953,10 @@ void interop::AimpointUpdateHandler(SolarField &SF){
 		SF.calcAllAimPoints(fd->_aim_method,args,3);
 	}
 	else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::IMAGE_SIZE){ //Image size priority
-		double args[2];	//args[0] = sigma, args[1] = reset flux grid flag
+		double args[3];	//args[0] = sigma limit x, args[1] = sigma limit y, args[2] = reset flux grid flag
 		args[0] = fd->_sigma_limit;
-		SF.calcAllAimPoints(fd->_aim_method, args, 1);
+        args[1] = fd->_sigma_limit_y;
+		SF.calcAllAimPoints(fd->_aim_method, args, 3);
 	}
 	else if(fd->_aim_method == FluxSimData::AIM_STRATEGY::EXISTING)
     { 
@@ -1222,6 +1223,9 @@ void sim_result::initialize(){
 	total_land_area = 0.;
 	power_on_field = 0.;
 	power_absorbed = 0.;
+    power_thermal_loss = 0.;
+    power_piping_loss = 0.;
+    power_to_htf = 0.;
 	power_to_cycle = 0.;
 	power_gross = 0.;
 	power_net = 0.;
@@ -1298,66 +1302,66 @@ void sim_result::process_field_stats(){
 
 	//Assign the named variables
 	eff_total_heliostat.set( 
-		mins[ helio_perf_data::ETA_TOT ], 
-		maxs[ helio_perf_data::ETA_TOT ], 
-		aves[ helio_perf_data::ETA_TOT ], 
-		stdevs[ helio_perf_data::ETA_TOT ], 
-		sums[ helio_perf_data::ETA_TOT ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]);
 	eff_cosine.set(
-		mins[ helio_perf_data::ETA_COS ], 
-		maxs[ helio_perf_data::ETA_COS ], 
-		aves[ helio_perf_data::ETA_COS ], 
-		stdevs[ helio_perf_data::ETA_COS ], 
-		sums[ helio_perf_data::ETA_COS ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_COS ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_COS ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_COS ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_COS ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_COS ]);
 	eff_attenuation.set(
-		mins[ helio_perf_data::ETA_ATT ], 
-		maxs[ helio_perf_data::ETA_ATT ], 
-		aves[ helio_perf_data::ETA_ATT ], 
-		stdevs[ helio_perf_data::ETA_ATT ], 
-		sums[ helio_perf_data::ETA_ATT ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_ATT ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_ATT ]);
 	eff_blocking.set(
-		mins[ helio_perf_data::ETA_BLOCK ], 
-		maxs[ helio_perf_data::ETA_BLOCK ], 
-		aves[ helio_perf_data::ETA_BLOCK ], 
-		stdevs[ helio_perf_data::ETA_BLOCK ], 
-		sums[ helio_perf_data::ETA_BLOCK ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_BLOCK ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_BLOCK ]);
 	eff_shading.set(
-		mins[ helio_perf_data::ETA_SHADOW ], 
-		maxs[ helio_perf_data::ETA_SHADOW ], 
-		aves[ helio_perf_data::ETA_SHADOW ], 
-		stdevs[ helio_perf_data::ETA_SHADOW ], 
-		sums[ helio_perf_data::ETA_SHADOW ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_SHADOW ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_SHADOW ]);
 	eff_intercept.set(
-		mins[ helio_perf_data::ETA_INT ], 
-		maxs[ helio_perf_data::ETA_INT ], 
-		aves[ helio_perf_data::ETA_INT ], 
-		stdevs[ helio_perf_data::ETA_INT ], 
-		sums[ helio_perf_data::ETA_INT ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_INT ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_INT ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_INT ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_INT ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_INT ]);
 	eff_absorption.set(
-		mins[ helio_perf_data::REC_ABSORPTANCE ], 
-		maxs[ helio_perf_data::REC_ABSORPTANCE ], 
-		aves[ helio_perf_data::REC_ABSORPTANCE ], 
-		stdevs[ helio_perf_data::REC_ABSORPTANCE ], 
-		sums[ helio_perf_data::REC_ABSORPTANCE ]);
+		mins[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		maxs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		aves[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		stdevs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		sums[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ]);
 	eff_cloud.set(
-		mins[ helio_perf_data::ETA_CLOUD ], 
-		maxs[ helio_perf_data::ETA_CLOUD ], 
-		aves[ helio_perf_data::ETA_CLOUD ], 
-		stdevs[ helio_perf_data::ETA_CLOUD ], 
-		sums[ helio_perf_data::ETA_CLOUD ]);
+		mins[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_CLOUD ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_CLOUD ]);
 	eff_reflect.set(
-		mins[ helio_perf_data::REFLECTIVITY ]*mins[ helio_perf_data::SOILING ], 
-		maxs[ helio_perf_data::REFLECTIVITY ]*maxs[ helio_perf_data::SOILING ], 
-		aves[ helio_perf_data::REFLECTIVITY ]*aves[ helio_perf_data::SOILING ], 
-		stdevs[ helio_perf_data::REFLECTIVITY ]*stdevs[ helio_perf_data::SOILING ], 
-		sums[ helio_perf_data::REFLECTIVITY ]*sums[ helio_perf_data::SOILING ]
+		mins[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*mins[ helio_perf_data::PERF_VALUES::SOILING ], 
+		maxs[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*maxs[ helio_perf_data::PERF_VALUES::SOILING ], 
+		aves[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*aves[ helio_perf_data::PERF_VALUES::SOILING ], 
+		stdevs[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*stdevs[ helio_perf_data::PERF_VALUES::SOILING ], 
+		sums[ helio_perf_data::PERF_VALUES::REFLECTIVITY ]*sums[ helio_perf_data::PERF_VALUES::SOILING ]
 	);
 	eff_total_sf.set(
-		mins[ helio_perf_data::ETA_TOT ]*mins[ helio_perf_data::REC_ABSORPTANCE ], 
-		maxs[ helio_perf_data::ETA_TOT ]*maxs[ helio_perf_data::REC_ABSORPTANCE ], 
-		aves[ helio_perf_data::ETA_TOT ]*aves[ helio_perf_data::REC_ABSORPTANCE ], 
-		stdevs[ helio_perf_data::ETA_TOT ]*stdevs[ helio_perf_data::REC_ABSORPTANCE ], 
-		sums[ helio_perf_data::ETA_TOT ]*sums[ helio_perf_data::REC_ABSORPTANCE ]
+		mins[ helio_perf_data::PERF_VALUES::ETA_TOT ]*mins[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		maxs[ helio_perf_data::PERF_VALUES::ETA_TOT ]*maxs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		aves[ helio_perf_data::PERF_VALUES::ETA_TOT ]*aves[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		stdevs[ helio_perf_data::PERF_VALUES::ETA_TOT ]*stdevs[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ], 
+		sums[ helio_perf_data::PERF_VALUES::ETA_TOT ]*sums[ helio_perf_data::PERF_VALUES::REC_ABSORPTANCE ]
 	);
 	
 	delete [] sums;
@@ -1428,6 +1432,11 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, Hv
 		dni =  SF.getDesignPointDNI()/1000.;
 		power_on_field = total_heliostat_area * dni;	//[kW]
 		power_absorbed = power_on_field * eff_total_sf.ave;
+
+        power_thermal_loss = SF.getReceiverTotalHeatLoss();
+        power_piping_loss = SF.getReceiverPipingHeatLoss();
+        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
+
 		solar_az = SF.getAmbientObject()->getSolarAzimuth();
 		solar_zen = SF.getAmbientObject()->getSolarZenith();
 
@@ -1444,6 +1453,10 @@ void sim_result::process_analytical_simulation(SolarField &SF, int nsim_type, Hv
 		dni =  SF.getDesignPointDNI()/1000.;
 		power_on_field = total_heliostat_area * dni;	//[kW]
 		power_absorbed = power_on_field * eff_total_sf.ave;
+        power_thermal_loss = SF.getReceiverTotalHeatLoss();
+        power_piping_loss = SF.getReceiverPipingHeatLoss();
+        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
+
 		solar_az = SF.getAmbientObject()->getSolarAzimuth();
 		solar_zen = SF.getAmbientObject()->getSolarZenith();
 
@@ -1543,6 +1556,10 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, Hvec
 
 		power_on_field = total_heliostat_area *dni;	//[kW]
 		power_absorbed = qray * nrabs;
+        power_thermal_loss = SF.getReceiverTotalHeatLoss();
+        power_piping_loss = SF.getReceiverPipingHeatLoss();
+        power_to_htf = power_absorbed - (power_thermal_loss + power_piping_loss);
+
         eff_total_sf.set(0,0, power_absorbed / power_on_field, 0, 0.);
         eff_cosine.set(0.,0., (double)nhin/(double)nsunrays*Abox/total_heliostat_area, 0., 0.);
 		eff_blocking.set(0.,0., 1.-(double)nhblock/(double)(nhin-nhabs), 0., 0.);

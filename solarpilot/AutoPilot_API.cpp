@@ -2462,7 +2462,8 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 					sim_first = 0,
 					sim_last = npert;
 				for(int i=0; i<nthreads; i++){
-					_simthread[i].Setup(my_to_string(i+1), SFarr[i], &_variables, &results, &wdata, sim_first, sim_last, false, false);
+                    std::string istr = my_to_string(i+1);
+                    _simthread[i].Setup(istr, SFarr[i], &_variables, &results, &wdata, sim_first, sim_last, false, false);
 					sim_first = sim_last;
 					sim_last = min(sim_last+npert, nsim_req);
 				}
@@ -2677,7 +2678,8 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 		sim_first = 0,
 		sim_last = npert;
 	for(int i=0; i<_n_threads; i++){
-		_simthread[i].Setup(my_to_string(i), SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, false);
+        std::string istr = my_to_string(i);
+		_simthread[i].Setup(istr, SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, false);
 		sim_first = sim_last;
 		sim_last = min(sim_last+npert, _sim_total);
 	}
@@ -2844,7 +2846,8 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 		sim_first = 0,
 		sim_last = npert;
 	for(int i=0; i<_n_threads; i++){
-		_simthread[i].Setup(my_to_string(i), SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, true);
+        std::string istr = my_to_string(i);
+        _simthread[i].Setup(istr, SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, true);
 		_simthread[i].IsFluxmapNormalized(is_normalized);
 		sim_first = sim_last;
 		sim_last = min(sim_last+npert, _sim_total);

@@ -476,14 +476,16 @@ double Receiver::getOffsetZ(){return _rec_offset_z;}
 double Receiver::getOpticalHeight(){return _opt_height;}	//[m] Optical height
 double Receiver::getAbsorptance(){return _absorptance;}
 double Receiver::getReceiverAbsorberArea(){return _absorber_area;}
-double Receiver::getReceiverThermalLoss(){return _therm_loss;}
-double Receiver::getReceiverPipingLoss(){return _piping_loss;}
+double Receiver::getReceiverThermalLoss(){return _therm_loss;}  //kWt
+double Receiver::getReceiverPipingLoss(){return _piping_loss;}  //kWt
 double Receiver::getReceiverThermalEfficiency(){return _thermal_eff;}
 int Receiver::getNumberPanels(){return _is_polygon ? _n_panels : 0; }
 double Receiver::getPanelRotation(){return _panel_rotation; }
 void Receiver::getAcceptAngles(double &theta_x, double &theta_y){theta_x = _accept_ang_x; theta_y = _accept_ang_y;};
 void Receiver::getReceiverOffset(Point &offset){offset.x = _rec_offset_x; offset.y = _rec_offset_y; offset.z = _rec_offset_z;}
 void Receiver::getReceiverSpan(double &span_min, double &span_max, double &azimuth){span_min = _span_min; span_max = _span_max; azimuth = _panel_rotation;};
+double Receiver::getReceiverCavityRadius(){ return _rec_cav_rad; };
+double Receiver::getReceiverCavityDepth(){ return _rec_cav_cdepth; };
 FluxSurfaces *Receiver::getFluxSurfaces(){ return &_surfaces; }
 string *Receiver::getReceiverName(){return &_rec_name;}
 bool Receiver::isReceiverEnabled(){return _is_enabled;}

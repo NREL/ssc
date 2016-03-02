@@ -229,6 +229,8 @@ public:
 	void getAcceptAngles(double &theta_x, double &theta_y);
 	void getReceiverOffset(Point &offset);
 	void getReceiverSpan(double &span_min, double &span_max, double &azimuth);
+    double getReceiverCavityRadius();
+    double getReceiverCavityDepth();
 	void CalculateNormalVector(PointVect &NV);	//Returns the normal vector and receiver centroid that represents the optimal optical incidence
 	void CalculateNormalVector(Point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal vector given a viewpoint vector
 	FluxSurfaces *getFluxSurfaces();
