@@ -220,13 +220,13 @@ public:
 	struct S_des_par_ind
 	{
 		double m_T_amb_des;		//[K] Design point ambient temperature
-		double m_P_amb_des;		//[Pa] Design point ambient pressure
-		double m_frac_fan_power;	//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
-		double m_deltaP_cooler_frac;       // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_elev;			//[m] Elevation (used to calculate ambient pressure)
+		//double m_frac_fan_power;	//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		//double m_deltaP_cooler_frac;       // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
 		
 		S_des_par_ind()
 		{
-			m_T_amb_des = m_P_amb_des = m_frac_fan_power = m_deltaP_cooler_frac = std::numeric_limits<double>::quiet_NaN();
+			m_T_amb_des = m_elev = /*m_frac_fan_power = m_deltaP_cooler_frac =*/ std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -287,7 +287,7 @@ private:
 
 	// Design Ambient Conditions
 	//double m_T_amb_des;		//[K]
-	//double m_P_amb_des;		//[Pa]
+	double m_P_amb_des;		//[Pa]
 
 	// Hot-side Inlet Conditions
 	//double m_T_hot_in_des;		//[K]
