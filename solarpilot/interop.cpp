@@ -1099,12 +1099,12 @@ bool interop::SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &S
 	//simulate, setting the UI callback and a pointer to the UI class
 	
 	st_sim_params( cxt, minrays, maxrays );
-    if(load_stage_data)
-        return st_sim_run_data(cxt, seed, st0data, st1data, false, callback, par) != -1;
-    else if(save_stage_data)
-        return st_sim_run_data(cxt, seed, st0data, st1data, true, callback, par) != -1;
-    else
-	    return st_sim_run(cxt, seed, callback, par) != -1;
+    //if(load_stage_data)
+        //return st_sim_run_data(cxt, seed, st0data, st1data, false, callback, par) != -1;
+    //else if(save_stage_data)
+        //return st_sim_run_data(cxt, seed, st0data, st1data, true, callback, par) != -1;
+    //else
+	    return st_sim_run(cxt, seed, true, callback, par) != -1;
 }
 
 
