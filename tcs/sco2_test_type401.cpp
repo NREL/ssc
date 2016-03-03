@@ -366,14 +366,15 @@ public:
 		C_CO2_to_air_cooler::S_des_par_ind ac_des_par_ind;
 		ac_des_par_ind.m_T_amb_des = 32.0+273.15;			//[K]
 		ac_des_par_ind.m_P_amb_des = 101325.0;				//[Pa]
-		ac_des_par_ind.m_W_dot_fan_des = 0.35;				//[MW] Cooler air fan power at design
 		C_CO2_to_air_cooler::S_des_par_cycle_dep ac_des_par_cycle_dep;
 		ac_des_par_cycle_dep.m_T_hot_in_des = 100.0+273.15;	//[K]
 		ac_des_par_cycle_dep.m_P_hot_in_des = 8000.0;		//[kPa]
 		ac_des_par_cycle_dep.m_m_dot_total = 938.9;			//[kg/s]
 		ac_des_par_cycle_dep.m_delta_P_des = 62.5;		//[kPa]
 		ac_des_par_cycle_dep.m_T_hot_in_des = ac_des_par_ind.m_T_amb_des+15.0;	//[K]
-		
+		ac_des_par_cycle_dep.m_W_dot_fan_des = 0.35;				//[MW] Cooler air fan power at design
+
+
 		bool air_cooler_success = air_cooler.design_hx(ac_des_par_ind,ac_des_par_cycle_dep);
 
 		double W_dot_od = 0.0;
