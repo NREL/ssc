@@ -38,13 +38,28 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 
 		// PHX design parameters
-		// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
+			// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
 		double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
 
 		// Air cooler parameters
 		double m_frac_fan_power;	//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
 		double m_deltaP_cooler_frac;       // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+	};
 
+	struct S_des_solved
+	{
+		C_HX_counterflow::S_des_solved ms_phx_des_solved;
+		C_RecompCycle::S_design_solved ms_rc_cycle_solved;
+	};
+
+	struct S_od_par
+	{
+		// From CSP System
+		double m_T_htf_hot;		//[K] Hot HTF temperature from the receiver or storage
+		double m_m_dot_htf;		//[kg/s] HTF mass flow rate 
+
+		// Ambient Conditions
+		double m_T_amb;			//[K] Ambient temperature
 	};
 
 private:
@@ -56,6 +71,11 @@ private:
 	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_cycle_des_par;
 	C_CO2_to_air_cooler::S_des_par_ind ms_air_cooler_des_par_ind;
 	C_CO2_to_air_cooler::S_des_par_cycle_dep ms_air_cooler_des_par_dep;
+	
+	S_des_solved ms_des_solved;
+
+	S_od_par ms_od_par;
+	C_RecompCycle::S_od_parameters ms_rc_cycle_od_par;
 
 	void design_core();
 
@@ -69,56 +89,7 @@ public:
 	{
 		FIX_T_MC_APPROACH__FLOAT_PHX_DT
 	};
-
-	//struct S_des_par1
-	//{
-	//	// System design parameters
-	//	int m_hot_fl_code;				//[-] Integer coding the HTF type
-	//	util::matrix_t<double> mc_hot_fl_props;	//[-] Custom HTF properties (if applicable)
-	//	double m_T_htf_hot_in;			//[K] Design-point hot inlet temperature
-	//	double m_phx_dt_hot_approach;	//[K/C] Temperature difference between hot HTF and turbine CO2 inlet
-
-	//	// Cycle design paramters
-	//	// This structure requires the turbine inlet temperature, but that should be calculated from System design parameters above
-	//	// Eventually, we should create a new structure that doesn't include it
-	//	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_cycle;
-	//	
-	//	// PHX design paramters
-	//	// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
-	//	double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
-	//	
-	//	// Air cooler parameters
-	//	C_CO2_to_air_cooler::S_des_par_ind ms_air_cooler;
-
-	//	S_des_par1()
-	//	{
-	//		m_hot_fl_code = -1;
-
-	//		m_T_htf_hot_in = m_phx_dt_hot_approach = m_phx_dt_cold_approach = std::numeric_limits<double>::quiet_NaN();
-	//	}
-
-	//};
-
-	struct S_des_solved
-	{
-		C_HX_counterflow::S_des_solved ms_phx_des_solved;
-		C_RecompCycle::S_design_solved ms_rc_cycle_solved;
-	};
-
-	struct S_od_par
-	{
-		// From CSP System
-		double m_T_htf_hot;		//[K] Hot HTF temperature from the receiver or storage
-		double m_m_dot_htf;		//[kg/s] HTF mass flow rate 
-		
-		// Ambient Conditions
-		double m_T_amb;			//[K] Ambient temperature
-	};
-
-	S_des_solved ms_des_solved;
-	S_od_par ms_od_par;
-	C_RecompCycle::S_od_parameters ms_rc_cycle_od_par;
-
+	
 	C_sco2_recomp_csp(){};
 
 	~C_sco2_recomp_csp(){};

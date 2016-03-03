@@ -102,7 +102,17 @@ void C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 
 	if(off_design_strategy == FIX_T_MC_APPROACH__FLOAT_PHX_DT)
 	{
-		ms_rc_cycle_od_par.m_T_mc_in = -1.2345;
+		// Defined now
+		ms_rc_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
+		ms_rc_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
+		ms_rc_cycle_od_par.m_tol = ms_des_par.m_tol;						//[-]
+		ms_rc_cycle_od_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.m_N_t;	//[rpm]
+
+		// Defined downstream
+		ms_rc_cycle_od_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
+		ms_rc_cycle_od_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
+		ms_rc_cycle_od_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
+		ms_rc_cycle_od_par.m_N_mc = std::numeric_limits<double>::quiet_NaN();			//[rpm]
 	}
 	else
 	{
@@ -177,9 +187,32 @@ double C_sco2_recomp_csp::off_design_fix_T_mc_approach__float_phx_dt(const std::
 	// Other off-design parameters should be already stored in ms_od_par:
 	//		m_T_htf_hot
 	//      m_m_dot_htf
+	// ... or in ms_rc_cycle_od_par
+	//	    m_T_mc_in
+	//	    m_N_sub_hxrs
+	//	    m_tol
+	//	    m_N_t
+
+	int index = 0;
+
+	ms_rc_cycle_od_par.m_P_mc_in = x[index];		//[kPa]
+	index++;
+
+	ms_rc_cycle_od_par.m_recomp_frac = 0.0;
+	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+	{
+		ms_rc_cycle_od_par.m_recomp_frac = x[index];
+		index++;
+	}
+
+	ms_rc_cycle_od_par.m_N_mc = x[index];
+	index++;
+
+	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
 
 
-	return 1.23;
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data)
