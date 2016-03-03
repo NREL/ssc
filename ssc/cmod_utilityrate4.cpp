@@ -2012,33 +2012,6 @@ public:
 				{
 					if (d == util::nday[m] - 1 && h == 23)
 					{
-						/*
-						// flat rate
-						if (enable_nm)
-						{
-							if (m_month[m].energy_net < 0)
-							{
-								payment[c] += -m_month[m].energy_net * buy;
-								monthly_ec_flat_charges[m] += payment[c];
-							}
-						}
-						else // no net metering - so no rollover.
-						{
-							if (m_month[m].energy_net < 0) // must buy from grid
-							{
-								payment[c] += -m_month[m].energy_net * buy;
-								monthly_ec_flat_charges[m] += payment[c];
-							}
-							else
-							{
-								income[c] += m_month[m].energy_net * sell;
-								monthly_ec_flat_charges[m] -= income[c];
-							}
-						}
-						// added for Mike Gleason 
-						energy_charge[c] += monthly_ec_flat_charges[m];
-// end of flat rate
-*/
 // energy charge
 						if (ec_enabled)
 						{
@@ -2168,12 +2141,8 @@ public:
 								payment[c] += charge; // apply to last hour of the month
 								demand_charge[c] += charge; // add TOU charge to hourly demand charge
 							}
-
-
-							
 							// end of TOU demand charge
 						}
-
 
 					} // end of if end of month
 					c++;
@@ -2198,16 +2167,6 @@ public:
 
 		// Assumption that fixed and minimum charges independent of rollovers kWh or $
 		// process monthly fixed charges
-		/*
-		if (include_fixed)
-			process_monthly_charge(payment, monthly_fixed_charges, rate_esc);
-		// process min charges
-		if (include_min)
-		{
-			process_monthly_min(payment, monthly_minimum_charges, rate_esc);
-			process_annual_min(payment, monthly_minimum_charges, rate_esc);
-		}
-		*/
 		// compute revenue ( = income - payment ) and monthly bill ( = payment - income) and apply fixed and minimum charges
 		c = 0;
 		ssc_number_t mon_bill = 0, ann_bill = 0;
@@ -2503,23 +2462,6 @@ public:
 				//daily_net_energy = 0;
 				for (h = 0; h<24; h++)
 				{
-					/*
-					// flat rate
-					if (e_in[c] < 0) // must buy from grid
-					{
-						payment[c] += -e_in[c] * buy;
-						energy_charge[c] += payment[c];
-						price[c] += buy;
-					}
-					else
-					{
-						income[c] += e_in[c] * sell;
-						energy_charge[c] -= income[c];
-						price[c] += sell;
-					}
-					monthly_ec_flat_charges[m] += energy_charge[c];
-					// end of flat rate
-					*/
 					// energy charge
 					if (ec_enabled)
 					{
@@ -2681,9 +2623,6 @@ public:
 								payment[c] += charge; // apply to last hour of the month
 								demand_charge[c] += charge; // add TOU charge to hourly demand charge
 							}
-
-
-
 							// end of TOU demand charge
 							// end of TOU demand charge
 						} // if demand charges enabled (dc_enabled)
@@ -2700,16 +2639,6 @@ public:
 
 		// Assumption that fixed and minimum charges independent of rollovers kWh or $
 		// process monthly fixed charges
-		/*
-		if (include_fixed)
-		process_monthly_charge(payment, monthly_fixed_charges, rate_esc);
-		// process min charges
-		if (include_min)
-		{
-		process_monthly_min(payment, monthly_minimum_charges, rate_esc);
-		process_annual_min(payment, monthly_minimum_charges, rate_esc);
-		}
-		*/
 		// compute revenue ( = income - payment ) and monthly bill ( = payment - income) and apply fixed and minimum charges
 		c = 0;
 		ssc_number_t mon_bill = 0, ann_bill = 0;
