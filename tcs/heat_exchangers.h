@@ -71,6 +71,7 @@ public:
 		double m_UA_design_total;		//[kW/K] Design-point conductance
 		double m_min_DT_design;			//[K] Minimum temperature difference in heat exchanger
 		double m_eff_design;			//[-] Effectiveness at design
+		double m_NTU_design;			//[-] NTU at design
 		double m_T_h_out;				//[K] Design-point hot outlet temperature
 		double m_T_c_out;				//[K] Design-point cold outlet temperature
 		double m_DP_cold_des;			//[kPa] cold fluid design pressure drop
@@ -78,7 +79,7 @@ public:
 
 		S_des_solved()
 		{
-			m_UA_design_total = m_min_DT_design = m_eff_design =
+			m_UA_design_total = m_min_DT_design = m_eff_design = m_NTU_design =
 				m_T_h_out = m_T_c_out =
 				m_DP_cold_des = m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -110,12 +111,13 @@ public:
 		double m_UA_total;	//[kW/K] Conductance
 		double m_min_DT;	//[K] Min temp difference
 		double m_eff;		//[-]
+		double m_NTU;
 
 		S_od_solved()
 		{
 			m_q_dot =
 				m_T_c_out = m_P_c_out = m_T_h_out = m_P_h_out =
-				m_UA_total = m_min_DT = m_eff = std::numeric_limits<double>::quiet_NaN();
+				m_UA_total = m_min_DT = m_eff = m_NTU = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -153,7 +155,7 @@ public:
 
 	void calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
 		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
-		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & T_h_out /*K*/, double & T_c_out /*K*/, double & q_dot_calc /*kWt*/);
+		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & T_h_out /*K*/, double & T_c_out /*K*/, double & q_dot_calc /*kWt*/);
 
 	void od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
@@ -178,8 +180,11 @@ private:
 
 public:
 
-	// This method calculates the HTF mass flow rate (m_m_dot_hot_des) that results in CR = 1
-	void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
+	//// This method calculates the HTF mass flow rate (m_m_dot_hot_des) that results in CR = 1
+	//void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
+
+	// This method calculates the required HTF mass flow rate (m_m_dot_hot_des) given a cold side approach temperature (assuming hot HTF temp is a design parameter)
+	void design_and_calc_m_dot_htf(C_HX_counterflow::S_des_par &des_par, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved);
 
 	virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props);
 
@@ -216,11 +221,12 @@ public:
 	{
 		double m_T_amb_des;		//[K] Design point ambient temperature
 		double m_P_amb_des;		//[Pa] Design point ambient pressure
-		double m_W_dot_fan_des;	//[MW] Design point fan power
-
+		double m_frac_fan_power;	//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;       // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		
 		S_des_par_ind()
 		{
-			m_T_amb_des = m_P_amb_des = m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
+			m_T_amb_des = m_P_amb_des = m_frac_fan_power = m_deltaP_cooler_frac = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -232,11 +238,12 @@ public:
 		double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
 		double m_delta_P_des;		//[kPa] sCO2 pressure drop
 		double m_T_hot_out_des;		//[K] sCO2 cold outlet temperature
+		double m_W_dot_fan_des;		//[MW] Design point fan power
 
 		S_des_par_cycle_dep()
 		{
 			m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total =
-				m_delta_P_des = m_T_hot_out_des = std::numeric_limits<double>::quiet_NaN();
+				m_delta_P_des = m_T_hot_out_des = m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

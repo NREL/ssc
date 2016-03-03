@@ -579,13 +579,15 @@ public:
 		C_CO2_to_air_cooler::S_des_par_ind acc_des_par_ind;
 		acc_des_par_ind.m_T_amb_des = T_amb_cycle_des;			//[K]
 		acc_des_par_ind.m_P_amb_des = P_amb_cycle_des;			//[Pa]
-		acc_des_par_ind.m_W_dot_fan_des = fan_power_frac*m_W_dot_net_des/1000.0;	//[MW] Cooler air fan power at design
+		acc_des_par_ind.m_frac_fan_power = fan_power_frac;		//[-]
+		//acc_des_par_ind.m_W_dot_fan_des = fan_power_frac*m_W_dot_net_des/1000.0;	//[MW] Cooler air fan power at design
 		C_CO2_to_air_cooler::S_des_par_cycle_dep acc_des_par_cycle_dep;
 		acc_des_par_cycle_dep.m_T_hot_in_des = ms_rc_cycle.get_design_solved()->m_temp[9 - 1];	//[K]
 		acc_des_par_cycle_dep.m_P_hot_in_des = ms_rc_cycle.get_design_solved()->m_pres[9 - 1];	//[kPa]
 		acc_des_par_cycle_dep.m_m_dot_total = ms_rc_cycle.get_design_solved()->m_m_dot_mc;		//[kg/s]
 		acc_des_par_cycle_dep.m_delta_P_des = m_deltaP_cooler_frac*ms_rc_cycle.get_design_solved()->m_pres[2 - 1];		//[kPa]
-		acc_des_par_cycle_dep.m_T_hot_in_des = m_T_mc_in_des;	//[K]
+		acc_des_par_cycle_dep.m_T_hot_out_des = m_T_mc_in_des;	//[K]
+		acc_des_par_cycle_dep.m_W_dot_fan_des = acc_des_par_ind.m_frac_fan_power*m_W_dot_fan_des/1000.0;	//[MW] Cooler air fan power at design
 		ACC.design_hx(acc_des_par_ind, acc_des_par_cycle_dep);
 
 		// Get air-cooler design parameters

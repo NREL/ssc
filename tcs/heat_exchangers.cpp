@@ -91,7 +91,7 @@ void C_HX_counterflow::initialize(const S_init_par & init_par_in)
 
 void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
 	double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
-	double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & T_h_out /*K*/, double & T_c_out /*K*/, double & q_dot_calc /*kWt*/)
+	double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & T_h_out /*K*/, double & T_c_out /*K*/, double & q_dot_calc /*kWt*/)
 {
 	// Check inputs
 	if( q_dot < 0.0 )
@@ -299,6 +299,18 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 
 	eff = q_dot / q_dot_max;
 
+	// Calculate NTU of entire heat exchanger
+	double C_dot_h = m_dot_h*(h_h_in - h_h_out)/(T_h_in - T_h_out);
+	double C_dot_c = m_dot_c*(h_c_out - h_c_in)/(T_c_out - T_c_in);
+	double C_dot_min = fmin(C_dot_h, C_dot_c);
+	double C_dot_max = fmax(C_dot_h, C_dot_c);
+	double C_R = C_dot_min / C_dot_max;
+
+	if( C_R != 1.0 )
+		NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
+	else
+		NTU = eff / (1.0 - eff);
+		
 	return;
 }
 
@@ -382,16 +394,17 @@ void C_HX_counterflow::design(C_HX_counterflow::S_des_par des_par, C_HX_counterf
 			"Design parameters are not initialized!"));
 	}
 
-	double UA_calc, min_DT_calc, eff_calc, T_h_out_calc, T_c_out_calc, q_dot_calc;
-	UA_calc = min_DT_calc = eff_calc = T_h_out_calc = T_c_out_calc = q_dot_calc = std::numeric_limits<double>::quiet_NaN();
+	double UA_calc, min_DT_calc, eff_calc, NTU_calc, T_h_out_calc, T_c_out_calc, q_dot_calc;
+	UA_calc = min_DT_calc = eff_calc = NTU_calc = T_h_out_calc = T_c_out_calc = q_dot_calc = std::numeric_limits<double>::quiet_NaN();
 	
 	calc_req_UA(ms_des_par.m_Q_dot_design, ms_des_par.m_m_dot_cold_des, ms_des_par.m_m_dot_hot_des, 
 		ms_des_par.m_T_c_in, ms_des_par.m_T_h_in, ms_des_par.m_P_c_in, ms_des_par.m_P_c_out, ms_des_par.m_P_h_in, ms_des_par.m_P_h_out,
-		UA_calc, min_DT_calc, eff_calc, T_h_out_calc, T_c_out_calc, q_dot_calc);
+		UA_calc, min_DT_calc, eff_calc, NTU_calc, T_h_out_calc, T_c_out_calc, q_dot_calc);
 
 	ms_des_solved.m_UA_design_total = UA_calc;
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
+	ms_des_solved.m_NTU_design = NTU_calc;
 	ms_des_solved.m_T_h_out = T_h_out_calc;
 	ms_des_solved.m_T_c_out = T_c_out_calc;
 
@@ -403,15 +416,28 @@ void C_HX_counterflow::design(C_HX_counterflow::S_des_par des_par, C_HX_counterf
 	return;
 }
 
-void C_HX_co2_to_htf::design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved)
-{
-	double h_htf_hot = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg-K]
-	double h_htf_cold = mc_hot_fl.enth_lookup(T_htf_cold);		//[kJ/kg-K]
+//void C_HX_co2_to_htf::design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved)
+//{
+//	double h_htf_hot = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg-K]
+//	double h_htf_cold = mc_hot_fl.enth_lookup(T_htf_cold);		//[kJ/kg-K]
+//
+//	des_par.m_m_dot_hot_des = des_par.m_Q_dot_design/(h_htf_hot - h_htf_cold);	//[kg/s]
+//
+//	design(des_par, des_solved);
+//}
 
-	des_par.m_m_dot_hot_des = des_par.m_Q_dot_design/(h_htf_hot - h_htf_cold);	//[kg/s]
+void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_par &des_par, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved)
+{
+	double T_htf_cold = des_par.m_T_c_in + dt_cold_approach;	//[C]
+
+	double h_h_in = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg]
+	double h_c_in = mc_hot_fl.enth_lookup(T_htf_cold);			//[kJ/kg]
+
+	des_par.m_m_dot_hot_des = des_par.m_Q_dot_design/(h_h_in - h_c_in);
 
 	design(des_par, des_solved);
 }
+
 
 int C_HX_counterflow::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/)
 {
@@ -428,7 +454,7 @@ int C_HX_counterflow::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, double 
 	{
 	mp_c_hx->calc_req_UA(q_dot, ms_od_par->m_m_dot_c, ms_od_par->m_m_dot_h, ms_od_par->m_T_c_in, ms_od_par->m_T_h_in,
 		ms_od_par->m_P_c_in, ms_od_solved->m_P_c_out, ms_od_par->m_P_h_in, ms_od_solved->m_P_h_out, ms_od_solved->m_UA_total, 
-		ms_od_solved->m_min_DT, ms_od_solved->m_eff,
+		ms_od_solved->m_min_DT, ms_od_solved->m_eff, ms_od_solved->m_NTU,
 		ms_od_solved->m_T_h_out, ms_od_solved->m_T_c_out, ms_od_solved->m_q_dot);
 	}
 	catch( C_csp_exception )
@@ -1012,7 +1038,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 				double V_dot_air_total = m_dot_air_total*v_air;
 				double W_dot_fan = deltaP_air*V_dot_air_total / m_eta_fan / 1.E6;
 
-				diff_W_dot_fan = (W_dot_fan - ms_des_par_ind.m_W_dot_fan_des) / ms_des_par_ind.m_W_dot_fan_des;
+				diff_W_dot_fan = (W_dot_fan - ms_des_par_cycle_dep.m_W_dot_fan_des) / ms_des_par_cycle_dep.m_W_dot_fan_des;
 
 			}	// Iteration on air mass flow rate
 
@@ -1288,7 +1314,7 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 
 		if( iter_T_hot > 25 )
 		{
-			if( fabs(W_dot_fan - ms_des_par_ind.m_W_dot_fan_des) / ms_des_par_ind.m_W_dot_fan_des < 2.0 )		// value "close enough" to be "reasonable"
+			if( fabs(W_dot_fan - ms_des_par_cycle_dep.m_W_dot_fan_des) / ms_des_par_cycle_dep.m_W_dot_fan_des < 2.0 )		// value "close enough" to be "reasonable"
 			{
 				W_dot_fan_MW = W_dot_fan;
 				error_code = 2;
