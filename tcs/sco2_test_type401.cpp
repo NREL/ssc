@@ -365,7 +365,7 @@ public:
 		C_CO2_to_air_cooler air_cooler;
 		C_CO2_to_air_cooler::S_des_par_ind ac_des_par_ind;
 		ac_des_par_ind.m_T_amb_des = 32.0+273.15;			//[K]
-		ac_des_par_ind.m_P_amb_des = 101325.0;				//[Pa]
+		ac_des_par_ind.m_elev = 300.0;						//[m]
 		C_CO2_to_air_cooler::S_des_par_cycle_dep ac_des_par_cycle_dep;
 		ac_des_par_cycle_dep.m_T_hot_in_des = 100.0+273.15;	//[K]
 		ac_des_par_cycle_dep.m_P_hot_in_des = 8000.0;		//[kPa]

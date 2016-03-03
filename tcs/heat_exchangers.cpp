@@ -669,7 +669,7 @@ C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 {
 	m_th = m_eta_fan = m_roughness =
 		m_d_in = m_A_cs = m_relRough = m_Depth = m_W_par = m_N_par = m_N_tubes = m_L_tube = m_L_path = m_A_surf_total = m_UA_total = m_V_total =
-		//m_T_amb_des = m_P_amb_des =
+		m_P_amb_des =
 		//m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total = m_W_dot_fan_des = m_delta_P_des = m_T_hot_out_des = 
 		m_m_dot_air_des = m_Q_dot_des = m_P_hot_out_des =
 		m_d_out = m_fin_pitch = m_D_h = m_fin_thk = m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = m_fin_V_per_m = numeric_limits<double>::quiet_NaN();
@@ -685,6 +685,9 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_des_par_ind = des_par_ind;
 	ms_des_par_cycle_dep = des_par_cycle_dep;
 
+	// Calculate ambient pressure
+	m_P_amb_des = 101325.0*pow(1 - 2.25577E-5*ms_des_par_ind.m_elev, 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+	
 	//m_enum_compact_hx_config = fc_tubes_s80_38T;
 	m_enum_compact_hx_config = N_compact_hx::fc_tubes_sCF_88_10Jb;
 
@@ -751,7 +754,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	// Assume air props don't change significantly in air cooler
 	double mu_air = mc_air.visc(ms_des_par_ind.m_T_amb_des);
-	double v_air = 1.0 / mc_air.dens(ms_des_par_ind.m_T_amb_des, ms_des_par_ind.m_P_amb_des);
+	double v_air = 1.0 / mc_air.dens(ms_des_par_ind.m_T_amb_des, m_P_amb_des);
 	double cp_air = mc_air.Cp(ms_des_par_ind.m_T_amb_des)*1000.0;
 	double k_air = mc_air.cond(ms_des_par_ind.m_T_amb_des);
 	double Pr_air = (cp_air*mu_air / k_air);
