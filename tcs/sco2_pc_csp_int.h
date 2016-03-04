@@ -5,6 +5,8 @@
 #include "heat_exchangers.h"
 #include "csp_solver_util.h"
 
+#include "numeric_solvers.h"
+
 class C_sco2_recomp_csp
 {
 
@@ -44,6 +46,20 @@ public:
 		// Air cooler parameters
 		double m_frac_fan_power;	//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
 		double m_deltaP_cooler_frac;       // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+
+		S_des_par()
+		{
+			m_hot_fl_code = m_N_sub_hxrs = -1;
+
+			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
+				m_elevation = m_W_dot_net = m_eta_thermal =
+
+				m_eta_mc = m_eta_rc = m_eta_t =
+				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
+
+				m_phx_dt_cold_approach = m_frac_fan_power = m_deltaP_cooler_frac = 
+				std::numeric_limits<double>::quiet_NaN();
+		}
 	};
 
 	struct S_des_solved
@@ -60,6 +76,26 @@ public:
 
 		// Ambient Conditions
 		double m_T_amb;			//[K] Ambient temperature
+
+		S_od_par()
+		{
+			m_T_htf_hot = m_m_dot_htf = m_T_amb = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	struct S_od_opt_eta_tracking
+	{	// The values here are updated on NLOPT calls to the off design models
+		bool m_is_opt_found;
+		double m_eta_max;
+		double m_over_T_t_in_at_eta_max;
+		double m_over_P_high_at_eta_max;
+	
+		S_od_opt_eta_tracking()
+		{
+			m_is_opt_found = false;
+
+			m_eta_max = m_over_T_t_in_at_eta_max = m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
+		}
 	};
 
 private:
@@ -71,15 +107,18 @@ private:
 	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_cycle_des_par;
 	C_CO2_to_air_cooler::S_des_par_ind ms_air_cooler_des_par_ind;
 	C_CO2_to_air_cooler::S_des_par_cycle_dep ms_air_cooler_des_par_dep;
-	
+	C_HX_counterflow::S_des_par ms_phx_des_par;
+		
 	S_des_solved ms_des_solved;
 
 	S_od_par ms_od_par;
 	C_RecompCycle::S_od_parameters ms_rc_cycle_od_par;
+	C_HX_counterflow::S_od_par ms_phx_od_par;
+	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
 
 	void design_core();
 
-	void off_design_fix_T_mc__float_phx_dt__opt_eta();
+	int od_fix_T_mc__float_phx_dt__opt_eta();
 
 public:
 
@@ -94,12 +133,38 @@ public:
 
 	~C_sco2_recomp_csp(){};
 
+	class C_mono_eq_T_t_in : public C_monotonic_equation
+	{
+	private: 
+		C_sco2_recomp_csp *mpc_sco2_rc;
+
+	public:
+		C_mono_eq_T_t_in(C_sco2_recomp_csp *pc_sco2_rc)
+		{
+			mpc_sco2_rc = pc_sco2_rc;
+		}
+	
+		virtual int operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/);
+	};
+
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
 	void off_design(S_od_par od_par, int off_design_strategy);
 
 	// Class methods linked to nlopt callbacks - must be public
-	double off_design_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
+	double od_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
+
+	// Methods to private access member data
+	const S_des_solved * get_design_solved()
+	{
+		return &ms_des_solved;
+	}
+
+	const C_HX_counterflow::S_des_par * get_phx_des_par()
+	{
+		return &ms_phx_des_par;
+	}
+
 
 };
 

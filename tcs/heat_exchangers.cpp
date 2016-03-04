@@ -500,8 +500,8 @@ void C_HX_counterflow::od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/
 							ms_od_par.m_T_c_in, ms_od_par.m_P_c_in, ms_od_solved.m_P_c_out, ms_od_par.m_m_dot_c);
 
 	// Use design point effectiveness to generate 2 guess values
-	double q_dot_guess_lower = ms_des_solved.m_eff_design*q_dot_upper;
-	double q_dot_guess_upper = 0.85*q_dot_guess_lower;		
+	double q_dot_guess_upper = ms_des_solved.m_eff_design*q_dot_upper;
+	double q_dot_guess_lower = 0.85*q_dot_guess_upper;		
 	
 	// Complete solver settings
 	double tol = 0.001;
@@ -511,7 +511,7 @@ void C_HX_counterflow::od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/
 	C_monotonic_eq_solver od_hx_solver(od_hx_eq);
 
 	// Set solver settings
-	od_hx_solver.settings(tol, 100, q_dot_lower, q_dot_upper, true);
+	od_hx_solver.settings(tol, 1000, q_dot_lower, q_dot_upper, true);
 
 	// Solve
 	double x_solved, tol_solved;
