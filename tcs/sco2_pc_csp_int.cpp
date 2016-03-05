@@ -95,7 +95,7 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-void C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
+int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 {
 	ms_od_par = od_par;
 
@@ -125,7 +125,7 @@ void C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 		
 		int opt_eta_code = od_fix_T_mc__float_phx_dt__opt_eta();
 
-		return;
+		return opt_eta_code;
 	}
 	else
 	{
