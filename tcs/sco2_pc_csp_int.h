@@ -44,8 +44,8 @@ public:
 		double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
 
 		// Air cooler parameters
-		double m_frac_fan_power;	//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
-		double m_deltaP_cooler_frac;       // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+		double m_frac_fan_power;		//[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+		double m_deltaP_cooler_frac;    // [-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
 
 		S_des_par()
 		{
@@ -149,7 +149,7 @@ public:
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
-	void off_design(S_od_par od_par, int off_design_strategy);
+	int off_design(S_od_par od_par, int off_design_strategy);
 
 	// Class methods linked to nlopt callbacks - must be public
 	double od_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
