@@ -1,0 +1,42 @@
+// Set Model Input Parameters
+	// System Design
+var('htf', 17);					//[-] Integer code for HTF, 17: Salt_60_NaNO3_40_KNO3
+var('htf_props', [[0]]);		//[-] Custom HTF props (only used if htf = 50)
+var('T_htf_hot_des', 720);		//[C] HTF design hot temperature (PHX inlet)
+var('dT_PHX_hot_approach', 20);	//[C] Temp diff between hot HTF and turbine inlet
+var('T_amb_des', 30);			//[C] Ambient temperature at design
+var('dT_mc_approach', 15);		//[C] Temperature difference between main compressor CO2 inlet and ambient air
+var('site_elevation', 300);		//[m] Site elevation (used to calculate air density in air cooler design model)
+var('W_dot_net_des', 10);		//[MWe] Design cycle power output (no cooling parasitics)
+var('eta_thermal_des', 0.50);	//[-] Power cycle thermal efficiency
+	// Cycle Design
+var('eta_isen_mc', 0.89);		//[-] Main compressor isentropic efficiency
+var('eta_isen_rc', 0.89);		//[-] Re-compressor isentropic efficiency
+var('eta_isen_t', 0.93);		//[-] Turbine isentropic efficiency
+var('P_high_limit',25);			//[MPa] Cycle high pressure limit
+	// PHX design
+var('dT_PHX_cold_approach', 20);	//[C] Temperature difference between cold HTF and cold CO2 PHX inlet
+	// Air Cooler design
+var('fan_power_frac',0.01);			//[-] Fraction of net cycle power consumed by air cooler fan
+var('deltaP_cooler_frac',0.002);	//[-] Fraction of cycle high pressure that is design point cooler CO2 pressure drop
+
+// Run Model
+run('sco2_csp_system');
+
+// Get Design Solution:
+outln("The HTF design cold temperature (PHX outlet) is: ", var("T_htf_cold_des"), " C");
+outln("The HTF temperature difference across the PHX is: ", var("T_htf_hot_des")-var("T_htf_cold_des"), " C");
+outln("The HTF mass flow rate is: ", var("m_dot_htf_des"), " kg/s");
+outln("The solved cycle thermal efficiency is: ", var("eta_thermal_calc"), " -");
+outln("The total recuperator conductance is: ", var("UA_recup_total"), " kW/K");
+outln("The low temperature recuperator conductance is: ", var("UA_LTR"), " UA_LTR");
+outln("The high temperature recuperator conductance is: ", var("UA_HTR"), " UA_HTR");
+outln("The recompression fraction is: ", var("recomp_frac"), " -");
+outln("The main compressor outlet pressure is: ", var("P_comp_in"), " MPa");
+outln("The main compressor inlet pressure is: ", var("P_comp_out"), " MPa");
+outln("The PHX conductance is: ", var("UA_PHX"), " kW/K");
+outln("The PHX effectiveness is: ", var("eff_PHX"), " -");
+outln("The PHX NTU is: ", var("NTU_PHX"), " -");
+
+
+
