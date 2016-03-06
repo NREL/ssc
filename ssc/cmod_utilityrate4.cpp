@@ -1893,6 +1893,7 @@ public:
 						}
 					}
 				}
+
 				// set surplus or use
 				for (size_t ir = 0; ir < m_month[m].ec_energy_use.nrows(); ir++)
 				{
@@ -1904,53 +1905,72 @@ public:
 					else
 						m_month[m].ec_energy_use.at(ir, 0) = -m_month[m].ec_energy_use.at(ir, 0);
 				}
+
 				// now ditribute across tier boundaries - upper bounds equally across periods
+				// 3/5/16 prorate based on total net per period / total net
+				// look at total net distributed among tiers
+
 				ssc_number_t num_per = (ssc_number_t)m_month[m].ec_energy_use.nrows();
-				for (size_t ir = 0; ir < m_month[m].ec_energy_use.nrows(); ir++)
+				ssc_number_t tot_energy = 0;
+				for (size_t ir = 0; ir < num_per; ir++)
+					tot_energy += m_month[m].ec_energy_use.at(ir, 0);
+				if (tot_energy > 0)
 				{
-					if (m_month[m].ec_energy_use.at(ir, 0) > 0)
+					for (size_t ir = 0; ir < num_per; ir++)
 					{
-						ssc_number_t energy = m_month[m].ec_energy_use.at(ir, 0);
-						for (size_t ic = 0; ic < m_month[m].ec_tou_ub.ncols(); ic++)
+						bool done = false;
+						ssc_number_t per_energy = m_month[m].ec_energy_use.at(ir, 0);
+						for (size_t ic = 0; ic < m_month[m].ec_tou_ub.ncols() && !done; ic++)
 						{
-							ssc_number_t ub_per = m_month[m].ec_tou_ub.at(ir, ic) / num_per;
-							if (energy > ub_per)
+							ssc_number_t ub_tier = m_month[m].ec_tou_ub.at(ir, ic);
+							if (per_energy > 0)
 							{
-								m_month[m].ec_energy_use.at(ir, ic) = ub_per;
-								if (ic>0)
-									m_month[m].ec_energy_use.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic-1) / num_per;
-							}
-							else
-							{
-								m_month[m].ec_energy_use.at(ir, ic) = energy;
-								if (ic>0)
-									m_month[m].ec_energy_use.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic - 1) / num_per;
-								break;
+								if (tot_energy > ub_tier)
+								{
+									m_month[m].ec_energy_use.at(ir, ic) = (per_energy/tot_energy) * ub_tier;
+									if (ic > 0)
+										m_month[m].ec_energy_use.at(ir, ic) -= (per_energy / tot_energy) * m_month[m].ec_tou_ub.at(ir, ic - 1);
+								}
+								else
+								{
+									m_month[m].ec_energy_use.at(ir, ic) = (per_energy / tot_energy) * tot_energy;
+									if (ic > 0)
+										m_month[m].ec_energy_use.at(ir, ic) -= (per_energy / tot_energy)* m_month[m].ec_tou_ub.at(ir, ic - 1);
+									done=true;
+								}
 							}
 						}
 					}
 				}
+
 				// repeat for surplus
-				for (size_t ir = 0; ir < m_month[m].ec_energy_surplus.nrows(); ir++)
+				tot_energy = 0;
+				for (size_t ir = 0; ir < num_per; ir++)
+					tot_energy += m_month[m].ec_energy_surplus.at(ir, 0);
+				if (tot_energy > 0)
 				{
-					if (m_month[m].ec_energy_surplus.at(ir, 0) > 0)
+					for (size_t ir = 0; ir < num_per; ir++)
 					{
-						ssc_number_t energy = m_month[m].ec_energy_surplus.at(ir, 0);
-						for (size_t ic = 0; ic < m_month[m].ec_tou_ub.ncols(); ic++)
+						bool done = false;
+						ssc_number_t per_energy = m_month[m].ec_energy_surplus.at(ir, 0);
+						for (size_t ic = 0; ic < m_month[m].ec_tou_ub.ncols() && !done; ic++)
 						{
-							ssc_number_t ub_per = m_month[m].ec_tou_ub.at(ir, ic) / num_per;
-							if (energy > ub_per)
+							ssc_number_t ub_tier = m_month[m].ec_tou_ub.at(0, ic);
+							if (per_energy > 0)
 							{
-								m_month[m].ec_energy_surplus.at(ir, ic) = ub_per;
-								if (ic > 0)
-									m_month[m].ec_energy_surplus.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic - 1) / num_per;
-							}
-							else
-							{
-								m_month[m].ec_energy_surplus.at(ir, ic) = energy;
-								if (ic > 0)
-									m_month[m].ec_energy_surplus.at(ir, ic) -= m_month[m].ec_tou_ub.at(ir, ic - 1) / num_per;
-								break;
+								if (tot_energy > ub_tier)
+								{
+									m_month[m].ec_energy_surplus.at(ir, ic) = (per_energy / tot_energy) * ub_tier;
+									if (ic > 0)
+										m_month[m].ec_energy_surplus.at(ir, ic) -= (per_energy / tot_energy) * m_month[m].ec_tou_ub.at(ir, ic - 1);
+								}
+								else
+								{
+									m_month[m].ec_energy_surplus.at(ir, ic) = (per_energy / tot_energy) * tot_energy;
+									if (ic > 0)
+										m_month[m].ec_energy_surplus.at(ir, ic) -= (per_energy / tot_energy)* m_month[m].ec_tou_ub.at(ir, ic - 1);
+									done = true;
+								}
 							}
 						}
 					}
@@ -1958,7 +1978,6 @@ public:
 
 			} // end month
 		}
-
 
 		// set peak per period - no tier accumulation
 		if (dc_enabled)
