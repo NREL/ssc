@@ -43,6 +43,7 @@
     <ClCompile Include="..\tcs\sam_mw_pt_type224_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_type250_input_generator.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
+    <ClCompile Include="..\tcs\sco2_pc_csp_int.cpp" />
     <ClCompile Include="..\tcs\tou_translator_csp_solver.cpp" />
     <ClCompile Include="..\tcs\ud_power_cycle.cpp" />
     <ClCompile Include="..\tcs\water_properties.cpp" />
@@ -106,6 +107,7 @@
     <ClInclude Include="..\tcs\heat_exchangers.h" />
     <ClInclude Include="..\tcs\numeric_solvers.h" />
     <ClInclude Include="..\tcs\sco2_pc_core.h" />
+    <ClInclude Include="..\tcs\sco2_pc_csp_int.h" />
     <ClInclude Include="..\tcs\ud_power_cycle.h" />
     <ClInclude Include="..\tcs\water_properties.h" />
     <ClInclude Include="..\tcs\fmin.h" />
