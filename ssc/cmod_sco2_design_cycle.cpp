@@ -118,8 +118,8 @@ public:
 		assign("O_PR_mc_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_pres[2-1]/ms_rc_cycle.get_design_solved()->m_pres[1-1]));	//[-]
 		assign("O_recomp_frac_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_recomp_frac));	//[-]
 		assign("O_eta_thermal_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_eta_thermal));	//[-]
-		assign("O_N_mc_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_N_mc));		//[-]
-		assign("O_m_dot_PHX", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_m_dot_t));
+		assign("O_N_mc_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->ms_mc_des_solved.m_N_design));		//[-]
+		assign("O_m_dot_PHX", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->ms_t_des_solved.m_N_design));
 		
 		// Assign temperatures to array
 		const std::vector<double> T_vector = ms_rc_cycle.get_design_solved()->m_temp;

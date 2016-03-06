@@ -392,10 +392,10 @@ public:
 			opt_target_od_params.m_recomp_frac_guess = rc_cycle.get_design_solved()->m_recomp_frac;
 			opt_target_od_params.m_fixed_recomp_frac = false;
 
-			opt_target_od_params.m_N_mc_guess = rc_cycle.get_design_solved()->m_N_mc;
+			opt_target_od_params.m_N_mc_guess = rc_cycle.get_design_solved()->ms_mc_des_solved.m_N_design;
 			opt_target_od_params.m_fixed_N_mc = false;
 
-			opt_target_od_params.m_N_t_guess = rc_cycle.get_design_solved()->m_N_t;
+			opt_target_od_params.m_N_t_guess = rc_cycle.get_design_solved()->ms_t_des_solved.m_N_design;
 			opt_target_od_params.m_fixed_N_t = true;
 
 			opt_target_od_params.m_tol = rc_params.m_tol;
