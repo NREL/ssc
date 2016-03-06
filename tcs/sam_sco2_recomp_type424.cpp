@@ -626,7 +626,7 @@ public:
 
 		ms_rc_od_par.m_T_mc_in = m_T_mc_in_des;
 		ms_rc_od_par.m_T_t_in = m_T_t_in_des;
-		ms_rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
+		ms_rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->ms_t_des_solved.m_N_design;
 		ms_rc_od_par.m_N_sub_hxrs = ms_rc_autodes_hit_eta_par.m_N_sub_hxrs;
 		ms_rc_od_par.m_tol = ms_rc_autodes_hit_eta_par.m_tol;
 
@@ -720,7 +720,7 @@ public:
 
 			ms_rc_od_par.m_T_mc_in = T_mc_in;
 			ms_rc_od_par.m_T_t_in = T_t_in;
-			ms_rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->m_N_t;
+			ms_rc_od_par.m_N_t = ms_rc_cycle.get_design_solved()->ms_t_des_solved.m_N_design;
 			ms_rc_od_par.m_N_sub_hxrs = ms_rc_autodes_hit_eta_par.m_N_sub_hxrs;
 			ms_rc_od_par.m_tol = ms_rc_autodes_hit_eta_par.m_tol;
 			

@@ -3940,6 +3940,11 @@ void C_RecompCycle::finalize_design(int & error_code)
 		return;
 	}
 
+	// Get 'design_solved' structures from component classes
+	ms_des_solved.ms_mc_des_solved = *m_mc.get_design_solved();
+	ms_des_solved.ms_rc_des_solved = *m_rc.get_design_solved();
+	ms_des_solved.ms_t_des_solved = *m_t.get_design_solved();
+
 	// Set solved design point metrics
 	ms_des_solved.m_temp = m_temp_last;
 	ms_des_solved.m_pres = m_pres_last;
@@ -3953,9 +3958,6 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.m_m_dot_rc = m_m_dot_rc;
 	ms_des_solved.m_m_dot_t = m_m_dot_t;
 	ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
-
-	ms_des_solved.m_N_mc = m_mc.get_design_solved()->m_N_design;
-	ms_des_solved.m_N_t = m_t.get_design_solved()->m_N_design;
 
 	ms_des_solved.m_UA_LT = ms_des_par.m_UA_LT;
 	ms_des_solved.m_UA_HT = ms_des_par.m_UA_HT;
@@ -5443,10 +5445,10 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 	m_eta_phx_max = 0.0;
 
 	// Compressor Speed
-	x.push_back(ms_des_solved.m_N_mc);
-	lb.push_back(ms_des_solved.m_N_mc*0.1);
-	ub.push_back(ms_des_solved.m_N_mc*1.5);
-	scale.push_back(ms_des_solved.m_N_mc*0.1);
+	x.push_back(ms_des_solved.ms_mc_des_solved.m_N_design);
+	lb.push_back(ms_des_solved.ms_mc_des_solved.m_N_design*0.1);
+	ub.push_back(ms_des_solved.ms_mc_des_solved.m_N_design*1.5);
+	scale.push_back(ms_des_solved.ms_mc_des_solved.m_N_design*0.1);
 	index++;
 
 	// Save initial vectors
@@ -5476,10 +5478,10 @@ void C_RecompCycle::opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_para
 		ub = ub_base;
 		scale = sc_base;
 
-		x[index-1] = ms_des_solved.m_N_mc*1.5;
-		lb[index-1] = ms_des_solved.m_N_mc*0.5;
-		ub[index-1] = ms_des_solved.m_N_mc*1.75;
-		scale[index-1] = -ms_des_solved.m_N_mc*0.1;
+		x[index-1] = ms_des_solved.ms_mc_des_solved.m_N_design*1.5;
+		lb[index-1] = ms_des_solved.ms_mc_des_solved.m_N_design*0.5;
+		ub[index-1] = ms_des_solved.ms_mc_des_solved.m_N_design*1.75;
+		scale[index-1] = -ms_des_solved.ms_mc_des_solved.m_N_design*0.1;
 		
 		opt_od_cycle.set_lower_bounds(lb);
 		opt_od_cycle.set_upper_bounds(ub);
