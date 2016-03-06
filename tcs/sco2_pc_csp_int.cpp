@@ -106,7 +106,7 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 		ms_rc_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
 		ms_rc_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
 		ms_rc_cycle_od_par.m_tol = ms_des_par.m_tol;						//[-]
-		ms_rc_cycle_od_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.m_N_t;	//[rpm]
+		ms_rc_cycle_od_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
 			// Defined downstream
 		ms_rc_cycle_od_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
 		ms_rc_cycle_od_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
@@ -169,10 +169,10 @@ int C_sco2_recomp_csp::od_fix_T_mc__float_phx_dt__opt_eta()
 	ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
 
 	// Compressor Speed
-	x.push_back(ms_des_solved.ms_rc_cycle_solved.m_N_mc);
-	lb.push_back(ms_des_solved.ms_rc_cycle_solved.m_N_mc*0.1);
-	ub.push_back(ms_des_solved.ms_rc_cycle_solved.m_N_mc*1.5);
-	scale.push_back(ms_des_solved.ms_rc_cycle_solved.m_N_mc*0.1);
+	x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);
+	lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*0.1);
+	ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*1.5);
+	scale.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*0.1);
 	index++;
 
 	// Save initial vectors

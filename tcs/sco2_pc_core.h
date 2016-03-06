@@ -293,6 +293,11 @@ public:
 	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
 	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
 
+	const S_design_solved * get_design_solved()
+	{
+		return &ms_des_solved;
+	}
+
 	const S_od_solved * get_od_solved()
 	{
 		return &ms_od_solved;
@@ -489,17 +494,19 @@ public:
 		double m_m_dot_rc;
 		double m_m_dot_t;
 		double m_recomp_frac;
-		double m_N_mc;
-		double m_N_t;
 		double m_UA_LT;
 		double m_UA_HT;
 
 		bool m_is_rc;
 
+		C_compressor::S_design_solved ms_mc_des_solved;
+		C_recompressor::S_design_solved ms_rc_des_solved;
+		C_turbine::S_design_solved ms_t_des_solved;
+
 		S_design_solved()
 		{
 			m_eta_thermal = m_W_dot_net = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = 
-				m_N_mc = m_N_t = m_UA_LT = m_UA_HT = std::numeric_limits<double>::quiet_NaN();
+				m_UA_LT = m_UA_HT = std::numeric_limits<double>::quiet_NaN();
 
 			m_is_rc = true;
 		}
