@@ -12,7 +12,7 @@ class C_csp_messages
 public:
 	enum 
 	{
-		NOTICE,
+		NOTICE = 1,
 		WARNING
 	};
 
