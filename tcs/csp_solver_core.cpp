@@ -7011,6 +7011,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_outputs.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
 		mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state.m_temp_in);             //[C] Power cycle HTF inlet temperature
 		mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_outputs.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
+		mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_outputs.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
 
 			// Thermal energy storage outputs
 		mvv_outputs_temp[TES_Q_DOT_LOSS].push_back(mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment

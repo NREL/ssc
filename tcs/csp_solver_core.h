@@ -567,6 +567,7 @@ public:
 		PC_W_DOT,             //[MWe] Cycle electric power output (gross)
 		PC_T_IN,              //[C] Cycle HTF inlet temperature
 		PC_T_OUT,             //[C] Cycle HTF outlet temperature
+		PC_M_DOT_WATER,       //[kg/hr] Cycle water consumption: makeup + cooling
 		TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
 		TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
 		TES_T_HOT,            //[C] TES final hot tank temperature
