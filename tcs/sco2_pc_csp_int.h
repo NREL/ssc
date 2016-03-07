@@ -98,6 +98,11 @@ public:
 		}
 	};
 
+	struct S_od_solved
+	{
+		C_RecompCycle::S_od_solved ms_rc_cycle_od_solved;	
+	};
+
 private:
 	C_RecompCycle mc_rc_cycle;
 	C_HX_co2_to_htf mc_phx;
@@ -116,6 +121,10 @@ private:
 	C_HX_counterflow::S_od_par ms_phx_od_par;
 	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
 
+	S_od_solved ms_od_solved;
+
+	double m_T_mc_in_min;
+
 	void design_core();
 
 	int od_fix_T_mc__float_phx_dt__opt_eta();
@@ -129,7 +138,7 @@ public:
 		FIX_T_MC_APPROACH__FLOAT_PHX_DT
 	};
 	
-	C_sco2_recomp_csp(){};
+	C_sco2_recomp_csp();
 
 	~C_sco2_recomp_csp(){};
 
@@ -154,6 +163,11 @@ public:
 	// Class methods linked to nlopt callbacks - must be public
 	double od_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
 
+	double get_T_mc_in_min()
+	{
+		return m_T_mc_in_min;		//[K]
+	}
+
 	// Methods to private access member data
 	const S_des_solved * get_design_solved()
 	{
@@ -163,6 +177,11 @@ public:
 	const C_HX_counterflow::S_des_par * get_phx_des_par()
 	{
 		return &ms_phx_des_par;
+	}
+
+	const S_od_solved * get_od_solved()
+	{
+		return &ms_od_solved;
 	}
 
 

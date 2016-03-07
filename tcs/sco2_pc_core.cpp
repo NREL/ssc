@@ -502,9 +502,11 @@ void C_compressor::compressor_sizing(const S_design_parameters & des_par_in, int
 	ms_des_solved.m_eta_design = w_i / (ms_des_par.m_h_out - ms_des_par.m_h_in);
 }
 
-void C_compressor::off_design_compressor(double T_in, double P_in, double m_dot, double N, int & error_code, double & T_out, double & P_out)
+void C_compressor::off_design_compressor(double T_in, double P_in, double m_dot, double N_in, int & error_code, double & T_out, double & P_out)
 {
 	CO2_state co2_props;
+
+	ms_od_solved.m_N = N_in;		//[rpm]
 
 	// Fully define the inlet state of the compressor
 	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
@@ -518,7 +520,7 @@ void C_compressor::off_design_compressor(double T_in, double P_in, double m_dot,
 	double s_in = co2_props.entr;
 
 	// Calculate the modified flow and head coefficients and efficiency for the SNL compressor
-	double U_tip = ms_des_solved.m_D_rotor*0.5*N*0.104719755;				//[m/s]
+	double U_tip = ms_des_solved.m_D_rotor*0.5*ms_od_solved.m_N*0.104719755;				//[m/s]
 	double phi = m_dot / (rho_in*U_tip*pow(ms_des_solved.m_D_rotor, 2));	//[-]
 	if( phi < m_snl_phi_min )
 	{
@@ -528,11 +530,11 @@ void C_compressor::off_design_compressor(double T_in, double P_in, double m_dot,
 	else
 		ms_od_solved.m_surge = false;
 
-	double phi_star = phi*pow(N / ms_des_solved.m_N_design, 0.2);		//[-] modified flow coefficient
+	double phi_star = phi*pow(ms_od_solved.m_N / ms_des_solved.m_N_design, 0.2);		//[-] modified flow coefficient
 	double psi_star = ((((-498626.0*phi_star) + 53224.0)*phi_star - 2505.0)*phi_star + 54.6)*phi_star + 0.04049;	// from dimensionless modified head curve
 	double eta_star = ((((-1.638e6*phi_star) + 182725.0)*phi_star - 8089.0)*phi_star + 168.6)*phi_star - 0.7069;	// from dimensionless modified efficiency curve
-	double psi = psi_star / pow(ms_des_solved.m_N_design / N, pow(20.0*phi_star, 3.0));
-	double eta_0 = eta_star*1.47528 / pow(ms_des_solved.m_N_design / N, pow(20.0*phi_star, 5.0));		// Efficiency is normalized so it equals 1.0 at snl_phi_design
+	double psi = psi_star / pow(ms_des_solved.m_N_design / ms_od_solved.m_N, pow(20.0*phi_star, 3.0));
+	double eta_0 = eta_star*1.47528 / pow(ms_des_solved.m_N_design / ms_od_solved.m_N, pow(20.0*phi_star, 5.0));		// Efficiency is normalized so it equals 1.0 at snl_phi_design
 	ms_od_solved.m_eta = max(eta_0*ms_des_solved.m_eta_design, 0.0);		//[-] Actual compressor efficiency, not allowed to go negative
 
 	// Check that the specified mass flow rate is possible with the compressor's current shaft speed
@@ -4509,6 +4511,11 @@ void C_RecompCycle::off_design_core(int & error_code)
 	m_W_dot_net_od = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;			
 	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
 
+	// Get 'od_solved' structures from component classes
+	ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
+	ms_od_solved.ms_rc_od_solved = *m_rc.get_od_solved();
+	ms_od_solved.ms_t_od_solved = *m_t.get_od_solved();
+
 	// Set ms_od_solved
 	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
 	ms_od_solved.m_W_dot_net = m_W_dot_net_od;
@@ -4517,8 +4524,8 @@ void C_RecompCycle::off_design_core(int & error_code)
 	ms_od_solved.m_m_dot_rc = m_dot_rc;
 	ms_od_solved.m_m_dot_t = m_dot_t;
 	ms_od_solved.m_recomp_frac = ms_od_par.m_recomp_frac;
-	ms_od_solved.m_N_mc = ms_od_par.m_N_mc;
-	ms_od_solved.m_N_t = ms_od_par.m_N_t;
+	// ms_od_solved.m_N_mc = ms_od_par.m_N_mc;
+	// ms_od_solved.m_N_t = ms_od_par.m_N_t;
 
 	ms_od_solved.m_temp = m_temp_od;
 	ms_od_solved.m_pres = m_pres_od;

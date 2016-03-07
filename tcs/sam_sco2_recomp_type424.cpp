@@ -754,7 +754,7 @@ public:
 			P_main_comp_in = ms_rc_cycle.get_od_solved()->m_pres[1-1];
 			P_main_comp_out = ms_rc_cycle.get_od_solved()->m_pres[2-1];
 			frac_recomp = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-			N_mc_od = ms_rc_cycle.get_od_solved()->m_N_mc;
+			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;		//[rpm]
 
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
 
