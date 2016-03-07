@@ -5,6 +5,7 @@
 static var_info _cm_vtab_sco2_csp_system[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/
+	// ** Design Parameters **
 		// System Design
 	{ SSC_INPUT,  SSC_NUMBER,  "htf",                  "Integer code for HTF used in PHX",                       "",           "",    "",      "*",     "",       "" },
     { SSC_INPUT,  SSC_MATRIX,  "htf_props",            "User defined HTF property data",                         "", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "*", "", "" },
@@ -25,8 +26,12 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 		// Air Cooler Design
 	{ SSC_INPUT,  SSC_NUMBER,  "fan_power_frac",       "Fraction of net cycle power consumed by air cooler fan", "",           "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
-
-	// ** OUTPUTS **
+	// ** Off-design Inputs **
+	{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_fracs",       "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "m_dot_fracs",          "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_fracs=1",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_T_amb_array",       "0 = N analysis of off design ambient temperature, 1 = Yes", "",        "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "T_amb_array",     "Array of ambient temperatures for off-design parametric",     "C",          "",    "",      "is_T_amb_array=1",     "",       "" },
+	// ** Design OUTPUTS **
 		// System Design Solution
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold_des",       "HTF design colde temperature (PHX outlet)",              "C",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "m_dot_htf_des",        "HTF mass flow rate",                                     "kg/s",       "",    "",      "*",     "",       "" },
@@ -44,6 +49,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_PHX",              "PHX NTU",                                                "",           "",    "",      "*",     "",       "" },
 		// Air Cooler Design
 	// ?????
+
+	// ** Off-Design Outputs
+	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "",    "",      "*",     "",       "" },
 
 	var_info_invalid };
 
@@ -112,9 +120,28 @@ public:
 		sco2_rc_des_par.m_frac_fan_power = as_double("fan_power_frac");
 		sco2_rc_des_par.m_deltaP_cooler_frac = as_double("deltaP_cooler_frac");
 
+		// For try/catch below
+		int out_type = -1;
+		std::string out_msg = "";
+
 		// Construction class and design system
 		C_sco2_recomp_csp sco2_recomp_csp;
-		sco2_recomp_csp.design(sco2_rc_des_par);
+		try
+		{
+			sco2_recomp_csp.design(sco2_rc_des_par);
+		}
+		catch( C_csp_exception &csp_exception )
+		{
+			// Report warning before exiting with error
+			while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg))
+			{
+				log(out_msg);
+			}
+
+			log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+			return;
+		}
 
 		// Set SSC design outputs
 			// System
@@ -143,9 +170,32 @@ public:
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = sco2_rc_des_par.m_T_amb_des;
 		int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
-		sco2_recomp_csp.off_design(sco2_rc_od_par, od_strategy);
 
-		double blah = 1.23;
+		try
+		{
+			sco2_recomp_csp.off_design(sco2_rc_od_par, od_strategy);
+		}
+		catch( C_csp_exception &csp_exception )
+		{
+			// Report warning before exiting with error
+			while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+			{
+				log(out_msg);
+			}
+
+			log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+			return;
+		}
+
+		// If all calls were successful, log to SSC any messages from sco2_recomp_csp
+		while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+		{
+			log(out_msg);
+		}
+
+		ssc_number_t *p_eta_thermal_od = allocate("eta_thermal_od", 1);
+		p_eta_thermal_od[0] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;
 	}
 
 };
