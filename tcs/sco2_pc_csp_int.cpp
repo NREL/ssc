@@ -1,8 +1,16 @@
 #include "sco2_pc_csp_int.h"
 #include "sco2_pc_core.h"
 #include "csp_solver_util.h"
+#include "CO2_properties.h"
+#include <cmath>
+#include <string>
 
 #include "nlopt.hpp"
+
+C_sco2_recomp_csp::C_sco2_recomp_csp()
+{
+	m_T_mc_in_min = mc_rc_cycle.get_design_limits().m_T_mc_in_min;		//[K]
+}
 
 void C_sco2_recomp_csp::design(C_sco2_recomp_csp::S_des_par des_par)
 {
@@ -18,6 +26,13 @@ void C_sco2_recomp_csp::design_core()
 	ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 	ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
 	ms_rc_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des+ms_des_par.m_dt_mc_approach;	//[K]
+	if(ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+	{
+		std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]." 
+		" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
+		ms_rc_cycle_des_par.m_T_mc_in-273.15,
+		m_T_mc_in_min-273.15);
+	}
 	ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in-ms_des_par.m_phx_dt_hot_approach;	//[K]
 	ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
 	ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
@@ -104,6 +119,13 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 		// Define ms_rc_cycle_od_par
 			// Defined now
 		ms_rc_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
+		if(ms_rc_cycle_od_par.m_T_mc_in < m_T_mc_in_min)
+		{
+			std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
+			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
+			ms_rc_cycle_od_par.m_T_mc_in - 273.15,
+			m_T_mc_in_min - 273.15);
+		}
 		ms_rc_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
 		ms_rc_cycle_od_par.m_tol = ms_des_par.m_tol;						//[-]
 		ms_rc_cycle_od_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
@@ -124,6 +146,8 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 		ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 		
 		int opt_eta_code = od_fix_T_mc__float_phx_dt__opt_eta();
+
+		ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
 
 		return opt_eta_code;
 	}
@@ -279,6 +303,12 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 
 	// 2) Don't let the upper pressure in the system exceed the specified max (typically also = design point P_high)
 	double over_P_high = max(0.0, mc_rc_cycle.get_od_solved()->m_pres[2-1] - ms_des_par.m_P_high_limit);
+
+	// 3) Check compressor(s) tip ratio?
+
+	// 4) Check for compressor(s) surge?
+
+	// 5) Constrain HTF temperature difference?
 
 	// Want thermal efficiency gradient, not step change, as turbine inlet temperature exceeds design
 	// ... to help the solver

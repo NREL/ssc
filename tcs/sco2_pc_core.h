@@ -189,10 +189,12 @@ public:
 		double m_phi;			//[-]
 		double m_w_tip_ratio;	//[-]
 
+		double m_N;			//[rpm]
+
 		S_od_solved()
 		{
 			m_surge = false;
-			m_eta = m_phi = m_w_tip_ratio = std::numeric_limits<double>::quiet_NaN();
+			m_eta = m_phi = m_w_tip_ratio = m_N = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -522,12 +524,17 @@ public:
 		double m_m_dot_rc;
 		double m_m_dot_t;
 		double m_recomp_frac;
-		double m_N_mc;
-		double m_N_t;
+		// double m_N_mc;
+		// double m_N_t;
+
+		C_compressor::S_od_solved ms_mc_od_solved;
+		C_recompressor::S_od_solved ms_rc_od_solved;
+		C_turbine::S_od_solved ms_t_od_solved;
 
 		S_od_solved()
 		{
-			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = m_recomp_frac = m_N_mc = m_N_t = std::numeric_limits<double>::quiet_NaN();
+			m_eta_thermal = m_W_dot_net = m_Q_dot = m_m_dot_mc = m_m_dot_rc = 
+				m_m_dot_t = m_recomp_frac = /* m_N_mc = m_N_t =*/ std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -793,7 +800,13 @@ public:
 		// Set design limits!!!!
 		ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
 		ms_des_limits.m_UA_net_power_ratio_min = 1.E-5;		//[-/K]
-		ms_des_limits.m_T_mc_in_min = 32.0 + 273.15;	//[K]
+
+		// Set minimum main compressor inlet temperature
+		CO2_info s_co2_info;
+
+		get_CO2_info(&s_co2_info);
+
+		ms_des_limits.m_T_mc_in_min = std::ceil(s_co2_info.T_critical);		//[K]
 	}
 
 	~C_RecompCycle(){}
