@@ -1918,7 +1918,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_ON__PC_SU__TES_OFF__AUX_OFF method converged to a power cycle"
 						" thermal input greater than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 				}
 
 				are_models_converged = true;
@@ -2566,7 +2566,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_DC__AUX_OFF method converged to a power cycle"
 					" thermal input greater than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					q_pc_exit_mode = CONVERGED;
 				}
@@ -2877,7 +2877,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF method converged to a power cycle"
 						" thermal input greater than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 				}
 
 				// Handle exit modes
@@ -4662,7 +4662,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_ON__PC_RM_HI__TES_FULL__AUX_OFF method converged to a power cycle"
 						" thermal input less than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 				}
 
 
@@ -5128,7 +5128,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_ON__PC_MIN__TES_EMPTY__AUX_OFF method converged to a power cycle"
 						" thermal input greater than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					q_pc_exit_mode == CONVERGED;
 				}
@@ -5353,7 +5353,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_DF__PC_MAX__TES_FULL__AUX_OFF method converged to a power cycle"
 						" thermal input less than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					defocus_exit_mode = CONVERGED;
 				}
@@ -6368,7 +6368,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					error_msg = util::format("At time = %lg CR_DF__PC_SU__TES_FULL__AUX_OFF method converged to a power cycle"
 						" thermal input less than the target.",
 						mc_sim_info.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					defocus_exit_mode = CONVERGED;
 				}
