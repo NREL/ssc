@@ -467,8 +467,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	double m_dot_st_bd = 0.0;
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_makeup = W_cool_par = f_hrsys = P_cond = std::numeric_limits<double>::quiet_NaN();
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond;
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = std::numeric_limits<double>::quiet_NaN();
 
 	// 4.15.15 twn: hardcode these so they don't have to be passed into call(). Mode is always = 2 for CSP simulations
 	int mode = 2;
@@ -527,7 +527,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
 		// *****
 		m_dot_demand = 0.0;
-		m_dot_makeup = 0.0;
+		m_dot_water_cooling = 0.0;
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
@@ -543,7 +543,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			RankineCycle(ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, T_db, T_wb, P_amb, ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER,
 				T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, ms_params.m_F_wc[tou],
 				m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, ms_params.m_P_cond_ratio, ms_params.m_P_cond_min,
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond);
 
 			// Check the output to make sure it's reasonable. If not, return zeros.
 			if( ((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 50.0)) )
@@ -553,7 +553,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				T_htf_cold = ms_params.m_T_htf_cold_ref;
 				// 7.10.13 twn: set ALL outputs to 0
 				m_dot_demand = 0.0;
-				m_dot_makeup = 0.0;
+				m_dot_water_cooling = 0.0;
 				W_cool_par = 0.0;
 				f_hrsys = 0.0;
 				P_cond = 0.0;
@@ -566,7 +566,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 			// -----Calculate the blowdown fraction-----
 			if( ms_params.m_tech_type != 4 )
-				m_dot_st_bd = P_cycle / fmax((eta * m_delta_h_steam), 1.e-6) * ms_params.m_pb_bd_frac;
+				m_dot_st_bd = P_cycle / fmax((eta * m_delta_h_steam), 1.e-6) * ms_params.m_pb_bd_frac;	//[kg/s]
 			else
 				m_dot_st_bd = 0; // Added Aug 3, 2011 for Isopentane Rankine cycle
 
@@ -585,7 +585,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 			W_cool_par = ms_params.m_W_dot_cooling_des*mc_user_defined_pc.get_W_dot_cooling_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[MW]
 
-			m_dot_makeup = ms_params.m_m_dot_water_des*mc_user_defined_pc.get_m_dot_water_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[kg/hr]
+			m_dot_water_cooling = ms_params.m_m_dot_water_des*mc_user_defined_pc.get_m_dot_water_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[kg/hr]
 
 			// Check power cycle outputs to be sure that they are reasonable. If not, return zeros
 			if( ((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 100.0)) )
@@ -594,7 +594,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				eta = 0.0;
 				T_htf_cold = ms_params.m_T_htf_cold_ref;
 				W_cool_par = 0.0;
-				m_dot_makeup = 0.0;
+				m_dot_water_cooling = 0.0;
 				q_dot_htf = 0.0;
 			}
 			else
@@ -611,11 +611,12 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				W_cool_par = 0.0;
 			}
 
-			if( m_dot_makeup < 0.0 )
+			if( m_dot_water_cooling < 0.0 )
 			{
-				m_dot_makeup = 0.0;
+				m_dot_water_cooling = 0.0;
 			}
 			
+			m_dot_st_bd = 0.0;					//[kg/hr] 
 			m_dot_htf_ref = m_m_dot_design;		//[kg/hr]
 			
 			f_hrsys = 0.0;		//[-] Not captured in User-defined power cycle model
@@ -643,7 +644,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			eta = 0.0;
 			T_htf_cold = ms_params.m_T_htf_cold_ref;
 			m_dot_demand = m_dot_sby;
-			m_dot_makeup = 0.0;
+			m_dot_st_bd = 0.0;
+			m_dot_water_cooling = 0.0;
 			W_cool_par = 0.0;
 			f_hrsys = 0.0;
 			P_cond = 0.0;
@@ -660,7 +662,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		eta = 0.0;
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
 		m_dot_demand = 0.0;
-		m_dot_makeup = 0.0;
+		m_dot_water_cooling = 0.0;
+		m_dot_st_bd = 0.0;
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
@@ -728,7 +731,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		T_htf_cold = ms_params.m_T_htf_cold_ref;
 		m_dot_htf = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
 		//m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
-		m_dot_makeup = 0.0;
+		m_dot_water_cooling = 0.0;
+		m_dot_st_bd = 0.0;
 		W_cool_par = 0.0;
 		f_hrsys = 0.0;
 		P_cond = 0.0;
@@ -819,7 +823,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
 	outputs.m_eta = eta;							//[-] Cycle thermal efficiency
 	outputs.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
-	outputs.m_m_dot_makeup = m_dot_makeup*3600.0;	//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	outputs.m_m_dot_makeup = (m_dot_water_cooling+m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	outputs.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	outputs.m_m_dot_htf = m_dot_htf;				//[kg/hr] Actual HTF flow rate passing through the power cycle
 	outputs.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
