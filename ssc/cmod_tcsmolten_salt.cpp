@@ -1037,7 +1037,7 @@ public:
 			// Report warning before exiting with error
 			while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
 			{
-				log(out_msg);
+				log(out_msg, out_type);
 			}
 
 			log(csp_exception.m_error_message, SSC_ERROR, -1.0);
@@ -1198,7 +1198,7 @@ public:
 		// If no exception, then report messages
 		while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
 		{
-			log(out_msg);
+			log(out_msg, out_type);
 		}
 
 		// Set output data from heliostat class
@@ -1269,8 +1269,6 @@ public:
 
 		assign("capacity_factor", kWh_per_kW/87.6);
 		assign("kwh_per_kw", kWh_per_kW);
-
-		log("Everything was super successful, great job!");
 		 
 	}
 };
