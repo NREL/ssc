@@ -85,6 +85,7 @@ enum{
 	P_REC_HTF_VOL,
 	P_T_AMB_SF_DES,
 	P_V_WIND_DES,
+	PO_A_APER_TOT,
 
 	I_I_B,
 	I_T_DB,
@@ -215,6 +216,10 @@ tcsvarinfo sam_mw_lf_type262_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,       P_REC_HTF_VOL,            "rec_htf_vol",                         "Volume of HTF in a single collector unit per unit aperture area",      "L/m2-ap",             "",             "",            "1" },
 	{ TCS_PARAM,          TCS_NUMBER,      P_T_AMB_SF_DES,           "T_amb_sf_des",                                    "Ambient design-point temperature for the solar field",            "C",             "",             "",           "25" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_V_WIND_DES,             "V_wind_des",                                                              "Design-point wind velocity",          "m/s",             "",             "",          "3.5" },
+
+	// Field design calculations
+	{ TCS_PARAM,          TCS_NUMBER,       PO_A_APER_TOT,             "A_aper_tot",                                                         "Total solar field aperture area",          "m^2",             "",             "",        "-1.23" },
+
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_I_B,                    "I_b",                                                "Direct normal incident solar irradiation",     "kJ/m2-hr",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DB,                   "T_db",                                                                "Dry bulb air temperature",            "C",             "",             "",             "" },
@@ -1203,6 +1208,9 @@ public:
 		v_cold = v_cold + v_sgs/2.;
 
 		is_fieldgeom_init = true;	//The field geometry has been initialized. Make note.
+
+		// Write Calculate Design Parameters
+		value(PO_A_APER_TOT, Ap_tot);		//[m]
 
 		return true;
 	}
