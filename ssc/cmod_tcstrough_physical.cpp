@@ -44,7 +44,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "W/SCA",        "",               "solar_field",    "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrctrl",                  "Defocusing strategy",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_init",               "In acceptance testing mode - require steady-state startup",                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_loc",                "In acceptance testing mode - temperature sensor location",                         "1/2",          "hx/loop",        "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Solar multiple",                                                                   "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -347,6 +349,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	// TODO - consistent fuel usage and o and m caclulations						                                            					            	              	                         	                      
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",      "System heat rate",                                           "MMBtu/MWh",     "",            "",               "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",     "Annual fuel usage",                                          "kWht",          "",            "",               "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use","Total Annual Water Usage: cycle + mirror washing",           "m3",            "",            "PostProcess",    "*",                       "",                      "" },
 
 
 	var_info_invalid };
@@ -793,7 +796,14 @@ public:
 		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0;
 		assign("conversion_factor", convfactor);
 	
-		 
+		// First, sum power cycle water consumption timeseries outputs
+		accumulate_annual_for_year("m_dot_makeup", "annual_total_water_use", 1.0/1000.0*ts_hour, step_per_hour); //[m^3], convert from kg
+		// Then, add water usage from mirror cleaning
+		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
+		double A_aper_tot = get_unit_value_number(type250_solarfield, "A_aper_tot");
+		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
+		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);		
+
 		// Monthly accumulations
 		accumulate_monthly("gen", "monthly_energy", ts_hour); // already in kWh
 		accumulate_monthly("W_cycle_gross", "monthly_W_cycle_gross", ts_hour);
