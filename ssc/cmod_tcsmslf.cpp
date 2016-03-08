@@ -46,6 +46,9 @@ static var_info _cm_vtab_tcsmslf[] = {
     { SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",            "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",    "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",             "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",       "",  "controller",            "*",        "",              ""},
 
+	{ SSC_INPUT,    SSC_NUMBER,         "water_per_wash",         "Water usage per wash",                                                                  "L/m2_aper",     "",  "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,    SSC_NUMBER,         "washes_per_year",        "Mirror washing frequency",                                                              "none",          "",  "solar_field",    "*",                       "",                      "" },	
+
     { SSC_INPUT,    SSC_NUMBER,         "opt_model",              "The optical model",                                                                     "",              "",  "controller",            "*",        "INTEGER",       ""},
     { SSC_INPUT,    SSC_NUMBER,         "A_aperture",             "Reflective aperture area of the collector",                                             "m2",            "",  "controller",            "*",        "",              ""},
     { SSC_INPUT,    SSC_NUMBER,         "reflectivity",           "Solar-weighted mirror reflectivity value",                                              "",              "",  "controller",            "*",        "",              ""},
@@ -313,16 +316,17 @@ static var_info _cm_vtab_tcsmslf[] = {
 //    { SSC_OUTPUT,   SSC_ARRAY,          "hourly_energy",      "Hourly Energy",                                                  "kWh",          "",            "Calculated",     "*",					    "LENGTH=8760",           ""},
 
     // monthly values
-    { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly Energy",                                                                        "kWh",           "",  "mslf",                  "*",        "LENGTH=12",     ""},
-
-    // single values
-    { SSC_OUTPUT,   SSC_NUMBER,         "annual_energy",          "Annual Energy",                                                                         "kWh",           "",  "mslf",                  "*",        "",              ""},
-    { SSC_OUTPUT,   SSC_NUMBER,         "annual_W_cycle_gross",   "Electrical source - Power cycle gross output",                                          "kWh",           "",  "mslf",                  "*",        "",              ""},
-    { SSC_OUTPUT,   SSC_NUMBER,         "conversion_factor",      "Gross to Net Conversion Factor",                                                        "%",             "",  "Calculated",            "*",        "",              ""},
-    { SSC_OUTPUT,   SSC_NUMBER,         "capacity_factor",        "Capacity factor",                                                                       "%",              "",  "",                      "*",        "",              ""},
-    { SSC_OUTPUT,   SSC_NUMBER,         "kwh_per_kw",             "First year kWh/kW",                                                                     "kWh/kW",              "",  "",                      "*",        "",              ""},
-    { SSC_OUTPUT,   SSC_NUMBER,         "system_heat_rate",       "System heat rate",                                                                      "MMBtu/MWh",     "",  "",                      "*",        "",              ""},
-    { SSC_OUTPUT,   SSC_NUMBER,         "annual_fuel_usage",      "Annual fuel usage",                                                                     "kWh",           "",  "",                      "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly Energy",                                             "kWh",           "",            "mslf",                  "*",        "LENGTH=12",     ""},
+																																					            
+    // single values																																            
+    { SSC_OUTPUT,   SSC_NUMBER,         "annual_energy",          "Annual Energy",                                              "kWh",           "",            "mslf",                  "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "annual_W_cycle_gross",   "Electrical source - Power cycle gross output",               "kWh",           "",            "mslf",                  "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "conversion_factor",      "Gross to Net Conversion Factor",                             "%",             "",            "Calculated",            "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "capacity_factor",        "Capacity factor",                                            "%",              "",           "",                      "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "kwh_per_kw",             "First year kWh/kW",                                          "kWh/kW",                       "",  "",                      "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "system_heat_rate",       "System heat rate",                                           "MMBtu/MWh",     "",            "",                      "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "annual_fuel_usage",      "Annual fuel usage",                                          "kWh",           "",            "",                      "*",        "",              ""},
+	{ SSC_OUTPUT,   SSC_NUMBER,         "annual_total_water_use", "Total Annual Water Usage: cycle + mirror washing",           "m3",            "",            "PostProcess",    "*",                       "",                      "" },
 
 
     var_info_invalid };
@@ -774,7 +778,14 @@ public:
 
 		accumulate_annual("gen", "annual_energy"); // already in kWh
 		accumulate_monthly("gen", "monthly_energy"); // already in kWh
-
+		
+		// First, sum power cycle water consumption timeseries outputs
+		accumulate_annual_for_year("m_dot_makeup", "annual_total_water_use", 1.0 / 1000.0, 1); //[m^3], convert from kg
+		// Then, add water usage from mirror cleaning
+		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
+		double A_aper_tot = get_unit_value_number(solarfield, "A_aper_tot");
+		double V_water_mirrors = as_double("water_per_wash") / 1000.0*A_aper_tot*as_double("washes_per_year");
+		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
 
 		double fuel_usage_mmbtu = 0;
 		ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
