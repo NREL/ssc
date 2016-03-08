@@ -337,7 +337,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_avail",        "Thermal power produced by the field",                        "MWht",          "",            "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_aux",          "Total fossil fuel usage by all plant subsystems",            "MMBTU",        "",             "SumCalc",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_dump",         "Dumped thermal energy",                                      "MWht",          "",            "Type250",        "*",                       "",                      "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_m_dot_makeup",   "Cooling water makeup flow rate",                             "kg/hr",        "",             "Type250",        "*",                       "",                      "" },
+	//{ SSC_OUTPUT,       SSC_NUMBER,      "annual_m_dot_makeup",   "Cooling water makeup flow rate",                             "kg/hr",        "",             "Type250",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_pb",           "Thermal energy to the power block",                          "MWht",          "",            "Type251",        "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_q_to_tes",       "Thermal energy into storage",                                "MWht",          "",            "Type251",        "*",                       "",                      "" },
 
@@ -823,7 +823,7 @@ public:
 		accumulate_annual("q_avail", "annual_q_avail", ts_hour);
 		double fuel_usage_mmbtu = accumulate_annual("Fuel_usage", "annual_q_aux", ts_hour);
 		accumulate_annual("q_dump", "annual_q_dump", ts_hour);
-		accumulate_annual("m_dot_makeup", "annual_m_dot_makeup", ts_hour);
+		//accumulate_annual("m_dot_makeup", "annual_m_dot_makeup", ts_hour);
 		accumulate_annual("q_pb", "annual_q_pb", ts_hour);
 		accumulate_annual("q_to_tes", "annual_q_to_tes", ts_hour);
 		

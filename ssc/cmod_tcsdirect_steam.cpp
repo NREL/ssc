@@ -26,50 +26,52 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",    "12x24 Time of Use Values for week end days",                     "",             "",            "tou_translator", "*",                       "",                      "" }, 
 
 	// Heliostat field  parameters				     										
-	{ SSC_INPUT, SSC_NUMBER, "run_type", "Run type", "-", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "helio_width", "Heliostat width", "m", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "helio_height", "Heliostat height", "m", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "helio_optical_error", "Heliostat optical error", "rad", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "helio_active_fraction", "Heliostat active frac.", "-", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "helio_reflectance", "Heliostat reflectance", "-", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "rec_absorptance", "Receiver absorptance", "-", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "rec_aspect", "Receiver aspect ratio", "-", "", "heliostat", "*", "", "" },
-    { SSC_INPUT, SSC_NUMBER, "rec_height",           "Receiver height",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
-	{ SSC_INPUT, SSC_NUMBER, "rec_hl_perm2", "Receiver design heatloss", "kW/m2", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "land_bound_type", "Land boundary type", "-", "", "heliostat", "?=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "land_max", "Land max boundary", "-ORm", "", "heliostat", "?=7.5", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "land_min", "Land min boundary", "-ORm", "", "heliostat", "?=0.75", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "land_bound_table", "Land boundary table", "m", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "land_bound_list", "Boundary table listing", "-", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dni_des", "Design-point DNI", "W/m2", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "p_start", "Heliostat startup energy", "kWe-hr", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "p_track", "Heliostat tracking energy", "kWe", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "hel_stow_deploy", "Stow/deploy elevation", "deg", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "v_wind_max", "Max. wind velocity", "m/s", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "interp_nug", "Interpolation nugget", "-", "", "heliostat", "?=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "interp_beta", "Interpolation beta coef.", "-", "", "heliostat", "?=1.99", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "n_flux_x", "Flux map X resolution", "-", "", "heliostat", "?=12", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "n_flux_y", "Flux map Y resolution", "-", "", "heliostat", "?=1", "", "" },
-    { SSC_INPUT, SSC_NUMBER, "dens_mirror", "Ratio of reflective area to profile", "-", "", "heliostat", "*", "", ""},
-	{ SSC_INPUT, SSC_MATRIX, "helio_positions", "Heliostat position table", "m", "", "heliostat", "run_type=1", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "helio_aim_points", "Heliostat aim point table", "m", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "N_hel", "Number of heliostats", "-", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "eta_map", "Field efficiency array", "-", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "flux_positions", "Flux map sun positions", "deg", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "flux_maps", "Flux map intensities", "-", "", "heliostat", "?", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "c_atm_0", "Attenuation coefficient 0", "", "", "heliostat", "?=0.006789", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "c_atm_1", "Attenuation coefficient 1", "", "", "heliostat", "?=0.1046", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "c_atm_2", "Attenuation coefficient 2", "", "", "heliostat", "?=-0.0107", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "c_atm_3", "Attenuation coefficient 3", "", "", "heliostat", "?=0.002845", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "n_facet_x", "Number of heliostat facets - X", "", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "n_facet_y", "Number of heliostat facets - Y", "", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "focus_type", "Heliostat focus method", "", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "cant_type", "Heliostat cant method", "", "", "heliostat", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "n_flux_days", "No. days in flux map lookup", "", "", "heliostat", "?=8", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "delta_flux_hrs", "Hourly frequency in flux map lookup", "", "", "heliostat", "?=1", "", "" },
-
-	{ SSC_INPUT, SSC_NUMBER, "H_rec", "The height of the receiver", "m", "", "receiver", "*", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "THT", "The height of the tower (hel. pivot to rec equator)", "m", "", "receiver", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "run_type",              "Run type",                            "-",     "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_width",           "Heliostat width",                     "m",     "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_height",          "Heliostat height",                    "m",     "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_optical_error",   "Heliostat optical error",             "rad",   "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_active_fraction", "Heliostat active frac.",              "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "helio_reflectance",     "Heliostat reflectance",               "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "rec_absorptance",       "Receiver absorptance",                "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "rec_aspect",            "Receiver aspect ratio",               "",      "", "heliostat", "*", "", "" },
+    { SSC_INPUT, SSC_NUMBER, "rec_height",            "Receiver height",                     "m",     "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "rec_hl_perm2",          "Receiver design heatloss",            "kW/m2", "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "land_bound_type",       "Land boundary type",                  "",      "", "heliostat", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "land_max",              "Land max boundary",                   "-ORm",  "", "heliostat", "?=7.5", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "land_min",              "Land min boundary",                   "-ORm",  "", "heliostat", "?=0.75", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "land_bound_table",      "Land boundary table",                 "m",     "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "land_bound_list",        "Boundary table listing",              "",      "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "dni_des",               "Design-point DNI",                    "W/m2",  "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "p_start",               "Heliostat startup energy",            "kWe-hr","", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "p_track",               "Heliostat tracking energy",           "kWe",   "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "hel_stow_deploy",       "Stow/deploy elevation",               "deg",   "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "v_wind_max",            "Max. wind velocity",                  "m/s",   "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "interp_nug",            "Interpolation nugget",                "",      "", "heliostat", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "interp_beta",           "Interpolation beta coef.",            "",      "", "heliostat", "?=1.99", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_x",              "Flux map X resolution",               "",      "", "heliostat", "?=12", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_y",              "Flux map Y resolution",               "",      "", "heliostat", "?=1", "", "" },
+    { SSC_INPUT, SSC_NUMBER, "dens_mirror",           "Ratio of reflective area to profile", "",      "", "heliostat", "*", "", ""},
+	{ SSC_INPUT, SSC_MATRIX, "helio_positions",       "Heliostat position table",            "m",     "", "heliostat", "run_type=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "helio_aim_points",      "Heliostat aim point table",           "m",     "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "N_hel",                 "Number of heliostats",                "",      "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "eta_map",               "Field efficiency array",              "",      "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "flux_positions",        "Flux map sun positions",              "deg",   "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "flux_maps",             "Flux map intensities",                "",      "", "heliostat", "?", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_0",               "Attenuation coefficient 0",           "",      "", "heliostat", "?=0.006789", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_1",               "Attenuation coefficient 1",           "",      "", "heliostat", "?=0.1046", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_2",               "Attenuation coefficient 2",           "",      "", "heliostat", "?=-0.0107", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "c_atm_3",               "Attenuation coefficient 3",           "",      "", "heliostat", "?=0.002845", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_facet_x",             "Number of heliostat facets - X",      "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_facet_y",             "Number of heliostat facets - Y",      "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "focus_type",            "Heliostat focus method",              "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cant_type",             "Heliostat cant method",               "",      "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "n_flux_days",           "No. days in flux map lookup",         "",      "", "heliostat", "?=8", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "delta_flux_hrs",        "Hourly frequency in flux map lookup", "",      "", "heliostat", "?=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "water_usage_per_wash",  "Water usage per wash",                "L/m2_aper", "", "heliostat", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "washing_frequency",     "Mirror washing frequency",            "",          "", "heliostat", "*", "", "" },
+	
+	{ SSC_INPUT, SSC_NUMBER, "H_rec",     "The height of the receiver",                          "m", "", "receiver",  "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "THT",       "The height of the tower (hel. pivot to rec equator)", "m", "", "receiver",  "*", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",                  "Receiver thermal design power",              "MW",     "",         "heliostat",   "*",                "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "heliostat",   "?=0",              "",                "" },
@@ -95,6 +97,7 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
     { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                 "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",         "Optimization convergence tol",                                      "",             "",            "heliostat",       "?=0.001",                "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_flux_penalty",     "Optimization flux overage penalty",                                 "",             "",            "heliostat",       "*",                      "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",        "Optimization algorithm",                                            "",             "",            "heliostat",       "?=0",                    "",                "" },
 
     //other costs needed for optimization update
@@ -296,14 +299,16 @@ static var_info _cm_vtab_tcsdirect_steam[] = {
 //	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy", "Hourly Energy", "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
 
 	// Annual Outputs
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",        "Annual Energy",                                "kWh", "", "Type228", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_W_cycle_gross", "Electrical source - Power cycle gross output", "kWh", "", "Type228", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",         "Annual Energy",                                      "kWh",    "", "Type228",        "*",  "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_W_cycle_gross",  "Electrical source - Power cycle gross output",       "kWh",    "", "Type228",        "*",  "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_total_water_use","Total Annual Water Usage: cycle + mirror washing",   "m3",     "", "PostProcess",    "*",  "", "" },
 
-	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor",    "Gross to Net Conversion Factor",               "%",         "", "Calculated", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor",      "Capacity factor",                              "%",         "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw",           "First year kWh/kW",                            "kWh/kW",    "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate",     "System heat rate",                             "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage",    "Annual fuel usage",                            "kWh",       "", "", "*", "", "" },
 
 	var_info_invalid };
 
@@ -810,6 +815,13 @@ public:
 		}
 
 		accumulate_annual("gen", "annual_energy"); // already in kWh
+
+		// First, sum power cycle water consumption timeseries outputs
+		accumulate_annual_for_year("m_dot_makeup", "annual_total_water_use", 1.0/1000.0, 1);	//[m^3], convert from kg
+		// Then, add water usage from mirror cleaning
+		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
+		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
+		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
