@@ -245,7 +245,7 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_nov_tp", "Electricity usage without system (TOU) Nov", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_dec_tp", "Electricity usage without system (TOU) Dec", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 
-
+	/*
 	// energy surplus wo system
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_wo_sys_ec_jan_tp", "Electricity exports without system (TOU) Jan", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_wo_sys_ec_feb_tp", "Electricity exports without system (TOU) Feb", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
@@ -259,7 +259,7 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_wo_sys_ec_oct_tp", "Electricity exports without system (TOU) Oct", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_wo_sys_ec_nov_tp", "Electricity exports without system (TOU) Nov", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "surplus_wo_sys_ec_dec_tp", "Electricity exports without system (TOU) Dec", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-
+	*/
 
 	// energy charge w system
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_jan_tp", "Energy charge with system (TOU) Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
@@ -616,6 +616,7 @@ public:
 		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_nov_tp = allocate_matrix("energy_wo_sys_ec_nov_tp", m_month[10].ec_charge.nrows() + 2, m_month[10].ec_charge.ncols() + 2);
 		util::matrix_t<ssc_number_t> &energy_wo_sys_ec_dec_tp = allocate_matrix("energy_wo_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
 
+		/*
 		util::matrix_t<ssc_number_t> &surplus_wo_sys_ec_jan_tp = allocate_matrix("surplus_wo_sys_ec_jan_tp", m_month[0].ec_charge.nrows() + 2, m_month[0].ec_charge.ncols() + 2);
 		util::matrix_t<ssc_number_t> &surplus_wo_sys_ec_feb_tp = allocate_matrix("surplus_wo_sys_ec_feb_tp", m_month[1].ec_charge.nrows() + 2, m_month[1].ec_charge.ncols() + 2);
 		util::matrix_t<ssc_number_t> &surplus_wo_sys_ec_mar_tp = allocate_matrix("surplus_wo_sys_ec_mar_tp", m_month[2].ec_charge.nrows() + 2, m_month[2].ec_charge.ncols() + 2);
@@ -628,7 +629,7 @@ public:
 		util::matrix_t<ssc_number_t> &surplus_wo_sys_ec_oct_tp = allocate_matrix("surplus_wo_sys_ec_oct_tp", m_month[9].ec_charge.nrows() + 2, m_month[9].ec_charge.ncols() + 2);
 		util::matrix_t<ssc_number_t> &surplus_wo_sys_ec_nov_tp = allocate_matrix("surplus_wo_sys_ec_nov_tp", m_month[10].ec_charge.nrows() + 2, m_month[10].ec_charge.ncols() + 2);
 		util::matrix_t<ssc_number_t> &surplus_wo_sys_ec_dec_tp = allocate_matrix("surplus_wo_sys_ec_dec_tp", m_month[11].ec_charge.nrows() + 2, m_month[11].ec_charge.ncols() + 2);
-
+		*/
 
 
 
@@ -790,6 +791,7 @@ public:
 
 			if (i == 0)
 			{
+				/*
 				ur_update_ec_monthly(0, charge_wo_sys_ec_jan_tp, energy_wo_sys_ec_jan_tp, surplus_wo_sys_ec_jan_tp);
 				ur_update_ec_monthly(1, charge_wo_sys_ec_feb_tp, energy_wo_sys_ec_feb_tp, surplus_wo_sys_ec_feb_tp);
 				ur_update_ec_monthly(2, charge_wo_sys_ec_mar_tp, energy_wo_sys_ec_mar_tp, surplus_wo_sys_ec_mar_tp);
@@ -802,7 +804,7 @@ public:
 				ur_update_ec_monthly(9, charge_wo_sys_ec_oct_tp, energy_wo_sys_ec_oct_tp, surplus_wo_sys_ec_oct_tp);
 				ur_update_ec_monthly(10, charge_wo_sys_ec_nov_tp, energy_wo_sys_ec_nov_tp, surplus_wo_sys_ec_nov_tp);
 				ur_update_ec_monthly(11, charge_wo_sys_ec_dec_tp, energy_wo_sys_ec_dec_tp, surplus_wo_sys_ec_dec_tp);
-
+				*/
 				//assign( "year1_hourly_revenue_without_system", var_data( &revenue_wo_sys[0], 8760 ) );
 				//assign( "year1_hourly_payment_without_system", var_data( &payment[0], 8760 ) );
 				//assign( "year1_hourly_income_without_system", var_data( &income[0], 8760 ) );
@@ -907,73 +909,73 @@ public:
 								{
 									ssc_number_t charge_adj = 0;
 									ssc_number_t energy_adj = 0;
-									ssc_number_t surplus_adj = 0;
+									//ssc_number_t surplus_adj = 0;
 									switch (m)
 									{
 									case 0:
 										charge_adj = charge_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
 										break;
 									case 1:
 										charge_adj = charge_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
 										break;
 									case 2:
 										charge_adj = charge_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
 										break;
 									case 3:
 										charge_adj = charge_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
 										break;
 									case 4:
 										charge_adj = charge_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
 										break;
 									case 5:
 										charge_adj = charge_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
 										break;
 									case 6:
 										charge_adj = charge_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
 										break;
 									case 7:
 										charge_adj = charge_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
 										break;
 									case 8:
 										charge_adj = charge_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
 										break;
 									case 9:
 										charge_adj = charge_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
 										break;
 									case 10:
 										charge_adj = charge_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
 										break;
 									case 11:
 										charge_adj = charge_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
 										energy_adj = energy_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
-										surplus_adj = surplus_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
+										//surplus_adj = surplus_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
 										break;
 									}
 									m_month[m].ec_charge.at(ir, ic) += charge_adj;
 									m_month[m].ec_energy_use.at(ir, ic) += energy_adj;
-									m_month[m].ec_energy_surplus.at(ir, ic) += surplus_adj;
+									//m_month[m].ec_energy_surplus.at(ir, ic) += surplus_adj;
 								}
 							}
 						}
