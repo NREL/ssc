@@ -15,7 +15,8 @@ static var_info vtab_utility_rate4[] = {
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_INPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
-	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
+//	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
 
@@ -100,9 +101,9 @@ static var_info vtab_utility_rate4[] = {
 	//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_output",  "Year 1 hourly electricity from system",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_demand",       "Year 1 hourly electricity from grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_grid",    "Electricity to grid",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Electricity from system to load",     "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
+//	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 // lifetime load (optional for lifetime analysis)
 	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Lifetime electricity load", "kW", "", "Time Series", "system_use_lifetime_output=1", "", "" },
@@ -1037,7 +1038,8 @@ public:
 
 				assign("year1_hourly_e_tofromgrid", var_data(&e_tofromgrid[0], 8760));
 				assign("year1_hourly_p_tofromgrid", var_data(&p_tofromgrid[0], 8760));
-				assign("year1_hourly_load", var_data(&load[0], 8760));
+//				assign("year1_hourly_load", var_data(&load[0], 8760));
+				assign("load", var_data(&load[0], 8760));
 				assign("year1_hourly_salespurchases_with_system", var_data(&salespurchases[0], 8760));
 				assign("year1_monthly_load", var_data(&monthly_load[0], 12));
 				assign("year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12));
@@ -1071,7 +1073,7 @@ public:
 				assign("year1_hourly_e_demand", var_data(&edemand[0], 8760));
 				assign("year1_hourly_p_demand", var_data(&pdemand[0], 8760));
 
-				assign("year1_hourly_system_to_grid", var_data(&e_sys_to_grid[0], 8760));
+//				assign("year1_hourly_system_to_grid", var_data(&e_sys_to_grid[0], 8760));
 				assign("year1_hourly_system_to_load", var_data(&e_sys_to_load[0], 8760));
 				assign("year1_hourly_p_system_to_load", var_data(&p_sys_to_load[0], 8760));
 
