@@ -1,5 +1,0 @@
-clear();
-
-test = add_unit("sco2_test_type401");
-
-simulate(1.0, 1000.0, 1.0);
