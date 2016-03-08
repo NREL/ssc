@@ -109,6 +109,8 @@ enum{
 	P_SCAINFOARRAY,
 	P_SCADEFOCUSARRAY,
 
+	PO_A_APER_TOT,
+
 	I_I_B,
 	I_T_DB,
 	I_V_WIND,
@@ -265,6 +267,9 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 
 	{ TCS_PARAM,          TCS_MATRIX,      P_SCAINFOARRAY,        "SCAInfoArray",                       "(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop ",         "none",             "",             "","[1,1][1,1][1,1][1,1][1,1][1,1][1,1][1,1]" },
 	{ TCS_PARAM,           TCS_ARRAY,   P_SCADEFOCUSARRAY,        "SCADefocusArray",                                            "Order in which the SCA's should be defocused",         "none",             "",             "","8,7,6,5,4,3,2,1" },
+
+	// Field design calculations
+	{ TCS_PARAM,          TCS_NUMBER,     PO_A_APER_TOT,             "A_aper_tot",                                          "Total solar field aperture area",                           "m^2",             "",             "",             "-1.23" },
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_I_B,                    "I_b",                                                "Direct normal incident solar irradiation",        "W/m^2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,              I_T_DB,                   "T_db",                                                                "Dry bulb air temperature",            "C",             "",             "",             "" },
@@ -1454,6 +1459,9 @@ public:
 			ss_init_complete = false;
 		else
 			ss_init_complete = true;
+
+		// Write Calculated Design Parameters
+		value(PO_A_APER_TOT, Ap_tot);	//[m^2] Total solar field aperture area
 
 		return true;
 	}
