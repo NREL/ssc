@@ -69,7 +69,11 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
     { SSC_INPUT,        SSC_NUMBER,      "e_startup",         "Thermal inertia contribution per sq meter of solar field",                            "kJ/K-m2",       "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des_sf",      "Design-point ambient temperature",                                                    "C",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_wind_max",        "Maximum allowable wind velocity before safety stow",                                  "m/s",           "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "ffrac",             "Fossil dispatch logic - TOU periods",                                                 "none",          "",            "solarfield",     "*",                       "",                      "" },
+    
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.lf.sf.water_per_wash",  "Water usage per wash",                "L/m2_aper",    "",    "heliostat", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.lf.sf.washes_per_year", "Mirror washing frequency",            "",             "",    "heliostat", "*", "", "" },
+	
+	{ SSC_INPUT,        SSC_ARRAY,       "ffrac",             "Fossil dispatch logic - TOU periods",                                                 "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "A_aperture",        "(boiler, SH) Reflective aperture area of the collector module",                       "m^2",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "L_col",             "(boiler, SH) Active length of the superheater section collector module",              "m",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "OptCharType",       "(boiler, SH) The optical characterization method",                                    "none",          "",            "solarfield",     "*",                       "",                      "" },
@@ -246,12 +250,13 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",               "Annual Energy",                                                             "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",        "Electrical source - Power cycle gross output",                              "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
 	//{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",  "Use lifetime output",                                                       "0/1",          "",            "Linear Fresnel", "*",                       "INTEGER",               "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "conversion_factor", "Gross to Net Conversion Factor", "%", "", "Calculated", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "system_heat_rate", "System heat rate", "MMBtu/MWh", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_fuel_usage", "Annual fuel usage", "kWh", "", "", "*", "", "" },
+	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",           "Gross to Net Conversion Factor",                       "%", "", "Calculated", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",             "Capacity factor",                                      "%", "", "", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",      "Total Annual Water Usage: cycle + mirror washing",     "m3",            "",            "PostProcess",    "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                  "First year kWh/kW",                                    "kWh/kW", "", "", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",            "System heat rate",                                     "MMBtu/MWh", "", "", "*", "", "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual fuel usage",                                    "kWh", "", "", "*", "", "" },
 
 
 	var_info_invalid };
@@ -561,6 +566,15 @@ public:
 
 		accumulate_annual("gen", "annual_energy"); // already in kWh
 		accumulate_monthly("gen", "monthly_energy"); // already in kWh
+
+		
+		// First, sum power cycle water consumption timeseries outputs
+		accumulate_annual_for_year("m_dot_makeup", "annual_total_water_use", 1.0 / 1000.0, 1);	//[m^3], convert from kg
+		// Then, add water usage from mirror cleaning
+		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
+		double A_aper_tot = get_unit_value_number(type261_solarfield, "A_aper_tot");
+		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
+		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
 
 
 		double fuel_usage_mmbtu = 0;
