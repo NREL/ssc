@@ -68,7 +68,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cant_type",            "Heliostat cant method",                                             "",             "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_flux_days",          "No. days in flux map lookup",                                       "",             "",            "heliostat",      "?=8",                     "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",       "Hourly frequency in flux map lookup",                               "",             "",            "heliostat",      "?=1",                     "",                     "" },
-    
+    { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash", "Water usage per wash",                                              "L/m2_aper",    "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",    "Mirror washing frequency",                                          "none",         "",            "heliostat",      "*",                       "",                     "" },
+	
     
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",             "Receiver thermal design power",                                     "MW",           "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",        "Include fluxmap calculations",                                      "",             "",            "heliostat",      "?=0",                     "",                     "" },
@@ -1263,7 +1265,11 @@ public:
 		// Calculated Outputs
 			// First, sum power cycle water consumption timeseries outputs
 		accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 3600.0 / 1000.0, steps_per_hour); //[m^3], convert from kg
-		
+			// Then, add water usage from mirror cleaning
+		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
+		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
+		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
+
 		ssc_number_t ae = as_number("annual_energy");
 		ssc_number_t pg = as_number("annual_W_cycle_gross");
 		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0.0;
