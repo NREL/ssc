@@ -96,6 +96,7 @@ enum{	//Parameters
 		P_DIRT_HCE, 
 		P_B_OPTICALTABLE, 
 		P_SH_OPTICALTABLE,
+		PO_A_APER_TOT,
 
 		//Inputs         
 		I_DNIFC,        
@@ -253,6 +254,9 @@ tcsvarinfo sam_mw_lf_type261_steam_variables[] = {
 	{TCS_PARAM, TCS_MATRIX, P_DIRT_HCE,         "Dirt_HCE",				  "(boiler, SH) Loss due to dirt on the receiver envelope (4: # field fracs)",          	   "none",  "", "", ""},
     {TCS_PARAM, TCS_MATRIX, P_B_OPTICALTABLE,   "b_OpticalTable",         "Values of the optical efficiency table",                                                    "none",  "", "", ""},
 	{TCS_PARAM, TCS_MATRIX, P_SH_OPTICALTABLE,  "sh_OpticalTable",        "Values of the optical efficiency table",                                                    "none",  "", "", ""},
+
+	// Field design calculations
+	{TCS_PARAM, TCS_NUMBER, PO_A_APER_TOT,      "A_aper_tot",             "Total solar field aperture area",                                                           "m^2",   "", "", "-1.23" },
 
 	// INPUTS   
 	{TCS_INPUT, TCS_NUMBER, I_DNIFC,            "dnifc",                  "Forecast DNI",                                                      "W/m2",   "", "", ""},      
@@ -1781,6 +1785,8 @@ public:
 			}
 		}
 
+		// Write Calculated Design Parameters
+		value(PO_A_APER_TOT, m_Ap_tot);		//[m]
 
 		return 0;
 	}
