@@ -621,7 +621,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	//double grating[] = {0.,0.,0.};
 	
 	//map the optics pointer to the heliostat template name
-	std::unordered_map<std::string, ST_OpticalPropertySet*> optics_map;
+	unordered_map<std::string, ST_OpticalPropertySet*> optics_map;
 
 	int ii=0;
 	for(htemp_map::iterator it = SF.getHeliostatTemplates()->begin(); it != SF.getHeliostatTemplates()->end(); it++){
@@ -902,7 +902,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 
 	vector<Receiver*> *recs = SF.getReceivers();
 	int nrecs = recs->size();
-	std::unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
+	unordered_map<int, Receiver*> rstage_map;	//map between element number and pointer to the receiver
 	
 	if(r_stage->ElementList.size() > 0){
 		return false;	//Error
