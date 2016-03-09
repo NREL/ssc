@@ -694,6 +694,32 @@ const char *weatherdata::error( size_t idx )
 	return ( idx == 0 && m_error.size() > 0 ) ? m_error.c_str() : 0;
 }
 
+int weatherdata::name_to_id( const char *name )
+{
+	std::string n( util::lower_case( name ) );
+
+	if ( n == "year" ) return YEAR;
+	if ( n == "month" ) return MONTH;
+	if ( n == "day" ) return DAY;
+	if ( n == "hour" ) return HOUR;
+	if ( n == "minute" ) return MINUTE;
+	if ( n == "gh" ) return GHI;
+	if ( n == "dn" ) return DNI;
+	if ( n == "df" ) return DHI;
+	if ( n == "wspd" ) return WSPD;
+	if ( n == "wdir" ) return WDIR;
+	if ( n == "tdry" ) return TDRY;
+	if ( n == "twet" ) return TWET;
+	if ( n == "tdew" ) return TDEW;
+	if ( n == "rhum" ) return RH;
+	if ( n == "pres" ) return PRES;
+	if ( n == "snow" ) return SNOW;
+	if ( n == "alb" ) return ALB;
+	if ( n == "aod" ) return AOD;
+
+	return -1;
+}
+
 weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *maxlen )
 {
 	vec x;
@@ -707,6 +733,9 @@ weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *ma
 			x.p = value->num.data();
 			if ( maxlen && x.len > *maxlen )
 				*maxlen = x.len;
+
+			int id = name_to_id(name);
+			if ( id >= 0 && !has_data_column( id ) ) m_columns.push_back( id );
 		}
 	}
 
@@ -744,4 +773,9 @@ bool weatherdata::read( weather_record *r )
 void weatherdata::rewind()
 {
 	m_index = 0;
+}
+
+bool weatherdata::has_data_column( size_t id )
+{
+	return std::find( m_columns.begin(), m_columns.end(), id ) != m_columns.end();
 }

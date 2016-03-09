@@ -109,6 +109,7 @@ public:
 	virtual bool read( weather_record *r ) = 0; // reads one more record
 	virtual void rewind() = 0;
 	virtual const char *error( size_t idx = 0 ) = 0;
+	virtual bool has_data_column( size_t id ) = 0;
 
 	
 	// some helper methods for ease of use of htis class
@@ -185,6 +186,7 @@ public:
 	virtual size_t step_sec(); // step time in seconds
 	virtual size_t nrecords(); // number of data records in file		
 	virtual const char *error( size_t idx = 0 );
+	virtual bool has_data_column( size_t id );
 	
 };
 
