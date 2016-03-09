@@ -518,7 +518,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Energy loss due to snow (DC)",						   "kWh",    "",                       "Annual",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
-	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "instantaneous_hourly_values",    "Instantaneous hourly data values",            "0/1", "",                        "Miscellaneous", "*",                       "BOOLEAN",                   "" },
+
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
 
@@ -864,13 +865,13 @@ public:
 		else
 			throw exec_error("pvsamv1", "no weather data supplied");
 		
-		
-		// by default do not interpolate sun position at sun up / down hours
-		// but: if hourly files do not have a minute data column, assume integrated data over the hour
-		// like tmy2 or tmy3 and do interpolate the sun position in sun up / sun down times.
-		bool interp_sunpos = false;
+								
+		// assumes instantaneous values, unless hourly file with no minute column specified
+		bool instantaneous = true;
 		if ( wdprov->step_sec() == 3600 && wdprov->has_data_column( weather_data_provider::MINUTE ) == false )
-			interp_sunpos = true;
+			instantaneous = false;
+
+		assign( "instantaneous_hourly_values", var_data( instantaneous ? 1.0f : 0.0f ) );
 
 		weather_header hdr;
 		wdprov->header( &hdr );
@@ -1996,7 +1997,8 @@ public:
 						}
 
 						irrad irr;
-						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour, interp_sunpos);
+						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, 
+							instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour );
 						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 						 
 						irr.set_sky_model(skymodel, alb);

@@ -916,12 +916,11 @@ irrad::irrad()
 	gcr=std::numeric_limits<double>::quiet_NaN();
 	en_backtrack = false;
 	ghi = std::numeric_limits<double>::quiet_NaN();
-	interpolate_sunpos_in_up_down_hours = true;
 }
 
 int irrad::check()
 {
-	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt < 0 || delt > 1) return -1;
+	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
 	if ( radmode < DN_DF || radmode > POA_P || skymodel < 0 || skymodel > 2 ) return -3;
 	if ( track < 0 || track > 3 ) return -4;
@@ -998,7 +997,7 @@ void irrad::get_irrad (double *ghi, double *dni, double *dhi){
 	*dhi = df;
 }
 
-void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr , bool interp )
+void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
 {
 	this->year = year;
 	this->month = month;
@@ -1006,7 +1005,6 @@ void irrad::set_time( int year, int month, int day, int hour, double minute, dou
 	this->hour = hour;
 	this->minute = minute;
 	this->delt = delt_hr;
-	this->interpolate_sunpos_in_up_down_hours = interp;
 }
 
 void irrad::set_location( double lat, double lon, double tz )
@@ -1091,7 +1089,8 @@ int irrad::calc()
 	double t_sunrise = sun[4];
 	double t_sunset = sun[5];
 
-	if ( interpolate_sunpos_in_up_down_hours
+	// recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp
+	if ( delt > 0
 		&& t_cur >= t_sunrise - delt/2.0
 		&& t_cur < t_sunrise + delt/2.0 )
 	{
@@ -1107,7 +1106,7 @@ int irrad::calc()
 
 		tms[2] = 2;				
 	}
-	else if ( interpolate_sunpos_in_up_down_hours
+	else if ( delt > 0
 		&& t_cur > t_sunset - delt/2.0
 		&& t_cur <= t_sunset + delt/2.0 )
 	{

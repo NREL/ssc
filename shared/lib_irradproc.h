@@ -54,7 +54,6 @@ private:
 	double sun[9], angle[5], poa[3], diffc[3];
 	int tms[3];
 	double ghi;
-	bool interpolate_sunpos_in_up_down_hours;
 
 	poaDecompReq* poaAll;
 
@@ -62,8 +61,10 @@ public:
 
 	irrad();
 	int check();
-
-	void set_time( int year, int month, int day, int hour, double minute, double delt_hr, bool interp_sunup_sundown );
+	
+	// if delt_hr is less than zero, do not interpolate sunrise and sunset hours
+#define IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET (-1.0)
+	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
 	void set_location( double lat, double lon, double tz);
 	//skymodel: 0 is isotropic, 1 is hdkr, 2 is perez
 	void set_sky_model( int skymodel, double albedo );
