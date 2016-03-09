@@ -15,7 +15,7 @@ void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_re
 	_SF = SF;
 	_results = results;
 	_wdata = wdata;
-	_sol_azzen = nullptr;
+	_sol_azzen = 0;
 	_sim_first = sim_first;
 	_sim_last = sim_last;
 	Finished = false;
@@ -52,7 +52,7 @@ void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_re
     _thread_id = tname;
 	_SF = SF;
 	_results = results;
-	_wdata = nullptr;
+	_wdata = 0;
 	_sol_azzen = sol_azzen;
 	_sim_first = sim_first;
 	_sim_last = sim_last;
