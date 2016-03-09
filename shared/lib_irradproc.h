@@ -54,6 +54,7 @@ private:
 	double sun[9], angle[5], poa[3], diffc[3];
 	int tms[3];
 	double ghi;
+	bool interpolate_sunpos_in_up_down_hours;
 
 	poaDecompReq* poaAll;
 
@@ -62,7 +63,7 @@ public:
 	irrad();
 	int check();
 
-	void set_time( int year, int month, int day, int hour, double minute, double delt_hr );
+	void set_time( int year, int month, int day, int hour, double minute, double delt_hr, bool interp_sunup_sundown );
 	void set_location( double lat, double lon, double tz);
 	//skymodel: 0 is isotropic, 1 is hdkr, 2 is perez
 	void set_sky_model( int skymodel, double albedo );
@@ -94,6 +95,7 @@ public:
 		double *isotrop, double *circum, double *horizon );
 	void get_irrad (double *ghi, double *dni, double *dhi);
 	double get_ghi();
+	double get_sunpos_calc_hour();
 };
 
 

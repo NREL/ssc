@@ -80,6 +80,7 @@ class weatherdata : public weather_data_provider
 	weather_header m_hdr;
 	std::vector< weather_record* > m_data;
 	size_t m_index;
+	std::vector<size_t> m_columns;
 
 	struct vec {
 		ssc_number_t *p;
@@ -88,7 +89,8 @@ class weatherdata : public weather_data_provider
 
 	vec get_vector( var_data *v, const char *name, int *maxlen = 0 );	
 	ssc_number_t get_number( var_data *v, const char *name );
-
+	
+	int name_to_id( const char *name );
 public:
 	weatherdata( var_data *data_table );
 	virtual ~weatherdata();
@@ -100,6 +102,7 @@ public:
 	virtual size_t step_sec() { return m_stepSec; } // step time in seconds
 	virtual size_t nrecords() { return m_nRecords; } // number of data records in file		
 	virtual const char *error( size_t idx = 0 );
+	virtual bool has_data_column( size_t id );
 };
 
 #endif

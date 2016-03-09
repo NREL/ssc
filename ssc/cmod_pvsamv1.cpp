@@ -384,6 +384,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Irradiance DNI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Irradiance DHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "wfpoa",                                      "Irradiance POA from weather file",                                     "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
+	
 	//not all of these three calculated values will be reported, based on irrad_mode selection
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Irradiance GHI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Irradiance DNI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
@@ -394,6 +395,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_alt",                                    "Solar altitude angle",                                              "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_azi",                                    "Solar azimuth angle",                                               "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sunup",                                      "Sun up over horizon",                                               "0/1",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "sunpos_hour",                                "Sun position calculation time",                                     "hour",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "airmass",                                    "Absolute air mass",                                                 "",       "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Albedo",							                                 "",       "",                     "Time Series",       "*",                    "",                              "" },
 	//SEV: snow depth output
@@ -516,6 +518,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Energy loss due to snow (DC)",						   "kWh",    "",                       "Annual",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
+	
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
 
@@ -861,6 +864,13 @@ public:
 		else
 			throw exec_error("pvsamv1", "no weather data supplied");
 		
+		
+		// by default do not interpolate sun position at sun up / down hours
+		// but: if hourly files do not have a minute data column, assume integrated data over the hour
+		// like tmy2 or tmy3 and do interpolate the sun position in sun up / sun down times.
+		bool interp_sunpos = false;
+		if ( wdprov->step_sec() == 3600 && wdprov->has_data_column( weather_data_provider::MINUTE ) == false )
+			interp_sunpos = true;
 
 		weather_header hdr;
 		wdprov->header( &hdr );
@@ -1534,6 +1544,7 @@ public:
 		ssc_number_t *p_beam = allocate("dn", nrec);
 		ssc_number_t *p_diff = allocate("df", nrec);
 		ssc_number_t *p_wfpoa = allocate("wfpoa", nrec);    // POA irradiance from weather file
+		ssc_number_t *p_sunpos_hour = allocate("sunpos_hour", nrec);
 		ssc_number_t *p_wspd = allocate("wspd", nrec);
 		ssc_number_t *p_tdry = allocate("tdry", nrec);
 		ssc_number_t *p_albedo = allocate("alb", nrec);
@@ -1984,9 +1995,8 @@ public:
 							wf.poa = 0;
 						}
 
-						
 						irrad irr;
-						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
+						irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour, interp_sunpos);
 						irr.set_location(hdr.lat, hdr.lon, hdr.tz);
 						 
 						irr.set_sky_model(skymodel, alb);
@@ -2053,6 +2063,9 @@ public:
 						irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
 						irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
 						irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+
+						if ( iyear == 0 )
+							p_sunpos_hour[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
 
 						// save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
 						/*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array

@@ -235,7 +235,7 @@ public:
 				throw exec_error("pvwattsv1", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
 
 			irrad irr;
-			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wfile.step_sec() / 3600.0 );
+			irr.set_time( wf.year, wf.month, wf.day, wf.hour, wf.minute, wfile.step_sec() / 3600.0, true );
 			irr.set_location( hdr.lat, hdr.lon, hdr.tz );
 				
 			double alb = 0.2;

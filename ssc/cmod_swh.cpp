@@ -136,7 +136,6 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                      "",        "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                     "%",       "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                   "kWh/kW",  "",                                  "Annual",           "*",                        "",                                 "" },
-
 	
 	var_info_invalid };
 
@@ -162,7 +161,14 @@ public:
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
 		********************************************************************** */
-
+						
+		// by default do not interpolate sun position at sun up / down hours
+		// but: if hourly files do not have a minute data column, assume integrated data over the hour
+		// like tmy2 or tmy3 and do interpolate the sun position in sun up / sun down times.
+		bool interp_sunpos = false;
+		if ( wfile.step_sec() == 3600 && wfile.has_data_column( weather_data_provider::MINUTE ) == false )
+			interp_sunpos = true;
+	
 		adjustment_factors haf( this );
 		if ( !haf.setup() )
 			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error() );
@@ -329,12 +335,15 @@ public:
 				/* **********************************************************************
 				Process radiation (Isotropic model), calculate Incident[i] through cover
 				********************************************************************** */
+				
+				
+
 				irrad tt;
 				if (irrad_mode == 0) tt.set_beam_diffuse(wf.dn, wf.df);
 				else if (irrad_mode == 2) tt.set_global_diffuse(wf.gh, wf.df);
 				else tt.set_global_beam(wf.gh, wf.dn);
 				tt.set_location(hdr.lat, hdr.lon, hdr.tz);
-				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour);
+				tt.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour, interp_sunpos );
 				tt.set_sky_model(sky_model /* isotropic=0, hdkr=1, perez=2 */, albedo );
 				tt.set_surface(0, tilt, azimuth, 0, 0, 0);
 				tt.calc();

@@ -88,7 +88,7 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                        "Miscellaneous", "*",                       "INTEGER",                   "" },
-
+	
 	var_info_invalid };
 
 class cm_pvwattsv5_base : public compute_module
@@ -193,11 +193,11 @@ public:
 	}
 
 	
-	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour,
+	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour, bool interp_sunpos,
 		double lat, double lon, double tz, double dn, double df, double alb )
 	{
 		irrad irr;
-		irr.set_time( year, month, day, hour, minute, ts_hour );
+		irr.set_time( year, month, day, hour, minute, ts_hour, interp_sunpos );
 		irr.set_location( lat, lon, tz );
 		irr.set_sky_model(2, alb );
 		irr.set_beam_diffuse(dn, df);
@@ -364,6 +364,13 @@ public:
 
 		weather_header hdr;
 		wdprov->header( &hdr );
+								
+		// by default do not interpolate sun position at sun up / down hours
+		// but: if hourly files do not have a minute data column, assume integrated data over the hour
+		// like tmy2 or tmy3 and do interpolate the sun position in sun up / sun down times.
+		bool interp_sunpos = false;
+		if ( wdprov->step_sec() == 3600 && wdprov->has_data_column( weather_data_provider::MINUTE ) == false )
+			interp_sunpos = true;
 
 		weather_record wf;
 		
@@ -371,7 +378,6 @@ public:
 		size_t step_per_hour = nrec/8760;
 		if ( step_per_hour < 1 || step_per_hour > 60 || step_per_hour*8760 != nrec )
 			throw exec_error( "pvwattsv5", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec ) );
-		
 		
 		/* allocate output arrays */		
 		ssc_number_t *p_gh = allocate("gh", nrec);
@@ -425,9 +431,9 @@ public:
 				
 				double alb = 0.2; // do not increase albedo if snow exists in TMY2			
 				if ( std::isfinite( wf.alb ) && wf.alb > 0 && wf.alb < 1 )
-					alb = wf.alb;
+					alb = wf.alb;					
 				
-				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour,
+				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour, interp_sunpos,
 					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb );
 
 				if ( -1 == code )
@@ -579,7 +585,9 @@ public:
 		setup_system_inputs();
 		initialize_cell_temp( time_step, last_tcell, last_poa );
 		
-		int code = process_irradiance(year, month, day, hour, minute, time_step, lat, lon, tz, beam, diff, alb );
+		int code = process_irradiance(year, month, day, hour, minute, time_step, false,
+			lat, lon, tz, beam, diff, alb );
+
 		if (code != 0)
 			throw exec_error( "pvwattsv5_1ts", "failed to calculate plane of array irradiance with given input parameters" );
 

@@ -897,6 +897,83 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			}
 		}
 	}
+	else if ( m_type == TMY2 )
+	{
+		// indicate which columns are available in TMY2 files
+		m_columns[YEAR].index 
+			= m_columns[MONTH].index
+			= m_columns[DAY].index
+			= m_columns[HOUR].index
+			= m_columns[GHI].index
+			= m_columns[DNI].index
+			= m_columns[DHI].index
+			= m_columns[TDRY].index
+			= m_columns[TDEW].index
+			= m_columns[WSPD].index
+			= m_columns[WDIR].index
+			= m_columns[RH].index
+			= m_columns[PRES].index
+			= m_columns[SNOW].index
+			= 1;
+	}
+	else if ( m_type == TMY3 )
+	{
+		// indicate which columns are available in TMY3 files
+		m_columns[YEAR].index 
+			= m_columns[MONTH].index
+			= m_columns[DAY].index
+			= m_columns[HOUR].index
+			= m_columns[GHI].index
+			= m_columns[DNI].index
+			= m_columns[DHI].index
+			= m_columns[TDRY].index
+			= m_columns[TDEW].index
+			= m_columns[WSPD].index
+			= m_columns[WDIR].index
+			= m_columns[RH].index
+			= m_columns[PRES].index
+			= m_columns[ALB].index
+			= 1;
+	}
+	else if ( m_type == EPW )
+	{
+		// indicate which columns are available in EPW files
+		m_columns[YEAR].index 
+			= m_columns[MONTH].index
+			= m_columns[DAY].index
+			= m_columns[HOUR].index
+			= m_columns[GHI].index
+			= m_columns[DNI].index
+			= m_columns[DHI].index
+			= m_columns[TDRY].index
+			= m_columns[TWET].index
+			= m_columns[WSPD].index
+			= m_columns[WDIR].index
+			= m_columns[RH].index
+			= m_columns[PRES].index
+			= m_columns[SNOW].index
+			= 1;
+	}
+	else if ( m_type == SMW )
+	{				
+		// indicate which columns are available in SMW files
+		m_columns[YEAR].index 
+			= m_columns[MONTH].index
+			= m_columns[DAY].index
+			= m_columns[HOUR].index
+			= m_columns[GHI].index
+			= m_columns[DNI].index
+			= m_columns[DHI].index
+			= m_columns[TDRY].index
+			= m_columns[TWET].index
+			= m_columns[WSPD].index
+			= m_columns[WDIR].index
+			= m_columns[RH].index
+			= m_columns[PRES].index
+			= m_columns[SNOW].index
+			= 1;
+	}
+
 
 	// by default, subtract 1 from hour of TMY3 files to switch
 	// from 1-24 standard to 0-23
@@ -1365,6 +1442,11 @@ bool weatherfile::read( weather_record *r )
 	}
 	else
 		return false;
+}
+
+bool weatherfile::has_data_column( size_t id )
+{
+	return m_columns[id].index >= 0;
 }
 
 

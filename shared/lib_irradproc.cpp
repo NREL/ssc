@@ -916,6 +916,7 @@ irrad::irrad()
 	gcr=std::numeric_limits<double>::quiet_NaN();
 	en_backtrack = false;
 	ghi = std::numeric_limits<double>::quiet_NaN();
+	interpolate_sunpos_in_up_down_hours = true;
 }
 
 int irrad::check()
@@ -937,6 +938,11 @@ int irrad::check()
 double irrad::get_ghi()
 {
 	return ghi;
+}
+
+double irrad::get_sunpos_calc_hour()
+{
+	return ((double)tms[0]) + ((double)tms[1])/60.0;
 }
 
 void irrad::get_sun( double *solazi,
@@ -992,7 +998,7 @@ void irrad::get_irrad (double *ghi, double *dni, double *dhi){
 	*dhi = df;
 }
 
-void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr )
+void irrad::set_time( int year, int month, int day, int hour, double minute, double delt_hr , bool interp )
 {
 	this->year = year;
 	this->month = month;
@@ -1000,6 +1006,7 @@ void irrad::set_time( int year, int month, int day, int hour, double minute, dou
 	this->hour = hour;
 	this->minute = minute;
 	this->delt = delt_hr;
+	this->interpolate_sunpos_in_up_down_hours = interp;
 }
 
 void irrad::set_location( double lat, double lon, double tz )
@@ -1075,8 +1082,7 @@ int irrad::calc()
 	diff: broken out diffuse components from sky model
 
 	lat, lon, tilt, sazm, rlim: angles in degrees
-*/
-	
+*/	
 	double t_cur = hour + minute/60.0;
 
 	// calculate sunrise and sunset hours in local standard time for the current day
@@ -1085,7 +1091,8 @@ int irrad::calc()
 	double t_sunrise = sun[4];
 	double t_sunset = sun[5];
 
-	if ( t_cur >= t_sunrise - delt/2.0
+	if ( interpolate_sunpos_in_up_down_hours
+		&& t_cur >= t_sunrise - delt/2.0
 		&& t_cur < t_sunrise + delt/2.0 )
 	{
 		// time step encompasses the sunrise
@@ -1100,7 +1107,8 @@ int irrad::calc()
 
 		tms[2] = 2;				
 	}
-	else if (t_cur > t_sunset - delt/2.0
+	else if ( interpolate_sunpos_in_up_down_hours
+		&& t_cur > t_sunset - delt/2.0
 		&& t_cur <= t_sunset + delt/2.0 )
 	{
 		// timestep encompasses the sunset
@@ -1129,8 +1137,8 @@ int irrad::calc()
 		sun[0] = -999*DTOR; //avoid returning a junk azimuth angle (return in radians)
 		sun[1] = -999*DTOR; //avoid returning a junk zenith angle (return in radians)
 		sun[2] = -999*DTOR; //avoid returning a junk elevation angle (return in radians)
-		tms[0] = -1;
-		tms[1] = -1;
+		tms[0] = 0;
+		tms[1] = 0;
 		tms[2] = 0;
 	}
 
