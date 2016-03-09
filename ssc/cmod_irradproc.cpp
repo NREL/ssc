@@ -173,7 +173,7 @@ public:
 
 			irrad x;
 
-			x.set_time( (int)year[i], (int)month[i], (int)day[i], (int)hour[i], minute[i], delt, false );
+			x.set_time( (int)year[i], (int)month[i], (int)day[i], (int)hour[i], minute[i], IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET );
 			x.set_location( lat, lon, tz );
 			x.set_sky_model( sky_model, alb );
 			if ( irrad_mode == 1 ) x.set_global_beam( glob[i], beam[i] );

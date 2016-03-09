@@ -130,7 +130,7 @@ public:
 		tccalc.set_last_values( last_tcell, last_poa );
 	
 		irrad irr;
-		irr.set_time( year, month, day, hour, minute, time_step, false );
+		irr.set_time( year, month, day, hour, minute, IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET );
 		irr.set_location( lat, lon, tz );
 				
 		double alb = 0.2;

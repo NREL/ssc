@@ -88,7 +88,8 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                        "Miscellaneous", "*",                       "INTEGER",                   "" },
-	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "instantaneous_hourly_values",    "Instantaneous hourly data values",            "0/1", "",                        "Miscellaneous", "*",                       "BOOLEAN",                   "" },
+
 	var_info_invalid };
 
 class cm_pvwattsv5_base : public compute_module
@@ -193,11 +194,11 @@ public:
 	}
 
 	
-	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour, bool interp_sunpos,
+	int process_irradiance(int year, int month, int day, int hour, double minute, double ts_hour,
 		double lat, double lon, double tz, double dn, double df, double alb )
 	{
 		irrad irr;
-		irr.set_time( year, month, day, hour, minute, ts_hour, interp_sunpos );
+		irr.set_time( year, month, day, hour, minute, ts_hour );
 		irr.set_location( lat, lon, tz );
 		irr.set_sky_model(2, alb );
 		irr.set_beam_diffuse(dn, df);
@@ -365,12 +366,12 @@ public:
 		weather_header hdr;
 		wdprov->header( &hdr );
 								
-		// by default do not interpolate sun position at sun up / down hours
-		// but: if hourly files do not have a minute data column, assume integrated data over the hour
-		// like tmy2 or tmy3 and do interpolate the sun position in sun up / sun down times.
-		bool interp_sunpos = false;
+		// assumes instantaneous values, unless hourly file with no minute column specified
+		bool instantaneous = true;
 		if ( wdprov->step_sec() == 3600 && wdprov->has_data_column( weather_data_provider::MINUTE ) == false )
-			interp_sunpos = true;
+			instantaneous = false;
+
+		assign( "instantaneous_hourly_values", var_data( instantaneous ? 1.0f : 0.0f ) );
 
 		weather_record wf;
 		
@@ -433,7 +434,8 @@ public:
 				if ( std::isfinite( wf.alb ) && wf.alb > 0 && wf.alb < 1 )
 					alb = wf.alb;					
 				
-				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, ts_hour, interp_sunpos,
+				int code = process_irradiance(wf.year, wf.month, wf.day, wf.hour, wf.minute, 
+					instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour,
 					hdr.lat, hdr.lon, hdr.tz, wf.dn, wf.df, alb );
 
 				if ( -1 == code )
@@ -585,7 +587,8 @@ public:
 		setup_system_inputs();
 		initialize_cell_temp( time_step, last_tcell, last_poa );
 		
-		int code = process_irradiance(year, month, day, hour, minute, time_step, false,
+		int code = process_irradiance(year, month, day, hour, minute, 
+			IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET,
 			lat, lon, tz, beam, diff, alb );
 
 		if (code != 0)

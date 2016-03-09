@@ -383,7 +383,7 @@ public:
 				update( "", 100.0f * ((float)istep) / ((float)nstep), (float)istep);
 
 			irrad irr;
-			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, dTS, true );
+			irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, dTS );
 			irr.set_location(wFile.lat(), wFile.lon(), wFile.tz());
 			irr.set_sky_model(0, 0.2); // isotropic sky, 0.2 albedo (doesn't matter for CPV) and diffuse shading factor not enabled (set to 1.0 by default)
 			irr.set_beam_diffuse(wf.dn, wf.df);
