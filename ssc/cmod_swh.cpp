@@ -136,7 +136,8 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                      "",        "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                     "%",       "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                   "kWh/kW",  "",                                  "Annual",           "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "instantaneous_hourly_values",    "Instantaneous hourly data values",            "0/1", "",                        "Miscellaneous", "*",                       "BOOLEAN",                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous", "*",                       "",                          "" },
+
 
 	var_info_invalid };
 
@@ -163,13 +164,32 @@ public:
 		Read user specified system parameters from compute engine
 		********************************************************************** */
 						
-
+		
 		// assumes instantaneous values, unless hourly file with no minute column specified
+		double ts_shift_hours = 0.0;
 		bool instantaneous = true;
-		if ( wfile.step_sec() == 3600 && wfile.has_data_column( weather_data_provider::MINUTE ) == false )
-			instantaneous = false;
+		if ( wfile.step_sec() == 3600 )
+		{
+			if ( wfile.has_data_column( weather_data_provider::MINUTE ) )
+			{
+				// if we have an hourly file with a minute column, then
+				// the offset equals the time of the first record (for correct plotting)
+				weather_record rec;
+				if ( wfile.read( &rec ) )
+					ts_shift_hours = rec.minute/60.0;
 
-		assign( "instantaneous_hourly_values", var_data( instantaneous ? 1.0f : 0.0f ) );
+				wfile.rewind();
+			}
+			else
+			{
+				// hourly file with no minute data column.  assume
+				// integrated/averaged values and use mid point convention for interpreting results
+				instantaneous = false;
+				ts_shift_hours = 0.5;
+			}
+		}
+
+		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 	
 		adjustment_factors haf( this );
 		if ( !haf.setup() )

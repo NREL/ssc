@@ -88,7 +88,7 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                        "Miscellaneous", "*",                       "INTEGER",                   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "instantaneous_hourly_values",    "Instantaneous hourly data values",            "0/1", "",                        "Miscellaneous", "*",                       "BOOLEAN",                   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous", "*",                       "",                          "" },
 
 	var_info_invalid };
 
@@ -367,11 +367,30 @@ public:
 		wdprov->header( &hdr );
 								
 		// assumes instantaneous values, unless hourly file with no minute column specified
+		double ts_shift_hours = 0.0;
 		bool instantaneous = true;
-		if ( wdprov->step_sec() == 3600 && wdprov->has_data_column( weather_data_provider::MINUTE ) == false )
-			instantaneous = false;
+		if ( wdprov->step_sec() == 3600 )
+		{
+			if ( wdprov->has_data_column( weather_data_provider::MINUTE ) )
+			{
+				// if we have an hourly file with a minute column, then
+				// the offset equals the time of the first record (for correct plotting)
+				weather_record rec;
+				if ( wdprov->read( &rec ) )
+					ts_shift_hours = rec.minute/60.0;
 
-		assign( "instantaneous_hourly_values", var_data( instantaneous ? 1.0f : 0.0f ) );
+				wdprov->rewind();
+			}
+			else
+			{
+				// hourly file with no minute data column.  assume
+				// integrated/averaged values and use mid point convention for interpreting results
+				instantaneous = false;
+				ts_shift_hours = 0.5;
+			}
+		}
+
+		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 
 		weather_record wf;
 		
