@@ -538,14 +538,15 @@ void EditorWindow::Exec()
 	wxString svar;
 	if( !m_fileName.IsEmpty() )
 	{
-		svar = wxPathOnly( m_fileName );
+		svar = wxPathOnly(m_fileName);
+		m_editor->SetWorkDir(wxPathOnly(m_fileName));
 	}
 	else
 	{
 		svar = wxEmptyString;
 	}
 
-	m_editor->Execute( svar );
+	m_editor->Execute( );
 
 	if ( m_stopButton->IsShown() )
 	{
