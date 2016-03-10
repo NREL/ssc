@@ -13,6 +13,7 @@ OBJECTS = tcskernel.o \
 	nlopt_callbacks.o \
 	numeric_solvers.o \
 	heat_exchangers.o \
+	sco2_pc_csp_int.o \
 	sco2_rec_util.o \
 	sco2_power_cycle.o \
 	water_properties.o \
