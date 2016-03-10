@@ -163,31 +163,31 @@ public:
 		/* **********************************************************************
 		Read user specified system parameters from compute engine
 		********************************************************************** */
-						
-		
+														
 		// assumes instantaneous values, unless hourly file with no minute column specified
 		double ts_shift_hours = 0.0;
 		bool instantaneous = true;
-		if ( wfile.step_sec() == 3600 )
+		if ( wfile.has_data_column( weather_data_provider::MINUTE ) )
 		{
-			if ( wfile.has_data_column( weather_data_provider::MINUTE ) )
-			{
-				// if we have an hourly file with a minute column, then
-				// the offset equals the time of the first record (for correct plotting)
-				weather_record rec;
-				if ( wfile.read( &rec ) )
-					ts_shift_hours = rec.minute/60.0;
+			// if we have an file with a minute column, then
+			// the starting time offset equals the time 
+			// of the first record (for correct plotting)
+			// this holds true even for hourly data with a minute column
+			weather_record rec;
+			if ( wfile.read( &rec ) )
+				ts_shift_hours = rec.minute/60.0;
 
-				wfile.rewind();
-			}
-			else
-			{
-				// hourly file with no minute data column.  assume
-				// integrated/averaged values and use mid point convention for interpreting results
-				instantaneous = false;
-				ts_shift_hours = 0.5;
-			}
+			wfile.rewind();
 		}
+		else if ( wfile.nrecords() == 8760 )
+		{
+			// hourly file with no minute data column.  assume
+			// integrated/averaged values and use mid point convention for interpreting results
+			instantaneous = false;
+			ts_shift_hours = 0.5;
+		}
+		else
+			throw exec_error("pvsamv1", "subhourly weather files must specify the minute for each record" );
 
 		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 	
