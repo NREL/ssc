@@ -12,7 +12,8 @@ tol = 1.E-6;				//[-] Convergence tolerance for performance calcs
 opt_tol = 1.E-6;			//[-] Convergence tolerance for optimization calcs
 UA_total_des = 10000.0;		//[kW/K] Total UA allocatable to recuperators
 P_high_limit = 25.0;		//[MPa] High pressure limit in cycle
-eta_c = 0.89;				//[-] Compressor Isentropic Efficiency
+eta_mc = 0.89;				//[-] Compressor Isentropic Efficiency
+eta_rc = 0.89;				//[-] Recompressor Isentropic Efficiency
 eta_t = 0.93;				//[-] Turbine Isentropic Efficiency
 
 // Matching Dyreby Figure 4.5
@@ -58,7 +59,8 @@ var('I_W_dot_net_des',W_dot_net_des);
 var('I_T_mc_in_des',T_mc_in_des);
 var('I_T_t_in_des',T_t_in_des);
 var('I_N_t_des',N_t_des);
-var('I_eta_c',eta_c);
+var('I_eta_mc',eta_mc);
+var('I_eta_rc',eta_rc);
 var('I_eta_t',eta_t);
 var('I_tol',tol);
 var('I_opt_tol',opt_tol);
