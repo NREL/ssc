@@ -20,6 +20,12 @@ var('dT_PHX_cold_approach', 20);	//[C] Temperature difference between cold HTF a
 var('fan_power_frac',0.01);			//[-] Fraction of net cycle power consumed by air cooler fan
 var('deltaP_cooler_frac',0.002);	//[-] Fraction of cycle high pressure that is design point cooler CO2 pressure drop
 
+// Set Off-Design Inputs
+var('is_m_dot_htf_fracs',0);
+var('m_dot_htf_fracs_in',[]);		//[-]
+var('is_T_amb_od',1);
+var('T_amb_od_in',[30,35]);		//[C]
+
 // Run Model
 run('sco2_csp_system');
 
@@ -29,14 +35,23 @@ outln("The HTF temperature difference across the PHX is: ", var("T_htf_hot_des")
 outln("The HTF mass flow rate is: ", var("m_dot_htf_des"), " kg/s");
 outln("The solved cycle thermal efficiency is: ", var("eta_thermal_calc"), " -");
 outln("The total recuperator conductance is: ", var("UA_recup_total"), " kW/K");
-outln("The low temperature recuperator conductance is: ", var("UA_LTR"), " UA_LTR");
-outln("The high temperature recuperator conductance is: ", var("UA_HTR"), " UA_HTR");
+outln("The low temperature recuperator conductance is: ", var("UA_LTR"), " kW/K");
+outln("The high temperature recuperator conductance is: ", var("UA_HTR"), " kW/K");
 outln("The recompression fraction is: ", var("recomp_frac"), " -");
 outln("The main compressor outlet pressure is: ", var("P_comp_in"), " MPa");
 outln("The main compressor inlet pressure is: ", var("P_comp_out"), " MPa");
 outln("The PHX conductance is: ", var("UA_PHX"), " kW/K");
 outln("The PHX effectiveness is: ", var("eff_PHX"), " -");
 outln("The PHX NTU is: ", var("NTU_PHX"), " -");
+
+// Get Off-Design Outputs:
+outln("The off-design ambient temperature is: ", var("T_amb_od"), " C");
+outln("The off-design HTF normalized mass flow rate is: ", var("m_dot_htf_fracs"), " -");
+outln("The off-design HTF inlet temperature is: ", var("T_htf_hot_od"), " C");
+outln("The off-design main compressor inlet pressure is: ", var("P_comp_in_od"), " MPa");
+outln("The off-design main compressor speed is: ", var("N_mc_od"), " rpm");
+outln("The off-design recompression fraction is: ", var("recomp_frac_od"), " -");
+outln("The off-design cycle thermal efficiency is: ", var("eta_thermal_od"), " -");
 
 
 
