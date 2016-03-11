@@ -1265,7 +1265,7 @@ public:
 					// rollover periods considered from weekday schedule at 12a [0], 6a [5], 12p [11], and 6p [17]
 					if ((m_month[m].ec_rollover_periods.size() < 5) && (c == 0 || c == 5 || c == 11 || c == 17))
 					{
-
+						m_month[m].ec_rollover_periods.push_back((int)ec_schedwkday.at(m, c));
 					}
 				}
 				for (c = 0; c < ec_schedwkend.ncols(); c++)
@@ -1314,7 +1314,6 @@ public:
 
 			// periods are rows and tiers are columns - note that columns can change based on rows
 			// Initialize each month variables that are constant over the simulation
-
 			for (m = 0; m < m_month.size(); m++)
 			{
 				int num_periods=0;
@@ -1921,8 +1920,6 @@ public:
 						}
 					}
 				}
-
-
 
 				// set surplus or use
 				for (size_t ir = 0; ir < m_month[m].ec_energy_use.nrows(); ir++)
