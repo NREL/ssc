@@ -27,10 +27,10 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "fan_power_frac",       "Fraction of net cycle power consumed by air cooler fan", "",           "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
 	// ** Off-design Inputs **
-	{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_fracs",       "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_ARRAY,   "m_dot_fracs",          "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_fracs=1",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "is_T_amb_array",       "0 = N analysis of off design ambient temperature, 1 = Yes", "",        "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_ARRAY,   "T_amb_array",     "Array of ambient temperatures for off-design parametric",     "C",          "",    "",      "is_T_amb_array=1",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_htf_fracs",   "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "m_dot_htf_fracs_in",   "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_htf_fracs=1",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_T_amb_od",          "0 = N analysis of off design ambient temperature, 1 = Yes", "",        "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_ARRAY,   "T_amb_od_in",          "Array of ambient temperatures for off-design parametric","C",          "",    "",      "is_T_amb_od=1",     "",       "" },
 	// ** Design OUTPUTS **
 		// System Design Solution
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold_des",       "HTF design colde temperature (PHX outlet)",              "C",          "",    "",      "*",     "",       "" },
@@ -51,7 +51,18 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	// ?????
 
 	// ** Off-Design Outputs
+	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_htf_fracs",      "Normalized mass flow rate",                              "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_od",             "Ambient temperatures",                                   "C",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_hot_od",         "HTF hot temperatures",                                   "C",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "P_comp_in_od",         "Main compressor inlet pressures",                        "MPa",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "N_mc_od",              "Main compressor speed",                                  "rpm",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "recomp_frac_od",       "Recompression fractions",                                "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "",    "",      "*",     "",       "" },
+
+
+
+
+
 
 	var_info_invalid };
 
@@ -145,10 +156,10 @@ public:
 
 		// Set SSC design outputs
 			// System
-		double m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
+		double m_dot_htf_design = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
 		double T_htf_cold_calc = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
 		assign("T_htf_cold_des",T_htf_cold_calc-273.15);		//[C] convert from K
-		assign("m_dot_htf_des",m_dot_htf);						//[kg/s]
+		assign("m_dot_htf_des",m_dot_htf_design);				//[kg/s]
 			// Cycle
 		assign("eta_thermal_calc",sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);	//[-]
 		double UA_LTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_LT;		//[kW/K]
@@ -164,28 +175,112 @@ public:
 		assign("eff_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 		assign("NTU_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
 
-		// Try calling off-design model with design parameters
-		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
-		sco2_rc_od_par.m_T_htf_hot = sco2_rc_des_par.m_T_htf_hot_in;
-		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
-		sco2_rc_od_par.m_T_amb = sco2_rc_des_par.m_T_amb_des;
-		int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
+		// Set up off-design analysis
+		bool is_m_dot_fracs = as_boolean("is_m_dot_htf_fracs");
+		bool is_T_amb_od = as_boolean("is_T_amb_od");
 
-		try
+		size_t n_m_dot_fracs = 1;
+		size_t n_T_amb_od = 1;
+
+		std::vector<double> m_dot_htf_fracs;
+		std::vector<double> T_amb_od;
+
+		if( is_m_dot_fracs )
 		{
-			sco2_recomp_csp.off_design(sco2_rc_od_par, od_strategy);
+			ssc_number_t *p_m_dot_htf_fracs = as_array("m_dot_htf_fracs_in", &n_m_dot_fracs);
+			m_dot_htf_fracs.resize(n_m_dot_fracs);
+			for( int i = 0; i < n_m_dot_fracs; i++ )
+				m_dot_htf_fracs[i] = (double) p_m_dot_htf_fracs[i];
 		}
-		catch( C_csp_exception &csp_exception )
+		else
 		{
-			// Report warning before exiting with error
-			while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+			m_dot_htf_fracs.resize(1);
+			m_dot_htf_fracs[0] = 1.0;		//[-]
+		}
+		
+		if( is_T_amb_od )
+		{
+			ssc_number_t *p_T_amb_od = as_array("T_amb_od_in", &n_T_amb_od);
+			T_amb_od.resize(n_T_amb_od);
+			for( int i = 0; i < n_T_amb_od; i++ )
+				T_amb_od[i] = (double) p_T_amb_od[i];
+		}
+		else
+		{
+			T_amb_od.resize(1);
+			T_amb_od[0] = as_double("T_amb_des");	//[C]
+		}
+
+		int n_od_runs = n_m_dot_fracs*n_T_amb_od;
+			// Off-design parameters
+		ssc_number_t *p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
+		ssc_number_t *p_T_amb_od = allocate("T_amb_od", n_od_runs);
+		ssc_number_t *p_T_htf_hot_od = allocate("T_htf_hot_od", n_od_runs);
+			// Optimized control parameters
+		ssc_number_t *p_P_comp_in_od = allocate("P_comp_in_od", n_od_runs);
+		ssc_number_t *p_N_mc_od = allocate("N_mc_od", n_od_runs);
+		ssc_number_t *p_recomp_frac_od = allocate("recomp_frac_od", n_od_runs);			
+			// Results
+		ssc_number_t *p_eta_thermal_od = allocate("eta_thermal_od", n_od_runs);
+
+		for(int n_run = 0; n_run < n_od_runs; n_run++)
+		{
+			// Setup off-design analysis for 'n_run'
+			int i_m_dot_htf = n_run / n_T_amb_od;
+			int j_T_amb_od = n_run % n_T_amb_od;
+
+			double m_dot_htf_od_run = m_dot_htf_fracs[i_m_dot_htf];		//[-]
+			double T_amb_od_run = T_amb_od[j_T_amb_od];					//[C]
+			double T_htf_od_run = as_double("T_htf_hot_des");			//[C]
+
+			p_m_dot_htf_fracs[n_run] = m_dot_htf_od_run;	//[-]
+			p_T_amb_od[n_run] = T_amb_od_run;				//[-]
+			p_T_htf_hot_od[n_run] = T_htf_od_run;			//[C]
+			
+			// Try calling off-design model with design parameters
+			C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+			sco2_rc_od_par.m_T_htf_hot = T_htf_od_run + 273.15;		//[K]
+			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*m_dot_htf_od_run;	//[kg/s]
+			sco2_rc_od_par.m_T_amb = T_amb_od_run + 273.15;			//[K]
+			int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
+
+			int off_design_code = 0;
+			try
 			{
-				log(out_msg);
+				off_design_code = sco2_recomp_csp.off_design(sco2_rc_od_par, od_strategy);
+			}
+			catch( C_csp_exception &csp_exception )
+			{
+				// Report warning before exiting with error
+				while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+				{
+					log(out_msg);
+				}
+
+				log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+				return;
 			}
 
-			log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+			if(off_design_code == 0)
+			{	// Off-design call was successful, so write outputs
+					// Control parameters
+				p_P_comp_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_pres[1-1]/1000.0;	//[MPa]
+				p_N_mc_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_N;		//[rpm]
+				p_recomp_frac_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_recomp_frac;		//[-]
+					// Results
+				p_eta_thermal_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;
+			}
+			else
+			{	// Off-design call failed, write NaN outptus
+					// Control parameters
+				p_P_comp_in_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_N_mc_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_recomp_frac_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+					// Results
+				p_eta_thermal_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+			}
 
-			return;
 		}
 
 		// If all calls were successful, log to SSC any messages from sco2_recomp_csp
@@ -193,9 +288,7 @@ public:
 		{
 			log(out_msg);
 		}
-
-		ssc_number_t *p_eta_thermal_od = allocate("eta_thermal_od", 1);
-		p_eta_thermal_od[0] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;
+		
 	}
 
 };
