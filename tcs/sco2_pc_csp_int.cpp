@@ -186,18 +186,18 @@ int C_sco2_recomp_csp::od_fix_T_mc__float_phx_dt__opt_eta()
 		index++;
 	}
 
-	// Reset optimization tracking structure
-	ms_od_opt_eta_tracking.m_is_opt_found = false;
-	ms_od_opt_eta_tracking.m_eta_max = 0.0;
-	ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = std::numeric_limits<double>::quiet_NaN();
-	ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
-
 	// Compressor Speed
 	x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);
 	lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*0.1);
 	ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*1.5);
 	scale.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*0.1);
 	index++;
+
+	// Reset optimization tracking structure
+	ms_od_opt_eta_tracking.m_is_opt_found = false;
+	ms_od_opt_eta_tracking.m_eta_max = 0.0;
+	ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = std::numeric_limits<double>::quiet_NaN();
+	ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
 
 	// Save initial vectors
 	std::vector<double> x_base = x;
