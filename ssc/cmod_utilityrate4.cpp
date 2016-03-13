@@ -1849,7 +1849,7 @@ public:
 
 				/*
 				// rollover energy from correct period - based on matching period number
-				if (m > 0)
+				if (m > 0 && enable_nm && !excess_monthly_dollars)
 				{
 					// check for surplus in previous month for same period
 					for (size_t ir = 0; ir < m_month[m - 1].ec_energy_surplus.nrows(); ir++)
@@ -1879,7 +1879,7 @@ public:
 				*/
 
 				// rollover energy from correct period - matching time of day - currently four values considered 12a, 6a, 12p, 6p set in loop above.
-				if (m > 0)
+				if (m > 0 && enable_nm && !excess_monthly_dollars)
 				{
 					// check for surplus in previous month for same period
 					for (size_t ir = 0; ir < m_month[m - 1].ec_energy_surplus.nrows(); ir++)
@@ -2061,8 +2061,10 @@ public:
 // energy charge
 						if (ec_enabled)
 						{
-
-							if (m_month[m].energy_net >= 0.0)
+							// energy use and surplus distributed correctly above.
+							// so calculate for all and not based on monthly net
+							// addresses issue if net > 0 but one period net < 0
+							//if (m_month[m].energy_net >= 0.0)
 							{ // calculate income or credit
 								ssc_number_t credit_amt = 0;
 								for (period = 0; period < (int)m_month[m].ec_tou_sr.nrows(); period++)
@@ -2081,7 +2083,7 @@ public:
 								}
 								monthly_ec_charges[m] -= credit_amt;
 							}
-							else
+							//else
 	
 							{ // calculate payment or charge
 
