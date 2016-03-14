@@ -80,6 +80,7 @@ mkdir sdk-release\examples
 copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
+copy examples\coeffgen_example.c sdk-release\examples
 copy examples\example1_pvwatts.c sdk-release\examples
 copy examples\pvwatts1ts_ex.c sdk-release\examples
 copy examples\pvwattsv5run.c sdk-release\examples
