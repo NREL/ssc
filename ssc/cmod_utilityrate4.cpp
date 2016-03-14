@@ -36,6 +36,12 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 
+
+// optional input that allows sell rates to be overridden with buy rates - defaults to no override
+	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Optional override", "", "?=0", "BOOLEAN", "" },
+
+
+
 //	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
 //	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",      "" },
 
@@ -1251,7 +1257,8 @@ public:
 //			bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option == 0);
 //			ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate");
 
-			bool sell_eq_buy = enable_nm;
+//			bool sell_eq_buy = enable_nm;
+			bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
 			// find all periods for each month m through schedules
 			for (m = 0; m < m_month.size(); m++)
@@ -1664,7 +1671,7 @@ public:
 //		bool ur_ec_sell_at_ec_rates = (ur_ec_sell_rate_option==0);
 //		ssc_number_t ur_ec_single_sell_rate = as_number("ur_ec_single_sell_rate")*rate_esc;
 
-		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
+//		bool sell_eq_buy = enable_nm; // update from 6/25/15 meeting
 
 //		bool ec_enabled = as_boolean("ur_ec_enable");
 		bool ec_enabled = true; // per 2/25/16 meeting
@@ -1772,7 +1779,7 @@ public:
 								end_tier = (int)i_tier - 1;
 						}
 					}
-					if (start_tier >= m_month[m].ec_tou_ub.ncols())
+					if (start_tier >= (int)m_month[m].ec_tou_ub.ncols())
 						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 					if (end_tier < start_tier)
 						end_tier = start_tier;
@@ -1818,9 +1825,9 @@ public:
 				/*  hour by hour accumulation - changed to monthly per meeting with Paul 2/29/16 */
 				// monthly accumulation of energy
 				ssc_number_t mon_e_net = 0;
-				ssc_number_t ub_old = 0; // tier boundaries
-				ssc_number_t ub = 0; // tier boundaries
-				int tier_old = start_tier; // tier boundary
+//				ssc_number_t ub_old = 0; // tier boundaries
+//				ssc_number_t ub = 0; // tier boundaries
+//				int tier_old = start_tier; // tier boundary
 				if (m>0 && enable_nm && !excess_monthly_dollars)
 				{
 					mon_e_net = monthly_cumulative_excess_energy[m - 1]; // rollover
@@ -1900,7 +1907,7 @@ public:
 								// find corresponding target period for same time of day
 								ssc_number_t extra = 0;
 								int rollover_index = (int)(source_per_num - m_month[m-1].ec_rollover_periods.begin());
-								if (rollover_index < m_month[m].ec_rollover_periods.size())
+								if (rollover_index < (int)m_month[m].ec_rollover_periods.size())
 								{
 									int toup_target = m_month[m].ec_rollover_periods[rollover_index];
 									std::vector<int>::iterator target_per_num = std::find(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end(), toup_target);
@@ -2072,6 +2079,7 @@ public:
 									for (tier = 0; tier < (int)m_month[m].ec_tou_sr.ncols(); tier++)
 									{
 										ssc_number_t cr = m_month[m].ec_energy_surplus.at(period, tier) * m_month[m].ec_tou_sr.at(period, tier) * rate_esc;
+										
 										if (!enable_nm)
 										{
 											credit_amt += cr;
@@ -2079,6 +2087,15 @@ public:
 										}
 										else if (excess_monthly_dollars)
 											monthly_cumulative_excess_dollars[m] += cr;
+										
+										/*
+										if (!enable_nm || excess_monthly_dollars)
+										{
+											credit_amt += cr;
+											if (!excess_monthly_dollars)
+												m_month[m].ec_charge.at(period, tier) = -cr;
+										}
+										*/
 									}
 								}
 								monthly_ec_charges[m] -= credit_amt;
@@ -2105,6 +2122,13 @@ public:
 							if (enable_nm)
 							{
 								payment[c] += monthly_ec_charges[m];
+								/*
+								if (monthly_ec_charges[m] < 0)
+								{
+									monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+									payment[c] += monthly_ec_charges[m];
+								}
+								*/
 							}
 							else // non-net metering - no rollover 
 							{
@@ -2200,8 +2224,33 @@ public:
 			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
 			monthly_bill[m] = payment[c - 1] - income[c - 1];
 			if (enable_nm)
+			/*
 			{
-				if (m > 0) monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
+				
+				// apply previous month rollover dollars
+				if (m > 0)
+					monthly_cumulative_excess_dollars[m] += monthly_cumulative_excess_dollars[m - 1];
+				if (monthly_bill[m] > 0)
+				{
+					monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+					if (monthly_bill[m] < 0)
+					{
+						if (excess_monthly_dollars)
+							monthly_cumulative_excess_dollars[m] = 0 - monthly_bill[m];
+						monthly_bill[m] = 0;
+						payment[c - 1] = 0; // fixed charges applied below
+					}
+				}
+			}
+			*/
+			
+			{
+				// apply previous month rollover dollars
+				if (m > 0)
+				{
+					monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
+					payment[c - 1] -= monthly_cumulative_excess_dollars[m-1];
+				}
 				if (monthly_bill[m] < 0)
 				{
 					if (excess_monthly_dollars)
@@ -2209,7 +2258,24 @@ public:
 					monthly_bill[m] = 0;
 					payment[c - 1] = 0; // fixed charges applied below
 				}
+				else // apply current month rollover and adjust
+				{
+					monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+					if (monthly_bill[m] < 0)
+					{
+						if (excess_monthly_dollars)
+							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+						monthly_bill[m] = 0;
+						payment[c - 1] = 0; // fixed charges applied below
+					}
+					else
+					{
+						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
+						monthly_cumulative_excess_dollars[m] = 0;
+					}
+				}
 			}
+			
 		} // end of month m (m loop)
 
 
@@ -2414,7 +2480,7 @@ public:
 								end_tier = (int)i_tier - 1;
 						}
 					}
-					if (start_tier >= m_month[m].ec_tou_ub.ncols())
+					if (start_tier >= (int)m_month[m].ec_tou_ub.ncols())
 						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 					if (end_tier < start_tier)
 						end_tier = start_tier;
