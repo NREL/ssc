@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sscapi.h>
+#include "sscapi.h"
 
 ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 	float f0, float f1, const char *s0, const char *s1, void *user_data )

@@ -24,12 +24,6 @@ ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action,
 		printf("(%.2f %%) %s\n",f0,s0);
 		return 1; // return 0 to abort simulation as needed.
 	}
-	else if (action == SSC_EXECUTE)
-	{
-		// run the executable, pipe the output, and return output to p_mod
-		// **TODO** (not necessary for basic PVwatts)
-		return 0;
-	}
 	else
 		return 0;
 }
