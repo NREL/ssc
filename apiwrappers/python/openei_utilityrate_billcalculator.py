@@ -20,7 +20,7 @@
 import httplib, json, sys
 
 ## Include SAM libraries
-sys.path.insert(0, 'C:\\Users\\dryberg\\Documents\\Projects\\SSC_SDK\\apiwrappers\\python\\')
+sys.path.insert(0, 'C:\\SAM\\SDK\\languages\\python\\')
 import sscapi
 
 ########################################

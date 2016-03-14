@@ -42,7 +42,7 @@ static var_info _cm_vtab_pvwattsv5_common[] = {
 	var_info_invalid };
 
 static var_info _cm_vtab_pvwattsv5_part2[] = {
-	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",                 "Hourly beam shading loss",                    "%",         "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
@@ -389,7 +389,7 @@ public:
 			ts_shift_hours = 0.5;
 		}
 		else
-			throw exec_error("pvsamv1", "subhourly weather files must specify the minute for each record" );
+			throw exec_error("pvwattsv5", "subhourly weather files must specify the minute for each record" );
 
 		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 
@@ -471,11 +471,10 @@ public:
 				p_sunup[idx] = (ssc_number_t)sunup;
 				p_aoi[idx] = (ssc_number_t)aoi;
 				
-				// sub hourly update
-//				double shad_beam = shad.fbeam( hour, solalt, solazi );
-				double shad_beam = shad.fbeam(hour, solalt, solazi, jj, step_per_hour);
-
-
+				double shad_beam = 1.0;
+				if ( shad.fbeam(hour, solalt, solazi, jj, step_per_hour) )
+					shad_beam = shad.beam_shade_factor();
+				
 				p_shad_beam[idx] = (ssc_number_t)shad_beam ;
 				
 				if ( sunup > 0 )

@@ -49,9 +49,9 @@
 
 /* exported application global variables */
 
-int SC_major_ver = 3;
-int SC_minor_ver = 0;
-int SC_micro_ver = 0;
+int SC_major_ver = 2016;
+int SC_minor_ver = 3;
+int SC_micro_ver = 14;
 
 SCFrame *app_frame = NULL;
 wxConfig *app_config = NULL;
