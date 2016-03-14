@@ -575,7 +575,7 @@ weatherdata::weatherdata( var_data *data_table )
 	{
 		m_error = "solar data must be an SSC table variable with fields: "
 			"(numbers): lat, lon, tz, elev, "
-			"(arrays): year, month, day, hour minute, gh, dn, df, wspd, wdir, tdry, twet, tdew, rhum, pres, snow, alb, aod";
+			"(arrays): year, month, day, hour, minute, gh, dn, df, wspd, wdir, tdry, twet, tdew, rhum, pres, snow, alb, aod";
 		return;
 	}
 

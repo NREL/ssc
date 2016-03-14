@@ -242,14 +242,14 @@ if __name__ == "__main__":
 				msg = ssc.module_log(mod, idx)
 				idx = idx + 1
 		else:
-			ann = ssc.data_get_number(dat, "annual_energy")
+			ann = ssc.data_get_number(data, "annual_energy")
 			print 'wind power Simulation ok, annual energy (kwh) =', ann
 
 		ssc.module_free(mod)
 
 	
 	def run_test1():
-		wf = 'C:/Users/adobos/Projects/2015-6-30-r3/SAMnt/deploy/wind_resource/WY Southern-Flat Lands.srw';
+		wf = 'C:/Users/adobos/Projects/SAMnt/deploy/wind_resource/WY Southern-Flat Lands.srw';
 		print wf
 		
 		ssc = PySSC()
@@ -319,7 +319,7 @@ if __name__ == "__main__":
 				msg = ssc.module_log(mod, idx)
 				idx = idx + 1
 		else:
-			ann = ssc.data_get_number(dat, "ac_annual")
+			ann = ssc.data_get_number(data, "ac_annual")
 			print 'PVWatts V5 Simulation ok, e_net (annual kW)=', ann
 
 		ssc.module_free(mod)
@@ -371,7 +371,17 @@ if __name__ == "__main__":
 		ssc.data_set_array( wfd, 'month',  month);
 		ssc.data_set_array( wfd, 'day',  day);
 		ssc.data_set_array( wfd, 'hour', hour);
-		ssc.data_set_array( wfd, 'minute', minute);
+		
+		# note: if using an hourly TMY file with integrated/averaged
+		# values, do not set the minute column here. otherwise
+		# SSC will assume it is instantaneous data and will not adjust
+		# the sun position in sunrise and sunset hours appropriately
+		# however, if using subhourly data or instantaneous NSRDB data
+		# do explicitly provide the minute data column for sunpos calcs
+		
+		# ssc.data_set_array( wfd, 'minute', minute);
+		
+		
 		ssc.data_set_array( wfd, 'dn', beam);
 		ssc.data_set_array( wfd, 'df', diffuse);
 		ssc.data_set_array( wfd, 'wspd', wspd);
