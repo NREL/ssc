@@ -23,8 +23,8 @@ copy "apiwrappers\matlab\+SSC\@Module\Module.m" "sdk-release\languages\matlab\+S
 
 mkdir sdk-release\languages\python
 copy apiwrappers\python\sscapi.py sdk-release\languages\python
-copy apiwrappers\python\sscapi3.4.2.py sdk-release\languages\python
-copy apiwrappers\python\openei_utilityrate_billcalculator.py sdk-release\languages\python
+rem copy apiwrappers\python\sscapi3.4.2.py sdk-release\languages\python
+rem copy apiwrappers\python\openei_utilityrate_billcalculator.py sdk-release\languages\python
 
 mkdir sdk-release\languages\php
 copy apiwrappers\php\down-arrow.png sdk-release\languages\php
@@ -53,17 +53,17 @@ copy apiwrappers\java\TestBelpe.data sdk-release\languages\java
 copy apiwrappers\java\TestBelpe.java sdk-release\languages\java
 copy apiwrappers\java\TestBelpe.make sdk-release\languages\java
 copy apiwrappers\java\TestBelpe.Manifest.txt sdk-release\languages\java
-copy apiwrappers\java\TestCashLoan.data sdk-release\languages\java
-copy apiwrappers\java\TestCashLoan.java sdk-release\languages\java
-copy apiwrappers\java\TestCashLoan.make sdk-release\languages\java
-copy apiwrappers\java\TestCashLoan.Manifest.txt sdk-release\languages\java
+rem copy apiwrappers\java\TestCashLoan.data sdk-release\languages\java
+rem copy apiwrappers\java\TestCashLoan.java sdk-release\languages\java
+rem copy apiwrappers\java\TestCashLoan.make sdk-release\languages\java
+rem copy apiwrappers\java\TestCashLoan.Manifest.txt sdk-release\languages\java
 copy apiwrappers\java\TestPVSamV1.java sdk-release\languages\java
 copy apiwrappers\java\TestPVSamV1.make sdk-release\languages\java
 copy apiwrappers\java\TestPVSamV1.Manifest.txt sdk-release\languages\java
-copy apiwrappers\java\TestUtilityRate3.data sdk-release\languages\java
-copy apiwrappers\java\TestUtilityRate3.java sdk-release\languages\java
-copy apiwrappers\java\TestUtilityRate3.make sdk-release\languages\java
-copy apiwrappers\java\TestUtilityRate3.Manifest.txt sdk-release\languages\java
+rem copy apiwrappers\java\TestUtilityRate3.data sdk-release\languages\java
+rem copy apiwrappers\java\TestUtilityRate3.java sdk-release\languages\java
+rem copy apiwrappers\java\TestUtilityRate3.make sdk-release\languages\java
+rem copy apiwrappers\java\TestUtilityRate3.Manifest.txt sdk-release\languages\java
 copy apiwrappers\java\ReadMe.txt sdk-release\languages\java
 copy apiwrappers\java\sscapi_wrap.c sdk-release\languages\java
 copy apiwrappers\java\TestSSCAPI.java sdk-release\languages\java

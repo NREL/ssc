@@ -52,7 +52,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "irrad_mode",            "Irradiance input mode",               "0/1/2",   "Beam+Diff,Global+Beam,Global+Diff", "SWH",              "?=0",                    "INTEGER,MIN=0,MAX=2",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sky_model",             "Tilted surface irradiance model",     "0/1/2",   "Isotropic,HDKR,Perez",  "SWH",      "?=1",                                        "INTEGER,MIN=0,MAX=2",                "" },
 																																								             
-	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",        "Hourly beam shading loss",             "%",      "",                                  "SWH",              "?",                       "",                                  "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",      "Time step beam shading loss",          "%",      "",                                  "SWH",              "?",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",           "Month x Hour beam shading loss",       "%",      "",                                  "SWH",              "?",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",          "Azimuth x altitude beam shading loss", "%",      "",                                  "SWH",              "?",                       "",                                  "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",          "Diffuse shading loss",                 "%",      "",                                  "SWH",              "?",                       "",                                  "" },
@@ -187,7 +187,7 @@ public:
 			ts_shift_hours = 0.5;
 		}
 		else
-			throw exec_error("pvsamv1", "subhourly weather files must specify the minute for each record" );
+			throw exec_error("swh", "subhourly weather files must specify the minute for each record" );
 
 		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 	
@@ -414,8 +414,9 @@ public:
 				if (Kta_g < 0) Kta_g = 0;
 
 				// sub hourly update
-//				double beam_loss_factor = shad.fbeam( hour, solalt, solazi );
-				double beam_loss_factor = shad.fbeam(hour, solalt, solazi, jj, step_per_hour);
+				double beam_loss_factor = 1.0;
+				if ( shad.fbeam(hour, solalt, solazi, jj, step_per_hour) )
+					beam_loss_factor = shad.beam_shade_factor();
 
 
 				shading_loss[idx] = (ssc_number_t) (1-beam_loss_factor)*100;

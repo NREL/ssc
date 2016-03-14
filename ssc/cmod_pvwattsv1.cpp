@@ -28,7 +28,7 @@ static var_info _cm_vtab_pvwattsv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "tilt_eq_lat",                    "Tilt=latitude override",                      "0/1",    "",                        "PVWatts",      "na:tilt",                 "BOOLEAN",                                  "" },
 
 	/* shading inputs */
-	{ SSC_INPUT,        SSC_ARRAY,       "shading:hourly",                 "Hourly beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading factors",                 "",       "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading factors",           "",       "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading factors",     "",       "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading factor",                      "",       "",                        "PVWatts",      "?",                        "",                              "" },
@@ -281,7 +281,10 @@ public:
 				irr.get_sun( &solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0 );
 			
 			p_sunup[i] = (ssc_number_t)sunup;
-			p_shad_beam[i] = (ssc_number_t) shad.fbeam(i, solalt, solazi ); // no change not sub hourly
+
+			p_shad_beam[i] = 1.0f;
+			if ( shad.fbeam( i, solalt, solazi ) )
+				p_shad_beam[i] = (ssc_number_t) shad.beam_shade_factor();
 
 			if (sunup > 0)
 			{
