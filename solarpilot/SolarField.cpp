@@ -3334,7 +3334,7 @@ void SolarField::calcAllAimPoints(int method, double args[], int nargs){
 	//--
 	_sim_info.Reset();
 	_sim_info.setTotalSimulationCount(nh);
-	int update_every = max(nh/100,1);
+	int update_every = max(nh/20,1);
 	for(int i=0; i<nh; i++){
 		
 		switch(method)
