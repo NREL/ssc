@@ -73,6 +73,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	
     
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",             "Receiver thermal design power",                                     "MW",           "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sf_excess",            "Heliostat field multiple",                                          "",             "",            "heliostat",      "?=1.0",                   "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",        "Include fluxmap calculations",                                      "",             "",            "heliostat",      "?=0",                     "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",     "Tower fixed cost",                                                  "$",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",            "Tower cost scaling exponent",                                       "",             "",            "heliostat",      "*",                       "",                     "" },
