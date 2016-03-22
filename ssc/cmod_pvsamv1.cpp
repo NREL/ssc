@@ -2210,8 +2210,10 @@ public:
 						}
 
 						// apply hourly shading factors to beam (if none enabled, factors are 1.0) 
-						if (sa[nn].shad.beam_shade_factor() < 1.0){
-							// Sara 1/25/16 - shading database derate applied to dc only
+						// shj 3/21/16 - update to handle negative shading loss
+						if (sa[nn].shad.beam_shade_factor() != 1.0){
+//							if (sa[nn].shad.beam_shade_factor() < 1.0){
+								// Sara 1/25/16 - shading database derate applied to dc only
 							// shading loss applied to beam if not from shading database
 							ibeam *= sa[nn].shad.beam_shade_factor();
 							if( radmode == POA_R || radmode == POA_P ){
