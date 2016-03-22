@@ -2124,8 +2124,10 @@ void Flux::fluxDensity(FluxSurface &flux_surface, SolarField &SF, Hvector &helio
 		SF.getSimInfoObject()->setTotalSimulationCount(nh);
 	}
 	//Loop through each heliostat
+	int update_every = max(nh/20,1);
+
 	for(int i=0; i<nh; i++){
-		if(show_progress && i % 100 == 0)
+		if(show_progress && i % update_every == 0)
 			SF.getSimInfoObject()->setCurrentSimulation(i+1);
 		
 
