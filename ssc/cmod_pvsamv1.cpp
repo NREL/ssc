@@ -472,7 +472,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	//SEV: Snow loss and coverage % time series arrays for SA3
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Power loss due to snow (DC)",							  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-//	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
+// 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_aoi",                        "Subarray 4 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -524,6 +524,10 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
 
 
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_shade_frac", "Subarray 1 DC shading factor", "frac", "", "Time Series (Subarray 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_shade_frac", "Subarray 2 DC shading factor", "frac", "", "Time Series (Subarray 2)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_shade_frac", "Subarray 3 DC shading factor", "frac", "", "Time Series (Subarray 3)", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_shade_frac", "Subarray 4 DC shading factor", "frac", "", "Time Series (Subarray 4)", "", "", "" },
 
 #ifdef SHADE_DB_OUTPUTS
 	// ShadeDB validation
@@ -535,7 +539,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_str_vmp_stc", "ShadeDB subarray 1 string Vmp at STC input", "V", "", "Time Series (Subarray 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_mppt_lo", "ShadeDB subarray 1 MPPT low input", "V", "", "Time Series (Subarray 1)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_mppt_hi", "ShadeDB subarray 1 MPPT high input", "V", "", "Time Series (Subarray 1)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_shade_frac", "ShadeDB subarray 1 shade fraction output", "", "", "Time Series (Subarray 1)", "", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_gpoa", "ShadeDB subarray 2 global poa input", "W/m2", "", "Time Series (Subarray 2)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_dpoa", "ShadeDB subarray 2 diffuse poa input", "W/m2", "", "Time Series (Subarray 2)", "", "", "" },
@@ -544,7 +547,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_str_vmp_stc", "ShadeDB subarray 2 string Vmp at STC input", "V", "", "Time Series (Subarray 2)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_mppt_lo", "ShadeDB subarray 2 MPPT low input", "V", "", "Time Series (Subarray 2)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_mppt_hi", "ShadeDB subarray 2 MPPT high input", "V", "", "Time Series (Subarray 2)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_shade_frac", "ShadeDB subarray 2 shade fraction output", "", "", "Time Series (Subarray 2)", "", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_gpoa", "ShadeDB subarray 3 global poa input", "W/m2", "", "Time Series (Subarray 3)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_dpoa", "ShadeDB subarray 3 diffuse poa input", "W/m2", "", "Time Series (Subarray 3)", "", "", "" },
@@ -553,7 +555,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_str_vmp_stc", "ShadeDB subarray 3 string Vmp at STC input", "V", "", "Time Series (Subarray 3)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_mppt_lo", "ShadeDB subarray 3 MPPT low input", "V", "", "Time Series (Subarray 3)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_mppt_hi", "ShadeDB subarray 3 MPPT high input", "V", "", "Time Series (Subarray 3)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_shade_frac", "ShadeDB subarray 3 shade fraction output", "", "", "Time Series (Subarray 3)", "", "", "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_gpoa", "ShadeDB subarray 4 global poa input", "W/m2", "", "Time Series (Subarray 4)", "", "", "" },
@@ -563,7 +564,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_str_vmp_stc", "ShadeDB subarray 4 string Vmp at STC input", "V", "", "Time Series (Subarray 4)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_mppt_lo", "ShadeDB subarray 4 MPPT low input", "V", "", "Time Series (Subarray 4)", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_mppt_hi", "ShadeDB subarray 4 MPPT high input", "V", "", "Time Series (Subarray 4)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_shade_frac", "ShadeDB subarray 4 shade fraction output", "", "", "Time Series (Subarray 4)", "", "", "" },
 
 #endif
 
@@ -1633,8 +1633,9 @@ public:
 		ssc_number_t *p_shadedb_str_vmp_stc[4];
 		ssc_number_t *p_shadedb_mppt_lo[4];
 		ssc_number_t *p_shadedb_mppt_hi[4];
-		ssc_number_t *p_shadedb_shade_frac[4];
 #endif
+		// shading database fraction hourly output for year 1
+		ssc_number_t *p_shadedb_shade_frac[4];
 
 
 		// allocate output arrays for all subarray-specific parameters
@@ -1679,8 +1680,8 @@ public:
 				p_shadedb_mppt_lo[nn] = allocate("shadedb_" + prefix + "mppt_lo", nrec);
 				p_shadedb_mppt_hi[nn] = allocate("shadedb_" + prefix + "mppt_hi", nrec);
 
-				p_shadedb_shade_frac[nn] = allocate("shadedb_" + prefix + "shade_frac", nrec);
 #endif
+				p_shadedb_shade_frac[nn] = allocate("shadedb_" + prefix + "shade_frac", nrec);
 			}
 		}
 		
@@ -2186,9 +2187,9 @@ public:
 							{
 								throw exec_error("pvsamv1", util::format("Error calculating shading factor for subarray %d", nn));
 							}
-#ifdef SHADE_DB_OUPUTS
 							if (iyear == 0)
 							{
+#ifdef SHADE_DB_OUPUTS
 								p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
 								p_shadedb_dpoa[nn][idx] = (ssc_number_t)shadedb_dpoa;
 								p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
@@ -2196,10 +2197,10 @@ public:
 								p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
 								p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 								p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
-								// fraction shaded for comparison
-								p_shadedb_shade_frac[nn][idx] = (ssc_number_t)(1.0 - sa[nn].shad.dc_shade_factor());
-							}
 #endif
+								// fraction shaded for comparison
+								p_shadedb_shade_frac[nn][idx] = (ssc_number_t)(sa[nn].shad.dc_shade_factor());
+							}
 						}
 						else
 						{
