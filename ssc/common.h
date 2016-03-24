@@ -45,9 +45,9 @@ class shading_factor_calculator
 	double m_beam_shade_factor;
 	double m_dc_shade_factor;
 
-
 	// subhourly modifications
 	int m_steps_per_hour;
+	bool m_enTimestep;
 	util::matrix_t<double> m_beamFactors;
 	bool m_enMxH;
 	util::matrix_t<double> m_mxhFactors;
