@@ -2628,7 +2628,7 @@ public:
 							if (tier >= (int)m_month[m].ec_tou_ub.ncols())
 								tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 							double tier_energy = energy_surplus;
-							double tier_credit = tier_energy*m_month[m].ec_tou_sr.at(row, tier);
+							double tier_credit = tier_energy * m_month[m].ec_tou_sr.at(row, tier) * rate_esc;
 							credit_amt += tier_credit;
 							m_month[m].ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
 							m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
@@ -2663,7 +2663,7 @@ public:
 							if (tier >= (int)m_month[m].ec_tou_ub.ncols())
 								tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 							double tier_energy = energy_deficit;
-							double tier_charge = tier_energy*m_month[m].ec_tou_br.at(row, tier);
+							double tier_charge = tier_energy * m_month[m].ec_tou_br.at(row, tier) * rate_esc;
 							charge_amt += tier_charge;
 							m_month[m].ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
 							m_month[m].ec_charge.at(row, tier) += (ssc_number_t)tier_charge;
