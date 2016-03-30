@@ -841,7 +841,6 @@ public:
 				assign("year1_monthly_minimum_without_system", var_data(&monthly_minimum_charges[0], 12));
 			}
 
-
 // with system
 
 			if (hourly_reconciliation)
@@ -1780,15 +1779,25 @@ public:
 						mon_kWhperkW /= m_month[m].dc_flat_peak;
 					// find start tier
 					start_tier = 1;
+					bool found = false;
 					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_ub.ncols(); i_tier++)
 					{ 
 						int units = m_month[m].ec_tou_units.at(0, i_tier);
+						if (!found) start_tier++;
 						if ((units == 1) || (units == 3))
 						{
-							if (mon_kWhperkW > m_month[m].ec_tou_ub.at(0, i_tier))
-								start_tier = (int)i_tier + 1;
 							if (mon_kWhperkW < m_month[m].ec_tou_ub.at(0, i_tier))
-								end_tier = (int)i_tier - 1;
+							{
+								if (!found)
+								{
+									start_tier = (int)i_tier + 1;
+									found = true;
+								}
+								else
+								{
+									end_tier = (int)i_tier - 1;
+								}
+							}
 						}
 					}
 					if (start_tier >= (int)m_month[m].ec_tou_ub.ncols())
