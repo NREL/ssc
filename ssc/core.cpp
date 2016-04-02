@@ -329,15 +329,28 @@ ssc_number_t *compute_module::as_matrix( const std::string &name, size_t *rows, 
 	return x.num.data();
 }
 
-util::matrix_t<double> compute_module::as_matrix( const std::string &name ) throw( general_error )
+util::matrix_t<double> compute_module::as_matrix(const std::string &name) throw(general_error)
 {
 	var_data &x = value(name);
-	if ( x.type != SSC_MATRIX ) throw cast_error("matrix", x, name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
 
-	util::matrix_t<double> mat( x.num.nrows(), x.num.ncols(), 0.0 );
+	util::matrix_t<double> mat(x.num.nrows(), x.num.ncols(), 0.0);
 	for (size_t r = 0; r<x.num.nrows(); r++)
 		for (size_t c = 0; c<x.num.ncols(); c++)
-			mat.at(r, c) = (double)x.num(r,c);
+			mat.at(r, c) = (double)x.num(r, c);
+
+	return mat;
+}
+
+util::matrix_t<double> compute_module::as_matrix_transpose(const std::string &name) throw(general_error)
+{
+	var_data &x = value(name);
+	if (x.type != SSC_MATRIX) throw cast_error("matrix", x, name);
+
+	util::matrix_t<double> mat(x.num.ncols(), x.num.nrows(), 0.0);
+	for (size_t r = 0; r<x.num.nrows(); r++)
+		for (size_t c = 0; c<x.num.ncols(); c++)
+			mat.at(c, r) = (double)x.num(r, c);
 
 	return mat;
 }
