@@ -1640,11 +1640,13 @@ public:
 
 				for (m = 0; m < m_month.size(); m++)
 				{
+					m_month[m].dc_flat_ub.clear();
+					m_month[m].dc_flat_ch.clear();
 					for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
 					{
 						tier = m_dc_flat_tiers[m][j];
-						m_month[m].dc_flat_ub.clear();
-						m_month[m].dc_flat_ch.clear();
+//						m_month[m].dc_flat_ub.clear();
+//						m_month[m].dc_flat_ch.clear();
 						// initialize for each period and tier
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
