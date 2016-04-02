@@ -52,35 +52,35 @@ static var_info vtab_utility_rate4[] = {
 
 
 	// Energy Charge Inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy Charge Weekday Schedule", "", "12x24", "", "*", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy Charge Weekend Schedule", "", "12x24", "", "*", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekday", "Energy charge weekday schedule", "", "12x24", "", "*", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_sched_weekend", "Energy charge weekend schedule", "", "12x24", "", "*", "", "" },
 
 	// ur_ec_tou_mat has 6 columns period, tier, max usage, max usage units, buy rate, sell rate
 	// replaces 12(P)*6(T)*(max usage+buy+sell) = 216 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy Charge TOU Inputs", "", "", "", "*", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_ec_tou_mat", "Energy rates table", "", "", "", "*", "", "" },
 
 
 	// Demand Charge Inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable Demand Charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "ur_dc_enable",            "Enable demand charge",        "0/1",    "",                      "",             "?=0",                       "BOOLEAN",                       "" },
 	// TOU demand charge
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demend Charge Weekday Schedule", "", "12x24", "", "", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demend Charge Weekend Schedule", "", "12x24", "", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekday", "Demand charge weekday schedule", "", "12x24", "", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_sched_weekend", "Demand charge weekend schedule", "", "12x24", "", "", "", "" },
 
 	// ur_dc_tou_mat has 4 columns period, tier, peak demand (kW), demand charge
 	// replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_tou_mat", "Demand Charge TOU Inputs", "", "", "", "ur_dc_enable=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_tou_mat", "Demand rates (TOU) table", "", "", "", "ur_dc_enable=1", "", "" },
 
 
 	// flat demand charge
 	// ur_dc_tou_flat has 4 columns month, tier, peak demand (kW), demand charge
 	// replaces 12(P)*6(T)*(peak+charge) = 144 single inputs
-	{ SSC_INPUT, SSC_MATRIX, "ur_dc_flat_mat", "Demand Charge Flat Inputs", "", "", "", "ur_dc_enable=1", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "ur_dc_flat_mat", "Demand rates (flat) table", "", "", "", "ur_dc_enable=1", "", "" },
 	
 
 	// outputs
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_value",             "Energy value in each year",     "$",    "",                      "",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Energy value in each year",     "$",    "",                      "Annual",             "*",                         "",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Total electric load in each year",  "kWh",    "",                      "Annual",             "*",                         "",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Electricity load total in each year",  "kWh",    "",                      "Annual",             "*",                         "",   "" },
 
 	// use output from annualoutput not scaled output from here
 	//	{ SSC_OUTPUT,       SSC_ARRAY,      "energy_net",               "Energy in each year",           "kW",   "",                      "",             "*",                         "",   "" },
@@ -93,10 +93,10 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity bill without system", "$/yr", "", "Annual", "*", "", "" },
 
 	// year 1 values for metrics
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity bill with system",    "$/yr", "",    "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity bill without system", "$/yr", "",    "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity net savings with system in Year 1",             "$/yr",    "", "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Electricity load",                "kWh/yr",  "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity bill with system (year 1)",    "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity bill without system (year 1)", "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity net savings with system (year 1)",             "$/yr",    "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Electricity load total (year 1)",                "kWh/yr",  "", "Financial Metrics", "*", "", "" },
 
 
 
@@ -118,7 +118,7 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Electricity to/from grid peak", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_demand",       "Year 1 subhourly peak from grid", "kW",  "",                      "",             "*",                         "LENGTH=8760",                   "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Electricity peak load met by system", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Electricity peak from system to load", "kW",  "",                      "Time Series",             "*",                         "LENGTH=8760",                   "" },
 	
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_revenue_with_system",     "Year 1 hourly sales/purchases with sytem",    "$", "",          "",             "*",                         "LENGTH=8760",                   "" },
@@ -141,20 +141,20 @@ static var_info vtab_utility_rate4[] = {
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_tou_schedule", "TOU period for energy charges", "", "", "Time Series", "*", "LENGTH=8760", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_tou_schedule",       "TOU period for demand charges", "", "", "Time Series", "*", "LENGTH=8760", "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_peak_per_period",    "Electricity from grid peak per TOU period",        "kW", "", "Time Series", "*", "LENGTH=8760", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_dc_peak_per_period",    "Electricity peak from grid per TOU period",        "kW", "", "Time Series", "*", "LENGTH=8760", "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_fixed_with_system", "Fixed monthly charge with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_fixed_without_system", "Fixed monthly charge without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_minimum_with_system", "Minimum charge with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_minimum_without_system", "Minimum charge without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_dc_fixed_with_system", "Demand charge (fixed) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_dc_fixed_with_system", "Demand charge (flat) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_dc_tou_with_system", "Demand charge (TOU) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_with_system", "Energy charge with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	//{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_flat_with_system", "Electricity charge (flat) with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 	//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_ec_rate_with_system",       "Year 1 monthly energy rate with system",              "$/kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_without_system",   "Demand charge (fixed) without system", "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_fixed_without_system",   "Demand charge (flat) without system", "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_dc_tou_without_system",     "Demand charge (TOU) without system",   "$/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_without_system", "Energy charge without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 //	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_ec_charge_flat_without_system", "Energy charge (flat) without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
@@ -162,8 +162,15 @@ static var_info vtab_utility_rate4[] = {
 
 
 	// monthly outputs from Sean 7/29/13 "Net Metering Accounting.xlsx" updates from Paul and Sean 8/9/13 and 8/12/13
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_load",    "Electricity load",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_load", "Electricity load", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_peak_w_system", "Peak demand with system", "kW/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_peak_wo_system", "Peak demand without system", "kW/mo", "", "Monthly", "*", "LENGTH=12", "" },
+
+// TODO - remove after testing
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_w_system", "Energy use with system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_wo_system", "Energy use without system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+
+	//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_generation", "Net metering credit in kWh", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
@@ -184,9 +191,9 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_minimum_ym", "Minimum charge with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_minimum_ym", "Minimum charge without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_dc_fixed_ym", "Demand charge with system (fixed)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_dc_fixed_ym", "Demand charge with system (flat)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_dc_tou_ym", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_dc_fixed_ym", "Demand charge without system (fixed)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_dc_fixed_ym", "Demand charge without system (flat)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_dc_tou_ym", "Demand charge without system (TOU)", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_ym", "Energy charge with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
@@ -205,9 +212,9 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_minimum", "Minimum charge with system", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_minimum", "Minimum charge without system", "$", "", "Charges by Month", "*", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_fixed", "Demand charge with system (fixed)", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_fixed", "Demand charge with system (flat)", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_dc_tou", "Demand charge with system (TOU)", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed", "Demand charge without system (fixed)", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_fixed", "Demand charge without system (flat)", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_dc_tou", "Demand charge without system (TOU)", "$", "", "Charges by Month", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_ec", "Energy charge with system", "$", "", "Charges by Month", "*", "", "" },
@@ -250,7 +257,6 @@ static var_info vtab_utility_rate4[] = {
 	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_oct_tp", "Electricity usage without system_Oct", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_nov_tp", "Electricity usage without system_Nov", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
 	{ SSC_OUTPUT, SSC_MATRIX, "energy_wo_sys_ec_dec_tp", "Electricity usage without system_Dec", "kWh", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
-
 
 	// energy charge w system
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_ec_jan_tp", "Energy charge with system_Jan", "$", "", "Charges by Month", "*", "", "ROW_LABEL=UR_PERIODNUMS,COL_LABEL=UR_TIERNUMS,FORMAT_SPEC=CURRENCY,GROUP=UR_MTP" },
@@ -314,6 +320,8 @@ public:
 	int hours_per_month;
 	// energy use period and tier
 	util::matrix_t<ssc_number_t> ec_energy_use;
+	// handle changing period tiers on monthly basis if kWh/kW
+	std::vector<std::vector<int> >  ec_periods_tiers; // tier numbers
 	// energy surplus - extra generated by system that is either sold or curtailed.
 	util::matrix_t<ssc_number_t> ec_energy_surplus;
 	// peak demand per period
@@ -353,7 +361,6 @@ private:
 	std::vector<int> m_ec_periods; // period number
 	// track initial values - may change based on units
 	std::vector<std::vector<int> >  m_ec_periods_tiers_init; // tier numbers
-	std::vector<std::vector<int> >  m_ec_periods_tiers; // tier numbers
 	std::vector<int> m_dc_tou_periods; // period number
 	std::vector<std::vector<int> >  m_dc_tou_periods_tiers; // tier numbers
 	std::vector<std::vector<int> >  m_dc_flat_tiers; // tier numbers for each month of flat demand charge
@@ -525,7 +532,7 @@ public:
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
 			monthly_elec_needed_from_grid(12),
-			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12);
+			monthly_cumulative_excess_energy(12), monthly_cumulative_excess_dollars(12), monthly_bill(12), monthly_peak(12), monthly_test(12);
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("annual_energy_value", nyears+1);
@@ -839,8 +846,17 @@ public:
 				assign("year1_monthly_utility_bill_wo_sys", var_data(&monthly_bill[0], 12));
 				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_minimum_without_system", var_data(&monthly_minimum_charges[0], 12));
-			}
 
+				// peak demand and testing energy use
+				for (int ii = 0; ii < 12; ii++)
+				{
+					monthly_peak[ii] = m_month[ii].dc_flat_peak;
+					monthly_test[ii] = -m_month[ii].energy_net;
+				}
+				assign("year1_monthly_peak_wo_system", var_data(&monthly_peak[0], 12));
+				assign("year1_monthly_use_wo_system", var_data(&monthly_test[0], 12));
+				
+			}
 
 // with system
 
@@ -1076,6 +1092,16 @@ public:
 				assign("year1_monthly_dc_tou_with_system", var_data(&monthly_dc_tou[0], 12));
 				assign("year1_monthly_ec_charge_with_system", var_data(&monthly_ec_charges[0], 12));
 //				assign("year1_monthly_ec_charge_flat_with_system", var_data(&monthly_ec_flat_charges[0], 12));
+
+				// peak demand and testing energy use
+				for (int ii = 0; ii < 12; ii++)
+				{
+					monthly_peak[ii] = m_month[ii].dc_flat_peak;
+					monthly_test[ii] = -m_month[ii].energy_net;
+				}
+				assign("year1_monthly_peak_w_system", var_data(&monthly_peak[0], 12));
+				assign("year1_monthly_use_w_system", var_data(&monthly_test[0], 12));
+
 			}
 
 			// determine net-revenue benefit due to solar for year 'i'
@@ -1180,8 +1206,8 @@ public:
 		util::matrix_t<float> dc_schedwkday(12, 24, 1);
 		util::matrix_t<float> dc_schedwkend(12, 24, 1);
 
-		for (i = 0; i < m_ec_periods_tiers.size(); i++)
-			m_ec_periods_tiers[i].clear();
+		for (i = 0; i < m_ec_periods_tiers_init.size(); i++)
+			m_ec_periods_tiers_init[i].clear();
 		m_ec_periods.clear();
 
 		for (i = 0; i < m_dc_tou_periods_tiers.size(); i++)
@@ -1256,7 +1282,6 @@ public:
 			util::matrix_t<float> ec_tou_mat(nrows, ncols);
 			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
 
-
 			// adjust sell rate based on input selections
 			int metering_option = as_integer("ur_metering_option");
 			bool enable_nm = (metering_option == 0 || metering_option == 1);
@@ -1271,6 +1296,40 @@ public:
 
 //			bool sell_eq_buy = enable_nm;
 			bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
+
+			for (r = 0; r < nrows; r++)
+			{
+				period = (int)ec_tou_mat.at(r, 0);
+				if (std::find(m_ec_periods.begin(), m_ec_periods.end(), period) == m_ec_periods.end())
+					m_ec_periods.push_back(period);
+			}
+			// sorted periods smallest to largest
+			std::sort(m_ec_periods.begin(), m_ec_periods.end());
+			// for each period, get list of tier numbers and then sort and construct 
+			//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
+
+			for (r = 0; r < m_ec_periods.size(); r++)
+			{
+				m_ec_periods_tiers_init.push_back(std::vector<int>());
+			}
+
+			for (r = 0; r < nrows; r++)
+			{
+				period = (int)ec_tou_mat.at(r, 0);
+				tier = (int)ec_tou_mat.at(r, 1);
+				std::vector<int>::iterator result = std::find(m_ec_periods.begin(), m_ec_periods.end(), period);
+				if (result == m_ec_periods.end())
+				{
+					std::ostringstream ss;
+					ss << "energy charge period not found " << period;
+					throw exec_error("utilityrate4", ss.str());
+				}
+				int ndx = (int)(result - m_ec_periods.begin());
+				m_ec_periods_tiers_init[ndx].push_back(tier);
+			}
+			// sort tier values for each period
+			for (r = 0; r < m_ec_periods_tiers_init.size(); r++)
+				std::sort(m_ec_periods_tiers_init[r].begin(), m_ec_periods_tiers_init[r].end());
 
 			// find all periods for each month m through schedules
 			for (m = 0; m < m_month.size(); m++)
@@ -1293,43 +1352,18 @@ public:
 						m_month[m].ec_periods.push_back((int)ec_schedwkend.at(m, c));
 				}
 				std::sort(m_month[m].ec_periods.begin(), m_month[m].ec_periods.end());
-			}
 
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)ec_tou_mat.at(r, 0);
-				if (std::find(m_ec_periods.begin(), m_ec_periods.end(),period) == m_ec_periods.end())
-					m_ec_periods.push_back(period);
-			}
-			// sorted periods smallest to largest
-			std::sort(m_ec_periods.begin(), m_ec_periods.end());
-			// for each period, get list of tier numbers and then sort and construct 
-			//m_ec_tou_ub, m_ec_tou_units, m_ec_tou_br, ec_tou_sr vectors of vectors
-			
-			for (r = 0; r < m_ec_periods.size(); r++)
-			{
-				m_ec_periods_tiers.push_back(std::vector<int>());
-				m_ec_periods_tiers_init.push_back(std::vector<int>());
-			}
-			
-			for (r = 0; r < nrows; r++)
-			{
-				period = (int)ec_tou_mat.at(r, 0);
-				tier = (int)ec_tou_mat.at(r, 1);
-				std::vector<int>::iterator result = std::find(m_ec_periods.begin(), m_ec_periods.end(), period);
-				if (result == m_ec_periods.end())
+				// set m_ec_periods_tiers
+				for (size_t pt_period = 0; pt_period < m_ec_periods_tiers_init.size(); pt_period++)
+					m_month[m].ec_periods_tiers.push_back(std::vector<int>());
+				for (size_t pt_period = 0; pt_period < m_ec_periods_tiers_init.size(); pt_period++)
 				{
-					std::ostringstream ss;
-					ss << "energy charge period not found " << period;
-					throw exec_error("utilityrate4", ss.str());
+					for (size_t pt_tier = 0; pt_tier < m_ec_periods_tiers_init[pt_period].size(); pt_tier++)
+						m_month[m].ec_periods_tiers[pt_period].push_back(m_ec_periods_tiers_init[pt_period][pt_tier]);
 				}
-				int ndx = (int)(result - m_ec_periods.begin());
-				m_ec_periods_tiers[ndx].push_back(tier);
-				m_ec_periods_tiers_init[ndx].push_back(tier);
+
+
 			}
-			// sort tier values for each period
-			for (r = 0; r < m_ec_periods_tiers.size(); r++)
-				std::sort(m_ec_periods_tiers[r].begin(), m_ec_periods_tiers[r].end());
 
 			// periods are rows and tiers are columns - note that columns can change based on rows
 			// Initialize each month variables that are constant over the simulation
@@ -1337,6 +1371,7 @@ public:
 			{
 				int num_periods=0;
 				int num_tiers = 0;
+
 				for (i = 0; i < m_month[m].ec_periods.size(); i++)
 				{
 					// find all periods and check that number of tiers the same for all for the month, if not through error
@@ -1353,7 +1388,7 @@ public:
 					{
 						// redimension ec_ field of ur_month class
 						num_periods = (int)m_month[m].ec_periods.size();
-						num_tiers = (int)m_ec_periods_tiers[ndx].size();
+						num_tiers = (int)m_ec_periods_tiers_init[ndx].size();
 						m_month[m].ec_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e+38);
 						m_month[m].ec_tou_units.resize_fill(num_periods, num_tiers, 0); // kWh
 						m_month[m].ec_tou_br.resize_fill(num_periods, num_tiers, 0);
@@ -1361,16 +1396,16 @@ public:
 					}
 					else
 					{
-						if ((int)m_ec_periods_tiers[ndx].size() != num_tiers)
+						if ((int)m_ec_periods_tiers_init[ndx].size() != num_tiers)
 						{
 							std::ostringstream ss;
-							ss << "energy charge number of tiers " << m_ec_periods_tiers[ndx].size() << ", incorrect for month " << m << " and period " << m_month[m].ec_periods[i] << " should be " << num_tiers;
+							ss << "energy charge number of tiers " << m_ec_periods_tiers_init[ndx].size() << ", incorrect for month " << m << " and period " << m_month[m].ec_periods[i] << " should be " << num_tiers;
 							throw exec_error("utilityrate4", ss.str());
 						}
 					}
-					for (j = 0; j < m_ec_periods_tiers[ndx].size(); j++)
+					for (j = 0; j < m_ec_periods_tiers_init[ndx].size(); j++)
 					{
-						tier = m_ec_periods_tiers[ndx][j];
+						tier = m_ec_periods_tiers_init[ndx][j];
 						// initialize for each period and tier
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
@@ -1605,11 +1640,13 @@ public:
 
 				for (m = 0; m < m_month.size(); m++)
 				{
+					m_month[m].dc_flat_ub.clear();
+					m_month[m].dc_flat_ch.clear();
 					for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
 					{
 						tier = m_dc_flat_tiers[m][j];
-						m_month[m].dc_flat_ub.clear();
-						m_month[m].dc_flat_ch.clear();
+//						m_month[m].dc_flat_ub.clear();
+//						m_month[m].dc_flat_ch.clear();
 						// initialize for each period and tier
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
@@ -1759,8 +1796,8 @@ public:
 				// check for kWh/kW
 				bool kWhperkW = false;
 				int start_tier = 0;
-				int end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
-				int num_periods = (int)m_month[m].ec_tou_ub.nrows();
+				int end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
+				int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
 				int num_tiers = end_tier - start_tier + 1;
 
 				// kWh/kW (kWh/kW daily handled in Setup)
@@ -1778,21 +1815,30 @@ public:
 					double mon_kWhperkW = -m_month[m].energy_net; // load negative
 					if (m_month[m].dc_flat_peak != 0)
 						mon_kWhperkW /= m_month[m].dc_flat_peak;
-					// find start tier
+					// find correct start and end tier based on kWhperkW band
 					start_tier = 1;
-					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_ub.ncols(); i_tier++)
+					bool found = false;
+					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
 					{ 
-						int units = m_month[m].ec_tou_units.at(0, i_tier);
+						int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
 						if ((units == 1) || (units == 3))
 						{
-							if (mon_kWhperkW > m_month[m].ec_tou_ub.at(0, i_tier))
-								start_tier = (int)i_tier + 1;
-							if (mon_kWhperkW < m_month[m].ec_tou_ub.at(0, i_tier))
+							if (found)
+							{
 								end_tier = (int)i_tier - 1;
+								break;
+							}
+							else if (mon_kWhperkW < m_month[m].ec_tou_ub_init.at(0, i_tier))
+							{
+								start_tier = (int)i_tier + 1;
+								found = true;
+							}
 						}
 					}
-					if (start_tier >= (int)m_month[m].ec_tou_ub.ncols())
-						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
+					// last tier since no max specified in rate
+					if (!found) start_tier = end_tier;
+					if (start_tier >= (int)m_month[m].ec_tou_ub_init.ncols())
+						start_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 					if (end_tier < start_tier)
 						end_tier = start_tier;
 					num_tiers = end_tier - start_tier + 1;
@@ -1810,7 +1856,7 @@ public:
 							sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
 							ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
 							// update for correct tier number column headings
-							m_ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
+							m_month[m].ec_periods_tiers[period][tier] = start_tier +		m_ec_periods_tiers_init[period][tier];
 						}
 					}
 
@@ -2479,21 +2525,30 @@ public:
 					double mon_kWhperkW = -m_month[m].energy_net; // load negative
 					if (m_month[m].dc_flat_peak != 0)
 						mon_kWhperkW /= m_month[m].dc_flat_peak;
-					// find start tier
+					// find correct start and end tier based on kWhperkW band
 					start_tier = 1;
-					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_ub.ncols(); i_tier++)
+					bool found = false;
+					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
 					{
-						int units = m_month[m].ec_tou_units.at(0, i_tier);
+						int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
 						if ((units == 1) || (units == 3))
 						{
-							if (mon_kWhperkW > m_month[m].ec_tou_ub.at(0, i_tier))
-								start_tier = (int)i_tier + 1;
-							if (mon_kWhperkW < m_month[m].ec_tou_ub.at(0, i_tier))
+							if (found)
+							{
 								end_tier = (int)i_tier - 1;
+								break;
+							}
+							else if (mon_kWhperkW < m_month[m].ec_tou_ub_init.at(0, i_tier))
+							{
+								start_tier = (int)i_tier + 1;
+								found = true;
+							}
 						}
 					}
-					if (start_tier >= (int)m_month[m].ec_tou_ub.ncols())
-						start_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
+					// last tier since no max specified in rate
+					if (!found) start_tier = end_tier;
+					if (start_tier >= (int)m_month[m].ec_tou_ub_init.ncols())
+						start_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
 					if (end_tier < start_tier)
 						end_tier = start_tier;
 					num_tiers = end_tier - start_tier + 1;
@@ -2511,7 +2566,7 @@ public:
 							sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
 							ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
 							// update for correct tier number column headings
-							m_ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
+							m_month[m].ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
 						}
 					}
 
@@ -2860,9 +2915,9 @@ public:
 		{
 			for (int ic = 0; ic < (int)m_month[month].ec_charge.ncols(); ic++)
 			{
-				charge.at(0, ic + 1) = (float)m_ec_periods_tiers[ndx][ic];
-				energy.at(0, ic + 1) = (float)m_ec_periods_tiers[ndx][ic];
-				surplus.at(0, ic + 1) = (float)m_ec_periods_tiers[ndx][ic];
+				charge.at(0, ic + 1) = (float)m_month[month].ec_periods_tiers[ndx][ic];
+				energy.at(0, ic + 1) = (float)m_month[month].ec_periods_tiers[ndx][ic];
+				surplus.at(0, ic + 1) = (float)m_month[month].ec_periods_tiers[ndx][ic];
 			}
 			for (int ir = 0; ir < (int)m_month[month].ec_charge.nrows(); ir++)
 			{
