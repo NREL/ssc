@@ -1282,7 +1282,6 @@ public:
 			util::matrix_t<float> ec_tou_mat(nrows, ncols);
 			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
 
-
 			// adjust sell rate based on input selections
 			int metering_option = as_integer("ur_metering_option");
 			bool enable_nm = (metering_option == 0 || metering_option == 1);
