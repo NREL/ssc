@@ -1079,7 +1079,7 @@ bool csp_dispatch_opt::optimize()
 
             for(int c=0; c<ncols; c++)
             {
-                char *colname = get_col_name(lp, c);
+                char *colname = get_col_name(lp, c+1);
                 if(! colname) continue;
 
                 char root[15];
