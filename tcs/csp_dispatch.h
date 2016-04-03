@@ -44,6 +44,9 @@ public:
         int bb_type;  
         int scaling_type;
 
+        bool is_write_ampl_dat;     //write ampl data files?
+        std::string ampl_data_dir;  //directory to write ampl data files
+
         s_solver_params()
         {
             bb_type = -1;
@@ -85,6 +88,7 @@ public:
         double w_rec_pump;          //[kWe/kWt] Pumping parasitic power per thermal energy produced
         double sf_effadj;           //[-] 0..1 Solar field efficiency adjustment
         double info_time;           //[s] time of the year at sim start. informational only.
+        double eta_cycle_ref;       //[kWe/kWt]  Design-point power cycle efficiency
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object

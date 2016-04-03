@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-#define _WRITE_AMPL_DATA 0
+//#define _WRITE_AMPL_DATA 1
 #define SOS_NONE
 //#define SOS_SEQUENCE
 //#define SOS_MANUAL
@@ -90,6 +90,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.col_rec = 0;
     params.sf_effadj = 1.;
     params.info_time = 0.;
+    params.eta_cycle_ref = numeric_limits<double>::quiet_NaN();
     
     outputs.objective = 0.;
     outputs.objective_relaxed = 0.;
@@ -193,6 +194,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
 
         //store the power cycle efficiency
         double cycle_eff = params.eff_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
+        cycle_eff *= params.eta_cycle_ref;  
         outputs.eta_pb_expected.push_back( cycle_eff );
 
         simloc.m_time+= simloc.m_step;
@@ -282,6 +284,7 @@ bool csp_dispatch_opt::optimize()
 
         lp = make_lp(0, nvar);  //build the context
 
+        set_verbose(lp, 3); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
 
 
         if(lp == NULL)
@@ -439,7 +442,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("y^rsu", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(1.e6*outputs.q_sfavail_expected.at(t), 1.01) );
+                add_constraintex(lp, 1, row, col, LE, min(1.e6*outputs.q_sfavail_expected.at(t), 1.0) );
                 
                 //-----
 
@@ -457,7 +460,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("y^r", t);
                 
-                row[1] = -1.01/params.e_rec_startup; 
+                row[1] = -1.0/params.e_rec_startup; 
                 col[1] = O.column("u^rsu", t);
 
                 if(t>0)
@@ -517,7 +520,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("y^r", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(1.e6*outputs.q_sfavail_expected.at(t), 1.01) );  //if any measurable energy, y^r can be 1
+                add_constraintex(lp, 1, row, col, LE, min(1.e6*outputs.q_sfavail_expected.at(t), 1.0) );  //if any measurable energy, y^r can be 1
 
             }
         }
@@ -567,7 +570,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("y", t);
                 
-                row[1] = -1.01/params.e_pb_startup_cold; 
+                row[1] = -1.0/params.e_pb_startup_cold; 
                 col[1] = O.column("u^csu", t);
 
                 if(t>0)
@@ -1238,59 +1241,64 @@ bool csp_dispatch_opt::optimize()
         params.messages->add_message(type, s.str() );
         
 
-                //write out a data file
-#if _WRITE_AMPL_DATA==1
-        if( !return_ok )
-            return return_ok;
-        int day = params.siminfo->m_time / 3600/24;
-        ofstream fout("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".dat");
+        //write out a data file
+        if(solver_params.is_write_ampl_dat)
+        {
+            if( !return_ok )
+                return return_ok;
+            int day = params.siminfo->m_time / 3600/24;
+            /*std::string ampl_dir = solver_params.ampl_data_dir;
+            if( ampl_dir.back() != "\\" || ampl_dir.back != "/" )
+                ampl_dir.append("/");*/
+            //ofstream fout("C:/Users/mwagner/Documents/NREL/OM Optimization/cspopt/csm_team/ampl_code/sdk_files/data_"+to_string(day)+".dat");
+            ofstream fout(solver_params.ampl_data_dir + "data_"+to_string(day)+".dat");
 
-        fout << "#data file\n\n";
-        fout << "# --- scalar parameters ----\n";
-        fout << "param T := " << nt << ";\n";
-        fout << "param Eu := " << params.e_tes_max << ";\n";
-        //fout << "param El := " << params.e_tes_min << ";\n";
-        fout << "param Er := " << params.e_rec_startup << ";\n";
-        fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
-        fout << "param Qu := " << params.q_pb_max << ";\n";
-        fout << "param Ql := " << params.q_pb_min << ";\n";
-        fout << "param Qru := " << dq_rsu << ";\n";
-        fout << "param Qrl := " << params.q_rec_min << ";\n";
-        fout << "param Qc := " << dq_csu << ";\n";
-        fout << "param Qb := " << params.q_pb_standby << ";\n";
-        fout << "param Lr := " << params.w_rec_pump << ";\n";
-        fout << "param delta := 1;\n";
+            fout << "#data file\n\n";
+            fout << "# --- scalar parameters ----\n";
+            fout << "param T := " << nt << ";\n";
+            fout << "param Eu := " << params.e_tes_max << ";\n";
+            //fout << "param El := " << params.e_tes_min << ";\n";
+            fout << "param Er := " << params.e_rec_startup << ";\n";
+            fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
+            fout << "param Qu := " << params.q_pb_max << ";\n";
+            fout << "param Ql := " << params.q_pb_min << ";\n";
+            fout << "param Qru := " << dq_rsu << ";\n";
+            fout << "param Qrl := " << params.q_rec_min << ";\n";
+            fout << "param Qc := " << dq_csu << ";\n";
+            fout << "param Qb := " << params.q_pb_standby << ";\n";
+            fout << "param Lr := " << params.w_rec_pump << ";\n";
+            fout << "param delta := 1;\n";
 
-        fout << "# --- variale initialization parameters ---\n";
-        fout << "param s0 := " << params.e_tes_init << ";\n";
-        fout << "param ursu0 := 0.;\n";
-        fout << "param ucsu0 := 0.;\n";
-        fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
-        fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
+            fout << "# --- variale initialization parameters ---\n";
+            fout << "param s0 := " << params.e_tes_init << ";\n";
+            fout << "param ursu0 := 0.;\n";
+            fout << "param ucsu0 := 0.;\n";
+            fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
+            fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
 
-        fout << "# --- indexed parameters ---\n";
-        fout << "param Qin := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.q_sfavail_expected.at(t) << "\n";
-        fout << ";\n\n";
+            fout << "# --- indexed parameters ---\n";
+            fout << "param Qin := \n";
+            for(int t=0; t<nt; t++)
+                fout << t+1 << "\t" << outputs.q_sfavail_expected.at(t) << "\n";
+            fout << ";\n\n";
 
-        fout << "param P := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << price_signal.at(t) << "\n";
-        fout << ";\n\n";
+            fout << "param P := \n";
+            for(int t=0; t<nt; t++)
+                fout << t+1 << "\t" << price_signal.at(t) << "\n";
+            fout << ";\n\n";
 
-        fout << "param etaamb := \n";   //power block ambient adjustment
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
-        fout << ";";
+            fout << "param etaamb := \n";   //power block ambient adjustment
+            for(int t=0; t<nt; t++)
+                fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
+            fout << ";";
 
-        fout.close();
+            fout.close();
 
-        //write the log file
-        /*ofstream flog("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".log");
-        flog << solver_params.log_message;
-        flog.close();*/
-#endif
+            //write the log file
+            /*ofstream flog("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".log");
+            flog << solver_params.log_message;
+            flog.close();*/
+        }
 
 
 

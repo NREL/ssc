@@ -250,6 +250,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",         "Dispatch optimization B&B heuristic",                               "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",   "Dispatch optimization presolve heuristic",                          "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",    "Dispatch optimization scaling heuristic",                           "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",    "Write AMPL data files for dispatch run",                            "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
+    { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",        "AMPL data file directory",                                          "-",            "",            "sys_ctrl_disp_opt", "is_write_ampl_dat=1",     "",                      "" }, 
     
 
 	// Financial inputs
@@ -981,6 +983,8 @@ public:
 		tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
 		tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
         tou.mc_dispatch_params.m_dispatch_optimize = as_boolean("is_dispatch");
+        tou.mc_dispatch_params.m_is_write_ampl_dat = as_boolean("is_write_ampl_dat");
+        tou.mc_dispatch_params.m_ampl_data_dir = as_string("ampl_data_dir");
 		if( tou.mc_dispatch_params.m_dispatch_optimize )
 		{
 			tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");

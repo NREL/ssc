@@ -144,7 +144,8 @@ public:
         int m_scaling_type;
         int m_max_iterations;
 
-		
+		bool m_is_write_ampl_dat;
+        std::string m_ampl_data_dir;
 		
 		bool m_is_block_dispatch;
 
@@ -168,7 +169,8 @@ public:
             m_presolve_type = -1;
             m_scaling_type = -1;
 
-			
+			m_is_write_ampl_dat = false;        //write ampl data files?
+            m_ampl_data_dir = "";               //directory where files should be written 
 			
 			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
 			
