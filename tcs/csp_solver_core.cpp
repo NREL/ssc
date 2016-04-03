@@ -286,7 +286,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.params.col_rec = &mc_collector_receiver;
     dispatch.params.siminfo = &mc_sim_info;
     dispatch.params.messages = &mc_csp_messages;
-
+    
     dispatch.params.dt = mc_sim_info.m_step/3600.;  //hr
     dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
     dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
@@ -308,6 +308,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.params.q_pb_max = mc_power_cycle.get_max_thermal_power()*1000;
     dispatch.params.q_pb_min = mc_power_cycle.get_min_thermal_power()*1000;
     dispatch.params.q_pb_des = m_cycle_q_dot_des*1000.;
+    dispatch.params.eta_cycle_ref = m_cycle_eta_des;
 
     //Cycle efficiency
     dispatch.params.eff_table_load.clear();
@@ -350,6 +351,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.solver_params.bb_type = mc_tou.mc_dispatch_params.m_bb_type;
     dispatch.solver_params.scaling_type = mc_tou.mc_dispatch_params.m_scaling_type;
     dispatch.solver_params.presolve_type = mc_tou.mc_dispatch_params.m_presolve_type;
+    dispatch.solver_params.is_write_ampl_dat = mc_tou.mc_dispatch_params.m_is_write_ampl_dat;
+    dispatch.solver_params.ampl_data_dir = mc_tou.mc_dispatch_params.m_ampl_data_dir;
     //-------------------------------
 
         
