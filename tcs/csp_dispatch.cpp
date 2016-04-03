@@ -1251,7 +1251,10 @@ bool csp_dispatch_opt::optimize()
             if( ampl_dir.back() != "\\" || ampl_dir.back != "/" )
                 ampl_dir.append("/");*/
             //ofstream fout("C:/Users/mwagner/Documents/NREL/OM Optimization/cspopt/csm_team/ampl_code/sdk_files/data_"+to_string(day)+".dat");
-            ofstream fout(solver_params.ampl_data_dir + "data_"+to_string(day)+".dat");
+            char outname[200];
+            printf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
+            
+            ofstream fout(outname);
 
             fout << "#data file\n\n";
             fout << "# --- scalar parameters ----\n";
