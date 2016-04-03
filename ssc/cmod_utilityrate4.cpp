@@ -1623,7 +1623,7 @@ public:
 					if ((month < 0) || (month >= (int)m_month.size()))
 					{
 						std::ostringstream ss;
-						ss << "demand flt month not found " << month;
+						ss << "demand for month not found " << month;
 						throw exec_error("utilityrate4", ss.str());
 					}
 					m_dc_flat_tiers[month].push_back(tier);
@@ -1645,8 +1645,6 @@ public:
 					for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
 					{
 						tier = m_dc_flat_tiers[m][j];
-//						m_month[m].dc_flat_ub.clear();
-//						m_month[m].dc_flat_ch.clear();
 						// initialize for each period and tier
 						bool found = false;
 						for (r = 0; (r < nrows) && !found; r++)
