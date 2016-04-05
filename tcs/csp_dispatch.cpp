@@ -1301,7 +1301,7 @@ std::string csp_dispatch_opt::write_ampl()
         
         sname = outname.str();    //save string
 
-        ofstream fout(outname.str());
+        ofstream fout(outname.str().c_str());
 
         int nt = m_nstep_opt;
         double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
@@ -1391,7 +1391,7 @@ bool csp_dispatch_opt::optimize_ampl()
     tstring.str(std::string()); //clear
 
     tstring << solver_params.ampl_data_dir << "sdk_solution.txt";
-    ifstream infile(tstring.str());
+    ifstream infile(tstring.str().c_str());
 
     if(! infile.is_open() )
         return false;
