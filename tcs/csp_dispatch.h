@@ -45,7 +45,9 @@ public:
         int scaling_type;
 
         bool is_write_ampl_dat;     //write ampl data files?
+        bool is_ampl_engine;        //run with external AMPL engine
         std::string ampl_data_dir;  //directory to write ampl data files
+        std::string ampl_exec_call; //system call for running ampl
 
         s_solver_params()
         {
@@ -227,6 +229,11 @@ public:
     static int optimize_demo2();
 
     bool optimize();
+
+    std::string write_ampl();
+    bool optimize_ampl();
+
+
 
     //Get optimized variable states for this timestep
     //s_outputs *get_step_vars(int step);
