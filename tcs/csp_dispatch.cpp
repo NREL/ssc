@@ -1,7 +1,9 @@
-#include "csp_dispatch.h"
-#include "lp_lib.h" 
 #include <fstream>
 #include <sstream>
+#include <stdlib.h>
+#include "csp_dispatch.h"
+#include "lp_lib.h" 
+#include "lib_util.h"
 
 //#define _WRITE_AMPL_DATA 1
 #define SOS_NONE
@@ -210,6 +212,13 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
 
 bool csp_dispatch_opt::optimize()
 {
+
+    //First check to see whether we should call the AMPL engine instead. 
+    if( solver_params.is_ampl_engine )
+    {
+        return optimize_ampl();
+    }
+
     /* 
     Formulate the optimization problem for dispatch generation. We are trying to maximize revenue subject to inventory
     constraints.
@@ -1241,70 +1250,8 @@ bool csp_dispatch_opt::optimize()
         params.messages->add_message(type, s.str() );
         
 
-        //write out a data file
-        if(solver_params.is_write_ampl_dat)
-        {
-            if( !return_ok )
-                return return_ok;
-            int day = params.siminfo->m_time / 3600/24;
-            /*std::string ampl_dir = solver_params.ampl_data_dir;
-            if( ampl_dir.back() != "\\" || ampl_dir.back != "/" )
-                ampl_dir.append("/");*/
-            //ofstream fout("C:/Users/mwagner/Documents/NREL/OM Optimization/cspopt/csm_team/ampl_code/sdk_files/data_"+to_string(day)+".dat");
-            char outname[200];
-            printf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
-            
-            ofstream fout(outname);
-
-            fout << "#data file\n\n";
-            fout << "# --- scalar parameters ----\n";
-            fout << "param T := " << nt << ";\n";
-            fout << "param Eu := " << params.e_tes_max << ";\n";
-            //fout << "param El := " << params.e_tes_min << ";\n";
-            fout << "param Er := " << params.e_rec_startup << ";\n";
-            fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
-            fout << "param Qu := " << params.q_pb_max << ";\n";
-            fout << "param Ql := " << params.q_pb_min << ";\n";
-            fout << "param Qru := " << dq_rsu << ";\n";
-            fout << "param Qrl := " << params.q_rec_min << ";\n";
-            fout << "param Qc := " << dq_csu << ";\n";
-            fout << "param Qb := " << params.q_pb_standby << ";\n";
-            fout << "param Lr := " << params.w_rec_pump << ";\n";
-            fout << "param delta := 1;\n";
-
-            fout << "# --- variale initialization parameters ---\n";
-            fout << "param s0 := " << params.e_tes_init << ";\n";
-            fout << "param ursu0 := 0.;\n";
-            fout << "param ucsu0 := 0.;\n";
-            fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
-            fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
-
-            fout << "# --- indexed parameters ---\n";
-            fout << "param Qin := \n";
-            for(int t=0; t<nt; t++)
-                fout << t+1 << "\t" << outputs.q_sfavail_expected.at(t) << "\n";
-            fout << ";\n\n";
-
-            fout << "param P := \n";
-            for(int t=0; t<nt; t++)
-                fout << t+1 << "\t" << price_signal.at(t) << "\n";
-            fout << ";\n\n";
-
-            fout << "param etaamb := \n";   //power block ambient adjustment
-            for(int t=0; t<nt; t++)
-                fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
-            fout << ";";
-
-            fout.close();
-
-            //write the log file
-            /*ofstream flog("C:/Users/mwagner/Documents/NREL/SAM/Dispatch optimization/AMPL formulation/data_"+to_string(day)+".log");
-            flog << solver_params.log_message;
-            flog.close();*/
-        }
-
-
-
+        if(return_ok)
+            write_ampl();
 
 
         return return_ok;
@@ -1331,21 +1278,209 @@ bool csp_dispatch_opt::optimize()
     return false;
 }
 
-//csp_dispatch_opt::s_outputs *csp_dispatch_opt::get_step_vars(int step)
-//{
-//    //Get optimized variable states for this timestep
-//
-//    outputs.e_gen = e_gen_opt.at(step);
-//    outputs.e_tes = e_tes_opt.at(step);
-//    outputs.pb_standby = is_pb_sb.at(step);
-//    outputs.pb_operation = is_pb_su.at(step);
-//    outputs.rec_operation = is_rec_su.at(step);
-//
-//    return &outputs;
-//}
+
+std::string csp_dispatch_opt::write_ampl()
+{
+    /* 
+    Write the par file for ampl input
+
+    return name of output file, if error, return empty string.
+    */
+
+    std::string sname;
+
+    //write out a data file
+    if(solver_params.is_write_ampl_dat || solver_params.is_ampl_engine)
+    {
+        int day = params.siminfo->m_time / 3600/24;
+        //char outname[200];
+        //sprintf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
+
+        stringstream outname;
+        outname << solver_params.ampl_data_dir << "data_" << day << ".dat";
+        
+        sname = outname.str();    //save string
+
+        ofstream fout(outname.str());
+
+        int nt = m_nstep_opt;
+        double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
+        double dq_csu = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/params.dt) / params.dt;
+
+        fout << "#data file\n\n";
+        fout << "# --- scalar parameters ----\n";
+        fout << "param T := " << nt << ";\n";
+        fout << "param Eu := " << params.e_tes_max << ";\n";
+        //fout << "param El := " << params.e_tes_min << ";\n";
+        fout << "param Er := " << params.e_rec_startup << ";\n";
+        fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
+        fout << "param Qu := " << params.q_pb_max << ";\n";
+        fout << "param Ql := " << params.q_pb_min << ";\n";
+        fout << "param Qru := " << dq_rsu << ";\n";
+        fout << "param Qrl := " << params.q_rec_min << ";\n";
+        fout << "param Qc := " << dq_csu << ";\n";
+        fout << "param Qb := " << params.q_pb_standby << ";\n";
+        fout << "param Lr := " << params.w_rec_pump << ";\n";
+        fout << "param delta := 1;\n";
+
+        fout << "# --- variale initialization parameters ---\n";
+        fout << "param s0 := " << params.e_tes_init << ";\n";
+        fout << "param ursu0 := 0.;\n";
+        fout << "param ucsu0 := 0.;\n";
+        fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
+        fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
+
+        fout << "# --- indexed parameters ---\n";
+        fout << "param Qin := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.q_sfavail_expected.at(t) << "\n";
+        fout << ";\n\n";
+
+        fout << "param P := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << price_signal.at(t) << "\n";
+        fout << ";\n\n";
+
+        fout << "param etaamb := \n";   //power block ambient adjustment
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
+        fout << ";";
+
+        fout.close();
+    }
+
+    return sname;
+}
+
+bool csp_dispatch_opt::optimize_ampl()
+{
+    /* 
+    handle the process of writing an input file, running ampl, handling results, and loading solution
+
+    writes
+        dat_<day #>.dat
+    runs
+        sdk_dispatch.run
+    expects
+        sdk_solution.txt input file
+    */
+
+    //check whether the ampl parameters have been configured correctly. If not, throw.
+    if(! util::dir_exists( solver_params.ampl_data_dir.c_str() ) )
+        throw C_csp_exception("The specified AMPL data directory is invalid.");
+
+    
+    stringstream tstring;
+
+    std::string datfile = write_ampl();
+    if( datfile.empty() )
+        throw C_csp_exception("An error occured when writing the AMPL input file.");
+    
+    ////call ampl
+    //tstring << "ampl \"" << solver_params.ampl_data_dir << "sdk_dispatch.run\"";
+
+    if( system(NULL) ) puts ("Ok");
+    else exit(EXIT_FAILURE);
+
+    //int sysret = system(tstring.str().c_str());
+    int sysret = system( solver_params.ampl_exec_call.c_str() );
+    
 
 
-// ----------------------------------------
+    //read back ampl solution
+    tstring.str(std::string()); //clear
+
+    tstring << solver_params.ampl_data_dir << "sdk_solution.txt";
+    ifstream infile(tstring.str());
+
+    if(! infile.is_open() )
+        return false;
+    
+    std::vector< std::string > F;
+
+    char line[1000];
+    while( true )
+    {
+        infile.getline( line, 1000 );
+
+        if( infile.eof() )
+            break;
+
+        F.push_back( line );
+    }
+
+    /* 
+    expects:
+    1.  objective (1)
+    2.  relaxed objective (1)
+    3.  y_t^{csb} (nt)
+    4.  y_t (nt)
+    5.  energy used for cycle standby (nt)
+    6.  x_t (nt)
+    7.  y_t^r (nt)
+    8.  s_t (nt)
+    9.  energy used for cycle startup (nt)
+    10. energy used for receiver startup (nt)
+
+    Each item will be on it's own line. Values in arrays are separated by commas.
+    */
+    
+    int nt = m_nstep_opt;
+
+    outputs.pb_standby.resize(nt, false);
+    outputs.pb_operation.resize(nt, false);
+    outputs.q_pb_standby.resize(nt, 0.);
+    outputs.q_pb_target.resize(nt, 0.);
+    outputs.rec_operation.resize(nt, false);
+    outputs.tes_charge_expected.resize(nt, 0.);
+    outputs.q_pb_startup.resize(nt, 0.);
+    outputs.q_rec_startup.resize(nt, 0.);
+
+    
+    util::to_double(F.at(0), &outputs.objective);
+    util::to_double(F.at(1), &outputs.objective_relaxed);
+    
+    std::vector< std::string > svals;
+
+    svals = util::split( F.at(2), "," );
+    for(int i=0; i<nt; i++)
+    {
+        int v;
+        util::to_integer(svals.at(i), &v );
+        outputs.pb_standby.at(i) = v == 1;
+    }
+    svals = util::split( F.at(3), "," );
+    for(int i=0; i<nt; i++)
+    {
+        int v;
+        util::to_integer(svals.at(i), &v );
+        outputs.pb_operation.at(i) = v == 1;
+    }
+    svals = util::split( F.at(4), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.q_pb_standby.at(i) );
+    svals = util::split( F.at(5), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.q_pb_target.at(i) );
+    svals = util::split( F.at(6), "," );
+    for(int i=0; i<nt; i++)
+    {
+        int v;
+        util::to_integer(svals.at(i), &v );
+        outputs.rec_operation.at(i) = v == 1;
+    }
+    svals = util::split( F.at(7), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.tes_charge_expected.at(i) );
+    svals = util::split( F.at(8), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.q_pb_startup.at(i) );
+    svals = util::split( F.at(9), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.q_rec_startup.at(i) );
+
+    return true;
+}
 
 
 // ----------------------------------------

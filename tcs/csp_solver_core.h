@@ -145,7 +145,9 @@ public:
         int m_max_iterations;
 
 		bool m_is_write_ampl_dat;
+        bool m_is_ampl_engine;
         std::string m_ampl_data_dir;
+        std::string m_ampl_exec_call;
 		
 		bool m_is_block_dispatch;
 
@@ -170,7 +172,9 @@ public:
             m_scaling_type = -1;
 
 			m_is_write_ampl_dat = false;        //write ampl data files?
+            m_is_ampl_engine = false;           //run dispatch with external AMPL engine?
             m_ampl_data_dir = "";               //directory where files should be written 
+            m_ampl_exec_call = "";
 			
 			m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
 			
