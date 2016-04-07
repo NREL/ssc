@@ -1231,7 +1231,7 @@ public:
 			eta_map_out[3*i+2] = heliostatfield.ms_params.m_eta_map(i,2);							//[deg] Solar field optical efficiency
 			for( int j = 2; j < n_cols_flux_maps; j++ )
 			{
-				flux_maps_out[n_cols_flux_maps*i + j] = heliostatfield.ms_params.m_flux_maps(i,j)*heliostatfield.ms_params.m_eta_map(i,2)*flux_scaling_mult;		//[kW/m^2]
+				flux_maps_out[n_cols_flux_maps*i + j] = heliostatfield.ms_params.m_flux_maps(i,j-2)*heliostatfield.ms_params.m_eta_map(i,2)*flux_scaling_mult;		//[kW/m^2]
 			}
 		}
 
