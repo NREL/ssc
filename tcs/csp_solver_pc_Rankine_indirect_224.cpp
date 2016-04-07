@@ -855,6 +855,11 @@ void C_pc_Rankine_indirect_224::converged()
 
 int C_pc_Rankine_indirect_224::get_operating_state()
 {
+	if( ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 )
+	{
+		return C_csp_power_cycle::ON;
+	}
+
 	return m_standby_control_prev;
 }
 
