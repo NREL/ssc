@@ -533,29 +533,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	*/
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 0) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 1) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 2) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 3) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 4) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 5) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 6) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 7) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 8) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 9) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 10) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 11) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 0) = m_cf.at(CF_TOD1JanEnergy, 1);
@@ -575,29 +575,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD1, 11, "cf_energy_net_monthly_firstyear_TOD1");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 0) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 1) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 2) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 3) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 4) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 5) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 6) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 7) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 8) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 9) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 10) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 11) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 0) = m_cf.at(CF_TOD2JanEnergy, 1);
@@ -617,29 +617,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD2, 11, "cf_energy_net_monthly_firstyear_TOD2");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 0) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 1) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 2) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 3) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 4) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 5) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 6) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 7) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 8) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 9) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 10) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 11) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 0) = m_cf.at(CF_TOD3JanEnergy, 1);
@@ -659,29 +659,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD3, 11, "cf_energy_net_monthly_firstyear_TOD3");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 0) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 1) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 2) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 3) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 4) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 5) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 6) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 7) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 8) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 9) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 10) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 11) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 0) = m_cf.at(CF_TOD4JanEnergy, 1);
@@ -701,29 +701,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD4, 11, "cf_energy_net_monthly_firstyear_TOD4");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 0) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 1) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 2) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 3) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 4) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 5) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 6) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 7) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 8) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 9) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 10) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 11) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 0) = m_cf.at(CF_TOD5JanEnergy, 1);
@@ -743,29 +743,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD5, 11, "cf_energy_net_monthly_firstyear_TOD5");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 0) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 1) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 2) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 3) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 4) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 5) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 6) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 7) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 8) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 9) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 10) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 11) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 0) = m_cf.at(CF_TOD6JanEnergy, 1);
@@ -785,29 +785,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD6, 11, "cf_energy_net_monthly_firstyear_TOD6");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 0) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 1) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 2) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 3) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 4) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 5) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 6) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 7) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 8) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 9) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 10) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 11) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 0) = m_cf.at(CF_TOD7JanEnergy, 1);
@@ -827,29 +827,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD7, 11, "cf_energy_net_monthly_firstyear_TOD7");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 0) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 1) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 2) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 3) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 4) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 5) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 6) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 7) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 8) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 9) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 10) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 11) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 0) = m_cf.at(CF_TOD8JanEnergy, 1);
@@ -869,29 +869,29 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD8, 11, "cf_energy_net_monthly_firstyear_TOD8");
 
 
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 0) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 0) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9JanEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 1) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 1) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9FebEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 2) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 2) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9MarEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 3) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 3) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9AprEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 4) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 4) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9MayEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 5) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 5) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9JunEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 6) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 6) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9JulEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 7) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 7) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9AugEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 8) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 8) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9SepEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 9) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 9) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9OctEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 10) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 10) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9NovEnergy, 1);
-	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 11) = ppa[0] / 100.0 *
+	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 11) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9DecEnergy, 1);
 
 	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 0) = m_cf.at(CF_TOD9JanEnergy, 1);
