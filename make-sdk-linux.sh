@@ -6,7 +6,7 @@ strip sdk-release/linux64/SDKtool
 file sdk-release/linux64/SDKtool > sdk-release/linux64/filetypes.txt
 file sdk-release/linux64/ssc.so >> sdk-release/linux64/filetypes.txt
 echo "Dynamic library dependencies and build system information:" > sdk-release/linux64/dependencies.txt
-cat /etc/*-release >> sdk-release/linux64/dependencies.txt
+cat /etc/*-version >> sdk-release/linux64/dependencies.txt
 echo "SDKtool:" >> sdk-release/linux64/dependencies.txt
 ldd sdk-release/linux64/SDKtool >> sdk-release/linux64/dependencies.txt
 echo "ssc.so:" >> sdk-release/linux64/dependencies.txt
