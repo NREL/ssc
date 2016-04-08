@@ -80,6 +80,7 @@
     <ClCompile Include="..\ssc\cmod_windfile.cpp" />
     <ClCompile Include="..\ssc\cmod_windpower.cpp" />
     <ClCompile Include="..\ssc\cmod_lcoefcr.cpp" />
+    <ClCompile Include="..\ssc\cmod_wind_obos.cpp" />
     <ClCompile Include="..\ssc\common_financial.cpp" />
     <ClCompile Include="..\ssc\core.cpp" />
     <ClCompile Include="..\ssc\csp_common.cpp" />
