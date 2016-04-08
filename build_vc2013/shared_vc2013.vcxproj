@@ -45,6 +45,7 @@
     <ClInclude Include="..\shared\lib_weatherfile.h" />
     <ClInclude Include="..\shared\lib_windfile.h" />
     <ClInclude Include="..\shared\lib_windwatts.h" />
+    <ClInclude Include="..\shared\lib_wind_obos.h" />
     <ClInclude Include="..\shared\lsqfit.h" />
   </ItemGroup>
   <ItemGroup>
@@ -68,6 +69,7 @@
     <ClCompile Include="..\shared\lib_weatherfile.cpp" />
     <ClCompile Include="..\shared\lib_windfile.cpp" />
     <ClCompile Include="..\shared\lib_windwatts.cpp" />
+    <ClCompile Include="..\shared\lib_wind_obos.cpp" />
     <ClCompile Include="..\shared\lsqfit.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
