@@ -17,17 +17,17 @@
 using namespace std;
 
 //substructure type
-enum SubstructureType { MONOPILE, JACKET, SPAR, SEMISUBMERSIBLE } substructure;
+enum { MONOPILE, JACKET, SPAR, SEMISUBMERSIBLE };
 //anchor types
-enum AnchorType { DRAGEMBEDMENT, SUCTIONPILE } anchor;
+enum  { DRAGEMBEDMENT, SUCTIONPILE } ;
 //turbine installation methods
-enum TurbInstallMethod { INDIVIDUAL, BUNNYEARS, ROTORASSEMBLED } turbInstallMethod;
+enum  { INDIVIDUAL, BUNNYEARS, ROTORASSEMBLED } ;
 //turbine tower installation methods
-enum TowerInstallMethod { ONEPIECE, TWOPIECE } towerInstallMethod;
+enum  { ONEPIECE, TWOPIECE } ;
 //installation vessel strategy
-enum InstallStrategy { PRIMARYVESSEL, FEEDERBARGE } installStrategy;
+enum  { PRIMARYVESSEL, FEEDERBARGE } ;
 //toggle cable cost optimizer on or off
-enum CableCostOptimization { ON, OFF } cableOptimizer;
+enum  { ON, OFF } ;
 
 
 //*******************************************************************************************
@@ -1009,8 +1009,9 @@ double wobos::SubstructureInstTime()
 	//check if fixed substructure type is selected
 	if ((substructure == MONOPILE) || (substructure == JACKET))
 	{
-		return ceil(((1 / (1 - substructCont))*((sum1*nTurb + (nTurb - ceil((nTurb / nSubPerTrip)))
+		double x = ceil(((1 / (1 - substructCont))*((sum1*nTurb + (nTurb - ceil((nTurb / nSubPerTrip)))
 			*(rotorD*arrayX) / (subInstVessel[11] * 1852)) + fac1)) / 24);
+		return x;
 	}
 	else
 	{
@@ -1349,7 +1350,7 @@ double wobos::CableRouteSurveyCost()
 double wobos::TotInstCost()
 {
 	//create variable to hold total cost values
-	double sum;
+	double sum = 0;
 
 	//following for loops iterate through cost loops adding each cost to sum
 	for (int i = 0; i < turbCostsByVessel.size(); i++)
@@ -1369,7 +1370,7 @@ double wobos::TotInstCost()
 		sum += mobDemobCostByVessel[i][1];
 	}
 
-	sum += cabDrillDist*cabDrillCR + (mpvRentalDR + diveTeamDR + winchDR)*landConstruct + civilWork + elecWork;
+	sum += cabSurvey + cabDrillDist*cabDrillCR + (mpvRentalDR + diveTeamDR + winchDR)*landConstruct + civilWork + elecWork;
 	//check substructure type
 	if ((substructure == MONOPILE) || (substructure == JACKET))
 	{
@@ -1513,7 +1514,7 @@ double wobos::TurbLaydownCost()
 
 double wobos::NumCranes()
 {
-	if (nCrane1000 == 0)
+	if (nCrane1000 <= 0)
 	{
 		switch (substructure)
 		{
@@ -1528,7 +1529,7 @@ double wobos::NumCranes()
 			break;
 		}
 	}
-	if (nCrane600 == 0)
+	if (nCrane600 <= 0)
 	{
 		switch (substructure)
 		{
@@ -1543,7 +1544,7 @@ double wobos::NumCranes()
 			break;
 		}
 	}
-	return 0; //MIKE
+	return 0;
 }
 //calculate the cost in dollars of the cranes that are required to carry out lifting operations
 //at port
@@ -2021,6 +2022,7 @@ void wobos::run()
 	expInstTime = ExportCabInstallTime(expCabSecPerTrip, nExpCab);
 	subsInstTime = SubsInstallTime();
 	totInstTime = TotalInstallTime();
+	cabSurvey = CableRouteSurveyCost();
 	TurbInstCost();
 	SubInstCost();
 	ElectricalInstCost();
