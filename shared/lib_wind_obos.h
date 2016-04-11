@@ -16,6 +16,12 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double distPort;//distance to install site from install port (km)
 	double distPtoA;//distance from install port to inshore assembly area (km) (spar only)
 	double distAtoS;//distance from inshore assembly area to install site (km) (spar Only)
+	int substructure; //type of substructure
+	int anchor; //anchor type
+	int turbInstallMethod; //turbine installation method
+	int towerInstallMethod; //tower installation method
+	int installStrategy; //installation vessel strategy
+	int cableOptimizer; //switch to run the cable optimizer or not
 	double moorLines;//number of mooring lines for floating substructures
 	double buryDepth;//array and export cable burial depth (m)
 	double arrayY;//turbine array spacing between turbines on same row (rotor diameters)
@@ -325,6 +331,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
     double expInstTime;
     double subsInstTime;
     double totInstTime;
+	double cabSurvey;
     //Port & Staging outputs
 	double entrExitCost;
 	double wharfCost;
@@ -348,6 +355,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double totPnSCost;
     double totEnMCost;
     double totDevCost;
+
 	//SUPPORTING FUNCTIONS************************************************************************************************************
 	//General Module
 	double HubDiameter();

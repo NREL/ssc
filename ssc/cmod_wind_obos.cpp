@@ -13,6 +13,19 @@
 
 //using namespace std;
 
+//substructure type
+enum { MONOPILE, JACKET, SPAR, SEMISUBMERSIBLE };
+//anchor types
+enum  { DRAGEMBEDMENT, SUCTIONPILE };
+//turbine installation methods
+enum  { INDIVIDUAL, BUNNYEARS, ROTORASSEMBLED };
+//turbine tower installation methods
+enum  { ONEPIECE, TWOPIECE };
+//installation vessel strategy
+enum  { PRIMARYVESSEL, FEEDERBARGE };
+//toggle cable cost optimizer on or off
+enum  { ON, OFF };
+
 static var_info _cm_vtab_wind_obos[] = {
 /*  VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS                 META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
@@ -33,12 +46,12 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "installStrategy",                "Installation Vessel Strategy",                             "",                   "",                       "wobos",            "?=0",                     "INTEGER",                       ""},
    { SSC_INPUT,        SSC_NUMBER,      "cableOptimizer",                 "Electrical Cable Cost Optimization",                       "",                   "",                       "wobos",            "?=0",                     "INTEGER",                       ""},
    { SSC_INPUT,        SSC_NUMBER,      "moorLines",                      "Number Of Mooring Lines",                                  "",                   "",                       "wobos",            "?=3",                     "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "buryDepth",                      "Electrical Cable Burial Depth"                             "m",                  "",                       "wobos",            "?=2",                     "MIN=0,MAX=15",                  ""},
+   { SSC_INPUT,        SSC_NUMBER,      "buryDepth",                      "Electrical Cable Burial Depth",                             "m",                  "",                       "wobos",            "?=2",                     "MIN=0,MAX=15",                  ""},
    { SSC_INPUT,        SSC_NUMBER,      "arrayY",                         "Spacing Between Turbines in Rows",                         "rotor diameters",    "",                       "wobos",            "?=9",                     "MIN=1",                         ""},
    { SSC_INPUT,        SSC_NUMBER,      "arrayX",                         "Spacing Between Turbine Rows",                             "rotor diameters",    "",                       "wobos",            "?=9",                     "MIN=1",                         ""},
-   { SSC_INPUT,        SSC_ARRAY,       "arrVoltage",                     "Array Cable System Voltage",                              "kV",                 "",                       "wobos",            "*",                       "",                              ""},
-   { SSC_INPUT,        SSC_ARRAY,       "expVoltage",                     "Export Cable System Voltage",                              "kV",                 "",                       "wobos",            "*",                       "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "substructCon",                   "Substructure Install Weather Contingency",                 "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
+   //{ SSC_INPUT,        SSC_ARRAY,       "arrVoltage",                     "Array Cable System Voltage",                              "kV",                 "",                       "wobos",            "*",                       "",                              ""},
+   //{ SSC_INPUT,        SSC_ARRAY,       "expVoltage",                     "Export Cable System Voltage",                              "kV",                 "",                       "wobos",            "*",                       "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "substructCont",                   "Substructure Install Weather Contingency",                 "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "turbCont",                       "Turbine Install Weather Contingency",                      "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "elecCont",                       "Electrical Install Weather Contingency",                   "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "interConVolt",                   "Grid Interconnect Voltage",                                "kV",                 "",                       "wobos",            "?=345",                   "",                              ""},
@@ -52,13 +65,13 @@ static var_info _cm_vtab_wind_obos[] = {
 //Substructure & Foundation
    { SSC_INPUT,        SSC_NUMBER,      "mpileCR",                        "Monopile Cost Rate",                                       "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "mtransCR",                       "Monopile Transition Piece Cost Rate",                      "$/tonne",            "",                       "wobos",            "?=3230",                  "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "mpileD",                         "Monopile Diameter",                                        "m",                  "",                       "wobos",            "",                        "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "mpileL",                         "Monopile Length",                                          "m",                  "",                       "wobos",            "",                        "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "mpileD",                         "Monopile Diameter",                                        "m",                  "",                       "wobos",            "substructure=0",          "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "mpileL",                         "Monopile Length",                                          "m",                  "",                       "wobos",            "substructure=0",          "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "mpEmbedL",                       "Monopile Embedment Length",                                "m",                  "",                       "wobos",            "?=30",                    "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "jlatticeCR"                      "Jacket Main Lattice Cost Rate",                            "$/tonne",            "",                       "wobos",            "?=4680",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "jlatticeCR",                      "Jacket Main Lattice Cost Rate",                            "$/tonne",            "",                       "wobos",            "?=4680",                 "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "jtransCR",                       "Jacket Transition Piece Cost Rate",                        "$/tonne",            "",                       "wobos",            "?=4500",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "jpileCR",                        "Jacket Pile Cost Rate",                                    "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "jlatticeA",                      "Jacket Main Lattice Footprint Area",                       "m^2"                 "",                       "wobos",            "?=26",                    "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "jlatticeA",                      "Jacket Main Lattice Footprint Area",                       "m^2",                 "",                       "wobos",            "?=26",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "jpileL",                         "Jacket Pile Length",                                       "m",                  "",                       "wobos",            "?=47.5",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "jpileD",                         "Jacket Pile Diameter",                                     "m",                  "",                       "wobos",            "?=1.6",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "spStifColCR",                    "Spar Stiffened Column Cost Rate",                          "$/tonne",            "",                       "wobos",            "?=3120",                  "",                              ""},
@@ -71,17 +84,17 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "sSteelCR",                       "Secondary/Outfitting Steel Cost Rate",                     "$/tonne",            "",                       "wobos",            "?=7250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "moorDia",                        "Mooring Line Diameter",                                    "m",                  "",                       "wobos",            "",                        "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "moorCR",                         "Mooring Line Cost Rate",                                   "$/m",                "",                       "wobos",            "",                        "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "scourMat",                       "Scour Protection Material Cost",                           "$/location"          "",                       "wobos",            "?=250000",                "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "scourMat",                       "Scour Protection Material Cost",                           "$/location",         "",                       "wobos",            "?=250000",                "",                              ""},
 
 //Electrical Infrastructure
    { SSC_INPUT,        SSC_NUMBER,      "pwrFac",                         "Power Transfer Efficiency Factor",                         "%",                  "",                       "wobos",            "?=0.95",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "buryFac",                        "Cable Burial Depth Factor",                                "%/m",                "",                       "wobos",            "?=0.1",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "catLengFac",                     "Catenary Cable Length Factor",                             "%",                  "",                       "wobos",            "?=0.04",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "exCabFac",                       "Excess Cable Factor",                                      "%",                  "",                       "wobos",            "?=0.1",                   "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "subsTobFab",                     "Offshore Substation Fabrication Cost",                     "$/tonne",            "",                       "wobos",            "?=14500",                 "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "subsTopFab",                     "Offshore Substation Fabrication Cost",                     "$/tonne",            "",                       "wobos",            "?=14500",                 "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsTopDes",                     "Offshore Substation Design Cost",                          "$",                  "",                       "wobos",            "?=4500000",               "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "topAssemblyFac",                 "Offshore Substation Land-based Assembly Factor",           "%",                  "",                       "wobos",            "?=0.08",                  "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "subsJacketCR",                   "Offshore Substation Jacket Lattice Cost Rate",             "$/tonne",            "",                       "wobos",            "?=6250",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "subsJackCR",                     "Offshore Substation Jacket Lattice Cost Rate",             "$/tonne",            "",                       "wobos",            "?=6250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsPileCR",                     "Offshore Substation Jacket Pile Cost Rate",                "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "dynCabFac",                      "Dynamic Cable Cost Premium Factor",                        "",                   "",                       "wobos",            "?=2",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "shuntCR",                        "Shunt Reactor Cost Rate",                                  "$/MVA",              "",                       "wobos",            "?=35000",                 "",                              ""},
@@ -91,8 +104,8 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "workSpace",                      "Offshore Substation Workspace & Accommodations Cost",      "$",                  "",                       "wobos",            "?=2000000",               "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "otherAncillary",                 "Other Ancillary Systems Costs",                            "$",                  "",                       "wobos",            "?=3000000",               "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "mptCR",                          "Main Power Transformer Cost Rate",                         "$/MVA",              "",                       "wobos",            "?=12500",                 "",                              ""},
-   { SSC_INPUT,        SSC_ARRAY,       "arrCables",                      "Array Cables and Specifications",                          "",                   "",                       "wobos",            "*",                       "",                              ""},
-   { SSC_INPUT,        SSC_ARRAY,       "expCables",                      "Export Cables and Specifications",                         "",                   "",                       "wobos",            "*",                       "",                              ""},
+   //{ SSC_INPUT,        SSC_ARRAY,       "arrCables",                      "Array Cables and Specifications",                          "",                   "",                       "wobos",            "*",                       "",                              ""},
+   //{ SSC_INPUT,        SSC_ARRAY,       "expCables",                      "Export Cables and Specifications",                         "",                   "",                       "wobos",            "*",                       "",                              ""},
 
 //Assembly & Installation
    { SSC_INPUT,        SSC_NUMBER,      "moorTimeFac",                    "Anchor & Mooring Water Depth Time Factor",                 "",                   "",                       "wobos",            "?=0.005",                 "",                              ""},
@@ -142,7 +155,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "cabPullIn",                      "Array Cable Pull in to Interfaces",                        "hours",              "",                       "wobos",            "?=5.5",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "cabTerm",                        "Cable Termination and Testing",                            "hours",              "",                       "wobos",            "?=5.5",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "cabLoadout",                     "Array Cable Loadout for Installation",                     "hours",              "",                       "wobos",            "?=14",                    "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "buryRate",                       "Cable Burial Rate"                                         "m/hour",             "",                       "wobos",            "?=125",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "buryRate",                       "Cable Burial Rate",                                         "m/hour",             "",                       "wobos",            "?=125",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsPullIn",                     "Cable Pull in to Offshore Substation",                     "hours",              "",                       "wobos",            "?=48",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "shorePullIn",                    "Cable Pull in to Onshore Infrastructure",                  "hours",              "",                       "wobos",            "?=96",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "landConstruct",                  "Onshore Infrastructure Construction",                      "days",               "",                       "wobos",            "?=7",                     "",                              ""},
@@ -150,7 +163,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "subsLoad",                       "Offshore Substation Loadout for Installation",             "hours",              "",                       "wobos",            "?=60",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "placeTop",                       "Lift and Place Offshore Substation Topside",               "hours",              "",                       "wobos",            "?=24",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "nFeederBarge",                   "Number of Feeder Barges (Feeder Barge Strategy)",          "",                   "",                       "wobos",            "?=2",                     "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "pileSpreadDR"                    "Piling Spread Day Rate",                                   "$/day",              "",                       "wobos",            "?=2500",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "pileSpreadDR",                   "Piling Spread Day Rate",                                   "$/day",              "",                       "wobos",            "?=2500",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "pileSpreadMob",                  "Piling Spread Mobilization Cost",                          "$",                  "",                       "wobos",            "?=750000",                "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "groutSpreadDR",                  "Grouting Spread Day Rate",                                 "$/day",              "",                       "wobos",            "?=3000",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "groutSpreadMob",                 "Grouting Spread Mobilization Cost",                        "$",                  "",                       "wobos",            "?=1000000",               "",                              ""},
@@ -165,7 +178,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "winchDR",                        "Cable Landfall Winch Day Rate",                            "$/day",              "",                       "wobos",            "?=1000",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "civilWork",                      "Onshore Infrastructure Civil Work Cost",                   "$",                  "",                       "wobos",            "?=40000",                 "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "elecWork",                       "Onshore Infrastructure Electrical Work Cost",              "$",                  "",                       "wobos",            "?=25000",                 "",                              ""},
-   { SSC_INPUT,        SSC_ARRAY,       "turbInstVessel",                 "Turbine Install Vessel Specifications",                    "",                   "",                       "wobos",            "*",                       "",                              ""},
+   /*{ SSC_INPUT,        SSC_ARRAY,       "turbInstVessel",                 "Turbine Install Vessel Specifications",                    "",                   "",                       "wobos",            "*",                       "",                              ""},
    { SSC_INPUT,        SSC_ARRAY,       "turbFeederBarge",                "Turbine Install Feeder Barge Specifications",              "",                   "",                       "wobos",            "*",                       "",                              ""},
    { SSC_INPUT,        SSC_ARRAY,       "turbSupportVessels",             "Turbine Install Support Vessels",                          "",                   "",                       "wobos",            "*",                       "",                              ""},
    { SSC_INPUT,        SSC_ARRAY,       "subInstVessel",                  "Substructure Install Vessel Specifications",               "",                   "",                       "wobos",            "*",                       "",                              ""},
@@ -175,7 +188,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_ARRAY,       "expCabInstVessel",               "Export Cable Install Vessel Specifications",               "",                   "",                       "wobos",            "*",                       "",                              ""},
    { SSC_INPUT,        SSC_ARRAY,       "substaInstVessel",               "Offshore Substation Install Vessel Specifications",        "",                   "",                       "wobos",            "*",                       "",                              ""},
    { SSC_INPUT,        SSC_ARRAY,       "elecSupportVessels",             "Electrical Infrastructure Install Support Vessels",        "",                   "",                       "wobos",            "*",                       "",                              ""},
-
+   */
 //Port & Staging
    { SSC_INPUT,        SSC_NUMBER,      "nCrane600",                      "Number of 600 tonne Crawler Cranes",                       "",                   "",                       "wobos",            "",                        "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "nCrane1000",                     "Number of 1000 tonne Crawler Cranes",                      "",                   "",                       "wobos",            "",                        "",                              ""},
@@ -323,6 +336,7 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_ARRAY,       "subCostsByVessel",               "Substructure Installation Vessel Costs",                   "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_ARRAY,       "elecCostsByVessel",              "Electrical Infrastructure Installation Vessel Costs",      "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_ARRAY,       "mobDemobCostByVessel",           "Vessel Mobilization and Demobilization Cost",              "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "cabSurvey",                      "Cable Route Survey Cost",                                  "$",                  "",                       "wobos",            "",                        "",                              ""},
 
     //Port & Staging outputs
    {SSC_OUTPUT,        SSC_NUMBER,      "entrExitCost",                   "Port Entrance and Exit Cost",                              "$",                  "",                       "wobos",            "",                        "",                              ""},
@@ -366,7 +380,8 @@ public:
 		wobos obos;
 
 		//Assign inputs***********************************************************************************************************************************
-		//B asic inputs
+		//Basic inputs
+		obos.nTurb = (double)as_number("nTurb"); //number of turbines
 		obos.rotorD = (double)as_number("rotorD");//rotor diameter (m)
 		obos.turbR = (double)as_number("turbR");//turbine rating (MW)
 		obos.hubH = (double)as_number("hubH");//hub height (m)
@@ -375,6 +390,11 @@ public:
 		obos.distPort = (double)as_number("distPort");//distance to install site from install port (km)
 		obos.distPtoA = (double)as_number("distPtoA");//distance from install port to inshore assembly area (km) (spar only)
 		obos.distAtoS = (double)as_number("distAtoS");//distance from inshore assembly area to install site (km) (spar Only)
+		obos.substructure = (int)as_number("substructure"); //substructure type
+		obos.anchor = (int)as_number("anchor"); //anchor type
+		obos.turbInstallMethod = (int)as_number("towerInstallMethod"); //tower installation method
+		obos.installStrategy = (int)as_number("installStrategy"); //installation vessel strategy
+		obos.cableOptimizer = (int)as_number("cableOptimizer"); //switch to turn cable optimizer on or off
 		obos.moorLines = (double)as_number("moorLines");//number of mooring lines for floating substructures
 		obos.buryDepth = (double)as_number("buryDepth");//array and export cable burial depth (m)
 		obos.arrayY = (double)as_number("arrayY");//turbine array spacing between turbines on same row (rotor diameters)
@@ -386,7 +406,7 @@ public:
 		obos.distInterCon = (double)as_number("distInterCon");//distance from onshore substation to grid interconnect (miles)
 		obos.scrapVal = (double)as_number("scrapVal");//scrap value of decommissioned components ($)
 
-		//detailed inputs
+		//Detailed inputs
 		//General
 		obos.projLife = (double)as_number("projLife");//economic lifetime of the project (years)
 		obos.inspectClear = (double)as_number("inspectClear");//inspection clearance for substructure and turbine components (m)
@@ -394,6 +414,8 @@ public:
 		//Substructure & Foundation
 		obos.mpileCR = (double)as_number("mpileCR");//monopile pile cost rate ($/tonne)
 		obos.mtransCR = (double)as_number("mtransCR");//monopile transition piece cost rate ($/tonne)
+		obos.mpileD = (double)as_number("mpileD"); //monopile diameter(m)
+		obos.mpileL = (double)as_number("mpileL"); //monopile length (m)
 		obos.jlatticeCR = (double)as_number("jlatticeCR");//jacket lattice cost rate ($/tonne)
 		obos.jtransCR = (double)as_number("jtransCR");//jacket transition piece cost rate ($/tonne)
 		obos.jpileCR = (double)as_number("jpileCR");//jacket pile cost rate ($/tonne)
@@ -543,12 +565,1179 @@ public:
 		obos.metTowCR = (double)as_number("metTowCR");//meteorological tower fabrication, design, and install cost rate ($/MW)
 		obos.decomDiscRate = (double)as_number("decomDiscRate");//decommissioning expense discount rate
 
+		//CABLE VECTORS****************************************************************************************************************************************
+		//DEFAULT VECTOR SIZES
+		double nArrVolts = 2;
+		double nExpVolts = 2;
+		double nArrCables = 11;
+		double nExpCables = 10;
+		double nCableAttributes = 6;
+		double nVesselAttributes = 27;
+		double nSupportVessels = 27;
+
+		obos.arrayVolt.resize(nArrVolts);
+		obos.arrCables.resize(nArrVolts);
+
+		for (int i = 0; i < obos.arrayVolt.size(); i++)
+		{
+			obos.arrayVolt[i].resize(nArrVolts);
+		}
+		for (int i = 0; i < obos.arrCables.size(); i++)
+		{
+			obos.arrCables[i].resize(nArrCables);
+
+			for (int j = 0; j < obos.arrCables[i].size(); j++)
+			{
+				obos.arrCables[i][j].resize(nCableAttributes);
+			}
+		}
+
+		obos.expCabVolt.resize(nExpVolts);
+		obos.expCables.resize(nExpVolts);
+
+		for (int i = 0; i < obos.expCabVolt.size(); i++)
+		{
+			obos.expCabVolt[i].resize(nExpVolts);
+		}
+		for (int i = 0; i < obos.expCables.size(); i++)
+		{
+			obos.expCables[i].resize(nExpCables);
+
+			for (int j = 0; j < obos.expCables[i].size(); j++)
+			{
+				obos.expCables[i][j].resize(nCableAttributes);
+			}
+		}
+
+		//vessel vectors
+		obos.turbInstVessel.resize(nVesselAttributes);
+		obos.turbFeederBarge.resize(nVesselAttributes);
+		obos.turbSupportVessels.resize(nSupportVessels);
+		obos.subInstVessel.resize(nVesselAttributes);
+		obos.subFeederBarge.resize(nVesselAttributes);
+		obos.subSupportVessels.resize(nSupportVessels);
+		obos.arrCabInstVessel.resize(nVesselAttributes);
+		obos.expCabInstVessel.resize(nVesselAttributes);
+		obos.substaInstVessel.resize(nVesselAttributes);
+		obos.elecSupportVessels.resize(nSupportVessels);
+
+		for (int i = 0; i < nSupportVessels; i++)
+		{
+			obos.turbSupportVessels[i].resize(nVesselAttributes);
+			obos.subSupportVessels[i].resize(nVesselAttributes);
+			obos.elecSupportVessels[i].resize(nVesselAttributes);
+		}
+
+		/*
+		array and export voltage
+		array voltage vector rows by index value
+		0: 33
+		1: 66
+		export voltage vector rows by index value
+		0: 132
+		1: 220
+
+		voltage vector columns by index value
+		0: voltage value in kV
+		1: voltage identifier value: corresponds to the row index for each voltage
+		*/
+		//defaults
+		obos.arrayVolt[0][0] = 33;
+		obos.arrayVolt[1][0] = 66;
+		obos.arrayVolt[0][1] = 0;
+		obos.arrayVolt[1][1] = 1;
+
+		obos.expCabVolt[0][0] = 132;
+		obos.expCabVolt[1][0] = 220;
+		obos.expCabVolt[0][1] = 0;
+		obos.expCabVolt[1][1] = 1;
+
+		/*
+		cable data
+		dimension 1's index refers to a voltage value identifier in vector obos.arrayVolt
+		for array cables:
+		0: 0 - corresponds to 33 kV
+		1: 1 - corresponds to 66 kV
+
+		for export cables:
+		0: 0 - corresponds to 132 kV
+		1: 1 - corresponds to 220 kV
+
+		dimension 2 is the rows required for each cable size
+		array cable rows by index value:
+		0: 95 mm2
+		1: 120 mm2
+		2: 150 mm2
+		3: 185 mm2
+		4: 240 mm2
+		5: 300 mm2
+		6: 400 mm2
+		7: 500 mm2
+		8: 630 mm2
+		9: 800 mm2
+		10: 1000 mm2
+
+		export cable rows by index value:
+		0: 300 mm2
+		1: 400 mm2
+		2: 500 mm2
+		3: 630 mm2
+		4: 800 mm2
+		5: 1000 mm2
+		6: 1200 mm2
+		7: 1600 mm2
+		8: 2000 mm2
+		9: 2500 mm2
+
+		dimension 3 is columns for storing cable attributes
+		cable columns by index value:
+		0: index from wrapper
+		1: cost ($/m)
+		2: mass (kg/m)
+		3: current rating (amps)
+		4: turbine interface cost ($/interface)
+		5: substation interface cost ($/interface)
+		*/
+		//defaults
+		//33 kV
+		//identifiers
+		obos.arrCables[0][0][0] = 0;
+		obos.arrCables[0][1][0] = 1;
+		obos.arrCables[0][2][0] = 2;
+		obos.arrCables[0][3][0] = 3;
+		obos.arrCables[0][4][0] = 4;
+		obos.arrCables[0][5][0] = 5;
+		obos.arrCables[0][6][0] = 6;
+		obos.arrCables[0][7][0] = 7;
+		obos.arrCables[0][8][0] = 8;
+		obos.arrCables[0][9][0] = 9;
+		obos.arrCables[0][10][0] = 10;
+		//cost per meter
+		obos.arrCables[0][0][1] = 185.889;
+		obos.arrCables[0][1][1] = 202.788;
+		obos.arrCables[0][2][1] = 208.421;
+		obos.arrCables[0][3][1] = 236.586;
+		obos.arrCables[0][4][1] = 270.384;
+		obos.arrCables[0][5][1] = 315.448;
+		obos.arrCables[0][6][1] = 360.512;
+		obos.arrCables[0][7][1] = 422.475;
+		obos.arrCables[0][8][1] = 478.805;
+		obos.arrCables[0][9][1] = 585.832;
+		obos.arrCables[0][10][1] = 698.492;
+		//mass per meter
+		obos.arrCables[0][0][2] = 20.384;
+		obos.arrCables[0][1][2] = 21.854;
+		obos.arrCables[0][2][2] = 23.912;
+		obos.arrCables[0][3][2] = 25.676;
+		obos.arrCables[0][4][2] = 28.910;
+		obos.arrCables[0][5][2] = 32.242;
+		obos.arrCables[0][6][2] = 37.142;
+		obos.arrCables[0][7][2] = 42.336;
+		obos.arrCables[0][8][2] = 48.706;
+		obos.arrCables[0][9][2] = 57.428;
+		obos.arrCables[0][10][2] = 66.738;
+		//current rating
+		obos.arrCables[0][0][3] = 300;
+		obos.arrCables[0][1][3] = 340;
+		obos.arrCables[0][2][3] = 375;
+		obos.arrCables[0][3][3] = 420;
+		obos.arrCables[0][4][3] = 480;
+		obos.arrCables[0][5][3] = 530;
+		obos.arrCables[0][6][3] = 590;
+		obos.arrCables[0][7][3] = 655;
+		obos.arrCables[0][8][3] = 715;
+		obos.arrCables[0][9][3] = 775;
+		obos.arrCables[0][10][3] = 825;
+		//cost per turbine interface
+		obos.arrCables[0][0][4] = 8410;
+		obos.arrCables[0][1][4] = 8615;
+		obos.arrCables[0][2][4] = 8861;
+		obos.arrCables[0][3][4] = 9149;
+		obos.arrCables[0][4][4] = 9600;
+		obos.arrCables[0][5][4] = 10092;
+		obos.arrCables[0][6][4] = 10913;
+		obos.arrCables[0][7][4] = 11733;
+		obos.arrCables[0][8][4] = 12800;
+		obos.arrCables[0][9][4] = 14195;
+		obos.arrCables[0][10][4] = 15836;
+		//cost per substation interface
+		obos.arrCables[0][0][5] = 19610;
+		obos.arrCables[0][1][5] = 19815;
+		obos.arrCables[0][2][5] = 20062;
+		obos.arrCables[0][3][5] = 20349;
+		obos.arrCables[0][4][5] = 20800;
+		obos.arrCables[0][5][5] = 21292;
+		obos.arrCables[0][6][5] = 22113;
+		obos.arrCables[0][7][5] = 22933;
+		obos.arrCables[0][8][5] = 24000;
+		obos.arrCables[0][9][5] = 25395;
+		obos.arrCables[0][10][5] = 27036;
+		//66 kV
+		//identifiers
+		obos.arrCables[1][0][0] = 0;
+		obos.arrCables[1][1][0] = 1;
+		obos.arrCables[1][2][0] = 2;
+		obos.arrCables[1][3][0] = 3;
+		obos.arrCables[1][4][0] = 4;
+		obos.arrCables[1][5][0] = 5;
+		obos.arrCables[1][6][0] = 6;
+		obos.arrCables[1][7][0] = 7;
+		obos.arrCables[1][8][0] = 8;
+		obos.arrCables[1][9][0] = 9;
+		obos.arrCables[1][10][0] = 10;
+		//cost per meter
+		obos.arrCables[1][0][1] = 225.320;
+		obos.arrCables[1][1][1] = 242.219;
+		obos.arrCables[1][2][1] = 253.485;
+		obos.arrCables[1][3][1] = 281.650;
+		obos.arrCables[1][4][1] = 326.714;
+		obos.arrCables[1][5][1] = 383.044;
+		obos.arrCables[1][6][1] = 433.741;
+		obos.arrCables[1][7][1] = 506.970;
+		obos.arrCables[1][8][1] = 574.566;
+		obos.arrCables[1][9][1] = 704.125;
+		obos.arrCables[1][10][1] = 844.950;
+		//mass per meter
+		obos.arrCables[1][0][2] = 21.6;
+		obos.arrCables[1][1][2] = 23.8;
+		obos.arrCables[1][2][2] = 25.7;
+		obos.arrCables[1][3][2] = 28.0;
+		obos.arrCables[1][4][2] = 31.3;
+		obos.arrCables[1][5][2] = 34.3;
+		obos.arrCables[1][6][2] = 39.2;
+		obos.arrCables[1][7][2] = 45.4;
+		obos.arrCables[1][8][2] = 52.0;
+		obos.arrCables[1][9][2] = 60.1;
+		obos.arrCables[1][10][2] = 70.7;
+		//current rating
+		obos.arrCables[1][0][3] = 300;
+		obos.arrCables[1][1][3] = 340;
+		obos.arrCables[1][2][3] = 375;
+		obos.arrCables[1][3][3] = 420;
+		obos.arrCables[1][4][3] = 480;
+		obos.arrCables[1][5][3] = 530;
+		obos.arrCables[1][6][3] = 590;
+		obos.arrCables[1][7][3] = 655;
+		obos.arrCables[1][8][3] = 715;
+		obos.arrCables[1][9][3] = 775;
+		obos.arrCables[1][10][3] = 825;
+		//cost per turbine interface
+		obos.arrCables[1][0][4] = 8830.50;
+		obos.arrCables[1][1][4] = 9045.75;
+		obos.arrCables[1][2][4] = 9304.05;
+		obos.arrCables[1][3][4] = 9606.45;
+		obos.arrCables[1][4][4] = 10080.00;
+		obos.arrCables[1][5][4] = 10596.60;
+		obos.arrCables[1][6][4] = 11458.65;
+		obos.arrCables[1][7][4] = 12319.65;
+		obos.arrCables[1][8][4] = 13440.00;
+		obos.arrCables[1][9][4] = 14904.75;
+		obos.arrCables[1][10][4] = 16627.80;
+		//cost per substation interface
+		obos.arrCables[1][0][5] = 20590.50;
+		obos.arrCables[1][1][5] = 20805.75;
+		obos.arrCables[1][2][5] = 21065.10;
+		obos.arrCables[1][3][5] = 21366.45;
+		obos.arrCables[1][4][5] = 21840.00;
+		obos.arrCables[1][5][5] = 22356.60;
+		obos.arrCables[1][6][5] = 23218.65;
+		obos.arrCables[1][7][5] = 24079.65;
+		obos.arrCables[1][8][5] = 25200.00;
+		obos.arrCables[1][9][5] = 26664.75;
+		obos.arrCables[1][10][5] = 28387.80;
+
+		//export cables
+		//132 kV
+		//identifiers
+		obos.expCables[0][0][0] = 0;
+		obos.expCables[0][1][0] = 1;
+		obos.expCables[0][2][0] = 2;
+		obos.expCables[0][3][0] = 3;
+		obos.expCables[0][4][0] = 4;
+		obos.expCables[0][5][0] = 5;
+		obos.expCables[0][6][0] = 6;
+		obos.expCables[0][7][0] = 7;
+		obos.expCables[0][8][0] = 8;
+		obos.expCables[0][9][0] = 9;
+		//cost per meter
+		obos.expCables[0][0][1] = 433.504;
+		obos.expCables[0][1][1] = 520.489;
+		obos.expCables[0][2][1] = 596.388;
+		obos.expCables[0][3][1] = 689.479;
+		obos.expCables[0][4][1] = 843.823;
+		obos.expCables[0][5][1] = 1006.054;
+		obos.expCables[0][6][1] = 1168.284;
+		obos.expCables[0][7][1] = 1492.745;
+		obos.expCables[0][8][1] = 1818.332;
+		obos.expCables[0][9][1] = 2223.908;
+		//mass per meter
+		obos.expCables[0][0][2] = 48.000;
+		obos.expCables[0][1][2] = 51.100;
+		obos.expCables[0][2][2] = 58.000;
+		obos.expCables[0][3][2] = 65.200;
+		obos.expCables[0][4][2] = 74.000;
+		obos.expCables[0][5][2] = 85.400;
+		obos.expCables[0][6][2] = 113.147;
+		obos.expCables[0][7][2] = 131.387;
+		obos.expCables[0][8][2] = 149.627;
+		obos.expCables[0][9][2] = 172.427;
+		//current rating
+		obos.expCables[0][0][3] = 530;
+		obos.expCables[0][1][3] = 590;
+		obos.expCables[0][2][3] = 655;
+		obos.expCables[0][3][3] = 715;
+		obos.expCables[0][4][3] = 775;
+		obos.expCables[0][5][3] = 825;
+		obos.expCables[0][6][3] = 990;
+		obos.expCables[0][7][3] = 1061;
+		obos.expCables[0][8][3] = 1299;
+		obos.expCables[0][9][3] = 1375;
+		//cost per substation interface
+		obos.expCables[0][0][5] = 57500;
+		obos.expCables[0][1][5] = 60000;
+		obos.expCables[0][2][5] = 62500;
+		obos.expCables[0][3][5] = 65000;
+		obos.expCables[0][4][5] = 67500;
+		obos.expCables[0][5][5] = 70000;
+		obos.expCables[0][6][5] = 72500;
+		obos.expCables[0][7][5] = 75000;
+		obos.expCables[0][8][5] = 77500;
+		obos.expCables[0][9][5] = 80000;
+		//220 kV
+		//identifiers
+		obos.expCables[1][0][0] = 0;
+		obos.expCables[1][1][0] = 1;
+		obos.expCables[1][2][0] = 2;
+		obos.expCables[1][3][0] = 3;
+		obos.expCables[1][4][0] = 4;
+		obos.expCables[1][5][0] = 5;
+		obos.expCables[1][6][0] = 6;
+		obos.expCables[1][7][0] = 7;
+		obos.expCables[1][8][0] = 8;
+		obos.expCables[1][9][0] = 9;
+		//cost per meter
+		obos.expCables[1][0][1] = 495.411;
+		obos.expCables[1][1][1] = 578.187;
+		obos.expCables[1][2][1] = 681.863;
+		obos.expCables[1][3][1] = 788.620;
+		obos.expCables[1][4][1] = 966.623;
+		obos.expCables[1][5][1] = 1159.271;
+		obos.expCables[1][6][1] = 1336.148;
+		obos.expCables[1][7][1] = 1676.499;
+		obos.expCables[1][8][1] = 2042.784;
+		obos.expCables[1][9][1] = 2498.703;
+		//mass per meter
+		obos.expCables[1][0][2] = 71.900;
+		obos.expCables[1][1][2] = 76.500;
+		obos.expCables[1][2][2] = 81.300;
+		obos.expCables[1][3][2] = 86.700;
+		obos.expCables[1][4][2] = 95.300;
+		obos.expCables[1][5][2] = 104.000;
+		obos.expCables[1][6][2] = 113.147;
+		obos.expCables[1][7][2] = 131.387;
+		obos.expCables[1][8][2] = 149.627;
+		obos.expCables[1][9][2] = 172.427;
+		//current rating
+		obos.expCables[1][0][3] = 530;
+		obos.expCables[1][1][3] = 590;
+		obos.expCables[1][2][3] = 655;
+		obos.expCables[1][3][3] = 715;
+		obos.expCables[1][4][3] = 775;
+		obos.expCables[1][5][3] = 825;
+		obos.expCables[1][6][3] = 960;
+		obos.expCables[1][7][3] = 1025;
+		obos.expCables[1][8][3] = 1181;
+		obos.expCables[1][9][3] = 1248;
+		//cost per substation interface
+		obos.expCables[1][0][5] = 57500;
+		obos.expCables[1][1][5] = 60000;
+		obos.expCables[1][2][5] = 62500;
+		obos.expCables[1][3][5] = 65000;
+		obos.expCables[1][4][5] = 67500;
+		obos.expCables[1][5][5] = 70000;
+		obos.expCables[1][6][5] = 72500;
+		obos.expCables[1][7][5] = 75000;
+		obos.expCables[1][8][5] = 77500;
+		obos.expCables[1][9][5] = 80000;
+
+		//Vessel vector***************************************************************************************************************************************
+		//vessel defaults
+		/*
+		turbine and substructure install vessels by identifier value
+		1: leg stabilized crane vessel
+		2: mid height, mid sized jack-up vessel
+		3: mid height, large sized jack-up vessel
+		4: high height, mid sized jack-up vessel
+		5: high height, large sized jack-up vessel
+		6: shear leg crane vessel
+		7: derrick crane vessel
+		8: semi-submersible crane vessel
+		9: heavy lift cargo vessel
+		10: small AHST
+		11: medium AHST
+		12: large AHST
+
+		array cable install vessels by identifier value
+		13: medium array cable lay barge
+		14: large array cable lay barge
+		15: medium array cable lay vessel
+		16: large array cable lay vessel
+
+		export cable install vessels by identifier value
+		17: medium export cable lay barge
+		18: large export cable lay barge
+		19: medium export cable lay vessel
+		20: large export cable lay vessel
+
+		offshore substation install vessels by identifier value
+		8: semi-submersible crane vessel
+		9: heavy lift cargo vessel
+		10: small AHST
+		11: medium AHST
+		12: large AHST
+
+		feeder barges by identifier value
+		21: medium jack-up barge
+		22: large jack-up barge
+		23: medium jack-up barge with crane
+		24: large jack-up barge with crane
+		25: small barge
+		26: medium barge
+		27: large barge
+
+		support vessels by identifier value
+		10: small AHST
+		11: medium AHST
+		12: large AHST
+		21: medium jack-up barge
+		22: large jack-up barge
+		23: medium jack-up barge with crane
+		24: large jack-up barge with crane
+		25: small barge
+		26: medium barge
+		27: large barge
+		28: sea going support tug
+		29: hotel vessel
+		30: mother ship
+		31: personnel transport vessel
+		32: dive support vessel
+		33: guard vessel
+		34: semi-submersible cargo barge
+		35: semi-submersible cargo barge
+		36: backhoe dredger
+		37: grab or clamshell dredger
+		38: fall pipe or trailing suction dredger
+		39: side rock dumper vessel
+		40: ballasting vessel
+		41: ballast hopper vessel
+		42: environmental survey vessel
+		43: geophysical survey vessel
+		44: geotechnical survey vessel
+
+		vessel vector columns by index value:
+		0: identifier value to/from wrapper
+		1: length
+		2: breadth
+		3: max draft
+		4: max operational water depth
+		5: leg length
+		6: jack up/down speed
+		7: deck space
+		8: max payload
+		9: max lift capacity
+		10: max lift height
+		11: max transit speed
+		12: max operational wind speed
+		13: max operational wave height
+		14: day rate
+		15: mob/demob time
+		16: number of vessels required
+		17: accommodation capacity
+		18: crew capacity
+		19: passenger capacity
+		20: bollard pull
+		21: tow speed
+		22: carousel weight
+		23: max spud depth
+		24: max dredge depth
+		25: bucket size
+		26: grabber size
+		27: hopper size
+		*/
+		//install vessel defaults
+		
+		if (obos.substructure == MONOPILE || obos.substructure == JACKET)
+		{
+			//turbine install vessel if monopile or jacket substructure
+			obos.turbInstVessel[0] = 5;
+			obos.turbInstVessel[1] = 150.3;
+			obos.turbInstVessel[2] = 47;
+			obos.turbInstVessel[3] = 6.2;
+			obos.turbInstVessel[4] = 57.8;
+			obos.turbInstVessel[5] = 99;
+			obos.turbInstVessel[6] = 1.2;
+			obos.turbInstVessel[7] = 5030;
+			obos.turbInstVessel[8] = 8000;
+			obos.turbInstVessel[9] = 1375;
+			obos.turbInstVessel[10] = 105;
+			obos.turbInstVessel[11] = 12.0;
+			obos.turbInstVessel[12] = 18.0;
+			obos.turbInstVessel[13] = 2.7;
+			obos.turbInstVessel[14] = 242000;
+			obos.turbInstVessel[15] = 3;
+			obos.turbInstVessel[16] = 1;
+			obos.turbInstVessel[17] = 0;
+			obos.turbInstVessel[18] = 0;
+			obos.turbInstVessel[19] = 0;
+			obos.turbInstVessel[20] = 0;
+			obos.turbInstVessel[21] = 0;
+			obos.turbInstVessel[22] = 0;
+			obos.turbInstVessel[23] = 0;
+			obos.turbInstVessel[24] = 0;
+			obos.turbInstVessel[25] = 0;
+			obos.turbInstVessel[26] = 0;
+			//substructure install vessel if monopile or jacket substructure
+			obos.subInstVessel[0] = 5;
+			obos.subInstVessel[1] = 150.3;
+			obos.subInstVessel[2] = 47;
+			obos.subInstVessel[3] = 6.2;
+			obos.subInstVessel[4] = 57.8;
+			obos.subInstVessel[5] = 99;
+			obos.subInstVessel[6] = 1.2;
+			obos.subInstVessel[7] = 5030;
+			obos.subInstVessel[8] = 8000;
+			obos.subInstVessel[9] = 1375;
+			obos.subInstVessel[10] = 105;
+			obos.subInstVessel[11] = 12.0;
+			obos.subInstVessel[12] = 18.0;
+			obos.subInstVessel[13] = 2.7;
+			obos.subInstVessel[14] = 242000;
+			obos.subInstVessel[15] = 3;
+			obos.subInstVessel[16] = 1;
+			obos.subInstVessel[17] = 0;
+			obos.subInstVessel[18] = 0;
+			obos.subInstVessel[19] = 0;
+			obos.subInstVessel[20] = 0;
+			obos.subInstVessel[21] = 0;
+			obos.subInstVessel[22] = 0;
+			obos.subInstVessel[23] = 0;
+			obos.subInstVessel[24] = 0;
+			obos.subInstVessel[25] = 0;
+			obos.subInstVessel[26] = 0;
+			//offshore substation installation vessel if monopile or jacket substructure
+			obos.substaInstVessel[0] = 8;
+			obos.substaInstVessel[1] = 166;
+			obos.substaInstVessel[2] = 72.6;
+			obos.substaInstVessel[3] = 24.3;
+			obos.substaInstVessel[4] = 0;
+			obos.substaInstVessel[5] = 0;
+			obos.substaInstVessel[6] = 0;
+			obos.substaInstVessel[7] = 0;
+			obos.substaInstVessel[8] = 0;
+			obos.substaInstVessel[9] = 7826;
+			obos.substaInstVessel[10] = 0;
+			obos.substaInstVessel[11] = 7.3;
+			obos.substaInstVessel[12] = 20;
+			obos.substaInstVessel[13] = 1.5;
+			obos.substaInstVessel[14] = 525000;
+			obos.substaInstVessel[15] = 3;
+			obos.substaInstVessel[16] = 1;
+			obos.substaInstVessel[17] = 0;
+			obos.substaInstVessel[18] = 0;
+			obos.substaInstVessel[19] = 0;
+			obos.substaInstVessel[20] = 0;
+			obos.substaInstVessel[21] = 0;
+			obos.substaInstVessel[22] = 0;
+			obos.substaInstVessel[23] = 0;
+			obos.substaInstVessel[24] = 0;
+			obos.substaInstVessel[25] = 0;
+			obos.substaInstVessel[26] = 0;
+			//turbine install support vessels if monopile or jacket substructure
+			obos.turbSupportVessels[0][0] = 31;
+			obos.turbSupportVessels[1][0] = 33;
+			obos.turbSupportVessels[0][1] = 19;
+			obos.turbSupportVessels[1][1] = 20.6;
+			obos.turbSupportVessels[0][2] = 0;
+			obos.turbSupportVessels[1][2] = 5.4;
+			obos.turbSupportVessels[0][3] = 1.5;
+			obos.turbSupportVessels[1][3] = 3.1;
+			obos.turbSupportVessels[0][11] = 23;
+			obos.turbSupportVessels[1][11] = 15;
+			obos.turbSupportVessels[0][12] = 15;
+			obos.turbSupportVessels[0][13] = 1.75;
+			obos.turbSupportVessels[1][13] = 1.75;
+			obos.turbSupportVessels[0][14] = 3000;
+			obos.turbSupportVessels[1][14] = 3000;
+			obos.turbSupportVessels[0][15] = 1;
+			obos.turbSupportVessels[1][15] = 1;
+			obos.turbSupportVessels[0][16] = 1;
+			obos.turbSupportVessels[1][16] = 1;
+			obos.turbSupportVessels[0][18] = 3;
+			obos.turbSupportVessels[0][19] = 13;
+			//substructure install support vessels if monopile or jacket substructure
+			obos.subSupportVessels[0][0] = 31;
+			obos.subSupportVessels[1][0] = 33;
+			obos.subSupportVessels[2][0] = 39;
+			obos.subSupportVessels[0][1] = 19;
+			obos.subSupportVessels[1][1] = 20.6;
+			obos.subSupportVessels[0][2] = 0;
+			obos.subSupportVessels[1][2] = 5.4;
+			obos.subSupportVessels[0][3] = 1.5;
+			obos.subSupportVessels[1][3] = 3.1;
+			obos.subSupportVessels[0][11] = 23;
+			obos.subSupportVessels[1][11] = 15;
+			obos.subSupportVessels[0][12] = 15;
+			obos.subSupportVessels[0][13] = 1.75;
+			obos.subSupportVessels[1][13] = 1.75;
+			obos.subSupportVessels[0][14] = 3000;
+			obos.subSupportVessels[1][14] = 3000;
+			obos.subSupportVessels[0][15] = 1;
+			obos.subSupportVessels[1][15] = 1;
+			obos.subSupportVessels[0][16] = 1;
+			obos.subSupportVessels[1][16] = 1;
+			obos.subSupportVessels[0][18] = 3;
+			obos.subSupportVessels[0][19] = 13;
+			obos.subSupportVessels[2][1] = 71;
+			obos.subSupportVessels[2][2] = 17.7;
+			obos.subSupportVessels[2][3] = 3.3;
+			obos.subSupportVessels[2][8] = 1490;
+			obos.subSupportVessels[2][11] = 7.8;
+			obos.subSupportVessels[2][13] = 2.5;
+			obos.subSupportVessels[2][14] = 84000;
+			obos.subSupportVessels[2][15] = 3;
+			obos.subSupportVessels[2][16] = 1;
+
+		}
+		else if (obos.substructure == SPAR)
+		{
+			//turbine install vessel if spar substructure
+			obos.turbInstVessel[0] = 12;
+			obos.turbInstVessel[1] = 87;
+			obos.turbInstVessel[2] = 20.9;
+			obos.turbInstVessel[3] = 7.4;
+			obos.turbInstVessel[4] = 0;
+			obos.turbInstVessel[5] = 0;
+			obos.turbInstVessel[6] = 0;
+			obos.turbInstVessel[7] = 637;
+			obos.turbInstVessel[8] = 1440;
+			obos.turbInstVessel[9] = 0;
+			obos.turbInstVessel[10] = 0;
+			obos.turbInstVessel[11] = 15.2;
+			obos.turbInstVessel[12] = 0;
+			obos.turbInstVessel[13] = 2.0;
+			obos.turbInstVessel[14] = 90000;
+			obos.turbInstVessel[15] = 3;
+			obos.turbInstVessel[16] = 1;
+			obos.turbInstVessel[17] = 0;
+			obos.turbInstVessel[18] = 0;
+			obos.turbInstVessel[19] = 0;
+			obos.turbInstVessel[20] = 237;
+			obos.turbInstVessel[21] = 5;
+			obos.turbInstVessel[22] = 0;
+			obos.turbInstVessel[23] = 0;
+			obos.turbInstVessel[24] = 0;
+			obos.turbInstVessel[25] = 0;
+			obos.turbInstVessel[26] = 0;
+			//substructure install vessel if spar or semisubmersible substructure
+			obos.subInstVessel[0] = 11;
+			obos.subInstVessel[1] = 68.2;
+			obos.subInstVessel[2] = 15.9;
+			obos.subInstVessel[3] = 6.3;
+			obos.subInstVessel[4] = 0;
+			obos.subInstVessel[5] = 0;
+			obos.subInstVessel[6] = 0;
+			obos.subInstVessel[7] = 441;
+			obos.subInstVessel[8] = 738;
+			obos.subInstVessel[9] = 0;
+			obos.subInstVessel[10] = 0;
+			obos.subInstVessel[11] = 12.7;
+			obos.subInstVessel[12] = 0;
+			obos.subInstVessel[13] = 2.0;
+			obos.subInstVessel[14] = 60000;
+			obos.subInstVessel[15] = 3;
+			obos.subInstVessel[16] = 1;
+			obos.subInstVessel[17] = 0;
+			obos.subInstVessel[18] = 0;
+			obos.subInstVessel[19] = 0;
+			obos.subInstVessel[20] = 152;
+			obos.subInstVessel[21] = 5;
+			obos.subInstVessel[22] = 0;
+			obos.subInstVessel[23] = 0;
+			obos.subInstVessel[24] = 0;
+			obos.subInstVessel[25] = 0;
+			obos.subInstVessel[26] = 0;
+			//offshore substation installation vessel if spar or semisubmersible substructure
+			obos.substaInstVessel[0] = 12;
+			obos.substaInstVessel[1] = 87;
+			obos.substaInstVessel[2] = 20.9;
+			obos.substaInstVessel[3] = 7.4;
+			obos.substaInstVessel[4] = 0;
+			obos.substaInstVessel[5] = 0;
+			obos.substaInstVessel[6] = 0;
+			obos.substaInstVessel[7] = 637;
+			obos.substaInstVessel[8] = 1440;
+			obos.substaInstVessel[9] = 0;
+			obos.substaInstVessel[10] = 0;
+			obos.substaInstVessel[11] = 15.2;
+			obos.substaInstVessel[12] = 0;
+			obos.substaInstVessel[13] = 2.0;
+			obos.substaInstVessel[14] = 90000;
+			obos.substaInstVessel[15] = 3;
+			obos.substaInstVessel[16] = 1;
+			obos.substaInstVessel[17] = 0;
+			obos.substaInstVessel[18] = 0;
+			obos.substaInstVessel[19] = 0;
+			obos.substaInstVessel[20] = 237;
+			obos.substaInstVessel[21] = 5;
+			obos.substaInstVessel[22] = 0;
+			obos.substaInstVessel[23] = 0;
+			obos.substaInstVessel[24] = 0;
+			obos.substaInstVessel[25] = 0;
+			obos.substaInstVessel[26] = 0;
+			//turbine install support vessels if spar substructure
+			obos.turbSupportVessels[0][0] = 11;
+			obos.turbSupportVessels[1][0] = 21;
+			obos.turbSupportVessels[2][0] = 22;
+			obos.turbSupportVessels[3][0] = 28;
+			obos.turbSupportVessels[4][0] = 31;
+			obos.turbSupportVessels[5][0] = 33;
+			obos.turbSupportVessels[6][0] = 40;
+			obos.turbSupportVessels[7][0] = 41;
+			obos.turbSupportVessels[0][1] = 68.2;
+			obos.turbSupportVessels[0][2] = 15.9;
+			obos.turbSupportVessels[0][3] = 6.3;
+			obos.turbSupportVessels[0][7] = 441;
+			obos.turbSupportVessels[0][8] = 738;
+			obos.turbSupportVessels[0][11] = 12.7;
+			obos.turbSupportVessels[0][13] = 2.5;
+			obos.turbSupportVessels[0][14] = 35000;
+			obos.turbSupportVessels[0][15] = 3;
+			obos.turbSupportVessels[0][16] = 1;
+			obos.turbSupportVessels[1][1] = 34.9;
+			obos.turbSupportVessels[1][2] = 20.5;
+			obos.turbSupportVessels[1][3] = 2.3;
+			obos.turbSupportVessels[1][4] = 25;
+			obos.turbSupportVessels[1][5] = 45;
+			obos.turbSupportVessels[1][6] = 0.6667;
+			obos.turbSupportVessels[1][7] = 600;
+			obos.turbSupportVessels[1][8] = 395;
+			obos.turbSupportVessels[1][11] = 4;
+			obos.turbSupportVessels[1][12] = 10;
+			obos.turbSupportVessels[1][13] = 1.5;
+			obos.turbSupportVessels[1][14] = 50000;
+			obos.turbSupportVessels[1][15] = 3;
+			obos.turbSupportVessels[1][16] = 1;
+			obos.turbSupportVessels[2][1] = 75.6;
+			obos.turbSupportVessels[2][2] = 32.5;
+			obos.turbSupportVessels[2][3] = 4.2;
+			obos.turbSupportVessels[2][4] = 32.5;
+			obos.turbSupportVessels[2][5] = 50.4;
+			obos.turbSupportVessels[2][6] = 0.9;
+			obos.turbSupportVessels[2][7] = 2000;
+			obos.turbSupportVessels[2][8] = 1930;
+			obos.turbSupportVessels[2][9] = 510;
+			obos.turbSupportVessels[2][10] = 89.5;
+			obos.turbSupportVessels[2][11] = 4;
+			obos.turbSupportVessels[2][12] = 10;
+			obos.turbSupportVessels[2][13] = 2;
+			obos.turbSupportVessels[2][14] = 70000;
+			obos.turbSupportVessels[2][15] = 3;
+			obos.turbSupportVessels[2][16] = 2;
+			obos.turbSupportVessels[3][1] = 28.2;
+			obos.turbSupportVessels[3][2] = 8.8;
+			obos.turbSupportVessels[3][3] = 3.1;
+			obos.turbSupportVessels[3][7] = 39.3;
+			obos.turbSupportVessels[3][8] = 8;
+			obos.turbSupportVessels[3][11] = 9.6;
+			obos.turbSupportVessels[3][13] = 2.5;
+			obos.turbSupportVessels[3][14] = 27500;
+			obos.turbSupportVessels[3][15] = 1;
+			obos.turbSupportVessels[3][16] = 2;
+			obos.turbSupportVessels[3][20] = 37;
+			obos.turbSupportVessels[4][1] = 19;
+			obos.turbSupportVessels[4][2] = 0;
+			obos.turbSupportVessels[4][3] = 1.5;
+			obos.turbSupportVessels[4][11] = 23;
+			obos.turbSupportVessels[4][12] = 15;
+			obos.turbSupportVessels[4][13] = 1.75;
+			obos.turbSupportVessels[4][14] = 3000;
+			obos.turbSupportVessels[4][15] = 1;
+			obos.turbSupportVessels[4][16] = 1;
+			obos.turbSupportVessels[4][18] = 3;
+			obos.turbSupportVessels[4][19] = 13;
+			obos.turbSupportVessels[5][1] = 20.6;
+			obos.turbSupportVessels[5][2] = 5.4;
+			obos.turbSupportVessels[5][3] = 3.1;
+			obos.turbSupportVessels[5][11] = 15;
+			obos.turbSupportVessels[5][13] = 1.75;
+			obos.turbSupportVessels[5][14] = 3000;
+			obos.turbSupportVessels[5][15] = 1;
+			obos.turbSupportVessels[5][16] = 1;
+			obos.turbSupportVessels[6][14] = 11500;
+			obos.turbSupportVessels[7][14] = 20500;
+			obos.turbSupportVessels[6][15] = 3;
+			obos.turbSupportVessels[7][15] = 3;
+			obos.turbSupportVessels[6][16] = 1;
+			obos.turbSupportVessels[7][16] = 1;
+			//substructure install support vessels if spar substructure
+			obos.subSupportVessels[0][0] = 21;
+			obos.subSupportVessels[1][0] = 22;
+			obos.subSupportVessels[2][0] = 28;
+			obos.subSupportVessels[3][0] = 31;
+			obos.subSupportVessels[4][0] = 33;
+			obos.subSupportVessels[5][0] = 40;
+			obos.subSupportVessels[6][0] = 41;
+			obos.subSupportVessels[0][1] = 34.9;
+			obos.subSupportVessels[0][2] = 20.5;
+			obos.subSupportVessels[0][3] = 2.3;
+			obos.subSupportVessels[0][4] = 25;
+			obos.subSupportVessels[0][5] = 45;
+			obos.subSupportVessels[0][6] = 0.6667;
+			obos.subSupportVessels[0][7] = 600;
+			obos.subSupportVessels[0][8] = 395;
+			obos.subSupportVessels[0][11] = 4;
+			obos.subSupportVessels[0][12] = 10;
+			obos.subSupportVessels[0][13] = 1.5;
+			obos.subSupportVessels[0][14] = 50000;
+			obos.subSupportVessels[0][15] = 3;
+			obos.subSupportVessels[0][16] = 1;
+			obos.subSupportVessels[1][1] = 75.6;
+			obos.subSupportVessels[1][2] = 32.5;
+			obos.subSupportVessels[1][3] = 4.2;
+			obos.subSupportVessels[1][4] = 32.5;
+			obos.subSupportVessels[1][5] = 50.4;
+			obos.subSupportVessels[1][6] = 0.9;
+			obos.subSupportVessels[1][7] = 2000;
+			obos.subSupportVessels[1][8] = 1930;
+			obos.subSupportVessels[1][9] = 510;
+			obos.subSupportVessels[1][10] = 89.5;
+			obos.subSupportVessels[1][11] = 4;
+			obos.subSupportVessels[1][12] = 10;
+			obos.subSupportVessels[1][13] = 2;
+			obos.subSupportVessels[1][14] = 70000;
+			obos.subSupportVessels[1][15] = 3;
+			obos.subSupportVessels[1][16] = 2;
+			obos.subSupportVessels[2][1] = 28.2;
+			obos.subSupportVessels[2][2] = 8.8;
+			obos.subSupportVessels[2][3] = 3.1;
+			obos.subSupportVessels[2][7] = 39.3;
+			obos.subSupportVessels[2][8] = 8;
+			obos.subSupportVessels[2][11] = 9.6;
+			obos.subSupportVessels[2][13] = 2.5;
+			obos.subSupportVessels[2][14] = 27500;
+			obos.subSupportVessels[2][15] = 1;
+			obos.subSupportVessels[2][16] = 2;
+			obos.subSupportVessels[2][20] = 37;
+			obos.subSupportVessels[3][1] = 19;
+			obos.subSupportVessels[3][2] = 0;
+			obos.subSupportVessels[3][3] = 1.5;
+			obos.subSupportVessels[3][11] = 23;
+			obos.subSupportVessels[3][12] = 15;
+			obos.subSupportVessels[3][13] = 1.75;
+			obos.subSupportVessels[3][14] = 3000;
+			obos.subSupportVessels[3][15] = 1;
+			obos.subSupportVessels[3][16] = 1;
+			obos.subSupportVessels[3][18] = 3;
+			obos.subSupportVessels[3][19] = 13;
+			obos.subSupportVessels[4][1] = 20.6;
+			obos.subSupportVessels[4][2] = 5.4;
+			obos.subSupportVessels[4][3] = 3.1;
+			obos.subSupportVessels[4][11] = 15;
+			obos.subSupportVessels[4][13] = 1.75;
+			obos.subSupportVessels[4][14] = 3000;
+			obos.subSupportVessels[4][15] = 1;
+			obos.subSupportVessels[4][16] = 1;
+			obos.subSupportVessels[5][14] = 11500;
+			obos.subSupportVessels[6][14] = 20500;
+			obos.subSupportVessels[5][15] = 3;
+			obos.subSupportVessels[6][15] = 3;
+			obos.subSupportVessels[5][16] = 1;
+			obos.subSupportVessels[6][16] = 1;
+		}
+		//turbine install vessel if semisubmersible substructure
+		else if (obos.substructure == SEMISUBMERSIBLE)
+		{
+			obos.turbInstVessel[0] = 11;
+			obos.turbInstVessel[1] = 68.2;
+			obos.turbInstVessel[2] = 15.9;
+			obos.turbInstVessel[3] = 6.3;
+			obos.turbInstVessel[4] = 0;
+			obos.turbInstVessel[5] = 0;
+			obos.turbInstVessel[6] = 0;
+			obos.turbInstVessel[7] = 441;
+			obos.turbInstVessel[8] = 738;
+			obos.turbInstVessel[9] = 0;
+			obos.turbInstVessel[10] = 0;
+			obos.turbInstVessel[11] = 12.7;
+			obos.turbInstVessel[12] = 0;
+			obos.turbInstVessel[13] = 2.0;
+			obos.turbInstVessel[14] = 60000;
+			obos.turbInstVessel[15] = 3;
+			obos.turbInstVessel[16] = 1;
+			obos.turbInstVessel[17] = 0;
+			obos.turbInstVessel[18] = 0;
+			obos.turbInstVessel[19] = 0;
+			obos.turbInstVessel[20] = 152;
+			obos.turbInstVessel[21] = 5;
+			obos.turbInstVessel[22] = 0;
+			obos.turbInstVessel[23] = 0;
+			obos.turbInstVessel[24] = 0;
+			obos.turbInstVessel[25] = 0;
+			obos.turbInstVessel[26] = 0;
+			//substructure install vessel if spar or semisubmersible substructure
+			obos.subInstVessel[0] = 11;
+			obos.subInstVessel[1] = 68.2;
+			obos.subInstVessel[2] = 15.9;
+			obos.subInstVessel[3] = 6.3;
+			obos.subInstVessel[4] = 0;
+			obos.subInstVessel[5] = 0;
+			obos.subInstVessel[6] = 0;
+			obos.subInstVessel[7] = 441;
+			obos.subInstVessel[8] = 738;
+			obos.subInstVessel[9] = 0;
+			obos.subInstVessel[10] = 0;
+			obos.subInstVessel[11] = 12.7;
+			obos.subInstVessel[12] = 0;
+			obos.subInstVessel[13] = 2.0;
+			obos.subInstVessel[14] = 60000;
+			obos.subInstVessel[15] = 3;
+			obos.subInstVessel[16] = 1;
+			obos.subInstVessel[17] = 0;
+			obos.subInstVessel[18] = 0;
+			obos.subInstVessel[19] = 0;
+			obos.subInstVessel[20] = 152;
+			obos.subInstVessel[21] = 5;
+			obos.subInstVessel[22] = 0;
+			obos.subInstVessel[23] = 0;
+			obos.subInstVessel[24] = 0;
+			obos.subInstVessel[25] = 0;
+			obos.subInstVessel[26] = 0;
+			//offshore substation installation vessel if spar or semisubmersible substructure
+			obos.substaInstVessel[0] = 12;
+			obos.substaInstVessel[1] = 87;
+			obos.substaInstVessel[2] = 20.9;
+			obos.substaInstVessel[3] = 7.4;
+			obos.substaInstVessel[4] = 0;
+			obos.substaInstVessel[5] = 0;
+			obos.substaInstVessel[6] = 0;
+			obos.substaInstVessel[7] = 637;
+			obos.substaInstVessel[8] = 1440;
+			obos.substaInstVessel[9] = 0;
+			obos.substaInstVessel[10] = 0;
+			obos.substaInstVessel[11] = 15.2;
+			obos.substaInstVessel[12] = 0;
+			obos.substaInstVessel[13] = 2.0;
+			obos.substaInstVessel[14] = 90000;
+			obos.substaInstVessel[15] = 3;
+			obos.substaInstVessel[16] = 1;
+			obos.substaInstVessel[17] = 0;
+			obos.substaInstVessel[18] = 0;
+			obos.substaInstVessel[19] = 0;
+			obos.substaInstVessel[20] = 237;
+			obos.substaInstVessel[21] = 5;
+			obos.substaInstVessel[22] = 0;
+			obos.substaInstVessel[23] = 0;
+			obos.substaInstVessel[24] = 0;
+			obos.substaInstVessel[25] = 0;
+			obos.substaInstVessel[26] = 0;
+			//turbine install support vessels if semisubmersible substructure
+			obos.turbSupportVessels[0][0] = 28;
+			obos.turbSupportVessels[1][0] = 33;
+			obos.turbSupportVessels[0][1] = 28.2;
+			obos.turbSupportVessels[0][2] = 8.8;
+			obos.turbSupportVessels[0][3] = 3.1;
+			obos.turbSupportVessels[0][7] = 39.3;
+			obos.turbSupportVessels[0][8] = 8;
+			obos.turbSupportVessels[0][11] = 9.6;
+			obos.turbSupportVessels[0][13] = 2.5;
+			obos.turbSupportVessels[0][14] = 27500;
+			obos.turbSupportVessels[0][15] = 1;
+			obos.turbSupportVessels[0][16] = 1;
+			obos.turbSupportVessels[0][20] = 37;
+			obos.turbSupportVessels[1][1] = 20.6;
+			obos.turbSupportVessels[1][2] = 5.4;
+			obos.turbSupportVessels[1][3] = 3.1;
+			obos.turbSupportVessels[1][11] = 15;
+			obos.turbSupportVessels[1][13] = 1.75;
+			obos.turbSupportVessels[1][14] = 3000;
+			obos.turbSupportVessels[1][15] = 1;
+			obos.turbSupportVessels[1][16] = 1;
+			//substructure install support vessels is semisubmersible substructure
+			obos.subSupportVessels[0][0] = 28;
+			obos.subSupportVessels[1][0] = 33;
+			obos.subSupportVessels[0][1] = 28.2;
+			obos.subSupportVessels[0][2] = 8.8;
+			obos.subSupportVessels[0][3] = 3.1;
+			obos.subSupportVessels[0][7] = 39.3;
+			obos.subSupportVessels[0][8] = 8;
+			obos.subSupportVessels[0][11] = 9.6;
+			obos.subSupportVessels[0][13] = 2.5;
+			obos.subSupportVessels[0][14] = 27500;
+			obos.subSupportVessels[0][15] = 1;
+			obos.subSupportVessels[0][16] = 1;
+			obos.subSupportVessels[0][20] = 37;
+			obos.subSupportVessels[1][1] = 20.6;
+			obos.subSupportVessels[1][2] = 5.4;
+			obos.subSupportVessels[1][3] = 3.1;
+			obos.subSupportVessels[1][11] = 15;
+			obos.subSupportVessels[1][13] = 1.75;
+			obos.subSupportVessels[1][14] = 3000;
+			obos.subSupportVessels[1][15] = 1;
+			obos.subSupportVessels[1][16] = 1;
+		}
+
+
+		//turbine install feeder barge
+		obos.turbFeederBarge[0] = 22;
+		obos.turbFeederBarge[1] = 75.6;
+		obos.turbFeederBarge[2] = 32.5;
+		obos.turbFeederBarge[3] = 4.2;
+		obos.turbFeederBarge[4] = 32.5;
+		obos.turbFeederBarge[5] = 50.4;
+		obos.turbFeederBarge[6] = 0.9;
+		obos.turbFeederBarge[7] = 2000;
+		obos.turbFeederBarge[8] = 1930;
+		obos.turbFeederBarge[9] = 510;
+		obos.turbFeederBarge[10] = 89.5;
+		obos.turbFeederBarge[11] = 4;
+		obos.turbFeederBarge[12] = 10;
+		obos.turbFeederBarge[13] = 2;
+		obos.turbFeederBarge[14] = 70000;
+		obos.turbFeederBarge[15] = 3;
+		obos.turbFeederBarge[16] = 2;
+		//substructure feeder barge
+		obos.subFeederBarge[0] = 22;
+		obos.subFeederBarge[1] = 75.6;
+		obos.subFeederBarge[2] = 32.5;
+		obos.subFeederBarge[3] = 4.2;
+		obos.subFeederBarge[4] = 32.5;
+		obos.subFeederBarge[5] = 50.4;
+		obos.subFeederBarge[6] = 0.9;
+		obos.subFeederBarge[7] = 2000;
+		obos.subFeederBarge[8] = 1930;
+		obos.subFeederBarge[9] = 510;
+		obos.subFeederBarge[10] = 89.5;
+		obos.subFeederBarge[11] = 4;
+		obos.subFeederBarge[12] = 10;
+		obos.subFeederBarge[13] = 2;
+		obos.subFeederBarge[14] = 70000;
+		obos.subFeederBarge[15] = 3;
+		obos.subFeederBarge[16] = 2;
+		//array cable install vessel
+		obos.arrCabInstVessel[0] = 16;
+		obos.arrCabInstVessel[1] = 111.1;
+		obos.arrCabInstVessel[2] = 23.6;
+		obos.arrCabInstVessel[3] = 6.3;
+		obos.arrCabInstVessel[4] = 0;
+		obos.arrCabInstVessel[5] = 0;
+		obos.arrCabInstVessel[6] = 0;
+		obos.arrCabInstVessel[7] = 1520;
+		obos.arrCabInstVessel[8] = 0;
+		obos.arrCabInstVessel[9] = 0;
+		obos.arrCabInstVessel[10] = 0;
+		obos.arrCabInstVessel[11] = 10.2;
+		obos.arrCabInstVessel[12] = 25;
+		obos.arrCabInstVessel[13] = 1;
+		obos.arrCabInstVessel[14] = 144000;
+		obos.arrCabInstVessel[15] = 3;
+		obos.arrCabInstVessel[16] = 1;
+		obos.arrCabInstVessel[17] = 0;
+		obos.arrCabInstVessel[18] = 0;
+		obos.arrCabInstVessel[19] = 0;
+		obos.arrCabInstVessel[20] = 72;
+		obos.arrCabInstVessel[21] = 0;
+		obos.arrCabInstVessel[22] = 5900;
+		obos.arrCabInstVessel[23] = 0;
+		obos.arrCabInstVessel[24] = 0;
+		obos.arrCabInstVessel[25] = 0;
+		obos.arrCabInstVessel[26] = 0;
+		//export cable install vessel
+		obos.expCabInstVessel[0] = 20;
+		obos.expCabInstVessel[1] = 102.7;
+		obos.expCabInstVessel[2] = 25.2;
+		obos.expCabInstVessel[3] = 5.6;
+		obos.expCabInstVessel[4] = 0;
+		obos.expCabInstVessel[5] = 0;
+		obos.expCabInstVessel[6] = 0;
+		obos.expCabInstVessel[7] = 1640;
+		obos.expCabInstVessel[8] = 0;
+		obos.expCabInstVessel[9] = 0;
+		obos.expCabInstVessel[10] = 0;
+		obos.expCabInstVessel[11] = 10.1;
+		obos.expCabInstVessel[12] = 25;
+		obos.expCabInstVessel[13] = 1;
+		obos.expCabInstVessel[14] = 173000;
+		obos.expCabInstVessel[15] = 3;
+		obos.expCabInstVessel[16] = 1;
+		obos.expCabInstVessel[17] = 0;
+		obos.expCabInstVessel[18] = 0;
+		obos.expCabInstVessel[19] = 0;
+		obos.expCabInstVessel[20] = 0;
+		obos.expCabInstVessel[21] = 0;
+		obos.expCabInstVessel[22] = 5980;
+		obos.expCabInstVessel[23] = 0;
+		obos.expCabInstVessel[24] = 0;
+		obos.expCabInstVessel[25] = 0;
+		obos.expCabInstVessel[26] = 0;
+
+		//support vessel defaults
+		//electrical infrastructure install support vessels
+		obos.elecSupportVessels[0][0] = 28;
+		obos.elecSupportVessels[1][0] = 33;
+		obos.elecSupportVessels[2][0] = 11;
+		obos.elecSupportVessels[3][0] = 31;
+		obos.elecSupportVessels[0][1] = 28.2;
+		obos.elecSupportVessels[0][2] = 8.8;
+		obos.elecSupportVessels[0][3] = 3.1;
+		obos.elecSupportVessels[0][7] = 39.3;
+		obos.elecSupportVessels[0][8] = 8;
+		obos.elecSupportVessels[0][11] = 9.6;
+		obos.elecSupportVessels[0][13] = 2.5;
+		obos.elecSupportVessels[0][14] = 27500;
+		obos.elecSupportVessels[0][15] = 1;
+		obos.elecSupportVessels[0][16] = 1;
+		obos.elecSupportVessels[0][20] = 37;
+		obos.elecSupportVessels[1][1] = 20.6;
+		obos.elecSupportVessels[1][2] = 5.4;
+		obos.elecSupportVessels[1][3] = 3.1;
+		obos.elecSupportVessels[1][11] = 15;
+		obos.elecSupportVessels[1][13] = 1.75;
+		obos.elecSupportVessels[1][14] = 3000;
+		obos.elecSupportVessels[1][15] = 1;
+		obos.elecSupportVessels[1][16] = 1;
+		obos.elecSupportVessels[2][1] = 68.2;
+		obos.elecSupportVessels[2][2] = 15.9;
+		obos.elecSupportVessels[2][3] = 6.3;
+		obos.elecSupportVessels[2][7] = 441;
+		obos.elecSupportVessels[2][8] = 738;
+		obos.elecSupportVessels[2][11] = 12.7;
+		obos.elecSupportVessels[2][13] = 2.5;
+		obos.elecSupportVessels[2][14] = 35000;
+		obos.elecSupportVessels[2][15] = 3;
+		obos.elecSupportVessels[2][16] = 1;
+		obos.elecSupportVessels[3][1] = 19;
+		obos.elecSupportVessels[3][2] = 0;
+		obos.elecSupportVessels[3][3] = 1.5;
+		obos.elecSupportVessels[3][11] = 23;
+		obos.elecSupportVessels[3][12] = 15;
+		obos.elecSupportVessels[3][13] = 1.75;
+		obos.elecSupportVessels[3][14] = 3000;
+		obos.elecSupportVessels[3][15] = 1;
+		obos.elecSupportVessels[3][16] = 1;
+		obos.elecSupportVessels[3][18] = 3;
+		obos.elecSupportVessels[3][19] = 13;
+
+
 		//RUN COMPUTE MODULE***********************************************************************************************************************************
 		obos.run();
 		
 		//Assign outputs***************************************************************************************************************************************
 		assign("subTotCost", var_data(obos.subTotCost));
-
+		assign("totElecCost", var_data(obos.totElecCost));
+		assign("totAnICost", var_data(obos.totAnICost));
+		assign("totPnSCost", var_data(obos.totPnSCost));
+		assign("totEnMCost", var_data(obos.totEnMCost));
+		assign("totDevCost", var_data(obos.totDevCost));
 	}
 };
 
