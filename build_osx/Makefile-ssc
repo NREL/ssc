@@ -35,6 +35,7 @@ OBJECTS = \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
 	cmod_windbos.o \
+	cmod_wind_obos.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
 	cmod_pvsamv1.o \
