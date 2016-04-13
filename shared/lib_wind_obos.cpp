@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <map>
 #include <string>
-#include <array>
 #include <fstream>
 
 #ifndef M_PI
@@ -405,10 +404,10 @@ double wobos::InterfacesCable1(double& fullStrings, double& nTurbPS, double& nTu
 double wobos::InterfacesCable2(double& fullStrings, double& nTurbPS, double&nTurbCab1, double& nTurbCab2)
 {
 	//calculate maximum values and store in 'max1' and 'max2'
-	double a[] = { (nTurbCab2 - nTurbCab1), 0 };
-	double b[] = { (nTurbPS - nTurbCab1 - 1), 0 };
-	double max1 = *max_element(begin(a), end(a));
-	double max2 = *max_element(begin(b), end(b));
+	vector <double> a = { (nTurbCab2 - nTurbCab1), 0 };
+	vector <double> b = { (nTurbPS - nTurbCab1 - 1), 0 };
+	double max1 = *max_element(a.begin(), a.end());
+	double max2 = *max_element(b.begin(), b.end());
 
 	if ((nTurbPS == 0))//check if any partial strings exist
 	{
@@ -474,10 +473,10 @@ double wobos::Cable1Length(double& nTurbInter1)
 double wobos::Cable2Length(double& nTurbCab1, double& nTurbCab2, double& fullStrings, double& nTurbPS)
 {
 	//calculate maximum values and store in 'max1' and 'max2'
-	double a[] = { (nTurbCab2 - nTurbCab1 - 1), 0 };
-	double b[] = { (nTurbPS - nTurbCab1 - 1), 0 };
-	double max1 = *max_element(begin(a), end(a));
-	double max2 = *max_element(begin(b), end(b));
+	vector<double> a = { (nTurbCab2 - nTurbCab1 - 1), 0 };
+	vector<double> b = { (nTurbPS - nTurbCab1 - 1), 0 };
+	double max1 = *max_element(a.begin(), a.end());
+	double max2 = *max_element(b.begin(), b.end());
 	double stringFac;
 	//'stringFac' changes depending on if a partial string exists
 	if (nSubstation > 0)//protect against division by zero if 'nSubstation' is zero
@@ -1066,10 +1065,10 @@ double wobos::ArrayCabInstTime(double& cab1Leng, double& cab2Leng, double& inter
 {
 	double fac1;
 	double fac2;
-	double array1[] = { nTurbCab2 - nTurbCab1 - 1, 0 };
-	double array2[] = { nTurbPS - nTurbCab1 - 1, 0 };
-	double max1 = *max_element(begin(array1), end(array1));
-	double max2 = *max_element(begin(array2), end(array2));
+	vector<double> array1 = { nTurbCab2 - nTurbCab1 - 1, 0 };
+	vector<double> array2 = { nTurbPS - nTurbCab1 - 1, 0 };
+	double max1 = *max_element(array1.begin(), array1.end());
+	double max2 = *max_element(array2.begin(), array2.end());
 	//check if cable is buried or not
 	if (buryDepth > 0)
 	{
@@ -1341,7 +1340,7 @@ void wobos::VesselMobDemobCost()
 
 	//create an iterator to iterate through vessel identifier values
 	//and place duplicates at the end of the vector
-	vector<vector<double>>::iterator it;
+	vector<vector<double> >::iterator it;
 	it = unique(mobDemobCostByVessel.begin(), mobDemobCostByVessel.end());
 
 	//resize the cost vector to get rid of the duplicate support vessels stored at the end of the vector
@@ -1677,21 +1676,21 @@ void wobos::ArrayCabCostOptimizer()
 	int nArrVolts = arrayVolt.size();
 	int nArrCables = arrCables[0].size();
 
-	vector<vector<double>> strings(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> nTurbPS(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> nTurbCab(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> subsInter(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> nTurbInter1(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> nTurbInter2(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> cab1Leng(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> cab2Leng(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> cab1SecM(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> cab2SecM(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> nCab1Sec(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> nCab2Sec(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> instTime(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> cabCost1(nArrVolts, vector<double>(nArrCables));
-	vector<vector<double>> cabCost2(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > strings(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > nTurbPS(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > nTurbCab(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > subsInter(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > nTurbInter1(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > nTurbInter2(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > cab1Leng(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > cab2Leng(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > cab1SecM(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > cab2SecM(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > nCab1Sec(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > nCab2Sec(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > instTime(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > cabCost1(nArrVolts, vector<double>(nArrCables));
+	vector<vector<double> > cabCost2(nArrVolts, vector<double>(nArrCables));
 
 	//The next 3 arrays contain default data for the array cables. note that if the number of cables
 	//changes form the default of 11 then these tables will need the appropriate additions of the
@@ -1839,12 +1838,12 @@ void wobos::ExportCabCostOptimizer()
 	int nExpVolts = expCabVolt.size();
 	int nExpCables = expCables[0].size();
 
-	vector<vector<double>>nExpCab(nExpVolts, vector<double>(nExpCables));
-	vector<vector<double>>expCabLeng(nExpVolts, vector<double>(nExpCables));
-	vector<vector<double>>expCabCost(nExpVolts, vector<double>(nExpCables));
-	vector<vector<double>>expCabSecM(nExpVolts, vector<double>(nExpCables));
-	vector<vector<double>>expCabSecPerTrip(nExpVolts, vector<double>(nExpCables));
-	vector<vector<double>>expCabInstTime(nExpVolts, vector<double>(nExpCables));
+	vector<vector<double> >nExpCab(nExpVolts, vector<double>(nExpCables));
+	vector<vector<double> >expCabLeng(nExpVolts, vector<double>(nExpCables));
+	vector<vector<double> >expCabCost(nExpVolts, vector<double>(nExpCables));
+	vector<vector<double> >expCabSecM(nExpVolts, vector<double>(nExpCables));
+	vector<vector<double> >expCabSecPerTrip(nExpVolts, vector<double>(nExpCables));
+	vector<vector<double> >expCabInstTime(nExpVolts, vector<double>(nExpCables));
 
 	double newCost;
 	double oldCost;
