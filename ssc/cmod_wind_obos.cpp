@@ -30,6 +30,7 @@ static var_info _cm_vtab_wind_obos[] = {
 /*  VARTYPE           DATATYPE         NAME                              LABEL                                                      UNITS                 META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 //Main inputs
+   { SSC_INPUT,        SSC_NUMBER,      "turbCapEX",                      "Turbine Capital Cost",                                     "$/kW",               "",                       "wobos",            "?=1605",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "nTurb",                          "Number of Turbines",                                       "",                   "",                       "wobos",            "?=20",                    "MIN=2,Max=200",                 ""},
    { SSC_INPUT,        SSC_NUMBER,      "turbR",                          "Turbine Rating",                                           "MW",                 "",                       "wobos",            "?=5",                     "MIN=1,MAX=10",                  ""},
    { SSC_INPUT,        SSC_NUMBER,      "rotorD",                         "Rotor Diameter",                                           "m",                  "",                       "wobos",            "?=120",                   "",                              ""},
@@ -61,6 +62,7 @@ static var_info _cm_vtab_wind_obos[] = {
 //General
    { SSC_INPUT,        SSC_NUMBER,      "projLife",                       "Project Economic Life",                                    "years",              "",                       "wobos",            "?=20",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "inspectClear",                   "Inspection Clearance",                                     "m",                  "",                       "wobos",            "?=2",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "plantComm",                      "Plant Commissioning Cost Factor",                          "%",                  "",                       "wobos",            "?=0.01",                     "",                              ""},
 
 //Substructure & Foundation
    { SSC_INPUT,        SSC_NUMBER,      "mpileCR",                        "Monopile Cost Rate",                                       "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
@@ -93,7 +95,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "exCabFac",                       "Excess Cable Factor",                                      "%",                  "",                       "wobos",            "?=0.1",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsTopFab",                     "Offshore Substation Fabrication Cost",                     "$/tonne",            "",                       "wobos",            "?=14500",                 "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsTopDes",                     "Offshore Substation Design Cost",                          "$",                  "",                       "wobos",            "?=4500000",               "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "topAssemblyFac",                 "Offshore Substation Land-based Assembly Factor",           "%",                  "",                       "wobos",            "?=0.08",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "topAssemblyFac",                 "Offshore Substation Land-based Assembly Factor",           "%",                  "",                       "wobos",            "?=0.075",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsJackCR",                     "Offshore Substation Jacket Lattice Cost Rate",             "$/tonne",            "",                       "wobos",            "?=6250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "subsPileCR",                     "Offshore Substation Jacket Pile Cost Rate",                "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "dynCabFac",                      "Dynamic Cable Cost Premium Factor",                        "",                   "",                       "wobos",            "?=2",                     "",                              ""},
@@ -360,6 +362,7 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_NUMBER,      "metFabCost",                     "Meteorological Tower Fabrication and Installation Cost",   "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "decomCost",                      "Decommissioning Expense",                                  "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "totDevCost",                     "Total Development Cost",                                   "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "commissioning",                  "Plant Commissioning Cost",                                 "$",                  "",                       "wobos",            "",                        "",                              ""},
 
    var_info_invalid};
 
@@ -381,6 +384,7 @@ public:
 
 		//Assign inputs***********************************************************************************************************************************
 		//Basic inputs
+		obos.turbCapEx = (double)as_number("turbCapEx");
 		obos.nTurb = (double)as_number("nTurb"); //number of turbines
 		obos.rotorD = (double)as_number("rotorD");//rotor diameter (m)
 		obos.turbR = (double)as_number("turbR");//turbine rating (MW)
@@ -410,7 +414,8 @@ public:
 		//General
 		obos.projLife = (double)as_number("projLife");//economic lifetime of the project (years)
 		obos.inspectClear = (double)as_number("inspectClear");//inspection clearance for substructure and turbine components (m)
-
+        obos.plantComm = (double)as_number("plantComm");//plant commissioning cost factor
+		
 		//Substructure & Foundation
 		obos.mpileCR = (double)as_number("mpileCR");//monopile pile cost rate ($/tonne)
 		obos.mtransCR = (double)as_number("mtransCR");//monopile transition piece cost rate ($/tonne)
@@ -1225,7 +1230,7 @@ public:
             obos.elecSupportVessels[3][16] = 1;
             obos.elecSupportVessels[3][18] = 3;
             obos.elecSupportVessels[3][19] = 13;
-			if(obos.substructure = MONOPILE)
+			if(obos.substructure == MONOPILE)
 			{
 				//scour protection vessel
 				obos.scourProtVessel[0] = 39;

@@ -1277,7 +1277,10 @@ void wobos::ElectricalInstCost()
     elecCostsByVessel[4][0] = elecTugs[1][0];
 	elecCostsByVessel[0][1] = arrCabInstVessel[14] * arrCabInstVessel[16] * arrInstTime;
 	elecCostsByVessel[1][1] = expCabInstVessel[14] * expCabInstVessel[16] * expInstTime;
+	if(substructure == MONOPILE || substructure == JACKET)
+    {
 	elecCostsByVessel[2][1] = substaInstVessel[14] * substaInstVessel[16] * subsInstTime;
+    }
     elecCostsByVessel[3][1] = elecTugs[0][14] * elecTugs[0][16] * subsInstTime;
     elecCostsByVessel[3][0] = elecTugs[1][14] * elecTugs[1][16] * subsInstTime;
 	for (int i = 5; i < elecCostsByVessel.size(); i++)
@@ -1388,11 +1391,11 @@ double wobos::TotInstCost()
 	{
 		if (substructure == MONOPILE)//check if monopile
 		{
-			sum += (turbInstTime + subInstTime)*(pileSpreadDR + groutSpreadDR) + groutSpreadMob + pileSpreadMob + compRacks
+			sum += subInstTime*(pileSpreadDR + groutSpreadDR) + groutSpreadMob + pileSpreadMob + compRacks
 				+ scourMat*nTurb;
 		}
 		else
-			sum += (turbInstTime + subInstTime)*(pileSpreadDR + groutSpreadDR) + groutSpreadMob + pileSpreadMob + compRacks;
+			sum += subInstTime*(pileSpreadDR + groutSpreadDR) + groutSpreadMob + pileSpreadMob + compRacks;
 	}
 	else
 	{
@@ -1657,6 +1660,10 @@ double wobos::TotalDevCost()
 	return decomCost + metFabCost + permStudyComp + feedCost;
 }
 
+double wobos::PlantCommissioning()
+{
+    return (totAnICost + totDevCost + totElecCost + totEnMCost + subTotCost + totPnSCost + turbCapEx*(turbR*nTurb*1000))*plantComm;
+}
 //*******************************************************************************************
 //Offshore BOS model 'Electrical Cable Optimization' module starts here and ends after
 //ExportCabCostOptimizer() function definition
@@ -2058,4 +2065,5 @@ void wobos::run()
 	metFabCost = MetTowerFabnInst();
 	decomCost = DecomissExpense();
 	totDevCost = TotalDevCost();
+	commissioning = PlantCommissioning();
 }

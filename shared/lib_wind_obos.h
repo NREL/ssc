@@ -7,6 +7,7 @@ using namespace std;
 struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND ALLOW MEMBER FUNCTIONS TO OPERATE ON THOSE VALUES
 {
 	//MAIN INPUTS************************************************************************************************************
+	double turbCapEx; //turbine capital cost ($/kW)
 	double nTurb;//number of turbines
 	double rotorD;//rotor diameter (m)
 	double turbR;//turbine rating (MW)
@@ -37,6 +38,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	//General
 	double projLife;//economic lifetime of the project (years)
 	double inspectClear;//inspection clearance for substructure and turbine components (m)
+	double plantComm; //plant commissioning cost factor
 	
 	//Substructure & Foundation
 	double mpileCR;//monopile pile cost rate ($/tonne)
@@ -357,7 +359,8 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double totPnSCost;
     double totEnMCost;
     double totDevCost;
-
+    double commissioning;
+	
 	//SUPPORTING FUNCTIONS************************************************************************************************************
 	//General Module
 	double HubDiameter();
@@ -488,6 +491,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double MetTowerFabnInst();
 	double DecomissExpense();
 	double TotalDevCost();
+	double PlantCommissioning();
 
     //cable cost optimizing functions
     void ArrayCabCostOptimizer();
