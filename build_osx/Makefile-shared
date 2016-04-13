@@ -22,6 +22,7 @@ OBJECTS = \
 	lib_util.o \
 	lib_weatherfile.o \
 	lib_windfile.o \
+	lib_wind_obos.o \
 	lib_windwatts.o \
 	lib_battery.o \
 	lib_miniz.o \
