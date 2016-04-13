@@ -60,7 +60,7 @@ static var_info _cm_vtab_wind_obos[] = {
 
 //General
    { SSC_INPUT,        SSC_NUMBER,      "projLife",                       "Project Economic Life",                                    "years",              "",                       "wobos",            "?=20",                    "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "inspectClear",                   "Inspection Clearance",                                     "m",                  "",                       "wobos",            "?=20",                    "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "inspectClear",                   "Inspection Clearance",                                     "m",                  "",                       "wobos",            "?=2",                     "",                              ""},
 
 //Substructure & Foundation
    { SSC_INPUT,        SSC_NUMBER,      "mpileCR",                        "Monopile Cost Rate",                                       "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
@@ -574,6 +574,7 @@ public:
 		double nCableAttributes = 6;
 		double nVesselAttributes = 27;
 		double nSupportVessels = 27;
+		double nTugs = 4;
 
 		obos.arrayVolt.resize(nArrVolts);
 		obos.arrCables.resize(nArrVolts);
@@ -614,13 +615,19 @@ public:
 		obos.turbFeederBarge.resize(nVesselAttributes);
 		obos.turbSupportVessels.resize(nSupportVessels);
 		obos.subInstVessel.resize(nVesselAttributes);
+		obos.scourProtVessel.resize(nVesselAttributes);
 		obos.subFeederBarge.resize(nVesselAttributes);
 		obos.subSupportVessels.resize(nSupportVessels);
 		obos.arrCabInstVessel.resize(nVesselAttributes);
 		obos.expCabInstVessel.resize(nVesselAttributes);
 		obos.substaInstVessel.resize(nVesselAttributes);
 		obos.elecSupportVessels.resize(nSupportVessels);
+		obos.elecTugs.resize(nTugs);
 
+		for(int i = 0; i < nTugs; i++)
+		{
+		    obos.elecTugs[i].resize(nVesselAttributes);
+		}
 		for (int i = 0; i < nSupportVessels; i++)
 		{
 			obos.turbSupportVessels[i].resize(nVesselAttributes);
@@ -1177,7 +1184,6 @@ public:
 			//substructure install support vessels if monopile or jacket substructure
 			obos.subSupportVessels[0][0] = 31;
 			obos.subSupportVessels[1][0] = 33;
-			obos.subSupportVessels[2][0] = 39;
 			obos.subSupportVessels[0][1] = 19;
 			obos.subSupportVessels[1][1] = 20.6;
 			obos.subSupportVessels[0][2] = 0;
@@ -1197,15 +1203,69 @@ public:
 			obos.subSupportVessels[1][16] = 1;
 			obos.subSupportVessels[0][18] = 3;
 			obos.subSupportVessels[0][19] = 13;
-			obos.subSupportVessels[2][1] = 71;
-			obos.subSupportVessels[2][2] = 17.7;
-			obos.subSupportVessels[2][3] = 3.3;
-			obos.subSupportVessels[2][8] = 1490;
-			obos.subSupportVessels[2][11] = 7.8;
-			obos.subSupportVessels[2][13] = 2.5;
-			obos.subSupportVessels[2][14] = 84000;
-			obos.subSupportVessels[2][15] = 3;
-			obos.subSupportVessels[2][16] = 1;
+			//electrical infrastructure install support vessels
+            obos.elecSupportVessels[1][0] = 33;
+            obos.elecSupportVessels[3][0] = 31;
+            obos.elecSupportVessels[1][1] = 20.6;
+            obos.elecSupportVessels[1][2] = 5.4;
+            obos.elecSupportVessels[1][3] = 3.1;
+            obos.elecSupportVessels[1][11] = 15;
+            obos.elecSupportVessels[1][13] = 1.75;
+            obos.elecSupportVessels[1][14] = 3000;
+            obos.elecSupportVessels[1][15] = 1;
+            obos.elecSupportVessels[1][16] = 1;
+            obos.elecSupportVessels[3][1] = 19;
+            obos.elecSupportVessels[3][2] = 0;
+            obos.elecSupportVessels[3][3] = 1.5;
+            obos.elecSupportVessels[3][11] = 23;
+            obos.elecSupportVessels[3][12] = 15;
+            obos.elecSupportVessels[3][13] = 1.75;
+            obos.elecSupportVessels[3][14] = 3000;
+            obos.elecSupportVessels[3][15] = 1;
+            obos.elecSupportVessels[3][16] = 1;
+            obos.elecSupportVessels[3][18] = 3;
+            obos.elecSupportVessels[3][19] = 13;
+			if(obos.substructure = MONOPILE)
+			{
+				//scour protection vessel
+				obos.scourProtVessel[0] = 39;
+				obos.scourProtVessel[1] = 71;
+				obos.scourProtVessel[2] = 17.7;
+				obos.scourProtVessel[3] = 3.3;
+				obos.scourProtVessel[8] = 1490;
+				obos.scourProtVessel[11] = 7.8;
+				obos.scourProtVessel[13] = 2.5;
+				obos.scourProtVessel[14] = 84000;
+				obos.scourProtVessel[15] = 3;
+				obos.scourProtVessel[16] = 1;
+			}
+            obos.elecTugs[0][0] = 12;
+            obos.elecTugs[0][1] = 87;
+            obos.elecTugs[0][2] = 20.9;
+            obos.elecTugs[0][3] = 7.4;
+            obos.elecTugs[0][4] = 0;
+            obos.elecTugs[0][5] = 0;
+            obos.elecTugs[0][6] = 0;
+            obos.elecTugs[0][7] = 637;
+            obos.elecTugs[0][8] = 1440;
+            obos.elecTugs[0][9] = 0;
+            obos.elecTugs[0][10] = 0;
+            obos.elecTugs[0][11] = 15.2;
+            obos.elecTugs[0][12] = 0;
+            obos.elecTugs[0][13] = 2.0;
+            obos.elecTugs[0][14] = 90000;
+            obos.elecTugs[0][15] = 3;
+            obos.elecTugs[0][16] = 1;
+            obos.elecTugs[0][17] = 0;
+            obos.elecTugs[0][18] = 0;
+            obos.elecTugs[0][19] = 0;
+            obos.elecTugs[0][20] = 237;
+            obos.elecTugs[0][21] = 5;
+            obos.elecTugs[0][22] = 0;
+            obos.elecTugs[0][23] = 0;
+            obos.elecTugs[0][24] = 0;
+            obos.elecTugs[0][25] = 0;
+            obos.elecTugs[0][26] = 0;
 
 		}
 		else if (obos.substructure == SPAR)
@@ -1453,6 +1513,66 @@ public:
 			obos.subSupportVessels[6][15] = 3;
 			obos.subSupportVessels[5][16] = 1;
 			obos.subSupportVessels[6][16] = 1;
+            obos.elecSupportVessels[1][0] = 33;
+            obos.elecSupportVessels[3][0] = 31;
+            obos.elecSupportVessels[1][1] = 20.6;
+            obos.elecSupportVessels[1][2] = 5.4;
+            obos.elecSupportVessels[1][3] = 3.1;
+            obos.elecSupportVessels[1][11] = 15;
+            obos.elecSupportVessels[1][13] = 1.75;
+            obos.elecSupportVessels[1][14] = 3000;
+            obos.elecSupportVessels[1][15] = 1;
+            obos.elecSupportVessels[1][16] = 1;
+            obos.elecSupportVessels[3][1] = 19;
+            obos.elecSupportVessels[3][2] = 0;
+            obos.elecSupportVessels[3][3] = 1.5;
+            obos.elecSupportVessels[3][11] = 23;
+            obos.elecSupportVessels[3][12] = 15;
+            obos.elecSupportVessels[3][13] = 1.75;
+            obos.elecSupportVessels[3][14] = 3000;
+            obos.elecSupportVessels[3][15] = 1;
+            obos.elecSupportVessels[3][16] = 1;
+            obos.elecSupportVessels[3][18] = 3;
+            obos.elecSupportVessels[3][19] = 13;
+            obos.elecTugs[0][0] = 12;
+            obos.elecTugs[1][0] = 28;
+            obos.elecTugs[0][1] = 87;
+            obos.elecTugs[0][2] = 20.9;
+            obos.elecTugs[0][3] = 7.4;
+            obos.elecTugs[0][4] = 0;
+            obos.elecTugs[0][5] = 0;
+            obos.elecTugs[0][6] = 0;
+            obos.elecTugs[0][7] = 637;
+            obos.elecTugs[0][8] = 1440;
+            obos.elecTugs[0][9] = 0;
+            obos.elecTugs[0][10] = 0;
+            obos.elecTugs[0][11] = 15.2;
+            obos.elecTugs[0][12] = 0;
+            obos.elecTugs[0][13] = 2.0;
+            obos.elecTugs[0][14] = 90000;
+            obos.elecTugs[0][15] = 3;
+            obos.elecTugs[0][16] = 1;
+            obos.elecTugs[0][17] = 0;
+            obos.elecTugs[0][18] = 0;
+            obos.elecTugs[0][19] = 0;
+            obos.elecTugs[0][20] = 237;
+            obos.elecTugs[0][21] = 5;
+            obos.elecTugs[0][22] = 0;
+            obos.elecTugs[0][23] = 0;
+            obos.elecTugs[0][24] = 0;
+            obos.elecTugs[0][25] = 0;
+            obos.elecTugs[0][26] = 0;
+			obos.elecTugs[1][1] = 28.2;
+			obos.elecTugs[1][2] = 8.8;
+			obos.elecTugs[1][3] = 3.1;
+			obos.elecTugs[1][7] = 39.3;
+			obos.elecTugs[1][8] = 8;
+			obos.elecTugs[1][11] = 9.6;
+			obos.elecTugs[1][13] = 2.5;
+			obos.elecTugs[1][14] = 27500;
+			obos.elecTugs[1][15] = 1;
+			obos.elecTugs[1][16] = 2;
+			obos.elecTugs[1][20] = 37;
 		}
 		//turbine install vessel if semisubmersible substructure
 		else if (obos.substructure == SEMISUBMERSIBLE)
@@ -1584,6 +1704,66 @@ public:
 			obos.subSupportVessels[1][14] = 3000;
 			obos.subSupportVessels[1][15] = 1;
 			obos.subSupportVessels[1][16] = 1;
+            obos.elecSupportVessels[1][0] = 33;
+            obos.elecSupportVessels[3][0] = 31;
+            obos.elecSupportVessels[1][1] = 20.6;
+            obos.elecSupportVessels[1][2] = 5.4;
+            obos.elecSupportVessels[1][3] = 3.1;
+            obos.elecSupportVessels[1][11] = 15;
+            obos.elecSupportVessels[1][13] = 1.75;
+            obos.elecSupportVessels[1][14] = 3000;
+            obos.elecSupportVessels[1][15] = 1;
+            obos.elecSupportVessels[1][16] = 1;
+            obos.elecSupportVessels[3][1] = 19;
+            obos.elecSupportVessels[3][2] = 0;
+            obos.elecSupportVessels[3][3] = 1.5;
+            obos.elecSupportVessels[3][11] = 23;
+            obos.elecSupportVessels[3][12] = 15;
+            obos.elecSupportVessels[3][13] = 1.75;
+            obos.elecSupportVessels[3][14] = 3000;
+            obos.elecSupportVessels[3][15] = 1;
+            obos.elecSupportVessels[3][16] = 1;
+            obos.elecSupportVessels[3][18] = 3;
+            obos.elecSupportVessels[3][19] = 13;
+            obos.elecTugs[0][0] = 12;
+            obos.elecTugs[1][0] = 28;
+            obos.elecTugs[0][1] = 87;
+            obos.elecTugs[0][2] = 20.9;
+            obos.elecTugs[0][3] = 7.4;
+            obos.elecTugs[0][4] = 0;
+            obos.elecTugs[0][5] = 0;
+            obos.elecTugs[0][6] = 0;
+            obos.elecTugs[0][7] = 637;
+            obos.elecTugs[0][8] = 1440;
+            obos.elecTugs[0][9] = 0;
+            obos.elecTugs[0][10] = 0;
+            obos.elecTugs[0][11] = 15.2;
+            obos.elecTugs[0][12] = 0;
+            obos.elecTugs[0][13] = 2.0;
+            obos.elecTugs[0][14] = 90000;
+            obos.elecTugs[0][15] = 3;
+            obos.elecTugs[0][16] = 1;
+            obos.elecTugs[0][17] = 0;
+            obos.elecTugs[0][18] = 0;
+            obos.elecTugs[0][19] = 0;
+            obos.elecTugs[0][20] = 237;
+            obos.elecTugs[0][21] = 5;
+            obos.elecTugs[0][22] = 0;
+            obos.elecTugs[0][23] = 0;
+            obos.elecTugs[0][24] = 0;
+            obos.elecTugs[0][25] = 0;
+            obos.elecTugs[0][26] = 0;
+			obos.elecTugs[1][1] = 28.2;
+			obos.elecTugs[1][2] = 8.8;
+			obos.elecTugs[1][3] = 3.1;
+			obos.elecTugs[1][7] = 39.3;
+			obos.elecTugs[1][8] = 8;
+			obos.elecTugs[1][11] = 9.6;
+			obos.elecTugs[1][13] = 2.5;
+			obos.elecTugs[1][14] = 27500;
+			obos.elecTugs[1][15] = 1;
+			obos.elecTugs[1][16] = 2;
+			obos.elecTugs[1][20] = 37;
 		}
 
 
@@ -1679,53 +1859,6 @@ public:
 		obos.expCabInstVessel[24] = 0;
 		obos.expCabInstVessel[25] = 0;
 		obos.expCabInstVessel[26] = 0;
-
-		//support vessel defaults
-		//electrical infrastructure install support vessels
-		obos.elecSupportVessels[0][0] = 28;
-		obos.elecSupportVessels[1][0] = 33;
-		obos.elecSupportVessels[2][0] = 11;
-		obos.elecSupportVessels[3][0] = 31;
-		obos.elecSupportVessels[0][1] = 28.2;
-		obos.elecSupportVessels[0][2] = 8.8;
-		obos.elecSupportVessels[0][3] = 3.1;
-		obos.elecSupportVessels[0][7] = 39.3;
-		obos.elecSupportVessels[0][8] = 8;
-		obos.elecSupportVessels[0][11] = 9.6;
-		obos.elecSupportVessels[0][13] = 2.5;
-		obos.elecSupportVessels[0][14] = 27500;
-		obos.elecSupportVessels[0][15] = 1;
-		obos.elecSupportVessels[0][16] = 1;
-		obos.elecSupportVessels[0][20] = 37;
-		obos.elecSupportVessels[1][1] = 20.6;
-		obos.elecSupportVessels[1][2] = 5.4;
-		obos.elecSupportVessels[1][3] = 3.1;
-		obos.elecSupportVessels[1][11] = 15;
-		obos.elecSupportVessels[1][13] = 1.75;
-		obos.elecSupportVessels[1][14] = 3000;
-		obos.elecSupportVessels[1][15] = 1;
-		obos.elecSupportVessels[1][16] = 1;
-		obos.elecSupportVessels[2][1] = 68.2;
-		obos.elecSupportVessels[2][2] = 15.9;
-		obos.elecSupportVessels[2][3] = 6.3;
-		obos.elecSupportVessels[2][7] = 441;
-		obos.elecSupportVessels[2][8] = 738;
-		obos.elecSupportVessels[2][11] = 12.7;
-		obos.elecSupportVessels[2][13] = 2.5;
-		obos.elecSupportVessels[2][14] = 35000;
-		obos.elecSupportVessels[2][15] = 3;
-		obos.elecSupportVessels[2][16] = 1;
-		obos.elecSupportVessels[3][1] = 19;
-		obos.elecSupportVessels[3][2] = 0;
-		obos.elecSupportVessels[3][3] = 1.5;
-		obos.elecSupportVessels[3][11] = 23;
-		obos.elecSupportVessels[3][12] = 15;
-		obos.elecSupportVessels[3][13] = 1.75;
-		obos.elecSupportVessels[3][14] = 3000;
-		obos.elecSupportVessels[3][15] = 1;
-		obos.elecSupportVessels[3][16] = 1;
-		obos.elecSupportVessels[3][18] = 3;
-		obos.elecSupportVessels[3][19] = 13;
 
 
 		//RUN COMPUTE MODULE***********************************************************************************************************************************

@@ -226,12 +226,14 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
     vector<vector<double> > expCabVolt;
     vector<vector<vector<double> > > expCables;
     //vessel vectors
+    vector<vector<double>> elecTugs;
     vector<double> turbInstVessel;
     vector<double> turbFeederBarge;
     vector<vector<double> >turbSupportVessels;
 
     vector<double> subInstVessel;
     vector<double> subFeederBarge;
+    vector<double> scourProtVessel;
     vector<vector<double> > subSupportVessels;
     vector<double> arrCabInstVessel;
     vector<double> expCabInstVessel;

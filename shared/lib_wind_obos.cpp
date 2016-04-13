@@ -563,7 +563,7 @@ double wobos::NumberMPT()
 double wobos::SingleMPTRating()
 {
 	//if the remainder of '((nTurb*turbR*1.15)/nMPT)/10' is greater than 5 round up, else round down
-	double mptRating = fmod((nTurb*turbR*1.15) / nMPT, 10) >= 5
+	double mptRating = ceil(fmod((nTurb*turbR*1.15) / nMPT, 10)) >= 5
 		? ceil(((nTurb*turbR*1.15) / nMPT) / 10) * 10 :
 		floor(((nTurb*turbR*1.15) / nMPT) / 10) * 10;
 
@@ -956,7 +956,7 @@ double wobos::TurbineInstall()
 		return ceil(sum*(1 / (1 - turbCont))*nTurb / 24 + ((nTurb / 24)*(1 / (1 - substructCont))*
 			((prepTow + ssBall + ssMoorCheck + ssMoorCon) + (distPort / turbInstVessel[21]))));
 	}
-	else if ((substructure == MONOPILE) || (substructure = JACKET))
+	else if ((substructure == MONOPILE) || (substructure == JACKET))
 	{
 		return ceil((((sum + ((waterD + 10) / (turbInstVessel[6] * 60)) * 2)*nTurb + (nTurb
 			- ceil((nTurb / nTurbPerTrip)))*(arrayY*rotorD) / (turbInstVessel[11] * 1852)
@@ -1002,7 +1002,7 @@ double wobos::SubstructureInstTime()
 			+ levJack + ((jpileL - 5) / hamRate) * 4 + ((waterD + 10) / (subInstVessel[6] * 60)) * 2 * 2;
 		break;
 	default:
-		sum1 = vesselPosMono + prepGripperMono + placeMP + prepHamMono + removeHamMono + instScour + placeTP + groutTP
+		sum1 = vesselPosMono + prepGripperMono + placeMP + prepHamMono + removeHamMono + placeTP + groutTP //change
 			+ tpCover + (mpEmbedL / hamRate) + ((waterD + 10) / (subInstVessel[6] * 60)) * 2;
 		break;
 	}
@@ -1166,7 +1166,7 @@ void wobos::TurbInstCost()
 	if ((installStrategy == FEEDERBARGE) || (substructure == SPAR))
 	{
 		turbCostsByVessel.resize(2 + turbSupportVessels.size());//size cost vector to fit all possible vessels
-		for (size_t i = 0; i < 2 + turbSupportVessels.size(); i++)
+		for (size_t i = 0; i < turbCostsByVessel.size(); i++)
 		{
 			turbCostsByVessel[i].resize(2);
 		}
@@ -1187,7 +1187,7 @@ void wobos::TurbInstCost()
 	else
 	{
 		turbCostsByVessel.resize(1 + turbSupportVessels.size());//size cost vector to fit all possible vessels
-		for (size_t i = 0; i < 1 + turbSupportVessels.size(); i++)
+		for (size_t i = 0; i < turbCostsByVessel.size(); i++)
 		{
 			turbCostsByVessel[i].resize(2);
 		}
@@ -1211,8 +1211,8 @@ void wobos::SubInstCost()
 	//check installStrategy
 	if ((installStrategy == FEEDERBARGE) || (substructure == SPAR))
 	{
-		subCostsByVessel.resize(2 + subSupportVessels.size());//size cost vector to fit all possible vessels
-		for (size_t i = 0; i < 2 + subSupportVessels.size(); i++)
+		subCostsByVessel.resize(3 + subSupportVessels.size());//size cost vector to fit all possible vessels
+		for (size_t i = 0; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i].resize(2);
 		}
@@ -1223,17 +1223,22 @@ void wobos::SubInstCost()
 		subCostsByVessel[0][1] = subInstVessel[16] * subInstVessel[14] * subInstTime;
 		subCostsByVessel[1][1] = subFeederBarge[16] * subFeederBarge[14] * subInstTime;
 
-		for (int i = 2; i < subCostsByVessel.size(); i++)
+        if(substructure == MONOPILE)//change
+        {
+            subCostsByVessel[2][0] = scourProtVessel[0];
+            subCostsByVessel[2][1] = (instScour/24)*nTurb*scourProtVessel[16]*scourProtVessel[14];
+        }
+		for (int i = 3; i < subCostsByVessel.size(); i++)
 		{
-			subCostsByVessel[i][0] = subSupportVessels[i - 2][0];
-			subCostsByVessel[i][1] = subSupportVessels[i - 2][16] * subSupportVessels[i - 2][14]
+			subCostsByVessel[i][0] = subSupportVessels[i - 3][0];
+			subCostsByVessel[i][1] = subSupportVessels[i - 3][16] * subSupportVessels[i - 3][14]
 				* subInstTime;
 		}
 	}
 	else
 	{
-		subCostsByVessel.resize(1 + subSupportVessels.size());//size cost vector to fit all possible vessels
-		for (size_t i = 0; i < 1 + subSupportVessels.size(); i++)
+		subCostsByVessel.resize(2 + subSupportVessels.size());//size cost vector to fit all possible vessels
+		for (size_t i = 0; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i].resize(2);
 		}
@@ -1242,11 +1247,15 @@ void wobos::SubInstCost()
 		subCostsByVessel[0][0] = subInstVessel[0];
 		subCostsByVessel[0][1] = subInstVessel[16] * subInstVessel[14] * subInstTime;
 
-		for (int i = 1; i < subCostsByVessel.size(); i++)
+        if(substructure == MONOPILE)//change
+        {
+            subCostsByVessel[1][0] = scourProtVessel[0];
+            subCostsByVessel[1][1] = (instScour/24)*nTurb*scourProtVessel[16]*scourProtVessel[14];
+        }
+		for (int i = 2; i < subCostsByVessel.size(); i++)
 		{
-			subCostsByVessel[i][0] = subSupportVessels[i - 1][0];
-			subCostsByVessel[i][1] = subSupportVessels[i - 1][16] * subSupportVessels[i - 1][14]
-				* subInstTime;
+			subCostsByVessel[i][0] = subSupportVessels[i - 2][0];
+			subCostsByVessel[i][1] = subSupportVessels[i - 2][16] * subSupportVessels[i - 2][14] * subInstTime;
 		}
 	}
 }
@@ -1254,8 +1263,8 @@ void wobos::SubInstCost()
 
 void wobos::ElectricalInstCost()
 {
-	elecCostsByVessel.resize((3 + elecSupportVessels.size()));//size cost vector to fit all possible vessels
-	for (size_t i = 0; i < 3 + elecSupportVessels.size(); i++)
+	elecCostsByVessel.resize((5 + elecSupportVessels.size()));//size cost vector to fit all possible vessels
+	for (size_t i = 0; i < elecCostsByVessel.size(); i++)
 	{
 		elecCostsByVessel[i].resize(2);
 	}
@@ -1264,13 +1273,17 @@ void wobos::ElectricalInstCost()
 	elecCostsByVessel[0][0] = arrCabInstVessel[0];
 	elecCostsByVessel[1][0] = expCabInstVessel[0];
 	elecCostsByVessel[2][0] = substaInstVessel[0];
+    elecCostsByVessel[3][0] = elecTugs[0][0];
+    elecCostsByVessel[4][0] = elecTugs[1][0];
 	elecCostsByVessel[0][1] = arrCabInstVessel[14] * arrCabInstVessel[16] * arrInstTime;
 	elecCostsByVessel[1][1] = expCabInstVessel[14] * expCabInstVessel[16] * expInstTime;
 	elecCostsByVessel[2][1] = substaInstVessel[14] * substaInstVessel[16] * subsInstTime;
-	for (int i = 3; i < elecCostsByVessel.size(); i++)
+    elecCostsByVessel[3][1] = elecTugs[0][14] * elecTugs[0][16] * subsInstTime;
+    elecCostsByVessel[3][0] = elecTugs[1][14] * elecTugs[1][16] * subsInstTime;
+	for (int i = 5; i < elecCostsByVessel.size(); i++)
 	{
-		elecCostsByVessel[i][0] = elecSupportVessels[i - 3][0];
-		elecCostsByVessel[i][1] = elecSupportVessels[i - 3][14] * elecSupportVessels[i - 3][16]
+		elecCostsByVessel[i][0] = elecSupportVessels[i - 5][0];
+		elecCostsByVessel[i][1] = elecSupportVessels[i - 5][14] * elecSupportVessels[i - 5][16]
 			* (arrInstTime + expInstTime + subsInstTime);
 	}
 }
@@ -1279,32 +1292,48 @@ void wobos::ElectricalInstCost()
 void wobos::VesselMobDemobCost()
 {
 	//size cost vector to fit all support vessels for entire installation
-	mobDemobCostByVessel.resize(subSupportVessels.size() + turbSupportVessels.size() + elecSupportVessels.size());
-	for (size_t i = 0; i < subSupportVessels.size() + turbSupportVessels.size() + elecSupportVessels.size(); i++)
+	mobDemobCostByVessel.resize(subSupportVessels.size() + turbSupportVessels.size() + elecSupportVessels.size() + 8);
+	for (size_t i = 0; i < mobDemobCostByVessel.size(); i++)
 	{
 		mobDemobCostByVessel[i].resize(2);
 	}
+	mobDemobCostByVessel[0][0] = turbInstVessel[0];
+	mobDemobCostByVessel[1][0] = subInstVessel[0];
+	mobDemobCostByVessel[2][0] = arrCabInstVessel[0];
+	mobDemobCostByVessel[3][0] = expCabInstVessel[0];
+	mobDemobCostByVessel[4][0] = substaInstVessel[0];
+    mobDemobCostByVessel[5][0] = scourProtVessel[0];
+    mobDemobCostByVessel[6][0] = elecTugs[0][0];
+    mobDemobCostByVessel[6][0] = elecTugs[1][0];
+	mobDemobCostByVessel[0][1] = turbInstVessel[14] * turbInstVessel[15] * turbInstVessel[16];
+	mobDemobCostByVessel[1][1] = subInstVessel[14] * subInstVessel[15] * subInstVessel[16];
+	mobDemobCostByVessel[2][1] = arrCabInstVessel[14] * arrCabInstVessel[15] * arrCabInstVessel[16];
+	mobDemobCostByVessel[3][1] = expCabInstVessel[14] * expCabInstVessel[15] * expCabInstVessel[16];
+	mobDemobCostByVessel[4][1] = substaInstVessel[14] * substaInstVessel[15] * substaInstVessel[16];
+    mobDemobCostByVessel[5][1] = scourProtVessel[14] * scourProtVessel[15] * scourProtVessel[16];
+    mobDemobCostByVessel[6][1] = elecTugs[0][14] * elecTugs[0][15] * elecTugs[0][16];
+    mobDemobCostByVessel[7][1] = elecTugs[1][14] * elecTugs[1][15] * elecTugs[1][16];
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 0; i < turbSupportVessels.size(); i++)
+	for (int i = 8; i < turbSupportVessels.size(); i++)
 	{
-		mobDemobCostByVessel[i][0] = turbSupportVessels[i][0];
-		mobDemobCostByVessel[i][1] = turbSupportVessels[i][14] * turbSupportVessels[i][15] * turbSupportVessels[i][16];
+		mobDemobCostByVessel[i][0] = turbSupportVessels[i-8][0];
+		mobDemobCostByVessel[i][1] = turbSupportVessels[i-8][14] * turbSupportVessels[i-8][15] * turbSupportVessels[i-8][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
+	for (int i = 8 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
 	{
-		mobDemobCostByVessel[i][0] = subSupportVessels[i - turbSupportVessels.size()][0];
-		mobDemobCostByVessel[i][1] = subSupportVessels[i - turbSupportVessels.size()][14] * subSupportVessels[i - turbSupportVessels.size()][15]
-			* subSupportVessels[i - turbSupportVessels.size()][16];
+		mobDemobCostByVessel[i][0] = subSupportVessels[i - turbSupportVessels.size()-8][0];
+		mobDemobCostByVessel[i][1] = subSupportVessels[i - turbSupportVessels.size()-8][14] * subSupportVessels[i - turbSupportVessels.size()-8][15]
+			* subSupportVessels[i - turbSupportVessels.size()-8][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
+	for (int i = 8 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
 		+ elecSupportVessels.size(); i++)
 	{
-		mobDemobCostByVessel[i][0] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())][0];
-		mobDemobCostByVessel[i][1] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())][14]
-			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())][15]
-			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())][16];
+		mobDemobCostByVessel[i][0] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][0];
+		mobDemobCostByVessel[i][1] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][14]
+			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][15]
+			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][16];
 	}
 
 	//create an iterator to iterate through vessel identifier values
@@ -1319,24 +1348,7 @@ void wobos::VesselMobDemobCost()
 	{
 		mobDemobCostByVessel[i].resize(2);
 	}
-	//resize cost vector again to store install vessel costs
-	mobDemobCostByVessel.resize(resizer + 5);
-	for (size_t i = 0; i < resizer + 5; i++)
-	{
-		mobDemobCostByVessel[i].resize(2);
-	}
 
-	//populate cost vector with install vessel identifier values and costs
-	mobDemobCostByVessel[resizer][0] = turbInstVessel[0];
-	mobDemobCostByVessel[resizer + 1][0] = subInstVessel[0];
-	mobDemobCostByVessel[resizer + 2][0] = arrCabInstVessel[0];
-	mobDemobCostByVessel[resizer + 3][0] = expCabInstVessel[0];
-	mobDemobCostByVessel[resizer + 4][0] = substaInstVessel[0];
-	mobDemobCostByVessel[resizer][1] = turbInstVessel[14] * turbInstVessel[15] * turbInstVessel[16];
-	mobDemobCostByVessel[resizer + 1][1] = subInstVessel[14] * subInstVessel[15] * subInstVessel[16];
-	mobDemobCostByVessel[resizer + 2][1] = arrCabInstVessel[14] * arrCabInstVessel[15] * arrCabInstVessel[16];
-	mobDemobCostByVessel[resizer + 3][1] = expCabInstVessel[14] * expCabInstVessel[15] * expCabInstVessel[16];
-	mobDemobCostByVessel[resizer + 4][1] = substaInstVessel[14] * substaInstVessel[15] * substaInstVessel[16];
 
 }
 
@@ -1922,11 +1934,11 @@ void wobos::run()
 	rnaM = RNAMass();
 	towerD = TowerDiameter();
 	towerM = TowerMass();
-	if (mpileL == 0)
+	if (mpileL <= 0)
 	{
 		mpileL = MonopileLength();
 	}
-	if (mpileD == 0)
+	if (mpileD <= 0)
 	{
 		mpileD = turbR;
 	}
