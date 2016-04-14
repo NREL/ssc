@@ -67,8 +67,8 @@ static var_info _cm_vtab_wind_obos[] = {
 //Substructure & Foundation
    { SSC_INPUT,        SSC_NUMBER,      "mpileCR",                        "Monopile Cost Rate",                                       "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "mtransCR",                       "Monopile Transition Piece Cost Rate",                      "$/tonne",            "",                       "wobos",            "?=3230",                  "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "mpileD",                         "Monopile Diameter",                                        "m",                  "",                       "wobos",            "substructure=0",          "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "mpileL",                         "Monopile Length",                                          "m",                  "",                       "wobos",            "substructure=0",          "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "mpileD",                         "Monopile Diameter",                                        "m",                  "",                       "wobos",            "",                        "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "mpileL",                         "Monopile Length",                                          "m",                  "",                       "wobos",            "",                        "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "mpEmbedL",                       "Monopile Embedment Length",                                "m",                  "",                       "wobos",            "?=30",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "jlatticeCR",                      "Jacket Main Lattice Cost Rate",                            "$/tonne",            "",                       "wobos",            "?=4680",                 "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "jtransCR",                       "Jacket Transition Piece Cost Rate",                        "$/tonne",            "",                       "wobos",            "?=4500",                  "",                              ""},
@@ -136,7 +136,7 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "placePiles",                     "Place Jacket Piles",                                       "hours",              "",                       "wobos",            "?=12",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "prepHamMono",                    "Prepare Hammer for Monopile Installation",                 "hours",              "",                       "wobos",            "?=2",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "prephamJack",                    "Prepare Hammer for jacket Piles Installation",             "hours",              "",                       "wobos",            "?=2",                     "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "removeHamMono",                  "Remove Hammer for Monopile Installation",                  "hours",              "",                       "wobos",            "?=4",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "removeHamMono",                  "Remove Hammer for Monopile Installation",                  "hours",              "",                       "wobos",            "?=2",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "removeHamJack",                  "Remove Hammer for Jacket Piles Installation",              "hours",              "",                       "wobos",            "?=4",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "placeTemplate",                  "Place Jacket Pile Template on Seabed",                     "hours",              "",                       "wobos",            "?=4",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "placeJack",                      "Place Jacket Main Lattice onto Piles",                     "hours",              "",                       "wobos",            "?=12",                    "",                              ""},
@@ -419,8 +419,8 @@ public:
 		//Substructure & Foundation
 		obos.mpileCR = (double)as_number("mpileCR");//monopile pile cost rate ($/tonne)
 		obos.mtransCR = (double)as_number("mtransCR");//monopile transition piece cost rate ($/tonne)
-		obos.mpileD = (double)as_number("mpileD"); //monopile diameter(m)
-		obos.mpileL = (double)as_number("mpileL"); //monopile length (m)
+		if(is_assigned("mpileD")) obos.mpileD = (double)as_number("mpileD"); //monopile diameter(m)
+		if(is_assigned("mpileL")) obos.mpileL = (double)as_number("mpileL"); //monopile length (m)
 		obos.jlatticeCR = (double)as_number("jlatticeCR");//jacket lattice cost rate ($/tonne)
 		obos.jtransCR = (double)as_number("jtransCR");//jacket transition piece cost rate ($/tonne)
 		obos.jpileCR = (double)as_number("jpileCR");//jacket pile cost rate ($/tonne)
@@ -1362,7 +1362,6 @@ public:
 			//turbine install support vessels if spar substructure
 			obos.turbSupportVessels[0][0] = 11;
 			obos.turbSupportVessels[1][0] = 21;
-			obos.turbSupportVessels[2][0] = 22;
 			obos.turbSupportVessels[3][0] = 28;
 			obos.turbSupportVessels[4][0] = 31;
 			obos.turbSupportVessels[5][0] = 33;
@@ -1375,7 +1374,7 @@ public:
 			obos.turbSupportVessels[0][8] = 738;
 			obos.turbSupportVessels[0][11] = 12.7;
 			obos.turbSupportVessels[0][13] = 2.5;
-			obos.turbSupportVessels[0][14] = 35000;
+			obos.turbSupportVessels[0][14] = 60000;
 			obos.turbSupportVessels[0][15] = 3;
 			obos.turbSupportVessels[0][16] = 1;
 			obos.turbSupportVessels[1][1] = 34.9;
@@ -1391,23 +1390,7 @@ public:
 			obos.turbSupportVessels[1][13] = 1.5;
 			obos.turbSupportVessels[1][14] = 50000;
 			obos.turbSupportVessels[1][15] = 3;
-			obos.turbSupportVessels[1][16] = 1;
-			obos.turbSupportVessels[2][1] = 75.6;
-			obos.turbSupportVessels[2][2] = 32.5;
-			obos.turbSupportVessels[2][3] = 4.2;
-			obos.turbSupportVessels[2][4] = 32.5;
-			obos.turbSupportVessels[2][5] = 50.4;
-			obos.turbSupportVessels[2][6] = 0.9;
-			obos.turbSupportVessels[2][7] = 2000;
-			obos.turbSupportVessels[2][8] = 1930;
-			obos.turbSupportVessels[2][9] = 510;
-			obos.turbSupportVessels[2][10] = 89.5;
-			obos.turbSupportVessels[2][11] = 4;
-			obos.turbSupportVessels[2][12] = 10;
-			obos.turbSupportVessels[2][13] = 2;
-			obos.turbSupportVessels[2][14] = 70000;
-			obos.turbSupportVessels[2][15] = 3;
-			obos.turbSupportVessels[2][16] = 2;
+			obos.turbSupportVessels[1][16] = 3;
 			obos.turbSupportVessels[3][1] = 28.2;
 			obos.turbSupportVessels[3][2] = 8.8;
 			obos.turbSupportVessels[3][3] = 3.1;
@@ -1446,7 +1429,6 @@ public:
 			obos.turbSupportVessels[7][16] = 1;
 			//substructure install support vessels if spar substructure
 			obos.subSupportVessels[0][0] = 21;
-			obos.subSupportVessels[1][0] = 22;
 			obos.subSupportVessels[2][0] = 28;
 			obos.subSupportVessels[3][0] = 31;
 			obos.subSupportVessels[4][0] = 33;
@@ -1465,23 +1447,7 @@ public:
 			obos.subSupportVessels[0][13] = 1.5;
 			obos.subSupportVessels[0][14] = 50000;
 			obos.subSupportVessels[0][15] = 3;
-			obos.subSupportVessels[0][16] = 1;
-			obos.subSupportVessels[1][1] = 75.6;
-			obos.subSupportVessels[1][2] = 32.5;
-			obos.subSupportVessels[1][3] = 4.2;
-			obos.subSupportVessels[1][4] = 32.5;
-			obos.subSupportVessels[1][5] = 50.4;
-			obos.subSupportVessels[1][6] = 0.9;
-			obos.subSupportVessels[1][7] = 2000;
-			obos.subSupportVessels[1][8] = 1930;
-			obos.subSupportVessels[1][9] = 510;
-			obos.subSupportVessels[1][10] = 89.5;
-			obos.subSupportVessels[1][11] = 4;
-			obos.subSupportVessels[1][12] = 10;
-			obos.subSupportVessels[1][13] = 2;
-			obos.subSupportVessels[1][14] = 70000;
-			obos.subSupportVessels[1][15] = 3;
-			obos.subSupportVessels[1][16] = 2;
+			obos.subSupportVessels[0][16] = 3;
 			obos.subSupportVessels[2][1] = 28.2;
 			obos.subSupportVessels[2][2] = 8.8;
 			obos.subSupportVessels[2][3] = 3.1;
@@ -1677,7 +1643,7 @@ public:
 			obos.turbSupportVessels[0][13] = 2.5;
 			obos.turbSupportVessels[0][14] = 27500;
 			obos.turbSupportVessels[0][15] = 1;
-			obos.turbSupportVessels[0][16] = 1;
+			obos.turbSupportVessels[0][16] = 2;
 			obos.turbSupportVessels[0][20] = 37;
 			obos.turbSupportVessels[1][1] = 20.6;
 			obos.turbSupportVessels[1][2] = 5.4;
@@ -1699,7 +1665,7 @@ public:
 			obos.subSupportVessels[0][13] = 2.5;
 			obos.subSupportVessels[0][14] = 27500;
 			obos.subSupportVessels[0][15] = 1;
-			obos.subSupportVessels[0][16] = 1;
+			obos.subSupportVessels[0][16] = 2;
 			obos.subSupportVessels[0][20] = 37;
 			obos.subSupportVessels[1][1] = 20.6;
 			obos.subSupportVessels[1][2] = 5.4;
@@ -1789,7 +1755,7 @@ public:
 		obos.turbFeederBarge[13] = 2;
 		obos.turbFeederBarge[14] = 70000;
 		obos.turbFeederBarge[15] = 3;
-		obos.turbFeederBarge[16] = 2;
+		obos.turbFeederBarge[16] = 1;
 		//substructure feeder barge
 		obos.subFeederBarge[0] = 22;
 		obos.subFeederBarge[1] = 75.6;
@@ -1807,7 +1773,7 @@ public:
 		obos.subFeederBarge[13] = 2;
 		obos.subFeederBarge[14] = 70000;
 		obos.subFeederBarge[15] = 3;
-		obos.subFeederBarge[16] = 2;
+		obos.subFeederBarge[16] = 1;
 		//array cable install vessel
 		obos.arrCabInstVessel[0] = 16;
 		obos.arrCabInstVessel[1] = 111.1;
@@ -1876,6 +1842,19 @@ public:
 		assign("totPnSCost", var_data(obos.totPnSCost));
 		assign("totEnMCost", var_data(obos.totEnMCost));
 		assign("totDevCost", var_data(obos.totDevCost));
+        assign("totInstTime", var_data(obos.totInstTime));
+        assign("entrExitCost", var_data(obos.entrExitCost));
+        assign("wharfCost", var_data(obos.wharfCost));
+        assign("dockCost", var_data(obos.dockCost));
+        assign("subLayCost", var_data(obos.subLayCost));
+        assign("turbLayCost", var_data(obos.turbLayCost));
+        assign("craneCost", var_data(obos.craneCost));
+		assign("turbInstTime", var_data(obos.turbInstTime));
+		assign("subInstTime", var_data(obos.subInstTime));
+		assign("arrInstTime", var_data(obos.arrInstTime));
+		assign("expInstTime", var_data(obos.expInstTime));
+		assign("subsInstTime", var_data(obos.subsInstTime));
+		assign("commissioning", var_data(obos.commissioning));
 	}
 };
 

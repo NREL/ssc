@@ -404,18 +404,18 @@ double wobos::InterfacesCable1(double& fullStrings, double& nTurbPS, double& nTu
 double wobos::InterfacesCable2(double& fullStrings, double& nTurbPS, double&nTurbCab1, double& nTurbCab2)
 {
 	//calculate maximum values and store in 'a' and 'b'
-	double a = nTurbCab2 - nTurbCab1;
-	if (a < 0) a = 0;
-	double b = nTurbPS - nTurbCab1 - 1;
-	if (b < 0) b = 0;
+	double max1 = nTurbCab2 - nTurbCab1;
+    if(max1 <= 0) max1 = 0;
+	double max2 = nTurbPS - nTurbCab1 - 1;
+    if(max2 <= 0) max2 = 0;
 
 	if ((nTurbPS == 0))//check if any partial strings exist
 	{
-		return (a*fullStrings + b) * 2;
+		return (max1*fullStrings + max2) * 2;
 	}
 	else
 	{
-		return ((a*fullStrings + b) * 2) + 1;
+		return ((max1*fullStrings + max2) * 2) + 1;
 	}
 }
 
@@ -473,10 +473,10 @@ double wobos::Cable1Length(double& nTurbInter1)
 double wobos::Cable2Length(double& nTurbCab1, double& nTurbCab2, double& fullStrings, double& nTurbPS)
 {
 	//calculate maximum values and store in 'max1' and 'max2'
-	double max1 = nTurbCab2 - nTurbCab1 - 1;
-	if (max1 < 0) max1 = 0;
+	double max1 = nTurbCab2 - nTurbCab1 -1;
+    if(max1 <= 0) max1 = 0;
 	double max2 = nTurbPS - nTurbCab1 - 1;
-	if (max2 < 0) max2 = 0;
+    if(max2 <= 0) max2 = 0;
 
 	double stringFac;
 	//'stringFac' changes depending on if a partial string exists
@@ -1067,10 +1067,10 @@ double wobos::ArrayCabInstTime(double& cab1Leng, double& cab2Leng, double& inter
 	double fac1;
 	double fac2;
 
-	double max1 = nTurbCab2 - nTurbCab1 - 1;
-	if (max1 < 0) max1 = 0;
+	double max1 = nTurbCab2 - nTurbCab1;
+    if(max1 <= 0) max1 = 0;
 	double max2 = nTurbPS - nTurbCab1 - 1;
-	if (max2 < 0) max2 = 0;
+    if(max2 <= 0) max2 = 0;
 
 	//check if cable is buried or not
 	if (buryDepth > 0)
@@ -1222,8 +1222,16 @@ void wobos::SubInstCost()
 		//populate vectors with vessel identifier values and costs
 		subCostsByVessel[0][0] = subInstVessel[0];
 		subCostsByVessel[1][0] = subFeederBarge[0];
+        if(substructure == SPAR)
+        {
+		subCostsByVessel[0][1] = subInstVessel[16] * subInstVessel[14] * moorTime;
+        subCostsByVessel[1][1] = subFeederBarge[16] * subFeederBarge[14] * (subInstTime-moorTime);
+        }
+        else
+        {
 		subCostsByVessel[0][1] = subInstVessel[16] * subInstVessel[14] * subInstTime;
 		subCostsByVessel[1][1] = subFeederBarge[16] * subFeederBarge[14] * subInstTime;
+        }
 
         if(substructure == MONOPILE)//change
         {
@@ -1233,6 +1241,10 @@ void wobos::SubInstCost()
 		for (int i = 3; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i][0] = subSupportVessels[i - 3][0];
+            if(substructure == SPAR)
+			subCostsByVessel[i][1] = subSupportVessels[i - 3][16] * subSupportVessels[i - 3][14]
+				* (subInstTime - moorTime);
+            else
 			subCostsByVessel[i][1] = subSupportVessels[i - 3][16] * subSupportVessels[i - 3][14]
 				* subInstTime;
 		}
@@ -1284,7 +1296,7 @@ void wobos::ElectricalInstCost()
 	elecCostsByVessel[2][1] = substaInstVessel[14] * substaInstVessel[16] * subsInstTime;
     }
     elecCostsByVessel[3][1] = elecTugs[0][14] * elecTugs[0][16] * subsInstTime;
-    elecCostsByVessel[3][0] = elecTugs[1][14] * elecTugs[1][16] * subsInstTime;
+    elecCostsByVessel[4][1] = elecTugs[1][14] * elecTugs[1][16] * subsInstTime;
 	for (int i = 5; i < elecCostsByVessel.size(); i++)
 	{
 		elecCostsByVessel[i][0] = elecSupportVessels[i - 5][0];
@@ -1297,7 +1309,7 @@ void wobos::ElectricalInstCost()
 void wobos::VesselMobDemobCost()
 {
 	//size cost vector to fit all support vessels for entire installation
-	mobDemobCostByVessel.resize(subSupportVessels.size() + turbSupportVessels.size() + elecSupportVessels.size() + 8);
+	mobDemobCostByVessel.resize(subSupportVessels.size() + turbSupportVessels.size() + elecSupportVessels.size() + 10);
 	for (size_t i = 0; i < mobDemobCostByVessel.size(); i++)
 	{
 		mobDemobCostByVessel[i].resize(2);
@@ -1309,7 +1321,7 @@ void wobos::VesselMobDemobCost()
 	mobDemobCostByVessel[4][0] = substaInstVessel[0];
     mobDemobCostByVessel[5][0] = scourProtVessel[0];
     mobDemobCostByVessel[6][0] = elecTugs[0][0];
-    mobDemobCostByVessel[6][0] = elecTugs[1][0];
+    mobDemobCostByVessel[7][0] = elecTugs[1][0];
 	mobDemobCostByVessel[0][1] = turbInstVessel[14] * turbInstVessel[15] * turbInstVessel[16];
 	mobDemobCostByVessel[1][1] = subInstVessel[14] * subInstVessel[15] * subInstVessel[16];
 	mobDemobCostByVessel[2][1] = arrCabInstVessel[14] * arrCabInstVessel[15] * arrCabInstVessel[16];
@@ -1318,32 +1330,40 @@ void wobos::VesselMobDemobCost()
     mobDemobCostByVessel[5][1] = scourProtVessel[14] * scourProtVessel[15] * scourProtVessel[16];
     mobDemobCostByVessel[6][1] = elecTugs[0][14] * elecTugs[0][15] * elecTugs[0][16];
     mobDemobCostByVessel[7][1] = elecTugs[1][14] * elecTugs[1][15] * elecTugs[1][16];
+    if(installStrategy == FEEDERBARGE || substructure == SPAR)
+    {
+        mobDemobCostByVessel[8][0] = turbFeederBarge[0];
+        mobDemobCostByVessel[9][0] = subFeederBarge[0];
+        mobDemobCostByVessel[8][1] = turbFeederBarge[14] * turbFeederBarge[15] * turbFeederBarge[16];
+        mobDemobCostByVessel[9][1] = subFeederBarge[14] * subFeederBarge[15] * subFeederBarge[16];
+    }
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 8; i < turbSupportVessels.size(); i++)
+	for (int i = 10; i < turbSupportVessels.size(); i++)
 	{
-		mobDemobCostByVessel[i][0] = turbSupportVessels[i-8][0];
-		mobDemobCostByVessel[i][1] = turbSupportVessels[i-8][14] * turbSupportVessels[i-8][15] * turbSupportVessels[i-8][16];
+		mobDemobCostByVessel[i][0] = turbSupportVessels[i-10][0];
+		mobDemobCostByVessel[i][1] = turbSupportVessels[i-10][14] * turbSupportVessels[i-10][15] * turbSupportVessels[i-10][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 8 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
+	for (int i = 10 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
 	{
-		mobDemobCostByVessel[i][0] = subSupportVessels[i - turbSupportVessels.size()-8][0];
-		mobDemobCostByVessel[i][1] = subSupportVessels[i - turbSupportVessels.size()-8][14] * subSupportVessels[i - turbSupportVessels.size()-8][15]
-			* subSupportVessels[i - turbSupportVessels.size()-8][16];
+		mobDemobCostByVessel[i][0] = subSupportVessels[i - turbSupportVessels.size()-10][0];
+		mobDemobCostByVessel[i][1] = subSupportVessels[i - turbSupportVessels.size()-10][14] * subSupportVessels[i - turbSupportVessels.size()-10][15]
+			* subSupportVessels[i - turbSupportVessels.size()-10][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 8 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
+	for (int i = 10 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
 		+ elecSupportVessels.size(); i++)
 	{
-		mobDemobCostByVessel[i][0] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][0];
-		mobDemobCostByVessel[i][1] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][14]
-			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][15]
-			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-8][16];
+		mobDemobCostByVessel[i][0] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-10][0];
+		mobDemobCostByVessel[i][1] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-10][14]
+			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-10][15]
+			* elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-10][16];
 	}
 
 	//create an iterator to iterate through vessel identifier values
 	//and place duplicates at the end of the vector
 	vector<vector<double> >::iterator it;
+    sort(mobDemobCostByVessel.begin(),mobDemobCostByVessel.end());
 	it = unique(mobDemobCostByVessel.begin(), mobDemobCostByVessel.end());
 
 	//resize the cost vector to get rid of the duplicate support vessels stored at the end of the vector
@@ -1536,7 +1556,7 @@ double wobos::NumCranes()
 		switch (substructure)
 		{
 		case SPAR:
-			nCrane600 = 3;
+			nCrane1000 = 1;
 			break;
 		case SEMISUBMERSIBLE:
 			nCrane1000 = 1;
@@ -1781,27 +1801,27 @@ void wobos::ArrayCabCostOptimizer()
 					nTurbPS[k][j],
 					nTurbCab[k][i]);
 
-				nTurbInter2[k][j] = InterfacesCable2(strings[k][j],
+				nTurbInter2[k][i] = InterfacesCable2(strings[k][j],
 					nTurbPS[k][j],
 					nTurbCab[k][i],
 					nTurbCab[k][j]);
 
 				cab1Leng[k][i] = Cable1Length(nTurbInter1[k][i]);
 
-				cab2Leng[k][j] = Cable2Length(nTurbCab[k][i], nTurbCab[k][j], strings[k][j], nTurbPS[k][j]);
+				cab2Leng[k][i] = Cable2Length(nTurbCab[k][i], nTurbCab[k][j], strings[k][j], nTurbPS[k][j]);
 
 				cabCost1[k][i] = ArrayCable1Cost(cab1Leng[k][i], arrCables[k][i][1], arrCables[k][i][4],
 					nTurbInter1[k][i]);
 
-				cabCost2[k][j] = ArrayCable2Cost(cab2Leng[k][j], arrCables[k][j][1], arrCables[k][j][4], nTurbInter2[k][j],
+				cabCost2[k][i] = ArrayCable2Cost(cab2Leng[k][i], arrCables[k][j][1], arrCables[k][j][4], nTurbInter2[k][j],
 					subsInter[k][j], arrCables[k][j][5]);
 
-				instTime[k][j] = ArrayCabInstTime(cab1Leng[k][i], cab2Leng[k][j],
+				instTime[k][i] = ArrayCabInstTime(cab1Leng[k][i], cab2Leng[k][j],
 					nTurbInter1[k][i], nTurbInter2[k][j],
 					nCab1Sec[k][i], nCab2Sec[k][j], strings[k][j],
 					nTurbPS[k][j], nTurbCab[k][i], nTurbCab[k][i], nTurbCab[k][j]);
 
-				newCost = cabCost1[k][i] + cabCost2[k][j] + instTime[k][j] * arrCabInstVessel[14]
+				newCost = cabCost1[k][i] + cabCost2[k][i] + instTime[k][i] * arrCabInstVessel[14]
 					+ (cab1Leng[k][i] + cab2Leng[k][j])*cabSurveyCR;
 				if ((k == 0) && (i == 0) && (j == 1))
 				{
