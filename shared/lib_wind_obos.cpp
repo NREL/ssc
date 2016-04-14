@@ -403,19 +403,19 @@ double wobos::InterfacesCable1(double& fullStrings, double& nTurbPS, double& nTu
 //calculate the number of turbine interfaces on array cable 2
 double wobos::InterfacesCable2(double& fullStrings, double& nTurbPS, double&nTurbCab1, double& nTurbCab2)
 {
-	//calculate maximum values and store in 'max1' and 'max2'
-	vector <double> a = { (nTurbCab2 - nTurbCab1), 0 };
-	vector <double> b = { (nTurbPS - nTurbCab1 - 1), 0 };
-	double max1 = *max_element(a.begin(), a.end());
-	double max2 = *max_element(b.begin(), b.end());
+	//calculate maximum values and store in 'a' and 'b'
+	double a = nTurbCab2 - nTurbCab1;
+	if (a < 0) a = 0;
+	double b = nTurbPS - nTurbCab1 - 1;
+	if (b < 0) b = 0;
 
 	if ((nTurbPS == 0))//check if any partial strings exist
 	{
-		return (max1*fullStrings + max2) * 2;
+		return (a*fullStrings + b) * 2;
 	}
 	else
 	{
-		return ((max1*fullStrings + max2) * 2) + 1;
+		return ((a*fullStrings + b) * 2) + 1;
 	}
 }
 
@@ -473,10 +473,11 @@ double wobos::Cable1Length(double& nTurbInter1)
 double wobos::Cable2Length(double& nTurbCab1, double& nTurbCab2, double& fullStrings, double& nTurbPS)
 {
 	//calculate maximum values and store in 'max1' and 'max2'
-	vector<double> a = { (nTurbCab2 - nTurbCab1 - 1), 0 };
-	vector<double> b = { (nTurbPS - nTurbCab1 - 1), 0 };
-	double max1 = *max_element(a.begin(), a.end());
-	double max2 = *max_element(b.begin(), b.end());
+	double max1 = nTurbCab2 - nTurbCab1 - 1;
+	if (max1 < 0) max1 = 0;
+	double max2 = nTurbPS - nTurbCab1 - 1;
+	if (max2 < 0) max2 = 0;
+
 	double stringFac;
 	//'stringFac' changes depending on if a partial string exists
 	if (nSubstation > 0)//protect against division by zero if 'nSubstation' is zero
@@ -1065,10 +1066,12 @@ double wobos::ArrayCabInstTime(double& cab1Leng, double& cab2Leng, double& inter
 {
 	double fac1;
 	double fac2;
-	vector<double> array1 = { nTurbCab2 - nTurbCab1 - 1, 0 };
-	vector<double> array2 = { nTurbPS - nTurbCab1 - 1, 0 };
-	double max1 = *max_element(array1.begin(), array1.end());
-	double max2 = *max_element(array2.begin(), array2.end());
+
+	double max1 = nTurbCab2 - nTurbCab1 - 1;
+	if (max1 < 0) max1 = 0;
+	double max2 = nTurbPS - nTurbCab1 - 1;
+	if (max2 < 0) max2 = 0;
+
 	//check if cable is buried or not
 	if (buryDepth > 0)
 	{
