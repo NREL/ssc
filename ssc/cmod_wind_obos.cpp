@@ -363,6 +363,9 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_NUMBER,      "decomCost",                      "Decommissioning Expense",                                  "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "totDevCost",                     "Total Development Cost",                                   "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "commissioning",                  "Plant Commissioning Cost",                                 "$",                  "",                       "wobos",            "",                        "",                              ""},
+   
+   //Total BOS Cost
+   {SSC_OUTPUT,        SSC_NUMBER,      "totalBOScost",                   "Total Balance of System Cost",                             "$",                  "",                       "wobos",            "",                        "",                              ""},
 
    var_info_invalid};
 
@@ -1855,6 +1858,9 @@ public:
 		assign("expInstTime", var_data(obos.expInstTime));
 		assign("subsInstTime", var_data(obos.subsInstTime));
 		assign("commissioning", var_data(obos.commissioning));
+
+		double totalBOScost = obos.totDevCost + obos.totEnMCost + obos.totPnSCost + obos.subTotCost + obos.totElecCost + obos.totAnICost + obos.commissioning;
+		assign("totalBOScost", var_data(totalBOScost));
 	}
 };
 
