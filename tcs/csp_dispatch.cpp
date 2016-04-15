@@ -1297,7 +1297,8 @@ std::string csp_dispatch_opt::write_ampl()
         //sprintf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
 
         stringstream outname;
-        outname << solver_params.ampl_data_dir << "data_" << day << ".dat";
+        //outname << solver_params.ampl_data_dir << "data_" << day << ".dat";        
+        outname << solver_params.ampl_data_dir << "sdk_data.dat";
         
         sname = outname.str();    //save string
 
