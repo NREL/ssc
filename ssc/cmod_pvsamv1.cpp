@@ -2043,14 +2043,17 @@ public:
 							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]",
 							nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
-						if( radmode == POA_R || radmode == POA_P) {
-							double gh_temp, df_temp, dn_temp;
-							gh_temp = df_temp = dn_temp = 0;
-							irr.get_irrad(&gh_temp, &dn_temp, &df_temp); 
-							p_irrad_calc[1][idx] = (ssc_number_t)df_temp;
-							p_irrad_calc[2][idx] = (ssc_number_t)dn_temp;
+						// p_irrad_calc is only weather file records long...
+						if (iyear == 0)
+						{
+							if (radmode == POA_R || radmode == POA_P) {
+								double gh_temp, df_temp, dn_temp;
+								gh_temp = df_temp = dn_temp = 0;
+								irr.get_irrad(&gh_temp, &dn_temp, &df_temp);
+								p_irrad_calc[1][idx] = (ssc_number_t)df_temp;
+								p_irrad_calc[2][idx] = (ssc_number_t)dn_temp;
+							}
 						}
-
 						// beam, skydiff, and grounddiff IN THE PLANE OF ARRAY
 						double ibeam, iskydiff, ignddiff;
 						double ipoa; // Container for direct POA measurements
@@ -2280,7 +2283,8 @@ public:
 								}
 							}
 
-							else if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, p_beam[idx], ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, sa[nn].ssout)) 
+//							else if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, p_beam[idx], ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, sa[nn].ssout)) 
+							else if (ss_exec(sa[nn].sscalc, stilt, sazi, solzen, solazi, wf.dn, ibeam, (iskydiff + ignddiff), alb, trackbool, linear, shad1xf, sa[nn].ssout))
 							{
 								if (linear) //fixed tilt linear
 								{
