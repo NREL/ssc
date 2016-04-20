@@ -932,8 +932,8 @@ public:
 		int num_subarrays = 1;
 
 
-		// check to see if shading database needs to be created;
-		bool create_shade_db = true;
+		// check to see if shading database needs to be created; updated 4/19/16
+		bool create_shade_db = false;
 		// loop over subarrays
 		for ( size_t nn=0;nn<4;nn++ )
 		{
@@ -991,7 +991,7 @@ public:
 			if (!sa[nn].shad.setup( this, prefix ))
 				throw exec_error("pvsamv1", prefix + "_shading: " + sa[nn].shad.get_error() );
 
-			create_shade_db = (create_shade_db && sa[nn].shad.use_shade_db());
+			create_shade_db = (create_shade_db || sa[nn].shad.use_shade_db());
 
 			// backtracking- only required if one-axis tracker
 			if (sa[nn].track_mode == 1)
