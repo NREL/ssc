@@ -1534,17 +1534,27 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 		F[2] = G[2];
 		X[1] = w2;	//xmax Normalized maximum x-extent of the receiver
 		X[0] = -X[1];		//xmin Normalized minimum x-extent of the receiver
-        //DELSOL limits the integral based on the size of the receiver vs image size (sig_x)
-		if(X[1]/sig_x > 4.) {X[1] = 4.*sig_x;}
-		if(X[0]/sig_x < -4.) {X[0] = -4.*sig_x;}
-				
-		G[0] = X[0] * cos_t_zen - h2 * sin_t_zen;
-		F[0] = X[0] * cos_t_zen + h2 * sin_t_zen;
 
 		//Assign the aim points - relative to the flux plane
-		//keep these as simple aim points for the setup.
 		TA[0] = H.getAimPointFluxPlane()->x/tht;		//aim at the center of the flux plane (horizontally)
 		TA[1] = H.getAimPointFluxPlane()->y * sin_t_zen / tht;		//DELSOL -> YTAP(I)*sin_t_zen | the aim point is vertically scaled according to the severity of the view angle
+
+        //DELSOL limits the integral based on the size of the receiver vs image size (sig_x)
+		//if(X[1]/sig_x > 4.) {X[1] = 4.*sig_x;}
+		//if(X[0]/sig_x < -4.) {X[0] = -4.*sig_x;}
+
+        double siglim = 4.*sqrt(sig_x*sig_x + sig_y*sig_y);
+
+        if( siglim < w2 )
+        {
+            double xprime = (TA[0] < 0. ? -1. : 1.) * fmin(fabs(TA[0]), w2 - siglim);
+            X[0] = - siglim;
+            X[1] =   siglim; 
+            TA[0] += -xprime;
+        }
+        				
+        G[0] = X[0] * cos_t_zen - h2 * sin_t_zen;
+		F[0] = X[0] * cos_t_zen + h2 * sin_t_zen;
 
 		G[3] = F[3] = X[1]*X[1];
 
@@ -2964,6 +2974,8 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
         //the relative position of the intersection on the image plain
         Point *aim = H.getAimPoint();       //global coordinates
         Point *hloc = H.getLocation();
+
+        int hid = H.getId();
 
         Vect h_to_r;
         h_to_r.Set(aim->x - hloc->x, aim->y - hloc->y, aim->z - hloc->z);   //vector from heliostat to receiver -- aimpoint line
