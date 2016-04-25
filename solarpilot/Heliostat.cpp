@@ -117,7 +117,7 @@ void Heliostat::setCantMethod(int method){
 void Heliostat::setCantVector(Vect &cant){_cant_vect.Set(cant.i, cant.j, cant.k);}
 void Heliostat::setCantVector(double cant[3]){_cant_vect.Set(cant[0], cant[1], cant[2]);}
 void Heliostat::setFocusMethod(int method){_focus_method = method;}
-void Heliostat::setSlantRange(double L){_slant = L; if(_cant_method == CANT_TYPE::AT_SLANT){_xfocal = L; _yfocal = L;}}
+void Heliostat::setSlantRange(double L){_slant = L;} // if(_cant_method == CANT_TYPE::AT_SLANT){_xfocal = L; _yfocal = L;}}
 void Heliostat::setFocalLengthX(double L){_xfocal = L;}
 void Heliostat::setFocalLengthY(double L){_yfocal = L;}
 void Heliostat::setFocalLength(double L){_yfocal = L; _xfocal = L;}
