@@ -1057,6 +1057,9 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 			if(layout->at(i).is_user_cant) {
 				cant_method = Heliostat::CANT_TYPE::USER_VECTOR;
 				hptr->IsUserCant( true );
+                Vect cant;
+                cant.Set( layout->at(i).cant.i, layout->at(i).cant.j, layout->at(i).cant.k );
+                hptr->setCantVector( cant );
 			}
 			else{
 				cant_method = hptr->getCantMethod();
@@ -1065,6 +1068,8 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 
 			if(layout->at(i).is_user_focus) {
 				focus_method = 3;	//user defined
+                hptr->setFocalLengthX( layout->at(i).focal_x );
+                hptr->setFocalLengthY( layout->at(i).focal_y );
 			}
 			else{
 				focus_method = hptr->getFocusMethod();
