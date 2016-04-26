@@ -1422,6 +1422,7 @@ bool csp_dispatch_opt::optimize_ampl()
     8.  s_t (nt)
     9.  energy used for cycle startup (nt)
     10. energy used for receiver startup (nt)
+    11. x_t^r   solar field energy produced (nt)
 
     Each item will be on it's own line. Values in arrays are separated by commas.
     */
@@ -1436,6 +1437,7 @@ bool csp_dispatch_opt::optimize_ampl()
     outputs.tes_charge_expected.resize(nt, 0.);
     outputs.q_pb_startup.resize(nt, 0.);
     outputs.q_rec_startup.resize(nt, 0.);
+    outputs.q_sf_expected.resize(nt, 0.);
 
     
     util::to_double(F.at(0), &outputs.objective);
@@ -1479,7 +1481,9 @@ bool csp_dispatch_opt::optimize_ampl()
     svals = util::split( F.at(9), "," );
     for(int i=0; i<nt; i++)
         util::to_double( svals.at(i), &outputs.q_rec_startup.at(i) );
-
+    svals = util::split( F.at(10), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.q_sf_expected.at(i) );
     return true;
 }
 
