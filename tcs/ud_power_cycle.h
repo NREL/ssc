@@ -88,7 +88,72 @@ public:
 
 };
 
+class C_od_pc_function
+{
 
+public:
+
+	struct S_f_inputs
+	{	// Power cycle function inputs
+
+		// From CSP System
+		double m_T_htf_hot;		//[C] Hot HTF temperature from the receiver or storage
+		double m_m_dot_htf_ND;	//[-] HTF mass flow rate
+
+		// Ambient Conditions
+		double m_T_amb;			//[C] Ambient temperature
+
+		S_f_inputs()
+		{
+			m_T_htf_hot = m_m_dot_htf_ND = m_T_amb = std::numeric_limits<double>::quiet_NaN();
+		}	
+	};
+
+	struct S_f_outputs
+	{	// Power cycle function outputs
+
+		double m_W_dot_gross_ND;	//[-] Off-design power / Design-point power
+		double m_Q_dot_in_ND;		//[-] Off-design thermal power / Design-point thermal power
+		double m_W_dot_cooling_ND;	//[-] Off-design cooling power / Design-point cooling power
+		double m_m_dot_water_ND;	//[-] Off-design mass flow rate / Design-point mass flow rate
+
+		S_f_outputs()
+		{
+			m_W_dot_gross_ND = m_Q_dot_in_ND = m_W_dot_cooling_ND = m_m_dot_water_ND = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	C_od_pc_function()
+	{
+	}
+	~C_od_pc_function()
+	{
+	}
+
+	virtual int operator()(S_f_inputs inputs, S_f_outputs & outputs) = 0;
+};
+
+class C_ud_pc_table_generator
+{
+
+private:
+	C_od_pc_function &mf_pc_eq;
+
+public:
+
+	C_csp_messages mc_messages;
+
+	C_ud_pc_table_generator(C_od_pc_function & f_pc_eq);
+
+	~C_ud_pc_table_generator(){}
+
+	int generate_tables(double T_htf_ref /*C*/, double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
+		double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
+		double m_dot_htf_ND_ref /*-*/, double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
+		util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ind);
+};
+
+//S_f_outputs(*mf_cycle)(S_f_inputs inputs);
 
 
 

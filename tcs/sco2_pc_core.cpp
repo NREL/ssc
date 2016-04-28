@@ -462,6 +462,16 @@ void C_turbine::off_design_turbine(double T_in, double P_in, double P_out, doubl
 	m_dot = C_s*ms_des_solved.m_A_nozzle*D_in;			//[kg/s] Mass flow rate through turbine
 	ms_od_solved.m_w_tip_ratio = U_tip / ssnd_in;		//[-] Ratio of the tip speed to the local (turbine inlet) speed of sound
 	ms_od_solved.m_N = N;
+	ms_od_solved.m_W_dot_out = m_dot*(h_in-h_out);		//[kW] Turbine power output
+}
+
+void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out)
+{
+	double N = ms_des_solved.m_N_design;		//[rpm]
+
+	off_design_turbine(T_in, P_in, P_out, N, error_code, m_dot, T_out);
+
+	return;
 }
 
 void C_compressor::compressor_sizing(const S_design_parameters & des_par_in, int & error_code)
@@ -500,7 +510,49 @@ void C_compressor::compressor_sizing(const S_design_parameters & des_par_in, int
 	// Set other compressor member data
 	ms_des_solved.m_w_tip_ratio = U_tip / ssnd_out;
 	ms_des_solved.m_eta_design = w_i / (ms_des_par.m_h_out - ms_des_par.m_h_in);
+	ms_des_solved.m_phi_des = m_snl_phi_design;
+	ms_des_solved.m_phi_surge = m_snl_phi_min;
+	ms_des_solved.m_phi_max = m_snl_phi_max;
+
+	ms_des_solved.m_n_stages = 1;
 }
+
+void C_compressor::od_comp_phi_opt(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	int &error_code, double &T_out /*K*/, double &P_out /*kPa*/)
+{
+	double phi = m_snl_phi_design;
+
+	od_comp_phi(phi, T_in, P_in, m_dot, error_code, T_out, P_out);
+
+	return;
+}
+
+void C_compressor::od_comp_phi(double phi_in /*-*/, double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	int &error_code, double &T_out /*K*/, double &P_out /*kPa*/)
+{
+	CO2_state co2_props;
+
+	// Get properties at the inlet state of the compressor
+	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = 1;
+		return;
+	}
+	double rho_in = co2_props.dens;
+	double h_in = co2_props.enth;
+	double s_in = co2_props.entr;
+
+	// Want design-point value of phi
+	double U_tip = m_dot / (rho_in*pow(ms_des_solved.m_D_rotor, 2)*phi_in);	//[m/s]
+	double N_mc = U_tip / (ms_des_solved.m_D_rotor*0.5*0.104719755);		//[rpm]
+
+	// Can now call performance call that requires shaft speed
+	off_design_compressor(T_in, P_in, m_dot, N_mc, error_code, T_out, P_out);
+
+	return;
+}
+
 
 void C_compressor::off_design_compressor(double T_in, double P_in, double m_dot, double N_in, int & error_code, double & T_out, double & P_out)
 {
@@ -571,7 +623,11 @@ void C_compressor::off_design_compressor(double T_in, double P_in, double m_dot,
 
 	// Set a few compressor variables
 	ms_od_solved.m_phi = phi;
+	ms_od_solved.m_surge_safety = phi / m_snl_phi_min;	//[-] If > 1, then not in surge
 	ms_od_solved.m_w_tip_ratio = U_tip / ssnd_out;
+	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);	//[kWe]
+	ms_od_solved.m_P_in = P_in;		//[kPa]
+	ms_od_solved.m_P_out = P_out;	//[kPa]
 }
 
 void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in, int & error_code)
@@ -580,16 +636,8 @@ void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in,
 
 	CO2_state co2_props;
 
-	int prop_error_code = CO2_TD(ms_des_par.m_T_out, ms_des_par.m_D_out, &co2_props);
-	if( prop_error_code != 0 )
-	{
-		error_code = prop_error_code;
-		return;
-	}
-	double ssnd_out = co2_props.ssnd;
-
 	// Ideal specific enthalpy after compression
-	prop_error_code = CO2_PS(ms_des_par.m_P_out, ms_des_par.m_s_in, &co2_props);
+	int prop_error_code = CO2_PS(ms_des_par.m_P_out, ms_des_par.m_s_in, &co2_props);
 	if( prop_error_code != 0 )
 	{
 		error_code = prop_error_code;
@@ -614,6 +662,10 @@ void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in,
 	double D_rotor_2 = -999.9;
 	double N_design = -999.9;
 
+	double ssnd_int = std::numeric_limits<double>::quiet_NaN();
+	double U_tip_1 = std::numeric_limits<double>::quiet_NaN();
+	double U_tip_2 = std::numeric_limits<double>::quiet_NaN();
+
 	int i = -1;
 	for( i = 0; i < max_iter; i++ )
 	{
@@ -628,7 +680,7 @@ void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in,
 		double h_s_out = co2_props.enth;
 
 		double w_i = h_s_out - ms_des_par.m_h_in;				//[kJ/kg] positive isentropic specific work of first stage
-		double U_tip_1 = sqrt(1000.0 * w_i / psi_design);		//[m/s]
+		U_tip_1 = sqrt(1000.0 * w_i / psi_design);		//[m/s]
 		D_rotor_1 = sqrt(ms_des_par.m_m_dot / (m_snl_phi_design*ms_des_par.m_D_in*U_tip_1));	//[m]
 		double N_rad_s = U_tip_1*2.0 / D_rotor_1;				//[rad/s]
 		N_design = N_rad_s*9.549296590;					//[rpm]
@@ -643,7 +695,7 @@ void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in,
 		}
 		double D_int = co2_props.dens;
 		double s_int = co2_props.entr;
-		double ssnd_int = co2_props.ssnd;
+		ssnd_int = co2_props.ssnd;
 
 		// Second stage
 		prop_error_code = CO2_PS(ms_des_par.m_P_out, s_int, &co2_props);
@@ -655,7 +707,7 @@ void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in,
 		h_s_out = co2_props.enth;
 
 		w_i = h_s_out - h_int;			// positive isentropic specific work of second stage
-		double U_tip_2 = sqrt(1000.0*w_i / psi_design);
+		U_tip_2 = sqrt(1000.0*w_i / psi_design);
 		D_rotor_2 = 2.0*U_tip_2 / (N_design*0.104719755);
 		double phi = ms_des_par.m_m_dot / (D_int*U_tip_2*pow(D_rotor_2, 2));	//[-] Flow coefficient
 		double eta_2_req = w_i / (ms_des_par.m_h_out - h_int);				//[-] Required second stage efficiency to achieve overall eta_design
@@ -701,6 +753,25 @@ void C_recompressor::recompressor_sizing(const S_design_parameters & des_par_in,
 	ms_des_solved.m_D_rotor_2 = D_rotor_2;
 	ms_des_solved.m_eta_design = eta_stage;
 	ms_des_solved.m_N_design = N_design;
+	
+	// Calculate tip ratios for each stage
+		// 1st stage (ssnd calculated in iteration loop above)
+	ms_des_solved.m_w_tip_ratio_1 = U_tip_1 / ssnd_int;
+
+		// 2nd stage
+	prop_error_code = CO2_TD(ms_des_par.m_T_out, ms_des_par.m_D_out, &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	double ssnd_out_2 = co2_props.ssnd;
+	ms_des_solved.m_w_tip_ratio_2 = U_tip_2 / ssnd_out_2;
+	
+
+	ms_des_solved.m_phi_des = m_snl_phi_design;
+	ms_des_solved.m_phi_min = m_snl_phi_min;
+	ms_des_solved.m_n_stages = 2;
 
 }
 
@@ -871,6 +942,8 @@ void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_
 	ms_od_solved.m_phi_2 = phi_2;
 	ms_od_solved.m_w_tip_ratio = max(U_tip_1 / ssnd_int, U_tip_2 / ssnd_out);	// store ratio
 	ms_od_solved.m_surge = phi_1 < m_snl_phi_min || phi_2 < m_snl_phi_min;
+	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);		//[kWe]
+	ms_od_solved.m_surge_safety = min(phi_1,phi_2)/m_snl_phi_min;
 }
 
 void C_RecompCycle::design_core_bypass(int & error_code)
@@ -3975,6 +4048,780 @@ void C_RecompCycle::off_design(S_od_parameters & od_par_in, int & error_code)
 	off_design_core(od_error_code);
 
 	error_code = od_error_code;
+}
+
+void C_RecompCycle::off_design_phi(S_od_phi_par & od_phi_par_in, int & error_code)
+{
+	ms_od_phi_par = od_phi_par_in;
+
+	int od_error_code = 0;
+
+	off_design_phi_core(od_error_code);
+
+	error_code = od_error_code;
+}
+
+int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/, double *diff_m_dot_t /*-*/)
+{
+	// Values that we will know and have to pass in through member data
+	double T_mc_in = mpc_rc_cycle->ms_od_turbo_bal_par.m_T_mc_in;		//[K]
+	double P_mc_in = mpc_rc_cycle->ms_od_turbo_bal_par.m_P_mc_in;		//[kPa]
+	double f_recomp = mpc_rc_cycle->ms_od_turbo_bal_par.m_f_recomp;		//[-]
+	double T_t_in = mpc_rc_cycle->ms_od_turbo_bal_par.m_T_t_in;			//[K]
+	double phi_mc = mpc_rc_cycle->ms_od_turbo_bal_par.m_phi_mc;			//[-]
+
+	// Calculate main compressor mass flow rate
+	double m_dot_mc = (1.0 - f_recomp)*m_dot_t_in;		//[kg/s]
+
+	// Calculate main compressor performance
+	int mc_err_code = 0;
+	double T_mc_out, P_mc_out;
+	T_mc_out = P_mc_out = std::numeric_limits<double>::quiet_NaN();
+
+	mpc_rc_cycle->m_mc.od_comp_phi(phi_mc, T_mc_in, P_mc_in, m_dot_mc, mc_err_code, T_mc_out, P_mc_out);
+	
+		// Check that main compressor performance solved
+	if(mc_err_code != 0)
+	{
+		*diff_m_dot_t = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] = P_mc_out;	//[kPa]
+	mpc_rc_cycle->m_temp_od[C_RecompCycle::MC_OUT] = T_mc_out;	//[K]
+
+		// Calculate main compressor power
+	int prop_err_code = CO2_TP(T_mc_out, P_mc_out, &mc_co2_props);
+
+	// Calculate scaled pressure drops through heat exchanger
+	std::vector<double> DP_LT, DP_HT, DP_PHX, DP_PC;
+	std::vector<double> m_dot_LT;
+	m_dot_LT.push_back(m_dot_mc);
+	m_dot_LT.push_back(m_dot_t_in);
+	mpc_rc_cycle->m_LT.hxr_pressure_drops(m_dot_LT, DP_LT);
+
+	std::vector<double> m_dot_HT;
+	m_dot_HT.push_back(m_dot_t_in);
+	m_dot_HT.push_back(m_dot_t_in);
+	mpc_rc_cycle->m_HT.hxr_pressure_drops(m_dot_HT, DP_HT);
+
+	std::vector<double> m_dot_PHX;
+	m_dot_PHX.push_back(m_dot_t_in);
+	m_dot_PHX.push_back(0.0);
+	mpc_rc_cycle->m_PHX.hxr_pressure_drops(m_dot_PHX, DP_PHX);
+
+	std::vector<double> m_dot_PC;
+	m_dot_PC.push_back(0.0);
+	m_dot_PC.push_back(m_dot_mc);
+	mpc_rc_cycle->m_PC.hxr_pressure_drops(m_dot_PC, DP_PC);
+
+	// Apply pressure drops to heat exchangers, fully defining the pressure at all states
+	int cpp_offset = 1;
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] - DP_LT[1 - cpp_offset];		// LT recuperator (cold stream)
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::MIXER_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT];								// Assume no pressure drop in mixing valve
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::RC_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT];								// Assume no pressure drop in mixing valve
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::HTR_HP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::MIXER_OUT] - DP_HT[1 - cpp_offset];		// HT recuperator (cold stream)
+	double P_t_in = mpc_rc_cycle->m_pres_od[C_RecompCycle::TURB_IN] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_HP_OUT] - DP_PHX[1 - cpp_offset];		// PHX
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_LP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_IN] + DP_PC[2 - cpp_offset];		// precooler
+	mpc_rc_cycle->m_pres_od[C_RecompCycle::HTR_LP_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::LTR_LP_OUT] + DP_LT[2 - cpp_offset];		// LT recuperator (hot stream)
+	double P_t_out = mpc_rc_cycle->m_pres_od[C_RecompCycle::TURB_OUT] = mpc_rc_cycle->m_pres_od[C_RecompCycle::HTR_LP_OUT] + DP_HT[2 - cpp_offset];		// HT recuperator (hot stream)
+
+	// Calculate turbine performance
+	int t_err_code = 0;
+	double m_dot_t_calc, T_t_out;
+	m_dot_t_calc = T_t_out = std::numeric_limits<double>::quiet_NaN();
+	mpc_rc_cycle->m_t.od_turbine_at_N_des(T_t_in, P_t_in, P_t_out, t_err_code, m_dot_t_calc, T_t_out);
+		// Check that turbine performance solved
+	if(t_err_code != 0)
+	{
+		*diff_m_dot_t = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	mpc_rc_cycle->m_temp_od[C_RecompCycle::TURB_OUT] = T_t_out;	//[K]
+
+	// Calculate difference between calculated and guessed mass flow rate
+	*diff_m_dot_t = (m_dot_t_calc - m_dot_t_in) / m_dot_t_in;
+
+	return 0;
+}
+
+void C_RecompCycle::optimize_od_turbo_balance_csp(S_od_turbo_bal_csp_par in_params, std::vector<double> &opt_params)
+{
+	ms_od_turbo_bal_csp_par = in_params;
+	
+	int n_vars = 1;
+	if(ms_des_solved.m_is_rc)
+		n_vars = 2;
+
+	// Set up 2 variable optimization in NLOPT to screen for initial guess for full optimization
+	std::vector<double> x_bal(n_vars);
+	std::vector<double> lb_bal(n_vars);
+	std::vector<double> ub_bal(n_vars);
+	std::vector<double> scale_bal(n_vars);
+
+	// Inlet pressure (all in [kPa])
+	x_bal[0] = ms_des_solved.m_pres[C_RecompCycle::MC_IN];
+	lb_bal[0] = 1000.0;
+	ub_bal[0] = (ms_des_solved.m_pres[C_RecompCycle::MC_OUT]);
+	scale_bal[0] = 1000.0;
+
+	// Recompression fraction
+	if( n_vars == 2 )
+	{
+		x_bal[1] = ms_des_solved.m_recomp_frac;
+		lb_bal[1] = 0.0;
+		ub_bal[1] = 1.0;
+		scale_bal[1] = -x_bal[1] / 4.0;
+	}
+
+	// Reset optimization tracking structure
+	reset_ms_od_turbo_bal_csp_solved();
+
+	// Set up instance of nlopt class and set optimization parameters
+	nlopt::opt          opt_turb_bal(nlopt::LN_SBPLX, n_vars);
+	opt_turb_bal.set_lower_bounds(lb_bal);
+	opt_turb_bal.set_upper_bounds(ub_bal);
+	opt_turb_bal.set_initial_step(scale_bal);
+	opt_turb_bal.set_xtol_rel(ms_des_par.m_tol);
+
+	// Set max objective function
+	opt_turb_bal.set_max_objective(nlopt_callback_tub_bal_opt, this);
+	double max_W_net = std::numeric_limits<double>::quiet_NaN();
+	nlopt::result      W_net_opt_result = opt_turb_bal.optimize(x_bal, max_W_net);
+
+	if( ms_od_turbo_bal_csp_solved.m_W_dot_net_adj < ms_od_turbo_bal_csp_solved.m_W_dot_net )
+	{
+		double wat_to_do_here = 1.23;
+	}
+
+	opt_params = x_bal;
+}
+
+void C_RecompCycle::reset_ms_od_turbo_bal_csp_solved()
+{
+	S_od_turbo_bal_csp_solved s_temp;
+	ms_od_turbo_bal_csp_solved = s_temp;
+}
+
+void C_RecompCycle::od_turbo_bal_csp(const S_od_turbo_bal_csp_par & par_in)
+{
+	// Split between member structure
+	ms_od_turbo_bal_csp_par.m_T_mc_in = par_in.m_T_mc_in;	//[K]
+	ms_od_turbo_bal_csp_par.m_T_t_in = par_in.m_T_t_in;		//[K]
+
+	// And vector
+	std::vector<double> x(2);
+	x[0] = par_in.m_P_mc_in;		//[kPa]
+	x[1] = par_in.m_f_recomp;		//[-]
+
+	od_turbo_bal_csp_Wnet(x);
+}
+
+
+double C_RecompCycle::od_turbo_bal_csp_Wnet(const std::vector<double> &x)
+{
+	// Get cycle operation arguments from vector input	
+	ms_od_turbo_bal_csp_par.m_P_mc_in = x[0];		//[kPa]
+	if( ms_des_solved.m_is_rc )
+		ms_od_turbo_bal_csp_par.m_f_recomp = x[1];		//[-]
+	else
+		ms_od_turbo_bal_csp_par.m_f_recomp = 0.0;		//[-]
+
+	// Apply 1 var solver to find the turbine mass flow rate that balances the turbomachinery,
+	//     given the Inlet Pressure and Recompression Fraction arguments
+	C_mono_eq_turbo_m_dot c_rc_cycle(this);
+	C_monotonic_eq_solver c_rc_cycle_solver(c_rc_cycle);
+
+	// Set lower bound on mass flow rate
+	double m_dot_lower = ms_des_solved.m_m_dot_t*1.E-3;	//[kg/s]
+	double m_dot_upper = std::numeric_limits<double>::quiet_NaN();
+
+	// Set solver settings
+	// Because this application of the solver is trying to get the calculated mass flow rate to match the guess,
+	//       then need to error in function
+	// So it's already relative, and solver is looking at an absolute value
+	c_rc_cycle_solver.settings(1.E-3, 100, m_dot_lower, m_dot_upper, false);
+
+	// Generate two guess values
+	double m_dot_guess_upper = ms_des_solved.m_m_dot_t;	//[kg/s]
+	double m_dot_guess_lower = 0.7*m_dot_guess_upper;	//[kg/s]
+
+	// Now, solve for the turbine mass flow rate
+	double m_dot_t_solved, tol_solved;
+	m_dot_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int m_dot_t_code = c_rc_cycle_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0, 
+							m_dot_t_solved, tol_solved, iter_solved);
+
+	if( m_dot_t_code != C_monotonic_eq_solver::CONVERGED )
+	{
+		return 0.0;
+	}
+
+	// Calculate main compressor power and turbine power
+	double W_dot_mc = m_mc.get_od_solved()->m_W_dot_in;	//[kW]
+	double W_dot_t = m_t.get_od_solved()->m_W_dot_out;	//[kW]
+
+	// Other useful outputs
+	double P_out = m_mc.get_od_solved()->m_P_out;	//[kPa]
+	
+	// Solve recompressor
+	double W_dot_rc = 0.0;
+
+	if( ms_des_solved.m_is_rc )
+	{
+			// Known inputs
+		//double P_in = m_mc.get_od_solved()->m_P_in;		//[kPa]
+			// Have to guess the inlet temperature
+		double T_in = ms_des_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
+			// Call performance model
+		double m_dot_rc = ms_od_turbo_bal_csp_par.m_f_recomp*m_dot_t_solved;
+		double T_out = std::numeric_limits<double>::quiet_NaN();
+		int rc_err_code = 0;
+		m_rc.off_design_recompressor(T_in, ms_od_turbo_bal_csp_par.m_P_mc_in, m_dot_rc, P_out, rc_err_code, T_out);
+			// Check recompressor model errors
+		if( rc_err_code != 0 )
+		{
+			return 0.0;
+		}
+		// Calculate recompressor power
+		W_dot_rc = m_rc.get_od_solved()->m_W_dot_in;	//[kW]
+	}
+
+	// Finally, calculate net power
+	double W_dot_net = W_dot_t - W_dot_mc - W_dot_rc;
+
+	// Now, need to filter results that exceed temperature/pressure/other limitations
+	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature
+	//     But we aren't running the entire cycle model here, so instead limit C_dot_co2 >= C_dot_MS
+	double co2_to_htf_m_dot_ratio = m_dot_t_solved / ms_od_turbo_bal_csp_par.m_m_dot_htf;	//[-]
+	double over_T_t_in = max(0.0, 10.0*(1.1*ms_od_turbo_bal_csp_par.m_co2_to_htf_m_dot_ratio_des - co2_to_htf_m_dot_ratio));
+	
+	// 2) Don't let the upper pressure in the cycle exceed the specified max (typically also = design point)
+	double over_P_high = max(0.0, (P_out - ms_des_par.m_P_high_limit));
+
+	// 3) Check the compressors' tip ratios
+	double mc_w_tip_ratio = m_mc.get_od_solved()->m_w_tip_ratio;
+		// How does recompressor tip speed ratio work with multiple stages?
+	double rc_w_tip_ratio = 0.0;
+	if( ms_des_solved.m_is_rc )
+		rc_w_tip_ratio = m_rc.get_od_solved()->m_w_tip_ratio;
+	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
+	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 1.0));
+
+	// 4) Check recompessor surge
+	double rc_phi_s1, rc_phi_s2, rc_phi_min, over_surge;
+	rc_phi_s1 = rc_phi_s2 = rc_phi_min = over_surge = 0.0;
+	if( ms_des_solved.m_is_rc )
+	{
+		rc_phi_s1 = m_rc.get_od_solved()->m_phi;
+		rc_phi_s2 = m_rc.get_od_solved()->m_phi_2;
+		rc_phi_min = min(rc_phi_s1, rc_phi_s2);
+		over_surge = max(0.0, C_recompressor::m_snl_phi_min - rc_phi_min);
+	}
+
+	double W_dot_net_adjusted = W_dot_net*exp(-over_T_t_in)*exp(-over_P_high)*exp(-over_tip_ratio)*exp(over_surge);
+
+	if(W_dot_net == W_dot_net_adjusted)
+	{
+		ms_od_turbo_bal_csp_solved.m_is_feasible = true;
+
+		// *********************************************************************
+		ms_od_turbo_bal_csp_solved.ms_par = ms_od_turbo_bal_csp_par;
+
+		// Set outputs through member structure
+		ms_od_turbo_bal_csp_solved.m_W_dot_net = W_dot_net;					//[kWe]
+		ms_od_turbo_bal_csp_solved.m_W_dot_net_adj = W_dot_net_adjusted;	//[kWe]
+		ms_od_turbo_bal_csp_solved.m_P_high = P_out;						//[kPa]
+		ms_od_turbo_bal_csp_solved.m_m_dot_total = m_dot_t_solved;			//[kg/s]
+	
+		ms_od_turbo_bal_csp_solved.m_N_mc = m_mc.get_od_solved()->m_N;		//[rpm]
+		ms_od_turbo_bal_csp_solved.m_w_tip_ratio_mc = mc_w_tip_ratio;		//[-]
+		ms_od_turbo_bal_csp_solved.m_eta_mc = m_mc.get_od_solved()->m_eta;	//[-]
+
+		if( ms_des_solved.m_is_rc )
+		{
+			ms_od_turbo_bal_csp_solved.m_N_rc = m_rc.get_od_solved()->m_N;		//[rpm]
+			ms_od_turbo_bal_csp_solved.m_phi_rc_1 = rc_phi_s1;					//[-]
+			ms_od_turbo_bal_csp_solved.m_phi_rc_2 = rc_phi_s2;					//[-]
+			ms_od_turbo_bal_csp_solved.m_w_tip_ratio_rc = rc_w_tip_ratio;		//[-]
+			ms_od_turbo_bal_csp_solved.m_eta_rc = m_rc.get_od_solved()->m_eta;	//[-]
+		}
+
+		ms_od_turbo_bal_csp_solved.m_eta_t = m_t.get_od_solved()->m_eta;	//[-]
+		// *********************************************************************
+		// *********************************************************************
+	}
+
+	return W_dot_net_adjusted;
+}
+
+double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
+	if( frame != NULL ) 
+		return frame->od_turbo_bal_csp_Wnet(x);
+	else
+		return std::numeric_limits<double>::quiet_NaN();
+}
+
+void C_RecompCycle::off_design_phi_core(int & error_code)
+{
+	CO2_state co2_props;
+
+	int cpp_offset = 1;
+
+	// Initialize a few variables
+	m_temp_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_T_mc_in;
+	m_pres_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_P_mc_in;
+	m_temp_od[C_RecompCycle::TURB_IN] = ms_od_phi_par.m_T_t_in;
+
+	// Set up solver to find mass flow rate that balances turbomachinery
+	ms_od_turbo_bal_par.m_P_mc_in = ms_od_phi_par.m_P_mc_in;		//[kPa]
+	ms_od_turbo_bal_par.m_f_recomp = ms_od_phi_par.m_recomp_frac;	//[-]
+	ms_od_turbo_bal_par.m_T_mc_in = ms_od_phi_par.m_T_mc_in;		//[K]
+	ms_od_turbo_bal_par.m_T_t_in = ms_od_phi_par.m_T_t_in;			//[K]
+	ms_od_turbo_bal_par.m_phi_mc = ms_od_phi_par.m_phi_mc;			//[-]
+
+	C_mono_eq_turbo_m_dot c_turbo_bal(this);
+	C_monotonic_eq_solver c_turbo_bal_solver(c_turbo_bal);
+
+	// Set lower bound on mass flow rate
+	double m_dot_lower = ms_des_solved.m_m_dot_t*1.E-3;					//[kg/s]
+	double m_dot_upper = std::numeric_limits<double>::quiet_NaN();
+
+	// Set solver settings
+	// Because this application of the solver is trying to get the calculated mass flow rate to match the guess,
+	//    then need to calculate error in function
+	// So it's already relatiave, and solver is looking at an absolute value
+	c_turbo_bal_solver.settings(1.E-3, 100, m_dot_lower, m_dot_upper, false);
+
+	// Generate two guess values
+	double m_dot_guess_upper = ms_des_solved.m_m_dot_t;		//[kg/s]
+	double m_dot_guess_lower = 0.7*m_dot_guess_upper;		//[kg/s]
+
+	// Now, solve for the turbine mass flow rate
+	double m_dot_t_solved, tol_solved;
+	m_dot_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int m_dot_t_code = c_turbo_bal_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0,
+								m_dot_t_solved, tol_solved, iter_solved);
+
+	if( m_dot_t_code != C_monotonic_eq_solver::CONVERGED )
+	{
+		error_code = 42;
+		return;
+	}
+
+	double m_dot_t = m_dot_t_solved;	//[kg/s]
+	double m_dot_rc = m_dot_t*ms_od_phi_par.m_recomp_frac;	//[kg/s]
+	double m_dot_mc = m_dot_t - m_dot_rc;
+
+	// Fully define known states
+	int prop_error_code = CO2_TP(m_temp_od[1 - cpp_offset], m_pres_od[1 - cpp_offset], &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	m_enth_od[1 - cpp_offset] = co2_props.enth;
+	m_entr_od[1 - cpp_offset] = co2_props.entr;
+	m_dens_od[1 - cpp_offset] = co2_props.dens;
+
+	prop_error_code = CO2_TP(m_temp_od[2 - cpp_offset], m_pres_od[2 - cpp_offset], &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	m_enth_od[2 - cpp_offset] = co2_props.enth;
+	m_entr_od[2 - cpp_offset] = co2_props.entr;
+	m_dens_od[2 - cpp_offset] = co2_props.dens;
+
+	prop_error_code = CO2_TP(m_temp_od[6 - cpp_offset], m_pres_od[6 - cpp_offset], &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	m_enth_od[6 - cpp_offset] = co2_props.enth;
+	m_entr_od[6 - cpp_offset] = co2_props.entr;
+	m_dens_od[6 - cpp_offset] = co2_props.dens;
+
+	prop_error_code = CO2_TP(m_temp_od[7 - cpp_offset], m_pres_od[7 - cpp_offset], &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	m_enth_od[7 - cpp_offset] = co2_props.enth;
+	m_entr_od[7 - cpp_offset] = co2_props.entr;
+	m_dens_od[7 - cpp_offset] = co2_props.dens;
+
+	// Get the recuperator conductances corresponding to the converged mass flow rates
+	double UA_LT, UA_HT;
+	UA_LT = UA_HT = std::numeric_limits<double>::quiet_NaN();
+	std::vector<double> m_dot_LT;
+	m_dot_LT.push_back(m_dot_mc);
+	m_dot_LT.push_back(m_dot_t);
+	std::vector<double> m_dot_HT;
+	m_dot_HT.push_back(m_dot_t);
+	m_dot_HT.push_back(m_dot_t);
+	m_LT.hxr_conductance(m_dot_LT, UA_LT);
+	m_HT.hxr_conductance(m_dot_HT, UA_HT);
+
+	// Outer iteration loop: temp(8), checking against UA_HT
+	double T8_lower_bound = std::numeric_limits<double>::quiet_NaN();
+	double T8_upper_bound = std::numeric_limits<double>::quiet_NaN();
+	double UA_HT_calc = std::numeric_limits<double>::quiet_NaN();
+	double last_HT_residual = std::numeric_limits<double>::quiet_NaN();
+	double last_T8_guess = std::numeric_limits<double>::quiet_NaN();
+	if( UA_HT < 1.E-12 )		// no high-temperature recuperator
+	{
+		T8_lower_bound = m_temp_od[7 - cpp_offset];	// no iteration necessary
+		T8_upper_bound = m_temp_od[7 - cpp_offset];	// no iteration necessary
+		m_temp_od[8 - cpp_offset] = m_temp_od[7 - cpp_offset];
+		UA_HT_calc = 0.0;
+		last_HT_residual = 0.0;
+		last_T8_guess = m_temp_od[7 - cpp_offset];
+	}
+	else
+	{
+		T8_lower_bound = m_temp_od[2 - cpp_offset];	// the absolute lowest temp(8) could be
+		T8_upper_bound = m_temp_od[7 - cpp_offset];	// the absolute highest temp(8) could be
+		m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for first guess
+		UA_HT_calc = -1.0;
+		last_HT_residual = UA_HT;					// know a priori that with T8 = T7, UA_calc = 0 therefore residual is UA_HT - 0.0
+		last_T8_guess = m_temp_od[7 - cpp_offset];
+	}
+
+	int T8_iter = -1;
+
+	double Q_dot_LT = std::numeric_limits<double>::quiet_NaN();
+	double Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
+
+	int max_iter = 100;
+	double temperature_tolerance = 1.E-6;
+
+	for( T8_iter = 0; T8_iter < max_iter; T8_iter++ )
+	{
+		// Fully define state 8
+		prop_error_code = CO2_TP(m_temp_od[8 - cpp_offset], m_pres_od[8 - cpp_offset], &co2_props);
+		if( prop_error_code != 0 )
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		m_enth_od[8 - cpp_offset] = co2_props.enth;
+		m_entr_od[8 - cpp_offset] = co2_props.entr;
+		m_dens_od[8 - cpp_offset] = co2_props.dens;
+
+		// Inner iteration loop: temp(9), checking against UA_LT
+		double T9_lower_bound = std::numeric_limits<double>::quiet_NaN();
+		double T9_upper_bound = std::numeric_limits<double>::quiet_NaN();
+		double UA_LT_calc = std::numeric_limits<double>::quiet_NaN();
+		double last_LT_residual = std::numeric_limits<double>::quiet_NaN();
+		double last_T9_guess = std::numeric_limits<double>::quiet_NaN();
+		if( UA_LT < 1.E-12 )		// no low-temperature recuperator
+		{
+			T9_lower_bound = m_temp_od[8 - cpp_offset];	// no iteration necessary
+			T9_upper_bound = m_temp_od[8 - cpp_offset];	// no iteration necessary
+			m_temp_od[9 - cpp_offset] = m_temp_od[8 - cpp_offset];
+			UA_LT_calc = 0.0;
+			last_LT_residual = 0.0;
+			last_T9_guess = m_temp_od[8 - cpp_offset];
+		}
+		else
+		{
+			T9_lower_bound = m_temp_od[2 - cpp_offset];		// the absolute lowest temp(9) could be
+			T9_upper_bound = m_temp_od[8 - cpp_offset];		// the absolute highest temp(9) could be
+			m_temp_od[9 - cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);	// bisect bounds for first guess
+			UA_LT_calc = -1.0;
+			last_LT_residual = UA_LT;			// know a priori that with T9=T8, UA_calc = 0 therefore residual is UA_LT - 0
+			last_T9_guess = m_temp_od[8 - cpp_offset];
+		}
+
+		int T9_iter = -1;
+
+		for( T9_iter = 0; T9_iter < max_iter; T9_iter++ )
+		{
+			prop_error_code = CO2_TP(m_temp_od[9 - cpp_offset], m_pres_od[9 - cpp_offset], &co2_props);		// fully define state 9
+			if( prop_error_code != 0 )
+			{
+				error_code = prop_error_code;
+				return;
+			}
+			m_enth_od[9 - cpp_offset] = co2_props.enth;
+			m_entr_od[9 - cpp_offset] = co2_props.entr;
+			m_dens_od[9 - cpp_offset] = co2_props.dens;
+
+			if( ms_od_phi_par.m_recomp_frac >= 1.E-12 )		// determine the required shaft speed for the recompressing compressor
+			{
+				int rc_error_code = 0;
+				m_rc.off_design_recompressor(m_temp_od[9 - cpp_offset], m_pres_od[9 - cpp_offset], m_dot_rc, m_pres_od[10 - cpp_offset], rc_error_code, m_temp_od[10 - cpp_offset]);
+
+				if( rc_error_code != 0 )
+				{
+					error_code = rc_error_code;
+					return;
+				}
+
+				// Fully define state 10
+				prop_error_code = CO2_TP(m_temp_od[10 - cpp_offset], m_pres_od[10 - cpp_offset], &co2_props);
+				if( prop_error_code != 0 )
+				{
+					error_code = prop_error_code;
+					return;
+				}
+				m_enth_od[10 - cpp_offset] = co2_props.enth;
+				m_entr_od[10 - cpp_offset] = co2_props.entr;
+				m_dens_od[10 - cpp_offset] = co2_props.dens;
+			}
+			else
+			{
+				m_temp_od[10 - cpp_offset] = m_temp_od[9 - cpp_offset];
+				m_enth_od[10 - cpp_offset] = m_enth_od[9 - cpp_offset];
+				m_entr_od[10 - cpp_offset] = m_entr_od[9 - cpp_offset];
+				m_dens_od[10 - cpp_offset] = m_dens_od[9 - cpp_offset];
+			}
+
+			// Calculate the UA value of the low-temperature recuperator
+			Q_dot_LT = std::numeric_limits<double>::quiet_NaN();
+			if( UA_LT < 1.E-12 )			// no low-temp recuperator (this check is necessary to prevent pressure drops with ua=0 from causing problems)
+				Q_dot_LT = 0.0;
+			else
+				Q_dot_LT = m_dot_t * (m_enth_od[8 - cpp_offset] - m_enth_od[9 - cpp_offset]);
+
+			int hx_error_code = 0;
+			double min_DT_LT = std::numeric_limits<double>::quiet_NaN();
+			calculate_hxr_UA_1(ms_od_phi_par.m_N_sub_hxrs, Q_dot_LT, m_dot_mc, m_dot_t, m_temp_od[2 - cpp_offset], m_temp_od[8 - cpp_offset],
+				m_pres_od[2 - cpp_offset], m_pres_od[3 - cpp_offset], m_pres_od[8 - cpp_offset], m_pres_od[9 - cpp_offset], hx_error_code, UA_LT_calc, min_DT_LT);
+
+			if( hx_error_code > 0 )
+			{
+				if( hx_error_code == 11 )			// second-law violation in hxr, therefore temp(9) is too low
+				{
+					T9_lower_bound = m_temp_od[9 - cpp_offset];
+					m_temp_od[9 - cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);	// bisect bounds for next guess
+					hx_error_code = 0;
+					continue;
+				}
+				else
+				{
+					error_code = hx_error_code;
+					return;
+				}
+			}
+
+			// Check for convergence and adjust T9 appropriately
+			double UA_LT_residual = UA_LT - UA_LT_calc;
+
+			if( fabs(UA_LT_residual) < 1.E-12 )		// catches no LT case
+				break;
+
+			double secant_guess = m_temp_od[9 - cpp_offset] - UA_LT_residual*(last_T9_guess - m_temp_od[9 - cpp_offset]) / (last_LT_residual - UA_LT_residual);	// next guess predicted using secant method
+
+			if( UA_LT_residual < 0.0 )		// UA_LT_calc is too big, temp(9) needs to be higher
+			{
+				if( fabs(UA_LT_residual) / UA_LT < ms_od_phi_par.m_tol )		// UA_LT converged (residual is negative
+					break;
+				T9_lower_bound = m_temp_od[9 - cpp_offset];
+			}
+			else			// UA_LT_calc is too small, temp(9) needs to be lower
+			{
+				if( UA_LT_residual / UA_LT < ms_od_phi_par.m_tol )				// UA_LT converged
+					break;
+
+				if( min_DT_LT < temperature_tolerance )			// UA_calc is still too low but there isn't anywhere to go so it's ok (catches huge UA values)
+					break;
+
+				T9_upper_bound = m_temp_od[9 - cpp_offset];
+			}
+
+			last_LT_residual = UA_LT_residual;			// reset last stored residual value
+			last_T9_guess = m_temp_od[9 - cpp_offset];	// reset last stored guess value
+
+			// Check if the secant method overshoots and fall abck to bisection if it does
+			if( secant_guess <= T9_lower_bound || secant_guess >= T9_upper_bound || secant_guess != secant_guess )		// secant method overshot (or is NaN), use bisection
+				m_temp_od[9 - cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);
+			else
+				m_temp_od[9 - cpp_offset] = secant_guess;
+
+		}	// End of T9 iteration
+
+		// Check that T9_loop converged
+		if( T9_iter >= max_iter )
+		{
+			error_code = 31;
+			return;
+		}
+
+		// State 3 can now be fully defined
+		m_enth_od[3 - cpp_offset] = m_enth_od[2 - cpp_offset] + Q_dot_LT / m_dot_mc;		// Energy balance on cold stream of low-temp recuperator
+		prop_error_code = CO2_PH(m_pres_od[3 - cpp_offset], m_enth_od[3 - cpp_offset], &co2_props);
+		if( prop_error_code != 0 )
+		{
+			error_code = prop_error_code;
+			return;
+		}
+		m_temp_od[3 - cpp_offset] = co2_props.temp;
+		m_entr_od[3 - cpp_offset] = co2_props.entr;
+		m_dens_od[3 - cpp_offset] = co2_props.dens;
+
+		// Go through mixing valve
+		if( ms_od_phi_par.m_recomp_frac >= 1.E-12 )
+		{
+			// Conservation of energy (both sides divided by m_dot_t)
+			m_enth_od[4 - cpp_offset] = (1.0 - ms_od_phi_par.m_recomp_frac)*m_enth_od[3 - cpp_offset] + ms_od_phi_par.m_recomp_frac*m_enth_od[10 - cpp_offset];
+			prop_error_code = CO2_PH(m_pres_od[4 - cpp_offset], m_enth_od[4 - cpp_offset], &co2_props);
+			if( prop_error_code != 0 )
+			{
+				error_code = prop_error_code;
+				return;
+			}
+			m_temp_od[4 - cpp_offset] = co2_props.temp;
+			m_entr_od[4 - cpp_offset] = co2_props.entr;
+			m_dens_od[4 - cpp_offset] = co2_props.dens;
+		}
+		else	// no mixing valve, therefore state 4 is equal to state 3
+		{
+			m_temp_od[4 - cpp_offset] = m_temp_od[3 - cpp_offset];
+			m_enth_od[4 - cpp_offset] = m_enth_od[3 - cpp_offset];
+			m_entr_od[4 - cpp_offset] = m_entr_od[3 - cpp_offset];
+			m_dens_od[4 - cpp_offset] = m_dens_od[3 - cpp_offset];
+		}
+
+		// Check for a second law violation at the outlet of the high-temp recuperator
+		if( m_temp_od[4 - cpp_offset] >= m_temp_od[8 - cpp_offset] )		// temp(8) is not valid and it must be increased
+		{
+			T8_lower_bound = m_temp_od[8 - cpp_offset];
+			m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);
+			continue;
+		}
+
+		// Calculate the UA value of the high-temperature recuperator
+		Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
+		if( UA_HT < 1.E-12 )		// no high-temp recuperator (this check is necessary to prevent pressure drops with UA=0 from causing problems)
+			Q_dot_HT = 0.0;
+		else
+			Q_dot_HT = m_dot_t*(m_enth_od[7 - cpp_offset] - m_enth_od[8 - cpp_offset]);
+
+		int HT_hx_error_code = 0;
+		double min_DT_HT = std::numeric_limits<double>::quiet_NaN();
+		calculate_hxr_UA_1(ms_od_phi_par.m_N_sub_hxrs, Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[4 - cpp_offset], m_temp_od[7 - cpp_offset], m_pres_od[4 - cpp_offset], m_pres_od[5 - cpp_offset],
+			m_pres_od[7 - cpp_offset], m_pres_od[8 - cpp_offset], HT_hx_error_code, UA_HT_calc, min_DT_HT);
+
+		if( HT_hx_error_code != 0 )
+		{
+			if( HT_hx_error_code == 11 )		// second-law violation in hxr, therefore temp(8) is too low
+			{
+				T8_lower_bound = m_temp_od[8 - cpp_offset];
+				m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
+				HT_hx_error_code = 0;
+				continue;
+			}
+			else
+			{
+				error_code = HT_hx_error_code;
+				return;
+			}
+		}
+
+		// Check for convergence and adjust T8 appropriately
+		double UA_HT_residual = UA_HT - UA_HT_calc;
+
+		if( fabs(UA_HT_residual) < 1.E-12 )			// catches no HT case
+			break;
+
+		double secant_guess = m_temp_od[8 - cpp_offset] - UA_HT_residual*(last_T8_guess - m_temp_od[8 - cpp_offset]) / (last_HT_residual - UA_HT_residual);	// next guess predicted using secant method
+
+		if( UA_HT_residual < 0.0 )		// UA_HT_calc is too big, temp(8) needs to be higher
+		{
+			if( fabs(UA_HT_residual) / UA_HT < ms_od_phi_par.m_tol )		// UA_HT converged (residual is negative)
+				break;
+
+			T8_lower_bound = m_temp_od[8 - cpp_offset];
+		}
+		else		// UA_HT_calc is too small, temp(8) needs to be lower
+		{
+			if( UA_HT_residual / UA_HT < ms_od_phi_par.m_tol )	// UA _HT converged
+				break;
+
+			if( min_DT_HT < temperature_tolerance )			// UA_calc is still too low, but there isn't anywhere to go so it's ok (catches huge UA values)
+				break;
+
+			T8_upper_bound = m_temp_od[8 - cpp_offset];
+		}
+
+		last_HT_residual = UA_HT_residual;			// reset last stored residual value
+		last_T8_guess = m_temp_od[8 - cpp_offset];	// reset last stored guess value
+
+		// Check if the secant method overshoots and fall back to bisection if it does
+		if( secant_guess <= T8_lower_bound || secant_guess >= T8_upper_bound )
+			m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);
+		else
+			m_temp_od[8 - cpp_offset] = secant_guess;
+
+	}	// End of T8 iteration
+
+	// Check that T8_loop converged
+	if( T8_iter >= max_iter )
+	{
+		error_code = 35;
+		return;
+	}
+
+	// State 5 can now be fully defined
+	m_enth_od[5 - cpp_offset] = m_enth_od[4 - cpp_offset] + Q_dot_HT / m_dot_t;		//[kJ/kg] Energy balance on cold stream of high-temp recuperator
+	prop_error_code = CO2_PH(m_pres_od[5 - cpp_offset], m_enth_od[5 - cpp_offset], &co2_props);
+	if( prop_error_code != 0 )
+	{
+		error_code = prop_error_code;
+		return;
+	}
+	m_temp_od[5 - cpp_offset] = co2_props.temp;
+	m_entr_od[5 - cpp_offset] = co2_props.entr;
+	m_dens_od[5 - cpp_offset] = co2_props.dens;
+
+	// Calculate cycle performance metrics
+	double w_mc = m_enth_od[1 - cpp_offset] - m_enth_od[2 - cpp_offset];		//[kJ/kg] (negative) specific work of compressor
+	double w_t = m_enth_od[6 - cpp_offset] - m_enth_od[7 - cpp_offset];			//[kJ/kg] (positive) specific work of turbine
+
+	double w_rc = 0.0;
+	if( ms_od_phi_par.m_recomp_frac > 0.0 )
+		w_rc = m_enth_od[9 - cpp_offset] - m_enth_od[10 - cpp_offset];			//[kJ/kg] (negative) specific work of recompressor
+
+
+	m_Q_dot_PHX_od = m_dot_t*(m_enth_od[6 - cpp_offset] - m_enth_od[5 - cpp_offset]);
+	m_W_dot_net_od = w_mc*m_dot_mc + w_rc*m_dot_rc + w_t*m_dot_t;
+	m_eta_thermal_od = m_W_dot_net_od / m_Q_dot_PHX_od;
+
+	// Get 'od_solved' structures from component classes
+	ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
+	ms_od_solved.ms_rc_od_solved = *m_rc.get_od_solved();
+	ms_od_solved.ms_t_od_solved = *m_t.get_od_solved();
+
+	// Set ms_od_solved
+	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
+	ms_od_solved.m_W_dot_net = m_W_dot_net_od;
+	ms_od_solved.m_Q_dot = m_Q_dot_PHX_od;
+	ms_od_solved.m_m_dot_mc = m_dot_mc;
+	ms_od_solved.m_m_dot_rc = m_dot_rc;
+	ms_od_solved.m_m_dot_t = m_dot_t;
+	ms_od_solved.m_recomp_frac = ms_od_phi_par.m_recomp_frac;
+	// ms_od_solved.m_N_mc = ms_od_par.m_N_mc;
+	// ms_od_solved.m_N_t = ms_od_par.m_N_t;
+
+	ms_od_solved.m_temp = m_temp_od;
+	ms_od_solved.m_pres = m_pres_od;
+	ms_od_solved.m_enth = m_enth_od;
+	ms_od_solved.m_entr = m_entr_od;
+	ms_od_solved.m_dens = m_dens_od;
+
+	return;
 }
 
 void C_RecompCycle::off_design_core(int & error_code)

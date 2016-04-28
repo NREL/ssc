@@ -47,7 +47,8 @@ void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_rece
 void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_solver_htf_state &htf_state,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-	C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	return;

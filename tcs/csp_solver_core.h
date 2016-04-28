@@ -7,6 +7,19 @@
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
+class C_csp_solver_htf_1state
+{
+public:
+	double m_temp;	//[C]
+	double m_pres;	//[kPa]
+	double m_qual;	//[-]
+
+	C_csp_solver_htf_1state()
+	{
+		m_temp = m_pres = m_qual = std::numeric_limits<double>::quiet_NaN();
+	}
+};
+
 class C_csp_solver_htf_state
 {
 public:
@@ -21,7 +34,7 @@ public:
 	C_csp_solver_htf_state()
 	{
 		m_m_dot = 
-			m_temp_in = m_pres_in = m_qual_in = 
+			m_temp_in = m_pres_in = m_qual_in =
 			m_temp_out = m_pres_out = m_qual_out = std::numeric_limits<double>::quiet_NaN();
 	}
 };
@@ -85,6 +98,7 @@ public:
 
 		double m_global;		//[W/m2]
 		double m_beam;			//[W/m2]
+		double m_hor_beam;		//[W/m2]
 		double m_diffuse;		//[W/m2]
 		double m_tdry;			//[C]
 		double m_twet;			//[C]
@@ -112,7 +126,8 @@ public:
 		{
 			m_year = m_month = m_day = m_hour = -1;
 
-			m_global = m_beam = m_diffuse = m_tdry = m_twet = m_tdew = m_wspd = m_wdir = m_rhum = m_pres = m_snow = m_albedo =
+			m_global = m_beam = m_hor_beam = m_diffuse = m_tdry = m_twet = m_tdew = m_wspd = 
+				m_wdir = m_rhum = m_pres = m_snow = m_albedo =
 				m_poa = m_solazi = m_solzen = m_lat = m_lon = m_tz = m_shift = m_elev =
 				m_time_rise = m_time_set = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -241,6 +256,18 @@ public:
 		STEADY_STATE
 	};
 
+	struct S_csp_cr_solved_params
+	{
+		double m_T_htf_cold_des;		//[K]
+		double m_q_dot_rec_on_min;		//[MW]
+		double m_q_dot_rec_des;			//[MW]
+
+		S_csp_cr_solved_params()
+		{
+			m_T_htf_cold_des = m_q_dot_rec_on_min = m_q_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_csp_cr_inputs
 	{	
 		double m_field_control;			//[-] Defocus signal from controller (can PC and TES accept all receiver output?)
@@ -253,49 +280,44 @@ public:
 			m_input_operation_mode = -1;
 		}
 	};
-
-	struct S_csp_cr_solved_params
-	{
-		double m_T_htf_cold_des;
-		double m_q_dot_rec_on_min;		//[MW]
-		double m_q_dot_rec_des;			//[MW]
-
-		S_csp_cr_solved_params()
+	
+	struct S_csp_cr_out_solver
+	{	
+		// Collector receiver outputs that must be defined in the CR call() for the solver to succeed.
+		double m_q_startup;				//[MWt-hr] Receiver thermal output
+		double m_time_required_su;		//[s] Time required for receiver to startup
+		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
+		double m_q_thermal;				//[MW] 'Available' receiver thermal output
+		double m_T_salt_hot;			//[C] Hot HTF from receiver
+			
+		// These are used for the parasitic class call(), so could be zero...
+		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
+		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
+			
+		S_csp_cr_out_solver()
 		{
-			m_T_htf_cold_des = m_q_dot_rec_on_min = m_q_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = 
+				m_W_dot_col_tracking = m_time_required_su = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-	struct S_csp_cr_outputs
+	struct S_csp_cr_out_report
 	{
 		double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
 		double m_eta_field;				//[-] Field optical efficiency
 		
 		double m_q_dot_rec_inc;         //[MWt] Receiver incident thermal power (after reflection losses)
 		double m_eta_thermal;			//[-] Receiver thermal efficiency
-		double m_q_thermal;				//[MW] 'Available' receiver thermal output
-		double m_q_startup;				//[MWt-hr] Receiver thermal output
 		double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings
-		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
-		double m_T_salt_hot;			//[C] Hot HTF from receiver
-		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
-		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 
-		double m_time_required_su;		//[s] Time required for receiver to startup
-		//int m_mode_calculated;			//[-] Receiver operation mode after last performance CALL - could still change this timestep
-
-		S_csp_cr_outputs()
+		S_csp_cr_out_report()
 		{
-			m_q_dot_field_inc = m_eta_field =  
-
-			m_q_dot_rec_inc = m_eta_thermal = m_q_thermal = m_q_startup = m_q_dot_piping_loss = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = m_W_dot_col_tracking =
-				m_time_required_su = std::numeric_limits<double>::quiet_NaN();
-
-			//m_mode_calculated = -1;
+			m_q_dot_field_inc = m_eta_field = 
+				m_q_dot_rec_inc = m_eta_thermal = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-	virtual void init() = 0;
+	virtual void init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
 	virtual int get_operating_state() = 0;
 
@@ -305,14 +327,19 @@ public:
     virtual double get_min_power_delivery() = 0;    //MWt
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,
-		C_csp_solver_htf_state &htf_state,
+		const C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		const C_csp_solver_sim_info &sim_info) = 0;
+
+	virtual void off(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void converged() = 0;
-
-	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
     virtual double calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim ) = 0;
 
@@ -342,6 +369,7 @@ public:
 	struct S_control_inputs
 	{
 		int m_standby_control;		//[-] Control signal indicating standby mode
+		double m_m_dot;				//[kg/hr] HTF mass flow rate to power cycle
 		//int m_tou;					//[-] Time-of-use period: ONE BASED, converted to 0-based in code
 
 		S_control_inputs()
@@ -353,8 +381,9 @@ public:
 	struct S_solved_params
 	{
 		double m_W_dot_des;			//[MW]
-		double m_eta_des;			//[MW]
+		double m_eta_des;			//[-]
 		double m_q_dot_des;			//[MW]
+		double m_q_startup;			//[MWt-hr]
 		double m_max_frac;			//[-]
 		double m_cutoff_frac;		//[-]
 		double m_sb_frac;			//[-]
@@ -363,44 +392,54 @@ public:
 
 		S_solved_params()
 		{
-			m_W_dot_des = m_eta_des = m_q_dot_des = m_max_frac = m_cutoff_frac = 
+			m_W_dot_des = m_eta_des = m_q_dot_des = m_q_startup = m_max_frac = m_cutoff_frac = 
 				m_sb_frac = m_T_htf_hot_ref = m_m_dot_design = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-	struct S_csp_pc_outputs
+	struct S_csp_pc_out_solver
 	{
+		double m_time_required_su;	//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
 		double m_P_cycle;			//[MWe] Cycle power output
-		double m_eta;				//[-] Cycle thermal efficiency
 		double m_T_htf_cold;		//[C] Heat transfer fluid outlet temperature
+		double m_q_dot_htf;			//[MWt] Thermal power from HTF (= thermal power into cycle)
+		double m_m_dot_htf;			//[kg/hr] Actual HTF flow rate passing through the power cycle
+
+			// Parasitics, plant net power equation
+		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
+		double m_W_cool_par;		//[MWe] Cooling system parasitic load
+
+		S_csp_pc_out_solver()
+		{
+			m_time_required_su = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
+				m_W_dot_htf_pump = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	struct S_csp_pc_out_report
+	{
+		double m_eta;				//[-] Cycle thermal efficiency
 		double m_m_dot_makeup;		//[kg/hr] Cooling water makeup flow rate
 		double m_m_dot_demand;		//[kg/hr] HTF required flow rate to meet power load
-		double m_m_dot_htf;			//[kg/hr] Actual HTF flow rate passing through the power cycle
 		double m_m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
-		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 		double m_P_ref;				//[MWe] Reference power level output at design
 		double m_f_hrsys;			//[-] Fraction of operating heat rejection system
 		double m_P_cond;			//[Pa] Condenser pressure		
 		
-		double m_time_required_su;	//[s] Time required for receiver to startup MIN(controller timestep, calculated time to startup during call)
 		double m_q_startup;			//[MWt-hr] Startup energy required
-		double m_q_dot_htf;			//[MWt] Thermal power from HTF (= thermal power into cycle)
-		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
 
-		S_csp_pc_outputs()
+		S_csp_pc_out_report()
 		{
-			m_P_cycle = m_eta = m_T_htf_cold = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf = m_m_dot_htf_ref =
-				m_W_cool_par = m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
+			m_eta = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf_ref =
+				m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
 			
-			m_time_required_su = m_q_startup = m_q_dot_htf = m_W_dot_htf_pump = std::numeric_limits<double>::quiet_NaN();
+			m_q_startup = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 	
-	virtual void init() = 0;
+	virtual void init(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
 	virtual int get_operating_state() = 0;
-
-	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
     //required gets
     virtual double get_cold_startup_time() = 0;
@@ -419,9 +458,10 @@ public:
 	virtual double get_max_q_pc_startup() = 0;		//[MWt]
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather,
-		C_csp_solver_htf_state &htf_state,
+		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
-		C_csp_power_cycle::S_csp_pc_outputs &outputs,
+		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
+		C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void converged() = 0;
@@ -633,13 +673,15 @@ private:
 
 	S_csp_system_params & ms_system_params;
 
-	C_csp_solver_htf_state mc_cr_htf_state;
+	C_csp_solver_htf_1state mc_cr_htf_state_in;
 	C_csp_collector_receiver::S_csp_cr_inputs mc_cr_inputs;
-	C_csp_collector_receiver::S_csp_cr_outputs mc_cr_outputs;
+	C_csp_collector_receiver::S_csp_cr_out_solver mc_cr_out_solver;
+	C_csp_collector_receiver::S_csp_cr_out_report mc_cr_out_report;
 
-	C_csp_solver_htf_state mc_pc_htf_state;
+	C_csp_solver_htf_1state mc_pc_htf_state_in;
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
-	C_csp_power_cycle::S_csp_pc_outputs mc_pc_outputs;
+	C_csp_power_cycle::S_csp_pc_out_solver mc_pc_out_solver;
+	C_csp_power_cycle::S_csp_pc_out_report mc_pc_out_report;
 
 	C_csp_solver_htf_state mc_tes_ch_htf_state;
 	C_csp_solver_htf_state mc_tes_dc_htf_state;
@@ -732,8 +774,6 @@ private:
 
 		// Reset hierarchy logic
 	void reset_hierarchy_logic();
-
-	void init_independent();
 
 	void solver_cr_to_pc_to_cr(double field_control_in, double tol, int &exit_mode, double &exit_tolerance);
 	 
@@ -877,81 +917,7 @@ public:
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
 	std::vector< std::vector< double > > mvv_outputs_temp;
 
-		// Simulation outputs
-	//std::vector<double> mv_time_final;		//[hr]
-	//std::vector<double> mv_step;			//[hr]
-	//std::vector<double> mv_solzen;			//[deg]
-	//std::vector<double> mv_beam;			//[W/m2]
-	
-	
-		// Collector-receiver ouputs
-	//std::vector<double> mv_eta_field;			//[-] Collector optical efficiency
-	//std::vector<double> mv_defocus;				//[-] = m_defocus 
-	//std::vector<double> mv_rec_eta_thermal;		//[-] Receiver thermal efficiency
-	//std::vector<double> mv_rec_q_dot_thermal;	//[MWt] Receiver thermal power output
-	//std::vector<double> mv_rec_m_dot;			//[kg/hr] Mass flow rate from receiver
-	//std::vector<double> mv_rec_q_dot_startup;	//[MWt] Receiver startup thermal power
-	//std::vector<double> mv_T_rec_in;			//[C] Receiver HTF inlet temperature
-	//std::vector<double> mv_T_rec_out;			//[C] Receiver HTF outlet temperature
-	//std::vector<double> mv_q_dot_piping_loss;	//[MWt] Tower piping thermal power losses
-	
-
-		// Power cycle outputs
-	//std::vector<double> mv_pc_eta;				//[-] Power cycle efficiency (gross - no parasitics outside of power block)
-	//std::vector<double> mv_pc_q_dot_thermal;	//[MWt] Power cycle input thermal power
-	//std::vector<double> mv_pc_m_dot;			//[kg/hr] Mass flow rate to power cycle
-	//std::vector<double> mv_pc_q_dot_startup;	//[MWt] Power cycle startup thermal power
-	//std::vector<double> mv_pc_W_dot_gross;		//[MWe] Power cycle electric gross power (only parasitics baked into regression)
-	//std::vector<double> mv_T_pc_in;				//[C] Power cycle HTF inlet temperature
-	//std::vector<double> mv_T_pc_out;			//[C] Power cycle HTF outlet temperature
-
-
-		// Thermal energy storage outputs
-	//std::vector<double> mv_tes_q_dot_loss;		//[MWt] TES thermal power losses to environment
-	//std::vector<double> mv_tes_q_dot_heater;	//[MWt] Thermal power TES from heaters (hot+cold) to maintain tank temperatures
-	//std::vector<double> mv_tes_T_hot;			//[C] TES hot temperature at end of timestep
-	//std::vector<double> mv_tes_T_cold;			//[C] TES cold temperature at end of timestep
-	//std::vector<double> mv_tes_dc_q_dot_thermal;	//[MWt] TES discharge thermal energy
-	//std::vector<double> mv_tes_ch_q_dot_thermal;	//[MWt] TES charge thermal energy
-	//std::vector<double> mv_tes_dc_m_dot;			//[kg/hr] Mass flow rate (HTF) discharged from TES
-	//std::vector<double> mv_tes_ch_m_dot;			//[kg/hr] Mass flow rate (HTF) charging TES
-
-
-		// Parasitics outputs
-	//std::vector<double> mv_W_dot_tracking;			//[MWe] Collector tracking, startup, stow power consumption
-	//std::vector<double> mv_W_dot_rec_htf_pump;		//[MWe] Receiver/tower HTF pumping power
-	//std::vector<double> mv_W_dot_tes_pc_htf_pump;	//[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)
-	//std::vector<double> mv_W_dot_cooling;			//[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
-	//std::vector<double> mv_W_dot_tes_fp_heater;		//[MWe] TES freeze protection heater power consumption
-	//std::vector<double> mv_W_dot_fixed;				//[MWe] Fixed electric parasitic power load
-	//std::vector<double> mv_W_dot_bop;				//[MWe] Balance-of-plant electric parasitic power load
-
-		// System outputs
-	//std::vector<double> mv_W_dot_net;				//[MWe] Total electric power output to grid
-
-		// Controller outputs
-	//std::vector<double> mv_q_dot_pc_sb;		//[MW]
-	//std::vector<double> mv_q_dot_pc_min;	//[MW]
-	//std::vector<double> mv_q_dot_pc_max;	//[MW]
-	//std::vector<double> mv_q_dot_pc_target;	//[MW]
-	//std::vector<int> mv_is_rec_su_allowed;	//[-]
-	//std::vector<int> mv_is_pc_su_allowed;	//[-]
-	//std::vector<int> mv_is_pc_sb_allowed;	//[-]
-	//std::vector<double> mv_q_dot_est_cr_su;	 //[MW]
-	//std::vector<double> mv_q_dot_est_cr_on;	 //[MW]
-	//std::vector<double> mv_q_dot_est_tes_dc; //[MW]
-	//std::vector<double> mv_q_dot_est_tes_ch; //[MW]
-	//std::vector<double> mv_operating_modes_a;	//[-] First list of operating modes tried each timestep
-	//std::vector<double> mv_operating_modes_b;	//[-] Second list of operating modes tried each timestep
-	//std::vector<double> mv_operating_modes_c;	//[-] Third list of operating modes tried each timestep
-	//std::vector<double> mv_m_dot_balance;	//[-] Are the sums of mass flow (close to) zero?
-	//std::vector<double> mv_q_balance;		//[-] Is the 1st law satisfied?
-
 };
-
-
-
-
 
 
 #endif //__csp_solver_core_
