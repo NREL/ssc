@@ -322,3 +322,179 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 
 	return 1.0 + ME_T_htf + ME_T_amb + ME_m_dot_htf + INT_T_htf_on_T_amb + INT_T_amb_on_m_dot_htf + INT_m_dot_htf_on_T_htf;
 }
+
+
+
+C_ud_pc_table_generator::C_ud_pc_table_generator(C_od_pc_function & f_pc_eq) : mf_pc_eq(f_pc_eq)
+{
+	return;
+}
+
+int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
+	double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
+	double m_dot_htf_ND_ref /*-*/, double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
+	util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ind)
+{
+	// Check levels against design values
+	if(T_htf_low >= T_htf_ref)
+	{
+		std::string msg = util::format("The lower level of HTF temperature %lg [C] must be colder than the design temperature %lg [C].",
+							T_htf_low, T_htf_ref);
+		throw(C_csp_exception(msg, "User defined power cycle, generate tables"));
+	}
+	if(T_htf_high <= T_htf_ref)
+	{
+		std::string msg = util::format("The upper level of HTF temperature %lg [C] must be hotter than the design temperature %lg [C].",
+							T_htf_high, T_htf_ref);
+		throw(C_csp_exception(msg, "User defined power cycle, generate tables"));
+	}
+	if(T_amb_low >= T_amb_ref)
+	{
+		std::string msg = util::format("The lower level of ambient temperature %lg [C] must be colder than the design temperatuare %lg [C].",
+							T_amb_low, T_amb_ref);
+		throw(C_csp_exception(msg, "User defined power cycle, generate tables"));
+	}
+	if(T_amb_high <= T_amb_ref)
+	{
+		std::string msg = util::format("The upper level of ambient temperature %lg [C] must be warmer than the design temperature %lg [C].",
+							T_amb_high, T_amb_ref);
+		throw(C_csp_exception(msg, "User defined power cycle, generate tables"));
+	}
+	if(m_dot_htf_ND_low >= m_dot_htf_ND_ref)
+	{
+		std::string msg = util::format("The lower level of the normalized HTF mass flow rate %lg must be less than the design value %lg.",
+							m_dot_htf_ND_low, m_dot_htf_ND_ref);
+		throw(C_csp_exception(msg, "User defined power cycle, generate tables"));
+	}
+	if(m_dot_htf_ND_high <= m_dot_htf_ND_ref)
+	{
+		std::string msg = util::format("The upper level of the normalized HTF mass flow rate %lg must be greater than the design value %lg.",
+							m_dot_htf_ND_high, m_dot_htf_ND_ref);
+		throw(C_csp_exception(msg, "User defined power cycle, generate tables"));
+	}
+
+	C_od_pc_function::S_f_inputs pc_inputs;
+	C_od_pc_function::S_f_outputs pc_outputs;
+
+	// ******************************************
+	// Setup T_HTF parameteric runs
+	if(n_T_htf < 3)
+	{
+		std::string msg = util::format("The input argument for number of indepedent HTF temperatures is %d."
+						" It was reset to the minimum value of 3.", n_T_htf);
+		mc_messages.add_notice(msg);
+		n_T_htf = 3;
+	}
+
+	T_htf_ind.clear();
+	T_htf_ind.resize(n_T_htf, 13);		// Set matrix size
+	double delta_T_htf = (T_htf_high - T_htf_low)/double(n_T_htf-1);
+
+	// Set ambient temperature because it is constant for the HTF temperature parametrics
+	pc_inputs.m_T_amb = T_amb_ref;	//[C]
+	for(int i = 0; i < n_T_htf; i++)
+	{
+		T_htf_ind(i,0) = T_htf_low + delta_T_htf*i;	//[C]
+		pc_inputs.m_T_htf_hot = T_htf_ind(i,0);
+
+		// Call at low, ref, and high ND mass flow rate levels
+		std::vector<double> m_dot_htf_ND_levels(3);
+		m_dot_htf_ND_levels[0] = m_dot_htf_ND_low;
+		m_dot_htf_ND_levels[1] = m_dot_htf_ND_ref;
+		m_dot_htf_ND_levels[2] = m_dot_htf_ND_high;
+		for(int j = 0; j < 3; j++)
+		{
+			pc_inputs.m_m_dot_htf_ND = m_dot_htf_ND_levels[j];
+			mf_pc_eq(pc_inputs,pc_outputs);
+
+			// Save outputs
+			T_htf_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
+			T_htf_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
+			T_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
+			T_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+		}
+	}
+	// ******************************************
+
+	// ******************************************
+	// Setup T_amb parametric runs
+	if(n_T_amb < 3)
+	{
+		std::string msg = util::format("The input argument for number of independent ambient temperatures"
+						" is %d. It was reset to the minimum value of 3.", n_T_amb);
+		mc_messages.add_notice(msg);
+		n_T_amb = 3;
+	}
+
+	T_amb_ind.clear();
+	T_amb_ind.resize(n_T_amb, 13);		// Set matrix size
+	double delta_T_amb = (T_amb_high - T_amb_low)/double(n_T_amb-1);
+
+	// Set ND htf mass flow rate because it is constant for the ambient temperature parametrics
+	pc_inputs.m_m_dot_htf_ND = m_dot_htf_ND_ref;
+	for(int i = 0; i < n_T_amb; i++)
+	{
+		T_amb_ind(i,0) = T_amb_low + delta_T_amb*i;		//[C]
+		pc_inputs.m_T_amb = T_amb_ind(i,0);				//[C]
+
+		// Call at low, ref, and high HTF temperature levels
+		std::vector<double> T_htf_levels(3);
+		T_htf_levels[0] = T_htf_low;   //[C]
+		T_htf_levels[1] = T_htf_ref;   //[C]
+		T_htf_levels[2] = T_htf_high;  //[C]
+		for(int j = 0; j < 3; j++)
+		{
+			pc_inputs.m_T_htf_hot = T_htf_levels[j];
+			mf_pc_eq(pc_inputs,pc_outputs);
+
+			// Save outputs
+			T_amb_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
+			T_amb_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
+			T_amb_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
+			T_amb_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+		}
+	}
+	// ******************************************
+
+	// ******************************************
+	// Setup ND m_dot parametric runs
+	if(n_m_dot_htf_ND < 3)
+	{
+		std::string msg = util::format("The input argument for number of independent normalized HTF mass flow rates"
+						" is %d. It was reset to the minimum value of 3.", n_m_dot_htf_ND);
+		mc_messages.add_notice(msg);
+		n_m_dot_htf_ND = 3;
+	}
+
+	m_dot_htf_ind.clear();
+	m_dot_htf_ind.resize(n_m_dot_htf_ND,13);		// Set matrix size
+	double delta_m_dot = (m_dot_htf_ND_high-m_dot_htf_ND_low)/double(n_m_dot_htf_ND-1);
+
+	// Set HTF temperature because it is constant for the ambient temperature parametrics
+	pc_inputs.m_T_htf_hot = T_htf_ref;
+	for(int i = 0; i < n_m_dot_htf_ND; i++)
+	{
+		m_dot_htf_ind(i,0) = m_dot_htf_ND_low + delta_m_dot*i;		//[-]
+		pc_inputs.m_m_dot_htf_ND = m_dot_htf_ind(i,0);				//[-]
+
+		// Call at low, ref, and high ambient temperatures
+		std::vector<double> T_amb_levels(3);
+		T_amb_levels[0] = T_amb_low;    //[C]
+		T_amb_levels[1] = T_amb_ref;	//[C]
+		T_amb_levels[2] = T_amb_high;	//[C]
+		for(int j = 0; j < 3; j++)
+		{
+			pc_inputs.m_T_amb = T_amb_levels[j];
+			mf_pc_eq(pc_inputs, pc_outputs);
+		
+			// Save outputs
+			m_dot_htf_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
+			m_dot_htf_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
+			m_dot_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
+			m_dot_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+		}
+	}
+	// ******************************************
+	
+	return 0;
+}

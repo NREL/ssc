@@ -67,7 +67,7 @@ public:
 
 };
 
-
+bool check_double(double x);
 
 
 #endif

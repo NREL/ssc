@@ -118,22 +118,23 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 	{
 		// Define ms_rc_cycle_od_par
 			// Defined now
-		ms_rc_cycle_od_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
-		if(ms_rc_cycle_od_par.m_T_mc_in < m_T_mc_in_min)
+		ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
+		if( ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min )
 		{
 			std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
 			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
-			ms_rc_cycle_od_par.m_T_mc_in - 273.15,
+			ms_rc_cycle_od_phi_par.m_T_mc_in - 273.15,
 			m_T_mc_in_min - 273.15);
+			ms_rc_cycle_od_phi_par.m_T_mc_in = m_T_mc_in_min;
 		}
-		ms_rc_cycle_od_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
-		ms_rc_cycle_od_par.m_tol = ms_des_par.m_tol;						//[-]
-		ms_rc_cycle_od_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
+		ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
+		ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
+		ms_rc_cycle_od_phi_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
 			// Defined downstream
-		ms_rc_cycle_od_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
-		ms_rc_cycle_od_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
-		ms_rc_cycle_od_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
-		ms_rc_cycle_od_par.m_N_mc = std::numeric_limits<double>::quiet_NaN();			//[rpm]
+		ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
+		ms_rc_cycle_od_phi_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
+		ms_rc_cycle_od_phi_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
+		ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[rpm]
 
 		// Define ms_phx_od_par
 			// Defined now
@@ -145,9 +146,30 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 		ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 		ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 		
+
+		
+		// *** Test Turbomachinery Balancing Method ***
+		//C_RecompCycle::S_od_turbo_bal_par od_turbo_bal_par;
+		//od_turbo_bal_par.m_P_mc_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];	 //[kPa]
+		//od_turbo_bal_par.m_f_recomp = ms_des_solved.ms_rc_cycle_solved.m_recomp_frac;				 //[-]
+		//od_turbo_bal_par.m_T_mc_in = ms_rc_cycle_od_par.m_T_mc_in;									 //[K]
+		//	// Need to do better here, esp. when T_HTF is colder than design
+		//od_turbo_bal_par.m_T_t_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::TURB_IN]; //[K]
+		//	// HTF
+		//od_turbo_bal_par.m_co2_to_htf_m_dot_ratio_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t / ms_phx_des_par.m_m_dot_hot_des;
+		//od_turbo_bal_par.m_m_dot_htf = ms_phx_od_par.m_m_dot_h;	//[kg/s]
+		//	// Method()
+		//mc_rc_cycle.od_turbo_bal(od_turbo_bal_par);
+		// ********************************************
+
+
+
+
+
 		int opt_eta_code = od_fix_T_mc__float_phx_dt__opt_eta();
 
 		ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+		ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
 		return opt_eta_code;
 	}
@@ -186,11 +208,12 @@ int C_sco2_recomp_csp::od_fix_T_mc__float_phx_dt__opt_eta()
 		index++;
 	}
 
-	// Compressor Speed
-	x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);
-	lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*0.1);
-	ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*1.5);
-	scale.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_N_design*0.1);
+	// Main Compressor Flow Coefficient
+	x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
+	lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);
+	ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max);
+	scale.push_back( ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des +
+			0.05*(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max - ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des) );
 	index++;
 
 	// Reset optimization tracking structure
@@ -255,17 +278,17 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 
 	int index = 0;
 
-	ms_rc_cycle_od_par.m_P_mc_in = x[index];		//[kPa]
+	ms_rc_cycle_od_phi_par.m_P_mc_in = x[index];		//[kPa]
 	index++;
 
-	ms_rc_cycle_od_par.m_recomp_frac = 0.0;
+	ms_rc_cycle_od_phi_par.m_recomp_frac = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
-		ms_rc_cycle_od_par.m_recomp_frac = x[index];
+		ms_rc_cycle_od_phi_par.m_recomp_frac = x[index];
 		index++;
 	}
 
-	ms_rc_cycle_od_par.m_N_mc = x[index];
+	ms_rc_cycle_od_phi_par.m_phi_mc = x[index];
 	index++;
 
 	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
@@ -282,7 +305,7 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 
 	// Set solver settings
 	// Because this application of solver is trying to get outlet to match guess, need to calculate error in function
-	// So its already relative, and solver is looking at an absolute value
+	// So it's already relative, and solver is looking at an absolute value
 	c_phx_cycle_solver.settings(ms_des_par.m_tol, 50, T_t_lower, T_t_upper, false);
 
 	// Now, solve for the turbine inlet temperature
@@ -290,7 +313,15 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 	T_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 	int iter_solved = -1;
 
-	int phx_cycle_code = c_phx_cycle_solver.solve(T_t_guess_lower, T_t_guess_upper, 0.0, T_t_solved, tol_solved, iter_solved);
+	int phx_cycle_code = 0;
+	try
+	{
+		phx_cycle_code = c_phx_cycle_solver.solve(T_t_guess_lower, T_t_guess_upper, 0.0, T_t_solved, tol_solved, iter_solved);
+	}
+	catch( C_csp_exception )
+	{
+		return 0.0;
+	}
 	
 	if( phx_cycle_code != C_monotonic_eq_solver::CONVERGED )
 	{
@@ -299,14 +330,39 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
 	// 1) Don't let the turbine inlet temperature exceed the design inlet temperature
-	double over_T_t_in = max(0.0, T_t_solved - mc_rc_cycle.get_design_solved()->m_temp[6-1]);
+	double over_T_t_in = 0.0;
+	// double over_T_t_in = max(0.0, T_t_solved - mc_rc_cycle.get_design_solved()->m_temp[6-1]);
 
 	// 2) Don't let the upper pressure in the system exceed the specified max (typically also = design point P_high)
-	double over_P_high = max(0.0, mc_rc_cycle.get_od_solved()->m_pres[2-1] - ms_des_par.m_P_high_limit);
+	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[2-1] - ms_des_par.m_P_high_limit)/1.E3);
 
 	// 3) Check compressor(s) tip ratio?
+	double mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
+		// Recompressor has multiple stages, it's reporting the fastest tip speed
+	double rc_w_tip_ratio = 0.0;
+	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+	{
+		rc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_w_tip_ratio;
+	}
+	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
+	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 1.0));
 
 	// 4) Check for compressor(s) surge?
+		// Main compressor
+	double mc_phi = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi;
+	double over_surge_mc = max(0.0, C_compressor::m_snl_phi_min - mc_phi);
+		// Recompressor
+	double rc_phi_s1, rc_phi_s2;
+	rc_phi_s1 = rc_phi_s2 = 0.0;
+	double over_surge_rc = 0.0;
+	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+	{
+		rc_phi_s1 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi;
+		rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
+		double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
+		over_surge_rc = max(0.0, C_recompressor::m_snl_phi_min - rc_phi_min);
+	}
+
 
 	// 5) Constrain HTF temperature difference?
 
@@ -314,7 +370,15 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 	// ... to help the solver
 	double eta_T_t_in_scale = exp(-over_T_t_in);
 	double eta_P_high_scale = exp(-over_P_high);
-	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*eta_T_t_in_scale*eta_P_high_scale;
+	double eta_tip_ratio_scale = exp(-over_tip_ratio);
+	double eta_surge_mc_scale = exp(-over_surge_mc);
+	double eta_surge_rc_scale = exp(-over_surge_rc);
+	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*
+							eta_T_t_in_scale*
+							eta_P_high_scale*
+							eta_tip_ratio_scale*
+							eta_surge_mc_scale*
+							eta_surge_rc_scale;
 
 	// BUT, need to inform upstream code that a solution in this gradient is not acceptable
 	if( over_T_t_in == 0.0 && over_P_high == 0.0 )
@@ -344,11 +408,12 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	//	-ms_phx_od_par
 
 	// 1) Update Turbine Inlet Temperature in sco2 cycle off design parameter structure
-	mpc_sco2_rc->ms_rc_cycle_od_par.m_T_t_in = T_t_in;
+	mpc_sco2_rc->ms_rc_cycle_od_phi_par.m_T_t_in = T_t_in;
 
 	// 2) Solve the off-design cycle model with off design parameter structure
 	int rc_od_error_code = 0;
-	mpc_sco2_rc->mc_rc_cycle.off_design(mpc_sco2_rc->ms_rc_cycle_od_par, rc_od_error_code);
+	
+	mpc_sco2_rc->mc_rc_cycle.off_design_phi(mpc_sco2_rc->ms_rc_cycle_od_phi_par, rc_od_error_code);
 
 	// If off-design cycle model did not solve, return to solver
 	if( rc_od_error_code != 0 )
@@ -379,6 +444,57 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	
 	*diff_T_t_in = (T_co2_phx_out - T_t_in) / T_t_in;
 	return 0;
+}
+
+int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
+{
+	S_od_par sco2_od_par;
+	sco2_od_par.m_T_htf_hot = inputs.m_T_htf_hot + 273.15;	//[K] convert from C
+	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
+	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
+
+	int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
+
+	mpc_sco2_rc->off_design(sco2_od_par, od_strategy);
+
+	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
+	double W_dot_gross_design = mpc_sco2_rc->get_design_par()->m_W_dot_net;	//[kWe]
+	double Q_dot_in_design = mpc_sco2_rc->get_design_par()->m_W_dot_net
+								/ mpc_sco2_rc->get_design_par()->m_eta_thermal;	//[kWt]
+	double W_dot_cooling_design = mpc_sco2_rc->get_design_par()->m_frac_fan_power*W_dot_gross_design;	//[kWe]
+	double m_dot_water_design = 0.0;		//[kg/s]
+
+	outputs.m_W_dot_gross_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net
+								/ W_dot_gross_design;
+
+	outputs.m_Q_dot_in_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_Q_dot
+								/ Q_dot_in_design;
+
+	outputs.m_W_dot_cooling_ND = 1.0;
+
+	outputs.m_m_dot_water_ND = 1.0;	
+
+	return 0;
+}
+
+int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
+	double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
+	double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
+	util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind)
+{
+	C_sco2_csp_od c_sco2_csp(this);
+	C_ud_pc_table_generator c_sco2_ud_pc(c_sco2_csp);
+
+	double T_htf_ref = ms_des_par.m_T_htf_hot_in - 273.15;	//[C] convert from K
+	double T_amb_ref = ms_des_par.m_T_amb_des - 273.15;		//[C] convert from K
+	double m_dot_htf_ND_ref = 1.0;							//[-]
+
+	int ud_pc_error_code = c_sco2_ud_pc.generate_tables(T_htf_ref, T_htf_low, T_htf_high, n_T_htf,
+								T_amb_ref, T_amb_low, T_amb_high, n_T_amb,
+								m_dot_htf_ND_ref, m_dot_htf_ND_low, m_dot_htf_ND_high, n_m_dot_htf_ND,
+								T_htf_ind, T_amb_ind, m_dot_htf_ND_ind);
+
+	return ud_pc_error_code;
 }
 
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data)

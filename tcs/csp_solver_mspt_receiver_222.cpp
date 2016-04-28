@@ -243,7 +243,7 @@ void C_mspt_receiver_222::init()
 }
 
 void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather, 
-	C_csp_solver_htf_state &htf_state,
+	const C_csp_solver_htf_1state &htf_state_in,
 	const C_mspt_receiver_222::S_inputs &inputs,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -268,7 +268,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double time = sim_info.m_time;
 
 	// Get applicable htf state info
-	double T_salt_cold_in = htf_state.m_temp_in;		//[C]
+	double T_salt_cold_in = htf_state_in.m_temp;		//[C]
 
 	// Complete necessary conversions/calculations of input variables
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
@@ -913,6 +913,37 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	else
 		ms_outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
 
+}
+
+void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// Don't currently need *any* of these inputs, but if we add recirculation or thermal capacitance it would be helpful to have in place
+	m_mode = C_csp_collector_receiver::OFF;
+
+	// Assuming no night recirculation, so... these should be zero
+	ms_outputs.m_m_dot_salt_tot = 0.0;		//[kg/hr] convert from kg/s
+	ms_outputs.m_eta_therm = 0.0;			//[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
+	ms_outputs.m_W_dot_pump = 0.0;			//[MW] convert from W
+	ms_outputs.m_q_conv_sum = 0.0;			//[MW] convert from W
+	ms_outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
+	ms_outputs.m_Q_thermal = 0.0;			//[MW] convert from W
+	ms_outputs.m_T_salt_hot = 0.0;			//[C] convert from K
+	ms_outputs.m_field_eff_adj = 0.0;		//[-]
+	ms_outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
+	ms_outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
+	ms_outputs.m_dP_receiver = 0.0;			//[bar] receiver pressure drop, convert from Pa
+	ms_outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
+	ms_outputs.m_vel_htf = 0.0;				//[m/s]
+	ms_outputs.m_T_salt_cold = 0.0;			//[C] convert from K
+	ms_outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
+	ms_outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
+	ms_outputs.m_f_timestep = 0.0;			//[-]
+	ms_outputs.m_time_required_su = 0.0;	//[s], convert from hr in code
+	ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
+	
+	return;
 }
 
 void C_mspt_receiver_222::converged()

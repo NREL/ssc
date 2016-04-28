@@ -91,7 +91,7 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	ms_outputs.m_minute = m_rec.minute;
 
 	ms_outputs.m_global = m_rec.gh;
-	ms_outputs.m_beam = m_rec.dn;
+	ms_outputs.m_beam = m_rec.dn;	
 	ms_outputs.m_diffuse = m_rec.df;
 	ms_outputs.m_tdry = m_rec.tdry;
 	ms_outputs.m_twet = m_rec.twet;
@@ -112,7 +112,8 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	ms_outputs.m_shift = (m_hdr.lon - m_hdr.tz*15.0);
 	ms_outputs.m_elev = m_hdr.elev;
 
-
+	ms_outputs.m_hor_beam = m_rec.dn*cos(sunn[1]);
+	
 	// Recalculate sunrise and sunset if necessary
 	if( m_rec.day != day_prev )
 	{

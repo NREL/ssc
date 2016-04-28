@@ -7,6 +7,8 @@
 
 #include "numeric_solvers.h"
 
+#include "ud_power_cycle.h"s
+
 class C_sco2_recomp_csp
 {
 
@@ -100,7 +102,8 @@ public:
 
 	struct S_od_solved
 	{
-		C_RecompCycle::S_od_solved ms_rc_cycle_od_solved;	
+		C_RecompCycle::S_od_solved ms_rc_cycle_od_solved;
+		C_HX_counterflow::S_od_solved ms_phx_od_solved;	
 	};
 
 private:
@@ -117,7 +120,8 @@ private:
 	S_des_solved ms_des_solved;
 
 	S_od_par ms_od_par;
-	C_RecompCycle::S_od_parameters ms_rc_cycle_od_par;
+	//C_RecompCycle::S_od_parameters ms_rc_cycle_od_par;
+	C_RecompCycle::S_od_phi_par ms_rc_cycle_od_phi_par;
 	C_HX_counterflow::S_od_par ms_phx_od_par;
 	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
 
@@ -156,6 +160,25 @@ public:
 		virtual int operator()(double T_t_in /*K*/, double *diff_T_t_in /*-*/);
 	};
 
+	class C_sco2_csp_od : public C_od_pc_function
+	{
+	private:
+		C_sco2_recomp_csp *mpc_sco2_rc;
+
+	public:
+		C_sco2_csp_od(C_sco2_recomp_csp *pc_sco2_rc)
+		{
+			mpc_sco2_rc = pc_sco2_rc;
+		}
+	
+		virtual int operator()(S_f_inputs inputs, S_f_outputs & outputs);
+	};
+
+	int generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
+		double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
+		double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
+		util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind);
+
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
 	int off_design(S_od_par od_par, int off_design_strategy);
@@ -169,6 +192,11 @@ public:
 	}
 
 	// Methods to private access member data
+	const S_des_par * get_design_par()
+	{
+		return &ms_des_par;
+	}
+
 	const S_des_solved * get_design_solved()
 	{
 		return &ms_des_solved;

@@ -137,40 +137,15 @@ public:
 		}
 	};
 
-	//struct S_outputs
-	//{
-	//	double m_P_cycle;			//[MWe] Cycle power output
-	//	double m_eta;				//[-] Cycle thermal efficiency
-	//	double m_T_htf_cold;		//[C] Heat transfer fluid outlet temperature
-	//	double m_m_dot_makeup;		//[kg/hr] Cooling water makeup flow rate
-	//	double m_m_dot_demand;		//[kg/hr] HTF required flow rate to meet power load
-	//	double m_m_dot_htf;			//[kg/hr] Actual HTF flow rate passing through the power cycle
-	//	double m_m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
-	//	double m_W_cool_par;		//[MWe] Cooling system parasitic load
-	//	double m_P_ref;				//[MWe] Reference power level output at design
-	//	double m_f_hrsys;			//[-] Fraction of operating heat rejection system
-	//	double m_P_cond;			//[Pa] Condenser pressure
-
-	//	S_outputs()
-	//	{
-	//		m_P_cycle = m_eta = m_T_htf_cold = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf = m_m_dot_htf_ref =
-	//			m_W_cool_par = m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
-	//	}
-	//};
-
 	S_params ms_params;
-
-	//S_outputs ms_outputs;
 
 	C_pc_Rankine_indirect_224();
 
 	~C_pc_Rankine_indirect_224(){};
 
-	virtual void init();
+	virtual void init(C_csp_power_cycle::S_solved_params &solved_params);
 
 	virtual int get_operating_state();
-
-	virtual void get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params);
 
     virtual double get_cold_startup_time(); 
     virtual double get_warm_startup_time();
@@ -189,9 +164,10 @@ public:
 
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather, 
-		C_csp_solver_htf_state &htf_state,
+		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
-		C_csp_power_cycle::S_csp_pc_outputs &outputs,
+		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
+		C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();

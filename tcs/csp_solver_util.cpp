@@ -62,3 +62,12 @@ C_csp_exception::C_csp_exception(const std::string &error_message, const std::st
 	m_code_location = code_location;
 	m_error_code = error_code;
 }
+
+bool check_double(double x)
+{
+	if( x != x )
+	{
+		return false;
+	}
+	return true;
+}

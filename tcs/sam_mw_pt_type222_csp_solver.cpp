@@ -152,7 +152,7 @@ class sam_mw_pt_type222 : public tcstypeinterface
 private:
 	C_mspt_receiver_222 mspt_receiver;
 	C_csp_weatherreader::S_outputs ms_weather;
-	C_csp_solver_htf_state ms_htf_state;
+	C_csp_solver_htf_1state ms_htf_state_in;
 	C_mspt_receiver_222::S_inputs ms_inputs;
 	C_csp_solver_sim_info ms_sim_info;
 
@@ -290,7 +290,7 @@ public:
 		//ms_sim_info.m_ncall = ncall;
 
 		// Set applicable htf state info
-		ms_htf_state.m_temp_in = T_salt_cold_in_csp;
+		ms_htf_state_in.m_temp = T_salt_cold_in_csp;
 
 		// Set operation mode == 2
 		ms_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
@@ -302,7 +302,7 @@ public:
         try
 		{
 			mspt_receiver.call(ms_weather, 
-				ms_htf_state, 
+				ms_htf_state_in, 
 				ms_inputs, 
 				ms_sim_info);
 		}

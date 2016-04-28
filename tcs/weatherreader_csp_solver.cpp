@@ -26,7 +26,8 @@ enum {	P_FILENAME,
 		O_MINUTE,
 
 		O_GLOBAL, 
-		O_BEAM, 
+		O_BEAM,
+		O_HOR_BEAM,
 		O_DIFFUSE,
 		O_TDRY,
 		O_TWET,
@@ -72,6 +73,7 @@ tcsvarinfo weatherreader_variables[] = {
 
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_GLOBAL,   "global",      "Global horizontal irradiance",         "W/m2",    "Solar", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_BEAM,     "beam",        "Beam normal irradiance",               "W/m2",    "Solar", "",     "" },
+	{ TCS_OUTPUT,  TCS_NUMBER,   O_HOR_BEAM, "hor_beam",    "Beam-horizontal irradiance",           "W/m2",    "Solar", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_DIFFUSE,  "diff",        "Diffuse horizontal irradiance",        "W/m2",    "Solar", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_TDRY,     "tdry",        "Dry bulb temperature",                 "'C",      "Meteo", "",     "" },
 	{ TCS_OUTPUT,  TCS_NUMBER,   O_TWET,     "twet",        "Wet bulb temperature",                 "'C",      "Meteo", "",     "" },
@@ -204,6 +206,7 @@ public:
 
 		value(O_GLOBAL, m_wf->m_global);
 		value(O_BEAM, m_wf->m_beam);
+		value(O_HOR_BEAM, m_wf->m_hor_beam);
 		value(O_DIFFUSE, m_wf->m_diffuse);
 		value(O_TDRY, m_wf->m_tdry);
 		value(O_TWET, m_wf->m_twet);

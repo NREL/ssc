@@ -46,72 +46,6 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	// Initialize ssc output reporting arrays
 	mp_reporting_array = 0;
 
-		// Simulation outputs
-	//mv_time_final.resize(0);
-	//mv_step.resize(0);
-	//mv_solzen.resize(0);
-	//mv_beam.resize(0);
-		
-		// Collector-receiver outputs
-	//mv_eta_field.resize(0);
-	//mv_defocus.resize(0);
-	//mv_rec_eta_thermal.resize(0);
-	//mv_rec_q_dot_thermal.resize(0);
-	//mv_rec_m_dot.resize(0);
-	//mv_rec_q_dot_startup.resize(0);
-	//mv_T_rec_in.resize(0);
-	//mv_T_rec_out.resize(0);
-	//mv_q_dot_piping_loss.resize(0);
-
-		// Power cycle outputs
-	//mv_pc_eta.resize(0);
-	//mv_pc_q_dot_thermal.resize(0);
-	//mv_pc_m_dot.resize(0);
-	//mv_pc_q_dot_startup.resize(0);
-	//mv_pc_W_dot_gross.resize(0);
-	//mv_T_pc_in.resize(0);
-	//mv_T_pc_out.resize(0);
-
-		// Thermal energy storage outputs
-	//mv_tes_q_dot_loss.resize(0);
-	//mv_tes_q_dot_heater.resize(0);
-	//mv_tes_T_hot.resize(0);
-	//mv_tes_T_cold.resize(0);	
-	//mv_tes_dc_q_dot_thermal.resize(0);
-	//mv_tes_ch_q_dot_thermal.resize(0);
-	//mv_tes_dc_m_dot.resize(0);
-	//mv_tes_ch_m_dot.resize(0);
-	//
-	//	// Parasitics outputs	
-	//mv_W_dot_tracking.resize(0);
-	//mv_W_dot_rec_htf_pump.resize(0);
-	//mv_W_dot_tes_pc_htf_pump.resize(0);
-	//mv_W_dot_cooling.resize(0);
-	//mv_W_dot_tes_fp_heater.resize(0);
-	//mv_W_dot_fixed.resize(0);
-	//mv_W_dot_bop.resize(0);
-
-		// System outputs
-	//mv_W_dot_net.resize(0);
-
-		// Controller outputs
-	//mv_q_dot_pc_sb.resize(0);
-	//mv_q_dot_pc_min.resize(0);
-	//mv_q_dot_pc_max.resize(0);
-	//mv_q_dot_pc_target.resize(0);
-	//mv_is_rec_su_allowed.resize(0);
-	//mv_is_pc_su_allowed.resize(0);
-	//mv_is_pc_sb_allowed.resize(0);
-	//mv_q_dot_est_cr_su.resize(0);
-	//mv_q_dot_est_cr_on.resize(0);
-	//mv_q_dot_est_tes_dc.resize(0);
-	//mv_q_dot_est_tes_ch.resize(0);
-	//mv_operating_modes_a.resize(0);
-	//mv_operating_modes_b.resize(0);
-	//mv_operating_modes_c.resize(0);
-	//mv_m_dot_balance.resize(0);
-	//mv_q_balance.resize(0);
-
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
 }
@@ -168,48 +102,33 @@ void C_csp_solver::reset_hierarchy_logic()
 	m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = true;
 } 
 
-void C_csp_solver::init_independent()
-{
-	mc_weather.init();
-	mc_collector_receiver.init();
-	mc_power_cycle.init();
-	mc_tes.init();
-	mc_tou.init();
-	mc_tou.init_parent();
-
-	return;
-}
-
 void C_csp_solver::init()
 {
-	init_independent();
-    /* 
-    This function calculates constant parameters to be used by the controller-solver
-    and passes them back. E.g. mass flow rate for scaling, initial cold temperature
-    guess value, etc.
-    */
-
-
-	// Get controller values from component models
-		// Collector/Receiver
+	// First, initialize each component and update solver-level membe data as necessary
+		// Weather reader
+	mc_weather.init();
+		// Collector-receiver
 	C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
-	mc_collector_receiver.get_design_parameters(cr_solved_params);
+	mc_collector_receiver.init(cr_solved_params);
 	m_T_htf_cold_des = cr_solved_params.m_T_htf_cold_des;		//[K]
 	m_q_dot_rec_on_min = cr_solved_params.m_q_dot_rec_on_min;	//[MW]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
-
-		// Power Cycle
-	C_csp_power_cycle::S_solved_params solved_params;
-	mc_power_cycle.get_design_parameters(solved_params);		
-	m_cycle_W_dot_des = solved_params.m_W_dot_des;					//[MW]
-	m_cycle_eta_des = solved_params.m_eta_des;						//[-]
-	m_cycle_q_dot_des = solved_params.m_q_dot_des;					//[MW]
-	m_cycle_max_frac = solved_params.m_max_frac;					//[-]
-	m_cycle_cutoff_frac = solved_params.m_cutoff_frac;				//[-]
-	m_cycle_sb_frac_des = solved_params.m_sb_frac;					//[-]
-	m_cycle_T_htf_hot_des = solved_params.m_T_htf_hot_ref+273.15;	//[K] convert from C
-	m_m_dot_pc_des = solved_params.m_m_dot_design;					//[kg/hr]
-		
+		// Power cycle
+	C_csp_power_cycle::S_solved_params pc_solved_params;
+	mc_power_cycle.init(pc_solved_params);
+	m_cycle_W_dot_des = pc_solved_params.m_W_dot_des;					//[MW]
+	m_cycle_eta_des = pc_solved_params.m_eta_des;						//[-]
+	m_cycle_q_dot_des = pc_solved_params.m_q_dot_des;					//[MW]
+	m_cycle_max_frac = pc_solved_params.m_max_frac;					//[-]
+	m_cycle_cutoff_frac = pc_solved_params.m_cutoff_frac;				//[-]
+	m_cycle_sb_frac_des = pc_solved_params.m_sb_frac;					//[-]
+	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
+	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
+		// TES
+	mc_tes.init();
+		// TOU
+	mc_tou.init();
+	mc_tou.init_parent();
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
 
@@ -499,20 +418,21 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
 		// May replace this call with a simple proxy model later...
-		mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+		mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 		mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STEADY_STATE;
 		mc_collector_receiver.call(mc_weather.ms_outputs,
-			mc_cr_htf_state,
+			mc_cr_htf_state_in,
 			mc_cr_inputs,
-			mc_cr_outputs,
+			mc_cr_out_solver,
+			mc_cr_out_report,
 			mc_sim_info);
 
 
 		// Need a way to consider min power (as calculated in receiver model)
 		// Steady State call is suggesting receiver can produce power, and when ON is tried, it is nowhere close to meeting min power requirements
 		// Think the idea with initially not checking output was for startup considerations...
-		double q_dot_cr_startup = mc_cr_outputs.m_q_thermal;		//[MW]
+		double q_dot_cr_startup = mc_cr_out_solver.m_q_thermal;		//[MW]
 
 		double q_dot_cr_on = std::numeric_limits<double>::quiet_NaN();
 
@@ -710,68 +630,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
             disp_time_last = mc_sim_info.m_time;
                         
         }
-        
-        // Solve collector/receiver at steady state with design inputs and weather to estimate output
-			// May replace this call with a simple proxy model later...
-		//mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-		//mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-		//mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STEADY_STATE;
-		//mc_collector_receiver.call(mc_weather.ms_outputs,
-		//	mc_cr_htf_state,
-		//	mc_cr_inputs,
-		//	mc_cr_outputs,
-		//	mc_sim_info);
-
-
-		//// Need a way to consider min power (as calculated in receiver model)
-		//// Steady State call is suggesting receiver can produce power, and when ON is tried, it is nowhere close to meeting min power requirements
-		//// Think the idea with initially not checking output was for startup considerations...
-		//double q_dot_cr_startup = mc_cr_outputs.m_q_thermal;		//[MW]
-
-		//double q_dot_cr_on = std::numeric_limits<double>::quiet_NaN();
-		//
-		//// Want to be VERY SURE that if controller thinks receiver can produce useful energy, then it actually can
-		//// Eventually, it would be nice to have these defined by a CR class method
-		//if(q_dot_cr_startup < m_q_dot_rec_on_min*1.01)      
-		//	q_dot_cr_on = 0.0;
-		//else
-		//	q_dot_cr_on = q_dot_cr_startup;
-
-
-        /* 
-        
-        
-        dispatch optimization here??
-        
-       
-        These control variables will be set by the dispatch algorithm. The steady state calls do not
-        depend on these variables.
-        
-        bool is_rec_su_allowed = true;
-		bool is_pc_su_allowed = true;
-		bool is_pc_sb_allowed = true;
-
-        Optionally, can also determine these values:
-
-        double q_pc_sb = cycle_sb_frac * m_cycle_q_dot_des;		//[MW]
-		double q_pc_min = m_cycle_cutoff_frac * m_cycle_q_dot_des;	//[MW]
-		double q_pc_max = m_cycle_max_frac * m_cycle_q_dot_des;		//[MW]
-		double q_pc_target = q_pc_max;							//[MW]
-                << this is the variable that will control how much TES is dispatched
-
-        */
-
-
-
-
-
-
-
-
-
-
-
-
 
         /* 
         ------------ Controller/Solver iteration loop -------------
@@ -791,28 +649,29 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			m_is_tes )
 		{
 			// Set startup conditions
-			mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+			mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 			mc_cr_inputs.m_field_control = 1.0;							//[-] no defocusing for initial simulation
 			mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 			mc_collector_receiver.call(mc_weather.ms_outputs,
-				mc_cr_htf_state,
+				mc_cr_htf_state_in,
 				mc_cr_inputs,
-				mc_cr_outputs,
+				mc_cr_out_solver,
+				mc_cr_out_report,
 				mc_sim_info);
 
 			// Check that startup happened
 			// Because for all modes w/ startup, the startup occurs under the same conditions for any given timestep
 			// then if startup fails here, it won't succeed downstream
 			// so set is_rec_su_allowed = false
-			if( mc_cr_outputs.m_q_startup == 0.0 || mc_cr_outputs.m_time_required_su != mc_cr_outputs.m_time_required_su )
+			if( mc_cr_out_solver.m_q_startup == 0.0 || mc_cr_out_solver.m_time_required_su != mc_cr_out_solver.m_time_required_su )
 			{	// Collector/receiver can't produce useful energy
 				
 				is_rec_su_allowed = false;
 			}
 			else
 			{
-				double t_CR_su = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+				double t_CR_su = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 
 				// Use minimum of CR startup timestep and initial simulation timestep
 				t_CR_su = fmin(t_CR_su, mc_sim_info.m_step);			//[s]
@@ -1330,21 +1189,22 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				
 				// Get collector-receiver performance with no defocus
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 
 				double defocus_guess_ini = std::numeric_limits<double>::quiet_NaN();
-				if( mc_cr_outputs.m_q_thermal > 0.0 )
+				if( mc_cr_out_solver.m_q_thermal > 0.0 )
 				{
 					// Controller hierarchy doesn't allow to go back to No Defocus and PC_RM, so check that defocus is <= 1
-					defocus_guess_ini = fmin(1.0, q_pc_max / mc_cr_outputs.m_q_thermal);
+					defocus_guess_ini = fmin(1.0, q_pc_max / mc_cr_out_solver.m_q_thermal);
 				}
 				else
 				{					
@@ -1533,7 +1393,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Calculate the difference between thermal power delivered to PC and thermal power requested
 						// (Rec - q_pc_max)/q_pc_max: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
 
-						diff_q_dot = (mc_cr_outputs.m_q_thermal - q_pc_max) / q_pc_max;
+						diff_q_dot = (mc_cr_out_solver.m_q_thermal - q_pc_max) / q_pc_max;
 					}
 
 				}	// end iteration on CR defocus
@@ -1711,7 +1571,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
 					{	// In this mode, the power cycle thermal input needs to be greater than the minimum power cycle fraction
 
-						if( mc_cr_outputs.m_q_thermal < q_pc_min )
+						if( mc_cr_out_solver.m_q_thermal < q_pc_min )
 						{
 							m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail = false;
 							are_models_converged = false;
@@ -1723,13 +1583,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// In this mode, the power cycle thermal input needs to be greater than the target cycle fraction
 						// ... and less than the maximum cycle fraction
 
-						if( mc_cr_outputs.m_q_thermal > q_pc_max )
+						if( mc_cr_out_solver.m_q_thermal > q_pc_max )
 						{
 							m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE = false;
 							are_models_converged = false;
 							break;
 						}
-						else if( mc_cr_outputs.m_q_thermal < q_pc_target )
+						else if( mc_cr_out_solver.m_q_thermal < q_pc_target )
 						{
 							m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = false;
 							are_models_converged = false;
@@ -1786,17 +1646,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				m_defocus = 1.0;
 
 				// First, solve the CR. Again, we're assuming HTF inlet temperature is always = m_T_htf_cold_des
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
-				if( mc_cr_outputs.m_q_thermal < q_pc_sb )
+				if( mc_cr_out_solver.m_q_thermal < q_pc_sb )
 				{	// Collector/receiver can't produce useful energy
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -1808,16 +1669,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// If receiver is indeed producing power, then try power cycle at standby
 				// Power cycle: STANDBY
-				mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
-				mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
+				mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::STANDBY;
 				//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);
 
 				if( m_is_tes )
@@ -1852,17 +1714,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				m_defocus = 1.0;
 
 				// CR: ON
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
-				if( mc_cr_outputs.m_q_thermal == 0.0 )
+				if( mc_cr_out_solver.m_q_thermal == 0.0 )
 				{	// Collector/receiver can't produce useful energy
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -1874,21 +1737,22 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// If receiver IS producing energy, try starting up power cycle
 				// Power Cycle: STARTUP
-				mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
-				mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
+				mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP;
 				//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);				
 
 
 				// Check for new timestep
-				step_local = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+				step_local = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 				if( step_local < mc_sim_info.m_step - step_tolerance )
 				{
 					is_sim_timestep_complete = false;
@@ -1918,7 +1782,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Compare q_dot_to_pc to q_dot_pc_su_max
-				if( mc_cr_outputs.m_q_thermal > q_dot_pc_su_max && q_dot_tes_ch > 0.0 )
+				if( mc_cr_out_solver.m_q_thermal > q_dot_pc_su_max && q_dot_tes_ch > 0.0 )
 				{
 					error_msg = util::format("At time = %lg CR_ON__PC_SU__TES_OFF__AUX_OFF method converged to a power cycle"
 						" thermal input greater than the target.",
@@ -1938,18 +1802,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				// Check that startup happened
-				if( mc_cr_outputs.m_q_startup == 0.0 )
+				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -1960,7 +1825,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Check for new timestep
-				step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+				step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 				if( step_local < mc_sim_info.m_step - step_tolerance )
 				{
 					is_sim_timestep_complete = false;
@@ -1974,16 +1839,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Power Cycle: OFF
-				mc_pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
-				mc_pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
 				//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);
 
 				if( m_is_tes )
@@ -2013,27 +1879,27 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 0.0;						//[-] Field OFF when receiver is OFF!
-				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::OFF;
-				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
-					mc_cr_inputs,
-					mc_cr_outputs,
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				
+				mc_collector_receiver.off(mc_weather.ms_outputs,
+					mc_cr_htf_state_in,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				// Power Cycle: OFF
 				// HTF State
-				mc_pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
-				mc_pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
 				//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);
 
 				if( m_is_tes )
@@ -2092,13 +1958,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Now run CR at 'OFF'
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 0.0;							//[-] Field OFF when receiver is OFF!
-				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::OFF;
-				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
-					mc_cr_inputs,
-					mc_cr_outputs,
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				
+				mc_collector_receiver.off(mc_weather.ms_outputs,
+					mc_cr_htf_state_in,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				are_models_converged = true; 
@@ -2240,19 +2105,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// Solve the collector-receiver model
 					// CR ON
-					mc_cr_htf_state.m_temp_in = T_rec_in_guess;					//[C]
+					mc_cr_htf_state_in.m_temp = T_rec_in_guess;					//[C]
 					mc_cr_inputs.m_field_control = 1.0;							//[-] assuming no defocus
 					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;		// Receiver is operating and producing useful output
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
+						mc_cr_htf_state_in,
 						mc_cr_inputs,
-						mc_cr_outputs,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
 					// ... if that is the case, then can't send useful information to TES and need to branch off here
-					if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+					if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 					{
 						
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
@@ -2303,13 +2169,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// Now, solved TES charge with CR outputs
 					double T_htf_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
-					bool tes_charge_success = mc_tes.charge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_cr_outputs.m_m_dot_salt_tot/3600.0, mc_cr_outputs.m_T_salt_hot+273.15,
+					bool tes_charge_success = mc_tes.charge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry+273.15, mc_cr_out_solver.m_m_dot_salt_tot/3600.0, mc_cr_out_solver.m_T_salt_hot+273.15,
 						T_htf_tes_cold_out, mc_tes_outputs);
 					T_htf_tes_cold_out -= 273.15;		//[C] convert back from K
 
 					// Set charge htf state
-					mc_tes_ch_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr]
-					mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+					mc_tes_ch_htf_state.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+					mc_tes_ch_htf_state.m_temp_in = mc_cr_out_solver.m_T_salt_hot;		//[C]
 					mc_tes_ch_htf_state.m_temp_out = T_htf_tes_cold_out;			//[C]
 
 					// Set discharge htf state
@@ -2386,16 +2252,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// If CR ON, TES CH solved, then solve powerblock OFF and get out
 				// Power Cycle: OFF
 				// HTF State
-				mc_pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
-				mc_pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
 				//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);
 
 				are_models_converged = true;
@@ -2710,18 +2577,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					} // end logic to determine new T_rec_in
 
 					// Solve the collector-receiver model
-					mc_cr_htf_state.m_temp_in = T_rec_in_guess;		//[C]
+					mc_cr_htf_state_in.m_temp = T_rec_in_guess;		//[C]
 					mc_cr_inputs.m_field_control = 1.0;				//[-] no defocusing for initial simulation
 					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
+						mc_cr_htf_state_in,
 						mc_cr_inputs,
-						mc_cr_outputs,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
-					if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+					if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 					{
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 						if( iter_T_rec_in == 1 )
@@ -2795,26 +2663,27 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;//[C] convert from K
 
-					double m_dot_pc = mc_cr_outputs.m_m_dot_salt_tot + m_dot_tes_dc;		//[kg/hr]
+					double m_dot_pc = mc_cr_out_solver.m_m_dot_salt_tot + m_dot_tes_dc;		//[kg/hr]
 
-					double T_pc_htf_in = (m_dot_tes_dc*T_tes_htf_hot + mc_cr_outputs.m_m_dot_salt_tot*mc_cr_outputs.m_T_salt_hot) / (m_dot_pc);	//[C]
+					double T_pc_htf_in = (m_dot_tes_dc*T_tes_htf_hot + mc_cr_out_solver.m_m_dot_salt_tot*mc_cr_out_solver.m_T_salt_hot) / (m_dot_pc);	//[C]
 
 					// Solve power cycle model
-					mc_pc_htf_state.m_temp_in = T_pc_htf_in;		//[C]
-					mc_pc_htf_state.m_m_dot = m_dot_pc;				//[kg/hr]
+					mc_pc_htf_state_in.m_temp = T_pc_htf_in;		//[C]
+					mc_pc_inputs.m_m_dot = m_dot_pc;				//[kg/hr]
 
 					// Inputs
 					mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 
 					// Performance Call
 					mc_power_cycle.call(mc_weather.ms_outputs,
-						mc_pc_htf_state,
+						mc_pc_htf_state_in,
 						mc_pc_inputs,
-						mc_pc_outputs,
+						mc_pc_out_solver,
+						mc_pc_out_report,
 						mc_sim_info);
 
 					// Check that power cycle is producing power or model didn't solve
-					if(mc_pc_outputs.m_P_cycle == 0.0)
+					if(mc_pc_out_solver.m_P_cycle == 0.0)
 					{
 						// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 						// Go to Receiver OFF power cycle OFF
@@ -2864,7 +2733,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}	// End logic for PC off or not producing power
 
 					// Get HTF temperature out from the power cycle and compare to guess value (T_rec_in)
-					double T_rec_in_calc = mc_pc_outputs.m_T_htf_cold;	//[C]
+					double T_rec_in_calc = mc_pc_out_solver.m_T_htf_cold;	//[C]
 
 					diff_T_rec_in = (T_rec_in_calc - T_rec_in_guess) / T_rec_in_guess;		//[-]
 				}
@@ -2872,12 +2741,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// *********************************
 				// Check PC q_dot is >= MIN!!!!!!!!
 				// *********************************
-				if(mc_pc_outputs.m_q_dot_htf < q_pc_min)
+				if(mc_pc_out_solver.m_q_dot_htf < q_pc_min)
 				{
 					exit_mode = NO_SOLUTION;
 				}
 
-				if(mc_pc_outputs.m_q_dot_htf > q_pc_target)
+				if(mc_pc_out_solver.m_q_dot_htf > q_pc_target)
 				{
 					error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF method converged to a power cycle"
 						" thermal input greater than the target.",
@@ -2929,17 +2798,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Assuming here that partial defocus is allowed, so should always be able to reach full power to PC
 				
 				// Get collector-receiver performance with no defocus
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				
-				if( mc_cr_outputs.m_q_thermal == 0.0 )
+				if( mc_cr_out_solver.m_q_thermal == 0.0 )
 				{
 					// CR not producing power at design inlet temperature
 
@@ -2987,7 +2857,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					T_htf_tes_out_est, m_dot_htf_tes_out_est, mc_tes_outputs);
 				m_dot_htf_tes_out_est *= 3600.0;
 
-				double defocus_guess_ini = fmin(1.0, m_dot_htf_tes_out_est / mc_cr_outputs.m_m_dot_salt_tot);				
+				double defocus_guess_ini = fmin(1.0, m_dot_htf_tes_out_est / mc_cr_out_solver.m_m_dot_salt_tot);				
 				double defocus_guess = defocus_guess_ini;
 
 				// Defocus: 1 = full power, 0 = no power
@@ -3199,18 +3069,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Solve the collector-receiver, *using defocus from outer loop*
 						// ... and T_rec_in_guess from this loop
 						// CR ON
-						mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C]
+						mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
 						mc_cr_inputs.m_field_control = defocus_guess;	//[-] no defocusing for initial simulation
 						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 						mc_collector_receiver.call(mc_weather.ms_outputs,
-							mc_cr_htf_state,
+							mc_cr_htf_state_in,
 							mc_cr_inputs,
-							mc_cr_outputs,
+							mc_cr_out_solver,
+							mc_cr_out_report,
 							mc_sim_info);
 
 						// Check if receiver is OFF or model didn't solve
-						if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+						if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 						{
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_rec_in == 1 )
@@ -3265,7 +3136,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						}	// end logic to determine path if receiver is off or did not solve
 
 						// Get receiver HTF outlet temperature
-						double T_htf_rec_out = mc_cr_outputs.m_T_salt_hot;		//[C]
+						double T_htf_rec_out = mc_cr_out_solver.m_T_salt_hot;		//[C]
 
 						// Solve TES for FULL charge
 						double T_htf_tes_out, m_dot_htf_tes_out;
@@ -3278,7 +3149,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// HTF charging state
 						mc_tes_ch_htf_state.m_m_dot = m_dot_htf_tes_out;				//[kg/hr]
-						mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+						mc_tes_ch_htf_state.m_temp_in = mc_cr_out_solver.m_T_salt_hot;		//[C]
 						mc_tes_ch_htf_state.m_temp_out = T_htf_tes_out;					//[C] convert from K
 
 						// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
@@ -3310,7 +3181,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// Calculate defocus error
 					// (m_dot_rec - m_dot_tes)/m_dot_tes: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
-					diff_m_dot = (mc_cr_outputs.m_m_dot_salt_tot - mc_tes_ch_htf_state.m_m_dot) / mc_tes_ch_htf_state.m_m_dot;
+					diff_m_dot = (mc_cr_out_solver.m_m_dot_salt_tot - mc_tes_ch_htf_state.m_m_dot) / mc_tes_ch_htf_state.m_m_dot;
 
 				}	// end while() on defocus
 
@@ -3367,16 +3238,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// Need to call power cycle at 'OFF'
 				// HTF State
-				mc_pc_htf_state.m_temp_in = m_cycle_T_htf_hot_des - 273.15;	//[C]
-				mc_pc_htf_state.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
+				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
 				//mc_pc_inputs.m_tou = tou_timestep;
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);
 
 				// If convergence was successful, finalize this timestep and get out
@@ -3404,30 +3276,31 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				if( operating_mode == CR_OFF__PC_SB__TES_DC__AUX_OFF )
 				{
 					// Run CR at 'OFF'
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 0.0;							//[-] Field OFF when receiver is OFF!
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::OFF;
-					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
-						mc_cr_inputs,
-						mc_cr_outputs,
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					
+					mc_collector_receiver.off(mc_weather.ms_outputs,
+						mc_cr_htf_state_in,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
+
 				}
 				else if( operating_mode == CR_SU__PC_SB__TES_DC__AUX_OFF )
 				{
 					// Run CR at 'Start Up'
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
+						mc_cr_htf_state_in,
 						mc_cr_inputs,
-						mc_cr_outputs,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
 
 					// Check that startup happened
-					if( mc_cr_outputs.m_q_startup == 0.0 )
+					if( mc_cr_out_solver.m_q_startup == 0.0 )
 					{	// Collector/receiver can't produce useful energy
 
 						m_is_CR_SU__PC_SB__TES_DC__AUX_OFF_avail = false;
@@ -3436,7 +3309,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Check for new timestep
-					step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+					step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 					if( step_local < mc_sim_info.m_step - step_tolerance )
 					{
 						is_sim_timestep_complete = false;
@@ -3660,17 +3533,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Now solve PC at Standby
-				mc_pc_htf_state.m_temp_in = T_htf_hot_out - 273.15;		//[C], convert from K: average storage discharge temperature
-				mc_pc_htf_state.m_m_dot = m_dot_dc_guess*3600.0;		//[kg/hr], convert from kg/s
+				mc_pc_htf_state_in.m_temp = T_htf_hot_out - 273.15;		//[C], convert from K: average storage discharge temperature
+				mc_pc_inputs.m_m_dot = m_dot_dc_guess*3600.0;		//[kg/hr], convert from kg/s
 
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::STANDBY;
 
 				// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
-					mc_pc_htf_state,
+					mc_pc_htf_state_in,
 					mc_pc_inputs,
-					mc_pc_outputs,
+					mc_pc_out_solver,
+					mc_pc_out_report,
 					mc_sim_info);
 													
 
@@ -3773,13 +3647,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				is_sim_timestep_complete = false;
 
 				// Now run CR at 'OFF'
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 0.0;							//[-] Field OFF when receiver is OFF!
-				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::OFF;
-				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
-					mc_cr_inputs,
-					mc_cr_outputs,
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				
+				mc_collector_receiver.off(mc_weather.ms_outputs,
+					mc_cr_htf_state_in,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				// If convergence was successful, finalize this timestep and get out
@@ -3802,30 +3675,31 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				if( operating_mode == CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF )
 				{
 					// Now run CR at 'OFF'
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 0.0;							//[-] Field OFF when receiver is OFF!
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::OFF;
-					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
-						mc_cr_inputs,
-						mc_cr_outputs,
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					
+					mc_collector_receiver.off(mc_weather.ms_outputs,
+						mc_cr_htf_state_in,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
+
 				}
 				else if( operating_mode == CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF )
 				{
 					// Run CR at 'Start Up'
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 					mc_cr_inputs.m_field_control = 1.0;							//[-] no defocusing for initial simulation
 					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
+						mc_cr_htf_state_in,
 						mc_cr_inputs,
-						mc_cr_outputs,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
 
 					// Check that startup happened
-					if( mc_cr_outputs.m_q_startup == 0.0 )
+					if( mc_cr_out_solver.m_q_startup == 0.0 )
 					{	// Collector/receiver can't produce useful energy
 
 						m_is_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
@@ -3834,7 +3708,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Check for new timestep
-					step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+					step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 					if( step_local < mc_sim_info.m_step - step_tolerance )
 					{
 						is_sim_timestep_complete = false;
@@ -3976,26 +3850,27 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;//[C] convert from K
 
 					// Solve PC model
-					mc_pc_htf_state.m_temp_in = T_htf_tes_hot - 273.15;		//[C]
-					mc_pc_htf_state.m_m_dot = m_dot_tes_dc*3600.0;			//[kg/hr]
+					mc_pc_htf_state_in.m_temp = T_htf_tes_hot - 273.15;		//[C]
+					mc_pc_inputs.m_m_dot = m_dot_tes_dc*3600.0;			//[kg/hr]
 
 					// Inputs
 					mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 
 					// Performance Call
 					mc_power_cycle.call(mc_weather.ms_outputs,
-						mc_pc_htf_state,
+						mc_pc_htf_state_in,
 						mc_pc_inputs,
-						mc_pc_outputs,
+						mc_pc_out_solver,
+						mc_pc_out_report,
 						mc_sim_info);			
 
-					diff_T_tes_cold = (mc_pc_outputs.m_T_htf_cold - T_tes_cold_guess) / T_tes_cold_guess;
+					diff_T_tes_cold = (mc_pc_out_solver.m_T_htf_cold - T_tes_cold_guess) / T_tes_cold_guess;
 				}
 
 				// *********************************
 				// Check PC q_dot is >= MIN!!!!!!!!
 				// *********************************
-				if( mc_pc_outputs.m_q_dot_htf < q_pc_min )
+				if( mc_pc_out_solver.m_q_dot_htf < q_pc_min )
 				{
 					exit_mode = NO_SOLUTION;
 				}
@@ -4145,18 +4020,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 
 				// First, startup the collector-receiver and get the time required
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				// Check that startup happened
-				if( mc_cr_outputs.m_q_startup == 0.0 )
+				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -4167,7 +4043,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Get startup time
-				double step_cr = fmin(mc_sim_info.m_step, mc_cr_outputs.m_time_required_su);	//[s]
+				double step_cr = fmin(mc_sim_info.m_step, mc_cr_out_solver.m_time_required_su);	//[s]
 
 
 				// Now, run PC at MIN until storage is discharged
@@ -4266,18 +4142,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				
 						// Rerun CR_SU
 						// First, startup the collector-receiver and get the time required
-						mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+						mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 						mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 						mc_collector_receiver.call(mc_weather.ms_outputs,
-							mc_cr_htf_state,
+							mc_cr_htf_state_in,
 							mc_cr_inputs,
-							mc_cr_outputs,
+							mc_cr_out_solver,
+							mc_cr_out_report,
 							mc_sim_info);
 
 						// Check that startup happened
-						if( mc_cr_outputs.m_q_startup == 0.0 )
+						if( mc_cr_out_solver.m_q_startup == 0.0 )
 						{	// Collector/receiver can't produce useful energy
 							//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -4487,30 +4364,31 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				if( operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF )
 				{
 					// Now run CR at 'OFF'
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 0.0;							//[-] Field OFF when receiver is OFF!
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::OFF;
-					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
-						mc_cr_inputs,
-						mc_cr_outputs,
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					
+					mc_collector_receiver.off(mc_weather.ms_outputs,
+						mc_cr_htf_state_in,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
+
 				}
 				else if( operating_mode == CR_SU__PC_TARGET__TES_DC__AUX_OFF )
 				{
 					// Run CR at 'Start Up'
-					mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
+						mc_cr_htf_state_in,
 						mc_cr_inputs,
-						mc_cr_outputs,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
 
 					// Check that startup happened
-					if( mc_cr_outputs.m_q_startup == 0.0 )
+					if( mc_cr_out_solver.m_q_startup == 0.0 )
 					{	// Collector/receiver can't produce useful energy
 
 						m_is_CR_SU__PC_TARGET__TES_DC__AUX_OFF_avail = false;
@@ -4519,7 +4397,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Check for new timestep
-					step_local = mc_cr_outputs.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
+					step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
 					if( step_local < mc_sim_info.m_step - step_tolerance )
 					{
 						is_sim_timestep_complete = false;
@@ -4657,12 +4535,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double relaxed_tol = relaxed_tol_mult*tol;	//[-]
 
 
-				if( mc_pc_outputs.m_q_dot_htf > q_pc_max )
+				if( mc_pc_out_solver.m_q_dot_htf > q_pc_max )
 				{
 					T_rec_in_exit_mode = NO_SOLUTION;
 				}
 
-				if( mc_pc_outputs.m_q_dot_htf < q_pc_target )
+				if( mc_pc_out_solver.m_q_dot_htf < q_pc_target )
 				{
 					error_msg = util::format("At time = %lg CR_ON__PC_RM_HI__TES_FULL__AUX_OFF method converged to a power cycle"
 						" thermal input less than the target.",
@@ -4959,18 +4837,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						} // end logic to determine new T_rec_in
 
 						// Solve the collector-receiver model
-						mc_cr_htf_state.m_temp_in = T_cold_guess;		//[C]
+						mc_cr_htf_state_in.m_temp = T_cold_guess;		//[C]
 						mc_cr_inputs.m_field_control = 1.0;				//[-] no defocusing for initial simulation
 						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 						mc_collector_receiver.call(mc_weather.ms_outputs,
-							mc_cr_htf_state,
+							mc_cr_htf_state_in,
 							mc_cr_inputs,
-							mc_cr_outputs,
+							mc_cr_out_solver,
+							mc_cr_out_report,
 							temp_sim_info);			// **** Use TEMP sim info ****
 
 						// Check if receiver is OFF or model didn't solve
-						if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+						if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 						{
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_cold == 1 )
@@ -5043,26 +4922,27 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
 
 						// Mass balance to PC
-						double m_dot_pc = mc_cr_outputs.m_m_dot_salt_tot + m_dot_tes_dc;		//[kg/hr]
+						double m_dot_pc = mc_cr_out_solver.m_m_dot_salt_tot + m_dot_tes_dc;		//[kg/hr]
 
-						double T_pc_htf_in = (m_dot_tes_dc*T_tes_htf_hot + mc_cr_outputs.m_m_dot_salt_tot*mc_cr_outputs.m_T_salt_hot) / (m_dot_pc);	//[C]
+						double T_pc_htf_in = (m_dot_tes_dc*T_tes_htf_hot + mc_cr_out_solver.m_m_dot_salt_tot*mc_cr_out_solver.m_T_salt_hot) / (m_dot_pc);	//[C]
 
 						// Solve power cycle model
-						mc_pc_htf_state.m_temp_in = T_pc_htf_in;		//[C]
-						mc_pc_htf_state.m_m_dot = m_dot_pc;				//[kg/hr]
+						mc_pc_htf_state_in.m_temp = T_pc_htf_in;		//[C]
+						mc_pc_inputs.m_m_dot = m_dot_pc;				//[kg/hr]
 
 						// Inputs
 						mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 
 						// Performance Call
 						mc_power_cycle.call(mc_weather.ms_outputs,
-							mc_pc_htf_state,
+							mc_pc_htf_state_in,
 							mc_pc_inputs,
-							mc_pc_outputs,
+							mc_pc_out_solver,
+							mc_pc_out_report,
 							temp_sim_info);			// **** Use TEMP sim info ****
 
 						// Check that power cycle is producing power or model didn't solve
-						if( mc_pc_outputs.m_P_cycle == 0.0 )
+						if( mc_pc_out_solver.m_P_cycle == 0.0 )
 						{
 							// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 							// Go to Receiver OFF power cycle OFF
@@ -5112,7 +4992,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						}	// End logic for PC off or not producing power
 
 						// Get HTF temperature out from the power cycle and compare to guess value (T_rec_in)
-						double T_cold_calc = mc_pc_outputs.m_T_htf_cold;	//[C]
+						double T_cold_calc = mc_pc_out_solver.m_T_htf_cold;	//[C]
 
 						diff_T_cold = (T_cold_calc - T_cold_guess) / T_cold_guess;		//[-]
 
@@ -5124,7 +5004,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						break;
 					}
 
-					diff_q_dot = (mc_pc_outputs.m_q_dot_htf - q_pc_min) / q_pc_min;
+					diff_q_dot = (mc_pc_out_solver.m_q_dot_htf - q_pc_min) / q_pc_min;
 
 				}	// end while() on timestep duration to achieve target to power cycle
 
@@ -5210,7 +5090,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					// Max PC mass flow rate
 				double m_dot_pc_max_est = m_m_dot_pc_des*(q_pc_max/m_cycle_q_dot_des);
 
-				double defocus_guess_ini = fmin(1.0, (m_dot_htf_tes_max_est+m_dot_pc_max_est) / mc_cr_outputs.m_m_dot_salt_tot );
+				double defocus_guess_ini = fmin(1.0, (m_dot_htf_tes_max_est+m_dot_pc_max_est) / mc_cr_out_solver.m_m_dot_salt_tot );
 				double defocus_guess = defocus_guess_ini;
 
 				// Defocus: 1 = full power, 0 = no power
@@ -5347,7 +5227,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Calculate defocus error
-					diff_q_dot = (mc_pc_outputs.m_q_dot_htf - q_pc_max) / q_pc_max;
+					diff_q_dot = (mc_pc_out_solver.m_q_dot_htf - q_pc_max) / q_pc_max;
 
 				}	// end while() on defocus to achieve full storage charge and PC max
 
@@ -5444,7 +5324,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double relaxed_tol_mult = 5.0;				//[-]
 				double relaxed_tol = relaxed_tol_mult*tol;	//[-]
 
-				if( mc_pc_outputs.m_q_dot_htf < q_pc_sb )
+				if( mc_pc_out_solver.m_q_dot_htf < q_pc_sb )
 				{
 					T_rec_in_exit_mode = NO_SOLUTION;
 				}
@@ -5493,18 +5373,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 
 				// First, startup the collector-receiver and get the time required
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				// Check that startup happened
-				if( mc_cr_outputs.m_q_startup == 0.0 )
+				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
 					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -5515,7 +5396,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Get startup time
-				double step_cr = fmin(mc_sim_info.m_step, mc_cr_outputs.m_time_required_su);	//[s]
+				double step_cr = fmin(mc_sim_info.m_step, mc_cr_out_solver.m_time_required_su);	//[s]
 
 				// *****************************************************************
 				// Next, calculate the required power cycle startup time
@@ -5554,18 +5435,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_sim_info.m_time = time_previous + step_pc_su;			//[s]
 
 						// Rerun CR_SU
-						mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+						mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 						mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
 						mc_collector_receiver.call(mc_weather.ms_outputs,
-							mc_cr_htf_state,
+							mc_cr_htf_state_in,
 							mc_cr_inputs,
-							mc_cr_outputs,
+							mc_cr_out_solver,
+							mc_cr_out_report,
 							mc_sim_info);
 
 						// Check that startup happened
-						if( mc_cr_outputs.m_q_startup == 0.0 )
+						if( mc_cr_out_solver.m_q_startup == 0.0 )
 						{	// Collector/receiver can't produce useful energy
 							//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
@@ -5762,18 +5644,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// Solve the receiver model with T_rec_in_guess
 					// CR ON
-					mc_cr_htf_state.m_temp_in = T_rec_in_guess;		//[C]
+					mc_cr_htf_state_in.m_temp = T_rec_in_guess;		//[C]
 					mc_cr_inputs.m_field_control = 1.0;				//[-] no defocusing for initial simulation
 					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 					mc_collector_receiver.call(mc_weather.ms_outputs,
-						mc_cr_htf_state,
+						mc_cr_htf_state_in,
 						mc_cr_inputs,
-						mc_cr_outputs,
+						mc_cr_out_solver,
+						mc_cr_out_report,
 						mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
-					if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+					if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 					{
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 						if( iter_T_rec_in == 1 )
@@ -5828,27 +5711,28 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}	// end logic to determine path if receiver is off or did not solve
 
 					// Call the power cycle in STARTUP_CONTROLLED mode
-					mc_pc_htf_state.m_m_dot = 0.0;
-					mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+					mc_pc_inputs.m_m_dot = 0.0;
+					mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
 					mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
 
 					mc_power_cycle.call(mc_weather.ms_outputs,
-						mc_pc_htf_state,
+						mc_pc_htf_state_in,
 						mc_pc_inputs,
-						mc_pc_outputs,
+						mc_pc_out_solver,
+						mc_pc_out_report,
 						mc_sim_info);
 
 					// Check for new PC startup timestep, probably will find one here
-					step_pc_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+					step_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 
 					// Get mass flow rate PC requires for Controlled Startup
-					double m_dot_pc = mc_pc_outputs.m_m_dot_htf;				//[kg/hr]
+					double m_dot_pc = mc_pc_out_solver.m_m_dot_htf;				//[kg/hr]
 
 					// Reset mass flow rate in 'mc_pc_htf_state'
-					mc_pc_htf_state.m_m_dot = mc_pc_outputs.m_m_dot_htf;		//[kg/hr]
+					mc_pc_inputs.m_m_dot = mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
 					// Calculate mass flow remaining to charge storage
-					double m_dot_tes_ch = mc_cr_outputs.m_m_dot_salt_tot - mc_pc_htf_state.m_m_dot;	//[kg/hr]
+					double m_dot_tes_ch = mc_cr_out_solver.m_m_dot_salt_tot - mc_pc_inputs.m_m_dot;	//[kg/hr]
 
 					// Check that m_dot_tes_ch is > 0.0
 					// If not, I *guess* we could try increasing the receiver inlet temperature (thereby increasing the mass flow rate)
@@ -5874,7 +5758,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					double T_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
-					bool ch_solved = mc_tes.charge(step_pc_su, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_tes_ch / 3600.0, mc_cr_outputs.m_T_salt_hot + 273.15,
+					bool ch_solved = mc_tes.charge(step_pc_su, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_tes_ch / 3600.0, mc_cr_out_solver.m_T_salt_hot + 273.15,
 							T_tes_cold_out, mc_tes_outputs);
 					T_tes_cold_out -= 273.15;		//[C] convert back from K
 
@@ -5903,7 +5787,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// HTF Charging State
 					mc_tes_ch_htf_state.m_m_dot = m_dot_tes_ch;						//[kg/hr]
-					mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+					mc_tes_ch_htf_state.m_temp_in = mc_cr_out_solver.m_T_salt_hot;		//[C]
 					mc_tes_ch_htf_state.m_temp_out = T_tes_cold_out;				//[C]
 
 					// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
@@ -5912,7 +5796,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_tes_dc_htf_state.m_temp_out = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
 					
 					// Enthalpy balance to calculate T_rec_in
-					double T_rec_in_calc = (m_dot_tes_ch*T_tes_cold_out + m_dot_pc*mc_pc_outputs.m_T_htf_cold)/mc_cr_outputs.m_m_dot_salt_tot;
+					double T_rec_in_calc = (m_dot_tes_ch*T_tes_cold_out + m_dot_pc*mc_pc_out_solver.m_T_htf_cold)/mc_cr_out_solver.m_m_dot_salt_tot;
 
 					diff_T_rec_in = (T_rec_in_calc - T_rec_in_guess) / T_rec_in_guess;		//[-]
 
@@ -5996,7 +5880,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					// Max (estimate) PC mass flow rate
 				double m_dot_pc_max_est = m_m_dot_pc_des*(q_dot_pc_su_max/m_cycle_q_dot_des);	//[kg/hr]
 
-				double defocus_guess_ini = fmin(1.0, (m_dot_htf_tes_max_est + m_dot_pc_max_est) / mc_cr_outputs.m_m_dot_salt_tot);
+				double defocus_guess_ini = fmin(1.0, (m_dot_htf_tes_max_est + m_dot_pc_max_est) / mc_cr_out_solver.m_m_dot_salt_tot);
 				double defocus_guess = defocus_guess_ini;
 				
 				// Defocus: 1 = full power, 0 = no power
@@ -6220,19 +6104,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Solve the receiver model with T_rec_in_guess and current defocus guess
 						// CR ON
-						mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C]
+						mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
 						mc_cr_inputs.m_field_control = defocus_guess;		//[-] no defocusing for initial simulation
 						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 						mc_collector_receiver.call(mc_weather.ms_outputs,
-							mc_cr_htf_state,
+							mc_cr_htf_state_in,
 							mc_cr_inputs,
-							mc_cr_outputs,
+							mc_cr_out_solver,
+							mc_cr_out_report,
 							mc_sim_info);
 
 
 							// Check if receiver is OFF or model didn't solve
-						if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+						if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 						{
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_rec_in == 1 )
@@ -6288,35 +6173,36 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						
 						// Get receiver HTF outputs
-						double m_dot_receiver = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr]
-						double T_htf_rec_out = mc_cr_outputs.m_T_salt_hot;			//[C]
+						double m_dot_receiver = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]
+						double T_htf_rec_out = mc_cr_out_solver.m_T_salt_hot;			//[C]
 
 						// ********************
 						// Call PC STARTUP CONTROLLED
-						mc_pc_htf_state.m_m_dot = 0.0;
-						mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+						mc_pc_inputs.m_m_dot = 0.0;
+						mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
 						mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
 
 						mc_power_cycle.call(mc_weather.ms_outputs,
-							mc_pc_htf_state,
+							mc_pc_htf_state_in,
 							mc_pc_inputs,
-							mc_pc_outputs,
+							mc_pc_out_solver,
+							mc_pc_out_report,
 							mc_sim_info);
 
 						// Check for new PC startup timestep, probably will find one here
-						step_pc_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+						step_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 
 						// Get mass flow rate PC requires for Controlled Startup
-						double m_dot_pc = mc_pc_outputs.m_m_dot_htf;				//[kg/hr]
+						double m_dot_pc = mc_pc_out_solver.m_m_dot_htf;				//[kg/hr]
 
 						// PC mass flow rate return temperature
-						double T_pc_out = mc_pc_outputs.m_T_htf_cold;		//[C]
+						double T_pc_out = mc_pc_out_solver.m_T_htf_cold;		//[C]
 
 						// Reset mass flow rate in 'mc_pc_htf_state'
-						mc_pc_htf_state.m_m_dot = mc_pc_outputs.m_m_dot_htf;		//[kg/hr]
+						mc_pc_inputs.m_m_dot = mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
 						// Calculate mass flow remaining to charge storage
-						m_dot_tes_ch_balance = mc_cr_outputs.m_m_dot_salt_tot - mc_pc_htf_state.m_m_dot;	//[kg/hr]
+						m_dot_tes_ch_balance = mc_cr_out_solver.m_m_dot_salt_tot - mc_pc_inputs.m_m_dot;	//[kg/hr]
 
 						// Solve TES for FULL charge
 						double T_htf_tes_out;
@@ -6329,7 +6215,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// HTF charging state
 						mc_tes_ch_htf_state.m_m_dot = m_dot_htf_tes_out;				//[kg/hr]
-						mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+						mc_tes_ch_htf_state.m_temp_in = mc_cr_out_solver.m_T_salt_hot;		//[C]
 						mc_tes_ch_htf_state.m_temp_out = T_htf_tes_out;					//[C] convert from K
 
 						// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
@@ -6441,20 +6327,21 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// This mode fails to CR_ON__PC_SU__TES_OFF__AUX_OFF
 
 				// Get collector-receiver performance with no defocus
-				mc_cr_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 				mc_collector_receiver.call(mc_weather.ms_outputs,
-					mc_cr_htf_state,
+					mc_cr_htf_state_in,
 					mc_cr_inputs,
-					mc_cr_outputs,
+					mc_cr_out_solver,
+					mc_cr_out_report,
 					mc_sim_info);
 
 				double defocus_guess_ini = std::numeric_limits<double>::quiet_NaN();
-				if( mc_cr_outputs.m_q_thermal > 0.0 )
+				if( mc_cr_out_solver.m_q_thermal > 0.0 )
 				{
 					// Controller hierarchy doesn't allow to go back to No Defocus and PC_RM, so check that defocus is <= 1
-					defocus_guess_ini = fmin(1.0, q_dot_pc_su_max / mc_cr_outputs.m_q_thermal);
+					defocus_guess_ini = fmin(1.0, q_dot_pc_su_max / mc_cr_out_solver.m_q_thermal);
 				}
 				else
 				{
@@ -6710,18 +6597,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Solve the receiver model with T_rec_in_guess and current defocus guess
 						// CR ON
-						mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C]
+						mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
 						mc_cr_inputs.m_field_control = defocus_guess;		//[-] no defocusing for initial simulation
 						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 						mc_collector_receiver.call(mc_weather.ms_outputs,
-							mc_cr_htf_state,
+							mc_cr_htf_state_in,
 							mc_cr_inputs,
-							mc_cr_outputs,
+							mc_cr_out_solver,
+							mc_cr_out_report,
 							mc_sim_info);
 
 							// Check if receiver is OFF or model didn't solve
-						if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+						if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 						{
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_rec_in == 1 )
@@ -6776,32 +6664,33 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						}	// end logic to determine path if receiver is off or did not solve
 
 						// Get receiver HTF outputs
-						double m_dot_receiver = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr]
-						double T_htf_rec_out = mc_cr_outputs.m_T_salt_hot;			//[C]
+						double m_dot_receiver = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]
+						double T_htf_rec_out = mc_cr_out_solver.m_T_salt_hot;			//[C]
 
 						// ********************
 						// Call PC STARTUP CONTROLLED
-						mc_pc_htf_state.m_m_dot = 0.0;
-						mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+						mc_pc_inputs.m_m_dot = 0.0;
+						mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
 						mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
 
 						mc_power_cycle.call(mc_weather.ms_outputs,
-							mc_pc_htf_state,
+							mc_pc_htf_state_in,
 							mc_pc_inputs,
-							mc_pc_outputs,
+							mc_pc_out_solver,
+							mc_pc_out_report,
 							mc_sim_info);
 
 						// Check for new PC startup timestep, probably will find one here
-						step_pc_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+						step_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 
 						// Get mass flow rate PC requires for Controlled Startup
-						double m_dot_pc = mc_pc_outputs.m_m_dot_htf;				//[kg/hr]
+						double m_dot_pc = mc_pc_out_solver.m_m_dot_htf;				//[kg/hr]
 
 						// PC mass flow rate return temperature
-						double T_pc_out = mc_pc_outputs.m_T_htf_cold;		//[C]
+						double T_pc_out = mc_pc_out_solver.m_T_htf_cold;		//[C]
 
 						// Reset mass flow rate in 'mc_pc_htf_state'
-						mc_pc_htf_state.m_m_dot = mc_pc_outputs.m_m_dot_htf;		//[kg/hr]
+						mc_pc_inputs.m_m_dot = mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
 
 						// Calculate diff_T_rec_in
 						diff_T_rec_in = (T_pc_out - T_rec_in_guess) / T_rec_in_guess;	//[-]
@@ -6824,7 +6713,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					// Calculate mass balance error
 					// (+) should be too much CR m_dot
 					// (-) should be not enough CR m_dot
-					diff_m_dot = (mc_cr_outputs.m_m_dot_salt_tot - mc_pc_htf_state.m_m_dot) / mc_pc_htf_state.m_m_dot;
+					diff_m_dot = (mc_cr_out_solver.m_m_dot_salt_tot - mc_pc_inputs.m_m_dot) / mc_pc_inputs.m_m_dot;
 				
 				}	// end while() on defocus
 
@@ -6897,17 +6786,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		// Calculate system-level parasitics: can happen after controller/solver converges
 		double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
 
-		double W_dot_ratio = mc_pc_outputs.m_P_cycle / m_cycle_W_dot_des;		//[-]
+		double W_dot_ratio = mc_pc_out_solver.m_P_cycle / m_cycle_W_dot_des;		//[-]
 
 		double W_dot_bop = m_cycle_W_dot_des*ms_system_params.m_bop_par*ms_system_params.m_bop_par_f *
 			(ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1*W_dot_ratio + ms_system_params.m_bop_par_2*pow(W_dot_ratio,2));
 			// [MWe]
 
-		double W_dot_net = mc_pc_outputs.m_P_cycle - 
-			mc_cr_outputs.m_W_dot_col_tracking -
-			mc_cr_outputs.m_W_dot_htf_pump - 
-			(mc_pc_outputs.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump) -
-			mc_pc_outputs.m_W_cool_par -
+		double W_dot_net = mc_pc_out_solver.m_P_cycle - 
+			mc_cr_out_solver.m_W_dot_col_tracking -
+			mc_cr_out_solver.m_W_dot_htf_pump - 
+			(mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump) -
+			mc_pc_out_solver.m_W_cool_par -
 			mc_tes_outputs.m_q_heater - 
 			W_dot_fixed -
 			W_dot_bop;	//[MWe]
@@ -6919,7 +6808,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_tes.converged();
 		
         //update the tracked field generation
-        disp_qsf_last = mc_cr_outputs.m_q_startup > 0. ? mc_cr_outputs.m_q_thermal : 0.;    //only count if not starting up
+        disp_qsf_last = mc_cr_out_solver.m_q_startup > 0. ? mc_cr_out_solver.m_q_thermal : 0.;    //only count if not starting up
 
         //Update the estimated thermal energy storage charge state
         double e_tes_disch = 0.;
@@ -6995,28 +6884,28 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[BEAM].push_back(mc_weather.ms_outputs.m_beam);		    //[W/m2] DNI
 
 			// Collector-receiver outputs
-		mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_outputs.m_q_dot_field_inc);	//[MWt] Field incident thermal power
-		mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_outputs.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
+		mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_out_report.m_q_dot_field_inc);	//[MWt] Field incident thermal power
+		mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_out_report.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
 		mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
-		mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_outputs.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
-		mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_outputs.m_eta_thermal);   //[-] Receiver thermal efficiency    
-		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_outputs.m_q_thermal);           //[MWt] Receiver thermal power output  
-		mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_outputs.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
-		mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_outputs.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
-		mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state.m_temp_in);            //[C] Receiver HTF inlet temperature           
-		mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_outputs.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
-		mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_outputs.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
+		mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
+		mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
+		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  
+		mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_out_solver.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
+		mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
+		mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
+		mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
+		mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
 
 			// Power cycle outputs
-		mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_outputs.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
-		mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_outputs.m_q_dot_htf);            //[MWt] Power cycle input thermal power
-		mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_htf_state.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
+		mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
+		mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_out_solver.m_q_dot_htf);            //[MWt] Power cycle input thermal power
+		mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_inputs.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
 		//mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt-hr] Power cycle startup thermal energy
-		mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt] Power cycle startup thermal energy
-		mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_outputs.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
-		mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state.m_temp_in);             //[C] Power cycle HTF inlet temperature
-		mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_outputs.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
-		mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_outputs.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
+		mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
+		mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
+		mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
+		mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
+		mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_out_report.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
 
 			// Thermal energy storage outputs
 		mvv_outputs_temp[TES_Q_DOT_LOSS].push_back(mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment
@@ -7030,10 +6919,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[TES_M_DOT_CH].push_back(mc_tes_ch_htf_state.m_m_dot);         //[kg/hr] TES mass flow rate charge
 
 			// Parasitics outputs
-		mvv_outputs_temp[COL_W_DOT_TRACK].push_back(mc_cr_outputs.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption
-		mvv_outputs_temp[CR_W_DOT_PUMP].push_back(mc_cr_outputs.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power
-		mvv_outputs_temp[SYS_W_DOT_PUMP].push_back((mc_pc_outputs.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)
-		mvv_outputs_temp[PC_W_DOT_COOLING].push_back(mc_pc_outputs.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
+		mvv_outputs_temp[COL_W_DOT_TRACK].push_back(mc_cr_out_solver.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption
+		mvv_outputs_temp[CR_W_DOT_PUMP].push_back(mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power
+		mvv_outputs_temp[SYS_W_DOT_PUMP].push_back((mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)
+		mvv_outputs_temp[PC_W_DOT_COOLING].push_back(mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
 		mvv_outputs_temp[SYS_W_DOT_FIXED].push_back(W_dot_fixed);                           //[MWe] Fixed electric parasitic power load
 		mvv_outputs_temp[SYS_W_DOT_BOP].push_back(W_dot_bop);                               //[MWe] Balance-of-plant electric parasitic power load
 
@@ -7058,89 +6947,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
         mvv_outputs_temp[DISPATCH_PRES_NCONSTR].push_back(dispatch.outputs.presolve_nconstr);
         mvv_outputs_temp[DISPATCH_PRES_NVAR].push_back(dispatch.outputs.presolve_nvar);
         mvv_outputs_temp[DISPATCH_SOLVE_TIME].push_back(dispatch.outputs.solve_time);
-
-
-			// Simulation outputs
-		//mv_time_final.push_back(mc_sim_info.m_time/3600.0);		//[hr] Time at end of timestep
-		//mv_step.push_back(mc_sim_info.m_step/3600.0);			//[hr] Timestep
-		//mv_solzen.push_back(mc_weather.ms_outputs.m_solzen);	//[deg] Solar zenith
-		//mv_beam.push_back(mc_weather.ms_outputs.m_beam);		//[W/m2] DNI
-		
-			// Collector-receiver outputs
-		//mv_eta_field.push_back(mc_cr_outputs.m_eta_field);			//[-] Field efficiency (= eta_field_full * defocus)
-		//mv_defocus.push_back(m_defocus);							//[-] Defocus
-		//mv_rec_eta_thermal.push_back(mc_cr_outputs.m_eta_thermal);	//[-] Receiver thermal efficiency
-		//mv_rec_q_dot_thermal.push_back(mc_cr_outputs.m_q_thermal);	//[MWt] Receiver thermal power output
-		//mv_rec_m_dot.push_back(mc_cr_outputs.m_m_dot_salt_tot);					//[kg/hr] Receiver mass flow rate output
-		//mv_rec_q_dot_startup.push_back(mc_cr_outputs.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr
-		//mv_T_rec_in.push_back(mc_cr_htf_state.m_temp_in);						//[C] Receiver HTF inlet temperature
-		//mv_T_rec_out.push_back(mc_cr_outputs.m_T_salt_hot);						//[C] Receiver HTF outlet temperature
-		//mv_q_dot_piping_loss.push_back(mc_cr_outputs.m_q_dot_piping_loss);		//[MWt] Tower piping thermal power loss
-
-			// Power cycle outputs
-		//mv_pc_eta.push_back(mc_pc_outputs.m_eta);						//[-] Power cycle efficiency (gross - no parasitics outside of power block)
-		//mv_pc_q_dot_thermal.push_back(mc_pc_outputs.m_q_dot_htf);		//[MWt] Power cycle input thermal power
-		//mv_pc_m_dot.push_back(mc_pc_htf_state.m_m_dot);					//[kg/hr] Mass flow rate to power cycle
-		//mv_pc_q_dot_startup.push_back(mc_pc_outputs.m_q_startup);		//[MWt-hr] Power cycle startup thermal energy
-		//mv_pc_W_dot_gross.push_back(mc_pc_outputs.m_P_cycle);			//[MWe] Power cycle electric gross power (only parasitics baked into regression)
-		//mv_T_pc_in.push_back(mc_pc_htf_state.m_temp_in);				//[C] Power cycle HTF inlet temperature
-		//mv_T_pc_out.push_back(mc_pc_outputs.m_T_htf_cold);				//[C] Power cycle HTF outlet temperature
-
-			// Thermal storage outputs
-		//mv_tes_q_dot_loss.push_back(mc_tes_outputs.m_q_dot_loss);				//[MWt] TES thermal power losses to environment
-		//mv_tes_q_dot_heater.push_back(mc_tes_outputs.m_q_heater);				//[MWe] Energy into TES from heaters (hot+cold) to maintain tank temperatures
-		//mv_tes_T_hot.push_back(mc_tes_outputs.m_T_hot_final - 273.15);			//[C] TES hot temperature at end of timestep
-		//mv_tes_T_cold.push_back(mc_tes_outputs.m_T_cold_final - 273.15);		//[C] TES cold temperature at end of timestep
-		//mv_tes_dc_q_dot_thermal.push_back(mc_tes_outputs.m_q_dot_dc_to_htf);	//[MWt] TES discharge thermal power
-		//mv_tes_ch_q_dot_thermal.push_back(mc_tes_outputs.m_q_dot_ch_from_htf);	//[MWt] TES charge thermal power
-		//mv_tes_dc_m_dot.push_back(mc_tes_dc_htf_state.m_m_dot);					//[kg/hr] TES mass flow rate discharge
-		//mv_tes_ch_m_dot.push_back(mc_tes_ch_htf_state.m_m_dot);					//[kg/hr] TES mass flow rate charge
-
-			// Parasitics outputs
-		//mv_W_dot_tracking.push_back(mc_cr_outputs.m_W_dot_col_tracking);	//[MWe] Collector tracking, startup, stow power consumption
-		//mv_W_dot_rec_htf_pump.push_back(mc_cr_outputs.m_W_dot_htf_pump);	//[MWe] Receiver/tower HTF pumping power
-		//mv_W_dot_tes_pc_htf_pump.push_back((mc_pc_outputs.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));	//[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)
-		//mv_W_dot_cooling.push_back(mc_pc_outputs.m_W_cool_par);				//[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
-		//mv_W_dot_tes_fp_heater.push_back(mc_tes_outputs.m_q_heater);		//[MWe] TES freeze protection heater power consumption
-		//mv_W_dot_fixed.push_back(W_dot_fixed);								//[MWe] Fixed electric parasitic power load
-		//mv_W_dot_bop.push_back(W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load
-
-			// System outputs
-		//mv_W_dot_net.push_back(W_dot_net);			//[MWe] Total electric power output to grid
-
-		
-		
-
-
-
-			// Controller outputs
-		//mv_Q_DOT_PC_TARGET.push_bAck(q_pc_target);	//[MW]
-		//mv_q_dot_pc_sb.push_back(q_pc_sb);			//[MW]
-		//mv_q_dot_pc_min.push_back(q_pc_min);		//[MW]
-		//mv_q_dot_pc_max.push_back(q_pc_max);		//[MW]
-		//mv_is_rec_su_allowed.push_back((int)is_rec_su_allowed);	//[-]
-		//mv_is_pc_su_allowed.push_back((int)is_pc_su_allowed);	//[-]
-		//mv_is_pc_sb_allowed.push_back((int)is_pc_sb_allowed);	//[-]
-		//mv_q_dot_est_cr_su.push_back(q_dot_cr_startup);		//[MW]
-		//mv_q_dot_est_cr_on.push_back(q_dot_cr_on);			//[MW]
-		//mv_q_dot_est_tes_dc.push_back(q_dot_tes_dc);		//[MW]
-		//mv_q_dot_est_tes_ch.push_back(q_dot_tes_ch);		//[MW]
-
-		// Mass flow rate balance
-		//double m_dot_bal = mc_cr_outputs.m_m_dot_salt_tot + mc_tes_dc_htf_state.m_m_dot - mc_pc_htf_state.m_m_dot - mc_tes_ch_htf_state.m_m_dot;
-		//double m_dot_sys_max = fmax(mc_tes_ch_htf_state.m_m_dot, fmax(mc_pc_htf_state.m_m_dot, fmax(mc_cr_outputs.m_m_dot_salt_tot, mc_tes_dc_htf_state.m_m_dot)));
-		//if(m_dot_sys_max > 0.0)
-		//	m_dot_bal = (m_dot_bal / m_dot_sys_max);		//[-] Relative mass balance 'error'
-		//else
-		//	m_dot_bal = 0.0;			
-		//
-		//// Energy balance
-		//double q_dot_bal = mc_cr_outputs.m_q_thermal + mc_tes_outputs.m_q_dot_dc_to_htf - mc_pc_outputs.m_q_dot_htf - mc_tes_outputs.m_q_dot_ch_from_htf;
-		//double q_dot_sys_max = fmax(fmax(fmax(mc_cr_outputs.m_q_thermal, mc_tes_outputs.m_q_dot_dc_to_htf), mc_pc_outputs.m_q_dot_htf),mc_tes_outputs.m_q_dot_ch_from_htf);
-		//if(q_dot_sys_max > 0.0)
-		//	q_dot_bal = (q_dot_bal / q_dot_sys_max);
-		//else
-		//	q_dot_bal = 0.0;
 
 		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
 		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
@@ -7495,26 +7301,27 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 
 
 		// Call the power cycle in STARTUP_CONTROLLED mode
-		mc_pc_htf_state.m_m_dot = 0.0;
-		mc_pc_htf_state.m_temp_in = T_pc_in_guess - 273.15;		//[C] convert from K
+		mc_pc_inputs.m_m_dot = 0.0;
+		mc_pc_htf_state_in.m_temp = T_pc_in_guess - 273.15;		//[C] convert from K
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
 
 		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state,
+			mc_pc_htf_state_in,
 			mc_pc_inputs,
-			mc_pc_outputs,
+			mc_pc_out_solver,
+			mc_pc_out_report,
 			mc_sim_info);
 
 		// Check for new timestep, probably will find one here
-		time_pc_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+		time_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 
 		// Use 'm_m_dot_demand' as an input to TES model
 		// 'm_m_dot_htf' and 'm_m_dot_htf_ref' will be NaN, but that should be ok...
 
-		double m_dot_pc = mc_pc_outputs.m_m_dot_htf / 3600.0;		//[kg/s]
+		double m_dot_pc = mc_pc_out_solver.m_m_dot_htf / 3600.0;		//[kg/s]
 
 		// Reset mass flow rate in 'mc_pc_htf_state'
-		mc_pc_htf_state.m_m_dot = mc_pc_outputs.m_m_dot_htf;			//[kg/hr]
+		mc_pc_inputs.m_m_dot = mc_pc_out_solver.m_m_dot_htf;			//[kg/hr]
 
 		bool dc_solved = mc_tes.discharge(time_pc_su, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_pc, m_T_htf_cold_des, T_pc_in_calc, mc_tes_outputs);
 
@@ -7563,23 +7370,24 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 
 		// If receiver IS producing energy, try starting up power cycle
 		// Power Cycle: STARTUP
-		mc_pc_htf_state.m_temp_in = T_pc_in_calc - 273.15;				//[C]
-		mc_pc_htf_state.m_m_dot = m_dot_pc*3600.0;						//[kg/hr] no mass flow rate to power cycle
+		mc_pc_htf_state_in.m_temp = T_pc_in_calc - 273.15;				//[C]
+		mc_pc_inputs.m_m_dot = m_dot_pc*3600.0;						//[kg/hr] no mass flow rate to power cycle
 		// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP;
 		//mc_pc_inputs.m_tou = tou_timestep;
 		// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state,
+			mc_pc_htf_state_in,
 			mc_pc_inputs,
-			mc_pc_outputs,
+			mc_pc_out_solver,
+			mc_pc_out_report,
 			mc_sim_info);
 
 		// Would be nice to have some check to know whether startup solved appropriately...
 
 
 		// Check for new timestep
-		time_pc_su = mc_pc_outputs.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+		time_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 		if( time_pc_su < mc_sim_info.m_step - step_tol )
 		{
 			exit_mode = NO_SOLUTION;
@@ -7713,18 +7521,19 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 
 		// Solve the receiver model with T_rec_in_guess
 		// CR ON
-		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C]
+		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
 		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,
-			mc_cr_htf_state,
+			mc_cr_htf_state_in,
 			mc_cr_inputs,
-			mc_cr_outputs,
+			mc_cr_out_solver,
+			mc_cr_out_report,
 			mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
-		if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+		if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 		{
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
@@ -7779,8 +7588,8 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 		}	// end logic to determine path if receiver is off or did not solve
 
 		// Get receiver HTF outputs
-		double m_dot_receiver = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr]
-		double T_htf_rec_out = mc_cr_outputs.m_T_salt_hot;			//[C]
+		double m_dot_receiver = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]
+		double T_htf_rec_out = mc_cr_out_solver.m_T_salt_hot;			//[C]
 
 		// Solve TES for FULL charge
 		double T_htf_tes_out, m_dot_htf_tes_out;
@@ -7793,7 +7602,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 
 		// HTF charging state
 		mc_tes_ch_htf_state.m_m_dot = m_dot_htf_tes_out;				//[kg/hr]
-		mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
+		mc_tes_ch_htf_state.m_temp_in = mc_cr_out_solver.m_T_salt_hot;		//[C]
 		mc_tes_ch_htf_state.m_temp_out = T_htf_tes_out;					//[C] convert from K
 
 		// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
@@ -7816,21 +7625,22 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 
 		// Solve PC performance
 		// Set inputs to power cycle model
-		mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
-		mc_pc_htf_state.m_m_dot = m_dot_pc;							//[kg/hr]
+		mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
+		mc_pc_inputs.m_m_dot = m_dot_pc;							//[kg/hr]
 
 		// Inputs
 		mc_pc_inputs.m_standby_control = power_cycle_mode;
 
 		// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state,
+			mc_pc_htf_state_in,
 			mc_pc_inputs,
-			mc_pc_outputs,
+			mc_pc_out_solver,
+			mc_pc_out_report,
 			mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve
-		if( mc_pc_outputs.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+		if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 		{
 			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
@@ -7886,7 +7696,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 		}	// end logic to handle power cycle not solving 
 
 		// Get power cycle HTF return temperature...
-		double T_pc_out = mc_pc_outputs.m_T_htf_cold;		//[C]
+		double T_pc_out = mc_pc_out_solver.m_T_htf_cold;		//[C]
 
 		// Enthalpy balance to get T_rec_in_calc
 		double T_rec_in_calc = (m_dot_htf_tes_out*T_htf_tes_out + m_dot_pc*T_pc_out) / m_dot_receiver;	//[C]
@@ -8179,25 +7989,26 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 			mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
 
 			// Enthalpy balance (mixer)
-			// double T_pc_htf_in = (m_dot_tes_dc*T_htf_hot_out + m_dot_receiver*mc_cr_outputs.m_T_salt_hot) / (m_dot_pc_guess);	//[C]
+			// double T_pc_htf_in = (m_dot_tes_dc*T_htf_hot_out + m_dot_receiver*mc_cr_out_solver.m_T_salt_hot) / (m_dot_pc_guess);	//[C]
 			double T_pc_htf_in = T_htf_hot_out;
 
 			// Solver power cycle model
-			mc_pc_htf_state.m_temp_in = T_pc_htf_in;		//[C]
-			mc_pc_htf_state.m_m_dot = m_dot_pc_guess;		//[kg/hr]
+			mc_pc_htf_state_in.m_temp = T_pc_htf_in;		//[C]
+			mc_pc_inputs.m_m_dot = m_dot_pc_guess;		//[kg/hr]
 
 			// Inputs
 			mc_pc_inputs.m_standby_control = power_cycle_mode;
 
 			// Performance Call
 			mc_power_cycle.call(mc_weather.ms_outputs,
-				mc_pc_htf_state,
+				mc_pc_htf_state_in,
 				mc_pc_inputs,
-				mc_pc_outputs,
+				mc_pc_out_solver,
+				mc_pc_out_report,
 				mc_sim_info);
 
 			// Check that power cycle is producing power or model didn't solve
-			if( mc_pc_outputs.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+			if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 			{
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
@@ -8254,7 +8065,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 			}	// end logic to handle power cycle not producing power or failing
 
 			// Get thermal power delivered to power cycle and calculate the difference between the calculated thermal power and target
-			diff_q_pc = (mc_pc_outputs.m_q_dot_htf - q_dot_pc_fixed) / q_dot_pc_fixed;		//[-] (Calc-Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
+			diff_q_pc = (mc_pc_out_solver.m_q_dot_htf - q_dot_pc_fixed) / q_dot_pc_fixed;		//[-] (Calc-Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
 
 		}	// end while() loop on discharge mass flow rate to hit PC thermal target
 
@@ -8266,7 +8077,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 		}
 
 		// Get HTF temperature out from the power cycle and compare to guess value (T_rec_in)
-		double T_cold_calc = mc_pc_outputs.m_T_htf_cold;	//[C]
+		double T_cold_calc = mc_pc_out_solver.m_T_htf_cold;	//[C]
 
 		diff_T_cold = (T_cold_calc - T_cold_guess) / T_cold_guess;		//[-]
 
@@ -8539,8 +8350,8 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		}
 
 		// Solve PC model
-		mc_pc_htf_state.m_temp_in = T_htf_tes_hot - 273.15;		//[C]
-		mc_pc_htf_state.m_m_dot = m_dot_tes_dc*3600.0;			//[kg/hr]
+		mc_pc_htf_state_in.m_temp = T_htf_tes_hot - 273.15;		//[C]
+		mc_pc_inputs.m_m_dot = m_dot_tes_dc*3600.0;			//[kg/hr]
 
 		// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
@@ -8552,12 +8363,13 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 
 		// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state,
+			mc_pc_htf_state_in,
 			mc_pc_inputs,
-			mc_pc_outputs,
+			mc_pc_out_solver,
+			mc_pc_out_report,
 			temp_sim_info);			// **** Note using 'temp_sim_info' here ****
 
-		diff_T_tes_cold = (mc_pc_outputs.m_T_htf_cold - T_tes_cold_guess) / T_tes_cold_guess;
+		diff_T_tes_cold = (mc_pc_out_solver.m_T_htf_cold - T_tes_cold_guess) / T_tes_cold_guess;
 
 	}	// end while() on TES inlet temperature
 
@@ -8681,18 +8493,19 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 		}
 
 		// Solve the receiver model
-		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C]
+		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
 		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,
-			mc_cr_htf_state,
+			mc_cr_htf_state_in,
 			mc_cr_inputs,
-			mc_cr_outputs,
+			mc_cr_out_solver,
+			mc_cr_out_report,
 			mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
-		if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+		if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 		{
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
@@ -8749,7 +8562,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 		}	// end logic to determine path if receiver is off or did not solve
 
 		// Now need to iterate on mass flow rate to send to the Power Cycle
-		double m_dot_receiver = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr]
+		double m_dot_receiver = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]
 
 		// Knowing the cold HTF temperature to TES, can calculate the maximum mass flow rate available for discharge
 		double q_dot_tes_dc_local, m_dot_tes_dc_max, T_tes_hot_return;
@@ -8913,25 +8726,26 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 			mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
 
 			// Enthalpy balance (mixer)
-			double T_pc_htf_in = (m_dot_tes_dc*T_htf_hot_out + m_dot_receiver*mc_cr_outputs.m_T_salt_hot) / (m_dot_pc_guess);	//[C]
+			double T_pc_htf_in = (m_dot_tes_dc*T_htf_hot_out + m_dot_receiver*mc_cr_out_solver.m_T_salt_hot) / (m_dot_pc_guess);	//[C]
 
 			// Solver power cycle model
-			mc_pc_htf_state.m_temp_in = T_pc_htf_in;		//[C]
-			mc_pc_htf_state.m_m_dot = m_dot_pc_guess;		//[kg/hr]
+			mc_pc_htf_state_in.m_temp = T_pc_htf_in;		//[C]
+			mc_pc_inputs.m_m_dot = m_dot_pc_guess;		//[kg/hr]
 
 			// Inputs
 			mc_pc_inputs.m_standby_control = power_cycle_mode;
 
 			// Performance Call
 			mc_power_cycle.call(mc_weather.ms_outputs,
-				mc_pc_htf_state,
+				mc_pc_htf_state_in,
 				mc_pc_inputs,
-				mc_pc_outputs,
+				mc_pc_out_solver,
+				mc_pc_out_report,
 				mc_sim_info);
 
 
 			// Check that power cycle is producing power or model didn't solve
-			if( mc_pc_outputs.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+			if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 			{
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
@@ -8988,7 +8802,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 			}	// end logic to handle power cycle not producing power or failing
 
 			// Get thermal power delivered to power cycle and calculate the difference between the calculated thermal power and target
-			diff_q_pc = (mc_pc_outputs.m_q_dot_htf - q_dot_pc_fixed) / q_dot_pc_fixed;		//[-] (Calc-Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
+			diff_q_pc = (mc_pc_out_solver.m_q_dot_htf - q_dot_pc_fixed) / q_dot_pc_fixed;		//[-] (Calc-Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
 
 		}	// end while() loop on the mass flow rate to the power cycle to hit the thermal input requirements
 
@@ -8999,7 +8813,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 		}
 
 		// Get HTF temperature out from the power cycle and compare to guess value (T_rec_in)
-		double T_rec_in_calc = mc_pc_outputs.m_T_htf_cold;	//[C]
+		double T_rec_in_calc = mc_pc_out_solver.m_T_htf_cold;	//[C]
 
 		diff_T_rec_in = (T_rec_in_calc - T_rec_in_guess) / T_rec_in_guess;		//[-]
 
@@ -9128,18 +8942,19 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 
 		// Solve the receiver model with T_rec_in_guess
 		// CR ON
-		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C]
+		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
 		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,
-			mc_cr_htf_state,
+			mc_cr_htf_state_in,
 			mc_cr_inputs,
-			mc_cr_outputs,
+			mc_cr_out_solver,
+			mc_cr_out_report,
 			mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
-		if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+		if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 		{
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
@@ -9194,7 +9009,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		}	// end logic to determine path if receiver is off or did not solve
 	
 		// Now need to iterate on receiver mass flow rate output to send to PC
-		double m_dot_receiver = mc_cr_outputs.m_m_dot_salt_tot;		//[kg/hr]
+		double m_dot_receiver = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]
 
 
 		// Set up iteration variables
@@ -9204,7 +9019,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		// Knowing the receiver outlet temperature, can calculate the maximum mass flow rate available for charging
 		double q_dot_tes_ch_local, m_dot_tes_ch_max, T_tes_cold_return;
 		q_dot_tes_ch_local = m_dot_tes_ch_max = T_tes_cold_return = std::numeric_limits<double>::quiet_NaN();
-		mc_tes.charge_avail_est(mc_cr_outputs.m_T_salt_hot + 273.15, mc_sim_info.m_step, q_dot_tes_ch_local, m_dot_tes_ch_max, T_tes_cold_return);
+		mc_tes.charge_avail_est(mc_cr_out_solver.m_T_salt_hot + 273.15, mc_sim_info.m_step, q_dot_tes_ch_local, m_dot_tes_ch_max, T_tes_cold_return);
 		m_dot_tes_ch_max *= 3600.0;		//[kg/hr] convert from kg/s
 
 		double m_dot_pc_min = fmax(0.0, m_dot_receiver - m_dot_tes_ch_max);
@@ -9335,22 +9150,23 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		
 			// Set inputs to power cycle model
 			// Power Cycle: ON
-			mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
-			mc_pc_htf_state.m_m_dot = m_dot_pc_guess;					//[kg/hr]
+			mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
+			mc_pc_inputs.m_m_dot = m_dot_pc_guess;					//[kg/hr]
 
 			// Inputs
 			mc_pc_inputs.m_standby_control = power_cycle_mode;
 
 			// Performance Call
 			mc_power_cycle.call(mc_weather.ms_outputs,
-				mc_pc_htf_state,
+				mc_pc_htf_state_in,
 				mc_pc_inputs,
-				mc_pc_outputs,
+				mc_pc_out_solver,
+				mc_pc_out_report,
 				mc_sim_info);
 
 			// Check that power cycle is producing power or model didn't solve
 			// Assumes that standby mode always solves
-			if( mc_pc_outputs.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+			if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 			{
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
@@ -9407,7 +9223,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 
 			// Calculate thermal power delivered to power cycle
 			// Calculate difference between calculated thermal power to cycle and target: diff_q_pc
-			diff_q_pc = (mc_pc_outputs.m_q_dot_htf - q_dot_pc_fixed) / q_dot_pc_fixed; 	//[-] (Calc - Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
+			diff_q_pc = (mc_pc_out_solver.m_q_dot_htf - q_dot_pc_fixed) / q_dot_pc_fixed; 	//[-] (Calc - Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
 
 		}	// end while() diff_q_pc
 
@@ -9418,12 +9234,12 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		}
 
 		// Get power cycle HTF return temperature...
-		double T_pc_out = mc_pc_outputs.m_T_htf_cold + 273.15;	//[K]
+		double T_pc_out = mc_pc_out_solver.m_T_htf_cold + 273.15;	//[K]
 
 		// Charge storage
 		double m_dot_tes = m_dot_receiver - m_dot_pc_guess;					//[kg/hr]
 		double T_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
-		bool tes_success = mc_tes.charge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_tes / 3600.0, mc_cr_outputs.m_T_salt_hot + 273.15,
+		bool tes_success = mc_tes.charge(mc_sim_info.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_tes / 3600.0, mc_cr_out_solver.m_T_salt_hot + 273.15,
 			T_tes_cold_out, mc_tes_outputs);
 
 		if( !tes_success )
@@ -9434,7 +9250,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 
 		// HTF charging state
 		mc_tes_ch_htf_state.m_m_dot = m_dot_tes;								//[kg/hr]
-		mc_tes_ch_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;				//[C]
+		mc_tes_ch_htf_state.m_temp_in = mc_cr_out_solver.m_T_salt_hot;				//[C]
 		mc_tes_ch_htf_state.m_temp_out = T_tes_cold_out - 273.15;				//[C] convert from K
 
 		// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
@@ -9568,18 +9384,19 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 		// 2) Solve the receiver model
 
 		// CR: ON
-		mc_cr_htf_state.m_temp_in = T_rec_in_guess;			//[C], convert from [K]
+		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C], convert from [K]
 		mc_cr_inputs.m_field_control = field_control_in;	//[-] apply defocus from method input 
 		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 
 		mc_collector_receiver.call(mc_weather.ms_outputs,
-			mc_cr_htf_state,
+			mc_cr_htf_state_in,
 			mc_cr_inputs,
-			mc_cr_outputs,
+			mc_cr_out_solver,
+			mc_cr_out_report,
 			mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
-		if( mc_cr_outputs.m_m_dot_salt_tot == 0.0 || mc_cr_outputs.m_q_thermal == 0.0 )
+		if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
 		{
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_in == 1 )
@@ -9629,20 +9446,21 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 		// 3) Solve the power cycle model using receiver outputs
 		// Power Cycle: ON
-		mc_pc_htf_state.m_temp_in = mc_cr_outputs.m_T_salt_hot;		//[C]
-		mc_pc_htf_state.m_m_dot = mc_cr_outputs.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
+		mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
+		mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
 		// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
 			//mc_pc_inputs.m_tou = tou_timestep;
 		// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state,
+			mc_pc_htf_state_in,
 			mc_pc_inputs,
-			mc_pc_outputs,
+			mc_pc_out_solver,
+			mc_pc_out_report,
 			mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve
-		if( mc_pc_outputs.m_P_cycle == 0.0 )
+		if( mc_pc_out_solver.m_P_cycle == 0.0 )
 		{
 			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 			// Go to Receiver OFF power cycle OFF
@@ -9690,7 +9508,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 		}	// end Power Cycle OFF decisions
 		else
 		{
-			diff_T_in = (mc_pc_outputs.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
+			diff_T_in = (mc_pc_out_solver.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
 		}
 
 	}	// end iteration on T_rec_in

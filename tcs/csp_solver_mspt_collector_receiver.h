@@ -17,7 +17,7 @@ public:
 
 	~C_csp_mspt_collector_receiver();
 
-	virtual void init();
+	virtual void init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
 	virtual int get_operating_state();
 
@@ -26,12 +26,17 @@ public:
     virtual double get_pumping_parasitic_coef();  //MWe/MWt
     virtual double get_min_power_delivery();    //MWt
 
-	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
-
     virtual void call(const C_csp_weatherreader::S_outputs &weather,
-		C_csp_solver_htf_state &htf_state,
+		const C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-		C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		const C_csp_solver_sim_info &sim_info);
+
+	virtual void off(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();

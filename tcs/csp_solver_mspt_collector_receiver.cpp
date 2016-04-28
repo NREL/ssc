@@ -12,10 +12,15 @@ C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield
 C_csp_mspt_collector_receiver::~C_csp_mspt_collector_receiver()
 {}
 
-void C_csp_mspt_collector_receiver::init()
+void C_csp_mspt_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	mc_pt_heliostatfield.init();
 	mc_mspt_receiver_222.init();
+
+	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;			//[K]
+	solved_params.m_q_dot_rec_on_min = mc_mspt_receiver_222.m_q_rec_min / 1.E6;		//[MW]
+	solved_params.m_q_dot_rec_des = mc_mspt_receiver_222.m_q_rec_des / 1.E6;		//[MW]
+
 	return;
 }
 
@@ -73,17 +78,11 @@ double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
     return mc_mspt_receiver_222.m_f_rec_min * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
 }
 
-void C_csp_mspt_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
-{
-	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;
-	solved_params.m_q_dot_rec_on_min = mc_mspt_receiver_222.m_q_rec_min/1.E6;	//[MW]
-	solved_params.m_q_dot_rec_des = mc_mspt_receiver_222.m_q_rec_des/1.E6;		//[MW]
-}
-
 void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
-	C_csp_solver_htf_state &htf_state,
+	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-	C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// What about catching errors here?
@@ -100,25 +99,57 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	receiver_inputs.m_field_eff = mc_pt_heliostatfield.ms_outputs.m_eta_field;
 	receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;
 	receiver_inputs.m_flux_map_input = &mc_pt_heliostatfield.ms_outputs.m_flux_map_out;
-	mc_mspt_receiver_222.call(weather, htf_state, receiver_inputs, sim_info);
+	mc_mspt_receiver_222.call(weather, htf_state_in, receiver_inputs, sim_info);
 		
 	// Set collector/receiver parent class outputs and return
-	cr_outputs.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
-	cr_outputs.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
+	cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
+	cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 
-	cr_outputs.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
-	cr_outputs.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
-	cr_outputs.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
-	cr_outputs.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				//[MWt-hr]
-	cr_outputs.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss;	//[MWt]
-	cr_outputs.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
-	cr_outputs.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
-	cr_outputs.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			//[MWe]
-	cr_outputs.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
+	cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
+	cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
+	cr_out_solver.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
+	cr_out_solver.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				//[MWt-hr]
+	cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss;	//[MWt]
+	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
+	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
+	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			//[MWe]
+	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
 
-	cr_outputs.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
+	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
 }
 
+void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// First call heliostat field class
+	// In OFF call, looking specifically for weather STOW parasitics apply
+	mc_pt_heliostatfield.off(sim_info);
+
+	// Set collector/receiver parent class outputs from field model
+	cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
+	cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
+	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
+
+	// Now, call the tower-receiver model
+	mc_mspt_receiver_222.off(weather, htf_state_in, sim_info);
+
+	// Set collector/receiver parent class outputs from field model
+	cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		 //[MWt]
+	cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				 //[-]
+	cr_out_solver.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				 //[MW]
+	cr_out_solver.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				 //[MWt-hr]
+	cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss; //[MWt]
+	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
+	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				 //[C]
+	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			 //[MWe]
+		// Not sure that we want 'startup time required' calculated in 'off' call
+	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	 //[s]
+	
+	return;
+}
 
 double C_csp_mspt_collector_receiver::calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim )
 {

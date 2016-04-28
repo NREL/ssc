@@ -156,9 +156,10 @@ private:
 	C_pc_Rankine_indirect_224 mc_power_cycle;
 	C_csp_weatherreader::S_outputs ms_weather;
 	C_csp_solver_sim_info ms_sim_info;
-	C_csp_solver_htf_state ms_htf_state;
+	C_csp_solver_htf_1state ms_htf_state_in;
 	C_csp_power_cycle::S_control_inputs ms_inputs;
-	C_csp_power_cycle::S_csp_pc_outputs ms_outputs;
+	C_csp_power_cycle::S_csp_pc_out_solver ms_out_solver;
+	C_csp_power_cycle::S_csp_pc_out_report ms_out_report;
 
 public:
 
@@ -260,7 +261,8 @@ public:
 
 		try
 		{
-			mc_power_cycle.init();
+			C_csp_power_cycle::S_solved_params solved_params;
+			mc_power_cycle.init(solved_params);
 		}
 		catch(C_csp_exception &csp_exception)
 		{
@@ -292,8 +294,8 @@ public:
 	virtual int call(double time, double step, int ncall)
 	{
 
-		ms_htf_state.m_temp_in = value(I_T_HTF_HOT);		//Hot HTF inlet temperature, from storage tank [C]
-		ms_htf_state.m_m_dot = value(I_M_DOT_HTF);		//HTF mass flow rate [kg/hr]
+		ms_htf_state_in.m_temp = value(I_T_HTF_HOT);	//Hot HTF inlet temperature, from storage tank [C]
+		ms_inputs.m_m_dot = value(I_M_DOT_HTF);			//HTF mass flow rate [kg/hr]
 		ms_weather.m_twet = value(I_T_WB);				//Ambient wet bulb temperature [C]
 		ms_inputs.m_standby_control = (int)value(I_STANDBY_CONTROL);		//Control signal indicating standby mode [none]
 		ms_weather.m_tdry = value(I_T_DB);				//Ambient dry bulb temperature [C]
@@ -312,7 +314,7 @@ public:
 
 		try
 		{
-			mc_power_cycle.call(ms_weather, ms_htf_state, ms_inputs, ms_outputs, ms_sim_info);
+			mc_power_cycle.call(ms_weather, ms_htf_state_in, ms_inputs, ms_out_solver, ms_out_report, ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)
 		{
@@ -339,19 +341,19 @@ public:
 		}
 
 
-		value(O_P_CYCLE, ms_outputs.m_P_cycle);				//[MWe] Cycle power output
-		value(O_ETA, ms_outputs.m_eta);						//[none] Cycle thermal efficiency
-		value(O_T_HTF_COLD, ms_outputs.m_T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
-		value(O_M_DOT_MAKEUP, ms_outputs.m_m_dot_makeup);	//[kg/hr] Cooling water makeup flow rate
-		value(O_M_DOT_DEMAND, ms_outputs.m_m_dot_demand);	//[kg/hr] HTF required flow rate to meet power load
-		value(O_M_DOT_HTF_OUT, ms_outputs.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
-		value(O_M_DOT_HTF_REF, ms_outputs.m_m_dot_htf_ref);	//[kg/hr] Calculated reference HTF flow rate at design
-		value(O_W_COOL_PAR, ms_outputs.m_W_cool_par);		//[MWe] Cooling system parasitic load
-		value(O_P_REF_OUT, ms_outputs.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
-		value(O_F_BAYS, ms_outputs.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
-		value(O_P_COND, ms_outputs.m_P_cond);				//[Pa] Condenser pressure
+		value(O_P_CYCLE, ms_out_solver.m_P_cycle);				//[MWe] Cycle power output
+		value(O_ETA, ms_out_report.m_eta);						//[none] Cycle thermal efficiency
+		value(O_T_HTF_COLD, ms_out_solver.m_T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
+		value(O_M_DOT_MAKEUP, ms_out_report.m_m_dot_makeup);	//[kg/hr] Cooling water makeup flow rate
+		value(O_M_DOT_DEMAND, ms_out_report.m_m_dot_demand);	//[kg/hr] HTF required flow rate to meet power load
+		value(O_M_DOT_HTF_OUT, ms_out_solver.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
+		value(O_M_DOT_HTF_REF, ms_out_report.m_m_dot_htf_ref);	//[kg/hr] Calculated reference HTF flow rate at design
+		value(O_W_COOL_PAR, ms_out_solver.m_W_cool_par);		//[MWe] Cooling system parasitic load
+		value(O_P_REF_OUT, ms_out_report.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
+		value(O_F_BAYS, ms_out_report.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
+		value(O_P_COND, ms_out_report.m_P_cond);				//[Pa] Condenser pressure
 
-		value(O_Q_STARTUP, ms_outputs.m_q_startup);			//[MWt-hr] Power cycle startup energy
+		value(O_Q_STARTUP, ms_out_report.m_q_startup);			//[MWt-hr] Power cycle startup energy
 
 		return 0;
 

@@ -1,3 +1,6 @@
+// Output file directory
+file_dir = 'c:/Users/tneises/Documents/Projects/ssc_dev/examples/';
+
 // Set Model Input Parameters
 	// System Design
 var('htf', 17);					//[-] Integer code for HTF, 17: Salt_60_NaNO3_40_KNO3
@@ -21,14 +24,15 @@ var('fan_power_frac',0.01);			//[-] Fraction of net cycle power consumed by air 
 var('deltaP_cooler_frac',0.002);	//[-] Fraction of cycle high pressure that is design point cooler CO2 pressure drop
 
 // Set Off-Design Inputs
-var('is_m_dot_htf_fracs',0);
-var('m_dot_htf_fracs_in',[]);		//[-]
+var('is_m_dot_htf_fracs',1);
+var('m_dot_htf_fracs_in',[1.25,1.0,0.5,0.25]);		//[-]
 var('is_T_amb_od',1);
-var('T_amb_od_in',[30,35]);		//[C]
+var('T_amb_od_in',[45,30,20]);
+//var('T_amb_od_in',[45,44,43,42,41,40,39,38,37,36,36,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15]);		//[C]
 
 // Run Model
 run('sco2_csp_system');
-
+ 
 // Get Design Solution:
 outln("The HTF design cold temperature (PHX outlet) is: ", var("T_htf_cold_des"), " C");
 outln("The HTF temperature difference across the PHX is: ", var("T_htf_hot_des")-var("T_htf_cold_des"), " C");
@@ -53,5 +57,144 @@ outln("The off-design main compressor speed is: ", var("N_mc_od"), " rpm");
 outln("The off-design recompression fraction is: ", var("recomp_frac_od"), " -");
 outln("The off-design cycle thermal efficiency is: ", var("eta_thermal_od"), " -");
 
+// Setup output file
+file_name = file_dir + 'test_sco2_csp_module.csv';
+file_int = open(file_name, 'w');
+headers_des = "T_htf_hot,T_amb,cycle_eta,cycle_power,mc_eta,rc_eta,t_eta,phx_hot_approach,phx_cold_approach,air_cooler_approach,"+
+			"fan_power_frac,deltaP_cooler_frac,T_htf_cold,m_dot_htf,cycle_eta_solved,m_dot_co2,mc_phi,mc_tip_ratio,mc_n_stages,mc_N,mc_D,mc_phi_surge,"+
+			"rc_phi,rc_tip_ratio1,rc_tip_ratio2,rc_n_stages,rc_N,rc_D1,rc_D2,rc_phi_surge,t_nu,t_tip_ratio,t_N,t_D,recup_UA,LTR_UA,HTR_UA,f_recomp,PHX_UA,PHX_eff,PHX_NTU,"+
+			"T_mc_in,T_mc_out,T_LTR_HP_out,T_mix_out,T_HTR_HP_out,T_t_in,T_t_out,T_HTR_LP_out,T_LTR_LP_out,T_rc_out,"+
+			"P_mc_in,P_mc_out,P_LTR_HP_out,P_mix_out,P_HTR_HP_out,P_t_in,P_t_out,P_HTR_LP_out,P_LTR_LP_out,P_rc_out";
+outln(file_name, " Design headers were successful? ", write_line(file_int,headers_des));
+labels_des = "C,C,-,MWe,-,-,-,C,C,C,"+
+			"-,-,C,kg/s,-,kg/s,-,-,-,rpm,m,-,"+
+			"-,-,-,-,rpm,m,m,-,-,-,rpm,m,kW/K,kW/K,kW/K,-,kW/K,-,-,"+
+			"C,C,C,C,C,C,C,C,C,C,"+
+			"MPa,MPa,MPa,MPa,MPa,MPa,MPa,MPa,MPa,MPa";
+outln(file_name, " Design labels were successful? ", write_line(file_int,labels_des));
+// Write design point
+//outln(file_name, " Design point values were successful? ", write_line(file_int,
+	write(file_int,to_string(var("T_htf_hot_des"))+",");
+	write(file_int,to_string(var("T_amb_des"))+",");
+	write(file_int,to_string(var("eta_thermal_des"))+",");
+	write(file_int,to_string(var("W_dot_net_des"))+",");
+	write(file_int,to_string(var("eta_isen_mc"))+",");
+	write(file_int,to_string(var("eta_isen_rc"))+",");
+	write(file_int,to_string(var("eta_isen_t"))+",");
+	write(file_int,to_string(var("dT_PHX_hot_approach"))+",");
+	write(file_int,to_string(var("dT_PHX_cold_approach"))+",");
+	write(file_int,to_string(var("dT_mc_approach"))+",");
+	write(file_int,to_string(var("fan_power_frac"))+",");
+	write(file_int,to_string(var("deltaP_cooler_frac"))+",");
+	write(file_int,to_string(var("T_htf_cold_des"))+",");
+	write(file_int,to_string(var("m_dot_htf_des"))+",");
+	write(file_int,to_string(var("eta_thermal_calc"))+",");
+	write(file_int,to_string(var("m_dot_co2_full"))+",");
+	write(file_int,to_string(var("mc_phi_des"))+",");
+	write(file_int,to_string(var("mc_tip_ratio_des"))+",");
+	write(file_int,to_string(var("mc_n_stages"))+",");
+	write(file_int,to_string(var("mc_N_des"))+",");
+	write(file_int,to_string(var("mc_D"))+",");
+	write(file_int,to_string(var("mc_phi_surge"))+",");
+	write(file_int,to_string(var("rc_phi_des"))+",");
+	write(file_int,to_string(var("rc_tip_ratio1_des"))+",");
+	write(file_int,to_string(var("rc_tip_ratio2_des"))+",");
+	write(file_int,to_string(var("rc_n_stages"))+",");
+	write(file_int,to_string(var("rc_N_des"))+",");
+	write(file_int,to_string(var("rc_D1"))+",");
+	write(file_int,to_string(var("rc_D2"))+",");
+	write(file_int,to_string(var("rc_phi_surge"))+",");
+	write(file_int,to_string(var("t_nu_des"))+",");
+	write(file_int,to_string(var("t_tip_ratio_des"))+",");
+	write(file_int,to_string(var("t_N_des"))+",");
+	write(file_int,to_string(var("t_D"))+",");
+	write(file_int,to_string(var("UA_recup_total"))+",");
+	write(file_int,to_string(var("UA_LTR"))+",");
+	write(file_int,to_string(var("UA_HTR"))+",");
+	write(file_int,to_string(var("recomp_frac"))+",");
+	write(file_int,to_string(var("UA_PHX"))+",");
+	write(file_int,to_string(var("eff_PHX"))+",");
+	write(file_int,to_string(var("NTU_PHX"))+",");
+	write(file_int,to_string(var("T_co2_des")[0])+",");
+	write(file_int,to_string(var("T_co2_des")[1])+",");
+	write(file_int,to_string(var("T_co2_des")[2])+",");
+	write(file_int,to_string(var("T_co2_des")[3])+",");
+	write(file_int,to_string(var("T_co2_des")[4])+",");
+	write(file_int,to_string(var("T_co2_des")[5])+",");
+	write(file_int,to_string(var("T_co2_des")[6])+",");
+	write(file_int,to_string(var("T_co2_des")[7])+",");
+	write(file_int,to_string(var("T_co2_des")[8])+",");
+	write(file_int,to_string(var("T_co2_des")[9])+",");
+	write(file_int,to_string(var("P_co2_des")[0])+",");
+	write(file_int,to_string(var("P_co2_des")[1])+",");
+	write(file_int,to_string(var("P_co2_des")[2])+",");
+	write(file_int,to_string(var("P_co2_des")[3])+",");
+	write(file_int,to_string(var("P_co2_des")[4])+",");
+	write(file_int,to_string(var("P_co2_des")[5])+",");
+	write(file_int,to_string(var("P_co2_des")[6])+",");
+	write(file_int,to_string(var("P_co2_des")[7])+",");
+	write(file_int,to_string(var("P_co2_des")[8])+",");
+	write(file_int,to_string(var("P_co2_des")[9])+"\n");
+	
+// Write off-design headers and labels
+headers_od = "m_dot_htf_frac,T_amb,T_htf_hot,P_comp_in,N_mc,f_recomp,cycle_eta,W_dot_net,Q_dot_in,T_htf_cold,m_dot_t_co2,PR,eta_mc,phi_mc,tip_ratio_mc,"+
+			"mc_surge_sf,rc_eta,rc_phi1,rc_phi2,rc_tip_ratio,rc_surge_sf,t_eta,t_nu,t_tip_ratio,phx_eff,"+
+			"T_mc_in,T_mc_out,T_LTR_HP_out,T_mix_out,T_HTR_HP_out,T_t_in,T_t_out,T_HTR_LP_out,T_LTR_LP_out,T_rc_out,"+
+			"P_mc_in,P_mc_out,P_LTR_HP_out,P_mix_out,P_HTR_HP_out,P_t_in,P_t_out,P_HTR_LP_out,P_LTR_LP_out,P_rc_out";
+outln(file_name, " Off-design heades were successful? ", write_line(file_int,headers_od));
+labels_od = "kg/s,C,C,MPa,rpm,-,-,MWe,MWt,C,kg/s,-,-,-,-,-,-,-,-,-,-,-,-,-,-,C,C,C,C,C,C,C,C,C,C,MPa,MPa,MPa,MPa,MPa,MPa,MPa,MPa,MPa,MPa";
+outln(file_name, " Off-design labels were successful? ", write_line(file_int,labels_od));
+// Write off-design results
+n_od_runs = #var("T_amb_od");
+for(i=0; i<n_od_runs; i++)
+{
+//outln(file_name, " Off-design run ", i, " was successful? ", write_line(file_int,
+		write(file_int,to_string(var("m_dot_htf_fracs")[i])+",");
+		write(file_int,to_string(var("T_amb_od")[i])+",");
+		write(file_int,to_string(var("T_htf_hot_od")[i])+",");
+		write(file_int,to_string(var("P_comp_in_od")[i])+",");
+		write(file_int,to_string(var("N_mc_od")[i])+",");
+		write(file_int,to_string(var("recomp_frac_od")[i])+",");
+		write(file_int,to_string(var("eta_thermal_od")[i])+",");
+		write(file_int,to_string(var("W_dot_net_od")[i])+",");
+		write(file_int,to_string(var("Q_dot_net_od")[i])+",");
+		write(file_int,to_string(var("T_htf_cold_od")[i])+",");
+		write(file_int,to_string(var("m_dot_co2_full_od")[i])+",");
+		write(file_int,to_string(var("PR_od")[i])+",");
+		write(file_int,to_string(var("mc_eta_od")[i])+",");
+		write(file_int,to_string(var("mc_phi_od")[i])+",");
+		write(file_int,to_string(var("mc_tip_ratio_od")[i])+",");
+		write(file_int,to_string(var("mc_surge_sf_od")[i])+",");
+		write(file_int,to_string(var("rc_eta_od")[i])+",");
+		write(file_int,to_string(var("rc_phi1_od")[i])+",");
+		write(file_int,to_string(var("rc_phi2_od")[i])+",");
+		write(file_int,to_string(var("rc_tip_ratio_od")[i])+",");
+		write(file_int,to_string(var("rc_surge_sf_od")[i])+",");
+		write(file_int,to_string(var("t_eta_od")[i])+",");
+		write(file_int,to_string(var("t_nu_od")[i])+",");
+		write(file_int,to_string(var("t_tip_ratio_od")[i])+",");
+		write(file_int,to_string(var("phx_eff_od")[i])+",");
+		write(file_int,to_string(var("T_co2_od")[i][0])+",");
+		write(file_int,to_string(var("T_co2_od")[i][1])+",");
+		write(file_int,to_string(var("T_co2_od")[i][2])+",");
+		write(file_int,to_string(var("T_co2_od")[i][3])+",");
+		write(file_int,to_string(var("T_co2_od")[i][4])+",");
+		write(file_int,to_string(var("T_co2_od")[i][5])+",");
+		write(file_int,to_string(var("T_co2_od")[i][6])+",");
+		write(file_int,to_string(var("T_co2_od")[i][7])+",");
+		write(file_int,to_string(var("T_co2_od")[i][8])+",");
+		write(file_int,to_string(var("T_co2_od")[i][9])+",");
+		write(file_int,to_string(var("P_co2_od")[i][0])+",");
+		write(file_int,to_string(var("P_co2_od")[i][1])+",");
+		write(file_int,to_string(var("P_co2_od")[i][2])+",");
+		write(file_int,to_string(var("P_co2_od")[i][3])+",");
+		write(file_int,to_string(var("P_co2_od")[i][4])+",");
+		write(file_int,to_string(var("P_co2_od")[i][5])+",");
+		write(file_int,to_string(var("P_co2_od")[i][6])+",");
+		write(file_int,to_string(var("P_co2_od")[i][7])+",");
+		write(file_int,to_string(var("P_co2_od")[i][8])+",");
+		write(file_int,to_string(var("P_co2_od")[i][9])+"\n");
+}
+outln("Off design runs complete!");
 
 

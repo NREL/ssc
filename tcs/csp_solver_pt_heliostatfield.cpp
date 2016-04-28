@@ -774,6 +774,32 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 
 }
 
+void C_pt_heliostatfield::off(const C_csp_solver_sim_info &sim_info)
+{
+	// Increase call-per-timestep counter
+	// Converge() sets it to -1, so on first call this line will adjust it = 0
+	m_ncall++;
+
+	// Get sim info
+	double step = sim_info.m_step;
+
+	// Calculate stow parasitics (if applicable)
+	double pparasi = 0.0;
+		// Is field shutting down?
+	if( m_eta_prev >= 1.e-4 )
+	{
+		pparasi = m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
+	}
+
+	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
+	// Other outputs
+		// clear out the existing flux map
+	ms_outputs.m_flux_map_out.fill(0.0);
+	ms_outputs.m_q_dot_field_inc = 0.0;		//[MWt]
+	ms_outputs.m_eta_field = 0.0;			//[-], field efficiency
+
+}
+
 void C_pt_heliostatfield::converged()
 {
 	m_eta_prev = ms_outputs.m_eta_field;

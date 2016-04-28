@@ -77,7 +77,10 @@ OBJECTS = \
 	cmod_user_htf_comparison.o \
 	cmod_cb_mspt_system_costs.o \
 	cmod_cb_construction_financing.o \
+	cmod_sco2_design_point.o \
 	cmod_sco2_design_cycle.o \
+	cmod_sco2_csp_system.o \
+	cmod_sco2_csp_ud_pc_tables.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)

@@ -20,7 +20,7 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 	m_ncall = -1;
 }
 
-void C_pc_Rankine_indirect_224::init()
+void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_params)
 {
 	// Declare instance of fluid class for FIELD fluid
 	if( ms_params.m_pc_fl != HTFProperties::User_defined && ms_params.m_pc_fl < HTFProperties::End_Library_Fluids )
@@ -293,19 +293,17 @@ void C_pc_Rankine_indirect_224::init()
 	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt]
 	
 	// Finally, set member model-timestep-tracking variables
-	m_standby_control_prev = 3;			// Assume power cycle is off when simulation begins
+	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
 	m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
 	m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
 
 	m_ncall = -1;
-}
 
-void C_pc_Rankine_indirect_224::get_design_parameters(C_csp_power_cycle::S_solved_params &solved_params)
-{
 	solved_params.m_W_dot_des = ms_params.m_P_ref / 1000.0;		//[MW], convert from kW
 	solved_params.m_eta_des = ms_params.m_eta_ref;				//[-]
 	//solved_params.m_q_dot_des = solved_params.m_W_dot_des / solved_params.m_eta_des;	//[MW]
 	solved_params.m_q_dot_des = m_q_dot_design;					//[MWt]
+	solved_params.m_q_startup = m_startup_energy_required/1.E3;	//[MWt-hr]
 	solved_params.m_max_frac = ms_params.m_cycle_max_frac;		//[-]
 	solved_params.m_cutoff_frac = ms_params.m_cycle_cutoff_frac;	//[-]
 	solved_params.m_sb_frac = ms_params.m_q_sby_frac;				//[-]
@@ -441,9 +439,10 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
 
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weather, 
-	C_csp_solver_htf_state &htf_state,
+	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs & inputs,
-	C_csp_power_cycle::S_csp_pc_outputs &outputs,
+	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
+	C_csp_power_cycle::S_csp_pc_out_report &out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
@@ -456,8 +455,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	//int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs
-	double T_htf_hot = htf_state.m_temp_in;		//[C] 
-	double m_dot_htf = htf_state.m_m_dot;		//[kg/hr]
+	double T_htf_hot = htf_state_in.m_temp;		//[C] 
+	double m_dot_htf = inputs.m_m_dot;			//[kg/hr]
 	double T_wb = weather.m_twet + 273.15;		//[K], converted from C
 	int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 	double T_db = weather.m_tdry + 273.15;		//[K], converted from C
@@ -820,28 +819,28 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	}	
 
 	// Set outputs
-	outputs.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
-	outputs.m_eta = eta;							//[-] Cycle thermal efficiency
-	outputs.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
-	outputs.m_m_dot_makeup = (m_dot_water_cooling+m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
-	outputs.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
-	outputs.m_m_dot_htf = m_dot_htf;				//[kg/hr] Actual HTF flow rate passing through the power cycle
-	outputs.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
-	outputs.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
-	outputs.m_P_ref = ms_params.m_P_ref/1000.0;		//[MWe] Reference power level output at design, convert from kWe
-	outputs.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
-	outputs.m_P_cond = P_cond;						//[Pa] Condenser pressure
+	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
+	out_report.m_eta = eta;							//[-] Cycle thermal efficiency
+	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
+	out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	out_solver.m_m_dot_htf = m_dot_htf;				//[kg/hr] Actual HTF flow rate passing through the power cycle
+	out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
+	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
+	out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
+	out_report.m_f_hrsys = f_hrsys;					//[-] Fraction of operating heat rejection system
+	out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
 
 	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
 	if( q_startup > 0.0 )
-		outputs.m_q_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
+		out_report.m_q_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
 	else
-		outputs.m_q_startup = 0.0;
+		out_report.m_q_startup = 0.0;
 
 
-	outputs.m_time_required_su = time_required_su*3600.0;	//[s]
-	outputs.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)
-	outputs.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf/3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
+	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
+	out_solver.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)
+	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
 }
 
 void C_pc_Rankine_indirect_224::converged()

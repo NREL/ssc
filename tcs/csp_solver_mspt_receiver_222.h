@@ -187,8 +187,12 @@ public:
 	int get_operating_state();
 
 	void call(const C_csp_weatherreader::S_outputs &weather, 
-		C_csp_solver_htf_state &htf_state, 
+		const C_csp_solver_htf_1state &htf_state_in, 
 		const C_mspt_receiver_222::S_inputs &inputs,
+		const C_csp_solver_sim_info &sim_info);
+
+	void off(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_solver_sim_info &sim_info);
 
 	void converged();
