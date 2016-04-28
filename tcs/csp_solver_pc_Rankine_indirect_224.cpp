@@ -463,7 +463,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	double T_db = weather.m_tdry + 273.15;		//[K], converted from C
 	double P_amb = weather.m_pres*100.0;		//[Pa], converted from mbar
 	int tou = sim_info.m_tou - 1;				//[-], convert from 1-based index
-	double rh = weather.m_rhum/100.0;			//[-], convert from %
+	//double rh = weather.m_rhum/100.0;			//[-], convert from %
 
 	double m_dot_st_bd = 0.0;
 
