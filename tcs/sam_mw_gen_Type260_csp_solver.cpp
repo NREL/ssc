@@ -237,11 +237,11 @@ class sam_mw_gen_type260 : public tcstypeinterface
 private:
 	// Add member class for csp-solver generic component models
 	C_csp_gen_collector_receiver mc_gen_cr;
-	C_csp_gen_collector_receiver::S_params *mp_params = &mc_gen_cr.ms_params;
+	C_csp_gen_collector_receiver::S_params *mp_params; // = &mc_gen_cr.ms_params;
 	C_csp_collector_receiver::S_csp_cr_solved_params mc_cr_des_solved;
 
 	C_pc_gen mc_gen_pc;
-	C_pc_gen::S_params *mp_pc_params = &mc_gen_pc.ms_params;
+	C_pc_gen::S_params *mp_pc_params; // = &mc_gen_pc.ms_params;
 	C_pc_gen::S_solved_params mc_pc_des_solved;
 
 
@@ -312,7 +312,10 @@ public:
 		d2r = pi/180.;
 		g = 9.81;	//gravitation constant
 		mtoinch = 39.3700787;	//[m] -> [in]
-
+		
+		mp_params = &mc_gen_cr.ms_params;
+		mp_pc_params = &mc_gen_pc.ms_params;
+		
 		is_sf_init = false;
 		
 		//Set all values to NaN or nonsense value to prevent misuse
