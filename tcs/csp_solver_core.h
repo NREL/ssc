@@ -13,10 +13,11 @@ public:
 	double m_temp;	//[C]
 	double m_pres;	//[kPa]
 	double m_qual;	//[-]
+	double m_m_dot;	//[kg/s]
 
 	C_csp_solver_htf_1state()
 	{
-		m_temp = m_pres = m_qual = std::numeric_limits<double>::quiet_NaN();
+		m_temp = m_pres = m_qual = m_m_dot = std::numeric_limits<double>::quiet_NaN();
 	}
 };
 
