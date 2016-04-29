@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <math.h>
 #include "csp_solver_pc_gen.h"
 #include "csp_solver_core.h"
 

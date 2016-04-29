@@ -1,6 +1,7 @@
 #ifndef __UD_POWER_CYCLE_
 #define __UD_POWER_CYCLE_
 
+#include <limits>
 #include "interpolation_routines.h"
 #include "csp_solver_util.h"
 
