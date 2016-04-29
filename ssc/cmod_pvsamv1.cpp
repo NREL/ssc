@@ -1873,8 +1873,8 @@ public:
 
 					}
 				}
+				wdprov->rewind();
 			}
-			wdprov->rewind();
 		}
 
 		// lifetime analysis over nyears
