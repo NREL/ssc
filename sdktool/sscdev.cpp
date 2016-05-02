@@ -86,8 +86,13 @@ bool SCApp::OnInit()
 
 	app_frame->Show();
 
-	if ( argc > 1 )
-		app_frame->LoadBdat( argv[1] );
+	if (argc > 1)
+	{
+		if (argv[1].Right(3).Lower() == ".lk")
+			app_frame->LoadScript(argv[1]);
+		else
+			app_frame->LoadBdat(argv[1]);
+	}
 
 	bool first_load = true;
 	wxString fl_key = wxString::Format("FirstLoad_%d",
@@ -525,6 +530,31 @@ bool SCFrame::ReadVarTable( wxDataInputStream &o, var_table &vt, bool clear_firs
 	}
 
 	return (o.Read16() == code);
+}
+
+bool SCFrame::LoadScript(wxString fn)
+{
+	if (fn.IsEmpty())
+	{
+
+		wxFileDialog dlg(this, "Load lk script",
+			wxPathOnly(m_lastFile),
+			m_lastFile,
+			"Script file (*.lk)|*.lk",
+			wxFD_OPEN);
+
+		if (dlg.ShowModal() == wxID_OK)
+		{
+			m_lastFile = dlg.GetPath();
+			fn = m_lastFile;
+		}
+		else
+			return false;
+	}
+	bool ret = m_scriptWindow->Load(fn);
+	m_notebook->SetSelection(2);
+	return ret;
+
 }
 
 bool SCFrame::LoadBdat( wxString fn )

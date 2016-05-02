@@ -44,6 +44,10 @@ public:
 		
 	bool CloseDocument();
 	bool LoadBdat( wxString fn = wxEmptyString );
+
+	bool LoadScript(wxString fn = wxEmptyString);
+
+
 	void SaveBdat();
 	bool WriteBdatToDisk(const wxString &fn);
 	

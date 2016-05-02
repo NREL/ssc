@@ -504,6 +504,7 @@ bool EditorWindow::Write( const wxString &file )
 	else return false;
 }
 
+
 bool EditorWindow::Load( const wxString &file )
 {
 	FILE *fp = fopen(file.c_str(), "r");
