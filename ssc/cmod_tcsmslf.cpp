@@ -680,8 +680,7 @@ public:
 		bConnected &= connect(powerblock, "m_dot_htf_ref", controller, "m_dot_htf_ref");
 		bConnected &= connect(solarfield, "T_sys_h", controller, "T_field_out");
 		bConnected &= connect(powerblock, "T_htf_cold", controller, "T_pb_out");
-		//bConnected &= connect(powerblock, "m_dot_demand", controller, "m_pb_demand");
-		//bConnected &= connect(solarfield, "E_bal_startup", controller, "q_startup");
+
 		if (!bConnected)
 			throw exec_error("tcsmslf", util::format("there was a problem connecting outputs of some units to inputs of controller for the simulation."));
 

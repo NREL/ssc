@@ -111,16 +111,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 
     { SSC_INPUT,        SSC_MATRIX,      "SCAInfoArray",              "Receiver (,1) and collector (,2) type for each assembly in loop",                 "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "SCADefocusArray",           "Collector defocus order",                                                         "none",          "",             "solar_field",    "*",                       "",                      "" },
-    // solar field (type 250) initial condition inputs			        																                  												  
-    //{ SSC_INPUT,        SSC_NUMBER,      "I_b",                       "Initial incident DNI",                                                            "kJ/m2-hr",      "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_db",                      "Initial dry bulb air temperature",                                                "C",             "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "V_wind",                    "Initial wind speed",                                                              "m/s",           "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "P_amb",                     "Initial atmospheric pressure",                                                    "mbar",          "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_dp",                      "Initial dew point temperature",                                                   "C",             "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_cold_in",                 "Initial HTF return temperature",                                                  "C",             "",             "solar_field",    "*",                       "",                      "" },
-	//{ SSC_INPUT,        SSC_NUMBER,      "defocus",                   "Defocus control (0=sequenced,1=simultaneous",                                      "none",          "",             "solar_field",    "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "SolarAz",                   "Solar azimuth angle reported by the irradiance processor",                         "deg",          "",             "solar_field",    "*",                       "",                      "" },
-															          															          
+														          															          
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                         "-",            "",             "controller",     "*",                       "",                      "" },
@@ -167,15 +158,6 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "t_ch_out_max",              "Max allowable cold side outlet temp during charge",              "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nodes",                     "Nodes modeled in the flow path",                                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "f_tc_cold",                 "0=entire tank is hot, 1=entire tank is cold",                    "-",            "",             "controller",     "*",                       "",                      "" },
-    // controller (type 251)  initial conditions				        																												  
-    //{ SSC_INPUT,        SSC_NUMBER,      "I_bn",                      "Initial condition for direct beam irradiance",                   "W/m2",         "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "m_dot_field",               "Initial mass flow rate from the field",                          "kg/hr",        "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",             "Reference HTF flow rate at design conditions",                   "kg/hr",        "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_field_out",               "Initial HTF temperature from the field",                         "C",            "",             "controller",     "*",                       "",                      "" },
-	//{ SSC_INPUT,        SSC_NUMBER,      "T_pb_out_init",             "Initial fluid temperature from the power block",                 "C",            "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_amb",                     "Initial ambient temperature",                                    "C",            "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "m_pb_demand",               "Initial demand htf flow from the PB",                            "kg/hr",        "",             "controller",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "q_startup",                 "Startup energy reported by the collector field",                 "MWt",          "",             "controller",     "*",                       "",                      "" },
 
     // Time of use schedules for thermal storage
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",          "Dispatch 12mx24h schedule for week days",                         "",             "",             "tou_translator", "*",                       "",                      "" }, 
@@ -543,13 +525,7 @@ public:
         set_unit_value_ssc_matrix(type250_solarfield, "Design_loss" ); // , [[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0]]);
         set_unit_value_ssc_matrix(type250_solarfield, "SCAInfoArray" ); // , [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]);
         set_unit_value_ssc_array(type250_solarfield, "SCADefocusArray" ); // , [8,7,6,5,4,3,2,1]);
-		//Set the initial values
-        //set_unit_value_ssc_double(type250_solarfield, "I_b" ); // , 0.);
-        //set_unit_value_ssc_double(type250_solarfield, "T_db" ); // , 15.);
-        //set_unit_value_ssc_double(type250_solarfield, "V_wind" ); // , 1.5);
-        //set_unit_value_ssc_double(type250_solarfield, "P_amb" ); // , 1.);
-        //set_unit_value_ssc_double(type250_solarfield, "T_dp" ); // , 10.);
-        //set_unit_value_ssc_double(type250_solarfield, "SolarAz" ); // , 0.);
+			// Set the initial values required from "downstream" types
         set_unit_value_ssc_double(type250_solarfield, "defocus", 1.0); // , 1.);
 		set_unit_value_ssc_double(type250_solarfield, "T_cold_in", as_double("T_loop_in_des")); // , 293.);
 		//Connect Solar Field Inputs
@@ -638,16 +614,6 @@ public:
 		set_unit_value_ssc_double(type251_controller, "m_dot_htf_ref", 0.0);  // , 0.);
 		set_unit_value_ssc_double(type251_controller, "T_field_out", as_double("T_loop_in_des"));    // , 391.);
 		set_unit_value(type251_controller, "T_pb_out", as_double("T_loop_in_des")); // , 293.);
-		//set_unit_value_ssc_double(type251_controller, "I_bn" );           // , 0.);
-		//set_unit_value_ssc_double(type251_controller, "T_amb" );          // , 15.);
-		//set_unit_value_ssc_double(type251_controller, "m_dot_field" );    // , 0.);
-		//set_unit_value_ssc_double(type251_controller, "m_dot_htf_ref" );  // , 0.);
-		//set_unit_value_ssc_double(type251_controller, "T_field_out" );    // , 391.);
-		//set_unit_value( type251_controller, "T_pb_out", as_double("T_pb_out_init") ); // , 293.);
-		
-			//5.2.16 Deleted from Type 251
-		//set_unit_value_ssc_double(type251_controller, "m_pb_demand" );    // , 100000.);
-		//set_unit_value_ssc_double(type251_controller, "q_startup" );      // , 0.);
 
 		//Set Powerblock Parameters ===========================================
 		set_unit_value_ssc_double(type224_powerblock, "P_ref", as_double("W_pb_design") ); // , 111);
@@ -722,8 +688,6 @@ public:
 		//Set initial values
 		set_unit_value_ssc_double(type224_powerblock, "T_db", 0.0); // , 15.); 
 		set_unit_value_ssc_double(type224_powerblock, "P_amb", 1.0); // , 1.);
-		//set_unit_value_ssc_double(type224_powerblock, "T_db" ); // , 15.); 
-		//set_unit_value_ssc_double(type224_powerblock, "P_amb" ); // , 1.);
 
 		//Set enet calculator inputs and connect it to the parasitic values ===========================================
 		set_unit_value_ssc_double(sum_calculator, "eta_lhv" ); // , 0.9);
