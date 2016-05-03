@@ -386,57 +386,40 @@ public:
 
 		C_csp_trough_collector_receiver c_trough;
 
-		c_trough.m_nSCA = as_integer("nSCA");
-		c_trough.m_nHCEt = as_integer("nHCEt");
-		c_trough.m_nColt = as_integer("nColt");
-		c_trough.m_nHCEVar = as_integer("nHCEVar");
-		c_trough.m_nLoops = as_integer("nLoops");
-		c_trough.m_FieldConfig = as_integer("FieldConfig");
-		c_trough.m_Fluid = as_integer("Fluid");
-		c_trough.m_fthrok = as_integer("fthrok");
-		c_trough.m_fthrctrl = as_integer("fthrctrl");
-		c_trough.m_accept_loc = as_integer("accept_loc");
-		c_trough.m_HDR_rough = as_double("HDR_rough");
-		c_trough.m_theta_stow = as_double("theta_stow");
-		c_trough.m_theta_dep = as_double("theta_dep");
-		c_trough.m_Row_Distance = as_double("Row_Distance");
-		c_trough.m_T_startup = as_double("T_startup");
-		c_trough.m_P_ref = as_double("P_ref"); // , 111);
-		c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin"); // , 1);
-		c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax"); // , 12);
-		c_trough.m_T_loop_in_des = as_double("T_loop_in_des"); // , 293);
-		c_trough.m_T_loop_out = as_double("T_loop_out"); // , 391);
-		c_trough.m_field_fl_props = as_matrix("field_fl_props");
-		c_trough.m_T_fp = as_double("T_fp"); // , 150);
-		c_trough.m_I_bn_des = as_double("I_bn_des"); // , 950);
-		c_trough.m_V_hdr_max = as_double("V_hdr_max"); // , 3);
-		c_trough.m_V_hdr_min = as_double("V_hdr_min"); // , 2);
-		c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef"); // , 0.45);
-		c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec"); // , 125);
-		//c_trough.m_nHCEVar = as_double("ColTilt", as_double("tilt")); // , 0);
-		//c_trough.m_nHCEVar = as_double("ColAz", as_double("azimuth")); // , 0);
-		c_trough.m_tilt = as_double("tilt"); // , 0);
-		c_trough.m_azimuth = as_double("azimuth"); // , 0);
-		c_trough.m_accept_mode = as_integer("accept_mode"); // , 0);
-		c_trough.m_accept_init = as_double("accept_init"); // , 0);
-		c_trough.m_solar_mult = as_double("solar_mult"); // , 2);
-		c_trough.m_mc_bal_hot = as_double("mc_bal_hot"); // , 0.2);
-		c_trough.m_mc_bal_cold = as_double("mc_bal_cold"); // , 0.2);
-		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); // , 4.5);
-		
-		//c_trough.m_OptCharType = as_array("OptCharType"); // , [1,1,1,1]);
-		size_t nval_OptCharType = -1;
-		ssc_number_t *OptCharType = as_array("OptCharType", &nval_OptCharType);
-		c_trough.m_OptCharType.resize(nval_OptCharType);
-		for (int i = 0; i < nval_OptCharType; i++)
-			c_trough.m_OptCharType[i] = (int)OptCharType[i];
-		
-		// c_trough.m_CollectorType = as_array("CollectorType"); // , [1,1,1,1]);
-		size_t nval_CollectorType = -1;
-		ssc_number_t *CollectorType = as_array("CollectorType", &nval_CollectorType);
-		c_trough.m_CollectorType.resize(nval_CollectorType);
-		for (int i = 0; i < nval_CollectorType; i++)
-			c_trough.m_CollectorType[i] = (int)CollectorType[i];
+		c_trough.m_nSCA = as_integer("nSCA");						//[-] Number of SCA's in a loop
+		c_trough.m_nHCEt = as_integer("nHCEt");						//[-] Number of HCE types
+		c_trough.m_nColt = as_integer("nColt");						//[-] Number of collector types
+		c_trough.m_nHCEVar = as_integer("nHCEVar");					//[-] Number of HCE variants per t
+		c_trough.m_nLoops = as_integer("nLoops");					//[-] Number of loops in the field
+		c_trough.m_FieldConfig = as_integer("FieldConfig");			//[-] Number of subfield headers
+		c_trough.m_Fluid = as_integer("Fluid");						//[-] Field HTF fluid number
+		c_trough.m_fthrok = as_integer("fthrok");					//[-] Flag to allow partial defocusing of the collectors
+		c_trough.m_fthrctrl = as_integer("fthrctrl");				//[-] Defocusing strategy
+		c_trough.m_accept_loc = as_integer("accept_loc");			//[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+		c_trough.m_HDR_rough = as_double("HDR_rough");				//[m] Header pipe roughness
+		c_trough.m_theta_stow = as_double("theta_stow");			//[deg] stow angle
+		c_trough.m_theta_dep = as_double("theta_dep");				//[deg] deploy angle
+		c_trough.m_Row_Distance = as_double("Row_Distance");		//[m] Spacing between rows (centerline to centerline)
+		c_trough.m_T_startup = as_double("T_startup");				//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+		c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");		//[kg/s] Minimum loop HTF flow rate
+		c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");		//[kg/s] Maximum loop HTF flow rate
+		c_trough.m_T_loop_in_des = as_double("T_loop_in_des");		//[C] Design loop inlet temperature, converted to K in init
+		c_trough.m_T_loop_out = as_double("T_loop_out");			//[C] Target loop outlet temperature, converted to K in init
+		c_trough.m_field_fl_props = as_matrix("field_fl_props");	//[-] User-defined field HTF properties
+		c_trough.m_T_fp = as_double("T_fp");						//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
+		c_trough.m_I_bn_des = as_double("I_bn_des");				//[W/m^2] Solar irradiation at design
+		c_trough.m_V_hdr_max = as_double("V_hdr_max");				//[m/s] Maximum HTF velocity in the header at design
+		c_trough.m_V_hdr_min = as_double("V_hdr_min"); 				//[m/s] Minimum HTF velocity in the header at design
+		c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef");		//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
+		c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec");  //[W/SCA] Tracking power, in Watts per SCA drive
+		c_trough.m_ColTilt = as_double("tilt");						//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
+		c_trough.m_ColAz = as_double("azimuth"); 					//[deg] Collector azimuth angle
+		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
+		c_trough.m_accept_init = as_double("accept_init");			//[-] In acceptance testing mode - require steady-state startup
+		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
+		c_trough.m_mc_bal_hot = as_double("mc_bal_hot");            //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
+		c_trough.m_mc_bal_cold = as_double("mc_bal_cold");			//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
+		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); 			//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 		
 		// c_trough.m_W_aperture = as_array("W_aperture"); // , [5,5,5,5]);
 		size_t nval_W_aperture = -1;
@@ -451,13 +434,6 @@ public:
 		c_trough.m_A_aperture.resize(nval_A_aperture);
 		for (int i = 0; i < nval_A_aperture; i++)
 			c_trough.m_A_aperture[i] = (double)A_aperture[i];
-
-		// c_trough.m_reflectivity = as_array("reflectivity"); // , [1,1,1,1]);
-		size_t nval_reflectivity = -1;
-		ssc_number_t *reflectivity = as_array("reflectivity", &nval_reflectivity);
-		c_trough.m_reflectivity.resize(nval_reflectivity);
-		for (int i = 0; i < nval_reflectivity; i++)
-			c_trough.m_reflectivity[i] = (double)reflectivity[i];
 
 		// c_trough.m_TrackingError = as_array("TrackingError"); // , [0.994,0.994,0.994,0.994]);
 		size_t nval_TrackingError = -1;
@@ -578,9 +554,6 @@ public:
 		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
 		for (int i = 0; i < nval_SCADefocusArray; i++)
 			c_trough.m_SCADefocusArray[i] = (int)SCADefocusArray[i];
-
-		c_trough.m_defocus = as_double("defocus"); // , 1.);
-		c_trough.m_T_cold_in = as_double("T_cold_in"); // , 293.);
 
 		int out_type = -1;
 		std::string out_msg = "";
