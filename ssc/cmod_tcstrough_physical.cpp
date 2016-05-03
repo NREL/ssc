@@ -36,13 +36,14 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "T_field_ini",               "Initial field temperature",                                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
+                                                                                                                                                              
+	{ SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "C",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_min",                 "Minimum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",              "Loss coefficient from the header, runner pipe, and non-HCE piping",                "m/s",          "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "W/SCA",        "",               "solar_field",    "*",                       "INTEGER",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",              "Loss coefficient from the header, runner pipe, and non-HCE piping",                "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/SCA",        "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "",             "",               "solar_field",    "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrctrl",                  "Defocusing strategy",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "solar_field",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -54,11 +55,9 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "mc_bal_cold",               "Heat capacity of the balance of plant on the cold side",                           "kWht/K-MWt",   "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mc_bal_sca",                "Non-HTF heat capacity associated with each SCA - per meter basis",                 "Wht/K-m",      "",               "solar_field",    "*",                       "",                      "" },
                                                                                                                                                              
-    { SSC_INPUT,        SSC_ARRAY,       "OptCharType",               "Optical characterization method (constant, not used)",                             "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "CollectorType",             "Collector type (constant, not used)",                                              "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "W_aperture",                "The collector aperture width (Total structural area used for shadowing)",          "m",            "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "A_aperture",                "Reflective aperture area of the collector",                                        "m2",           "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "reflectivity",              "Base solar-weighted mirror reflectivity value (constant, not used)",               "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "reflectivity",              "Base solar-weighted mirror reflectivity value (constant, not used)",               "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "TrackingError",             "User-defined tracking error derate",                                               "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "GeomEffects",               "User-defined geometry effects derate",                                             "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "Rho_mirror_clean",          "User-defined clean mirror reflectivity",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
@@ -466,14 +465,14 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "mc_bal_hot" ); // , 0.2);
         set_unit_value_ssc_double(type250_solarfield, "mc_bal_cold" ); // , 0.2);
         set_unit_value_ssc_double(type250_solarfield, "mc_bal_sca" ); // , 4.5);
-        set_unit_value_ssc_array(type250_solarfield, "OptCharType" ); // , [1,1,1,1]);
-        set_unit_value_ssc_array(type250_solarfield, "CollectorType" ); // , [1,1,1,1]);
+        //set_unit_value_ssc_array(type250_solarfield, "OptCharType" ); // , [1,1,1,1]);
+        //set_unit_value_ssc_array(type250_solarfield, "CollectorType" ); // , [1,1,1,1]);
         set_unit_value_ssc_array(type250_solarfield, "W_aperture" ); // , [5,5,5,5]);
         set_unit_value_ssc_array(type250_solarfield, "A_aperture" ); // , [470.3,470.3,470.3,470.3]);
         //set_unit_value_ssc_array(type250_solarfield, "IamF0" ); // , [1,1,1,1]);
         //set_unit_value_ssc_array(type250_solarfield, "IamF1" ); // , [0.0506,0.0506,0.0506,0.0506]);
         //set_unit_value_ssc_array(type250_solarfield, "IamF2" ); // , [-0.1763,-0.1763,-0.1763,-0.1763]);
-        set_unit_value_ssc_array(type250_solarfield, "reflectivity" ); // , [1,1,1,1]);
+        //set_unit_value_ssc_array(type250_solarfield, "reflectivity" ); // , [1,1,1,1]);
         set_unit_value_ssc_array(type250_solarfield, "TrackingError" ); // , [0.994,0.994,0.994,0.994]);
         set_unit_value_ssc_array(type250_solarfield, "GeomEffects" ); // , [0.98,0.98,0.98,0.98]);
         set_unit_value_ssc_array(type250_solarfield, "Rho_mirror_clean" ); // , [0.935,0.935,0.935,0.935]);
