@@ -11,13 +11,60 @@
 
 class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
+private:
 
 	HTFProperties m_htfProps, m_airProps;
 	double m_pi, m_Pi, m_d2r, m_r2d, m_g, m_mtoinch;
-
-	//int m_n_c_iam_matrix = 0;
-	//int m_n_r_iam_matrix = 0;
 	
+	// Variables moved to private
+	double m_Pipe_hl;		//Pipe heat loss in the hot header and the hot runner
+	double m_I_b;			//Direct normal incident solar irradiation
+	double m_T_db;			//Dry bulb air temperature
+	double m_V_wind;		//Ambient windspeed 
+	double m_P_amb;			//Ambient pressure
+	double m_T_dp;			//The dewpoint temperature
+	double m_T_cold_in;		//HTF return temperature
+	double m_m_dot_in;		//HTF mass flow rate at the inlet 
+	double m_defocus;		//Defocus control 
+	double m_SolarAz;		//Solar azimuth angle reported by the Type15 weather file
+	double m_latitude;		//Site m_latitude read from weather file
+	double m_longitude;		//Site m_longitude read from weather file
+
+	double m_T_sys_h;		//Solar field HTF outlet temperature
+	double m_m_dot_avail;		//HTF mass flow rate from the field
+	double m_q_avail;		//Thermal power produced by the field
+	double m_DP_tot;		//Total HTF pressure drop
+	double m_W_dot_pump;		//Required solar field pumping power
+	double m_E_fp_tot;		//Freeze protection energy
+	int m_qq;		//Number of iterations required to solve
+	double m_T_sys_c;		//Collector inlet temperature
+	double m_EqOpteff;		//Collector equivalent optical efficiency
+	double m_SCAs_def;		//The fraction of focused SCA's
+	double m_m_dot_htf_tot;		//The actual flow rate through the field..
+	double m_E_bal_startup;		//Startup energy consumed
+	double m_q_inc_sf_tot;		//Total power incident on the field
+	double m_q_abs_tot;		//Total absorbed energy
+	double m_q_loss_tot;		//Total receiver thermal and optical losses
+	double m_m_dot_htf;		//Flow rate in a single loop
+	double m_q_loss_spec_tot;		//Field-average receiver thermal losses (convection and radiation)
+	double m_SCA_par_tot;		//Parasitic electric power consumed by the SC
+	double m_q_dump;		//Dumped thermal energy
+	double m_Theta_ave;		//Field average m_theta value
+	double m_CosTh_ave;		//Field average costheta value
+	double m_IAM_ave;		//Field average incidence angle modifier
+	double m_RowShadow_ave;		//Field average row shadowing loss
+	double m_EndLoss_ave;		//Field average end loss
+	double m_dni_costh;		//DNI_x_CosTh
+	double m_qinc_costh;		//Q_inc_x_CosTh
+	double m_t_loop_outlet;		//HTF temperature immediately subsequent to the loop outlet
+	double m_c_htf_ave;		//Average solar field specific heat
+	double m_q_field_delivered;		//Total solar field thermal power delivered
+	double m_eta_thermal;		//Solar field thermal efficiency (power out/ANI)
+	double m_E_loop_accum;		//Accumulated internal energy change rate in the loops ONLY
+	double m_E_hdr_accum;		//Accumulated internal energy change rate in the headers/SGS
+	double m_E_tot_accum;		//Total accumulated internal energy change rate
+	double m_E_field;		//Accumulated internal energy in the entire solar field
+
 	//Declare variables that require storage from step to step
 	double
 		m_Ap_tot, //Total aperture area m2
@@ -93,38 +140,27 @@ public:
 	double m_T_loop_in_des;	//[C] Design loop inlet temperature, converted to K in init
 	double m_T_loop_out;	//[C] Target loop outlet temperature, converted to K in init
 	int m_Fluid;			//[-] Field HTF fluid number
-
-	// Why are these here??
-	int m_nrow_HTF_data, m_ncol_HTF_data;
 	
 	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
-	double m_I_bn_des;		//Solar irradiation at design
-	double m_V_hdr_max;		//Maximum HTF velocity in the header at design
-	double m_V_hdr_min;		//Minimum HTF velocity in the header at design
-	double m_Pipe_hl_coef;		//Loss coefficient from the header, runner pipe, and non-HCE piping
-	double m_SCA_drives_elec;		//Tracking power, in Watts per SCA drive
-	int m_fthrok;		//Flag to allow partial defocusing of the collectors
-	int m_fthrctrl;		//Defocusing strategy
-	double m_ColTilt;		//Collector tilt angle (0 is horizontal, 90deg is vertical)
-	double m_ColAz;		//Collector azimuth angle
+	double m_I_bn_des;		//[W/m^2] Solar irradiation at design
+	double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
+	double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
+	double m_Pipe_hl_coef;	//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
+	double m_SCA_drives_elec;	//[W/SCA] Tracking power, in Watts per SCA drive
+	int m_fthrok;			//[-] Flag to allow partial defocusing of the collectors
+	int m_fthrctrl;			//[-] Defocusing strategy
+	double m_ColTilt;		//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
+	double m_ColAz;			//[deg] Collector azimuth angle
 
-	int m_accept_mode;		//Acceptance testing mode? (1=yes, 0=no)
-	bool m_accept_init;		//In acceptance testing mode - require steady-state startup
-	int m_accept_loc;			//In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+	int m_accept_mode;		//[-] Acceptance testing mode? (1=yes, 0=no)
+	bool m_accept_init;		//[-] In acceptance testing mode - require steady-state startup
+	int m_accept_loc;		//[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
 	bool m_is_using_input_gen;
 
-	double m_solar_mult;		//Solar multiple
-	double m_mc_bal_hot;		//The heat capacity of the balance of plant on the hot side
-	double m_mc_bal_cold;		//The heat capacity of the balance of plant on the cold side
-	double m_mc_bal_sca;		//Non-HTF heat capacity associated with each SCA - per meter basis
-
-	//double* m_OptCharType;		 
-	//int m_nval_OptCharType;
-	std::vector<int> m_OptCharType; //The optical characterization method
-	
-	//double* m_CollectorType;		
-	//int m_nval_CollectorType;
-	std::vector<int> m_CollectorType;	//{1=user defined, 2=LS-2, 3=LS-3, 4=IST} 
+	double m_solar_mult;		//[-] Solar multiple 
+	double m_mc_bal_hot;		//[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
+	double m_mc_bal_cold;		//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
+	double m_mc_bal_sca;		//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 
 	//double* m_W_aperture;		
 	//int m_nval_W_aperture;
@@ -133,10 +169,6 @@ public:
 	//double* m_A_aperture;		//Reflective aperture area of the collector
 	//int m_nval_A_aperture;
 	std::vector<double> m_A_aperture; //Reflective aperture area of the collector
-
-	//double* m_reflectivity;		//Base solar-weighted mirror m_reflectivity value 
-	//int m_nval_reflectivity;
-	std::vector<double> m_reflectivity;
 
 	//double* m_TrackingError;		//User-defined tracking error derate
 	//int m_nval_TrackingError;
@@ -178,137 +210,7 @@ public:
 	//int m_nval_Distance_SCA;
 	std::vector<double> m_Distance_SCA; // piping distance between SCA's in the field
 	
-	//double* m_HCE_FieldFrac_in;		//The fraction of the field occupied by this HCE type 
-	//int m_nrow_HCE_FieldFrac, m_ncol_HCE_FieldFrac;
-	//double* m_D_2_in;		//The inner absorber tube diameter
-	//int m_nrow_D_2, m_ncol_D_2;
-	//double* m_D_3_in;		//The outer absorber tube diameter
-	//int m_nrow_D_3, m_ncol_D_3;
-	//double* m_D_4_in;		//The inner glass envelope diameter 
-	//int m_nrow_D_4, m_ncol_D_4;
-	//double* m_D_5_in;		//The outer glass envelope diameter 
-	//int m_nrow_D_5, m_ncol_D_5;
-	//double* m_D_p_in;		//The diameter of the absorber flow plug (optional) 
-	//int m_nrow_D_p, m_ncol_D_p;
-	//double* m_Flow_type_in;		//The flow type through the absorber
-	//int m_nrow_Flow_type, m_ncol_Flow_type;
-	//double* m_Rough_in;		//Roughness of the internal surface 
-	//int m_nrow_Rough, m_ncol_Rough;
-	//double* m_alpha_env_in;		//Envelope absorptance 
-	//int m_nrow_alpha_env, m_ncol_alpha_env;
-	//double* m_epsilon_3_11_in;		//Absorber emittance - HCE type 1 - HCE variation 1
-	//int m_nrow_epsilon_3_11, m_ncol_epsilon_3_11;
-	//double* m_epsilon_3_12_in;		//Absorber emittance - HCE type 1 - HCE variation 2
-	//int m_nrow_epsilon_3_12, m_ncol_epsilon_3_12;
-	//double* m_epsilon_3_13_in;		//Absorber emittance - HCE type 1 - HCE variation 3
-	//int m_nrow_epsilon_3_13, m_ncol_epsilon_3_13;
-	//double* m_epsilon_3_14_in;		//Absorber emittance - HCE type 1 - HCE variation 4
-	//int m_nrow_epsilon_3_14, m_ncol_epsilon_3_14;
-	//double* m_epsilon_3_21_in;		//Absorber emittance - HCE type 2 - HCE variation 1
-	//int m_nrow_epsilon_3_21, m_ncol_epsilon_3_21;
-	//double* m_epsilon_3_22_in;		//Absorber emittance - HCE type 2 - HCE variation 2
-	//int m_nrow_epsilon_3_22, m_ncol_epsilon_3_22;
-	//double* m_epsilon_3_23_in;		//Absorber emittance - HCE type 2 - HCE variation 3
-	//int m_nrow_epsilon_3_23, m_ncol_epsilon_3_23;
-	//double* m_epsilon_3_24_in;		//Absorber emittance - HCE type 2 - HCE variation 4
-	//int m_nrow_epsilon_3_24, m_ncol_epsilon_3_24;
-	//double* m_epsilon_3_31_in;		//Absorber emittance - HCE type 3 - HCE variation 1
-	//int m_nrow_epsilon_3_31, m_ncol_epsilon_3_31;
-	//double* m_epsilon_3_32_in;		//Absorber emittance - HCE type 3 - HCE variation 2
-	//int m_nrow_epsilon_3_32, m_ncol_epsilon_3_32;
-	//double* m_epsilon_3_33_in;		//Absorber emittance - HCE type 3 - HCE variation 3
-	//int m_nrow_epsilon_3_33, m_ncol_epsilon_3_33;
-	//double* m_epsilon_3_34_in;		//Absorber emittance - HCE type 3 - HCE variation 4
-	//int m_nrow_epsilon_3_34, m_ncol_epsilon_3_34;
-	//double* m_epsilon_3_41_in;		//Absorber emittance - HCE type 4 - HCE variation 1
-	//int m_nrow_epsilon_3_41, m_ncol_epsilon_3_41;
-	//double* m_epsilon_3_42_in;		//Absorber emittance - HCE type 4 - HCE variation 2
-	//int m_nrow_epsilon_3_42, m_ncol_epsilon_3_42;
-	//double* m_epsilon_3_43_in;		//Absorber emittance - HCE type 4 - HCE variation 3
-	//int m_nrow_epsilon_3_43, m_ncol_epsilon_3_43;
-	//double* m_epsilon_3_44_in;		//Absorber emittance - HCE type 4 - HCE variation 4
-	//int m_nrow_epsilon_3_44, m_ncol_epsilon_3_44;
-	//double* m_alpha_abs_in;		//Absorber absorptance 
-	//int m_nrow_alpha_abs, m_ncol_alpha_abs;
-	//double* m_Tau_envelope_in;		//Envelope transmittance
-	//int m_nrow_Tau_envelope, m_ncol_Tau_envelope;
-	//double* m_EPSILON_4_in;		//Inner glass envelope emissivities (Pyrex) 
-	//int m_nrow_EPSILON_4, m_ncol_EPSILON_4;
-	//double* m_EPSILON_5_in;		//Outer glass envelope emissivities (Pyrex) 
-	//int m_nrow_EPSILON_5, m_ncol_EPSILON_5;
-	//double* m_GlazingIntactIn_in;		//The glazing intact flag {1=true, else=false}
-	//int m_nrow_GlazingIntactIn, m_ncol_GlazingIntactIn;
-	//double* m_P_a_in;		//Annulus gas pressure
-	//int m_nrow_P_a, m_ncol_P_a;
-	//double* m_AnnulusGas_in;		//Annulus gas type (1=air, 26=Ar, 27=H2)
-	//int m_nrow_AnnulusGas, m_ncol_AnnulusGas;
-	//double* m_AbsorberMaterial_in;		//Absorber material type
-	//int m_nrow_AbsorberMaterial, m_ncol_AbsorberMaterial;
-	//double* m_Shadowing_in;		//Receiver bellows shadowing loss factor
-	//int m_nrow_Shadowing, m_ncol_Shadowing;
-	//double* m_Dirt_HCE_in;		//Loss due to dirt on the receiver envelope
-	//int m_nrow_Dirt_HCE, m_ncol_Dirt_HCE;
-	//double* m_Design_loss_in;		//Receiver heat loss at design
-	//int m_nrow_Design_loss, m_ncol_Design_loss;
-	//double* m_SCAInfoArray_in;		//(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop 
-	//int m_nrow_SCAInfoArray, m_ncol_SCAInfoArray;
-
-	//double* m_SCADefocusArray;		//Order in which the SCA's should be defocused
-	//int m_nval_SCADefocusArray;
 	std::vector<int> m_SCADefocusArray; //Order in which the SCA's should be defocused
-
-
-	double m_I_b;		//Direct normal incident solar irradiation
-	double m_T_db;		//Dry bulb air temperature
-	double m_V_wind;		//Ambient windspeed 
-	double m_P_amb;		//Ambient pressure
-	double m_T_dp;		//The dewpoint temperature
-	double m_T_cold_in;		//HTF return temperature
-	double m_m_dot_in;		//HTF mass flow rate at the inlet 
-	double m_defocus;		//Defocus control 
-	double m_SolarAz;		//Solar azimuth angle reported by the Type15 weather file
-	double m_latitude;		//Site m_latitude read from weather file
-	double m_longitude;		//Site m_longitude read from weather file
-	//double timezone;		//Time zone
-
-	double m_T_sys_h;		//Solar field HTF outlet temperature
-	double m_m_dot_avail;		//HTF mass flow rate from the field
-	double m_q_avail;		//Thermal power produced by the field
-	double m_DP_tot;		//Total HTF pressure drop
-	double m_W_dot_pump;		//Required solar field pumping power
-	double m_E_fp_tot;		//Freeze protection energy
-	int m_qq;		//Number of iterations required to solve
-	double m_T_sys_c;		//Collector inlet temperature
-	double m_EqOpteff;		//Collector equivalent optical efficiency
-	double m_SCAs_def;		//The fraction of focused SCA's
-	double m_m_dot_htf_tot;		//The actual flow rate through the field..
-	double m_E_bal_startup;		//Startup energy consumed
-	double m_q_inc_sf_tot;		//Total power incident on the field
-	double m_q_abs_tot;		//Total absorbed energy
-	double m_q_loss_tot;		//Total receiver thermal and optical losses
-	double m_m_dot_htf;		//Flow rate in a single loop
-	double m_q_loss_spec_tot;		//Field-average receiver thermal losses (convection and radiation)
-	double m_SCA_par_tot;		//Parasitic electric power consumed by the SC
-	double m_Pipe_hl;		//Pipe heat loss in the hot header and the hot runner
-	double m_q_dump;		//Dumped thermal energy
-	double m_Theta_ave;		//Field average m_theta value
-	double m_CosTh_ave;		//Field average costheta value
-	double m_IAM_ave;		//Field average incidence angle modifier
-	double m_RowShadow_ave;		//Field average row shadowing loss
-	double m_EndLoss_ave;		//Field average end loss
-	double m_dni_costh;		//DNI_x_CosTh
-	double m_qinc_costh;		//Q_inc_x_CosTh
-	double m_t_loop_outlet;		//HTF temperature immediately subsequent to the loop outlet
-	double m_c_htf_ave;		//Average solar field specific heat
-	double m_q_field_delivered;		//Total solar field thermal power delivered
-	double m_eta_thermal;		//Solar field thermal efficiency (power out/ANI)
-	double m_E_loop_accum;		//Accumulated internal energy change rate in the loops ONLY
-	double m_E_hdr_accum;		//Accumulated internal energy change rate in the headers/SGS
-	double m_E_tot_accum;		//Total accumulated internal energy change rate
-	double m_E_field;		//Accumulated internal energy in the entire solar field
-	double m_tilt; // 
-	double m_azimuth; //
-	double m_P_ref; // the plant nameplate capacity
 
 	util::matrix_t<double> m_field_fl_props;
 

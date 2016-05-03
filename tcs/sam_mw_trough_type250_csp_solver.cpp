@@ -52,14 +52,14 @@ enum{
 	P_MC_BAL_COLD,
 	P_MC_BAL_SCA,
 
-	P_OPTCHARTYPE,
-	P_COLLECTORTYPE,
+	//P_OPTCHARTYPE,
+	//P_COLLECTORTYPE,
 	P_W_APERTURE,
 	P_A_APERTURE,
 	//P_IAMF0,
 	//P_IAMF1,
 	//P_IAMF2,
-	P_REFLECTIVITY,
+	//P_REFLECTIVITY,
 	P_TRACKINGERROR,
 	P_GEOMEFFECTS,
 	P_RHO_MIRROR_CLEAN,
@@ -211,14 +211,14 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,       P_MC_BAL_COLD,            "mc_bal_cold",                              "The heat capacity of the balance of plant on the cold side",   "kWht/K-MWt",             "",             "",          "0.2" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_MC_BAL_SCA,             "mc_bal_sca",                        "Non-HTF heat capacity associated with each SCA - per meter basis",      "Wht/K-m",             "",             "",          "4.5" },
 
-	{ TCS_PARAM,           TCS_ARRAY,       P_OPTCHARTYPE,            "OptCharType",                                                    "The optical characterization method ",         "none",             "",             "",      "1,1,1,1" },
-	{ TCS_PARAM,           TCS_ARRAY,     P_COLLECTORTYPE,          "CollectorType",                                                "{1=user defined, 2=LS-2, 3=LS-3, 4=IST} ",         "none",             "",             "",      "1,1,1,1" },
+	//{ TCS_PARAM,           TCS_ARRAY,       P_OPTCHARTYPE,            "OptCharType",                                                    "The optical characterization method ",         "none",             "",             "",      "1,1,1,1" },
+	//{ TCS_PARAM,           TCS_ARRAY,     P_COLLECTORTYPE,          "CollectorType",                                                "{1=user defined, 2=LS-2, 3=LS-3, 4=IST} ",         "none",             "",             "",      "1,1,1,1" },
 	{ TCS_PARAM,           TCS_ARRAY,        P_W_APERTURE,             "W_aperture",               "The collector aperture width (Total structural area.. used for shadowing)",            "m",             "",             "",      "5,5,5,5" },
 	{ TCS_PARAM,           TCS_ARRAY,        P_A_APERTURE,             "A_aperture",                                               "Reflective aperture area of the collector",           "m2",             "",             "","470.3,470.3,470.3,470.3" },
 	//{ TCS_PARAM,           TCS_ARRAY,             P_IAMF0,                  "IamF0",                                                  "Incident angle modifier 0th order term",         "none",             "",             "",      "1,1,1,1" },
 	//{ TCS_PARAM,           TCS_ARRAY,             P_IAMF1,                  "IamF1",                                                  "Incident angle modifier 1st order term",         "none",             "",             "","0.0506,0.0506,0.0506,0.0506" },
 	//{ TCS_PARAM,           TCS_ARRAY,             P_IAMF2,                  "IamF2",                                                  "Incident angle modifier 2nd order term",         "none",             "",             "","-0.1763,-0.1763,-0.1763,-0.1763" },
-	{ TCS_PARAM,           TCS_ARRAY,      P_REFLECTIVITY,           "reflectivity",                                          "Base solar-weighted mirror reflectivity value ",         "none",             "",             "",      "1,1,1,1" },
+	//{ TCS_PARAM,           TCS_ARRAY,      P_REFLECTIVITY,           "reflectivity",                                          "Base solar-weighted mirror reflectivity value ",         "none",             "",             "",      "1,1,1,1" },
 	{ TCS_PARAM,           TCS_ARRAY,     P_TRACKINGERROR,          "TrackingError",                                                      "User-defined tracking error derate",         "none",             "",             "","0.994,0.994,0.994,0.994" },
 	{ TCS_PARAM,           TCS_ARRAY,       P_GEOMEFFECTS,            "GeomEffects",                                                    "User-defined geometry effects derate",         "none",             "",             "","0.98,0.98,0.98,0.98" },
 	{ TCS_PARAM,           TCS_ARRAY,  P_RHO_MIRROR_CLEAN,       "Rho_mirror_clean",                                                  "User-defined clean mirror reflectivity",         "none",             "",             "","0.935,0.935,0.935,0.935" },
@@ -433,17 +433,17 @@ public:
 		ms_trough.m_mc_bal_sca = value(P_MC_BAL_SCA);		//Non-HTF heat capacity associated with each SCA - per meter basis [Wht/K-m]
 
 		// Setup member vectors
-		int n_OptCharType = -1;
-		double *OptCharType = value(P_OPTCHARTYPE, &n_OptCharType);		//The optical characterization method  [none]
-		ms_trough.m_OptCharType.resize(n_OptCharType);
-		for( int i = 0; i < n_OptCharType; i++ )
-			ms_trough.m_OptCharType[i] = (int)OptCharType[i];
+		//int n_OptCharType = -1;
+		//double *OptCharType = value(P_OPTCHARTYPE, &n_OptCharType);		//The optical characterization method  [none]
+		//ms_trough.m_OptCharType.resize(n_OptCharType);
+		//for( int i = 0; i < n_OptCharType; i++ )
+		//	ms_trough.m_OptCharType[i] = (int)OptCharType[i];
 		
-		int n_CollectorType = -1;
-		double *CollectorType = value(P_COLLECTORTYPE, &n_CollectorType);		//{1=user defined, 2=LS-2, 3=LS-3, 4=IST}  [none]
-		ms_trough.m_CollectorType.resize(n_CollectorType);
-		for( int i = 0; i < n_CollectorType; i++ )
-			ms_trough.m_CollectorType[i] = (int)CollectorType[i];
+		//int n_CollectorType = -1;
+		//double *CollectorType = value(P_COLLECTORTYPE, &n_CollectorType);		//{1=user defined, 2=LS-2, 3=LS-3, 4=IST}  [none]
+		//ms_trough.m_CollectorType.resize(n_CollectorType);
+		//for( int i = 0; i < n_CollectorType; i++ )
+		//	ms_trough.m_CollectorType[i] = (int)CollectorType[i];
 
 		int n_W_aper = -1;
 		double *W_aper = value(P_W_APERTURE, &n_W_aper);		//The collector aperture width (Total structural area.. used for shadowing) [m]
@@ -465,11 +465,11 @@ public:
 			for( int c = 0; c < n_c_iam_matrix; c++ )
 				ms_trough.m_IAM_matrix(r,c) = TCS_MATRIX_INDEX(var(P_IAM_MATRIX), r, c);
 
-		int n_refl = -1;
-		double *refl = value(P_REFLECTIVITY, &n_refl);		//Base solar-weighted mirror reflectivity value  [none]
-		ms_trough.m_reflectivity.resize(n_refl);
-		for( int i = 0; i < n_refl; i++ )
-			ms_trough.m_reflectivity[i] = refl[i];
+		//int n_refl = -1;
+		//double *refl = value(P_REFLECTIVITY, &n_refl);		//Base solar-weighted mirror reflectivity value  [none]
+		//ms_trough.m_reflectivity.resize(n_refl);
+		//for( int i = 0; i < n_refl; i++ )
+		//	ms_trough.m_reflectivity[i] = refl[i];
 
 		int n_track = -1;
 		double *track = value(P_TRACKINGERROR, &n_track);		//User-defined tracking error derate [none]
