@@ -26,13 +26,11 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_Row_Distance = std::numeric_limits<double>::quiet_NaN();
 	m_FieldConfig = -1;
 	m_T_startup = std::numeric_limits<double>::quiet_NaN();
-	m_pb_rated_cap = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();
 	m_T_loop_in_des = std::numeric_limits<double>::quiet_NaN();
 	m_T_loop_out = std::numeric_limits<double>::quiet_NaN();
 	m_Fluid = -1;
-	m_T_field_ini = std::numeric_limits<double>::quiet_NaN();
 
 	m_nrow_HTF_data = -1, m_ncol_HTF_data = -1;
 	m_T_fp = std::numeric_limits<double>::quiet_NaN();
@@ -195,7 +193,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_DP_tot = std::numeric_limits<double>::quiet_NaN();
 	m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();
 	m_E_fp_tot = std::numeric_limits<double>::quiet_NaN();
-	m_qq = -1;
+	m_qq = -1; 
 	m_T_sys_c = std::numeric_limits<double>::quiet_NaN();
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
 	m_SCAs_def = std::numeric_limits<double>::quiet_NaN();
@@ -291,7 +289,6 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	}
 
 	// Adjust parameters
-	m_T_field_ini = 0.5*(m_T_field_ini + m_T_loop_in_des);
 	m_ColTilt = m_tilt*m_d2r;		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
 	m_ColAz = m_azimuth*m_d2r;		//Collector azimuth angle [deg]
 
@@ -448,12 +445,11 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	//Unit conversions
 	m_theta_stow *= m_d2r;
 	m_theta_dep *= m_d2r;
-	m_T_startup += 273.15;
-	m_T_loop_in_des += 273.15;
-	m_T_loop_out += 273.15;
-	m_T_field_ini += 273.15;
-	m_T_fp += 273.15;
-	m_mc_bal_sca *= 3.6e3;	//[Wht/K-m] -> [J/K-m]
+	m_T_startup += 273.15;			//[K] convert from C
+	m_T_loop_in_des += 273.15;		//[K] convert from C
+	m_T_loop_out += 273.15;			//[K] convert from C
+	m_T_fp += 273.15;				//[K] convert from C
+	m_mc_bal_sca *= 3.6e3;			//[Wht/K-m] -> [J/K-m]
 
 
 	/*--- Do any initialization calculations here ---- */
@@ -778,14 +774,15 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	}
 
 	/* ----- Set initial storage values ------ */
-	m_T_sys_c_last = m_T_field_ini;
-	m_T_sys_h_last = m_T_field_ini;
+	double T_field_ini = 0.5*(m_T_fp + m_T_loop_in_des);		//[K]
+	m_T_sys_c_last = T_field_ini;	//[K]
+	m_T_sys_h_last = T_field_ini;	//[K]
 	//cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
 	for (int i = 0; i < m_nSCA; i++)
 	{
-		m_T_htf_in0[i] = m_T_field_ini;
-		m_T_htf_out0[i] = m_T_field_ini;
-		m_T_htf_ave0[i] = m_T_field_ini;
+		m_T_htf_in0[i] = T_field_ini;
+		m_T_htf_out0[i] = T_field_ini;
+		m_T_htf_ave0[i] = T_field_ini;
 	}
 
 	m_is_fieldgeom_init = true;	//The field geometry has been initialized. Make note.

@@ -31,7 +31,7 @@ enum{
 	P_T_LOOP_IN_DES,
 	P_T_LOOP_OUT,
 	P_FLUID,
-	P_T_FIELD_INI,
+	//P_T_FIELD_INI,
 	P_FIELD_FL_PROPS,
 	P_T_FP,
 	P_I_BN_DES,
@@ -190,7 +190,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,     P_T_LOOP_IN_DES,          "T_loop_in_des",                                                           "Design loop inlet temperature",            "C",             "",             "",          "293" },
 	{ TCS_PARAM,          TCS_NUMBER,        P_T_LOOP_OUT,             "T_loop_out",                                                          "Target loop outlet temperature",            "C",             "",             "",          "391" },
 	{ TCS_PARAM,          TCS_NUMBER,             P_FLUID,                  "Fluid",                                                                  "Field HTF fluid number",         "none",             "",             "",           "21" },
-	{ TCS_PARAM,          TCS_NUMBER,       P_T_FIELD_INI,            "T_field_ini",                                                               "Initial field temperature",            "C",             "",             "",          "150" },
+	//{ TCS_PARAM,          TCS_NUMBER,       P_T_FIELD_INI,            "T_field_ini",                                                               "Initial field temperature",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_MATRIX,    P_FIELD_FL_PROPS,         "field_fl_props",                                                                     "Fluid property data",         "none","7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",             "",             "" },
 	{ TCS_PARAM,          TCS_NUMBER,              P_T_FP,                   "T_fp",                       "Freeze protection temperature (heat trace activation temperature)",            "C",             "",             "",          "150" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_I_BN_DES,               "I_bn_des",                                                             "Solar irradiation at design",         "W/m2",             "",             "",          "950" },
@@ -405,14 +405,11 @@ public:
 		ms_trough.m_Row_Distance = value(P_ROW_DISTANCE);	//Spacing between rows (centerline to centerline) [m]
 		ms_trough.m_FieldConfig = (int)value(P_FIELDCONFIG);		//Number of subfield headers [none]
 		ms_trough.m_T_startup = value(P_T_STARTUP);			//The required temperature of the system before the power block can be switched on [C]
-		ms_trough.m_pb_rated_cap = value(P_PB_RATED_CAP);	//Rated plant capacity [MWe]
 		ms_trough.m_m_dot_htfmin = value(P_M_DOT_HTFMIN);	//Minimum loop HTF flow rate [kg/s]
 		ms_trough.m_m_dot_htfmax = value(P_M_DOT_HTFMAX);	//Maximum loop HTF flow rate [kg/s]
 		ms_trough.m_T_loop_in_des = value(P_T_LOOP_IN_DES);	//Design loop inlet temperature [C]
 		ms_trough.m_T_loop_out = value(P_T_LOOP_OUT);		//Target loop outlet temperature [C]
 		ms_trough.m_Fluid = (int)value(P_FLUID);			//Field HTF fluid number [none]
-		
-		ms_trough.m_T_field_ini = value(P_T_FIELD_INI);		//Initial field temperature [C]
 		
 		ms_trough.m_T_fp = value(P_T_FP);					//Freeze protection temperature (heat trace activation temperature) [C]
 		ms_trough.m_I_bn_des = value(P_I_BN_DES);			//Solar irradiation at design [W/m2]
