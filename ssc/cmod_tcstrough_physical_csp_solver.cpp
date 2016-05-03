@@ -7,6 +7,7 @@
 #include "lib_weatherfile.h"
 
 #include "csp_solver_trough_collector_receiver.h"
+#include "csp_solver_pc_Rankine_indirect_224.h"
 
 static var_info _cm_vtab_tcstrough_physical_heat[] = {
 //   weather reader inputs
@@ -37,8 +38,8 @@ static var_info _cm_vtab_tcstrough_physical_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_ini",               "Initial field temperature",                                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
+    
+	{ SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_min",                 "Minimum HTF velocity in the header at design",                                     "m/s",          "",               "solar_field",    "*",                       "",                      "" },
@@ -46,7 +47,9 @@ static var_info _cm_vtab_tcstrough_physical_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",           "Tracking power, in Watts per SCA drive",                                           "W/m2-K",       "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "W/SCA",        "",               "solar_field",    "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "fthrctrl",                  "Defocusing strategy",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_init",               "In acceptance testing mode - require steady-state startup",                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_loc",                "In acceptance testing mode - temperature sensor location",                         "1/2",          "hx/loop",        "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Solar multiple",                                                                   "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -54,11 +57,8 @@ static var_info _cm_vtab_tcstrough_physical_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "mc_bal_cold",               "Heat capacity of the balance of plant on the cold side",                           "kWht/K-MWt",   "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mc_bal_sca",                "Non-HTF heat capacity associated with each SCA - per meter basis",                 "Wht/K-m",      "",               "solar_field",    "*",                       "",                      "" },
                                                                                                                                                              
-    { SSC_INPUT,        SSC_ARRAY,       "OptCharType",               "Optical characterization method (constant, not used)",                             "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "CollectorType",             "Collector type (constant, not used)",                                              "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "W_aperture",                "The collector aperture width (Total structural area used for shadowing)",          "m",            "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "A_aperture",                "Reflective aperture area of the collector",                                        "m2",           "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "reflectivity",              "Base solar-weighted mirror reflectivity value (constant, not used)",               "none",         "[1,1,1,1]",    "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "TrackingError",             "User-defined tracking error derate",                                               "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "GeomEffects",               "User-defined geometry effects derate",                                             "none",         "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "Rho_mirror_clean",          "User-defined clean mirror reflectivity",                                           "none",         "",             "solar_field",    "*",                       "",                      "" },
@@ -110,18 +110,7 @@ static var_info _cm_vtab_tcstrough_physical_heat[] = {
     { SSC_INPUT,        SSC_MATRIX,      "Design_loss",               "Receiver heat loss at design",                                                     "W/m",          "",             "solar_field",    "*",                       "",                      "" },
 
     { SSC_INPUT,        SSC_MATRIX,      "SCAInfoArray",              "Receiver (,1) and collector (,2) type for each assembly in loop",                 "none",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "SCADefocusArray",           "Collector defocus order",                                                         "none",          "",             "solar_field",    "*",                       "",                      "" },
-    // solar field (type 250) initial condition inputs			        																                  												  
-    { SSC_INPUT,        SSC_NUMBER,      "I_b",                       "Initial incident DNI",                                                            "kJ/m2-hr",      "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_db",                      "Initial dry bulb air temperature",                                                "C",             "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "V_wind",                    "Initial wind speed",                                                              "m/s",           "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_amb",                     "Initial atmospheric pressure",                                                    "mbar",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_dp",                      "Initial dew point temperature",                                                   "C",             "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_cold_in",                 "Initial HTF return temperature",                                                  "C",             "",             "solar_field",    "*",                       "",                      "" },
-
-    { SSC_INPUT,        SSC_NUMBER,      "defocus",                   "Defocus control (0=sequenced,1=simultaneous",                                      "none",          "",             "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "SolarAz",                   "Solar azimuth angle reported by the irradiance processor",                         "deg",          "",             "solar_field",    "*",                       "",                      "" },
-															          
+    { SSC_INPUT,        SSC_ARRAY,       "SCADefocusArray",           "Collector defocus order",                                                         "none",          "",             "solar_field",    "*",                       "",                      "" },      
 															          
 //   controller (type 251) inputs							          
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                             UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
@@ -169,15 +158,6 @@ static var_info _cm_vtab_tcstrough_physical_heat[] = {
     { SSC_INPUT,        SSC_NUMBER,      "t_ch_out_max",              "Max allowable cold side outlet temp during charge",              "C",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nodes",                     "Nodes modeled in the flow path",                                 "-",            "",             "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "f_tc_cold",                 "0=entire tank is hot, 1=entire tank is cold",                    "-",            "",             "controller",     "*",                       "",                      "" },
-    // controller (type 251)  initial conditions				        																												  
-    { SSC_INPUT,        SSC_NUMBER,      "I_bn",                      "Initial condition for direct beam irradiance",                   "W/m2",         "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_field",               "Initial mass flow rate from the field",                          "kg/hr",        "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_ref",             "Reference HTF flow rate at design conditions",                   "kg/hr",        "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_out",               "Initial HTF temperature from the field",                         "C",            "",             "controller",     "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "T_pb_out_init",             "Initial fluid temperature from the power block",                 "C",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_amb",                     "Initial ambient temperature",                                    "C",            "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_pb_demand",               "Initial demand htf flow from the PB",                            "kg/hr",        "",             "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "q_startup",                 "Startup energy reported by the collector field",                 "MWt",          "",             "controller",     "*",                       "",                      "" },
 
     // Time of use schedules for thermal storage
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",          "Dispatch 12mx24h schedule for week days",                         "",             "",             "tou_translator", "*",                       "",                      "" }, 
@@ -421,139 +401,227 @@ public:
 		c_trough.m_mc_bal_cold = as_double("mc_bal_cold");			//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
 		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); 			//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 		
-		// c_trough.m_W_aperture = as_array("W_aperture"); // , [5,5,5,5]);
+		//[m] The collector aperture width (Total structural area.. used for shadowing)
 		size_t nval_W_aperture = -1;
 		ssc_number_t *W_aperture = as_array("W_aperture", &nval_W_aperture);
 		c_trough.m_W_aperture.resize(nval_W_aperture);
 		for (int i = 0; i < nval_W_aperture; i++)
 			c_trough.m_W_aperture[i] = (double)W_aperture[i];
 		
-		// c_trough.m_A_aperture = as_array("A_aperture"); // , [470.3,470.3,470.3,470.3]);
+		//[m^2] Reflective aperture area of the collector
 		size_t nval_A_aperture = -1;
 		ssc_number_t *A_aperture = as_array("A_aperture", &nval_A_aperture);
 		c_trough.m_A_aperture.resize(nval_A_aperture);
 		for (int i = 0; i < nval_A_aperture; i++)
 			c_trough.m_A_aperture[i] = (double)A_aperture[i];
 
-		// c_trough.m_TrackingError = as_array("TrackingError"); // , [0.994,0.994,0.994,0.994]);
+		//[-] Tracking error derate
 		size_t nval_TrackingError = -1;
 		ssc_number_t *TrackingError = as_array("TrackingError", &nval_TrackingError);
 		c_trough.m_TrackingError.resize(nval_TrackingError);
 		for (int i = 0; i < nval_TrackingError; i++)
 			c_trough.m_TrackingError[i] = (double)TrackingError[i];
 		
-		// c_trough.m_GeomEffects = as_array("GeomEffects"); // , [0.98,0.98,0.98,0.98]);
+		//[-] Geometry effects derate
 		size_t nval_GeomEffects = -1;
 		ssc_number_t *GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
 		c_trough.m_GeomEffects.resize(nval_GeomEffects);
 		for (int i = 0; i < nval_GeomEffects; i++)
 			c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
 
-		// c_trough.m_Rho_mirror_clean = as_array("Rho_mirror_clean"); // , [0.935,0.935,0.935,0.935]);
+		//[-] Clean mirror reflectivity
 		size_t nval_Rho_mirror_clean = -1;
 		ssc_number_t *Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
 		c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
 		for (int i = 0; i < nval_Rho_mirror_clean; i++)
 			c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
 		
-		// c_trough.m_Dirt_mirror = as_array("Dirt_mirror"); // , [0.95,0.95,0.95,0.95]);
+		//[-] Dirt on mirror derate
 		size_t nval_Dirt_mirror = -1;
 		ssc_number_t *Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
 		c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
 		for (int i = 0; i < nval_Dirt_mirror; i++)
 			c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
 		
-		// c_trough.m_Error = as_array("Error"); // , [0.99,0.99,0.99,0.99]);		size_t m_nval_Dirt_mirror = -1;
+		//[-] General optical error derate
 		size_t nval_Error = -1;
 		ssc_number_t *Error = as_array("Error", &nval_Error);
 		c_trough.m_Error.resize(nval_Error);
 		for (int i = 0; i < nval_Error; i++)
 			c_trough.m_Error[i] = (double)Error[i];
 		
-		// c_trough.m_Ave_Focal_Length = as_array("Ave_Focal_Length"); // , [1.8,1.8,1.8,1.8]);
+		//[m] The average focal length of the collector 
 		size_t nval_Ave_Focal_Length = -1;
 		ssc_number_t *Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
 		c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
 		for (int i = 0; i < nval_Ave_Focal_Length; i++)
 			c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
 		
-		// c_trough.m_L_SCA = as_array("L_SCA"); // , [100,100,100,100]);
+		//[m] The length of the SCA 
 		size_t nval_L_SCA = -1;
 		ssc_number_t *L_SCA = as_array("L_SCA", &nval_L_SCA);
 		c_trough.m_L_SCA.resize(nval_L_SCA);
 		for (int i = 0; i < nval_L_SCA; i++)
 			c_trough.m_L_SCA[i] = (double)L_SCA[i];
 
-		//c_trough.m_L_aperture = as_array("L_aperture"); // , [8.33333,8.33333,8.33333,8.33333]);
+		//[m] The length of a single mirror/HCE unit
 		size_t nval_L_aperture = -1;
 		ssc_number_t *L_aperture = as_array("L_aperture", &nval_L_aperture);
 		c_trough.m_L_aperture.resize(nval_L_aperture);
 		for (int i = 0; i < nval_L_aperture; i++)
 			c_trough.m_L_aperture[i] = (double)L_aperture[i];
 		
-		// c_trough.m_ColperSCA = as_array("ColperSCA"); // , [12,12,12,12]);
+		//[-] The number of individual collector sections in an SCA
 		size_t nval_ColperSCA = -1;
 		ssc_number_t *ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
 		c_trough.m_ColperSCA.resize(nval_ColperSCA);
 		for (int i = 0; i < nval_ColperSCA; i++)
 			c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
 
-		//c_trough.m_Distance_SCA = as_array("Distance_SCA"); // , [1,1,1,1]);
+		//[m] Piping distance between SCA's in the field
 		size_t nval_Distance_SCA = -1;
 		ssc_number_t *Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
 		c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
 		for (int i = 0; i < nval_Distance_SCA; i++)
 			c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
 
-		c_trough.m_IAM_matrix = as_matrix("IAM_matrix");
-		c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac"); // , [[0.985,0.01,0.005,0],[0.985,0.01,0.005,0],[0.985,0.01,0.005,0],[0.985,0.01,0.005,0]]);
-		c_trough.m_D_2 = as_matrix("D_2"); // , [[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066],[0.066,0.066,0.066,0.066]]);
-		c_trough.m_D_3 = as_matrix("D_3"); // , [[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07],[0.07,0.07,0.07,0.07]]);
-		c_trough.m_D_4 = as_matrix("D_4"); // , [[0.115,0.115,0.115,0.115],[0.115,0.115,0.115,0.115],[0.115,0.115,0.115,0.115],[0.115,0.115,0.115,0.115]]);
-		c_trough.m_D_5 = as_matrix("D_5"); // , [[0.12,0.12,0.12,0.12],[0.12,0.12,0.12,0.12],[0.12,0.12,0.12,0.12],[0.12,0.12,0.12,0.12]]);
-		c_trough.m_D_p = as_matrix("D_p"); // , [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]);
-		c_trough.m_Flow_type = as_matrix("Flow_type"); // , [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]);
-		c_trough.m_Rough = as_matrix("Rough"); // , [[4.50E-05,4.50E-05,4.50E-05,4.50E-05],[4.50E-05,4.50E-05,4.50E-05,4.50E-05],[4.50E-05,4.50E-05,4.50E-05,4.50E-05],[4.50E-05,4.50E-05,4.50E-05,4.50E-05]]);
-		c_trough.m_alpha_env = as_matrix("alpha_env"); // , [[0.02,0.02,0,0],[0.02,0.02,0,0],[0.02,0.02,0,0],[0.02,0.02,0,0]]);
-				
-		c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11"); // , [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
-		c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14"); // , [[0],[0]]);
-		c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21"); // , [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
-		c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24"); // , [[0],[0]]);
-		c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31"); // , [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
-		c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34"); // , [[0],[0]]);
-		c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41"); // , [[100,150,200,250,300,350,400,450,500],[0.064,0.0665,0.07,0.0745,0.08,0.0865,0.094,0.1025,0.112]]);
-		c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43"); // , [[0],[0.65]]);
-		c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44"); // , [[0],[0]]);
-		//transpose finished
-
-		c_trough.m_alpha_abs = as_matrix("alpha_abs"); // , [[0.96,0.96,0.8,0],[0.96,0.96,0.8,0],[0.96,0.96,0.8,0],[0.96,0.96,0.8,0]]);
-		c_trough.m_Tau_envelope = as_matrix("Tau_envelope"); // , [[0.963,0.963,1,0],[0.963,0.963,1,0],[0.963,0.963,1,0],[0.963,0.963,1,0]]);
-		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4"); // , [[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0]]);
-		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5"); // , [[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0],[0.86,0.86,1,0]]);
-		//c_trough.m_GlazingIntactIn = as_matrix("GlazingIntactIn"); // , [[1,1,0,1],[1,1,0,1],[1,1,0,1],[1,1,0,1]]);
-		c_trough.m_GlazingIntact = as_matrix("GlazingIntactIn"); // , [[1,1,0,1],[1,1,0,1],[1,1,0,1],[1,1,0,1]]);
-		c_trough.m_P_a = as_matrix("P_a"); // , [[0.0001,750,750,0],[0.0001,750,750,0],[0.0001,750,750,0],[0.0001,750,750,0]]);
-		c_trough.m_AnnulusGas = as_matrix("AnnulusGas"); // , [[27,1,1,27],[27,1,1,27],[27,1,1,27],[27,1,1,27]]);
-		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial"); // , [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]);
-		c_trough.m_Shadowing = as_matrix("Shadowing"); // , [[0.96,0.96,0.96,0.963],[0.96,0.96,0.96,0.963],[0.96,0.96,0.96,0.963],[0.96,0.96,0.96,0.963]]);
-		c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE"); // , [[0.98,0.98,1,0.98],[0.98,0.98,1,0.98],[0.98,0.98,1,0.98],[0.98,0.98,1,0.98]]);
-		c_trough.m_Design_loss = as_matrix("Design_loss"); // , [[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0],[150,1100,1500,0]]);
-		c_trough.m_SCAInfoArray = as_matrix("SCAInfoArray"); // , [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]);
+		c_trough.m_IAM_matrix = as_matrix("IAM_matrix");		//[-] IAM coefficients, matrix for 4 collectors
 		
-		// c_trough.m_SCADefocusArray = as_double("SCADefocusArray"); // , [8,7,6,5,4,3,2,1]);
+		// Why are these matrices - can't they be arrays?
+		c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");	//[-] Fraction of the field occupied by this HCE type
+		c_trough.m_D_2 = as_matrix("D_2");                      //[m] Inner absorber tube diameter
+		c_trough.m_D_3 = as_matrix("D_3");                      //[m] Outer absorber tube diameter
+		c_trough.m_D_4 = as_matrix("D_4");                      //[m] Inner glass envelope diameter
+		c_trough.m_D_5 = as_matrix("D_5");                      //[m] Outer glass envelope diameter
+		c_trough.m_D_p = as_matrix("D_p");                      //[m] Diameter of the absorber flow plug (optional)
+		c_trough.m_Flow_type = as_matrix("Flow_type");			//[-] Flow type through the absorber
+		c_trough.m_Rough = as_matrix("Rough");					//[m] Roughness of the internal surface
+		c_trough.m_alpha_env = as_matrix("alpha_env");			//[-] Envelope absorptance
+		// **********************************************************
+		
+		// Emittance vs. temperature profile for each receiver type and variation
+		c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11");   //[-] Absorber emittance for receiver type 1 variation 1
+		c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12"); 	 //[-] Absorber emittance for receiver type 1 variation 2
+		c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13"); 	 //[-] Absorber emittance for receiver type 1 variation 3
+		c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14"); 	 //[-] Absorber emittance for receiver type 1 variation 4
+		c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21"); 	 //[-] Absorber emittance for receiver type 2 variation 1
+		c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22"); 	 //[-] Absorber emittance for receiver type 2 variation 2
+		c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23"); 	 //[-] Absorber emittance for receiver type 2 variation 3
+		c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24"); 	 //[-] Absorber emittance for receiver type 2 variation 4
+		c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31"); 	 //[-] Absorber emittance for receiver type 3 variation 1
+		c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32"); 	 //[-] Absorber emittance for receiver type 3 variation 2
+		c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33"); 	 //[-] Absorber emittance for receiver type 3 variation 3
+		c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34"); 	 //[-] Absorber emittance for receiver type 3 variation 4
+		c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41"); 	 //[-] Absorber emittance for receiver type 4 variation 1
+		c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42"); 	 //[-] Absorber emittance for receiver type 4 variation 2
+		c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43"); 	 //[-] Absorber emittance for receiver type 4 variation 3
+		c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44"); 	 //[-] Absorber emittance for receiver type 4 variation 4
+
+		c_trough.m_alpha_abs = as_matrix("alpha_abs");                   //[-] Absorber absorptance
+		c_trough.m_Tau_envelope = as_matrix("Tau_envelope");             //[-] Envelope transmittance
+		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                   //[-] Inner glass envelope emissivities
+		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                   //[-] Outer glass envelope emissivities
+		c_trough.m_GlazingIntact = as_matrix("GlazingIntactIn");         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
+		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type
+		c_trough.m_Shadowing = as_matrix("Shadowing");                   //[-] Receiver bellows shadowing loss factor
+		c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                     //[-] Loss due to dirt on the receiver envelope
+		c_trough.m_Design_loss = as_matrix("Design_loss");               //[-] Receiver heat loss at design
+				
+		c_trough.m_SCAInfoArray = as_matrix("SCAInfoArray");			 //[-] Receiver (,1) and collector (,2) type for each assembly in loop 
+		
+		//[-] Collector defocus order
 		size_t nval_SCADefocusArray = -1;
 		ssc_number_t *SCADefocusArray = as_array("SCADefocusArray", &nval_SCADefocusArray);
 		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
 		for (int i = 0; i < nval_SCADefocusArray; i++)
 			c_trough.m_SCADefocusArray[i] = (int)SCADefocusArray[i];
+
+
+		// ********************************
+		// ********************************
+		// Now add the power cycle class
+		// ********************************
+		// ********************************
+		// Power cycle
+		// Logic to choose between steam and sco2 power cycle 
+		int pb_tech_type = as_integer("pc_config");		//[-] 0: Steam Rankine (224), 1: user defined
+
+		if( pb_tech_type == 2 )
+		{
+			log("The sCO2 power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
+			return;
+		}
+
+		C_pc_Rankine_indirect_224 power_cycle;
+		C_pc_Rankine_indirect_224::S_params *pc = &power_cycle.ms_params;
+		pc->m_P_ref = as_double("W_pb_design");                         //[MWe] Rated plant capacity
+		pc->m_eta_ref = as_double("eta_ref");					        //[-] Reference conversion efficiency at design conditions
+		pc->m_T_htf_hot_ref = as_double("T_loop_out");			        //[C] FIELD design outlet temperature
+		pc->m_T_htf_cold_ref = as_double("T_loop_in_des");			    //[C] FIELD design inlet temperature
+		pc->m_cycle_max_frac = as_double("cycle_max_frac");			    //[-]
+		pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");	    //[-]
+		pc->m_q_sby_frac = as_double("q_sby_frac");					    //[-]
+		pc->m_startup_time = as_double("startup_time");				    //[hr]
+		pc->m_startup_frac = as_double("startup_frac");				    //[-]
+		pc->m_htf_pump_coef = as_double("pb_pump_coef");			    //[kW/kg/s]
+		pc->m_pc_fl = as_integer("Fluid");							    //[-]
+		pc->m_pc_fl_props = as_matrix("field_fl_props");                //[-]
+
+		if( pb_tech_type == 0 )
+		{
+			pc->m_dT_cw_ref = as_double("dT_cw_ref");			//[C]
+			pc->m_T_amb_des = as_double("T_amb_des");			//[C]
+			pc->m_P_boil = as_double("P_boil");					//[bar]
+			pc->m_CT = as_integer("CT");						//[-]
+			pc->m_tech_type = as_double("tech_type");			//[-]					
+			pc->m_T_approach = as_double("T_approach");			//[C/K]
+			pc->m_T_ITD_des = as_double("T_ITD_des");			//[C/K]
+			pc->m_P_cond_ratio = as_double("P_cond_ratio");		//[-]
+			pc->m_pb_bd_frac = as_double("pb_bd_frac");			//[-]
+			pc->m_P_cond_min = as_double("P_cond_min");			//[inHg]
+			pc->m_n_pl_inc = as_integer("n_pl_inc");			//[-]
+
+			size_t n_F_wc = -1;
+			ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);	//[-]
+			pc->m_F_wc.resize(n_F_wc, 0.0);
+			for( int i = 0; i < n_F_wc; i++ )
+				pc->m_F_wc[i] = (double)p_F_wc[i];
+
+			// Set User Defined cycle parameters to appropriate values
+			pc->m_is_user_defined_pc = false;
+			pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
+		}
+		else if( pb_tech_type == 1 )
+		{
+			pc->m_is_user_defined_pc = true;
+
+			// User-Defined Cycle Parameters
+			pc->m_T_amb_des = as_double("ud_T_amb_des");			//[C]
+			pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*pc->m_P_ref;	//[MWe]
+			pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
+
+			// Also need lower and upper levels for the 3 independent variables...
+			pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
+			pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
+			pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
+			pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
+			pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
+			pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
+
+			// User-Defined Cycle Off-Design Tables 
+			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
+			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
+			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+		}
+
+
+
+
+
+
+
 
 		int out_type = -1;
 		std::string out_msg = "";
