@@ -17,7 +17,7 @@ class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 
 	//int m_n_c_iam_matrix = 0;
 	//int m_n_r_iam_matrix = 0;
-
+	
 	//Declare variables that require storage from step to step
 	double
 		m_Ap_tot, //Total aperture area m2
@@ -74,34 +74,30 @@ public:
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
-	
-	// Design Parameters: Must be defined before member functions can be used
-	// **************************************************************************
-
 
 	//parameters and inputs
-	int m_nSCA;		//Number of SCA's in a loop
-	int m_nHCEt;		//Number of HCE types
-	int m_nColt;		//Number of collector types
-	int m_nHCEVar;		//Number of HCE variants per type
-	int m_nLoops;		//Number of loops in the field
-	double m_eta_pump;		//HTF pump efficiency
-	double m_HDR_rough;		//Header pipe roughness
-	double m_theta_stow;		//stow angle
-	double m_theta_dep;		//deploy angle
-	double m_Row_Distance;		//Spacing between rows (centerline to centerline)
-	int m_FieldConfig;		//Number of subfield headers
-	double m_T_startup;		//The required temperature of the system before the power block can be switched on
-	double m_pb_rated_cap;		//Rated plant capacity
-	double m_m_dot_htfmin;		//Minimum loop HTF flow rate
-	double m_m_dot_htfmax;		//Maximum loop HTF flow rate
-	double m_T_loop_in_des;		//Design loop inlet temperature
-	double m_T_loop_out;		//Target loop outlet temperature
-	int m_Fluid;		//Field HTF fluid number
-	double m_T_field_ini;		//Initial field temperature
-	//double* HTF_data_in;		//m_Fluid property data
+	int m_nSCA;				//[-] Number of SCA's in a loop
+	int m_nHCEt;			//[-] Number of HCE types
+	int m_nColt;			//[-] Number of collector types
+	int m_nHCEVar;			//[-] Number of HCE variants per type
+	int m_nLoops;			//[-] Number of loops in the field
+	double m_eta_pump;		//[-] HTF pump efficiency
+	double m_HDR_rough;		//[m] Header pipe roughness
+	double m_theta_stow;	//[deg] stow angle
+	double m_theta_dep;		//[deg] deploy angle
+	double m_Row_Distance;	//[m] Spacing between rows (centerline to centerline)
+	int m_FieldConfig;		//[-] Number of subfield headers
+	double m_T_startup;		//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+	double m_m_dot_htfmin;	//[kg/s] Minimum loop HTF flow rate
+	double m_m_dot_htfmax;	//[kg/s] Maximum loop HTF flow rate
+	double m_T_loop_in_des;	//[C] Design loop inlet temperature, converted to K in init
+	double m_T_loop_out;	//[C] Target loop outlet temperature, converted to K in init
+	int m_Fluid;			//[-] Field HTF fluid number
+
+	// Why are these here??
 	int m_nrow_HTF_data, m_ncol_HTF_data;
-	double m_T_fp;		//Freeze protection temperature (heat trace activation temperature)
+	
+	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 	double m_I_bn_des;		//Solar irradiation at design
 	double m_V_hdr_max;		//Maximum HTF velocity in the header at design
 	double m_V_hdr_min;		//Minimum HTF velocity in the header at design
