@@ -20,6 +20,7 @@ void C_csp_mspt_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_solv
 	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;			//[K]
 	solved_params.m_q_dot_rec_on_min = mc_mspt_receiver_222.m_q_rec_min / 1.E6;		//[MW]
 	solved_params.m_q_dot_rec_des = mc_mspt_receiver_222.m_q_rec_des / 1.E6;		//[MW]
+	solved_params.m_A_aper_total = mc_pt_heliostatfield.ms_params.m_A_sf;			//[m^2]
 
 	return;
 }
