@@ -35,7 +35,7 @@ static var_info _cm_vtab_tcstrough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_field_ini",               "Initial field temperature",                                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_NUMBER,      "T_field_ini",               "Initial field temperature",                                                        "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
@@ -447,7 +447,7 @@ public:
         set_unit_value_ssc_double(type250_solarfield, "T_loop_in_des" ); // , 293);
         set_unit_value_ssc_double(type250_solarfield, "T_loop_out" ); // , 391);
         set_unit_value_ssc_double(type250_solarfield, "Fluid" ); // , 21);
-        set_unit_value_ssc_double(type250_solarfield, "T_field_ini" ); // , 150);
+        //set_unit_value_ssc_double(type250_solarfield, "T_field_ini" ); // , 150);
 		set_unit_value_ssc_matrix(type250_solarfield, "field_fl_props");
 		set_unit_value_ssc_double(type250_solarfield, "T_fp" ); // , 150);
         set_unit_value_ssc_double(type250_solarfield, "I_bn_des" ); // , 950);
@@ -674,7 +674,7 @@ public:
 			return;
 		}
 
-		//Connect inputs
+		//Connect inputs 
 		bConnected &= connect(weather, "twet", type224_powerblock, "T_wb", 0);
 		bConnected &= connect(weather, "tdry", type224_powerblock, "T_db", 0);
 		bConnected &= connect(weather, "pres", type224_powerblock, "P_amb", 0);
