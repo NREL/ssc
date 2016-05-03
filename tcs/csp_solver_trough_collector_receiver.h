@@ -65,6 +65,9 @@ private:
 	double m_E_tot_accum;		//Total accumulated internal energy change rate
 	double m_E_field;		//Accumulated internal energy in the entire solar field
 
+	int m_n_c_iam_matrix;
+	int m_n_r_iam_matrix;
+
 	//Declare variables that require storage from step to step
 	double
 		m_Ap_tot, //Total aperture area m2
@@ -162,70 +165,54 @@ public:
 	double m_mc_bal_cold;		//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
 	double m_mc_bal_sca;		//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 
-	//double* m_W_aperture;		
-	//int m_nval_W_aperture;
-	std::vector<double> m_W_aperture; //The collector aperture width (Total structural area.. used for shadowing)
+	std::vector<double> m_W_aperture;	//[m] The collector aperture width (Total structural area.. used for shadowing)
+	std::vector<double> m_A_aperture;	//[m^2] Reflective aperture area of the collector
+	std::vector<double> m_TrackingError;//[-] Tracking error derate
+	std::vector<double> m_GeomEffects;	//[-] Geometry effects derate
+	std::vector<double> m_Rho_mirror_clean;	//[-] Clean mirror reflectivity
+	std::vector<double> m_Dirt_mirror;	//[-] Dirt on mirror derate
+	std::vector<double> m_Error;		//[-] General optical error derate
+	std::vector<double> m_Ave_Focal_Length; //[m] The average focal length of the collector 
+	std::vector<double> m_L_SCA;		//[m] The length of the SCA 
+	std::vector<double> m_L_aperture;	//[m] The length of a single mirror/HCE unit
+	std::vector<double> m_ColperSCA;	//[-] The number of individual collector sections in an SCA
+	std::vector<double> m_Distance_SCA; //[m] Piping distance between SCA's in the field
 	
-	//double* m_A_aperture;		//Reflective aperture area of the collector
-	//int m_nval_A_aperture;
-	std::vector<double> m_A_aperture; //Reflective aperture area of the collector
+	std::vector<int> m_SCADefocusArray; //[-] Order in which the SCA's should be defocused
 
-	//double* m_TrackingError;		//User-defined tracking error derate
-	//int m_nval_TrackingError;
-	std::vector<double> m_TrackingError;
+	util::matrix_t<double> m_field_fl_props;	//[-] User-defined field HTF properties
 
-	//double* m_GeomEffects;		//User-defined geometry effects derate
-	//int m_nval_GeomEffects;
-	std::vector<double> m_GeomEffects;
-
-	//double* m_Rho_mirror_clean;		//User-defined clean mirror m_reflectivity
-	//int m_nval_Rho_mirror_clean;
-	std::vector<double> m_Rho_mirror_clean;
-
-	//double* m_Dirt_mirror;		//User-defined dirt on mirror derate
-	//int m_nval_Dirt_mirror;
-	std::vector<double> m_Dirt_mirror; //User-defined dirt on mirror derate
-
-	//double* m_Error;		//User-defined general optical error derate 
-	//int m_nval_Error;
-	std::vector<double> m_Error; //User-defined general optical error derate
-
-	//double* m_Ave_Focal_Length;		//The average focal length of the collector 
-	//int m_nval_Ave_Focal_Length;
-	std::vector<double> m_Ave_Focal_Length; //The average focal length of the collector 
-
-	//double* m_L_SCA;		//The length of the SCA 
-	//int m_nval_L_SCA;
-	std::vector<double> m_L_SCA; //The length of the SCA 
-
-	//double* m_L_aperture;		//The length of a single mirror/HCE unit
-	//int m_nval_L_aperture;
-	std::vector<double> m_L_aperture;//The length of a single mirror/HCE unit
-
-	//double* m_ColperSCA;		//The number of individual collector sections in an SCA 
-	//int m_nval_ColperSCA;
-	std::vector<double> m_ColperSCA; //The number of individual collector sections in an SCA
-
-	//double* m_Distance_SCA;		// piping distance between SCA's in the field
-	//int m_nval_Distance_SCA;
-	std::vector<double> m_Distance_SCA; // piping distance between SCA's in the field
+	util::matrix_t<double> m_HCE_FieldFrac,  //[-] Fraction of the field occupied by this HCE type
+	m_D_2, 									 //[m] Inner absorber tube diameter
+	m_D_3, 									 //[m] Outer absorber tube diameter
+	m_D_4, 									 //[m] Inner glass envelope diameter
+	m_D_5, 									 //[m] Outer glass envelope diameter
+	m_D_p, 									 //[m] Diameter of the absorber flow plug (optional)
+	m_Flow_type, 							 //[-] Flow type through the absorber
+	m_Rough, 								 //[m] Roughness of the internal surface
+	m_alpha_env, 							 //[-] Envelope absorptance
 	
-	std::vector<int> m_SCADefocusArray; //Order in which the SCA's should be defocused
+	//[-] Emittance vs. temperature profile for each receiver type and variation
+	m_epsilon_3_11, m_epsilon_3_12,	m_epsilon_3_13, m_epsilon_3_14, 
+	m_epsilon_3_21, m_epsilon_3_22, m_epsilon_3_23, m_epsilon_3_24, 
+	m_epsilon_3_31, m_epsilon_3_32, m_epsilon_3_33,	m_epsilon_3_34,
+	m_epsilon_3_41, m_epsilon_3_42, m_epsilon_3_43, m_epsilon_3_44, 
+	
+	m_alpha_abs,             //[-] Absorber absorptance
+	m_Tau_envelope, 		 //[-] Envelope transmittance
+	m_EPSILON_4, 			 //[-] Inner glass envelope emissivities
+	m_EPSILON_5,			 //[-] Outer glass envelope emissivities
+	m_GlazingIntact,         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+	m_P_a, 					 //[torr] Annulus gas pressure				 
+	m_AnnulusGas, 			 //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+	m_AbsorberMaterial, 	 //[-] Absorber material type
+	m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
+	m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
+	m_Design_loss, 			 //[-] Receiver heat loss at design
+	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop 	 
 
-	util::matrix_t<double> m_field_fl_props;
-
-	util::matrix_t<double> m_HCE_FieldFrac, m_D_2, m_D_3, m_D_4, m_D_5, m_D_p, m_Flow_type, m_Rough, m_alpha_env, m_epsilon_3_11, m_epsilon_3_12,
-		m_epsilon_3_13, m_epsilon_3_14, m_epsilon_3_21, m_epsilon_3_22, m_epsilon_3_23, m_epsilon_3_24, m_epsilon_3_31, m_epsilon_3_32, m_epsilon_3_33,
-		m_epsilon_3_34, m_epsilon_3_41, m_epsilon_3_42, m_epsilon_3_43, m_epsilon_3_44, m_alpha_abs, m_Tau_envelope, m_EPSILON_4, m_EPSILON_5,
-		m_P_a, m_AnnulusGas, m_AbsorberMaterial, m_Shadowing, m_Dirt_HCE, m_Design_loss, m_SCAInfoArray; // m_GlazingIntactIn,
-
-	util::matrix_t<double> m_IAM_matrix;
-
-	util::matrix_t<double> m_GlazingIntact;
-
-	int m_n_c_iam_matrix;
-	int m_n_r_iam_matrix;
-
+	util::matrix_t<double> m_IAM_matrix;		//[-] IAM coefficients, matrix for 4 collectors
+	
 	// **************************************************************************
 	// **************************************************************************
 	// **************************************************************************
