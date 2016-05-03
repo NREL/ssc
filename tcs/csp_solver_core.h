@@ -262,10 +262,11 @@ public:
 		double m_T_htf_cold_des;		//[K]
 		double m_q_dot_rec_on_min;		//[MW]
 		double m_q_dot_rec_des;			//[MW]
+		double m_A_aper_total;			//[m^2] Total solar field aperture area
 
 		S_csp_cr_solved_params()
 		{
-			m_T_htf_cold_des = m_q_dot_rec_on_min = m_q_dot_rec_des = std::numeric_limits<double>::quiet_NaN();
+			m_T_htf_cold_des = m_q_dot_rec_on_min = m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -292,13 +293,14 @@ public:
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
 			
 		// These are used for the parasitic class call(), so could be zero...
+		double m_E_fp_total;			//[MW] Solar field freeze protection power
 		double m_W_dot_col_tracking;	//[MWe] Collector tracking power
 		double m_W_dot_htf_pump;		//[MWe] HTF pumping power
 			
 		S_csp_cr_out_solver()
 		{
 			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump = 
-				m_W_dot_col_tracking = m_time_required_su = std::numeric_limits<double>::quiet_NaN();
+				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
