@@ -265,7 +265,7 @@ public:
 		// Pass inputs to mspt_receiver class - NO CONVERSIONS!
 		ms_weather.m_solazi = value(I_azimuth);							//[deg] Solar azimuth angle 0 - 360, clockwise from due north, northern hemisphere
 		ms_weather.m_solzen = value(I_zenith);							//[deg] Solar zenith angle
-		double T_salt_cold_in_csp = value(I_T_salt_cold);				//[K] Cold salt inlet temp, convert from C
+		double T_salt_cold_in_csp = value(I_T_salt_cold);				//[C] Cold salt inlet temp
 		ms_weather.m_wspd = value(I_v_wind_10);							//[m/s] Wind velocity
 		ms_weather.m_pres = value(I_P_amb);								//[Pa] Ambient pressure, convert from mbar
 	
