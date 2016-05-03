@@ -240,7 +240,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 
 }
 
-void C_csp_trough_collector_receiver::init()
+void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	
 	// double some_calc = m_nSCA + m_nHCEt;
@@ -259,14 +259,11 @@ void C_csp_trough_collector_receiver::init()
 	//Initialize air properties -- used in reeiver calcs
 	m_airProps.SetFluid(HTFProperties::Air);
 
-	//Get fluid properties
-	// m_Fluid = (int)value(P_FLUID);
+	// Set trough HTF properties
 	if (m_Fluid != HTFProperties::User_defined)
 	{
 		if (!m_htfProps.SetFluid(m_Fluid))
 		{
-			//mc_csp_messages.add_message(C_csp_messages::WARNING, "Field HTF code is not recognized");
-
 			throw(C_csp_exception("Field HTF code is not recognized", "Trough Collector Solver"));
 		}
 	}
@@ -293,124 +290,25 @@ void C_csp_trough_collector_receiver::init()
 		throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
 	}
 
-	//	int nrows = 0, ncols = 0;
-	//	// double *fl_mat = value(P_FIELD_FL_PROPS, &nrows, &ncols);
-	//	if (fl_mat != 0 && nrows > 2 && ncols == 7)
-	//	{
-	//		util::matrix_t<double> mat(nrows, ncols, 0.0);
-	//		for (int r = 0; r<nrows; r++)
-	//			for (int c = 0; c<ncols; c++)
-	//				// mat.at(r, c) = TCS_MATRIX_INDEX(var(P_FIELD_FL_PROPS), r, c);
-	//				mat.at(r, c) = m_field_fl_props(r, c);
-
-	//		if (!m_htfProps.SetUserDefinedFluid(mat))
-	//		{
-	//			message(TCS_ERROR, m_htfProps.UserFluidErrMessage(), nrows, ncols);
-	//			return -1;
-	//		}
-	//	}
-	//	else
-	//	{
-	//		message(TCS_ERROR, "The user defined HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", nrows, ncols);
-	//		return -1;
-	//	}
-	//}
-	//else
-	//{
-	//	message(TCS_ERROR, "Field HTF code is not recognized");
-	//	return -1;
-	//}
-
-	//Get values for any parameters here
-	//m_nSCA = (int)value(P_NSCA);		//Number of SCA's in a loop [none]
-	//m_nHCEt = (int)value(P_NHCET);		//Number of HCE types [none]
-	//m_nColt = (int)value(P_NCOLT);		//Number of collector types [none]
-	//m_nHCEVar = (int)value(P_NHCEVAR);		//Number of HCE variants per type [none]
-	//m_nLoops = (int)value(P_NLOOPS);		//Number of loops in the field [none]
-	//m_eta_pump = value(P_ETA_PUMP);		//HTF pump efficiency [none]
-	//m_HDR_rough = value(P_HDR_ROUGH);		//Header pipe roughness [m]
-	//m_theta_stow = value(P_THETA_STOW);		//stow angle [deg]
-	//m_theta_dep = value(P_THETA_DEP);		//deploy angle [deg]
-	//m_Row_Distance = value(P_ROW_DISTANCE);		//Spacing between rows (centerline to centerline) [m]
-	//m_FieldConfig = (int)value(P_FIELDCONFIG);		//Number of subfield headers [none]
-	//m_T_startup = value(P_T_STARTUP);		//The required temperature of the system before the power block can be switched on [C]
-	//m_pb_rated_cap = value(P_PB_RATED_CAP);		//Rated plant capacity [MWe]
-	//m_m_dot_htfmin = value(P_M_DOT_HTFMIN);		//Minimum loop HTF flow rate [kg/s]
-	//m_m_dot_htfmax = value(P_M_DOT_HTFMAX);		//Maximum loop HTF flow rate [kg/s]
-	//m_T_loop_in_des = value(P_T_LOOP_IN_DES);		//Design loop inlet temperature [C]
-	//m_T_loop_out = value(P_T_LOOP_OUT);		//Target loop outlet temperature [C]
-	//m_Fluid = (int)value(P_FLUID);		//Field HTF fluid number [none]
-
-
-
-	//m_T_field_ini = value(P_T_FIELD_INI);		//Initial field temperature [C]
-
+	// Adjust parameters
 	m_T_field_ini = 0.5*(m_T_field_ini + m_T_loop_in_des);
 	m_ColTilt = m_tilt*m_d2r;		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
 	m_ColAz = m_azimuth*m_d2r;		//Collector azimuth angle [deg]
 
-	//m_T_fp = value(P_T_FP);		//Freeze protection temperature (heat trace activation temperature) [C]
-	//m_I_bn_des = value(P_I_BN_DES);		//Solar irradiation at design [W/m2]
-	//m_V_hdr_max = value(P_V_HDR_MAX);		//Maximum HTF velocity in the header at design [m/s]
-	//m_V_hdr_min = value(P_V_HDR_MIN);		//Minimum HTF velocity in the header at design [m/s]
-	//m_Pipe_hl_coef = value(P_PIPE_HL_COEF);		//Loss coefficient from the header, runner pipe, and non-HCE piping [W/m2-K]
-	//m_SCA_drives_elec = value(P_SCA_DRIVES_ELEC);		//Tracking power, in Watts per SCA drive [W/SCA]
-	//m_fthrok = (int)value(P_FTHROK);		//Flag to allow partial defocusing of the collectors [none]
-	//m_fthrctrl = (int)value(P_FTHRCTRL);		//Defocusing strategy [none]
-	//m_ColTilt = value(P_COLTILT)*m_d2r;		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
-	//m_ColAz = value(P_COLAZ)*m_d2r;		//Collector azimuth angle [deg]
-
-	//m_accept_mode = (int)value(P_ACCEPT_MODE);				// Acceptance testing mode? (1=yes, 0=no) [none]
-	//m_accept_init = value(P_ACCEPT_INIT) == 1;				// In acceptance testing mode - require steady-state startup [none]
-	//m_accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
-	//m_is_using_input_gen = (bool)value(P_USING_INPUT_GEN);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
-
-	//m_solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
-	//m_mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
-	//m_mc_bal_cold = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
-	//m_mc_bal_sca = value(P_MC_BAL_SCA);		//Non-HTF heat capacity associated with each SCA - per meter basis [Wht/K-m]
-
-	//m_OptCharType = value(P_OPTCHARTYPE, &m_nval_OptCharType);		//The optical characterization method  [none]
-	//m_CollectorType = value(P_COLLECTORTYPE, &m_nval_CollectorType);		//{1=user defined, 2=LS-2, 3=LS-3, 4=IST}  [none]
-	//m_W_aperture = value(P_W_APERTURE, &m_nval_W_aperture);		//The collector aperture width (Total structural area.. used for shadowing) [m]
-	//m_A_aperture = value(P_A_APERTURE, &m_nval_A_aperture);		//Reflective aperture area of the collector [m2]
-	////IamF0 = value(P_IAMF0, &nval_IamF0);		//Incident angle modifier 0th order term [none]
-	////IamF1 = value(P_IAMF1, &nval_IamF1);		//Incident angle modifier 1st order term [none]
-	////IamF2 = value(P_IAMF2, &nval_IamF2);		//Incident angle modifier 2nd order term [none]
-
-	//// Check m_IAM matrix against number of collectors: m_nColt
-
-	//m_n_c_iam_matrix = -1;
-	//m_n_r_iam_matrix = -1;
-	//double *p_iam_matrix = value(P_IAM_MATRIX, &m_n_r_iam_matrix, &m_n_c_iam_matrix);
+	// Check m_IAM matrix against number of collectors: m_nColt
 	m_n_r_iam_matrix = m_IAM_matrix.nrows();
 	m_n_c_iam_matrix = m_IAM_matrix.ncols();
 
 	if (m_n_c_iam_matrix < 3)
 	{
 		throw(C_csp_exception("There must be at least 3 incident angle modifier coefficients", "Trough collector solver"));
-		//message(TCS_ERROR, "There must be at least 3 incident angle modifier coefficients");
-		//return -1;
 	}
 
 	if (m_n_r_iam_matrix < m_nColt)
 	{
 		m_error_msg = util::format("The number of groups of m_IAM coefficients (%d) is less than the number of collector types in this simulation (%d)", m_n_r_iam_matrix, m_nColt);
 		throw(C_csp_exception(m_error_msg, "Trough collector solver"));
-
-		//message(TCS_ERROR, "The number of groups of m_IAM coefficients (%d) is less than the number of collector types in this simulation (%d)", m_n_r_iam_matrix, m_nColt);
-		//return -1;
 	}
-
-	//// Load p_iam_matrix in matrix_t
-	//m_IAM_matrix.resize_fill(m_n_r_iam_matrix, m_n_c_iam_matrix, 0.0);
-	//for (int r = 0; r < m_n_r_iam_matrix; r++)
-	//{
-	//	for (int c = 0; c < m_n_c_iam_matrix; c++)
-	//	{
-	//		m_IAM_matrix(r, c) = TCS_MATRIX_INDEX(var(P_IAM_MATRIX), r, c);
-	//	}
-	//}
 
 	// Check that for each collector, at least 3 coefficients are != 0.0
 	for (int i = 0; i < m_nColt; i++)
@@ -619,6 +517,8 @@ void C_csp_trough_collector_receiver::init()
 	// for test start
 	init_fieldgeom();
 	// for test end
+
+	solved_params.m_A_aper_total = m_Ap_tot;	//[m^2]
 
 	return;
 }
@@ -965,8 +865,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	m_latitude = weather.m_lat;				//Site m_latitude read from weather file [deg]
 	m_longitude = weather.m_lon;			//Site m_longitude read from weather file [deg]
 	m_shift = weather.m_shift;				// [deg]
-
-	// 
 
 	//Unit conversions
 	m_T_db += 273.15;
@@ -2280,14 +2178,19 @@ set_outputs_and_return:
 	//------------------------------------------------------------------
 
 	//Set outputs
-	cr_out_solver.m_T_salt_hot = T_sys_h_out;
-
+	cr_out_solver.m_T_salt_hot = T_sys_h_out;		//[C] Solar field HTF outlet temperature
 	//value(O_T_SYS_H, T_sys_h_out);				//[C] Solar field HTF outlet temperature
-	//value(O_M_DOT_AVAIL, m_dot_avail_out);		//[kg/hr] HTF mass flow rate from the field
+	cr_out_solver.m_m_dot_salt_tot = m_dot_avail_out;	//[kg/hr] HTF mass flow rate from the field
+	//value(O_M_DOT_AVAIL, m_dot_avail_out);			//[kg/hr] HTF mass flow rate from the field
+	
 	//value(O_Q_AVAIL, m_q_avail);					//[MWt] Thermal power produced by the field
 	//value(O_DP_TOT, m_DP_tot);					//[bar] Total HTF pressure drop
+	
+	cr_out_solver.m_W_dot_htf_pump = W_dot_pump_out;	//[MWe] Required solar field pumping power
 	//value(O_W_DOT_PUMP, W_dot_pump_out);		//[MWe] Required solar field pumping power
+	cr_out_solver.m_E_fp_total = E_fp_tot_out;	//[MW] Freeze protection energy
 	//value(O_E_FP_TOT, E_fp_tot_out);			//[MW] Freeze protection energy
+	
 	//value(O_QQ, m_qq);							//[none] Number of iterations required to solve
 	//value(O_T_SYS_C, T_sys_c_out);				//[C] Collector inlet temperature
 	//value(O_EQOPTEFF, EqOpteff_out);			//[none] Collector equivalent optical efficiency
@@ -2299,7 +2202,10 @@ set_outputs_and_return:
 	//value(O_Q_LOSS_TOT, m_q_loss_tot);			//[MWt] Total receiver thermal and optical losses
 	//value(O_M_DOT_HTF, m_m_dot_htf);				//[kg/s] Flow rate in a single loop
 	//value(O_Q_LOSS_SPEC_TOT, m_q_loss_spec_tot);	//[W/m] Field-average receiver thermal losses (convection and radiation)
+	
+	cr_out_solver.m_W_dot_col_tracking = SCA_par_tot_out;	//[MWe] Parasitic electric power consumed by the SC
 	//value(O_SCA_PAR_TOT, SCA_par_tot_out);		//[MWe] Parasitic electric power consumed by the SC
+	
 	//value(O_PIPE_HL, Pipe_hl_out);				//[MWt] Pipe heat loss in the header and the hot runner
 	//value(O_Q_DUMP, m_q_dump);					//[MWt] Dumped thermal energy
 	//value(O_THETA_AVE, Theta_ave_out);			//[deg] Field average m_theta value
@@ -2348,6 +2254,8 @@ void C_csp_trough_collector_receiver::converged()
 		m_T_htf_out0[i] = m_T_htf_out[i];
 		m_T_htf_ave0[i] = (m_T_htf_in0[i] + m_T_htf_out0[i]) / 2.0;
 	}
+
+	m_ncall = -1;
 
 	return;
 }
