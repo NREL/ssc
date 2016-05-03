@@ -1,3 +1,8 @@
+#ifndef _power_electronics_h_
+#define _power_electronics_h_
+
+#include "lib_battery.h"
+
 class bidirectional_inverter
 {
 public:
@@ -47,7 +52,7 @@ protected:
 class charge_controller
 {
 public:
-	charge_controller(double efficiency_1, double efficiency_2){};
+	charge_controller(dispatch_t * dispatch, double efficiency_1, double efficiency_2){};
 
 	// return power loss [kW]
 	virtual double run_battery(double P_pv, double P_load, double * P_grid, double * P_gen) = 0;
@@ -62,6 +67,7 @@ public:
 protected:
 
 	double _round_trip_efficiency;
+	dispatch_t * _dispatch;
 
 
 };
@@ -69,7 +75,7 @@ protected:
 class dc_connected_battery_controller : public charge_controller
 {
 public:
-	dc_connected_battery_controller(float dc_dc_efficiency, float ac_dc_efficiency);
+	dc_connected_battery_controller(dispatch_t * dispatch, float dc_dc_efficiency, float ac_dc_efficiency);
 	double run_battery(double P_pv_dc, double P_load_ac, double * P_grid_ac, double * P_gen_dc);
 
 protected:
@@ -80,10 +86,12 @@ protected:
 class ac_connected_battery_controller : public charge_controller
 {
 public:
-	ac_connected_battery_controller(float ac_dc_efficiency, float dc_ac_efficiency);
+	ac_connected_battery_controller(dispatch_t * dispatch, float ac_dc_efficiency, float dc_ac_efficiency);
 
 	double run_battery(double P_pv_ac, double P_load_ac, double * P_grid_ac, double * P_gen_ac);
 
 protected:
 	bidirectional_inverter * _bidirectional_inverter;
 };
+
+#endif
