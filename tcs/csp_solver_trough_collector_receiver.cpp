@@ -5,7 +5,7 @@
 using namespace std;
 
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
-{
+{ 
 	//Commonly used values, conversions, etc...
 	m_Pi = acos(-1.);
 	m_pi = m_Pi;
@@ -32,7 +32,6 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_T_loop_out = std::numeric_limits<double>::quiet_NaN();
 	m_Fluid = -1;
 
-	m_nrow_HTF_data = -1, m_ncol_HTF_data = -1;
 	m_T_fp = std::numeric_limits<double>::quiet_NaN();
 	m_I_bn_des = std::numeric_limits<double>::quiet_NaN();
 	m_V_hdr_max = std::numeric_limits<double>::quiet_NaN();
@@ -53,128 +52,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_mc_bal_hot = std::numeric_limits<double>::quiet_NaN();
 	m_mc_bal_cold = std::numeric_limits<double>::quiet_NaN();
 	m_mc_bal_sca = std::numeric_limits<double>::quiet_NaN();
-	//m_OptCharType = NULL;
-	////m_nval_OptCharType = -1;
-	//m_CollectorType = NULL;
-	////m_nval_CollectorType = -1;
-	//m_W_aperture = NULL;
-	////m_nval_W_aperture = -1;
-	//m_A_aperture = NULL;
-	////m_nval_A_aperture = -1;
-	////IamF0	= NULL;
-	////nval_IamF0 = -1;
-	////IamF1	= NULL;
-	////nval_IamF1 = -1;
-	////IamF2	= NULL;
-	////nval_IamF2 = -1;
 
-	//m_n_c_iam_matrix = -1;
-	//m_n_r_iam_matrix = -1;
-
-	//m_reflectivity = NULL;
-	////m_nval_reflectivity = -1;
-	//m_TrackingError = NULL;
-	////m_nval_TrackingError = -1;
-	//m_GeomEffects = NULL;
-	////m_nval_GeomEffects = -1;
-	//m_Rho_mirror_clean = NULL;
-	////m_nval_Rho_mirror_clean = -1;
-	//m_Dirt_mirror = NULL;
-	////m_nval_Dirt_mirror = -1;
-	//m_Error = NULL;
-	////m_nval_Error = -1;
-	//m_Ave_Focal_Length = NULL;
-	////m_nval_Ave_Focal_Length = -1;
-	//m_L_SCA = NULL;
-	////m_nval_L_SCA = -1;
-	//m_L_aperture = NULL;
-	////m_nval_L_aperture = -1;
-	//m_ColperSCA = NULL;
-	////m_nval_ColperSCA = -1;
-	//m_Distance_SCA = NULL;
-	////m_nval_Distance_SCA = -1;
-	//m_SCADefocusArray = NULL;
-	////m_nval_SCADefocusArray = -1;
-
-	// no longer needed - start
-	//m_HCE_FieldFrac_in = NULL;
-	////m_nrow_HCE_FieldFrac = -1, m_ncol_HCE_FieldFrac = -1;
-	//m_D_2_in = NULL;
-	////m_nrow_D_2 = -1, m_ncol_D_2 = -1;
-	//m_D_3_in = NULL;
-	////m_nrow_D_3 = -1, m_ncol_D_3 = -1;
-	//m_D_4_in = NULL;
-	//m_nrow_D_4 = -1, m_ncol_D_4 = -1;
-	//m_D_5_in = NULL;
-	//m_nrow_D_5 = -1, m_ncol_D_5 = -1;
-	//m_D_p_in = NULL;
-	//m_nrow_D_p = -1, m_ncol_D_p = -1;
-	//m_Flow_type_in = NULL;
-	//m_nrow_Flow_type = -1, m_ncol_Flow_type = -1;
-	//m_Rough_in = NULL;
-	//m_nrow_Rough = -1, m_ncol_Rough = -1;
-	//m_alpha_env_in = NULL;
-	//m_nrow_alpha_env = -1, m_ncol_alpha_env = -1;
-	//m_epsilon_3_11_in = NULL;
-	//m_nrow_epsilon_3_11 = -1, m_ncol_epsilon_3_11 = -1;
-	//m_epsilon_3_12_in = NULL;
-	//m_nrow_epsilon_3_12 = -1, m_ncol_epsilon_3_12 = -1;
-	//m_epsilon_3_13_in = NULL;
-	//m_nrow_epsilon_3_13 = -1, m_ncol_epsilon_3_13 = -1;
-	//m_epsilon_3_14_in = NULL;
-	//m_nrow_epsilon_3_14 = -1, m_ncol_epsilon_3_14 = -1;
-	//m_epsilon_3_21_in = NULL;
-	//m_nrow_epsilon_3_21 = -1, m_ncol_epsilon_3_21 = -1;
-	//m_epsilon_3_22_in = NULL;
-	//m_nrow_epsilon_3_22 = -1, m_ncol_epsilon_3_22 = -1;
-	//m_epsilon_3_23_in = NULL;
-	//m_nrow_epsilon_3_23 = -1, m_ncol_epsilon_3_23 = -1;
-	//m_epsilon_3_24_in = NULL;
-	//m_nrow_epsilon_3_24 = -1, m_ncol_epsilon_3_24 = -1;
-	//m_epsilon_3_31_in = NULL;
-	//m_nrow_epsilon_3_31 = -1, m_ncol_epsilon_3_31 = -1;
-	//m_epsilon_3_32_in = NULL;
-	//m_nrow_epsilon_3_32 = -1, m_ncol_epsilon_3_32 = -1;
-	//m_epsilon_3_33_in = NULL;
-	//m_nrow_epsilon_3_33 = -1, m_ncol_epsilon_3_33 = -1;
-	//m_epsilon_3_34_in = NULL;
-	//m_nrow_epsilon_3_34 = -1, m_ncol_epsilon_3_34 = -1;
-	//m_epsilon_3_41_in = NULL;
-	//m_nrow_epsilon_3_41 = -1, m_ncol_epsilon_3_41 = -1;
-	//m_epsilon_3_42_in = NULL;
-	//m_nrow_epsilon_3_42 = -1, m_ncol_epsilon_3_42 = -1;
-	//m_epsilon_3_43_in = NULL;
-	//m_nrow_epsilon_3_43 = -1, m_ncol_epsilon_3_43 = -1;
-	//m_epsilon_3_44_in = NULL;
-	//m_nrow_epsilon_3_44 = -1, m_ncol_epsilon_3_44 = -1;
-	//m_alpha_abs_in = NULL;
-	//m_nrow_alpha_abs = -1, m_ncol_alpha_abs = -1;
-	//m_Tau_envelope_in = NULL;
-	//m_nrow_Tau_envelope = -1, m_ncol_Tau_envelope = -1;
-	//m_EPSILON_4_in = NULL;
-	//m_nrow_EPSILON_4 = -1, m_ncol_EPSILON_4 = -1;
-	//m_EPSILON_5_in = NULL;
-	//m_nrow_EPSILON_5 = -1, m_ncol_EPSILON_5 = -1;
-	//m_GlazingIntactIn_in = NULL;
-	//m_nrow_GlazingIntactIn = -1, m_ncol_GlazingIntactIn = -1;
-	//m_P_a_in = NULL;
-	//m_nrow_P_a = -1, m_ncol_P_a = -1;
-	//m_AnnulusGas_in = NULL;
-	//m_nrow_AnnulusGas = -1, m_ncol_AnnulusGas = -1;
-	//m_AbsorberMaterial_in = NULL;
-	//m_nrow_AbsorberMaterial = -1, m_ncol_AbsorberMaterial = -1;
-	//m_Shadowing_in = NULL;
-	//m_nrow_Shadowing = -1, m_ncol_Shadowing = -1;
-	//m_Dirt_HCE_in = NULL;
-	//m_nrow_Dirt_HCE = -1, m_ncol_Dirt_HCE = -1;
-	//m_Design_loss_in = NULL;
-	//m_nrow_Design_loss = -1, m_ncol_Design_loss = -1;
-	//m_SCAInfoArray_in = NULL;
-	//m_nrow_SCAInfoArray = -1, m_ncol_SCAInfoArray = -1;
-    // no longer needed - end
-
-	//m_SCADefocusArray = NULL;
-	//m_nval_SCADefocusArray = -1;
 	m_I_b = std::numeric_limits<double>::quiet_NaN();
 	m_T_db = std::numeric_limits<double>::quiet_NaN();
 	m_V_wind = std::numeric_limits<double>::quiet_NaN();
@@ -186,7 +64,6 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_SolarAz = std::numeric_limits<double>::quiet_NaN();
 	m_latitude = std::numeric_limits<double>::quiet_NaN();
 	m_longitude = std::numeric_limits<double>::quiet_NaN();
-	//timezone = std::numeric_limits<double>::quiet_NaN();
 	m_T_sys_h = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_avail = std::numeric_limits<double>::quiet_NaN();
 	m_q_avail = std::numeric_limits<double>::quiet_NaN();
@@ -289,8 +166,8 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	}
 
 	// Adjust parameters
-	m_ColTilt = m_tilt*m_d2r;		//Collector tilt angle (0 is horizontal, 90deg is vertical) [deg]
-	m_ColAz = m_azimuth*m_d2r;		//Collector azimuth angle [deg]
+	m_ColTilt = m_ColTilt*m_d2r;	//[rad] Collector tilt angle (0 is horizontal, 90deg is vertical), convert from [deg]
+	m_ColAz = m_ColAz*m_d2r;		//[rad] Collector azimuth angle, convert from [deg]
 
 	// Check m_IAM matrix against number of collectors: m_nColt
 	m_n_r_iam_matrix = m_IAM_matrix.nrows();
@@ -850,37 +727,29 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//******************************************************************************************************************************
 	//               Time-dependent conditions
 	//******************************************************************************************************************************
-	m_I_b = weather.m_beam;			//DNI [W/m^2]	
-	m_T_db = weather.m_tdry;		//Dry bulb air temperature [C]
-	m_V_wind = weather.m_wspd;		//Ambient windspeed  [m/s]
-	m_P_amb = weather.m_pres;		//Ambient pressure [mbar]
-	m_T_dp = weather.m_tdew;		//The dewpoint temperature [C]
-	m_T_cold_in = htf_state_in.m_temp;		//HTF return temperature [C]
-	m_m_dot_in = htf_state_in.m_m_dot;			//HTF mass flow rate at the inlet  [kg/hr]
-	m_defocus_new = inputs.m_field_control;		//Defocus control  [none]
-	m_SolarAz = weather.m_solazi;			//Solar azimuth angle reported by the Type15 weather file [deg]
-	m_latitude = weather.m_lat;				//Site m_latitude read from weather file [deg]
-	m_longitude = weather.m_lon;			//Site m_longitude read from weather file [deg]
-	m_shift = weather.m_shift;				// [deg]
+	m_I_b = weather.m_beam;					//[W/m^2] DNI 	
+	m_T_db = weather.m_tdry;				//[C] Dry bulb air temperature 
+	m_V_wind = weather.m_wspd;				//[m/s] Ambient windspeed 
+	m_P_amb = weather.m_pres;				//[mbar] Ambient pressure 
+	m_T_dp = weather.m_tdew;				//[C] The dewpoint temperature 
+	m_T_cold_in = htf_state_in.m_temp;		//[C] HTF return temperature 
+	m_m_dot_in = htf_state_in.m_m_dot;		//[kg/hr] HTF mass flow rate at the inlet  
+	m_defocus_new = inputs.m_field_control;	//[none] Defocus control 
+	m_SolarAz = weather.m_solazi;			//[deg] Solar azimuth angle reported by the Type15 weather file 
+	m_latitude = weather.m_lat;				//[deg] Site m_latitude read from weather file 
+	m_longitude = weather.m_lon;			//[deg] Site m_longitude read from weather file 
+	m_shift = weather.m_shift;				//[deg]
 
 	//Unit conversions
-	m_T_db += 273.15;
-	m_T_dp += 273.15;
-	m_P_amb *= 100.0; //mbar -> Pa
-	m_T_cold_in += 273.15;
-	m_m_dot_in *= 1 / 3600.;
-	m_SolarAz = (m_SolarAz - 180.0) * m_d2r;
-	m_latitude *= m_d2r;
-	m_longitude *= m_d2r;
-	m_shift *= m_d2r;
-
-	//Initialize the field geometry if it hasn't been already
-	if (!m_is_fieldgeom_init)
-	{
-		if (!init_fieldgeom())
-			return; // check later
-		//return -1; 
-	}
+	m_T_db += 273.15;           //[K] convert from C
+	m_T_dp += 273.15;			//[K] convert from C
+	m_P_amb *= 100.0;			//mbar -> Pa
+	m_T_cold_in += 273.15;      //[K] convert from C
+	m_m_dot_in *= 1 / 3600.;	//[kg/s] convert from kg/hr
+	m_SolarAz = (m_SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
+	m_latitude *= m_d2r;		//[rad] convert from [deg]
+	m_longitude *= m_d2r;		//[rad] convert from [deg]
+	m_shift *= m_d2r;			//[rad] convert from [deg]
 
 	//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
 	if (m_ncall>0)
