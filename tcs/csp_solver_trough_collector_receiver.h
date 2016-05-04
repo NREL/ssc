@@ -255,6 +255,26 @@ public:
 	virtual double get_collector_area();
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
+	class E_piping_config
+	{
+		public:
+			enum 
+			{
+				FIELD = 1,
+				LOOP
+			};
+	};
+	class E_loop_energy_balance_exit
+	{
+		public:
+			enum 
+			{
+				SOLVED,
+				NaN
+			};
+	};
+	int loop_energy_balance(double rho_hdr_cold, double c_hdr_cold_last, double rho_hdr_hot);
+			
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
 		//outputs
