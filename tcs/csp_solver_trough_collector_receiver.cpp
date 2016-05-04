@@ -7,11 +7,8 @@ using namespace std;
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
 	//Commonly used values, conversions, etc...
-	m_Pi = acos(-1.);
-	m_pi = m_Pi;
-	m_r2d = 180. / m_pi;
-	m_d2r = m_pi / 180.;
-	m_g = 9.81;	//gravitation constant
+	m_r2d = 180. / CSP::pi;
+	m_d2r = CSP::pi / 180.;
 	m_mtoinch = 39.3700787;	//[m] -> [in]
 	
 	// set initial values for all parameters to prevent possible misuse
@@ -53,10 +50,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_mc_bal_cold = std::numeric_limits<double>::quiet_NaN();
 	m_mc_bal_sca = std::numeric_limits<double>::quiet_NaN();
 
-	m_T_cold_in = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_in = std::numeric_limits<double>::quiet_NaN();
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
-	m_SolarAz = std::numeric_limits<double>::quiet_NaN();
 	m_latitude = std::numeric_limits<double>::quiet_NaN();
 	m_longitude = std::numeric_limits<double>::quiet_NaN();
 	m_T_sys_h = std::numeric_limits<double>::quiet_NaN();
@@ -94,8 +88,6 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_E_hdr_accum = std::numeric_limits<double>::quiet_NaN();
 	m_E_tot_accum = std::numeric_limits<double>::quiet_NaN();
 	m_E_field = std::numeric_limits<double>::quiet_NaN();
-
-	m_hour = m_T_sky = std::numeric_limits<double>::quiet_NaN();
 
 	for (int i = 0; i < 5; i++)
 		m_T_save[i] = std::numeric_limits<double>::quiet_NaN();
@@ -335,7 +327,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 				m_D_h.at(i, j) = m_D_2.at(i, j);
 				m_D_p.at(i, j) = 0.;
 			}
-			m_A_cs.at(i, j) = m_pi * (m_D_2.at(i, j)*m_D_2.at(i, j) - m_D_p.at(i, j)*m_D_p.at(i, j)) / 4.;  //[m2] The cross-sectional flow area
+			m_A_cs.at(i, j) = CSP::pi* (m_D_2.at(i, j)*m_D_2.at(i, j) - m_D_p.at(i, j)*m_D_p.at(i, j)) / 4.;  //[m2] The cross-sectional flow area
 		}
 	}
 
@@ -461,7 +453,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		double v_tofrom_sgs = 0.0;
 		for (int i = 0; i < m_nrunsec; i++)
 		{
-			v_tofrom_sgs = v_tofrom_sgs + 2.*m_L_runner[i] * m_pi*pow(m_D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
+			v_tofrom_sgs = v_tofrom_sgs + 2.*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  //This is the volume of the runner in 1 direction.
 		}
 
 		//6/14/12, TN: Multiplier for runner heat loss. In main section of code, are only calculating loss for one path.
@@ -496,7 +488,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		for (int i = 0; i < m_nhdrsec; i++)
 		{
 			//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-			v_header += m_D_hdr[i] * m_D_hdr[i] / 4.*m_pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
+			v_header += m_D_hdr[i] * m_D_hdr[i] / 4.*CSP::pi*(m_Row_Distance + 4.275)*float(m_nfsec)*2.0;  //tn 4.25.11 The header distance should be multiplied by 2 row spacings
 		}
 		//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
 		v_header = v_header + 20.*m_A_cs(0, 0)*float(m_nLoops);
@@ -602,7 +594,8 @@ void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_rece
 }
 
 int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
-									double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/, double step /*s*/)
+									double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
+									const C_csp_solver_sim_info &sim_info)
 {
 	//First calculate the cold header temperature, which will serve as the loop inlet temperature
 	double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_last, 1.);
@@ -610,10 +603,22 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	double c_hdr_cold_last = m_htfProps.Cp(m_T_sys_c_last)*1000.0;	//mjw 1.6.2011 Adding mc_bal to the cold header inertia
 
 	double T_db = weather.m_tdry+273.15;		//[K] Dry bulb temperature, convert from C
+	double T_dp = weather.m_twet+273.15;		//[K] Dew point temperature, convert from C
+
+	// Calculate effective sky temperature
+	double hour = fmod(sim_info.m_time/3600.0, 24.0);		//[hr] Hour of day
+	double T_sky;	//[K] Effective sky temperature
+	if(T_dp > -300.0)
+		T_sky = CSP::skytemp(T_db, T_dp, hour);				//[K] Effective sky temperature 
+	else
+		T_sky = T_db - 20.0;
+
+	// Clear all member data that *should* be set in this type???
+	// m_T_htf_in.assign(m_T_htf_in.size(), std::numeric_limits<double>::quiet_NaN());
 
 	if( m_accept_loc ==  E_piping_config::FIELD )
 	{
-		m_T_sys_c = (m_T_sys_c_last - T_htf_cold_in)*exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*step) + T_htf_cold_in;
+		m_T_sys_c = (m_T_sys_c_last - T_htf_cold_in)*exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*sim_info.m_step) + T_htf_cold_in;
 		m_c_hdr_cold = m_htfProps.Cp(m_T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 			//Consider heat loss from cold piping
 		m_Header_hl_cold = 0.0;
@@ -621,12 +626,12 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			//Header
 		for( int i = 0; i<m_nhdrsec; i++ )
 		{
-			m_Header_hl_cold += m_Row_Distance*m_D_hdr[i] * m_pi*m_Pipe_hl_coef*(m_T_sys_c - T_db);  //[W]
+			m_Header_hl_cold += m_Row_Distance*m_D_hdr[i]*CSP::pi*m_Pipe_hl_coef*(m_T_sys_c - T_db);  //[W]
 		}
 			//Runner
 		for( int i = 0; i<m_nrunsec; i++ )
 		{
-			m_Runner_hl_cold += m_L_runner[i] * m_pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c - T_db);  //[W]
+			m_Runner_hl_cold += m_L_runner[i]*CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c - T_db);  //[W]
 		}
 		m_Pipe_hl_cold = m_Header_hl_cold + m_Runner_hl_cold;
 
@@ -658,7 +663,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			double c_htf_j, rho_htf_j;
 			c_htf_j = rho_htf_j = std::numeric_limits<double>::quiet_NaN();
 
-			EvacReceiver(m_T_htf_in[i], m_dot_htf_loop, T_db, m_T_sky, weather.m_wspd, weather.m_pres*100.0, m_q_SCA[i], HT, j, CT, i, false, m_ncall, m_time_hr,
+			EvacReceiver(m_T_htf_in[i], m_dot_htf_loop, T_db, T_sky, weather.m_wspd, weather.m_pres*100.0, m_q_SCA[i], HT, j, CT, i, false, m_ncall, m_time_hr,
 				//outputs
 				m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j);
 
@@ -692,7 +697,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		//mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
 		m_T_htf_out[i] = m_q_abs_SCAtot[i] / (m_dot_htf_loop*m_c_htf[i]) + m_T_htf_in[i] +
 			2.0 * (m_T_htf_ave0[i] - m_T_htf_in[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * m_c_htf[i])) *
-			exp(-2. * m_dot_htf_loop * m_c_htf[i] * step / (m_node * m_c_htf[i] + m_mc_bal_sca * m_L_actSCA[CT]));
+			exp(-2. * m_dot_htf_loop * m_c_htf[i] * sim_info.m_step / (m_node * m_c_htf[i] + m_mc_bal_sca * m_L_actSCA[CT]));
 		//Recalculate the average temperature for the SCA
 		m_T_htf_ave[i] = (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0;
 
@@ -707,7 +712,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * m_c_htf[i] + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
 				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
 				m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-				m_E_avail[i] = max(m_q_abs_SCAtot[i] * step - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+				m_E_avail[i] = max(m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
 
 				//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
 				//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
@@ -720,7 +725,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
 			m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
 			//m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
-			m_E_avail[i] = (m_q_abs_SCAtot[i] * step - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
+			m_E_avail[i] = (m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
 
 			//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
 			//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
@@ -742,9 +747,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			}
 
 			//Calculate inlet temperature of the next SCA
-			m_T_htf_in[i + 1] = m_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*m_pi*L_int*(m_T_htf_out[i] - T_db) / (m_m_dot_htf*m_c_htf[i]);
+			m_T_htf_in[i + 1] = m_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*CSP::pi*L_int*(m_T_htf_out[i] - T_db) / (m_m_dot_htf*m_c_htf[i]);
 			//mjw 1.18.2011 Add the internal energy of the crossover piping
-			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*m_pi + m_mc_bal_sca / m_c_htf[i])*(m_T_htf_out[i] - 298.150);
+			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi + m_mc_bal_sca / m_c_htf[i])*(m_T_htf_out[i] - 298.150);
 		}
 
 	}
@@ -761,14 +766,14 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		for( int i = 0; i < m_nhdrsec; i++ )
 		{
 			//m_Pipe_hl_hot = m_Pipe_hl_hot + m_Row_Distance*m_D_hdr[i]*m_pi*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)
-			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * m_pi*m_Pipe_hl_coef*(m_T_loop_outX - T_db);
+			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_loop_outX - T_db);
 		}
 
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
 			//m_Pipe_hl_hot = m_Pipe_hl_hot + m_L_runner[i]*m_pi*m_D_runner[i]*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)  //Wt
-			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * m_pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - T_db);  //Wt
+			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - T_db);  //Wt
 		}
 		m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;
 
@@ -820,10 +825,10 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double V_wind = weather.m_wspd;			//[m/s] Ambient windspeed 
 	double P_amb = weather.m_pres;			//[mbar] Ambient pressure 
 	double T_dp = weather.m_tdew;			//[C] The dewpoint temperature 
-	m_T_cold_in = htf_state_in.m_temp;		//[C] HTF return temperature 
-	m_m_dot_in = htf_state_in.m_m_dot;		//[kg/hr] HTF mass flow rate at the inlet  
+	double T_cold_in = htf_state_in.m_temp;	//[C] HTF return temperature 
+	double m_dot_in = htf_state_in.m_m_dot;	//[kg/hr] HTF mass flow rate at the inlet  
 	m_defocus_new = inputs.m_field_control;	//[none] Defocus control 
-	m_SolarAz = weather.m_solazi;			//[deg] Solar azimuth angle reported by the Type15 weather file 
+	double SolarAz = weather.m_solazi;			//[deg] Solar azimuth angle reported by the Type15 weather file 
 	m_latitude = weather.m_lat;				//[deg] Site m_latitude read from weather file 
 	m_longitude = weather.m_lon;			//[deg] Site m_longitude read from weather file 
 	m_shift = weather.m_shift;				//[deg]
@@ -832,9 +837,9 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	T_db += 273.15;				//[K] convert from C
 	T_dp += 273.15;				//[K] convert from C
 	P_amb *= 100.0;				//mbar -> Pa
-	m_T_cold_in += 273.15;      //[K] convert from C
-	m_m_dot_in *= 1 / 3600.;	//[kg/s] convert from kg/hr
-	m_SolarAz = (m_SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
+	T_cold_in += 273.15;      //[K] convert from C
+	m_dot_in *= 1 / 3600.;	//[kg/s] convert from kg/hr
+	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
 	m_latitude *= m_d2r;		//[rad] convert from [deg]
 	m_longitude *= m_d2r;		//[rad] convert from [deg]
 	m_shift *= m_d2r;			//[rad] convert from [deg]
@@ -842,9 +847,9 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
 	if (m_ncall>0)
 	{
-		if ((!m_no_fp) && (m_T_cold_in_1 > m_T_cold_in))
+		if ((!m_no_fp) && (m_T_cold_in_1 > T_cold_in))
 		{
-			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - m_T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 			goto set_outputs_and_return;
 		}
 	}
@@ -869,10 +874,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		m_time_hr = sim_info.m_time / 3600.;
 		m_dt_hr = m_dt / 3600.;
 		m_hour = fmod(m_time_hr, 24.);       //m_hour of the day (1..24)  //tn 4.25.11 mod returns a natural number. This messes with the m_ftrack HrA/HrB calculations
-		if (T_dp > -300.0)
-			m_T_sky = CSP::skytemp(T_db, T_dp, m_hour);     //[K] Effective sky temperature 
-		else
-			m_T_sky = T_db - 20.0;
 
 		// Always reset the m_defocus control at the first call of a timestep
 		m_defocus_new = 1.;
@@ -882,26 +883,26 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		//Time calculations
 		m_day_of_year = (int)ceil(m_time_hr / 24.);  //Day of the year
 		// Duffie & Beckman 1.5.3b
-		double B = (m_day_of_year - 1)*360.0 / 365.0*m_pi / 180.0;
+		double B = (m_day_of_year - 1)*360.0 / 365.0*CSP::pi / 180.0;
 		// Eqn of time in minutes
 		double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B*2.0) - 0.04089 * sin(B*2.0));
 		// Declination in radians (Duffie & Beckman 1.6.1)
-		double Dec = 23.45 * sin(360.0*(284.0 + m_day_of_year) / 365.0*m_pi / 180.0) * m_pi / 180.0;
+		double Dec = 23.45 * sin(360.0*(284.0 + m_day_of_year) / 365.0*CSP::pi / 180.0) *CSP::pi / 180.0;
 		// Solar Noon and time in hours
-		double SolarNoon = 12. - ((m_shift)*180.0 / m_pi) / 15.0 - EOT / 60.0;
+		double SolarNoon = 12. - ((m_shift)*180.0 / CSP::pi) / 15.0 - EOT / 60.0;
 
 		// Deploy & stow times in hours
 		// Calculations modified by MJW 11/13/2009 to correct bug
 		m_theta_dep = max(m_theta_dep, 1.e-6);
 		double DepHr1 = cos(m_latitude) / tan(m_theta_dep);
 		double DepHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_dep);
-		double DepHr3 = CSP::sign(tan(m_pi - m_theta_dep)) * acos((DepHr1*DepHr2 + sqrt(DepHr1*DepHr1 - DepHr2*DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / m_pi / 15.0;
+		double DepHr3 = CSP::sign(tan(CSP::pi - m_theta_dep)) * acos((DepHr1*DepHr2 + sqrt(DepHr1*DepHr1 - DepHr2*DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
 		double DepTime = SolarNoon + DepHr3;
 
 		m_theta_stow = max(m_theta_stow, 1.e-6);
 		double StwHr1 = cos(m_latitude) / tan(m_theta_stow);
 		double StwHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_stow);
-		double StwHr3 = CSP::sign(tan(m_pi - m_theta_stow))*acos((StwHr1*StwHr2 + sqrt(StwHr1*StwHr1 - StwHr2*StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / m_pi / 15.0;
+		double StwHr3 = CSP::sign(tan(CSP::pi - m_theta_stow))*acos((StwHr1*StwHr2 + sqrt(StwHr1*StwHr1 - StwHr2*StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
 		double StwTime = SolarNoon + StwHr3;
 
 		// m_ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
@@ -940,19 +941,19 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		}
 
 		double StdTime = MidTrack;
-		double SolarTime = StdTime + ((m_shift)*180.0 / m_pi) / 15.0 + EOT / 60.0;
+		double SolarTime = StdTime + ((m_shift)*180.0 / CSP::pi) / 15.0 + EOT / 60.0;
 		// m_hour angle (arc of sun) in radians
-		double omega = (SolarTime - 12.0)*15.0*m_pi / 180.0;
+		double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
 		// B. Stine equation for Solar Altitude angle in radians
 		m_SolarAlt = asin(sin(Dec)*sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
 		if ((m_accept_init  &&  time == m_start_time) || m_is_using_input_gen)
 		{  //MJW 1.14.2011 
-			m_SolarAz = CSP::sign(omega)*fabs(acos(min(1.0, (cos(m_pi / 2. - m_SolarAlt)*sin(m_latitude) - sin(Dec)) / (sin(m_pi / 2. - m_SolarAlt)*cos(m_latitude)))));
+			SolarAz = CSP::sign(omega)*fabs(acos(min(1.0, (cos(CSP::pi / 2. - m_SolarAlt)*sin(m_latitude) - sin(Dec)) / (sin(CSP::pi / 2. - m_SolarAlt)*cos(m_latitude)))));
 		}
 
 		// Calculation of Tracking Angle for Trough. Stine Reference
-		double TrackAngle = atan(cos(m_SolarAlt) * sin(m_SolarAz - m_ColAz) /
-			(sin(m_SolarAlt - m_ColTilt) + sin(m_ColTilt)*cos(m_SolarAlt)*(1 - cos(m_SolarAz - m_ColAz))));
+		double TrackAngle = atan(cos(m_SolarAlt) * sin(SolarAz - m_ColAz) /
+			(sin(m_SolarAlt - m_ColTilt) + sin(m_ColTilt)*cos(m_SolarAlt)*(1 - cos(SolarAz - m_ColAz))));
 		// Calculation of solar incidence angle for trough.. Stine reference
 		if (m_ftrack == 0.0)
 		{
@@ -960,7 +961,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		}
 		else
 		{
-			m_costh = sqrt(1.0 - pow(cos(m_SolarAlt - m_ColTilt) - cos(m_ColTilt) * cos(m_SolarAlt) * (1.0 - cos(m_SolarAz - m_ColAz)), 2));
+			m_costh = sqrt(1.0 - pow(cos(m_SolarAlt - m_ColTilt) - cos(m_ColTilt) * cos(m_SolarAlt) * (1.0 - cos(SolarAz - m_ColAz)), 2));
 		}
 
 		// m_theta in radians
@@ -989,7 +990,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 			//mjw 4.21.11 - rescope this to be for each specific collector j=1,m_nSCA
 			for (int j = 0; j<m_nSCA; j++)
 			{
-				if (fabs(m_SolarAz) <= 90.0)
+				if (fabs(SolarAz) <= 90.0)
 				{  //mjw 5.1.11 The sun is in the southern sky (towards equator)
 					if (j == 0 || j == m_nSCA - 1)
 					{
@@ -1053,9 +1054,9 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		if (m_accept_mode)
 		{
 			if (m_accept_loc == 1)
-				m_m_dot_htfX = m_m_dot_in / float(m_nLoops);
+				m_m_dot_htfX = m_dot_in / float(m_nLoops);
 			else
-				m_m_dot_htfX = m_m_dot_in;
+				m_m_dot_htfX = m_dot_in;
 		}
 		else
 		{
@@ -1089,7 +1090,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	}
 
 	// 12.29.2014, twn: want this before 'overtemp_iter_flag' so temp doesn't reset when flag is called
-	m_T_cold_in_1 = m_T_cold_in; //Inlet temperature may change due to new freeze protection model
+	m_T_cold_in_1 = T_cold_in; //Inlet temperature may change due to new freeze protection model
 
 overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
@@ -1164,7 +1165,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		else
 			m_m_dot_htf_tot = m_m_dot_htf;
 
-		int loop_energy_bal_exit = loop_energy_balance(weather, m_T_cold_in_1, m_m_dot_htf, m_dt);
+		int loop_energy_bal_exit = loop_energy_balance(weather, m_T_cold_in_1, m_m_dot_htf, sim_info);
 
 		// Check that we found a solution
 		if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
@@ -1252,7 +1253,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			if (m_is_using_input_gen)
 				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - m_T_sys_h)*m_dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
 			else
-				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - m_T_cold_in)*m_dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
+				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - T_cold_in)*m_dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
 
 
 			// Energy losses in field
@@ -1509,7 +1510,7 @@ freeze_prot_ok:		//9 continue
 		// Choosing here to enter recirculation when the outlet temperature is less than the user specified inlet temperature. Then, if there is no freeze-protection adjustment of the inlet temperature
 		// the code should iterate until the inlet and outlet temperatures are roughly equal.
 		// Could consider implementing a faster, more robust method than successive substitution to solve for the inlet temperature.
-		if (m_T_sys_h < m_T_cold_in)
+		if (m_T_sys_h < T_cold_in)
 		{
 			if (m_no_fp && fabs(m_T_cold_in_1 - m_T_sys_h) / m_T_sys_h > 0.001)
 			{
@@ -1525,16 +1526,13 @@ freeze_prot_ok:		//9 continue
 		if (m_is_using_input_gen)
 			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - m_T_sys_h);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 		else
-			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - m_T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 	}
 
 	if (m_qq>29)
 	{
-
 		m_error_msg = util::format("Mass Flow Rate Convergence Error");
 		throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
-		//message(TCS_ERROR, "Mass Flow Rate Convergence Error");
-		//return -1;
 	}
 
 	m_m_dot_htfX = m_m_dot_htf;              //for calls back to the temperature loop during the same run, this ensures that the first mass flow rate used will be the last mass flow rate
@@ -1631,7 +1629,7 @@ post_convergence_flag: //11 continue
 		//mjw 11.4.2010 added conditional statement
 		if (m_dfcount<5)
 		{
-			m_T_cold_in_1 = m_T_cold_in;		//12.29.14 twn: Shouldn't need to worry about freeze protection AND m_defocus, but, if both occur and m_defocus is adjusted, should try inlet temperature
+			m_T_cold_in_1 = T_cold_in;		//12.29.14 twn: Shouldn't need to worry about freeze protection AND m_defocus, but, if both occur and m_defocus is adjusted, should try inlet temperature
 			goto overtemp_iter_flag; //Return to recalculate with new m_defocus arrangement
 		}
 	}
@@ -2281,7 +2279,7 @@ lab_keep_guess:
 
 	//Constants
 	k_45 = 1.04;                             //[W/m-K]  Conductivity of glass
-	R_45cond = log(m_D_5(hn, hv) / m_D_4(hn, hv)) / (2.*m_pi*k_45);    //[K-m/W]Equation of thermal resistance for conduction through a cylinder
+	R_45cond = log(m_D_5(hn, hv) / m_D_4(hn, hv)) / (2.*CSP::pi*k_45);    //[K-m/W]Equation of thermal resistance for conduction through a cylinder
 
 	colopteff_tot = m_ColOptEff(ct, sca_num)*m_Dirt_HCE(hn, hv)*m_Shadowing(hn, hv);	//The total optical efficiency
 
@@ -2611,7 +2609,7 @@ lab_keep_guess:
 		k_23 = FK_23(T_2, T_3, hn, hv);       //[W/m-K]  
 
 		//Update the absorber surface temperature (T_3) according to new heat transfer rate
-		abs_diffT3 = T_3 - (T_2 + q_23cond*log(m_D_3(hn, hv) / m_D_2(hn, hv)) / (2.*m_pi*k_23));
+		abs_diffT3 = T_3 - (T_2 + q_23cond*log(m_D_3(hn, hv) / m_D_2(hn, hv)) / (2.*CSP::pi*k_23));
 		Diff_T3 = abs_diffT3 / T_3;
 
 
@@ -2796,7 +2794,7 @@ double C_csp_trough_collector_receiver::fT_2(double q_12conv, double T_1, double
 		}
 
 		h_1 = Nu_D2 * k_1 / m_D_h(hn, hv);  //[W/m**2-K]
-		return T_1 + q_12conv / (h_1*m_D_2(hn, hv)*m_pi);
+		return T_1 + q_12conv / (h_1*m_D_2(hn, hv)*CSP::pi);
 		//q_12conv = h_1 * m_D_2 * PI  * (T_2 - T_1ave)  //[W/m]
 	}
 	else{
@@ -2989,7 +2987,7 @@ void C_csp_trough_collector_receiver::FQ_34CONV(double T_3, double T_4, double P
 			Pr_36 = nu_36 / alpha_36;
 			Nu_bar = pow(0.60 + (0.387 * pow(Ra_D3, 0.1667)) / pow(1. + pow(0.559 / Pr_36, 0.5625), 0.2963), 2);
 			h_36 = Nu_bar * k_36 / m_D_3(hn, hv);  //[W/m**2-K]//
-			q_34conv = h_36 * m_pi * m_D_3(hn, hv) * (T_3 - T_6);  //[W/m]//
+			q_34conv = h_36 * CSP::pi * m_D_3(hn, hv) * (T_3 - T_6);  //[W/m]//
 			h_34 = h_36;  //Set output coefficient
 		}
 		else {
@@ -3048,7 +3046,7 @@ void C_csp_trough_collector_receiver::FQ_34CONV(double T_3, double T_4, double P
 			// Zhukauskas's correlation for external forced convection flow normal to an isothermal cylinder 
 			Nu_bar = C * pow(Re_D3, m)  * pow(Pr_6, n) * pow(Pr_6 / Pr_3, 0.25);
 			h_36 = Nu_bar  *  k_6 / m_D_3(hn, hv);  //[W/m**2-K]
-			q_34conv = h_36  *  m_D_3(hn, hv)  *  m_pi  *  (T_3 - T_6);  //[W/m]	
+			q_34conv = h_36  *  m_D_3(hn, hv)  * CSP::pi *  (T_3 - T_6);  //[W/m]	
 			h_34 = h_36;  //set output coefficient
 		}
 	}
@@ -3090,7 +3088,7 @@ void C_csp_trough_collector_receiver::FQ_34CONV(double T_3, double T_4, double P
 		a = 1.;
 		b = (2. - a) / a * (9. * Gamma - 5.) / (2. * (Gamma + 1.));
 		h_34 = k_34 / (m_D_3(hn, hv) / 2. * log(m_D_4(hn, hv) / m_D_3(hn, hv)) + b * Lambda / 100.* (m_D_3(hn, hv) / m_D_4(hn, hv) + 1.));  //[W/m**2-K]
-		Kineticq_34conv = m_D_3(hn, hv) * m_pi * h_34 * (T_3 - T_4);  //[W/m]
+		Kineticq_34conv = m_D_3(hn, hv) * CSP::pi * h_34 * (T_3 - T_4);  //[W/m]
 
 		// Following compares free-molecular heat transfer with natural convection heat transfer and uses the largest value for heat transfer in annulus 
 		if (Kineticq_34conv > Natq_34conv) {
@@ -3098,7 +3096,7 @@ void C_csp_trough_collector_receiver::FQ_34CONV(double T_3, double T_4, double P
 		}
 		else{
 			q_34conv = Natq_34conv;  //[W/m]
-			h_34 = q_34conv / (m_D_3(hn, hv)*m_pi*(T_3 - T_4));  //Recalculate the convection coefficient for natural convection
+			h_34 = q_34conv / (m_D_3(hn, hv)*CSP::pi*(T_3 - T_4));  //Recalculate the convection coefficient for natural convection
 		}
 	}
 
@@ -3146,12 +3144,12 @@ void C_csp_trough_collector_receiver::FQ_34RAD(double T_3, double T_4, double T_
 	double sigma = 5.67e-8, T_ave;
 	T_ave = (T_3 + T_4) / 2.;
 	if (!m_GlazingIntact.at(hn, hv)) {
-		q_34rad = epsilon_3_v * m_pi * m_D_3(hn, hv)  * sigma * (pow(T_3, 4) - pow(T_7, 4));  //[W/m]
-		h_34 = q_34rad / (m_pi*m_D_3(hn, hv)*(T_3 - T_7));
+		q_34rad = epsilon_3_v * CSP::pi * m_D_3(hn, hv)  * sigma * (pow(T_3, 4) - pow(T_7, 4));  //[W/m]
+		h_34 = q_34rad / (CSP::pi*m_D_3(hn, hv)*(T_3 - T_7));
 	}
 	else {
 		h_34 = sigma*(T_3*T_3 + T_4*T_4)*(T_3 + T_4) / (1.0 / epsilon_3_v + m_D_3(hn, hv) / m_D_4(hn, hv) * (1.0 / m_EPSILON_4(hn, hv) - 1.0));
-		q_34rad = m_pi* m_D_3(hn, hv) * h_34 * (T_3 - T_4);
+		q_34rad = CSP::pi* m_D_3(hn, hv) * h_34 * (T_3 - T_4);
 	}
 
 }
@@ -3205,7 +3203,7 @@ void C_csp_trough_collector_receiver::FQ_56CONV(double T_5, double T_6, double P
 			nu_56 = mu_56 / rho_56;  //[m^2/s]
 			alpha_56 = k_56 / (Cp_56 * rho_56);  //[m^2/s]
 			beta_56 = 1.0 / T_56;  //[1/K]
-			Ra_D5 = m_g *beta_56 * fabs(T_5 - T_6) * pow(m_D_5(hn, hv), 3) / (alpha_56 * nu_56);
+			Ra_D5 = CSP::grav *beta_56 * fabs(T_5 - T_6) * pow(m_D_5(hn, hv), 3) / (alpha_56 * nu_56);
 
 			// Warning Statement if following Nusselt Number correlation is used out of range //
 			//If (Ra_D5 <= 10**(-5)) or (Ra_D5 >= 10**12) Then CALL WARNING('The result may not be accurate, 
@@ -3215,7 +3213,7 @@ void C_csp_trough_collector_receiver::FQ_56CONV(double T_5, double T_6, double P
 			Pr_56 = nu_56 / alpha_56;
 			Nu_bar = pow(0.60 + (0.387 * pow(Ra_D5, 0.1667)) / pow(1.0 + pow(0.559 / Pr_56, 0.5625), 0.2963), 2);
 			h_6 = Nu_bar * k_56 / m_D_5(hn, hv);  //[W/m**2-K]
-			q_56conv = h_6 * m_pi * m_D_5(hn, hv) * (T_5 - T_6);  //[W/m]
+			q_56conv = h_6 * CSP::pi * m_D_5(hn, hv) * (T_5 - T_6);  //[W/m]
 		}
 		else {
 
@@ -3265,7 +3263,7 @@ void C_csp_trough_collector_receiver::FQ_56CONV(double T_5, double T_6, double P
 
 			Nus_6 = C * pow(Re_D5, m) *  pow(Pr_6, n)  * pow(Pr_6 / Pr_5, 0.25);
 			h_6 = Nus_6 * k_6 / m_D_5(hn, hv);  //[W/m**2-K]
-			q_56conv = h_6 * m_pi * m_D_5(hn, hv) * (T_5 - T_6);  //[W/m]
+			q_56conv = h_6 * CSP::pi * m_D_5(hn, hv) * (T_5 - T_6);  //[W/m]
 		}
 	}
 }
@@ -3321,7 +3319,7 @@ double C_csp_trough_collector_receiver::FQ_COND_BRACKET(double T_3, double T_6, 
 		nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 		Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 		Beta_brac6 = 1.0 / T_brac6;  //[1/K]
-		Ra_Dbrac = m_g * Beta_brac6 * fabs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
+		Ra_Dbrac = CSP::grav * Beta_brac6 * fabs(T_brac - T_6) * D_brac*D_brac*D_brac / (Alpha_brac6 * nu_brac6);
 
 		// Warning Statement if following Nusselt Number correlation is used out of recommended range 
 		//If ((Ra_Dbrac <= 1.e-5)) || (Ra_Dbrac >= 1.e12) Then CALL WARNING('The result may not be accurate, 
@@ -3617,7 +3615,7 @@ double C_csp_trough_collector_receiver::PressureDrop(double m_dot, double T, dou
 	mu = m_htfProps.visc(T);
 	nu = mu / rho;
 	v_dot = m_dot / rho;   //fluid volumetric flow rate
-	u_fluid = v_dot / (m_pi*(D / 2.)*(D / 2.));  //m_Fluid mean velocity
+	u_fluid = v_dot / (CSP::pi*(D / 2.)*(D / 2.));  //m_Fluid mean velocity
 
 	//Dimensionless numbers
 	Re = u_fluid*D / nu;
@@ -3629,21 +3627,21 @@ double C_csp_trough_collector_receiver::PressureDrop(double m_dot, double T, dou
 	//}
 
 	//Calculation of pressure loss from pipe length
-	HL_pm = f*u_fluid*u_fluid / (2.*D*m_g);
-	DP_pipe = HL_pm*rho*m_g*L_pipe;
+	HL_pm = f*u_fluid*u_fluid / (2.0*D*CSP::grav);
+	DP_pipe = HL_pm*rho*CSP::grav*L_pipe;
 
 	//Calculation of pressure loss from Fittings
 	DP_exp = 0.25*rho*u_fluid*u_fluid*Nexp;
 	DP_con = 0.25*rho*u_fluid*u_fluid*Ncon;
-	DP_els = 0.9 * D / f * HL_pm * rho * m_g * Nels;
-	DP_elm = 0.75 * D / f * HL_pm * rho * m_g * Nelm;
-	DP_ell = 0.6 * D / f * HL_pm * rho * m_g * Nell;
-	DP_gav = 0.19 * D / f * HL_pm * rho * m_g * Ngav;
-	DP_glv = 10.0 * D / f * HL_pm * rho * m_g * Nglv;
-	DP_chv = 2.5 * D / f * HL_pm * rho * m_g * Nchv;
-	DP_lw = 1.8 * D / f * HL_pm * rho * m_g * Nlw;
-	DP_lcv = 10.0 * D / f * HL_pm * rho * m_g * Nlcv;
-	DP_bja = 8.69 * D / f * HL_pm * rho * m_g * Nbja;
+	DP_els = 0.9 * D / f * HL_pm * rho * CSP::grav * Nels;
+	DP_elm = 0.75 * D / f * HL_pm * rho * CSP::grav * Nelm;
+	DP_ell = 0.6 * D / f * HL_pm * rho * CSP::grav * Nell;
+	DP_gav = 0.19 * D / f * HL_pm * rho * CSP::grav * Ngav;
+	DP_glv = 10.0 * D / f * HL_pm * rho * CSP::grav * Nglv;
+	DP_chv = 2.5 * D / f * HL_pm * rho * CSP::grav * Nchv;
+	DP_lw = 1.8 * D / f * HL_pm * rho * CSP::grav * Nlw;
+	DP_lcv = 10.0 * D / f * HL_pm * rho * CSP::grav * Nlcv;
+	DP_bja = 8.69 * D / f * HL_pm * rho * CSP::grav * Nbja;
 
 	return DP_pipe + DP_exp + DP_con + DP_els + DP_elm + DP_ell + DP_gav + DP_glv + DP_chv + DP_lw + DP_lcv + DP_bja;
 
@@ -3731,12 +3729,12 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 
 	//Runner diameters
 	//runner pipe needs some length to go from the power block to the headers
-	m_D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_ts / (rho*V_max*m_pi)));
+	m_D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_ts / (rho*V_max*CSP::pi)));
 	//other runner diameters
 	m_dot_temp = m_dot_ts*(1. - float(m_nfsec % 4) / float(m_nfsec));  //mjw 5.4.11 Fix mass flow rate for m_nfsec/2==odd 
 	if (m_nrunsec>1) {
 		for (int i = 1; i<m_nrunsec; i++){
-			m_D_runner[i] = pipe_sched(sqrt(4.*m_dot_temp / (rho*V_max*m_pi)));
+			m_D_runner[i] = pipe_sched(sqrt(4.*m_dot_temp / (rho*V_max*CSP::pi)));
 			m_dot_temp = max(m_dot_temp - m_dot_hdr * 2, 0.0);
 		}
 	}
@@ -3751,9 +3749,9 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 
 			nd++; //keep track of the total number of diameter sections
 			//Calculate header diameter based on max velocity
-			m_D_hdr[i] = pipe_sched(sqrt(4.*m_dot_max / (rho*V_max*m_pi)));
+			m_D_hdr[i] = pipe_sched(sqrt(4.*m_dot_max / (rho*V_max*CSP::pi)));
 			//Determine the mass flow corresponding to the minimum velocity at design
-			m_dot_min = rho*V_min*m_pi*m_D_hdr[i] * m_D_hdr[i] / 4.;
+			m_dot_min = rho*V_min*CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.;
 			//Determine the loop after which the current diameter calculation will no longer apply
 			nend = (int)floor((m_dot_hdr - m_dot_min) / (m_dot_2loops));  //tn 4.12.11 ceiling->floor
 			//The starting loop for the next diameter section starts after the calculated ending loop
@@ -3885,9 +3883,9 @@ double C_csp_trough_collector_receiver::Pump_SGS(double rho, double m_dotsf, dou
 	double psum = 0.;
 	for (int i = 0; i<nl; i++){
 		//Calculate the pipe diameter
-		D[i] = pipe_sched(sqrt(4.0*V_dot[i] / (vel_max*m_pi)));
+		D[i] = pipe_sched(sqrt(4.0*V_dot[i] / (vel_max*CSP::pi)));
 		//Calculate the total volume
-		V[i] = pow(D[i], 2) / 4.*m_pi*L_line[i];
+		V[i] = pow(D[i], 2) / 4.0*CSP::pi*L_line[i];
 		psum += V[i];
 	}
 
