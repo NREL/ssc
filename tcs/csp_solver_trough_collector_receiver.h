@@ -18,11 +18,6 @@ private:
 	
 	// Variables moved to private
 	double m_Pipe_hl;		//Pipe heat loss in the hot header and the hot runner
-	double m_I_b;			//Direct normal incident solar irradiation
-	double m_T_db;			//Dry bulb air temperature
-	double m_V_wind;		//Ambient windspeed 
-	double m_P_amb;			//Ambient pressure
-	double m_T_dp;			//The dewpoint temperature
 	double m_T_cold_in;		//HTF return temperature
 	double m_m_dot_in;		//HTF mass flow rate at the inlet 
 	double m_defocus;		//Defocus control 
@@ -273,7 +268,8 @@ public:
 				NaN
 			};
 	};
-	int loop_energy_balance(double rho_hdr_cold, double c_hdr_cold_last, double rho_hdr_hot);
+	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
+		double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/, double step /*s*/);
 			
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
