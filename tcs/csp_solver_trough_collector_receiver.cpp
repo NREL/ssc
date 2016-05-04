@@ -1161,244 +1161,37 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		else
 			m_m_dot_htf_tot = m_m_dot_htf;
 
-		//int loop_energy_bal_exit = loop_energy_balance(rho_hdr_cold, c_hdr_cold_last, rho_hdr_hot);
+		int loop_energy_bal_exit = loop_energy_balance(rho_hdr_cold, c_hdr_cold_last, rho_hdr_hot);
 
-		//// Check that we found a solution
-		//if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
-		//{
-		//	m_m_dot_htfX = m_m_dot_htfmax;
-		//	if( m_dfcount > 20 )
-		//	{
-		//		m_error_msg = "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...";
-		//		mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-
-		//		// Set values to something that won't crash TCS solver
-		//		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
-		//		cr_out_solver.m_time_required_su = 0.0;		//[s]
-		//		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
-		//		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
-		//		cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
-
-		//		cr_out_solver.m_E_fp_total = 0.0;
-		//		cr_out_solver.m_W_dot_col_tracking = 0.0;
-		//		cr_out_solver.m_W_dot_htf_pump = 0.0;
-
-		//		cr_out_report.m_q_dot_field_inc = 0.0;
-		//		cr_out_report.m_eta_field = 0.0;
-		//		cr_out_report.m_q_dot_rec_inc = 0.0;
-		//		cr_out_report.m_eta_thermal = 0.0;
-		//		cr_out_report.m_q_dot_piping_loss = 0.0;
-
-		//		return;
-		//	}
-		//	goto overtemp_iter_flag;
-		//}
-
-		if (m_accept_loc == 1)
+		// Check that we found a solution
+		if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
 		{
-			m_T_sys_c = (m_T_sys_c_last - m_T_cold_in_1)*exp(-(m_m_dot_htf*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*m_dt) + m_T_cold_in_1;
-			m_c_hdr_cold = m_htfProps.Cp(m_T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
-			//Consider heat loss from cold piping
-			//m_Pipe_hl_cold = 0.0
-			m_Header_hl_cold = 0.0;
-			m_Runner_hl_cold = 0.0;
-			//Header
-			for (int i = 0; i<m_nhdrsec; i++)
+			m_m_dot_htfX = m_m_dot_htfmax;
+			if( m_dfcount > 20 )
 			{
-				//m_Pipe_hl_cold = m_Pipe_hl_cold + m_Row_Distance*m_D_hdr[i]*m_pi*m_Pipe_hl_coef*(m_T_sys_c - m_T_db)  //[W]
-				m_Header_hl_cold = m_Header_hl_cold + m_Row_Distance*m_D_hdr[i] * m_pi*m_Pipe_hl_coef*(m_T_sys_c - m_T_db);  //[W]
+				m_error_msg = "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...";
+				mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+
+				// Set values to something that won't crash TCS solver
+				cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
+				cr_out_solver.m_time_required_su = 0.0;		//[s]
+				cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
+				cr_out_solver.m_q_thermal = 0.0;			//[MWt]
+				cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
+
+				cr_out_solver.m_E_fp_total = 0.0;
+				cr_out_solver.m_W_dot_col_tracking = 0.0;
+				cr_out_solver.m_W_dot_htf_pump = 0.0;
+
+				cr_out_report.m_q_dot_field_inc = 0.0;
+				cr_out_report.m_eta_field = 0.0;
+				cr_out_report.m_q_dot_rec_inc = 0.0;
+				cr_out_report.m_eta_thermal = 0.0;
+				cr_out_report.m_q_dot_piping_loss = 0.0;
+
+				return;
 			}
-			//Runner
-			for (int i = 0; i<m_nrunsec; i++)
-			{
-				//m_Pipe_hl_cold = m_Pipe_hl_cold + m_L_runner[i]*m_pi*m_D_runner[i]*m_Pipe_hl_coef*(m_T_sys_c - m_T_db)  //[W]
-				m_Runner_hl_cold = m_Runner_hl_cold + m_L_runner[i] * m_pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c - m_T_db);  //[W]
-			}
-			m_Pipe_hl_cold = m_Header_hl_cold + m_Runner_hl_cold;
-
-			m_T_loop_in = m_T_sys_c - m_Pipe_hl_cold / (m_m_dot_htf*float(m_nLoops)*m_c_hdr_cold);
-			m_T_htf_in[0] = m_T_loop_in;
-		}
-		else		// m_accept_loc == 2, only modeling loop
-		{
-			m_T_htf_in[0] = m_T_cold_in_1;
-			m_T_sys_c = m_T_htf_in[0];
-		}
-
-		//---------------------
-		for (int i = 0; i<m_nSCA; i++)
-		{
-			m_q_loss.fill(0.);
-			m_q_abs.fill(0.);
-			m_q_1abs.fill(0.);
-
-			int HT = (int)m_SCAInfoArray(i, 0) - 1;    //HCE type
-			int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type
-
-			for (int j = 0; j<m_nHCEVar; j++)
-			{
-
-				//Check to see if the field fraction for this HCE is zero.  if so, don't bother calculating for this variation
-				if (m_HCE_FieldFrac(HT, j) == 0.0) continue;
-
-				/*if(epsilon_3l(HT,j)>1) {
-				xx(:)=epsilon_3t(HT,j,:)
-				yy(:)=epsilon_3(HT,j,:)
-				//call interp((m_T_htf_ave[i]-273.15),epsilon_3l(HT,j),xx,yy,eps3sav,eps_3): Now calculate inside of receiver subroutine such that correct temp is used
-				} else {
-				eps_3 = epsilon_3(HT,j,1)
-				}*/	//cc--> Emittance is stored in objects that the EvacReceiver sub. has access to. No need to calculate here
-				double c_htf_j, rho_htf_j;//                                               hn, hv
-				EvacReceiver(m_T_htf_in[i], m_m_dot_htf, m_T_db, m_T_sky, m_V_wind, m_P_amb, m_q_SCA[i], HT, j, CT, i, false, m_ncall, m_time_hr,
-					//outputs
-					m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j);
-
-				if (m_q_abs[j] != m_q_abs[j])	//cc--> Check for NaN
-				{
-					m_m_dot_htfX = m_m_dot_htfmax;
-					if (m_dfcount > 20)
-					{
-						m_error_msg = "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...";
-						mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-						
-						// Set values to something that won't crash TCS solver
-						cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
-						cr_out_solver.m_time_required_su = 0.0;		//[s]
-						cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
-						cr_out_solver.m_q_thermal = 0.0;			//[MWt]
-						cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
-
-						cr_out_solver.m_E_fp_total = 0.0;
-						cr_out_solver.m_W_dot_col_tracking = 0.0;
-						cr_out_solver.m_W_dot_htf_pump = 0.0;
-
-						cr_out_report.m_q_dot_field_inc = 0.0;
-						cr_out_report.m_eta_field = 0.0;
-						cr_out_report.m_q_dot_rec_inc = 0.0;
-						cr_out_report.m_eta_thermal = 0.0;
-						cr_out_report.m_q_dot_piping_loss = 0.0;
-
-						return;
-					}
-					goto overtemp_iter_flag;
-				}
-
-				//Keep a running sum of all of the absorbed/lost heat for each SCA in the loop
-				double temp[] = { m_q_loss[j], m_q_abs[j], m_L_actSCA[CT], m_HCE_FieldFrac(HT, j) };
-
-				m_q_abs_SCAtot[i] += m_q_abs[j] * m_L_actSCA[CT] * m_HCE_FieldFrac(HT, j);
-				m_q_loss_SCAtot[i] += m_q_loss[j] * m_L_actSCA[CT] * m_HCE_FieldFrac(HT, j);
-				m_q_1abs_tot[i] += m_q_1abs[j] * m_HCE_FieldFrac(HT, j);  //losses in W/m from the absorber surface
-				m_c_htf[i] += c_htf_j*m_HCE_FieldFrac(HT, j);
-				m_rho_htf[i] += rho_htf_j*m_HCE_FieldFrac(HT, j);
-
-				//keep track of the total equivalent optical efficiency
-				m_EqOpteff += m_ColOptEff(CT, i)*m_Shadowing(HT, j)*m_Dirt_HCE(HT, j)*m_alpha_abs(HT, j)*m_Tau_envelope(HT, j)*(m_L_actSCA[CT] / m_L_tot)*m_HCE_FieldFrac(HT, j);;
-			}  //m_nHCEVar loop
-
-			//Calculate the specific heat for the node
-			m_c_htf[i] *= 1000.0;
-			//Calculate the average node outlet temperature, including transient effects
-			double m_node = m_rho_htf[i] * m_A_cs(HT, 1)*m_L_actSCA[CT];
-
-			//MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
-			//average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
-			//of the heat addition.
-			//mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
-			m_T_htf_out[i] = m_q_abs_SCAtot[i] / (m_m_dot_htf*m_c_htf[i]) + m_T_htf_in[i] +
-				2.0 * (m_T_htf_ave0[i] - m_T_htf_in[i] - m_q_abs_SCAtot[i] / (2.0 * m_m_dot_htf * m_c_htf[i])) *
-				exp(-2. * m_m_dot_htf * m_c_htf[i] * m_dt / (m_node * m_c_htf[i] + m_mc_bal_sca * m_L_actSCA[CT]));
-			//Recalculate the average temperature for the SCA
-			m_T_htf_ave[i] = (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0;
-
-
-			//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
-			//MJW 1.16.2011 Include the thermal inertia term
-			if (!m_is_using_input_gen)
-			{
-				if (m_q_abs_SCAtot[i] > 0.0)
-				{
-					//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
-					double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * m_c_htf[i] + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
-					m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
-					m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-					m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
-
-					//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
-					//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
-				}
-			}
-			else
-			{
-				//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
-				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * m_c_htf[i] + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
-				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
-				m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-				//m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
-				m_E_avail[i] = (m_q_abs_SCAtot[i] * m_dt - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
-
-				//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
-				//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
-			}
-
-			//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
-			//minus the heat losses in intermediate piping
-			if (i < m_nSCA - 1)
-			{
-				//Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
-				double L_int;
-				if (i == m_nSCA / 2 - 1)
-				{
-					L_int = 2. + m_Row_Distance;
-				}
-				else
-				{
-					L_int = m_Distance_SCA[CT];
-				}
-
-				//Calculate inlet temperature of the next SCA
-				m_T_htf_in[i + 1] = m_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*m_pi*L_int*(m_T_htf_out[i] - m_T_db) / (m_m_dot_htf*m_c_htf[i]);
-				//mjw 1.18.2011 Add the internal energy of the crossover piping
-				m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*m_pi + m_mc_bal_sca / m_c_htf[i])*(m_T_htf_out[i] - 298.150);
-			}
-
-		}
-
-		//Set the loop outlet temperature
-		m_T_loop_outX = m_T_htf_out[m_nSCA - 1];
-
-		if (m_accept_loc == 1)
-		{
-			//Calculation for heat losses from hot header and runner pipe
-			//m_Pipe_hl_hot = 0.0 //initialize
-			m_Runner_hl_hot = 0.0;    //initialize
-			m_Header_hl_hot = 0.0;   //initialize
-			for (int i = 0; i < m_nhdrsec; i++)
-			{
-				//m_Pipe_hl_hot = m_Pipe_hl_hot + m_Row_Distance*m_D_hdr[i]*m_pi*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)
-				m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * m_pi*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db);
-			}
-
-			//Add the runner length
-			for (int i = 0; i < m_nrunsec; i++)
-			{
-				//m_Pipe_hl_hot = m_Pipe_hl_hot + m_L_runner[i]*m_pi*m_D_runner[i]*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)  //Wt
-				m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * m_pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - m_T_db);  //Wt
-			}
-			m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;
-
-			m_c_hdr_hot = m_htfProps.Cp(m_T_loop_outX)* 1000.;
-
-			//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-			m_T_sys_h = m_T_loop_outX - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);
-
-			//Calculate the system temperature of the hot portion of the collector field. 
-			//This will serve as the fluid outlet temperature
-			m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*m_dt) + m_T_sys_h;
-		}
-		else
-		{
-			m_T_sys_h = m_T_loop_outX;
+			goto overtemp_iter_flag;
 		}
 
 		if (!m_ss_init_complete && m_accept_init)
