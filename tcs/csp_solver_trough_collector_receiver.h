@@ -13,15 +13,16 @@ class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
 private:
 
+	// Constants
 	HTFProperties m_htfProps, m_airProps;
-	double m_pi, m_Pi, m_d2r, m_r2d, m_g, m_mtoinch;
+	double m_d2r, m_r2d, m_mtoinch;
+	
+	// Variables that we need to track between calls and timesteps
+	double m_defocus;		//[-] Defocus control 
+	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
 	
 	// Variables moved to private
 	double m_Pipe_hl;		//Pipe heat loss in the hot header and the hot runner
-	double m_T_cold_in;		//HTF return temperature
-	double m_m_dot_in;		//HTF mass flow rate at the inlet 
-	double m_defocus;		//Defocus control 
-	double m_SolarAz;		//Solar azimuth angle reported by the Type15 weather file
 	double m_latitude;		//Site m_latitude read from weather file
 	double m_longitude;		//Site m_longitude read from weather file
 
@@ -82,10 +83,15 @@ private:
 	emit_table m_epsilon_3;
 	util::matrix_t<double> m_D_runner, m_L_runner, m_D_hdr;
 
+	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
+
 	util::matrix_t<double>
-		m_T_htf_in, m_T_htf_out, m_T_htf_ave, m_q_loss, m_q_abs, m_c_htf, m_rho_htf, m_DP_tube, m_E_abs_field,
+		m_q_loss, m_q_abs, m_c_htf, m_rho_htf, m_DP_tube, m_E_abs_field,
 		m_E_int_loop, m_E_accum, m_E_avail, m_E_abs_max, m_v_1, m_q_loss_SCAtot, m_q_abs_SCAtot, m_q_SCA, m_T_htf_in0, m_T_htf_out0,
 		m_T_htf_ave0, m_E_fp, m_q_1abs_tot, m_q_1abs, m_q_i, m_IAM, m_EndGain, m_EndLoss, m_RowShadow;
+	
 	double m_T_sys_c_last, m_T_sys_h_last; //stored values for header thermal inertia calculations
 	double m_N_run_mult;
 	double m_v_hot, m_v_cold;	//Header HTF volume
@@ -93,7 +99,7 @@ private:
 	bool
 		m_no_fp,	//Freeze protection flag
 		m_is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
-	double m_T_cold_in_1, m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_SolarAlt, m_costh, m_theta, m_shift,
+	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_SolarAlt, m_costh, m_theta, m_shift,
 		m_q_SCA_tot, m_m_dot_htfX, m_Header_hl_cold, m_Runner_hl_cold, m_Pipe_hl_cold, m_T_loop_in,
 		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_Pipe_hl_hot, m_c_hdr_hot, m_time_hr, m_dt_hr;
 	int m_day_of_year, m_SolveMode, m_dfcount;
@@ -103,7 +109,7 @@ private:
 	double m_T_save[5];
 	double m_reguess_args[3];
 
-	double m_hour, m_T_sky;
+	double m_hour;
 
 	double m_m_htf_prop_min;
 
@@ -269,7 +275,8 @@ public:
 			};
 	};
 	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
-		double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/, double step /*s*/);
+		double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
+		const C_csp_solver_sim_info &sim_info);
 			
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
