@@ -201,105 +201,6 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	}
 	// ******************************************************************
 
-	//m_reflectivity = value(P_REFLECTIVITY, &m_nval_reflectivity);		//Base solar-weighted mirror m_reflectivity value  [none]
-	//m_TrackingError = value(P_TRACKINGERROR, &m_nval_TrackingError);		//User-defined tracking error derate [none]
-	//m_GeomEffects = value(P_GEOMEFFECTS, &m_nval_GeomEffects);		//User-defined geometry effects derate [none]
-	//m_Rho_mirror_clean = value(P_RHO_MIRROR_CLEAN, &m_nval_Rho_mirror_clean);		//User-defined clean mirror m_reflectivity [none]
-	//m_Dirt_mirror = value(P_DIRT_MIRROR, &m_nval_Dirt_mirror);		//User-defined dirt on mirror derate [none]
-	//m_Error = value(P_ERROR, &m_nval_Error);		//User-defined general optical error derate  [none]
-	//m_Ave_Focal_Length = value(P_AVE_FOCAL_LENGTH, &m_nval_Ave_Focal_Length);		//The average focal length of the collector  [m]
-	//m_L_SCA = value(P_L_SCA, &m_nval_L_SCA);		//The length of the SCA  [m]
-	//m_L_aperture = value(P_L_APERTURE, &m_nval_L_aperture);		//The length of a single mirror/HCE unit [m]
-	//m_ColperSCA = value(P_COLPERSCA, &m_nval_ColperSCA);		//The number of individual collector sections in an SCA  [none]
-	//m_Distance_SCA = value(P_DISTANCE_SCA, &m_nval_Distance_SCA);		// piping distance between SCA's in the field [m]
-
-	//m_HCE_FieldFrac_in = value(P_HCE_FIELDFRAC, &m_nrow_HCE_FieldFrac, &m_ncol_HCE_FieldFrac);		//The fraction of the field occupied by this HCE type  [none]
-	//m_D_2_in = value(P_D_2, &m_nrow_D_2, &m_ncol_D_2);		//The inner absorber tube diameter [m]
-	//m_D_3_in = value(P_D_3, &m_nrow_D_3, &m_ncol_D_3);		//The outer absorber tube diameter [m]
-	//m_D_4_in = value(P_D_4, &m_nrow_D_4, &m_ncol_D_4);		//The inner glass envelope diameter  [m]
-	//m_D_5_in = value(P_D_5, &m_nrow_D_5, &m_ncol_D_5);		//The outer glass envelope diameter  [m]
-	//m_D_p_in = value(P_D_P, &m_nrow_D_p, &m_ncol_D_p);		//The diameter of the absorber flow plug (optional)  [m]
-	//m_Flow_type_in = value(P_FLOW_TYPE, &m_nrow_Flow_type, &m_ncol_Flow_type);		//The flow type through the absorber [none]
-	//m_Rough_in = value(P_ROUGH, &m_nrow_Rough, &m_ncol_Rough);		//Roughness of the internal surface  [m]
-	//m_alpha_env_in = value(P_ALPHA_ENV, &m_nrow_alpha_env, &m_ncol_alpha_env);		//Envelope absorptance  [none]
-	//m_epsilon_3_11_in = value(P_EPSILON_3_11, &m_nrow_epsilon_3_11, &m_ncol_epsilon_3_11);		//Absorber emittance - HCE type 1 - HCE variation 1 [none]
-	//m_epsilon_3_12_in = value(P_EPSILON_3_12, &m_nrow_epsilon_3_12, &m_ncol_epsilon_3_12);		//Absorber emittance - HCE type 1 - HCE variation 2 [none]
-	//m_epsilon_3_13_in = value(P_EPSILON_3_13, &m_nrow_epsilon_3_13, &m_ncol_epsilon_3_13);		//Absorber emittance - HCE type 1 - HCE variation 3 [none]
-	//m_epsilon_3_14_in = value(P_EPSILON_3_14, &m_nrow_epsilon_3_14, &m_ncol_epsilon_3_14);		//Absorber emittance - HCE type 1 - HCE variation 4 [none]
-	//m_epsilon_3_21_in = value(P_EPSILON_3_21, &m_nrow_epsilon_3_21, &m_ncol_epsilon_3_21);		//Absorber emittance - HCE type 2 - HCE variation 1 [none]
-	//m_epsilon_3_22_in = value(P_EPSILON_3_22, &m_nrow_epsilon_3_22, &m_ncol_epsilon_3_22);		//Absorber emittance - HCE type 2 - HCE variation 2 [none]
-	//m_epsilon_3_23_in = value(P_EPSILON_3_23, &m_nrow_epsilon_3_23, &m_ncol_epsilon_3_23);		//Absorber emittance - HCE type 2 - HCE variation 3 [none]
-	//m_epsilon_3_24_in = value(P_EPSILON_3_24, &m_nrow_epsilon_3_24, &m_ncol_epsilon_3_24);		//Absorber emittance - HCE type 2 - HCE variation 4 [none]
-	//m_epsilon_3_31_in = value(P_EPSILON_3_31, &m_nrow_epsilon_3_31, &m_ncol_epsilon_3_31);		//Absorber emittance - HCE type 3 - HCE variation 1 [none]
-	//m_epsilon_3_32_in = value(P_EPSILON_3_32, &m_nrow_epsilon_3_32, &m_ncol_epsilon_3_32);		//Absorber emittance - HCE type 3 - HCE variation 2 [none]
-	//m_epsilon_3_33_in = value(P_EPSILON_3_33, &m_nrow_epsilon_3_33, &m_ncol_epsilon_3_33);		//Absorber emittance - HCE type 3 - HCE variation 3 [none]
-	//m_epsilon_3_34_in = value(P_EPSILON_3_34, &m_nrow_epsilon_3_34, &m_ncol_epsilon_3_34);		//Absorber emittance - HCE type 3 - HCE variation 4 [none]
-	//m_epsilon_3_41_in = value(P_EPSILON_3_41, &m_nrow_epsilon_3_41, &m_ncol_epsilon_3_41);		//Absorber emittance - HCE type 4 - HCE variation 1 [none]
-	//m_epsilon_3_42_in = value(P_EPSILON_3_42, &m_nrow_epsilon_3_42, &m_ncol_epsilon_3_42);		//Absorber emittance - HCE type 4 - HCE variation 2 [none]
-	//m_epsilon_3_43_in = value(P_EPSILON_3_43, &m_nrow_epsilon_3_43, &m_ncol_epsilon_3_43);		//Absorber emittance - HCE type 4 - HCE variation 3 [none]
-	//m_epsilon_3_44_in = value(P_EPSILON_3_44, &m_nrow_epsilon_3_44, &m_ncol_epsilon_3_44);		//Absorber emittance - HCE type 4 - HCE variation 4 [none]
-	//m_alpha_abs_in = value(P_ALPHA_ABS, &m_nrow_alpha_abs, &m_ncol_alpha_abs);		//Absorber absorptance  [none]
-	//m_Tau_envelope_in = value(P_TAU_ENVELOPE, &m_nrow_Tau_envelope, &m_ncol_Tau_envelope);		//Envelope transmittance [none]
-	//m_EPSILON_4_in = value(P_EPSILON_4, &m_nrow_EPSILON_4, &m_ncol_EPSILON_4);		//Inner glass envelope emissivities (Pyrex)  [none]
-	//m_EPSILON_5_in = value(P_EPSILON_5, &m_nrow_EPSILON_5, &m_ncol_EPSILON_5);		//Outer glass envelope emissivities (Pyrex)  [none]
-	//m_GlazingIntactIn_in = value(P_GLAZINGINTACTIN, &m_nrow_GlazingIntactIn, &m_ncol_GlazingIntactIn);		//The glazing intact flag {1=true, else=false} [none]
-	//m_P_a_in = value(P_P_A, &m_nrow_P_a, &m_ncol_P_a);		//Annulus gas pressure [torr]
-	//m_AnnulusGas_in = value(P_ANNULUSGAS, &m_nrow_AnnulusGas, &m_ncol_AnnulusGas);		//Annulus gas type (1=air, 26=Ar, 27=H2) [none]
-	//m_AbsorberMaterial_in = value(P_ABSORBERMATERIAL, &m_nrow_AbsorberMaterial, &m_ncol_AbsorberMaterial);		//Absorber material type [none]
-	//m_Shadowing_in = value(P_SHADOWING, &m_nrow_Shadowing, &m_ncol_Shadowing);		//Receiver bellows shadowing loss factor [none]
-	//m_Dirt_HCE_in = value(P_DIRT_HCE, &m_nrow_Dirt_HCE, &m_ncol_Dirt_HCE);		//Loss due to dirt on the receiver envelope [none]
-	//m_Design_loss_in = value(P_DESIGN_LOSS, &m_nrow_Design_loss, &m_ncol_Design_loss);		//Receiver heat loss at design [W/m]
-
-	//m_SCAInfoArray_in = value(P_SCAINFOARRAY, &m_nrow_SCAInfoArray, &m_ncol_SCAInfoArray);		//(:,1) = HCE type, (:,2)= Collector type for each SCA in the loop  [none]
-	//m_SCADefocusArray = value(P_SCADEFOCUSARRAY, &m_nval_SCADefocusArray);		//Order in which the SCA's should be defocused [none]
-
-	////Put all of the matrices into a more handlable format
-	//m_HCE_FieldFrac.assign(m_HCE_FieldFrac_in, m_nrow_HCE_FieldFrac, m_ncol_HCE_FieldFrac);
-	//m_D_2.assign(m_D_2_in, m_nrow_D_2, m_ncol_D_2);
-	//m_D_3.assign(m_D_3_in, m_nrow_D_3, m_ncol_D_3);
-	//m_D_4.assign(m_D_4_in, m_nrow_D_4, m_ncol_D_4);
-	//m_D_5.assign(m_D_5_in, m_nrow_D_5, m_ncol_D_5);
-	//m_D_p.assign(m_D_p_in, m_nrow_D_p, m_ncol_D_p);
-	//m_Flow_type.assign(m_Flow_type_in, m_nrow_Flow_type, m_ncol_Flow_type);
-	//m_Rough.assign(m_Rough_in, m_nrow_Rough, m_ncol_Rough);
-	//m_alpha_env.assign(m_alpha_env_in, m_nrow_alpha_env, m_ncol_alpha_env);
-	//m_epsilon_3_11.assign(m_epsilon_3_11_in, m_nrow_epsilon_3_11, m_ncol_epsilon_3_11);
-	//m_epsilon_3_12.assign(m_epsilon_3_12_in, m_nrow_epsilon_3_12, m_ncol_epsilon_3_12);
-	//m_epsilon_3_13.assign(m_epsilon_3_13_in, m_nrow_epsilon_3_13, m_ncol_epsilon_3_13);
-	//m_epsilon_3_14.assign(m_epsilon_3_14_in, m_nrow_epsilon_3_14, m_ncol_epsilon_3_14);
-	//m_epsilon_3_21.assign(m_epsilon_3_21_in, m_nrow_epsilon_3_21, m_ncol_epsilon_3_21);
-	//m_epsilon_3_22.assign(m_epsilon_3_22_in, m_nrow_epsilon_3_22, m_ncol_epsilon_3_22);
-	//m_epsilon_3_23.assign(m_epsilon_3_23_in, m_nrow_epsilon_3_23, m_ncol_epsilon_3_23);
-	//m_epsilon_3_24.assign(m_epsilon_3_24_in, m_nrow_epsilon_3_24, m_ncol_epsilon_3_24);
-	//m_epsilon_3_31.assign(m_epsilon_3_31_in, m_nrow_epsilon_3_31, m_ncol_epsilon_3_31);
-	//m_epsilon_3_32.assign(m_epsilon_3_32_in, m_nrow_epsilon_3_32, m_ncol_epsilon_3_32);
-	//m_epsilon_3_33.assign(m_epsilon_3_33_in, m_nrow_epsilon_3_33, m_ncol_epsilon_3_33);
-	//m_epsilon_3_34.assign(m_epsilon_3_34_in, m_nrow_epsilon_3_34, m_ncol_epsilon_3_34);
-	//m_epsilon_3_41.assign(m_epsilon_3_41_in, m_nrow_epsilon_3_41, m_ncol_epsilon_3_41);
-	//m_epsilon_3_42.assign(m_epsilon_3_42_in, m_nrow_epsilon_3_42, m_ncol_epsilon_3_42);
-	//m_epsilon_3_43.assign(m_epsilon_3_43_in, m_nrow_epsilon_3_43, m_ncol_epsilon_3_43);
-	//m_epsilon_3_44.assign(m_epsilon_3_44_in, m_nrow_epsilon_3_44, m_ncol_epsilon_3_44);
-	//m_alpha_abs.assign(m_alpha_abs_in, m_nrow_alpha_abs, m_ncol_alpha_abs);
-	//m_Tau_envelope.assign(m_Tau_envelope_in, m_nrow_Tau_envelope, m_ncol_Tau_envelope);
-	//m_EPSILON_4.assign(m_EPSILON_4_in, m_nrow_EPSILON_4, m_ncol_EPSILON_4);
-	//m_EPSILON_5.assign(m_EPSILON_5_in, m_nrow_EPSILON_5, m_ncol_EPSILON_5);
-	//m_GlazingIntactIn.assign(m_GlazingIntactIn_in, m_nrow_GlazingIntactIn, m_ncol_GlazingIntactIn);
-	//m_P_a.assign(m_P_a_in, m_nrow_P_a, m_ncol_P_a);
-	//m_AnnulusGas.assign(m_AnnulusGas_in, m_nrow_AnnulusGas, m_ncol_AnnulusGas);
-	//m_AbsorberMaterial.assign(m_AbsorberMaterial_in, m_nrow_AbsorberMaterial, m_ncol_AbsorberMaterial);
-	//m_Shadowing.assign(m_Shadowing_in, m_nrow_Shadowing, m_ncol_Shadowing);
-	//m_Dirt_HCE.assign(m_Dirt_HCE_in, m_nrow_Dirt_HCE, m_ncol_Dirt_HCE);
-	//m_Design_loss.assign(m_Design_loss_in, m_nrow_Design_loss, m_ncol_Design_loss);
-	//m_SCAInfoArray.assign(m_SCAInfoArray_in, m_nrow_SCAInfoArray, m_ncol_SCAInfoArray);
-
-	////The glazingintact array should be converted to bools
-	//m_GlazingIntact.resize(m_nrow_GlazingIntactIn, m_ncol_GlazingIntactIn);
-	//for (int i = 0; i<m_nrow_GlazingIntactIn; i++){
-	//	for (int j = 0; j<m_ncol_GlazingIntactIn; j++){
-	//		m_GlazingIntact.at(i, j) = m_GlazingIntactIn.at(i, j) == 1;
-	//	}
-	//}
-
 	//Organize the emittance tables here
 	m_epsilon_3.init(4, 4);
 	m_epsilon_3.addTable(&m_epsilon_3_11);	//HCE #1
@@ -391,7 +292,11 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	init_fieldgeom();
 	// for test end
 
-	solved_params.m_A_aper_total = m_Ap_tot;	//[m^2]
+	// Set solved parameters
+	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
+	solved_params.m_q_dot_rec_on_min = 0.0;				//[W/m^2] Not sure that this is super important for the trough
+	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
+	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
 	return;
 }
@@ -699,6 +604,186 @@ double C_csp_trough_collector_receiver::get_min_power_delivery()
 void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	return;
+}
+
+int C_csp_trough_collector_receiver::loop_energy_balance(double rho_hdr_cold, double c_hdr_cold_last, double rho_hdr_hot)
+{
+
+	if( m_accept_loc ==  E_piping_config::FIELD )
+	{
+		m_T_sys_c = (m_T_sys_c_last - m_T_cold_in_1)*exp(-(m_m_dot_htf*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*m_dt) + m_T_cold_in_1;
+		m_c_hdr_cold = m_htfProps.Cp(m_T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
+		//Consider heat loss from cold piping
+		//m_Pipe_hl_cold = 0.0
+		m_Header_hl_cold = 0.0;
+		m_Runner_hl_cold = 0.0;
+		//Header
+		for( int i = 0; i<m_nhdrsec; i++ )
+		{
+			//m_Pipe_hl_cold = m_Pipe_hl_cold + m_Row_Distance*m_D_hdr[i]*m_pi*m_Pipe_hl_coef*(m_T_sys_c - m_T_db)  //[W]
+			m_Header_hl_cold = m_Header_hl_cold + m_Row_Distance*m_D_hdr[i] * m_pi*m_Pipe_hl_coef*(m_T_sys_c - m_T_db);  //[W]
+		}
+		//Runner
+		for( int i = 0; i<m_nrunsec; i++ )
+		{
+			//m_Pipe_hl_cold = m_Pipe_hl_cold + m_L_runner[i]*m_pi*m_D_runner[i]*m_Pipe_hl_coef*(m_T_sys_c - m_T_db)  //[W]
+			m_Runner_hl_cold = m_Runner_hl_cold + m_L_runner[i] * m_pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_sys_c - m_T_db);  //[W]
+		}
+		m_Pipe_hl_cold = m_Header_hl_cold + m_Runner_hl_cold;
+
+		m_T_loop_in = m_T_sys_c - m_Pipe_hl_cold / (m_m_dot_htf*float(m_nLoops)*m_c_hdr_cold);
+		m_T_htf_in[0] = m_T_loop_in;
+	}
+	else		// m_accept_loc == 2, only modeling loop
+	{
+		m_T_htf_in[0] = m_T_cold_in_1;
+		m_T_sys_c = m_T_htf_in[0];
+	}
+
+	//---------------------
+	for( int i = 0; i<m_nSCA; i++ )
+	{
+		m_q_loss.fill(0.);
+		m_q_abs.fill(0.);
+		m_q_1abs.fill(0.);
+
+		int HT = (int)m_SCAInfoArray(i, 0) - 1;    //[-] HCE type
+		int CT = (int)m_SCAInfoArray(i, 1) - 1;    //[-] Collector type
+
+		for( int j = 0; j<m_nHCEVar; j++ )
+		{
+			//Check to see if the field fraction for this HCE is zero.  if so, don't bother calculating for this variation
+			if( m_HCE_FieldFrac(HT, j) == 0.0 ) continue;
+
+			double c_htf_j, rho_htf_j;//                                               hn, hv
+			EvacReceiver(m_T_htf_in[i], m_m_dot_htf, m_T_db, m_T_sky, m_V_wind, m_P_amb, m_q_SCA[i], HT, j, CT, i, false, m_ncall, m_time_hr,
+				//outputs
+				m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j);
+
+			if( m_q_abs[j] != m_q_abs[j] )	//cc--> Check for NaN
+			{
+				return E_loop_energy_balance_exit::NaN;
+			}
+
+			//Keep a running sum of all of the absorbed/lost heat for each SCA in the loop
+			double temp[] = {m_q_loss[j], m_q_abs[j], m_L_actSCA[CT], m_HCE_FieldFrac(HT, j)};
+
+			m_q_abs_SCAtot[i] += m_q_abs[j] * m_L_actSCA[CT] * m_HCE_FieldFrac(HT, j);
+			m_q_loss_SCAtot[i] += m_q_loss[j] * m_L_actSCA[CT] * m_HCE_FieldFrac(HT, j);
+			m_q_1abs_tot[i] += m_q_1abs[j] * m_HCE_FieldFrac(HT, j);  //losses in W/m from the absorber surface
+			m_c_htf[i] += c_htf_j*m_HCE_FieldFrac(HT, j);
+			m_rho_htf[i] += rho_htf_j*m_HCE_FieldFrac(HT, j);
+
+			//keep track of the total equivalent optical efficiency
+			m_EqOpteff += m_ColOptEff(CT, i)*m_Shadowing(HT, j)*m_Dirt_HCE(HT, j)*m_alpha_abs(HT, j)*m_Tau_envelope(HT, j)*(m_L_actSCA[CT] / m_L_tot)*m_HCE_FieldFrac(HT, j);;
+		}  //m_nHCEVar loop
+
+		//Calculate the specific heat for the node
+		m_c_htf[i] *= 1000.0;
+		//Calculate the average node outlet temperature, including transient effects
+		double m_node = m_rho_htf[i] * m_A_cs(HT, 1)*m_L_actSCA[CT];
+
+		//MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
+		//average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
+		//of the heat addition.
+		//mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
+		m_T_htf_out[i] = m_q_abs_SCAtot[i] / (m_m_dot_htf*m_c_htf[i]) + m_T_htf_in[i] +
+			2.0 * (m_T_htf_ave0[i] - m_T_htf_in[i] - m_q_abs_SCAtot[i] / (2.0 * m_m_dot_htf * m_c_htf[i])) *
+			exp(-2. * m_m_dot_htf * m_c_htf[i] * m_dt / (m_node * m_c_htf[i] + m_mc_bal_sca * m_L_actSCA[CT]));
+		//Recalculate the average temperature for the SCA
+		m_T_htf_ave[i] = (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0;
+
+
+		//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
+		//MJW 1.16.2011 Include the thermal inertia term
+		if( !m_is_using_input_gen )
+		{
+			if( m_q_abs_SCAtot[i] > 0.0 )
+			{
+				//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
+				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * m_c_htf[i] + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
+				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
+				m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
+				m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+
+				//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
+				//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
+			}
+		}
+		else
+		{
+			//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
+			double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * m_c_htf[i] + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
+			m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
+			m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
+			//m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+			m_E_avail[i] = (m_q_abs_SCAtot[i] * m_dt - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
+
+			//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
+			//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
+		}
+
+		//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
+		//minus the heat losses in intermediate piping
+		if( i < m_nSCA - 1 )
+		{
+			//Determine the length between SCA's to use.  if halfway down the loop, use the row distance.
+			double L_int;
+			if( i == m_nSCA / 2 - 1 )
+			{
+				L_int = 2. + m_Row_Distance;
+			}
+			else
+			{
+				L_int = m_Distance_SCA[CT];
+			}
+
+			//Calculate inlet temperature of the next SCA
+			m_T_htf_in[i + 1] = m_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*m_pi*L_int*(m_T_htf_out[i] - m_T_db) / (m_m_dot_htf*m_c_htf[i]);
+			//mjw 1.18.2011 Add the internal energy of the crossover piping
+			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*m_pi + m_mc_bal_sca / m_c_htf[i])*(m_T_htf_out[i] - 298.150);
+		}
+
+	}
+
+	//Set the loop outlet temperature
+	m_T_loop_outX = m_T_htf_out[m_nSCA - 1];
+
+	if( m_accept_loc == 1 )
+	{
+		//Calculation for heat losses from hot header and runner pipe
+		//m_Pipe_hl_hot = 0.0 //initialize
+		m_Runner_hl_hot = 0.0;    //initialize
+		m_Header_hl_hot = 0.0;   //initialize
+		for( int i = 0; i < m_nhdrsec; i++ )
+		{
+			//m_Pipe_hl_hot = m_Pipe_hl_hot + m_Row_Distance*m_D_hdr[i]*m_pi*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)
+			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * m_pi*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db);
+		}
+
+		//Add the runner length
+		for( int i = 0; i < m_nrunsec; i++ )
+		{
+			//m_Pipe_hl_hot = m_Pipe_hl_hot + m_L_runner[i]*m_pi*m_D_runner[i]*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)  //Wt
+			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * m_pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - m_T_db);  //Wt
+		}
+		m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;
+
+		m_c_hdr_hot = m_htfProps.Cp(m_T_loop_outX)* 1000.;
+
+		//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
+		m_T_sys_h = m_T_loop_outX - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);
+
+		//Calculate the system temperature of the hot portion of the collector field. 
+		//This will serve as the fluid outlet temperature
+		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*m_dt) + m_T_sys_h;
+	}
+	else
+	{
+		m_T_sys_h = m_T_loop_outX;
+	}
+
+	return E_loop_energy_balance_exit::SOLVED;
 }
 
 void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
@@ -1076,6 +1161,39 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		else
 			m_m_dot_htf_tot = m_m_dot_htf;
 
+		//int loop_energy_bal_exit = loop_energy_balance(rho_hdr_cold, c_hdr_cold_last, rho_hdr_hot);
+
+		//// Check that we found a solution
+		//if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
+		//{
+		//	m_m_dot_htfX = m_m_dot_htfmax;
+		//	if( m_dfcount > 20 )
+		//	{
+		//		m_error_msg = "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...";
+		//		mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
+
+		//		// Set values to something that won't crash TCS solver
+		//		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
+		//		cr_out_solver.m_time_required_su = 0.0;		//[s]
+		//		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
+		//		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
+		//		cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
+
+		//		cr_out_solver.m_E_fp_total = 0.0;
+		//		cr_out_solver.m_W_dot_col_tracking = 0.0;
+		//		cr_out_solver.m_W_dot_htf_pump = 0.0;
+
+		//		cr_out_report.m_q_dot_field_inc = 0.0;
+		//		cr_out_report.m_eta_field = 0.0;
+		//		cr_out_report.m_q_dot_rec_inc = 0.0;
+		//		cr_out_report.m_eta_thermal = 0.0;
+		//		cr_out_report.m_q_dot_piping_loss = 0.0;
+
+		//		return;
+		//	}
+		//	goto overtemp_iter_flag;
+		//}
+
 		if (m_accept_loc == 1)
 		{
 			m_T_sys_c = (m_T_sys_c_last - m_T_cold_in_1)*exp(-(m_m_dot_htf*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*m_dt) + m_T_cold_in_1;
@@ -1142,8 +1260,25 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					{
 						m_error_msg = "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...";
 						mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
-						/*message(TCS_WARNING, "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...");
-						return 0;*/
+						
+						// Set values to something that won't crash TCS solver
+						cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
+						cr_out_solver.m_time_required_su = 0.0;		//[s]
+						cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
+						cr_out_solver.m_q_thermal = 0.0;			//[MWt]
+						cr_out_solver.m_T_salt_hot = m_T_loop_in_des - 273.15;	//[C] Reset to loop inlet temperature, I guess?
+
+						cr_out_solver.m_E_fp_total = 0.0;
+						cr_out_solver.m_W_dot_col_tracking = 0.0;
+						cr_out_solver.m_W_dot_htf_pump = 0.0;
+
+						cr_out_report.m_q_dot_field_inc = 0.0;
+						cr_out_report.m_eta_field = 0.0;
+						cr_out_report.m_q_dot_rec_inc = 0.0;
+						cr_out_report.m_eta_thermal = 0.0;
+						cr_out_report.m_q_dot_piping_loss = 0.0;
+
+						return;
 					}
 					goto overtemp_iter_flag;
 				}
