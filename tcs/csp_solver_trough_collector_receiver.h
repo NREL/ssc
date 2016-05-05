@@ -19,15 +19,17 @@ private:
 	// Hardcoded constants
 	double m_d2r, m_r2d, m_mtoinch;
 	
-	// Calculate parameters
+	// Calculated parameters
 	double m_N_run_mult;	//[-] Multiplier for runner heat loss - see comments in init()
+	double m_v_hot;			//[m^3] Hot piping volume
+	double m_v_cold;		//[m^3] Cold piping volume
 
+	
 	// Variables that we need to track between calls and timesteps
 	double m_defocus;		//[-] Defocus control 
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
 	
 	// Variables moved to private
-	double m_Pipe_hl;		//Pipe heat loss in the hot header and the hot runner
 	double m_latitude;		//Site m_latitude read from weather file
 	double m_longitude;		//Site m_longitude read from weather file
 
@@ -98,7 +100,7 @@ private:
 	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
 
 	util::matrix_t<double>
-		m_rho_htf, m_DP_tube, m_E_abs_field,
+		m_DP_tube, m_E_abs_field,
 		m_E_int_loop, m_E_accum, m_E_avail, m_E_abs_max, m_v_1, m_q_loss_SCAtot, m_q_abs_SCAtot, 
 		m_T_htf_in0, m_T_htf_out0,
 		m_T_htf_ave0, m_E_fp, m_q_1abs_tot, m_q_i, m_IAM, m_EndGain, m_EndLoss, m_RowShadow;
@@ -109,7 +111,6 @@ private:
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
 
-	double m_v_hot, m_v_cold;	//Header HTF volume
 	double m_defocus_new, m_defocus_old, m_ftrack;
 	bool
 		m_no_fp,	//Freeze protection flag
