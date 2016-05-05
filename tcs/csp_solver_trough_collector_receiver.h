@@ -19,20 +19,21 @@ private:
 	// Hardcoded constants
 	double m_d2r, m_r2d, m_mtoinch;
 	
+	// Init() inputs
+	double m_latitude;		//[deg] convert to [rad] in init()
+	double m_longitude;		//[deg] convert to [rad] in init()
+	double m_shift;			//[deg] convert to [rad] in init()
+
 	// Calculated parameters
 	double m_N_run_mult;	//[-] Multiplier for runner heat loss - see comments in init()
 	double m_v_hot;			//[m^3] Hot piping volume
 	double m_v_cold;		//[m^3] Cold piping volume
-
 	
 	// Variables that we need to track between calls and timesteps
 	double m_defocus;		//[-] Defocus control 
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
 	
 	// Variables moved to private
-	double m_latitude;		//Site m_latitude read from weather file
-	double m_longitude;		//Site m_longitude read from weather file
-
 	double m_T_sys_h;		//Solar field HTF outlet temperature
 	double m_m_dot_avail;		//HTF mass flow rate from the field
 	double m_q_avail;		//Thermal power produced by the field
@@ -115,7 +116,7 @@ private:
 	bool
 		m_no_fp,	//Freeze protection flag
 		m_is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
-	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_SolarAlt, m_costh, m_theta, m_shift,
+	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_SolarAlt, m_costh, m_theta,
 		m_q_SCA_tot, m_m_dot_htfX,  m_T_loop_in,
 		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot, m_time_hr, m_dt_hr;
 	int m_day_of_year, m_SolveMode, m_dfcount;

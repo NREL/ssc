@@ -12,6 +12,11 @@
 using namespace std;
 
 enum{
+	// Site parameters
+	P_LATITUDE,
+	P_LONGITUDE,
+	P_SHIFT,
+
 	//parameters and inputs
 	P_NSCA,
 	P_NHCET,
@@ -124,9 +129,6 @@ enum{
 	I_M_DOT_IN,
 	I_DEFOCUS,
 	I_SOLARAZ,
-	I_LATITUDE,
-	I_LONGITUDE,
-	I_SHIFT,
 
 	O_T_SYS_H,
 	O_M_DOT_AVAIL,
@@ -172,6 +174,10 @@ enum{
 
 tcsvarinfo sam_mw_trough_type250_variables[] = {
 	// vartype,		      datatype,		            index,				       name,		                                                                             label,          units,           meta,          group,  default_value
+	{ TCS_INPUT,          TCS_NUMBER,          P_LATITUDE,               "latitude",                                                    "Site latitude read from weather file",          "deg",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,         P_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
+	{ TCS_INPUT,          TCS_NUMBER,             P_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
+
 	{ TCS_PARAM,          TCS_NUMBER,              P_NSCA,                   "nSCA",                                                               "Number of SCA's in a loop",         "none",             "",             "",            "8" },
 	{ TCS_PARAM,          TCS_NUMBER,             P_NHCET,                  "nHCEt",                                                                     "Number of HCE types",         "none",             "",             "",            "4" },
 	{ TCS_PARAM,          TCS_NUMBER,             P_NCOLT,                  "nColt",                                                               "Number of collector types",         "none",             "",             "",            "4" },
@@ -284,10 +290,7 @@ tcsvarinfo sam_mw_trough_type250_variables[] = {
 	{ TCS_INPUT,          TCS_NUMBER,          I_M_DOT_IN,               "m_dot_in",                                                        "HTF mass flow rate at the inlet ",        "kg/hr",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,           I_DEFOCUS,                "defocus",                                                                        "Defocus control ",         "none",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,           I_SOLARAZ,                "SolarAz",                                 "Solar azimuth angle reported by the Type15 weather file",          "deg",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,          I_LATITUDE,               "latitude",                                                    "Site latitude read from weather file",          "deg",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,         I_LONGITUDE,              "longitude",                                                   "Site longitude read from weather file",          "deg",             "",             "",             "" },
-	{ TCS_INPUT,          TCS_NUMBER,             I_SHIFT,                  "shift",                                         "shift in longitude from local standard meridian",          "deg",             "",             "",             "" },
-
+	
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_T_SYS_H,                "T_sys_h",                                                      "Solar field HTF outlet temperature",            "C",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,       O_M_DOT_AVAIL,            "m_dot_avail",                                                       "HTF mass flow rate from the field",        "kg/hr",             "",             "",             "" },
 	{ TCS_OUTPUT,          TCS_NUMBER,           O_Q_AVAIL,                "q_avail",                                                     "Thermal power produced by the field",          "MWt",             "",             "",             "" },
@@ -584,9 +587,9 @@ public:
 		try
 		{
 			C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
-			init_inputs.m_latitude = std::numeric_limits<double>::quiet_NaN();		//[deg]
-			init_inputs.m_longitude = std::numeric_limits<double>::quiet_NaN();	//[deg]
-			init_inputs.m_shift = std::numeric_limits<double>::quiet_NaN();		//[deg]
+			init_inputs.m_latitude = value(P_LATITUDE);		//[deg] Site latitude read from weather file
+			init_inputs.m_longitude = value(P_LONGITUDE);	//[deg] Site longitude read from weather file
+			init_inputs.m_shift = value(P_SHIFT);			//[deg]
 			ms_trough.init(init_inputs, solved_params);
 		}
 
@@ -635,9 +638,6 @@ public:
 		ms_htf_state_in.m_m_dot = value(I_M_DOT_IN)/3600.0;		//[kg/s] HTF mass flow rate at the inlet, convert from kg/hr
 		ms_inputs.m_field_control = value(I_DEFOCUS);			//[-] Defocus control
 		ms_weather.m_solazi = value(I_SOLARAZ);	//[deg] Solar azimuth angle reported by the Type15 weather file
-		ms_weather.m_lat = value(I_LATITUDE);	//[deg] Site latitude read from weather file
-		ms_weather.m_lon = value(I_LONGITUDE);	//[deg] Site longitude read from weather file
-		ms_weather.m_shift = value(I_SHIFT);	// [deg]
 
 		ms_sim_info.m_time = time;
 		ms_sim_info.m_step = step;

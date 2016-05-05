@@ -121,6 +121,14 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//Initialize air properties -- used in reeiver calcs
 	m_airProps.SetFluid(HTFProperties::Air);
 
+	// Save init_inputs to member data
+	m_latitude = init_inputs.m_latitude;	//[deg]
+	m_longitude = init_inputs.m_longitude;	//[deg]
+	m_shift = init_inputs.m_shift;			//[deg]
+	m_latitude *= m_d2r;		//[rad] convert from [deg]
+	m_longitude *= m_d2r;		//[rad] convert from [deg]
+	m_shift *= m_d2r;			//[rad] convert from [deg]
+
 	// Set trough HTF properties
 	if (m_Fluid != HTFProperties::User_defined)
 	{
@@ -821,9 +829,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double m_dot_in = htf_state_in.m_m_dot;	//[kg/hr] HTF mass flow rate at the inlet  
 	m_defocus_new = inputs.m_field_control;	//[none] Defocus control 
 	double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
-	m_latitude = weather.m_lat;				//[deg] Site m_latitude read from weather file 
-	m_longitude = weather.m_lon;			//[deg] Site m_longitude read from weather file 
-	m_shift = weather.m_shift;				//[deg]
 
 	//Unit conversions
 	T_db += 273.15;				//[K] convert from C
@@ -832,9 +837,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	T_cold_in += 273.15;		//[K] convert from C
 	m_dot_in *= 1 / 3600.;		//[kg/s] convert from kg/hr
 	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
-	m_latitude *= m_d2r;		//[rad] convert from [deg]
-	m_longitude *= m_d2r;		//[rad] convert from [deg]
-	m_shift *= m_d2r;			//[rad] convert from [deg]
 
 	//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
 	if (m_ncall>0)
