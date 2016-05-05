@@ -541,7 +541,9 @@ public:
 		}
 		
 		//Calculate max TES charging/discharging rates based on solar multiple
-		ptsmax = m_q_des*max((mp_params->m_solarm - 1.), 1.0);
+			//5.5.2016, twn: adopt Physical Trough Convention: size TES HX to accept design point receiver output 
+		//ptsmax = m_q_des*max((mp_params->m_solarm - 1.), 1.0);
+		ptsmax = m_q_des * mp_params->m_solarm;		
 		pfsmax = ptsmax / f_disch*mc_pc_des_solved.m_max_frac;
 
 		//Set initial storage values
