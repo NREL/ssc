@@ -13,10 +13,15 @@ class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
 private:
 
-	// Constants
+	// Member classes
 	HTFProperties m_htfProps, m_airProps;
+	
+	// Hardcoded constants
 	double m_d2r, m_r2d, m_mtoinch;
 	
+	// Calculate parameters
+	double m_N_run_mult;	//[-] Multiplier for runner heat loss - see comments in init()
+
 	// Variables that we need to track between calls and timesteps
 	double m_defocus;		//[-] Defocus control 
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
@@ -87,26 +92,36 @@ private:
 	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
 	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
 
+	std::vector<double> m_q_loss;		//[W/m] Total losses (thermal + optical) per length in each SCA
+	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA
+	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA
+	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+
 	util::matrix_t<double>
-		m_q_loss, m_q_abs, m_c_htf, m_rho_htf, m_DP_tube, m_E_abs_field,
-		m_E_int_loop, m_E_accum, m_E_avail, m_E_abs_max, m_v_1, m_q_loss_SCAtot, m_q_abs_SCAtot, m_q_SCA, m_T_htf_in0, m_T_htf_out0,
-		m_T_htf_ave0, m_E_fp, m_q_1abs_tot, m_q_1abs, m_q_i, m_IAM, m_EndGain, m_EndLoss, m_RowShadow;
+		m_rho_htf, m_DP_tube, m_E_abs_field,
+		m_E_int_loop, m_E_accum, m_E_avail, m_E_abs_max, m_v_1, m_q_loss_SCAtot, m_q_abs_SCAtot, 
+		m_T_htf_in0, m_T_htf_out0,
+		m_T_htf_ave0, m_E_fp, m_q_1abs_tot, m_q_i, m_IAM, m_EndGain, m_EndLoss, m_RowShadow;
 	
-	double m_T_sys_c_last, m_T_sys_h_last; //stored values for header thermal inertia calculations
-	double m_N_run_mult;
+	double m_T_sys_c_last;		//[C] Temperature (bulk) of cold runners & headers in previous timestep
+	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep
+	
+	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
+	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
+
 	double m_v_hot, m_v_cold;	//Header HTF volume
 	double m_defocus_new, m_defocus_old, m_ftrack;
 	bool
 		m_no_fp,	//Freeze protection flag
 		m_is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
 	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_SolarAlt, m_costh, m_theta, m_shift,
-		m_q_SCA_tot, m_m_dot_htfX, m_Header_hl_cold, m_Runner_hl_cold, m_Pipe_hl_cold, m_T_loop_in,
-		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_Pipe_hl_hot, m_c_hdr_hot, m_time_hr, m_dt_hr;
+		m_q_SCA_tot, m_m_dot_htfX,  m_T_loop_in,
+		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot, m_time_hr, m_dt_hr;
 	int m_day_of_year, m_SolveMode, m_dfcount;
 
 	double m_ncall_track;
 
-	double m_T_save[5];
+	double m_T_save[5];			//[C] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
 	double m_reguess_args[3];
 
 	double m_hour;
