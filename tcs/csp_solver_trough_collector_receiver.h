@@ -238,7 +238,8 @@ public:
 
 	~C_csp_trough_collector_receiver(){};
 
-	virtual void init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
+	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
+				C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 	virtual bool init_fieldgeom();	
 
 	virtual int get_operating_state();

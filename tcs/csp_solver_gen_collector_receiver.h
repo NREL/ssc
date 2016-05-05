@@ -76,7 +76,8 @@ public:
 	~C_csp_gen_collector_receiver();
 
 	// Done
-	virtual void init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
+	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
+			C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
 	// Done
 	void init_sf();

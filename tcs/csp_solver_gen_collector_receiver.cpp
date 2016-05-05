@@ -86,7 +86,8 @@ void C_csp_gen_collector_receiver::check_double_params_are_set()
 	}
 }
 
-void C_csp_gen_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
+void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
+			C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	// Check that ms_params are set
 	check_double_params_are_set();

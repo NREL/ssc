@@ -272,6 +272,18 @@ public:
 		STEADY_STATE
 	};
 
+	struct S_csp_cr_init_inputs
+	{
+		double m_latitude;		//[deg]
+		double m_longitude;		//[deg]
+		double m_shift;			//[deg]
+
+		S_csp_cr_init_inputs()
+		{
+			m_latitude = m_longitude = m_shift = std::numeric_limits<double>::quiet_NaN();	
+		}
+	};
+	
 	struct S_csp_cr_solved_params
 	{
 		double m_T_htf_cold_des;		//[K]
@@ -335,7 +347,8 @@ public:
 		}
 	};
 
-	virtual void init(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
+	virtual void init( const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
+		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
 	virtual int get_operating_state() = 0;
 
