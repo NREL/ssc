@@ -108,8 +108,12 @@ void C_csp_solver::init()
 		// Weather reader
 	mc_weather.init();
 		// Collector-receiver
+	C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
+	init_inputs.m_latitude = mc_weather.ms_solved_params.m_lat;		//[deg]
+	init_inputs.m_longitude = mc_weather.ms_solved_params.m_lon;	//[deg]
+	init_inputs.m_shift = mc_weather.ms_solved_params.m_shift;		//[deg]
 	C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
-	mc_collector_receiver.init(cr_solved_params);
+	mc_collector_receiver.init(init_inputs, cr_solved_params);
 	m_T_htf_cold_des = cr_solved_params.m_T_htf_cold_des;		//[K]
 	m_q_dot_rec_on_min = cr_solved_params.m_q_dot_rec_on_min;	//[MW]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]

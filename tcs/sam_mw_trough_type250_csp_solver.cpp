@@ -583,7 +583,11 @@ public:
 
 		try
 		{
-			ms_trough.init(solved_params);
+			C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
+			init_inputs.m_latitude = std::numeric_limits<double>::quiet_NaN();		//[deg]
+			init_inputs.m_longitude = std::numeric_limits<double>::quiet_NaN();	//[deg]
+			init_inputs.m_shift = std::numeric_limits<double>::quiet_NaN();		//[deg]
+			ms_trough.init(init_inputs, solved_params);
 		}
 
 		catch(C_csp_exception &csp_exception)

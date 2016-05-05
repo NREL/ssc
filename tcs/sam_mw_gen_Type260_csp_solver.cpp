@@ -491,7 +491,8 @@ public:
 
 		try
 		{
-			mc_gen_cr.init(mc_cr_des_solved);
+			C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs;
+			mc_gen_cr.init(init_inputs, mc_cr_des_solved);
 			mc_gen_pc.init(mc_pc_des_solved);
 		}
 		catch( C_csp_exception &csp_exception )
