@@ -33,7 +33,6 @@ private:
 	double m_defocus;		//[-] Defocus control 
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
 	
-	// Variables moved to private
 	double m_T_sys_h;		//Solar field HTF outlet temperature
 	double m_m_dot_avail;		//HTF mass flow rate from the field
 	double m_q_avail;		//Thermal power produced by the field
@@ -81,9 +80,10 @@ private:
 		m_q_design;	//Design thermal power from the solar field [Wt]
 
 	int
-		m_nfsec,	//Number of field sections
-		m_nhdrsec,	//Number of header sections
-		m_nrunsec;	//Number of unique runner diameters
+		m_nfsec,	//[-] Number of field sections
+		m_nhdrsec,	//[-] Number of header sections
+		m_nrunsec;	//[-] Number of unique runner diameters
+
 	//Other matrices
 	util::matrix_t<HTFProperties*> m_AnnulusGasMat;
 	util::matrix_t<AbsorberProps*> m_AbsorberPropMat;
@@ -113,15 +113,17 @@ private:
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
 
 	double m_defocus_new, m_defocus_old, m_ftrack;
+	
 	bool
-		m_no_fp,	//Freeze protection flag
-		m_is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
-	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_costh, m_theta,
+		m_no_fp;	//Freeze protection flag
+
+	double m_c_hdr_cold, m_costh,
 		m_q_SCA_tot, m_m_dot_htfX,  m_T_loop_in,
 		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
-	int m_SolveMode, m_dfcount;
-
-	double m_ncall_track;
+	
+	int m_SolveMode; 
+	int m_dfcount; 
+	int m_ncall;		//[-] Track number of calls per timestep, reset = -1 in converged() call
 
 	double m_T_save[5];			//[C] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
 	double m_reguess_args[3];
@@ -132,9 +134,6 @@ private:
 
 	// member string for exception messages
 	std::string m_error_msg;
-
-	// track number of calls per timestep, reset = -1 in converged() call
-	int m_ncall;
 
 public:
 
@@ -297,6 +296,12 @@ public:
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
 			
+	void recirculate(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		const C_csp_solver_sim_info &sim_info);
+
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
 		//outputs

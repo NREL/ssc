@@ -115,9 +115,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	m_m_htf_prop_min = 275.0;
 
-	// m_dt = time_step();
-	m_start_time = -1;
-
 	//Initialize air properties -- used in reeiver calcs
 	m_airProps.SetFluid(HTFProperties::Air);
 
@@ -275,7 +272,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//Initialize values
 	m_E_fp_tot = 0.;
 	m_defocus_old = 0.;
-	m_is_fieldgeom_init = false;
 
 	m_E_hdr_accum = 0.0;
 
@@ -561,8 +557,6 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_T_htf_ave0[i] = T_field_ini;
 	}
 
-	m_is_fieldgeom_init = true;	//The field geometry has been initialized. Make note.
-
 	if (m_accept_init)
 		m_ss_init_complete = false;
 	else
@@ -786,7 +780,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 
 		//Calculate the system temperature of the hot portion of the collector field. 
 		//This will serve as the fluid outlet temperature
-		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*m_dt) + m_T_sys_h;	//[C]
+		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.m_step) + m_T_sys_h;	//[C]
 	}
 	else
 	{
@@ -893,17 +887,15 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	}
 
 	// m_theta in radians
-	m_theta = acos(m_costh);
+	double theta = acos(m_costh);		//[rad] Incidene angle
 
 	for( int i = 0; i<m_nColt; i++ )
 	{
 		m_q_i[i] = weather.m_beam*m_A_aperture[i] / m_L_actSCA[i]; //[W/m] The incoming solar irradiation per aperture length
-		//incidence angle modifier (radians)
-		//m_IAM[i] = IamF0[i] + IamF1[i] * m_theta / m_costh + IamF2[i] * m_theta*theta/ m_costh;
 
 		m_IAM[i] = m_IAM_matrix(i, 0);
 		for( int j = 1; j < m_n_c_iam_matrix; j++ )
-			m_IAM[i] += m_IAM_matrix(i, j)*pow(m_theta, j) / m_costh;
+			m_IAM[i] += m_IAM_matrix(i, j)*pow(theta, j) / m_costh;
 
 		m_IAM[i] = fmax(0.0, fmin(m_IAM[i], 1.0));
 
@@ -926,7 +918,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 				}
 				else
 				{
-					m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(m_theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
+					m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
 				}
 			}
 			else
@@ -937,10 +929,10 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 				}
 				else
 				{
-					m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(m_theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
+					m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
 				}
 			}
-			m_EndLoss(i, j) = 1.0 - m_Ave_Focal_Length[i] * tan(m_theta) / m_L_actSCA[i] + m_EndGain(i, j);
+			m_EndLoss(i, j) = 1.0 - m_Ave_Focal_Length[i] * tan(theta) / m_L_actSCA[i] + m_EndGain(i, j);
 		}
 
 		// Row to Row m_Shadowing Lossess
@@ -970,13 +962,35 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type
 		m_q_SCA[i] = m_q_i[CT] * m_costh;        //The flux corresponding with the collector type
 		//Also use this chance to calculate average optical values
-		m_Theta_ave = m_Theta_ave + m_theta*m_L_actSCA[CT] / m_L_tot;
+		m_Theta_ave = m_Theta_ave + theta*m_L_actSCA[CT] / m_L_tot;
 		m_CosTh_ave = m_CosTh_ave + m_costh*m_L_actSCA[CT] / m_L_tot;
 		m_IAM_ave = m_IAM_ave + m_IAM[CT] * m_L_actSCA[CT] / m_L_tot;
 		m_RowShadow_ave = m_RowShadow_ave + m_RowShadow[CT] * m_L_actSCA[CT] / m_L_tot;
 		m_EndLoss_ave = m_EndLoss_ave + m_EndLoss(CT, i)*m_L_actSCA[CT] / m_L_tot;
 	}
 
+}
+
+void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// Get optical properties
+		// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
+
+
+	return;
+}
+
+void C_csp_trough_collector_receiver::recirculate(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	return;
 }
 
 void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
@@ -993,15 +1007,8 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//reset m_defocus counter
 	m_dfcount = 0;
 
-	//record the start time
-	if (m_start_time < 0)
-	{
-		m_start_time = sim_info.m_time;		//[s]
-	}
-
-	double time;
-	time = sim_info.m_time;
-	m_dt = sim_info.m_step;
+	double time = sim_info.m_time;		//[hr]
+	double dt = sim_info.m_step;		//[s]
 	//******************************************************************************************************************************
 	//               Time-dependent conditions
 	//******************************************************************************************************************************
@@ -1252,9 +1259,9 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			double E_fp_field = std::numeric_limits<double>::quiet_NaN();
 
 			if (m_is_using_input_gen)
-				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - m_T_sys_h)*m_dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
+				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - m_T_sys_h)*dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
 			else
-				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - T_cold_in)*m_dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
+				E_fp_field = m_m_dot_htf_tot*m_c_hdr_cold*(m_T_cold_in_1 - T_cold_in)*dt;       //[kg/s]*[J/kg-K]*[K] = [W]*[s] = [J]  Freeze protection energy required
 
 
 			// Energy losses in field
@@ -1265,11 +1272,11 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				E_field_loss_tot += m_q_loss_SCAtot[i] * 1.e-6;             //*float(m_nLoops);
 			}
 
-			E_field_loss_tot *= 1.e-6 * m_dt;
+			E_field_loss_tot *= 1.e-6*dt;
 
 			double E_field_pipe_hl = m_N_run_mult*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot + m_N_run_mult*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
 
-			E_field_pipe_hl *= m_dt;		//[J]
+			E_field_pipe_hl *= dt;		//[J]
 
 			E_field_loss_tot += E_field_pipe_hl;
 
@@ -1647,29 +1654,6 @@ post_convergence_flag: //11 continue
 		m_SCAs_def = 1.;
 	}
 
-	// ******************************************************************
-	// Determine whether freeze protection is needed for the SCA's
-	// ******************************************************************
-	//m_E_fp(:) = 0.0
-	//for(int i=1,m_nSCA
-	//    if(m_T_htf_ave[i] < m_T_fp) {
-	//        CT = m_SCAInfoArray(i,2)    //Collector type    
-	//        HT = m_SCAInfoArray(i,1)    //HCE type
-	//        for(int j=1,m_nHCEVar
-	//            //m_E_fp[i] = m_E_fp[i] +  ((m_T_fp - m_T_htf_ave[i])*m_A_cs(HT,j)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i] + m_q_loss_SCAtot[i])*m_HCE_FieldFrac(HT,j)*float(m_nLoops)
-	//            m_E_fp[i] = m_E_fp[i] +  m_q_loss_SCAtot[i]*m_HCE_FieldFrac(HT,j)*float(m_nLoops)*3600.0*m_dt      //[J]
-	//        }
-	//        m_T_htf_ave[i] = m_T_fp
-	//        m_T_htf_in[i] = m_T_fp
-	//        m_T_htf_out[i] = m_T_fp
-	//    } else {
-	//        m_E_fp[i] = 0.0
-	//    }
-	//}
-	//m_E_fp_tot = sum(m_E_fp(1:m_nSCA))
-	////Reset the loop outlet temperature if it's different
-	//m_T_loop_outX = m_T_htf_out(m_nSCA)
-
 calc_final_metrics_goto:
 
 	// ******************************************************************************************************************************
@@ -1878,9 +1862,9 @@ calc_final_metrics_goto:
 		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
 
 		if (!m_is_using_input_gen)
-			E_avail_tot = max(E_avail_tot - piping_hl_total*m_dt, 0.0);		//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			E_avail_tot = max(E_avail_tot - piping_hl_total*dt, 0.0);		//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
 		else
-			E_avail_tot = E_avail_tot - piping_hl_total*m_dt;				//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			E_avail_tot = E_avail_tot - piping_hl_total*dt;				//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
 
 		E_avail_tot = max(E_avail_tot - m_E_bal_startup, 0.0);  //[J]
 	}
@@ -1895,7 +1879,7 @@ calc_final_metrics_goto:
 		//Calculate the thermal power produced by the field
 		if (m_T_sys_h >= m_T_startup)   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
 		{
-			m_q_avail = E_avail_tot / (m_dt)*1.e-6;  //[MW]
+			m_q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 			//Calculate the available mass flow of HTF
 			m_m_dot_avail = max(m_q_avail*1.e6 / (m_c_htf_ave*(m_T_sys_h - m_T_cold_in_1)), 0.0); //[kg/s]     
 		}
@@ -1907,7 +1891,7 @@ calc_final_metrics_goto:
 	}
 	else
 	{
-		m_q_avail = E_avail_tot / (m_dt)*1.e-6;  //[MW]
+		m_q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 		//Calculate the available mass flow of HTF
 		m_m_dot_avail = max(m_q_avail*1.e6 / (m_c_htf_ave*(m_T_sys_h - m_T_cold_in_1)), 0.0); //[kg/s]     
 	}
@@ -1938,7 +1922,7 @@ set_outputs_and_return:
 	double T_sys_c_out = m_T_sys_c - 273.15;			//[C] from K
 	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
 	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
-	double E_bal_startup_out = m_E_bal_startup / (m_dt*1.e6);	//[MW] from J
+	double E_bal_startup_out = m_E_bal_startup / (dt*1.e6);	//[MW] from J
 	m_q_inc_sf_tot = m_Ap_tot*I_b / 1.e6;
 	m_q_abs_tot = 0.;
 	m_q_loss_tot = 0.;
@@ -2024,15 +2008,6 @@ set_outputs_and_return:
 	//value(O_E_FIELD, E_field_out);				//[MWht] Accumulated internal energy in the entire solar field
 	//value(O_T_C_IN_CALC, m_T_cold_in_1 - 273.15);	//[C] Calculated cold HTF inlet temperature - used in freeze protection and for stand-alone model in recirculation
 
-	return;
-}
-
-void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &htf_state_in,
-	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-	const C_csp_solver_sim_info &sim_info)
-{
 	return;
 }
 
