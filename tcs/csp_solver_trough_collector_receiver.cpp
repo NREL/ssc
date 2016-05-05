@@ -71,7 +71,6 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_m_dot_htf = std::numeric_limits<double>::quiet_NaN();
 	m_q_loss_spec_tot = std::numeric_limits<double>::quiet_NaN();
 	m_SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
-	m_Pipe_hl = std::numeric_limits<double>::quiet_NaN();
 	m_q_dump = std::numeric_limits<double>::quiet_NaN();
 	m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
 	m_CosTh_ave = std::numeric_limits<double>::quiet_NaN();
@@ -224,7 +223,6 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	m_T_htf_ave.resize(m_nSCA);
 	m_q_loss.resize(m_nHCEVar);
 	m_q_abs.resize(m_nHCEVar);
-	m_rho_htf.resize(m_nSCA);
 	m_DP_tube.resize(m_nSCA);
 	m_E_abs_field.resize(m_nSCA);
 	m_E_int_loop.resize(m_nSCA);
@@ -268,7 +266,6 @@ void C_csp_trough_collector_receiver::init(C_csp_collector_receiver::S_csp_cr_so
 	m_defocus_old = 0.;
 	m_is_fieldgeom_init = false;
 
-	m_Pipe_hl = 0.0;
 	m_E_hdr_accum = 0.0;
 
 
@@ -651,6 +648,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		int CT = (int)m_SCAInfoArray(i, 1) - 1;    //[-] Collector type
 
 		double c_htf_i = 0.0;
+		double rho_htf_i = 0.0;
 
 		for( int j = 0; j<m_nHCEVar; j++ )
 		{
@@ -674,8 +672,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			m_q_abs_SCAtot[i] += m_q_abs[j] * m_L_actSCA[CT] * m_HCE_FieldFrac(HT, j);		//[W] Heat absorbed by HTF, weighted, for SCA
 			m_q_loss_SCAtot[i] += m_q_loss[j] * m_L_actSCA[CT] * m_HCE_FieldFrac(HT, j);	//[W] Total heat losses, weighted, for SCA
 			m_q_1abs_tot[i] += m_q_1abs[j] * m_HCE_FieldFrac(HT, j);  //[W/m] Thermal losses from the absorber surface
-			c_htf_i += c_htf_j*m_HCE_FieldFrac(HT, j);			//[kJ/kg-K]
-			m_rho_htf[i] += rho_htf_j*m_HCE_FieldFrac(HT, j);
+			c_htf_i += c_htf_j*m_HCE_FieldFrac(HT, j);				//[kJ/kg-K]
+			rho_htf_i += rho_htf_j*m_HCE_FieldFrac(HT, j);
 
 			//keep track of the total equivalent optical efficiency
 			m_EqOpteff += m_ColOptEff(CT, i)*m_Shadowing(HT, j)*m_Dirt_HCE(HT, j)*m_alpha_abs(HT, j)*m_Tau_envelope(HT, j)*(m_L_actSCA[CT] / m_L_tot)*m_HCE_FieldFrac(HT, j);;
@@ -684,7 +682,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		//Calculate the specific heat for the node
 		c_htf_i *= 1000.0;	//[kJ/kg-K]
 		//Calculate the average node outlet temperature, including transient effects
-		double m_node = m_rho_htf[i] * m_A_cs(HT, 1)*m_L_actSCA[CT];
+		double m_node = rho_htf_i * m_A_cs(HT, 1)*m_L_actSCA[CT];
 
 		//MJW 12.14.2010 The first term should represent the difference between the previous average temperature and the new 
 		//average temperature. Thus, the heat addition in the first term should be divided by 2 rather than include the whole magnitude
@@ -704,7 +702,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			if( m_q_abs_SCAtot[i] > 0.0 )
 			{
 				//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
-				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
+				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
 				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
 				m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
 				m_E_avail[i] = max(m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
@@ -716,7 +714,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		else
 		{
 			//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
-			double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * m_rho_htf[i] * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
+			double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
 			m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
 			m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
 			//m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
@@ -750,40 +748,38 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	}
 
 	//Set the loop outlet temperature
-	m_T_loop_outX = m_T_htf_out[m_nSCA - 1];
+	m_T_loop_outX = m_T_htf_out[m_nSCA - 1];	//[C] Outlet temperature of the final SCA
 
 	if( m_accept_loc == 1 )
 	{
 		//Calculation for heat losses from hot header and runner pipe
-		//m_Pipe_hl_hot = 0.0 //initialize
-		m_Runner_hl_hot = 0.0;    //initialize
-		m_Header_hl_hot = 0.0;   //initialize
+		m_Runner_hl_hot = 0.0;  
+		m_Header_hl_hot = 0.0;  
 		for( int i = 0; i < m_nhdrsec; i++ )
 		{
-			//m_Pipe_hl_hot = m_Pipe_hl_hot + m_Row_Distance*m_D_hdr[i]*m_pi*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)
-			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_loop_outX - T_db);
+			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_loop_outX - T_db);	//[W]
 		}
 
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			//m_Pipe_hl_hot = m_Pipe_hl_hot + m_L_runner[i]*m_pi*m_D_runner[i]*m_Pipe_hl_coef*(m_T_loop_outX - m_T_db)  //Wt
-			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - T_db);  //Wt
+			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - T_db);	//[W]
 		}
-		double m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;
+		
+		double m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
 
-		m_c_hdr_hot = m_htfProps.Cp(m_T_loop_outX)* 1000.;
+		m_c_hdr_hot = m_htfProps.Cp(m_T_loop_outX)* 1000.;		//[kJ/kg-K]
 
 		//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-		m_T_sys_h = m_T_loop_outX - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);
+		m_T_sys_h = m_T_loop_outX - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);	//[C]
 
 		//Calculate the system temperature of the hot portion of the collector field. 
 		//This will serve as the fluid outlet temperature
-		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*m_dt) + m_T_sys_h;
+		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*m_dt) + m_T_sys_h;	//[C]
 	}
 	else
 	{
-		m_T_sys_h = m_T_loop_outX;
+		m_T_sys_h = m_T_loop_outX;	//[C]
 	}
 
 	return E_loop_energy_balance_exit::SOLVED;
@@ -823,7 +819,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double T_cold_in = htf_state_in.m_temp;	//[C] HTF return temperature 
 	double m_dot_in = htf_state_in.m_m_dot;	//[kg/hr] HTF mass flow rate at the inlet  
 	m_defocus_new = inputs.m_field_control;	//[none] Defocus control 
-	double SolarAz = weather.m_solazi;			//[deg] Solar azimuth angle reported by the Type15 weather file 
+	double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
 	m_latitude = weather.m_lat;				//[deg] Site m_latitude read from weather file 
 	m_longitude = weather.m_lon;			//[deg] Site m_longitude read from weather file 
 	m_shift = weather.m_shift;				//[deg]
@@ -831,9 +827,9 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//Unit conversions
 	T_db += 273.15;				//[K] convert from C
 	T_dp += 273.15;				//[K] convert from C
-	P_amb *= 100.0;				//mbar -> Pa
-	T_cold_in += 273.15;      //[K] convert from C
-	m_dot_in *= 1 / 3600.;	//[kg/s] convert from kg/hr
+	P_amb *= 100.0;				//[mbar] -> Pa
+	T_cold_in += 273.15;		//[K] convert from C
+	m_dot_in *= 1 / 3600.;		//[kg/s] convert from kg/hr
 	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
 	m_latitude *= m_d2r;		//[rad] convert from [deg]
 	m_longitude *= m_d2r;		//[rad] convert from [deg]
@@ -1150,7 +1146,6 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		m_E_accum.fill(0.);
 		m_E_int_loop.fill(0.);
 		m_EqOpteff = 0.0;
-		m_rho_htf.fill(0.);
 
 		m_m_dot_htf = m_m_dot_htfX;
 
@@ -1832,6 +1827,9 @@ calc_final_metrics_goto:
 	rho_ave = m_htfProps.dens((m_T_loop_outX + m_T_sys_c) / 2.0, 0.0); //kg/m3
 	m_c_htf_ave = m_htfProps.Cp((m_T_sys_h + m_T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
 
+	// Other calculated outputs
+	double piping_hl_total = 0.0;
+
 	if (m_accept_loc == 1)		// Consider entire internal energy of entire field, not just the loop
 	{
 		E_avail_tot *= float(m_nLoops);
@@ -1865,12 +1863,12 @@ calc_final_metrics_goto:
 		double m_Pipe_hl_hot = m_N_run_mult*m_Runner_hl_hot + float(m_nfsec)*m_Header_hl_hot;
 		double m_Pipe_hl_cold = m_N_run_mult*m_Runner_hl_cold + float(m_nfsec)*m_Header_hl_cold;
 
-		m_Pipe_hl = m_Pipe_hl_hot + m_Pipe_hl_cold;
+		piping_hl_total = m_Pipe_hl_hot + m_Pipe_hl_cold;
 
 		if (!m_is_using_input_gen)
-			E_avail_tot = max(E_avail_tot - m_Pipe_hl*m_dt, 0.0);    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			E_avail_tot = max(E_avail_tot - piping_hl_total*m_dt, 0.0);		//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
 		else
-			E_avail_tot = E_avail_tot - m_Pipe_hl*m_dt;    //[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
+			E_avail_tot = E_avail_tot - piping_hl_total*m_dt;				//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
 
 		E_avail_tot = max(E_avail_tot - m_E_bal_startup, 0.0);  //[J]
 	}
@@ -1949,7 +1947,7 @@ set_outputs_and_return:
 
 	double
 		SCA_par_tot_out = m_SCA_par_tot * 1.e-6,
-		Pipe_hl_out = m_Pipe_hl * 1.e-6,
+		Pipe_hl_out = piping_hl_total * 1.e-6,		//[MW] convert from W
 		Theta_ave_out = m_Theta_ave / m_d2r,
 		CosTh_ave_out = m_CosTh_ave;
 

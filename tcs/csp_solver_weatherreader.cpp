@@ -28,6 +28,14 @@ void C_csp_weatherreader::init()
 	
 	m_wfile.header( &m_hdr );
 	
+	// Set solved parameters
+	ms_solved_params.m_lat = m_hdr.lat;		//[deg]
+	ms_solved_params.m_lon = m_hdr.lon;		//[deg]
+	ms_solved_params.m_tz = m_hdr.tz;		//[deg]
+	ms_solved_params.m_shift = (m_hdr.lon - m_hdr.tz*15.0);	//[deg]
+	ms_solved_params.m_elev = m_hdr.elev;	//[m]
+	// ***********************************************************
+
 	m_first = true;		// True the first time call() is accessed
 
 	if(m_trackmode < 0 || m_trackmode > 2)

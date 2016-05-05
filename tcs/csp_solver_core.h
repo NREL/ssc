@@ -89,6 +89,20 @@ public:
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 
+	struct S_csp_weatherreader_solved_params
+	{
+		double m_lat;			//[deg]
+		double m_lon;			//[deg]
+		double m_tz;			//[deg]
+		double m_shift;			//[deg]
+		double m_elev;			//[m]
+
+		S_csp_weatherreader_solved_params()
+		{
+			m_lat = m_lon = m_tz = m_shift = m_elev = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_outputs
 	{
 		int m_year;				//[yr]
@@ -141,6 +155,7 @@ public:
 	double m_azimuth;
 
 	S_outputs ms_outputs;
+	S_csp_weatherreader_solved_params ms_solved_params;
 };
 
 class C_csp_tou
