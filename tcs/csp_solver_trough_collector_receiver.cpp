@@ -802,12 +802,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	// Convert other input data as necessary
 	double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
 	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
-
-	// Always reset the m_defocus control at the first call of a timestep
-	m_defocus_new = 1.;
-	m_defocus_old = 1.;
-	m_defocus = 1.0;
-
+	
 	//Time calculations
 	int day_of_year = (int)ceil(time_hr / 24.);  //Day of the year
 	// Duffie & Beckman 1.5.3b
@@ -2030,6 +2025,11 @@ void C_csp_trough_collector_receiver::converged()
 	}
 
 	m_ncall = -1;
+
+	// Always reset the m_defocus control at the first call of a timestep
+	m_defocus_new = 1.;
+	m_defocus_old = 1.;
+	m_defocus = 1.0;
 
 	return;
 }
