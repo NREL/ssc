@@ -116,17 +116,15 @@ private:
 	bool
 		m_no_fp,	//Freeze protection flag
 		m_is_fieldgeom_init;	//Flag to indicate whether the field geometry has been initialized
-	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_SolarAlt, m_costh, m_theta,
+	double m_c_hdr_cold, m_start_time, m_current_time, m_dt, m_costh, m_theta,
 		m_q_SCA_tot, m_m_dot_htfX,  m_T_loop_in,
-		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot, m_time_hr, m_dt_hr;
-	int m_day_of_year, m_SolveMode, m_dfcount;
+		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
+	int m_SolveMode, m_dfcount;
 
 	double m_ncall_track;
 
 	double m_T_save[5];			//[C] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
 	double m_reguess_args[3];
-
-	double m_hour;
 
 	double m_m_htf_prop_min;
 
@@ -294,6 +292,9 @@ public:
 	};
 	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
 		double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
+		const C_csp_solver_sim_info &sim_info);
+
+	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
 			
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,

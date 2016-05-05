@@ -217,7 +217,9 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	//Unit conversions
 	m_theta_stow *= m_d2r;
+	m_theta_stow = max(m_theta_stow, 1.e-6);
 	m_theta_dep *= m_d2r;
+	m_theta_dep = max(m_theta_dep, 1.e-6);
 	m_T_startup += 273.15;			//[K] convert from C
 	m_T_loop_in_des += 273.15;		//[K] convert from C
 	m_T_loop_out += 273.15;			//[K] convert from C
@@ -668,7 +670,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			double c_htf_j, rho_htf_j;
 			c_htf_j = rho_htf_j = std::numeric_limits<double>::quiet_NaN();
 
-			EvacReceiver(m_T_htf_in[i], m_dot_htf_loop, T_db, T_sky, weather.m_wspd, weather.m_pres*100.0, m_q_SCA[i], HT, j, CT, i, false, m_ncall, m_time_hr,
+			EvacReceiver(m_T_htf_in[i], m_dot_htf_loop, T_db, T_sky, weather.m_wspd, weather.m_pres*100.0, m_q_SCA[i], HT, j, CT, i, false, m_ncall, sim_info.m_time/3600.0,
 				//outputs
 				m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j);
 
@@ -794,6 +796,189 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
+void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_sim_info &sim_info)
+{
+
+	//calculate the m_hour of the day
+	double time_hr = sim_info.m_time / 3600.;		//[hr]
+	double dt_hr = sim_info.m_step / 3600.;			//[hr]
+	double hour = fmod(time_hr, 24.);				//[hr]
+
+	// Convert other input data as necessary
+	double SolarAz = weather.m_solazi;		//[deg] Solar azimuth angle
+	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
+
+	// Always reset the m_defocus control at the first call of a timestep
+	m_defocus_new = 1.;
+	m_defocus_old = 1.;
+	m_defocus = 1.0;
+
+	//Time calculations
+	int day_of_year = (int)ceil(time_hr / 24.);  //Day of the year
+	// Duffie & Beckman 1.5.3b
+	double B = (day_of_year - 1)*360.0 / 365.0*CSP::pi / 180.0;
+	// Eqn of time in minutes
+	double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B*2.0) - 0.04089 * sin(B*2.0));
+	// Declination in radians (Duffie & Beckman 1.6.1)
+	double Dec = 23.45 * sin(360.0*(284.0 + day_of_year) / 365.0*CSP::pi / 180.0) *CSP::pi / 180.0;
+	// Solar Noon and time in hours
+	double SolarNoon = 12. - ((m_shift)*180.0 / CSP::pi) / 15.0 - EOT / 60.0;
+
+	// Deploy & stow times in hours
+	// Calculations modified by MJW 11/13/2009 to correct bug
+	double DepHr1 = cos(m_latitude) / tan(m_theta_dep);
+	double DepHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_dep);
+	double DepHr3 = CSP::sign(tan(CSP::pi - m_theta_dep)) * acos((DepHr1*DepHr2 + sqrt(DepHr1*DepHr1 - DepHr2*DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
+	double DepTime = SolarNoon + DepHr3;
+
+	double StwHr1 = cos(m_latitude) / tan(m_theta_stow);
+	double StwHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_stow);
+	double StwHr3 = CSP::sign(tan(CSP::pi - m_theta_stow))*acos((StwHr1*StwHr2 + sqrt(StwHr1*StwHr1 - StwHr2*StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
+	double StwTime = SolarNoon + StwHr3;
+
+	// m_ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
+	double HrA = hour - dt_hr;
+	double HrB = hour;
+
+	double  MidTrack;
+	// Solar field operates
+	if( (HrB > DepTime) && (HrA < StwTime) )
+	{
+		// solar field deploys during time period
+		if( HrA < DepTime )
+		{
+			m_ftrack = (HrB - DepTime) / dt_hr;
+			MidTrack = HrB - m_ftrack * 0.5 *dt_hr;
+
+			// Solar field stows during time period
+		}
+		else if( HrB > StwTime )
+		{
+			m_ftrack = (StwTime - HrA) / dt_hr;
+			MidTrack = HrA + m_ftrack * 0.5 *dt_hr;
+			// solar field operates during entire period
+		}
+		else
+		{
+			m_ftrack = 1.0;
+			MidTrack = HrA + 0.5 *dt_hr;
+		}
+		// solar field doesn't operate
+	}
+	else
+	{
+		m_ftrack = 0.0;
+		MidTrack = HrA + 0.5 *dt_hr;
+	}
+
+	double StdTime = MidTrack;
+	double SolarTime = StdTime + ((m_shift)*180.0 / CSP::pi) / 15.0 + EOT / 60.0;
+	// m_hour angle (arc of sun) in radians
+	double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
+	// B. Stine equation for Solar Altitude angle in radians
+	double SolarAlt = asin(sin(Dec)*sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
+
+	// Calculation of Tracking Angle for Trough. Stine Reference
+	double TrackAngle = atan(cos(SolarAlt) * sin(SolarAz - m_ColAz) /
+		(sin(SolarAlt - m_ColTilt) + sin(m_ColTilt)*cos(SolarAlt)*(1 - cos(SolarAz - m_ColAz))));
+	// Calculation of solar incidence angle for trough.. Stine reference
+	if( m_ftrack == 0.0 )
+	{
+		m_costh = 1.0;
+	}
+	else
+	{
+		m_costh = sqrt(1.0 - pow(cos(SolarAlt - m_ColTilt) - cos(m_ColTilt) * cos(SolarAlt) * (1.0 - cos(SolarAz - m_ColAz)), 2));
+	}
+
+	// m_theta in radians
+	m_theta = acos(m_costh);
+
+	for( int i = 0; i<m_nColt; i++ )
+	{
+		m_q_i[i] = weather.m_beam*m_A_aperture[i] / m_L_actSCA[i]; //[W/m] The incoming solar irradiation per aperture length
+		//incidence angle modifier (radians)
+		//m_IAM[i] = IamF0[i] + IamF1[i] * m_theta / m_costh + IamF2[i] * m_theta*theta/ m_costh;
+
+		m_IAM[i] = m_IAM_matrix(i, 0);
+		for( int j = 1; j < m_n_c_iam_matrix; j++ )
+			m_IAM[i] += m_IAM_matrix(i, j)*pow(m_theta, j) / m_costh;
+
+		m_IAM[i] = fmax(0.0, fmin(m_IAM[i], 1.0));
+
+		//Calculate the Optical efficiency of the collector
+		for( int j = 0; j<m_nSCA; j++ )
+		{
+			m_ColOptEff(i, j) = m_TrackingError[i] * m_GeomEffects[i] * m_Rho_mirror_clean[i] * m_Dirt_mirror[i] * m_Error[i] * m_IAM[i];
+		}
+
+		//Account for light reflecting off the collector and missing the receiver, also light from other 
+		//collectors hitting a different receiver
+		//mjw 4.21.11 - rescope this to be for each specific collector j=1,m_nSCA
+		for( int j = 0; j<m_nSCA; j++ )
+		{
+			if( fabs(SolarAz) <= 90.0 )
+			{  //mjw 5.1.11 The sun is in the southern sky (towards equator)
+				if( j == 0 || j == m_nSCA - 1 )
+				{
+					m_EndGain(i, j) = 0.0; //No gain for the first or last collector
+				}
+				else
+				{
+					m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(m_theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
+				}
+			}
+			else
+			{  //mjw 5.1.11 The sun is in the northern sky (away from equator)
+				if( (j == floor(float(m_nSCA) / 2.) - 1) || (j == floor(float(m_nSCA) / 2.)) )
+				{
+					m_EndGain(i, j) = 0.0; //No gain for the loops at the ends of the rows
+				}
+				else
+				{
+					m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(m_theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
+				}
+			}
+			m_EndLoss(i, j) = 1.0 - m_Ave_Focal_Length[i] * tan(m_theta) / m_L_actSCA[i] + m_EndGain(i, j);
+		}
+
+		// Row to Row m_Shadowing Lossess
+		//PH = m_pi / 2.0 - TrackAngle[i]
+		m_RowShadow[i] = fabs(cos(TrackAngle)) * m_Row_Distance / m_W_aperture[i];
+		if( m_RowShadow[i] < 0.5 || SolarAlt < 0. )
+		{
+			m_RowShadow[i] = 0.;
+		}
+		else if( m_RowShadow[i] > 1. )
+		{
+			m_RowShadow[i] = 1.;
+		}
+
+		//Finally correct for these losses on the collector optical efficiency value
+		for( int j = 0; j<m_nSCA; j++ )
+		{
+			m_ColOptEff(i, j) = m_ColOptEff(i, j)*m_RowShadow[i] * m_EndLoss(i, j)*m_ftrack;  //mjw 4.21.11 now a separate value for each SCA
+		}
+	}
+
+	//Calculate the flux level associated with each SCA
+	//but only calculate for the first call of the timestep<----[NO// messes with defocusing control: mjw 11.4.2010]
+	m_Theta_ave = 0.0; m_CosTh_ave = 0.0; m_IAM_ave = 0.0; m_RowShadow_ave = 0.0; m_EndLoss_ave = 0.0;
+	for( int i = 0; i<m_nSCA; i++ )
+	{
+		int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type
+		m_q_SCA[i] = m_q_i[CT] * m_costh;        //The flux corresponding with the collector type
+		//Also use this chance to calculate average optical values
+		m_Theta_ave = m_Theta_ave + m_theta*m_L_actSCA[CT] / m_L_tot;
+		m_CosTh_ave = m_CosTh_ave + m_costh*m_L_actSCA[CT] / m_L_tot;
+		m_IAM_ave = m_IAM_ave + m_IAM[CT] * m_L_actSCA[CT] / m_L_tot;
+		m_RowShadow_ave = m_RowShadow_ave + m_RowShadow[CT] * m_L_actSCA[CT] / m_L_tot;
+		m_EndLoss_ave = m_EndLoss_ave + m_EndLoss(CT, i)*m_L_actSCA[CT] / m_L_tot;
+	}
+
+}
+
 void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
@@ -864,184 +1049,8 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 	if (m_ncall == 0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 	{
-		//calculate the m_hour of the day
-		m_time_hr = sim_info.m_time / 3600.;
-		m_dt_hr = m_dt / 3600.;
-		m_hour = fmod(m_time_hr, 24.);       //m_hour of the day (1..24)  //tn 4.25.11 mod returns a natural number. This messes with the m_ftrack HrA/HrB calculations
-
-		// Always reset the m_defocus control at the first call of a timestep
-		m_defocus_new = 1.;
-		m_defocus_old = 1.;
-		m_defocus = 1.0;
-
-		//Time calculations
-		m_day_of_year = (int)ceil(m_time_hr / 24.);  //Day of the year
-		// Duffie & Beckman 1.5.3b
-		double B = (m_day_of_year - 1)*360.0 / 365.0*CSP::pi / 180.0;
-		// Eqn of time in minutes
-		double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B*2.0) - 0.04089 * sin(B*2.0));
-		// Declination in radians (Duffie & Beckman 1.6.1)
-		double Dec = 23.45 * sin(360.0*(284.0 + m_day_of_year) / 365.0*CSP::pi / 180.0) *CSP::pi / 180.0;
-		// Solar Noon and time in hours
-		double SolarNoon = 12. - ((m_shift)*180.0 / CSP::pi) / 15.0 - EOT / 60.0;
-
-		// Deploy & stow times in hours
-		// Calculations modified by MJW 11/13/2009 to correct bug
-		m_theta_dep = max(m_theta_dep, 1.e-6);
-		double DepHr1 = cos(m_latitude) / tan(m_theta_dep);
-		double DepHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_dep);
-		double DepHr3 = CSP::sign(tan(CSP::pi - m_theta_dep)) * acos((DepHr1*DepHr2 + sqrt(DepHr1*DepHr1 - DepHr2*DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
-		double DepTime = SolarNoon + DepHr3;
-
-		m_theta_stow = max(m_theta_stow, 1.e-6);
-		double StwHr1 = cos(m_latitude) / tan(m_theta_stow);
-		double StwHr2 = -tan(Dec) * sin(m_latitude) / tan(m_theta_stow);
-		double StwHr3 = CSP::sign(tan(CSP::pi - m_theta_stow))*acos((StwHr1*StwHr2 + sqrt(StwHr1*StwHr1 - StwHr2*StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
-		double StwTime = SolarNoon + StwHr3;
-
-		// m_ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
-		double HrA = m_hour - m_dt_hr;
-		double HrB = m_hour;
-
-		double  MidTrack;
-		// Solar field operates
-		if ((HrB > DepTime) && (HrA < StwTime))
-		{
-			// solar field deploys during time period
-			if (HrA < DepTime)
-			{
-				m_ftrack = (HrB - DepTime) / m_dt_hr;
-				MidTrack = HrB - m_ftrack * 0.5 *m_dt_hr;
-
-				// Solar field stows during time period
-			}
-			else if (HrB > StwTime)
-			{
-				m_ftrack = (StwTime - HrA) / m_dt_hr;
-				MidTrack = HrA + m_ftrack * 0.5 *m_dt_hr;
-				// solar field operates during entire period
-			}
-			else
-			{
-				m_ftrack = 1.0;
-				MidTrack = HrA + 0.5 *m_dt_hr;
-			}
-			// solar field doesn't operate
-		}
-		else
-		{
-			m_ftrack = 0.0;
-			MidTrack = HrA + 0.5 *m_dt_hr;
-		}
-
-		double StdTime = MidTrack;
-		double SolarTime = StdTime + ((m_shift)*180.0 / CSP::pi) / 15.0 + EOT / 60.0;
-		// m_hour angle (arc of sun) in radians
-		double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
-		// B. Stine equation for Solar Altitude angle in radians
-		m_SolarAlt = asin(sin(Dec)*sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
-		if ((m_accept_init  &&  time == m_start_time) || m_is_using_input_gen)
-		{  //MJW 1.14.2011 
-			SolarAz = CSP::sign(omega)*fabs(acos(min(1.0, (cos(CSP::pi / 2. - m_SolarAlt)*sin(m_latitude) - sin(Dec)) / (sin(CSP::pi / 2. - m_SolarAlt)*cos(m_latitude)))));
-		}
-
-		// Calculation of Tracking Angle for Trough. Stine Reference
-		double TrackAngle = atan(cos(m_SolarAlt) * sin(SolarAz - m_ColAz) /
-			(sin(m_SolarAlt - m_ColTilt) + sin(m_ColTilt)*cos(m_SolarAlt)*(1 - cos(SolarAz - m_ColAz))));
-		// Calculation of solar incidence angle for trough.. Stine reference
-		if (m_ftrack == 0.0)
-		{
-			m_costh = 1.0;
-		}
-		else
-		{
-			m_costh = sqrt(1.0 - pow(cos(m_SolarAlt - m_ColTilt) - cos(m_ColTilt) * cos(m_SolarAlt) * (1.0 - cos(SolarAz - m_ColAz)), 2));
-		}
-
-		// m_theta in radians
-		m_theta = acos(m_costh);
-
-		for (int i = 0; i<m_nColt; i++)
-		{
-			m_q_i[i] = I_b*m_A_aperture[i] / m_L_actSCA[i]; //[W/m] The incoming solar irradiation per aperture length
-			//incidence angle modifier (radians)
-			//m_IAM[i] = IamF0[i] + IamF1[i] * m_theta / m_costh + IamF2[i] * m_theta*theta/ m_costh;
-
-			m_IAM[i] = m_IAM_matrix(i, 0);
-			for (int j = 1; j < m_n_c_iam_matrix; j++)
-				m_IAM[i] += m_IAM_matrix(i, j)*pow(m_theta, j) / m_costh;
-
-			m_IAM[i] = fmax(0.0, fmin(m_IAM[i], 1.0));
-
-			//Calculate the Optical efficiency of the collector
-			for (int j = 0; j<m_nSCA; j++)
-			{
-				m_ColOptEff(i, j) = m_TrackingError[i] * m_GeomEffects[i] * m_Rho_mirror_clean[i] * m_Dirt_mirror[i] * m_Error[i] * m_IAM[i];
-			}
-
-			//Account for light reflecting off the collector and missing the receiver, also light from other 
-			//collectors hitting a different receiver
-			//mjw 4.21.11 - rescope this to be for each specific collector j=1,m_nSCA
-			for (int j = 0; j<m_nSCA; j++)
-			{
-				if (fabs(SolarAz) <= 90.0)
-				{  //mjw 5.1.11 The sun is in the southern sky (towards equator)
-					if (j == 0 || j == m_nSCA - 1)
-					{
-						m_EndGain(i, j) = 0.0; //No gain for the first or last collector
-					}
-					else
-					{
-						m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(m_theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
-					}
-				}
-				else
-				{  //mjw 5.1.11 The sun is in the northern sky (away from equator)
-					if ((j == floor(float(m_nSCA) / 2.) - 1) || (j == floor(float(m_nSCA) / 2.)))
-					{
-						m_EndGain(i, j) = 0.0; //No gain for the loops at the ends of the rows
-					}
-					else
-					{
-						m_EndGain(i, j) = max(m_Ave_Focal_Length[i] * tan(m_theta) - m_Distance_SCA[i], 0.0) / m_L_actSCA[i];
-					}
-				}
-				m_EndLoss(i, j) = 1.0 - m_Ave_Focal_Length[i] * tan(m_theta) / m_L_actSCA[i] + m_EndGain(i, j);
-			}
-
-			// Row to Row m_Shadowing Lossess
-			//PH = m_pi / 2.0 - TrackAngle[i]
-			m_RowShadow[i] = fabs(cos(TrackAngle)) * m_Row_Distance / m_W_aperture[i];
-			if (m_RowShadow[i] < 0.5 || m_SolarAlt < 0.)
-			{
-				m_RowShadow[i] = 0.;
-			}
-			else if (m_RowShadow[i] > 1.)
-			{
-				m_RowShadow[i] = 1.;
-			}
-
-			//Finally correct for these losses on the collector optical efficiency value
-			for (int j = 0; j<m_nSCA; j++)
-			{
-				m_ColOptEff(i, j) = m_ColOptEff(i, j)*m_RowShadow[i] * m_EndLoss(i, j)*m_ftrack;  //mjw 4.21.11 now a separate value for each SCA
-			}
-		}
-
-		//Calculate the flux level associated with each SCA
-		//but only calculate for the first call of the timestep<----[NO// messes with defocusing control: mjw 11.4.2010]
-		m_Theta_ave = 0.0; m_CosTh_ave = 0.0; m_IAM_ave = 0.0; m_RowShadow_ave = 0.0; m_EndLoss_ave = 0.0;
-		for (int i = 0; i<m_nSCA; i++)
-		{
-			int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type
-			m_q_SCA[i] = m_q_i[CT] * m_costh;        //The flux corresponding with the collector type
-			//Also use this chance to calculate average optical values
-			m_Theta_ave = m_Theta_ave + m_theta*m_L_actSCA[CT] / m_L_tot;
-			m_CosTh_ave = m_CosTh_ave + m_costh*m_L_actSCA[CT] / m_L_tot;
-			m_IAM_ave = m_IAM_ave + m_IAM[CT] * m_L_actSCA[CT] / m_L_tot;
-			m_RowShadow_ave = m_RowShadow_ave + m_RowShadow[CT] * m_L_actSCA[CT] / m_L_tot;
-			m_EndLoss_ave = m_EndLoss_ave + m_EndLoss(CT, i)*m_L_actSCA[CT] / m_L_tot;
-		}
+		// Call optical efficiency method
+		loop_optical_eta(weather, sim_info);
 
 		m_SCAs_def = 1.;
 
