@@ -30,7 +30,17 @@ private:
 	double m_N_run_mult;	//[-] Multiplier for runner heat loss - see comments in init()
 	double m_v_hot;			//[m^3] Hot piping volume
 	double m_v_cold;		//[m^3] Cold piping volume
-	
+	double m_Ap_tot;		//[m^2] Total field aperture area
+	int	m_nfsec;			//[-] Number of field sections
+	int	m_nhdrsec;			//[-] Number of header sections
+	int	m_nrunsec;			//[-] Number of unique runner diameters
+	double m_L_tot;			//[m] Total length of collectors in a loop
+	double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
+	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
+	double m_q_design;		//[Wt] Design-point thermal power from the solar field
+
+	std::vector<double> m_D_runner;	//[m] Runner diameters
+
 	// Variables that we need to track between calls and timesteps?
 	double m_defocus;		//[-] Defocus control 
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
@@ -38,44 +48,15 @@ private:
 	// Variables that are passed between methods, but not necessary to carry over timesteps
 	double m_EqOpteff;		//[-] Collector equivalent (weighted over variants AND all SCAs) optical efficiency
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
-
+	double m_c_htf_ave;		//[J/kg-K] Average solar field specific heat
 	
-	
-
-	double m_SCA_par_tot;		//Parasitic electric power consumed by the SC
-	
-	double m_dni_costh;		//DNI_x_CosTh
-	double m_qinc_costh;		//Q_inc_x_CosTh
-	double m_t_loop_outlet;		//HTF temperature immediately subsequent to the loop outlet
-	double m_c_htf_ave;		//Average solar field specific heat
-	double m_q_field_delivered;		//Total solar field thermal power delivered
-	double m_eta_thermal;		//Solar field thermal efficiency (power out/ANI)
-	double m_E_loop_accum;		//Accumulated internal energy change rate in the loops ONLY
-	double m_E_hdr_accum;		//Accumulated internal energy change rate in the headers/SGS
-	double m_E_tot_accum;		//Total accumulated internal energy change rate
-	double m_E_field;		//Accumulated internal energy in the entire solar field
-
-	
-
-	//Declare variables that require storage from step to step
-	double
-		m_Ap_tot, //Total aperture area m2
-		m_L_tot,	//Total length of a collector row [m]
-		m_opteff_des,	//Solar field optical efficiency at design
-		m_m_dot_design,	//Solar field mass flow rate at design [kg/s]
-		m_q_design;	//Design thermal power from the solar field [Wt]
-
-	int
-		m_nfsec,	//[-] Number of field sections
-		m_nhdrsec,	//[-] Number of header sections
-		m_nrunsec;	//[-] Number of unique runner diameters
 
 	//Other matrices
 	util::matrix_t<HTFProperties*> m_AnnulusGasMat;
 	util::matrix_t<AbsorberProps*> m_AbsorberPropMat;
 	util::matrix_t<double> m_L_actSCA, m_A_cs, m_D_h;
 	emit_table m_epsilon_3;
-	util::matrix_t<double> m_D_runner, m_L_runner, m_D_hdr;
+	util::matrix_t<double> m_L_runner, m_D_hdr;
 
 	/*m_nColt, m_nSCA*/
 	util::matrix_t<double> m_ColOptEff;	//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
@@ -321,7 +302,7 @@ public:
 		double Nchv, double Nlw, double Nlcv, double Nbja);
 	double FricFactor(double m_Rough, double Reynold);
 	void header_design(int nhsec, int m_nfsec, int m_nrunsec, double rho, double V_max, double V_min, double m_dot,
-		util::matrix_t<double> &m_D_hdr, util::matrix_t<double> &m_D_runner, std::string *summary = NULL);
+		util::matrix_t<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
 	double pipe_sched(double De);
 	double Pump_SGS(double rho, double m_dotsf, double sm);
 

@@ -57,22 +57,12 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_T_sys_c = std::numeric_limits<double>::quiet_NaN();
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
-	m_SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
 	m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
 	m_CosTh_ave = std::numeric_limits<double>::quiet_NaN();
 	m_IAM_ave = std::numeric_limits<double>::quiet_NaN();
 	m_RowShadow_ave = std::numeric_limits<double>::quiet_NaN();
 	m_EndLoss_ave = std::numeric_limits<double>::quiet_NaN();
-	m_dni_costh = std::numeric_limits<double>::quiet_NaN();
-	m_qinc_costh = std::numeric_limits<double>::quiet_NaN();
-	m_t_loop_outlet = std::numeric_limits<double>::quiet_NaN();
 	m_c_htf_ave = std::numeric_limits<double>::quiet_NaN();
-	m_q_field_delivered = std::numeric_limits<double>::quiet_NaN();
-	m_eta_thermal = std::numeric_limits<double>::quiet_NaN();
-	m_E_loop_accum = std::numeric_limits<double>::quiet_NaN();
-	m_E_hdr_accum = std::numeric_limits<double>::quiet_NaN();
-	m_E_tot_accum = std::numeric_limits<double>::quiet_NaN();
-	m_E_field = std::numeric_limits<double>::quiet_NaN();
 
 	for (int i = 0; i < 5; i++)
 		m_T_save[i] = std::numeric_limits<double>::quiet_NaN();
@@ -258,9 +248,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//Initialize values
 	m_defocus_old = 0.;
 
-	m_E_hdr_accum = 0.0;
-
-
 	m_ncall = -1;
 
 	// for test start
@@ -354,7 +341,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_D_hdr.resize_fill(m_nhdrsec, 0.);
 
 		//We need to determine design information about the field for purposes of header sizing ONLY
-		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_loop_in_des) / 2.0)*1000.;    //Specific heat
+		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
@@ -1777,6 +1764,7 @@ calc_final_metrics_goto:
 
 	double DP_tot = std::numeric_limits<double>::quiet_NaN();
 	double W_dot_pump = std::numeric_limits<double>::quiet_NaN();
+	double SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
 	if (m_accept_loc == 1)
 	{
 		// The total pressure drop in all of the piping
@@ -1787,11 +1775,11 @@ calc_final_metrics_goto:
 		//The parasitic power consumed by electronics and SCA drives
 		if (m_EqOpteff>0.0)
 		{
-			m_SCA_par_tot = m_SCA_drives_elec*SCAs_def*float(m_nSCA*m_nLoops);
+			SCA_par_tot = m_SCA_drives_elec*SCAs_def*float(m_nSCA*m_nLoops);
 		}
 		else
 		{
-			m_SCA_par_tot = 0.0;
+			SCA_par_tot = 0.0;
 		}
 	}
 	else
@@ -1804,11 +1792,11 @@ calc_final_metrics_goto:
 		//The parasitic power consumed by electronics and SCA drives 
 		if (m_EqOpteff>0.0)
 		{
-			m_SCA_par_tot = m_SCA_drives_elec*SCAs_def*float(m_nSCA);
+			SCA_par_tot = m_SCA_drives_elec*SCAs_def*float(m_nSCA);
 		}
 		else
 		{
-			m_SCA_par_tot = 0.0;
+			SCA_par_tot = 0.0;
 		}
 	}
 
@@ -1818,16 +1806,16 @@ calc_final_metrics_goto:
 	//First, calculate the amount of energy absorbed during the time step that didn't contribute to 
 	//heating up the solar field
 	E_avail_tot = 0.;
-	m_E_loop_accum = 0.;
+	double E_loop_accum = 0.0;
 	E_int_sum = 0.;
 	for (int i = 0; i<m_nSCA; i++)
 	{
 		E_avail_tot += m_E_avail[i];  //[J]
-		m_E_loop_accum += m_E_accum[i]; //[J]
+		E_loop_accum += m_E_accum[i]; //[J]
 		E_int_sum += m_E_int_loop[i]; //[J]
 	}
 
-	m_E_field = E_int_sum;
+	double E_field = E_int_sum;
 
 	// Average properties
 	rho_ave = m_htfProps.dens((m_T_loop_outX + m_T_sys_c) / 2.0, 0.0); //kg/m3
@@ -1837,11 +1825,12 @@ calc_final_metrics_goto:
 	double piping_hl_total = 0.0;
 
 	double E_bal_startup = 0.0;
+	double E_hdr_accum = 0.0;
 	if (m_accept_loc == 1)		// Consider entire internal energy of entire field, not just the loop
 	{
 		E_avail_tot *= float(m_nLoops);
-		m_E_loop_accum *= float(m_nLoops);
-		m_E_field *= float(m_nLoops);
+		E_loop_accum *= float(m_nLoops);
+		E_field *= float(m_nLoops);
 
 		//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS) 
 		//The mass of HTF in the system will be calculated based on the design loop inlet temperature
@@ -1854,16 +1843,16 @@ calc_final_metrics_goto:
 		//MJW 12.8.2010 modified startup temp calc to be based on previous system temperature
 		//MJW 12.14.2010 Limit to positive to avoid step-to-step oscillation introduced by using previous step. 
 		//.. This may cause a minor underestimation of annual energy output (<<.5%).
-		m_E_hdr_accum = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h - m_T_sys_h_last) + //Hot half
+		E_hdr_accum = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h - m_T_sys_h_last) + //Hot half
 			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_T_sys_c - m_T_sys_c_last);   //cold half
 
 		if (!m_is_using_input_gen)
-			E_bal_startup = max(m_E_hdr_accum, 0.0); //cold half
+			E_bal_startup = max(E_hdr_accum, 0.0); //cold half
 		else
-			E_bal_startup = m_E_hdr_accum; //cold half
+			E_bal_startup = E_hdr_accum; //cold half
 
 		//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]			
-		m_E_field += ((m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h - 298.150) +       //hot header and piping
+		E_field += ((m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h - 298.150) +       //hot header and piping
 			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_T_sys_c - 298.150));   //cold header and piping
 
 		//6/14/12, TN: Redefine pipe heat losses with header and runner components to get total system losses
@@ -1913,15 +1902,16 @@ calc_final_metrics_goto:
 	double q_dump = m_Ap_tot*I_b*m_EqOpteff*(1.0 - SCAs_def) / 1.e6;  //[MW]
 
 	//Total field performance
-	m_q_field_delivered = m_m_dot_htf_tot * m_c_htf_ave * (m_T_sys_h - m_T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
+	double q_field_delivered = m_m_dot_htf_tot * m_c_htf_ave * (m_T_sys_h - m_T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
 
+	double eta_thermal = std::numeric_limits<double>::quiet_NaN();
 	if (I_b*m_CosTh_ave == 0.)	//cc--> Adding case for zero output. Was reporting -Infinity in original version
 	{
-		m_eta_thermal = 0.;
+		eta_thermal = 0.;
 	}
 	else
 	{
-		m_eta_thermal = m_q_field_delivered / (I_b*m_CosTh_ave*m_Ap_tot / 1.e6);  //MJW 1.11.11	
+		eta_thermal = q_field_delivered / (I_b*m_CosTh_ave*m_Ap_tot / 1.e6);  //MJW 1.11.11	
 	}
 
 set_outputs_and_return:
@@ -1955,22 +1945,21 @@ set_outputs_and_return:
 	}
 
 	double
-		SCA_par_tot_out = m_SCA_par_tot * 1.e-6,
+		SCA_par_tot_out = SCA_par_tot * 1.e-6,
 		Pipe_hl_out = piping_hl_total * 1.e-6,		//[MW] convert from W
 		Theta_ave_out = m_Theta_ave / m_d2r,
 		CosTh_ave_out = m_CosTh_ave;
 
-	m_dni_costh = I_b*m_CosTh_ave;
-	m_qinc_costh = m_dni_costh * m_Ap_tot / 1.e6;
-	m_t_loop_outlet = m_T_loop_outX - 273.15;
+	double dni_costh = I_b*m_CosTh_ave;
+	double qinc_costh = dni_costh * m_Ap_tot / 1.e6;
+	double T_loop_outlet = m_T_loop_outX - 273.15;
 
-	double
-		E_loop_accum_out = m_E_loop_accum * 3.6e-9,
-		E_hdr_accum_out = m_E_hdr_accum * 3.6e-9;
+	double E_loop_accum_out = E_loop_accum * 3.6e-9;
+	double E_hdr_accum_out = E_hdr_accum * 3.6e-9;
 
-	m_E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
+	double E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
 
-	double E_field_out = m_E_field*3.6e-9;
+	double E_field_out = E_field*3.6e-9;
 	//------------------------------------------------------------------
 
 	//Set outputs
@@ -3705,14 +3694,14 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 ---------------------------------------------------------------------------------			*/
 
 void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int m_nrunsec, double rho, double V_max, double V_min, double m_dot,
-	util::matrix_t<double> &m_D_hdr, util::matrix_t<double> &m_D_runner, std::string *summary){
-
+	util::matrix_t<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary){
+	 
 	summary = NULL;
 
 	//resize the header matrices if they are incorrect
 	//real(8),intent(out):: m_D_hdr(nhsec), m_D_runner(m_nrunsec)
 	if (m_D_hdr.ncells() != nhsec) m_D_hdr.resize(nhsec);
-	if (m_D_runner.ncells() != m_nrunsec) m_D_runner.resize(m_nrunsec);
+	if (m_D_runner.size() != m_nrunsec) m_D_runner.resize(m_nrunsec);
 
 	//----
 	int nst, nend, nd;
