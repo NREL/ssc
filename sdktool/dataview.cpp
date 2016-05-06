@@ -293,14 +293,14 @@ std::vector<int> DataView::GetColumnWidths()
 {
 	std::vector<int> list;
 	for (size_t i=0;i<m_grid->GetNumberCols();i++)
-		list.push_back( m_grid->GetColumnWidth( i ) );
+		list.push_back( m_grid->GetColSize( i ) );
 	return list;
 }
 
 void DataView::SetColumnWidths( const std::vector<int> &cwl )
 {
 	for (size_t i=0;i<cwl.size() && i<m_grid->GetNumberCols();i++)
-		m_grid->SetColumnWidth( i, cwl[i] );
+		m_grid->SetColSize( i, cwl[i] );
 }
 
 wxArrayString DataView::GetSelections()
@@ -885,11 +885,11 @@ static int nday[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 	grdMonthly->ResizeGrid(12,5);
 	for (i=0;i<12;i++)
 	{
-		grdMonthly->SetCellValue( wxString::Format("%lg", mmin[i] ), i, 0 );
-		grdMonthly->SetCellValue( wxString::Format("%lg", mmax[i] ), i, 1 );
-		grdMonthly->SetCellValue( wxString::Format("%lg", mmean[i] ), i, 2 );
-		grdMonthly->SetCellValue( wxString::Format("%lg", msum[i] ), i, 3 );
-		grdMonthly->SetCellValue( wxString::Format("%lg", msum[i]/1000.0f ), i, 4 );
+		grdMonthly->SetCellValue( i, 0, wxString::Format("%lg", mmin[i]  )  );
+		grdMonthly->SetCellValue( i, 1, wxString::Format("%lg", mmax[i]  )  );
+		grdMonthly->SetCellValue( i, 2, wxString::Format("%lg", mmean[i] )  );
+		grdMonthly->SetCellValue( i, 3, wxString::Format("%lg", msum[i] ) );
+		grdMonthly->SetCellValue( i, 4, wxString::Format("%lg", msum[i]/1000.0f ) );
 	}
 	
 	grdMonthly->SetRowLabelValue(0, "Jan");

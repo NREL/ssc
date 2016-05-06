@@ -36,7 +36,7 @@ BEGIN_EVENT_TABLE( EditVariableDialog, wxDialog )
 	EVT_TEXT( ID_txtValue, EditVariableDialog::OnTextChange )
 	EVT_BUTTON( ID_btnChooseFile, EditVariableDialog::OnChooseFile )
 	EVT_NUMERIC( ID_numValue, EditVariableDialog::OnNumChange )
-	EVT_GRID_CMD_CELL_CHANGE( ID_grdArrMat, EditVariableDialog::OnGridCellChange )
+	EVT_GRID_CMD_CELL_CHANGED( ID_grdArrMat, EditVariableDialog::OnGridCellChange )
 	EVT_RADIOBOX( ID_rbgVarType, EditVariableDialog::OnTypeChange )
 END_EVENT_TABLE()
 
@@ -121,7 +121,7 @@ void EditVariableDialog::UpdateForm()
 		numRows->SetValue( m_var.num.length() );
 		numCols->SetValue( 1 );
 		for (size_t i=0;i<m_var.num.length();i++)
-			grdArrMat->SetCellValue( wxString::Format("%lg", (double) m_var.num[i]), i, 0 );
+			grdArrMat->SetCellValue( i, 0, wxString::Format("%lg", (double) m_var.num[i]) );
 
 		grdArrMat->Thaw();
 	}
@@ -135,7 +135,7 @@ void EditVariableDialog::UpdateForm()
 
 		for (size_t r=0;r<m_var.num.nrows();r++)
 			for (size_t c=0;c<m_var.num.ncols();c++)
-				grdArrMat->SetCellValue( wxString::Format("%lg", (double) m_var.num.at(r,c)), r, c );
+				grdArrMat->SetCellValue( r, c, wxString::Format("%lg", (double) m_var.num.at(r,c)) );
 
 		grdArrMat->Thaw();
 	}
@@ -203,7 +203,7 @@ void EditVariableDialog::OnGridCellChange( wxGridEvent &evt )
 			m_var.num[r] = val;
 	}
 
-	grdArrMat->SetCellValue(wxString::Format("%lg",val),r,c);
+	grdArrMat->SetCellValue( r, c, wxString::Format("%lg",val) );
 }
 
 void EditVariableDialog::OnChooseFile( wxCommandEvent & )

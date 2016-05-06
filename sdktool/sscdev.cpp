@@ -963,7 +963,7 @@ void SCFrame::OnCMListSelect(wxCommandEvent &)
 
 		for (int r=0;r<nrows;r++)
 			for (int c=0;c<ncols;c++)
-				m_gridCM->SetCellValue( vartab[r][c], r, c );
+				m_gridCM->SetCellValue( r, c, vartab[r][c]  );
 
 		m_gridCM->AutoSizeColumns(false);
 		m_gridCM->Thaw();
