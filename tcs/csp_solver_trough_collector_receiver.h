@@ -51,10 +51,14 @@ private:
 	util::matrix_t<double> m_A_cs;	//[m^2] Cross-sectional area for HTF flow for each receiver and variant (why variant?)
 	util::matrix_t<double> m_D_h;	//[m^2] Hydraulic diameters for HTF flow for each receiver and variant (why variant?)	
 
-	// Variables that we need to track between calls and timesteps?
-	double m_defocus;		//[-] Defocus control 
+	// Variables that we need to track between calls during one timestep
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
-	
+	double m_defocus;		//[-] Defocus during present call = m_defocus_new / m_defocus_old
+	double m_defocus_new;	//[-] Defocus signal from controller during present timestep
+	double m_defocus_old;	//[-] Defocus during previous call (= 1 at first call)
+	bool m_no_fp;			//[-] Did previous call require freeze protection (T = no, F = yes) 
+	double m_m_dot_htfX;	//[kg/s] Loop mass flow rate solved in previous timestep
+
 	// Variables that are passed between methods, but not necessary to carry over timesteps
 	double m_EqOpteff;		//[-] Collector equivalent (weighted over variants AND all SCAs) optical efficiency
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
@@ -85,22 +89,25 @@ private:
 	util::matrix_t<double> m_EndGain;	//[-] Light from different collector hitting receiver
 	util::matrix_t<double> m_EndLoss;	//[-] Light missing receiver due to length
 
-	// Classes that are defined as member data so are re-declared each time performance function is called
-	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
-
-
-	
-	
-
-	
-
-
-
 	double m_Theta_ave;					//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
 	double m_CosTh_ave;					//[-] Field average costheta value
 	double m_IAM_ave;					//[-] Field average incidence angle modifier
 	double m_RowShadow_ave;				//[-] Field average row shadowing loss
 	double m_EndLoss_ave;				//[-] Field average end loss
+	
+	double m_ftrack;			//[-] Fraction of timestep that solar field is deployed
+	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
+	
+	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
+	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
+
+	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
+
+	// Classes that are defined as member data so are re-declared each time performance function is called
+	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
+
+	// Variables that we need to track between timesteps
+	
 
 	util::matrix_t<double>
 		m_T_htf_in0, m_T_htf_out0,
@@ -109,21 +116,9 @@ private:
 	double m_T_sys_c;			//[C] Temperature (bulk) of cold runners & headers
 	double m_T_sys_h;			//[C] Solar field HTF outlet temperature
 	double m_T_sys_c_last;		//[C] Temperature (bulk) of cold runners & headers in previous timestep
-	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep
-	
-	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
-	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
+	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep		
 
-	double m_ftrack;			//[-] Fraction of timestep that solar field is deployed
-	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
-
-	double m_defocus_new, m_defocus_old;
-	
-	bool
-		m_no_fp;	//Freeze protection flag
-
-	double m_c_hdr_cold,
-		m_q_SCA_tot, m_m_dot_htfX,  m_T_loop_in,
+	double m_T_loop_in,
 		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
 	
 	int m_SolveMode; 
