@@ -208,16 +208,12 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_q_loss.resize(m_nHCEVar);
 	m_q_abs.resize(m_nHCEVar);
 	m_DP_tube.resize(m_nSCA);
-	m_E_abs_field.resize(m_nSCA);
 	m_E_int_loop.resize(m_nSCA);
 	m_E_accum.resize(m_nSCA);
 	m_E_avail.resize(m_nSCA);
-	m_E_abs_max.resize(m_nSCA);
-	m_v_1.resize(m_nSCA);
 	m_q_loss_SCAtot.resize(m_nSCA);
 	m_q_abs_SCAtot.resize(m_nSCA);
 	m_q_SCA.resize(m_nSCA);
-	m_E_fp.resize_fill(m_nSCA, 0.);
 	m_q_1abs_tot.resize(m_nSCA);
 	m_q_1abs.resize(m_nHCEVar);
 	m_q_i.resize(m_nColt);
@@ -338,7 +334,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
 
 		//Allocate space for the m_D_hdr array
-		m_D_hdr.resize_fill(m_nhdrsec, 0.);
+		m_D_hdr.resize(m_nhdrsec);
 
 		//We need to determine design information about the field for purposes of header sizing ONLY
 		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
@@ -657,7 +653,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		}  //m_nHCEVar loop
 
 		//Calculate the specific heat for the node
-		c_htf_i *= 1000.0;	//[kJ/kg-K]
+		c_htf_i *= 1000.0;	//[J/kg-K]
 		//Calculate the average node outlet temperature, including transient effects
 		double m_node = rho_htf_i * m_A_cs(HT, 1)*m_L_actSCA[CT];
 
@@ -1153,12 +1149,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	{
 
 		qq++; //Iteration counter
-		m_q_loss_SCAtot.fill(0.);
-		m_q_abs_SCAtot.fill(0.);
-		m_q_1abs_tot.fill(0.);
-		m_E_avail.fill(0.);
-		m_E_accum.fill(0.);
-		m_E_int_loop.fill(0.);
+		m_q_loss_SCAtot.assign(m_q_loss_SCAtot.size(),0.0);
+		m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(),0.0);
+		m_q_1abs_tot.assign(m_q_1abs.size(),0.0);
+		m_E_avail.assign(m_E_avail.size(),0.0);
+		m_E_accum.assign(m_E_accum.size(),0.0);
+		m_E_int_loop.assign(m_E_int_loop.size(),0.0);
 		m_EqOpteff = 0.0;
 
 		m_dot_htf = m_m_dot_htfX;
@@ -1660,7 +1656,7 @@ calc_final_metrics_goto:
 		m_HDR_rough, (40. + m_Row_Distance), 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 1.0, 0.0);
 	//if(ErrorFound()) return 1
 	//-------HCE's
-	m_DP_tube.fill(0.0);
+	m_DP_tube.assign(m_DP_tube.size(),0.0);
 	for (int j = 0; j<m_nHCEVar; j++)
 	{
 		for (int i = 0; i<m_nSCA; i++)
@@ -3694,13 +3690,13 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 ---------------------------------------------------------------------------------			*/
 
 void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int m_nrunsec, double rho, double V_max, double V_min, double m_dot,
-	util::matrix_t<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary){
+	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary){
 	 
 	summary = NULL;
 
 	//resize the header matrices if they are incorrect
 	//real(8),intent(out):: m_D_hdr(nhsec), m_D_runner(m_nrunsec)
-	if (m_D_hdr.ncells() != nhsec) m_D_hdr.resize(nhsec);
+	if (m_D_hdr.size() != nhsec) m_D_hdr.resize(nhsec);
 	if (m_D_runner.size() != m_nrunsec) m_D_runner.resize(m_nrunsec);
 
 	//----

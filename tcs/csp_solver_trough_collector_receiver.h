@@ -39,7 +39,17 @@ private:
 	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
 	double m_q_design;		//[Wt] Design-point thermal power from the solar field
 
-	std::vector<double> m_D_runner;	//[m] Runner diameters
+	std::vector<double> m_D_runner;	//[m] Diameters of runner sections
+	std::vector<double> m_L_runner;	//[m] Lengths of runner sections
+	std::vector<double> m_D_hdr;	//[m] Diameters of header sections
+	std::vector<double> m_L_actSCA;	//[m] Lengths of each SCA
+
+	emit_table m_epsilon_3;			// Table of emissivity vs temperature for each variant of each receiver type
+	util::matrix_t<HTFProperties*> m_AnnulusGasMat;		// HTF Property class for each variant of each receiver type
+	util::matrix_t<AbsorberProps*> m_AbsorberPropMat;	// Absorber Property class for each variant of each receiver type
+
+	util::matrix_t<double> m_A_cs;	//[m^2] Cross-sectional area for HTF flow for each receiver and variant (why variant?)
+	util::matrix_t<double> m_D_h;	//[m^2] Hydraulic diameters for HTF flow for each receiver and variant (why variant?)	
 
 	// Variables that we need to track between calls and timesteps?
 	double m_defocus;		//[-] Defocus control 
@@ -49,32 +59,42 @@ private:
 	double m_EqOpteff;		//[-] Collector equivalent (weighted over variants AND all SCAs) optical efficiency
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
 	double m_c_htf_ave;		//[J/kg-K] Average solar field specific heat
-	
 
-	//Other matrices
-	util::matrix_t<HTFProperties*> m_AnnulusGasMat;
-	util::matrix_t<AbsorberProps*> m_AbsorberPropMat;
-	util::matrix_t<double> m_L_actSCA, m_A_cs, m_D_h;
-	emit_table m_epsilon_3;
-	util::matrix_t<double> m_L_runner, m_D_hdr;
+	std::vector<double> m_E_int_loop;	//[J] Energy relative to ambient for each receiver
+	std::vector<double> m_E_accum;		//[J] Internal energy change in timestep for each receiver
+	std::vector<double> m_E_avail;		//[J] Energy absorbed less internal energy change for each receiver
+	std::vector<double> m_q_abs_SCAtot;	//[W] Heat absorption into HTF in each SCA, weighted variants
+	std::vector<double> m_q_loss_SCAtot;//[W] Total heat losses from each SCA, weighted variants
+	std::vector<double> m_q_1abs_tot;	//[W/m] Thermal losses from each SCA, weighted variants
+
+	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
+
+	std::vector<double> m_q_loss;		//[W/m] Total losses (thermal + optical) per length in each SCA, one variant
+	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA, one variant
+	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA, one variant
+	std::vector<double> m_q_i;			//[W/m] DNI * A_aper / L_sca
+	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+
+	std::vector<double> m_IAM;			//[-] Incidence angle modifiers
+	std::vector<double> m_RowShadow;	//[-] Row-to-row shadowing losses
 
 	/*m_nColt, m_nSCA*/
 	util::matrix_t<double> m_ColOptEff;	//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
 	util::matrix_t<double> m_EndGain;	//[-] Light from different collector hitting receiver
 	util::matrix_t<double> m_EndLoss;	//[-] Light missing receiver due to length
 
-	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
-	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
+	// Classes that are defined as member data so are re-declared each time performance function is called
+	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
 
-	std::vector<double> m_q_loss;		//[W/m] Total losses (thermal + optical) per length in each SCA
-	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA
-	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA
-	std::vector<double> m_q_i;			//[W/m] DNI * A_aper / L_sca
-	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+
 	
-	std::vector<double> m_IAM;			//[-] Incidence angle modifiers
-	std::vector<double> m_RowShadow;	//[-] Row-to-row shadowing losses
+	
+
+	
+
+
 
 	double m_Theta_ave;					//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
 	double m_CosTh_ave;					//[-] Field average costheta value
@@ -83,10 +103,8 @@ private:
 	double m_EndLoss_ave;				//[-] Field average end loss
 
 	util::matrix_t<double>
-		m_DP_tube, m_E_abs_field,
-		m_E_int_loop, m_E_accum, m_E_avail, m_E_abs_max, m_v_1, m_q_loss_SCAtot, m_q_abs_SCAtot, 
 		m_T_htf_in0, m_T_htf_out0,
-		m_T_htf_ave0, m_E_fp, m_q_1abs_tot;
+		m_T_htf_ave0;
 	
 	double m_T_sys_c;			//[C] Temperature (bulk) of cold runners & headers
 	double m_T_sys_h;			//[C] Solar field HTF outlet temperature
@@ -302,7 +320,7 @@ public:
 		double Nchv, double Nlw, double Nlcv, double Nbja);
 	double FricFactor(double m_Rough, double Reynold);
 	void header_design(int nhsec, int m_nfsec, int m_nrunsec, double rho, double V_max, double V_min, double m_dot,
-		util::matrix_t<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
+		std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
 	double pipe_sched(double De);
 	double Pump_SGS(double rho, double m_dotsf, double sm);
 
