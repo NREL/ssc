@@ -10,6 +10,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_r2d = 180. / CSP::pi;
 	m_d2r = CSP::pi / 180.;
 	m_mtoinch = 39.3700787;	//[m] -> [in]
+	m_T_htf_prop_min = 275.0;	//[K]
 	
 	// set initial values for all parameters to prevent possible misuse
 	m_nSCA = -1;
@@ -70,8 +71,6 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	for (int i = 0; i < 3; i++)
 		m_reguess_args[i] = std::numeric_limits<double>::quiet_NaN();
 
-	m_m_htf_prop_min = std::numeric_limits<double>::quiet_NaN();
-
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
 
@@ -88,8 +87,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	Do any setup required here.
 	Get the values of the inputs and parameters
 	*/
-
-	m_m_htf_prop_min = 275.0;
 
 	//Initialize air properties -- used in reeiver calcs
 	m_airProps.SetFluid(HTFProperties::Air);
@@ -988,7 +985,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	m_ncall++;
 
 	//reset m_defocus counter
-	m_dfcount = 0;
+	int dfcount = 0;
 
 	double time = sim_info.m_time;		//[hr]
 	double dt = sim_info.m_step;		//[s]
@@ -1084,7 +1081,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//TWN 6/14/11  if defous is < 1 { calculate m_defocus from previous call's m_q_abs and { come back to temperature loop.
 	if (m_defocus<1.)
 	{
-		m_dfcount = m_dfcount + 1;	//cc--> Not sure why this counts.. the m_dfcount variable is always set to 0 when the simulation is called.. Ask Ty.
+		dfcount = 1;	//cc--> Not sure why this counts.. the m_dfcount variable is always set to 0 when the simulation is called.. Ask Ty.
 		goto post_convergence_flag; // goto 11;
 	}
 
@@ -1098,7 +1095,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	rho_hdr_hot = m_htfProps.dens(m_T_sys_h_last, 1.);
 	c_hdr_cold_last = m_htfProps.Cp(m_T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 
-	m_dfcount++;   //The m_defocus iteration counter
+	dfcount++;   //The m_defocus iteration counter
 
 	// ******* Initial values *******
 	//if(m_T_loop_in == m_T_loop_out) m_T_loop_in = m_T_loop_out - 1. //Don't allow equal temperatures
@@ -1108,7 +1105,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	//1=constrain temperature
 	//2=defocusing array
 	//3=constrain mass flow above min
-	m_SolveMode = 1;
+	int SolveMode = 1;
 
 	int qq = 0;                  //Set iteration counter
 
@@ -1169,7 +1166,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
 		{
 			m_m_dot_htfX = m_m_dot_htfmax;
-			if( m_dfcount > 20 )
+			if( dfcount > 20 )
 			{
 				m_error_msg = "The solution encountered an unresolvable NaN error in the heat loss calculations. Continuing calculations...";
 				mc_csp_messages.add_message(C_csp_messages::WARNING, m_error_msg);
@@ -1236,7 +1233,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 	freeze_prot_flag: //7   continue    
 
-		if (m_SolveMode == 4)
+		if (SolveMode == 4)
 		{
 			// assumptions...
 			// 1) solver won't enter both modes 3 & 4 in the SAME CALL. so, don't need unique flags or to reset flags
@@ -1325,7 +1322,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				}
 			}
 		}
-		else if (m_SolveMode == 3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
+		else if (SolveMode == 3)  //Solve to find (increased) inlet temperature that keeps outlet temperature above freeze protection temp
 		{
 			t_tol = 1.5e-4;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
 
@@ -1400,12 +1397,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				{
 					if (m_T_htf_out[m_nSCA-1] < m_T_fp)
 					{
-						m_SolveMode = 3;
+						SolveMode = 3;
 						goto freeze_prot_flag; //goto 7
 					}
 					else
 					{
-						m_SolveMode = 4;
+						SolveMode = 4;
 						goto freeze_prot_flag;
 					}
 				}
@@ -1488,7 +1485,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			if (m_dot_upper < m_m_dot_htfmin)      //Once the maximum possible m_dot to solve energy balance is less than minimum allowable, set to min value and get final T_out
 			{
 				m_m_dot_htfX = m_m_dot_htfmin;
-				m_SolveMode = 3;
+				SolveMode = 3;
 			}
 
 		}
@@ -1542,7 +1539,7 @@ freeze_prot_ok:		//9 continue
 	//After convergence, check to see if the HTF flow rate is over the maximum level
 
 post_convergence_flag: //11 continue
-	if (((m_dot_htf > m_m_dot_htfmax) && (m_dfcount<5)) || ((m_defocus<1.0) && (m_dfcount == 1)))
+	if (((m_dot_htf > m_m_dot_htfmax) && (dfcount<5)) || ((m_defocus<1.0) && (dfcount == 1)))
 	{
 
 		//if so, the field m_defocus control must be engaged. for(int this by calculating the maximum
@@ -1553,7 +1550,7 @@ post_convergence_flag: //11 continue
 		for (int i = 0; i<m_nSCA; i++){ qsum += m_q_abs_SCAtot[i]; }
 		double q_check = max(qsum, 0.0); //limit to positive
 		//mjw 11.4.2010: the max Q amount is based on the m_defocus control    
-		if (m_dfcount == 1) q_abs_maxOT = min(q_check*m_defocus, m_c_htf_ave*m_m_dot_htfmax*(m_T_loop_out - m_T_loop_in_des));  //mjw 11.30.2010
+		if (dfcount == 1) q_abs_maxOT = min(q_check*m_defocus, m_c_htf_ave*m_m_dot_htfmax*(m_T_loop_out - m_T_loop_in_des));  //mjw 11.30.2010
 
 		//Select the method of defocusing used for this system
 		if (m_fthrctrl == 0)
@@ -1623,9 +1620,9 @@ post_convergence_flag: //11 continue
 			SCAs_def = 1.;
 		}
 
-		m_SolveMode = 2;  //Mode 2 -> defocusing
+		SolveMode = 2;  //Mode 2 -> defocusing
 		//mjw 11.4.2010 added conditional statement
-		if (m_dfcount<5)
+		if (dfcount<5)
 		{
 			m_T_cold_in_1 = T_cold_in;		//12.29.14 twn: Shouldn't need to worry about freeze protection AND m_defocus, but, if both occur and m_defocus is adjusted, should try inlet temperature
 			goto overtemp_iter_flag; //Return to recalculate with new m_defocus arrangement
@@ -2727,7 +2724,7 @@ double C_csp_trough_collector_receiver::fT_2(double q_12conv, double T_1, double
 	double Cp_1, Cp_2, f, h_1, k_1, k_2, mu_1, mu_2, Nu_D2, Pr_1, Pr_2, Re_D2, rho_1, DRatio;
 	bool includelaminar = true;	//cc -- this is always set to TRUE in TRNSYS
 
-	T_2g = max(T_2g, m_m_htf_prop_min);
+	T_2g = max(T_2g, m_T_htf_prop_min);		//[K]
 
 	// Thermophysical properties for HTF 
 	mu_1 = m_htfProps.visc(T_1);  //[kg/m-s]

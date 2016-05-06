@@ -18,7 +18,8 @@ private:
 	
 	// Hardcoded constants
 	double m_d2r, m_r2d, m_mtoinch;
-	
+	double m_T_htf_prop_min;	//[K] Minimum temperature allowed in props call to minimize errors
+
 	// Init() inputs
 	double m_latitude;		//[deg] convert to [rad] in init()
 	double m_longitude;		//[deg] convert to [rad] in init()
@@ -58,7 +59,8 @@ private:
 	double m_defocus_old;	//[-] Defocus during previous call (= 1 at first call)
 	bool m_no_fp;			//[-] Did previous call require freeze protection (T = no, F = yes) 
 	double m_m_dot_htfX;	//[kg/s] Loop mass flow rate solved in previous timestep
-
+	int m_ncall;			//[-] Track number of calls per timestep, reset = -1 in converged() call
+	
 	// Variables that are passed between methods, but not necessary to carry over timesteps
 	double m_EqOpteff;		//[-] Collector equivalent (weighted over variants AND all SCAs) optical efficiency
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
@@ -70,10 +72,6 @@ private:
 	std::vector<double> m_q_abs_SCAtot;	//[W] Heat absorption into HTF in each SCA, weighted variants
 	std::vector<double> m_q_loss_SCAtot;//[W] Total heat losses from each SCA, weighted variants
 	std::vector<double> m_q_1abs_tot;	//[W/m] Thermal losses from each SCA, weighted variants
-
-	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
-	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
 
 	std::vector<double> m_q_loss;		//[W/m] Total losses (thermal + optical) per length in each SCA, one variant
 	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA, one variant
@@ -101,36 +99,35 @@ private:
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
 
+	double m_Header_hl_hot;		//[W] Total heat loss from the hot headers *in one field section*
+	double m_Runner_hl_hot;		//[W] Total heat loss from the hot runners *in one field section*
+
 	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
+	double m_c_hdr_hot;			//[J/kg-K] Specific heat of fluid at outlet temperature of last SCA (not necessarily return temperature if modeling runners and headers)
 
 	// Classes that are defined as member data so are re-declared each time performance function is called
 	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
 
-	// Variables that we need to track between timesteps
-	
+		// Temperatures from the most recent converged() operation
+	double m_T_sys_c_last;				//[C] Temperature (bulk) of cold runners & headers in previous timestep
+	std::vector<double> m_T_htf_in0;	//[C] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave0;	//[C] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out0;	//[C] Outlet HTF temperature to each SCA
+	double m_T_sys_h_last;				//[C] Temperature (bulk) of hot runners & headers in previous timestep		
 
-	util::matrix_t<double>
-		m_T_htf_in0, m_T_htf_out0,
-		m_T_htf_ave0;
-	
-	double m_T_sys_c;			//[C] Temperature (bulk) of cold runners & headers
-	double m_T_sys_h;			//[C] Solar field HTF outlet temperature
-	double m_T_sys_c_last;		//[C] Temperature (bulk) of cold runners & headers in previous timestep
-	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep		
+		// Latest temperatures solved during present call to this class
+	double m_T_sys_c;					//[C] Temperature (bulk) of cold runners & headers
+	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
+	double m_T_sys_h;					//[C] Solar field HTF outlet temperature
 
-	double m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
-	
-	int m_SolveMode; 
-	int m_dfcount; 
-	int m_ncall;		//[-] Track number of calls per timestep, reset = -1 in converged() call
+	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
+	// Member variables that are used to store information for the EvacReceiver method
 	double m_T_save[5];			//[C] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
-	double m_reguess_args[3];
-
-	double m_m_htf_prop_min;
-
-	bool m_ss_init_complete;
-
+	double m_reguess_args[3];	//[-] Logic to determine whether to use previous guess values or start iteration fresh
+	
 	// member string for exception messages
 	std::string m_error_msg;
 
