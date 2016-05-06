@@ -1442,16 +1442,16 @@ wxGrid *tcLayoutCtrl::CreateUnitDataGrid( wxWindow *parent, tcstypeinfo *type )
 		else if (vl[idx].data_type == TCS_ARRAY ) sdata = "array";
 		else if (vl[idx].data_type == TCS_MATRIX ) sdata = "matrix";
 
-		grid->SetCellValue( stype, idx, 0 );
-		grid->SetCellValue( sdata, idx, 1 );
-		grid->SetCellValue( vl[idx].name, idx, 2 );
-		grid->SetCellValue( vl[idx].label, idx, 3 );
-		grid->SetCellValue( vl[idx].units, idx, 4 );
-		grid->SetCellValue( vl[idx].group, idx, 5 );
-		grid->SetCellValue( vl[idx].meta, idx, 6 );
+		grid->SetCellValue( idx, 0, stype );
+		grid->SetCellValue( idx, 1, sdata );
+		grid->SetCellValue( idx, 2, vl[idx].name );
+		grid->SetCellValue( idx, 3, vl[idx].label );
+		grid->SetCellValue( idx, 4, vl[idx].units );
+		grid->SetCellValue( idx, 5, vl[idx].group );
+		grid->SetCellValue( idx, 6, vl[idx].meta );
 
 		for (int j=0;j<7;j++)
-			grid->SetCellBackgroundColour( rowc, idx, j );
+			grid->SetCellBackgroundColour( idx, j, rowc );
 
 		idx++;
 	}
