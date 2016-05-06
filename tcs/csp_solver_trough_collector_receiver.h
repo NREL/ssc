@@ -118,8 +118,7 @@ private:
 	double m_T_sys_c_last;		//[C] Temperature (bulk) of cold runners & headers in previous timestep
 	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep		
 
-	double m_T_loop_in,
-		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
+	double m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
 	
 	int m_SolveMode; 
 	int m_dfcount; 
