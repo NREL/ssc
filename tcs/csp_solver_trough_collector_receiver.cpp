@@ -56,6 +56,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_longitude = std::numeric_limits<double>::quiet_NaN();
 	m_T_sys_h = std::numeric_limits<double>::quiet_NaN();
 	m_T_sys_c = std::numeric_limits<double>::quiet_NaN();
+	m_T_sys_h_converged = std::numeric_limits<double>::quiet_NaN();
+	m_T_sys_c_converged = std::numeric_limits<double>::quiet_NaN();
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
 	m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
@@ -220,9 +222,12 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_EndLoss.resize(m_nColt, m_nSCA);
 	m_RowShadow.resize(m_nColt);
 	//Allocate space for transient variables
-	m_T_htf_in0.resize(m_nSCA);
-	m_T_htf_out0.resize(m_nSCA);
-	m_T_htf_ave0.resize(m_nSCA);
+	m_T_htf_in_last.resize(m_nSCA);
+	m_T_htf_out_last.resize(m_nSCA);
+	m_T_htf_ave_last.resize(m_nSCA);
+	m_T_htf_in_converged.resize(m_nSCA);
+	m_T_htf_out_converged.resize(m_nSCA);
+	m_T_htf_ave_converged.resize(m_nSCA);
 
 	//Set up annulus gas and absorber property matrices
 	m_AnnulusGasMat.resize(m_nHCEt, m_nHCEVar);
@@ -511,15 +516,15 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	}
 
 	/* ----- Set initial storage values ------ */
-	double T_field_ini = 0.5*(m_T_fp + m_T_loop_in_des);		//[K]
-	m_T_sys_c_last = T_field_ini;	//[K]
-	m_T_sys_h_last = T_field_ini;	//[K]
+	double T_field_ini = 0.5*(m_T_fp + m_T_loop_in_des);	//[K]
+	m_T_sys_c_converged = m_T_sys_c_last = T_field_ini;		//[K]
+	m_T_sys_h_converged = m_T_sys_h_last = T_field_ini;		//[K]
 	//cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
 	for (int i = 0; i < m_nSCA; i++)
 	{
-		m_T_htf_in0[i] = T_field_ini;
-		m_T_htf_out0[i] = T_field_ini;
-		m_T_htf_ave0[i] = T_field_ini;
+		m_T_htf_in_converged[i] = m_T_htf_in_last[i] = T_field_ini;		//[K]
+		m_T_htf_out_converged[i] = m_T_htf_out_last[i] = T_field_ini;	//[K]
+		m_T_htf_ave_converged[i] = m_T_htf_ave_last[i] = T_field_ini;	//[K]
 	}
 
 	if (m_accept_init)
@@ -658,7 +663,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		//of the heat addition.
 		//mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
 		m_T_htf_out[i] = m_q_abs_SCAtot[i] / (m_dot_htf_loop*c_htf_i) + m_T_htf_in[i] +
-			2.0 * (m_T_htf_ave0[i] - m_T_htf_in[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * c_htf_i)) *
+			2.0 * (m_T_htf_ave_last[i] - m_T_htf_in[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * c_htf_i)) *
 			exp(-2. * m_dot_htf_loop * c_htf_i * sim_info.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_actSCA[CT]));
 		//Recalculate the average temperature for the SCA
 		m_T_htf_ave[i] = (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0;
@@ -672,7 +677,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			{
 				//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
 				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
-				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
+				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave_last[i]);
 				m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
 				m_E_avail[i] = max(m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
 
@@ -684,7 +689,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		{
 			//m_E_avail[i] = max(m_q_abs_SCAtot[i]*m_dt*3600. - m_A_cs(HT,1)*m_L_actSCA[CT]*m_rho_htf[i]*m_c_htf[i]*(m_T_htf_ave[i]- m_T_htf_ave0[i]),0.0)
 			double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
-			m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave0[i]);
+			m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave_last[i]);
 			m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
 			//m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
 			m_E_avail[i] = (m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
@@ -1200,7 +1205,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			ss_diff += fabs(m_T_sys_c - m_T_sys_c_last) + fabs(m_T_sys_h_last - m_T_sys_h);
 			for (int i = 0; i < m_nSCA; i++)
 			{
-				ss_diff += fabs(m_T_htf_in0[i] - m_T_htf_in[i]) + fabs(m_T_htf_out0[i] - m_T_htf_out[i]) + fabs(m_T_htf_ave0[i] - (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0);
+				ss_diff += fabs(m_T_htf_in_last[i] - m_T_htf_in[i]) + fabs(m_T_htf_out_last[i] - m_T_htf_out[i]) + fabs(m_T_htf_ave_last[i] - (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0);
 			}
 
 			if (ss_diff / 300.0 > 0.001)	// If not in steady state, updated previous temperatures and re-run energy balances
@@ -1211,9 +1216,9 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 				for (int i = 0; i<m_nSCA; i++)
 				{
-					m_T_htf_in0[i] = m_T_htf_in[i];
-					m_T_htf_out0[i] = m_T_htf_out[i];
-					m_T_htf_ave0[i] = (m_T_htf_in0[i] + m_T_htf_out0[i]) / 2.0;
+					m_T_htf_in_last[i] = m_T_htf_in[i];
+					m_T_htf_out_last[i] = m_T_htf_out[i];
+					m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;
 				}
 
 				rho_hdr_cold = m_htfProps.dens(m_T_sys_c_last, 1.);
@@ -1911,9 +1916,9 @@ set_outputs_and_return:
 	//---------Do unit conversions and final calculations-------------
 
 	double T_sys_h_out = m_T_sys_h - 273.15;			//[C] from K
-	double m_dot_avail_out = m_dot_avail*3600.;		//[kg/hr] from kg/s
-	double W_dot_pump_out = W_dot_pump / 1000.;		//[MW] from kW
-	double E_fp_tot_out = E_fp_tot*1.e-6;			//[MW] from W
+	double m_dot_avail_out = m_dot_avail*3600.;			//[kg/hr] from kg/s
+	double W_dot_pump_out = W_dot_pump / 1000.;			//[MW] from kW
+	double E_fp_tot_out = E_fp_tot*1.e-6;				//[MW] from W
 	double T_sys_c_out = m_T_sys_c - 273.15;			//[C] from K
 	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
 	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
@@ -2015,20 +2020,21 @@ void C_csp_trough_collector_receiver::converged()
 
 	m_ss_init_complete = true;
 
-	m_T_sys_c_last = m_T_sys_c;   //Get T_sys from the last timestep
-	m_T_sys_h_last = m_T_sys_h;
-	for (int i = 0; i<m_nSCA; i++){
-		m_T_htf_in0[i] = m_T_htf_in[i];
-		m_T_htf_out0[i] = m_T_htf_out[i];
-		m_T_htf_ave0[i] = (m_T_htf_in0[i] + m_T_htf_out0[i]) / 2.0;
+	m_T_sys_c_converged = m_T_sys_c_last = m_T_sys_c;		//[K]
+	m_T_sys_h_converged = m_T_sys_h_last = m_T_sys_h;		//[K]
+	for (int i = 0; i<m_nSCA; i++)
+	{
+		m_T_htf_in_converged[i] = m_T_htf_in_last[i] = m_T_htf_in[i];		//[K]
+		m_T_htf_out_converged[i] = m_T_htf_out_last[i] = m_T_htf_out[i];	//[K]
+		m_T_htf_ave[i] = m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
 	}
 
-	m_ncall = -1;
+	m_ncall = -1;	//[-]
 
 	// Always reset the m_defocus control at the first call of a timestep
-	m_defocus_new = 1.0;
-	m_defocus_old = 1.0;
-	m_defocus = 1.0;
+	m_defocus_new = 1.0;	//[-]
+	m_defocus_old = 1.0;	//[-]
+	m_defocus = 1.0;		//[-]
 
 	// Reset the optical efficiency member data
 	loop_optical_eta_off();
