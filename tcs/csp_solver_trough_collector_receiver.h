@@ -24,34 +24,25 @@ private:
 	double m_longitude;		//[deg] convert to [rad] in init()
 	double m_shift;			//[deg] convert to [rad] in init()
 
-	// Calculated parameters
+	// Parameters calculated in init()
+	int m_n_c_iam_matrix;	//[-] Number of columns in the IAM matrix
+	int m_n_r_iam_matrix;	//[-] Number of rows in the IAM matrix
 	double m_N_run_mult;	//[-] Multiplier for runner heat loss - see comments in init()
 	double m_v_hot;			//[m^3] Hot piping volume
 	double m_v_cold;		//[m^3] Cold piping volume
 	
-	// Variables that we need to track between calls and timesteps
+	// Variables that we need to track between calls and timesteps?
 	double m_defocus;		//[-] Defocus control 
 	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
 	
-	double m_T_sys_h;		//Solar field HTF outlet temperature
-	double m_m_dot_avail;		//HTF mass flow rate from the field
-	double m_q_avail;		//Thermal power produced by the field
-	double m_DP_tot;		//Total HTF pressure drop
-	double m_W_dot_pump;		//Required solar field pumping power
-	double m_E_fp_tot;		//Freeze protection energy
-	int m_qq;		//Number of iterations required to solve
-	double m_T_sys_c;		//Collector inlet temperature
-	double m_EqOpteff;		//Collector equivalent optical efficiency
-	double m_SCAs_def;		//The fraction of focused SCA's
-	double m_m_dot_htf_tot;		//The actual flow rate through the field..
-	double m_E_bal_startup;		//Startup energy consumed
-	double m_q_inc_sf_tot;		//Total power incident on the field
-	double m_q_abs_tot;		//Total absorbed energy
-	double m_q_loss_tot;		//Total receiver thermal and optical losses
-	double m_m_dot_htf;		//Flow rate in a single loop
-	double m_q_loss_spec_tot;		//Field-average receiver thermal losses (convection and radiation)
+	// Variables that are passed between methods, but not necessary to carry over timesteps
+	double m_EqOpteff;		//[-] Collector equivalent (weighted over variants AND all SCAs) optical efficiency
+	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
+
+	
+	
+
 	double m_SCA_par_tot;		//Parasitic electric power consumed by the SC
-	double m_q_dump;		//Dumped thermal energy
 	
 	double m_dni_costh;		//DNI_x_CosTh
 	double m_qinc_costh;		//Q_inc_x_CosTh
@@ -64,8 +55,7 @@ private:
 	double m_E_tot_accum;		//Total accumulated internal energy change rate
 	double m_E_field;		//Accumulated internal energy in the entire solar field
 
-	int m_n_c_iam_matrix;
-	int m_n_r_iam_matrix;
+	
 
 	//Declare variables that require storage from step to step
 	double
@@ -117,6 +107,8 @@ private:
 		m_T_htf_in0, m_T_htf_out0,
 		m_T_htf_ave0, m_E_fp, m_q_1abs_tot;
 	
+	double m_T_sys_c;			//[C] Temperature (bulk) of cold runners & headers
+	double m_T_sys_h;			//[C] Solar field HTF outlet temperature
 	double m_T_sys_c_last;		//[C] Temperature (bulk) of cold runners & headers in previous timestep
 	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep
 	
@@ -311,12 +303,6 @@ public:
 		const C_csp_solver_sim_info &sim_info);
 
 	void loop_optical_eta_off();
-			
-	void recirculate(const C_csp_weatherreader::S_outputs &weather,
-		const C_csp_solver_htf_1state &htf_state_in,
-		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-		const C_csp_solver_sim_info &sim_info);
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,

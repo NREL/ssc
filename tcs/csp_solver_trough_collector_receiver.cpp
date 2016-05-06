@@ -54,24 +54,10 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_latitude = std::numeric_limits<double>::quiet_NaN();
 	m_longitude = std::numeric_limits<double>::quiet_NaN();
 	m_T_sys_h = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_avail = std::numeric_limits<double>::quiet_NaN();
-	m_q_avail = std::numeric_limits<double>::quiet_NaN();
-	m_DP_tot = std::numeric_limits<double>::quiet_NaN();
-	m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();
-	m_E_fp_tot = std::numeric_limits<double>::quiet_NaN();
-	m_qq = -1; 
 	m_T_sys_c = std::numeric_limits<double>::quiet_NaN();
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
-	m_SCAs_def = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
-	m_E_bal_startup = std::numeric_limits<double>::quiet_NaN();
-	m_q_inc_sf_tot = std::numeric_limits<double>::quiet_NaN();
-	m_q_abs_tot = std::numeric_limits<double>::quiet_NaN();
-	m_q_loss_tot = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf = std::numeric_limits<double>::quiet_NaN();
-	m_q_loss_spec_tot = std::numeric_limits<double>::quiet_NaN();
 	m_SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
-	m_q_dump = std::numeric_limits<double>::quiet_NaN();
 	m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
 	m_CosTh_ave = std::numeric_limits<double>::quiet_NaN();
 	m_IAM_ave = std::numeric_limits<double>::quiet_NaN();
@@ -270,7 +256,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	//Initialize values
-	m_E_fp_tot = 0.;
 	m_defocus_old = 0.;
 
 	m_E_hdr_accum = 0.0;
@@ -745,7 +730,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			}
 
 			//Calculate inlet temperature of the next SCA
-			m_T_htf_in[i + 1] = m_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*CSP::pi*L_int*(m_T_htf_out[i] - T_db) / (m_m_dot_htf*c_htf_i);
+			m_T_htf_in[i + 1] = m_T_htf_out[i] - m_Pipe_hl_coef*m_D_3(HT, 0)*CSP::pi*L_int*(m_T_htf_out[i] - T_db) / (m_dot_htf_loop*c_htf_i);
 			//mjw 1.18.2011 Add the internal energy of the crossover piping
 			m_E_int_loop[i] = m_E_int_loop[i] + L_int*(pow(m_D_3(HT, 0), 2) / 4.*CSP::pi + m_mc_bal_sca / c_htf_i)*(m_T_htf_out[i] - 298.150);
 		}
@@ -998,17 +983,17 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 {
 	// Get optical properties
 		// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
+	loop_optical_eta_off();
 
+	// Set inlet temperature to previous timestep outlet temperature
+	double T_cold_in = m_T_sys_h_last;			//[C]
+	// Set mass flow rate to minimum allowable
+	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
 
-	return;
-}
+	// Define a copy of the sim_info structure
+	C_csp_solver_sim_info sim_info_temp;
+	sim_info_temp = sim_info;
 
-void C_csp_trough_collector_receiver::recirculate(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &htf_state_in,
-	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-	const C_csp_solver_sim_info &sim_info)
-{
 	return;
 }
 
@@ -1050,11 +1035,12 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
 
 	//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
+	double E_fp_tot = std::numeric_limits<double>::quiet_NaN();
 	if (m_ncall>0)
 	{
 		if ((!m_no_fp) && (m_T_cold_in_1 > T_cold_in))
 		{
-			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 			goto set_outputs_and_return;
 		}
 	}
@@ -1073,6 +1059,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double q_abs_maxOT;
 	q_abs_maxOT = 0;
 
+	double SCAs_def = 1.0;
 	if (m_ncall == 0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 	{
 		// Call optical efficiency method
@@ -1080,8 +1067,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 			loop_optical_eta(weather, sim_info);
 		else
 			loop_optical_eta_off();
-
-		m_SCAs_def = 1.;
 
 		if (m_accept_mode)
 		{
@@ -1143,9 +1128,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	//3=constrain mass flow above min
 	m_SolveMode = 1;
 
-	m_qq = 0;                  //Set iteration counter
+	int qq = 0;                  //Set iteration counter
 
 	m_m_dot_htfX = max(min(m_m_dot_htfmax, m_m_dot_htfX), m_m_dot_htfmin);
+	double m_dot_htf = m_m_dot_htfX;
 
 	//Set ends of iteration bracket.  Make bracket greater than bracket defined on system limits so a value less than system limit can be tried earlier in iteration
 	m_dot_lower = 0.7*m_m_dot_htfmin;
@@ -1176,10 +1162,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	// ******************************************************************************************************************************
 	//                   Iterative section
 	// ******************************************************************************************************************************
-	while ((fabs(err) > t_tol) && (m_qq < 30))
+	while ((fabs(err) > t_tol) && (qq < 30))
 	{
 
-		m_qq++; //Iteration counter
+		qq++; //Iteration counter
 		m_q_loss_SCAtot.fill(0.);
 		m_q_abs_SCAtot.fill(0.);
 		m_q_1abs_tot.fill(0.);
@@ -1188,14 +1174,14 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		m_E_int_loop.fill(0.);
 		m_EqOpteff = 0.0;
 
-		m_m_dot_htf = m_m_dot_htfX;
+		m_dot_htf = m_m_dot_htfX;
 
 		if (m_accept_loc == 1)
-			m_m_dot_htf_tot = m_m_dot_htf*float(m_nLoops);
+			m_m_dot_htf_tot = m_dot_htf*float(m_nLoops);
 		else
-			m_m_dot_htf_tot = m_m_dot_htf;
+			m_m_dot_htf_tot = m_dot_htf;
 
-		int loop_energy_bal_exit = loop_energy_balance(weather, m_T_cold_in_1, m_m_dot_htf, sim_info);
+		int loop_energy_bal_exit = loop_energy_balance(weather, m_T_cold_in_1, m_dot_htf, sim_info);
 
 		// Check that we found a solution
 		if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
@@ -1256,7 +1242,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				c_hdr_cold_last = m_htfProps.Cp(m_T_sys_c_last)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 
 				//goto overtemp_iter_flag;
-				m_qq = 0;
+				qq = 0;
 				continue;
 			}
 		}
@@ -1352,7 +1338,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					else                             //if not, recalculate value based on approximate energy balance
 					{
 						m_T_cold_in_1 = m_T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature
-						m_qq = 0;
+						qq = 0;
 					}
 				}
 			}
@@ -1416,7 +1402,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					else                             //if not, recalculate value based on approximate energy balance
 					{
 						m_T_cold_in_1 = m_T_cold_in_1 + 40.0;   //Will always start low, so fp_lowflag = true so until fp_upflag = true { increase inlet temperature  
-						m_qq = 0;
+						qq = 0;
 					}
 				}
 			}
@@ -1426,7 +1412,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		{
 			err = (m_T_loop_out - m_T_loop_outX) / m_T_loop_out;
 
-			if (m_m_dot_htf == m_m_dot_htfmin)
+			if (m_dot_htf == m_m_dot_htfmin)
 			{
 				if (m_T_loop_outX < m_T_fp + 10.0)         //freeze protection mode
 				{
@@ -1460,12 +1446,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			{
 				if (err > 0.0)
 				{
-					m_dot_upper = m_m_dot_htf;
+					m_dot_upper = m_dot_htf;
 					y_upper = err;
 				}
 				else
 				{
-					m_dot_lower = m_m_dot_htf;
+					m_dot_lower = m_dot_htf;
 					y_lower = err;
 				}
 				m_m_dot_htfX = (y_upper) / (y_upper - y_lower)*(m_dot_lower - m_dot_upper) + m_dot_upper;
@@ -1474,14 +1460,14 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			{
 				if (err > 0.0)      //Prescribed is greater than calculated, so decrease mass flow, so set upper limit
 				{
-					m_dot_upper = m_m_dot_htf;
+					m_dot_upper = m_dot_htf;
 					y_upper = err;
 					upflag = true;
 					upmult = 0.50;
 				}
 				else                    //Presribed is less than calculated, so increase mass flow, so set lower limit
 				{
-					m_dot_lower = m_m_dot_htf;
+					m_dot_lower = m_dot_htf;
 					y_lower = err;
 					lowflag = true;
 					upmult = 0.50;
@@ -1493,7 +1479,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				}
 				else                            //if not, recalculate value based on approximate energy balance
 				{
-					if (m_qq<3)
+					if (qq<3)
 					{
 						m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_loop_in) / 2.0)*1000.;    //Specific heat
 						double qsum = 0.;
@@ -1550,22 +1536,22 @@ freeze_prot_ok:		//9 continue
 		}
 	}
 
-	m_E_fp_tot = 0.0;
+	E_fp_tot = 0.0;
 	if (!m_no_fp)
 	{
 		if (m_is_using_input_gen)
-			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - m_T_sys_h);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - m_T_sys_h);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 		else
-			m_E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
 	}
 
-	if (m_qq>29)
+	if (qq>29)
 	{
 		m_error_msg = util::format("Mass Flow Rate Convergence Error");
 		throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
 	}
 
-	m_m_dot_htfX = m_m_dot_htf;              //for calls back to the temperature loop during the same run, this ensures that the first mass flow rate used will be the last mass flow rate
+	m_m_dot_htfX = m_dot_htf;              //for calls back to the temperature loop during the same run, this ensures that the first mass flow rate used will be the last mass flow rate
 
 	// ******************************************************************
 	// Special condition checks
@@ -1574,7 +1560,7 @@ freeze_prot_ok:		//9 continue
 	//After convergence, check to see if the HTF flow rate is over the maximum level
 
 post_convergence_flag: //11 continue
-	if (((m_m_dot_htf > m_m_dot_htfmax) && (m_dfcount<5)) || ((m_defocus<1.0) && (m_dfcount == 1)))
+	if (((m_dot_htf > m_m_dot_htfmax) && (m_dfcount<5)) || ((m_defocus<1.0) && (m_dfcount == 1)))
 	{
 
 		//if so, the field m_defocus control must be engaged. for(int this by calculating the maximum
@@ -1648,11 +1634,11 @@ post_convergence_flag: //11 continue
 		{
 			double tsum = 0.;
 			for (int k = 0; k<m_nSCA; k++){ tsum += m_q_SCA[k]; }
-			m_SCAs_def = min(tsum / m_q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
+			SCAs_def = min(tsum / m_q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
 		}
 		else
 		{
-			m_SCAs_def = 1.;
+			SCAs_def = 1.;
 		}
 
 		m_SolveMode = 2;  //Mode 2 -> defocusing
@@ -1669,11 +1655,11 @@ post_convergence_flag: //11 continue
 		double tsum = 0.;
 		for (int k = 0; k<m_nSCA; k++){ tsum += m_q_SCA[k]; }
 
-		m_SCAs_def = min(tsum / m_q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
+		SCAs_def = min(tsum / m_q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
 	}
 	else
 	{
-		m_SCAs_def = 1.;
+		SCAs_def = 1.;
 	}
 
 calc_final_metrics_goto:
@@ -1683,7 +1669,7 @@ calc_final_metrics_goto:
 	// ******************************************************************************************************************************
 	//m_m_dot_htf = 8.673
 	//------Inlet, Outlet, and COP
-	DP_IOCOP = PressureDrop(m_m_dot_htf, (m_T_loop_in + m_T_loop_outX) / 2.0, 1.0, m_D_h((int)m_SCAInfoArray(0, 0), 0),
+	DP_IOCOP = PressureDrop(m_dot_htf, (m_T_loop_in + m_T_loop_outX) / 2.0, 1.0, m_D_h((int)m_SCAInfoArray(0, 0), 0),
 		m_HDR_rough, (40. + m_Row_Distance), 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 1.0, 0.0);
 	//if(ErrorFound()) return 1
 	//-------HCE's
@@ -1707,7 +1693,7 @@ calc_final_metrics_goto:
 				x1 = 0.0;
 				x2 = 1.0;
 			}
-			m_DP_tube[i] = m_DP_tube[i] + PressureDrop(m_m_dot_htf, m_T_htf_ave[i], 1.0, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
+			m_DP_tube[i] = m_DP_tube[i] + PressureDrop(m_dot_htf, m_T_htf_ave[i], 1.0, m_D_h(HT, j), (m_Rough(HT, j)*m_D_h(HT, j)),
 				(m_L_SCA[CT] + m_Distance_SCA[CT]), 0.0, 0.0, x1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, x2)*m_HCE_FieldFrac(HT, j);
 			//if(ErrorFound()) return 1
 		}
@@ -1717,9 +1703,9 @@ calc_final_metrics_goto:
 	for (int j = 0; j<m_nSCA; j++){ DP_loop += m_DP_tube[j]; }
 
 	if (m_accept_loc == 1)
-		m_m_dot_htf_tot = m_m_dot_htf*float(m_nLoops);
+		m_m_dot_htf_tot = m_dot_htf*float(m_nLoops);
 	else
-		m_m_dot_htf_tot = m_m_dot_htf;
+		m_m_dot_htf_tot = m_dot_htf;
 
 	//-------SGS to field section
 	//if(m_FieldConfig==1.) { //"H" type
@@ -1785,21 +1771,23 @@ calc_final_metrics_goto:
 				(m_Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
 			//if(ErrorFound()) return 1
 			//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
-			m_dot_header = max(m_dot_header - 2.*m_m_dot_htf, 0.0);
+			m_dot_header = max(m_dot_header - 2.0*m_dot_htf, 0.0);
 		}
 	}
 
+	double DP_tot = std::numeric_limits<double>::quiet_NaN();
+	double W_dot_pump = std::numeric_limits<double>::quiet_NaN();
 	if (m_accept_loc == 1)
 	{
 		// The total pressure drop in all of the piping
-		m_DP_tot = (DP_loop + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
+		DP_tot = (DP_loop + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField + DP_IOCOP);
 		// The total pumping power consumption
-		m_W_dot_pump = m_DP_tot*m_m_dot_htf_tot / (rho_hdr_cold*m_eta_pump) / 1000.;  //[kW]
+		W_dot_pump = DP_tot*m_m_dot_htf_tot / (rho_hdr_cold*m_eta_pump) / 1000.;  //[kW]
 
 		//The parasitic power consumed by electronics and SCA drives
 		if (m_EqOpteff>0.0)
 		{
-			m_SCA_par_tot = m_SCA_drives_elec*m_SCAs_def*float(m_nSCA*m_nLoops);
+			m_SCA_par_tot = m_SCA_drives_elec*SCAs_def*float(m_nSCA*m_nLoops);
 		}
 		else
 		{
@@ -1809,14 +1797,14 @@ calc_final_metrics_goto:
 	else
 	{
 		// The total pressure drop in all of the piping
-		m_DP_tot = (DP_loop + DP_IOCOP);
+		DP_tot = (DP_loop + DP_IOCOP);
 		// The total pumping power consumption
-		m_W_dot_pump = m_DP_tot*m_m_dot_htf / (rho_hdr_cold*m_eta_pump) / 1000.;  //[kW]
+		W_dot_pump = DP_tot*m_dot_htf / (rho_hdr_cold*m_eta_pump) / 1000.;  //[kW]
 
 		//The parasitic power consumed by electronics and SCA drives 
 		if (m_EqOpteff>0.0)
 		{
-			m_SCA_par_tot = m_SCA_drives_elec*m_SCAs_def*float(m_nSCA);
+			m_SCA_par_tot = m_SCA_drives_elec*SCAs_def*float(m_nSCA);
 		}
 		else
 		{
@@ -1848,6 +1836,7 @@ calc_final_metrics_goto:
 	// Other calculated outputs
 	double piping_hl_total = 0.0;
 
+	double E_bal_startup = 0.0;
 	if (m_accept_loc == 1)		// Consider entire internal energy of entire field, not just the loop
 	{
 		E_avail_tot *= float(m_nLoops);
@@ -1869,9 +1858,9 @@ calc_final_metrics_goto:
 			(m_v_cold*rho_hdr_cold*m_c_hdr_cold + m_mc_bal_cold)*(m_T_sys_c - m_T_sys_c_last);   //cold half
 
 		if (!m_is_using_input_gen)
-			m_E_bal_startup = max(m_E_hdr_accum, 0.0); //cold half
+			E_bal_startup = max(m_E_hdr_accum, 0.0); //cold half
 		else
-			m_E_bal_startup = m_E_hdr_accum; //cold half
+			E_bal_startup = m_E_hdr_accum; //cold half
 
 		//mjw 1.17.2011 Calculate the total energy content of the solar field relative to a standard ambient temp. of 25[C]			
 		m_E_field += ((m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h - 298.150) +       //hot header and piping
@@ -1888,38 +1877,40 @@ calc_final_metrics_goto:
 		else
 			E_avail_tot = E_avail_tot - piping_hl_total*dt;				//[J] 11/1/11 TN: Include hot and cold piping losses in available energy calculation
 
-		E_avail_tot = max(E_avail_tot - m_E_bal_startup, 0.0);  //[J]
+		E_avail_tot = max(E_avail_tot - E_bal_startup, 0.0);  //[J]
 	}
 
 	// ******************************************************************
 	// Calculate final output values
 	// ******************************************************************
-	m_DP_tot = m_DP_tot * 1.e-5; //[bar]
+	DP_tot = DP_tot * 1.e-5; //[bar]
 
+	double m_dot_avail = std::numeric_limits<double>::quiet_NaN();
+	double q_dot_avail = std::numeric_limits<double>::quiet_NaN();
 	if (!m_is_using_input_gen)
 	{
 		//Calculate the thermal power produced by the field
 		if (m_T_sys_h >= m_T_startup)   // MJW 12.14.2010 Limit field production to above startup temps. Otherwise we get strange results during startup. Does this affect turbine startup?
 		{
-			m_q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
+			q_dot_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 			//Calculate the available mass flow of HTF
-			m_m_dot_avail = max(m_q_avail*1.e6 / (m_c_htf_ave*(m_T_sys_h - m_T_cold_in_1)), 0.0); //[kg/s]     
+			m_dot_avail = max(q_dot_avail*1.e6 / (m_c_htf_ave*(m_T_sys_h - m_T_cold_in_1)), 0.0); //[kg/s]     
 		}
 		else
 		{
-			m_q_avail = 0.0;
-			m_m_dot_avail = 0.0;
+			q_dot_avail = 0.0;
+			m_dot_avail = 0.0;
 		}
 	}
 	else
 	{
-		m_q_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
+		q_dot_avail = E_avail_tot / (dt)*1.e-6;  //[MW]
 		//Calculate the available mass flow of HTF
-		m_m_dot_avail = max(m_q_avail*1.e6 / (m_c_htf_ave*(m_T_sys_h - m_T_cold_in_1)), 0.0); //[kg/s]     
+		m_dot_avail = max(q_dot_avail*1.e6 / (m_c_htf_ave*(m_T_sys_h - m_T_cold_in_1)), 0.0); //[kg/s]     
 	}
 
 	//Dumped energy
-	m_q_dump = m_Ap_tot*I_b*m_EqOpteff*(1. - m_SCAs_def) / 1.e6;  //MW
+	double q_dump = m_Ap_tot*I_b*m_EqOpteff*(1.0 - SCAs_def) / 1.e6;  //[MW]
 
 	//Total field performance
 	m_q_field_delivered = m_m_dot_htf_tot * m_c_htf_ave * (m_T_sys_h - m_T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
@@ -1938,29 +1929,29 @@ set_outputs_and_return:
 	//---------Do unit conversions and final calculations-------------
 
 	double T_sys_h_out = m_T_sys_h - 273.15;			//[C] from K
-	double m_dot_avail_out = m_m_dot_avail*3600.;		//[kg/hr] from kg/s
-	double W_dot_pump_out = m_W_dot_pump / 1000.;		//[MW] from kW
-	double E_fp_tot_out = m_E_fp_tot*1.e-6;			//[MW] from W
+	double m_dot_avail_out = m_dot_avail*3600.;		//[kg/hr] from kg/s
+	double W_dot_pump_out = W_dot_pump / 1000.;		//[MW] from kW
+	double E_fp_tot_out = E_fp_tot*1.e-6;			//[MW] from W
 	double T_sys_c_out = m_T_sys_c - 273.15;			//[C] from K
 	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
 	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
-	double E_bal_startup_out = m_E_bal_startup / (dt*1.e6);	//[MW] from J
-	m_q_inc_sf_tot = m_Ap_tot*I_b / 1.e6;
-	m_q_abs_tot = 0.;
-	m_q_loss_tot = 0.;
-	m_q_loss_spec_tot = 0.;
+	double E_bal_startup_out = E_bal_startup / (dt*1.e6);	//[MW] from J
+	double q_inc_sf_tot = m_Ap_tot*I_b / 1.e6;
+	double q_abs_tot = 0.;
+	double q_loss_tot = 0.;
+	double q_loss_spec_tot = 0.;
 
 	for (int i = 0; i<m_nSCA; i++)
 	{
-		m_q_abs_tot += m_q_abs_SCAtot[i] * 1.e-6;               //*float(m_nLoops);
-		m_q_loss_tot += m_q_loss_SCAtot[i] * 1.e-6;             //*float(m_nLoops);
-		m_q_loss_spec_tot += m_q_1abs_tot[i] / float(m_nSCA);
+		q_abs_tot += m_q_abs_SCAtot[i] * 1.e-6;               //*float(m_nLoops);
+		q_loss_tot += m_q_loss_SCAtot[i] * 1.e-6;             //*float(m_nLoops);
+		q_loss_spec_tot += m_q_1abs_tot[i] / float(m_nSCA);
 	}
 
 	if (m_accept_loc == 1)
 	{
-		m_q_abs_tot *= float(m_nLoops);
-		m_q_loss_tot *= float(m_nLoops);
+		q_abs_tot *= float(m_nLoops);
+		q_loss_tot *= float(m_nLoops);
 	}
 
 	double
