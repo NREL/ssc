@@ -52,11 +52,7 @@ private:
 	double m_q_loss_spec_tot;		//Field-average receiver thermal losses (convection and radiation)
 	double m_SCA_par_tot;		//Parasitic electric power consumed by the SC
 	double m_q_dump;		//Dumped thermal energy
-	double m_Theta_ave;		//Field average m_theta value
-	double m_CosTh_ave;		//Field average costheta value
-	double m_IAM_ave;		//Field average incidence angle modifier
-	double m_RowShadow_ave;		//Field average row shadowing loss
-	double m_EndLoss_ave;		//Field average end loss
+	
 	double m_dni_costh;		//DNI_x_CosTh
 	double m_qinc_costh;		//Q_inc_x_CosTh
 	double m_t_loop_outlet;		//HTF temperature immediately subsequent to the loop outlet
@@ -87,9 +83,14 @@ private:
 	//Other matrices
 	util::matrix_t<HTFProperties*> m_AnnulusGasMat;
 	util::matrix_t<AbsorberProps*> m_AbsorberPropMat;
-	util::matrix_t<double> m_L_actSCA, m_A_cs, m_D_h, m_ColOptEff /*m_nColt, m_nSCA*/;
+	util::matrix_t<double> m_L_actSCA, m_A_cs, m_D_h;
 	emit_table m_epsilon_3;
 	util::matrix_t<double> m_D_runner, m_L_runner, m_D_hdr;
+
+	/*m_nColt, m_nSCA*/
+	util::matrix_t<double> m_ColOptEff;	//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
+	util::matrix_t<double> m_EndGain;	//[-] Light from different collector hitting receiver
+	util::matrix_t<double> m_EndLoss;	//[-] Light missing receiver due to length
 
 	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
 	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
@@ -98,13 +99,23 @@ private:
 	std::vector<double> m_q_loss;		//[W/m] Total losses (thermal + optical) per length in each SCA
 	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA
 	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA
+	std::vector<double> m_q_i;			//[W/m] DNI * A_aper / L_sca
 	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+	
+	std::vector<double> m_IAM;			//[-] Incidence angle modifiers
+	std::vector<double> m_RowShadow;	//[-] Row-to-row shadowing losses
+
+	double m_Theta_ave;					//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
+	double m_CosTh_ave;					//[-] Field average costheta value
+	double m_IAM_ave;					//[-] Field average incidence angle modifier
+	double m_RowShadow_ave;				//[-] Field average row shadowing loss
+	double m_EndLoss_ave;				//[-] Field average end loss
 
 	util::matrix_t<double>
 		m_DP_tube, m_E_abs_field,
 		m_E_int_loop, m_E_accum, m_E_avail, m_E_abs_max, m_v_1, m_q_loss_SCAtot, m_q_abs_SCAtot, 
 		m_T_htf_in0, m_T_htf_out0,
-		m_T_htf_ave0, m_E_fp, m_q_1abs_tot, m_q_i, m_IAM, m_EndGain, m_EndLoss, m_RowShadow;
+		m_T_htf_ave0, m_E_fp, m_q_1abs_tot;
 	
 	double m_T_sys_c_last;		//[C] Temperature (bulk) of cold runners & headers in previous timestep
 	double m_T_sys_h_last;		//[C] Temperature (bulk) of hot runners & headers in previous timestep
@@ -112,12 +123,15 @@ private:
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
 
-	double m_defocus_new, m_defocus_old, m_ftrack;
+	double m_ftrack;			//[-] Fraction of timestep that solar field is deployed
+	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
+
+	double m_defocus_new, m_defocus_old;
 	
 	bool
 		m_no_fp;	//Freeze protection flag
 
-	double m_c_hdr_cold, m_costh,
+	double m_c_hdr_cold,
 		m_q_SCA_tot, m_m_dot_htfX,  m_T_loop_in,
 		m_T_loop_outX, m_Runner_hl_hot, m_Header_hl_hot, m_c_hdr_hot;
 	
@@ -295,6 +309,8 @@ public:
 
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
+
+	void loop_optical_eta_off();
 			
 	void recirculate(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
