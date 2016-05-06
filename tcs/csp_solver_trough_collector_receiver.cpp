@@ -790,6 +790,30 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
+void C_csp_trough_collector_receiver::loop_optical_eta_off()
+{
+	// If trough is not absorbing any sunlight (night or 100% defocus), then set member data as necessary
+
+	m_ftrack = 0.0;		//[-] Fraction of timestep that solar field is deployed
+	m_costh = 0.0;		//[-] Cosine of the incident angle between the sun and trough aperture
+
+	m_q_i.assign(m_q_i.size(),0.0);		//[W/m] DNI * A_aper / L_sca
+	m_IAM.assign(m_IAM.size(),0.0);		//[-] Incidence angle modifiers
+	m_ColOptEff.fill(0.0);				//[-] tracking * geom * rho * dirt * error * IAM * row shadow * end loss * ftrack
+	m_EndGain.fill(0.0);				//[-] Light from different collector hitting receiver
+	m_EndLoss.fill(0.0);				//[-] Light missing receiver due to length + end gain
+	m_RowShadow.assign(m_RowShadow.size(),0.0);	//[-] Row-to-row shadowing losses
+	m_q_SCA.assign(m_q_SCA.size(),0.0);			//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+
+	m_Theta_ave = 0.0; 
+	m_CosTh_ave = 0.0; 
+	m_IAM_ave = 0.0; 
+	m_RowShadow_ave = 0.0; 
+	m_EndLoss_ave = 0.0;
+
+	return;
+}
+
 void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1052,7 +1076,10 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	if (m_ncall == 0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 	{
 		// Call optical efficiency method
-		loop_optical_eta(weather, sim_info);
+		if(I_b > 0.0)
+			loop_optical_eta(weather, sim_info);
+		else
+			loop_optical_eta_off();
 
 		m_SCAs_def = 1.;
 
@@ -2030,6 +2057,9 @@ void C_csp_trough_collector_receiver::converged()
 	m_defocus_new = 1.;
 	m_defocus_old = 1.;
 	m_defocus = 1.0;
+
+	// Reset the optical efficiency member data
+	loop_optical_eta_off();
 
 	return;
 }
