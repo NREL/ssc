@@ -1075,8 +1075,11 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		}
 	}  //mjw 3.5.11 ---------- } of the items that only need to be calculated once per time step
 
-	m_q_SCA_tot = 0.;
-	for (int i = 0; i<m_nSCA; i++){ m_q_SCA_tot += m_q_SCA[i]; } //W/m
+	double q_SCA_tot = 0.;
+	for (int i = 0; i<m_nSCA; i++)
+	{ 
+		q_SCA_tot += m_q_SCA[i];	//[W/m]
+	} 
 
 	//9-27-12, TWN: This model uses relative m_defocus. Changed controller to provide absolute m_defocus, so now convert to relative here
 	m_defocus = m_defocus_new / m_defocus_old;
@@ -1613,11 +1616,11 @@ post_convergence_flag: //11 continue
 			}
 		}
 
-		if (m_q_SCA_tot>0.)
+		if (q_SCA_tot>0.)
 		{
 			double tsum = 0.;
 			for (int k = 0; k<m_nSCA; k++){ tsum += m_q_SCA[k]; }
-			SCAs_def = min(tsum / m_q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
+			SCAs_def = min(tsum / q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
 		}
 		else
 		{
@@ -1633,12 +1636,12 @@ post_convergence_flag: //11 continue
 		}
 	}
 	//Calculate the amount of defocusing
-	if (m_q_SCA_tot>0.)
+	if (q_SCA_tot>0.)
 	{
 		double tsum = 0.;
 		for (int k = 0; k<m_nSCA; k++){ tsum += m_q_SCA[k]; }
 
-		SCAs_def = min(tsum / m_q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
+		SCAs_def = min(tsum / q_SCA_tot, 1.0);  //MJW 7.23.2010::Limit fraction to 1
 	}
 	else
 	{
@@ -2030,8 +2033,8 @@ void C_csp_trough_collector_receiver::converged()
 	m_ncall = -1;
 
 	// Always reset the m_defocus control at the first call of a timestep
-	m_defocus_new = 1.;
-	m_defocus_old = 1.;
+	m_defocus_new = 1.0;
+	m_defocus_old = 1.0;
 	m_defocus = 1.0;
 
 	// Reset the optical efficiency member data
