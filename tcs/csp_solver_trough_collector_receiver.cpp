@@ -601,8 +601,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		}
 		double m_Pipe_hl_cold = m_Header_hl_cold + m_Runner_hl_cold;	//[W]
 
-		m_T_loop_in = m_T_sys_c - m_Pipe_hl_cold / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_cold);	//[C]
-		m_T_htf_in[0] = m_T_loop_in;		//[C]
+		m_T_htf_in[0] = m_T_sys_c - m_Pipe_hl_cold / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_cold);	//[C]
 	}
 	else		// m_accept_loc == 2, only modeling loop
 	{
@@ -720,9 +719,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 
 	}
 
-	//Set the loop outlet temperature
-	m_T_loop_outX = m_T_htf_out[m_nSCA - 1];	//[C] Outlet temperature of the final SCA
-
 	if( m_accept_loc == 1 )
 	{
 		//Calculation for heat losses from hot header and runner pipe
@@ -730,21 +726,21 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		m_Header_hl_hot = 0.0;  
 		for( int i = 0; i < m_nhdrsec; i++ )
 		{
-			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_loop_outX - T_db);	//[W]
+			m_Header_hl_hot = m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_htf_out[m_nSCA-1] - T_db);	//[W]
 		}
 
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_loop_outX - T_db);	//[W]
+			m_Runner_hl_hot = m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_htf_out[m_nSCA-1] - T_db);	//[W]
 		}
 		
 		double m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
 
-		m_c_hdr_hot = m_htfProps.Cp(m_T_loop_outX)* 1000.;		//[kJ/kg-K]
+		m_c_hdr_hot = m_htfProps.Cp(m_T_htf_out[m_nSCA-1])* 1000.;		//[kJ/kg-K]
 
 		//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-		m_T_sys_h = m_T_loop_outX - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);	//[C]
+		m_T_sys_h = m_T_htf_out[m_nSCA-1] - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);	//[C]
 
 		//Calculate the system temperature of the hot portion of the collector field. 
 		//This will serve as the fluid outlet temperature
@@ -752,7 +748,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	}
 	else
 	{
-		m_T_sys_h = m_T_loop_outX;	//[C]
+		m_T_sys_h = m_T_htf_out[m_nSCA-1];	//[C]
 	}
 
 	return E_loop_energy_balance_exit::SOLVED;
@@ -1333,12 +1329,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		{
 			t_tol = 1.5e-4;		//12.29.2014, twn: decreases oscillation in freeze protection energy because a smaller deltaT governs it
 
-			if ((m_no_fp) && ((m_T_loop_outX > m_T_fp) || fabs(m_T_fp - m_T_loop_outX) / m_T_fp <= t_tol))
+			if( (m_no_fp) && ((m_T_htf_out[m_nSCA-1] > m_T_fp) || fabs(m_T_fp - m_T_htf_out[m_nSCA-1]) / m_T_fp <= t_tol) )
 				goto freeze_prot_ok; //goto 9
 
 			m_no_fp = false;
 
-			err = (m_T_fp - m_T_loop_outX) / m_T_fp;
+			err = (m_T_fp - m_T_htf_out[m_nSCA-1]) / m_T_fp;
 
 			if (fabs(err) <= t_tol)
 				goto freeze_prot_ok; //goto 9
@@ -1396,13 +1392,13 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		}
 		else    //Solve to find mass flow that results in target outlet temperature
 		{
-			err = (m_T_loop_out - m_T_loop_outX) / m_T_loop_out;
+			err = (m_T_loop_out - m_T_htf_out[m_nSCA-1]) / m_T_loop_out;
 
 			if (m_dot_htf == m_m_dot_htfmin)
 			{
-				if (m_T_loop_outX < m_T_fp + 10.0)         //freeze protection mode
+				if (m_T_htf_out[m_nSCA-1] < m_T_fp + 10.0)         //freeze protection mode
 				{
-					if (m_T_loop_outX < m_T_fp)
+					if (m_T_htf_out[m_nSCA-1] < m_T_fp)
 					{
 						m_SolveMode = 3;
 						goto freeze_prot_flag; //goto 7
@@ -1467,10 +1463,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				{
 					if (qq<3)
 					{
-						m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_loop_in) / 2.0)*1000.;    //Specific heat
+						m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_htf_in[0]) / 2.0)*1000.;    //Specific heat
 						double qsum = 0.;
 						for (int i = 0; i<m_nSCA; i++){ qsum += m_q_abs_SCAtot[i]; }
-						m_m_dot_htfX = qsum / (m_c_htf_ave*(m_T_loop_out - m_T_loop_in));
+						m_m_dot_htfX = qsum / (m_c_htf_ave*(m_T_loop_out - m_T_htf_in[0]));
 						m_m_dot_htfX = max(m_m_dot_htfmin, min(m_m_dot_htfX, m_m_dot_htfmax));
 					}
 					else
@@ -1655,7 +1651,7 @@ calc_final_metrics_goto:
 	// ******************************************************************************************************************************
 	//m_m_dot_htf = 8.673
 	//------Inlet, Outlet, and COP
-	DP_IOCOP = PressureDrop(m_dot_htf, (m_T_loop_in + m_T_loop_outX) / 2.0, 1.0, m_D_h((int)m_SCAInfoArray(0, 0), 0),
+	DP_IOCOP = PressureDrop(m_dot_htf, (m_T_htf_in[0] + m_T_htf_out[m_nSCA-1]) / 2.0, 1.0, m_D_h((int)m_SCAInfoArray(0, 0), 0),
 		m_HDR_rough, (40. + m_Row_Distance), 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 1.0, 0.0);
 	//if(ErrorFound()) return 1
 	//-------HCE's
@@ -1724,11 +1720,11 @@ calc_final_metrics_goto:
 		DP_fromField = 0.0;
 		for (int i = 0; i<m_nrunsec; i++)
 		{
-			DP_toField = DP_toField + PressureDrop(m_dot_temp, m_T_loop_in, 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], 0.0, x3, 0.0, 0.0,
+			DP_toField = DP_toField + PressureDrop(m_dot_temp, m_T_htf_in[0], 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], 0.0, x3, 0.0, 0.0,
 				max(float(CSP::nint(m_L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 			//if(ErrorFound()) return 1                  
 			//-------SGS from field section
-			DP_fromField = DP_fromField + PressureDrop(m_dot_temp, m_T_loop_outX, 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], x3, 0.0, 0.0, 0.0,
+			DP_fromField = DP_fromField + PressureDrop(m_dot_temp, m_T_htf_out[m_nSCA-1], 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], x3, 0.0, 0.0, 0.0,
 				max(float(CSP::nint(m_L_runner[i] / 70.))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //*m_dot_temp/m_dot_run_in  //mjw 5.11.11 Correct for less than all mass flow passing through each section
 			//if(ErrorFound()) return 1
 			if (i>1)
@@ -1750,10 +1746,10 @@ calc_final_metrics_goto:
 			}
 
 			//Calculate pressure drop in cold header and hot header sections.. both use similar information
-			DP_hdr_cold = DP_hdr_cold + PressureDrop(m_dot_header, m_T_loop_in, 1.0, m_D_hdr[i], m_HDR_rough,
+			DP_hdr_cold = DP_hdr_cold + PressureDrop(m_dot_header, m_T_htf_in[0], 1.0, m_D_hdr[i], m_HDR_rough,
 				(m_Row_Distance + 4.275)*2., 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
 			//if(ErrorFound()) return 1
-			DP_hdr_hot = DP_hdr_hot + PressureDrop(m_dot_header, m_T_loop_outX, 1.0, m_D_hdr[i], m_HDR_rough,
+			DP_hdr_hot = DP_hdr_hot + PressureDrop(m_dot_header, m_T_htf_out[m_nSCA-1], 1.0, m_D_hdr[i], m_HDR_rough,
 				(m_Row_Distance + 4.275)*2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
 			//if(ErrorFound()) return 1
 			//Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
@@ -1817,7 +1813,7 @@ calc_final_metrics_goto:
 	double E_field = E_int_sum;
 
 	// Average properties
-	rho_ave = m_htfProps.dens((m_T_loop_outX + m_T_sys_c) / 2.0, 0.0); //kg/m3
+	rho_ave = m_htfProps.dens((m_T_htf_out[m_nSCA-1] + m_T_sys_c) / 2.0, 0.0); //kg/m3
 	m_c_htf_ave = m_htfProps.Cp((m_T_sys_h + m_T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
 
 	// Other calculated outputs
@@ -1834,8 +1830,8 @@ calc_final_metrics_goto:
 		//Calculate the HTF mass in the header, balance of field piping, piping to&from the steam generator (SGS) 
 		//The mass of HTF in the system will be calculated based on the design loop inlet temperature
 		//v_tot = m_v_hot + m_v_cold	//cc--> not used
-		m_c_hdr_cold = m_htfProps.Cp(m_T_loop_in)* 1000.;
-		m_c_hdr_hot = m_htfProps.Cp(m_T_loop_outX)* 1000.;
+		m_c_hdr_cold = m_htfProps.Cp(m_T_htf_in[0])* 1000.;
+		m_c_hdr_hot = m_htfProps.Cp(m_T_htf_out[m_nSCA-1])* 1000.;
 
 		//Half of the plant thermal mass must be heated up to the startup temperature (think hot header, hot half of heat
 		//exchangers) and the other half must be heated up to the design loop inlet temperature
@@ -1951,7 +1947,7 @@ set_outputs_and_return:
 
 	double dni_costh = I_b*m_CosTh_ave;
 	double qinc_costh = dni_costh * m_Ap_tot / 1.e6;
-	double T_loop_outlet = m_T_loop_outX - 273.15;
+	double T_loop_outlet = m_T_htf_out[m_nSCA-1] - 273.15;
 
 	double E_loop_accum_out = E_loop_accum * 3.6e-9;
 	double E_hdr_accum_out = E_hdr_accum * 3.6e-9;
