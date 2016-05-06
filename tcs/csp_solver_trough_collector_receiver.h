@@ -53,7 +53,7 @@ private:
 	util::matrix_t<double> m_D_h;	//[m^2] Hydraulic diameters for HTF flow for each receiver and variant (why variant?)	
 
 	// Variables that we need to track between calls during one timestep
-	double m_T_cold_in_1;	//[C] Calculated HTF inlet temperature
+	double m_T_cold_in_1;	//[K] Calculated HTF inlet temperature
 	double m_defocus;		//[-] Defocus during present call = m_defocus_new / m_defocus_old
 	double m_defocus_new;	//[-] Defocus signal from controller during present timestep
 	double m_defocus_old;	//[-] Defocus during previous call (= 1 at first call)
@@ -109,23 +109,30 @@ private:
 	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
 
 		// Temperatures from the most recent converged() operation
-	double m_T_sys_c_last;				//[C] Temperature (bulk) of cold runners & headers in previous timestep
-	std::vector<double> m_T_htf_in0;	//[C] Inlet HTF temperature to each SCA
-	std::vector<double> m_T_htf_ave0;	//[C] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out0;	//[C] Outlet HTF temperature to each SCA
-	double m_T_sys_h_last;				//[C] Temperature (bulk) of hot runners & headers in previous timestep		
+	double m_T_sys_c_converged;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
+	std::vector<double> m_T_htf_in_converged;	//[K] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave_converged;	//[K] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out_converged;	//[K] Outlet HTF temperature to each SCA
+	double m_T_sys_h_converged;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
+	
+		// Temperatures from the most recent timestep (in the event that a method solves multiple, shorter timesteps)
+	double m_T_sys_c_last;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
+	std::vector<double> m_T_htf_in_last;	//[K] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave_last;	//[K] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out_last;	//[K] Outlet HTF temperature to each SCA
+	double m_T_sys_h_last;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
 
 		// Latest temperatures solved during present call to this class
-	double m_T_sys_c;					//[C] Temperature (bulk) of cold runners & headers
-	std::vector<double> m_T_htf_in;		//[C] Inlet HTF temperature to each SCA
-	std::vector<double> m_T_htf_ave;	//[C] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out;	//[C] Outlet HTF temperature to each SCA
-	double m_T_sys_h;					//[C] Solar field HTF outlet temperature
+	double m_T_sys_c;					//[K] Temperature (bulk) of cold runners & headers
+	std::vector<double> m_T_htf_in;		//[K] Inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_ave;	//[K] Average HTF temperature in each SCA
+	std::vector<double> m_T_htf_out;	//[K] Outlet HTF temperature to each SCA
+	double m_T_sys_h;					//[K] Solar field HTF outlet temperature
 
 	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
 	// Member variables that are used to store information for the EvacReceiver method
-	double m_T_save[5];			//[C] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
+	double m_T_save[5];			//[K] Saved temperatures from previous call to EvacReceiver single SCA energy balance model
 	double m_reguess_args[3];	//[-] Logic to determine whether to use previous guess values or start iteration fresh
 	
 	// member string for exception messages
