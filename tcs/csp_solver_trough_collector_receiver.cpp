@@ -12,6 +12,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_mtoinch = 39.3700787;	//[m] -> [in]
 	m_T_htf_prop_min = 275.0;	//[K]
 	
+	m_step_recirc = std::numeric_limits<double>::quiet_NaN();
+
 	// set initial values for all parameters to prevent possible misuse
 	m_nSCA = -1;
 	m_nHCEt = -1;
@@ -568,7 +570,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 									double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
 									const C_csp_solver_sim_info &sim_info)
 {
-	//First calculate the cold header temperature, which will serve as the loop inlet temperature
+	//First calculate the cold header temperature, which will serve as the loop inlet temperature 
 	double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_last, 1.);
 	double rho_hdr_hot = m_htfProps.dens(m_T_sys_h_last, 1.);
 	double c_hdr_cold_last = m_htfProps.Cp(m_T_sys_c_last)*1000.0;	//mjw 1.6.2011 Adding mc_bal to the cold header inertia
@@ -610,6 +612,16 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		m_T_htf_in[0] = T_htf_cold_in;		//[C]
 		m_T_sys_c = m_T_htf_in[0];			//[C]
 	}
+
+	// Reset vectors that are populated in following for(i..nSCA) loop
+	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
+	m_q_loss_SCAtot.assign(m_q_loss_SCAtot.size(), 0.0);
+	m_q_1abs_tot.assign(m_q_1abs_tot.size(), 0.0);
+	m_E_avail.assign(m_E_avail.size(), 0.0);
+	m_E_accum.assign(m_E_accum.size(), 0.0);
+	m_E_int_loop.assign(m_E_int_loop.size(), 0.0);	
+	// And single values...
+	m_EqOpteff = 0.0;
 
 	//---------------------
 	for( int i = 0; i<m_nSCA; i++ )
@@ -742,11 +754,11 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		m_c_hdr_hot = m_htfProps.Cp(m_T_htf_out[m_nSCA-1])* 1000.;		//[kJ/kg-K]
 
 		//Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
-		m_T_sys_h = m_T_htf_out[m_nSCA-1] - m_Pipe_hl_hot / (m_m_dot_htf_tot*m_c_hdr_hot);	//[C]
+		m_T_sys_h = m_T_htf_out[m_nSCA - 1] - m_Pipe_hl_hot / (m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot);	//[C]
 
 		//Calculate the system temperature of the hot portion of the collector field. 
 		//This will serve as the fluid outlet temperature
-		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_m_dot_htf_tot / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.m_step) + m_T_sys_h;	//[C]
+		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_dot_htf_loop*float(m_nLoops) / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.m_step) + m_T_sys_h;	//[C]
 	}
 	else
 	{
@@ -966,14 +978,69 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
 	loop_optical_eta_off();
 
-	// Set inlet temperature to previous timestep outlet temperature
-	double T_cold_in = m_T_sys_h_last;			//[C]
 	// Set mass flow rate to minimum allowable
 	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
 
+	// Set duration for recirculation timestep
+	if(m_step_recirc != m_step_recirc)
+		m_step_recirc = 10.0*60.0;	//[s]
+
+	// ****** RESET *******
+	m_accept_loc = 0;
+
+	// Calculate number of steps required given timestep from solver and recirculation step
+	int n_steps_recirc = std::ceil(sim_info.m_step / m_step_recirc);	//[-] Number of recirculation steps required
+	
 	// Define a copy of the sim_info structure
-	C_csp_solver_sim_info sim_info_temp;
-	sim_info_temp = sim_info;
+	double time_start = sim_info.m_time - sim_info.m_step;	//[s]
+	double step_local = sim_info.m_step / (double)n_steps_recirc;	//[s]
+	C_csp_solver_sim_info sim_info_temp = sim_info;
+	sim_info_temp.m_step = step_local;		//[s]
+
+	for(int i = 0; i < n_steps_recirc; i++)
+	{
+		sim_info_temp.m_time = time_start + step_local*(i+1);	//[s]
+
+		// Set inlet temperature to previous timestep outlet temperature
+		double T_cold_in = m_T_sys_h_last;			//[K]
+
+		// Call energy balance with updated info
+		loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+		update_last_temps();
+	}
+	
+	cr_out_solver.m_T_salt_hot = m_T_sys_h_last - 273.15;	//[C]
+
+	return;
+}
+
+void C_csp_trough_collector_receiver::update_last_temps()
+{
+	// Update "_last" temperatures
+	m_T_sys_c_last = m_T_sys_c;		//[K]
+	m_T_sys_h_last = m_T_sys_h;		//[K]
+	for( int i = 0; i<m_nSCA; i++ )
+	{
+		m_T_htf_in_last[i] = m_T_htf_in[i];		//[K]
+		m_T_htf_out_last[i] = m_T_htf_out[i];	//[K]
+		m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
+	}
+
+	return;
+}
+
+void C_csp_trough_collector_receiver::reset_last_temps()
+{
+	// Reset "_last" temperatures to the "_converged" temps
+	m_T_sys_c_last = m_T_sys_c_converged;		//[K]
+	m_T_sys_h_last = m_T_sys_h_converged;		//[K]
+	for( int i = 0; i<m_nSCA; i++ )
+	{
+		m_T_htf_in_last[i] = m_T_htf_in_converged[i];		//[K]
+		m_T_htf_out_last[i] = m_T_htf_out_converged[i];		//[K]
+		m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
+	}
 
 	return;
 }
@@ -1150,13 +1217,6 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	{
 
 		qq++; //Iteration counter
-		m_q_loss_SCAtot.assign(m_q_loss_SCAtot.size(),0.0);
-		m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(),0.0);
-		m_q_1abs_tot.assign(m_q_1abs.size(),0.0);
-		m_E_avail.assign(m_E_avail.size(),0.0);
-		m_E_accum.assign(m_E_accum.size(),0.0);
-		m_E_int_loop.assign(m_E_int_loop.size(),0.0);
-		m_EqOpteff = 0.0;
 
 		m_dot_htf = m_m_dot_htfX;
 

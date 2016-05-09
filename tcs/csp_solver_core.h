@@ -43,10 +43,10 @@ public:
 class C_csp_solver_sim_info
 {
 public:
-	double m_time;		//[s]
-	double m_step;		//[s]
+	double m_time;		//[s] Time at end of timestep
+	double m_step;		//[s] Duration of timestep
 
-	int m_tou;		//[-]
+	int m_tou;		//[-] Time-Of-Use Period
 
 	C_csp_solver_sim_info()
 	{
