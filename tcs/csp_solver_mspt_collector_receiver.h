@@ -40,6 +40,12 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info);
 
+	virtual void startup(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		const C_csp_solver_sim_info &sim_info);
+
 	virtual void converged();
 
     virtual double calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim );

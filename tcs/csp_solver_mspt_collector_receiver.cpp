@@ -153,6 +153,23 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	return;
 }
 
+void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// For now, define startup(...) shell that calls call() with operation mode defined.
+	// Should eventually develop a startup method for the collector receiver
+
+	// Set heliostat field call() parameters and solve
+	C_csp_collector_receiver::S_csp_cr_inputs inputs;
+	inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
+	inputs.m_field_control = 1.0;
+
+	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
+}
+
 double C_csp_mspt_collector_receiver::calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim )
 {
     /*
