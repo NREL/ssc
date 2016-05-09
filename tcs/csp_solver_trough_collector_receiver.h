@@ -235,6 +235,13 @@ public:
 	// **************************************************************************
 	// **************************************************************************
 
+
+	// ***********************
+	// ***** T  E  M  P ******
+	double m_step_recirc;
+	// ***********************
+	// ***********************
+
 	C_csp_trough_collector_receiver();
 
 	~C_csp_trough_collector_receiver(){};
@@ -293,13 +300,17 @@ public:
 			};
 	};
 	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
-		double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
+		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
 
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
 
 	void loop_optical_eta_off();
+
+	void update_last_temps();
+
+	void reset_last_temps();
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
