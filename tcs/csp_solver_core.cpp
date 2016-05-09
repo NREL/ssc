@@ -440,7 +440,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		double q_dot_cr_on = std::numeric_limits<double>::quiet_NaN();
 
-		// Want to be VERY SURE that if controller thinks receiver can produce useful energy, then it actually can
+		// Want to be VERY SURE that if controller thinks receiver can produce *useful* energy, then it actually can
 		// Eventually, it would be nice to have these defined by a CR class method
 		if( q_dot_cr_startup < m_q_dot_rec_on_min*1.01 )
 			q_dot_cr_on = 0.0;
@@ -654,12 +654,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		{
 			// Set startup conditions
 			mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-			mc_cr_inputs.m_field_control = 1.0;							//[-] no defocusing for initial simulation
-			mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-			mc_collector_receiver.call(mc_weather.ms_outputs,
+			mc_collector_receiver.startup(mc_weather.ms_outputs,
 				mc_cr_htf_state_in,
-				mc_cr_inputs,
 				mc_cr_out_solver,
 				mc_cr_out_report,
 				mc_sim_info);
