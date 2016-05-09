@@ -1807,12 +1807,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				m_defocus = 1.0;
 
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-				mc_collector_receiver.call(mc_weather.ms_outputs,
+				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -3293,12 +3290,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					// Run CR at 'Start Up'
 					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-					mc_collector_receiver.call(mc_weather.ms_outputs,
+					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
-						mc_cr_inputs,
 						mc_cr_out_solver,
 						mc_cr_out_report,
 						mc_sim_info);
@@ -3692,12 +3686,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					// Run CR at 'Start Up'
 					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 1.0;							//[-] no defocusing for initial simulation
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-					mc_collector_receiver.call(mc_weather.ms_outputs,
+					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
-						mc_cr_inputs,
 						mc_cr_out_solver,
 						mc_cr_out_report,
 						mc_sim_info);
@@ -4025,12 +4016,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// First, startup the collector-receiver and get the time required
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-				mc_collector_receiver.call(mc_weather.ms_outputs,
+				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -4147,12 +4135,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Rerun CR_SU
 						// First, startup the collector-receiver and get the time required
 						mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-						mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-						mc_collector_receiver.call(mc_weather.ms_outputs,
+						mc_collector_receiver.startup(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
-							mc_cr_inputs,
 							mc_cr_out_solver,
 							mc_cr_out_report,
 							mc_sim_info);
@@ -4381,12 +4366,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					// Run CR at 'Start Up'
 					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-					mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-					mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-					mc_collector_receiver.call(mc_weather.ms_outputs,
+					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
-						mc_cr_inputs,
 						mc_cr_out_solver,
 						mc_cr_out_report,
 						mc_sim_info);
@@ -5378,12 +5360,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// First, startup the collector-receiver and get the time required
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-				mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-				mc_collector_receiver.call(mc_weather.ms_outputs,
+				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -5440,12 +5419,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Rerun CR_SU
 						mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-						mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-						mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 
-						mc_collector_receiver.call(mc_weather.ms_outputs,
+						mc_collector_receiver.startup(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
-							mc_cr_inputs,
 							mc_cr_out_solver,
 							mc_cr_out_report,
 							mc_sim_info);

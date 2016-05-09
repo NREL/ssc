@@ -472,6 +472,17 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 
 }
 
+void C_csp_gen_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	throw(C_csp_exception("C_csp_gen_collector_receiver::startup(...) is not complete"));
+	
+	return;
+}
+
 void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
