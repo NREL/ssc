@@ -974,6 +974,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Always reset last temps
+	reset_last_temps();
+	
 	// Get optical properties
 		// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
 	loop_optical_eta_off();
@@ -984,9 +987,6 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	// Set duration for recirculation timestep
 	if(m_step_recirc != m_step_recirc)
 		m_step_recirc = 10.0*60.0;	//[s]
-
-	// ****** RESET *******
-	m_accept_loc = 0;
 
 	// Calculate number of steps required given timestep from solver and recirculation step
 	int n_steps_recirc = std::ceil(sim_info.m_step / m_step_recirc);	//[-] Number of recirculation steps required
@@ -1010,7 +1010,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		update_last_temps();
 	}
 	
-	cr_out_solver.m_T_salt_hot = m_T_sys_h_last - 273.15;	//[C]
+	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;	//[C]
 
 	return;
 }
