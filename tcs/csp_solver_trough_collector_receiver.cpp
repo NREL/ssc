@@ -795,6 +795,8 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// First, clear all the values calculated below
+	loop_optical_eta_off();
 
 	//calculate the m_hour of the day
 	double time_hr = sim_info.m_time / 3600.;		//[hr]
@@ -1010,9 +1012,26 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		update_last_temps();
 	}
 	
+	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
 	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;	//[C]
 
+	m_operating_mode = C_csp_collector_receiver::OFF;
+
 	return;
+}
+
+void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// Always reset last temps
+
+	// Get optical performance
+	loop_optical_eta(weather, sim_info);
+
+
 }
 
 void C_csp_trough_collector_receiver::update_last_temps()
@@ -2070,17 +2089,6 @@ set_outputs_and_return:
 	return;
 }
 
-void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &htf_state_in,
-	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-	const C_csp_solver_sim_info &sim_info)
-{
-	throw(C_csp_exception("C_csp_trough_collector_receiver::startup(...) is not complete"));
-
-	return;
-}
-
 void C_csp_trough_collector_receiver::converged()
 {
 	/*
@@ -2101,6 +2109,14 @@ void C_csp_trough_collector_receiver::converged()
 	}
 
 	m_ncall = -1;	//[-]
+
+	if( m_operating_mode == C_csp_collector_receiver::STEADY_STATE )
+	{
+		throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
+			"Trough converged method"));
+	}
+
+	m_operating_mode_converged = m_operating_mode;	//[-]
 
 	// Always reset the m_defocus control at the first call of a timestep
 	m_defocus_new = 1.0;	//[-]

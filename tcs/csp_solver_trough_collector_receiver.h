@@ -138,6 +138,9 @@ private:
 	// member string for exception messages
 	std::string m_error_msg;
 
+	int m_operating_mode_converged;
+	int m_operating_mode;
+
 public:
 
 	// Class to save messages for up stream classes
