@@ -825,6 +825,7 @@ public:
 	{
 		add_var_info( _cm_vtab_pvsamv1 );
 		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_dc_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 		add_var_info(vtab_battery);
 	}
@@ -1706,8 +1707,13 @@ public:
 		ssc_number_t *p_dcpwr = allocate("dc_net", nrec * nyears);
 		ssc_number_t *p_gen = allocate("gen", nrec * nyears);
 		ssc_number_t *p_load_full = allocate("load_full", nrec* nyears);
+
+		//dc hourly adjustment factors
+		dc_adjustment_factors dc_haf(this);
+		if (!dc_haf.setup())
+			throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 		
-		// hourly adjustement factors
+		// hourly adjustment factors
 		adjustment_factors haf(this);
 		if (!haf.setup())
 			throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
@@ -2571,8 +2577,13 @@ public:
 
 
 						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
+
+						//module degradation applies to all subarrays
 						if (pv_lifetime_simulation==1)
 							dcpwr_net*= p_dc_degrade_factor[iyear + 1];
+						//dc adjustment factors apply to all subarrays
+						dcpwr_net *= dc_haf(hour);
+
 
 					}
 
