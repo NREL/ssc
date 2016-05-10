@@ -420,32 +420,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
 		// May replace this call with a simple proxy model later...
 		mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-		mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
-		mc_cr_inputs.m_input_operation_mode = C_csp_collector_receiver::STEADY_STATE;
-		mc_collector_receiver.call(mc_weather.ms_outputs,
+		C_csp_collector_receiver::S_csp_cr_est_out est_out;
+		mc_collector_receiver.estimates(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
-			mc_cr_inputs,
-			mc_cr_out_solver,
-			mc_cr_out_report,
+			est_out,
 			mc_sim_info);
-
-
-		// 5.9.2016, twn: Controller can't use both startup *and* useful output, so report one or the other
-		// Can be smarter here about how startup works
-		double q_dot_cr_startup = 0.0;
-		double q_dot_cr_on = 0.0;
-		if( cr_operating_state == C_csp_collector_receiver::ON )
+		double q_dot_cr_startup = est_out.m_q_startup_avail;
+		double q_dot_cr_on = est_out.m_q_dot_avail;
+		if( q_dot_cr_on <= m_q_dot_rec_on_min*1.01 )
 		{
-			if( mc_cr_out_solver.m_q_thermal > m_q_dot_rec_on_min*1.01 )
-			{
-				q_dot_cr_on = mc_cr_out_solver.m_q_thermal;
-			}
+			q_dot_cr_on = 0.0;
 		}
-		else
-		{
-			q_dot_cr_startup = mc_cr_out_solver.m_q_thermal;
-		}
-		
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )

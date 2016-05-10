@@ -170,6 +170,37 @@ void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs
 	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
 }
 
+void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_est_out &est_out,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// For now, define estimates(...) shell that calls call() with operation mode defined.
+	// Should eventually develop an estimate(...) method for the MSPT
+	
+	C_csp_collector_receiver::S_csp_cr_inputs inputs;
+	inputs.m_input_operation_mode = C_csp_collector_receiver::STEADY_STATE;
+	inputs.m_field_control = 1.0;
+
+	C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
+	C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
+
+	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
+
+	int mode = get_operating_state();
+
+	if( mode == C_csp_collector_receiver::ON )
+	{
+		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;
+		est_out.m_q_startup_avail = 0.0;
+	}
+	else
+	{
+		est_out.m_q_startup_avail = cr_out_solver.m_q_thermal;
+		est_out.m_q_dot_avail = 0.0;
+	}
+}
+
 double C_csp_mspt_collector_receiver::calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim )
 {
     /*
