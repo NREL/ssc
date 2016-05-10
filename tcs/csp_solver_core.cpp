@@ -417,9 +417,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		q_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
 
 		
-
-
-
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
 		// May replace this call with a simple proxy model later...
 		mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
@@ -433,22 +430,22 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_sim_info);
 
 
-		// Need a way to consider min power (as calculated in receiver model)
-		// Steady State call is suggesting receiver can produce power, and when ON is tried, it is nowhere close to meeting min power requirements
-		// Think the idea with initially not checking output was for startup considerations...
-		double q_dot_cr_startup = mc_cr_out_solver.m_q_thermal;		//[MW]
-
-		double q_dot_cr_on = std::numeric_limits<double>::quiet_NaN();
-
-		// Want to be VERY SURE that if controller thinks receiver can produce *useful* energy, then it actually can
-		// Eventually, it would be nice to have these defined by a CR class method
-		if( q_dot_cr_startup < m_q_dot_rec_on_min*1.01 )
-			q_dot_cr_on = 0.0;
+		// 5.9.2016, twn: Controller can't use both startup *and* useful output, so report one or the other
+		// Can be smarter here about how startup works
+		double q_dot_cr_startup = 0.0;
+		double q_dot_cr_on = 0.0;
+		if( cr_operating_state == C_csp_collector_receiver::ON )
+		{
+			if( mc_cr_out_solver.m_q_thermal > m_q_dot_rec_on_min*1.01 )
+			{
+				q_dot_cr_on = mc_cr_out_solver.m_q_thermal;
+			}
+		}
 		else
-			q_dot_cr_on = q_dot_cr_startup;
-
-
-
+		{
+			q_dot_cr_startup = mc_cr_out_solver.m_q_thermal;
+		}
+		
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
