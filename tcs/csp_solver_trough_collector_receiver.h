@@ -9,6 +9,9 @@
 #include <cmath>
 #include "sam_csp_util.h"
 
+#include <iostream>
+#include <fstream>
+
 class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
 private:
@@ -242,6 +245,9 @@ public:
 	// ***********************
 	// ***** T  E  M  P ******
 	double m_step_recirc;
+
+	std::ofstream m_outfile;	//("example.txt", std::ofstream); //("C:/Users/tneises/Documents/2015 SuNLaMP Projects/SAM/FY16/Q2 reporting/debug.csv");
+
 	// ***********************
 	// ***********************
 
