@@ -260,6 +260,15 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
+	m_outfile.open("C:/Users/tneises/Documents/2015 SuNLaMP Projects/SAM/FY16/Q2 reporting/debug.csv");
+
+	m_outfile << "Step [s], T_cold_in, T_sys_c_last,";
+	for( int i = 0; i < m_nSCA; i++ )
+	{
+		m_outfile << "T_htf_in [K], q_abs, T_htf_ave_last [K], T_htf_out [K],";
+	}
+	m_outfile << "T_sys_h_last, T_hot_out\n";
+
 	return;
 }
 
@@ -613,6 +622,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		m_T_sys_c = m_T_htf_in[0];			//[C]
 	}
 
+	m_outfile << sim_info.m_step << "," << T_htf_cold_in << "," << m_T_sys_c_last;
+
 	// Reset vectors that are populated in following for(i..nSCA) loop
 	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
 	m_q_loss_SCAtot.assign(m_q_loss_SCAtot.size(), 0.0);
@@ -680,6 +691,10 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		//Recalculate the average temperature for the SCA
 		m_T_htf_ave[i] = (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0;
 
+		
+		m_outfile << "," << m_T_htf_in[i] << "," << m_q_abs_SCAtot[i] << "," << m_T_htf_ave_last[i] << 
+					"," << m_T_htf_out[i];
+		
 
 		//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
 		//MJW 1.16.2011 Include the thermal inertia term
@@ -764,6 +779,8 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	{
 		m_T_sys_h = m_T_htf_out[m_nSCA-1];	//[C]
 	}
+
+	m_outfile << "," << m_T_sys_h_last << "," << m_T_sys_h << "\n";
 
 	return E_loop_energy_balance_exit::SOLVED;
 }
@@ -1012,8 +1029,15 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		update_last_temps();
 	}
 	
+	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
+	cr_out_solver.m_time_required_su = sim_info.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
+	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr] Total HTF mass flow rate
+	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
+	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
+
+	cr_out_solver.m_E_fp_total = 0.0;					//[MW]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
-	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;	//[C]
+	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
 
 	m_operating_mode = C_csp_collector_receiver::OFF;
 
@@ -1027,10 +1051,102 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Always reset last temps
+	reset_last_temps();
 
 	// Get optical performance
 	loop_optical_eta(weather, sim_info);
 
+	// Set mass flow rate to minimum allowable
+	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
+
+	// Set duration for recirculation timestep
+	if( m_step_recirc != m_step_recirc )
+		m_step_recirc = 10.0*60.0;	//[s]
+
+	// Calculate number of steps required given timestep from solver and recirculation step
+	int n_steps_recirc = std::ceil(sim_info.m_step / m_step_recirc);	//[-] Number of recirculation steps required
+
+	// Define a copy of the sim_info structure
+	double time_start = sim_info.m_time - sim_info.m_step;	//[s]
+	double step_local = sim_info.m_step / (double)n_steps_recirc;	//[s]
+	C_csp_solver_sim_info sim_info_temp = sim_info;
+	sim_info_temp.m_step = step_local;		//[s]
+
+	bool is_T_startup_achieved = false;
+
+	int i_step = 0;
+	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
+	{
+		sim_info_temp.m_time = time_start + step_local*(i_step + 1);	//[s]
+
+		// Set inlet temperature to previous timestep outlet temperature
+		double T_cold_in = m_T_sys_h_last;			//[K]
+
+		// Call energy balance with updated info
+		loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+		// If the outlet temperature is greater than startup temperature,
+		//    then backup one timestep, and move forward in shorter steps
+		if( m_T_sys_h > m_T_startup )
+		{
+			sim_info_temp.m_time - step_local;	//[s] reset time to start of present i_step
+			is_T_startup_achieved = true;
+			break;
+		}
+
+		update_last_temps();
+	}
+
+	// Check if startup is achieved in current controller/kernel timestep
+	double time_required_su = sim_info.m_step;				//[s]
+	m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
+
+	if( is_T_startup_achieved )
+	{
+		// Use 1 minute timesteps, or half of the local timestep from above calcs, whichever is shortest
+		double step_startup_fixed = min(60.0, step_local/2.0);				//[s]
+		double delta_time = sim_info.m_time - sim_info_temp.m_time;			//[s]
+		int n_steps_startup = std::ceil(delta_time / step_startup_fixed);	//[-]	
+		double step_startup = delta_time / (double)n_steps_startup;			//[s]
+
+		for( int i = 0; i < n_steps_startup; i++ )
+		{
+			sim_info_temp.m_time += n_steps_startup*(i+1);	//[s]
+
+			double T_cold_in = m_T_sys_h_last;				//[K]
+
+			// Call energy balance with updated info
+			loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+			update_last_temps();
+
+			if( m_T_sys_h > m_T_startup )
+			{
+				time_required_su = sim_info_temp.m_time - time_start;		//[s]
+				m_operating_mode = C_csp_collector_receiver::ON;			//[-]
+				break;
+			}
+		}
+	}
+
+	// These outputs need some more thought
+		// For now, just set this > 0.0 so that the controller knows that startup was successful
+	cr_out_solver.m_q_startup = 1.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
+		// Startup time is calculated here
+	cr_out_solver.m_time_required_su = time_required_su;	//[s]
+		// 	Need to be sure this value is correct..., but controller doesn't use it in CR_SU (confirmed)
+	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;//[kg/hr] Total HTF mass flow rate
+		// Should not be available thermal output if receiver is in start up, but controller doesn't use it in CR_SU?
+	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
+		// Reporting final (t = t_end) or ave (t = t_mid)?, but controller doesn't use it in CR_SU?
+	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
+
+		// Shouldn't need freeze protection if in startup, but may want a check on this
+	cr_out_solver.m_E_fp_total = 0.0;					//[MW]
+		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
+	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
+		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
+	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
 
 }
 
@@ -1039,8 +1155,23 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	C_csp_collector_receiver::S_csp_cr_est_out &est_out,
 	const C_csp_solver_sim_info &sim_info)
 {
-	throw(C_csp_exception("C_csp_trough_collector::estimates(...) is not complete"));
-
+	if( m_operating_mode == C_csp_collector_receiver::ON )
+	{
+		throw(C_csp_exception("C_csp_trough_collector::estimates(...) is not complete"));
+	}
+	else
+	{
+		if( weather.m_beam > 1.0 )
+		{
+			est_out.m_q_startup_avail = 1.0;	//[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
+		}
+		else
+		{
+			est_out.m_q_startup_avail = 0.0;
+		}
+		est_out.m_q_dot_avail = 0.0;	
+	}
+	
 	return;
 }
 
