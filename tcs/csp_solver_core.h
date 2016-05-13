@@ -730,7 +730,6 @@ private:
 	S_csp_system_params & ms_system_params;
 
 	C_csp_solver_htf_1state mc_cr_htf_state_in;
-	C_csp_collector_receiver::S_csp_cr_inputs mc_cr_inputs;
 	C_csp_collector_receiver::S_csp_cr_out_solver mc_cr_out_solver;
 	C_csp_collector_receiver::S_csp_cr_out_report mc_cr_out_report;
 

@@ -1180,10 +1180,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				
 				// Get collector-receiver performance with no defocus
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				double field_control = 1.0;									//[-] no defocusing for initial simulation
 				mc_collector_receiver.on(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs.m_field_control,
+					field_control,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -1636,11 +1636,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// First, solve the CR. Again, we're assuming HTF inlet temperature is always = m_T_htf_cold_des
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 
 				mc_collector_receiver.on(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs.m_field_control,
+					m_defocus,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -1702,11 +1701,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// CR: ON
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
 
 				mc_collector_receiver.on(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs.m_field_control,
+					m_defocus,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -2087,11 +2085,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					// Solve the collector-receiver model
 					// CR ON
 					mc_cr_htf_state_in.m_temp = T_rec_in_guess;					//[C]
-					mc_cr_inputs.m_field_control = 1.0;							//[-] assuming no defocus
 
 					mc_collector_receiver.on(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
-						mc_cr_inputs.m_field_control,
+						m_defocus,
 						mc_cr_out_solver,
 						mc_cr_out_report,
 						mc_sim_info);
@@ -2554,11 +2551,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// Solve the collector-receiver model
 					mc_cr_htf_state_in.m_temp = T_rec_in_guess;		//[C]
-					mc_cr_inputs.m_field_control = 1.0;				//[-] no defocusing for initial simulation
 
 					mc_collector_receiver.on(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
-						mc_cr_inputs.m_field_control,
+						m_defocus,
 						mc_cr_out_solver,
 						mc_cr_out_report,
 						mc_sim_info);
@@ -2774,11 +2770,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				
 				// Get collector-receiver performance with no defocus
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				double field_control = 1.0;									//[-] no defocusing for initial simulation
 
 				mc_collector_receiver.on(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs.m_field_control,
+					field_control,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -3045,11 +3041,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// ... and T_rec_in_guess from this loop
 						// CR ON
 						mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
-						mc_cr_inputs.m_field_control = defocus_guess;	//[-] no defocusing for initial simulation
 
 						mc_collector_receiver.on(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
-							mc_cr_inputs.m_field_control,
+							defocus_guess,
 							mc_cr_out_solver,
 							mc_cr_out_report,
 							mc_sim_info);
@@ -4795,11 +4790,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Solve the collector-receiver model
 						mc_cr_htf_state_in.m_temp = T_cold_guess;		//[C]
-						mc_cr_inputs.m_field_control = 1.0;				//[-] no defocusing for initial simulation
 
 						mc_collector_receiver.on(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
-							mc_cr_inputs.m_field_control,
+							m_defocus,
 							mc_cr_out_solver,
 							mc_cr_out_report,
 							temp_sim_info);			// **** Use TEMP sim info ****
@@ -5593,11 +5587,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					// Solve the receiver model with T_rec_in_guess
 					// CR ON
 					mc_cr_htf_state_in.m_temp = T_rec_in_guess;		//[C]
-					mc_cr_inputs.m_field_control = 1.0;				//[-] no defocusing for initial simulation
 
 					mc_collector_receiver.on(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
-						mc_cr_inputs.m_field_control,
+						m_defocus,
 						mc_cr_out_solver,
 						mc_cr_out_report,
 						mc_sim_info);
@@ -6052,11 +6045,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Solve the receiver model with T_rec_in_guess and current defocus guess
 						// CR ON
 						mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
-						mc_cr_inputs.m_field_control = defocus_guess;		//[-] no defocusing for initial simulation
 
 						mc_collector_receiver.on(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
-							mc_cr_inputs.m_field_control,
+							defocus_guess,
 							mc_cr_out_solver,
 							mc_cr_out_report,
 							mc_sim_info);
@@ -6274,11 +6266,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// Get collector-receiver performance with no defocus
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				mc_cr_inputs.m_field_control = 1.0;						//[-] no defocusing for initial simulation
+				double field_control = 1.0;									//[-] no defocusing for initial simulation
 
 				mc_collector_receiver.on(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
-					mc_cr_inputs.m_field_control,
+					field_control,
 					mc_cr_out_solver,
 					mc_cr_out_report,
 					mc_sim_info);
@@ -6544,11 +6536,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Solve the receiver model with T_rec_in_guess and current defocus guess
 						// CR ON
 						mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
-						mc_cr_inputs.m_field_control = defocus_guess;		//[-] no defocusing for initial simulation
 
 						mc_collector_receiver.on(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
-							mc_cr_inputs.m_field_control,
+							defocus_guess,
 							mc_cr_out_solver,
 							mc_cr_out_report,
 							mc_sim_info);
@@ -7467,11 +7458,10 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 		// Solve the receiver model with T_rec_in_guess
 		// CR ON
 		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
-		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 
 		mc_collector_receiver.on(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
-			mc_cr_inputs.m_field_control,
+			field_control_in,
 			mc_cr_out_solver,
 			mc_cr_out_report,
 			mc_sim_info);
@@ -8438,11 +8428,10 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 
 		// Solve the receiver model
 		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
-		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 
 		mc_collector_receiver.on(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
-			mc_cr_inputs.m_field_control,
+			field_control_in,
 			mc_cr_out_solver,
 			mc_cr_out_report,
 			mc_sim_info);
@@ -8886,11 +8875,10 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		// Solve the receiver model with T_rec_in_guess
 		// CR ON
 		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C]
-		mc_cr_inputs.m_field_control = field_control_in;	//[-] no defocusing for initial simulation
 
 		mc_collector_receiver.on(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
-			mc_cr_inputs.m_field_control,
+			field_control_in,
 			mc_cr_out_solver,
 			mc_cr_out_report,
 			mc_sim_info);
@@ -9327,11 +9315,10 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 		// CR: ON
 		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C], convert from [K]
-		mc_cr_inputs.m_field_control = field_control_in;	//[-] apply defocus from method input 
 
 		mc_collector_receiver.on(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
-			mc_cr_inputs.m_field_control,
+			field_control_in,
 			mc_cr_out_solver,
 			mc_cr_out_report,
 			mc_sim_info);
