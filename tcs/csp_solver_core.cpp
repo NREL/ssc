@@ -365,6 +365,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		// Get collector/receiver & power cycle operating states at start of time step (last time step)
 		cr_operating_state = mc_collector_receiver.get_operating_state();
+		if( cr_operating_state < C_csp_collector_receiver::E_csp_cr_modes::OFF ||
+			cr_operating_state > C_csp_collector_receiver::E_csp_cr_modes::ON )
+		{
+			std::string msg = util::format("The collector-receiver operating state at time %lg [hr] is %d. Recognized"
+				" values are from %d to %d\n", mc_sim_info.m_step / 3600.0, cr_operating_state, C_csp_collector_receiver::E_csp_cr_modes::OFF, C_csp_collector_receiver::E_csp_cr_modes::ON);
+			throw(C_csp_exception(msg,"CSP Solver Core"));
+		}
 		pc_operating_state = mc_power_cycle.get_operating_state();
 
 		// Get TES operating state info at end of last time step
@@ -1642,8 +1649,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( mc_cr_out_solver.m_q_thermal < q_pc_sb )
 				{	// Collector/receiver can't produce useful energy
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-
+					
 					m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = false;
 
 					are_models_converged = false;
@@ -1710,8 +1716,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( mc_cr_out_solver.m_q_thermal == 0.0 )
 				{	// Collector/receiver can't produce useful energy
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-
+					
 					m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail = false;
 
 					are_models_converged = false;
@@ -1796,8 +1801,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check that startup happened
 				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-
+					
 					m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail = false;
 
 					are_models_converged = false;
@@ -2209,9 +2213,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			
 				if( exit_mode == NO_SOLUTION )
 				{	// This mode did not solve, and did not provide enough information to try other operating mode. Shut plant off
-				
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-
+		
 					m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = false;
 
 					are_models_converged = false;
@@ -2220,8 +2222,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			
 				if( exit_mode != CONVERGED )
 				{	// All other options should be exhausted, so if not CONVERGED, something is wrong. Shut down plant
-				
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
 					m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = false;
 
@@ -4005,7 +4005,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check that startup happened
 				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
 					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 
@@ -4124,7 +4123,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Check that startup happened
 						if( mc_cr_out_solver.m_q_startup == 0.0 )
 						{	// Collector/receiver can't produce useful energy
-							//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
 							m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 
@@ -5349,7 +5347,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Check that startup happened
 				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
-					//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
 					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
 
@@ -5408,7 +5405,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Check that startup happened
 						if( mc_cr_out_solver.m_q_startup == 0.0 )
 						{	// Collector/receiver can't produce useful energy
-							//operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
 
 							m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
 

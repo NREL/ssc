@@ -260,14 +260,17 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
-	m_outfile.open("C:/Users/tneises/Documents/2015 SuNLaMP Projects/SAM/FY16/Q2 reporting/debug.csv");
+	// Set previous operating mode
+	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+
+	/*m_outfile.open("C:/Users/tneises/Documents/2015 SuNLaMP Projects/SAM/FY16/Q2 reporting/debug.csv");
 
 	m_outfile << "Step [s], T_cold_in, T_sys_c_last,";
 	for( int i = 0; i < m_nSCA; i++ )
 	{
 		m_outfile << "T_htf_in [K], q_abs, T_htf_ave_last [K], T_htf_out [K],";
 	}
-	m_outfile << "T_sys_h_last, T_hot_out\n";
+	m_outfile << "T_sys_h_last, T_hot_out\n";*/
 
 	return;
 }
@@ -549,7 +552,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 int C_csp_trough_collector_receiver::get_operating_state()
 {
-	return -1;
+	return m_operating_mode_converged;	//[-]
 }
 
 
@@ -1029,6 +1032,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		update_last_temps();
 	}
 	
+	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
 	cr_out_solver.m_time_required_su = sim_info.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
 	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr] Total HTF mass flow rate
@@ -1136,9 +1140,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_time_required_su = time_required_su;	//[s]
 		// 	Need to be sure this value is correct..., but controller doesn't use it in CR_SU (confirmed)
 	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;//[kg/hr] Total HTF mass flow rate
-		// Should not be available thermal output if receiver is in start up, but controller doesn't use it in CR_SU?
+		// Should not be available thermal output if receiver is in start up, but controller doesn't use it in CR_SU (confirmed)
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
-		// Reporting final (t = t_end) or ave (t = t_mid)?, but controller doesn't use it in CR_SU?
+		// Reporting final (t = t_end) or ave (t = t_mid)?, but controller doesn't use it in CR_SU (confirmed)
 	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
