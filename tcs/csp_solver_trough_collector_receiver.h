@@ -268,13 +268,6 @@ public:
 	
 	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
-	virtual void call(const C_csp_weatherreader::S_outputs &weather,
-		const C_csp_solver_htf_1state &htf_state_in,
-		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-		const C_csp_solver_sim_info &sim_info);
-
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
@@ -338,6 +331,13 @@ public:
 	void update_last_temps();
 
 	void reset_last_temps();
+
+	void call(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		const C_csp_solver_sim_info &sim_info);
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,

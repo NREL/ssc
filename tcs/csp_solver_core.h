@@ -360,13 +360,6 @@ public:
     virtual double get_pumping_parasitic_coef() = 0;  //MWe/MWt
     virtual double get_min_power_delivery() = 0;    //MWt
 
-	virtual void call(const C_csp_weatherreader::S_outputs &weather,
-		const C_csp_solver_htf_1state &htf_state_in,
-		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-		const C_csp_solver_sim_info &sim_info) = 0;
-
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
