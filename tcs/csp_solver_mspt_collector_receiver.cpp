@@ -170,6 +170,24 @@ void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs
 	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
 }
 
+void C_csp_mspt_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	double field_control,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	// For now, define on(...) shell that calls call() with operation mode defined.
+	// Should eventually develop an 'on' method for the MSPT
+
+	// Define 'C_csp_cr_inputs' for call(...)
+	C_csp_collector_receiver::S_csp_cr_inputs inputs;
+	inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
+	inputs.m_field_control = field_control;
+
+	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
+}
+
 void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_est_out &est_out,

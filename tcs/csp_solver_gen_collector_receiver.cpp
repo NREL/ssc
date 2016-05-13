@@ -317,6 +317,16 @@ double C_csp_gen_collector_receiver::get_min_power_delivery()
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
+void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	double field_control,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	throw(C_csp_exception("C_csp_gen_collector_receiver::on(...) is not complete"));
+}
+
 void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
