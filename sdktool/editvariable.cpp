@@ -45,8 +45,8 @@ EditVariableDialog::EditVariableDialog(wxWindow *parent, const wxString &title )
 		wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER )
 {
 
-	numRows = new wxNumericCtrl(this, ID_numRows, 3, wxNumericCtrl::INTEGER );
-	numCols = new wxNumericCtrl(this, ID_numCols, 4, wxNumericCtrl::INTEGER );
+	numRows = new wxNumericCtrl(this, ID_numRows, 3, wxNUMERIC_INTEGER );
+	numCols = new wxNumericCtrl(this, ID_numCols, 4, wxNUMERIC_INTEGER );
 		
 	numValue = new wxNumericCtrl(this, ID_numValue );
 	txtValue = new wxTextCtrl(this, ID_txtValue );

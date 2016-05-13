@@ -663,7 +663,7 @@ tcVisualEditor::tcVisualEditor( wxWindow *parent )
 	m_endTime->SetFormat(2,false,wxEmptyString," hr");
 	m_timeStep = new wxNumericCtrl( this, ID_TIMESTEP, 0 ); 
 	m_timeStep->SetFormat(2,false,wxEmptyString," hr");
-	m_maxIter = new wxNumericCtrl( this, ID_MAXITER, 100, wxNumericCtrl::INTEGER ); 
+	m_maxIter = new wxNumericCtrl( this, ID_MAXITER, 100, wxNUMERIC_INTEGER ); 
 	m_maxIter->SetFormat(-1,false,wxEmptyString, " iter");
 
 	m_storeArrMat = new wxCheckBox(this, wxID_ANY, "Store array/matrix data from simulation" );
