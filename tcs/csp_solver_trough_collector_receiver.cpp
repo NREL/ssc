@@ -1154,6 +1154,16 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 }
 
+void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	double field_control,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	const C_csp_solver_sim_info &sim_info)
+{
+	throw(C_csp_exception("C_csp_trough_collector::on(...) is not complete"));
+}
+
 void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_est_out &est_out,

@@ -379,6 +379,13 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
+	virtual void on(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		double field_control,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		const C_csp_solver_sim_info &sim_info) = 0;
+
 	struct S_csp_cr_est_out
 	{
 		double m_q_startup_avail;	//[MWt] Estimate startup thermal power. Only > 0 if solar avail AND cr is OFF or Starting Up
