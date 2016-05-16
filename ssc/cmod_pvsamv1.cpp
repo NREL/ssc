@@ -3033,6 +3033,8 @@ public:
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
+		// adjustment for timestep values
+		kWhperkW *= ts_hour;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}

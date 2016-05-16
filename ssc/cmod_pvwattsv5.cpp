@@ -529,6 +529,8 @@ public:
 
 		// metric outputs moved to technology
 		double kWhperkW = 1000.0*annual_kwh / dc_nameplate;
+		// adjustment for timestep values
+		kWhperkW *= ts_hour;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}
