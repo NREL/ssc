@@ -1161,6 +1161,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Get optical performance (no defocus applied in this method)
+	loop_optical_eta(weather, sim_info);
+
+	// If field_control < 1, then apply it here
+
 	throw(C_csp_exception("C_csp_trough_collector::on(...) is not complete"));
 }
 
@@ -1256,18 +1261,6 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	m_dot_in *= 1 / 3600.;		//[kg/s] convert from kg/hr
 	SolarAz = (SolarAz - 180.0) * m_d2r;	//[rad] convert from [deg]
 
-	//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
-	double E_fp_tot = std::numeric_limits<double>::quiet_NaN();
-	if (m_ncall>0)
-	{
-		if ((!m_no_fp) && (m_T_cold_in_1 > T_cold_in))
-		{
-			E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
-			goto set_outputs_and_return;
-		}
-	}
-	//**********************************************************************************************************************
-
 	double rho_hdr_cold, rho_hdr_hot;
 	double c_hdr_cold_last, m_dot_lower, m_dot_upper;
 	bool upflag, lowflag, fp_lowflag, fp_upflag;
@@ -1280,8 +1273,38 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double E_avail_tot, rho_ave, E_int_sum;
 	double q_abs_maxOT;
 	q_abs_maxOT = 0;
-
+	double m_dot_htf = std::numeric_limits<double>::quiet_NaN();
+	int qq = -1;
+	int SolveMode = -1;
+	double eta_thermal = std::numeric_limits<double>::quiet_NaN();
+	double q_field_delivered = std::numeric_limits<double>::quiet_NaN();
+	double q_dump = std::numeric_limits<double>::quiet_NaN();
+	double m_dot_avail = std::numeric_limits<double>::quiet_NaN();
+	double q_dot_avail = std::numeric_limits<double>::quiet_NaN();
+	double E_bal_startup = std::numeric_limits<double>::quiet_NaN();
+	double E_hdr_accum = std::numeric_limits<double>::quiet_NaN();
+	double piping_hl_total = std::numeric_limits<double>::quiet_NaN();
+	double E_field = std::numeric_limits<double>::quiet_NaN();
+	double E_loop_accum = std::numeric_limits<double>::quiet_NaN();
+	double DP_tot = std::numeric_limits<double>::quiet_NaN();
+	double W_dot_pump = std::numeric_limits<double>::quiet_NaN();
+	double SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
+	double q_SCA_tot = std::numeric_limits<double>::quiet_NaN();
+	
 	double SCAs_def = 1.0;
+
+	//If no change in inputs between calls, then no need to go through calculations.  Sometimes an extra call was run.....
+	double E_fp_tot = std::numeric_limits<double>::quiet_NaN();
+	if (m_ncall>0)
+	{
+		if ((!m_no_fp) && (m_T_cold_in_1 > T_cold_in))
+		{
+			E_fp_tot = m_m_dot_htf_tot * m_c_hdr_cold * (m_T_cold_in_1 - T_cold_in);       //[kg/s]*[J/kg-K]*[K] = [W]  Freeze protection energy required
+			goto set_outputs_and_return;
+		}
+	}
+	//**********************************************************************************************************************
+		
 	if (m_ncall == 0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
 	{
 		// Call optical efficiency method
@@ -1314,7 +1337,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		}
 	}  //mjw 3.5.11 ---------- } of the items that only need to be calculated once per time step
 
-	double q_SCA_tot = 0.;
+	q_SCA_tot = 0.;
 	for (int i = 0; i<m_nSCA; i++)
 	{ 
 		q_SCA_tot += m_q_SCA[i];	//[W/m]
@@ -1351,12 +1374,12 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 	//1=constrain temperature
 	//2=defocusing array
 	//3=constrain mass flow above min
-	int SolveMode = 1;
+	SolveMode = 1;
 
-	int qq = 0;                  //Set iteration counter
+	qq = 0;                  //Set iteration counter
 
 	m_m_dot_htfX = max(min(m_m_dot_htfmax, m_m_dot_htfX), m_m_dot_htfmin);
-	double m_dot_htf = m_m_dot_htfX;
+	m_dot_htf = m_m_dot_htfX;
 
 	//Set ends of iteration bracket.  Make bracket greater than bracket defined on system limits so a value less than system limit can be tried earlier in iteration
 	m_dot_lower = 0.7*m_m_dot_htfmin;
@@ -1993,9 +2016,9 @@ calc_final_metrics_goto:
 		}
 	}
 
-	double DP_tot = std::numeric_limits<double>::quiet_NaN();
-	double W_dot_pump = std::numeric_limits<double>::quiet_NaN();
-	double SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
+	DP_tot = std::numeric_limits<double>::quiet_NaN();
+	W_dot_pump = std::numeric_limits<double>::quiet_NaN();
+	SCA_par_tot = std::numeric_limits<double>::quiet_NaN();
 	if (m_accept_loc == 1)
 	{
 		// The total pressure drop in all of the piping
@@ -2037,7 +2060,7 @@ calc_final_metrics_goto:
 	//First, calculate the amount of energy absorbed during the time step that didn't contribute to 
 	//heating up the solar field
 	E_avail_tot = 0.;
-	double E_loop_accum = 0.0;
+	E_loop_accum = 0.0;
 	E_int_sum = 0.;
 	for (int i = 0; i<m_nSCA; i++)
 	{
@@ -2046,17 +2069,17 @@ calc_final_metrics_goto:
 		E_int_sum += m_E_int_loop[i]; //[J]
 	}
 
-	double E_field = E_int_sum;
+	E_field = E_int_sum;
 
 	// Average properties
 	rho_ave = m_htfProps.dens((m_T_htf_out[m_nSCA-1] + m_T_sys_c) / 2.0, 0.0); //kg/m3
 	m_c_htf_ave = m_htfProps.Cp((m_T_sys_h + m_T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
 
 	// Other calculated outputs
-	double piping_hl_total = 0.0;
+	piping_hl_total = 0.0;
 
-	double E_bal_startup = 0.0;
-	double E_hdr_accum = 0.0;
+	E_bal_startup = 0.0;
+	E_hdr_accum = 0.0;
 	if (m_accept_loc == 1)		// Consider entire internal energy of entire field, not just the loop
 	{
 		E_avail_tot *= float(m_nLoops);
@@ -2105,8 +2128,8 @@ calc_final_metrics_goto:
 	// ******************************************************************
 	DP_tot = DP_tot * 1.e-5; //[bar]
 
-	double m_dot_avail = std::numeric_limits<double>::quiet_NaN();
-	double q_dot_avail = std::numeric_limits<double>::quiet_NaN();
+	m_dot_avail = std::numeric_limits<double>::quiet_NaN();
+	q_dot_avail = std::numeric_limits<double>::quiet_NaN();
 	if (!m_is_using_input_gen)
 	{
 		//Calculate the thermal power produced by the field
@@ -2130,12 +2153,12 @@ calc_final_metrics_goto:
 	}
 
 	//Dumped energy
-	double q_dump = m_Ap_tot*I_b*m_EqOpteff*(1.0 - SCAs_def) / 1.e6;  //[MW]
+	q_dump = m_Ap_tot*I_b*m_EqOpteff*(1.0 - SCAs_def) / 1.e6;  //[MW]
 
 	//Total field performance
-	double q_field_delivered = m_m_dot_htf_tot * m_c_htf_ave * (m_T_sys_h - m_T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
+	q_field_delivered = m_m_dot_htf_tot * m_c_htf_ave * (m_T_sys_h - m_T_cold_in_1) / 1.e6; //MJW 1.11.11 [MWt]
 
-	double eta_thermal = std::numeric_limits<double>::quiet_NaN();
+	eta_thermal = std::numeric_limits<double>::quiet_NaN();
 	if (I_b*m_CosTh_ave == 0.)	//cc--> Adding case for zero output. Was reporting -Infinity in original version
 	{
 		eta_thermal = 0.;
