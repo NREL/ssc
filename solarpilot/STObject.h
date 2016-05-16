@@ -13,7 +13,6 @@
 //#include "hpvm.h"
 #include "SolarField.h"
 
-
 class ST_OpticalProperties
 {
 public:
@@ -192,6 +191,30 @@ private:
 	st_uint_t m_dataCapacity;
 };
 
+
+class ST_IntersectionData
+{
+public:
+    double *hitx;
+	double *hity;
+	double *hitz;
+	double *cosx;
+	double *cosy;
+	double *cosz;
+	int *emap;	//corresponding element number
+	int *smap;	//corresponding stage number
+	int *rnum;	//ray numbers
+    int nint;   //number of intersections
+    int nsunrays;
+    double q_ray;   //power per ray
+    double bounds[5]; //land bounds
+
+    ST_IntersectionData();
+    ~ST_IntersectionData();
+    void AllocateArrays(int size);
+};
+
+
 struct ST_Stage
 {
 	ST_Stage();
@@ -239,6 +262,7 @@ struct ST_System
 	// simulation outputs
 	ST_RayData AllRayData;
 	st_uint_t SunRayCount;
+    ST_IntersectionData IntData;
 
 	//method for loading the solar field geometry into the ST_System object
 	bool CreateSTSystem(SolarField &SF, Hvector &helios);

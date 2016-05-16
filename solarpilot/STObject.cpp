@@ -392,6 +392,66 @@ void ST_RayData::Print()
 	printf("\n");
 }
 
+
+ST_IntersectionData::ST_IntersectionData()
+{
+    //initialize null
+    hitx=0;
+    hity=0;
+    hitz=0;
+    cosx=0;
+    cosy=0;
+    cosz=0;
+    emap=0;	//corresponding element number
+    smap=0;	//corresponding stage number
+    rnum=0;	//ray numbers
+    nint=0;
+    nsunrays = 0;
+    q_ray = 0.;
+    bounds[0] = bounds[1] = bounds[2] = bounds[3] = bounds[4] = 0.;
+    return;
+}
+
+ST_IntersectionData::~ST_IntersectionData()
+{
+    //delete dynamic arrays if allocated
+    if( hitx != 0 ) delete [] hitx;
+    if( hity != 0 ) delete [] hity;
+    if( hitz != 0 ) delete [] hitz;
+    if( cosx != 0 ) delete [] cosx;
+    if( cosy != 0 ) delete [] cosy;
+    if( cosz != 0 ) delete [] cosz;
+    if( emap != 0 ) delete [] emap;	//corresponding element number
+    if( smap != 0 ) delete [] smap;	//corresponding stage number
+    if( rnum != 0 ) delete [] rnum;	//ray numbers
+    return;
+}
+
+void ST_IntersectionData::AllocateArrays(int size)
+{
+    try
+    {
+        //Size the arrays
+        hitx = new double[size];
+        hity = new double[size];
+        hitz = new double[size];
+        cosx = new double[size];
+        cosy = new double[size];
+        cosz = new double[size];
+        emap = new int[size];	//corresponding element number
+        smap = new int[size];	//corresponding stage number
+        rnum = new int[size];	//ray numbers
+        nint = size;
+    }
+    catch(...)
+    {
+        throw spexception("Memory allocation error encountered when sizing arrays for SolTrace intersection data. Contact support.");
+    }
+    return;
+}
+
+
+
 ST_Stage::ST_Stage()
 {
 	st_uint_t i,j;
