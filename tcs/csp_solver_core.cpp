@@ -365,11 +365,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		// Get collector/receiver & power cycle operating states at start of time step (last time step)
 		cr_operating_state = mc_collector_receiver.get_operating_state();
-		if( cr_operating_state < C_csp_collector_receiver::E_csp_cr_modes::OFF ||
-			cr_operating_state > C_csp_collector_receiver::E_csp_cr_modes::ON )
+		if( cr_operating_state < C_csp_collector_receiver::OFF ||
+			cr_operating_state > C_csp_collector_receiver::ON )
 		{
 			std::string msg = util::format("The collector-receiver operating state at time %lg [hr] is %d. Recognized"
-				" values are from %d to %d\n", mc_sim_info.m_step / 3600.0, cr_operating_state, C_csp_collector_receiver::E_csp_cr_modes::OFF, C_csp_collector_receiver::E_csp_cr_modes::ON);
+				" values are from %d to %d\n", mc_sim_info.m_step / 3600.0, cr_operating_state, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
 		pc_operating_state = mc_power_cycle.get_operating_state();
