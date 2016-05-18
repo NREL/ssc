@@ -165,7 +165,7 @@ public:
 	double m_m_dot_htfmin;	//[kg/s] Minimum loop HTF flow rate
 	double m_m_dot_htfmax;	//[kg/s] Maximum loop HTF flow rate
 	double m_T_loop_in_des;	//[C] Design loop inlet temperature, converted to K in init
-	double m_T_loop_out;	//[C] Target loop outlet temperature, converted to K in init
+	double m_T_loop_out_des;//[C] Target loop outlet temperature, converted to K in init
 	int m_Fluid;			//[-] Field HTF fluid number
 	
 	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init

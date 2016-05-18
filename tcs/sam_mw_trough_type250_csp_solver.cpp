@@ -411,7 +411,7 @@ public:
 		ms_trough.m_m_dot_htfmin = value(P_M_DOT_HTFMIN);	//Minimum loop HTF flow rate [kg/s]
 		ms_trough.m_m_dot_htfmax = value(P_M_DOT_HTFMAX);	//Maximum loop HTF flow rate [kg/s]
 		ms_trough.m_T_loop_in_des = value(P_T_LOOP_IN_DES);	//Design loop inlet temperature [C]
-		ms_trough.m_T_loop_out = value(P_T_LOOP_OUT);		//Target loop outlet temperature [C]
+		ms_trough.m_T_loop_out_des = value(P_T_LOOP_OUT);		//Target loop outlet temperature [C]
 		ms_trough.m_Fluid = (int)value(P_FLUID);			//Field HTF fluid number [none]
 		
 		ms_trough.m_T_fp = value(P_T_FP);					//Freeze protection temperature (heat trace activation temperature) [C]
