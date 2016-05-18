@@ -403,7 +403,7 @@ public:
 		c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");		//[kg/s] Minimum loop HTF flow rate
 		c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");		//[kg/s] Maximum loop HTF flow rate
 		c_trough.m_T_loop_in_des = as_double("T_loop_in_des");		//[C] Design loop inlet temperature, converted to K in init
-		c_trough.m_T_loop_out = as_double("T_loop_out");			//[C] Target loop outlet temperature, converted to K in init
+		c_trough.m_T_loop_out_des = as_double("T_loop_out");		//[C] Target loop outlet temperature, converted to K in init
 		c_trough.m_field_fl_props = as_matrix("field_fl_props");	//[-] User-defined field HTF properties
 		c_trough.m_T_fp = as_double("T_fp");						//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
 		c_trough.m_I_bn_des = as_double("I_bn_des");				//[W/m^2] Solar irradiation at design
