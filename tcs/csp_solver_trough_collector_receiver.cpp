@@ -29,7 +29,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();
 	m_T_loop_in_des = std::numeric_limits<double>::quiet_NaN();
-	m_T_loop_out = std::numeric_limits<double>::quiet_NaN();
+	m_T_loop_out_des = std::numeric_limits<double>::quiet_NaN();
 	m_Fluid = -1;
 
 	m_T_fp = std::numeric_limits<double>::quiet_NaN();
@@ -196,7 +196,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_theta_dep = max(m_theta_dep, 1.e-6);
 	m_T_startup += 273.15;			//[K] convert from C
 	m_T_loop_in_des += 273.15;		//[K] convert from C
-	m_T_loop_out += 273.15;			//[K] convert from C
+	m_T_loop_out_des += 273.15;			//[K] convert from C
 	m_T_fp += 273.15;				//[K] convert from C
 	m_mc_bal_sca *= 3.6e3;			//[Wht/K-m] -> [J/K-m]
 
@@ -353,7 +353,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_D_hdr.resize(m_nhdrsec);
 
 		//We need to determine design information about the field for purposes of header sizing ONLY
-		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
@@ -381,15 +381,15 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 			}
 		}
 		//the estimated mass flow rate at design
-		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
 		//mjw 1.16.2011 Design field thermal power 
-		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out - m_T_loop_in_des); //[Wt]
+		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
 		m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design;    //[J/K]
 		m_mc_bal_cold = m_mc_bal_cold * 3.6 * m_q_design;  //[J/K]
 
 		//need to provide fluid density
-		double rho_ave = m_htfProps.dens((m_T_loop_out + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
+		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
 		//Calculate the header design
 		m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
 		m_D_runner.resize(m_nrunsec);
@@ -1164,7 +1164,33 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	// Get optical performance (no defocus applied in this method)
 	loop_optical_eta(weather, sim_info);
 
-	// If field_control < 1, then apply it here
+	// If Control Defocus: field_control < 1, then apply it here
+	if( field_control < 1.0 )
+	{
+		throw(C_csp_exception("C_csp_trough_collector::on(...).defocus() is not complete"));
+	}
+
+	// Solve the loop energy balance at the minimum mass flow rate
+		// Set mass flow rate to minimum allowable
+	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
+		// Get inlet condition from input argument
+	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
+		// Call energy balance with updated info
+	loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info);
+
+	// If the outlet temperature is less than the target (considering some convergence tolerance)
+		// then return to Controller
+	if( m_T_sys_h < m_T_loop_out_des )
+	{
+		// Set solver outputs & return
+	
+	}
+
+	// Else, try the maximum mass flow rate
+
+	// If the outlet temperature is greater than the target, then iterate on COMPONENT Defocus
+
+	// Else, iterate on mass flow rate to achieve target outlet temperature
 
 	throw(C_csp_exception("C_csp_trough_collector::on(...) is not complete"));
 }
@@ -1651,7 +1677,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		}
 		else    //Solve to find mass flow that results in target outlet temperature
 		{
-			err = (m_T_loop_out - m_T_htf_out[m_nSCA-1]) / m_T_loop_out;
+			err = (m_T_loop_out_des - m_T_htf_out[m_nSCA - 1]) / m_T_loop_out_des;
 
 			if (m_dot_htf == m_m_dot_htfmin)
 			{
@@ -1722,10 +1748,10 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				{
 					if (qq<3)
 					{
-						m_c_htf_ave = m_htfProps.Cp((m_T_loop_out + m_T_htf_in[0]) / 2.0)*1000.;    //Specific heat
+						m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_htf_in[0]) / 2.0)*1000.;    //Specific heat
 						double qsum = 0.;
 						for (int i = 0; i<m_nSCA; i++){ qsum += m_q_abs_SCAtot[i]; }
-						m_m_dot_htfX = qsum / (m_c_htf_ave*(m_T_loop_out - m_T_htf_in[0]));
+						m_m_dot_htfX = qsum / (m_c_htf_ave*(m_T_loop_out_des - m_T_htf_in[0]));
 						m_m_dot_htfX = max(m_m_dot_htfmin, min(m_m_dot_htfX, m_m_dot_htfmax));
 					}
 					else
@@ -1812,7 +1838,7 @@ post_convergence_flag: //11 continue
 		for (int i = 0; i<m_nSCA; i++){ qsum += m_q_abs_SCAtot[i]; }
 		double q_check = max(qsum, 0.0); //limit to positive
 		//mjw 11.4.2010: the max Q amount is based on the m_defocus control    
-		if (dfcount == 1) q_abs_maxOT = min(q_check*m_defocus, m_c_htf_ave*m_m_dot_htfmax*(m_T_loop_out - m_T_loop_in_des));  //mjw 11.30.2010
+		if( dfcount == 1 ) q_abs_maxOT = min(q_check*m_defocus, m_c_htf_ave*m_m_dot_htfmax*(m_T_loop_out_des - m_T_loop_in_des));  //mjw 11.30.2010
 
 		//Select the method of defocusing used for this system
 		if (m_fthrctrl == 0)
