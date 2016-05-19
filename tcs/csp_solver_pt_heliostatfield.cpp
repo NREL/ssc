@@ -669,8 +669,8 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 	m_ncall++;
 	
 	// Get sim info
-	double time = sim_info.m_time;
-	double step = sim_info.m_step;
+	double time = sim_info.ms_ts.m_time;
+	double step = sim_info.ms_ts.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
 	double v_wind = weather.m_wspd;
@@ -781,7 +781,7 @@ void C_pt_heliostatfield::off(const C_csp_solver_sim_info &sim_info)
 	m_ncall++;
 
 	// Get sim info
-	double step = sim_info.m_step;
+	double step = sim_info.ms_ts.m_step;
 
 	// Calculate stow parasitics (if applicable)
 	double pparasi = 0.0;

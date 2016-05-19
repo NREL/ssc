@@ -357,8 +357,8 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 		break;
 	}
 
-	double hour_of_day = fmod(sim_info.m_time/3600.0, 24.0);     //[hr] hour_of_day of the day (1..24)
-	double day_of_year = ceil(sim_info.m_time/3600.0/24.0);		 //[-] Day of the year
+	double hour_of_day = fmod(sim_info.ms_ts.m_time / 3600.0, 24.0);     //[hr] hour_of_day of the day (1..24)
+	double day_of_year = ceil(sim_info.ms_ts.m_time / 3600.0 / 24.0);		 //[-] Day of the year
 	// Duffie & Beckman 1.5.3b
 	double B = (day_of_year - 1)*360.0 / 365.0*CSP::pi / 180.0;
 	// Eqn of time in minutes
@@ -383,7 +383,7 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	double StwTime = SolarNoon + StwHr3;
 
 	// Ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
-	double HrA = hour_of_day - sim_info.m_step/3600.0;		//[hr]
+	double HrA = hour_of_day - sim_info.ms_ts.m_step / 3600.0;		//[hr]
 	double HrB = hour_of_day;
 
 	// Solar field operates
@@ -393,27 +393,27 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 		// solar field deploys during time period
 		if( HrA < DepTime )
 		{
-			Ftrack = (HrB - DepTime) *sim_info.m_step/3600.0;
-			MidTrack = HrB - Ftrack * 0.5 *sim_info.m_step / 3600.0;
+			Ftrack = (HrB - DepTime) *sim_info.ms_ts.m_step / 3600.0;
+			MidTrack = HrB - Ftrack * 0.5 *sim_info.ms_ts.m_step / 3600.0;
 			// Solar field stows during time period
 		}
 		else if( HrB > StwTime )
 		{
-			Ftrack = (StwTime - HrA) *sim_info.m_step / 3600.0;
-			MidTrack = HrA + Ftrack * 0.5 *sim_info.m_step / 3600.0;
+			Ftrack = (StwTime - HrA) *sim_info.ms_ts.m_step / 3600.0;
+			MidTrack = HrA + Ftrack * 0.5 *sim_info.ms_ts.m_step / 3600.0;
 		}
 		// solar field operates during entire period
 		else
 		{
 			Ftrack = 1.0;
-			MidTrack = HrA + 0.5 *sim_info.m_step / 3600.0;
+			MidTrack = HrA + 0.5 *sim_info.ms_ts.m_step / 3600.0;
 		}
 	}
 	// solar field doesn't operate
 	else
 	{
 		Ftrack = 0.0;
-		MidTrack = HrA + 0.5 *sim_info.m_step / 3600.0;
+		MidTrack = HrA + 0.5 *sim_info.ms_ts.m_step / 3600.0;
 	}
 
 	double StdTime = MidTrack;

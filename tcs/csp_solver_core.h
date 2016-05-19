@@ -40,17 +40,48 @@ public:
 	}
 };
 
+struct S_timestep
+{
+	// Obviously, only need to know 2 out of 3...
+	double m_time_start;	//[s] Time at beginning of timestep
+	double m_time;			//[s] Time at *end* of timestep
+	double m_step;			//[s] Duration of timestep
+
+	S_timestep()
+	{
+		m_time_start = m_time = m_step = std::numeric_limits<double>::quiet_NaN();
+	}
+};
+
+class C_timestep_fixed
+{
+	private:
+		S_timestep ms_timestep;
+
+	public:
+		void init(double time_start /*s*/, double step /*s*/);
+		double get_end_time();
+		void step_forward();
+
+	C_timestep_fixed(){};
+
+	~C_timestep_fixed(){};
+};
+
 class C_csp_solver_sim_info
 {
 public:
-	double m_time;		//[s] Time at end of timestep
-	double m_step;		//[s] Duration of timestep
+	
+	S_timestep ms_ts;
+	
+	//double m_time;		//[s] Time at end of timestep
+	//double m_step;		//[s] Duration of timestep
 
 	int m_tou;		//[-] Time-Of-Use Period
 
 	C_csp_solver_sim_info()
 	{
-		m_time = m_step = std::numeric_limits<double>::quiet_NaN();
+		//m_time = m_step = std::numeric_limits<double>::quiet_NaN();
 
 		m_tou = -1;
 	}
@@ -702,6 +733,32 @@ public:
 		}
 	};
 
+	class C_csp_solver_kernel
+	{
+	private:
+		S_sim_setup ms_sim_setup;
+
+		C_timestep_fixed mc_ts_weatherfile;
+
+		C_timestep_fixed mc_ts_sim_baseline;
+
+	public:
+			
+		S_timestep ms_ts_solver;
+
+		void init(double wf_time_start /*s*/, double wf_step /*s*/,
+				double baseline_time_start /*s*/, double baseline_step /*s*/);
+
+		double get_wf_end_time();
+
+		double get_baseline_end_time();
+
+		void wf_step_forward();
+
+		void baseline_step_forward();
+
+	};
+	
 	struct S_csp_system_params
 	{
 		double m_pb_fixed_par;		//[MWe/MWcap]

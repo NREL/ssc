@@ -450,8 +450,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	m_ncall++;
 
 	// Get sim info
-	double time = sim_info.m_time;			//[s]
-	double step_sec = sim_info.m_step;		//[s]
+	double time = sim_info.ms_ts.m_time;			//[s]
+	double step_sec = sim_info.ms_ts.m_step;		//[s]
 	//int ncall = p_sim_info->m_ncall;
 
 	// Check and convert inputs

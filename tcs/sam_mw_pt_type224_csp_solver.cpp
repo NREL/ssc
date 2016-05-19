@@ -304,8 +304,8 @@ public:
 		ms_weather.m_rhum = value(I_RH) / 100.0;			//Relative humidity of the ambient air [none]
 
 		// set sim info
-		ms_sim_info.m_time = time;
-		ms_sim_info.m_step = step;
+		ms_sim_info.ms_ts.m_time = time;
+		ms_sim_info.ms_ts.m_step = step;
 		ms_sim_info.m_tou = (int)value(I_TOU);		//Current Time-of-use period [none]
 		//ms_sim_info.m_ncall = ncall;
 

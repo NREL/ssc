@@ -52,8 +52,8 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 	
-	double time = p_sim_info.m_time;		//[s]
-	double step = p_sim_info.m_step;		//[s]
+	double time = p_sim_info.ms_ts.m_time;		//[s]
+	double step = p_sim_info.ms_ts.m_step;		//[s]
 	//int ncall = p_sim_info->m_ncall;
 
 	if( m_ncall == 0 ) // only read data values once per timestep
@@ -163,7 +163,7 @@ bool C_csp_weatherreader::read_time_step(int time_step, C_csp_solver_sim_info &p
     {
         converged();
     
-        p_sim_info.m_time = (time_step + 1.) * p_sim_info.m_step;
+		p_sim_info.ms_ts.m_time = (time_step + 1.) * p_sim_info.ms_ts.m_step;
     
         m_wfile.set_counter_to( time_step );
     
