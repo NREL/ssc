@@ -556,8 +556,8 @@ public:
 		ms_weather.m_solazi = value(I_solaz);
 
 		// set sim info
-		ms_sim_info.m_time = time;
-		ms_sim_info.m_step = step;
+		ms_sim_info.ms_ts.m_time = time;
+		ms_sim_info.ms_ts.m_step = step;
 		//ms_sim_info.m_ncall = ncall;
 
 		int out_type = -1;

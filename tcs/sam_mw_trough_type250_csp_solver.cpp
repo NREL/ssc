@@ -639,8 +639,8 @@ public:
 		ms_inputs.m_field_control = value(I_DEFOCUS);			//[-] Defocus control
 		ms_weather.m_solazi = value(I_SOLARAZ);	//[deg] Solar azimuth angle reported by the Type15 weather file
 
-		ms_sim_info.m_time = time;
-		ms_sim_info.m_step = step;
+		ms_sim_info.ms_ts.m_time = time;
+		ms_sim_info.ms_ts.m_step = step;
 
 		ms_inputs.m_input_operation_mode = C_csp_collector_receiver::E_csp_cr_modes::ON;
 

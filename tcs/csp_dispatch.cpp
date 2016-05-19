@@ -162,7 +162,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
 
     //create the sim info
     C_csp_solver_sim_info simloc;    // = *params.siminfo;
-    simloc.m_step = params.siminfo->m_step;
+	simloc.ms_ts.m_step = params.siminfo->ms_ts.m_step;
 
 
     double Asf = params.col_rec->get_collector_area();
@@ -171,7 +171,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
     {
         
         //check to see if we're past the end of the weather file
-        if( simloc.m_time > 8760*3600)
+        if( simloc.ms_ts.m_time > 8760*3600)
             return false;
 
         //jump to the current step
@@ -192,14 +192,14 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
         outputs.eta_sf_expected.push_back(therm_eff);
 
         //store the predicted field energy output
-        outputs.q_sfavail_expected.push_back( q_inc * therm_eff * simloc.m_step/3600.);
+        outputs.q_sfavail_expected.push_back( q_inc * therm_eff * simloc.ms_ts.m_step/3600.);
 
         //store the power cycle efficiency
         double cycle_eff = params.eff_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
         cycle_eff *= params.eta_cycle_ref;  
         outputs.eta_pb_expected.push_back( cycle_eff );
 
-        simloc.m_time+= simloc.m_step;
+		simloc.ms_ts.m_time += simloc.ms_ts.m_step;
         m_weather.converged();
     }
 
@@ -1292,7 +1292,7 @@ std::string csp_dispatch_opt::write_ampl()
     //write out a data file
     if(solver_params.is_write_ampl_dat || solver_params.is_ampl_engine)
     {
-        int day = params.siminfo->m_time / 3600/24;
+		int day = params.siminfo->ms_ts.m_time / 3600 / 24;
         //char outname[200];
         //sprintf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
 

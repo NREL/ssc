@@ -591,7 +591,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 	double T_dp = weather.m_twet+273.15;		//[K] Dew point temperature, convert from C
 
 	// Calculate effective sky temperature
-	double hour = fmod(sim_info.m_time/3600.0, 24.0);		//[hr] Hour of day
+	double hour = fmod(sim_info.ms_ts.m_time / 3600.0, 24.0);		//[hr] Hour of day
 	double T_sky;	//[K] Effective sky temperature
 	if(T_dp > -300.0)
 		T_sky = CSP::skytemp(T_db, T_dp, hour);				//[K] Effective sky temperature 
@@ -600,7 +600,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 
 	if( m_accept_loc ==  E_piping_config::FIELD )
 	{
-		m_T_sys_c = (m_T_sys_c_last - T_htf_cold_in)*exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*sim_info.m_step) + T_htf_cold_in;
+		m_T_sys_c = (m_T_sys_c_last - T_htf_cold_in)*exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*sim_info.ms_ts.m_step) + T_htf_cold_in;
 		m_c_hdr_cold = m_htfProps.Cp(m_T_sys_c)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 			//Consider heat loss from cold piping
 		m_Header_hl_cold = 0.0;
@@ -625,7 +625,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		m_T_sys_c = m_T_htf_in[0];			//[C]
 	}
 
-	m_outfile << sim_info.m_step << "," << T_htf_cold_in << "," << m_T_sys_c_last;
+	m_outfile << sim_info.ms_ts.m_step << "," << T_htf_cold_in << "," << m_T_sys_c_last;
 
 	// Reset vectors that are populated in following for(i..nSCA) loop
 	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
@@ -659,7 +659,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			double c_htf_j, rho_htf_j;
 			c_htf_j = rho_htf_j = std::numeric_limits<double>::quiet_NaN();
 
-			EvacReceiver(m_T_htf_in[i], m_dot_htf_loop, T_db, T_sky, weather.m_wspd, weather.m_pres*100.0, m_q_SCA[i], HT, j, CT, i, false, m_ncall, sim_info.m_time/3600.0,
+			EvacReceiver(m_T_htf_in[i], m_dot_htf_loop, T_db, T_sky, weather.m_wspd, weather.m_pres*100.0, m_q_SCA[i], HT, j, CT, i, false, m_ncall, sim_info.ms_ts.m_time / 3600.0,
 				//outputs
 				m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j);
 
@@ -690,7 +690,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		//mjw & tn 5.1.11: There was an error in the assumption about average and outlet temperature      
 		m_T_htf_out[i] = m_q_abs_SCAtot[i] / (m_dot_htf_loop*c_htf_i) + m_T_htf_in[i] +
 			2.0 * (m_T_htf_ave_last[i] - m_T_htf_in[i] - m_q_abs_SCAtot[i] / (2.0 * m_dot_htf_loop * c_htf_i)) *
-			exp(-2. * m_dot_htf_loop * c_htf_i * sim_info.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_actSCA[CT]));
+			exp(-2. * m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_actSCA[CT]));
 		//Recalculate the average temperature for the SCA
 		m_T_htf_ave[i] = (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0;
 
@@ -709,7 +709,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 				double x1 = (m_A_cs(HT, 1)*m_L_actSCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca);  //mjw 4.29.11 removed m_c_htf[i] -> it doesn't make sense on the m_mc_bal_sca term
 				m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave_last[i]);
 				m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
-				m_E_avail[i] = max(m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
+				m_E_avail[i] = max(m_q_abs_SCAtot[i] * sim_info.ms_ts.m_step - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
 
 				//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
 				//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
@@ -722,7 +722,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 			m_E_accum[i] = x1*(m_T_htf_ave[i] - m_T_htf_ave_last[i]);
 			m_E_int_loop[i] = x1*(m_T_htf_ave[i] - 298.15);  //mjw 1.18.2011 energy relative to ambient 
 			//m_E_avail[i] = max(m_q_abs_SCAtot[i] * m_dt - m_E_accum[i], 0.0);      //[J/s]*[hr]*[s/hr]: [J]
-			m_E_avail[i] = (m_q_abs_SCAtot[i] * sim_info.m_step - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
+			m_E_avail[i] = (m_q_abs_SCAtot[i] * sim_info.ms_ts.m_step - m_E_accum[i]);      //[J/s]*[hr]*[s/hr]: [J]
 
 			//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
 			//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
@@ -776,7 +776,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 
 		//Calculate the system temperature of the hot portion of the collector field. 
 		//This will serve as the fluid outlet temperature
-		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_dot_htf_loop*float(m_nLoops) / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.m_step) + m_T_sys_h;	//[C]
+		m_T_sys_h = (m_T_sys_h_last - m_T_sys_h)*exp(-m_dot_htf_loop*float(m_nLoops) / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.ms_ts.m_step) + m_T_sys_h;	//[C]
 	}
 	else
 	{
@@ -819,8 +819,8 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	loop_optical_eta_off();
 
 	//calculate the m_hour of the day
-	double time_hr = sim_info.m_time / 3600.;		//[hr]
-	double dt_hr = sim_info.m_step / 3600.;			//[hr]
+	double time_hr = sim_info.ms_ts.m_time / 3600.;		//[hr]
+	double dt_hr = sim_info.ms_ts.m_step / 3600.;			//[hr]
 	double hour = fmod(time_hr, 24.);				//[hr]
 
 	// Convert other input data as necessary
@@ -1011,17 +1011,17 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		m_step_recirc = 10.0*60.0;	//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.m_step / m_step_recirc);	//[-] Number of recirculation steps required
+	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
 	
 	// Define a copy of the sim_info structure
-	double time_start = sim_info.m_time - sim_info.m_step;	//[s]
-	double step_local = sim_info.m_step / (double)n_steps_recirc;	//[s]
+	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s]
+	double step_local = sim_info.ms_ts.m_step / (double)n_steps_recirc;	//[s]
 	C_csp_solver_sim_info sim_info_temp = sim_info;
-	sim_info_temp.m_step = step_local;		//[s]
+	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
 	for(int i = 0; i < n_steps_recirc; i++)
 	{
-		sim_info_temp.m_time = time_start + step_local*(i+1);	//[s]
+		sim_info_temp.ms_ts.m_time = time_start + step_local*(i + 1);	//[s]
 
 		// Set inlet temperature to previous timestep outlet temperature
 		double T_cold_in = m_T_sys_h_last;			//[K]
@@ -1034,7 +1034,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
-	cr_out_solver.m_time_required_su = sim_info.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
+	cr_out_solver.m_time_required_su = sim_info.ms_ts.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
 	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr] Total HTF mass flow rate
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
 	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
@@ -1068,20 +1068,20 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		m_step_recirc = 10.0*60.0;	//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.m_step / m_step_recirc);	//[-] Number of recirculation steps required
+	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
 
 	// Define a copy of the sim_info structure
-	double time_start = sim_info.m_time - sim_info.m_step;	//[s]
-	double step_local = sim_info.m_step / (double)n_steps_recirc;	//[s]
+	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s]
+	double step_local = sim_info.ms_ts.m_step / (double)n_steps_recirc;	//[s]
 	C_csp_solver_sim_info sim_info_temp = sim_info;
-	sim_info_temp.m_step = step_local;		//[s]
+	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
 	bool is_T_startup_achieved = false;
 
 	int i_step = 0;
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
 	{
-		sim_info_temp.m_time = time_start + step_local*(i_step + 1);	//[s]
+		sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);	//[s]
 
 		// Set inlet temperature to previous timestep outlet temperature
 		double T_cold_in = m_T_sys_h_last;			//[K]
@@ -1093,7 +1093,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		//    then backup one timestep, and move forward in shorter steps
 		if( m_T_sys_h > m_T_startup )
 		{
-			sim_info_temp.m_time - step_local;	//[s] reset time to start of present i_step
+			sim_info_temp.ms_ts.m_time - step_local;	//[s] reset time to start of present i_step
 			is_T_startup_achieved = true;
 			break;
 		}
@@ -1102,20 +1102,20 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	// Check if startup is achieved in current controller/kernel timestep
-	double time_required_su = sim_info.m_step;				//[s]
+	double time_required_su = sim_info.ms_ts.m_step;		//[s]
 	m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
 
 	if( is_T_startup_achieved )
 	{
 		// Use 1 minute timesteps, or half of the local timestep from above calcs, whichever is shortest
 		double step_startup_fixed = min(60.0, step_local/2.0);				//[s]
-		double delta_time = sim_info.m_time - sim_info_temp.m_time;			//[s]
+		double delta_time = sim_info.ms_ts.m_time - sim_info_temp.ms_ts.m_time;			//[s]
 		int n_steps_startup = std::ceil(delta_time / step_startup_fixed);	//[-]	
 		double step_startup = delta_time / (double)n_steps_startup;			//[s]
 
 		for( int i = 0; i < n_steps_startup; i++ )
 		{
-			sim_info_temp.m_time += n_steps_startup*(i+1);	//[s]
+			sim_info_temp.ms_ts.m_time += n_steps_startup*(i + 1);	//[s]
 
 			double T_cold_in = m_T_sys_h_last;				//[K]
 
@@ -1126,7 +1126,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 			if( m_T_sys_h > m_T_startup )
 			{
-				time_required_su = sim_info_temp.m_time - time_start;		//[s]
+				time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
 				m_operating_mode = C_csp_collector_receiver::ON;			//[-]
 				break;
 			}
@@ -1300,8 +1300,8 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//reset m_defocus counter
 	int dfcount = 0;
 
-	double time = sim_info.m_time;		//[hr]
-	double dt = sim_info.m_step;		//[s]
+	double time = sim_info.ms_ts.m_time;		//[hr]
+	double dt = sim_info.ms_ts.m_step;		//[s]
 	//******************************************************************************************************************************
 	//               Time-dependent conditions
 	//******************************************************************************************************************************

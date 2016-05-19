@@ -264,8 +264,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	}
 
 	// Get sim info 
-	double step = sim_info.m_step;
-	double time = sim_info.m_time;
+	double step = sim_info.ms_ts.m_step;			//[s]
+	double time = sim_info.ms_ts.m_time;	//[s]
 
 	// Get applicable htf state info
 	double T_salt_cold_in = htf_state_in.m_temp;		//[C]

@@ -609,8 +609,8 @@ public:
 		cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;	//[-] Model always solves as 'on'
 
 			// Set sim info
-		sim_info.m_time = time;
-		sim_info.m_step = step;
+		sim_info.ms_ts.m_time = time;
+		sim_info.ms_ts.m_step = step;
 		sim_info.m_tou = touperiod;
 
 		int out_type = -1;

@@ -285,8 +285,8 @@ public:
 		ms_inputs.m_flux_map_input = &flux_map_in;
 
 		// set sim info
-		ms_sim_info.m_time = time;
-		ms_sim_info.m_step = step;
+		ms_sim_info.ms_ts.m_time = time;
+		ms_sim_info.ms_ts.m_step = step;
 		//ms_sim_info.m_ncall = ncall;
 
 		// Set applicable htf state info
