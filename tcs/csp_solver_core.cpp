@@ -196,10 +196,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	m_sim_step_size_baseline = 3600.0;			//[s]
 	mc_sim_info.m_step = m_sim_step_size_baseline;		//[s] hardcode steps = 1 hr, for now
 
-    //initialize control flags
-	/*bool is_rec_su_allowed = true;
-	bool is_pc_su_allowed = true;
-	bool is_pc_sb_allowed = true;*/
 
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
@@ -6756,23 +6752,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
             e_tes_disch *= mc_sim_info.m_step / 3600.;  //MWh
         }
 
-		// Don't converge weather file if working with partial timesteps
-		if( !is_sim_timestep_complete )
-		{
-			// Calculate new timestep
-			step_local = time_sim_step_next - mc_sim_info.m_time;
-		}
-		else
-		{
-			// If partial timestep, use constant weather data for all partial timesteps
-			mc_weather.converged();
-
-			step_local = m_sim_step_size_baseline;
-
-			time_sim_step_next += m_sim_step_size_baseline;
-		}
-
-
 		double step_hr = mc_sim_info.m_step/3600.0;
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
@@ -6962,7 +6941,23 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		} while(true);
 
 		
+		// Don't converge weather file if working with partial timesteps
+		if( !is_sim_timestep_complete )
+		{
+			// Calculate new timestep
+			step_local = time_sim_step_next - mc_sim_info.m_time;
+		}
+		else
+		{
+			// If partial timestep, use constant weather data for all partial timesteps
+			mc_weather.converged();
 
+			step_local = m_sim_step_size_baseline;
+
+			time_sim_step_next += m_sim_step_size_baseline;
+		}
+
+		
 		// ***********************************
 		//      Track time and step forward
 		// ***********************************
@@ -6972,7 +6967,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_sim_info.m_time = time_previous + step_local;		//[s]
 					
 		
-
 	}	// End timestep loop
 
 }	// End simulate() method
