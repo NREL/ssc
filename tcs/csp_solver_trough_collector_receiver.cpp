@@ -783,7 +783,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 		m_T_sys_h = m_T_htf_out[m_nSCA-1];	//[C]
 	}
 
-	m_outfile << "," << m_T_sys_h_last << "," << m_T_sys_h << "\n";
+	//m_outfile << "," << m_T_sys_h_last << "," << m_T_sys_h << "\n";
 
 	return E_loop_energy_balance_exit::SOLVED;
 }
@@ -1167,7 +1167,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	// If Control Defocus: field_control < 1, then apply it here
 	if( field_control < 1.0 )
 	{
-		throw(C_csp_exception("C_csp_trough_collector::on(...).defocus() is not complete"));
+		throw(C_csp_exception("C_csp_trough_collector::on(...) CONTROL defocus is not complete"));
 	}
 
 	// Solve the loop energy balance at the minimum mass flow rate
@@ -1178,21 +1178,52 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// Call energy balance with updated info
 	loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info);
 
-	// If the outlet temperature is less than the target (considering some convergence tolerance)
-		// then return to Controller
-	if( m_T_sys_h < m_T_loop_out_des )
+	// If the outlet temperature (of last SCA!) is greater than the target (considering some convergence tolerance)
+		// then adjust mass flow rate and see what happens
+	if( (m_T_htf_out[m_nSCA-1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
 	{
-		// Set solver outputs & return
-	
+		// Try the maximum mass flow rate
+		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
+		
+		// We set T_cold_in above, so call loop energy balance
+		loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info);
+
+		// Is the outlet temperature (of the last SCA!) still greater than the target (considering some convergence tolerance)
+			// then need to defocus
+		if( (m_T_htf_out[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
+		{
+			// Defocus at maximum mass flow rate to hit target outlet temperature
+			throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus is not complete"));
+		}
+		else
+		{
+			// Iterate on mass flow rate to achieve target outlet temperature
+			throw(C_csp_exception("C_csp_trough_collector::on(...) mass flow rate iteration is not complete"));
+		}
 	}
 
-	// Else, try the maximum mass flow rate
 
-	// If the outlet temperature is greater than the target, then iterate on COMPONENT Defocus
+	// Call final metrics method?
+	// (i.e. pressure drops, parasitics...)
 
-	// Else, iterate on mass flow rate to achieve target outlet temperature
+	// Set solver outputs & return
+	// Receiver is already on, so the controller is not looking for this value
+	cr_out_solver.m_q_startup = 0.0;		//[MWt-hr] 
+	// Receiver is already on, so the controller is not looking for the required startup time
+	cr_out_solver.m_time_required_su = 0.0;	//[s]
+	// The controller requires the total mass flow rate from the collector-receiver
+	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr]
+	// The controller also requires the receiver thermal output
+	double c_htf_ave = m_htfProps.Cp((m_T_sys_h + T_cold_in) / 2.0);  //[kJ/kg-K]
+	cr_out_solver.m_q_thermal = cr_out_solver.m_m_dot_salt_tot*c_htf_ave*(m_T_sys_h - T_cold_in) / 1.E3;	//[MWt]
+	// Finally, the controller need the HTF outlet temperature from the field
+	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
 
-	throw(C_csp_exception("C_csp_trough_collector::on(...) is not complete"));
+	// For now, set parasitic outputs to 0
+	cr_out_solver.m_E_fp_total = 0.0;			//[MW]
+	cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+
 }
 
 void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
@@ -1202,7 +1233,12 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 {
 	if( m_operating_mode == C_csp_collector_receiver::ON )
 	{
-		throw(C_csp_exception("C_csp_trough_collector::estimates(...) is not complete"));
+		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
+		C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
+
+		on(weather, htf_state_in, 1.0, cr_out_solver, cr_out_report, sim_info);
+
+		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;	//[MWt]
 	}
 	else
 	{

@@ -316,7 +316,7 @@ public:
 			// The controller only checks whether this value is > 0. 
 			// If it is <= 0.0, then the controller assumes that startup failed
 			// This value is also reported as a modeled timestep output
-		double m_q_startup;				//[MWt-hr] Receiver thermal output
+		double m_q_startup;				//[MWt-hr] 
 		double m_time_required_su;		//[s] Time required for receiver to startup
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
