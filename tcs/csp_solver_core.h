@@ -744,9 +744,9 @@ public:
 
 	public:
 			
-		S_timestep ms_ts_solver;
+		C_csp_solver_sim_info mc_sim_info;
 
-		void init(double wf_time_start /*s*/, double wf_step /*s*/,
+		void init(C_csp_solver::S_sim_setup & sim_setup, double wf_time_start /*s*/, double wf_step /*s*/,
 				double baseline_time_start /*s*/, double baseline_step /*s*/);
 
 		double get_wf_end_time();
@@ -801,7 +801,8 @@ private:
 
     C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
-	C_csp_solver_sim_info mc_sim_info;
+	C_csp_solver::C_csp_solver_kernel mc_kernel;
+	//C_csp_solver_sim_info mc_sim_info;
 
 	// Hierarchy logic
 	bool m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail;
@@ -877,7 +878,7 @@ private:
 		// Reporting and Output Tracking
 	int m_i_reporting;					//[-]
 	double m_sim_time_start;			//[s]
-	double m_sim_time_end;				//[s]
+	double m_sim_time_end;			//[s]
 	double m_sim_step_size_baseline;	//[s]
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]
