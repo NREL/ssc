@@ -24,6 +24,11 @@ void C_timestep_fixed::step_forward()
 	ms_timestep.m_time += ms_timestep.m_step;		//[s] Step forward to step new end time
 }
 
+double C_timestep_fixed::get_step()
+{
+	return ms_timestep.m_step;
+}
+
 void C_csp_solver::C_csp_solver_kernel::init(C_csp_solver::S_sim_setup & sim_setup, double wf_step /*s*/, double baseline_step /*s*/, C_csp_messages & csp_messages)
 {
 	ms_sim_setup = sim_setup;
@@ -78,6 +83,21 @@ void C_csp_solver::C_csp_solver_kernel::wf_step_forward()
 	mc_ts_weatherfile.step_forward();
 }
 
+const C_csp_solver::S_sim_setup * C_csp_solver::C_csp_solver_kernel::get_sim_setup()
+{
+	return &ms_sim_setup;
+}
+
+double C_csp_solver::C_csp_solver_kernel::get_wf_step()
+{
+	return mc_ts_weatherfile.get_step();
+}
+
+double C_csp_solver::C_csp_solver_kernel::get_baseline_step()
+{
+	return mc_ts_sim_baseline.get_step();
+}
+
 void C_csp_solver::C_csp_solver_kernel::baseline_step_forward()
 {
 	mc_ts_sim_baseline.step_forward();
@@ -108,9 +128,10 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	// Reporting and Output Tracking
 	m_i_reporting = -1;
-	m_sim_time_start = m_sim_time_end = 
-		m_sim_step_size_baseline =
-		m_report_time_start = m_report_time_end = m_report_step = std::numeric_limits<double>::quiet_NaN();
+	//m_sim_time_start = 
+	//m_sim_time_end = 
+	//m_sim_step_size_baseline =
+	m_report_time_start = m_report_time_end = m_report_step = std::numeric_limits<double>::quiet_NaN();
 
 	m_op_mode_tracking.resize(0);
 
@@ -268,26 +289,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
 
 
-    //Set up initial simulation information.
-	//m_sim_time_start = 0.0;			//[s] hardcode simulation to start at first of year, for now
-	m_sim_time_start = sim_setup.m_sim_time_start;
+	//double step_local = mc_kernel.mc_sim_info.ms_ts.m_step;		//[hr] Step size might adjust during receiver and/or power cycle startup
 	
-	//m_sim_time_end = 1000.*3600;		//[s] hardcode simulation to run through entire year, for now
-	m_sim_time_end = sim_setup.m_sim_time_end;
-	
-	// Hardcode simulation step size until we build in some weather file checks
-	m_sim_step_size_baseline = 3600.0;			//[s]
-	mc_kernel.mc_sim_info.ms_ts.m_step= m_sim_step_size_baseline;		//[s] hardcode steps = 1 hr, for now
-
-	double step_local = mc_kernel.mc_sim_info.ms_ts.m_step;		//[hr] Step size might adjust during receiver and/or power cycle startup
 	bool is_sim_timestep_complete = true;		//[-] Are we running serial simulations at partial timesteps inside of one typical timestep?
 
-	double time_previous = m_sim_time_start;		//[s]
+	double time_previous = mc_kernel.get_sim_setup()->m_sim_time_start;	//[s] m_sim_time_start;		//[s]
 
-	double time_sim_step_next = m_sim_time_start + m_sim_step_size_baseline;	//[s]
+	double time_sim_step_next = mc_kernel.get_sim_setup()->m_sim_time_start + mc_kernel.get_baseline_step();	//[s]
 
-	//mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
-	//mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_local;		//[s]
 
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
@@ -302,11 +311,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
     dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
     dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
-    dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy(m_sim_step_size_baseline)*1000.;
-    dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy(m_sim_step_size_baseline)*1000.;
+	dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy(mc_kernel.get_baseline_step())*1000.;
+	dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy(mc_kernel.get_baseline_step())*1000.;
     
     dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time()/3600.;
-    dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy(m_sim_step_size_baseline)*1000;
+	dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy(mc_kernel.get_baseline_step()) * 1000;
     dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
     dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
 
@@ -382,7 +391,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	m_defocus = 1.0;		//[-]  
 
 	m_i_reporting = 0;
-	m_report_time_start = m_sim_time_start;			//[s]
+	m_report_time_start = mc_kernel.get_sim_setup()->m_sim_time_start;			//[s]
 	m_report_step = sim_setup.m_report_step;		//[s]
 	m_report_time_end = m_report_time_start + m_report_step;	//[s]
 
@@ -414,10 +423,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
 
-	while( mc_kernel.mc_sim_info.ms_ts.m_time <= m_sim_time_end )
+	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
 		// Report simulation progress
-		double calc_frac_current = (mc_kernel.mc_sim_info.ms_ts.m_time - m_sim_time_start) / (m_sim_time_end - m_sim_time_start);
+		double calc_frac_current = (mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.get_sim_setup()->m_sim_time_start) / (mc_kernel.get_sim_setup()->m_sim_time_end - mc_kernel.get_sim_setup()->m_sim_time_start);
 		if( calc_frac_current > reporting_frac_current )
 		{
 			if(! 
@@ -573,7 +582,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 
 
-			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(m_sim_step_size_baseline*mc_tou.mc_dispatch_params.m_optimize_frequency) == m_sim_step_size_baseline
+			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(mc_kernel.get_baseline_step()*mc_tou.mc_dispatch_params.m_optimize_frequency) == mc_kernel.get_baseline_step()
 				&& mc_kernel.mc_sim_info.ms_ts.m_time < (8760 - opt_horizon)*mc_kernel.mc_sim_info.ms_ts.m_step
 				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
                 )
@@ -661,7 +670,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 }
 
                 //read in other values
-                dispatch.m_current_read_step = (int)floor(mc_kernel.mc_sim_info.ms_ts.m_time/ m_sim_step_size_baseline - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;
+				dispatch.m_current_read_step = (int)floor(mc_kernel.mc_sim_info.ms_ts.m_time / mc_kernel.get_baseline_step() - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;
 
                 is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
@@ -1808,19 +1817,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
-
 				// Check for new timestep
-				step_local = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
-				if( step_local < mc_kernel.mc_sim_info.ms_ts.m_step- step_tolerance )
+				if( mc_pc_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
 				{
+					// Reset sim_info values
+					mc_kernel.mc_sim_info.ms_ts.m_step = mc_pc_out_solver.m_time_required_su;						//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_pc_out_solver.m_time_required_su;		//[s]
+					
 					is_sim_timestep_complete = false;
-				}
-
-				// Reset sim_info values
-				if( !is_sim_timestep_complete )
-				{
-					mc_kernel.mc_sim_info.ms_ts.m_step= step_local;						//[s]
-					mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + step_local;		//[s]
 				}
 
 				if( m_is_tes )
@@ -1879,17 +1883,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Check for new timestep
-				step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
-				if( step_local < mc_kernel.mc_sim_info.ms_ts.m_step- step_tolerance )
+				if( mc_cr_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
 				{
-					is_sim_timestep_complete = false;
-				}
+					// Reset sim_info values
+					mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
 
-				// Reset sim_info values
-				if( !is_sim_timestep_complete )
-				{
-					mc_kernel.mc_sim_info.ms_ts.m_step= step_local;						//[s]
-					mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + step_local;		//[s]
+					is_sim_timestep_complete = false;
 				}
 
 				// Power Cycle: OFF
@@ -3350,19 +3350,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Check for new timestep
-					step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
-					if( step_local < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
+					if( mc_cr_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
 					{
+						// Reset sim_info values
+						mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+
 						is_sim_timestep_complete = false;
 					}
-
-					// Reset sim_info values
-					if( !is_sim_timestep_complete )
-					{
-						mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + step_local;		//[s]
-					}
-
 				}
 					
 				// First, get the maximum possible max flow rate from TES discharge
@@ -3746,19 +3741,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Check for new timestep
-					step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
-					if( step_local < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
+					if( mc_cr_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
 					{
+						// Reset sim_info values
+						mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+
 						is_sim_timestep_complete = false;
 					}
-
-					// Reset sim_info values
-					if( !is_sim_timestep_complete )
-					{
-						mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + step_local;		//[s]
-					}
-
 				}
 
 				double T_tes_cold_ini = m_T_htf_cold_des - 273.15;		//[C], convert from K
@@ -4424,20 +4414,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Check for new timestep
-					step_local = mc_cr_out_solver.m_time_required_su;		//[s] Receiver model returns MIN(time required to completely startup, full timestep duration)
-					if( step_local < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
+					if( mc_cr_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
 					{
+						// Reset sim_info values
+						mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+
 						is_sim_timestep_complete = false;
 					}
-
-					// Reset sim_info values
-					if( !is_sim_timestep_complete )
-					{
-						mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_local;		//[s]
-					}
 				}
-
 
 				double q_dot_pc_fixed = q_pc_target;	//[MWt]
 				int power_cycle_mode = C_csp_power_cycle::ON;
@@ -7021,19 +7006,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		
 		// Don't converge weather file if working with partial timesteps
+		double sstep_local = 0.0;
 		if( !is_sim_timestep_complete )
 		{
 			// Calculate new timestep
-			step_local = time_sim_step_next - mc_kernel.mc_sim_info.ms_ts.m_time;
+			sstep_local = time_sim_step_next - mc_kernel.mc_sim_info.ms_ts.m_time;
 		}
 		else
 		{
 			// If partial timestep, use constant weather data for all partial timesteps
 			mc_weather.converged();
 
-			step_local = m_sim_step_size_baseline;
+			sstep_local = mc_kernel.get_baseline_step();
 
-			time_sim_step_next += m_sim_step_size_baseline;
+			time_sim_step_next += mc_kernel.get_baseline_step();
 		}
 
 		
@@ -7042,8 +7028,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		// ***********************************
 		//is_sim_timestep_complete = true;
 		time_previous = mc_kernel.mc_sim_info.ms_ts.m_time;				//[s]
-		mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
-		mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_local;	//[s]
+		mc_kernel.mc_sim_info.ms_ts.m_step = sstep_local;						//[s]
+		mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + sstep_local;	//[s]
 					
 		
 	}	// End timestep loop

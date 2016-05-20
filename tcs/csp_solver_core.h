@@ -61,6 +61,7 @@ class C_timestep_fixed
 	public:
 		void init(double time_start /*s*/, double step /*s*/);
 		double get_end_time();
+		double get_step();
 		void step_forward();
 
 	C_timestep_fixed(){};
@@ -749,13 +750,17 @@ public:
 		void init(C_csp_solver::S_sim_setup & sim_setup, double wf_step /*s*/, 
 			double baseline_step /*s*/, C_csp_messages & csp_messages);
 
-		double get_wf_end_time();
-
-		double get_baseline_end_time();
-
 		void wf_step_forward();
 
 		void baseline_step_forward();
+
+		double get_wf_end_time();
+		double get_wf_step();
+
+		double get_baseline_end_time();
+		double get_baseline_step();		
+
+		const S_sim_setup * get_sim_setup();
 
 	};
 	
@@ -877,9 +882,9 @@ private:
 
 		// Reporting and Output Tracking
 	int m_i_reporting;					//[-]
-	double m_sim_time_start;			//[s]
-	double m_sim_time_end;			//[s]
-	double m_sim_step_size_baseline;	//[s]
+	//double m_sim_time_start;			//[s]
+	//double m_sim_time_end;			//[s]
+	//double m_sim_step_size_baseline;	//[s]
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]
 	double m_report_step;				//[s]
