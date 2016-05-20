@@ -287,16 +287,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	double baseline_step = 3600.0;	//[s] Baseline timestep of the simulation - this should probably be technology/model specific
 
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
-
-
-	//double step_local = mc_kernel.mc_sim_info.ms_ts.m_step;		//[hr] Step size might adjust during receiver and/or power cycle startup
 	
 	bool is_sim_timestep_complete = true;		//[-] Are we running serial simulations at partial timesteps inside of one typical timestep?
-
-	double time_previous = mc_kernel.get_sim_setup()->m_sim_time_start;	//[s] m_sim_time_start;		//[s]
-
-	double time_sim_step_next = mc_kernel.get_sim_setup()->m_sim_time_start + mc_kernel.get_baseline_step();	//[s]
-
 
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
@@ -1822,7 +1814,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					// Reset sim_info values
 					mc_kernel.mc_sim_info.ms_ts.m_step = mc_pc_out_solver.m_time_required_su;						//[s]
-					mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_pc_out_solver.m_time_required_su;		//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_pc_out_solver.m_time_required_su;		//[s]
 					
 					is_sim_timestep_complete = false;
 				}
@@ -1887,7 +1879,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					// Reset sim_info values
 					mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
-					mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_cr_out_solver.m_time_required_su;		//[s]
 
 					is_sim_timestep_complete = false;
 				}
@@ -2008,7 +2000,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					is_sim_timestep_complete = false;
 					mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
-					mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + step_pc_su;
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
 				}
 
 				// Now run CR at 'OFF'
@@ -3354,7 +3346,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{
 						// Reset sim_info values
 						mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_cr_out_solver.m_time_required_su;		//[s]
 
 						is_sim_timestep_complete = false;
 					}
@@ -3677,7 +3669,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// Update mc_sim_info
 				mc_kernel.mc_sim_info.ms_ts.m_step = time_tes_dc;
-				mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + time_tes_dc;
+				mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + time_tes_dc;
 
 				// Know that simulation timestep is not complete
 				is_sim_timestep_complete = false;
@@ -3745,7 +3737,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{
 						// Reset sim_info values
 						mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_cr_out_solver.m_time_required_su;		//[s]
 
 						is_sim_timestep_complete = false;
 					}
@@ -4162,7 +4154,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Update simulation time info
 						mc_kernel.mc_sim_info.ms_ts.m_step = time_tes_dc;					//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + time_tes_dc;	//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + time_tes_dc;	//[s]
 				
 						// Rerun CR_SU
 						// First, startup the collector-receiver and get the time required
@@ -4197,7 +4189,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Update simulation time info
 						mc_kernel.mc_sim_info.ms_ts.m_step = step_cr;					//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + step_cr;	//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_cr;	//[s]
 
 						// Rerun PC MIN and TES DC
 						int pc_mode = C_csp_power_cycle::ON;
@@ -4261,7 +4253,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						is_sim_timestep_complete = false;
 
 						mc_kernel.mc_sim_info.ms_ts.m_step = time_tes_dc;
-						mc_kernel.mc_sim_info.ms_ts.m_time= time_previous + time_tes_dc;
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + time_tes_dc;
 					}
 
 				}
@@ -4418,7 +4410,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{
 						// Reset sim_info values
 						mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + mc_cr_out_solver.m_time_required_su;		//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_cr_out_solver.m_time_required_su;		//[s]
 
 						is_sim_timestep_complete = false;
 					}
@@ -5438,7 +5430,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Update simulation time info
 						mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;							//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_pc_su;			//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;			//[s]
 
 						// Rerun CR_SU
 						mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
@@ -5472,7 +5464,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// Update simulation time info
 						mc_kernel.mc_sim_info.ms_ts.m_step = step_cr;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_cr;		//[s]
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_cr;		//[s]
 
 						// Rerun PC_SU
 						step_tol = step_tolerance;		//[s]
@@ -5503,7 +5495,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						is_sim_timestep_complete = false;
 
 						mc_kernel.mc_sim_info.ms_ts.m_step = step_cr;
-						mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_cr;
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_cr;
 					}
 				}
 				else
@@ -5837,7 +5829,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					is_sim_timestep_complete = false;
 					mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
-					mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_pc_su;
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
 				}
 
 				are_models_converged = true;
@@ -7010,7 +7002,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		if( !is_sim_timestep_complete )
 		{
 			// Calculate new timestep
-			sstep_local = time_sim_step_next - mc_kernel.mc_sim_info.ms_ts.m_time;
+			sstep_local = mc_kernel.get_baseline_end_time() - mc_kernel.mc_sim_info.ms_ts.m_time;
 		}
 		else
 		{
@@ -7018,18 +7010,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_weather.converged();
 
 			sstep_local = mc_kernel.get_baseline_step();
-
-			time_sim_step_next += mc_kernel.get_baseline_step();
+			mc_kernel.baseline_step_forward();
 		}
 
 		
 		// ***********************************
 		//      Track time and step forward
 		// ***********************************
-		//is_sim_timestep_complete = true;
-		time_previous = mc_kernel.mc_sim_info.ms_ts.m_time;				//[s]
+		mc_kernel.mc_sim_info.ms_ts.m_time_start = mc_kernel.mc_sim_info.ms_ts.m_time;				//[s]
 		mc_kernel.mc_sim_info.ms_ts.m_step = sstep_local;						//[s]
-		mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + sstep_local;	//[s]
+		mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + sstep_local;	//[s]
 					
 		
 	}	// End timestep loop
