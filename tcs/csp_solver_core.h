@@ -292,7 +292,14 @@ class C_csp_collector_receiver
 {
 
 public:
-	C_csp_collector_receiver(){};
+	
+	// Maximum step for collector-receiver model
+	double m_max_step;		//[s]
+
+	C_csp_collector_receiver()
+	{
+		m_max_step = -1.0;	//[s]
+	};
 
 	~C_csp_collector_receiver(){};
 

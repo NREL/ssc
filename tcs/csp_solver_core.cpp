@@ -283,12 +283,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	/* 
     This function is called once and manages the time series simulation.
     */
-	double wf_step = 3600.0;		//[s] Weather file time step - would like to check this against weather file, some day
-	double baseline_step = 3600.0;	//[s] Baseline timestep of the simulation - this should probably be technology/model specific
+	double wf_step = 3600.0;			//[s] Weather file time step - would like to check this against weather file, some day
+	
+	double step_tolerance = 10.0;		//[s] For adjustable timesteps, if within 10 seconds, assume it equals baseline timestep
+	double baseline_step = wf_step;		//[s] Baseline timestep of the simulation - this should probably be technology/model specific
+	// Check the collector-receiver model for a maximum step
+	if(mc_collector_receiver.m_max_step > 0.0)
+	{
+		baseline_step = max(step_tolerance, min(baseline_step, mc_collector_receiver.m_max_step));
+	}
+	
 
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
-	
-	//bool is_sim_timestep_complete = true;		//[-] Are we running serial simulations at partial timesteps inside of one typical timestep?
 
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
@@ -374,7 +380,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	int pc_operating_state = C_csp_power_cycle::OFF;
 
 	double tol_mode_switching = 0.05;		// Give buffer to account for uncertainty in estimates
-	double step_tolerance = 10.0;	//[s] For adjustable timesteps, if within 10 seconds, assume it equals baseline timestep
 
 	// Reset vector that tracks operating modes
 	m_op_mode_tracking.resize(0);
@@ -387,8 +392,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	m_report_step = sim_setup.m_report_step;		//[s]
 	m_report_time_end = m_report_time_start + m_report_step;	//[s]
 
-	double reporting_interval_frac = 0.02;
-	double reporting_frac_current = reporting_interval_frac;
+	double progress_msg_interval_frac = 0.02;
+	double progress_msg_frac_current = progress_msg_interval_frac;
 
     /* 
     ************************** MAIN TIME-SERIES LOOP **************************
@@ -419,14 +424,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	{
 		// Report simulation progress
 		double calc_frac_current = (mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.get_sim_setup()->m_sim_time_start) / (mc_kernel.get_sim_setup()->m_sim_time_end - mc_kernel.get_sim_setup()->m_sim_time_start);
-		if( calc_frac_current > reporting_frac_current )
+		if( calc_frac_current > progress_msg_frac_current )
 		{
 			if(! 
                 mf_callback(m_cdata, (float) calc_frac_current*100.f, &mc_csp_messages, mc_kernel.mc_sim_info.ms_ts.m_time)
                 )
                 return;     //user cancelled the simulation
 
-			reporting_frac_current += reporting_interval_frac;
+			progress_msg_frac_current += progress_msg_interval_frac;
 		}
 
 		// Store mc_sim_info at start of timestep, use in case it needs to be reset if variable timestep modes fail
@@ -1991,7 +1996,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Check reported timestep against initial timestep
-				if(step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step- step_tolerance)
+				if(step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
 				{
 					mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
 					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
