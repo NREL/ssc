@@ -746,8 +746,8 @@ public:
 			
 		C_csp_solver_sim_info mc_sim_info;
 
-		void init(C_csp_solver::S_sim_setup & sim_setup, double wf_time_start /*s*/, double wf_step /*s*/,
-				double baseline_time_start /*s*/, double baseline_step /*s*/);
+		void init(C_csp_solver::S_sim_setup & sim_setup, double wf_step /*s*/, 
+			double baseline_step /*s*/, C_csp_messages & csp_messages);
 
 		double get_wf_end_time();
 

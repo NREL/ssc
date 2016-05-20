@@ -24,14 +24,43 @@ void C_timestep_fixed::step_forward()
 	ms_timestep.m_time += ms_timestep.m_step;		//[s] Step forward to step new end time
 }
 
-void C_csp_solver::C_csp_solver_kernel::init(C_csp_solver::S_sim_setup & sim_setup, double wf_time_start /*s*/, double wf_step /*s*/,
-	double baseline_time_start /*s*/, double baseline_step /*s*/)
+void C_csp_solver::C_csp_solver_kernel::init(C_csp_solver::S_sim_setup & sim_setup, double wf_step /*s*/, double baseline_step /*s*/, C_csp_messages & csp_messages)
 {
 	ms_sim_setup = sim_setup;
 	
+	// Compare steps: if necessary, set baseline to = weather file
+	if(baseline_step > wf_step)
+	{
+		std::string msg = util::format("The input Baseline Simulation Timestep (%lg [s]) must be less than or equal to " 
+								"the Weatherfile Timestep (%lg [s]). It was reset to the Weatherfile Timestep", baseline_step, wf_step);
+		csp_messages.add_message(C_csp_messages::WARNING, msg);
+		baseline_step = wf_step;
+	}
+	else if( (int)wf_step % (int)baseline_step != 0)
+	{
+		double wf_over_bl = wf_step / baseline_step;
+		double wf_over_bl_new = ceil(wf_over_bl);
+		double baseline_step_new = wf_step / wf_over_bl_new;
+
+		std::string msg = util::format("The Weatherfile Timestep (%lg [s]) must be divisible by the "
+								"input Baseline Simulation Timestep (%lg [s]). It was reset to %lg [s].", wf_step, baseline_step, baseline_step_new);
+
+		csp_messages.add_message(C_csp_messages::WARNING, msg);
+		baseline_step = baseline_step_new;
+	}
+
+	// Define start and steps for weatherfile, baseline, and sim_info timesteps
+	double wf_time_start = ms_sim_setup.m_sim_time_start;			//[s]
+	double baseline_time_start = ms_sim_setup.m_sim_time_start;		//[s]
+
 	// Initialize the private C_timestep_fixed classes
 	mc_ts_weatherfile.init(wf_time_start, wf_step);
 	mc_ts_sim_baseline.init(baseline_time_start, baseline_step);
+
+	// Set up 'mc_sim_info'
+	mc_sim_info.ms_ts.m_time_start = ms_sim_setup.m_sim_time_start;	//[s]
+	mc_sim_info.ms_ts.m_step = baseline_step;						//[s]
+	mc_sim_info.ms_ts.m_time = mc_sim_info.ms_ts.m_time_start + mc_sim_info.ms_ts.m_step;	//[s]
 }
 
 double C_csp_solver::C_csp_solver_kernel::get_wf_end_time()
@@ -233,6 +262,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	/* 
     This function is called once and manages the time series simulation.
     */
+	double wf_step = 3600.0;		//[s] Weather file time step - would like to check this against weather file, some day
+	double baseline_step = 3600.0;	//[s] Baseline timestep of the simulation - this should probably be technology/model specific
+
+	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
+
 
     //Set up initial simulation information.
 	//m_sim_time_start = 0.0;			//[s] hardcode simulation to start at first of year, for now
@@ -252,8 +286,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 	double time_sim_step_next = m_sim_time_start + m_sim_step_size_baseline;	//[s]
 
-	mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
-	mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_local;		//[s]
+	//mc_kernel.mc_sim_info.ms_ts.m_step = step_local;						//[s]
+	//mc_kernel.mc_sim_info.ms_ts.m_time = time_previous + step_local;		//[s]
 
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
