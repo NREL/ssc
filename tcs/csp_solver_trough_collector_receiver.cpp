@@ -6,14 +6,17 @@ using namespace std;
 
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
+	// Set maximum timestep from parent class member data
+	m_max_step = 5.0*60.0;			//[s]
+	m_step_recirc = m_max_step;		//[s]
+
 	//Commonly used values, conversions, etc...
 	m_r2d = 180. / CSP::pi;
 	m_d2r = CSP::pi / 180.;
 	m_mtoinch = 39.3700787;	//[m] -> [in]
 	m_T_htf_prop_min = 275.0;	//[K]
 	
-	m_step_recirc = std::numeric_limits<double>::quiet_NaN();
-
+	
 	// set initial values for all parameters to prevent possible misuse
 	m_nSCA = -1;
 	m_nHCEt = -1;
@@ -1093,7 +1096,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		//    then backup one timestep, and move forward in shorter steps
 		if( m_T_sys_h > m_T_startup )
 		{
-			sim_info_temp.ms_ts.m_time - step_local;	//[s] reset time to start of present i_step
+			sim_info_temp.ms_ts.m_time =- step_local;	//[s] reset time to start of present i_step
 			is_T_startup_achieved = true;
 			break;
 		}
@@ -1161,6 +1164,9 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Always reset last temps
+	reset_last_temps();
+	
 	// Get optical performance (no defocus applied in this method)
 	loop_optical_eta(weather, sim_info);
 
@@ -1239,6 +1245,7 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 		on(weather, htf_state_in, 1.0, cr_out_solver, cr_out_report, sim_info);
 
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;	//[MWt]
+		est_out.m_q_startup_avail = 0.0;	//[MWt]
 	}
 	else
 	{
