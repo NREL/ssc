@@ -1085,7 +1085,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
 	bool is_T_startup_achieved = false;
-
+	
+	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
+	double time_required_su = sim_info.ms_ts.m_step;		//[s]
 	int i_step = 0;
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
 	{
@@ -1101,7 +1103,8 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		//    then backup one timestep, and move forward in shorter steps
 		if( m_T_sys_h > m_T_startup )
 		{
-			sim_info_temp.ms_ts.m_time -= step_local;	//[s] reset time to start of present i_step
+			time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
+			m_operating_mode = C_csp_collector_receiver::ON;				//[-]
 			is_T_startup_achieved = true;
 			break;
 		}
@@ -1110,36 +1113,71 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	// Check if startup is achieved in current controller/kernel timestep
-	double time_required_su = sim_info.ms_ts.m_step;		//[s]
-	m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
-
-	if( is_T_startup_achieved )
+	if( !is_T_startup_achieved )
 	{
-		// Use 1 minute timesteps, or half of the local timestep from above calcs, whichever is shortest
-		double step_startup_fixed = min(60.0, step_local/2.0);				//[s]
-		double delta_time = sim_info.ms_ts.m_time - sim_info_temp.ms_ts.m_time;			//[s]
-		int n_steps_startup = std::ceil(delta_time / step_startup_fixed);	//[-]	
-		double step_startup = delta_time / (double)n_steps_startup;			//[s]
-
-		for( int i = 0; i < n_steps_startup; i++ )
-		{
-			sim_info_temp.ms_ts.m_time += step_startup*(i + 1);	//[s]
-
-			double T_cold_in = m_T_sys_h_last;				//[K]
-
-			// Call energy balance with updated info
-			loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
-
-			update_last_temps();
-
-			if( m_T_sys_h > m_T_startup )
-			{
-				time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
-				m_operating_mode = C_csp_collector_receiver::ON;			//[-]
-				break;
-			}
-		}
+		time_required_su = sim_info.ms_ts.m_step;		//[s]
+		m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
 	}
+
+	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
+	// Then, it steps back one recirculation timestep and advanced in 1 min timesteps to more closely calculate the time
+	// This seems awfully burdensome given the somewhat arbitrary nature of the Startup Temperature,
+	// so the routine above only uses the Recirculation Step
+
+	//int i_step = 0;
+	//for( i_step = 0; i_step < n_steps_recirc; i_step++ )
+	//{
+	//	sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);	//[s]
+
+	//	// Set inlet temperature to previous timestep outlet temperature
+	//	double T_cold_in = m_T_sys_h_last;			//[K]
+
+	//	// Call energy balance with updated info
+	//	loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+	//	// If the outlet temperature is greater than startup temperature,
+	//	//    then backup one timestep, and move forward in shorter steps
+	//	if( m_T_sys_h > m_T_startup )
+	//	{
+	//		sim_info_temp.ms_ts.m_time -= step_local;	//[s] reset time to start of present i_step
+	//		is_T_startup_achieved = true;
+	//		break;
+	//	}
+
+	//	update_last_temps();
+	//}
+
+	//// Check if startup is achieved in current controller/kernel timestep
+	//double time_required_su = sim_info.ms_ts.m_step;		//[s]
+	//m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
+
+	//if( is_T_startup_achieved )
+	//{
+	//	// Use 1 minute timesteps, or half of the local timestep from above calcs, whichever is shortest
+	//	double step_startup_fixed = min(60.0, step_local/2.0);				//[s]
+	//	double delta_time = sim_info.ms_ts.m_time - sim_info_temp.ms_ts.m_time;			//[s]
+	//	int n_steps_startup = std::ceil(delta_time / step_startup_fixed);	//[-]	
+	//	double step_startup = delta_time / (double)n_steps_startup;			//[s]
+
+	//	for( int i = 0; i < n_steps_startup; i++ )
+	//	{
+	//		sim_info_temp.ms_ts.m_time += step_startup*(i + 1);	//[s]
+
+	//		double T_cold_in = m_T_sys_h_last;				//[K]
+
+	//		// Call energy balance with updated info
+	//		loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+	//		update_last_temps();
+
+	//		if( m_T_sys_h > m_T_startup )
+	//		{
+	//			time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
+	//			m_operating_mode = C_csp_collector_receiver::ON;			//[-]
+	//			break;
+	//		}
+	//	}
+	//}
 
 	// These outputs need some more thought
 		// For now, just set this > 0.0 so that the controller knows that startup was successful
