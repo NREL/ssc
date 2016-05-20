@@ -585,7 +585,12 @@ int C_csp_trough_collector_receiver::loop_energy_balance(const C_csp_weatherread
 									double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
 									const C_csp_solver_sim_info &sim_info)
 {
-	//First calculate the cold header temperature, which will serve as the loop inlet temperature 
+	if( m_accept_loc == 1 )
+		m_m_dot_htf_tot = m_dot_htf_loop*float(m_nLoops);
+	else
+		m_m_dot_htf_tot = m_dot_htf_loop;
+
+	// First calculate the cold header temperature, which will serve as the loop inlet temperature 
 	double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_last, 1.);
 	double rho_hdr_hot = m_htfProps.dens(m_T_sys_h_last, 1.);
 	double c_hdr_cold_last = m_htfProps.Cp(m_T_sys_c_last)*1000.0;	//mjw 1.6.2011 Adding mc_bal to the cold header inertia
@@ -1096,7 +1101,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		//    then backup one timestep, and move forward in shorter steps
 		if( m_T_sys_h > m_T_startup )
 		{
-			sim_info_temp.ms_ts.m_time =- step_local;	//[s] reset time to start of present i_step
+			sim_info_temp.ms_ts.m_time -= step_local;	//[s] reset time to start of present i_step
 			is_T_startup_achieved = true;
 			break;
 		}
@@ -1118,7 +1123,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		for( int i = 0; i < n_steps_startup; i++ )
 		{
-			sim_info_temp.ms_ts.m_time += n_steps_startup*(i + 1);	//[s]
+			sim_info_temp.ms_ts.m_time += step_startup*(i + 1);	//[s]
 
 			double T_cold_in = m_T_sys_h_last;				//[K]
 
@@ -1221,7 +1226,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr]
 	// The controller also requires the receiver thermal output
 	double c_htf_ave = m_htfProps.Cp((m_T_sys_h + T_cold_in) / 2.0);  //[kJ/kg-K]
-	cr_out_solver.m_q_thermal = cr_out_solver.m_m_dot_salt_tot*c_htf_ave*(m_T_sys_h - T_cold_in) / 1.E3;	//[MWt]
+	cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot/3600.0)*c_htf_ave*(m_T_sys_h - T_cold_in)/1.E3;	//[MWt]
 	// Finally, the controller need the HTF outlet temperature from the field
 	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
 
@@ -1485,11 +1490,6 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 		qq++; //Iteration counter
 
 		m_dot_htf = m_m_dot_htfX;
-
-		if (m_accept_loc == 1)
-			m_m_dot_htf_tot = m_dot_htf*float(m_nLoops);
-		else
-			m_m_dot_htf_tot = m_dot_htf;
 
 		int loop_energy_bal_exit = loop_energy_balance(weather, m_T_cold_in_1, m_dot_htf, sim_info);
 

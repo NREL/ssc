@@ -435,8 +435,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		}
 
 		// Store mc_sim_info at start of timestep, use in case it needs to be reset if variable timestep modes fail
-		double step_ts_start = mc_kernel.mc_sim_info.ms_ts.m_step;			//[s]
-		double time_ts_start = mc_kernel.mc_sim_info.ms_ts.m_time;	//[s]
+		// double step_ts_start = mc_kernel.mc_sim_info.ms_ts.m_step;			//[s]
+		// double time_ts_start = mc_kernel.mc_sim_info.ms_ts.m_time;	//[s]
 		
 		// Get tou for timestep
 		mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
@@ -763,10 +763,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		while(!are_models_converged)		// Solve for correct operating mode and performance in following loop:
 		{
-
 			// Reset timestep info for iterations on the operating mode...
-			mc_kernel.mc_sim_info.ms_ts.m_step = step_ts_start;		//[s]
-			mc_kernel.mc_sim_info.ms_ts.m_time = time_ts_start;		//[s]
+			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();
+			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;
 
 			if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP)
 				&& (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) )
@@ -6975,6 +6974,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info.ms_ts.m_time_start = mc_kernel.mc_sim_info.ms_ts.m_time;	//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();			//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;	//[s]
+
+			double blah = 1.23;
 		}
 		else if( mc_kernel.mc_sim_info.ms_ts.m_time == mc_kernel.get_baseline_end_time() )
 		{
@@ -6994,6 +6995,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info.ms_ts.m_time_start = mc_kernel.mc_sim_info.ms_ts.m_time;	//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();			//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;	//[s]
+
+			double blah = 1.23;
 		}
 		else
 		{
