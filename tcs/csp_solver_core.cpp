@@ -293,8 +293,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		baseline_step = max(step_tolerance, min(baseline_step, mc_collector_receiver.m_max_step));
 	}
 	
-
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
+
+
 
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
@@ -433,10 +434,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			progress_msg_frac_current += progress_msg_interval_frac;
 		}
-
-		// Store mc_sim_info at start of timestep, use in case it needs to be reset if variable timestep modes fail
-		// double step_ts_start = mc_kernel.mc_sim_info.ms_ts.m_step;			//[s]
-		// double time_ts_start = mc_kernel.mc_sim_info.ms_ts.m_time;	//[s]
 		
 		// Get tou for timestep
 		mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time, mc_tou_outputs);
