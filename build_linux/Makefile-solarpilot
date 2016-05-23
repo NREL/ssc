@@ -2,7 +2,7 @@ VPATH = ../solarpilot
 CC = gcc
 CXX = g++
 CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt 
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = $(CFLAGS) -std=c++0x
 
 OBJECTS = \
 	fluxsim.o \
