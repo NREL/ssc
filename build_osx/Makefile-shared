@@ -1,8 +1,10 @@
 VPATH = ../shared
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -O3 -D__64BIT__
-CXXFLAGS = $(CFLAGS)
+#CFLAGS = -Wall -g -O3 -D__64BIT__
+CFLAGS = -Wall -g -O3 
+CXXFLAGS = $(CFLAGS) -std=c++0x
+
 
 OBJECTS = \
 	lsqfit.o \

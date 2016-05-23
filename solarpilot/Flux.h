@@ -10,7 +10,14 @@
 #ifdef _MSC_VER
 #include <random>
 #else
-#include <tr1/random>
+//#ifdef _LIBCPP_VERSION
+//using libc++
+#include <random>
+//#else
+//#include <tr1/random>
+// using libstdc++
+//#endif
+
 #endif
 
 using namespace std;

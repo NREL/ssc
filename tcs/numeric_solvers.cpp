@@ -174,7 +174,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 	}
 
 	// x guesses might be lucky, check against tolerance
-	if( abs(E1) < m_tol )
+	if( fabs(E1) < m_tol )
 	{
 		// Last call to equation was with x_guess_2, so call again here...
 		// ... if equation is setting member data, this is required to have outputs matching calculated solution
@@ -184,7 +184,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 		iter_solved = 0;
 		return CONVERGED;
 	}
-	if( abs(E2) < m_tol )
+	if( fabs(E2) < m_tol )
 	{
 		x_solved = x_guess_2;
 		tol_solved = E2;
