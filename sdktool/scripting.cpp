@@ -535,7 +535,8 @@ void EditorWindow::Exec()
 	
 	wxLKSetToplevelParentForPlots( app_frame );
 	wxLKSetPlotTarget( NULL );
-	
+
+	
 	wxString svar;
 	if( !m_fileName.IsEmpty() )
 	{
