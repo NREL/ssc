@@ -825,7 +825,8 @@ public:
 		qttmin = q_des*f_wmin;
 		qttmax = q_des*f_wmax;
 		//Calculate max TES charging/discharging rates based on solar multiple
-		ptsmax = q_des*max((solarm - 1.), 1.0);
+		// ptsmax = q_des*max((solarm - 1.), 1.0);
+		ptsmax = q_des * solarm;
 		pfsmax = ptsmax/f_disch*f_wmax;
 
 		
@@ -1246,14 +1247,27 @@ public:
 		//------------------------------------------------------------------------------------------------------------
 		//       Fossil backup
 		//------------------------------------------------------------------------------------------------------------
-		if (q_sf < fdisp[touperiod]){      // if the solar provided is less than the level stipulated in the fossil control
-			q_fossil = fdisp[touperiod] - q_sf;     // then the fossil used is the fossil control value minus what's provided by the solar field
+			// 5.23.16 twn bug fix (see svn)
+		if( q_to_pb < fdisp[touperiod] )
+		{	// If the thermal power dispatched to the power cycle is less than the level in the fossil control
+			q_fossil = fdisp[touperiod] - q_to_pb;	// then the fossil used is the fossil control value minus what's provided by the solar field
 			q_gas = q_fossil / eta_lhv;       // Calculate the required fossil heat content based on the LHV efficiency
 		}
-		else{
-			q_fossil = 0.;
-			q_gas = 0.;
+		else
+		{
+			q_fossil = 0.0;
+			q_gas = 0.0;
 		}
+		
+		//if (q_sf < fdisp[touperiod]){      // if the solar provided is less than the level stipulated in the fossil control
+		//	q_fossil = fdisp[touperiod] - q_sf;     // then the fossil used is the fossil control value minus what's provided by the solar field
+		//	q_gas = q_fossil / eta_lhv;       // Calculate the required fossil heat content based on the LHV efficiency
+		//}
+		//else{
+		//	q_fossil = 0.;
+		//	q_gas = 0.;
+		//}
+
 		//Adjust the power block energy based on additional fossil backup
 		q_to_pb = q_to_pb + q_fossil;
     
