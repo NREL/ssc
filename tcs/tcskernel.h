@@ -16,8 +16,17 @@
 #include <unordered_map>
 using std::tr1::unordered_map;
 #else
+
+#ifdef _LIBCPP_VERSION
+//using libc++
+#include <unordered_map>
+using std::unordered_map;
+#else
+// using libstdc++
 #include <tr1/unordered_map>
 using std::tr1::unordered_map;
+#endif
+
 #endif
 
 #include "tcstype.h"

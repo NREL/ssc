@@ -3,7 +3,8 @@ VPATH=../ssc
 CC = gcc
 CXX = g++
 CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = $(CFLAGS) -std=c++0x
+
 LDFLAGS = -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
 
 CFLAGS += -D__64BIT__

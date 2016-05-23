@@ -1,8 +1,10 @@
 VPATH = ../nlopt ../nlopt/direct ../nlopt/cdirect ../nlopt/praxis ../nlopt/luksan ../nlopt/crs
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt/api -I../nlopt/util -I../nlopt
-CXXFLAGS = $(CFLAGS)
+#CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt/api -I../nlopt/util -I../nlopt
+CFLAGS = -Wall -g -O3 -I../  -I../nlopt/api -I../nlopt/util -I../nlopt
+CXXFLAGS = $(CFLAGS) -std=c++0x
+
 
 OBJECTS = \
 	auglag.o \

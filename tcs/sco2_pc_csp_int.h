@@ -7,7 +7,7 @@
 
 #include "numeric_solvers.h"
 
-#include "ud_power_cycle.h"s
+#include "ud_power_cycle.h"
 
 class C_sco2_recomp_csp
 {
