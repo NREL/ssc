@@ -14,8 +14,12 @@ CXX = g++
 
 
 CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine
-#CFLAGS = -dy -fPIC -DNOLONGLONG -O3 -I../ -D__64BIT__ -I../lpsolve -DNDEBUG -#DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -#DRoleIsExternalInvEngine
-CXXFLAGS = $(CFLAGS)
+
+CXXFLAGS=-stdlib=libc++ -std=c++11 $(CFLAGS)
+OBJCXXFLAGS=-stdlib=libc++ -std=c++11
+LDFLAGS=-stdlib=libc++
+
+
 
 OBJECTS = \
 	colamd.o \

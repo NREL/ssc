@@ -1,6 +1,13 @@
 #include <vector>
 #include <string>
 #include "csp_solver_core.h"
+
+#include <unordered_map>
+using std::unordered_map;
+#pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+
+
+/*
 #ifdef _MSC_VER
 #include <unordered_map>
 using std::tr1::unordered_map;
@@ -17,6 +24,8 @@ using std::unordered_map;
 //#endif
 
 #endif
+
+*/
 #include "lp_lib.h" 
 //#include "glpk\src\glpk.h"
 
