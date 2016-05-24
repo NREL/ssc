@@ -15,7 +15,7 @@ CXX = g++
 
 CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine
 
-CXXFLAGS=-stdlib=libc++ -std=c++11 $(CFLAGS)
+CXXFLAGS= -std=c++11 $(CFLAGS)
 OBJCXXFLAGS=-stdlib=libc++ -std=c++11
 LDFLAGS=-stdlib=libc++
 

@@ -2,8 +2,7 @@ VPATH = ../shared
 CC = gcc
 CXX = g++
 CFLAGS = -Wall -g -O3 -D__64BIT__ -fPIC
-#CXXFLAGS = $(CFLAGS) -std=c++0x
-CXXFLAGS=-stdlib=libc++ -std=c++11 $(CFLAGS)
+CXXFLAGS=-std=c++11 $(CFLAGS)
 OBJCXXFLAGS=-stdlib=libc++ -std=c++11
 LDFLAGS=-stdlib=libc++
 
