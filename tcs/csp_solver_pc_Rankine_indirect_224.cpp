@@ -689,33 +689,64 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		double time_required_su_energy = m_startup_energy_remain_prev / q_dot_to_pc_max;		//[hr]
 		double time_required_su_ramping = m_startup_time_remain_prev;		//[hr]
 
-		double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);		//[hr]
-		
-
-		double step_hr = step_sec / 3600.0;		//[hr]
-
-		//double q_dot_startup_energy = std::numeric_limits<double>::quiet_NaN();
-		
-		// Can the power cycle startup within the timestep?
-		if( time_required_max > step_hr )	// No: power cycle startup will required another timestep
+		if( time_required_su_energy > time_required_su_ramping )	// Meeting energy requirements (at design thermal input) will require more time than time requirements
 		{
-			time_required_su = step_hr;
-			m_standby_control_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
+			// Can the power cycle startup within the timestep?
+			if( time_required_su_energy > step_sec / 3600.0 )	// No: the power cycle startup will require another timestep
+			{
+				time_required_su = step_sec / 3600.0;	//[hr]
+				m_standby_control_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
 
-			double frac_su_time = fmin(1.0, time_required_su / fmax(0.01, m_startup_time_remain_prev));
-			double Q_timestep = frac_su_time*m_startup_energy_remain_prev;	//[kWt-hr]
-			q_startup = fmin(q_dot_to_pc_max*time_required_su, Q_timestep);	//[kWt-hr]
+			}	
+			else	// Yes: the power cycle will complete startup within this timestep
+			{
+				time_required_su = time_required_su_energy;	//[hr]
+				m_standby_control_calc = ON;				//[-] Power cycle has started up, next time step it will be ON
+			}		
 		}
-		else	// Yes: the power cycle will complete startup within this timestep
+		else		// Meeting time requirements will require more time than energy requirements (at design thermal input)
 		{
-			time_required_su = time_required_max;
-			m_standby_control_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
-
-			if(time_required_su_energy)
-				q_startup = q_dot_to_pc_max*time_required_su;		//[kWt-hr]
-			else
-				q_startup = m_startup_energy_remain_prev;			//[kWt-hr]
+			// Can the power cycle startup within the timestep?
+			if( time_required_su_ramping > step_sec / 3600.0 )	// No: the power cycle startup will require another timestep
+			{
+				time_required_su = step_sec / 3600.0;			//[hr]
+				m_standby_control_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+			}
+			else	// Yes: the power cycle will complete startup within this timestep
+			{
+				time_required_su = time_required_su_ramping;	//[hr]
+				m_standby_control_calc = ON;					//[-] Power cycle has started up, next time step it will be ON
+			}
 		}
+		q_startup = q_dot_to_pc_max*time_required_su;	//[kWt-hr]
+
+		//double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);		//[hr]
+		//
+
+		//double step_hr = step_sec / 3600.0;		//[hr]
+
+		////double q_dot_startup_energy = std::numeric_limits<double>::quiet_NaN();
+		//
+		//// Can the power cycle startup within the timestep?
+		//if( time_required_max > step_hr )	// No: power cycle startup will require another timestep
+		//{
+		//	time_required_su = step_hr;
+		//	m_standby_control_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
+
+		//	double frac_su_time = fmin(1.0, time_required_su / fmax(0.01, m_startup_time_remain_prev));
+		//	double Q_timestep = frac_su_time*m_startup_energy_remain_prev;	//[kWt-hr]
+		//	q_startup = fmin(q_dot_to_pc_max*time_required_su, Q_timestep);	//[kWt-hr]
+		//}
+		//else	// Yes: the power cycle will complete startup within this timestep
+		//{
+		//	time_required_su = time_required_max;
+		//	m_standby_control_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
+
+		//	if(time_required_su_energy)
+		//		q_startup = q_dot_to_pc_max*time_required_su;		//[kWt-hr]
+		//	else
+		//		q_startup = m_startup_energy_remain_prev;			//[kWt-hr]
+		//}
 
 
 		double m_dot_htf_required = (q_startup/time_required_su) / (c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref));	//[kg/s]
