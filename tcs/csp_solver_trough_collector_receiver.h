@@ -9,6 +9,8 @@
 #include <cmath>
 #include "sam_csp_util.h"
 
+#include "numeric_solvers.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -319,9 +321,29 @@ public:
 				NaN
 			};
 	};
+	
+	struct S_loop_energy_balance_inputs
+	{
+		const C_csp_weatherreader::S_outputs *ms_weather;
+		double m_T_htf_cold_in;		//[K]
+		double m_m_dot_htf_loop;		//[kg/s]
+		const C_csp_solver_sim_info *ms_sim_info;
+		
+		S_loop_energy_balance_inputs()
+		{
+			m_T_htf_cold_in = m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
+			ms_weather = 0;
+			ms_sim_info = 0;
+		}	
+	};
+	
+	S_loop_energy_balance_inputs ms_loop_energy_balance_inputs;
+
 	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
 		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
+
+	int loop_energy_balance();
 
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
@@ -338,6 +360,21 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info);
+
+	class C_mono_eq_T_htf_loop_out : public C_monotonic_equation
+	{
+	private:
+		C_csp_trough_collector_receiver *mpc_trough;
+
+	public:
+		C_mono_eq_T_htf_loop_out(C_csp_trough_collector_receiver *pc_trough)
+		{
+			mpc_trough = pc_trough;
+		}
+	
+		virtual int operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/);
+	};
+
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,

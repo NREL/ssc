@@ -1069,7 +1069,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	loop_optical_eta(weather, sim_info);
 
 	// Set mass flow rate to minimum allowable
-	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
+	double m_dot_htf_loop = 0.8*m_m_dot_htfmax + 0.2*m_m_dot_htfmin;		//[kg/s]
 
 	// Set duration for recirculation timestep
 	if( m_step_recirc != m_step_recirc )
@@ -1225,11 +1225,18 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// Get inlet condition from input argument
 	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
 		// Call energy balance with updated info
-	loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info);
+	int balance_code = loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info);
+
+	bool on_success = true;
+
+	if( balance_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		on_success = false;
+	}
 
 	// If the outlet temperature (of last SCA!) is greater than the target (considering some convergence tolerance)
 		// then adjust mass flow rate and see what happens
-	if( (m_T_htf_out[m_nSCA-1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
+	if( (m_T_htf_out[m_nSCA-1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 && on_success )
 	{
 		// Try the maximum mass flow rate
 		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
@@ -1246,33 +1253,129 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		}
 		else
 		{
-			// Iterate on mass flow rate to achieve target outlet temperature
-			throw(C_csp_exception("C_csp_trough_collector::on(...) mass flow rate iteration is not complete"));
+			// Set up the member structure that contains loop_energy_balance inputs
+			ms_loop_energy_balance_inputs.ms_weather = &weather;
+			ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_cold_in;
+				// will set mass flow rate in solver
+			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info;
+			
+			// Apply 1 var solver to find the mass flow rate that achieves the target outlet temperature
+			C_mono_eq_T_htf_loop_out c_T_htf_out_calc(this);
+			C_monotonic_eq_solver c_htf_m_dot_solver(c_T_htf_out_calc);
+
+			// Set upper and lower bounds
+			double m_dot_upper = m_m_dot_htfmax;	//[kg/s]
+			double m_dot_lower = m_m_dot_htfmin;	//[kg/s]
+
+			// Set guess values... can be smarter about this...
+			double m_dot_guess_upper = 0.75*m_m_dot_htfmax + 0.25*m_m_dot_htfmin;	//[kg/s]
+			double m_dot_guess_lower = 0.25*m_m_dot_htfmax + 0.75*m_m_dot_htfmin;	//[kg/s]
+
+			// Set solver settings
+			// Relative error
+			c_htf_m_dot_solver.settings(0.001, 30, m_dot_lower, m_dot_upper, true);
+
+			int iter_solved = -1;
+			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+			int m_dot_htf_code = 0;
+			try
+			{
+				m_dot_htf_code = c_htf_m_dot_solver.solve(m_dot_guess_lower, m_dot_guess_upper, m_T_loop_out_des,
+						m_dot_htf_loop, tol_solved, iter_solved);
+			}
+			catch( C_csp_exception )
+			{
+				on_success = false;
+			}
+
+			if( m_dot_htf_code != C_monotonic_eq_solver::CONVERGED )
+			{
+				on_success = false;
+			}
 		}
 	}
 
+	if( on_success )
+	{
+		// Call final metrics method?
+		// (i.e. pressure drops, parasitics...)
 
-	// Call final metrics method?
-	// (i.e. pressure drops, parasitics...)
+		// Set solver outputs & return
+		// Receiver is already on, so the controller is not looking for this value
+		cr_out_solver.m_q_startup = 0.0;		//[MWt-hr] 
+		// Receiver is already on, so the controller is not looking for the required startup time
+		cr_out_solver.m_time_required_su = 0.0;	//[s]
+		// The controller requires the total mass flow rate from the collector-receiver
+		cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr]
+		// The controller also requires the receiver thermal output
+		double c_htf_ave = m_htfProps.Cp((m_T_sys_h + T_cold_in) / 2.0);  //[kJ/kg-K]
+		cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot/3600.0)*c_htf_ave*(m_T_sys_h - T_cold_in)/1.E3;	//[MWt]
+		// Finally, the controller need the HTF outlet temperature from the field
+		cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
 
-	// Set solver outputs & return
-	// Receiver is already on, so the controller is not looking for this value
-	cr_out_solver.m_q_startup = 0.0;		//[MWt-hr] 
-	// Receiver is already on, so the controller is not looking for the required startup time
-	cr_out_solver.m_time_required_su = 0.0;	//[s]
-	// The controller requires the total mass flow rate from the collector-receiver
-	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr]
-	// The controller also requires the receiver thermal output
-	double c_htf_ave = m_htfProps.Cp((m_T_sys_h + T_cold_in) / 2.0);  //[kJ/kg-K]
-	cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot/3600.0)*c_htf_ave*(m_T_sys_h - T_cold_in)/1.E3;	//[MWt]
-	// Finally, the controller need the HTF outlet temperature from the field
-	cr_out_solver.m_T_salt_hot = m_T_sys_h - 273.15;		//[C]
+		// For now, set parasitic outputs to 0
+		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
+		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+	}
+	else
+	{	// Solution failed, so tell controller/solver
+		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
+		cr_out_solver.m_time_required_su = 0.0;		//[s]
+		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
+		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
+		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
+		cr_out_solver.m_E_fp_total = 0.0;
+		cr_out_solver.m_W_dot_col_tracking = 0.0;
+		cr_out_solver.m_W_dot_htf_pump = 0.0;
+	}
 
-	// For now, set parasitic outputs to 0
-	cr_out_solver.m_E_fp_total = 0.0;			//[MW]
-	cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+	return;
+}
 
+int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/)
+{
+	// Update the mass flow rate in 'ms_loop_energy_balance_inputs'
+	mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_dot_htf_loop;	//[kg/s]
+	
+	// Solve the loop energy balance at the input mass flow rate
+	int exit_code = mpc_trough->loop_energy_balance();
+
+	if( exit_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		*T_htf_loop_out = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+	
+	// Set the outlet temperature
+	*T_htf_loop_out = mpc_trough->m_T_htf_out[mpc_trough->m_nSCA-1];
+
+	return 0;
+}
+
+int C_csp_trough_collector_receiver::loop_energy_balance()
+{
+	// Check that 'ms_loop_energy_balance_inputs' is defined
+	if( ms_loop_energy_balance_inputs.ms_weather == 0 )
+	{
+		throw(C_csp_exception("The pointer to constant weather output structure is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance()'."));
+	}
+	if( ms_loop_energy_balance_inputs.m_T_htf_cold_in != ms_loop_energy_balance_inputs.m_T_htf_cold_in )
+	{
+		throw(C_csp_exception("The cold HTF inlet temperature [K] is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
+	}
+	if( ms_loop_energy_balance_inputs.m_m_dot_htf_loop != ms_loop_energy_balance_inputs.m_m_dot_htf_loop )
+	{
+		throw(C_csp_exception("The HTF mass flow rate [kg/s] is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
+	}
+	if( ms_loop_energy_balance_inputs.ms_sim_info == 0 )
+	{
+		throw(C_csp_exception("The pointer to constant sim info structure is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
+	}
+
+	return loop_energy_balance(*ms_loop_energy_balance_inputs.ms_weather, ms_loop_energy_balance_inputs.m_T_htf_cold_in,
+				ms_loop_energy_balance_inputs.m_m_dot_htf_loop, *ms_loop_energy_balance_inputs.ms_sim_info);
 }
 
 void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
