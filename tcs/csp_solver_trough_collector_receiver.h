@@ -339,6 +339,8 @@ public:
 		}	
 	};
 	
+	void reset_S_loop_energy_balance_inputs();
+
 	S_loop_energy_balance_inputs ms_loop_energy_balance_inputs;
 
 	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
@@ -378,6 +380,23 @@ public:
 	};
 
 	void apply_control_defocus(double defocus /*-*/);
+	void apply_component_defocus(double defocus /*-*/);
+
+	class C_mono_eq_defocus : public C_monotonic_equation
+	{	// The solver chooses a defocus and sends it to the operator. The operator 
+		//    calculates a new m_q_SCA and then solves the loop_energy_balance *at max HTF mass flow rate* 
+		//    and returns T_htf_SCA_out. The solver finds the defocus resulting in the target HTF outlet temp
+	private:
+		C_csp_trough_collector_receiver *mpc_trough;
+
+	public:
+		C_mono_eq_defocus(C_csp_trough_collector_receiver *pc_trough)
+		{
+			mpc_trough = pc_trough;
+		}
+	
+		virtual int operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/);
+	};
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
