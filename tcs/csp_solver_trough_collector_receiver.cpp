@@ -1227,6 +1227,32 @@ void C_csp_trough_collector_receiver::apply_control_defocus(double defocus /*-*/
 	}
 }
 
+void C_csp_trough_collector_receiver::apply_component_defocus(double defocus /*-*/)
+{
+	// Uses m_q_SCA_control_df and input defocus to calculate m_q_SCA
+
+	if( m_fthrctrl == 0 )
+	{
+		mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
+			" The model will instead use Simultaneous Partial Defocusing");
+		m_fthrctrl = 2;
+	}
+	if( m_fthrctrl == 1 )
+	{
+		mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
+			" The model will instead use Simultaneous Partial Defocusing");
+		m_fthrctrl = 2;
+	}
+	if( m_fthrctrl == 2 )
+	{
+		for( int i = 0; i < m_nSCA; i++ )
+		{
+			int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
+			m_q_SCA[i] = defocus*m_q_SCA_control_df[i];
+		}
+	}
+}
+
 void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,
@@ -1292,8 +1318,52 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// then need to defocus
 		if( (m_T_htf_out[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
 		{
-			// Defocus at maximum mass flow rate to hit target outlet temperature
-			throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus is not complete"));
+			// Set up the member structure that contains loop_energy_balance inputs
+			ms_loop_energy_balance_inputs.ms_weather = &weather;
+			ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_cold_in;
+			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_m_dot_htfmax;
+			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info;
+
+			// The Monotonic Solver will iterate on defocus that achieves the target outlet temperature
+			//     at the maximum HTF mass flow rate
+			C_mono_eq_defocus c_defocus_function(this);
+			C_monotonic_eq_solver c_defocus_solver(c_defocus_function);
+
+			// Set upper and lower bounds
+			double defocus_upper = 1.0;		//[-]
+			double defocus_lower = 0.0;		//[-]
+
+			// Set guess values... can be smarter about this...
+			double defocus_guess_upper = min(1.0, (m_T_loop_out_des - m_T_loop_in_des)/(m_T_htf_out[m_nSCA - 1] - m_T_loop_in_des));
+			double defocus_guess_lower = 0.9*defocus_guess_upper;	//[-]
+
+			// Set solver settings - relative error on T_htf_out
+			c_defocus_solver.settings(0.001, 30, defocus_lower, defocus_upper, true);
+
+			int iter_solved = -1;
+			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+			int defocus_code = 0;
+			double defocus_solved = 1.0;
+			try
+			{
+				defocus_code = c_defocus_solver.solve(defocus_guess_lower, defocus_guess_upper, m_T_loop_out_des,
+						defocus_solved, tol_solved, iter_solved);
+			}
+			catch( C_csp_exception )
+			{
+				throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
+				on_success = false;
+			}
+
+			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
+			{
+				throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
+				on_success = false;
+			}
+
+			// Reset member structure
+			reset_S_loop_energy_balance_inputs();
 		}
 		else
 		{
@@ -1330,13 +1400,18 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			}
 			catch( C_csp_exception )
 			{
+				throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
 				on_success = false;
 			}
 
 			if( m_dot_htf_code != C_monotonic_eq_solver::CONVERGED )
 			{
+				throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
 				on_success = false;
 			}
+
+			// Reset member structure
+			reset_S_loop_energy_balance_inputs();
 		}
 	}
 
@@ -1376,6 +1451,32 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	}
 
 	return;
+}
+
+void C_csp_trough_collector_receiver::reset_S_loop_energy_balance_inputs()
+{
+	S_loop_energy_balance_inputs reset_inputs;
+	ms_loop_energy_balance_inputs = reset_inputs;
+}
+
+int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/)
+{
+	// Apply the defocus to calculate a new m_q_SCA
+	mpc_trough->apply_component_defocus(defocus);
+
+	// Solve the loop energy balance at the input mass flow rate
+	int exit_code = mpc_trough->loop_energy_balance();
+
+	if( exit_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		*T_htf_loop_out = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Set the outlet temperature
+	*T_htf_loop_out = mpc_trough->m_T_htf_out[mpc_trough->m_nSCA - 1];
+
+	return 0;
 }
 
 int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/)
