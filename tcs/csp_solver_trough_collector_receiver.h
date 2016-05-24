@@ -82,7 +82,9 @@ private:
 	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA, one variant
 	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA, one variant
 	std::vector<double> m_q_i;			//[W/m] DNI * A_aper / L_sca
-	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta))
+		// This value (m_q_SCA) is passed to the Evacuated Tube model, where the other optical losses are applied
+	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta)*all_defocus)
+	std::vector<double> m_q_SCA_control_df;	//[W/m] Total incident irradiation less CONTROL defocus (m_q_sca * control_defocus)
 
 	std::vector<double> m_IAM;			//[-] Incidence angle modifiers
 	std::vector<double> m_RowShadow;	//[-] Row-to-row shadowing losses
@@ -375,6 +377,7 @@ public:
 		virtual int operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/);
 	};
 
+	void apply_control_defocus(double defocus /*-*/);
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,

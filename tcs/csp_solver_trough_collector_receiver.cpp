@@ -218,6 +218,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_q_loss_SCAtot.resize(m_nSCA);
 	m_q_abs_SCAtot.resize(m_nSCA);
 	m_q_SCA.resize(m_nSCA);
+	m_q_SCA_control_df.resize(m_nSCA);
 	m_q_1abs_tot.resize(m_nSCA);
 	m_q_1abs.resize(m_nHCEVar);
 	m_q_i.resize(m_nColt);
@@ -1200,6 +1201,32 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 }
 
+void C_csp_trough_collector_receiver::apply_control_defocus(double defocus /*-*/)
+{
+	// Uses m_q_i, m_costh, and input defocus to calculate m_q_SCA_control_df
+
+	if( m_fthrctrl == 0 )
+	{
+		mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, fully defocusing SCAs is not available."
+			" The model will instead use Simultaneous Partial Defocusing");
+		m_fthrctrl = 2;
+	}
+	if( m_fthrctrl == 1 )
+	{
+		mc_csp_messages.add_message(C_csp_messages::WARNING, "The selected defocusing method of sequentially, partially defocusing SCAs is not available."
+			" The model will instead use Simultaneous Partial Defocusing");
+		m_fthrctrl = 2;
+	}
+	if( m_fthrctrl == 2 )
+	{
+		for(int i = 0; i < m_nSCA; i++)
+		{
+			int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
+			m_q_SCA_control_df[i] = defocus*m_q_i[CT]*m_costh;
+		}
+	}
+}
+
 void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,
@@ -1211,12 +1238,29 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	reset_last_temps();
 	
 	// Get optical performance (no defocus applied in this method)
+	// This returns m_q_SCA with NO defocus
 	loop_optical_eta(weather, sim_info);
 
 	// If Control Defocus: field_control < 1, then apply it here
 	if( field_control < 1.0 )
 	{
-		throw(C_csp_exception("C_csp_trough_collector::on(...) CONTROL defocus is not complete"));
+		// 1) Calculate m_q_sca_control_df
+		apply_control_defocus(field_control);
+
+		// 2) Set m_q_sca = m_q_sca_control_df
+			// m_q_sca_control_df will be baseline for component defocusing downstream in this method
+			// While loop_energy_balance uses m_q_sca
+		m_q_SCA = m_q_SCA_control_df;
+	}
+	else if( field_control == 1.0 )
+	{
+		// If no CONTROL defocus, then baseline against the vector returned by 'loop_optical_eta'
+		m_q_SCA_control_df = m_q_SCA;
+	}
+	else
+	{
+		throw(C_csp_exception("C_csp_trough_collector::on(...) received a CONTROL defocus > 1.0, "
+					"and that is not ok!"));
 	}
 
 	// Solve the loop energy balance at the minimum mass flow rate
