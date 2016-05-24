@@ -2,8 +2,7 @@ VPATH = ../nlopt ../nlopt/direct ../nlopt/cdirect ../nlopt/praxis ../nlopt/luksa
 CC = gcc
 CXX = g++
 CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt/api -I../nlopt/util -I../nlopt
-#CXXFLAGS = $(CFLAGS)
-CXXFLAGS=-stdlib=libc++ -std=c++11 $(CFLAGS)
+CXXFLAGS=-std=c++11 $(CFLAGS)
 
 OBJECTS = \
 	auglag.o \
