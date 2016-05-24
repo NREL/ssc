@@ -1500,7 +1500,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
 
 						error_msg = util::format("At time = %lg the defocus iteration only reached a convergence"
-							" = &lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							" = %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, cr_pc_exit_mode);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
