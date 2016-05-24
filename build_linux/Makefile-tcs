@@ -2,7 +2,12 @@ VPATH = ../tcs
 CC = gcc
 CXX = g++
 CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
-CXXFLAGS = $(CFLAGS) -std=c++0x
+#CXXFLAGS = $(CFLAGS) -std=c++0x
+CXXFLAGS=-stdlib=libc++ -std=c++11 $(CFLAGS)
+OBJCXXFLAGS=-stdlib=libc++ -std=c++11
+LDFLAGS=-stdlib=libc++
+
+
 
 OBJECTS = tcskernel.o \
 	fmin_callbacks.o \
