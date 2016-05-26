@@ -756,7 +756,7 @@ void DataView::OnPopup(wxCommandEvent &evt)
 				}
 				else
 				{
-					plotsurf->AddPlot( new wxPLBarPlot( pdat, m_popup_var_name ) );
+					plotsurf->AddPlot( new wxPLBarPlot( pdat, 0.0, m_popup_var_name ) );
 					if ( minval > 0 ) minval = 0;
 					if ( maxval < 0 ) maxval = 0;
 					plotsurf->SetYAxis1( new wxPLLinearAxis( minval, maxval ) );
