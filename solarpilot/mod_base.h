@@ -8,7 +8,6 @@ These components can use the methods and variable declarations provided here.
 
 #include <unordered_map>
 using std::unordered_map;
-#pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 /*
 #ifdef _MSC_VER
 #include <unordered_map>
@@ -36,8 +35,11 @@ using std::unordered_map;
 
 //using namespace std;
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #pragma warning(disable:4503)	//warning for name length - VS2010 compiler
 #pragma warning(disable:4505)	//warning for removing unused method
+#endif
  
 /* 
 Forward-declare the class that will be calling the performance code simulation. This 

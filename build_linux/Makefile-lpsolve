@@ -12,13 +12,8 @@ CXX = g++
 #fi
 #opts='-O3'
 
-
 CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine
-
-CXXFLAGS= -std=c++11 $(CFLAGS)
-OBJCXXFLAGS=-stdlib=libc++ -std=c++11
-LDFLAGS=-stdlib=libc++
-
+CXXFLAGS= -std=c++0x $(CFLAGS)
 
 
 OBJECTS = \
