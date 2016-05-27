@@ -8,7 +8,10 @@
 
 #include <unordered_map>
 using std::unordered_map;
+
+#ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+#endif
 /*
 #ifdef _MSC_VER
 #include <unordered_map>
