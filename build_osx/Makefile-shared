@@ -3,7 +3,9 @@ CC = gcc
 CXX = g++
 #CFLAGS = -Wall -g -O3 -D__64BIT__
 CFLAGS = -Wall -g -O3 
-CXXFLAGS = $(CFLAGS) -std=c++0x
+CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
+OBJCXXFLAGS = -stdlib=libstdc++
+LDFLAGS = -stdlib=libstdc++
 
 
 OBJECTS = \

@@ -5,7 +5,10 @@ CXX = g++
 #CXXFLAGS = $(CFLAGS)
 #CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt 
 CFLAGS = -fPIC -Wall -g -O3 -I../ -I../nlopt 
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
+OBJCXXFLAGS = -stdlib=libstdc++
+LDFLAGS = -stdlib=libstdc++
+
 
 OBJECTS = \
 	fluxsim.o \
