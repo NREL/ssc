@@ -3,7 +3,9 @@ CC = gcc
 CXX = g++
 #CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
 CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot
-CXXFLAGS = $(CFLAGS) -std=c++0x
+CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
+OBJCXXFLAGS = -stdlib=libstdc++
+LDFLAGS = -stdlib=libstdc++
 
 
 OBJECTS = tcskernel.o \

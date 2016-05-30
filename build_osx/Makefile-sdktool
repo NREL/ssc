@@ -9,9 +9,10 @@ CC = gcc
 CXX = g++
 #CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR)/include -I../ssc -I../shared -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -D__64BIT__
 CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR)/include -I../ssc -I../shared -DLK_USE_WXWIDGETS `wx-config-3 --cflags` 
-CXXFLAGS = $(CFLAGS) -std=c++0x
+CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
+OBJCXXFLAGS = -stdlib=libstdc++
 
-LDFLAGS = $(WEXLIB) $(LKLIB) `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm 
+LDFLAGS = $(WEXLIB) $(LKLIB) `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm -stdlib=libstdc++
 
 OBJECTS  = \
 	dataview.o \
