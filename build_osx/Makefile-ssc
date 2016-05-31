@@ -1,14 +1,13 @@
 VPATH=../ssc
 
-CC = gcc
-CXX = g++
-CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3
-CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
-OBJCXXFLAGS = -stdlib=libstdc++
-
-LDFLAGS = -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a -stdlib=libstdc++
-
+CC = gcc -mmacosx-version-min=10.9
+CXX = g++ -mmacosx-version-min=10.9
+CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -fPIC -Wall -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CXXFLAGS = $(CFLAGS) -std=gnu++11
+# for __ARCHBITS__ in cmod_pvsamv1
 CFLAGS += -D__64BIT__
+LDFLAGS = -arch x86_64 -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
+
 TARGET = ssc.dylib
 
 
