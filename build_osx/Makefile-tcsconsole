@@ -5,14 +5,12 @@ WEXLIB = $(WEXDIR)/wexosxwx3.a
 LKDIR = ../../lk
 LKLIB = $(LKDIR)/lkosxwx3.a
 
-CC = gcc
-CXX = g++
-#CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR)/include -I../tcs -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -D__64BIT__
-CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR)/include -I../tcs -DLK_USE_WXWIDGETS `wx-config-3 --cflags` 
-CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
-OBJCXXFLAGS = -stdlib=libstdc++
+CC = gcc -mmacosx-version-min=10.9
+CXX = g++ -mmacosx-version-min=10.9
+CFLAGS = -g -I. -I$(WEXDIR)/include -I$(LKDIR)/include -I../tcs -DLK_USE_WXWIDGETS `wx-config-3 --cflags` -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CXXFLAGS = $(CFLAGS)  -std=gnu++11
 
-LDFLAGS = $(WEXLIB) $(LKLIB) shared.a nlopt.a solarpilot.a tcs.a `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm  -stdlib=libstdc++
+LDFLAGS =  -arch x86_64 $(WEXLIB) $(LKLIB) shared.a nlopt.a solarpilot.a tcs.a `wx-config-3 --libs` `wx-config-3 --libs aui` `wx-config-3 --libs stc` -lm -lcurl
 
 
 OBJECTS  = tcsscript.o \

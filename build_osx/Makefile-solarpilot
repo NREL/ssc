@@ -1,13 +1,8 @@
 VPATH = ../solarpilot
-CC = gcc
-CXX = g++
-#CFLAGS = -std=c++0x -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt 
-#CXXFLAGS = $(CFLAGS)
-#CFLAGS = -fPIC -Wall -g -O3 -I../ -D__64BIT__ -I../nlopt 
-CFLAGS = -fPIC -Wall -g -O3 -I../ -I../nlopt 
-CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
-OBJCXXFLAGS = -stdlib=libstdc++
-LDFLAGS = -stdlib=libstdc++
+CC = gcc -mmacosx-version-min=10.9
+CXX = g++ -mmacosx-version-min=10.9
+CFLAGS = -fPIC -Wall -g -O3 -I../ -I../nlopt  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CXXFLAGS = $(CFLAGS) -std=gnu++11
 
 
 OBJECTS = \

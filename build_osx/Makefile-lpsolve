@@ -1,11 +1,8 @@
 VPATH = ../lpsolve
-CC = gcc
-CXX = g++
-#CFLAGS = -Wall -g -O3 -I../ -D__64BIT__ -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine
-CFLAGS = -Wall -g -O3 -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine
-CXXFLAGS = -std=c++0x $(CFLAGS) -stdlib=libstdc++
-OBJCXXFLAGS = -stdlib=libstdc++
-LDFLAGS = -stdlib=libstdc++
+CC = gcc -mmacosx-version-min=10.9
+CXX = g++ -mmacosx-version-min=10.9
+CFLAGS = -Wall -g -O3 -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+CXXFLAGS = $(CFLAGS) -std=gnu++11
 
 
 OBJECTS = \
