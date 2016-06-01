@@ -39,7 +39,11 @@ std::string message::get_message(int index)
 std::string message::construct_log_count_string(int index)
 {
 //    std::string message_count = static_cast<std::ostringstream*>(&(std::ostringstream() << count[index]))->str();
-    std::string message_count = static_cast<std::ostringstream>((std::ostringstream() << count[index])).str();
+//    std::string message_count = static_cast<std::ostringstream>((std::ostringstream() << count[index])).str();
+    std::ostringstream oss;
+    oss << count[index];
+    
+    std::string message_count = oss.str();
     std::string log = messages[index] + " - warning occurred: " + message_count + " times";
 	return log;
 }
