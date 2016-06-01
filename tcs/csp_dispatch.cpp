@@ -1310,6 +1310,7 @@ std::string csp_dispatch_opt::write_ampl()
 
         fout << "#data file\n\n";
         fout << "# --- scalar parameters ----\n";
+        fout << "param day_of_year := " << day << ";\n";
         fout << "param T := " << nt << ";\n";
         fout << "param Eu := " << params.e_tes_max << ";\n";
         //fout << "param El := " << params.e_tes_min << ";\n";
