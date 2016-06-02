@@ -1,12 +1,3 @@
-#usage from https://gist.github.com/j0sh/895945
-#make realclean;
-#make;
-#make clean;
-#make IOS=1;
-#make lipo
-
-
-
 VPATH=../ssc
 
 #CC = gcc -mmacosx-version-min=10.9
@@ -15,39 +6,10 @@ VPATH=../ssc
 #CXXFLAGS = $(CFLAGS) -std=gnu++11
 # for __ARCHBITS__ in cmod_pvsamv1
 #LDFLAGS = -arch x86_64 -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
-
-PROJ=ssc
-ifeq ($(IOS), 1)
-    ARCH=armv7
-    DEVICE=OS
-    CC_FLAGS=-arch $(ARCH)
-    CFLAGS_FLAGS=-mcpu=cortex-a8 -marm
-else
-    ARCH=i386
-    CC_FLAGS=-arch $(ARCH)
-    DEVICE=Simulator
-endif
-
-DEVROOT=/Developer/Platforms/iPhone$(DEVICE).platform/Developer
-SDKROOT=${DEVROOT}/SDKs/iPhone$(DEVICE)4.3.sdk
-CC=gcc $(CC_FLAGS)
-LD=$(CC)
-CFLAGS=-isysroot ${SDKROOT} -Iheaders $(CFLAGS_FLAGS)
-LDFLAGS=-isysroot ${SDKROOT} -Wl, -syslibroot ${SDKROOT}
 CFLAGS += -D__64BIT__
 
-#SRC=$(wildcard *.c)
-#OBJS=$(patsubst %.c,%.o,$(SRC))
-DEPS=ssl crypto expat
 
-LIBDIR=./
-LDLIBS=shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
-
-
-#TARGET = ssc.a
-
-
-OBJS = \
+OBJECTS = \
 	cmod_ui_tes_calcs.o \
 	csp_common.o \
 	cmod_lcoefcr.o \
@@ -123,34 +85,9 @@ OBJS = \
 
 
 
-all:$(ARCH)-$(PROJ).a
-
-$(ARCH)-$(PROJ).a: $(OBJS)
-	@echo $(LDLIBS) $(OBJS)
-	ar rcs $@ $(OBJS)
-	ranlib $@
-
-.PHONY: lipo
-lipo:
-	lipo -create -arch armv7 armv7-$(PROJ).a -arch i386 i386-$(PROJ).a -output $(PROJ).a
+$(TARGET) : $(OBJECTS)
+	$(CXX) $(LDFLAGS)   -o $@ $^
 
 clean:
-	rm $(OBJS)
-
-
-.PHONY: realclean
-realclean: clean
-	rm *.a
-
-
-
-
-
-#$(TARGET) : $(OBJECTS)
-#	$(CXX) $(LDFLAGS) -dynamiclib  -o $@ $^
-#	gcc $(CFLAGS) dltest.c -o dltest -ldl
-#	./dltest ./$(TARGET)
-
-#clean:
-#	rm -rf $(OBJECTS) $(TARGET) ./dltest
+	rm -rf $(OBJECTS) $(TARGET) ./dltest
 
