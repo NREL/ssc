@@ -1,8 +1,8 @@
 VPATH = ../tcs
-CC = gcc -mmacosx-version-min=10.9
-CXX = g++ -mmacosx-version-min=10.9
-CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
-CXXFLAGS = $(CFLAGS)  -std=gnu++11
+#CC = gcc -mmacosx-version-min=10.9
+#CXX = g++ -mmacosx-version-min=10.9
+#CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
+#CXXFLAGS = $(CFLAGS)  -std=gnu++11
 
 OBJECTS = tcskernel.o \
 	fmin_callbacks.o \

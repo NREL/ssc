@@ -4,22 +4,14 @@ VPATH = ../shared
 #CFLAGS = -Wall -g -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 #CXXFLAGS = $(CFLAGS) -std=gnu++11
 
-ARCH=armv7
-DEVICE=OS
-CC_FLAGS=-arch $(ARCH)
-CFLAGS_FLAGS=-mcpu=cortex-a8 -marm
 
-DEVROOT=/Developer/Platforms/iPhone$(DEVICE).platform/Developer
-SDKROOT=${DEVROOT}/SDKs/iPhone$(DEVICE)4.3.sdk
-CC=gcc $(CC_FLAGS)
-LD=$(CC)
-CFLAGS=-isysroot ${SDKROOT} -Iheaders $(CFLAGS_FLAGS)
-LDFLAGS=-isysroot ${SDKROOT} -Wl, -syslibroot ${SDKROOT}
+
+# OBJECTS = \
+#  lsqfit.o \
 
 
 
-OBJS = \
-	lsqfit.o \
+OBJECTS = \
 	lib_snowmodel.o \
 	lib_iec61853.o \
 	lib_cec6par.o \
