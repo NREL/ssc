@@ -82,7 +82,7 @@ public class TestSSCAPI {
 	    data.setNumber("tilt", 20f );
 	    data.setNumber("azimuth", 180f );
 	    data.setNumber("gcr", 0.4f );
-	    data.setNumber("adjust:factor", 1f );
+	    data.setNumber("adjust:constant", 1f );
 
         SSC.Module mod = new SSC.Module("pvwattsv5");
         if (mod.exec(data))

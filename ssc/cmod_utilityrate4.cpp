@@ -14,7 +14,7 @@ static var_info vtab_utility_rate4[] = {
 	// First year or lifetime hourly or subhourly
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
-	{ SSC_INPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
+	{ SSC_INOUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
 //	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
 	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
 
