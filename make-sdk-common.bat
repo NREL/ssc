@@ -77,6 +77,8 @@ copy apiwrappers\java\SSC\Module.java sdk-release\languages\java\SSC
 copy apiwrappers\java\SSC\SSCAPIJNI.java sdk-release\languages\java\SSC
 
 mkdir sdk-release\examples
+USA AZ Phoenix (TMY2)
+copy "examples\USA AZ Phoenix (TMY2).csv" sdk-release\examples
 copy examples\abilene.tm2 sdk-release\examples
 copy examples\daggett.tm2 sdk-release\examples
 copy examples\rocksprings.tm2 sdk-release\examples
