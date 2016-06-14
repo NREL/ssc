@@ -657,7 +657,7 @@ bool csp_dispatch_opt::optimize()
                 }
                 else
                 {
-                    add_constraintex(lp, 1, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_standby0 ? 1 : 0));
+                    add_constraintex(lp, 1, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
                 }
 
                 //some modes can't coincide

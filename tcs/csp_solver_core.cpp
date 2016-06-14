@@ -574,13 +574,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
             //time to reoptimize
             int opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon;
 
-
+            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/mc_kernel.mc_sim_info.ms_ts.m_step;
 
 			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(mc_kernel.get_baseline_step()*mc_tou.mc_dispatch_params.m_optimize_frequency) == mc_kernel.get_baseline_step()
-				&& mc_kernel.mc_sim_info.ms_ts.m_time < (8760 - opt_horizon)*mc_kernel.mc_sim_info.ms_ts.m_step
 				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
                 )
             {
+                //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
+				
+                if( hour_now >= (8760 - opt_horizon) )
+                    opt_horizon = min(opt_horizon, 8761-hour_now);
 
                 //message
                 stringstream ss;
