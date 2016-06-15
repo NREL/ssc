@@ -110,11 +110,11 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
+int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy)
 {
 	ms_od_par = od_par;
 
-	if(off_design_strategy == FIX_T_MC_APPROACH__FLOAT_PHX_DT)
+	if(off_design_strategy == FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA)
 	{
 		// Define ms_rc_cycle_od_par
 			// Defined now
@@ -145,26 +145,6 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, int off_design_strategy)
 		ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
 		ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 		ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
-		
-
-		
-		// *** Test Turbomachinery Balancing Method ***
-		//C_RecompCycle::S_od_turbo_bal_par od_turbo_bal_par;
-		//od_turbo_bal_par.m_P_mc_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];	 //[kPa]
-		//od_turbo_bal_par.m_f_recomp = ms_des_solved.ms_rc_cycle_solved.m_recomp_frac;				 //[-]
-		//od_turbo_bal_par.m_T_mc_in = ms_rc_cycle_od_par.m_T_mc_in;									 //[K]
-		//	// Need to do better here, esp. when T_HTF is colder than design
-		//od_turbo_bal_par.m_T_t_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::TURB_IN]; //[K]
-		//	// HTF
-		//od_turbo_bal_par.m_co2_to_htf_m_dot_ratio_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t / ms_phx_des_par.m_m_dot_hot_des;
-		//od_turbo_bal_par.m_m_dot_htf = ms_phx_od_par.m_m_dot_h;	//[kg/s]
-		//	// Method()
-		//mc_rc_cycle.od_turbo_bal(od_turbo_bal_par);
-		// ********************************************
-
-
-
-
 
 		int opt_eta_code = od_fix_T_mc__float_phx_dt__opt_eta();
 
@@ -453,9 +433,9 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
 
-	int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
+	int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
 
-	mpc_sco2_rc->off_design(sco2_od_par, od_strategy);
+	mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
 
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_par()->m_W_dot_net;	//[kWe]
