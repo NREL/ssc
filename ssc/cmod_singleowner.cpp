@@ -941,7 +941,7 @@ public:
 
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
-		cf.resize_fill( CF_max, nyears+1, 0.0 );
+		cf.resize_fill(CF_max, nyears + 1, 0.0);
 
 		// assign inputs
 		double inflation_rate = as_double("inflation_rate")*0.01;
@@ -1657,6 +1657,8 @@ public:
 		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
 		double flip_target_percent = as_double("flip_target_percent") ;
 		int flip_target_year = as_integer("flip_target_year");
+		// check for accessing off of the end of cashflow matrix
+		if (flip_target_year > nyears) flip_target_year = nyears;
 		int flip_year=-1;
 		double purchase_of_property;
 		bool solved=true;
