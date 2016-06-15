@@ -139,7 +139,7 @@ public:
 
 	enum E_off_design_strategies
 	{
-		FIX_T_MC_APPROACH__FLOAT_PHX_DT
+		FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA
 	};
 	
 	C_sco2_recomp_csp();
@@ -181,7 +181,7 @@ public:
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
-	int off_design(S_od_par od_par, int off_design_strategy);
+	int off_design_opt(S_od_par od_par, int off_design_strategy);
 
 	// Class methods linked to nlopt callbacks - must be public
 	double od_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
