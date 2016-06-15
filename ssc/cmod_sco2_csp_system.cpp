@@ -135,7 +135,7 @@ public:
 		int out_type = -1;
 		std::string out_msg = "";
 
-		// Construction class and design system
+		// Construction class and design system 
 		C_sco2_recomp_csp sco2_recomp_csp;
 		try
 		{
@@ -242,12 +242,12 @@ public:
 			sco2_rc_od_par.m_T_htf_hot = T_htf_od_run + 273.15;		//[K]
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*m_dot_htf_od_run;	//[kg/s]
 			sco2_rc_od_par.m_T_amb = T_amb_od_run + 273.15;			//[K]
-			int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
+			int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
 
 			int off_design_code = 0;
 			try
 			{
-				off_design_code = sco2_recomp_csp.off_design(sco2_rc_od_par, od_strategy);
+				off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 			}
 			catch( C_csp_exception &csp_exception )
 			{

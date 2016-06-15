@@ -335,8 +335,8 @@ public:
 		sco2_rc_od_par.m_T_htf_hot = sco2_rc_des_par.m_T_htf_hot_in;
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;
-		int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT;
-		sco2_recomp_csp.off_design(sco2_rc_od_par, od_strategy);
+		int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
+		sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 
 
 
