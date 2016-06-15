@@ -1034,10 +1034,11 @@ double dispatch_calculations::tod_energy_value(int period, int year)
 
 bool dispatch_calculations::setup()
 {
-
-
 	// initialize cashflow matrix
-	m_cf.resize_fill(CF_max_dispatch, m_nyears + 1, 0.0);
+	if ((m_nyears + 1) > 12)
+		m_cf.resize_fill(CF_max_dispatch, m_nyears + 1, 0.0);
+	else // must be able to handle TOD periods and months hard crash in releases 2016.3.14-r1 and before
+		m_cf.resize_fill(CF_max_dispatch, 12, 0.0);
 
 	size_t nrows, ncols;
 	ssc_number_t *disp_weekday = m_cm->as_matrix("dispatch_sched_weekday", &nrows, &ncols);

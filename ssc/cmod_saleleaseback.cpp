@@ -1721,7 +1721,9 @@ public:
 		int ppa_soln_max_iteations = as_integer("ppa_soln_max_iterations");
 		double flip_target_percent = as_double("flip_target_percent") ;
 		int flip_target_year = as_integer("flip_target_year");
-		int flip_year=-1;
+		// check for accessing off of the end of cashflow matrix
+		if (flip_target_year > nyears) flip_target_year = nyears;
+		int flip_year = -1;
 		double sale_of_property;
 		double issuance_of_equity;
 		double purchase_of_plant;

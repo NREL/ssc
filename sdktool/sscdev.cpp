@@ -196,11 +196,11 @@ SCFrame::SCFrame()
 	m_gridCM->EnableDragColSize();
 	
 	wxBoxSizer *szh_run = new wxBoxSizer( wxHORIZONTAL );
-	szh_run->Add( m_currentCM, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
+	szh_run->Add( m_currentCM, 1, wxALL|wxEXPAND, 3 );
 	szh_run->Add( new wxButton( cm_browser, wxID_EXECUTE, "Run" , wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT),0, wxALL|wxALIGN_CENTER_VERTICAL, 3);
 	
 	wxBoxSizer *szleft = new wxBoxSizer( wxVERTICAL );
-	szleft->Add( new wxStaticText( cm_browser, wxID_ANY, " Available modules:" ), 0, wxALL|wxEXPAND|wxALIGN_BOTTOM, 1 );
+	szleft->Add( new wxStaticText( cm_browser, wxID_ANY, " Available modules:" ), 0, wxALL|wxEXPAND, 1 );
 	szleft->Add( m_listCM, 1, wxALL|wxEXPAND, 3 );	
 	szleft->Add( new wxButton(cm_browser, ID_CopyToClipboardCM, "Copy table to clipboard...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 3);
 	szleft->Add( new wxStaticLine( cm_browser, wxID_ANY ), 0, wxALL|wxEXPAND, 2 );
@@ -242,8 +242,8 @@ SCFrame::SCFrame()
 	split_win->SetSashGravity( 1 );
 
 	wxBoxSizer *sz_stat = new wxBoxSizer( wxHORIZONTAL );
-	sz_stat->Add( m_progressBar, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
-	sz_stat->Add( m_statusLabel, 5, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 3 );
+	sz_stat->Add( m_progressBar, 1, wxALL|wxEXPAND, 3 );
+	sz_stat->Add( m_statusLabel, 5, wxALL|wxEXPAND, 3 );
 
 	wxBoxSizer *sz_main = new wxBoxSizer( wxVERTICAL );
 	sz_main->Add( split_win, 1, wxALL|wxEXPAND, 0 );
