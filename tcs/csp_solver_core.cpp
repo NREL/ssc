@@ -583,7 +583,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
 				
                 if( hour_now >= (8760 - opt_horizon) )
-                    opt_horizon = min(opt_horizon, 8761-hour_now);
+                    opt_horizon = min((double)opt_horizon, (double)(8761-hour_now));
 
                 //message
                 stringstream ss;
