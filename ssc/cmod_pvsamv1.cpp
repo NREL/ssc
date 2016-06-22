@@ -1977,22 +1977,22 @@ public:
 						// Check for missing data
 						// *note this method may not work for all compilers (lookin at you, MACs!)
 						if ( (wf.gh != wf.gh) && (radmode == DN_GH || radmode == GH_DF)){
-							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+							log(util::format("missing global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
 						if ( (wf.dn != wf.dn) && (radmode == DN_DF || radmode == DN_GH)){
-							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+							log(util::format("missing beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
 						if ( (wf.df != wf.df) && (radmode == DN_DF || radmode == GH_DF)){
-							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+							log(util::format("missing diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
 						if ( (wf.poa != wf.poa) && (radmode == POA_R || radmode == POA_P)){
-							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+							log(util::format("missing plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
@@ -2000,25 +2000,25 @@ public:
 						// Check for bad data
 						if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == DN_GH || radmode == GH_DF))
 						{
-							log(util::format("invalid global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+							log(util::format("out of range global irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.gh, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.gh = 0;
 						}
 						if ((wf.dn < 0 || wf.dn > IRRMAX) && (radmode == DN_DF || radmode == DN_GH))
 						{
-							log(util::format("invalid beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+							log(util::format("out of range beam irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.dn, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.dn = 0;
 						}
 						if ((wf.df < 0 || wf.df > IRRMAX) && (radmode == DN_DF || radmode == GH_DF))
 						{
-							log(util::format("invalid diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+							log(util::format("out of range diffuse irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.df, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.df = 0;
 						}
 						if ( (wf.poa < 0 || wf.poa > IRRMAX) && (radmode == POA_R || radmode == POA_P) )
 						{
-							log(util::format("invalid plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+							log(util::format("out of range plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.poa = 0;
 						}
@@ -2046,7 +2046,7 @@ public:
 
 						if (code != 0)
 							throw exec_error("pvsamv1",
-							util::format("failed to process irradiation on surface %d (code: %d) [y:%d m:%d d:%d h:%d]",
+							util::format("failed to calculate irradiance incident on surface (POA) %d (code: %d) [y:%d m:%d d:%d h:%d]",
 							nn + 1, code, wf.year, wf.month, wf.day, wf.hour));
 
 						// p_irrad_calc is only weather file records long...
@@ -2080,13 +2080,13 @@ public:
 						if( speForceNoPOA && ( radmode == POA_R || radmode == POA_P)){  // only will be true if using a poa model AND spe module model AND spe_fp is < 1
 							sa[nn].poa.usePOAFromWF = false;
 							if( idx == 0 )
-								log("A poa sky model, spe module model, and diffuse utilization factor less than one have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+								log("The combination of POA irradiance as in input, single point efficiency module model, and module diffuse utilization factor less than one means that SAM must use a POA decomposition model to calculate the incident diffuse irradiance", SSC_WARNING);
 						}
 
 						if( mcspForceNoPOA && (radmode == POA_R || radmode == POA_P)){
 							sa[nn].poa.usePOAFromWF = false;
 							if( idx == 0 )
-								log("A poa sky model and the MCSP Thermal Model have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+								log("The combination of POA irradiance as input and heat transfer method for cell temperature means that SAM must use a POA decomposition model to calculate the beam irradiance required by the cell temperature model", SSC_WARNING);
 						}
 
 
@@ -2229,11 +2229,11 @@ public:
 							if( radmode == POA_R || radmode == POA_P ){
 								sa[nn].poa.usePOAFromWF = false;
 								if( sa[nn].poa.poaShadWarningCount == 0){
-									log(util::format("Both a poa sky model has been selected and non-zero beam shading losses have been applied at time [y:%d m:%d d:%d h:%d]. This will force SAM to employ a POA decomposition model",
+									log(util::format("Combining POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d] forces SAM to use a POA decomposition model to calculate incident beam irradiance",
 									wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 								}
 								else{ 
-									log(util::format("Both a poa sky model has been selected and non-zero beam shading losses have been applied at time [y:%d m:%d d:%d h:%d]. This will force SAM to employ a POA decomposition model",
+									log(util::format("Combining POA irradiance as input with the beam shading losses at time [y:%d m:%d d:%d h:%d] forces SAM to use a POA decomposition model to calculate incident beam irradiance",
 									wf.year, wf.month, wf.day, wf.hour), SSC_NOTICE, (float)idx);
 								}
 								sa[nn].poa.poaShadWarningCount++;
@@ -2245,7 +2245,7 @@ public:
 							iskydiff *= sa[nn].shad.fdiff();
 							if( radmode == POA_R || radmode == POA_P ){
 								if( idx == 0 )
-									log("Both a poa sky model has been selected and diffuse shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+									log("Combining POA irradiance as input with the diffuse shading losses forces SAM to use a POA decomposition model to calculate incident diffuse irradiance", SSC_WARNING);
 								sa[nn].poa.usePOAFromWF = false;
 							}
 						}
@@ -2259,7 +2259,7 @@ public:
 
 							if( radmode == POA_R || radmode == POA_P ){
 								if( idx == 0 )
-									log("Both a poa sky model has been selected and self-shading losses have been applied. This will force SAM to employ a POA decomposition model", SSC_WARNING);
+									log("Combining POA irradiance as input with self shading forces SAM to employ a POA decomposition model to calculate incident beam irradiance", SSC_WARNING);
 								sa[nn].poa.usePOAFromWF = false;
 							}
 
@@ -2489,7 +2489,7 @@ public:
 						}
 
 						if ( out.Voltage > module_model->VocRef()*1.3 )
-							log(util::format("Non-physical module voltage at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage ), SSC_NOTICE );
+							log(util::format("Module voltage is unrealistically high (exceeds 1.3*VocRef) at [mdhm: %d %d %d %lg]: %lg V\n", wf.month, wf.day, wf.hour, wf.minute, out.Voltage ), SSC_NOTICE );
 
 						if (!std::isfinite(out.Power))
 						{
@@ -2758,7 +2758,7 @@ public:
 
 		if (en_snow_model){
 			if (sa[0].sm.badValues > 0){
-				log(util::format("The snow model has detected %d bad snow depth values. These values have been set to zero.", sa[0].sm.badValues), SSC_WARNING);
+				log(util::format("The snow model has detected %d bad snow depth values (less than 0 or greater than 610 cm). These values have been set to zero.", sa[0].sm.badValues), SSC_WARNING);
 			}
 			
 			// scale by ts_hour to convert power -> energy
