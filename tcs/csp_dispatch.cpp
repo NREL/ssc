@@ -71,6 +71,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.is_pb_operating0 = false;
     params.is_pb_standby0 = false;
     params.is_rec_operating0 = false;
+    params.w_pb0 = numeric_limits<double>::quiet_NaN();
     params.dt = numeric_limits<double>::quiet_NaN();
     params.e_tes_init = numeric_limits<double>::quiet_NaN();          
     params.e_tes_min = numeric_limits<double>::quiet_NaN();           
@@ -1331,6 +1332,7 @@ std::string csp_dispatch_opt::write_ampl()
         fout << "param ucsu0 := 0.;\n";
         fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
         fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
+        fout << "param w0 := " <<  params.w_pb0 << ";\n";
 
         fout << "# --- indexed parameters ---\n";
         fout << "param Qin := \n";
