@@ -23,7 +23,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased,4=Net billing", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
 
 	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 2 to use daily kWh 
 //	{ SSC_INPUT, SSC_NUMBER, "ur_ec_hourly_acc_period", "Energy charge hourly reconciliation period", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
@@ -441,8 +441,6 @@ public:
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
 		m_num_rec_yearly = nrec_gen_per_year;
 
-//		log("generation assigned", SSC_WARNING);
-
 		if (is_assigned("load"))
 		{ // hourly or sub hourly loads for single year
 			bload = true;
@@ -454,9 +452,6 @@ public:
 				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
 		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
-//		log("load assigned", SSC_WARNING);
-
-
 
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t> e_sys(m_num_rec_yearly), p_sys(m_num_rec_yearly), e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
@@ -471,41 +466,40 @@ public:
 		ssc_number_t ts_power = 0;
 		ssc_number_t ts_load = 0;
 		ssc_number_t year1_elec_load = 0;
-		for (i = 0; i < 8760; i++)
+
+		
+		for (i = 0; i < m_num_rec_yearly; i++)
 		{
-			for (size_t ii = 0; ii < step_per_hour_gen; ii++)
-			{
-				e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
-				ts_power = (idx < m_num_rec_yearly) ? pgen[idx] : 0;
-				e_sys[i] += ts_power * ts_hour_gen;
-				p_sys[i] = ((ts_power > p_sys[i]) ? ts_power : p_sys[i]);
-				idx++;
-			}
+			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
+			e_sys[i] = pgen[i] * ts_hour_gen; // kWh
+			p_sys[i] = pgen[i];
 		}
 	
-//		log("esys psys assigned", SSC_WARNING);
-
 		//load - fill out to number of generation records per year
+		// handle cases 
+		// 1. if no load 
+		// 2. if load has 8760 and gen has more records
+		// 3. if number records same for load and gen
 		idx = 0;
 		for (i = 0; i < 8760; i++)
 		{
 			for (size_t ii = 0; ii < step_per_hour_gen; ii++)
 			{
+				size_t ndx = i*step_per_hour_gen + ii;
 				ts_load = (bload ? ((idx < nrec_load) ? pload[idx] : 0) : 0);
-				e_load[i] += ts_load * ts_hour_gen;
-				p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
+				e_load[ndx] = ts_load * ts_hour_gen; // kwh
+				p_load[ndx] = ts_load;
+				year1_elec_load += e_load[ndx];
+				// sign correction for utility rate calculations
+				e_load[ndx] = -e_load[ndx];
+				p_load[ndx] = -p_load[ndx];
 				if (ii < step_per_hour_load) idx++;
 			}
-			year1_elec_load += e_load[i];
-			// sign correction for utility rate calculations
-			e_load[i] = -e_load[i];
-			p_load[i] = -p_load[i];
 		}
-
 		assign("year1_electric_load", year1_elec_load);
-//		log("eload pload assigned", SSC_WARNING);
 
 
+		
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(m_num_rec_yearly), revenue_wo_sys(m_num_rec_yearly),
 			payment(m_num_rec_yearly), income(m_num_rec_yearly), price(m_num_rec_yearly), demand_charge(m_num_rec_yearly), energy_charge(m_num_rec_yearly),
@@ -537,11 +531,9 @@ public:
 		ssc_number_t *ch_w_sys_dc_fixed_ym = allocate("charge_w_sys_dc_fixed_ym", nyears + 1, 12);
 		ssc_number_t *ch_w_sys_dc_tou_ym = allocate("charge_w_sys_dc_tou_ym", nyears + 1, 12);
 		ssc_number_t *ch_w_sys_ec_ym = allocate("charge_w_sys_ec_ym", nyears + 1, 12);
-//		ssc_number_t *ch_w_sys_ec_flat_ym = allocate("charge_w_sys_ec_flat_ym", nyears + 1, 12);
 		ssc_number_t *ch_wo_sys_dc_fixed_ym = allocate("charge_wo_sys_dc_fixed_ym", nyears + 1, 12);
 		ssc_number_t *ch_wo_sys_dc_tou_ym = allocate("charge_wo_sys_dc_tou_ym", nyears + 1, 12);
 		ssc_number_t *ch_wo_sys_ec_ym = allocate("charge_wo_sys_ec_ym", nyears + 1, 12);
-//		ssc_number_t *ch_wo_sys_ec_flat_ym = allocate("charge_wo_sys_ec_flat_ym", nyears + 1, 12);
 		ssc_number_t *ch_w_sys_fixed_ym = allocate("charge_w_sys_fixed_ym", nyears + 1, 12);
 		ssc_number_t *ch_wo_sys_fixed_ym = allocate("charge_wo_sys_fixed_ym", nyears + 1, 12);
 		ssc_number_t *ch_w_sys_minimum_ym = allocate("charge_w_sys_minimum_ym", nyears + 1, 12);
@@ -554,11 +546,9 @@ public:
 		ssc_number_t *ch_w_sys_dc_fixed = allocate("charge_w_sys_dc_fixed", nyears + 1);
 		ssc_number_t *ch_w_sys_dc_tou = allocate("charge_w_sys_dc_tou", nyears + 1);
 		ssc_number_t *ch_w_sys_ec = allocate("charge_w_sys_ec", nyears + 1);
-//		ssc_number_t *ch_w_sys_ec_flat = allocate("charge_w_sys_ec_flat", nyears + 1);
 		ssc_number_t *ch_wo_sys_dc_fixed = allocate("charge_wo_sys_dc_fixed", nyears + 1);
 		ssc_number_t *ch_wo_sys_dc_tou = allocate("charge_wo_sys_dc_tou", nyears + 1);
 		ssc_number_t *ch_wo_sys_ec = allocate("charge_wo_sys_ec", nyears + 1);
-//		ssc_number_t *ch_wo_sys_ec_flat = allocate("charge_wo_sys_ec_flat", nyears + 1);
 		ssc_number_t *ch_w_sys_fixed = allocate("charge_w_sys_fixed", nyears + 1);
 		ssc_number_t *ch_wo_sys_fixed = allocate("charge_wo_sys_fixed", nyears + 1);
 		ssc_number_t *ch_w_sys_minimum = allocate("charge_w_sys_minimum", nyears + 1);
@@ -670,9 +660,6 @@ public:
 		// lifetime hourly load
 		ssc_number_t *lifetime_load = allocate("lifetime_load", nrec_gen);
 
-
-
-
 		// false = 2 meters, load and system treated separately
 		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
 		//			bool enable_nm = as_boolean("ur_enable_net_metering");
@@ -715,15 +702,12 @@ public:
 				if ((as_integer("system_use_lifetime_output") == 1) )
 				{
 					e_sys[j] = p_sys[j] = 0.0;
-					for (size_t ii = 0; (ii < step_per_hour_gen); ii++)
-					{
-						ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
-						e_sys[j] += ts_power * ts_hour_gen;
-						p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
-						// until lifetime load fully implemented
-						lifetime_load[idx] = -e_load_cy[j];
-						idx++;
-					}
+					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
+					e_sys[j] += ts_power * ts_hour_gen;
+					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
+					// until lifetime load fully implemented
+					lifetime_load[idx] = -e_load_cy[j];
+					idx++;
 				}
 
 				// calculate e_grid value (e_sys + e_load)
@@ -733,8 +717,7 @@ public:
 				e_grid[j] = e_sys_cy[j] + e_load_cy[j];
 				p_grid[j] = p_sys_cy[j] + p_load_cy[j];
 			}
-//			log("eload_cy", SSC_WARNING);
-//			log("psys", SSC_WARNING);
+
 
 			// now calculate revenue without solar system (using load only)
 			if (hourly_reconciliation)
@@ -744,7 +727,6 @@ public:
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0],
-					//&monthly_ec_flat_charges[0], 
 					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
 			}
 			else
@@ -754,12 +736,9 @@ public:
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0], 
-					//&monthly_ec_flat_charges[0], 
 					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i+1);
 			}
 	
-//			log(util::format("year %d without system ", (int)i));
-
 			for (j = 0; j < 12; j++)
 			{
 				utility_bill_wo_sys_ym[(i + 1) * 12 + j] = monthly_bill[j];
@@ -779,9 +758,6 @@ public:
 				ch_wo_sys_minimum[i + 1] += monthly_minimum_charges[j];
 			}
 
-
-//			log(util::format("start year %d without system outputs ", (int)i));
-
 			
 			if (i == 0)
 			{
@@ -800,7 +776,6 @@ public:
 
 				assign("year1_hourly_dc_without_system", var_data(&demand_charge[0], m_num_rec_yearly));
 				assign("year1_hourly_ec_without_system", var_data(&energy_charge[0], m_num_rec_yearly));
-//				log(util::format("start year %d without system outputs energy charge", (int)i));
 
 				assign("year1_monthly_dc_fixed_without_system", var_data(&monthly_dc_fixed[0], 12));
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
@@ -811,8 +786,6 @@ public:
 				{
 					salespurchases[ii] = revenue_wo_sys[ii];
 				}
-
-//				log(util::format("start year %d without system outputs sales purchases", (int)i));
 
 				int c = 0;
 
@@ -836,9 +809,6 @@ public:
 				assign("year1_monthly_fixed_without_system", var_data(&monthly_fixed_charges[0], 12));
 				assign("year1_monthly_minimum_without_system", var_data(&monthly_minimum_charges[0], 12));
 
-//				log(util::format("start year %d without system outputs sales purchases", (int)i));
-
-
 				// peak demand and testing energy use
 				for (int ii = 0; ii < 12; ii++)
 				{
@@ -847,10 +817,6 @@ public:
 				}
 				assign("year1_monthly_peak_wo_system", var_data(&monthly_peak[0], 12));
 				assign("year1_monthly_use_wo_system", var_data(&monthly_test[0], 12));
-
-	//			log(util::format("year %d without system outputs ", (int)i));
-
-
 			}
 			
 // with system
@@ -863,7 +829,6 @@ public:
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0],
-					//&monthly_ec_flat_charges[0], 
 					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
 			}
 			else // monthly reconciliation per 2015.6.30 release
@@ -877,7 +842,6 @@ public:
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
 						&monthly_ec_charges[0], 
-						//&monthly_ec_flat_charges[0], 
 						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],  rate_scale[i], i+1);
 				}
 				else
@@ -889,7 +853,6 @@ public:
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
 						&monthly_ec_charges[0], 
-						//&monthly_ec_flat_charges[0],
 						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],  rate_scale[i], i+1, false, false,true);
 					// TODO - remove annual_revenue and just use annual bill
 					// Two meters - adjust output accordingly
@@ -905,16 +868,11 @@ public:
 						monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
 						monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
 						monthly_ec_charges[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
-						//monthly_ec_flat_charges[j] += ch_wo_sys_ec_flat_ym[(i + 1) * 12 + j];
 						monthly_fixed_charges[j] += ch_wo_sys_fixed_ym[(i + 1) * 12 + j];
 						monthly_minimum_charges[j] += ch_wo_sys_minimum_ym[(i + 1) * 12 + j];
 						monthly_bill[j] += utility_bill_wo_sys_ym[(i + 1) * 12 + j];
 					}
 
-
-//					log(util::format("start year %d with system outputs ", (int)i));
-
-					
 					if (i == 0)
 					{
 
@@ -988,7 +946,6 @@ public:
 					}
 				} // non net metering with monthly reconciliation
 			} // monthly reconciliation
-
 			
 			if (i == 0)
 			{
@@ -1093,8 +1050,6 @@ public:
 
 			}
 			
-//			log(util::format("start year %d with system outputs ", (int)i));
-
 			// determine net-revenue benefit due to solar for year 'i'
 			
 			annual_net_revenue[i+1] = 0.0;
@@ -1123,7 +1078,6 @@ public:
 				ch_w_sys_dc_fixed_ym[(i + 1) * 12 + j] = monthly_dc_fixed[j];
 				ch_w_sys_dc_tou_ym[(i + 1) * 12 + j] = monthly_dc_tou[j];
 				ch_w_sys_ec_ym[(i + 1) * 12 + j] = monthly_ec_charges[j];
-//				ch_w_sys_ec_flat_ym[(i + 1) * 12 + j] = monthly_ec_flat_charges[j];
 				ch_w_sys_fixed_ym[(i + 1) * 12 + j] = monthly_fixed_charges[j];
 				ch_w_sys_minimum_ym[(i + 1) * 12 + j] = monthly_minimum_charges[j];
 
@@ -1131,7 +1085,6 @@ public:
 				ch_w_sys_dc_fixed[i + 1] += monthly_dc_fixed[j];
 				ch_w_sys_dc_tou[i + 1] += monthly_dc_tou[j];
 				ch_w_sys_ec[i + 1] += monthly_ec_charges[j];
-//				ch_w_sys_ec_flat[i + 1] += monthly_ec_flat_charges[j];
 				ch_w_sys_fixed[i + 1] += monthly_fixed_charges[j];
 				ch_w_sys_minimum[i + 1] += monthly_minimum_charges[j];
 			}
@@ -1164,15 +1117,17 @@ public:
 				for(h=0;h<24;h++)
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-					// net energy use per month
-					energy_use[m] += e_grid[c];
-					// Sean's sign convention
-					monthly_load[m] -= e_load[c];
-					monthly_generation[m] += e_sys[c]; // does not include first year sys_scale
-					monthly_elec_to_grid[m] += e_grid[c];
-// 9/10/13 update from Paul
-					monthly_salespurchases[m] += salespurchases[c];
-					c++;
+					{
+						// net energy use per month
+						energy_use[m] += e_grid[c];
+						// Sean's sign convention
+						monthly_load[m] -= e_load[c];
+						monthly_generation[m] += e_sys[c]; // does not include first year sys_scale
+						monthly_elec_to_grid[m] += e_grid[c];
+						// 9/10/13 update from Paul
+						monthly_salespurchases[m] += salespurchases[c];
+						c++;
+					}
 				}
 			}
 		}
@@ -2388,8 +2343,6 @@ public:
 		throw(general_error)
 	{
 		int i;
-//		log("start ur_calc_timestep", SSC_WARNING);
-
 		for (i = 0; i<(int)m_num_rec_yearly; i++)
 			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
 
@@ -2583,12 +2536,6 @@ public:
 			}
 		}
 
-
-
-//		log("before main loop ur_calc_timestep", SSC_WARNING);
-
-
-
 // main loop
 		c = 0; // hourly count
 		// process one hour at a time
@@ -2781,8 +2728,6 @@ public:
 			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 		} // end of month m (m loop)
 
-//		log("after main loop ur_calc_timestep", SSC_WARNING);
-
 
 		// Assumption that fixed and minimum charges independent of rollovers kWh or $
 		// process monthly fixed charges
@@ -2800,9 +2745,9 @@ public:
 			{
 				for (h = 0; h < 24; h++)
 				{
-					if (d == util::nday[m] - 1 && h == 23)
+					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+						if (d == util::nday[m] - 1 && h == 23)
 						{
 							// apply fixed first
 							if (include_fixed)
@@ -2842,11 +2787,6 @@ public:
 				}
 			}
 		}
-
-
-//		log("after utility bill loop ur_calc_timestep", SSC_WARNING);
-
-
 
 	}
 
