@@ -2063,7 +2063,7 @@ public:
 					// energy charge
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23)
+						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour-1 )
 						{
 							if (ec_enabled)
 							{
@@ -2277,7 +2277,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23)
+						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour - 1)
 						{
 							// apply fixed first
 							if (include_fixed)
@@ -2642,7 +2642,7 @@ public:
 
 
 						// demand charge - end of month only
-						if (d == util::nday[m] - 1 && h == 23)
+						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour - 1)
 						{
 
 							if (dc_enabled)
@@ -2747,7 +2747,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23)
+						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour - 1)
 						{
 							// apply fixed first
 							if (include_fixed)
