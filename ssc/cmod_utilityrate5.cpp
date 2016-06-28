@@ -347,6 +347,9 @@ private:
 	std::vector<int> m_dc_tou_sched;
 	std::vector<ur_month> m_month;
 	std::vector<int> m_ec_periods; // period number
+	// time step sell rate
+	std::vector<ssc_number_t> m_ec_ts_sell_rate;
+
 	// track initial values - may change based on units
 	std::vector<std::vector<int> >  m_ec_periods_tiers_init; // tier numbers
 	std::vector<int> m_dc_tou_periods; // period number
@@ -435,7 +438,7 @@ public:
 		*/
 		ssc_number_t *pload, *pgen;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
-//		bool bload=false;
+		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
 		// for lifetime analysis
 		size_t nrec_gen_per_year = nrec_gen;
@@ -447,22 +450,23 @@ public:
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
 		m_num_rec_yearly = nrec_gen_per_year;
 
-//		if (is_assigned("load"))
-//		{ // hourly or sub hourly loads for single year
-//			bload = true;
+		if (is_assigned("load"))
+		{ // hourly or sub hourly loads for single year
+			bload = true;
 			pload = as_array("load", &nrec_load);
 			step_per_hour_load = nrec_load / 8760;
 			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
 				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
 			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
 				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
-//		}
+		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t> //e_sys(m_num_rec_yearly), p_sys(m_num_rec_yearly), 
 			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
-//			e_load(m_num_rec_yearly), p_load(m_num_rec_yearly),
+//			e_load(m_num_rec_yearly), 
+			p_load(m_num_rec_yearly), // to handle no load, or num load != num gen
 			e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
 			e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
 
@@ -470,7 +474,6 @@ public:
 
 		// assign timestep values for utility rate calculations
 		size_t idx = 0;
-		ssc_number_t ts_power = 0;
 		ssc_number_t ts_load = 0;
 		ssc_number_t year1_elec_load = 0;
 
@@ -482,7 +485,7 @@ public:
 			e_sys[i] = pgen[i] * ts_hour_gen; // kWh
 			p_sys[i] = pgen[i];
 		}
-	
+*/	
 		//load - fill out to number of generation records per year
 		// handle cases 
 		// 1. if no load 
@@ -495,22 +498,14 @@ public:
 			{
 				size_t ndx = i*step_per_hour_gen + ii;
 				ts_load = (bload ? ((idx < nrec_load) ? pload[idx] : 0) : 0);
-				e_load[ndx] = ts_load * ts_hour_gen; // kwh
-				p_load[ndx] = ts_load;
-				year1_elec_load += e_load[ndx];
+				year1_elec_load += ts_load;
 				// sign correction for utility rate calculations
-				e_load[ndx] = -e_load[ndx];
-				p_load[ndx] = -p_load[ndx];
+				p_load[ndx] = -ts_load;
 				if (ii < step_per_hour_load) idx++;
 			}
 		}
-		*/
-		for (i = 0; i < m_num_rec_yearly; i++)
-			year1_elec_load += pload[i];
-
 
 		assign("year1_electric_load", year1_elec_load* ts_hour_gen);
-
 
 		
 		/* allocate intermediate data arrays */
@@ -709,8 +704,8 @@ public:
 				// apply load escalation appropriate for current year
 //				e_load_cy[j] = e_load[j] * load_scale[i];
 //				p_load_cy[j] = p_load[j] * load_scale[i];
-				e_load_cy[j] = -pload[j] * load_scale[i] * ts_hour_gen;
-				p_load_cy[j] = -pload[j] * load_scale[i];
+				e_load_cy[j] = p_load[j] * load_scale[i] * ts_hour_gen;
+				p_load_cy[j] = p_load[j] * load_scale[i];
 
 
 				// update e_sys per year if lifetime output
@@ -1192,9 +1187,51 @@ public:
 			m_month.push_back(urm);
 		}
 
+		m_ec_ts_sell_rate.clear();
 
 		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
+		bool en_ts_sell_rate = as_boolean("ur_en_ts_sell_rate");
+
+		if (en_ts_sell_rate)
+		{
+			if (!is_assigned("ur_ts_sell_rate"))
+			{
+				throw exec_error("utilityrate5", util::format("Time step sell rate enabled but no time step sell rates specified."));
+			}
+			else
+			{ // hourly or sub hourly loads for single year
+				size_t cnt;
+				ssc_number_t * ts_sr;
+				ts_sr = as_array("load", &cnt);
+				size_t ts_step_per_hour = cnt / 8760;
+				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
+					throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)cnt));
+				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
+					throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
+
+				// assign timestep values for utility rate calculations
+				size_t idx = 0;
+				ssc_number_t sr = 0;
+				size_t step_per_hour = m_num_rec_yearly / 8760;
+				//time step sell rate - fill out to number of generation records per year
+				// handle cases 
+				// 1. if no time step sell rate  
+				// 2. if time step sell rate  has 8760 and gen has more records
+				// 3. if number records same for time step sell rate  and gen
+				idx = 0;
+				for (i = 0; i < 8760; i++)
+				{
+					for (size_t ii = 0; ii < step_per_hour; ii++)
+					{
+//						size_t ndx = i*step_per_hour + ii;
+						sr = (idx < cnt) ? ts_sr[idx] : 0;
+						m_ec_ts_sell_rate.push_back(sr);
+						if (ii < ts_step_per_hour) idx++;
+					}
+				}
+			}
+		}
 
 		// for reporting purposes
 		for (i = 0; i < m_num_rec_yearly; i++)
@@ -2088,7 +2125,7 @@ public:
 					// energy charge
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour-1 )
+						if (d == util::nday[m] - 1 && h == 23 && s == (int)(steps_per_hour-1) )
 						{
 							if (ec_enabled)
 							{
@@ -2302,7 +2339,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour - 1)
+						if (d == util::nday[m] - 1 && h == 23 && (int)(steps_per_hour - 1))
 						{
 							// apply fixed first
 							if (include_fixed)
@@ -2400,7 +2437,7 @@ public:
 
 		// calculate the monthly net energy and monthly hours
 		int m, d, h, s, period, tier;
-		int c = 0;
+		size_t c = 0;
 		for (m = 0; m < (int)m_month.size(); m++)
 		{
 			m_month[m].energy_net = 0;
@@ -2421,7 +2458,7 @@ public:
 						if (p_in[c] < 0 && p_in[c] < -m_month[m].dc_flat_peak)
 						{
 							m_month[m].dc_flat_peak = -p_in[c];
-							m_month[m].dc_flat_peak_hour = c;
+							m_month[m].dc_flat_peak_hour = (int)c;
 						}
 						c++;
 					}
@@ -2552,7 +2589,7 @@ public:
 							if (p_in[c] < 0 && p_in[c] < -m_month[m].dc_tou_peak[row])
 							{
 								m_month[m].dc_tou_peak[row] = -p_in[c];
-								m_month[m].dc_tou_peak_hour[row] = c;
+								m_month[m].dc_tou_peak_hour[row] = (int)c;
 							}
 							c++;
 						}
@@ -2617,7 +2654,12 @@ public:
 								if (tier >= (int)m_month[m].ec_tou_ub.ncols())
 									tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 								double tier_energy = energy_surplus;
-								double tier_credit = tier_energy * m_month[m].ec_tou_sr.at(row, tier) * rate_esc;
+								double sr = m_month[m].ec_tou_sr.at(row, tier);
+								// time step sell rates
+								if (c< m_ec_ts_sell_rate.size())
+									sr = m_ec_ts_sell_rate[c];
+								double tier_credit = tier_energy * sr * rate_esc;
+
 								credit_amt += tier_credit;
 								m_month[m].ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
 								m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
@@ -2667,7 +2709,7 @@ public:
 
 
 						// demand charge - end of month only
-						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour - 1)
+						if (d == util::nday[m] - 1 && h == 23 && s == (int)(steps_per_hour - 1))
 						{
 
 							if (dc_enabled)
@@ -2772,7 +2814,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23 && s == steps_per_hour - 1)
+						if (d == util::nday[m] - 1 && h == 23 && s == (int)(steps_per_hour - 1))
 						{
 							// apply fixed first
 							if (include_fixed)
