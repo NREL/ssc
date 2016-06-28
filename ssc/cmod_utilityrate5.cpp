@@ -15,7 +15,6 @@ static var_info vtab_utility_rate5[] = {
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_INOUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
-//	{ SSC_INPUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
 	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
@@ -48,6 +47,11 @@ static var_info vtab_utility_rate5[] = {
 	// urdb minimums
 	{ SSC_INPUT, SSC_NUMBER, "ur_monthly_min_charge", "Monthly minimum charge", "$", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "ur_annual_min_charge", "Annual minimum charge", "$", "", "", "?=0.0", "", "" },
+
+
+	// time step sell rates
+	{ SSC_INPUT, SSC_NUMBER, "ur_en_ts_sell_rate", "Enable time step sell rates", "0/1", "", "", "?=0", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_ARRAY, "ur_ts_sell_rate", "Time step sell rates", "0/1", "", "", "", "", "" },
 
 
 
@@ -331,6 +335,8 @@ public:
 	// calculated charges per period
 	std::vector<double>  dc_tou_charge;
 	ssc_number_t dc_flat_charge;
+
+
 };
 
 class cm_utilityrate5 : public compute_module
@@ -429,7 +435,7 @@ public:
 		*/
 		ssc_number_t *pload, *pgen;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
-		bool bload=false;
+//		bool bload=false;
 		pgen = as_array("gen", &nrec_gen);
 		// for lifetime analysis
 		size_t nrec_gen_per_year = nrec_gen;
@@ -441,22 +447,23 @@ public:
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
 		m_num_rec_yearly = nrec_gen_per_year;
 
-		if (is_assigned("load"))
-		{ // hourly or sub hourly loads for single year
-			bload = true;
+//		if (is_assigned("load"))
+//		{ // hourly or sub hourly loads for single year
+//			bload = true;
 			pload = as_array("load", &nrec_load);
 			step_per_hour_load = nrec_load / 8760;
 			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
 				throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
 			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
 				throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
-		}
+//		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
 		// prepare timestep arrays for load and grid values
-		std::vector<ssc_number_t> e_sys(m_num_rec_yearly), p_sys(m_num_rec_yearly), e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
-			e_load(m_num_rec_yearly), p_load(m_num_rec_yearly),
-			e_grid(m_num_rec_yearly), p_grid(m_num_rec_yearly),
+		std::vector<ssc_number_t> //e_sys(m_num_rec_yearly), p_sys(m_num_rec_yearly), 
+			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
+//			e_load(m_num_rec_yearly), p_load(m_num_rec_yearly),
+			e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
 			e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
 
 
@@ -467,10 +474,11 @@ public:
 		ssc_number_t ts_load = 0;
 		ssc_number_t year1_elec_load = 0;
 
-		
+		/*
 		for (i = 0; i < m_num_rec_yearly; i++)
 		{
-			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
+//			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
+			] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
 			e_sys[i] = pgen[i] * ts_hour_gen; // kWh
 			p_sys[i] = pgen[i];
 		}
@@ -496,7 +504,12 @@ public:
 				if (ii < step_per_hour_load) idx++;
 			}
 		}
-		assign("year1_electric_load", year1_elec_load);
+		*/
+		for (i = 0; i < m_num_rec_yearly; i++)
+			year1_elec_load += pload[i];
+
+
+		assign("year1_electric_load", year1_elec_load* ts_hour_gen);
 
 
 		
@@ -694,28 +707,38 @@ public:
 				}
 				*/
 				// apply load escalation appropriate for current year
-				e_load_cy[j] = e_load[j] * load_scale[i];
-				p_load_cy[j] = p_load[j] * load_scale[i];
+//				e_load_cy[j] = e_load[j] * load_scale[i];
+//				p_load_cy[j] = p_load[j] * load_scale[i];
+				e_load_cy[j] = -pload[j] * load_scale[i] * ts_hour_gen;
+				p_load_cy[j] = -pload[j] * load_scale[i];
 
 
 				// update e_sys per year if lifetime output
-				if ((as_integer("system_use_lifetime_output") == 1) )
+				if ((as_integer("system_use_lifetime_output") == 1) && ( idx < nrec_gen ))
 				{
-					e_sys[j] = p_sys[j] = 0.0;
-					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
-					e_sys[j] += ts_power * ts_hour_gen;
-					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
+//					e_sys[j] = p_sys[j] = 0.0;
+//					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
+//					e_sys[j] = ts_power * ts_hour_gen;
+//					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
+					e_sys_cy[j] = pgen[idx] * ts_hour_gen;
+					p_sys_cy[j] = pgen[idx];
 					// until lifetime load fully implemented
 					lifetime_load[idx] = -e_load_cy[j];
 					idx++;
 				}
-
+				else
+				{
+					e_sys_cy[j] = pgen[j] * ts_hour_gen;
+					p_sys_cy[j] = pgen[j];
+				}
+				e_sys_cy[j] *= sys_scale[i];
+				p_sys_cy[j] *= sys_scale[i];
 				// calculate e_grid value (e_sys + e_load)
-				e_sys_cy[j] = e_sys[j] * sys_scale[i];
-				p_sys_cy[j] = p_sys[j] * sys_scale[i];
+//				e_sys_cy[j] = e_sys[j] * sys_scale[i];
+//				p_sys_cy[j] = p_sys[j] * sys_scale[i];
 				// note: load is assumed to have negative sign
-				e_grid[j] = e_sys_cy[j] + e_load_cy[j];
-				p_grid[j] = p_sys_cy[j] + p_load_cy[j];
+				e_grid_cy[j] = e_sys_cy[j] + e_load_cy[j];
+				p_grid_cy[j] = p_sys_cy[j] + p_load_cy[j];
 			}
 
 
@@ -823,7 +846,7 @@ public:
 
 			if (hourly_reconciliation)
 			{
-				ur_calc_timestep(&e_grid[0], &p_grid[0],
+				ur_calc_timestep(&e_grid_cy[0], &p_grid_cy[0],
 					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 					&energy_charge[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
@@ -836,7 +859,7 @@ public:
 				if (enable_nm)
 				{
 					// calculate revenue with solar system (using net grid energy & maxpower)
-					ur_calc(&e_grid[0], &p_grid[0],
+					ur_calc(&e_grid_cy[0], &p_grid_cy[0],
 						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 						&energy_charge[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
@@ -972,8 +995,8 @@ public:
 				{
 					ec_tou_sched[ii] = (ssc_number_t)m_ec_tou_sched[ii];
 					dc_tou_sched[ii] = (ssc_number_t)m_dc_tou_sched[ii];
-					load[ii] = -e_load[ii];
-					e_tofromgrid[ii] = e_grid[ii];
+					load[ii] = -e_load_cy[ii];
+					e_tofromgrid[ii] = e_grid_cy[ii];
 					if (e_tofromgrid[ii] > 0)
 					{
 						year1_hourly_e_togrid[ii] = e_tofromgrid[ii];
@@ -984,13 +1007,13 @@ public:
 						year1_hourly_e_togrid[ii] = 0.0;
 						year1_hourly_e_fromgrid[ii] = -e_tofromgrid[ii];
 					}
-					p_tofromgrid[ii] = p_grid[ii];
+					p_tofromgrid[ii] = p_grid_cy[ii];
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
 				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], (int)m_num_rec_yearly));
 				assign("year1_hourly_dc_tou_schedule", var_data(&dc_tou_sched[0], (int)m_num_rec_yearly));
 				// monthly outputs - Paul and Sean 7/29/13 - updated 8/9/13 and 8/12/13 and 9/10/13
-				monthly_outputs(&e_load[0], &e_sys_cy[0], &e_grid[0], &salespurchases[0],
+				monthly_outputs(&e_load_cy[0], &e_sys_cy[0], &e_grid_cy[0], &salespurchases[0],
 					&monthly_load[0], &monthly_system_generation[0], &monthly_elec_to_grid[0],
 					&monthly_elec_needed_from_grid[0],
 					&monthly_salespurchases[0]);
@@ -1015,15 +1038,17 @@ public:
 				for (j = 0; j<m_num_rec_yearly; j++)
 				{
 					output[j] = e_sys_cy[j];
-					edemand[j] = e_grid[j] < 0.0 ? -e_grid[j] : (ssc_number_t)0.0;
-					pdemand[j] = p_grid[j] < 0.0 ? -p_grid[j] : (ssc_number_t)0.0;
+					edemand[j] = e_grid_cy[j] < 0.0 ? -e_grid_cy[j] : (ssc_number_t)0.0;
+					pdemand[j] = p_grid_cy[j] < 0.0 ? -p_grid_cy[j] : (ssc_number_t)0.0;
 
-					ssc_number_t sys_e_net = output[j] + e_load[j];// loads are assumed negative
+					ssc_number_t sys_e_net = output[j] + e_load_cy[j];// loads are assumed negative
 					e_sys_to_grid[j] = sys_e_net > 0 ? sys_e_net : (ssc_number_t)0.0;
-					e_sys_to_load[j] = sys_e_net > 0 ? -e_load[j] : output[j];
+					e_sys_to_load[j] = sys_e_net > 0 ? -e_load_cy[j] : output[j];
 
-					ssc_number_t sys_p_net = output[j] + p_load[j];// loads are assumed negative
-					p_sys_to_load[j] = sys_p_net > 0 ? -p_load[j] : output[j];
+//					ssc_number_t sys_p_net = output[j] + p_load[j];// loads are assumed negative
+//					p_sys_to_load[j] = sys_p_net > 0 ? -p_load[j] : output[j];
+					ssc_number_t sys_p_net = output[j] + p_load_cy[j];// loads are assumed negative
+					p_sys_to_load[j] = sys_p_net > 0 ? -p_load_cy[j] : output[j];
 				}
 
 				assign("year1_hourly_system_output", var_data(&output[0], (int)m_num_rec_yearly));
