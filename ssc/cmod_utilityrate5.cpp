@@ -1203,7 +1203,7 @@ public:
 			{ // hourly or sub hourly loads for single year
 				size_t cnt;
 				ssc_number_t * ts_sr;
-				ts_sr = as_array("load", &cnt);
+				ts_sr = as_array("ur_ts_sell_rate", &cnt);
 				size_t ts_step_per_hour = cnt / 8760;
 				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
 					throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)cnt));
@@ -1299,7 +1299,7 @@ public:
 //			int metering_option = as_integer("ur_metering_option");
 //			bool enable_nm = (metering_option == 0 || metering_option == 1);
 			// 0 = net metering energy rollover, 1=net metering dollar rollover
-			// 2= non-net metering monthly, 3= non-net metering hourly
+			// 2= non-net metering hourly, 2= non-net metering monthly
 
 			bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
@@ -2339,7 +2339,7 @@ public:
 				{
 					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
 					{
-						if (d == util::nday[m] - 1 && h == 23 && (int)(steps_per_hour - 1))
+						if (d == util::nday[m] - 1 && h == 23 && s == (int)(steps_per_hour - 1))
 						{
 							// apply fixed first
 							if (include_fixed)
