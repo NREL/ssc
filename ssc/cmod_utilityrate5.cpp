@@ -22,27 +22,18 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased", "Net metering monthly excess", "", "?=0", "INTEGER", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased (time step),4=Two meters with all generation sold and all load purchased (monthly)", "Net metering monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=4", "" },
 
-	// 0 to match with 2015.1.30 release, 1 to use most common URDB kWh and 2 to use daily kWh 
-//	{ SSC_INPUT, SSC_NUMBER, "ur_ec_hourly_acc_period", "Energy charge hourly reconciliation period", "0=hourly,1=monthly,2=daily", "Non-net metering hourly tier energy", "", "?=0", "INTEGER", "" },
-	// 0 to use previous version sell rates and 1 to use single sell rate, namely flat sell rate
-//	{ SSC_INPUT, SSC_NUMBER, "ur_ec_sell_rate_option", "Energy charge sell rate option", "0=Sell excess at energy charge sell rates,1=sell excess at specified sell rate", "Non-net metering sell rate", "", "?=0", "INTEGER", "" },
-
-//	{ SSC_INPUT, SSC_NUMBER, "ur_ec_single_sell_rate", "Single TOU sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 
 
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 
 
-// optional input that allows sell rates to be overridden with buy rates - defaults to no override
+// optional input that allows sell rates to be overridden with buy rates - defaults to not override
 	{ SSC_INPUT, SSC_NUMBER, "ur_sell_eq_buy", "Set sell rate equal to buy rate", "0/1", "Optional override", "", "?=0", "BOOLEAN", "" },
 
 
-
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_buy_rate",         "Flat rate (buy)",                 "$/kWh",  "",                      "",             "*",                         "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,     "ur_flat_sell_rate",        "Flat rate (sell)",                "$/kWh",  "",                      "",             "?=0.0",                     "",      "" },
 
 	// urdb minimums
 	{ SSC_INPUT, SSC_NUMBER, "ur_monthly_min_charge", "Monthly minimum charge", "$", "", "", "?=0.0", "", "" },
@@ -668,13 +659,16 @@ public:
 		// lifetime hourly load
 		ssc_number_t *lifetime_load = allocate("lifetime_load", nrec_gen);
 
-		// false = 2 meters, load and system treated separately
-		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
-		//			bool enable_nm = as_boolean("ur_enable_net_metering");
+		/*
+		0=Single meter with monthly rollover credits in kWh
+		1=Single meter with monthly rollover credits in $
+		2=Single meter with no monthly rollover credits
+		3=Two meters with all generation sold and all load purchased (time step)
+		4=Two meters with all generation sold and all load purchased (monthly)
+		*/		
 		int metering_option = as_integer("ur_metering_option");
-		bool enable_nm = (metering_option == 0 || metering_option == 1);
-//		bool hourly_reconciliation = (metering_option == 3);
-		bool hourly_reconciliation = (metering_option == 2); // per 2/25/16 meeting
+		bool two_meter = (metering_option == 3 || metering_option == 4);
+		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3);
 
 
 		idx = 0;
@@ -738,7 +732,7 @@ public:
 
 
 			// now calculate revenue without solar system (using load only)
-			if (hourly_reconciliation)
+			if (timestep_reconciliation)
 			{
 				ur_calc_timestep(&e_load_cy[0], &p_load_cy[0],
 					&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
@@ -839,30 +833,32 @@ public:
 			
 // with system
 
-			if (hourly_reconciliation)
+			if (timestep_reconciliation)
 			{
-				ur_calc_timestep(&e_grid_cy[0], &p_grid_cy[0],
-					&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-					&energy_charge[0],
-					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
-					&monthly_dc_fixed[0], &monthly_dc_tou[0],
-					&monthly_ec_charges[0],
-					&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
-			}
-			else // monthly reconciliation per 2015.6.30 release
-			{
-				if (enable_nm)
+				if (two_meter)
 				{
-					// calculate revenue with solar system (using net grid energy & maxpower)
-					ur_calc(&e_grid_cy[0], &p_grid_cy[0],
+					ur_calc_timestep(&e_sys_cy[0], &p_sys_cy[0],
 						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
 						&energy_charge[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
-						&monthly_ec_charges[0], 
-						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],  rate_scale[i], i+1);
+						&monthly_ec_charges[0],
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], false, false, true);
 				}
 				else
+				{
+					ur_calc_timestep(&e_grid_cy[0], &p_grid_cy[0],
+						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+						&energy_charge[0],
+						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
+						&monthly_dc_fixed[0], &monthly_dc_tou[0],
+						&monthly_ec_charges[0],
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i]);
+				}
+			}
+			else // monthly reconciliation per 2015.6.30 release
+			{
+				if (two_meter)
 				{
 					// calculate revenue with solar system (using system energy & maxpower)
 					ur_calc(&e_sys_cy[0], &p_sys_cy[0],
@@ -870,100 +866,113 @@ public:
 						&energy_charge[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
-						&monthly_ec_charges[0], 
-						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0],  rate_scale[i], i+1, false, false,true);
-					// TODO - remove annual_revenue and just use annual bill
-					// Two meters - adjust output accordingly
-					for (j = 0; j < m_num_rec_yearly; j++)
-					{
-						revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
-						annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
-					}
-					// adjust monthly outputs as sum of both meters = system meter + load meter 
+						&monthly_ec_charges[0],
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1, false, false, true);
+				}
+				else
+				{
+					// calculate revenue with solar system (using net grid energy & maxpower)
+					ur_calc(&e_grid_cy[0], &p_grid_cy[0],
+						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
+						&energy_charge[0],
+						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
+						&monthly_dc_fixed[0], &monthly_dc_tou[0],
+						&monthly_ec_charges[0],
+						&dc_hourly_peak[0], &monthly_cumulative_excess_energy[0], &monthly_cumulative_excess_dollars[0], &monthly_bill[0], rate_scale[i], i + 1);
+				}
+			}
+			if (two_meter)
+			{
+				// TODO - remove annual_revenue and just use annual bill
+				// Two meters - adjust output accordingly
+				for (j = 0; j < m_num_rec_yearly; j++)
+				{
+					revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
+					annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
+				}
+				// adjust monthly outputs as sum of both meters = system meter + load meter 
 
-					for (j = 0; j < 12; j++)
-					{
-						monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
-						monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
-						monthly_ec_charges[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
-						monthly_fixed_charges[j] += ch_wo_sys_fixed_ym[(i + 1) * 12 + j];
-						monthly_minimum_charges[j] += ch_wo_sys_minimum_ym[(i + 1) * 12 + j];
-						monthly_bill[j] += utility_bill_wo_sys_ym[(i + 1) * 12 + j];
-					}
+				for (j = 0; j < 12; j++)
+				{
+					monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
+					monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
+					monthly_ec_charges[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
+					monthly_fixed_charges[j] += ch_wo_sys_fixed_ym[(i + 1) * 12 + j];
+					monthly_minimum_charges[j] += ch_wo_sys_minimum_ym[(i + 1) * 12 + j];
+					monthly_bill[j] += utility_bill_wo_sys_ym[(i + 1) * 12 + j];
+				}
 
-					if (i == 0)
-					{
+				if (i == 0)
+				{
 
-						// for each month add the wo system charge and energy
-						// not that first row contains tier num and first column contains period numbers in the charge_wo_sys_ec and energy_wo_sys_ec matrices
-						for (int m = 0; m < (int)m_month.size(); m++)
+					// for each month add the wo system charge and energy
+					// not that first row contains tier num and first column contains period numbers in the charge_wo_sys_ec and energy_wo_sys_ec matrices
+					for (int m = 0; m < (int)m_month.size(); m++)
+					{
+						for (int ir = 0; ir < (int)m_month[m].ec_charge.nrows(); ir++)
 						{
-							for (int ir = 0; ir < (int)m_month[m].ec_charge.nrows(); ir++)
+							for (int ic = 0; ic < (int)m_month[m].ec_charge.ncols(); ic++)
 							{
-								for (int ic = 0; ic < (int)m_month[m].ec_charge.ncols(); ic++)
+								ssc_number_t charge_adj = 0;
+								ssc_number_t energy_adj = 0;
+								switch (m)
 								{
-									ssc_number_t charge_adj = 0;
-									ssc_number_t energy_adj = 0;
-									switch (m)
-									{
-									case 0:
-										charge_adj = charge_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
-										break;
-									case 1:
-										charge_adj = charge_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
-										break;
-									case 2:
-										charge_adj = charge_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
-										break;
-									case 3:
-										charge_adj = charge_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
-										break;
-									case 4:
-										charge_adj = charge_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
-										break;
-									case 5:
-										charge_adj = charge_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
-										break;
-									case 6:
-										charge_adj = charge_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
-										break;
-									case 7:
-										charge_adj = charge_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
-										break;
-									case 8:
-										charge_adj = charge_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
-										break;
-									case 9:
-										charge_adj = charge_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
-										break;
-									case 10:
-										charge_adj = charge_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
-										break;
-									case 11:
-										charge_adj = charge_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
-										energy_adj = energy_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
-										break;
-									}
-									m_month[m].ec_charge.at(ir, ic) += charge_adj;
-									m_month[m].ec_energy_use.at(ir, ic) += energy_adj;
+								case 0:
+									charge_adj = charge_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_jan_tp.at(ir + 1, ic + 1);
+									break;
+								case 1:
+									charge_adj = charge_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_feb_tp.at(ir + 1, ic + 1);
+									break;
+								case 2:
+									charge_adj = charge_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_mar_tp.at(ir + 1, ic + 1);
+									break;
+								case 3:
+									charge_adj = charge_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_apr_tp.at(ir + 1, ic + 1);
+									break;
+								case 4:
+									charge_adj = charge_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_may_tp.at(ir + 1, ic + 1);
+									break;
+								case 5:
+									charge_adj = charge_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_jun_tp.at(ir + 1, ic + 1);
+									break;
+								case 6:
+									charge_adj = charge_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_jul_tp.at(ir + 1, ic + 1);
+									break;
+								case 7:
+									charge_adj = charge_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_aug_tp.at(ir + 1, ic + 1);
+									break;
+								case 8:
+									charge_adj = charge_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_sep_tp.at(ir + 1, ic + 1);
+									break;
+								case 9:
+									charge_adj = charge_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_oct_tp.at(ir + 1, ic + 1);
+									break;
+								case 10:
+									charge_adj = charge_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_nov_tp.at(ir + 1, ic + 1);
+									break;
+								case 11:
+									charge_adj = charge_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
+									energy_adj = energy_wo_sys_ec_dec_tp.at(ir + 1, ic + 1);
+									break;
 								}
+								m_month[m].ec_charge.at(ir, ic) += charge_adj;
+								m_month[m].ec_energy_use.at(ir, ic) += energy_adj;
 							}
 						}
-
 					}
-				} // non net metering with monthly reconciliation
-			} // monthly reconciliation
+				} // i==0 (first year matrix outputs)
+			} // two meter metering option 
 			
 			if (i == 0)
 			{
@@ -1295,12 +1304,6 @@ public:
 			util::matrix_t<float> ec_tou_mat(nrows, ncols);
 			ec_tou_mat.assign(ec_tou_in, nrows, ncols);
 
-			// adjust sell rate based on input selections
-//			int metering_option = as_integer("ur_metering_option");
-//			bool enable_nm = (metering_option == 0 || metering_option == 1);
-			// 0 = net metering energy rollover, 1=net metering dollar rollover
-			// 2= non-net metering hourly, 2= non-net metering monthly
-
 			bool sell_eq_buy = as_boolean("ur_sell_eq_buy");
 
 			for (r = 0; r < nrows; r++)
@@ -1432,8 +1435,6 @@ public:
 								ssc_number_t sell = ec_tou_mat.at(r, 5);
 								if (sell_eq_buy)
 									sell = ec_tou_mat.at(r, 4);
-//								else if (!ur_ec_sell_at_ec_rates)
-//									sell = ur_ec_single_sell_rate;
 								m_month[m].ec_tou_sr.at(i, j) = sell;
 								found = true;
 							}
@@ -1710,14 +1711,15 @@ public:
 		}
 		// initialize all montly values
 
-
-
-		// false = 2 meters, load and system treated separately
-		// true = 1 meter, net grid energy used for bill calculation with either energy or dollar rollover.
+		/*
+		0=Single meter with monthly rollover credits in kWh
+		1=Single meter with monthly rollover credits in $
+		2=Single meter with no monthly rollover credits
+		3=Two meters with all generation sold and all load purchased (time step)
+		4=Two meters with all generation sold and all load purchased (monthly)
+		*/
 		int metering_option = as_integer("ur_metering_option");
 		bool enable_nm = (metering_option == 0 || metering_option == 1);
-		// 0 = net metering energy rollover, 1=net metering dollar rollover
-		// 3= non-net metering monthly, 2= non-net metering hourly
 
 		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
@@ -2401,7 +2403,7 @@ public:
 		ssc_number_t monthly_ec_charges[12], //ssc_number_t monthly_ec_flat_charges[12],
 		ssc_number_t *dc_hourly_peak, ssc_number_t monthly_cumulative_excess_energy[12],
 		ssc_number_t monthly_cumulative_excess_dollars[12], ssc_number_t monthly_bill[12],
-		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true)
+		ssc_number_t rate_esc, bool include_fixed = true, bool include_min = true, bool gen_only = false)
 		throw(general_error)
 	{
 		int i;
@@ -2475,77 +2477,86 @@ public:
 			for (m = 0; m < (int)m_month.size(); m++)
 			{
 				// check for kWh/kW
-				bool kWhperkW = false;
 				int start_tier = 0;
 				int end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 				int num_periods = (int)m_month[m].ec_tou_ub.nrows();
 				int num_tiers = end_tier - start_tier + 1;
 
-				// kWh/kW (kWh/kW daily handled in Setup)
-				// 1. find kWh/kW tier
-				// 2. set min tier and max tier based on next item in ec_tou matrix
-				// 3. resize use and chart based on number of tiers in kWh/kW section
-				// 4. assumption is that all periods in same month have same tier breakdown
-				// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
-				// That is, first tier must be kWh/kW
-				if ((m_month[m].ec_tou_units.ncols()>0 && m_month[m].ec_tou_units.nrows() > 0)
-					&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
+				if (!gen_only) // added for two meter no load scenarios to use load tier sizing
 				{
-					kWhperkW = true;
-					// monthly total energy / monthly peak to determine which kWh/kW tier
-					double mon_kWhperkW = -m_month[m].energy_net; // load negative
-					if (m_month[m].dc_flat_peak != 0)
-						mon_kWhperkW /= m_month[m].dc_flat_peak;
-					// find correct start and end tier based on kWhperkW band
-					start_tier = 1;
-					bool found = false;
-					for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
-					{
-						int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
-						if ((units == 1) || (units == 3))
-						{
-							if (found)
-							{
-								end_tier = (int)i_tier - 1;
-								break;
-							}
-							else if (mon_kWhperkW < m_month[m].ec_tou_ub_init.at(0, i_tier))
-							{
-								start_tier = (int)i_tier + 1;
-								found = true;
-							}
-						}
-					}
-					// last tier since no max specified in rate
-					if (!found) start_tier = end_tier;
-					if (start_tier >= (int)m_month[m].ec_tou_ub_init.ncols())
-						start_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
-					if (end_tier < start_tier)
-						end_tier = start_tier;
+					// check for kWh/kW
+					bool kWhperkW = false;
+					//start_tier = 0;
+					end_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
+					//int num_periods = (int)m_month[m].ec_tou_ub_init.nrows();
 					num_tiers = end_tier - start_tier + 1;
-					// resize everytime to handle load and energy changes
-					// resize sr, br and ub for use in energy charge calculations below
-					util::matrix_t<float> br(num_periods, num_tiers);
-					util::matrix_t<float> sr(num_periods, num_tiers);
-					util::matrix_t<float> ub(num_periods, num_tiers);
-					// assign appropriate values.
-					for (period = 0; period < num_periods; period++)
+
+
+					// kWh/kW (kWh/kW daily handled in Setup)
+					// 1. find kWh/kW tier
+					// 2. set min tier and max tier based on next item in ec_tou matrix
+					// 3. resize use and chart based on number of tiers in kWh/kW section
+					// 4. assumption is that all periods in same month have same tier breakdown
+					// 5. assumption is that tier numbering is correct for the kWh/kW breakdown
+					// That is, first tier must be kWh/kW
+					if ((m_month[m].ec_tou_units.ncols() > 0 && m_month[m].ec_tou_units.nrows() > 0)
+						&& ((m_month[m].ec_tou_units.at(0, 0) == 1) || (m_month[m].ec_tou_units.at(0, 0) == 3)))
 					{
-						for (tier = 0; tier < num_tiers; tier++)
+						kWhperkW = true;
+						// monthly total energy / monthly peak to determine which kWh/kW tier
+						double mon_kWhperkW = -m_month[m].energy_net; // load negative
+						if (m_month[m].dc_flat_peak != 0)
+							mon_kWhperkW /= m_month[m].dc_flat_peak;
+						// find correct start and end tier based on kWhperkW band
+						start_tier = 1;
+						bool found = false;
+						for (size_t i_tier = 0; i_tier < m_month[m].ec_tou_units.ncols(); i_tier++)
 						{
-							br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, start_tier + tier);
-							sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
-							ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
-							// update for correct tier number column headings
-							m_month[m].ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
+							int units = (int)m_month[m].ec_tou_units.at(0, i_tier);
+							if ((units == 1) || (units == 3))
+							{
+								if (found)
+								{
+									end_tier = (int)i_tier - 1;
+									break;
+								}
+								else if (mon_kWhperkW < m_month[m].ec_tou_ub_init.at(0, i_tier))
+								{
+									start_tier = (int)i_tier + 1;
+									found = true;
+								}
+							}
 						}
+						// last tier since no max specified in rate
+						if (!found) start_tier = end_tier;
+						if (start_tier >= (int)m_month[m].ec_tou_ub_init.ncols())
+							start_tier = (int)m_month[m].ec_tou_ub_init.ncols() - 1;
+						if (end_tier < start_tier)
+							end_tier = start_tier;
+						num_tiers = end_tier - start_tier + 1;
+						// resize everytime to handle load and energy changes
+						// resize sr, br and ub for use in energy charge calculations below
+						util::matrix_t<float> br(num_periods, num_tiers);
+						util::matrix_t<float> sr(num_periods, num_tiers);
+						util::matrix_t<float> ub(num_periods, num_tiers);
+						// assign appropriate values.
+						for (period = 0; period < num_periods; period++)
+						{
+							for (tier = 0; tier < num_tiers; tier++)
+							{
+								br.at(period, tier) = m_month[m].ec_tou_br_init.at(period, start_tier + tier);
+								sr.at(period, tier) = m_month[m].ec_tou_sr_init.at(period, start_tier + tier);
+								ub.at(period, tier) = m_month[m].ec_tou_ub_init.at(period, start_tier + tier);
+								// update for correct tier number column headings
+								m_month[m].ec_periods_tiers[period][tier] = start_tier + m_ec_periods_tiers_init[period][tier];
+							}
+						}
+
+						m_month[m].ec_tou_br = br;
+						m_month[m].ec_tou_sr = sr;
+						m_month[m].ec_tou_ub = ub;
 					}
-
-					m_month[m].ec_tou_br = br;
-					m_month[m].ec_tou_sr = sr;
-					m_month[m].ec_tou_ub = ub;
 				}
-
 				// reset now resized
 				start_tier = 0;
 				end_tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
