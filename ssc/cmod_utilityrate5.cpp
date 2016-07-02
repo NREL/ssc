@@ -664,11 +664,10 @@ public:
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
 		2=Single meter with no monthly rollover credits
-		3=Two meters with all generation sold and all load purchased (time step)
-		4=Two meters with all generation sold and all load purchased (monthly)
+		3=Two meters with all generation sold and all load purchaseded 
 		*/		
 		int metering_option = as_integer("ur_metering_option");
-		bool two_meter = (metering_option == 3 || metering_option == 4);
+		bool two_meter = (metering_option == 3 );
 		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3);
 
 
@@ -1717,8 +1716,7 @@ public:
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
 		2=Single meter with no monthly rollover credits
-		3=Two meters with all generation sold and all load purchased (time step)
-		4=Two meters with all generation sold and all load purchased (monthly)
+		3=Two meters with all generation sold and all load purchased
 		*/
 		int metering_option = as_integer("ur_metering_option");
 		bool enable_nm = (metering_option == 0 || metering_option == 1);
