@@ -22,7 +22,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased (time step),4=Two meters with all generation sold and all load purchased (monthly)", "Net metering monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=4", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased", "Net metering monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=3", "" },
 
 
 
@@ -501,14 +501,15 @@ public:
 		
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(m_num_rec_yearly), revenue_wo_sys(m_num_rec_yearly),
-			payment(m_num_rec_yearly), income(m_num_rec_yearly), price(m_num_rec_yearly), demand_charge(m_num_rec_yearly), energy_charge(m_num_rec_yearly),
+			payment(m_num_rec_yearly), income(m_num_rec_yearly), 
+			demand_charge_w_sys(m_num_rec_yearly), energy_charge_w_sys(m_num_rec_yearly), 
+			demand_charge_wo_sys(m_num_rec_yearly), energy_charge_wo_sys(m_num_rec_yearly),
 			ec_tou_sched(m_num_rec_yearly), dc_tou_sched(m_num_rec_yearly), load(m_num_rec_yearly), dc_hourly_peak(m_num_rec_yearly),
 			e_tofromgrid(m_num_rec_yearly), p_tofromgrid(m_num_rec_yearly), salespurchases(m_num_rec_yearly);
 		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
 			monthly_fixed_charges(12), monthly_minimum_charges(12),
 			monthly_dc_fixed(12), monthly_dc_tou(12),
 			monthly_ec_charges(12),
-			//monthly_ec_flat_charges(12),
 			monthly_ec_rates(12),
 			monthly_salespurchases(12),
 			monthly_load(12), monthly_system_generation(12), monthly_elec_to_grid(12),
@@ -735,7 +736,7 @@ public:
 			if (timestep_reconciliation)
 			{
 				ur_calc_timestep(&e_load_cy[0], &p_load_cy[0],
-					&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
+					&revenue_wo_sys[0], &payment[0], &income[0], &demand_charge_wo_sys[0], &energy_charge_wo_sys[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0],
@@ -744,7 +745,7 @@ public:
 			else
 			{
 				ur_calc(&e_load_cy[0], &p_load_cy[0],
-					&revenue_wo_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0], &energy_charge[0],
+					&revenue_wo_sys[0], &payment[0], &income[0], &demand_charge_wo_sys[0], &energy_charge_wo_sys[0],
 					&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 					&monthly_dc_fixed[0], &monthly_dc_tou[0],
 					&monthly_ec_charges[0], 
@@ -786,8 +787,8 @@ public:
 				ur_update_ec_monthly(10, charge_wo_sys_ec_nov_tp, energy_wo_sys_ec_nov_tp, surplus_wo_sys_ec_nov_tp);
 				ur_update_ec_monthly(11, charge_wo_sys_ec_dec_tp, energy_wo_sys_ec_dec_tp, surplus_wo_sys_ec_dec_tp);
 
-				assign("year1_hourly_dc_without_system", var_data(&demand_charge[0], m_num_rec_yearly));
-				assign("year1_hourly_ec_without_system", var_data(&energy_charge[0], m_num_rec_yearly));
+				assign("year1_hourly_dc_without_system", var_data(&demand_charge_wo_sys[0], m_num_rec_yearly));
+				assign("year1_hourly_ec_without_system", var_data(&energy_charge_wo_sys[0], m_num_rec_yearly));
 
 				assign("year1_monthly_dc_fixed_without_system", var_data(&monthly_dc_fixed[0], 12));
 				assign( "year1_monthly_dc_tou_without_system", var_data(&monthly_dc_tou[0], 12) );
@@ -838,8 +839,8 @@ public:
 				if (two_meter)
 				{
 					ur_calc_timestep(&e_sys_cy[0], &p_sys_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-						&energy_charge[0],
+						&revenue_w_sys[0], &payment[0], &income[0],
+						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
 						&monthly_ec_charges[0],
@@ -848,8 +849,8 @@ public:
 				else
 				{
 					ur_calc_timestep(&e_grid_cy[0], &p_grid_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-						&energy_charge[0],
+						&revenue_w_sys[0], &payment[0], &income[0], 
+						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
 						&monthly_ec_charges[0],
@@ -862,8 +863,8 @@ public:
 				{
 					// calculate revenue with solar system (using system energy & maxpower)
 					ur_calc(&e_sys_cy[0], &p_sys_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-						&energy_charge[0],
+						&revenue_w_sys[0], &payment[0], &income[0], 
+						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
 						&monthly_ec_charges[0],
@@ -873,8 +874,8 @@ public:
 				{
 					// calculate revenue with solar system (using net grid energy & maxpower)
 					ur_calc(&e_grid_cy[0], &p_grid_cy[0],
-						&revenue_w_sys[0], &payment[0], &income[0], &price[0], &demand_charge[0],
-						&energy_charge[0],
+						&revenue_w_sys[0], &payment[0], &income[0], 
+						&demand_charge_w_sys[0], &energy_charge_w_sys[0],
 						&monthly_fixed_charges[0], &monthly_minimum_charges[0],
 						&monthly_dc_fixed[0], &monthly_dc_tou[0],
 						&monthly_ec_charges[0],
@@ -889,6 +890,8 @@ public:
 				{
 					revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
 					annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
+					energy_charge_w_sys[j] += energy_charge_wo_sys[j];
+					demand_charge_w_sys[j] += demand_charge_wo_sys[j];
 				}
 				// adjust monthly outputs as sum of both meters = system meter + load meter 
 
@@ -990,8 +993,8 @@ public:
 				ur_update_ec_monthly(11, charge_w_sys_ec_dec_tp, energy_w_sys_ec_dec_tp, surplus_w_sys_ec_dec_tp);
 
 
-				assign("year1_hourly_dc_with_system", var_data(&demand_charge[0], (int)m_num_rec_yearly));
-				assign("year1_hourly_ec_with_system", var_data(&energy_charge[0], (int)m_num_rec_yearly));
+				assign("year1_hourly_dc_with_system", var_data(&demand_charge_w_sys[0], (int)m_num_rec_yearly));
+				assign("year1_hourly_ec_with_system", var_data(&energy_charge_w_sys[0], (int)m_num_rec_yearly));
 				assign("year1_hourly_dc_peak_per_period", var_data(&dc_hourly_peak[0], (int)m_num_rec_yearly));
 
 				// sign reversal based on 9/5/13 meeting reverse again 9/6/13
@@ -1684,8 +1687,7 @@ public:
 
 	void ur_calc( ssc_number_t *e_in, ssc_number_t *p_in,
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income, 
-		ssc_number_t *price, ssc_number_t *demand_charge, 
-		ssc_number_t *energy_charge,
+		ssc_number_t *demand_charge, ssc_number_t *energy_charge,
 		ssc_number_t monthly_fixed_charges[12], ssc_number_t monthly_minimum_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], // ssc_number_t monthly_ec_flat_charges[12],
@@ -1697,7 +1699,7 @@ public:
 		int i;
 
 		for (i=0;i<(int)m_num_rec_yearly;i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
+			revenue[i] = payment[i] = income[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
 
 		for (i=0;i<12;i++)
 		{
@@ -2396,8 +2398,7 @@ public:
 	// updated to timestep for net billing
 	void ur_calc_timestep(ssc_number_t *e_in, ssc_number_t *p_in,
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,
-		ssc_number_t *price, ssc_number_t *demand_charge,
-		ssc_number_t *energy_charge,
+		ssc_number_t *demand_charge, ssc_number_t *energy_charge,
 		ssc_number_t monthly_fixed_charges[12], ssc_number_t monthly_minimum_charges[12],
 		ssc_number_t monthly_dc_fixed[12], ssc_number_t monthly_dc_tou[12],
 		ssc_number_t monthly_ec_charges[12], //ssc_number_t monthly_ec_flat_charges[12],
@@ -2408,7 +2409,7 @@ public:
 	{
 		int i;
 		for (i = 0; i<(int)m_num_rec_yearly; i++)
-			revenue[i] = payment[i] = income[i] = price[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
+			revenue[i] = payment[i] = income[i] = demand_charge[i] = dc_hourly_peak[i] = energy_charge[i] = 0.0;
 
 		for (i = 0; i<12; i++)
 		{
@@ -2677,7 +2678,7 @@ public:
 
 								income[c] += (ssc_number_t)credit_amt;
 								monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
-								price[c] += (ssc_number_t)credit_amt;
+//								price[c] += (ssc_number_t)credit_amt;
 								energy_charge[c] -= (ssc_number_t)credit_amt;
 							}
 							else
@@ -2712,7 +2713,7 @@ public:
 
 								payment[c] += (ssc_number_t)charge_amt;
 								monthly_ec_charges[m] += (ssc_number_t)charge_amt;
-								price[c] += (ssc_number_t)charge_amt;
+//								price[c] += (ssc_number_t)charge_amt;
 								energy_charge[c] += (ssc_number_t)charge_amt;
 							}
 						}
