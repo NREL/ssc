@@ -1,6 +1,6 @@
 VPATH = ../lpsolve
-#CC = gcc -mmacosx-version-min=10.9
-#CXX = g++ -mmacosx-version-min=10.9
+#CC = gcc -mmacosx-version-min=10.8
+#CXX = g++ -mmacosx-version-min=10.8
 #CFLAGS = -Wall -g -O3 -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 #CXXFLAGS = $(CFLAGS) -std=gnu++11
 
