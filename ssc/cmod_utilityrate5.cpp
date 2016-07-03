@@ -492,7 +492,10 @@ public:
 				year1_elec_load += ts_load;
 				// sign correction for utility rate calculations
 				p_load[ndx] = -ts_load;
-				if (ii < step_per_hour_load) idx++;
+				if (step_per_hour_gen == step_per_hour_load)
+					idx++;
+				else if (ii == (step_per_hour_gen - 1))
+					idx++;
 			}
 		}
 
