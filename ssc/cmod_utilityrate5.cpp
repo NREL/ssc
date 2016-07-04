@@ -454,9 +454,8 @@ public:
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
 		// prepare timestep arrays for load and grid values
-		std::vector<ssc_number_t> //e_sys(m_num_rec_yearly), p_sys(m_num_rec_yearly), 
+		std::vector<ssc_number_t> 
 			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
-//			e_load(m_num_rec_yearly), 
 			p_load(m_num_rec_yearly), // to handle no load, or num load != num gen
 			e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
 			e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
@@ -468,15 +467,6 @@ public:
 		ssc_number_t ts_load = 0;
 		ssc_number_t year1_elec_load = 0;
 
-		/*
-		for (i = 0; i < m_num_rec_yearly; i++)
-		{
-//			e_sys[i] = p_sys[i] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
-			] = e_grid[i] = p_grid[i] = e_load[i] = p_load[i] = e_load_cy[i] = p_load_cy[i] = 0.0;
-			e_sys[i] = pgen[i] * ts_hour_gen; // kWh
-			p_sys[i] = pgen[i];
-		}
-*/	
 		//load - fill out to number of generation records per year
 		// handle cases 
 		// 1. if no load 
@@ -1220,9 +1210,9 @@ public:
 				ts_sr = as_array("ur_ts_sell_rate", &cnt);
 				size_t ts_step_per_hour = cnt / 8760;
 				if (ts_step_per_hour < 1 || ts_step_per_hour > 60 || ts_step_per_hour * 8760 != cnt)
-					throw exec_error("utilityrate5", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)cnt));
+					throw exec_error("utilityrate5", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)cnt));
 				if ((cnt != m_num_rec_yearly) && (cnt != 8760))
-					throw exec_error("utilityrate5", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
+					throw exec_error("utilityrate5", util::format("number of sell rate records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)cnt, (int)m_num_rec_yearly));
 
 				// assign timestep values for utility rate calculations
 				size_t idx = 0;
