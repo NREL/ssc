@@ -1046,11 +1046,11 @@ public:
 
 				HLTerm1 = (m_HCE_A0[n]+m_HCE_A5[n]*pow(HLWind,0.5))*(SfTo-SfTi);
     
-				HLTerm2 = (m_HCE_A1[n]+m_HCE_A6[n]*sqrt(HLWind))*((pow(SfTo,2)-pow(SfTi,2))/2.e0-Tamb*(SfTo-SfTi));
+				HLTerm2 = (m_HCE_A1[n]+m_HCE_A6[n]*sqrt(HLWind))*((pow(SfTo,2)-pow(SfTi,2))/2.0-Tamb*(SfTo-SfTi));
 		
-				HLTerm3 = ((m_HCE_A2[n]+m_HCE_A4[n]*(Insol_Beam_Normal * CosTh * IAM))/3)*(pow(SfTo,3)-pow(SfTi,3));
+				HLTerm3 = ((m_HCE_A2[n]+m_HCE_A4[n]*(Insol_Beam_Normal * CosTh * IAM))/3.0)*(pow(SfTo,3)-pow(SfTi,3));
 
-				HLTerm4 = (m_HCE_A3[n]/4)*(pow(SfTo,4)-pow(SfTi,4));
+				HLTerm4 = (m_HCE_A3[n]/4.0)*(pow(SfTo,4)-pow(SfTi,4));
 
 				HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4)/(SfTo-SfTi);
 
