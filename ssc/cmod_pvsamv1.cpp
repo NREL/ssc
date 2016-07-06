@@ -2109,7 +2109,7 @@ public:
 							if (radmode == GH_DF)
 							{
 								p_irrad_calc[2][idx] = (ssc_number_t)((wf.gh - wf.df) / cos(solzen*3.1415926 / 180));
-								if (p_irrad_calc[2][idx] < 0)
+								if (p_irrad_calc[2][idx] < -1)
 								{
 									log(util::format("SAM calculated negative direct normal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
 										p_irrad_calc[2][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
@@ -2121,7 +2121,7 @@ public:
 							if (radmode == DN_DF)
 							{
 								p_irrad_calc[0][idx] = (ssc_number_t)(wf.df + wf.dn * cos(solzen*3.1415926 / 180));
-								if (p_irrad_calc[0][idx] < 0)
+								if (p_irrad_calc[0][idx] < -1)
 								{
 									log(util::format("SAM calculated negative global horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
 										p_irrad_calc[0][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
@@ -2133,7 +2133,7 @@ public:
 							if (radmode == DN_GH)
 							{
 								p_irrad_calc[1][idx] = (ssc_number_t)(wf.gh - wf.dn * cos(solzen*3.1415926 / 180));
-								if (p_irrad_calc[1][idx] < 0)
+								if (p_irrad_calc[1][idx] < -1)
 								{
 									log(util::format("SAM calculated negative diffuse horizontal irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero.",
 										p_irrad_calc[1][idx], wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
