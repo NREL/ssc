@@ -7,7 +7,7 @@ using namespace std;
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
 	// Set maximum timestep from parent class member data
-	m_max_step = 0.5*60.0;			//[s]
+	m_max_step = 10.0*60.0;			//[s]
 	m_step_recirc = m_max_step;		//[s]
 
 	//Commonly used values, conversions, etc...
@@ -584,7 +584,7 @@ void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_rece
 	return;
 }
 
-int C_csp_trough_collector_receiver::loop_energy_balance_TCS(const C_csp_weatherreader::S_outputs &weather,
+int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_weatherreader::S_outputs &weather,
 	double T_htf_cold_in /*C*/, double m_dot_htf_loop /*kg/s*/,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -635,8 +635,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_TCS(const C_csp_weather
 		m_T_htf_in[0] = T_htf_cold_in;		//[C]
 		m_T_sys_c = m_T_htf_in[0];			//[C]
 	}
-
-	m_outfile << sim_info.ms_ts.m_step << "," << T_htf_cold_in << "," << m_T_sys_c_last;
 
 	// Reset vectors that are populated in following for(i..nSCA) loop
 	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
@@ -793,7 +791,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_TCS(const C_csp_weather
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
-int C_csp_trough_collector_receiver::loop_energy_balance123(const C_csp_weatherreader::S_outputs &weather, 
+int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather, 
 									double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 									const C_csp_solver_sim_info &sim_info)
 {
@@ -861,8 +859,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance123(const C_csp_weatherr
 		m_T_htf_in[0] = T_htf_cold_in;		//[K]
 		m_T_sys_c = m_T_htf_in[0];			//[K]
 	}
-
-	//m_outfile << sim_info.ms_ts.m_step << "," << T_htf_cold_in << "," << m_T_sys_c_last;
 
 	// Reset vectors that are populated in following for(i..nSCA) loop
 	m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
@@ -1309,7 +1305,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		double T_cold_in = m_T_sys_h_last;			//[K]
 
 		// Call energy balance with updated info
-		loop_energy_balance123(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
 		update_last_temps();
 	}
@@ -1371,7 +1367,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		double T_cold_in = m_T_sys_h_last;			//[K]
 
 		// Call energy balance with updated info
-		loop_energy_balance123(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
 		// If the outlet temperature is greater than startup temperature,
 		//    then backup one timestep, and move forward in shorter steps
@@ -1568,7 +1564,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// Get inlet condition from input argument
 	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
 		// Call energy balance with updated info
-	int balance_code = loop_energy_balance123(weather, T_cold_in, m_dot_htf_loop, sim_info);
+	int balance_code = loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info);
 
 	bool on_success = true;
 
@@ -1585,7 +1581,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
 		
 		// We set T_cold_in above, so call loop energy balance
-		loop_energy_balance123(weather, T_cold_in, m_dot_htf_loop, sim_info);
+		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info);
 
 		// Is the outlet temperature (of the last SCA!) still greater than the target (considering some convergence tolerance)
 			// then need to defocus
@@ -1738,7 +1734,7 @@ int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 	mpc_trough->apply_component_defocus(defocus);
 
 	// Solve the loop energy balance at the input mass flow rate
-	int exit_code = mpc_trough->loop_energy_balance123();
+	int exit_code = mpc_trough->loop_energy_balance_T_t_int();
 
 	if( exit_code != E_loop_energy_balance_exit::SOLVED )
 	{
@@ -1758,7 +1754,7 @@ int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double
 	mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_dot_htf_loop;	//[kg/s]
 	
 	// Solve the loop energy balance at the input mass flow rate
-	int exit_code = mpc_trough->loop_energy_balance123();
+	int exit_code = mpc_trough->loop_energy_balance_T_t_int();
 
 	if( exit_code != E_loop_energy_balance_exit::SOLVED )
 	{
@@ -1772,7 +1768,7 @@ int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double
 	return 0;
 }
 
-int C_csp_trough_collector_receiver::loop_energy_balance123()
+int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int()
 {
 	// Check that 'ms_loop_energy_balance_inputs' is defined
 	if( ms_loop_energy_balance_inputs.ms_weather == 0 )
@@ -1792,7 +1788,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance123()
 		throw(C_csp_exception("The pointer to constant sim info structure is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
 	}
 
-	return loop_energy_balance123(*ms_loop_energy_balance_inputs.ms_weather, ms_loop_energy_balance_inputs.m_T_htf_cold_in,
+	return loop_energy_balance_T_t_int(*ms_loop_energy_balance_inputs.ms_weather, ms_loop_energy_balance_inputs.m_T_htf_cold_in,
 				ms_loop_energy_balance_inputs.m_m_dot_htf_loop, *ms_loop_energy_balance_inputs.ms_sim_info);
 }
 
@@ -2050,7 +2046,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 		m_dot_htf = m_m_dot_htfX;
 
-		int loop_energy_bal_exit = loop_energy_balance_TCS(weather, m_T_cold_in_1, m_dot_htf, sim_info);
+		int loop_energy_bal_exit = loop_energy_balance_T_t_end(weather, m_T_cold_in_1, m_dot_htf, sim_info);
 
 		// Check that we found a solution
 		if( loop_energy_bal_exit != E_loop_energy_balance_exit::SOLVED )	//cc--> Check for NaN
@@ -2911,7 +2907,7 @@ void C_csp_trough_collector_receiver::converged()
 	{
 		m_T_htf_in_converged[i] = m_T_htf_in_last[i] = m_T_htf_in[i];		//[K]
 		m_T_htf_out_converged[i] = m_T_htf_out_last[i] = m_T_htf_out[i];	//[K]
-		m_T_htf_ave[i] = m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
+		m_T_htf_ave_converged[i] = m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
 	}
 
 	m_ncall = -1;	//[-]
