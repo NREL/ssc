@@ -431,8 +431,8 @@ public:
 		ms_trough.m_is_using_input_gen = (bool)value(P_USING_INPUT_GEN);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
 		ms_trough.m_solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
-		ms_trough.m_mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
-		ms_trough.m_mc_bal_cold = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
+		ms_trough.m_mc_bal_hot_per_MW = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]
+		ms_trough.m_mc_bal_cold_per_MW = value(P_MC_BAL_COLD);		//The heat capacity of the balance of plant on the cold side [kWht/K-MWt]
 		ms_trough.m_mc_bal_sca = value(P_MC_BAL_SCA);		//Non-HTF heat capacity associated with each SCA - per meter basis [Wht/K-m]
 
 		// Setup member vectors
