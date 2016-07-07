@@ -387,22 +387,46 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
     /* 
     Get cycle efficiency, assuming full load operation
     */
-    
-    double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
+    double eta = std::numeric_limits<double>::quiet_NaN();
 
-    water_state wprop;
+	if( !ms_params.m_is_user_defined_pc )
+	{
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
 
-    double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
+		water_state wprop;
 
-    RankineCycle(
-            //inputs
-            ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, T_degC+273.15, Twet+273.15, 
-            P_atm*101325., ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, ms_params.m_T_htf_hot_ref, m_m_dot_design, 
-            2, 0., ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, 1., m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, 
-            ms_params.m_P_cond_ratio, ms_params.m_P_cond_min, 
-            //outputs
-            P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
-    
+		double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
+
+		RankineCycle(
+				//inputs
+				ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, T_degC+273.15, Twet+273.15, 
+				P_atm*101325., ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, ms_params.m_T_htf_hot_ref, m_m_dot_design, 
+				2, 0., ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, 1., m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, 
+				ms_params.m_P_cond_ratio, ms_params.m_P_cond_min, 
+				//outputs
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+    }
+	else
+	{
+		// User-defined power cycle model
+
+		// Calculate non-dimensional mass flow rate relative to design point
+		double m_dot_htf_ND = 1.0;		//[-] Use design point mass flow rate
+
+		// Get ND performance at off-design ambient temperature
+		double P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_ND
+			(ms_params.m_T_htf_hot_ref,
+			T_degC,
+			m_dot_htf_ND);	//[kWe]
+
+		double q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_ND
+			(ms_params.m_T_htf_hot_ref,
+			T_degC,
+			m_dot_htf_ND);	//[MWt]
+
+		eta = P_cycle / 1.E3 / q_dot_htf;
+	}
+
     return eta;
 }
 
@@ -411,28 +435,51 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
     /* 
     Get cycle efficiency, assuming design point temperature operation
     */
-    
+	double eta = std::numeric_limits<double>::quiet_NaN();
 
-    double cp = mc_pc_htfProps.Cp( (ms_params.m_T_htf_cold_ref + ms_params.m_T_htf_hot_ref)/2. );  //kJ/kg-K
+	if( !ms_params.m_is_user_defined_pc )
+	{
+		double cp = mc_pc_htfProps.Cp( (ms_params.m_T_htf_cold_ref + ms_params.m_T_htf_hot_ref)/2. );  //kJ/kg-K
 
-    //calculate mass flow    [kg/hr]
-    double mdot = ms_params.m_P_ref /* kW */ / ( ms_params.m_eta_ref * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
-    mdot *= load_frac;
+		//calculate mass flow    [kg/hr]
+		double mdot = ms_params.m_P_ref /* kW */ / ( ms_params.m_eta_ref * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
+		mdot *= load_frac;
 
-    //ambient calculations
-    water_state wprop;
-    double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
+		//ambient calculations
+		water_state wprop;
+		double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
 
-    //Call
-    double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
-    RankineCycle(
-            //inputs
-            ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, ms_params.m_T_amb_des+273.15, Twet+273.15, 
-            101325., ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, ms_params.m_T_htf_hot_ref, mdot, 
-            2, 0., ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, 1., m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, 
-            ms_params.m_P_cond_ratio, ms_params.m_P_cond_min, 
-            //outputs
-            P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+		//Call
+		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
+		RankineCycle(
+				//inputs
+				ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, ms_params.m_T_amb_des+273.15, Twet+273.15, 
+				101325., ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, ms_params.m_T_htf_hot_ref, mdot, 
+				2, 0., ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, 1., m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, 
+				ms_params.m_P_cond_ratio, ms_params.m_P_cond_min, 
+				//outputs
+				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+	}
+	else
+	{
+		// User-defined power cycle model
+
+		// Calculate non-dimensional mass flow rate relative to design point
+		double m_dot_htf_ND = load_frac;		//[-] Use design point mass flow rate
+
+		// Get ND performance at off-design ambient temperature
+		double P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_ND
+			(ms_params.m_T_htf_hot_ref,
+			ms_params.m_T_amb_des,
+			m_dot_htf_ND);	//[kWe]
+
+		double q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_ND
+			(ms_params.m_T_htf_hot_ref,
+			ms_params.m_T_amb_des,
+			m_dot_htf_ND);	//[MWt]
+
+		eta = P_cycle / 1.E3 / q_dot_htf;
+	}
     
     return eta;
 }
