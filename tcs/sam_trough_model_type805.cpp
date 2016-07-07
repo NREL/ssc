@@ -1044,6 +1044,7 @@ public:
 													//MJW 11/09  Recommend removing this restriction
 				HLWind = MAX(WndSpd, 0.0); //MJW 6/29/2010 Instead enforce a positive windspeed. Some datasets include negative windspeeds.
 
+				// 7.7.2016 twn: these temperatures should be in C, per Burkholder & Kutscher 2008
 				HLTerm1 = (m_HCE_A0[n]+m_HCE_A5[n]*pow(HLWind,0.5))*(SfTo-SfTi);
     
 				HLTerm2 = (m_HCE_A1[n]+m_HCE_A6[n]*sqrt(HLWind))*((pow(SfTo,2)-pow(SfTi,2))/2.0-Tamb*(SfTo-SfTi));
@@ -1052,7 +1053,7 @@ public:
 
 				HLTerm4 = (m_HCE_A3[n]/4.0)*(pow(SfTo,4)-pow(SfTi,4));
 
-				HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4)/(SfTo-SfTi);
+				HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4)/(SfTo-SfTi);		//[W/m]
 
 				// Convert Receiver HL from W/m of receiver to W/m2 of collector aperture
 				RecHL = RecHL + (m_PerfFac[n] * m_HCEFrac[n] * HL / m_RefMirrAper[n]);
