@@ -112,6 +112,9 @@ private:
 	double m_c_hdr_cold;		//[J/kg-K] Specific heat of fluid at m_T_sys_c
 	double m_c_hdr_hot;			//[J/kg-K] Specific heat of fluid at outlet temperature of last SCA (not necessarily return temperature if modeling runners and headers)
 
+	double m_mc_bal_hot;		//[J/K] The heat capacity of the balance of plant on the hot side
+	double m_mc_bal_cold;		//[J/K] The heat capacity of the balance of plant on the cold side
+
 	// Classes that are defined as member data so are re-declared each time performance function is called
 	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
 
@@ -189,8 +192,8 @@ public:
 	bool m_is_using_input_gen;
 
 	double m_solar_mult;		//[-] Solar multiple 
-	double m_mc_bal_hot;		//[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
-	double m_mc_bal_cold;		//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
+	double m_mc_bal_hot_per_MW;		//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the hot side
+	double m_mc_bal_cold_per_MW;	//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the cold side
 	double m_mc_bal_sca;		//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 
 	std::vector<double> m_W_aperture;	//[m] The collector aperture width (Total structural area.. used for shadowing)
@@ -343,11 +346,20 @@ public:
 
 	S_loop_energy_balance_inputs ms_loop_energy_balance_inputs;
 
-	int loop_energy_balance(const C_csp_weatherreader::S_outputs &weather, 
+	// Input weather, and inlet HTF conditions
+	// Calculates energy balances for headers (if applicable) and receivers
+	// This method uses TCS convention where the End Of Timestep HTF temperature
+	//    is passed to the next receiver
+	int loop_energy_balance_TCS(const C_csp_weatherreader::S_outputs &weather, 
 		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
 
-	int loop_energy_balance();
+	// This method is designed to pass the timestep average HTF temperature to successive energy balance nodes
+	int loop_energy_balance123(const C_csp_weatherreader::S_outputs &weather,
+		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
+		const C_csp_solver_sim_info &sim_info);
+
+	int loop_energy_balance123();
 
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
