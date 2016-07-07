@@ -334,33 +334,37 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     //add zero point
     dispatch.params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
     
-    int neff = 2;
-    for(int i=0; i<neff; i++)
-    {
-        double x = dispatch.params.q_pb_min + (dispatch.params.q_pb_max - dispatch.params.q_pb_min)/(double)(neff - 1)*i;
-        double xf = x * 1.e-3/m_cycle_q_dot_des;  //MW
+	if( mc_tou.mc_dispatch_params.m_dispatch_optimize )
+	{
+		int neff = 2;
+		for(int i=0; i<neff; i++)
+		{
+			double x = dispatch.params.q_pb_min + (dispatch.params.q_pb_max - dispatch.params.q_pb_min)/(double)(neff - 1)*i;
+			double xf = x * 1.e-3/m_cycle_q_dot_des;  //MW
 
-        double eta;
+			double eta;
         
-        //eta = 0.86 + xf * 0.28 - xf*xf * 0.14;  //Equation from curve fit of power tower steam rankine Type 224
-        //eta *= m_cycle_eta_des;
-        eta = mc_power_cycle.get_efficiency_at_load(xf);
+			//eta = 0.86 + xf * 0.28 - xf*xf * 0.14;  //Equation from curve fit of power tower steam rankine Type 224
+			//eta *= m_cycle_eta_des;
+			eta = mc_power_cycle.get_efficiency_at_load(xf);
 
-        dispatch.params.eff_table_load.add_point(x, eta);
-    }
+			dispatch.params.eff_table_load.add_point(x, eta);
+		}
 
-    //cycle efficiency vs temperature
-    dispatch.params.eff_table_Tdb.clear();
-    int neffT = 40;
+		//cycle efficiency vs temperature
+		dispatch.params.eff_table_Tdb.clear();
+		int neffT = 40;
 
-    for(int i=0; i<neffT; i++)
-    {
-        double T = -10. + 60./(double)(neffT - 1) * i;
+		for(int i=0; i<neffT; i++)
+		{
+			double T = -10. + 60./(double)(neffT - 1) * i;
 
-        double eta = mc_power_cycle.get_efficiency_at_TPH(T, 1., 30.) / m_cycle_eta_des;  
+			double eta = mc_power_cycle.get_efficiency_at_TPH(T, 1., 30.) / m_cycle_eta_des;  
 
-        dispatch.params.eff_table_Tdb.add_point(T, eta);
-    }
+			dispatch.params.eff_table_Tdb.add_point(T, eta);
+		}
+
+	}
     
 
         //solver parameters
