@@ -118,22 +118,27 @@ private:
 	// Classes that are defined as member data so are re-declared each time performance function is called
 	std::vector<double> m_DP_tube;	//[Pa] Pressure drops in each receiver
 
+	// *********************************************
+	// TCS Temperature Tracking
 		// Temperatures from the most recent converged() operation
-	double m_T_sys_c_converged;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
-	std::vector<double> m_T_htf_ave_converged;	//[K] Average HTF temperature in each SCA
-	double m_T_sys_h_converged;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
+	double m_TCS_T_sys_c_converged;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
+	std::vector<double> m_TCS_T_htf_ave_converged;	//[K] Average HTF temperature in each SCA
+	double m_TCS_T_sys_h_converged;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
 	
 		// Temperatures from the most recent timestep (in the event that a method solves multiple, shorter timesteps)
-	double m_T_sys_c_last;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
-	std::vector<double> m_T_htf_ave_last;	//[K] Average HTF temperature in each SCA
-	double m_T_sys_h_last;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
+	double m_TCS_T_sys_c_last;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
+	std::vector<double> m_TCS_T_htf_ave_last;	//[K] Average HTF temperature in each SCA
+	double m_TCS_T_sys_h_last;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
 
 		// Latest temperatures solved during present call to this class
-	double m_T_sys_c;					//[K] Temperature (bulk) of cold runners & headers
-	std::vector<double> m_T_htf_in;		//[K] Inlet HTF temperature to each SCA
-	std::vector<double> m_T_htf_ave;	//[K] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out;	//[K] Outlet HTF temperature to each SCA
-	double m_T_sys_h;					//[K] Solar field HTF outlet temperature
+	double m_TCS_T_sys_c;					//[K] Temperature (bulk) of cold runners & headers
+	std::vector<double> m_TCS_T_htf_in;		//[K] Inlet HTF temperature to each SCA
+	std::vector<double> m_TCS_T_htf_ave;	//[K] Average HTF temperature in each SCA
+	std::vector<double> m_TCS_T_htf_out;	//[K] Outlet HTF temperature to each SCA
+	double m_TCS_T_sys_h;					//[K] Solar field HTF outlet temperature
+	// *********************************************
+	// *********************************************
+
 
 	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
