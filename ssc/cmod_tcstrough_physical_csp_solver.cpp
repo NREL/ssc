@@ -416,8 +416,8 @@ public:
 		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
 		c_trough.m_accept_init = as_double("accept_init");			//[-] In acceptance testing mode - require steady-state startup
 		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
-		c_trough.m_mc_bal_hot = as_double("mc_bal_hot");            //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
-		c_trough.m_mc_bal_cold = as_double("mc_bal_cold");			//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
+		c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
+		c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");	//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
 		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); 			//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 		
 		//[m] The collector aperture width (Total structural area.. used for shadowing)
