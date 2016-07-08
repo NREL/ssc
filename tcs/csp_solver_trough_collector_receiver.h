@@ -129,7 +129,7 @@ private:
 	double m_TCS_T_sys_c_last;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
 	std::vector<double> m_TCS_T_htf_ave_last;	//[K] Average HTF temperature in each SCA
 	double m_TCS_T_sys_h_last;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
-
+	
 		// Latest temperatures solved during present call to this class
 	double m_TCS_T_sys_c;					//[K] Temperature (bulk) of cold runners & headers
 	std::vector<double> m_TCS_T_htf_in;		//[K] Inlet HTF temperature to each SCA
@@ -139,6 +139,34 @@ private:
 	// *********************************************
 	// *********************************************
 
+	// *********************************************
+	// CSP Solver Temperature Tracking
+		// Temperatures from the most recent converged() operation
+	double m_T_sys_c_t_end_converged;
+	std::vector<double> m_T_htf_out_t_end_converged;
+	double m_T_sys_h_t_end_converged;
+			// ** Check for these in other methods developed for CSP Solver **
+
+		// Temperatures from the most recent timstep (in the event that a method solves multiple, shorter timesteps
+	double m_T_sys_c_t_end_last;			//[K] Temperature (bulk) of cold runners & headers at end of previous timestep
+	std::vector<double> m_T_htf_out_t_end_last;			//[K] Temperature of HTF temperature & material at end of previous timestep
+	double m_T_sys_h_t_end_last;			//[K] Temperature (bulk) of hot runners & headers at end of previous timestep
+
+			// ** Check for these in other methods developed for CSP Solver **
+	
+		// Latest temperature solved during present call to this class
+	double m_T_sys_c_t_end;				//[K] Temperature (bulk) of cold runners & headers at end of current timestep
+	double m_T_sys_c_t_int;				//[K] Temperature (bulk) of cold runners & headers at time-INTegrated-average	
+	std::vector<double> m_T_htf_in_t_int;	//[K] time-integrated-average inlet HTF temperature to each SCA
+	std::vector<double> m_T_htf_out_t_end;	//[K] end-of-timestep outlet HTF temperature of each SCA
+	std::vector<double> m_T_htf_out_t_int;	//[K] time-integrated-average outlet HTF temp of each SCA
+	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
+	double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
+
+	double m_T_sys_TEMP_UPDATE;
+	std::vector<double> m_T_sys_vector_UPDATE;
+	// *********************************************
+	// *********************************************
 
 	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
