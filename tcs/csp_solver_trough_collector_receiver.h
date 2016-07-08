@@ -120,16 +120,12 @@ private:
 
 		// Temperatures from the most recent converged() operation
 	double m_T_sys_c_converged;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
-	std::vector<double> m_T_htf_in_converged;	//[K] Inlet HTF temperature to each SCA
 	std::vector<double> m_T_htf_ave_converged;	//[K] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out_converged;	//[K] Outlet HTF temperature to each SCA
 	double m_T_sys_h_converged;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
 	
 		// Temperatures from the most recent timestep (in the event that a method solves multiple, shorter timesteps)
 	double m_T_sys_c_last;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
-	std::vector<double> m_T_htf_in_last;	//[K] Inlet HTF temperature to each SCA
 	std::vector<double> m_T_htf_ave_last;	//[K] Average HTF temperature in each SCA
-	std::vector<double> m_T_htf_out_last;	//[K] Outlet HTF temperature to each SCA
 	double m_T_sys_h_last;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
 
 		// Latest temperatures solved during present call to this class

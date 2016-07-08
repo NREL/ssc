@@ -230,11 +230,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_EndLoss.resize(m_nColt, m_nSCA);
 	m_RowShadow.resize(m_nColt);
 	//Allocate space for transient variables
-	m_T_htf_in_last.resize(m_nSCA);
-	m_T_htf_out_last.resize(m_nSCA);
 	m_T_htf_ave_last.resize(m_nSCA);
-	m_T_htf_in_converged.resize(m_nSCA);
-	m_T_htf_out_converged.resize(m_nSCA);
 	m_T_htf_ave_converged.resize(m_nSCA);
 
 	//Set up annulus gas and absorber property matrices
@@ -542,8 +538,6 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	//cc--> Note that stored(3) -> Iter is no longer used in the TRNSYS code. It is omitted here.
 	for (int i = 0; i < m_nSCA; i++)
 	{
-		m_T_htf_in_converged[i] = m_T_htf_in_last[i] = T_field_ini;		//[K]
-		m_T_htf_out_converged[i] = m_T_htf_out_last[i] = T_field_ini;	//[K]
 		m_T_htf_ave_converged[i] = m_T_htf_ave_last[i] = T_field_ini;	//[K]
 	}
 
@@ -1830,9 +1824,7 @@ void C_csp_trough_collector_receiver::update_last_temps()
 	m_T_sys_h_last = m_T_sys_h;		//[K]
 	for( int i = 0; i<m_nSCA; i++ )
 	{
-		m_T_htf_in_last[i] = m_T_htf_in[i];		//[K]
-		m_T_htf_out_last[i] = m_T_htf_out[i];	//[K]
-		m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
+		m_T_htf_ave_last[i] = m_T_htf_ave[i];	//[K]
 	}
 
 	return;
@@ -1845,9 +1837,7 @@ void C_csp_trough_collector_receiver::reset_last_temps()
 	m_T_sys_h_last = m_T_sys_h_converged;		//[K]
 	for( int i = 0; i<m_nSCA; i++ )
 	{
-		m_T_htf_in_last[i] = m_T_htf_in_converged[i];		//[K]
-		m_T_htf_out_last[i] = m_T_htf_out_converged[i];		//[K]
-		m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
+		m_T_htf_ave_last[i] = m_T_htf_ave_converged[i];		//[K]
 	}
 
 	return;
@@ -2086,7 +2076,9 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 			ss_diff += fabs(m_T_sys_c - m_T_sys_c_last) + fabs(m_T_sys_h_last - m_T_sys_h);
 			for (int i = 0; i < m_nSCA; i++)
 			{
-				ss_diff += fabs(m_T_htf_in_last[i] - m_T_htf_in[i]) + fabs(m_T_htf_out_last[i] - m_T_htf_out[i]) + fabs(m_T_htf_ave_last[i] - (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0);
+				//ss_diff += fabs(m_T_htf_in_last[i] - m_T_htf_in[i]) + fabs(m_T_htf_out_last[i] - m_T_htf_out[i]) + fabs(m_T_htf_ave_last[i] - (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0);
+					// 7.7.2016 twn: only use m_T_htf_ave for now...
+				ss_diff += fabs(m_T_htf_ave_last[i] - (m_T_htf_in[i] + m_T_htf_out[i]) / 2.0);
 			}
 
 			if (ss_diff / 300.0 > 0.001)	// If not in steady state, updated previous temperatures and re-run energy balances
@@ -2097,9 +2089,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 
 				for (int i = 0; i<m_nSCA; i++)
 				{
-					m_T_htf_in_last[i] = m_T_htf_in[i];
-					m_T_htf_out_last[i] = m_T_htf_out[i];
-					m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;
+					m_T_htf_ave_last[i] = m_T_htf_ave[i];
 				}
 
 				rho_hdr_cold = m_htfProps.dens(m_T_sys_c_last, 1.);
@@ -2905,9 +2895,7 @@ void C_csp_trough_collector_receiver::converged()
 	m_T_sys_h_converged = m_T_sys_h_last = m_T_sys_h;		//[K]
 	for (int i = 0; i<m_nSCA; i++)
 	{
-		m_T_htf_in_converged[i] = m_T_htf_in_last[i] = m_T_htf_in[i];		//[K]
-		m_T_htf_out_converged[i] = m_T_htf_out_last[i] = m_T_htf_out[i];	//[K]
-		m_T_htf_ave_converged[i] = m_T_htf_ave_last[i] = (m_T_htf_in_last[i] + m_T_htf_out_last[i]) / 2.0;	//[K]
+		m_T_htf_ave_converged[i] = m_T_htf_ave_last[i] = m_T_htf_ave[i];
 	}
 
 	m_ncall = -1;	//[-]
