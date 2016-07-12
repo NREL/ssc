@@ -89,7 +89,7 @@ public:
         bool is_rec_operating0;     //receiver is operating at the initial time step
         bool is_pb_operating0;      //Power block is operating at the initial time step
         bool is_pb_standby0;        //Power block is in standby at the initial time step
-        double w_pb0;               //[kWe] Power production in the cycle entering the initial time step
+        double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
         double dt;                  //Time step (hr)
         double e_tes_init;          //[kWht] current stored energy capacity
         double e_tes_min;           //[kWht] minimum allowable energy capacity in TES

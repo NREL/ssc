@@ -673,6 +673,8 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 	double step = sim_info.ms_ts.m_step;
 	//int ncall = p_sim_info->m_ncall;
 
+    double sf_adjust = ms_params.m_sf_adjust.at( (int)(time / 3600.) - 1 );
+
 	double v_wind = weather.m_wspd;
 	m_v_wind_current = v_wind;
 	double field_control = field_control_in;	// Control Parameter ( range from 0 to 1; 0=off, 1=all on)
@@ -719,7 +721,7 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 		sunpos.push_back(solzen / zen_scale);
 
 		eta_field = field_efficiency_table->interp(sunpos) * eff_scale;
-		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control;		// Ensure physical behavior 
+		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 
 
 		//Set the active flux map
 		VectDoub pos_now(sunpos);
@@ -771,6 +773,7 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking
 	ms_outputs.m_eta_field = eta_field;			//[-], field efficiency
+    ms_outputs.m_sf_adjust_out = sf_adjust;
 
 }
 

@@ -379,6 +379,7 @@ public:
 	{
 		double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
 		double m_eta_field;				//[-] Field optical efficiency
+        double m_sf_adjust_out;         //[-] Field adjustment factor used
 		
 		double m_q_dot_rec_inc;         //[MWt] Receiver incident thermal power (after reflection losses)
 		double m_eta_thermal;			//[-] Receiver thermal efficiency
@@ -387,7 +388,7 @@ public:
 		S_csp_cr_out_report()
 		{
 			m_q_dot_field_inc = m_eta_field = 
-				m_q_dot_rec_inc = m_eta_thermal = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
+				m_q_dot_rec_inc = m_eta_thermal = m_q_dot_piping_loss = m_sf_adjust_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -691,10 +692,15 @@ public:
 		//       multiple csp-timesteps for one reporting timestep
 		// **************************************************************
 		SOLZEN,			      //[deg] Solar zenith angle
+        SOLAZ,
 		BEAM,			      //[W/m^2] Resource beam normal irradiance
+        TDRY,
+        TWET,
+        RH,
 		CR_Q_INC,             //[MWt] Field incident thermal power
 		CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
 		CR_DEFOCUS,           //[-] Field optical focus fraction
+        CR_ADJUST,            //[-] Field adjustment factor
 		REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
 		REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
 		REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses

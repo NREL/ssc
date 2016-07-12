@@ -118,6 +118,8 @@ public:
 		//int m_nfluxcol;
 		util::matrix_t<double> m_flux_maps;
 
+        util::matrix_t<double> m_sf_adjust; // array of length equal to number of time steps
+
 		double m_c_atm_0;
 		double m_c_atm_1;
 		double m_c_atm_2;
@@ -164,10 +166,11 @@ public:
 		util::matrix_t<double> m_flux_map_out;
 		double m_pparasi;		//[MWe]
 		double m_eta_field;		//[-]
+        double m_sf_adjust_out;
 
 		S_outputs()
 		{
-			m_q_dot_field_inc = m_pparasi = m_eta_field = std::numeric_limits<double>::quiet_NaN();
+			m_q_dot_field_inc = m_pparasi = m_eta_field = m_sf_adjust_out =  std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

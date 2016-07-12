@@ -52,6 +52,7 @@ class sf_adjustment_factors
 public:
 	sf_adjustment_factors(compute_module *cm);
 	bool setup();
+    int size();
 	float operator()(size_t time);
 	std::string error() { return m_error; }
 };

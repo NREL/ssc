@@ -105,6 +105,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 		
 	// Set collector/receiver parent class outputs and return
 	cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
+    cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
 	cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 
 	cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
@@ -132,6 +133,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 
 	// Set collector/receiver parent class outputs from field model
 	cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
+    cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
 	cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
 

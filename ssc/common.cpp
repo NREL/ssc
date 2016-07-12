@@ -385,7 +385,6 @@ sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 {
 }
 
-//adjustment factors changed from derates to percentages jmf 1/9/15
 bool sf_adjustment_factors::setup()
 {
 	float f = (float)m_cm->as_number("sf_adjust:constant");
@@ -436,6 +435,11 @@ float sf_adjustment_factors::operator()(size_t time)
 {
 	if (time < m_factors.size()) return m_factors[time];
 	else return 0.0;
+}
+
+int sf_adjustment_factors::size()
+{
+    return (int)m_factors.size();
 }
 
 shading_factor_calculator::shading_factor_calculator()
