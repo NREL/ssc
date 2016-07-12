@@ -15,9 +15,13 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                     "PV lifetime simulation",                                  "0/1",     "",                     "",             "?=0",                        "BOOLEAN",                        "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
 
-		// configuration inputs
-//  { SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
-//	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
+	// configuration inputs
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload", "",     "*",                           "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "Wdc",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "Wdc",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "Wdc",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
 
@@ -97,7 +101,7 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_capacity_thermal_percent",              "Battery capacity percent for temperature",               "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_bank_replacement",                      "Battery bank replacements per year",                     "number/year", "",                  "Battery",       "",                           "",                              "" },
 																			          
-	// Energy outputs	- Power outputs at native time step													        
+	// POwer outputs at native timestep												        
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_power",                                 "Power to/from battery",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power",                                 "Power to/from grid",                                    "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_batt_gen",                                "Power of PV+battery",                                   "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -399,19 +403,14 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		capacity_model);
 
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
+	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
-	dc_dc = ac_dc = dc_ac = 100.;
-	// ac_or_dc = cm.as_integer("batt_ac_or_dc");
-	ac_or_dc = 1; // hard code to ac for now
-	ac_dc = cm.as_double("batt_ac_dc_efficiency");
-	dc_ac = cm.as_double("batt_dc_ac_efficiency");
 	
 	if (batt_dispatch == dispatch_t::MANUAL)
 	{
 		dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
 			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
 			cm.as_double("batt_minimum_modetime"),
-			ac_or_dc, dc_dc, ac_dc, dc_ac,
 			batt_dispatch, pv_dispatch,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
@@ -421,11 +420,32 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		dispatch_model = new automate_dispatch_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
 			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
 			1, // minimum mode time allowed as 1 minute for auto dispatch
-			ac_or_dc, dc_dc, ac_dc, dc_ac,
 			batt_dispatch, pv_dispatch,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
 			nyears);
+	}
+
+	dc_dc = ac_dc = dc_ac = 100.;
+	ac_or_dc = cm.as_integer("batt_ac_or_dc");
+	ac_dc = cm.as_double("batt_ac_dc_efficiency");
+	dc_ac = cm.as_double("batt_dc_ac_efficiency");
+	dc_dc = cm.as_double("batt_dc_dc_efficiency");
+
+	if (ac_or_dc == charge_controller::AC_CONNECTED)
+		charge_controller = new ac_connected_battery_controller(dispatch_model, battery_metrics, ac_dc, dc_ac);
+	else if (ac_or_dc == charge_controller::DC_CONNECTED)
+	{
+		int inverter_model = cm.as_integer("inverter_model");
+		double inverter_efficiency = 0.0;
+		if (inverter_model == inverter::SANDIA_INVERTER)
+			inverter_efficiency = cm.as_integer("inv_snl_eff_cec");
+		else if (inverter_model == inverter::DATASHEET_INVERTER)
+			inverter_efficiency = cm.as_integer("inv_ds_eff");
+		else if (inverter_model == inverter::PARTLOAD_INVERTER)
+			inverter_efficiency = cm.as_integer("inv_pd_eff");
+
+		charge_controller = new dc_connected_battery_controller(dispatch_model, battery_metrics, dc_dc, inverter_efficiency);
 	}
 } 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
@@ -473,9 +493,11 @@ battstor::~battstor()
 	if( lifetime_model ) delete lifetime_model;
 	if( thermal_model ) delete thermal_model;
 	if( battery_model ) delete battery_model;
+	if (battery_metrics) delete battery_metrics;
 	if( capacity_model ) delete capacity_model;
 	if (losses_model) delete losses_model;
 	if( dispatch_model ) delete dispatch_model;
+	if (charge_controller) delete charge_controller;
 
 }
 
@@ -511,10 +533,11 @@ void battstor::force_replacement()
 }
 
 
-void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double PV /* [kWh] */, double LOAD /* [kWh] */)
+void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv_dc , double P_load_dc )
 {
-	if (PV < 0){ PV = 0; }
-	dispatch_model->dispatch(year, hour_of_year, step, PV, LOAD);
+	if (P_pv_dc < 0){ P_pv_dc = 0; }
+
+	charge_controller->run(year, hour_of_year, step, P_pv_dc, P_load_dc);
 	
 	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
@@ -554,48 +577,43 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 	{
 		int replacements = lifetime_model->replacements();
 		lifetime_model->reset_replacements();
-		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(dispatch_model->grid_import_annual());
-		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(dispatch_model->grid_export_annual());
-		outAnnualPVChargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->pv_charge_annual());
-		outAnnualGridChargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->grid_charge_annual());
-		outAnnualChargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->charge_annual());
-		outAnnualDischargeEnergy[annual_index] = (ssc_number_t)(dispatch_model->discharge_annual()); 
-		outAnnualEnergyLoss[annual_index] = (ssc_number_t)(dispatch_model->energy_loss_annual());
-		dispatch_model->new_year();
+		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_import_annual());
+		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_export_annual());
+		outAnnualPVChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_pv_charge_annual());
+		outAnnualGridChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_charge_annual());
+		outAnnualChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_charge_annual());
+		outAnnualDischargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_discharge_annual());
+		battery_metrics->new_year();
 		year++;
 	}
-	// dispatch_model output (all Powers in kW)
-	outBatteryPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_battery())/_dt_hour;
-	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid()) / _dt_hour;
-	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load())/_dt_hour;
-	outGenPower[idx] = (ssc_number_t)(dispatch_model->gen()) / _dt_hour;
-	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load())/_dt_hour;
-	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load())/_dt_hour;
-	outPVToBatt[idx] = (ssc_number_t)(dispatch_model->pv_to_batt()) / _dt_hour;
-	outGridToBatt[idx] = (ssc_number_t)(dispatch_model->grid_to_batt()) / _dt_hour;
+	// Power output (all Powers in kWac)
+	outBatteryPower[idx] = (ssc_number_t)(charge_controller->power_tofrom_battery());
+	outGridPower[idx] = (ssc_number_t)(charge_controller->power_tofrom_grid());
+	outPVToLoad[idx] = (ssc_number_t)(charge_controller->power_pv_to_load());
+	outGenPower[idx] = (ssc_number_t)(charge_controller->power_gen());
+	outBatteryToLoad[idx] = (ssc_number_t)(charge_controller->power_battery_to_load());
+	outGridToLoad[idx] = (ssc_number_t)(charge_controller->power_grid_to_load());
+	outPVToBatt[idx] = (ssc_number_t)(charge_controller->power_pv_to_batt());
+	outGridToBatt[idx] = (ssc_number_t)(charge_controller->power_grid_to_batt());
 
 	// Average efficiency
-	outAverageCycleEfficiency = (ssc_number_t)dispatch_model->average_efficiency();
+	outAverageCycleEfficiency = (ssc_number_t)battery_metrics->average_efficiency();
 	if (outAverageCycleEfficiency > 100)
 		outAverageCycleEfficiency = 100;
 	else if (outAverageCycleEfficiency < 0)
 		outAverageCycleEfficiency = 0;
 
 	// PV charge ratio
-	outPVChargePercent = (ssc_number_t)dispatch_model->pv_charge_percent();
+	outPVChargePercent = (ssc_number_t)battery_metrics->pv_charge_percent();
 	if (outPVChargePercent > 100)
 		outPVChargePercent = 100;
 	else if (outPVChargePercent < 0)
 		outPVChargePercent = 0;
 
 }
-void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD)
+void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV)
 {
-	dispatch_model->compute_grid_net(PV, LOAD);
-	outGridPower[idx] = (ssc_number_t)(dispatch_model->energy_tofrom_grid()) / _dt_hour;
-	outPVToLoad[idx] = (ssc_number_t)(dispatch_model->pv_to_load()) / _dt_hour;
-	outBatteryToLoad[idx] = (ssc_number_t)(dispatch_model->battery_to_load()) / _dt_hour;
-	outGridToLoad[idx] = (ssc_number_t)(dispatch_model->grid_to_load()) / _dt_hour;
+	charge_controller->update_gen_ac(PV);
 }
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )

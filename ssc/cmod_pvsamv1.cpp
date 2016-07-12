@@ -11,6 +11,7 @@
 
 // for battery model, leverage common code with standalone compute module.
 #include "cmod_battery.h"
+#include "lib_power_electronics.h"
 
 #include "lib_weatherfile.h"
 #include "lib_irradproc.h"
@@ -2593,11 +2594,10 @@ public:
 
 						 
 					// DC Connected Battery
-					// Note for all battery inputs, PV & LOAD must be converted to energy in [kWh]
 					if (en_batt && (ac_or_dc == 0) )
 					{
-						batt.advance(*this, iyear, hour, jj, dcpwr_net*0.001*ts_hour, cur_load*ts_hour);
-						dcpwr_net = 1000*batt.outGenPower[idx];
+						batt.advance(*this, iyear, hour, jj, dcpwr_net*0.001, cur_load);
+						dcpwr_net = 1000 * batt.outGenPower[idx];
 
 						// inverter can't handle negative dcpwr
 						if (dcpwr_net < 0)
@@ -2631,7 +2631,7 @@ public:
 						
 					// if dc connected battery, update post-inverted quantities
 					if (en_batt && (ac_or_dc == 0) )
-						batt.update_post_inverted(*this, idx, acpwr_gross*0.001*ts_hour, cur_load*ts_hour);
+						batt.update_post_inverted(*this, idx, acpwr_gross*0.001);
 					
 					// save other array-level environmental and irradiance outputs	- year 1 only outputs
 					if (iyear == 0)
@@ -2677,7 +2677,7 @@ public:
 
 					if (en_batt && ac_or_dc == 1)
 					{
-						batt.advance(*this, iyear, hour, jj, p_gen[idx] * ts_hour, cur_load*ts_hour);
+						batt.advance(*this, iyear, hour, jj, p_gen[idx], cur_load);
 						p_gen[idx] = batt.outGenPower[idx];
 					}
 
