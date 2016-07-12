@@ -197,6 +197,7 @@ public:
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_sf_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 	}
 
@@ -333,9 +334,20 @@ public:
 		// check if all connections worked
 		if ( !bConnected )
 			throw exec_error( "tcsgeneric_solar", util::format("there was a problem connecting outputs of one unit to inputs of another for the simulation.") );
+		
+        size_t hours = 8760;
+
+        //Load the solar field adjustment factors
+        sf_adjustment_factors sf_haf(this);
+        if (!sf_haf.setup())
+			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
+        //allocate array to pass to tcs
+        ssc_number_t *sf_adjust = allocate("sf_adjust", hours);
+        for( int i=0; i<hours; i++)
+            sf_adjust[i] = sf_haf(i);
+        set_unit_value_ssc_array(type260_genericsolar, "sf_adjust");
 
 		// Run simulation
-		size_t hours = 8760;
 		if (0 > simulate(3600, hours*3600, 3600) )
 			throw exec_error( "tcsgeneric_solar", util::format("there was a problem simulating in tcsgeneric_solar.") );
 

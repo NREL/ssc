@@ -17,6 +17,7 @@ extern var_info vtab_payment_incentives[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];
+extern var_info vtab_sf_adjustment_factors[];
 extern var_info vtab_technology_outputs[];
 
 class adjustment_factors
@@ -38,6 +39,18 @@ class dc_adjustment_factors
 	std::string m_error;
 public:
 	dc_adjustment_factors(compute_module *cm);
+	bool setup();
+	float operator()(size_t time);
+	std::string error() { return m_error; }
+};
+
+class sf_adjustment_factors
+{
+	compute_module *m_cm;
+	std::vector<float> m_factors;
+	std::string m_error;
+public:
+	sf_adjustment_factors(compute_module *cm);
 	bool setup();
 	float operator()(size_t time);
 	std::string error() { return m_error; }

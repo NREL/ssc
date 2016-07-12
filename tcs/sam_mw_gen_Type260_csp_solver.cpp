@@ -72,6 +72,7 @@ enum{
     P_ISTABLEUNSORTED,
 	P_OPTICALTABLE,
     //P_OPTICALTABLEUNS,
+    P_ADJUST,
 
 	I_IBN,
 	I_IBH,
@@ -173,6 +174,7 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
 	{ TCS_PARAM,           TCS_ARRAY,             P_FDISP,                  "fdisp",                                                    "Fossil backup output control factors",         "none",             "",             "","0,0,0,0,0,0,0,0,0" },
     { TCS_PARAM,          TCS_NUMBER,   P_ISTABLEUNSORTED,        "istableunsorted",                                                "Is optical table unsorted? (1=yes, 0=no)",         "none",             "",             "",            "0" },
     { TCS_PARAM,          TCS_MATRIX,      P_OPTICALTABLE,           "OpticalTable",                                                                           "Optical table",         "none",             "",             "",             "" },
+	{ TCS_PARAM,           TCS_ARRAY,             P_ADJUST,             "sf_adjust",                                           "Time series solar field production adjustment",         "none",             "",             "",             "" },
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_IBN,                    "ibn",                                                           "Beam-normal (DNI) irradiation",         "W/m2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,               I_IBH,                    "ibh",                                                             "Beam-horizontal irradiation",         "W/m2",             "",             "",             "" },
@@ -279,6 +281,8 @@ private:
 	int nval_qdisp;
 	double* fdisp;		//Fossil backup output control factors
 	int nval_fdisp;
+    double* sf_adjust;
+    int nval_sf_adjust;
 
 	int pbmode;		//Power conversion mode
 
@@ -351,6 +355,8 @@ public:
 		nval_qdisp = -1;
 		fdisp	= NULL;
 		nval_fdisp = -1;
+        sf_adjust = NULL;
+        nval_sf_adjust = -1;
 
 		pbmode	= -1;
 
@@ -481,6 +487,7 @@ public:
 		diswos = value(P_DISWOS, &nval_diswos);		//Time-of-dispatch control for without-solar conditions [none]
 		qdisp = value(P_QDISP, &nval_qdisp);		//touperiod power output control factors [none]
 		fdisp = value(P_FDISP, &nval_fdisp);		//Fossil backup output control factors [none]
+        sf_adjust = value(P_ADJUST, &nval_sf_adjust); //solar field adjust factors
 
 		// Update site parameters
 		mp_params->m_latitude = value(P_LATITUDE);
@@ -607,6 +614,7 @@ public:
 			// Collector-receiver class inputs
 		cr_inputs.m_field_control = 1.0;		//[-] Generic model doesn't require defocus signal
 		cr_inputs.m_input_operation_mode = C_csp_collector_receiver::ON;	//[-] Model always solves as 'on'
+        cr_inputs.m_adjust = sf_adjust[ (int)(time / step) ];
 
 			// Set sim info
 		sim_info.ms_ts.m_time = time;

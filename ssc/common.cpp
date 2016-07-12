@@ -246,6 +246,14 @@ var_info vtab_dc_adjustment_factors[] = {
 	
 var_info_invalid };
 
+var_info vtab_sf_adjustment_factors[] = {
+/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+	{ SSC_INPUT,        SSC_NUMBER,      "sf_adjust:constant",            "SF Constant loss adjustment",             "%",    "",                                     "Loss Adjustments",      "*",                     "MAX=100",                     "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "sf_adjust:hourly",              "SF Hourly loss adjustments",              "%",    "",                                     "Loss Adjustments",      "?",                     "LENGTH=8760",                "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "sf_adjust:periods",             "SF Period-based loss adjustments",        "%",    "n x 3 matrix [ start, end, loss ]",    "Loss Adjustments",      "?",                     "COLS=3",                     "" },
+	
+var_info_invalid };
 
 
 var_info vtab_technology_outputs[] = {
@@ -366,6 +374,65 @@ bool dc_adjustment_factors::setup()
 }
 
 float dc_adjustment_factors::operator()(size_t time)
+{
+	if (time < m_factors.size()) return m_factors[time];
+	else return 0.0;
+}
+
+
+sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
+: m_cm(cm)
+{
+}
+
+//adjustment factors changed from derates to percentages jmf 1/9/15
+bool sf_adjustment_factors::setup()
+{
+	float f = (float)m_cm->as_number("sf_adjust:constant");
+	f = 1 - f / 100; //convert from percentage to factor
+	m_factors.resize(8760, f);
+
+	if (m_cm->is_assigned("sf_adjust:hourly"))
+	{
+		size_t n;
+		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
+		if (p != 0 && n == 8760)
+		{
+			for (size_t i = 0; i<8760; i++)
+				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
+		}
+	}
+
+	if (m_cm->is_assigned("sf_adjust:periods"))
+	{
+		size_t nr, nc;
+		ssc_number_t *mat = m_cm->as_matrix("sf_adjust:periods", &nr, &nc);
+		if (mat != 0 && nc == 3)
+		{
+			for (size_t r = 0; r<nr; r++)
+			{
+				int start = (int)mat[nc*r];
+				int end = (int)mat[nc*r + 1];
+				float factor = (float)mat[nc*r + 2];
+
+				if (start < 0 || start >= 8760 || end < start)
+				{
+					m_error = util::format("period %d is invalid ( start: %d, end %d )", (int)r, start, end);
+					continue;
+				}
+
+				if (end >= 8760) end = 8759;
+
+				for (int i = start; i <= end; i++)
+					m_factors[i] *= (1 - factor / 100); //convert from percentages to factors
+			}
+		}
+	}
+
+	return m_error.length() == 0;
+}
+
+float sf_adjustment_factors::operator()(size_t time)
 {
 	if (time < m_factors.size()) return m_factors[time];
 	else return 0.0;
