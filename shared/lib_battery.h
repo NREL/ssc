@@ -387,42 +387,40 @@ Dispatch Base Class - can envision many potential modifications. Goal is to defi
 class dispatch_t
 {
 public:
-	dispatch_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
-		double t_min, bool ac_or_dc, double dc_dc, double ac_dc, double dc_ac, int mode, bool pv_dispatch);
+	dispatch_t(battery_t * Battery, 
+			   double dt, 
+			   double SOC_min, 
+			   double SOC_max, 
+			   double Ic_max, 
+			   double Id_max, 
+			   double t_min, 
+			   int mode, 
+			   bool pv_dispatch);
 
 	// Public APIs
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double e_pv,     // PV energy [kWh]
-		double e_load)=0;   // Load energy [kWh]
+		double P_pv_dc,        // PV energy [kWh]
+		double P_load_dc)=0;   // Load energy [kWh]
 						  
-	void compute_grid_net(double e_pv, double e_load);
+	void compute_grid_net(double P_pv_dc, double P_load_dc);
+
 	enum MODES{LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
 
 	// Outputs
-	void new_year();
 	double cycle_efficiency();
-	double average_efficiency();
-	double pv_charge_percent();
 
-	double energy_tofrom_battery();
-	double energy_tofrom_grid();
-	double gen();
-	double pv_to_load();
-	double battery_to_load();
-	double grid_to_load();
-	double pv_to_batt();
-	double grid_to_batt();
-
-	// Annual metrics
-	double pv_charge_annual();
-	double grid_charge_annual();
-	double charge_annual();
-	double discharge_annual();
-	double grid_import_annual();
-	double grid_export_annual();
-	double energy_loss_annual();
+	// dc powers
+	double power_tofrom_battery();
+	double power_tofrom_grid();
+	double power_gen();
+	double power_pv_to_load();
+	double power_battery_to_load();
+	double power_grid_to_load();
+	double power_pv_to_batt();
+	double power_grid_to_batt();
+	double power_pv_to_grid();
 
 	message get_messages();
 
@@ -433,54 +431,36 @@ protected:
 	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
-	
-	// Losses at AC or DC connection points and internal loss
-	void conversion_loss_in(double &I, double multiplier);
-	void conversion_loss_out(double &I, double multiplier);
-	void compute_loss(double, double,double);
 
-	// compute metrics
-	void accumulate_charge();
-	void accumulate_discharge();
-	void compute_metrics();
-	void accumulate_grid_annual();
-	void compute_to_batt(double e_pv);
-	void compute_to_load(double e_pv, double e_load, double e_tofrom_battery);
-	void compute_generation(double e_pv);
+	// compute totals
+	void compute_to_batt(double P_pv_dc);
+	void compute_to_load(double P_pv_dc, double P_load_dc, double P_tofrom_battery);
+	void compute_to_grid(double P_pv_dc);
+	void compute_generation(double P_pv_dc);
 
 	battery_t * _Battery;
 	double _dt_hour;
 
 	// configuration
-	bool _ac_or_dc;
-	double _dc_dc;
-	double _dc_ac;
-	double _ac_dc;
 	int _mode; // 0 = look ahead, 1 = look behind, 2 = maintain target power, 3 = manual dispatch
 	bool _pv_dispatch_to_battery_first; // 0 = meet load first, 1 = meet battery first
 
-	// energy quantities
-	double _e_tofrom_batt;		 // AC
-	double _e_grid;              // AC
-	double _e_gen;				 // AC
-	double _e_loss_annual;		 
-	double _pv_to_load;		     // AC
-	double _battery_to_load;     // AC
-	double _grid_to_load;        // AC
-	double _pv_to_batt;	         // post conversion losses
-	double _grid_to_batt;        
-	double _batt_charge_loss;    // Loss from AC to DC
-	double _batt_discharge_loss; // Loss from DC to AC
-	double _pv_loss;			 // Loss of PV due to conversion loss
-	double _battery_fraction;
-	double _pv_fraction;
+	// dc power quantities
+	double _P_gen;				 // DC
+	double _P_tofrom_batt;		 // DC
+	double _P_grid;              // DC
+	double _P_pv_to_load;		 // DC
+	double _P_battery_to_load;   // DC
+	double _P_grid_to_load;      // DC
+	double _P_pv_to_batt;	     // DC
+	double _P_grid_to_batt;      // DC
+	double _P_pv_to_grid;		 // DC
 
 	// Charge & current limits controllers
 	double _SOC_min;
 	double _SOC_max;
 	double _Ic_max;
 	double _Id_max;
-	double _I_loss;
 	double _t_min;
 	double _e_max_discharge;
 	double _e_max_charge;
@@ -494,25 +474,8 @@ protected:
 	bool _prev_charging;
 	bool _grid_recharge;
 
-	// single value metrics
-	double _charge_accumulated;		 // [Kwh]
-	double _discharge_accumulated;   // [Kwh]
-	double _charge_from_pv;			 // [Kwh]
-	double _charge_from_grid;		 // [Kwh]
-	double _average_efficiency;		 // [%]
-	double _pv_charge_percent;		 // [%]
-
-	// annual metrics
-	double _charge_from_pv_annual;	 // [Kwh]
-	double _charge_from_grid_annual; // [Kwh]
-	double _charge_annual;			 // [Kwh]
-	double _discharge_annual;		 // [Kwh]
-	double _grid_import_annual;		 // [Kwh]
-	double _grid_export_annual;		 // [Kwh]
-
 	// messages
 	message _message;
-
 };
 
 /*
@@ -528,10 +491,6 @@ public:
 					  double Ic_max, 
 					  double Id_max, 
 					  double t_min, 
-					  bool ac_or_dc, 
-					  double dc_dc, 
-					  double ac_dc, 
-					  double dc_ac,
 					  int mode, 
 					  bool pv_dispatch,
 					  util::matrix_t<float> dm_dynamic_sched, 
@@ -542,14 +501,14 @@ public:
 					  std::map<int, double> dm_percent_discharge, 
 					  std::map<int, double> dm_percent_gridcharge);
 
-	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double e_pv, double e_load);
+	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc);
 
 protected:
 	
 	void initialize_dispatch(size_t hour_of_year, size_t step);
 	void reset();
-	void compute_energy_load_priority(double pv, double load, double energy_needed);
-	void compute_energy_battery_priority(double pv, double load, double energy_needed);
+	void compute_energy_load_priority(double P_pv_dc, double P_load_dc, double energy_needed);
+	void compute_energy_battery_priority(double P_pv_dc, double P_load_dc, double energy_needed);
 
 	util::matrix_t < float > _sched;
 	util::matrix_t < float > _sched_weekend;
@@ -602,10 +561,6 @@ public:
 		double Ic_max, 
 		double Id_max,
 		double t_min, 
-		bool ac_or_dc, 
-		double dc_dc, 
-		double ac_dc, 
-		double dc_ac,
 		int mode,   // 0/1/2
 		bool pv_dispatch,
 		util::matrix_t<float> dm_dynamic_sched, 
@@ -618,10 +573,10 @@ public:
 		int nyears
 		);				  
 
-	void dispatch(size_t year, size_t hour_of_year, size_t step, double e_pv, double e_load);
+	void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc);
 	
-	void update_pv_load_data(std::vector<double> pv, std::vector<double> load);
-	void set_target_power(std::vector<double> target_power);
+	void update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc);
+	void set_target_power(std::vector<double> P_target);
 
 protected:
 	void update_dispatch(int hour_of_year, int step, int idx);
@@ -636,11 +591,11 @@ protected:
 	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max);
 	void check_new_month(int hour_of_year, int step);
 	
-	std::vector<double> _pv;			 // [kW]
-	std::vector<double> _load;           // [kW]
-	std::vector<double> _target_power;   // [kW]
-	double _target_power_month;	    	 // [kW]
-	int _month;							 // [0-11]
+	std::vector<double> _P_pv_dc;	 // [kW]
+	std::vector<double> _P_load_dc;  // [kW]
+	std::vector<double> _P_target;   // [kW]
+	double _P_target_month;	    	 // [kW]
+	int _month;						 // [0-11]
 	int _hour_last_updated;
 	double _dt_hour;
 	int _steps_per_hour;
@@ -649,9 +604,56 @@ protected:
 	int _mode;
 	
 	
-	grid_vec grid; // [grid_power, hour, step]
+	grid_vec grid; // [P_grid, hour, step]
 };
 
+// battery_metrics (report as AC or DC energy quanitities)
+class battery_metrics_t
+{
+public:
+	battery_metrics_t(battery_t * Battery, double dt_hour);
 
+	void compute_metrics_ac(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid);
+	void compute_metrics_dc(dispatch_t * dispatch);
+
+	void accumulate_energy_charge(double P_tofrom_batt);
+	void accumulate_energy_discharge(double P_tofrom_batt);
+	void accumulate_battery_charge_components(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt);
+	void accumulate_grid_annual(double P_tofrom_grid);
+	void new_year();
+
+
+	// outputs
+	double energy_pv_charge_annual();
+	double energy_grid_charge_annual();
+	double energy_charge_annual();
+	double energy_discharge_annual();
+	double energy_grid_import_annual();
+	double energy_grid_export_annual();
+	double energy_loss_annual();
+	double average_efficiency();
+	double pv_charge_percent();
+
+protected:
+
+	// single value metrics
+	double _e_charge_accumulated;	 // [Kwh]
+	double _e_discharge_accumulated; // [Kwh]
+	double _e_charge_from_pv;		 // [Kwh]
+	double _e_charge_from_grid;		 // [Kwh]
+	double _average_efficiency;		 // [%]
+	double _pv_charge_percent;		 // [%]
+
+	// annual metrics
+	double _e_charge_from_pv_annual;   // [Kwh]
+	double _e_charge_from_grid_annual; // [Kwh]
+	double _e_charge_annual;		   // [Kwh]
+	double _e_discharge_annual;		   // [Kwh]
+	double _e_grid_import_annual;	   // [Kwh]
+	double _e_grid_export_annual;	   // [Kwh]
+
+	battery_t * _Battery;
+	double _dt_hour;
+};
 
 #endif

@@ -3,6 +3,9 @@
 
 #include "core.h"
 #include "lib_battery.h"
+#include "lib_power_electronics.h"
+#include "lib_sandia.h"
+#include "lib_pvinv.h"
 
 
 extern var_info vtab_battery[];
@@ -15,8 +18,8 @@ struct battstor
 	~battstor();
 
 	// Note, PV & LOAD are energy quantities, not power
-	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double PV, double LOAD);
-	void update_post_inverted(compute_module &cm, size_t idx, double PV, double LOAD);
+	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv, double P_load);
+	void update_post_inverted(compute_module &cm, size_t idx, double P_gen_ac);
 	void process_messages(compute_module &cm);
 
 	// for user schedule
@@ -38,8 +41,11 @@ struct battstor
 	thermal_t *thermal_model;
 	capacity_t *capacity_model;
 	battery_t *battery_model;
+	battery_metrics_t *battery_metrics;
 	dispatch_manual_t *dispatch_model;
 	losses_t *losses_model;
+	charge_controller *charge_controller;
+	inverter * inverter;
 
 	bool en;
 	int chem;
