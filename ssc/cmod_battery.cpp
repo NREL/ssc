@@ -433,7 +433,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	dc_dc = cm.as_double("batt_dc_dc_efficiency");
 
 	if (ac_or_dc == charge_controller::AC_CONNECTED)
-		charge_controller = new ac_connected_battery_controller(dispatch_model, battery_metrics, ac_dc, dc_ac);
+		charge_control = new ac_connected_battery_controller(dispatch_model, battery_metrics, ac_dc, dc_ac);
 	else if (ac_or_dc == charge_controller::DC_CONNECTED)
 	{
 		int inverter_model = cm.as_integer("inverter_model");
@@ -445,7 +445,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		else if (inverter_model == inverter::PARTLOAD_INVERTER)
 			inverter_efficiency = cm.as_integer("inv_pd_eff");
 
-		charge_controller = new dc_connected_battery_controller(dispatch_model, battery_metrics, dc_dc, inverter_efficiency);
+		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, dc_dc, inverter_efficiency);
 	}
 } 
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
@@ -497,7 +497,7 @@ battstor::~battstor()
 	if( capacity_model ) delete capacity_model;
 	if (losses_model) delete losses_model;
 	if( dispatch_model ) delete dispatch_model;
-	if (charge_controller) delete charge_controller;
+	if (charge_control) delete charge_control;
 
 }
 
@@ -537,7 +537,7 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 {
 	if (P_pv_dc < 0){ P_pv_dc = 0; }
 
-	charge_controller->run(year, hour_of_year, step, P_pv_dc, P_load_dc);
+	charge_control->run(year, hour_of_year, step, P_pv_dc, P_load_dc);
 	
 	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
@@ -587,14 +587,14 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 		year++;
 	}
 	// Power output (all Powers in kWac)
-	outBatteryPower[idx] = (ssc_number_t)(charge_controller->power_tofrom_battery());
-	outGridPower[idx] = (ssc_number_t)(charge_controller->power_tofrom_grid());
-	outPVToLoad[idx] = (ssc_number_t)(charge_controller->power_pv_to_load());
-	outGenPower[idx] = (ssc_number_t)(charge_controller->power_gen());
-	outBatteryToLoad[idx] = (ssc_number_t)(charge_controller->power_battery_to_load());
-	outGridToLoad[idx] = (ssc_number_t)(charge_controller->power_grid_to_load());
-	outPVToBatt[idx] = (ssc_number_t)(charge_controller->power_pv_to_batt());
-	outGridToBatt[idx] = (ssc_number_t)(charge_controller->power_grid_to_batt());
+	outBatteryPower[idx] = (ssc_number_t)(charge_control->power_tofrom_battery());
+	outGridPower[idx] = (ssc_number_t)(charge_control->power_tofrom_grid());
+	outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
+	outGenPower[idx] = (ssc_number_t)(charge_control->power_gen());
+	outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
+	outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
+	outPVToBatt[idx] = (ssc_number_t)(charge_control->power_pv_to_batt());
+	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
 
 	// Average efficiency
 	outAverageCycleEfficiency = (ssc_number_t)battery_metrics->average_efficiency();
@@ -613,7 +613,7 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 }
 void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV)
 {
-	charge_controller->update_gen_ac(PV);
+	charge_control->update_gen_ac(PV);
 }
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
