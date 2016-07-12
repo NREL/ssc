@@ -17,7 +17,6 @@ struct battstor
 	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0, int mode=0);
 	~battstor();
 
-	// Note, PV & LOAD are energy quantities, not power
 	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv, double P_load);
 	void update_post_inverted(compute_module &cm, size_t idx, double P_gen_ac);
 	void process_messages(compute_module &cm);
@@ -44,8 +43,8 @@ struct battstor
 	battery_metrics_t *battery_metrics;
 	dispatch_manual_t *dispatch_model;
 	losses_t *losses_model;
-	charge_controller *charge_controller;
-	inverter * inverter;
+	charge_controller *charge_control;
+	inverter * inverter_model;
 
 	bool en;
 	int chem;

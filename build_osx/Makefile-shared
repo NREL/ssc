@@ -14,6 +14,7 @@ OBJECTS = \
 	lib_irradproc.o \
 	lib_physics.o \
 	lib_powerblock.o \
+	lib_power_electronics.o \
 	lib_pvinv.o \
 	lib_pvmodel.o \
 	lib_pvshade.o \

@@ -1,5 +1,6 @@
 #include "lib_power_electronics.h"
 #include "lib_sandia.h"
+#include <cmath>
 
 double bidirectional_inverter::convert_to_dc(double P_ac, double * P_dc)
 {
@@ -63,7 +64,7 @@ double charge_controller::grid_ac(double dc_ac_efficiency)
 
 	// ac grid power required to meet dc charging
 	if (_P_battery < 0)
-		_P_grid_to_batt = std::fabs(_P_battery + _P_pv_to_battery);
+		_P_grid_to_batt = fabs(_P_battery + _P_pv_to_battery);
 	double P_grid_loss = (_P_grid_to_batt - P_grid_to_batt_0);
 
 	// reconcile any conversion with required load 
