@@ -617,10 +617,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
                 dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
                 dispatch.params.is_rec_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
-                dispatch.params.w_pb0 = mc_pc_out_solver.m_P_cycle * 1000.;
+                dispatch.params.q_pb0 = mc_pc_out_solver.m_q_dot_htf * 1000.;
 
-                if(dispatch.params.w_pb0 != dispatch.params.w_pb0 )
-                    dispatch.params.w_pb0 = 0.;
+                if(dispatch.params.q_pb0 != dispatch.params.q_pb0 )
+                    dispatch.params.q_pb0 = 0.;
             
                 //time
                 dispatch.params.info_time = mc_kernel.mc_sim_info.ms_ts.m_time; //s
@@ -692,7 +692,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 //q_pc_sb = dispatch.outputs.q_pb_standby.at( dispatch.m_current_read_step ) / 1000. ;
 
                 disp_etapb_expect = dispatch.outputs.eta_pb_expected.at( dispatch.m_current_read_step ) 
-                                    * m_cycle_eta_des * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
+                                    /** m_cycle_eta_des*/ * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
                 disp_etasf_expect = dispatch.outputs.eta_sf_expected.at( dispatch.m_current_read_step );
                 disp_qsf_expect = dispatch.outputs.q_sfavail_expected.at( dispatch.m_current_read_step )*1.e-3;
                 disp_qsfprod_expect = dispatch.outputs.q_sf_expected.at( dispatch.m_current_read_step )*1.e-3;
@@ -6831,12 +6831,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[EST_Q_DOT_CH].push_back(q_dot_tes_ch);                 //[MWt]
 
 		mvv_outputs_temp[SOLZEN].push_back(mc_weather.ms_outputs.m_solzen);		//[deg] Solar zenith
+        mvv_outputs_temp[SOLAZ].push_back(mc_weather.ms_outputs.m_solazi);
 		mvv_outputs_temp[BEAM].push_back(mc_weather.ms_outputs.m_beam);		    //[W/m2] DNI
+        mvv_outputs_temp[TDRY].push_back(mc_weather.ms_outputs.m_tdry);
+        mvv_outputs_temp[TWET].push_back(mc_weather.ms_outputs.m_twet);
+        mvv_outputs_temp[RH].push_back(mc_weather.ms_outputs.m_rhum);
 
 			// Collector-receiver outputs
 		mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_out_report.m_q_dot_field_inc);	//[MWt] Field incident thermal power
 		mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_out_report.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
 		mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
+        mvv_outputs_temp[CR_ADJUST].push_back(mc_cr_out_report.m_sf_adjust_out);
 		mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
 		mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
 		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  

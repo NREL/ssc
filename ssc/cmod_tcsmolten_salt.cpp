@@ -354,7 +354,11 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 		// Simulation outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "time_hr",              "Time at end of timestep",                                      "hr",           "",            "Solver",         "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Resource Solar Zenith",                                        "deg",          "",            "weather",        "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "solaz",                "Resource Solar Azimuth",                                       "deg",          "",            "weather",        "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Resource Beam normal irradiance",                              "W/m2",         "",            "weather",        "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",                 "Resource Dry Bulb Temperature",                                "C",           "",            "weather",        "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "twet",                 "Resource Wet Bulb Temperature",                                "C",           "",            "weather",        "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "rh",                   "Resource Relative Humidity",                                   "%",           "",            "weather",        "*",                       "",           "" },
 	
 		// Collector-receiver outputs
 			// Eventually want to make this INOUT, but will have to add 'eta_map' to UI...
@@ -365,6 +369,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Controller",     "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "sf_adjust_out",        "Field availability adjustment factor",                         "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",        "Rec. incident thermal power",                                  "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Rec. thermal power to HTF less piping loss",                   "MWt",          "",            "CR",             "*",                       "",           "" },
@@ -481,6 +486,7 @@ public:
 	{
 		add_var_info(_cm_vtab_tcsmolten_salt);
 		add_var_info(vtab_adjustment_factors);
+        add_var_info(vtab_sf_adjustment_factors);
 	} 
 
 	bool relay_message(string &msg, double percent)
@@ -795,6 +801,15 @@ public:
 		heliostatfield.ms_params.m_interp_nug = 0.0;
 		heliostatfield.ms_params.m_interp_beta = 1.99;
 
+        //Load the solar field adjustment factors
+        sf_adjustment_factors sf_haf(this);
+        if (!sf_haf.setup())
+			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
+        //allocate array to pass to tcs
+        heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
+        for( int i=0; i<sf_haf.size(); i++)
+            heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
+
 		// Set callback information
 		heliostatfield.mf_callback = ssc_mspt_solarpilot_callback;
 		heliostatfield.m_cdata = (void*)this;
@@ -1035,7 +1050,17 @@ public:
 		system.m_bop_par_1 = as_double("bop_par_1");
 		system.m_bop_par_2 = as_double("bop_par_2");
 
-		// Instantiate Solver
+		// Set steps per hour
+        double nhoursim = 8760.;          //[hr] Number of hours to simulate
+		C_csp_solver::S_sim_setup sim_setup;
+		sim_setup.m_sim_time_start = 0.0;			//[s] starting first hour of year
+		sim_setup.m_sim_time_end = nhoursim*3600.; //8760.0*3600.0;	//[s] full year simulation
+
+		int steps_per_hour = 1;		//60; //[-]
+		int n_steps_fixed = steps_per_hour * 8760;	//[-]
+		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
+
+  		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, collector_receiver, power_cycle, storage, tou, system);
 
 
@@ -1060,15 +1085,6 @@ public:
 		}
 
 		// Set up ssc output arrays
-		// Set steps per hour
-        double nhoursim = 8760.;          //[hr] Number of hours to simulate
-		C_csp_solver::S_sim_setup sim_setup;
-		sim_setup.m_sim_time_start = 0.0;			//[s] starting first hour of year
-		sim_setup.m_sim_time_end = nhoursim*3600.; //8760.0*3600.0;	//[s] full year simulation
-
-		int steps_per_hour = 1;		//60; //[-]
-		int n_steps_fixed = steps_per_hour * 8760;	//[-]
-		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
 		float **ptr_array = new float*[C_csp_solver::N_END];
 		float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
@@ -1088,12 +1104,18 @@ public:
 			// Simulation outputs
 		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
 		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen", n_steps_fixed);
-		ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
+		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz", n_steps_fixed);
+        ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
+        ptr_array[C_csp_solver::TDRY] = allocate("tdry", n_steps_fixed);
+        ptr_array[C_csp_solver::TWET] = allocate("twet", n_steps_fixed);
+        ptr_array[C_csp_solver::RH] = allocate("rh", n_steps_fixed);
+        
 
 			// Collector-receiver outputs
 		ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
 		ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
 		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
+        ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);

@@ -225,6 +225,7 @@ enum{	//Parameters
 		//Outputs
 		O_pparasi,
 		O_eta_field,
+        O_sf_adjust_out,
 		O_flux_map,
 
 		//N_MAX
@@ -284,6 +285,7 @@ tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
     
 	{ TCS_OUTPUT,   TCS_NUMBER,   O_pparasi,                 "pparasi",               "Parasitic tracking/startup power",                     "MWe",    "",                              "", ""          },
     { TCS_OUTPUT,   TCS_NUMBER,   O_eta_field,               "eta_field",             "Total field efficiency",                               "",       "",                              "", ""          },
+    { TCS_OUTPUT,   TCS_NUMBER,   O_sf_adjust_out,           "sf_adjust_out",         "Field availability adjustment factor",                 "",       "",                              "", ""          },
     { TCS_OUTPUT,   TCS_MATRIX,   O_flux_map,                "flux_map",              "Receiver flux map",                                    "",       "n_flux_x cols x n_flux_y rows", "", ""          },
 
 
@@ -606,6 +608,7 @@ public:
 			// Set remaining outputs
 		value( O_pparasi, mc_heliostatfield.ms_outputs.m_pparasi );
 		value( O_eta_field, mc_heliostatfield.ms_outputs.m_eta_field );
+        value( O_sf_adjust_out, mc_heliostatfield.ms_outputs.m_sf_adjust_out );
 
 		return 0;
 	}
