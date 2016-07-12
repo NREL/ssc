@@ -443,7 +443,7 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	}
 
 	double eta_arr = max(opt_val*Ftrack, 0.0);  //mjw 7.25.11 limit zenith to <90, otherwise the interpolation error message gets called during night hours.
-	double eta_opt_sf = eta_arr*ms_params.m_eta_opt_soil*ms_params.m_eta_opt_gen;
+	double eta_opt_sf = eta_arr*ms_params.m_eta_opt_soil*ms_params.m_eta_opt_gen*inputs.m_adjust;
 
 	//Evaluate solar feild thermal efficiency derate
 	double f_sfhl_qdni = 0.0;
