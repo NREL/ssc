@@ -44,7 +44,6 @@ struct battstor
 	dispatch_manual_t *dispatch_model;
 	losses_t *losses_model;
 	charge_controller *charge_control;
-	inverter * inverter_model;
 
 	bool en;
 	int chem;
