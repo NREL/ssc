@@ -166,6 +166,7 @@ class voltage_t
 {
 public:
 	voltage_t(int num_cells_series, int num_strings, double voltage);
+	virtual ~voltage_t(){};
 
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
 	double battery_voltage(); // voltage of one battery
@@ -396,6 +397,8 @@ public:
 			   double t_min, 
 			   int mode, 
 			   bool pv_dispatch);
+	
+	virtual ~dispatch_t(){};
 
 	// Public APIs
 	virtual void dispatch(size_t year,
@@ -612,6 +615,7 @@ class battery_metrics_t
 {
 public:
 	battery_metrics_t(battery_t * Battery, double dt_hour);
+	~battery_metrics_t(){};
 
 	void compute_metrics_ac(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid);
 	void compute_metrics_dc(dispatch_t * dispatch);

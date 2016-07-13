@@ -87,6 +87,11 @@ charge_controller(dispatch, battery_metrics, 100, dc_dc_efficiency)
 	_dc_dc_charge_controller = new dc_dc_charge_controller(dc_dc_efficiency);
 	_inverter_efficiency = inverter_efficiency * 0.01;
 }
+dc_connected_battery_controller::~dc_connected_battery_controller()
+{
+	if (_dc_dc_charge_controller)
+		delete _dc_dc_charge_controller;
+}
 
 double dc_connected_battery_controller::run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv_dc, double P_load_ac)
 {
@@ -198,7 +203,11 @@ charge_controller(dispatch, battery_metrics, ac_dc_efficiency, dc_ac_efficiency)
 {
 	_bidirectional_inverter = new bidirectional_inverter(ac_dc_efficiency, dc_ac_efficiency);
 }
-
+ac_connected_battery_controller::~ac_connected_battery_controller()
+{
+	if (_bidirectional_inverter)
+		delete _bidirectional_inverter;
+}
 double ac_connected_battery_controller::run( size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv_ac, double P_load_ac)
 {
 	double P_pv_dc = 0;
