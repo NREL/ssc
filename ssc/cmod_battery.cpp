@@ -149,6 +149,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	capacity_model = 0;
 	dispatch_model = 0;
 	losses_model = 0;
+	charge_control = 0;
+	battery_metrics = 0;
 
 	// outputs
 	outTotalCharge = 0;
