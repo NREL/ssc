@@ -227,6 +227,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	
 				     																	  
 	// System Control	
+    { SSC_INPUT,        SSC_NUMBER,      "time_start",           "Simulation start time",                                             "s",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "time_stop",            "Simulation stop time",                                              "s",            "",            "sys_ctrl",          "?=31536000",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "time_steps_per_hour",  "Number of simulation time steps per hour",                          "-",            "",            "sys_ctrl",          "?=1",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",         "Fixed parasitic load - runs at all times",                          "MWe/MWcap",    "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "aux_par",              "Aux heater, boiler parasitic",                                      "MWe/MWcap",    "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "aux_par_f",            "Aux heater, boiler parasitic - multiplying fraction",               "none",         "",            "sys_ctrl",          "*",                       "",                      "" },
@@ -504,6 +507,22 @@ public:
 			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
 		}
 
+
+        //set up simulation parameters
+        
+        // Set steps per hour
+		C_csp_solver::S_sim_setup sim_setup;
+		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
+		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
+
+		int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
+		int n_steps_fixed = steps_per_hour * 8760;	//[-]
+        //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
+		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
+
+
+
+        //heliostat field class
 		C_pt_heliostatfield heliostatfield;
 
 		heliostatfield.ms_params.m_run_type = (int) as_double("run_type");
@@ -807,7 +826,7 @@ public:
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
-        for( int i=0; i<sf_haf.size(); i++)
+        for( int i=0; i<sf_haf.size(); i++)     //array should be 8760 in length
             heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
 
 		// Set callback information
@@ -1049,16 +1068,6 @@ public:
 		system.m_bop_par_0 = as_double("bop_par_0");
 		system.m_bop_par_1 = as_double("bop_par_1");
 		system.m_bop_par_2 = as_double("bop_par_2");
-
-		// Set steps per hour
-        double nhoursim = 8760.;          //[hr] Number of hours to simulate
-		C_csp_solver::S_sim_setup sim_setup;
-		sim_setup.m_sim_time_start = 0.0;			//[s] starting first hour of year
-		sim_setup.m_sim_time_end = nhoursim*3600.; //8760.0*3600.0;	//[s] full year simulation
-
-		int steps_per_hour = 1;		//60; //[-]
-		int n_steps_fixed = steps_per_hour * 8760;	//[-]
-		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
   		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, collector_receiver, power_cycle, storage, tou, system);
