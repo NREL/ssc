@@ -271,6 +271,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor7",     "Dispatch payment factor 7",	                                      "",             "",            "tou",            "*",						  "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor8",     "Dispatch payment factor 8",	                                      "",             "",            "tou",            "*",						  "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",     "Dispatch payment factor 9",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",   "Use time-series dispatch factors",                                  "",             "",            "tou",            "?=0",						  "",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_series",      "Time series dispatch factors",                                      "",             "",            "tou",            "",						  "",                      "" },
 
 
 
@@ -1041,8 +1043,7 @@ public:
 		tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
 		tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
 
-
-		size_t n_f_turbine = -1;
+        size_t n_f_turbine = -1;
 		ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine,0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
@@ -1059,7 +1060,7 @@ public:
 		tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][6] = as_double("dispatch_factor7");
 		tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][7] = as_double("dispatch_factor8");
 		tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][8] = as_double("dispatch_factor9");
-		
+
 		// System parameters
 		C_csp_solver::S_csp_system_params system;
 		system.m_pb_fixed_par = as_double("pb_fixed_par");
@@ -1092,6 +1093,25 @@ public:
 
 			return;
 		}
+
+
+        //if the pricing schedule is provided as hourly, overwrite the tou schedule
+        if( as_boolean("is_dispatch_series") )
+        {
+            size_t n_dispatch_series;
+            ssc_number_t *dispatch_series = as_array("dispatch_series", &n_dispatch_series);
+
+            if( n_dispatch_series != 8760 )
+			    throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array must be 8760 in length.");
+                
+
+            for(int i=0; i<8760; i++)
+                tou_params->mc_pricing.m_hr_tou[i] = i+1;
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(8760);
+            for( int i=0; i<8760; i++)
+                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
+        }
+        
 
 		// Set up ssc output arrays
 
