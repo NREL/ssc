@@ -7,7 +7,7 @@ using namespace std;
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
 	// Set maximum timestep from parent class member data
-	m_max_step = 10.0*60.0;			//[s]
+	m_max_step = 10.0*60.0;			//[s]: [m] * [s/m]
 	m_step_recirc = m_max_step;		//[s]
 
 	//Commonly used values, conversions, etc...
@@ -895,8 +895,10 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	m_EqOpteff = 0.0;
 
 	// Vectors storing information for the energy balance
-	std::vector<double> E_sca;
+	std::vector<double> E_sca;		//[MJ]
+	std::vector<double> E_sca_bal;	//[MJ]
 	E_sca.resize(m_nSCA);
+	E_sca_bal.resize(m_nSCA);
 
 	std::vector<double> q_dot_loss_xover;		//[W]
 	q_dot_loss_xover.resize(m_nSCA-1);
@@ -954,12 +956,12 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		//                    the outlet HTF temperature is equal to the bulk temperature
 		m_T_htf_out_t_end[i] = m_q_abs_SCAtot[i] / (m_dot_htf_loop*c_htf_i) + m_T_htf_in_t_int[i] + 
 								(m_T_htf_out_t_end_last[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i]/(m_dot_htf_loop*c_htf_i)) *
-								exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i * m_mc_bal_sca * m_L_actSCA[CT]));
+								exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_actSCA[CT]));
 
 		m_T_htf_out_t_int[i] = m_q_abs_SCAtot[i] / (m_dot_htf_loop*c_htf_i) + m_T_htf_in_t_int[i] +
-								( (m_node * c_htf_i * m_mc_bal_sca * m_L_actSCA[CT])/(-m_dot_htf_loop * c_htf_i) * 
+								( (m_node * c_htf_i + m_mc_bal_sca * m_L_actSCA[CT])/(-m_dot_htf_loop * c_htf_i) * 
 								(m_T_htf_out_t_end_last[i] - m_T_htf_in_t_int[i] - m_q_abs_SCAtot[i]/(m_dot_htf_loop*c_htf_i)) *
-								exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i * m_mc_bal_sca * m_L_actSCA[CT])) - 1) / sim_info.ms_ts.m_step;
+								(exp(-m_dot_htf_loop * c_htf_i * sim_info.ms_ts.m_step / (m_node * c_htf_i + m_mc_bal_sca * m_L_actSCA[CT])) - 1.0)) / sim_info.ms_ts.m_step;
 
 		//Calculate the actual amount of energy absorbed by the field that doesn't go into changing the SCA's average temperature
 		//MJW 1.16.2011 Include the thermal inertia term
@@ -989,9 +991,11 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			//Equation: m_m_dot_avail*m_c_htf[i]*(T_hft_out - m_T_htf_in) = m_E_avail/(m_dt*3600)
 			//m_m_dot_avail = (m_E_avail[i]/(m_dt*3600.))/(m_c_htf[i]*(m_T_htf_out[i] - m_T_htf_in[i]))   //[J/s]*[kg-K/J]*[K]: 
 		}
-		E_sca[i] = (m_A_cs(HT, 1)*m_L_SCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca)*(m_T_htf_out_t_end[i] - m_T_htf_out_t_end[i])*1.E-6;	//[MJ]
+		E_sca[i] = (m_A_cs(HT, 1)*m_L_SCA[CT] * rho_htf_i * c_htf_i + m_L_actSCA[CT] * m_mc_bal_sca)*(m_T_htf_out_t_end[i] - m_T_htf_out_t_end_last[i])*1.E-6;	//[MJ] SCA basis
 
-		//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA
+		E_sca_bal[i] = m_q_abs_SCAtot[i]*sim_info.ms_ts.m_step/1.E6 - m_dot_htf_loop*c_htf_i*(m_T_htf_out_t_int[i] - m_T_htf_in_t_int[i])*sim_info.ms_ts.m_step/1.E6 - E_sca[i];
+
+		//Set the inlet temperature of the next SCA equal to the outlet temperature of the current SCA 
 		//minus the heat losses in intermediate piping
 		if( i < m_nSCA - 1 )
 		{
@@ -1321,25 +1325,37 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	C_csp_solver_sim_info sim_info_temp = sim_info;
 	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
+	double T_sys_h_t_int_sum = 0.0;
 	for(int i = 0; i < n_steps_recirc; i++)
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i + 1);	//[s]
 
-		// Set inlet temperature to previous timestep outlet temperature
-		double T_cold_in = m_T_sys_TEMP_UPDATE;			//[K]
+		// Could iterate here for each step such that T_cold_in = m_T_sys_h_t_in
+		// This would signficantly slow the code
 
-		// Call energy balance with updated info
-		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+			// Set inlet temperature to previous timestep outlet temperature
+			double T_cold_in = m_T_sys_h_t_end_last;			//[K]
+
+			// Call energy balance with updated info
+			loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+		// This iteration would end here, and step forward
+
+		// Add current temperature so summation
+		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
 
 		update_last_temps();
 	}
-	
+	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)n_steps_recirc;		//[K]
+
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
 	cr_out_solver.m_time_required_su = sim_info.ms_ts.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
 	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr] Total HTF mass flow rate
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
-	cr_out_solver.m_T_salt_hot = m_T_sys_TEMP_UPDATE - 273.15;		//[C]
+		// 7.12.16: Return timestep-end or timestep-integrated-average?
+		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
+	cr_out_solver.m_T_salt_hot = T_sys_h_int_ts_ave - 273.15;		//[C]
 
 	cr_out_solver.m_E_fp_total = 0.0;					//[MW]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1383,19 +1399,25 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
 	double time_required_su = sim_info.ms_ts.m_step;		//[s]
 	int i_step = 0;
+	double T_sys_h_t_int_sum = 0.0;
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);	//[s]
 
+		// Could iterate here for each step such that T_cold_in = m_T_sys_h_t_in
+		// This would signficantly slow the code
+
 		// Set inlet temperature to previous timestep outlet temperature
-		double T_cold_in = m_T_sys_TEMP_UPDATE;			//[K]
+		double T_cold_in = m_T_sys_h_t_end_last;			//[K]
 
 		// Call energy balance with updated info
 		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
-		// If the outlet temperature is greater than startup temperature,
-		//    then backup one timestep, and move forward in shorter steps
-		if( m_T_sys_TEMP_UPDATE > m_T_startup )
+		// Add current temperature so summation
+		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
+
+		// If the *outlet temperature at the end of the timestep* is greater than startup temperature,
+		if( m_T_sys_h_t_end > m_T_startup )
 		{
 			time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
 			m_operating_mode = C_csp_collector_receiver::ON;				//[-]
@@ -1405,6 +1427,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		update_last_temps();
 	}
+	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)n_steps_recirc;		//[K]
 
 	// Check if startup is achieved in current controller/kernel timestep
 	if( !is_T_startup_achieved )
@@ -1412,66 +1435,6 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		time_required_su = sim_info.ms_ts.m_step;		//[s]
 		m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
 	}
-
-	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
-	// Then, it steps back one recirculation timestep and advanced in 1 min timesteps to more closely calculate the time
-	// This seems awfully burdensome given the somewhat arbitrary nature of the Startup Temperature,
-	// so the routine above only uses the Recirculation Step
-
-	//int i_step = 0;
-	//for( i_step = 0; i_step < n_steps_recirc; i_step++ )
-	//{
-	//	sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);	//[s]
-
-	//	// Set inlet temperature to previous timestep outlet temperature
-	//	double T_cold_in = m_T_sys_h_last;			//[K]
-
-	//	// Call energy balance with updated info
-	//	loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
-
-	//	// If the outlet temperature is greater than startup temperature,
-	//	//    then backup one timestep, and move forward in shorter steps
-	//	if( m_T_sys_h > m_T_startup )
-	//	{
-	//		sim_info_temp.ms_ts.m_time -= step_local;	//[s] reset time to start of present i_step
-	//		is_T_startup_achieved = true;
-	//		break;
-	//	}
-
-	//	update_last_temps();
-	//}
-
-	//// Check if startup is achieved in current controller/kernel timestep
-	//double time_required_su = sim_info.ms_ts.m_step;		//[s]
-	//m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
-
-	//if( is_T_startup_achieved )
-	//{
-	//	// Use 1 minute timesteps, or half of the local timestep from above calcs, whichever is shortest
-	//	double step_startup_fixed = min(60.0, step_local/2.0);				//[s]
-	//	double delta_time = sim_info.ms_ts.m_time - sim_info_temp.ms_ts.m_time;			//[s]
-	//	int n_steps_startup = std::ceil(delta_time / step_startup_fixed);	//[-]	
-	//	double step_startup = delta_time / (double)n_steps_startup;			//[s]
-
-	//	for( int i = 0; i < n_steps_startup; i++ )
-	//	{
-	//		sim_info_temp.ms_ts.m_time += step_startup*(i + 1);	//[s]
-
-	//		double T_cold_in = m_T_sys_h_last;				//[K]
-
-	//		// Call energy balance with updated info
-	//		loop_energy_balance(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
-
-	//		update_last_temps();
-
-	//		if( m_T_sys_h > m_T_startup )
-	//		{
-	//			time_required_su = sim_info_temp.ms_ts.m_time - time_start;		//[s]
-	//			m_operating_mode = C_csp_collector_receiver::ON;			//[-]
-	//			break;
-	//		}
-	//	}
-	//}
 
 	// These outputs need some more thought
 		// For now, just set this > 0.0 so that the controller knows that startup was successful
@@ -1482,8 +1445,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;//[kg/hr] Total HTF mass flow rate
 		// Should not be available thermal output if receiver is in start up, but controller doesn't use it in CR_SU (confirmed)
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
-		// Reporting final (t = t_end) or ave (t = t_mid)?, but controller doesn't use it in CR_SU (confirmed)
-	cr_out_solver.m_T_salt_hot = m_T_sys_TEMP_UPDATE - 273.15;		//[C]
+		// 7.12.16: Return timestep-end or timestep-integrated-average?
+		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
+	cr_out_solver.m_T_salt_hot = T_sys_h_int_ts_ave - 273.15;		//[C]
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = 0.0;					//[MW]
@@ -1599,7 +1563,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	// If the outlet temperature (of last SCA!) is greater than the target (considering some convergence tolerance)
 		// then adjust mass flow rate and see what happens
-	if( (m_T_sys_vector_UPDATE[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 && on_success )
+	if( (m_T_htf_out_t_end[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 && on_success )
 	{
 		// Try the maximum mass flow rate
 		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
@@ -1609,7 +1573,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 		// Is the outlet temperature (of the last SCA!) still greater than the target (considering some convergence tolerance)
 			// then need to defocus
-		if( (m_T_sys_vector_UPDATE[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
+		if( (m_T_htf_out_t_end[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
 		{
 			// Set up the member structure that contains loop_energy_balance inputs
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1627,7 +1591,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			double defocus_lower = 0.0;		//[-]
 
 			// Set guess values... can be smarter about this...
-			double defocus_guess_upper = min(1.0, (m_T_loop_out_des - m_T_loop_in_des)/(m_T_sys_vector_UPDATE[m_nSCA - 1] - m_T_loop_in_des));
+			double defocus_guess_upper = min(1.0, (m_T_loop_out_des - m_T_loop_in_des)/(m_T_htf_out_t_end[m_nSCA - 1] - m_T_loop_in_des));
 			double defocus_guess_lower = 0.9*defocus_guess_upper;	//[-]
 
 			// Set solver settings - relative error on T_htf_out
@@ -1720,11 +1684,15 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_time_required_su = 0.0;	//[s]
 		// The controller requires the total mass flow rate from the collector-receiver
 		cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr]
-		// The controller also requires the receiver thermal output
-		double c_htf_ave = m_htfProps.Cp((m_T_sys_TEMP_UPDATE + T_cold_in) / 2.0);  //[kJ/kg-K]
-		cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot / 3600.0)*c_htf_ave*(m_T_sys_TEMP_UPDATE - T_cold_in) / 1.E3;	//[MWt]
+		
+			// The controller also requires the receiver thermal output
+			// 7.12.16 Now using the timestep-integrated-average temperature
+		double c_htf_ave = m_htfProps.Cp((m_T_sys_h_t_int + T_cold_in) / 2.0);  //[kJ/kg-K]
+		cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot / 3600.0)*c_htf_ave*(m_T_sys_h_t_int - T_cold_in) / 1.E3;	//[MWt]
 		// Finally, the controller need the HTF outlet temperature from the field
-		cr_out_solver.m_T_salt_hot = m_T_sys_TEMP_UPDATE - 273.15;		//[C]
+		cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int - 273.15;		//[C]
+			// ***********************************************************
+			// ***********************************************************
 
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
@@ -1766,8 +1734,8 @@ int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 		return -1;
 	}
 
-	// Set the outlet temperature
-	*T_htf_loop_out = mpc_trough->m_T_sys_vector_UPDATE[mpc_trough->m_nSCA - 1];
+	// Set the outlet temperature at end of timestep
+	*T_htf_loop_out = mpc_trough->m_T_htf_out_t_end[mpc_trough->m_nSCA - 1];
 
 	return 0;
 }
@@ -1786,8 +1754,8 @@ int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double
 		return -1;
 	}
 	
-	// Set the outlet temperature
-	*T_htf_loop_out = mpc_trough->m_T_sys_vector_UPDATE[mpc_trough->m_nSCA - 1];
+	// Set the outlet temperature at end of timestep
+	*T_htf_loop_out = mpc_trough->m_T_htf_out_t_end[mpc_trough->m_nSCA - 1];
 
 	return 0;
 }

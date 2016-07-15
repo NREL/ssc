@@ -163,8 +163,6 @@ private:
 	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
 	double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
 
-	double m_T_sys_TEMP_UPDATE;
-	std::vector<double> m_T_sys_vector_UPDATE;
 	// *********************************************
 	// *********************************************
 
