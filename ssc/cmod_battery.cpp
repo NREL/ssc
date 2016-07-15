@@ -24,6 +24,7 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "Battery",       "",                           "",                              "" },
 
 	// generic battery inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_strings",                      "Number of strings of cells",                              "",        "",                     "Battery",       "",                           "",                              "" },
@@ -110,6 +111,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_load",                               "Power to load from grid",                               "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_batt",                                 "Power to battery from PV",                              "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Power to battery from grid",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_grid",                                 "Power to grid from PV",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Power to grid from battery",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -175,6 +178,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outGridToLoad = 0;
 	outPVToBatt = 0;
 	outGridToBatt = 0;
+	outPVToGrid = 0;
+	outBatteryToGrid = 0;
 	outAverageCycleEfficiency = 0;
 	outPVChargePercent = 0;
 	outAnnualPVChargeEnergy = 0;
@@ -243,6 +248,12 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	size_t m,n;
 	batt_dispatch = cm.as_integer("batt_dispatch_choice");
+	
+	// behind the meter, in front of meter
+	batt_meter_position = cm.as_integer("batt_meter_position");
+	if (batt_meter_position == dispatch_t::FRONT)
+		batt_dispatch = dispatch_t::MANUAL;
+
 	bool pv_dispatch = cm.as_boolean("batt_pv_choice");
 	util::matrix_t<float> &schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
 	if (batt_dispatch != dispatch_t::MANUAL)
@@ -330,12 +341,22 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
-	outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
-	outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
-	outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
+
+	if (batt_meter_position == dispatch_t::BEHIND)
+	{
+		outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
+		outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
+		outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
+	}
+	else if (batt_meter_position == dispatch_t::FRONT)
+	{
+		outPVToGrid = cm.allocate("pv_to_grid", nrec*nyears);
+		outBatteryToGrid = cm.allocate("batt_to_grid", nrec*nyears);
+	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
 	outGridToBatt = cm.allocate("grid_to_batt", nrec*nyears);
-	
+
+
 	// annual outputs
 	int annual_size = nyears+1;
 	if (nyears == 1){ annual_size = 1; };
@@ -407,10 +428,18 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
-	
-	if (batt_dispatch == dispatch_t::MANUAL)
+	if (batt_dispatch == dispatch_t::MANUAL && batt_meter_position == dispatch_t::BEHIND)
 	{
 		dispatch_model = new dispatch_manual_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
+			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
+			cm.as_double("batt_minimum_modetime"),
+			batt_dispatch, pv_dispatch,
+			dm_dynamic_sched, dm_dynamic_sched_weekend,
+			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+	}
+	else if (batt_meter_position == dispatch_t::FRONT)
+	{
+		dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, cm.as_double("batt_minimum_SOC"), cm.as_double("batt_maximum_SOC"),
 			cm.as_double("batt_current_charge_max"), cm.as_double("batt_current_discharge_max"),
 			cm.as_double("batt_minimum_modetime"),
 			batt_dispatch, pv_dispatch,
@@ -460,7 +489,6 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
 		bool look_behind = ((mode == dispatch_t::LOOK_BEHIND));
 		automate_dispatch_t * automated_dispatch = dynamic_cast<automate_dispatch_t*>(dispatch_model);
-
 
 		// automatic look ahead
 		if (look_ahead)
@@ -564,7 +592,6 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 		outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
 		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
 		outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent());
-
 	}
 	
 	// Lifetime outputs
@@ -591,12 +618,20 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 	// Power output (all Powers in kWac)
 	outBatteryPower[idx] = (ssc_number_t)(charge_control->power_tofrom_battery());
 	outGridPower[idx] = (ssc_number_t)(charge_control->power_tofrom_grid());
-	outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
 	outGenPower[idx] = (ssc_number_t)(charge_control->power_gen());
-	outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
-	outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
 	outPVToBatt[idx] = (ssc_number_t)(charge_control->power_pv_to_batt());
 	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
+	if (batt_meter_position == dispatch_t::BEHIND)
+	{
+		outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
+		outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
+		outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
+	}
+	else if (batt_meter_position == dispatch_t::FRONT)
+	{
+		outPVToGrid[idx] = (ssc_number_t)(charge_control->power_pv_to_grid());
+		outBatteryToGrid[idx] = (ssc_number_t)(charge_control->power_battery_to_grid());
+	}
 
 	// Average efficiency
 	outAverageCycleEfficiency = (ssc_number_t)battery_metrics->average_efficiency();
@@ -628,9 +663,12 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	cm.assign("batt_bank_installed_capacity", cm.as_double("batt_computed_bank_capacity"));
 
 	// monthly outputs
-	cm.accumulate_monthly_for_year( "pv_to_load",   "monthly_pv_to_load",   _dt_hour, step_per_hour );
-	cm.accumulate_monthly_for_year( "batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour );
-	cm.accumulate_monthly_for_year( "grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour );
+	if (batt_meter_position == dispatch_t::BEHIND)
+	{
+		cm.accumulate_monthly_for_year("pv_to_load", "monthly_pv_to_load", _dt_hour, step_per_hour);
+		cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
+		cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
+	}
 }
 void battstor::process_messages(compute_module &cm) 
 {

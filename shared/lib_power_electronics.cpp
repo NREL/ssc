@@ -50,6 +50,7 @@ void charge_controller::initialize(double P_pv, double P_load_ac)
 	_P_pv_to_load = 0;
 	_P_pv_to_battery = 0;
 	_P_pv_to_grid = 0;
+	_P_battery_to_grid = 0;
 	_P_battery = 0;
 
 	// ac for ac-connected, dc for dc-connected
@@ -131,6 +132,7 @@ double dc_connected_battery_controller::gen_dc()
 	double P_pv_to_load_dc = _dispatch->power_pv_to_load();
 	double P_pv_to_battery_dc = _dispatch->power_pv_to_batt();
 	double P_pv_to_grid_dc = _dispatch->power_pv_to_grid();
+	double P_battery_to_grid_dc = _dispatch->power_battery_to_grid();
 
 	// apply conversion losses, power is still DC
 	double P_loss_gen = _dc_dc_charge_controller->convert_dc_to_dc(P_gen_dc, &_P_gen);
@@ -139,6 +141,7 @@ double dc_connected_battery_controller::gen_dc()
 	double P_loss_pv_to_load = _dc_dc_charge_controller->convert_dc_to_dc(P_pv_to_load_dc, &_P_pv_to_load);
 	double P_loss_pv_to_battery = _dc_dc_charge_controller->convert_dc_to_dc(P_pv_to_battery_dc, &_P_pv_to_battery);
 	double P_loss_pv_to_grid = _dc_dc_charge_controller->convert_dc_to_dc(P_pv_to_grid_dc, &_P_pv_to_grid);
+	double P_loss_battery_to_grid = _dc_dc_charge_controller->convert_dc_to_dc(P_battery_to_grid_dc, &_P_battery_to_grid);
 
 	// compute total loss due to conversions
 	return  P_loss_gen;
@@ -152,10 +155,13 @@ double dc_connected_battery_controller::gen_ac()
 	double P_pv_to_load_dc = _P_pv_to_load;
 	double P_pv_to_battery_dc = _P_pv_to_battery;
 	double P_pv_to_grid_dc = _P_pv_to_grid;
+	double P_battery_to_grid_dc = _P_battery_to_grid;
 
 	// ac quantities
 	_P_battery_to_load = P_battery_to_load_dc * _inverter_efficiency;
 	_P_pv_to_load = P_pv_to_load_dc * _inverter_efficiency;
+
+	_P_battery_to_grid = P_battery_to_grid_dc * _inverter_efficiency;
 	_P_pv_to_grid = P_pv_to_grid_dc * _inverter_efficiency;
 
 	if (P_battery_dc > 0)
@@ -187,6 +193,7 @@ double dc_connected_battery_controller::gen_ac()
 	double P_loss_pv_to_load = P_pv_to_load_dc - _P_pv_to_load;
 	double P_loss_pv_to_battery = P_pv_to_battery_dc - _P_pv_to_battery;
 	double P_loss_pv_to_grid = P_pv_to_grid_dc - _P_pv_to_grid;
+	double P_loss_battery_to_grid = P_battery_to_grid_dc - _P_battery_to_grid;
 	double P_loss_battery = P_battery_dc - _P_battery;
 
 	return 0.;
@@ -247,16 +254,20 @@ double ac_connected_battery_controller::gen_ac()
 	double P_battery_to_load_dc = _dispatch->power_battery_to_load();
 	double P_pv_to_load_dc = _dispatch->power_pv_to_load();
 	double P_pv_to_battery_dc = _dispatch->power_pv_to_batt();
+	double P_pv_to_grid_dc = _dispatch->power_pv_to_grid();
+	double P_battery_to_grid_dc = _dispatch->power_battery_to_grid();
 
 	// ac quantities
 	_P_gen = P_gen_dc * _bidirectional_inverter->dc_ac_efficiency();
 	_P_battery_to_load = P_battery_to_load_dc * _bidirectional_inverter->dc_ac_efficiency();
 	_P_pv_to_load = P_pv_to_load_dc * _bidirectional_inverter->dc_ac_efficiency();
+	_P_pv_to_grid = P_pv_to_grid_dc * _bidirectional_inverter->dc_ac_efficiency();
 
 	if (P_battery_dc > 0)
 	{
 		_P_battery = P_battery_dc * _bidirectional_inverter->dc_ac_efficiency();
 		_P_pv_to_battery = P_pv_to_battery_dc * _bidirectional_inverter->dc_ac_efficiency();
+		_P_battery_to_grid = P_battery_to_grid_dc * _bidirectional_inverter->dc_ac_efficiency();
 	}
 	else if (P_battery_dc < 0)
 	{
