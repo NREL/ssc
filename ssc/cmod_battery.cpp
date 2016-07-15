@@ -118,7 +118,11 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_load",                       "Energy to load from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_load",                       "Energy to load from grid",                              "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
-	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_grid",                         "Energy to grid from pv",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_batt_to_grid",                       "Energy to grid from battery",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_batt",                         "Energy to battery from pv",                             "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_grid_to_batt",                       "Energy to battery from grid",                           "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
+
 	// annual metrics													          
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_pv",                 "Battery annual energy charged from pv",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_from_grid",               "Battery annual energy charged from grid",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
@@ -663,11 +667,19 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	cm.assign("batt_bank_installed_capacity", cm.as_double("batt_computed_bank_capacity"));
 
 	// monthly outputs
+	cm.accumulate_monthly_for_year("pv_to_batt", "monthly_pv_to_batt", _dt_hour, step_per_hour);
+	cm.accumulate_monthly_for_year("grid_to_batt", "monthly_grid_to_batt", _dt_hour, step_per_hour);
+
 	if (batt_meter_position == dispatch_t::BEHIND)
 	{
 		cm.accumulate_monthly_for_year("pv_to_load", "monthly_pv_to_load", _dt_hour, step_per_hour);
 		cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
 		cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
+	}
+	else if (batt_meter_position == dispatch_t::FRONT)
+	{
+		cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
+		cm.accumulate_monthly_for_year("pv_to_grid", "monthly_pv_to_grid", _dt_hour, step_per_hour);
 	}
 }
 void battstor::process_messages(compute_module &cm) 
