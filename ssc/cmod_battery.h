@@ -48,7 +48,7 @@ struct battstor
 	bool en;
 	int chem;
 	
-
+	int batt_meter_position;
 	int batt_dispatch;
 	bool dm_charge[6], dm_discharge[6], dm_gridcharge[6]; // manual dispatch
 	std::map<int, double> dm_percent_discharge; // <profile, discharge_percent>
@@ -94,6 +94,8 @@ struct battstor
 		*outGridToLoad,
 		*outPVToBatt,
 		*outGridToBatt,
+		*outPVToGrid,
+		*outBatteryToGrid,
 		*outAnnualPVChargeEnergy,
 		*outAnnualGridChargeEnergy,
 		*outAnnualChargeEnergy,

@@ -407,9 +407,10 @@ public:
 		double P_pv_dc,        // PV energy [kWh]
 		double P_load_dc)=0;   // Load energy [kWh]
 						  
-	void compute_grid_net(double P_pv_dc, double P_load_dc);
+	virtual void compute_grid_net(double P_pv_dc, double P_load_dc);
 
 	enum MODES{LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
+	enum METERING{ BEHIND, FRONT };
 
 	// Outputs
 	double cycle_efficiency();
@@ -424,6 +425,7 @@ public:
 	double power_pv_to_batt();
 	double power_grid_to_batt();
 	double power_pv_to_grid();
+	double power_battery_to_grid();
 
 	message get_messages();
 
@@ -458,6 +460,7 @@ protected:
 	double _P_pv_to_batt;	     // DC
 	double _P_grid_to_batt;      // DC
 	double _P_pv_to_grid;		 // DC
+	double _P_battery_to_grid;   // DC
 
 	// Charge & current limits controllers
 	double _SOC_min;
@@ -503,7 +506,7 @@ public:
 					  bool * dm_gridcharge, 
 					  std::map<int, double> dm_percent_discharge, 
 					  std::map<int, double> dm_percent_gridcharge);
-
+	virtual ~dispatch_manual_t(){};
 	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc);
 
 protected:
@@ -512,6 +515,8 @@ protected:
 	void reset();
 	void compute_energy_load_priority(double P_pv_dc, double P_load_dc, double energy_needed);
 	void compute_energy_battery_priority(double P_pv_dc, double P_load_dc, double energy_needed);
+	bool compute_energy_battery_priority_charging(double P_pv_dc, double P_load_dc, double energy_needed);
+
 
 	util::matrix_t < float > _sched;
 	util::matrix_t < float > _sched_weekend;
@@ -525,6 +530,37 @@ protected:
 	bool  _can_grid_charge;
 		
 };
+/* Manual dispatch for utility scale (front of meter)*/
+class dispatch_manual_front_of_meter_t : public dispatch_manual_t
+{
+public:
+	dispatch_manual_front_of_meter_t(battery_t * Battery,
+		double dt_hour,
+		double SOC_min,
+		double SOC_max,
+		double Ic_max,
+		double Id_max,
+		double t_min,
+		int mode,
+		bool pv_dispatch,
+		util::matrix_t<float> dm_dynamic_sched,
+		util::matrix_t<float> dm_dynamic_sched_weekend,
+		bool * dm_charge,
+		bool *dm_discharge,
+		bool * dm_gridcharge,
+		std::map<int, double> dm_percent_discharge,
+		std::map<int, double> dm_percent_gridcharge);
+	~dispatch_manual_front_of_meter_t(){};
+
+	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc=0);
+	void compute_grid_net(double P_pv_dc, double P_load_dc=0);
+
+protected:
+	void compute_energy_no_load(double P_pv_dc, double energy_needed);
+	void compute_to_grid(double P_pv_dc);
+};
+
+
 /*
 Automated dispatch classes
 */

@@ -117,6 +117,8 @@ public:
 	double power_grid_to_load(){ return _P_grid_to_load; }
 	double power_pv_to_batt(){ return _P_pv_to_battery; }
 	double power_grid_to_batt(){ return _P_grid_to_batt; }
+	double power_pv_to_grid(){ return _P_pv_to_grid; }
+	double power_battery_to_grid(){ return _P_battery_to_grid; }
 
 	enum {DC_CONNECTED, AC_CONNECTED};
 
@@ -136,6 +138,7 @@ protected:
 	double _P_pv_to_load;
 	double _P_pv_to_battery;
 	double _P_pv_to_grid;
+	double _P_battery_to_grid;
 	double _P_battery;
 
 	// ac or dc pv input
