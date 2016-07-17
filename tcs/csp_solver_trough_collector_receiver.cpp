@@ -7,8 +7,8 @@ using namespace std;
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
 	// Set maximum timestep from parent class member data
-	m_max_step = 10.0*60.0;			//[s]: [m] * [s/m]
-	m_step_recirc = m_max_step;		//[s]
+	m_max_step = 60.0*60.0;			//[s]: [m] * [s/m]
+	m_step_recirc = 10.0*60.0;		//[s]
 
 	//Commonly used values, conversions, etc...
 	m_r2d = 180. / CSP::pi;
@@ -961,6 +961,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 		//Calculate the specific heat for the node
 		c_htf_i *= 1000.0;	//[J/kg-K]
+		
 		//Calculate the average node outlet temperature, including transient effects
 		double m_node = rho_htf_i * m_A_cs(HT, 1)*m_L_actSCA[CT];
 
@@ -1473,7 +1474,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		update_last_temps();
 	}
-	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)n_steps_recirc;		//[K]
+	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)(i_step + 1);		//[K]
 
 	// Check if startup is achieved in current controller/kernel timestep
 	if( !is_T_startup_achieved )
