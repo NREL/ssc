@@ -507,10 +507,14 @@ public:
 		double m_W_dot_htf_pump;	//[MWe] HTF pumping power
 		double m_W_cool_par;		//[MWe] Cooling system parasitic load
 
+		bool m_was_method_successful;	//[-] Return false if method did not solve as expected but can be handled by solver/controller
+
 		S_csp_pc_out_solver()
 		{
 			m_time_required_su = m_P_cycle = m_T_htf_cold = m_q_dot_htf = m_m_dot_htf =
 				m_W_dot_htf_pump = m_W_cool_par = std::numeric_limits<double>::quiet_NaN();
+
+			m_was_method_successful = false;
 		}
 	};
 

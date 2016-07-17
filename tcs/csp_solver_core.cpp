@@ -2727,7 +2727,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_kernel.mc_sim_info);
 
 					// Check that power cycle is producing power or model didn't solve
-					if(mc_pc_out_solver.m_P_cycle == 0.0)
+					if( !mc_pc_out_solver.m_was_method_successful )
 					{
 						// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 						// Go to Receiver OFF power cycle OFF
@@ -4933,7 +4933,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							temp_sim_info);			// **** Use TEMP sim info ****
 
 						// Check that power cycle is producing power or model didn't solve
-						if( mc_pc_out_solver.m_P_cycle == 0.0 )
+						if( !mc_pc_out_solver.m_was_method_successful )
 						{
 							// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 							// Go to Receiver OFF power cycle OFF
@@ -7617,7 +7617,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 			mc_kernel.mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve
-		if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+		if( !mc_pc_out_solver.m_was_method_successful && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 		{
 			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
@@ -7985,7 +7985,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 				mc_kernel.mc_sim_info);
 
 			// Check that power cycle is producing power or model didn't solve
-			if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+			if( !mc_pc_out_solver.m_was_method_successful && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 			{
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
@@ -8720,7 +8720,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 
 
 			// Check that power cycle is producing power or model didn't solve
-			if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+			if( !mc_pc_out_solver.m_was_method_successful && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 			{
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
@@ -9139,7 +9139,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 
 			// Check that power cycle is producing power or model didn't solve
 			// Assumes that standby mode always solves
-			if( mc_pc_out_solver.m_P_cycle == 0.0 && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
+			if( !mc_pc_out_solver.m_was_method_successful && mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON )
 			{
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
@@ -9431,7 +9431,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 			mc_kernel.mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve
-		if( mc_pc_out_solver.m_P_cycle == 0.0 )
+		if( !mc_pc_out_solver.m_was_method_successful )
 		{
 			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 			// Go to Receiver OFF power cycle OFF
