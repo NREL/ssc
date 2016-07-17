@@ -12,9 +12,9 @@
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_core.h"
 
-static bool ssc_mspt_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec);
+static bool ssc_trough_physical_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec);
 
-static var_info _cm_vtab_tcstrough_physical_heat[] = {
+static var_info _cm_vtab_trough_physical_csp_solver[] = {
 //   weather reader inputs
 //   VARTYPE            DATATYPE          NAME                        LABEL                                                                               UNITS           META            GROUP             REQUIRED_IF                CONSTRAINTS              UI_HINTS
     { SSC_INPUT,        SSC_STRING,      "file_name",                 "Local weather file with path",                                                     "none",         "",             "Weather",        "*",                       "LOCAL_FILE",            "" },
@@ -340,16 +340,13 @@ static var_info _cm_vtab_tcstrough_physical_heat[] = {
 
 
 
-class cm_tcstrough_physical_heat : public tcKernel
+class cm_trough_physical_csp_solver : public compute_module
 {
 public:
 
-	cm_tcstrough_physical_heat(tcstypeprovider *prov)
-	:tcKernel(prov)
+	cm_trough_physical_csp_solver()
 	{
-		add_var_info( _cm_vtab_tcstrough_physical_heat );
-		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above
-		// performance adjustment factors
+		add_var_info( _cm_vtab_trough_physical_csp_solver );
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 	}
@@ -958,7 +955,7 @@ public:
 		{
 			// Simulate !
 			csp_solver.Ssimulate(sim_setup,
-				ssc_mspt_sim_progress, (void*)this,
+				ssc_trough_physical_sim_progress, (void*)this,
 				ptr_array,
 				post_proc_array);
 		}
@@ -990,9 +987,9 @@ public:
 
 };
 
-static bool ssc_mspt_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec)
+static bool ssc_trough_physical_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec)
 {
-	cm_tcstrough_physical_heat *cm = static_cast<cm_tcstrough_physical_heat*> (data);
+	cm_trough_physical_csp_solver *cm = static_cast<cm_trough_physical_csp_solver*> (data);
 	if( !cm )
 		false;
 
@@ -1010,4 +1007,4 @@ static bool ssc_mspt_sim_progress(void *data, double percent, C_csp_messages *cs
 	return ret;
 }
 
-DEFINE_TCS_MODULE_ENTRY( tcstrough_physical_heat, "CSP model using the emperical trough TCS types.", 4 )
+DEFINE_MODULE_ENTRY(trough_physical_csp_solver, "Physical trough using CSP Solver", 1)
