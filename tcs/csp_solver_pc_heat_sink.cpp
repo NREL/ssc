@@ -187,6 +187,8 @@ void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_q_dot_htf = q_dot_htf;		//[MWt] Thermal power form HTF
 	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*m_dot_htf/1.E3;
 	
+	out_solver.m_was_method_successful = true;
+
 	return;
 }
 
