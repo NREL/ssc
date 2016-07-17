@@ -528,6 +528,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	double q_startup = 0.0;
 
+	bool was_method_successful = true;
+
 	switch(standby_control)
 	{
 	case STARTUP:
@@ -579,6 +581,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		P_cond = 0.0;
 		m_dot_st_bd = 0.0;
 
+		was_method_successful = true;
+
 		break;
 
 	case ON:
@@ -604,10 +608,14 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				f_hrsys = 0.0;
 				P_cond = 0.0;
 				q_dot_htf = 0.0;
+
+				// 7.17.16 twn: don't want the controller/solver to key off P_cyle == 0, so add boolean
+				was_method_successful = false;
 			}
 			else
 			{
 				q_dot_htf = P_cycle/1000.0/eta;		//[MWt]
+				was_method_successful = true;
 			}
 
 			// -----Calculate the blowdown fraction-----
@@ -642,6 +650,9 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				W_cool_par = 0.0;
 				m_dot_water_cooling = 0.0;
 				q_dot_htf = 0.0;
+
+				// 7.17.16 twn: don't want the controller/solver to key off P_cyle == 0, so add boolean
+				was_method_successful = false;
 			}
 			else
 			{
@@ -650,6 +661,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 				// Want to iterate to fine more accurate cp_htf?
 				T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf / 3600.0*m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+
+				was_method_successful = true;
 			}
 
 			if( W_cool_par < 0.0 )
@@ -697,6 +710,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			P_cond = 0.0;
 
 			q_dot_htf = m_dot_htf/3600.0*c_htf*(T_htf_hot - T_htf_cold)/1000.0;		//[MWt]
+
+			was_method_successful = true;
 		}
 
 		break;
@@ -719,6 +734,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		// Cycle is off, so reset startup parameters!
 		m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
 		m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
+
+		was_method_successful = true;
 
 		break;
 
@@ -816,6 +833,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/1000.0;	//[MWt]
 
+		was_method_successful = true;
 
 		break;
 	
@@ -919,6 +937,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
 	out_solver.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)
 	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
+
+	out_solver.m_was_method_successful = was_method_successful;	//[-]
 }
 
 void C_pc_Rankine_indirect_224::converged()
