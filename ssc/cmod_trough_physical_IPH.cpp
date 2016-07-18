@@ -47,7 +47,23 @@
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_T_amb_des",         "Ambient temperature at user-defined power cycle design point",                   "C",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",  "Percent of user-defined power cycle design gross output consumed by cooling",    "%",	    "",                            "user_defined_PC", "pc_config=1",            "",                      "" },
 
-	
+	var_info_invalid };
+
+
+
+class cm_trough_physical_process_heat : public compute_module
+{
+public:
+
+	cm_trough_physical_process_heat()
+	{
+		add_var_info( _cm_vtab_trough_physical_process_heat );
+		add_var_info(vtab_adjustment_factors);
+		add_var_info(vtab_technology_outputs);
+	}
+
+	void exec( ) throw( general_error )
+	{	
 		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )
 		{
