@@ -90,7 +90,7 @@ public:
         bool is_pb_operating0;      //Power block is operating at the initial time step
         bool is_pb_standby0;        //Power block is in standby at the initial time step
         double q_pb0;               //[kWt] Thermal power consumption in the cycle entering the initial time step
-        double dt;                  //Time step (hr)
+        double dt;                  //[hr] Time step
         double e_tes_init;          //[kWht] current stored energy capacity
         double e_tes_min;           //[kWht] minimum allowable energy capacity in TES
         double e_tes_max;           //[kWht] maximum allowable energy capacity in TES
@@ -102,7 +102,7 @@ public:
         double dt_rec_startup;      //[hr] time requirement to start up the reciever
         double tes_degrade_rate;    //IN [1/hr] Fractional energy loss from tes per hour
         double q_pb_standby;        //[kWt] power requirement to maintain the power block in standby mode
-        double q_pb_des;               //[kWe] design cycle thermal power input
+        double q_pb_des;            //[kWe] design cycle thermal power input
         double q_pb_max;            //[kWt] Maximum allowable thermal energy rate to the cycle
         double q_pb_min;            //[kWt] Minimum allowable thermal energy rate to the cycle
         double q_rec_min;           //[kWt] Minimum allowable power delivery by the receiver when operating
@@ -110,6 +110,10 @@ public:
         double sf_effadj;           //[-] 0..1 Solar field efficiency adjustment
         double info_time;           //[s] time of the year at sim start. informational only.
         double eta_cycle_ref;       //[kWe/kWt]  Design-point power cycle efficiency
+        double rsu_cost;            //[$/start] Receiver startup cost
+        double csu_cost;            //[$/start] Cycle startup cost
+        double pen_delta_w;         //[$/kWe-change] Cycle production change penalty
+        double q_rec_standby;       //[kWt] Receiver standby thermal power consumption fraction
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object

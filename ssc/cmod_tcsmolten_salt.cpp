@@ -257,6 +257,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",        "AMPL data file directory",                                          "-",            "",            "sys_ctrl_disp_opt", "?=''",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_ampl_engine",       "Run dispatch optimization with external AMPL engine",               "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_STRING,      "ampl_exec_call",       "System command to run AMPL code",                                   "-",            "",            "sys_ctrl_disp_opt", "?='ampl sdk_solution.run'", "",                    "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",        "Receiver startup cost",                                             "$",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",        "Cycle startup cost",                                                "$",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",     "Dispatch cycle production change penalty",                          "$/kWe-change", "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",        "Receiver standby energy consumption",                               "kWt",          "",            "sys_ctrl_disp_opt", "?=9e99",                  "",                      "" }, 
     
 
 	// Financial inputs
@@ -1035,6 +1039,10 @@ public:
 			tou.mc_dispatch_params.m_presolve_type = as_integer("disp_spec_presolve");
 			tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
 			tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
+            tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
+            tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
+            tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
+            tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
 		}
 		tou.mc_dispatch_params.m_is_block_dispatch = ! tou.mc_dispatch_params.m_dispatch_optimize;      //mw
 		tou.mc_dispatch_params.m_use_rule_1 = true;

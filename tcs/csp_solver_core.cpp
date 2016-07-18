@@ -329,6 +329,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.params.q_pb_des = m_cycle_q_dot_des*1000.;
     dispatch.params.eta_cycle_ref = m_cycle_eta_des;
 
+    dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
+    dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
+    dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
+    dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
+
     //Cycle efficiency
     dispatch.params.eff_table_load.clear();
     //add zero point
