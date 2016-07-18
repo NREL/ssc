@@ -293,3 +293,26 @@
 
 	}
 
+};
+
+static bool ssc_trough_physical_process_heat_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec)
+{
+	cm_trough_physical_process_heat *cm = static_cast<cm_trough_physical_process_heat*> (data);
+	if( !cm )
+		false;
+
+	if( csp_msg != 0 )
+	{
+		int out_type;
+		string message;
+		while( csp_msg->get_message(&out_type, &message) )
+		{
+			cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
+		}
+	}
+	bool ret = cm->update("", percent);
+
+	return ret;
+}
+
+DEFINE_MODULE_ENTRY(trough_physical_process_heat, "Physical trough process heat applications", 1)
