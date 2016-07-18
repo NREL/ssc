@@ -2936,6 +2936,12 @@ void C_csp_trough_collector_receiver::converged()
 
 	m_ss_init_complete = true;
 
+	// Check that, if trough is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
+	if( m_operating_mode == ON && m_T_sys_h_t_end < m_T_startup)
+	{
+		m_operating_mode = OFF;
+	}
+
 	// TCS Temperature Tracking
 	m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = m_TCS_T_sys_c;		//[K]
 	m_TCS_T_sys_h_converged = m_TCS_T_sys_h_last = m_TCS_T_sys_h;		//[K]
@@ -2949,7 +2955,7 @@ void C_csp_trough_collector_receiver::converged()
 	m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = m_T_sys_h_t_end;		//[K]
 	for( int i = 0; i < m_nSCA; i++ )
 	{
-		m_T_htf_out_t_end_converged = m_T_htf_out_t_end_last = m_T_htf_out_t_end;	//[K]
+		m_T_htf_out_t_end_converged[i] = m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end[i];	//[K]
 	}
 
 	m_ncall = -1;	//[-]
