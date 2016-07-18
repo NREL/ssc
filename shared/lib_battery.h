@@ -46,6 +46,8 @@ class capacity_t
 {
 public:
 	capacity_t(double q, double SOC_max);
+	virtual capacity_t * clone() = 0;
+	virtual void copy(capacity_t *&);
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
@@ -96,6 +98,10 @@ public:
 
 	// Public APIs 
 	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max);
+	~capacity_kibam_t(){}
+	capacity_kibam_t * clone();
+	void copy(capacity_kibam_t *&);
+
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
 	void updateCapacityForLifetime(double capacity_percent);
@@ -143,7 +149,9 @@ class capacity_lithium_ion_t : public capacity_t
 {
 public:
 	capacity_lithium_ion_t(double q, double SOC_max);
-	~capacity_lithium_ion_t();
+	~capacity_lithium_ion_t(){};
+	capacity_lithium_ion_t * clone();
+	void copy(capacity_lithium_ion_t *&);
 
 	// override public api
 	void updateCapacity(double I, double dt);
@@ -166,6 +174,8 @@ class voltage_t
 {
 public:
 	voltage_t(int num_cells_series, int num_strings, double voltage);
+	virtual voltage_t * clone()=0;
+	void copy(voltage_t *&);
 	virtual ~voltage_t(){};
 
 	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
@@ -185,6 +195,8 @@ class voltage_basic_t : public voltage_t
 {
 public:
 	voltage_basic_t(int num_cells_series, int num_strings, double voltage);
+	voltage_basic_t * clone();
+	void copy(voltage_basic_t *&);
 	void updateVoltage(capacity_t * capacity, double dt);
 };
 
@@ -193,6 +205,9 @@ class voltage_dynamic_t : public voltage_t
 {
 public:
 	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R);
+	voltage_dynamic_t * clone();
+	void copy(voltage_dynamic_t *&);
+
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, double dt);
 
@@ -225,6 +240,9 @@ class lifetime_t
 public:
 	lifetime_t(const util::matrix_t<double> &cyles_vs_DOD, const int replacement_option, const double replacement_capacity  );
 	~lifetime_t();
+	lifetime_t * clone();
+	void copy(lifetime_t *&);
+
 	void rainflow(double DOD);
 	bool check_replaced();
 	void reset_replacements();
@@ -285,6 +303,8 @@ public:
 	thermal_t(double mass, double length, double width, double height,
 		double Cp, double h, double T_room,
 		const util::matrix_t<double> &cap_vs_temp);
+	thermal_t * clone();
+	void copy(thermal_t *&);
 
 	void updateTemperature(double I, double R, double dt);
 	void replace_battery();
@@ -325,6 +345,9 @@ class losses_t
 {
 public:
 	losses_t(lifetime_t *, thermal_t *, capacity_t*);
+	losses_t * clone();
+	void copy(losses_t *&);
+
 	void run_losses(double dt_hour);
 	void replace_battery();
 
@@ -344,6 +367,15 @@ class battery_t
 public:
 	battery_t();
 	battery_t(double dt, int battery_chemistry);
+
+	// deep copy constructor (new memory), from battery to this
+	battery_t(const battery_t& battery);
+
+	// copy members from battery to this
+	void copy(const battery_t& battery);
+	~battery_t(){};
+	void delete_clone();
+
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all
@@ -356,9 +388,11 @@ public:
 	void runLifetimeModel(double DOD);
 	void runLossesModel();
 
-	capacity_t * capacity_model();
-	voltage_t * voltage_model();
-	lifetime_t * lifetime_model();
+	capacity_t * capacity_model() const;
+	voltage_t * voltage_model() const;
+	lifetime_t * lifetime_model() const;
+	thermal_t * thermal_model() const;
+	losses_t * losses_model() const;
 
 	// Get capacity quantities
 	double battery_charge_needed();
@@ -398,7 +432,7 @@ public:
 			   int mode, 
 			   bool pv_dispatch);
 	
-	virtual ~dispatch_t(){};
+	virtual ~dispatch_t();
 
 	// Public APIs
 	virtual void dispatch(size_t year,
@@ -444,6 +478,8 @@ protected:
 	void compute_generation(double P_pv_dc);
 
 	battery_t * _Battery;
+	battery_t * _Battery_initial;
+
 	double _dt_hour;
 
 	// configuration
