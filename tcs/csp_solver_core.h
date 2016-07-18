@@ -206,6 +206,10 @@ public:
         int m_bb_type;
         int m_scaling_type;
         int m_max_iterations;
+        double m_rsu_cost;
+        double m_csu_cost;
+        double m_q_rec_standby;
+        double m_pen_delta_w;
 
 		bool m_is_write_ampl_dat;
         bool m_is_ampl_engine;
@@ -233,6 +237,11 @@ public:
             m_bb_type = -1;
             m_presolve_type = -1;
             m_scaling_type = -1;
+
+            m_rsu_cost = 952.;
+            m_csu_cost = 10000.;
+            m_pen_delta_w = 0.1;
+            m_q_rec_standby = 9.e99;
 
 			m_is_write_ampl_dat = false;        //write ampl data files?
             m_is_ampl_engine = false;           //run dispatch with external AMPL engine?
