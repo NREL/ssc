@@ -71,6 +71,21 @@ capacity_t::capacity_t(double q, double SOC_max)
 	_prev_charge = DISCHARGE;
 	_chargeChange = false;
 }
+void capacity_t::copy(capacity_t *& capacity)
+{
+	capacity->_q0 = _q0;
+	capacity->_qmax = _qmax;
+	capacity->_qmax0 = _qmax0;
+	capacity->_I = _I;
+	capacity->_I_loss = _I_loss;
+	capacity->_dt_hour = _dt_hour;
+	capacity->_SOC = _SOC;
+	capacity->_SOC_max = _SOC_max;
+	capacity->_DOD = _DOD;
+	capacity->_DOD_prev = _DOD_prev;
+	capacity->_prev_charge = _prev_charge;
+	capacity->_chargeChange = _chargeChange;
+}
 void capacity_t::check_charge_change()
 {
 	int charging = NO_CHARGE;
@@ -138,6 +153,27 @@ capacity_t(q20, SOC_max)
 	// initializes to full battery
 	replace_battery();
 }
+capacity_kibam_t * capacity_kibam_t::clone(){ return new capacity_kibam_t(*this); }
+void capacity_kibam_t::copy(capacity_kibam_t *& capacity)
+{
+	capacity_t * tmp = dynamic_cast<capacity_t*>(capacity);
+	capacity_t::copy(tmp);
+	capacity = dynamic_cast<capacity_kibam_t*>(tmp);
+	
+	capacity->_t1 = _t1;
+	capacity->_t2 = _t2;
+	capacity->_q1 = _q1;
+	capacity->_q2 = _q2;
+	capacity->_F1 = _F1;
+	capacity->_c = _c;
+	capacity->_k = _k;
+	capacity->_q1_0 = _q1_0;
+	capacity->_q2_0 = _q2_0;
+	capacity->_q10 = _q10;
+	capacity->_q20 = _q20;
+	capacity->_I20 = _I20;
+}
+
 void capacity_kibam_t::replace_battery()
 {
 	// Assume initial charge is max capacity
@@ -146,7 +182,6 @@ void capacity_kibam_t::replace_battery()
 	_q2_0 = _q0 - _q1_0;
 	_qmax = _qmax0;
 }
-
 
 double capacity_kibam_t::c_compute(double F, double t1, double t2, double k_guess)
 {
@@ -313,7 +348,14 @@ double capacity_kibam_t::q20(){return _q20;}
 Define Lithium Ion capacity model
 */
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max) :capacity_t(q, SOC_max){};
-capacity_lithium_ion_t::~capacity_lithium_ion_t(){}
+capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
+void capacity_lithium_ion_t::copy(capacity_lithium_ion_t *& capacity)
+{
+	capacity_t * tmp = dynamic_cast<capacity_t*>(capacity);
+	capacity_t::copy(tmp);
+	capacity = dynamic_cast<capacity_lithium_ion_t*>(tmp);
+}
+
 void capacity_lithium_ion_t::replace_battery()
 {
 	_q0 = _qmax0;
@@ -388,6 +430,13 @@ voltage_t::voltage_t(int num_cells_series, int num_strings, double voltage)
 	_cell_voltage = voltage;
 	_R = 0.004; // just a default, will get recalculated upon construction
 }
+void voltage_t::copy(voltage_t *& voltage)
+{
+	voltage->_num_cells_series = _num_cells_series;
+	voltage->_num_strings = _num_strings;
+	voltage->_cell_voltage = _cell_voltage;
+	voltage->_R = _R;
+}
 
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::cell_voltage(){ return _cell_voltage; }
@@ -412,7 +461,24 @@ voltage_t(num_cells_series, num_strings, voltage)
 
 	parameter_compute();
 };
+voltage_dynamic_t * voltage_dynamic_t::clone(){ return new voltage_dynamic_t(*this); }
+void voltage_dynamic_t::copy(voltage_dynamic_t *& voltage)
+{
+	voltage_t * tmp = dynamic_cast<voltage_t*>(voltage);
+	voltage_t::copy(tmp);
+	voltage = dynamic_cast<voltage_dynamic_t*>(tmp);
 
+	voltage->_Vfull = _Vfull;
+	voltage->_Vexp = _Vexp;
+	voltage->_Qfull = _Qfull;
+	voltage->_Qexp = _Qexp;
+	voltage->_Qnom = _Qnom;
+	voltage->_C_rate = _C_rate;
+	voltage->_A = _A;
+	voltage->_B = _B;
+	voltage->_E0 = _E0;
+	voltage->_K = _K;
+}
 void voltage_dynamic_t::parameter_compute()
 {
 	// Determines parameters according to page 2 of:
@@ -472,6 +538,14 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 voltage_basic_t::voltage_basic_t(int num_cells_series, int num_cells_parallel, double voltage) :
 voltage_t(num_cells_series, num_cells_parallel, voltage){}
 
+voltage_basic_t * voltage_basic_t::clone(){ return new voltage_basic_t(*this); }
+void voltage_basic_t::copy(voltage_basic_t *& voltage)
+{
+	voltage_t * tmp = dynamic_cast<voltage_t*>(voltage);
+	voltage_t::copy(tmp);
+	voltage = dynamic_cast<voltage_basic_t*>(tmp);
+}
+
 void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
 
 /*
@@ -506,6 +580,24 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const
 }
 
 lifetime_t::~lifetime_t(){}
+lifetime_t * lifetime_t::clone(){ return new lifetime_t(*this); }
+void lifetime_t::copy(lifetime_t *& lifetime)
+{
+	lifetime->_nCycles = _nCycles;
+	lifetime->_Dlt = _Dlt;
+	lifetime->_Clt = _Clt;
+	lifetime->_jlt = _jlt;
+	lifetime->_Xlt = _Xlt;
+	lifetime->_Ylt = _Ylt;
+	lifetime->_Peaks = _Peaks;
+	lifetime->_Range = _Range;
+	lifetime->_average_range = _average_range;
+	lifetime->_replacement_option = _replacement_option;
+	lifetime->_replacement_capacity = _replacement_capacity;
+	lifetime->_replacements = _replacements;
+	lifetime->_replacement_scheduled = _replacement_scheduled;
+}
+
 
 void lifetime_t::rainflow(double DOD)
 {
@@ -803,6 +895,23 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 		_cap_vs_temp(i,0) += 273.15; // convert C to K
 	}
 }
+thermal_t * thermal_t::clone(){ return new thermal_t(*this); }
+void thermal_t::copy(thermal_t *& thermal)
+{
+	thermal->_mass = _mass;
+	thermal->_length = _length;
+	thermal->_width = _width;
+	thermal->_height = _height;
+	thermal->_Cp = _Cp;
+	thermal->_h = _h;
+	thermal->_T_room = _T_room;
+	thermal->_R = _R;
+	thermal->_A = _A;
+	thermal->_T_battery = _T_battery;
+	thermal->_capacity_percent = _capacity_percent;
+	thermal->_T_max = _T_max;
+
+}
 void thermal_t::replace_battery()
 { 
 	_T_battery = _T_room; 
@@ -878,6 +987,15 @@ losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capac
 	_capacity = capacity;
 	_nCycle = 0;
 }
+losses_t * losses_t::clone(){ return new losses_t(*this); }
+void losses_t::copy(losses_t *& losses)
+{
+	losses->_lifetime = _lifetime;
+	losses->_thermal = _thermal;
+	losses->_capacity = _capacity;
+	losses->_nCycle = _nCycle;
+}
+
 void losses_t::replace_battery(){ _nCycle = 0; }
 void losses_t::run_losses(double dt_hour)
 {
@@ -902,6 +1020,41 @@ battery_t::battery_t(double dt_hour, int battery_chemistry)
 	_dt_hour = dt_hour;
 	_dt_min = dt_hour * 60;
 	_battery_chemistry = battery_chemistry;
+}
+
+battery_t::battery_t(const battery_t& battery)
+{
+	_capacity = battery.capacity_model()->clone();
+	_voltage = battery.voltage_model()->clone();
+	_thermal = battery.thermal_model()->clone();
+	_lifetime = battery.lifetime_model()->clone();
+	_losses = battery.losses_model()->clone();
+	_battery_chemistry = battery._battery_chemistry;
+	_dt_hour = battery._dt_hour;
+	_dt_min = battery._dt_min;
+	_firstStep = battery._firstStep;
+}
+void battery_t::copy(const battery_t& battery)
+{
+	battery.capacity_model()->copy(_capacity);
+	battery.voltage_model()->copy(_voltage);
+	battery.thermal_model()->copy(_thermal);
+	battery.lifetime_model()->copy(_lifetime);
+	battery.losses_model()->copy(_losses);
+	_battery_chemistry = battery._battery_chemistry;
+	_dt_hour = battery._dt_hour;
+	_dt_min = battery._dt_min;
+	_firstStep = battery._firstStep;
+}
+
+//void battery_t::operator=(const battery_t& battery){}
+void battery_t::delete_clone()
+{
+	if (_capacity) delete _capacity;
+	if (_voltage) delete _voltage;
+	if (_thermal) delete _thermal;
+	if (_lifetime) delete _lifetime;
+	if (_losses) delete _losses;
 }
 void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)
 {
@@ -959,18 +1112,12 @@ void battery_t::runLossesModel()
 {
 	_losses->run_losses(_dt_hour);
 }
-capacity_t * battery_t::capacity_model()
-{
-	return _capacity;
-}
-voltage_t * battery_t::voltage_model()
-{
-	return _voltage;
-}
-lifetime_t * battery_t::lifetime_model()
-{
-	return _lifetime;
-}
+capacity_t * battery_t::capacity_model() const { return _capacity; }
+voltage_t * battery_t::voltage_model() const { return _voltage; }
+lifetime_t * battery_t::lifetime_model() const { return _lifetime; }
+thermal_t * battery_t::thermal_model() const { return _thermal; }
+losses_t * battery_t::losses_model() const { return _losses; }
+
 double battery_t::battery_charge_needed()
 {
 	double charge_needed = _capacity->qmax() - _capacity->q0();
@@ -992,6 +1139,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	double t_min, int mode, bool pv_dispatch)
 {
 	_Battery = Battery;
+	_Battery_initial = new battery_t(*_Battery);
 	_dt_hour = dt_hour;
 	_SOC_min = SOC_min;
 	_SOC_max = SOC_max;
@@ -1028,7 +1176,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_e_max_charge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_max*0.01)*watt_to_kilowatt;
 	_grid_recharge = false;
 }
-
+dispatch_t::~dispatch_t()
+{
+	_Battery_initial->delete_clone();
+	delete _Battery_initial;
+}
 double dispatch_t::power_tofrom_battery(){ return _P_tofrom_batt; };
 double dispatch_t::power_tofrom_grid(){ return _P_grid; };
 double dispatch_t::power_pv_to_load(){ return _P_pv_to_load; };
@@ -1041,7 +1193,6 @@ double dispatch_t::power_pv_to_grid(){ return _P_pv_to_grid; }
 double dispatch_t::power_battery_to_grid(){ return _P_battery_to_grid; }
 
 message dispatch_t::get_messages(){ return _message; };
-
 
 void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
 {
@@ -1418,17 +1569,31 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year, size_t hour_of_year
 	switch_controller();
 	I = current_controller(battery_voltage);
 
-	// Run Battery Model to update charge based on charge/discharge
-	_Battery->run(I);
+	_Battery_initial->copy(*_Battery);
 
-	// Update how much power was actually used to/from battery
-	I = _Battery->capacity_model()->I();
-	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
-	_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * watt_to_kilowatt;// [kW]
+	bool iterate = _charging;
 
+	do {
+		// Run Battery Model to update charge based on charge/discharge
+		_Battery->run(I);
 
-	compute_generation(P_pv_dc);
-	compute_grid_net(P_pv_dc, P_load_dc);
+		// Update how much power was actually used to/from battery
+		I = _Battery->capacity_model()->I();
+		double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
+		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * watt_to_kilowatt;// [kW]
+
+		compute_generation(P_pv_dc);
+		compute_grid_net(P_pv_dc, P_load_dc);
+
+		if (_P_grid_to_batt > 0 && !_can_grid_charge)
+		{
+			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
+			_Battery->copy(*_Battery_initial); 
+		}
+		else
+			iterate = false;
+			
+	} while (iterate);
 
 	// update for next step
 	_prev_charging = _charging;
