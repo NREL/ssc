@@ -81,6 +81,9 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_T_sys_c_t_int = std::numeric_limits<double>::quiet_NaN();			//[K]
 	m_T_sys_h_t_end = std::numeric_limits<double>::quiet_NaN();			//[K]
 	m_T_sys_h_t_int = std::numeric_limits<double>::quiet_NaN();			//[K]
+
+	m_Q_field_losses_total = std::numeric_limits<double>::quiet_NaN();	//[MJ]
+	m_c_htf_ave_ts_ave_temp = std::numeric_limits<double>::quiet_NaN();	//[J/kg-K]
 	// ************************************************************************
 	// ************************************************************************
 
@@ -1127,13 +1130,15 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	E_scas_htf_summed *= m_nLoops;			//[MJ] 
 	E_xovers_htf_summed *= m_nLoops;		//[MJ]
 
-	double c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5)*1000.0;	//[J/kg-K]
+	m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5)*1000.0;	//[J/kg-K]
 
-	double Q_htf = m_m_dot_htf_tot*c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
+	double Q_htf = m_m_dot_htf_tot*m_c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 	double E_htf_bal = E_HR_cold_htf + E_scas_htf_summed + E_xovers_htf_summed + E_HR_hot_htf - Q_htf;				//[MJ]
 
 	double Q_loss_HR_cold = q_dot_loss_HR_cold*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 	double Q_loss_HR_hot = q_dot_loss_HR_hot*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
+
+	m_Q_field_losses_total = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
 
 	double E_bal = Q_abs_scas_summed - Q_loss_xover - Q_loss_HR_cold  - Q_loss_HR_hot
 					- Q_htf - E_HR_cold - E_scas_summed - E_xovers_summed - E_HR_hot;
@@ -1373,6 +1378,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
 	double T_sys_h_t_int_sum = 0.0;
+	double Q_fp_sum = 0.0;				//[MJ]
 	for(int i = 0; i < n_steps_recirc; i++)
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i + 1);	//[s]
@@ -1387,6 +1393,55 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 			loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
 		// This iteration would end here, and step forward
+
+		// Check freeze protection
+		if( m_T_htf_out_t_end[m_nSCA-1] < m_T_fp + 10.0 ) 
+		{
+			// Set up the member structure that contains loop_energy_balance inputs!
+			ms_loop_energy_balance_inputs.ms_weather = &weather;
+			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info_temp;
+				// The following are set in the solver equation operator
+			ms_loop_energy_balance_inputs.m_T_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
+			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
+
+			C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this);
+			C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
+
+			// Set upper and lower bounds on T_htf_cold_in
+			double T_htf_cold_in_lower = T_cold_in;		//[K]
+			double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
+
+			// Set two initial guess values
+			double T_htf_guess_lower = (m_Q_field_losses_total/sim_info.ms_ts.m_step)*1.E6 / 
+									(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot ) + T_cold_in;	//[K]
+
+			double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
+
+			// Set solver settings - relative error on E_balance
+			c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
+
+			int iter_solved = -1;
+			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+			int fp_code = 0;
+			double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
+
+			try
+			{
+				fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
+			}
+			catch( C_csp_exception )
+			{
+				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
+			}
+
+			if( fp_code != C_monotonic_eq_solver::CONVERGED )
+			{
+				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+			}
+
+			Q_fp_sum += c_freeze_protection_eq.Q_htf_fp;		//[MJ]
+		}
 
 		// Add current temperature so summation
 		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
@@ -1404,7 +1459,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = T_sys_h_int_ts_ave - 273.15;		//[C]
 
-	cr_out_solver.m_E_fp_total = 0.0;					//[MW]
+	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
 
@@ -1803,6 +1858,33 @@ int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double
 	
 	// Set the outlet temperature at end of timestep
 	*T_htf_loop_out = mpc_trough->m_T_htf_out_t_end[mpc_trough->m_nSCA - 1];
+
+	return 0;
+}
+
+int C_csp_trough_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/)
+{
+	// Update the HTF inlet temperature in 'ms_loop_energy_balance_inputs'
+	mpc_trough->ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_htf_cold_in;		//[K]
+
+	// Solve the loop energy balance at the HTF inlet temperature
+		// Use the minimum HTF mass flow rate for the freeze protection mass flow rate
+	mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = mpc_trough->m_m_dot_htfmin;	//[kg/s]
+	
+	int exit_code = mpc_trough->loop_energy_balance_T_t_int();
+
+	if( exit_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		*E_loss_balance = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+	
+	// Get energy added to the HTF
+	Q_htf_fp = mpc_trough->m_m_dot_htf_tot*mpc_trough->m_c_htf_ave_ts_ave_temp*
+						(T_htf_cold_in - mpc_trough->m_T_sys_h_t_end_last)/1.E6*(mpc_trough->ms_loop_energy_balance_inputs.ms_sim_info->ms_ts.m_step);	//[MJ]
+	
+	// Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
+	*E_loss_balance = (Q_htf_fp - mpc_trough->m_Q_field_losses_total) / mpc_trough->m_Q_field_losses_total;		//[-]
 
 	return 0;
 }
