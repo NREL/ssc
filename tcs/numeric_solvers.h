@@ -75,6 +75,7 @@ public:
 
 	enum solver_exit_modes
 	{
+		REL_TOL_WITH_0_TARGET,
 		EQUAL_GUESS_VALUES,
 		NO_SOLUTION,
 
