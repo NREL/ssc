@@ -163,6 +163,8 @@ private:
 	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
 	double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
 
+	double m_Q_field_losses_total;		//[MJ] scas + xover + hot_HR + cold_HR
+	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
 	// *********************************************
 	// *********************************************
 
@@ -435,6 +437,27 @@ public:
 		}
 	
 		virtual int operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/);
+	};
+
+	class C_mono_eq_freeze_prot_E_bal : public C_monotonic_equation
+	{	// The solver chooses a cold inlet temperature and sends it to the operator. The operator
+		//		call the loop energy balance at the recirculation mass flow rate
+		//		and returns the total field heat loss. The solver finds the T_cold_in such that E_fp_htf = E_losses
+	private:
+		C_csp_trough_collector_receiver *mpc_trough;
+
+	public:
+		
+		double Q_htf_fp;	//[MJ]
+				
+		C_mono_eq_freeze_prot_E_bal(C_csp_trough_collector_receiver *pc_trough)
+		{
+			mpc_trough = pc_trough;
+			Q_htf_fp = std::numeric_limits<double>::quiet_NaN();
+		}
+	
+
+		virtual int operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/);
 	};
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
