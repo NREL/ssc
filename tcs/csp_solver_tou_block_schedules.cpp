@@ -7,25 +7,25 @@ void C_block_schedule::check_dimensions()
 	// Check that each schedule is a 12x24 matrix
 	// If not, throw exception
 
-	if( mc_weekdays.nrows() != 12 )
+	if( mc_weekdays.nrows() != mstatic_n_rows )
 	{
 		m_error_msg = util::format("TOU schedules require 12 rows and 24 columns. The loaded weekday schedule has %d rows.", mc_weekdays.nrows());
 		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 	}
 
-	if( mc_weekdays.ncols() != 24 )
+	if( mc_weekdays.ncols() != mstatic_n_cols )
 	{
 		m_error_msg = util::format("TOU schedules require 12 rows and 24 columns. The loaded weekday schedule has %d columns.", mc_weekdays.ncols());
 		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 	}
 
-	if( mc_weekends.nrows() != 12 )
+	if( mc_weekends.nrows() != mstatic_n_rows )
 	{
 		m_error_msg = util::format("TOU schedules require 12 rows and 24 columns. The loaded weekend schedule has %d rows.", mc_weekends.nrows());
 		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 	}
 
-	if( mc_weekends.ncols() != 24 )
+	if( mc_weekends.ncols() != mstatic_n_cols )
 	{
 		m_error_msg = util::format("TOU schedules require 12 rows and 24 columns. The loaded weekend schedule has %d columns.", mc_weekends.ncols());
 		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
@@ -182,4 +182,23 @@ void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs
 	tou_outputs.m_f_turbine = ms_params.mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][csp_op_tou-1];
 	
 	tou_outputs.m_price_mult = ms_params.mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][pricing_tou-1];
+}
+
+void C_csp_tou_block_schedules::setup_block_uniform_tod()
+{
+	int nrows = ms_params.mc_csp_ops.mstatic_n_rows;
+	int ncols = ms_params.mc_csp_ops.mstatic_n_cols;
+	
+	for( int i = 0; i < ms_params.mc_csp_ops.N_END; i++ )
+		ms_params.mc_csp_ops.mvv_tou_arrays[i].resize(2, 1.0);
+
+	for( int i = 0; i < ms_params.mc_pricing.N_END; i++ )
+		ms_params.mc_pricing.mvv_tou_arrays[i].resize(2, 1.0);
+
+	ms_params.mc_csp_ops.mc_weekdays.resize_fill(nrows, ncols, 1.0);
+	ms_params.mc_csp_ops.mc_weekends.resize_fill(nrows, ncols, 1.0);
+
+	ms_params.mc_pricing.mc_weekdays.resize_fill(nrows, ncols, 1.0);
+	ms_params.mc_pricing.mc_weekends.resize_fill(nrows, ncols, 1.0);
+	
 }

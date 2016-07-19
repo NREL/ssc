@@ -21,6 +21,9 @@ protected:
 
 public:
 
+	const int mstatic_n_rows = 12;
+	const int mstatic_n_cols = 24;
+
 	double m_hr_tou[8760];
 
 	// member string for exception messages
@@ -108,6 +111,8 @@ public:
 	virtual void init();
 
 	virtual void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs);
+
+	void setup_block_uniform_tod();
 
 };
 
