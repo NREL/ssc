@@ -169,6 +169,8 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 	// If tolerance corresponds to relative error, then calculate it
 	if( m_is_err_rel )
 	{
+		if( y_target == 0 )
+			return REL_TOL_WITH_0_TARGET;
 		E1 = E1 / fabs(y_target);
 		E2 = E2 / fabs(y_target);
 	}
