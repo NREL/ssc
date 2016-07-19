@@ -1502,6 +1502,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	double time_required_su = sim_info.ms_ts.m_step;		//[s]
 	int i_step = 0;
 	double T_sys_h_t_int_sum = 0.0;
+	double Q_fp_sum = 0.0;				//[MJ]
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);	//[s]
@@ -1514,6 +1515,55 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		// Call energy balance with updated info
 		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
+
+		// Check freeze protection
+		if( m_T_htf_out_t_end[m_nSCA - 1] < m_T_fp + 10.0 )
+		{
+			// Set up the member structure that contains loop_energy_balance inputs!
+			ms_loop_energy_balance_inputs.ms_weather = &weather;
+			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info_temp;
+			// The following are set in the solver equation operator
+			ms_loop_energy_balance_inputs.m_T_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
+			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
+
+			C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this);
+			C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
+
+			// Set upper and lower bounds on T_htf_cold_in
+			double T_htf_cold_in_lower = T_cold_in;		//[K]
+			double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
+
+			// Set two initial guess values
+			double T_htf_guess_lower = (m_Q_field_losses_total / sim_info.ms_ts.m_step)*1.E6 /
+				(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot) + T_cold_in;	//[K]
+
+			double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
+
+			// Set solver settings - relative error on E_balance
+			c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
+
+			int iter_solved = -1;
+			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+			int fp_code = 0;
+			double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
+
+			try
+			{
+				fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
+			}
+			catch( C_csp_exception )
+			{
+				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
+			}
+
+			if( fp_code != C_monotonic_eq_solver::CONVERGED )
+			{
+				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+			}
+
+			Q_fp_sum += c_freeze_protection_eq.Q_htf_fp;		//[MJ]
+		}
 
 		// Add current temperature so summation
 		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
@@ -1552,7 +1602,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_T_salt_hot = T_sys_h_int_ts_ave - 273.15;		//[C]
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_E_fp_total = 0.0;					//[MW]
+	cr_out_solver.m_E_fp_total = Q_fp_sum / time_required_su;		//[MWt]
 		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
