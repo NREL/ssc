@@ -20,9 +20,7 @@ protected:
 	void set_hr_tou();
 
 public:
-	// Stop breaking the linux build :-) 
-	//const int mstatic_n_rows = 12;
-	//const int mstatic_n_cols = 24;
+
 	int mstatic_n_rows;
 	int mstatic_n_cols;
 
@@ -31,7 +29,6 @@ public:
 	// member string for exception messages
 	std::string m_error_msg;
 
-//	C_block_schedule(){};
 	C_block_schedule()
 	{
 		mstatic_n_rows = 12;
