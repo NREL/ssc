@@ -12,24 +12,6 @@ using std::unordered_map;
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 #endif
 
-/*
-#ifdef _MSC_VER
-#include <unordered_map>
-using std::tr1::unordered_map;
-#else
-
-//#ifdef _LIBCPP_VERSION
-//using libc++
-#include <unordered_map>
-using std::unordered_map;
-//#else
-// using libstdc++
-//#include <tr1/unordered_map>
-//using std::tr1::unordered_map;
-//#endif
-
-#endif
-*/
 class var_data;
 
 typedef unordered_map< std::string, var_data* > var_hash;
