@@ -20,16 +20,23 @@ protected:
 	void set_hr_tou();
 
 public:
-
-	const int mstatic_n_rows = 12;
-	const int mstatic_n_cols = 24;
+	// Stop breaking the linux build :-) 
+	//const int mstatic_n_rows = 12;
+	//const int mstatic_n_cols = 24;
+	int mstatic_n_rows;
+	int mstatic_n_cols;
 
 	double m_hr_tou[8760];
 
 	// member string for exception messages
 	std::string m_error_msg;
 
-	C_block_schedule(){};
+//	C_block_schedule(){};
+	C_block_schedule()
+	{
+		mstatic_n_rows = 12;
+		mstatic_n_cols = 24;
+	};
 
 	~C_block_schedule(){};
 
