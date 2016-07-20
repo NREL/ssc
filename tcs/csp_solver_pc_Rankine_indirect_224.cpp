@@ -290,7 +290,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	m_m_dot_design = m_q_dot_design*1000.0 / (m_cp_htf_design*((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref)))*3600.0;		//[kg/hr]
 
 	// 8.30.2010 :: Calculate the startup energy needed
-	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt]
+	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
 	
 	// Finally, set member model-timestep-tracking variables
 	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
