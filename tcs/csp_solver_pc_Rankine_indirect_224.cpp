@@ -399,10 +399,8 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 
 		RankineCycle(
 				//inputs
-				ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, T_degC+273.15, Twet+273.15, 
-				P_atm*101325., ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, ms_params.m_T_htf_hot_ref, m_m_dot_design, 
-				2, 0., ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, 1., m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, 
-				ms_params.m_P_cond_ratio, ms_params.m_P_cond_min, 
+				T_degC+273.15, Twet+273.15, P_atm*101325., ms_params.m_T_htf_hot_ref, m_m_dot_design, 
+				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,
 				//outputs
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
     }
@@ -439,10 +437,10 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
 
 	if( !ms_params.m_is_user_defined_pc )
 	{
-		double cp = mc_pc_htfProps.Cp( (ms_params.m_T_htf_cold_ref + ms_params.m_T_htf_hot_ref)/2. );  //kJ/kg-K
+		double cp = mc_pc_htfProps.Cp( (ms_params.m_T_htf_cold_ref + ms_params.m_T_htf_hot_ref)/2. +273.15);  //kJ/kg-K
 
 		//calculate mass flow    [kg/hr]
-		double mdot = ms_params.m_P_ref /* kW */ / ( ms_params.m_eta_ref * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
+		double mdot = ms_params.m_P_ref /* kW */ / ( /*ms_params.m_eta_ref*/m_eta_adj * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
 		mdot *= load_frac;
 
 		//ambient calculations
@@ -451,14 +449,14 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
 
 		//Call
 		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
-		RankineCycle(
-				//inputs
-				ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, ms_params.m_T_amb_des+273.15, Twet+273.15, 
-				101325., ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER, ms_params.m_T_htf_hot_ref, mdot, 
-				2, 0., ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, 1., m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, 
-				ms_params.m_P_cond_ratio, ms_params.m_P_cond_min, 
-				//outputs
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+
+        RankineCycle(
+			    //inputs
+			    ms_params.m_T_amb_des+273.15, Twet+273.15, 101325., ms_params.m_T_htf_hot_ref, mdot, 2, 
+                0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, 
+			    //outputs
+			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+
 	}
 	else
 	{
@@ -590,10 +588,9 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		if( !ms_params.m_is_user_defined_pc )
 		{
 
-			RankineCycle(ms_params.m_P_ref, ms_params.m_eta_ref, ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref, T_db, T_wb, P_amb, ms_params.m_dT_cw_ref, physics::SPECIFIC_HEAT_LIQUID_WATER,
-				T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil, ms_params.m_T_amb_des, ms_params.m_T_approach, ms_params.m_F_wc[tou],
-				m_F_wcMin, m_F_wcMax, ms_params.m_T_ITD_des, ms_params.m_P_cond_ratio, ms_params.m_P_cond_min,
-				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond);
+            RankineCycle(T_db, T_wb, P_amb, T_htf_hot, m_dot_htf, mode, demand_var, ms_params.m_P_boil, 
+                ms_params.m_F_wc[tou], m_F_wcMin, m_F_wcMax, 
+			P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond);
 
 			// Check the output to make sure it's reasonable. If not, return zeros.
 			if( ((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 50.0)) )
@@ -960,14 +957,27 @@ int C_pc_Rankine_indirect_224::get_operating_state()
 	return m_standby_control_prev;
 }
 
-void C_pc_Rankine_indirect_224::RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb,
-	double P_amb, double dT_cw_ref, /*double HTF,*/ double c_p_w, double T_htf_hot, double m_dot_htf, int /*double*/ mode,
-	double demand_var, double P_boil, /*double tech_type,*/ double T_amb_des, double T_approach, double F_wc, double F_wcmin,
-	double F_wcmax, double T_ITD_des, double P_cond_ratio, /*double CT,*/ double P_cond_min, /*double n_pl_inc,*/
-	/*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
-	double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond)
+void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
+		double P_amb, double T_htf_hot, double m_dot_htf, int mode,
+		double demand_var, double P_boil, double F_wc, double F_wcmin, double F_wcmax, 
+        //outputs
+        double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref,
+		double& m_dot_makeup, double& W_cool_par, double& f_hrsys, double& P_cond)
 {
-	water_state wp;
+	
+    //local names for parameters
+    double P_ref = ms_params.m_P_ref;
+    double T_htf_hot_ref = ms_params.m_T_htf_hot_ref;
+    double T_htf_cold_ref = ms_params.m_T_htf_cold_ref;
+    double dT_cw_ref = ms_params.m_dT_cw_ref;
+    double T_amb_des = ms_params.m_T_amb_des;
+    double T_approach = ms_params.m_T_approach;
+    double T_ITD_des = ms_params.m_T_ITD_des;
+    double P_cond_ratio = ms_params.m_P_cond_ratio;
+    double P_cond_min = ms_params.m_P_cond_min;
+    
+    
+    water_state wp;
 
 	// Calculate the specific heat before converting to Kelvin
 	double c_htf_ref = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot_ref + T_htf_cold_ref) / 2.0));
