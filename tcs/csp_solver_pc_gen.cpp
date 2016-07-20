@@ -136,19 +136,19 @@ double C_pc_gen::get_standby_energy_requirement()
 
 	return std::numeric_limits<double>::quiet_NaN();	//[MWt]
 }
-double C_pc_gen::get_cold_startup_energy(double step /*sec*/)
+double C_pc_gen::get_cold_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_cold_startup_energy() is not complete"));
 
 	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
 }
-double C_pc_gen::get_warm_startup_energy(double step /*sec*/)
+double C_pc_gen::get_warm_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_warm_startup_energy() is not complete"));
 
 	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
 }
-double C_pc_gen::get_hot_startup_energy(double step /*sec*/)
+double C_pc_gen::get_hot_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_hot_startup_energy() is not complete"));
 

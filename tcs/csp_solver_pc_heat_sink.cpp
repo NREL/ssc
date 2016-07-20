@@ -110,17 +110,17 @@ double C_pc_heat_sink::get_standby_energy_requirement()
 	return 0.0;	//[MWt]
 }
 
-double C_pc_heat_sink::get_cold_startup_energy(double step /*sec*/)
+double C_pc_heat_sink::get_cold_startup_energy()
 {
 	return 0.0;	//[MWh]
 }
 
-double C_pc_heat_sink::get_warm_startup_energy(double step /*sec*/)
+double C_pc_heat_sink::get_warm_startup_energy()
 {
 	return 0.0;	//[MWh]
 }
 
-double C_pc_heat_sink::get_hot_startup_energy(double step /*sec*/)
+double C_pc_heat_sink::get_hot_startup_energy()
 {
 	return 0.0;	//[MWh]
 }

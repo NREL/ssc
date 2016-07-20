@@ -54,9 +54,9 @@ public:
 	virtual double get_warm_startup_time();
 	virtual double get_hot_startup_time();
 	virtual double get_standby_energy_requirement();    //[MW]
-	virtual double get_cold_startup_energy(double step /*sec*/);    //[MWh]
-	virtual double get_warm_startup_energy(double step /*sec*/);    //[MWh]
-	virtual double get_hot_startup_energy(double step /*sec*/);    //[MWh]
+	virtual double get_cold_startup_energy();    //[MWh]
+	virtual double get_warm_startup_energy();    //[MWh]
+	virtual double get_hot_startup_energy();    //[MWh]
 	virtual double get_max_thermal_power();     //MW
 	virtual double get_min_thermal_power();     //MW
 	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct);

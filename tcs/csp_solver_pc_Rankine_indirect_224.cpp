@@ -338,22 +338,22 @@ double C_pc_Rankine_indirect_224::get_standby_energy_requirement()
     return ms_params.m_q_sby_frac * ms_params.m_P_ref / ms_params.m_eta_ref *1.e-3;   //MW
 }
 
-double C_pc_Rankine_indirect_224::get_cold_startup_energy(double step)
+double C_pc_Rankine_indirect_224::get_cold_startup_energy()
 {
     //cold startup energy requirement. No differentiation between warm/hot yet.
-    return ms_params.m_startup_frac * step/3600. * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3; //MWh
+    return ms_params.m_startup_frac* ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3; //MWt-hr
 }
 
-double C_pc_Rankine_indirect_224::get_warm_startup_energy(double step)
+double C_pc_Rankine_indirect_224::get_warm_startup_energy()
 {
     //warm startup energy requirement. No differentiation between cold/hot yet.
-    return ms_params.m_startup_frac * step/3600. * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3; //MWh
+    return ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3; //MWh
 }
 
-double C_pc_Rankine_indirect_224::get_hot_startup_energy(double step)
+double C_pc_Rankine_indirect_224::get_hot_startup_energy()
 {
     //hot startup energy requirement. No differentiation between cold/hot yet.
-    return ms_params.m_startup_frac * step/3600. * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3; //MWh
+    return ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref*1.e-3; //MWh
 }
 
 
