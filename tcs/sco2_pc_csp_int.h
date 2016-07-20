@@ -9,6 +9,9 @@
 
 #include "ud_power_cycle.h"
 
+#include <iostream>
+#include <fstream>
+
 class C_sco2_recomp_csp
 {
 
@@ -82,6 +85,18 @@ public:
 		S_od_par()
 		{
 			m_T_htf_hot = m_m_dot_htf = m_T_amb = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	struct S_od_operation_inputs
+	{
+		double m_P_mc_in;		//[kPa]
+		double m_recomp_frac;	//[-]
+		double m_phi_mc;		//[-]
+
+		S_od_operation_inputs()
+		{
+			m_P_mc_in = m_recomp_frac = m_phi_mc = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -183,6 +198,8 @@ public:
 
 	int off_design_opt(S_od_par od_par, int off_design_strategy);
 
+	int off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs);
+
 	// Class methods linked to nlopt callbacks - must be public
 	double od_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
 
@@ -212,7 +229,7 @@ public:
 		return &ms_od_solved;
 	}
 
-
+	//ofstream sco2_od_opt_file;
 };
 
 // Optimization method callbacks

@@ -10,6 +10,10 @@
 C_sco2_recomp_csp::C_sco2_recomp_csp()
 {
 	m_T_mc_in_min = mc_rc_cycle.get_design_limits().m_T_mc_in_min;		//[K]
+
+	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
+
+	//sco2_od_opt_file << "P_mc_in_MPa,f_recomp,phi_mc,eta_ND,W_dot_MW\n";
 }
 
 void C_sco2_recomp_csp::design(C_sco2_recomp_csp::S_des_par des_par)
@@ -131,11 +135,10 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy)
 		ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
 		ms_rc_cycle_od_phi_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
 			// Defined downstream
-		ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
+		ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
 		ms_rc_cycle_od_phi_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 		ms_rc_cycle_od_phi_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
-		ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[rpm]
-
+		ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[-]
 		// Define ms_phx_od_par
 			// Defined now
 		ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
@@ -159,6 +162,58 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy)
 		throw(C_csp_exception("C_sco2_recomp_csp::off_design", msg));
 	}
 
+}
+
+int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
+{
+	ms_od_par = od_par;
+
+	// Define ms_rc_cycle_od_par
+		// Defined here
+	ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
+	if( ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min )
+	{
+		std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
+			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
+			ms_rc_cycle_od_phi_par.m_T_mc_in - 273.15,
+			m_T_mc_in_min - 273.15);
+		ms_rc_cycle_od_phi_par.m_T_mc_in = m_T_mc_in_min;
+	}
+	ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
+	ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
+	ms_rc_cycle_od_phi_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
+		// Operational Inputs Defined Downstream
+		// Setting vector input to off-design call here
+	std::vector<double> od_operation(0);
+	od_operation.push_back(od_op_inputs.m_P_mc_in);		//[kPa]
+	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+	{	// Recompression Fraction
+		od_operation.push_back(od_op_inputs.m_recomp_frac);	//[-]
+	}
+	od_operation.push_back(od_op_inputs.m_phi_mc);		//[-]
+		// And off-design call will set class member structure values
+	ms_rc_cycle_od_phi_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
+	ms_rc_cycle_od_phi_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
+	ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[-]
+		// Defined downstream
+	ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]
+	
+	// Define ms_phx_od_par
+		// Defined here
+	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
+	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
+	ms_phx_od_par.m_m_dot_h = ms_od_par.m_m_dot_htf;		//[kg/s]
+		// Defined downstream
+	ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
+	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
+	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
+
+	double eta_od = od_fix_T_mc_approach__float_phx_dt(od_operation);
+	
+	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+
+	return 0;
 }
 
 int C_sco2_recomp_csp::od_fix_T_mc__float_phx_dt__opt_eta()
@@ -353,16 +408,29 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 	double eta_tip_ratio_scale = exp(-over_tip_ratio);
 	double eta_surge_mc_scale = exp(-over_surge_mc);
 	double eta_surge_rc_scale = exp(-over_surge_rc);
-	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*
-							eta_T_t_in_scale*
-							eta_P_high_scale*
-							eta_tip_ratio_scale*
-							eta_surge_mc_scale*
-							eta_surge_rc_scale;
+	//double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*
+	//						eta_T_t_in_scale*
+	//						eta_P_high_scale*
+	//						eta_tip_ratio_scale*
+	//						eta_surge_mc_scale*
+	//						eta_surge_rc_scale;
+
+	double eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.3*
+		eta_T_t_in_scale*
+		eta_P_high_scale*
+		eta_tip_ratio_scale*
+		eta_surge_mc_scale*
+		eta_surge_rc_scale;
 
 	// BUT, need to inform upstream code that a solution in this gradient is not acceptable
-	if( over_T_t_in == 0.0 && over_P_high == 0.0 )
+	if( over_T_t_in == 0.0 && over_P_high == 0.0 && over_tip_ratio == 0.0 && over_surge_mc == 0.0 && over_surge_rc == 0.0 )
 	{
+		//sco2_od_opt_file << mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_IN]/1.E3 << ","
+		//				<< mc_rc_cycle.get_od_solved()->m_recomp_frac << ","
+		//				<< mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi << ","
+		//				<< mc_rc_cycle.get_od_solved()->m_eta_thermal << "," 
+		//				<< mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3 << "\n";
+
 		ms_od_opt_eta_tracking.m_is_opt_found = true;
 	}
 
