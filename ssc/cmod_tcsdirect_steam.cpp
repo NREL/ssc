@@ -324,6 +324,7 @@ public:
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
+        add_var_info(vtab_sf_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -337,7 +338,6 @@ public:
 
 		// Add units
 		int	tou = add_unit("tou_translator", "Time of Use Translator");
-		//int type221_hel_field = add_unit("sam_mw_pt_type221");
 		int type_hel_field = add_unit("sam_mw_pt_heliostatfield");
 		int type265_dsg_controller = add_unit("sam_dsg_controller_type265");
 		int type234_powerblock = add_unit("sam_mw_type234");
@@ -573,7 +573,15 @@ public:
 		bConnected &= connect(weather, "solazi", type_hel_field, "solaz");
 
 
-
+        //Load the solar field adjustment factors
+        sf_adjustment_factors sf_haf(this);
+        if (!sf_haf.setup())
+			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
+        //allocate array to pass to tcs
+        ssc_number_t *sf_adjust = allocate("sf_adjust", 8760);
+        for( int i=0; i<8760; i++)
+            sf_adjust[i] = sf_haf(i);
+        set_unit_value_ssc_array(type_hel_field, "sf_adjust");
 
 
 		//Set DSG Controller Parameters
