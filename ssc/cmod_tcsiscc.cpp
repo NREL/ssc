@@ -230,6 +230,7 @@ public:
 		//set_store_all_parameters(true); // default is 'false' = only store TCS parameters that match the SSC_OUTPUT variables above 
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
+        add_var_info(vtab_sf_adjustment_factors);
 	}
 
 	void exec( ) throw( general_error )
@@ -556,6 +557,16 @@ public:
 		bConnected = connect(type222_receiver, "f_timestep", iscc_parasitics, "f_timestep");
 		bConnected = connect(type222_receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss");
 		bConnected = connect(iscc_pb, "q_dot_fuel", iscc_parasitics, "q_dot_fuel");
+
+        //Load the solar field adjustment factors
+        sf_adjustment_factors sf_haf(this);
+        if (!sf_haf.setup())
+			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
+        //allocate array to pass to tcs
+        ssc_number_t *sf_adjust = allocate("sf_adjust", 8760);
+        for( int i=0; i<8760; i++)
+            sf_adjust[i] = sf_haf(i);
+        set_unit_value_ssc_array(type_hel_field, "sf_adjust");
 
 		// check if all connections worked
 		if ( !bConnected )

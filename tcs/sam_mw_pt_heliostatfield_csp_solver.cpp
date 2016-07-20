@@ -215,6 +215,7 @@ enum{	//Parameters
 		P_delta_flux_hrs,
 		P_dni_des,
 		P_land_area,
+        P_ADJUST,
 
 		//Inputs
 		I_v_wind,
@@ -277,6 +278,7 @@ tcsvarinfo sam_mw_pt_heliostatfield_variables[] = {
     { TCS_PARAM,    TCS_NUMBER,   P_delta_flux_hrs,          "delta_flux_hrs",        "Hourly frequency in flux map lookup",                  "hrs",    "",                              "", "1"         },
     { TCS_PARAM,    TCS_NUMBER,   P_dni_des,                 "dni_des",               "Design-point DNI",                                     "W/m2",   "",                              "", ""          },
 	{ TCS_PARAM,    TCS_NUMBER,   P_land_area,               "land_area",             "CALCULATED land area",                                 "acre",   "",                              "", ""          },
+	{ TCS_PARAM,     TCS_ARRAY,   P_ADJUST,                  "sf_adjust",             "Time series solar field production adjustment",        "none",   "",                              "", "" },
     
 	{ TCS_INPUT,    TCS_NUMBER,   I_v_wind,                  "vwind",                 "Wind velocity",                                        "m/s",    "",                              "", ""          },
     { TCS_INPUT,    TCS_NUMBER,   I_field_control,           "field_control",         "Field defocus control",                                "",       "",                              "", ""          },
@@ -446,6 +448,13 @@ public:
 		mc_heliostatfield.ms_params.m_dni_des = value(P_dni_des);
 
 		mc_heliostatfield.ms_params.m_land_area = value(P_land_area);
+
+        //construct array for sf_adjust to pass to heliostat module
+        int nval_sf_adjust;
+        double* sf_adjust = value(P_ADJUST, &nval_sf_adjust); //solar field adjust factors
+        mc_heliostatfield.ms_params.m_sf_adjust.resize( nval_sf_adjust );
+        for( int i=0; i<nval_sf_adjust; i++)     //array should be 8760 in length
+            mc_heliostatfield.ms_params.m_sf_adjust.at(i) = sf_adjust[i];
 
 		mc_heliostatfield.mf_callback = solarpilot_callback;
 		mc_heliostatfield.m_cdata = (void*)this;
