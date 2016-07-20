@@ -13,6 +13,9 @@ private:
 
 	C_sco2_recomp_csp mc_sco2_recomp;
 
+	double m_q_dot_design;					//[MWt]
+	double m_q_dot_standby;					//[MWt]
+	double m_q_dot_max;						//[MWt]
 	double m_startup_energy_required;		//[kW-hr]
 
 	int m_standby_control_prev;				//[-]
@@ -59,9 +62,9 @@ public:
 	virtual double get_warm_startup_time();
 	virtual double get_hot_startup_time();
 	virtual double get_standby_energy_requirement();    //[MW]
-	virtual double get_cold_startup_energy(double step /*sec*/);    //[MWh]
-	virtual double get_warm_startup_energy(double step /*sec*/);    //[MWh]
-	virtual double get_hot_startup_energy(double step /*sec*/);    //[MWh]
+	virtual double get_cold_startup_energy();    //[MWh]
+	virtual double get_warm_startup_energy();    //[MWh]
+	virtual double get_hot_startup_energy();    //[MWh]
 	virtual double get_max_thermal_power();     //MW
 	virtual double get_min_thermal_power();     //MW
 	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct);

@@ -5,7 +5,7 @@
 
 C_pc_sco2::C_pc_sco2()
 {
-	m_startup_energy_required = 
+	m_q_dot_design = m_q_dot_standby = m_startup_energy_required = 
 		m_startup_time_remain_prev = m_startup_energy_remain_prev =
 		m_startup_time_remain_calc = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
@@ -17,11 +17,12 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	// Call the sCO2 Recompression Cycle class to design the cycle
 	mc_sco2_recomp.design(ms_params.ms_mc_sco2_recomp_params);
 
-	
+		
 	// Set solved paramaters and calculate timestep dependent information
 	solved_params.m_W_dot_des = mc_sco2_recomp.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net / 1.E3;	//[MWe] convert from kWe
 	solved_params.m_eta_des = mc_sco2_recomp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;			//[-]
-	solved_params.m_q_dot_des = solved_params.m_W_dot_des / solved_params.m_eta_des;						//[MWt]
+	m_q_dot_design = solved_params.m_W_dot_des / solved_params.m_eta_des;			//[MWt]
+	solved_params.m_q_dot_des = m_q_dot_design;										//[MWt]
 	
 	// Calculate the startup energy needed
 	m_startup_energy_required = ms_params.m_startup_frac*solved_params.m_q_dot_des*1.E3;			//[kWt-hr]	
@@ -31,6 +32,11 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	solved_params.m_sb_frac = ms_params.m_q_sby_frac;						//[-]
 	solved_params.m_T_htf_hot_ref = ms_params.ms_mc_sco2_recomp_params.m_T_htf_hot_in - 273.15;	//[C]
 	solved_params.m_m_dot_design = mc_sco2_recomp.get_phx_des_par()->m_m_dot_hot_des*3600.0;	//[kg/hr]
+
+	// Calculate the standby thermal power requirement
+	m_q_dot_standby = ms_params.m_q_sby_frac * m_q_dot_design;		//[MWt]
+	// and max thermal power to cycle
+	m_q_dot_max = ms_params.m_cycle_max_frac * m_q_dot_design;		//[MWt]
 
 	// Finally, set member model-timestep-tracking variables
 	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
@@ -51,41 +57,38 @@ int C_pc_sco2::get_operating_state()
 
 double C_pc_sco2::get_cold_startup_time()
 {
-	throw(C_csp_exception("C_pc_sco2::get_cold_startup_time() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();
+	return ms_params.m_startup_time;	//[hr]
 }
+
 double C_pc_sco2::get_warm_startup_time()
 {
-	throw(C_csp_exception("C_pc_sco2::get_warm_startup_time() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();
+	//startup time from warm state. No differentiation between cold/hot yet.
+	return ms_params.m_startup_time;	//[hr]
 }
+
 double C_pc_sco2::get_hot_startup_time()
 {
-	throw(C_csp_exception("C_pc_sco2::get_hot_startup_time() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();
+	//startup time from warm state. No differentiation between cold/warm yet.
+	return ms_params.m_startup_time;	//[hr]
 }
+
 double C_pc_sco2::get_standby_energy_requirement()
 {
-	throw(C_csp_exception("C_pc_sco2::get_standby_energy_requirement() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	return m_q_dot_standby;		//[MWt]
 }
-double C_pc_sco2::get_cold_startup_energy(double step /*sec*/)
+
+double C_pc_sco2::get_cold_startup_energy()
 {
-	throw(C_csp_exception("C_pc_sco2::get_cold_startup_energy() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
+	return m_startup_energy_required/1.E3;	//[MWt-hr]
 }
-double C_pc_sco2::get_warm_startup_energy(double step /*sec*/)
+
+double C_pc_sco2::get_warm_startup_energy()
 {
 	throw(C_csp_exception("C_pc_sco2::get_warm_startup_energy() is not complete"));
 
 	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
 }
-double C_pc_sco2::get_hot_startup_energy(double step /*sec*/)
+double C_pc_sco2::get_hot_startup_energy()
 {
 	throw(C_csp_exception("C_pc_sco2::get_hot_startup_energy() is not complete"));
 
@@ -136,5 +139,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 
 void C_pc_sco2::converged()
 {
-	throw(C_csp_exception("C_pc_sco2::converged() is not complete"));
+	m_standby_control_prev = m_standby_control_calc;
+	m_startup_time_remain_prev = m_startup_time_remain_calc;
+	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
 }

@@ -310,8 +310,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
     dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
     dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
-	dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy(mc_kernel.get_baseline_step())*1000.;
-	dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy(mc_kernel.get_baseline_step())*1000.;
+	dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy()*1000.;
+	dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy()*1000.;
     
     dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time()/3600.;
 	dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy(mc_kernel.get_baseline_step()) * 1000;

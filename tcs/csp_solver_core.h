@@ -557,9 +557,9 @@ public:
     virtual double get_warm_startup_time() = 0;
     virtual double get_hot_startup_time() = 0;
     virtual double get_standby_energy_requirement() = 0; //[MW]
-    virtual double get_cold_startup_energy(double step /*sec*/) = 0;    //[MWh]
-    virtual double get_warm_startup_energy(double step /*sec*/) = 0;    //[MWh]
-    virtual double get_hot_startup_energy(double step /*sec*/) = 0;    //[MWh]
+    virtual double get_cold_startup_energy() = 0;    //[MWh]
+    virtual double get_warm_startup_energy() = 0;    //[MWh]
+    virtual double get_hot_startup_energy() = 0;    //[MWh]
     virtual double get_max_thermal_power() = 0;     //MW
     virtual double get_min_thermal_power() = 0;     //MW
     virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct) = 0; //-
