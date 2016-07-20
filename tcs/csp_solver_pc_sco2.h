@@ -13,10 +13,16 @@ private:
 
 	C_sco2_recomp_csp mc_sco2_recomp;
 
+	HTFProperties mc_pc_htfProps;
+
 	double m_q_dot_design;					//[MWt]
 	double m_q_dot_standby;					//[MWt]
 	double m_q_dot_max;						//[MWt]
+	double m_q_dot_min;						//[MWt]
 	double m_startup_energy_required;		//[kW-hr]
+
+	double m_W_dot_des;						//[MWe]
+	double m_T_htf_cold_des;				//[K]
 
 	int m_standby_control_prev;				//[-]
 	double m_startup_time_remain_prev;		//[hr]

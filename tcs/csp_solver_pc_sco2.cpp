@@ -5,7 +5,8 @@
 
 C_pc_sco2::C_pc_sco2()
 {
-	m_q_dot_design = m_q_dot_standby = m_startup_energy_required = 
+	m_q_dot_design = m_q_dot_standby = m_q_dot_max = m_q_dot_min = m_startup_energy_required = 
+		m_W_dot_des = m_T_htf_cold_des =
 		m_startup_time_remain_prev = m_startup_energy_remain_prev =
 		m_startup_time_remain_calc = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
@@ -16,10 +17,42 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 {
 	// Call the sCO2 Recompression Cycle class to design the cycle
 	mc_sco2_recomp.design(ms_params.ms_mc_sco2_recomp_params);
+	
+	// Setup HTF class
+	if( ms_params.ms_mc_sco2_recomp_params.m_hot_fl_code != HTFProperties::User_defined && ms_params.ms_mc_sco2_recomp_params.m_hot_fl_code < HTFProperties::End_Library_Fluids )
+	{
+		if( !mc_pc_htfProps.SetFluid(ms_params.ms_mc_sco2_recomp_params.m_hot_fl_code) )
+		{
+			throw(C_csp_exception("Power cycle HTF code is not recognized", "sCO2 Power Cycle Initialization"));
+		}
+	}
+	else if( ms_params.ms_mc_sco2_recomp_params.m_hot_fl_code == HTFProperties::User_defined )
+	{
+		// Check that 'm_field_fl_props' is allocated and correct dimensions
+		int n_rows = ms_params.ms_mc_sco2_recomp_params.mc_hot_fl_props.nrows();
+		int n_cols = ms_params.ms_mc_sco2_recomp_params.mc_hot_fl_props.ncols();
+		if( n_rows > 2 && n_cols == 7 )
+		{
+			if( !mc_pc_htfProps.SetUserDefinedFluid(ms_params.ms_mc_sco2_recomp_params.mc_hot_fl_props) )
+			{
+				std::string error_msg = util::format(mc_pc_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+				throw(C_csp_exception(error_msg, "sCO2 Power Cycle Initialization"));
+			}
+		}
+		else
+		{
+			std::string error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+			throw(C_csp_exception(error_msg, "sCO2 Power Cycle Initialization"));
+		}
+	}
+	else
+	{
+		throw(C_csp_exception("Power cycle HTF code is not recognized", "sCO2 Power Cycle Initialization"));
+	}
 
-		
 	// Set solved paramaters and calculate timestep dependent information
 	solved_params.m_W_dot_des = mc_sco2_recomp.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net / 1.E3;	//[MWe] convert from kWe
+	m_W_dot_des = solved_params.m_W_dot_des;		//[MWe] Net power from cycle NOT counting cooling parasitics
 	solved_params.m_eta_des = mc_sco2_recomp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;			//[-]
 	m_q_dot_design = solved_params.m_W_dot_des / solved_params.m_eta_des;			//[MWt]
 	solved_params.m_q_dot_des = m_q_dot_design;										//[MWt]
@@ -35,8 +68,11 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 
 	// Calculate the standby thermal power requirement
 	m_q_dot_standby = ms_params.m_q_sby_frac * m_q_dot_design;		//[MWt]
-	// and max thermal power to cycle
+	// and max/min thermal power to cycle
 	m_q_dot_max = ms_params.m_cycle_max_frac * m_q_dot_design;		//[MWt]
+	m_q_dot_min = ms_params.m_cycle_cutoff_frac * m_q_dot_design;	//[MWt]
+	// and calculated cold HTF return temperature
+	m_T_htf_cold_des = mc_sco2_recomp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
 
 	// Finally, set member model-timestep-tracking variables
 	m_standby_control_prev = OFF;			// Assume power cycle is off when simulation begins
@@ -84,28 +120,24 @@ double C_pc_sco2::get_cold_startup_energy()
 
 double C_pc_sco2::get_warm_startup_energy()
 {
-	throw(C_csp_exception("C_pc_sco2::get_warm_startup_energy() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
+	return m_startup_energy_required / 1.E3;	//[MWt-hr]
 }
+
 double C_pc_sco2::get_hot_startup_energy()
 {
-	throw(C_csp_exception("C_pc_sco2::get_hot_startup_energy() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
+	return m_startup_energy_required / 1.E3;	//[MWt-hr]
 }
+
 double C_pc_sco2::get_max_thermal_power()
 {
-	throw(C_csp_exception("C_pc_sco2::get_max_thermal_power() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MW]
+	return m_q_dot_max;		//[MWt]
 }
+
 double C_pc_sco2::get_min_thermal_power()
 {
-	throw(C_csp_exception("C_pc_sco2::get_min_thermal_power() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MW]
+	return m_q_dot_min;		//[MWt]
 }
+
 double C_pc_sco2::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct)
 {
 	throw(C_csp_exception("C_pc_sco2::get_efficiency_at_TPH() is not complete"));
@@ -122,9 +154,17 @@ double C_pc_sco2::get_efficiency_at_load(double load_frac)
 // This can vary between timesteps for Type224, depending on remaining startup energy and time
 double C_pc_sco2::get_max_q_pc_startup()
 {
-	throw(C_csp_exception("C_pc_sco2::get_max_q_pc_startup() is not complete"));
-
-	return std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	if( m_startup_time_remain_prev > 0.0 )
+		return fmin(m_q_dot_max,
+		m_startup_energy_remain_prev / 1.E3 / m_startup_time_remain_prev);		//[MWt]
+	else if( m_startup_energy_remain_prev > 0.0 )
+	{
+		return m_q_dot_max;    //[MWt]
+	}
+	else
+	{
+		return 0.0;
+	}
 }
 
 void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
@@ -134,6 +174,233 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_power_cycle::S_csp_pc_out_report &out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Get sim info
+	double step_sec = sim_info.ms_ts.m_step;		//[s]
+	
+	// Check and convert inputs
+	double T_htf_hot = htf_state_in.m_temp+273.15;		//[K], convert from C 
+	double m_dot_htf = inputs.m_m_dot;			//[kg/hr]
+	
+	int standby_control = inputs.m_standby_control;			//[-] 1: On, 2: Standby, 3: Off
+
+	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond;
+	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = std::numeric_limits<double>::quiet_NaN();
+
+	double time_required_su = 0.0;
+	double q_startup = 0.0;
+
+	double q_dot_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	
+	bool was_method_successful = true;
+
+	switch( standby_control )
+	{
+	case STARTUP:
+		{
+			double c_htf = mc_pc_htfProps.Cp((T_htf_hot + m_T_htf_cold_des) / 2.0);		//[kJ/kg-K]
+
+			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - m_T_htf_cold_des) / 3600);	//[hr]
+			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
+
+			double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);
+
+			double time_step_hrs = step_sec / 3600.0;	//[hr]
+
+
+			if( time_required_max > time_step_hrs )
+			{
+				time_required_su = time_step_hrs;		//[hr]
+				m_standby_control_calc = STARTUP;	//[-] Power cycle requires additional startup next timestep
+				q_startup = m_dot_htf*c_htf*(T_htf_hot - m_T_htf_cold_des)*time_step_hrs / 3600.0;	//[kW-hr]
+			}
+			else
+			{
+				time_required_su = time_required_max;	//[hr]
+				m_standby_control_calc = ON;	//[-] Power cycle has started up, next time step it will be ON
+
+				double q_startup_energy_req = m_startup_energy_remain_prev;	//[kWt-hr]
+				double q_startup_ramping_req = m_dot_htf*c_htf*(T_htf_hot - m_T_htf_cold_des)*m_startup_time_remain_prev / 3600.0;	//[kWt-hr]
+				q_startup = fmax(q_startup_energy_req, q_startup_ramping_req);	//[kWt-hr]
+
+				// ******************
+
+			}
+
+			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);	//[hr]
+			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]
+		}
+
+		q_dot_htf = q_startup / 1000.0 / (time_required_su);	//[kWt-hr] * [MW/kW] * [1/hr] = [MWt]
+
+		// *****
+		P_cycle = 0.0;
+		eta = 0.0;
+		T_htf_cold = m_T_htf_cold_des;
+		// *****
+		m_dot_demand = 0.0;
+		m_dot_water_cooling = 0.0;
+		W_cool_par = 0.0;
+		f_hrsys = 0.0;
+		P_cond = 0.0;
+
+		was_method_successful = true;
+
+		break;
+
+	case ON:
+
+		throw(C_csp_exception("C_pc_sco2::call()::on is not complete"));
+		// Call the sco2 class here
+
+		break;
+
+	case STANDBY:
+		{
+			double c_htf = mc_pc_htfProps.Cp((T_htf_hot + m_T_htf_cold_des) / 2.0);		//[kJ/kg-K]
+
+			// Calculate the actual q_sby_needed from the reference flows
+			double q_sby_needed = m_q_dot_standby;		//[MWt]
+
+			// now calculate the mass flow rate knowing the inlet temperature of the salt,
+			// ..and holding the outlet temperature at the reference outlet temperature
+			double m_dot_sby = q_sby_needed / (c_htf * (T_htf_hot - m_T_htf_cold_des))*3600.0;
+
+			// Set other output values
+			P_cycle = 0.0;
+			eta = 0.0;
+			T_htf_cold = m_T_htf_cold_des;
+			m_dot_demand = m_dot_sby;
+			m_dot_water_cooling = 0.0;
+			W_cool_par = 0.0;
+			f_hrsys = 0.0;
+			P_cond = 0.0;
+
+			q_dot_htf = m_dot_htf / 3600.0*c_htf*(T_htf_hot - T_htf_cold) / 1000.0;		//[MWt]
+
+			was_method_successful = true;
+		}
+
+		break;
+
+	case OFF:
+
+		// Set other output values
+		P_cycle = 0.0;
+		eta = 0.0;
+		T_htf_cold = m_T_htf_cold_des;
+		m_dot_demand = 0.0;
+		m_dot_water_cooling = 0.0;
+		W_cool_par = 0.0;
+		f_hrsys = 0.0;
+		P_cond = 0.0;
+
+		q_dot_htf = 0.0;
+
+		// Cycle is off, so reset startup parameters!
+		m_startup_time_remain_calc = ms_params.m_startup_time;			//[hr]
+		m_startup_energy_remain_calc = m_startup_energy_required;		//[kWt-hr]
+
+		was_method_successful = true;
+
+		break;
+
+	case STARTUP_CONTROLLED:
+		// Thermal input can be controlled (e.g. TES mass flow rate is adjustable, rather than direct connection
+		//     to the receiver), so find the mass flow rate that results in the required energy input can be achieved
+		//     simultaneously with the required startup time. If the timestep is less than the required startup time
+		//     scale the mass flow rate appropriately
+
+		double c_htf = mc_pc_htfProps.Cp((T_htf_hot + m_T_htf_cold_des) / 2.0);		//[kJ/kg-K]
+
+		// Maximum thermal power to power cycle based on design conditions:
+		double q_dot_to_pc_max = m_q_dot_max*1.E3;		//[kWt]
+
+		double time_required_su_energy = m_startup_energy_remain_prev / q_dot_to_pc_max;		//[hr]
+		double time_required_su_ramping = m_startup_time_remain_prev;		//[hr]
+
+		if( time_required_su_energy > time_required_su_ramping )	// Meeting energy requirements (at design thermal input) will require more time than time requirements
+		{
+			// Can the power cycle startup within the timestep?
+			if( time_required_su_energy > step_sec / 3600.0 )	// No: the power cycle startup will require another timestep
+			{
+				time_required_su = step_sec / 3600.0;	//[hr]
+				m_standby_control_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+
+			}
+			else	// Yes: the power cycle will complete startup within this timestep
+			{
+				time_required_su = time_required_su_energy;	//[hr]
+				m_standby_control_calc = ON;				//[-] Power cycle has started up, next time step it will be ON
+			}
+		}
+		else		// Meeting time requirements will require more time than energy requirements (at design thermal input)
+		{
+			// Can the power cycle startup within the timestep?
+			if( time_required_su_ramping > step_sec / 3600.0 )	// No: the power cycle startup will require another timestep
+			{
+				time_required_su = step_sec / 3600.0;			//[hr]
+				m_standby_control_calc = STARTUP;		//[-] Power cycle requires additional startup next timestep
+			}
+			else	// Yes: the power cycle will complete startup within this timestep
+			{
+				time_required_su = time_required_su_ramping;	//[hr]
+				m_standby_control_calc = ON;					//[-] Power cycle has started up, next time step it will be ON
+			}
+		}
+		q_startup = q_dot_to_pc_max*time_required_su;	//[kWt-hr]
+
+		double m_dot_htf_required = (q_startup / time_required_su) / (c_htf*(T_htf_hot - m_T_htf_cold_des));	//[kg/s]
+
+		m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - time_required_su, 0.0);	//[hr]
+		m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - q_startup, 0.0);		//[kWt-hr]	
+
+
+		// Set other output values
+		P_cycle = 0.0;
+		eta = 0.0;
+		T_htf_cold = m_T_htf_cold_des;
+		m_dot_htf = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
+		//m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
+		m_dot_water_cooling = 0.0;
+		W_cool_par = 0.0;
+		f_hrsys = 0.0;
+		P_cond = 0.0;
+
+		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - m_T_htf_cold_des) / 1000.0;	//[MWt]
+
+		was_method_successful = true;
+
+		break;
+
+	}	// end switch() on standby control
+
+	// Set outputs
+	out_solver.m_P_cycle = P_cycle / 1000.0;			//[MWe] Cycle power output, convert from kWe
+	out_report.m_eta = eta;								//[-] Cycle thermal efficiency
+	out_solver.m_T_htf_cold = T_htf_cold-273.15;		//[C] HTF outlet temperature
+	out_report.m_m_dot_makeup = m_dot_water_cooling*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
+	out_report.m_m_dot_htf_ref = m_dot_htf_ref;			//[kg/hr] Calculated reference HTF flow rate at design
+	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
+	out_report.m_P_ref = m_W_dot_des;					//[MWe] Reference power level output at design not counting cooling parasitics
+	out_report.m_f_hrsys = f_hrsys;						//[-] Fraction of operating heat rejection system
+	out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
+
+	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
+	if( q_startup > 0.0 )
+		out_report.m_q_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
+	else
+		out_report.m_q_startup = 0.0;
+
+
+	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
+	out_solver.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)
+	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
+
+	out_solver.m_was_method_successful = was_method_successful;	//[-]
+
+
 	throw(C_csp_exception("C_pc_sco2::call() is not complete"));
 }
 
