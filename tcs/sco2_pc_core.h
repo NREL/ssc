@@ -682,7 +682,7 @@ public:
 		double m_T_t_in;		//[K] Turbine inlet temperature
 		double m_P_mc_in;		//[kPa] Compressor inlet pressure
 		double m_recomp_frac;	//[-] Fraction of flow that bypasses the precooler and main compressor
-		double m_phi_mc;		//[rpm] Main compressor flow coefficient
+		double m_phi_mc;		//[-] Main compressor flow coefficient
 		double m_N_t;			//[rpm] Turbine shaft speed
 		int m_N_sub_hxrs;		//[-] Number of sub heat exchangers
 		double m_tol;			//[-] Convergence tolerance
