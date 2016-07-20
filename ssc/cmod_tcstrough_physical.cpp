@@ -199,17 +199,17 @@ static var_info _cm_vtab_tcstrough_physical[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "",               "user_defined_PC", "pc_config=1",            "",                      "" }, 
 		
 	// Financial inputs
-	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
-	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekend", "12x24 PPA pricing Weekend schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor1",     "Dispatch payment factor 1",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor2",     "Dispatch payment factor 2",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor3",     "Dispatch payment factor 3",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor4",     "Dispatch payment factor 4",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor5",     "Dispatch payment factor 5",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor6",     "Dispatch payment factor 6",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor7",     "Dispatch payment factor 7",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor8",     "Dispatch payment factor 8",	                                      "",             "",            "tou",            "*",						  "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",     "Dispatch payment factor 9",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
+	// { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekend", "12x24 PPA pricing Weekend schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor1",     "Dispatch payment factor 1",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor2",     "Dispatch payment factor 2",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor3",     "Dispatch payment factor 3",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor4",     "Dispatch payment factor 4",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor5",     "Dispatch payment factor 5",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor6",     "Dispatch payment factor 6",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor7",     "Dispatch payment factor 7",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor8",     "Dispatch payment factor 8",	                                      "",             "",            "tou",            "*",						  "",                      "" },
+	// { SSC_INPUT,        SSC_NUMBER,      "dispatch_factor9",     "Dispatch payment factor 9",	                                      "",             "",            "tou",            "*",						  "",                      "" },
 
 																																												  
  //  enet calculator																																							  
