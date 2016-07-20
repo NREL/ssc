@@ -270,10 +270,10 @@ bool csp_dispatch_opt::optimize()
         O.add_var("ursu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
         O.add_var("yr", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("yrsu", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("yrsb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+        //O.add_var("yrsb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         //O.add_var("yrsd", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("yrsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        O.add_var("yrhsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+        //O.add_var("yrhsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         
         O.add_var("x", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0.);
         O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
@@ -314,8 +314,45 @@ bool csp_dispatch_opt::optimize()
         double Qrsb = params.q_rec_standby; // * dq_rsu;     //.02
         double M = 1.e6;
         double W_dot_cycle = params.q_pb_des * params.eta_cycle_ref;
-        double Z_1 = 1.041015237927;
-        double Z_2 = -0.0421548482813;
+
+        //calculate Z parameters
+        double Z_1 = 0.;
+        double Z_2 = 0.;
+        {
+            double fi = 0.;
+            double fhfi2 = 0.;
+            double fhfi = 0.;
+            double fhfi_2 = 0.;
+            vector<double> fiv;
+            int m = params.eff_table_load.get_size();
+            for(int i=0; i<m; i++)
+            {
+                if( i==0 ) continue; // first data point is zero, so skip
+
+                double q, eta, f, fh;
+                params.eff_table_load.get_point(i, q, eta);
+                fh = params.eta_cycle_ref / eta;
+                f = q / params.q_pb_des;
+                fiv.push_back(f);
+
+                fi += f;
+                fhfi += fh*f;
+                fhfi2 += fh*f*f;
+                fhfi_2 += fh*fh*f*f;
+            }
+            m += -1;
+
+            double fi_fhfi = 0.;
+            for(int i=0; i<m; i++)
+                fi_fhfi += fiv[i]*fhfi;
+
+            Z_1 = (fhfi2 - 1./(double)m*fi_fhfi)/(fhfi_2 - 1./(double)m *fhfi * fhfi);
+
+            Z_2 = 1./(double)m * ( fi - Z_1 * fhfi );
+        }
+
+        //double Z_1 = 1.041015237927;
+        //double Z_2 = -0.0421548482813;
 
         double rate1 = 0;
         double etap = Z_1*params.eta_cycle_ref; //rate2
@@ -324,7 +361,7 @@ bool csp_dispatch_opt::optimize()
 
         double Wdot0 = 0.;
         if( q0 >= Ql )
-            Wdot0 = etap*q0;
+            Wdot0 = etap*q0*outputs.eta_pb_expected.at(0);
 
         double Wdotu = (Qu - limit1) * etap;
         double Wdotl = (Ql - limit1) * etap;
@@ -397,8 +434,8 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
         {
-            int *col = new int[9*nt];
-            REAL *row = new REAL[9*nt];
+            int *col = new int[8*nt];
+            REAL *row = new REAL[8*nt];
             double tadj = 0.999;
 
             for(int t=0; t<nt; t++)
@@ -407,30 +444,30 @@ bool csp_dispatch_opt::optimize()
                 col[      t] = O.column("wdot", t);
                 col[ 1*nt+t] = O.column("xr", t);
                 col[ 2*nt+t] = O.column("xrsu", t);
-                col[ 3*nt+t] = O.column("yrsb", t);
+                //col[ 3*nt+t] = O.column("yrsb", t);
                 //col[ 4*nt+t] = O.column("yrsd", t);
                 //col[ 5*nt+t] = O.column("ycsd", t);
-                col[ 4*nt+t] = O.column("yrsup", t);
-                col[ 5*nt+t] = O.column("yrhsp", t);
-                col[ 6*nt+t] = O.column("ycsup", t);
-                col[ 7*nt+t] = O.column("ychsp", t);
-                col[ 8*nt+t] = O.column("delta_w", t);
+                col[ 3*nt+t] = O.column("yrsup", t);
+                //col[ 5*nt+t] = O.column("yrhsp", t);
+                col[ 4*nt+t] = O.column("ycsup", t);
+                col[ 5*nt+t] = O.column("ychsp", t);
+                col[ 6*nt+t] = O.column("delta_w", t);
 
-                row[      t] = price_signal.at(t) * outputs.eta_pb_expected.at(t);
+                row[      t] = price_signal.at(t) /** outputs.eta_pb_expected.at(t)*/;
                 row[ 1*nt+t] = - price_signal.at(t) * Lr;
                 row[ 2*nt+t] = row[ nt+t];
-                row[ 3*nt+t] = row[ nt+t]*Qrl;
+                //row[ 3*nt+t] = row[ nt+t]*Qrl;
                 //row[ 4*nt+t] = row[ 5*nt+t] = -0.5;
-                row[ 4*nt+t] = -rsu_cost*tadj;
-                row[ 5*nt+t] = -tadj;
-                row[ 6*nt+t] = -csu_cost*tadj;
-                row[ 7*nt+t] = row[ 6*nt+t] * 0.1;
-                row[ 8*nt+t] = -pen_delta_w*tadj;
+                row[ 3*nt+t] = -rsu_cost*tadj;
+                //row[ 5*nt+t] = -tadj;
+                row[ 4*nt+t] = -csu_cost*tadj;
+                row[ 5*nt+t] = row[ 4*nt+t] * 0.1;
+                row[ 6*nt+t] = -pen_delta_w*tadj;
 
                 tadj *= 0.999;
             }
 
-            set_obj_fnex(lp, 9*nt, row, col);
+            set_obj_fnex(lp, 7*nt, row, col);
         
             delete [] col;
             delete [] row;
@@ -506,7 +543,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("wdot", t);
 
-                row[1] = -etap;
+                row[1] = -etap*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
                 col[1] = O.column("x", t);
 
                 row[2] = -(Wdotu - etap*Qu);
@@ -638,27 +675,27 @@ bool csp_dispatch_opt::optimize()
                 // --- new constraints ---
 
                 //receiver startup/standby persist
-                row[0] = 1.;
+                /*row[0] = 1.;
                 col[0] = O.column("yrsu", t);
 
                 row[1] = 1.;
                 col[1] = O.column("yrsb", t);
 
-                add_constraintex(lp, 2, row, col, LE, 1.);
+                add_constraintex(lp, 2, row, col, LE, 1.);*/
 
-                //recever standby persist
-                row[0] = 1.;
+                //recever standby partition
+                /*row[0] = 1.;
                 col[0] = O.column("yr", t);
 
                 row[1] = 1.;
                 col[1] = O.column("yrsb", t);
 
-                add_constraintex(lp, 2, row, col, LE, 1.);
+                add_constraintex(lp, 2, row, col, LE, 1.);*/
 
                 if( t > 0 )
                 {
                     //rsb_persist
-                    row[0] = 1.;
+                    /*row[0] = 1.;
                     col[0] = O.column("yrsb", t);
 
                     row[1] = -1.;
@@ -667,7 +704,7 @@ bool csp_dispatch_opt::optimize()
                     row[2] = -1.;
                     col[2] = O.column("yrsb", t-1);
 
-                    add_constraintex(lp, 3, row, col, LE, 0.);
+                    add_constraintex(lp, 3, row, col, LE, 0.);*/
 
                     //receiver startup penalty
                     row[0] = 1.;
@@ -682,7 +719,7 @@ bool csp_dispatch_opt::optimize()
                     add_constraintex(lp, 3, row, col, GE, 0.);
 
                     //receiver hot startup penalty
-                    row[0] = 1.;
+                    /*row[0] = 1.;
                     col[0] = O.column("yrhsp", t);
 
                     row[1] = -1.;
@@ -691,7 +728,7 @@ bool csp_dispatch_opt::optimize()
                     row[2] = -1.;
                     col[2] = O.column("yrsb", t-1);
 
-                    add_constraintex(lp, 3, row, col, GE, -1);
+                    add_constraintex(lp, 3, row, col, GE, -1);*/
 
                     //receiver shutdown energy
                     /*row[0] = 1.;
@@ -917,26 +954,26 @@ bool csp_dispatch_opt::optimize()
                 row[1] = -delta*Qc;
                 row[2] = -delta*Qb; 
                 row[3] = -delta;
-                row[4] = -delta*Qrsb;
-                row[5] = -1.;
-                row[6] = 1.;
+                //row[4] = -delta*Qrsb;
+                row[4] = -1.;
+                row[5] = 1.;
             
                 col[0] = O.column("xr", t);
                 col[1] = O.column("ycsu", t);
                 col[2] = O.column("ycsb", t);
                 col[3] = O.column("x", t);
-                col[4] = O.column("yrsb", t);
-                col[5] = O.column("s", t);
+                //col[4] = O.column("yrsb", t);
+                col[4] = O.column("s", t);
 
                 
                 if(t>0)
                 {
-                    col[6] = O.column("s", t-1);
-                    add_constraintex(lp, 7, row, col, EQ, 0.);
+                    col[5] = O.column("s", t-1);
+                    add_constraintex(lp, 6, row, col, EQ, 0.);
                 }
                 else
                 {
-                    add_constraintex(lp, 6, row, col, EQ, -s0);  //initial storage state (kWh)
+                    add_constraintex(lp, 5, row, col, EQ, -s0);  //initial storage state (kWh)
                 }
             }
         }
@@ -1033,7 +1070,9 @@ bool csp_dispatch_opt::optimize()
         else
             //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING);        //original
             //set_bb_rule(lp, NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE);  //original 2
-            set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE);    //independent optimization
+            set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE);    //independent optimization <<
+            //set_bb_rule(lp, NODE_PSEUDONONINTSELECT + NODE_GREEDYMODE + NODE_DYNAMICMODE + NODE_RCOSTFIXING); //5m30s, 10.24c
+            //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE + NODE_RCOSTFIXING);    5m20s, 10.17c
             //set_bb_rule(lp, NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE );  //genetic algorithm
  
        //Problem scaling loop
@@ -1129,6 +1168,7 @@ bool csp_dispatch_opt::optimize()
             outputs.q_sf_expected.resize(nt, 0.);
             outputs.q_pb_startup.resize(nt, 0.);
             outputs.q_rec_startup.resize(nt, 0.);
+            outputs.w_pb_target.resize(nt, 0.);
 
             int ncols = get_Ncolumns(lp);
 
@@ -1217,6 +1257,10 @@ bool csp_dispatch_opt::optimize()
                 else if(strcmp(root, "xr") == 0)   //receiver production
                 {
                     outputs.q_sf_expected.at(t) = vars[ c-1 ];
+                }
+                else if(strcmp(root, "wdot") == 0) //electricity production
+                {
+                    outputs.w_pb_target.at(t) = vars[ c-1 ];
                 }
             }
 

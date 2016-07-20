@@ -205,6 +205,7 @@ public:
         vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
         vector<double> q_pb_startup;    //thermal power going to startup
         vector<double> q_rec_startup;   //thermal power going to startup
+        vector<double> w_pb_target;  //optimized electricity generation
 
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
