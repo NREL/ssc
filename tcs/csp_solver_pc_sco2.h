@@ -4,17 +4,48 @@
 #include "csp_solver_util.h"
 #include "csp_solver_core.h"
 
+#include "sco2_pc_csp_int.h"
+
 class C_pc_sco2 : public C_csp_power_cycle
 {
 
 private:
 
-	double abc;
+	C_sco2_recomp_csp mc_sco2_recomp;
+
+	double m_startup_energy_required;		//[kW-hr]
+
+	int m_standby_control_prev;				//[-]
+	double m_startup_time_remain_prev;		//[hr]
+	double m_startup_energy_remain_prev;	//[kW-hr]
+
+	int m_standby_control_calc;				//[-]
+	double m_startup_time_remain_calc;		//[hr]
+	double m_startup_energy_remain_calc;	//[kW-hr]
 
 public:
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
+
+	struct S_des_par
+	{
+		C_sco2_recomp_csp::S_des_par ms_mc_sco2_recomp_params;
+
+		double m_cycle_max_frac;	//[-] Maximum turbine over-design operation fraction
+		double m_cycle_cutoff_frac;	//[-] Minimum turbine operation fraction
+		double m_q_sby_frac;		//[-] fraction of thermal power required for standby mode
+		double m_startup_time;		//[hr] time needed for power block startup
+		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
+		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+
+		S_des_par()
+		{
+			m_cycle_max_frac = m_cycle_cutoff_frac = m_q_sby_frac = m_startup_time = m_startup_frac = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	S_des_par ms_params;
 
 	C_pc_sco2();
 
