@@ -7,18 +7,7 @@
 //#include "Ambient.h"
 //#include "Land.h"
 #include <time.h>
-#ifdef _MSC_VER
 #include <random>
-#else
-//#ifdef _LIBCPP_VERSION
-//using libc++
-#include <random>
-//#else
-//#include <tr1/random>
-// using libstdc++
-//#endif
-
-#endif
 
 using namespace std;
 
