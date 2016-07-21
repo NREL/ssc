@@ -1536,7 +1536,7 @@ bool csp_dispatch_opt::optimize_ampl()
     outputs.q_pb_startup.resize(nt, 0.);
     outputs.q_rec_startup.resize(nt, 0.);
     outputs.q_sf_expected.resize(nt, 0.);
-
+    outputs.w_pb_target.resize(nt, 0.);
     
     util::to_double(F.at(0), &outputs.objective);
     util::to_double(F.at(1), &outputs.objective_relaxed);
@@ -1582,6 +1582,10 @@ bool csp_dispatch_opt::optimize_ampl()
     svals = util::split( F.at(10), "," );
     for(int i=0; i<nt; i++)
         util::to_double( svals.at(i), &outputs.q_sf_expected.at(i) );
+    svals = util::split( F.at(11), "," );
+    for(int i=0; i<nt; i++)
+        util::to_double( svals.at(i), &outputs.w_pb_target.at(i) );
+
     return true;
 }
 
