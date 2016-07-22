@@ -45,6 +45,10 @@ void C_csp_weatherreader::init()
 	}
 }
 
+double C_csp_weatherreader::get_n_records()
+{
+	return m_wfile.nrecords();		//[-] Number of weather records in weather file
+}
 
 void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 {

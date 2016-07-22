@@ -112,6 +112,8 @@ public:
 
 	void timestep_call(const C_csp_solver_sim_info &p_sim_info);
 
+	double get_n_records();
+
 	void converged();
 
     bool read_time_step(int time_step, C_csp_solver_sim_info &p_sim_info);
