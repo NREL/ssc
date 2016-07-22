@@ -262,6 +262,13 @@ void C_csp_solver::init()
 	}
 }
 
+int C_csp_solver::steps_per_hour()
+{
+	// Get number of records in weather file
+	int n_wf_records = mc_weather.get_n_records();
+	int step_per_hour = n_wf_records / 8760;
+	return step_per_hour;
+}
 
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
 								bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
@@ -296,53 +303,51 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
 
-
-
     //instantiate dispatch optimization object
     csp_dispatch_opt dispatch;
     //load parameters used by dispatch algorithm
-    //-------------------------------
-    dispatch.copy_weather_data( mc_weather );
-    dispatch.params.col_rec = &mc_collector_receiver;
-	dispatch.params.siminfo = &mc_kernel.mc_sim_info;
-    dispatch.params.messages = &mc_csp_messages;
-    
-	dispatch.params.dt = mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //hr
-    dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
-    dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
-    dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
-	dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy()*1000.;
-	dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy()*1000.;
-    
-    dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time()/3600.;
-	dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy(mc_kernel.get_baseline_step()) * 1000;
-    dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
-    dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
-
-
-    dispatch.params.e_tes_init = mc_tes.get_initial_charge_energy()*1000;
-    dispatch.params.e_tes_min = mc_tes.get_min_charge_energy()*1000;
-    dispatch.params.e_tes_max = mc_tes.get_max_charge_energy()*1000;
-    dispatch.params.tes_degrade_rate = mc_tes.get_degradation_rate();
-
-    dispatch.params.q_pb_max = mc_power_cycle.get_max_thermal_power()*1000;
-    dispatch.params.q_pb_min = mc_power_cycle.get_min_thermal_power()*1000;
-    dispatch.params.q_pb_des = m_cycle_q_dot_des*1000.;
-    dispatch.params.eta_cycle_ref = mc_power_cycle.get_efficiency_at_load(1.);
-
-    dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
-    dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
-    dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
-    dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
-
-    //Cycle efficiency
-    dispatch.params.eff_table_load.clear();
-    //add zero point
-    dispatch.params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
+    //-------------------------------    
     
 	if( mc_tou.mc_dispatch_params.m_dispatch_optimize )
 	{
-        
+		dispatch.copy_weather_data(mc_weather);
+		dispatch.params.col_rec = &mc_collector_receiver;
+		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
+		dispatch.params.messages = &mc_csp_messages;
+
+		dispatch.params.dt = mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //hr
+		dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
+		dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
+		dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
+		dispatch.params.e_pb_startup_cold = mc_power_cycle.get_cold_startup_energy()*1000.;
+		dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy()*1000.;
+
+		dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time() / 3600.;
+		dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy(mc_kernel.get_baseline_step()) * 1000;
+		dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
+		dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
+
+
+		dispatch.params.e_tes_init = mc_tes.get_initial_charge_energy() * 1000;
+		dispatch.params.e_tes_min = mc_tes.get_min_charge_energy() * 1000;
+		dispatch.params.e_tes_max = mc_tes.get_max_charge_energy() * 1000;
+		dispatch.params.tes_degrade_rate = mc_tes.get_degradation_rate();
+
+		dispatch.params.q_pb_max = mc_power_cycle.get_max_thermal_power() * 1000;
+		dispatch.params.q_pb_min = mc_power_cycle.get_min_thermal_power() * 1000;
+		dispatch.params.q_pb_des = m_cycle_q_dot_des*1000.;
+		dispatch.params.eta_cycle_ref = mc_power_cycle.get_efficiency_at_load(1.);
+
+		dispatch.params.rsu_cost = mc_tou.mc_dispatch_params.m_rsu_cost;
+		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
+		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
+		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
+
+		//Cycle efficiency
+		dispatch.params.eff_table_load.clear();
+		//add zero point
+		dispatch.params.eff_table_load.add_point(0., 0.);    //this is required to allow the model to converge
+
 		int neff = 2;
 		for(int i=0; i<neff; i++)
 		{
