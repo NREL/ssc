@@ -688,7 +688,7 @@ public:
 		//tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
 		//tou_params->mc_pricing.mc_weekdays = as_matrix("weekday_schedule");
 		//tou_params->mc_pricing.mc_weekends = as_matrix("weekend_schedule");
-		//tou.mc_dispatch_params.m_dispatch_optimize = false;
+		tou.mc_dispatch_params.m_dispatch_optimize = false;
 		//tou.mc_dispatch_params.m_is_write_ampl_dat = false;
 		//tou.mc_dispatch_params.m_is_ampl_engine = false;
 		//tou.mc_dispatch_params.m_ampl_data_dir = "";
@@ -769,6 +769,9 @@ public:
 		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
 
 		int steps_per_hour = 1;			//[-]
+
+		steps_per_hour = csp_solver.steps_per_hour();	//[-]
+
 		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double) steps_per_hour;	//[s]
 
