@@ -280,10 +280,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		}
 	}
 	
-	/* 
-    This function is called once and manages the time series simulation.
-    */
-	double wf_step = 3600.0;			//[s] Weather file time step - would like to check this against weather file, some day
+	// Get number of records in weather file
+	int n_wf_records = mc_weather.get_n_records();
+	int step_per_hour = n_wf_records / 8760;
+
+	double wf_step = 3600.0 / step_per_hour;	//[s] Weather file time step - would like to check this against weather file, some day
 	
 	double step_tolerance = 10.0;		//[s] For adjustable timesteps, if within 10 seconds, assume it equals baseline timestep
 	double baseline_step = wf_step;		//[s] Baseline timestep of the simulation - this should probably be technology/model specific
