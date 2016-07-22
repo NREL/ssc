@@ -1056,8 +1056,12 @@ public:
 					float **ptr_array,
 					float **post_proc_array);
 
+
+
 	float **mp_reporting_array;
 	float **mp_post_proc_array;
+
+	int steps_per_hour();
 
 	void set_outputs_at_reporting_interval();
 
