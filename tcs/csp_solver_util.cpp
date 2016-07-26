@@ -127,6 +127,8 @@ void C_csp_reported_outputs::construct(const S_output_info *output_info, int n_o
 	mvc_outputs.resize(n_outputs);
 	m_n_outputs = n_outputs;
 
+	mv_latest_calculated_outputs.resize(n_outputs);
+
 	// Loop through the output info and set m_is_ts_weighted for each output
 	for( int i = 0; i < n_outputs; i++ )
 	{
@@ -156,9 +158,15 @@ bool C_csp_reported_outputs::allocate(int index, float *p_reporting_ts_array, in
 	return true;
 }
 
-void C_csp_reported_outputs::set_timestep_output(int index, double output_value)
+void C_csp_reported_outputs::set_timestep_outputs()
 {
-	mvc_outputs[index].set_timestep_output(output_value);
+	for(int i = 0; i < m_n_outputs; i++)
+		mvc_outputs[i].set_timestep_output(mv_latest_calculated_outputs[i]);
+}
+
+void C_csp_reported_outputs::value(int index, double value)
+{
+	mv_latest_calculated_outputs[index] = value;
 }
 
 C_csp_messages::C_csp_messages()
