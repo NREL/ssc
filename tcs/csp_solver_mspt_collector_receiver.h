@@ -18,7 +18,14 @@ public:
 	
 	enum
 	{
-		E_Q_DOT_THERMAL,
+		E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
+		E_ETA_THERMAL,			//[-] Receiver thermal efficiency
+		E_Q_DOT_THERMAL,		//[MWt] Field incident thermal power
+		E_M_DOT_HTF,			//[kg/hr] Receiver mass flow rate
+		E_Q_DOT_STARTUP,		//[MWt] Receiver startup thermal power consumed
+		E_T_HTF_IN,				//[C] Receiver HTF inlet temperature
+		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature
+		E_Q_DOT_PIPE_LOSS,		//[MWt] Tower piping losses
 
 		E_END_OUTPUTS
 	};
