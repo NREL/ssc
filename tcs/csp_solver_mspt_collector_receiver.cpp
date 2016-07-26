@@ -282,7 +282,7 @@ void C_csp_mspt_collector_receiver::converged()
 	mc_mspt_receiver_222.converged();
 
 	// Hardcode to test...
-	mc_reported_outputs.set_timestep_output(E_Q_DOT_THERMAL, 100.0);	//[MWt]
+	mc_reported_outputs.set_timestep_output(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
 }
 
 void C_csp_mspt_collector_receiver::write_output_intervals(double report_time_start,
