@@ -52,6 +52,8 @@ private:
 	
 	int m_n_reporting_ts_array;			//[-] Length of allocated array
 
+	std::vector<double> mv_latest_calculated_outputs;	//[-] Output after most recent 
+
 public:
 
 	C_csp_reported_outputs(){};
@@ -60,10 +62,13 @@ public:
 
 	bool allocate(int index, float *p_reporting_ts_array, int n_reporting_ts_array);
 
-	void set_timestep_output(int index, double output_value);
-
 	void send_to_reporting_ts_array(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
+
+	void value(int index, double value);
+
+	void set_timestep_outputs();
+
 };
 
 class C_csp_messages
