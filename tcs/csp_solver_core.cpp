@@ -6857,14 +6857,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_out_report.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
 		mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
         mvv_outputs_temp[CR_ADJUST].push_back(mc_cr_out_report.m_sf_adjust_out);
-		mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
-		mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
-		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  
+		//mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
+		//mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
+			// 7.26.16, twn: Need to keep these for now, for mass balance
+		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  			
 		mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_out_solver.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
-		mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
-		mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
-		mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
-		mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
+		//mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
+		//mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
+		//mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
+		//mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
 
 			// Power cycle outputs
 		mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
