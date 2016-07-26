@@ -382,6 +382,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",        "Rec. incident thermal power",                                  "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Rec. thermal power to HTF less piping loss",                   "MWt",          "",            "CR",             "*",                       "",           "" },
+			
 	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Rec. mass flow rate",                                          "kg/hr",        "",            "CR",             "*",                       "",           "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",            "Rec. startup thermal energy consumed",                         "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_in",             "Rec. HTF inlet temperature",                                   "C",            "",            "CR",             "*",                       "",           "" },
@@ -907,6 +908,19 @@ public:
 		// Then try init() call here, which should call inits from both classes
 		//collector_receiver.init();
 
+		// *******************************************************
+		// *******************************************************
+		// Set receiver outputs
+		//float *p_q_thermal_copy = allocate("Q_thermal_123", n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, allocate("Q_thermal", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_M_DOT_HTF, allocate("m_dot_rec", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_Q_DOT_STARTUP, allocate("q_startup", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_T_HTF_IN, allocate("T_rec_in", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_T_HTF_OUT, allocate("T_rec_out", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_piping_losses", n_steps_fixed), n_steps_fixed);
+
 		// Power cycle
 		// Logic to choose between steam and sco2 power cycle 
 		int pb_tech_type = as_integer("pc_config");
@@ -1148,14 +1162,15 @@ public:
 		ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
 		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
         ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc1", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm1", n_steps_fixed);
+			// 7.26.16, twn: Need to keep this for now, for mass balance
+		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal1", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec1", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup1", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in1", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses1", n_steps_fixed);
 
 			// Power cycle outputs
 		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta", n_steps_fixed);
