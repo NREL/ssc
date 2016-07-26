@@ -6981,6 +6981,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		{			
 			if(mc_kernel.mc_sim_info.ms_ts.m_time >= m_report_time_end)
 			{
+				mc_collector_receiver.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
+				
 				set_outputs_at_reporting_interval();
 
 				// Advance time_reporting_hr index
@@ -7039,8 +7041,6 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 {
 	// Step through each uniform reporting period
 	int n_report = mvv_outputs_temp[W_DOT_NET].size();
-
-	mc_collector_receiver.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
 
 	if( n_report < 1 )
 	{
