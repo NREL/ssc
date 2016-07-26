@@ -513,6 +513,14 @@ public:
 			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
 		}
 
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		weather_reader.m_filename = as_string("solar_resource_file");
+		weather_reader.m_trackmode = 0;
+		weather_reader.m_tilt = 0.0;
+		weather_reader.m_azimuth = 0.0;
+			// Initialize to get weather file info
+		weather_reader.init();
 
         //set up simulation parameters
         
@@ -898,19 +906,6 @@ public:
 		C_csp_mspt_collector_receiver collector_receiver(heliostatfield, receiver);
 		// Then try init() call here, which should call inits from both classes
 		//collector_receiver.init();
-
-
-
-		// Weather reader
-		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("solar_resource_file");
-		weather_reader.m_trackmode = 0;
-		weather_reader.m_tilt = 0.0;
-		weather_reader.m_azimuth = 0.0;
-
-		// Test weatherreader initialization
-		//weather_reader.init();
-
 
 		// Power cycle
 		// Logic to choose between steam and sco2 power cycle 
