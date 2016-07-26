@@ -1,12 +1,17 @@
 #include "csp_solver_mspt_collector_receiver.h"
 #include <algorithm>
 
+static C_csp_reported_outputs::S_output_info S_output_info[] =
+{
+	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, true}
+};
+
 C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield,
 	C_mspt_receiver_222 & mspt_receiver_222):
 	mc_pt_heliostatfield(pt_heliostatfield),
 	mc_mspt_receiver_222(mspt_receiver_222)
 {
-	
+	mc_reported_outputs.construct(S_output_info, E_END_OUTPUTS);
 }
 
 C_csp_mspt_collector_receiver::~C_csp_mspt_collector_receiver()
@@ -275,4 +280,14 @@ void C_csp_mspt_collector_receiver::converged()
 {
 	mc_pt_heliostatfield.converged();
 	mc_mspt_receiver_222.converged();
+
+	// Hardcode to test...
+	mc_reported_outputs.set_timestep_output(E_Q_DOT_THERMAL, 100.0);	//[MWt]
+}
+
+void C_csp_mspt_collector_receiver::write_output_intervals(double report_time_start,
+	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
+{
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }

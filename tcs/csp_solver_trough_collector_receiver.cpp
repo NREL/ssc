@@ -3111,6 +3111,12 @@ void C_csp_trough_collector_receiver::converged()
 	return;
 }
 
+void C_csp_trough_collector_receiver::write_output_intervals(double report_time_start,
+	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
+{
+	return;
+}
+
 double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
 	return std::numeric_limits<double>::quiet_NaN();

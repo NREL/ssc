@@ -7040,6 +7040,8 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	// Step through each uniform reporting period
 	int n_report = mvv_outputs_temp[W_DOT_NET].size();
 
+	mc_collector_receiver.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
+
 	if( n_report < 1 )
 	{
 		throw(C_csp_exception("No data to send to SSC", "Reporting Intervals"));
