@@ -452,6 +452,9 @@ public:
 
 	virtual void converged() = 0;
 
+	virtual void write_output_intervals(double report_time_start,
+		const std::vector<double> & v_temp_ts_time_end, double report_time_end) = 0;
+
     virtual double calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim ) = 0;
 
     virtual double calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_incident ) = 0; //very approximate thermal efficiency for optimization projections

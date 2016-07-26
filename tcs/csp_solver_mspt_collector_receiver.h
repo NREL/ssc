@@ -5,13 +5,26 @@
 #include "csp_solver_pt_heliostatfield.h"
 #include "csp_solver_mspt_receiver_222.h"
 
+
+
 class C_csp_mspt_collector_receiver : public C_csp_collector_receiver
 {
+
 private:
 	C_pt_heliostatfield &mc_pt_heliostatfield;
 	C_mspt_receiver_222 &mc_mspt_receiver_222;
 
 public:
+	
+	enum
+	{
+		E_Q_DOT_THERMAL,
+
+		E_END_OUTPUTS
+	};
+
+	C_csp_reported_outputs mc_reported_outputs;
+	
 	C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield, 
 		C_mspt_receiver_222 & mspt_receiver_222);
 
@@ -52,6 +65,9 @@ public:
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();
+
+	virtual void write_output_intervals(double report_time_start,
+		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 
     virtual double calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim );
   
