@@ -940,7 +940,7 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_m_dot_ss = 0.0;			//[kg/hr] convert from kg/s
 	ms_outputs.m_q_dot_ss = 0.0;			//[MW] convert from W
 	ms_outputs.m_f_timestep = 0.0;			//[-]
-	ms_outputs.m_time_required_su = 0.0;	//[s], convert from hr in code
+	ms_outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
 	ms_outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
 	
 	return;

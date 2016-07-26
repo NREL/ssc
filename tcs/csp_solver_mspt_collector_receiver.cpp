@@ -136,7 +136,8 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
 	mc_reported_outputs.value(E_M_DOT_HTF, mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
-	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup / (sim_info.ms_ts.m_step / 3600.0));		//[MWt])
+		// If startup, then timestep may have changed (why not report this from 222 in MWt?)
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
@@ -177,7 +178,8 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
 	mc_reported_outputs.value(E_M_DOT_HTF, mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
-	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup/(sim_info.ms_ts.m_step/3600.0));		//[MWt])
+		// Should not be startup energy in OFF, but timestep may be subhourly/nonuniform (why not report this from 222 in MWt?)
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]

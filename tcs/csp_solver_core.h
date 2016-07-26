@@ -721,14 +721,15 @@ public:
 		CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
 		CR_DEFOCUS,           //[-] Field optical focus fraction
         CR_ADJUST,            //[-] Field adjustment factor
-		REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
-		REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
-		REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses
+		//REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
+		//REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
+			// 7.26.16, twn: Need to keep this for now, for mass balance
+		REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses			
 		REC_M_DOT,            //[kg/hr] Receiver mass flow rate
-		REC_Q_DOT_STARTUP,    //[MWt] Receiver startup thermal power consumed
-		REC_T_IN,             //[C] Receiver HTF inlet temperature
-		REC_T_OUT,            //[C] Receiver HTF outlet temperature
-		CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
+		//REC_Q_DOT_STARTUP,    //[MWt] Receiver startup thermal power consumed
+		//REC_T_IN,             //[C] Receiver HTF inlet temperature
+		//REC_T_OUT,            //[C] Receiver HTF outlet temperature
+		//CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
 		PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
 		PC_Q_DOT,             //[-] Cycle input thermal power
 		PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
