@@ -15,11 +15,16 @@ C_csp_weatherreader::C_csp_weatherreader()
 	m_ncall = -1;
 
 	day_prev = -1;
+
+	m_is_wf_init = false;
 }
 
 
 void C_csp_weatherreader::init()
 {
+	if(m_is_wf_init)
+		return;
+	
 	if( !m_wfile.open(m_filename) )
 	{
 		m_error_msg = util::format("Could not open %s for reading", m_filename.c_str());
@@ -43,6 +48,8 @@ void C_csp_weatherreader::init()
 		m_error_msg = util::format("invalid tracking mode specified %d [0..2]", m_trackmode);
 		throw(C_csp_exception(m_error_msg, ""));
 	}
+
+	m_is_wf_init = true;
 }
 
 double C_csp_weatherreader::get_n_records()

@@ -103,6 +103,8 @@ private:
 
 	int day_prev;
 
+	bool m_is_wf_init;
+
 public:
 	C_csp_weatherreader();
 
