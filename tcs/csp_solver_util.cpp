@@ -44,6 +44,11 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
 {
 	if( m_is_allocated )
 	{	
+		if( mv_temp_outputs.size() != n_report )
+		{
+			throw(C_csp_exception("Time and data arrays are not the same size", "C_csp_reported_outputs::send_to_reporting_ts_array"));
+		}
+
 		if( m_counter_reporting_ts_array + 1 > m_n_reporting_ts_array )
 		{
 			throw(C_csp_exception("Attempting store more points in Reporting Timestep Array than it was allocated for"));
@@ -104,14 +109,6 @@ void C_csp_reported_outputs::send_to_reporting_ts_array(double report_time_start
 	{
 		is_save_last_step = false;
 		n_pop_back = n_report;
-	}
-
-	for( int i = 0; i < m_n_outputs; i++ )
-	{
-		if( mvc_outputs[i].get_vector_size() != n_report )
-		{
-			throw(C_csp_exception("Time and data arrays are not the same size", "C_csp_reported_outputs::send_to_reporting_ts_array"));
-		}
 	}
 
 	for( int i = 0; i < m_n_outputs; i++ )

@@ -3,7 +3,14 @@
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, true}
+	{C_csp_mspt_collector_receiver::E_Q_DOT_INC, true},
+	{C_csp_mspt_collector_receiver::E_ETA_THERMAL, true},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, true},
+	{C_csp_mspt_collector_receiver::E_M_DOT_HTF, true},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_STARTUP, true},
+	{C_csp_mspt_collector_receiver::E_T_HTF_IN, true},
+	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, true},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, true}	
 };
 
 C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield,
@@ -125,7 +132,14 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
 
+	mc_reported_outputs.value(E_Q_DOT_INC, mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc);	//[MWt]
+	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
+	mc_reported_outputs.value(E_M_DOT_HTF, mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup / (sim_info.ms_ts.m_step / 3600.0));		//[MWt])
+	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
+	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
 }
 
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -159,7 +173,14 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 		// Not sure that we want 'startup time required' calculated in 'off' call
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	 //[s]
 	
+	mc_reported_outputs.value(E_Q_DOT_INC, mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc);	//[MWt]
+	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
+	mc_reported_outputs.value(E_M_DOT_HTF, mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot);	//[kg/hr]
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, mc_mspt_receiver_222.ms_outputs.m_q_startup/(sim_info.ms_ts.m_step/3600.0));		//[MWt])
+	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
+	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
 
 	return;
 }
