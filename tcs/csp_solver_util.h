@@ -67,6 +67,8 @@ public:
 
 	void value(int index, double value);
 
+	double value(int index);
+
 	void set_timestep_outputs();
 
 };

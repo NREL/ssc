@@ -11,6 +11,14 @@
 static const double zen_scale = 1.570781477;
 static const double az_scale = 6.283125908;
 
+static C_csp_reported_outputs::S_output_info S_output_info[] = 
+{
+	{C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, true},
+	{C_csp_gen_collector_receiver::E_ETA_FIELD, true},
+	{C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, true},
+	{C_csp_gen_collector_receiver::E_ETA_THERMAL, true}
+};
+
 C_csp_gen_collector_receiver::C_csp_gen_collector_receiver()
 {
 	// *************************************************************
@@ -27,6 +35,8 @@ C_csp_gen_collector_receiver::C_csp_gen_collector_receiver()
 	
 	m_mode = -1;
 	m_mode_prev = -1;
+
+	mc_reported_outputs.construct(S_output_info, E_END_OUTPUTS);
 }
 
 C_csp_gen_collector_receiver::~C_csp_gen_collector_receiver()
@@ -321,7 +331,7 @@ void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &weat
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::on(...) is not complete"));
@@ -331,7 +341,7 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	double ibn = weather.m_beam;		//[W/m2] DNI
@@ -472,20 +482,27 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	cr_out_solver.m_W_dot_col_tracking = 0.0;		//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = 0.0;			//[MWe]
 
-	// Set collector-receiver class outputs for reporting
-	cr_out_report.m_q_dot_field_inc = m_f_qsf * irr_used;	//[MWt]
-	cr_out_report.m_eta_field = eta_opt_sf;					//[-]
+	double q_dot_rec_inc = m_f_qsf * eta_opt_sf * irr_used;
 
-	cr_out_report.m_q_dot_rec_inc = m_f_qsf * eta_opt_sf * irr_used;	//[MWt]
-	cr_out_report.m_eta_thermal = q_sf / cr_out_report.m_q_dot_rec_inc;	//[-]
-	cr_out_report.m_q_dot_piping_loss = 0.0;		//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_FIELD_INC, m_f_qsf * irr_used);	//[MWt]
+	mc_reported_outputs.value(E_ETA_FIELD, eta_opt_sf);		//[-]
+	mc_reported_outputs.value(E_Q_DOT_REC_INC, q_dot_rec_inc);	//[-]
+	mc_reported_outputs.value(E_ETA_THERMAL, q_sf / q_dot_rec_inc);		//[-]
+
+	// Set collector-receiver class outputs for reporting
+	//cr_out_report.m_q_dot_field_inc = m_f_qsf * irr_used;	//[MWt]
+	//cr_out_report.m_eta_field = eta_opt_sf;					//[-]
+
+	//cr_out_report.m_q_dot_rec_inc = m_f_qsf * eta_opt_sf * irr_used;	//[MWt]
+	//cr_out_report.m_eta_thermal = q_sf / cr_out_report.m_q_dot_rec_inc;	//[-]
+	//cr_out_report.m_q_dot_piping_loss = 0.0;		//[MWt]
 
 }
 
 void C_csp_gen_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::startup(...) is not complete"));
@@ -506,7 +523,7 @@ void C_csp_gen_collector_receiver::estimates(const C_csp_weatherreader::S_output
 void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	m_mode = C_csp_collector_receiver::OFF;
@@ -519,11 +536,17 @@ void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &wea
 	cr_out_solver.m_T_salt_hot = 0.0;			//[C]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
-	cr_out_report.m_q_dot_field_inc = 0.0;		//[MWt]
-	cr_out_report.m_eta_field = 0.0;			//[-]
-	cr_out_report.m_q_dot_rec_inc = 0.0;		//[MWt]
-	cr_out_report.m_eta_thermal = 0.0;			//[-]
-	cr_out_report.m_q_dot_piping_loss = 0.0;	//[MWt]
+
+	mc_reported_outputs.value(E_Q_DOT_FIELD_INC, 0.0);	//[MWt]
+	mc_reported_outputs.value(E_END_OUTPUTS, 0.0);		//[-]
+	mc_reported_outputs.value(E_Q_DOT_REC_INC, 0.0);	//[-]
+	mc_reported_outputs.value(E_ETA_THERMAL, 0.0);		//[-]
+
+	//cr_out_report.m_q_dot_field_inc = 0.0;		//[MWt]
+	//cr_out_report.m_eta_field = 0.0;			//[-]
+	//cr_out_report.m_q_dot_rec_inc = 0.0;		//[MWt]
+	//cr_out_report.m_eta_thermal = 0.0;			//[-]
+	//cr_out_report.m_q_dot_piping_loss = 0.0;	//[MWt]
 
 	return;
 }

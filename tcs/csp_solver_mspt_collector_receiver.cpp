@@ -100,7 +100,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// What about catching errors here?
@@ -120,15 +120,15 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_mspt_receiver_222.call(weather, htf_state_in, receiver_inputs, sim_info);
 		
 	// Set collector/receiver parent class outputs and return
-	cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
-    cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
-	cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
+	//cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
+    //cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
+	//cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 
-	cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
-	cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
+	//cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		//[MWt]
+	//cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				//[-]
 	cr_out_solver.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				//[MW]
 	cr_out_solver.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				//[MWt-hr]
-	cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss;	//[MWt]
+	//cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss;	//[MWt]
 	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
 	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			//[MWe]
@@ -154,7 +154,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// First call heliostat field class
@@ -162,20 +162,20 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_pt_heliostatfield.off(sim_info);
 
 	// Set collector/receiver parent class outputs from field model
-	cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
-    cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
-	cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
+	//cr_out_report.m_eta_field = mc_pt_heliostatfield.ms_outputs.m_eta_field;				//[-]
+    //cr_out_report.m_sf_adjust_out = mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out;
+	//cr_out_report.m_q_dot_field_inc = mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;			//[MWe]
 
 	// Now, call the tower-receiver model
 	mc_mspt_receiver_222.off(weather, htf_state_in, sim_info);
 
 	// Set collector/receiver parent class outputs from field model
-	cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		 //[MWt]
-	cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				 //[-]
+	//cr_out_report.m_q_dot_rec_inc = mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc;		 //[MWt]
+	//cr_out_report.m_eta_thermal = mc_mspt_receiver_222.ms_outputs.m_eta_therm;				 //[-]
 	cr_out_solver.m_q_thermal = mc_mspt_receiver_222.ms_outputs.m_Q_thermal;				 //[MW]
 	cr_out_solver.m_q_startup = mc_mspt_receiver_222.ms_outputs.m_q_startup;				 //[MWt-hr]
-	cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss; //[MWt]
+	//cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss; //[MWt]
 	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				 //[C]
 	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			 //[MWe]
@@ -202,7 +202,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// For now, define startup(...) shell that calls call() with operation mode defined.
@@ -213,14 +213,14 @@ void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs
 	inputs.m_input_operation_mode = C_csp_collector_receiver::STARTUP;
 	inputs.m_field_control = 1.0;
 
-	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
+	call(weather, htf_state_in, inputs, cr_out_solver, sim_info);
 }
 
 void C_csp_mspt_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// For now, define on(...) shell that calls call() with operation mode defined.
@@ -231,7 +231,7 @@ void C_csp_mspt_collector_receiver::on(const C_csp_weatherreader::S_outputs &wea
 	inputs.m_input_operation_mode = C_csp_collector_receiver::ON;
 	inputs.m_field_control = field_control;
 
-	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
+	call(weather, htf_state_in, inputs, cr_out_solver, sim_info);
 }
 
 void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
@@ -247,9 +247,9 @@ void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outpu
 	inputs.m_field_control = 1.0;
 
 	C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
-	C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
+	//C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
 
-	call(weather, htf_state_in, inputs, cr_out_solver, cr_out_report, sim_info);
+	call(weather, htf_state_in, inputs, cr_out_solver, sim_info);
 
 	int mode = get_operating_state();
 
