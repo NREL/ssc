@@ -341,7 +341,7 @@ private:
 	C_csp_solver_htf_1state ms_htf_state_in;
 	C_csp_collector_receiver::S_csp_cr_inputs ms_inputs;
 	C_csp_collector_receiver::S_csp_cr_out_solver ms_out_solver;
-	C_csp_collector_receiver::S_csp_cr_out_report ms_out_report;
+	//C_csp_collector_receiver::S_csp_cr_out_report ms_out_report;
 	C_csp_solver_sim_info ms_sim_info;
 
 public:
@@ -653,7 +653,7 @@ public:
 				ms_htf_state_in,
 				ms_inputs,
 				ms_out_solver,
-				ms_out_report,
+				//ms_out_report,
 				ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)

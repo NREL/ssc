@@ -166,6 +166,11 @@ void C_csp_reported_outputs::value(int index, double value)
 	mv_latest_calculated_outputs[index] = value;
 }
 
+double C_csp_reported_outputs::value(int index)
+{
+	return mv_latest_calculated_outputs[index];
+}
+
 C_csp_messages::C_csp_messages()
 {
 	//m_message_list.resize(0);

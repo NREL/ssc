@@ -1351,7 +1351,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Always reset last temps
@@ -1471,7 +1471,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Always reset last temps
@@ -1666,7 +1666,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Always reset last temps
@@ -1971,9 +1971,9 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	if( m_operating_mode == C_csp_collector_receiver::ON )
 	{
 		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
-		C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
+		//C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
 
-		on(weather, htf_state_in, 1.0, cr_out_solver, cr_out_report, sim_info);
+		on(weather, htf_state_in, 1.0, cr_out_solver, sim_info);
 
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;	//[MWt]
 		est_out.m_q_startup_avail = 0.0;	//[MWt]
@@ -2024,7 +2024,7 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Increase call-per-timestep counter
@@ -2235,11 +2235,11 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				cr_out_solver.m_W_dot_col_tracking = 0.0;
 				cr_out_solver.m_W_dot_htf_pump = 0.0;
 
-				cr_out_report.m_q_dot_field_inc = 0.0;
-				cr_out_report.m_eta_field = 0.0;
-				cr_out_report.m_q_dot_rec_inc = 0.0;
-				cr_out_report.m_eta_thermal = 0.0;
-				cr_out_report.m_q_dot_piping_loss = 0.0;
+				//cr_out_report.m_q_dot_field_inc = 0.0;
+				//cr_out_report.m_eta_field = 0.0;
+				//cr_out_report.m_q_dot_rec_inc = 0.0;
+				//cr_out_report.m_eta_thermal = 0.0;
+				//cr_out_report.m_q_dot_piping_loss = 0.0;
 
 				return;
 			}

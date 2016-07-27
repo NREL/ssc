@@ -388,22 +388,22 @@ public:
 		}
 	};
 
-	struct S_csp_cr_out_report
-	{
-		double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
-		double m_eta_field;				//[-] Field optical efficiency
-        double m_sf_adjust_out;         //[-] Field adjustment factor used
-		
-		double m_q_dot_rec_inc;         //[MWt] Receiver incident thermal power (after reflection losses)
-		double m_eta_thermal;			//[-] Receiver thermal efficiency
-		double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings
-
-		S_csp_cr_out_report()
-		{
-			m_q_dot_field_inc = m_eta_field = 
-				m_q_dot_rec_inc = m_eta_thermal = m_q_dot_piping_loss = m_sf_adjust_out = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
+	//struct S_csp_cr_out_report
+	//{
+	//	double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
+	//	double m_eta_field;				//[-] Field optical efficiency
+    //    double m_sf_adjust_out;         //[-] Field adjustment factor used
+	//	
+	//	double m_q_dot_rec_inc;         //[MWt] Receiver incident thermal power (after reflection losses)
+	//	double m_eta_thermal;			//[-] Receiver thermal efficiency
+	//	double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings
+	//
+	//	S_csp_cr_out_report()
+	//	{
+	//		m_q_dot_field_inc = m_eta_field = 
+	//			m_q_dot_rec_inc = m_eta_thermal = m_q_dot_piping_loss = m_sf_adjust_out = std::numeric_limits<double>::quiet_NaN();
+	//	}
+	//};
 
 	virtual void init( const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
@@ -418,20 +418,20 @@ public:
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void startup(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
+		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	struct S_csp_cr_est_out
@@ -829,7 +829,7 @@ private:
 
 	C_csp_solver_htf_1state mc_cr_htf_state_in;
 	C_csp_collector_receiver::S_csp_cr_out_solver mc_cr_out_solver;
-	C_csp_collector_receiver::S_csp_cr_out_report mc_cr_out_report;
+	//C_csp_collector_receiver::S_csp_cr_out_report mc_cr_out_report;
 
 	C_csp_solver_htf_1state mc_pc_htf_state_in;
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;

@@ -304,11 +304,27 @@ private:
 	int pbmode0;
 	bool is_sf_init;
 
+	// pointers to arrays
+	float *p_q_dot_field_inc;
+	float *p_eta_field;
+	float *p_q_dot_rec_inc;
+	float *p_eta_thermal;
+
 public:
 
 	sam_mw_gen_type260( tcscontext *cxt, tcstypeinfo *ti ) 
 		: tcstypeinterface(cxt, ti)
 	{
+		// Set up arrays
+		p_q_dot_field_inc = new float[8760];
+		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, p_q_dot_field_inc, 8760);
+		p_eta_field = new float[8760];
+		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_ETA_FIELD, p_eta_field, 8760);
+		p_q_dot_rec_inc = new float[8760];
+		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, p_q_dot_rec_inc, 8760);
+		p_eta_thermal = new float[8760];
+		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_ETA_THERMAL, p_eta_thermal, 8760);
+		
 		//Commonly used values, conversions, etc...
 		Pi = acos(-1.);
 		pi = Pi;
@@ -374,7 +390,10 @@ public:
 
 	virtual ~sam_mw_gen_type260()
 	{
-
+		delete [] p_q_dot_field_inc;
+		delete [] p_eta_field;
+		delete [] p_q_dot_rec_inc;
+		delete [] p_eta_thermal;
 	}
 
 	virtual int init(){
@@ -606,7 +625,7 @@ public:
 		C_csp_solver_htf_1state cr_htf_state_in;
 		C_csp_collector_receiver::S_csp_cr_inputs cr_inputs;
 		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
-		C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
+		//C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
 		C_csp_solver_sim_info sim_info;
 
 			// HTF inlet state: not required by generic class
@@ -627,7 +646,7 @@ public:
 		// Call cr class
 		try
 		{
-			mc_gen_cr.call(weather, cr_htf_state_in, cr_inputs, cr_out_solver, cr_out_report, sim_info);
+			mc_gen_cr.call(weather, cr_htf_state_in, cr_inputs, cr_out_solver, sim_info);
 		}
 		catch( C_csp_exception &csp_exception )
 		{
@@ -670,7 +689,7 @@ public:
 		
 		//*********** End of input section *********************************************************************************************
 
-		double eta_opt_sf = cr_out_report.m_eta_field;
+		double eta_opt_sf = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_ETA_FIELD);		// cr_out_report.m_eta_field;
 		double q_sf = cr_out_solver.m_q_thermal;		//[MWt]
 
 		//------------------------------------------------------------------------------------------------------------
@@ -1002,7 +1021,7 @@ public:
 		//solalt = max(solalt*r2d, 0.0); //[deg] Solar elevation angle
 		//solaz = solaz*r2d;       //[deg] Solar azimuth angle (-180..180, 0deg=South)
 		
-		double q_inc = cr_out_report.m_q_dot_field_inc;            //[MWt] Qdni - Solar incident energy, before all losses
+		double q_inc = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC);	// cr_out_report.m_q_dot_field_inc;            //[MWt] Qdni - Solar incident energy, before all losses
 		double q_dump_tot = q_dump_tesfull + q_dump_teschg + q_dump_umin; //[MWt] Total dumped energy
 		double w_gr_fossil = w_gr - w_gr_solar;          //[MWe] Power produced from the fossil component
 		
@@ -1020,7 +1039,7 @@ public:
 		//value(O_F_SFHL_QDNI, f_sfhl_qdni);		//[none] Solar field load-based thermal loss correction
 		//value(O_F_SFHL_TAMB, f_sfhl_tamb);		//[none] Solar field temp.-based thermal loss correction
 		//value(O_F_SFHL_VWIND, f_sfhl_vwind);		//[none] Solar field wind-based thermal loss correction
-		value(O_Q_HL_SF, cr_out_report.m_q_dot_field_inc - cr_out_solver.m_q_thermal);		//[MWt] Solar field thermal losses
+		value(O_Q_HL_SF, q_inc - cr_out_solver.m_q_thermal);		//[MWt] Solar field thermal losses
 		value(O_Q_SF, q_sf);		//[MWt] Solar field delivered thermal power
 		value(O_Q_INC, q_inc);		//[MWt] Qdni - Solar incident energy, before all losses
 		value(O_PBMODE, pbmode);		//[none] Power conversion mode

@@ -751,7 +751,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_collector_receiver.startup(mc_weather.ms_outputs,
 				mc_cr_htf_state_in,
 				mc_cr_out_solver,
-				mc_cr_out_report,
+				//mc_cr_out_report,
 				mc_kernel.mc_sim_info);
 
 			// Check that startup happened
@@ -1287,7 +1287,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_htf_state_in,
 					field_control,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 
@@ -1743,7 +1743,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_htf_state_in,
 					m_defocus,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( mc_cr_out_solver.m_q_thermal < q_pc_sb )
@@ -1808,7 +1808,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_htf_state_in,
 					m_defocus,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( mc_cr_out_solver.m_q_thermal == 0.0 )
@@ -1885,7 +1885,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check that startup happened
@@ -1952,7 +1952,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				mc_collector_receiver.off(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Power Cycle: OFF
@@ -2030,7 +2030,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				mc_collector_receiver.off(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				are_models_converged = true; 
@@ -2178,7 +2178,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_cr_htf_state_in,
 						m_defocus,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
@@ -2644,7 +2644,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_cr_htf_state_in,
 						m_defocus,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
@@ -2864,7 +2864,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_htf_state_in,
 					field_control,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				
@@ -3134,7 +3134,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_cr_htf_state_in,
 							defocus_guess,
 							mc_cr_out_solver,
-							mc_cr_out_report,
+							//mc_cr_out_report,
 							mc_kernel.mc_sim_info);
 
 						// Check if receiver is OFF or model didn't solve
@@ -3338,7 +3338,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.off(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 				}
@@ -3350,7 +3350,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check that startup happened
@@ -3696,7 +3696,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				mc_collector_receiver.off(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// If convergence was successful, finalize this timestep and get out
@@ -3724,7 +3724,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.off(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 				}
@@ -3736,7 +3736,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check that startup happened
@@ -4059,7 +4059,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check that startup happened
@@ -4174,7 +4174,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_collector_receiver.startup(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
 							mc_cr_out_solver,
-							mc_cr_out_report,
+							//mc_cr_out_report,
 							mc_kernel.mc_sim_info);
 
 						// Check that startup happened
@@ -4387,7 +4387,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.off(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 				}
@@ -4399,7 +4399,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check that startup happened
@@ -4851,7 +4851,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_cr_htf_state_in,
 							m_defocus,
 							mc_cr_out_solver,
-							mc_cr_out_report,
+							//mc_cr_out_report,
 							temp_sim_info);			// **** Use TEMP sim info ****
 
 						// Check if receiver is OFF or model didn't solve
@@ -5383,7 +5383,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check that startup happened
@@ -5438,7 +5438,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_collector_receiver.startup(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
 							mc_cr_out_solver,
-							mc_cr_out_report,
+							//mc_cr_out_report,
 							mc_kernel.mc_sim_info);
 
 						// Check that startup happened
@@ -5639,7 +5639,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_cr_htf_state_in,
 						m_defocus,
 						mc_cr_out_solver,
-						mc_cr_out_report,
+						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check if receiver is OFF or model didn't solve
@@ -6096,7 +6096,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_cr_htf_state_in,
 							defocus_guess,
 							mc_cr_out_solver,
-							mc_cr_out_report,
+							//mc_cr_out_report,
 							mc_kernel.mc_sim_info);
 
 
@@ -6318,7 +6318,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_htf_state_in,
 					field_control,
 					mc_cr_out_solver,
-					mc_cr_out_report,
+					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				double defocus_guess_ini = std::numeric_limits<double>::quiet_NaN();
@@ -6587,7 +6587,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_cr_htf_state_in,
 							defocus_guess,
 							mc_cr_out_solver,
-							mc_cr_out_report,
+							//mc_cr_out_report,
 							mc_kernel.mc_sim_info);
 
 							// Check if receiver is OFF or model didn't solve
@@ -6862,6 +6862,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			// 7.26.16, twn: Need to keep these for now, for mass balance
 		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  			
 		mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_out_solver.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
+			// **************************************************************
 		//mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
 		//mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
 		//mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
@@ -7524,7 +7525,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 			mc_cr_htf_state_in,
 			field_control_in,
 			mc_cr_out_solver,
-			mc_cr_out_report,
+			//mc_cr_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
@@ -8494,7 +8495,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 			mc_cr_htf_state_in,
 			field_control_in,
 			mc_cr_out_solver,
-			mc_cr_out_report,
+			//mc_cr_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
@@ -8941,7 +8942,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 			mc_cr_htf_state_in,
 			field_control_in,
 			mc_cr_out_solver,
-			mc_cr_out_report,
+			//mc_cr_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
@@ -9381,7 +9382,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 			mc_cr_htf_state_in,
 			field_control_in,
 			mc_cr_out_solver,
-			mc_cr_out_report,
+			//mc_cr_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
