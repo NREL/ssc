@@ -3,6 +3,10 @@
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
+	{C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, true},
+	{C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, true},
+	{C_csp_mspt_collector_receiver::E_FIELD_ADJUST, true},
+
 	{C_csp_mspt_collector_receiver::E_Q_DOT_INC, true},
 	{C_csp_mspt_collector_receiver::E_ETA_THERMAL, true},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, true},
@@ -132,6 +136,10 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
 
+	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
+	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
+	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
+
 	mc_reported_outputs.value(E_Q_DOT_INC, mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc);	//[MWt]
 	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]
@@ -174,6 +182,10 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 		// Not sure that we want 'startup time required' calculated in 'off' call
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	 //[s]
 	
+	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
+	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
+	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
+
 	mc_reported_outputs.value(E_Q_DOT_INC, mc_mspt_receiver_222.ms_outputs.m_q_dot_rec_inc);	//[MWt]
 	mc_reported_outputs.value(E_ETA_THERMAL, mc_mspt_receiver_222.ms_outputs.m_eta_therm);		//[-]
 	mc_reported_outputs.value(E_Q_DOT_THERMAL, mc_mspt_receiver_222.ms_outputs.m_Q_thermal);	//[MWt]

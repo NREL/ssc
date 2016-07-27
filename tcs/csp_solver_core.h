@@ -717,10 +717,10 @@ public:
         TDRY,
         TWET,
         RH,
-		CR_Q_INC,             //[MWt] Field incident thermal power
-		CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
+		//CR_Q_INC,             //[MWt] Field incident thermal power
+		//CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
 		CR_DEFOCUS,           //[-] Field optical focus fraction
-        CR_ADJUST,            //[-] Field adjustment factor
+        //CR_ADJUST,            //[-] Field adjustment factor
 		//REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
 		//REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
 			// 7.26.16, twn: Need to keep this for now, for mass balance

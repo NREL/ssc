@@ -18,6 +18,10 @@ public:
 	
 	enum
 	{
+		E_FIELD_Q_DOT_INC,		//[MWt] Field incident thermal power
+		E_FIELD_ETA_OPT,		//[-] Optical efficiency including receiver refl
+		E_FIELD_ADJUST,			//[-] Field adjustment factor
+		
 		E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
 		E_ETA_THERMAL,			//[-] Receiver thermal efficiency
 		E_Q_DOT_THERMAL,		//[MWt] Field incident thermal power
