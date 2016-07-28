@@ -6,7 +6,7 @@
 C_pc_sco2::C_pc_sco2()
 {
 	m_q_dot_design = m_q_dot_standby = m_q_dot_max = m_q_dot_min = m_startup_energy_required = 
-		m_W_dot_des = m_T_htf_cold_des =
+		m_W_dot_des = m_T_htf_cold_des = m_m_dot_htf_des =
 		m_startup_time_remain_prev = m_startup_energy_remain_prev =
 		m_startup_time_remain_calc = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
@@ -65,6 +65,7 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	solved_params.m_sb_frac = ms_params.m_q_sby_frac;						//[-]
 	solved_params.m_T_htf_hot_ref = ms_params.ms_mc_sco2_recomp_params.m_T_htf_hot_in - 273.15;	//[C]
 	solved_params.m_m_dot_design = mc_sco2_recomp.get_phx_des_par()->m_m_dot_hot_des*3600.0;	//[kg/hr]
+	m_m_dot_htf_des = solved_params.m_m_dot_design;		//[kg/hr]
 
 	// Calculate the standby thermal power requirement
 	m_q_dot_standby = ms_params.m_q_sby_frac * m_q_dot_design;		//[MWt]
@@ -178,13 +179,14 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	double step_sec = sim_info.ms_ts.m_step;		//[s]
 	
 	// Check and convert inputs
-	double T_htf_hot = htf_state_in.m_temp+273.15;		//[K], convert from C 
-	double m_dot_htf = inputs.m_m_dot;			//[kg/hr]
+	double T_htf_hot = htf_state_in.m_temp+273.15;	//[K], convert from C 
+	double m_dot_htf = inputs.m_m_dot;				//[kg/hr]
 	
 	int standby_control = inputs.m_standby_control;			//[-] 1: On, 2: Standby, 3: Off
+	m_standby_control_calc = standby_control;
 
-	double P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_water_cooling, W_cool_par, f_hrsys, P_cond;
-	P_cycle = eta = T_htf_cold = m_dot_demand = m_dot_htf_ref = m_dot_water_cooling = W_cool_par = f_hrsys = P_cond = std::numeric_limits<double>::quiet_NaN();
+	double P_cycle, eta, T_htf_cold, m_dot_demand, W_cool_par;
+	P_cycle = eta = T_htf_cold = m_dot_demand = W_cool_par = std::numeric_limits<double>::quiet_NaN();
 
 	double time_required_su = 0.0;
 	double q_startup = 0.0;
@@ -235,22 +237,62 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 		// *****
 		P_cycle = 0.0;
 		eta = 0.0;
-		T_htf_cold = m_T_htf_cold_des;
+		T_htf_cold = m_T_htf_cold_des;		//[K]
 		// *****
 		m_dot_demand = 0.0;
-		m_dot_water_cooling = 0.0;
 		W_cool_par = 0.0;
-		f_hrsys = 0.0;
-		P_cond = 0.0;
 
 		was_method_successful = true;
 
 		break;
 
 	case ON:
+		{
+			C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+			sco2_rc_od_par.m_T_htf_hot = T_htf_hot;				//[K]
+			sco2_rc_od_par.m_m_dot_htf = m_dot_htf/3600.0;		//[kg/s]
+			sco2_rc_od_par.m_T_amb = weather.m_tdry+273.15;		//[K]
 
-		throw(C_csp_exception("C_pc_sco2::call()::on is not complete"));
-		// Call the sco2 class here
+			int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
+
+			int off_design_code = 0;
+			try
+			{
+				off_design_code = mc_sco2_recomp.off_design_opt(sco2_rc_od_par, od_strategy);
+			}
+			catch( C_csp_exception &csp_exception )
+			{
+				throw(C_csp_exception(csp_exception.m_error_message, "sCO2 power cycle"));		
+			}
+
+			// Was power cycle simulations successful?
+			if(off_design_code == 0)
+			{
+				P_cycle = mc_sco2_recomp.get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net;	//[kWe]
+				eta = mc_sco2_recomp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+				T_htf_cold = mc_sco2_recomp.get_od_solved()->ms_phx_od_solved.m_T_h_out;		//[K]
+				q_dot_htf = P_cycle/eta/1.E3;		//[MWt]
+			
+				W_cool_par = 0.0;
+
+				m_dot_demand = 0.0;
+
+				was_method_successful = true;
+			}
+			else
+			{
+				P_cycle = 0.0;
+				eta = 0.0;
+				T_htf_cold = m_T_htf_cold_des;		//[K]
+				q_dot_htf = 0.0;
+
+				W_cool_par = 0.0;
+
+				m_dot_demand = 0.0;
+
+				was_method_successful = false;
+			}
+		}
 
 		break;
 
@@ -270,10 +312,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 			eta = 0.0;
 			T_htf_cold = m_T_htf_cold_des;
 			m_dot_demand = m_dot_sby;
-			m_dot_water_cooling = 0.0;
 			W_cool_par = 0.0;
-			f_hrsys = 0.0;
-			P_cond = 0.0;
 
 			q_dot_htf = m_dot_htf / 3600.0*c_htf*(T_htf_hot - T_htf_cold) / 1000.0;		//[MWt]
 
@@ -289,10 +328,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 		eta = 0.0;
 		T_htf_cold = m_T_htf_cold_des;
 		m_dot_demand = 0.0;
-		m_dot_water_cooling = 0.0;
 		W_cool_par = 0.0;
-		f_hrsys = 0.0;
-		P_cond = 0.0;
 
 		q_dot_htf = 0.0;
 
@@ -361,10 +397,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 		T_htf_cold = m_T_htf_cold_des;
 		m_dot_htf = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
 		//m_dot_demand = m_dot_htf_required*3600.0;		//[kg/hr], convert from kg/s
-		m_dot_water_cooling = 0.0;
 		W_cool_par = 0.0;
-		f_hrsys = 0.0;
-		P_cond = 0.0;
 
 		q_dot_htf = m_dot_htf_required*c_htf*(T_htf_hot - m_T_htf_cold_des) / 1000.0;	//[MWt]
 
@@ -378,14 +411,14 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_P_cycle = P_cycle / 1000.0;			//[MWe] Cycle power output, convert from kWe
 	out_report.m_eta = eta;								//[-] Cycle thermal efficiency
 	out_solver.m_T_htf_cold = T_htf_cold-273.15;		//[C] HTF outlet temperature
-	out_report.m_m_dot_makeup = m_dot_water_cooling*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	out_report.m_m_dot_makeup = 0.0;					//[kg/hr] Cooling water makeup flow rate, convert from kg/s
 	out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
-	out_report.m_m_dot_htf_ref = m_dot_htf_ref;			//[kg/hr] Calculated reference HTF flow rate at design
+	out_report.m_m_dot_htf_ref = m_m_dot_htf_des;		//[kg/hr] Calculated reference HTF flow rate at design
 	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
 	out_report.m_P_ref = m_W_dot_des;					//[MWe] Reference power level output at design not counting cooling parasitics
-	out_report.m_f_hrsys = f_hrsys;						//[-] Fraction of operating heat rejection system
-	out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
+	out_report.m_f_hrsys = 0.0;							//[-] Fraction of operating heat rejection system
+	out_report.m_P_cond = 0.0;							//[Pa] Condenser pressure
 
 	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
 	if( q_startup > 0.0 )
@@ -399,9 +432,6 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
 
 	out_solver.m_was_method_successful = was_method_successful;	//[-]
-
-
-	throw(C_csp_exception("C_pc_sco2::call() is not complete"));
 }
 
 void C_pc_sco2::converged()
