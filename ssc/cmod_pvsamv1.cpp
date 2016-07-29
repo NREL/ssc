@@ -422,8 +422,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
 	//SEV: Snow loss and coverage % time series arrays for SA1
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",					 "Subarray 1 Power loss due to snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",				 "Subarray 1 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",				 "Subarray 1 Snow coverage",										  "0..1",    "",                     "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 1)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_aoi",                        "Subarray 2 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -446,9 +447,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 
 	//SEV: Snow loss and coverage % time series arrays for SA2
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Power loss due to snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Power loss due to snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow coverage",										  "0..1",    "",                     "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
+	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_aoi",                        "Subarray 3 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -470,9 +473,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_soiling_derate",             "Subarray 3 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	//SEV: Snow loss and coverage % time series arrays for SA3
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Power loss due to snow (DC)",							  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Power loss due to snow (DC)",							  "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow coverage",										  "0..1",    "",                     "Time Series (Subarray 3)",       "",                    "",                              "" },
 // 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                   "Subarray 3 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 3)",       "",                    "",                              "" },
+	
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_aoi",                        "Subarray 4 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -494,9 +500,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_soiling_derate",             "Subarray 4 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	//SEV: Snow loss and coverage % time series arrays for SA3
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Power loss due to snow (DC)",						      "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 snow coverage",										  "0..1",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Power loss due to snow (DC)",						      "kW",    "",                       "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 snow coverage",										  "0..1",    "",                       "Time Series (Subarray 4)",       "",                    "",                              "" },
 //	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                   "Subarray 4 Gross DC power",                                         "kW",    "",                       "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 
 
@@ -766,6 +774,9 @@ struct subarray
 		module.dcv = 0;
 		module.dceff = 0;
 		module.tcell = 0;
+		module.voc = 0;
+		module.isc = 0;
+
 
 	}
 
@@ -810,6 +821,8 @@ struct subarray
 	struct {
 		double dcpwr;
 		double dcv;
+		double voc;
+		double isc;
 		double dceff;
 		double tcell;
 	} module;
@@ -1611,6 +1624,8 @@ public:
 		ssc_number_t *p_tcell[4];     
 		ssc_number_t *p_modeff[4];    
 		ssc_number_t *p_dcv[4];
+		ssc_number_t *p_isc[4];
+		ssc_number_t *p_voc[4];
 		ssc_number_t *p_dcsubarray[4];
 		
 		// self-shading outputs- also sub-array specific
@@ -1659,6 +1674,8 @@ public:
 				p_tcell[nn]      = allocate( prefix+"celltemp", nrec );
 				p_modeff[nn]     = allocate( prefix+"modeff", nrec );
 				p_dcv[nn]        = allocate( prefix+"dc_voltage", nrec );
+				p_voc[nn]        = allocate( prefix+"voc", nrec );
+				p_isc[nn]        = allocate( prefix+"isc", nrec );
 				p_dcsubarray[nn] = allocate( prefix+"dc_gross", nrec );
 				p_linear_derate[nn] = allocate(prefix + "linear_derate", nrec);
 				p_ss_derate[nn] = allocate(prefix + "ss_derate", nrec);
@@ -2502,6 +2519,8 @@ public:
 						sa[nn].module.dceff = out.Efficiency * 100;
 						sa[nn].module.dcv = out.Voltage;
 						sa[nn].module.tcell = out.CellTemp;
+						sa[nn].module.isc = out.Isc_oper;
+						sa[nn].module.voc = out.Voc_oper;
 
 						voltage_sum += out.Voltage;
 						n_voltage_values++;
@@ -2563,6 +2582,8 @@ public:
 							p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
 							p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
 							p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
+							p_voc[nn][idx] = (ssc_number_t)sa[nn].module.voc * modules_per_string;
+							p_isc[nn][idx] = (ssc_number_t)sa[nn].module.isc;
 							p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
 						}
 						// Sara 1/25/16 - shading database derate applied to dc only
