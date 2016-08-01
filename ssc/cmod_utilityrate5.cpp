@@ -22,7 +22,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits,3=Two meters with all generation sold and all load purchased", "Net metering monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=3", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits (Net Billing),3=Two meters with all generation sold and all load purchased,4=2=Single meter with monthly rollover credits in $ (Net Billing $)", "Net metering monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=4", "" },
 
 
 
@@ -656,12 +656,13 @@ public:
 		/*
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
-		2=Single meter with no monthly rollover credits
+		2=Single meter with no monthly rollover credits (Net Billing)
 		3=Two meters with all generation sold and all load purchaseded 
-		*/		
+		4=Single meter with monthly rollover credits in $ (Net Billing $)
+		*/
 		int metering_option = as_integer("ur_metering_option");
 		bool two_meter = (metering_option == 3 );
-		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3);
+		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3 || metering_option == 4);
 
 
 		idx = 0;
@@ -1708,8 +1709,9 @@ public:
 		/*
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
-		2=Single meter with no monthly rollover credits
-		3=Two meters with all generation sold and all load purchased
+		2=Single meter with no monthly rollover credits (Net Billing)
+		3=Two meters with all generation sold and all load purchaseded
+		4=Single meter with monthly rollover credits in $ (Net Billing $)
 		*/
 		int metering_option = as_integer("ur_metering_option");
 		bool enable_nm = (metering_option == 0 || metering_option == 1);
@@ -2425,6 +2427,15 @@ public:
 		bool ec_enabled = true; // per 2/25/16 meeting
 		bool dc_enabled = as_boolean("ur_dc_enable");
 
+		/*
+		0=Single meter with monthly rollover credits in kWh
+		1=Single meter with monthly rollover credits in $
+		2=Single meter with no monthly rollover credits (Net Billing)
+		3=Two meters with all generation sold and all load purchaseded
+		4=Single meter with monthly rollover credits in $ (Net Billing $)
+		*/
+		int metering_option = as_integer("ur_metering_option");
+		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 4);
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
 
@@ -2664,13 +2675,21 @@ public:
 								double tier_credit = tier_energy * sr * rate_esc;
 
 								credit_amt += tier_credit;
-								m_month[m].ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
-								m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
 
-								income[c] += (ssc_number_t)credit_amt;
-								monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
-//								price[c] += (ssc_number_t)credit_amt;
-								energy_charge[c] -= (ssc_number_t)credit_amt;
+								if (excess_monthly_dollars)
+								{
+									monthly_cumulative_excess_dollars[m] += credit_amt;
+								}
+								else
+								{
+									m_month[m].ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
+									m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
+
+									income[c] += (ssc_number_t)credit_amt;
+									monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
+									//								price[c] += (ssc_number_t)credit_amt;
+									energy_charge[c] -= (ssc_number_t)credit_amt;
+								}
 							}
 							else
 							{ // calculate payment or charge
@@ -2795,7 +2814,39 @@ public:
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
 //			monthly_bill[m] = monthly_ec_flat_charges[m] + monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
+
 			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
+
+			// apply previous month rollover dollars
+			if (m > 0)
+			{
+				monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
+				payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
+			}
+			if (monthly_bill[m] < 0)
+			{
+				if (excess_monthly_dollars)
+					monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
+				monthly_bill[m] = 0;
+				payment[c - 1] = 0; // fixed charges applied below
+			}
+			else // apply current month rollover and adjust
+			{
+				monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+				if (monthly_bill[m] < 0)
+				{
+					if (excess_monthly_dollars)
+						monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+					monthly_bill[m] = 0;
+					payment[c - 1] = 0; // fixed charges applied below
+				}
+				else
+				{
+					payment[c - 1] -= monthly_cumulative_excess_dollars[m];
+					monthly_cumulative_excess_dollars[m] = 0;
+				}
+			}
+
 		} // end of month m (m loop)
 
 
@@ -2847,6 +2898,12 @@ public:
 										monthly_minimum_charges[m] += ann_min_charge - ann_bill;
 										payment[c] += ann_min_charge - ann_bill;
 									}
+								}
+								// apply annual rollovers AFTER minimum calculations
+								if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
+								{
+										income[8759] += monthly_cumulative_excess_dollars[m];
+										monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
 								}
 							}
 							monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];
