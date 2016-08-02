@@ -912,6 +912,10 @@ public:
 		// *******************************************************
 		// Set receiver outputs
 		//float *p_q_thermal_copy = allocate("Q_thermal_123", n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
+
 		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.allocate(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, allocate("Q_thermal", n_steps_fixed), n_steps_fixed);
@@ -1158,11 +1162,10 @@ public:
         
 
 			// Collector-receiver outputs
-		/* remove undefined enums so ssc will build */
-		//ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
-		//ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
-		//ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
-        //ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field1", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
+        //ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out1", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc1", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm1", n_steps_fixed);
 			// 7.26.16, twn: Need to keep this for now, for mass balance
