@@ -2674,7 +2674,8 @@ public:
 									sr = m_ec_ts_sell_rate[c];
 								double tier_credit = tier_energy * sr * rate_esc;
 
-								credit_amt += tier_credit;
+								credit_amt = tier_credit;
+
 
 								if (excess_monthly_dollars)
 								{
@@ -2683,13 +2684,12 @@ public:
 								else
 								{
 									m_month[m].ec_charge.at(row, tier) -= (ssc_number_t)tier_credit;
-									m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
-
-									income[c] += (ssc_number_t)credit_amt;
-									monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
 									//								price[c] += (ssc_number_t)credit_amt;
-									energy_charge[c] -= (ssc_number_t)credit_amt;
+									monthly_ec_charges[m] -= (ssc_number_t)credit_amt;
+									income[c] = (ssc_number_t)credit_amt;
+									energy_charge[c] = -(ssc_number_t)credit_amt;
 								}
+								m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
 							}
 							else
 							{ // calculate payment or charge
@@ -2717,14 +2717,14 @@ public:
 									tier = (int)m_month[m].ec_tou_ub.ncols() - 1;
 								double tier_energy = energy_deficit;
 								double tier_charge = tier_energy * m_month[m].ec_tou_br.at(row, tier) * rate_esc;
-								charge_amt += tier_charge;
+								charge_amt = tier_charge;
 								m_month[m].ec_energy_use.at(row, tier) += (ssc_number_t)tier_energy;
 								m_month[m].ec_charge.at(row, tier) += (ssc_number_t)tier_charge;
 
-								payment[c] += (ssc_number_t)charge_amt;
+								payment[c] = (ssc_number_t)charge_amt;
 								monthly_ec_charges[m] += (ssc_number_t)charge_amt;
 //								price[c] += (ssc_number_t)charge_amt;
-								energy_charge[c] += (ssc_number_t)charge_amt;
+								energy_charge[c] = (ssc_number_t)charge_amt;
 							}
 						}
 						// end of energy charge
@@ -2813,40 +2813,44 @@ public:
 			} // d loop
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess dollars and rollover
-//			monthly_bill[m] = monthly_ec_flat_charges[m] + monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 
 			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 
 			// apply previous month rollover dollars
-			if (m > 0)
+			if (excess_monthly_dollars)
 			{
-				monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
-				payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
-			}
-			if (monthly_bill[m] < 0)
-			{
-				if (excess_monthly_dollars)
-					monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
-				monthly_bill[m] = 0;
-				payment[c - 1] = 0; // fixed charges applied below
-			}
-			else // apply current month rollover and adjust
-			{
-				monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
-				if (monthly_bill[m] < 0)
+				if (m > 0)
 				{
-					if (excess_monthly_dollars)
-						monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
-					monthly_bill[m] = 0;
+					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
+					payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
+				}
+				
+				if (monthly_ec_charges[m] < 0)
+				{
+					monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
+					monthly_ec_charges[m] = 0;
 					payment[c - 1] = 0; // fixed charges applied below
 				}
-				else
+				/*
+				else // apply current month rollover and adjust
 				{
-					payment[c - 1] -= monthly_cumulative_excess_dollars[m];
-					monthly_cumulative_excess_dollars[m] = 0;
+					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
+					if (monthly_ec_charges[m] < 0)
+					{
+						monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+					//	monthly_ec_charges[m] = 0;
+					//	payment[c - 1] = 0; // fixed charges applied below
+					}
+					else
+					{
+						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
+						monthly_cumulative_excess_dollars[m] = 0;
+					}
 				}
+				*/
 			}
 
+			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 		} // end of month m (m loop)
 
 
