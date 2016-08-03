@@ -1,4 +1,5 @@
 #include "csp_solver_util.h"
+#include <math.h>
 
 C_csp_reported_outputs::C_output::C_output()
 {
