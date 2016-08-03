@@ -22,10 +22,9 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "AnnualOutput", "*", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "", "?=0", "", "" },
 	{ SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",  "%/year", "",                      "",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits (Net Billing),3=Two meters with all generation sold and all load purchased,4=2=Single meter with monthly rollover credits in $ (Net Billing $)", "Net metering monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=4", "" },
+	{ SSC_INPUT, SSC_NUMBER, "ur_metering_option", "Metering options", "0=Single meter with monthly rollover credits in kWh,1=Single meter with monthly rollover credits in $,2=Single meter with no monthly rollover credits (Net Billing),3=Single meter with monthly rollover credits in $ (Net Billing $),4=Two meters with all generation sold and all load purchased", "Net metering 3monthly excess", "", "?=0", "INTEGER,MIN=0,MAX=4", "" },
 
-
-
+	
 	{ SSC_INPUT, SSC_NUMBER, "ur_nm_yearend_sell_rate", "Year end sell rate", "$/kWh", "", "", "?=0.0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",            "$",      "",                      "",             "?=0.0",                     "",                              "" },
 
@@ -657,11 +656,11 @@ public:
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
 		2=Single meter with no monthly rollover credits (Net Billing)
-		3=Two meters with all generation sold and all load purchaseded 
-		4=Single meter with monthly rollover credits in $ (Net Billing $)
+		3=Single meter with monthly rollover credits in $ (Net Billing $)
+		4=Two meters with all generation sold and all load purchaseded
 		*/
 		int metering_option = as_integer("ur_metering_option");
-		bool two_meter = (metering_option == 3 );
+		bool two_meter = (metering_option == 4 );
 		bool timestep_reconciliation = (metering_option == 2 || metering_option == 3 || metering_option == 4);
 
 
@@ -2431,11 +2430,11 @@ public:
 		0=Single meter with monthly rollover credits in kWh
 		1=Single meter with monthly rollover credits in $
 		2=Single meter with no monthly rollover credits (Net Billing)
-		3=Two meters with all generation sold and all load purchaseded
-		4=Single meter with monthly rollover credits in $ (Net Billing $)
+		3=Single meter with monthly rollover credits in $ (Net Billing $)
+		4=Two meters with all generation sold and all load purchaseded
 		*/
 		int metering_option = as_integer("ur_metering_option");
-		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 4);
+		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
 
