@@ -386,7 +386,7 @@ public:
 
 
 			// TODO - implement performance factors 
-			adjustment_factors haf(this);
+			adjustment_factors haf(this, "adjust");
 			if (!haf.setup())
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
 

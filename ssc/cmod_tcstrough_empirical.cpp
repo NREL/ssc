@@ -520,7 +520,7 @@ public:
 		assign("conversion_factor", convfactor);
 
 		// performance adjustement factors
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcstrough_empirical", "failed to setup adjustment factors: " + haf.error());
 		// hourly_energy output

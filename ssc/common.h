@@ -25,20 +25,9 @@ class adjustment_factors
 	compute_module *m_cm;
 	std::vector<float> m_factors;
 	std::string m_error;
+	std::string m_prefix;
 public:
-	adjustment_factors(compute_module *cm);
-	bool setup();
-	float operator()(size_t time);
-	std::string error() { return m_error; }
-};
-
-class dc_adjustment_factors
-{
-	compute_module *m_cm;
-	std::vector<float> m_factors;
-	std::string m_error;
-public:
-	dc_adjustment_factors(compute_module *cm);
+	adjustment_factors(compute_module *cm, const std::string &prefix);
 	bool setup();
 	float operator()(size_t time);
 	std::string error() { return m_error; }

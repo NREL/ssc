@@ -191,7 +191,7 @@ public:
 
 		assign( "ts_shift_hours", var_data( (ssc_number_t)ts_shift_hours ) );
 	
-		adjustment_factors haf( this );
+		adjustment_factors haf( this, "adjust" );
 		if ( !haf.setup() )
 			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error() );
 	

@@ -750,7 +750,7 @@ public:
 
 
 		// performance adjustement factors
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 

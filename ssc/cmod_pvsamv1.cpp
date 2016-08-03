@@ -1727,12 +1727,12 @@ public:
 		ssc_number_t *p_load_full = allocate("load_full", nrec* nyears);
 
 		//dc hourly adjustment factors
-		dc_adjustment_factors dc_haf(this);
+		adjustment_factors dc_haf(this, "dc_adjust");
 		if (!dc_haf.setup())
 			throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 		
 		// hourly adjustment factors
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("pvsamv1", "failed to setup adjustment factors: " + haf.error());
 		

@@ -537,7 +537,7 @@ public:
 			throw exec_error( "tcslinear_fresnel", util::format("there was a problem returning the results from the simulation.") );
 
 		// performance adjustement factors
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 	

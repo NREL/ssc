@@ -213,7 +213,7 @@ public:
 		if ( !shad.setup( this, "" ) )
 			throw exec_error( "pvwattsv1", shad.get_error() );
 
-		adjustment_factors haf( this );
+		adjustment_factors haf( this, "adjust" );
 		if ( !haf.setup() )
 			throw exec_error("pvwattsv1", "failed to setup adjustment factors: " + haf.error() );
 

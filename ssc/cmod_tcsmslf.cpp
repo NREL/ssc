@@ -732,7 +732,7 @@ public:
 			throw exec_error( "tcsmslf", util::format("there was a problem returning the results from the simulation.") );
 
 		// performance adjustement factors
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
 		

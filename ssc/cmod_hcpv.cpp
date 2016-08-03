@@ -368,7 +368,7 @@ public:
 		double ac_loss_tracker = 0;
 
 
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
 
