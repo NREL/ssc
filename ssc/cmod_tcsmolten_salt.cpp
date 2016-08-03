@@ -1322,7 +1322,7 @@ public:
 		ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
 
 		// 'adjustment_factors' class stores factors in hourly array, so need to index as such
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if( !haf.setup() )
 			throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 

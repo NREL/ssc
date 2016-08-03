@@ -52,7 +52,7 @@ public:
 		double derate = (1 - (double)as_number("derate") / 100);
 		double annual_output = 0;
 
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
 

@@ -306,7 +306,7 @@ public:
 			throw exec_error( "windpower", util::format("error allocating memory: %s",  wpc.GetErrorDetails().c_str() )  );
 
 
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 

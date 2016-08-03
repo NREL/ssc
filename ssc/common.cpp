@@ -263,22 +263,22 @@ var_info vtab_technology_outputs[] = {
 		var_info_invalid };
 
 
-adjustment_factors::adjustment_factors( compute_module *cm )
-	: m_cm(cm)
+adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
+: m_cm(cm), m_prefix(prefix)
 {	
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup()
 {
-	float f = (float)m_cm->as_number( "adjust:constant" );
+	float f = (float)m_cm->as_number( m_prefix + ":constant" );
 	f = 1 - f / 100; //convert from percentage to factor
 	m_factors.resize( 8760, f );
 
-	if ( m_cm->is_assigned("adjust:hourly") )
+	if ( m_cm->is_assigned(m_prefix + ":hourly") )
 	{
 		size_t n;
-		ssc_number_t *p = m_cm->as_array( "adjust:hourly", &n );
+		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
 		if ( p != 0 && n == 8760 )
 		{
 			for( size_t i=0;i<8760;i++ )
@@ -286,10 +286,10 @@ bool adjustment_factors::setup()
 		}
 	}
 
-	if ( m_cm->is_assigned("adjust:periods") )
+	if ( m_cm->is_assigned(m_prefix + ":periods") )
 	{
 		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix( "adjust:periods", &nr, &nc );
+		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
 		if ( mat != 0 && nc == 3 )
 		{
 			for( size_t r=0;r<nr;r++ )
@@ -320,65 +320,6 @@ float adjustment_factors::operator()( size_t time )
 	if ( time < m_factors.size() ) return m_factors[time];
 	else return 0.0;
 }
-
-dc_adjustment_factors::dc_adjustment_factors(compute_module *cm)
-: m_cm(cm)
-{
-}
-
-//adjustment factors changed from derates to percentages jmf 1/9/15
-bool dc_adjustment_factors::setup()
-{
-	float f = (float)m_cm->as_number("dc_adjust:constant");
-	f = 1 - f / 100; //convert from percentage to factor
-	m_factors.resize(8760, f);
-
-	if (m_cm->is_assigned("dc_adjust:hourly"))
-	{
-		size_t n;
-		ssc_number_t *p = m_cm->as_array("dc_adjust:hourly", &n);
-		if (p != 0 && n == 8760)
-		{
-			for (size_t i = 0; i<8760; i++)
-				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
-		}
-	}
-
-	if (m_cm->is_assigned("dc_adjust:periods"))
-	{
-		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix("dc_adjust:periods", &nr, &nc);
-		if (mat != 0 && nc == 3)
-		{
-			for (size_t r = 0; r<nr; r++)
-			{
-				int start = (int)mat[nc*r];
-				int end = (int)mat[nc*r + 1];
-				float factor = (float)mat[nc*r + 2];
-
-				if (start < 0 || start >= 8760 || end < start)
-				{
-					m_error = util::format("period %d is invalid ( start: %d, end %d )", (int)r, start, end);
-					continue;
-				}
-
-				if (end >= 8760) end = 8759;
-
-				for (int i = start; i <= end; i++)
-					m_factors[i] *= (1 - factor / 100); //convert from percentages to factors
-			}
-		}
-	}
-
-	return m_error.length() == 0;
-}
-
-float dc_adjustment_factors::operator()(size_t time)
-{
-	if (time < m_factors.size()) return m_factors[time];
-	else return 0.0;
-}
-
 
 sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 : m_cm(cm)

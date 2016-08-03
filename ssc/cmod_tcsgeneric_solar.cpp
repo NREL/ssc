@@ -361,7 +361,7 @@ public:
 		if (!enet || count != 8760)
 			throw exec_error("tcsgeneric_solar", "Failed to retrieve hourly net energy");
 
-		adjustment_factors haf(this);
+		adjustment_factors haf(this, "adjust");
 		if (!haf.setup())
 			throw exec_error("tcsgeneric_solar", "failed to setup adjustment factors: " + haf.error());
 
