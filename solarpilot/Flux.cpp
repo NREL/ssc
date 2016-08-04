@@ -1730,15 +1730,15 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
                 We wish to know where the derivative of this equation dy/dx equals the slope of the tangent line:
                 dy/dx = - (sig_x * x) / sqrt(b - a b x^2 )
                 In terms of x-position:
-                x = -dy/dx / sqrt( sig_x^2 sig_y + sig_x (dy/dx)^2 )
+                x = -(sig_x^2 * dy/dx) / sqrt( sig_y^2 + sig_x^2 (dy/dx)^2 )
 
                 The apparent half-width and half-height of the scaled receiver in projected coordinates are given by the 
                 radius of the ellipse at x,y. Substituting the above expression for x and the equation of the ellipse solved 
                 for y into the radius equation:
                 r = sqrt(x^2 + y^2)
                 
-                we have:
-                r = sqrt[ (sig_x^4 sig_y^3 + (sig_x^2 + (sig_x^3 - 1) sig_y^2) (dy/dx)^2) / (sig_x^3 (sig_x sig_y + (dy/dx)^2) ) ]
+                we have: 
+                r = sqrt[ (sig_y^4 + sig_x^4 * (dy/dx)^2 ) / (sig_y^2 + sig_x^2 * (dy/dx)^2 ) ]
                 (valid first quadrant)
                 */
 
@@ -1752,15 +1752,14 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
 
                 double dydx_h2 = dydx_h * dydx_h;
 
+                //translation assumes coef a = sig_x / sig_y, b = 1 = sig_y / sig_y
                 double a = sig_x / sig_y;
-                double b = 1.;
+                double a2 = a*a;
+                double a4 = a2*a2;
 
-                double a2 = a * a;
-                double a3 = a2 * a;
-                //Solve for the width at each slope
-                double t1 = a2 + a3 - 1.;
-                double radw = sqrt( (a3 + t1*dydx_w2) / (a3 * (a + dydx_w2) ) );
-                double radh = sqrt( (a3 + t1*dydx_h2) / (a3 * (a + dydx_h2) ) );
+                double radw = sqrt( (1. + a4*dydx_w2)/(1. + a2*dydx_w2) );
+                double radh = sqrt( (1. + a4*dydx_h2)/(1. + a2*dydx_h2) );
+
                 //Translate back to original receiver coordinates
                 double rx_ip = 2. * radw * sig_y5 * rxn / (sdp * l23);
                 double ry_ip = 2. * radh * sig_y5 * ryn / (sdp * l03);
