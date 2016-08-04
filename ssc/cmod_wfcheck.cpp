@@ -123,7 +123,7 @@ public:
 			if ( wf.rhum < 2 ) warn("relative humidity (%lg) less than 2 percent at record %d", wf.rhum, i );
 			if ( wf.rhum > 100 ) warn("relative humidity (%lg) greater than 100 percent at record %d", wf.rhum, i );
 
-			if ( wf.pres < 700 ) warn("pressure (%lg) less than 700 millibar at record %d", wf.pres, i );
+			if ( wf.pres < 200 ) warn("pressure (%lg) less than 200 millibar at record %d", wf.pres, i );
 			if ( wf.pres > 1100 ) warn("pressure greater than 1100 millibar at record %d", wf.pres, i );
 
 
