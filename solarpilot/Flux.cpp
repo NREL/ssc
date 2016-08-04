@@ -1742,12 +1742,12 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
                 (valid first quadrant)
                 */
 
-                double dydx_w = abs(lx23)>1e-6 ? ly23/lx23 : 1e6;
+                double dydx_w = fabs(lx23)>1e-6 ? ly23/lx23 : 1e6;
                 if(U[3] > U[0]) dydx_w *= -1.;  //always work 3->0 positive
 
                 double dydx_w2 = dydx_w * dydx_w;
 
-                double dydx_h = abs(lx03)>1e-6 ? ly03/lx03 : 1e6;
+                double dydx_h = fabs(lx03)>1e-6 ? ly03/lx03 : 1e6;
                 if(U[3] > U[2]) dydx_h *= -1;   //always work 3->2 positive
 
                 double dydx_h2 = dydx_h * dydx_h;
@@ -1772,12 +1772,12 @@ void Flux::hermiteIntegralSetup(SolarField &SF, double SigXY[2], Heliostat &H, m
                     double delta_x_q = aimx_adj; 
                     double signx = aimx_adj < 0 ? -1. : 1.;
                     double dshiftx = max(rxn - rx_ip, 0.);      //maximum allowable shift in x, zero if rx_ip > rxn
-                    if( abs(delta_x_q) > rxn - rx_ip ) delta_x_q = signx * dshiftx;
+                    if( fabs(delta_x_q) > rxn - rx_ip ) delta_x_q = signx * dshiftx;
 
                     double delta_y_q = aimy_adj; 
                     double signy = aimy_adj < 0 ? -1. : 1.;
                     double dshifty = max(ryn - ry_ip, 0.);
-                    if( abs(delta_y_q) > ryn - ry_ip ) delta_y_q = signy * dshifty;
+                    if( fabs(delta_y_q) > ryn - ry_ip ) delta_y_q = signy * dshifty;
 
                     //the aim point is now closer to the (0,0) centroid of the quadrature grid. Adjust
                     aimx_adj += -delta_x_q;
