@@ -317,13 +317,13 @@ public:
 	{
 		// Set up arrays
 		p_q_dot_field_inc = new float[8760];
-		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, p_q_dot_field_inc, 8760);
+		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, p_q_dot_field_inc, 8760);
 		p_eta_field = new float[8760];
-		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_ETA_FIELD, p_eta_field, 8760);
+		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_ETA_FIELD, p_eta_field, 8760);
 		p_q_dot_rec_inc = new float[8760];
-		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, p_q_dot_rec_inc, 8760);
+		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, p_q_dot_rec_inc, 8760);
 		p_eta_thermal = new float[8760];
-		mc_gen_cr.mc_reported_outputs.allocate(C_csp_gen_collector_receiver::E_ETA_THERMAL, p_eta_thermal, 8760);
+		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_ETA_THERMAL, p_eta_thermal, 8760);
 		
 		//Commonly used values, conversions, etc...
 		Pi = acos(-1.);
