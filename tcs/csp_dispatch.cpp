@@ -546,7 +546,7 @@ bool csp_dispatch_opt::optimize()
                 row[1] = -etap*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
                 col[1] = O.column("x", t);
 
-                row[2] = -(Wdotu - etap*Qu*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref);
+                row[2] = -(Wdotu - etap*Qu)*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
                 col[2] = O.column("y", t);
 
                 add_constraintex(lp, 3, row, col, LE, 0.);
