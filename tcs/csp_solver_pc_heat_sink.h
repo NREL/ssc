@@ -75,6 +75,8 @@ public:
 
 	virtual void converged();
 
+	virtual void write_output_intervals(double report_time_start,
+		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 };
 
 
