@@ -58,7 +58,7 @@ public:
 
 	C_csp_reported_outputs(){};
 
-	void construct(const S_output_info *output_info, int n_outputs);
+	void construct(const S_output_info *output_info);
 
 	bool assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array);
 
@@ -72,6 +72,8 @@ public:
 	void set_timestep_outputs();
 
 };
+
+extern const C_csp_reported_outputs::S_output_info csp_info_invalid;
 
 class C_csp_messages
 {

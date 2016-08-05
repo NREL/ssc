@@ -14,7 +14,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_Q_DOT_STARTUP, true},
 	{C_csp_mspt_collector_receiver::E_T_HTF_IN, true},
 	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, true},
-	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, true}	
+	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, true},
+	
+	csp_info_invalid	
 };
 
 C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield,
@@ -22,7 +24,7 @@ C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield
 	mc_pt_heliostatfield(pt_heliostatfield),
 	mc_mspt_receiver_222(mspt_receiver_222)
 {
-	mc_reported_outputs.construct(S_output_info, E_END_OUTPUTS);
+	mc_reported_outputs.construct(S_output_info);
 }
 
 C_csp_mspt_collector_receiver::~C_csp_mspt_collector_receiver()
