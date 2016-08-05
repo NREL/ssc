@@ -229,17 +229,17 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,       SSC_MATRIX,      "flux_maps_out",        "Flux map intensities",                                         "",             "",            "heliostat",      "",                       "",           "COL_LABEL=FLUX_MAPS,ROW_LABEL=NO_ROW_LABEL" },
 	
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Controller",     "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",        "Rec. incident thermal power",                                  "MWt",          "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",        "Rec. incident thermal power",                                  "MWt",          "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Rec. thermal power to HTF less piping loss",                   "MWt",          "",            "CR",             "",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Rec. mass flow rate",                                          "kg/hr",        "",            "CR",             "",                       "",           "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",            "Rec. startup thermal energy consumed",                         "MWt",          "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_in",             "Rec. HTF inlet temperature",                                   "C",            "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_out",            "Rec. HTF outlet temperature",                                  "C",            "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_piping_losses",      "Rec. header/tower piping losses",                              "MWt",          "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",            "Rec. startup thermal energy consumed",                         "MWt",          "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_in",             "Rec. HTF inlet temperature",                                   "C",            "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_out",            "Rec. HTF outlet temperature",                                  "C",            "",            "CR",             "",                       "",           "" },
+	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_piping_losses",      "Rec. header/tower piping losses",                              "MWt",          "",            "CR",             "",                       "",           "" },
 	
 		// Power cycle outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "PC efficiency: gross",                                         "",             "",            "PC",             "",                       "",           "" },
@@ -359,26 +359,32 @@ public:
 			throw exec_error("Physical Trough CSP Solver", "The tes_type input must be = 1. Additional TES options may be added in future versions.\n");
 		}
 
-		// ******************************************************************************
-		// Do some stuff to get site information from weather file; can probably maybe delete this after testing component classes...
-		weatherfile wfile(as_string("file_name"));
-		if( !wfile.ok() ) throw exec_error("Physical Trough", wfile.message());
-		if( wfile.has_message() ) log(wfile.message(), SSC_WARNING);
-
-		weather_header hdr;
-		wfile.header(&hdr);
-
-		double lat = hdr.lat;	//[deg]
-		double lon = hdr.lon;	//[deg]
-		double shift = (lon - hdr.tz*15.0);		//[deg]
-		// ******************************************************************************
-
-		// Weather reader
+		//***************************************************************************
+		//***************************************************************************
+			// Weather reader
 		C_csp_weatherreader weather_reader;
 		weather_reader.m_filename = as_string("file_name");
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
+		weather_reader.init();
+
+		// Set up ssc output arrays
+		// Set steps per hour
+		double nhourssim = 8760.0;				//[hr] Number of hours to simulate
+		C_csp_solver::S_sim_setup sim_setup;
+		sim_setup.m_sim_time_start = 0.0;				//[s] starting first hour of year
+		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
+
+		int steps_per_hour = 1;			//[-]
+
+		int n_wf_records = weather_reader.get_n_records();
+		steps_per_hour = n_wf_records / 8760;	//[-]
+
+		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
+		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
+		//***************************************************************************
+		//***************************************************************************
 
 		C_csp_trough_collector_receiver c_trough;
 
@@ -553,6 +559,9 @@ public:
 		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
 		for (int i = 0; i < nval_SCADefocusArray; i++)
 			c_trough.m_SCADefocusArray[i] = (int)SCADefocusArray[i];
+
+		// Allocate trough outputs
+		//"Q_thermal_trough"
 
 		// ********************************
 		// ********************************
@@ -761,19 +770,7 @@ public:
 			return;
 		}
 		
-		// Set up ssc output arrays
-		// Set steps per hour
-		double nhourssim = 8760.0;				//[hr] Number of hours to simulate
-		C_csp_solver::S_sim_setup sim_setup;
-		sim_setup.m_sim_time_start = 0.0;				//[s] starting first hour of year
-		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
-
-		int steps_per_hour = 1;			//[-]
-
-		steps_per_hour = csp_solver.steps_per_hour();	//[-]
-
-		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
-		sim_setup.m_report_step = 3600.0 / (double) steps_per_hour;	//[s]
+		
 
 		float **ptr_array = new float*[C_csp_solver::N_END];
 		float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
@@ -801,18 +798,19 @@ public:
 
 
 		// Collector-receiver outputs
-		ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
 		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
+			// 7.26.16, twn: Need to keep this for now, for mass balance
 		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
 		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
 
 		// Power cycle outputs
 		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta", n_steps_fixed);
