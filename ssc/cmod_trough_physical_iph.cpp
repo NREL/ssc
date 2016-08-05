@@ -216,126 +216,11 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 
 // OUTPUTS
 // The names of the output variables should match the parameter names for the TCS units in order to signal the TCS kernel to store the values by timestep
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Thermal power to HTF",                                                   "MWt",          "",            "CR",             "",                       "",           "" },
 
-// These are outputs of the MSPT model - eventually need to figure out a way to either merge these or have separate values
-		// Simulation outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "time_hr",              "Time at end of timestep",                                      "hr",           "",            "Solver",         "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "solzen",               "Resource Solar Zenith",                                        "deg",          "",            "weather",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "beam",                 "Resource Beam normal irradiance",                              "W/m2",         "",            "weather",        "",                       "",           "" },
-	
-		// Collector-receiver outputs
-			// Eventually want to make this INOUT, but will have to add 'eta_map' to UI...
-    { SSC_OUTPUT,       SSC_MATRIX,      "eta_map_out",          "Solar field optical efficiencies",                             "",             "",            "heliostat",      "",                       "",           "COL_LABEL=OPTICAL_EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
-    { SSC_OUTPUT,       SSC_MATRIX,      "flux_maps_out",        "Flux map intensities",                                         "",             "",            "heliostat",      "",                       "",           "COL_LABEL=FLUX_MAPS,ROW_LABEL=NO_ROW_LABEL" },
-	
-
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_sf_inc",             "Field incident thermal power",                                 "MWt",          "",            "CR",             "",                       "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "eta_field",            "Field optical efficiency",                                     "",             "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",              "Field optical focus fraction",                                 "",             "",            "Controller",     "",                       "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",        "Rec. incident thermal power",                                  "MWt",          "",            "CR",             "",                       "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Rec. thermal power to HTF less piping loss",                   "MWt",          "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Rec. mass flow rate",                                          "kg/hr",        "",            "CR",             "",                       "",           "" },	
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",            "Rec. startup thermal energy consumed",                         "MWt",          "",            "CR",             "",                       "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_in",             "Rec. HTF inlet temperature",                                   "C",            "",            "CR",             "",                       "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_out",            "Rec. HTF outlet temperature",                                  "C",            "",            "CR",             "",                       "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "q_piping_losses",      "Rec. header/tower piping losses",                              "MWt",          "",            "CR",             "",                       "",           "" },
-	
-		// Power cycle outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "PC efficiency: gross",                                         "",             "",            "PC",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		         "PC input energy",                                              "MWt",          "",            "PC",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",             "PC HTF mass flow rate",                                        "kg/hr",        "",            "PC",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",         "PC startup thermal energy",                                    "MWht",         "",            "PC",             "",                       "",           "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_startup",     "PC startup thermal power",                                     "MWt",          "",            "PC",             "",                       "",           "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",              "PC electrical power output: gross",                            "MWe",          "",            "PC",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_in",              "PC HTF inlet temperature",                                     "C",            "",            "PC",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",             "PC HTF outlet temperature",                                    "C",            "",            "PC",             "",                       "",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",       "PC water consumption: makeup + cooling",                       "kg/hr",        "",            "PC",             "",                       "",           "" },
-	
-
-		// Thermal energy storage outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tank_losses",          "TES thermal losses",                                           "MWt",          "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_heater",             "TES freeze protection power",                                  "MWe",          "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tes_hot",            "TES hot temperature",                                          "C",            "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "T_tes_cold",           "TES cold temperature",                                         "C",            "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dc_tes",             "TES discharge thermal power",                                  "MWt",          "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_ch_tes",             "TES charge thermal power",                                     "MWt",          "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "e_ch_tes",             "TES charge state",                                             "MWht",         "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",         "TES discharge mass flow rate",                                 "kg/hr",        "",            "TES",            "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_ch",         "TES charge mass flow rate",                                    "kg/hr",        "",            "TES",            "",                       "",           "" },
-	
-		// Parasitics outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",              "Parasitic power heliostat drives",                             "MWe",          "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_tower_pump",         "Parasitic power receiver/tower HTF pump",                      "MWe",          "",            "CR",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "htf_pump_power",       "Parasitic power TES and Cycle HTF pump",                       "MWe",          "",            "PC-TES",         "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",  "Parasitic power condenser operation",                          "MWe",          "",            "PC",             "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",              "Parasitic power fixed load",                                   "MWe",          "",            "System",         "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",  "Parasitic power generation-dependent load",                    "MWe",          "",            "System",         "",                       "",           "" },
-	
-		// System outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",            "Total electric power to grid",                                 "MWe",          "",            "System",         "",                       "",           "" },
-	
-		// Controller outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "tou_value",            "CSP operating Time-of-use value",                              "",             "",            "Controller",    "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "pricing_mult",         "PPA price multiplier",                                         "",             "",            "Controller",    "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "n_op_modes",           "Operating modes in reporting timestep",                        "",             "",            "Solver",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",            "1st operating mode",                                           "",             "",            "Solver",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_2",            "2nd op. mode, if applicable",                                  "",             "",            "Solver",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_3",            "3rd op. mode, if applicable",                                  "",             "",            "Solver",        "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_balance",        "Relative mass flow balance error",                             "",             "",            "Controller",    "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_balance",            "Relative energy balance error",                                "",             "",            "Controller",    "",                       "",           "" },
-
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_state",     "Dispatch solver state",                                        "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_iter",      "Dispatch iterations count",                                    "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_objective",       "Dispatch objective function value",                            "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_obj_relax",       "Dispatch objective function - relaxed max",                    "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsf_expected",    "Dispatch expected solar field available energy",               "MWt",          "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsfprod_expected","Dispatch expected solar field generation",                     "MWt",          "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qsfsu_expected",  "Dispatch expected solar field startup enegy",                  "MWt",          "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_tes_expected",    "Dispatch expected TES charge level",                           "MWht",         "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_pceff_expected",  "Dispatch expected power cycle efficiency adj.",                "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_thermeff_expected","Dispatch expected SF thermal efficiency adj.",                "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_qpbsu_expected",  "Dispatch expected power cycle startup energy",                 "MWht",         "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_wpb_expected",    "Dispatch expected power generation",                           "MWe",          "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_rev_expected",    "Dispatch expected revenue factor",                             "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nconstr","Dispatch number of constraints in problem",                    "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_presolve_nvar",   "Dispatch number of variables in problem",                      "",             "",            "tou",            ""                       "",            "" }, 
-    { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_time",      "Dispatch solver time",                                         "sec",          "",            "tou",            ""                       "",            "" }, 
+	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                  "Total electric power to grid w/ avail. derate",                          "kWe",          "",            "System",         "",                       "",           "" },
 
 
-			// These outputs correspond to the first csp-solver timestep in the reporting timestep.
-			//     Subsequent csp-solver timesteps within the same reporting timestep are not tracked
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_sb",          "Thermal power for PC standby",                                 "MWt",          "",            "Controller",     "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_min",		 "Thermal power for PC min operation",		                     "MWt",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_max",		 "Max thermal power to PC",						                 "MWt",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_target",		 "Target thermal power to PC",							         "MWt",			 "",            "Controller",	  "",                       "",           "" },	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "is_rec_su_allowed",	 "is receiver startup allowed",		                             "",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "is_pc_su_allowed",	 "is power cycle startup allowed",	                             "",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "is_pc_sb_allowed",	 "is power cycle standby allowed",	                             "",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_su",		 "Estimate rec. startup thermal power",                          "MWt",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_on",		 "Estimate rec. thermal power TO HTF",	                         "MWt",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_dc",	 "Estimate max TES discharge thermal power",			         "MWt",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_ch",	 "Estimate max TES charge thermal power",			             "MWt",			 "",            "Controller",	  "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_a",    "First 3 operating modes tried",                                "",             "",            "Solver",         "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_b",    "Next 3 operating modes tried",                                 "",             "",            "Solver",         "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_c",    "Final 3 operating modes tried",                                "",             "",            "Solver",         "",                       "",           "" },
-	
-	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                  "Total electric power to grid w/ avail. derate",                                 "kWe",          "",            "System",         "",                       "",           "" },
-
-	// Annual single-value outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",        "Annual total electric power to grid",                          "kWhe",       "",            "System",           "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross", "Electrical source - Power cycle gross output",                 "kWhe",       "",            "PC",               "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",    "Gross to Net Conversion Factor",                               "%",            "",            "PostProcess",    "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",      "Capacity factor",                                              "%",            "",            "PostProcess",    "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",           "First year kWh/kW",                                            "kWh/kW",       "",            "",               "",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use","Total Annual Water Usage: cycle + mirror washing",            "m3",         "",            "PostProcess",      "",                         "",           "" },
-
-    { SSC_OUTPUT,       SSC_NUMBER,      "disp_objective_ann",  "Annual sum of dispatch objective func. value",                 "",            "",             "",               "",                       "",           "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "disp_iter_ann",       "Annual sum of dispatch solver iterations",                     "",            "",             "",               "",                       "",           "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "disp_presolve_nconstr_ann",  "Annual sum of dispatch problem constraint count",       "",            "",             "",               "",                       "",           "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "disp_presolve_nvar_ann",  "Annual sum of dispatch problem variable count",            "",            "",             "",               "",                       "",           "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "disp_solve_time_ann",  "Annual sum of dispatch solver time",                          "",            "",             "",               "",                       "",           "" },
-	
 	var_info_invalid };
 	
 	
@@ -788,106 +673,106 @@ public:
 		}
 
 			// Simulation outputs
-		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
-		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen", n_steps_fixed);
-		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz", n_steps_fixed);
-		ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
-		ptr_array[C_csp_solver::TDRY] = allocate("tdry", n_steps_fixed);
-		ptr_array[C_csp_solver::TWET] = allocate("twet", n_steps_fixed);
-		ptr_array[C_csp_solver::RH] = allocate("rh", n_steps_fixed);
+		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr1", n_steps_fixed);
+		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen1", n_steps_fixed);
+		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz1", n_steps_fixed);
+		ptr_array[C_csp_solver::BEAM] = allocate("beam1", n_steps_fixed);
+		ptr_array[C_csp_solver::TDRY] = allocate("tdry1", n_steps_fixed);
+		ptr_array[C_csp_solver::TWET] = allocate("twet1", n_steps_fixed);
+		ptr_array[C_csp_solver::RH] = allocate("rh1", n_steps_fixed);
 
 
 		// Collector-receiver outputs
 		//ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
 		//ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus1", n_steps_fixed);
 		//ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
 			// 7.26.16, twn: Need to keep this for now, for mass balance
 		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec1", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
 		//ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
 		//ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
 
 		// Power cycle outputs
-		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
 
 		// Thermal energy storage outputs
-		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch1", n_steps_fixed);
 
 		// Parasitics outputs
-		ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump", n_steps_fixed);
-		ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot", n_steps_fixed);
-		ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed", n_steps_fixed);
-		ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot", n_steps_fixed);
+		ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi1", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump1", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot1", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed1", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot1", n_steps_fixed);
 
 		// System outputs
-		ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net", n_steps_fixed);
+		ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net1", n_steps_fixed);
 
 		// Controller outputs
-		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value", n_steps_fixed);
-		ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult", n_steps_fixed);
-		ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes", n_steps_fixed);
-		ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_1", n_steps_fixed);
-		ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_2", n_steps_fixed);
-		ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_3", n_steps_fixed);
-		ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance", n_steps_fixed);
-		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance", n_steps_fixed);
+		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value1", n_steps_fixed);
+		ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult1", n_steps_fixed);
+		ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
+		ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance1", n_steps_fixed);
+		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance1", n_steps_fixed);
 
 
-		ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target1", n_steps_fixed);
 
-		ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch1", n_steps_fixed);
 
-		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c1", n_steps_fixed);
 
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time1", n_steps_fixed);
 
 		try
 		{
