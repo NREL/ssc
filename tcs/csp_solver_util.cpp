@@ -1,6 +1,8 @@
 #include "csp_solver_util.h"
 #include <math.h>
 
+const C_csp_reported_outputs::S_output_info csp_info_invalid = {-1, true};
+
 C_csp_reported_outputs::C_output::C_output()
 {
 	mp_reporting_ts_array = 0;		// Initialize pointer to NULL
@@ -119,8 +121,15 @@ void C_csp_reported_outputs::send_to_reporting_ts_array(double report_time_start
 	}
 }
 
-void C_csp_reported_outputs::construct(const S_output_info *output_info, int n_outputs)
+void C_csp_reported_outputs::construct(const S_output_info *output_info)
 {
+	int n_outputs = 0;
+
+	while( output_info[n_outputs].m_name != csp_info_invalid.m_name )
+	{
+		n_outputs++;
+	}
+
 	// Resize the vector of Output Classes
 	mvc_outputs.resize(n_outputs);
 	m_n_outputs = n_outputs;

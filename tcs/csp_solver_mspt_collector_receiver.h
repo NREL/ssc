@@ -29,11 +29,9 @@ public:
 		E_Q_DOT_STARTUP,		//[MWt] Receiver startup thermal power consumed
 		E_T_HTF_IN,				//[C] Receiver HTF inlet temperature
 		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature
-		E_Q_DOT_PIPE_LOSS,		//[MWt] Tower piping losses
-
-		E_END_OUTPUTS
+		E_Q_DOT_PIPE_LOSS		//[MWt] Tower piping losses
 	};
-
+	
 	C_csp_reported_outputs mc_reported_outputs;
 	
 	C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield, 

@@ -37,9 +37,7 @@ public:
 		E_Q_DOT_FIELD_INC,	//[W/m2]
 		E_ETA_FIELD,		//[-]
 		E_Q_DOT_REC_INC,	//[W/m2]
-		E_ETA_THERMAL,		//[-]
-
-		E_END_OUTPUTS	
+		E_ETA_THERMAL		//[-]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
