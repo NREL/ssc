@@ -6,6 +6,20 @@
 #include "lib_util.h"
 #include "sam_csp_util.h"
 
+static C_csp_reported_outputs::S_output_info S_output_info[] =
+{
+	{C_pc_Rankine_indirect_224::E_ETA_THERMAL, true},
+	{C_pc_Rankine_indirect_224::E_Q_DOT_HTF, true},
+	{C_pc_Rankine_indirect_224::E_M_DOT_HTF, true},
+	{C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, true},
+	{C_pc_Rankine_indirect_224::E_W_DOT, true},
+	{C_pc_Rankine_indirect_224::E_T_HTF_IN, true},
+	{C_pc_Rankine_indirect_224::E_T_HTF_OUT, true},
+	{C_pc_Rankine_indirect_224::E_M_DOT_WATER, true},
+
+	csp_info_invalid
+};
+
 C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 {
 	m_is_initialized = false;
@@ -18,6 +32,8 @@ C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
 		m_startup_energy_remain_prev = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
 	m_ncall = -1;
+
+	mc_reported_outputs.construct(S_output_info);
 }
 
 void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_params)
@@ -913,11 +929,23 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	// Set outputs
 	out_solver.m_P_cycle = P_cycle/1000.0;				//[MWe] Cycle power output, convert from kWe
+	mc_reported_outputs.value(E_W_DOT, P_cycle/1000.0);	//[MWe] Cycle power output, convert from kWe
+
 	out_report.m_eta = eta;							//[-] Cycle thermal efficiency
+	mc_reported_outputs.value(E_ETA_THERMAL, eta);	//[-] Cycle thermal efficiency
+
 	out_solver.m_T_htf_cold = T_htf_cold;				//[C] HTF outlet temperature
+	mc_reported_outputs.value(E_T_HTF_OUT, T_htf_cold);	//[C] HTF outlet temperature
+	mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);	//[C] HTF inlet temperature
+
 	out_report.m_m_dot_makeup = (m_dot_water_cooling + m_dot_st_bd)*3600.0;		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	mc_reported_outputs.value(E_M_DOT_WATER, (m_dot_water_cooling + m_dot_st_bd)*3600.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+
 	out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
-	out_solver.m_m_dot_htf = m_dot_htf;				//[kg/hr] Actual HTF flow rate passing through the power cycle
+	
+	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
+	mc_reported_outputs.value(E_M_DOT_HTF,m_dot_htf);	//[kg/hr] Actual HTF flow rate passing through the power cycle
+	
 	out_report.m_m_dot_htf_ref = m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
 	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
 	out_report.m_P_ref = ms_params.m_P_ref / 1000.0;		//[MWe] Reference power level output at design, convert from kWe
@@ -925,14 +953,19 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	out_report.m_P_cond = P_cond;						//[Pa] Condenser pressure
 
 	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
+	double q_dot_startup = 0.0;
 	if( q_startup > 0.0 )
-		out_report.m_q_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
+		q_dot_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
 	else
-		out_report.m_q_startup = 0.0;
-
+		q_dot_startup = 0.0;
+	out_report.m_q_startup = q_dot_startup;						//[MWt] Startup thermal power
+	mc_reported_outputs.value(E_Q_DOT_STARTUP, q_dot_startup);	//[MWt] Startup thermal power
 
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
-	out_solver.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)
+	
+	out_solver.m_q_dot_htf = q_dot_htf;					//[MWt] Thermal power from HTF (= thermal power into cycle)
+	mc_reported_outputs.value(E_Q_DOT_HTF, q_dot_htf);	//[MWt] Thermal power from HTF (= thermal power into cycle)
+	
 	out_solver.m_W_dot_htf_pump = ms_params.m_htf_pump_coef*(m_dot_htf / 3.6E6);	//[MW] HTF pumping power, convert from [kW/kg/s]*[kg/hr]    
 
 	out_solver.m_was_method_successful = was_method_successful;	//[-]
@@ -945,6 +978,15 @@ void C_pc_Rankine_indirect_224::converged()
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
 
 	m_ncall = -1;
+
+	mc_reported_outputs.set_timestep_outputs();
+}
+
+void C_pc_Rankine_indirect_224::write_output_intervals(double report_time_start,
+	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
+{
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }
 
 int C_pc_Rankine_indirect_224::get_operating_state()

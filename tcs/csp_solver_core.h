@@ -584,6 +584,9 @@ public:
 
 	virtual void converged() = 0;
 
+	virtual void write_output_intervals(double report_time_start,
+		const std::vector<double> & v_temp_ts_time_end, double report_time_end) = 0;
+
 };
 
 class C_csp_tes
@@ -731,7 +734,7 @@ public:
 		//REC_T_OUT,            //[C] Receiver HTF outlet temperature
 		//CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
 		PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
-		PC_Q_DOT,             //[-] Cycle input thermal power
+		PC_Q_DOT,             //[MWt] Cycle input thermal power
 		PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
 		PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
 		PC_W_DOT,             //[MWe] Cycle electric power output (gross)

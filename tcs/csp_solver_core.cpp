@@ -6984,7 +6984,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			if(mc_kernel.mc_sim_info.ms_ts.m_time >= m_report_time_end)
 			{
 				mc_collector_receiver.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
-				
+				mc_power_cycle.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
+
 				set_outputs_at_reporting_interval();
 
 				// Advance time_reporting_hr index

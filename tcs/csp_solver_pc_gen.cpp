@@ -253,3 +253,11 @@ void C_pc_gen::converged()
 {
 	throw(C_csp_exception("C_csp_gen_pc::converged() is not complete"));
 }
+
+void C_pc_gen::write_output_intervals(double report_time_start,
+	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
+{
+	throw(C_csp_exception("C_csp_gen_pc::write_output_intervals() is not complete"));
+	//mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+	//	v_temp_ts_time_end, report_time_end);
+}
