@@ -30,7 +30,7 @@ public:
 
 		void set_m_is_ts_weighted(bool is_ts_weighted);
 
-		void allocate(float *p_reporting_ts_array, int n_reporting_ts_array);
+		void assign(float *p_reporting_ts_array, int n_reporting_ts_array);
 
 		void set_timestep_output(double output_value);
 
@@ -60,7 +60,7 @@ public:
 
 	void construct(const S_output_info *output_info, int n_outputs);
 
-	bool allocate(int index, float *p_reporting_ts_array, int n_reporting_ts_array);
+	bool assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array);
 
 	void send_to_reporting_ts_array(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
