@@ -733,14 +733,14 @@ public:
 		//REC_T_IN,             //[C] Receiver HTF inlet temperature
 		//REC_T_OUT,            //[C] Receiver HTF outlet temperature
 		//CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
-		PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
+		//PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
 		PC_Q_DOT,             //[MWt] Cycle input thermal power
 		PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
 		PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
-		PC_W_DOT,             //[MWe] Cycle electric power output (gross)
-		PC_T_IN,              //[C] Cycle HTF inlet temperature
-		PC_T_OUT,             //[C] Cycle HTF outlet temperature
-		PC_M_DOT_WATER,       //[kg/hr] Cycle water consumption: makeup + cooling
+		//PC_W_DOT,             //[MWe] Cycle electric power output (gross)
+		//PC_T_IN,              //[C] Cycle HTF inlet temperature
+		//PC_T_OUT,             //[C] Cycle HTF outlet temperature
+		//PC_M_DOT_WATER,       //[kg/hr] Cycle water consumption: makeup + cooling
 		TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
 		TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
 		TES_T_HOT,            //[C] TES final hot tank temperature
