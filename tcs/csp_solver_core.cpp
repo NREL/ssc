@@ -6869,15 +6869,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		//mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
 
 			// Power cycle outputs
-		mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
+		//mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
 		mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_out_solver.m_q_dot_htf);            //[MWt] Power cycle input thermal power
 		mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_inputs.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
 		//mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt-hr] Power cycle startup thermal energy
 		mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
-		mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
-		mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
-		mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
-		mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_out_report.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
+		//mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
+		//mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
+		//mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
+		//mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_out_report.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
 
 			// Thermal energy storage outputs
 		mvv_outputs_temp[TES_Q_DOT_LOSS].push_back(mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment
