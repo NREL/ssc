@@ -658,14 +658,14 @@ public:
 		
 
 		float **ptr_array = new float*[C_csp_solver::N_END];
-		float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
-
-		for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++ )
-		{
-			post_proc_array[i] = 0;
-		}
-
-		post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
+		//float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
+		//
+		//for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++ )
+		//{
+		//	post_proc_array[i] = 0;
+		//}
+		//
+		//post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
 
 		for( int i = 0; i < C_csp_solver::N_END; i++ )
 		{
@@ -701,7 +701,7 @@ public:
 		//ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
 		//ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
 		//ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
 		//ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
@@ -779,8 +779,7 @@ public:
 			// Simulate !
 			csp_solver.Ssimulate(sim_setup,
 				ssc_trough_physical_process_heat_sim_progress, (void*)this,
-				ptr_array,
-				post_proc_array);
+				ptr_array);
 		}
 		catch( C_csp_exception &csp_exception )
 		{
@@ -792,7 +791,6 @@ public:
 
 			log(csp_exception.m_error_message, SSC_WARNING);
 			delete[] ptr_array;
-			delete[] post_proc_array;
 
 			return;
 		}
@@ -801,7 +799,6 @@ public:
 		// ************************************
 		// ************************************
 		delete[] ptr_array;
-		delete[] post_proc_array;
 		// ************************************
 		// ************************************
 

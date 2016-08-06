@@ -1145,14 +1145,14 @@ public:
 		// Set up ssc output arrays
 
 		float **ptr_array = new float*[C_csp_solver::N_END];
-		float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
+		//float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
+		//
+		//for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++)
+		//{
+		//	post_proc_array[i] = 0;
+		//}
 
-		for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++)
-		{
-			post_proc_array[i] = 0;
-		}
-
-		post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
+		//post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup1", n_steps_fixed);
 
 		for( int i = 0; i < C_csp_solver::N_END; i++ )
 		{
@@ -1188,7 +1188,7 @@ public:
 		//ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
 		//ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
 		//ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
 		//ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
@@ -1266,8 +1266,8 @@ public:
 			// Simulate !
 			csp_solver.Ssimulate(sim_setup, 
 									ssc_mspt_sim_progress, (void*)this, 
-									ptr_array,
-									post_proc_array);
+									ptr_array
+									/*post_proc_array*/);
 		}
 		catch(C_csp_exception &csp_exception)
 		{
@@ -1279,7 +1279,7 @@ public:
 
 			log(csp_exception.m_error_message, SSC_WARNING);
 			delete [] ptr_array;
-			delete [] post_proc_array;
+			//delete [] post_proc_array;
 
 			return;
 		}
@@ -1287,9 +1287,24 @@ public:
 		// ************************************
 		// ************************************
 		delete[] ptr_array;
-		delete[] post_proc_array;
+		//delete[] post_proc_array;
 		// ************************************
 		// ************************************
+
+		// Do unit post-processing here
+		float *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
+		size_t count_pc_su = 0;
+		ssc_number_t *p_q_dot_pc_startup = as_array("q_dot_pc_startup", &count_pc_su);
+		if( count_pc_su != n_steps_fixed )
+		{
+			log("q_dot_pc_startup array is a different length than 'n_steps_fixed'.", SSC_WARNING);
+			return;
+		}
+		for( int i = 0; i < n_steps_fixed; i++ )
+		{
+			p_q_pc_startup[i] = p_q_dot_pc_startup[i] * (sim_setup.m_report_step/3600.0);	//[MWh]
+		}
+
 
 		// If no exception, then report messages
 		while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
