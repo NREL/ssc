@@ -272,12 +272,12 @@ int C_csp_solver::steps_per_hour()
 
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
 								bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
-								float **ptr_array,
-								float **post_proc_array)
+								float **ptr_array
+								/*float **post_proc_array*/)
 {
 	// Load ssc arrays here, for now...
 	mp_reporting_array = ptr_array;
-	mp_post_proc_array = post_proc_array;
+	//mp_post_proc_array = post_proc_array;
 
 	for( int i = 0; i < C_csp_solver::N_END; i++ )
 	{
@@ -6873,7 +6873,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_out_solver.m_q_dot_htf);            //[MWt] Power cycle input thermal power
 		mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_inputs.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
 		//mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt-hr] Power cycle startup thermal energy
-		mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
+		//mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
 		//mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
 		//mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
 		//mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
@@ -7180,8 +7180,8 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	}
 
 	// Populate post-processed outputs
-	mp_post_proc_array[C_csp_solver::PC_Q_STARTUP][m_i_reporting] = 
-		mp_reporting_array[PC_Q_DOT_STARTUP][m_i_reporting] * (m_report_step/3600.0);	//[MW]*[hr]
+	//mp_post_proc_array[C_csp_solver::PC_Q_STARTUP][m_i_reporting] = 
+	//	mp_reporting_array[PC_Q_DOT_STARTUP][m_i_reporting] * (m_report_step/3600.0);	//[MW]*[hr]
 
 }
 

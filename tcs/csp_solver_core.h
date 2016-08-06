@@ -654,12 +654,12 @@ class C_csp_solver
 
 public:
 
-	enum E_post_proc_outputs
-	{
-		PC_Q_STARTUP,				//[MWt-hr] Receiver startup thermal energy consumed
-	
-		N_END_POST_PROC
-	};
+	//enum E_post_proc_outputs
+	//{
+	//	PC_Q_STARTUP,				//[MWt-hr] Receiver startup thermal energy consumed
+	//
+	//	N_END_POST_PROC
+	//};
 	
 	enum E_reported_outputs
 	{
@@ -736,7 +736,7 @@ public:
 		//PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
 		PC_Q_DOT,             //[MWt] Cycle input thermal power
 		PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
-		PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
+		//PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
 		//PC_W_DOT,             //[MWe] Cycle electric power output (gross)
 		//PC_T_IN,              //[C] Cycle HTF inlet temperature
 		//PC_T_OUT,             //[C] Cycle HTF outlet temperature
@@ -1062,13 +1062,13 @@ public:
 
 	void Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
 					bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
-					float **ptr_array,
-					float **post_proc_array);
+					float **ptr_array
+					/*float **post_proc_array*/);
 
 
 
 	float **mp_reporting_array;
-	float **mp_post_proc_array;
+	//float **mp_post_proc_array;
 
 	int steps_per_hour();
 
