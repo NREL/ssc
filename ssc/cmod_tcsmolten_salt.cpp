@@ -1000,7 +1000,15 @@ public:
 			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
 			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
 		}
-
+		
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
+		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
 
 		// Thermal energy storage 
 		C_csp_two_tank_tes storage;
@@ -1177,14 +1185,14 @@ public:
 		//ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses1", n_steps_fixed);
 
 			// Power cycle outputs
-		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
 
 			// Thermal energy storage outputs
 		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses", n_steps_fixed);

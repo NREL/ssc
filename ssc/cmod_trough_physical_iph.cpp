@@ -698,14 +698,14 @@ public:
 		//ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
 
 		// Power cycle outputs
-		ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
 		ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
 
 		// Thermal energy storage outputs
 		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses1", n_steps_fixed);
