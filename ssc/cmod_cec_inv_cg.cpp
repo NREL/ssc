@@ -57,8 +57,33 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		size_t count, i, j; 
+		size_t count, i, j, nrows, ncols; 
+		// 6 columns period, tier, max usage, max usage units, buy, sell
+		ssc_number_t *cec_inv_cg_test_samples_in = as_matrix("cec_inv_cg_test_samples", &nrows, &ncols);
+		if (nrows != 18)
+		{
+			std::ostringstream ss;
+			ss << "The samples table must have 18 rows. Number of rows in samples table provided is " << nrows << " rows.";
+			throw exec_error("cec_inv_cg", ss.str());
+		}
+		if ((ncols % 3) != 0)
+		{
+			std::ostringstream ss;
+			ss << "The samples table must have number of columns divisible by 3. Number of columns in samples table provided is " << ncols << " columns.";
+			throw exec_error("cec_inv_cg", ss.str());
+		}
+		size_t num_samples = ncols / 3;
+		util::matrix_t<float> cec_inv_cg_test_samples(nrows, ncols);
+		cec_inv_cg_test_samples.assign(cec_inv_cg_test_samples_in, nrows, ncols);
 
+		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
+		ssc_number_t vdco = 0;
+		for (j = 0; j < num_samples; j++)
+		{
+			for (i = 6; i < 12; i++)
+				vdco += cec_inv_cg_test_samples.at(i, j*num_samples + 1);
+		}
+		assign("cec_inv_cg_Vdco", (var_data)vdco);
 	}
 
 
