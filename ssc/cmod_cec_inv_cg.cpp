@@ -31,6 +31,9 @@ static var_info vtab_cec_inv_cg[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdcmax",                              "Maximum dc input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	*/
 
+	// intermediate outputs for testing and validation
+	{ SSC_OUTPUT, SSC_MATRIX, "cec_inv_cg_J87_L91", "Excel cells J87:L91", "", "", "", "*", "", "" },
+
 
 	// outputs Pdco, Vdco, Pso, c0, c1, c2, c3
 	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_Pdco", "CEC generated Pdco", "Wac", "", "", "*", "", "" },
@@ -73,17 +76,47 @@ public:
 			throw exec_error("cec_inv_cg", ss.str());
 		}
 		size_t num_samples = ncols / 3;
+		size_t columns_per_sample = 3;
 		util::matrix_t<float> cec_inv_cg_test_samples(nrows, ncols);
 		cec_inv_cg_test_samples.assign(cec_inv_cg_test_samples_in, nrows, ncols);
 
-		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
-		ssc_number_t vdco = 0;
+		util::matrix_t<ssc_number_t> &cec_inv_cg_J87_L91 = allocate_matrix("cec_inv_cg_J87_L91", 5, 3);
+		ssc_number_t vdc = 0;
+		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
+			cec_inv_cg_J87_L91.at(0, k) = 0.0;
+
 		for (j = 0; j < num_samples; j++)
 		{
-			for (i = 6; i < 12; i++)
-				vdco += cec_inv_cg_test_samples.at(i, j*num_samples + 1);
+			for (i = 0; i < cec_inv_cg_test_samples.nrows(); i++)
+			{
+				vdc = cec_inv_cg_test_samples.at(i, j*columns_per_sample + 1);
+				if (i < 6) // Vmin
+					cec_inv_cg_J87_L91.at(0, 0) += vdc;
+				else if (i < 12) // Vnom
+					cec_inv_cg_J87_L91.at(0, 1) += vdc;
+				else // Vmax
+					cec_inv_cg_J87_L91.at(0, 2) += vdc;
+			}
 		}
-		assign("cec_inv_cg_Vdco", (var_data)vdco);
+		
+		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
+			cec_inv_cg_J87_L91.at(0, k) /= (6 * num_samples);
+
+		// Vdc-Vnom
+		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
+			cec_inv_cg_J87_L91.at(1, k) = cec_inv_cg_J87_L91.at(0, k) - cec_inv_cg_J87_L91.at(0, 1);
+		
+		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
+		assign("cec_inv_cg_Vdco", (var_data)cec_inv_cg_J87_L91.at(0, 1));
+
+
+
+		assign("cec_inv_cg_Pdco", (var_data)0);
+		assign("cec_inv_cg_Pso", (var_data)0);
+		assign("cec_inv_cg_c0", (var_data)0);
+		assign("cec_inv_cg_c1", (var_data)0);
+		assign("cec_inv_cg_c2", (var_data)0);
+		assign("cec_inv_cg_c3", (var_data)0);
 	}
 
 
