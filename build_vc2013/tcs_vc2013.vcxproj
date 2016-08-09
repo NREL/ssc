@@ -28,7 +28,9 @@
     <ClCompile Include="..\tcs\csp_solver_mspt_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_mspt_receiver_222.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pc_gen.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_pc_heat_sink.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pc_Rankine_indirect_224.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_pc_sco2.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pt_heliostatfield.cpp" />
     <ClCompile Include="..\tcs\csp_solver_tou_block_schedules.cpp" />
     <ClCompile Include="..\tcs\csp_solver_trough_collector_receiver.cpp" />
@@ -45,6 +47,7 @@
     <ClCompile Include="..\tcs\sam_mw_pt_heliostatfield_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type222_csp_solver.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type224_csp_solver.cpp" />
+    <ClCompile Include="..\tcs\sam_mw_trough_type250.cpp" />
     <ClCompile Include="..\tcs\sam_type250_input_generator.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_core.cpp" />
     <ClCompile Include="..\tcs\sco2_pc_csp_int.cpp" />
@@ -69,7 +72,6 @@
     <ClCompile Include="..\tcs\sam_mw_lf_type262_salt.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type221.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type228.cpp" />
-    <ClCompile Include="..\tcs\sam_mw_trough_type250.cpp" />
     <ClCompile Include="..\tcs\sam_mw_trough_type251.cpp" />
     <ClCompile Include="..\tcs\sam_mw_type234.cpp" />
     <ClCompile Include="..\tcs\sam_pf_dish_collector_type295.cpp" />
@@ -102,7 +104,9 @@
     <ClInclude Include="..\tcs\csp_solver_mspt_collector_receiver.h" />
     <ClInclude Include="..\tcs\csp_solver_mspt_receiver_222.h" />
     <ClInclude Include="..\tcs\csp_solver_pc_gen.h" />
+    <ClInclude Include="..\tcs\csp_solver_pc_heat_sink.h" />
     <ClInclude Include="..\tcs\csp_solver_pc_Rankine_indirect_224.h" />
+    <ClInclude Include="..\tcs\csp_solver_pc_sco2.h" />
     <ClInclude Include="..\tcs\csp_solver_pt_heliostatfield.h" />
     <ClInclude Include="..\tcs\csp_solver_tou_block_schedules.h" />
     <ClInclude Include="..\tcs\csp_solver_trough_collector_receiver.h" />
