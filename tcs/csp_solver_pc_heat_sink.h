@@ -70,7 +70,7 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		C_csp_power_cycle::S_csp_pc_out_report &out_report,
+		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();

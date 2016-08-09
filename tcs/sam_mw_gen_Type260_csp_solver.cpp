@@ -310,12 +310,14 @@ private:
 	float *p_q_dot_rec_inc;
 	float *p_eta_thermal;
 
+	float *p_pc_eta_thermal;
+
 public:
 
 	sam_mw_gen_type260( tcscontext *cxt, tcstypeinfo *ti ) 
 		: tcstypeinterface(cxt, ti)
 	{
-		// Set up arrays
+		// Set up arrays: don't forget to delete [] !!
 		p_q_dot_field_inc = new float[8760];
 		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, p_q_dot_field_inc, 8760);
 		p_eta_field = new float[8760];
@@ -325,6 +327,9 @@ public:
 		p_eta_thermal = new float[8760];
 		mc_gen_cr.mc_reported_outputs.assign(C_csp_gen_collector_receiver::E_ETA_THERMAL, p_eta_thermal, 8760);
 		
+		p_pc_eta_thermal = new float [8760];
+		mc_gen_pc.mc_reported_outputs.assign(C_pc_gen::E_ETA_THERMAL, p_pc_eta_thermal, 8760);
+
 		//Commonly used values, conversions, etc...
 		Pi = acos(-1.);
 		pi = Pi;
@@ -964,13 +969,12 @@ public:
 		pc_control_inputs.m_m_dot = m_dot_htf;				//[kg/hr]
 
 		C_csp_power_cycle::S_csp_pc_out_solver pc_out_solver;
-		C_csp_power_cycle::S_csp_pc_out_report pc_out_report;
 
-		mc_gen_pc.call(weather, pc_htf_state_in, pc_control_inputs, pc_out_solver, pc_out_report, sim_info);
+		mc_gen_pc.call(weather, pc_htf_state_in, pc_control_inputs, pc_out_solver, sim_info);
 
 		//Calculate the gross power
 		double w_gr = pc_out_solver.m_P_cycle;				//[MWe]
-		double eta_cycle = pc_out_report.m_eta;		//[-]
+		double eta_cycle = mc_gen_pc.mc_reported_outputs.value(C_pc_gen::E_ETA_THERMAL);	//[0[
 
 		//Keep track of what portion is from solar
 		double w_gr_solar = (q_to_pb - q_fossil)*eta_cycle;

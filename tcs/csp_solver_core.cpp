@@ -1767,7 +1767,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( m_is_tes )
@@ -1832,7 +1832,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check for new timestep
@@ -1917,7 +1917,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( m_is_tes )
@@ -1967,7 +1967,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( m_is_tes )
@@ -2323,7 +2323,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				are_models_converged = true;
@@ -2738,7 +2738,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_pc_htf_state_in,
 						mc_pc_inputs,
 						mc_pc_out_solver,
-						mc_pc_out_report,
+						//mc_pc_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check that power cycle is producing power or model didn't solve
@@ -3305,7 +3305,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				// If convergence was successful, finalize this timestep and get out
@@ -3591,7 +3591,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					mc_pc_out_report,
+					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 													
 
@@ -3895,7 +3895,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_pc_htf_state_in,
 						mc_pc_inputs,
 						mc_pc_out_solver,
-						mc_pc_out_report,
+						//mc_pc_out_report,
 						mc_kernel.mc_sim_info);
 
 					diff_T_tes_cold = (mc_pc_out_solver.m_T_htf_cold - T_tes_cold_guess) / T_tes_cold_guess;
@@ -4944,7 +4944,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_pc_htf_state_in,
 							mc_pc_inputs,
 							mc_pc_out_solver,
-							mc_pc_out_report,
+							//mc_pc_out_report,
 							temp_sim_info);			// **** Use TEMP sim info ****
 
 						// Check that power cycle is producing power or model didn't solve
@@ -5706,7 +5706,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_pc_htf_state_in,
 						mc_pc_inputs,
 						mc_pc_out_solver,
-						mc_pc_out_report,
+						//mc_pc_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check for new PC startup timestep, probably will find one here
@@ -6170,7 +6170,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_pc_htf_state_in,
 							mc_pc_inputs,
 							mc_pc_out_solver,
-							mc_pc_out_report,
+							//mc_pc_out_report,
 							mc_kernel.mc_sim_info);
 
 						// Check for new PC startup timestep, probably will find one here
@@ -6659,7 +6659,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_pc_htf_state_in,
 							mc_pc_inputs,
 							mc_pc_out_solver,
-							mc_pc_out_report,
+							//mc_pc_out_report,
 							mc_kernel.mc_sim_info);
 
 						// Check for new PC startup timestep, probably will find one here
@@ -7308,7 +7308,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			mc_pc_out_report,
+			//mc_pc_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check for new timestep, probably will find one here
@@ -7379,7 +7379,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			mc_pc_out_report,
+			//mc_pc_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Would be nice to have some check to know whether startup solved appropriately...
@@ -7633,7 +7633,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			mc_pc_out_report,
+			//mc_pc_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve
@@ -8001,7 +8001,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 				mc_pc_htf_state_in,
 				mc_pc_inputs,
 				mc_pc_out_solver,
-				mc_pc_out_report,
+				//mc_pc_out_report,
 				mc_kernel.mc_sim_info);
 
 			// Check that power cycle is producing power or model didn't solve
@@ -8363,7 +8363,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			mc_pc_out_report,
+			//mc_pc_out_report,
 			temp_sim_info);			// **** Note using 'temp_sim_info' here ****
 
 		diff_T_tes_cold = (mc_pc_out_solver.m_T_htf_cold - T_tes_cold_guess) / T_tes_cold_guess;
@@ -8735,7 +8735,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 				mc_pc_htf_state_in,
 				mc_pc_inputs,
 				mc_pc_out_solver,
-				mc_pc_out_report,
+				//mc_pc_out_report,
 				mc_kernel.mc_sim_info);
 
 
@@ -9154,7 +9154,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 				mc_pc_htf_state_in,
 				mc_pc_inputs,
 				mc_pc_out_solver,
-				mc_pc_out_report,
+				//mc_pc_out_report,
 				mc_kernel.mc_sim_info);
 
 			// Check that power cycle is producing power or model didn't solve
@@ -9447,7 +9447,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			mc_pc_out_report,
+			//mc_pc_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve

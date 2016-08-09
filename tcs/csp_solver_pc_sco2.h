@@ -35,6 +35,20 @@ private:
 
 public:
 
+	enum
+	{
+		E_ETA_THERMAL,		//[-] Cycle thermal efficiency (gross)
+		E_Q_DOT_HTF,		//[MWt] Cycle thermal power input
+		E_M_DOT_HTF,		//[kg/hr] Cycle HTF mass flow rate
+		E_Q_DOT_STARTUP,	//[MWt] Cycle startup thermal power
+		E_W_DOT,			//[MWe] Cycle electricity output (gross)
+		E_T_HTF_IN,			//[C] Cycle HTF inlet temperature
+		E_T_HTF_OUT,		//[C] Cycle HTF outlet temperature
+		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
+	};
+	
+	C_csp_reported_outputs mc_reported_outputs;
+
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 
@@ -84,7 +98,7 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		C_csp_power_cycle::S_csp_pc_out_report &out_report,
+		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();
