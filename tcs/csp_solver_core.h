@@ -534,26 +534,26 @@ public:
 		}
 	};
 
-	struct S_csp_pc_out_report
-	{
-		double m_eta;				//[-] Cycle thermal efficiency
-		double m_m_dot_makeup;		//[kg/hr] Cooling water makeup flow rate
-		double m_m_dot_demand;		//[kg/hr] HTF required flow rate to meet power load
-		double m_m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
-		double m_P_ref;				//[MWe] Reference power level output at design
-		double m_f_hrsys;			//[-] Fraction of operating heat rejection system
-		double m_P_cond;			//[Pa] Condenser pressure		
-		
-		double m_q_startup;			//[MWt-hr] Startup energy required
+	//struct S_csp_pc_out_report
+	//{
+	//	double m_eta;				//[-] Cycle thermal efficiency
+	//	double m_m_dot_makeup;		//[kg/hr] Cooling water makeup flow rate
+	//	double m_m_dot_demand;		//[kg/hr] HTF required flow rate to meet power load
+	//	double m_m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
+	//	double m_P_ref;				//[MWe] Reference power level output at design
+	//	double m_f_hrsys;			//[-] Fraction of operating heat rejection system
+	//	double m_P_cond;			//[Pa] Condenser pressure		
+	//	
+	//	double m_q_startup;			//[MWt-hr] Startup energy required
 
-		S_csp_pc_out_report()
-		{
-			m_eta = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf_ref =
-				m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
-			
-			m_q_startup = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
+	//	S_csp_pc_out_report()
+	//	{
+	//		m_eta = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf_ref =
+	//			m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
+	//		
+	//		m_q_startup = std::numeric_limits<double>::quiet_NaN();
+	//	}
+	//};
 	
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
@@ -579,7 +579,7 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		C_csp_power_cycle::S_csp_pc_out_report &out_report,
+		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void converged() = 0;
@@ -837,7 +837,7 @@ private:
 	C_csp_solver_htf_1state mc_pc_htf_state_in;
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
 	C_csp_power_cycle::S_csp_pc_out_solver mc_pc_out_solver;
-	C_csp_power_cycle::S_csp_pc_out_report mc_pc_out_report;
+	//C_csp_power_cycle::S_csp_pc_out_report mc_pc_out_report;
 
 	C_csp_solver_htf_state mc_tes_ch_htf_state;
 	C_csp_solver_htf_state mc_tes_dc_htf_state;

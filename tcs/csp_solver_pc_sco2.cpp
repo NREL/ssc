@@ -3,6 +3,20 @@
 
 #include "htf_props.h"
 
+static C_csp_reported_outputs::S_output_info S_output_info[] =
+{
+	{C_pc_sco2::E_ETA_THERMAL, true},
+	{C_pc_sco2::E_Q_DOT_HTF, true},
+	{C_pc_sco2::E_M_DOT_HTF, true},
+	{C_pc_sco2::E_Q_DOT_STARTUP, true},
+	{C_pc_sco2::E_W_DOT, true},
+	{C_pc_sco2::E_T_HTF_IN, true},
+	{C_pc_sco2::E_T_HTF_OUT, true},
+	{C_pc_sco2::E_M_DOT_WATER, true},
+
+	csp_info_invalid
+};
+
 C_pc_sco2::C_pc_sco2()
 {
 	m_q_dot_design = m_q_dot_standby = m_q_dot_max = m_q_dot_min = m_startup_energy_required = 
@@ -11,6 +25,8 @@ C_pc_sco2::C_pc_sco2()
 		m_startup_time_remain_calc = m_startup_energy_remain_calc = std::numeric_limits<double>::quiet_NaN();
 
 	m_standby_control_prev = m_standby_control_calc = -1;
+
+	mc_reported_outputs.construct(S_output_info);
 }
 
 void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
@@ -172,7 +188,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs &inputs,
 	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-	C_csp_power_cycle::S_csp_pc_out_report &out_report,
+	//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Get sim info
@@ -409,23 +425,23 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 
 	// Set outputs
 	out_solver.m_P_cycle = P_cycle / 1000.0;			//[MWe] Cycle power output, convert from kWe
-	out_report.m_eta = eta;								//[-] Cycle thermal efficiency
+	mc_reported_outputs.value(E_ETA_THERMAL,eta);		//[-] Cycle thermal efficiency
 	out_solver.m_T_htf_cold = T_htf_cold-273.15;		//[C] HTF outlet temperature
-	out_report.m_m_dot_makeup = 0.0;					//[kg/hr] Cooling water makeup flow rate, convert from kg/s
-	out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
+	mc_reported_outputs.value(E_M_DOT_WATER, 0.0);		//[kg/hr] Cooling water makeup flow rate, convert from kg/s
+	//out_report.m_m_dot_demand = m_dot_demand;			//[kg/hr] HTF required flow rate to meet power load
 	out_solver.m_m_dot_htf = m_dot_htf;					//[kg/hr] Actual HTF flow rate passing through the power cycle
-	out_report.m_m_dot_htf_ref = m_m_dot_htf_des;		//[kg/hr] Calculated reference HTF flow rate at design
+	//out_report.m_m_dot_htf_ref = m_m_dot_htf_des;		//[kg/hr] Calculated reference HTF flow rate at design
 	out_solver.m_W_cool_par = W_cool_par;				//[MWe] Cooling system parasitic load
-	out_report.m_P_ref = m_W_dot_des;					//[MWe] Reference power level output at design not counting cooling parasitics
-	out_report.m_f_hrsys = 0.0;							//[-] Fraction of operating heat rejection system
-	out_report.m_P_cond = 0.0;							//[Pa] Condenser pressure
+	//out_report.m_P_ref = m_W_dot_des;					//[MWe] Reference power level output at design not counting cooling parasitics
+	//out_report.m_f_hrsys = 0.0;							//[-] Fraction of operating heat rejection system
+	//out_report.m_P_cond = 0.0;							//[Pa] Condenser pressure
 
 	//outputs.m_q_startup = q_startup / 1.E3;					//[MWt-hr] Startup energy
+	double q_dot_startup = 0.0;
 	if( q_startup > 0.0 )
-		out_report.m_q_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
+		q_dot_startup = q_startup / 1.E3 / time_required_su;	//[MWt] Startup thermal power
 	else
-		out_report.m_q_startup = 0.0;
-
+		q_dot_startup = 0.0;
 
 	out_solver.m_time_required_su = time_required_su*3600.0;	//[s]
 	out_solver.m_q_dot_htf = q_dot_htf;						//[MWt] Thermal power from HTF (= thermal power into cycle)

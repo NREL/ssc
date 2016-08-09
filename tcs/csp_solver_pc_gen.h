@@ -30,6 +30,14 @@ private:
 	void check_double_params_are_set();
 
 public:
+	
+	enum
+	{
+		E_ETA_THERMAL,		//[-] Cycle thermal efficiency
+	};
+	
+	C_csp_reported_outputs mc_reported_outputs;
+
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
 
@@ -89,7 +97,7 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		C_csp_power_cycle::S_csp_pc_out_report &out_report,
+		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();

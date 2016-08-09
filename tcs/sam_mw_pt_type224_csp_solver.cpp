@@ -159,16 +159,30 @@ private:
 	C_csp_solver_htf_1state ms_htf_state_in;
 	C_csp_power_cycle::S_control_inputs ms_inputs;
 	C_csp_power_cycle::S_csp_pc_out_solver ms_out_solver;
-	C_csp_power_cycle::S_csp_pc_out_report ms_out_report;
+
+	// pointers to csp solver output arrays
+	float *p_eta_thermal;
+	float *p_m_dot_water;
+	float *p_q_dot_startup;
 
 public:
 
 	sam_mw_pt_type224(tcscontext *cxt, tcstypeinfo *ti)
 		: tcstypeinterface(cxt, ti)
 	{
+		p_eta_thermal = new float[8760];
+		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, p_eta_thermal, 8760);
+		p_m_dot_water = new float[8760];
+		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, p_m_dot_water, 8760);
+		p_q_dot_startup = new float[8760];
+		mc_power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, p_q_dot_startup, 8760);
 	}
 
-	virtual ~sam_mw_pt_type224(){
+	virtual ~sam_mw_pt_type224()
+	{
+		delete [] p_eta_thermal;
+		delete [] p_m_dot_water;
+		delete [] p_q_dot_startup;
 	}
 
 	virtual int init()
@@ -314,7 +328,7 @@ public:
 
 		try
 		{
-			mc_power_cycle.call(ms_weather, ms_htf_state_in, ms_inputs, ms_out_solver, ms_out_report, ms_sim_info);
+			mc_power_cycle.call(ms_weather, ms_htf_state_in, ms_inputs, ms_out_solver, ms_sim_info);
 		}
 		catch(C_csp_exception &csp_exception)
 		{
@@ -342,18 +356,25 @@ public:
 
 
 		value(O_P_CYCLE, ms_out_solver.m_P_cycle);				//[MWe] Cycle power output
-		value(O_ETA, ms_out_report.m_eta);						//[none] Cycle thermal efficiency
+		value(O_ETA, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_ETA_THERMAL));						//[none] Cycle thermal efficiency
 		value(O_T_HTF_COLD, ms_out_solver.m_T_htf_cold);		//[C] Heat transfer fluid outlet temperature 
-		value(O_M_DOT_MAKEUP, ms_out_report.m_m_dot_makeup);	//[kg/hr] Cooling water makeup flow rate
-		value(O_M_DOT_DEMAND, ms_out_report.m_m_dot_demand);	//[kg/hr] HTF required flow rate to meet power load
-		value(O_M_DOT_HTF_OUT, ms_out_solver.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
-		value(O_M_DOT_HTF_REF, ms_out_report.m_m_dot_htf_ref);	//[kg/hr] Calculated reference HTF flow rate at design
-		value(O_W_COOL_PAR, ms_out_solver.m_W_cool_par);		//[MWe] Cooling system parasitic load
-		value(O_P_REF_OUT, ms_out_report.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
-		value(O_F_BAYS, ms_out_report.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
-		value(O_P_COND, ms_out_report.m_P_cond);				//[Pa] Condenser pressure
+		value(O_M_DOT_MAKEUP, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_M_DOT_WATER));	//[kg/hr] Cooling water makeup flow rate
 
-		value(O_Q_STARTUP, ms_out_report.m_q_startup);			//[MWt-hr] Power cycle startup energy
+		// 8.8.2016 twn: These variables aren't used by compute modules, so don't worry about passing through		
+		//value(O_M_DOT_DEMAND, ms_out_report.m_m_dot_demand);	//[kg/hr] HTF required flow rate to meet power load
+		//value(O_P_REF_OUT, ms_out_report.m_P_ref);				//[MWe] Reference power level output at design (mirror param)
+		//value(O_F_BAYS, ms_out_report.m_f_hrsys);				//[none] Fraction of operating heat rejection bays
+		//value(O_P_COND, ms_out_report.m_P_cond);				//[Pa] Condenser pressure
+		value(O_M_DOT_DEMAND, 0.0);	//[kg/hr] HTF required flow rate to meet power load
+		value(O_P_REF_OUT, 0.0);	//[MWe]
+		value(O_F_BAYS, 0.0);		//[-]
+		value(O_P_COND, 0.0);		//[Pa]
+
+		value(O_M_DOT_HTF_OUT, ms_out_solver.m_m_dot_htf);		//[kg/hr] Actual HTF flow rate passing through the power cycle
+		value(O_M_DOT_HTF_REF, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF));	//[kg/hr] Calculated reference HTF flow rate at design
+		value(O_W_COOL_PAR, ms_out_solver.m_W_cool_par);		//[MWe] Cooling system parasitic load
+
+		value(O_Q_STARTUP, mc_power_cycle.mc_reported_outputs.value(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP));			//[MWt-hr] Power cycle startup energy
 
 		return 0;
 

@@ -5,6 +5,13 @@
 
 #include "lib_util.h"
 
+static C_csp_reported_outputs::S_output_info S_output_info[] = 
+{
+	{C_pc_gen::E_ETA_THERMAL},
+
+	csp_info_invalid
+};
+
 C_pc_gen::C_pc_gen()
 {
 	// *************************************************************
@@ -19,6 +26,8 @@ C_pc_gen::C_pc_gen()
 		m_q_des = m_qttmin = m_qttmax = std::numeric_limits<double>::quiet_NaN();
 
 	m_pc_mode_prev = m_pc_mode = -1;
+
+	mc_reported_outputs.construct(S_output_info);
 }
 
 void C_pc_gen::get_fixed_properties(double &T_htf_cold_fixed /*K*/, double &T_htf_hot_fixed /*K*/, double &cp_htf_fixed /*K*/)
@@ -191,7 +200,7 @@ void C_pc_gen::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs &inputs,
 	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-	C_csp_power_cycle::S_csp_pc_out_report &out_report,
+	//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	double twb = weather.m_twet+273.15;		//[K] Wet-bulb temperature, convert from C
@@ -238,26 +247,29 @@ void C_pc_gen::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
 	out_solver.m_W_cool_par = 0.0;			//[MWe]
 
-	out_report.m_eta = eta_cycle;		//[-]
-	out_report.m_m_dot_makeup = 0.0;	//[kg/hr]
-	out_report.m_m_dot_demand = 0.0;	//[kg/hr]
-	out_report.m_m_dot_htf_ref = 0.0;	//[kg/hr]
-	out_report.m_P_ref = 0.0;			//[MWe]
-	out_report.m_f_hrsys = 0.0;			//[-]
-	out_report.m_P_cond = 0.0;			//[-]
-	out_report.m_q_startup = 0.0;		//[MWt-hr]
+	mc_reported_outputs.value(E_ETA_THERMAL, eta_cycle);	//[-]
+
+	//out_report.m_eta = eta_cycle;		//[-]
+	//out_report.m_m_dot_makeup = 0.0;	//[kg/hr]
+	//out_report.m_m_dot_demand = 0.0;	//[kg/hr]
+	//out_report.m_m_dot_htf_ref = 0.0;	//[kg/hr]
+	//out_report.m_P_ref = 0.0;			//[MWe]
+	//out_report.m_f_hrsys = 0.0;			//[-]
+	//out_report.m_P_cond = 0.0;			//[-]
+	//out_report.m_q_startup = 0.0;		//[MWt-hr]
 
 }
 
 void C_pc_gen::converged()
 {
+	mc_reported_outputs.set_timestep_outputs();
+
 	throw(C_csp_exception("C_csp_gen_pc::converged() is not complete"));
 }
 
 void C_pc_gen::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	throw(C_csp_exception("C_csp_gen_pc::write_output_intervals() is not complete"));
-	//mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
-	//	v_temp_ts_time_end, report_time_end);
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }

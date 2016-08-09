@@ -80,7 +80,10 @@ public:
 		E_W_DOT,			//[MWe] Cycle electricity output (gross)
 		E_T_HTF_IN,			//[C] Cycle HTF inlet temperature
 		E_T_HTF_OUT,		//[C] Cycle HTF outlet temperature
-		E_M_DOT_WATER		//[kg/hr] Cycle water consumption: makeup + cooling	
+		E_M_DOT_WATER,		//[kg/hr] Cycle water consumption: makeup + cooling	
+
+		// Variables added for backwards compatability with TCS
+		E_M_DOT_HTF_REF		//[kg/hr] HTF mass flow rate at design
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -189,7 +192,7 @@ public:
 		C_csp_solver_htf_1state &htf_state_in,
 		const C_csp_power_cycle::S_control_inputs &inputs,
 		C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-		C_csp_power_cycle::S_csp_pc_out_report &out_report,
+		//C_csp_power_cycle::S_csp_pc_out_report &out_report,
 		const C_csp_solver_sim_info &sim_info);
 
 	virtual void converged();
