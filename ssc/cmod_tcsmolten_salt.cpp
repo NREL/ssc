@@ -16,6 +16,7 @@
 #include "csp_solver_mspt_receiver_222.h"
 #include "csp_solver_mspt_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
+#include "csp_solver_pc_sco2.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 
@@ -218,13 +219,14 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "ud_m_dot_htf_ind_od",  "Off design table of user-defined power cycle performance formed from parametric on m_dot_htf [ND]","", "", "user_defined_PC", "pc_config=1",    "",                      "" }, 
 																     																	  
 		// sCO2 Powerblock (type 424) inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "powerblock",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "powerblock",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "powerblock",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "deltaT_PHX",           "Design temperature difference in PHX",						      "C",	          "",            "powerblock",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "powerblock",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "elev",                 "Site elevation",                                                    "m",            "",            "powerblock",     "pc_config=2",                "",                      "" },
-	
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "sco2_pc",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "deltaT_PHX",           "Design temperature difference in PHX",						      "C",	          "",            "sco2_pc",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "sco2_pc",     "pc_config=2",                "",                      "" },	
+	{ SSC_INPUT,        SSC_NUMBER,      "sco2_T_amb_des",       "Ambient temperature at design point",                                      "C",     "",            "sco2_pc",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "sco2_T_approach",      "Temperature difference between main compressor CO2 inlet and ambient air", "C",     "",            "sco2_pc",     "pc_config=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "is_preprocess_udpc",   "1 = Preprocess model and interpolate results, 0 = No preprocess",   "-",            "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 				     																	  
 	// System Control	
     { SSC_INPUT,        SSC_NUMBER,      "time_start",           "Simulation start time",                                             "s",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
@@ -523,7 +525,8 @@ public:
 			// Initialize to get weather file info
 		weather_reader.init();
 
-        //set up simulation parameters
+		// Get info from the weather reader initialization
+		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
         
         // Set steps per hour
 		C_csp_solver::S_sim_setup sim_setup;
@@ -925,90 +928,319 @@ public:
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT, allocate("T_rec_out", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_piping_losses", n_steps_fixed), n_steps_fixed);
 
+		
+		// ***********************************************
+		// ***********************************************
 		// Power cycle
+		// ***********************************************
+		// ***********************************************
+		C_csp_power_cycle * p_csp_power_cycle;
+			// Steam Rankine and User Defined power cycle classes
+		C_pc_Rankine_indirect_224 rankine_pc;
+			// sCO2 power cycle class
+		C_pc_sco2 sco2_pc;
+
 		// Logic to choose between steam and sco2 power cycle 
 		int pb_tech_type = as_integer("pc_config");
-		//if( pb_tech_type == 1 )
-		//{
-		//	log("The User Defined power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
-		//	return;
-		//}
-		if( pb_tech_type == 2 )
+		if( pb_tech_type == 0 || pb_tech_type == 1 )
+		{			
+			C_pc_Rankine_indirect_224::S_params *pc = &rankine_pc.ms_params;
+			pc->m_P_ref = as_double("P_ref");
+			pc->m_eta_ref = as_double("design_eff");
+			pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
+			pc->m_T_htf_cold_ref = as_double("T_htf_cold_des");
+			pc->m_cycle_max_frac = as_double("cycle_max_frac");
+			pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
+			pc->m_q_sby_frac = as_double("q_sby_frac");
+			pc->m_startup_time = as_double("startup_time");
+			pc->m_startup_frac = as_double("startup_frac");
+			pc->m_htf_pump_coef = as_double("pb_pump_coef");
+			pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
+			pc->m_pc_fl_props = as_matrix("field_fl_props");		
+
+			if( pb_tech_type == 0 )
+			{
+				pc->m_dT_cw_ref = as_double("dT_cw_ref");
+				pc->m_T_amb_des = as_double("T_amb_des");					
+				pc->m_P_boil = as_double("P_boil");
+				pc->m_CT = as_integer("CT");		
+				pc->m_tech_type = as_double("tech_type");									// compute module is for MSPT, so hardcode tech type
+				pc->m_T_approach = as_double("T_approach");
+				pc->m_T_ITD_des = as_double("T_ITD_des");
+				pc->m_P_cond_ratio = as_double("P_cond_ratio");
+				pc->m_pb_bd_frac = as_double("pb_bd_frac");
+				pc->m_P_cond_min = as_double("P_cond_min");		
+				pc->m_n_pl_inc = as_integer("n_pl_inc");
+
+				size_t n_F_wc = -1;
+				ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
+				pc->m_F_wc.resize(n_F_wc, 0.0);
+				for( int i = 0; i < n_F_wc; i++ )
+					pc->m_F_wc[i] = (double)p_F_wc[i];
+
+				// Set User Defined cycle parameters to appropriate values
+				pc->m_is_user_defined_pc = false;
+				pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
+			}
+			else if( pb_tech_type == 1 )
+			{
+				pc->m_is_user_defined_pc = true;
+			
+				// User-Defined Cycle Parameters
+				pc->m_T_amb_des = as_double("ud_T_amb_des");	//[C]
+				pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des")/100.0*as_double("P_ref");	//[MWe]
+				pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
+
+				// Also need lower and upper levels for the 3 independent variables...
+				pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
+				pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
+				pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
+				pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
+				pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
+				pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
+
+				// User-Defined Cycle Off-Design Tables 
+				pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
+				pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
+				pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
+			}
+
+			// Set pointer to parent class
+			p_csp_power_cycle = &rankine_pc;
+		}
+		else if( pb_tech_type == 2 )
+		{ 
+			// ****************************************
+			// C_sco2_recomp_csp::S_des_par  User Defined Parameters
+			// ****************************************
+			C_sco2_recomp_csp::S_des_par sco2_rc_csp_par;
+				// System Design Parameters
+			sco2_rc_csp_par.m_hot_fl_code = as_integer("rec_htf");					//[-]
+			sco2_rc_csp_par.mc_hot_fl_props = as_matrix("field_fl_props");			//[-]
+			sco2_rc_csp_par.m_T_htf_hot_in = as_double("T_htf_hot_des") + 273.15;		//[K] Design HTF hot temp to power cycle
+			sco2_rc_csp_par.m_phx_dt_hot_approach = as_double("deltaT_PHX");			//[K/C]
+			sco2_rc_csp_par.m_T_amb_des = as_double("sco2_T_amb_des") + 273.15;		//[K] Design ambient temp, convert from C
+			sco2_rc_csp_par.m_dt_mc_approach = as_double("sco2_T_approach");			//[K/C]
+			sco2_rc_csp_par.m_elevation = site_elevation;							//[m]
+			sco2_rc_csp_par.m_W_dot_net = as_double("P_ref")*1.E3;					//[kWe]
+			sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");					//[-]
+				// Cycle Design Parameters
+			sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
+			sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
+			sco2_rc_csp_par.m_eta_t = as_double("eta_t");					//[-]
+			sco2_rc_csp_par.m_P_high_limit = as_double("P_high_limit")*1.E3;	//[kPa]
+				// Air cooler parameters
+			sco2_rc_csp_par.m_frac_fan_power = as_double("fan_power_perc_net") / 100.0;	//[-]
+			
+			// ****************************************
+			// ****************************************
+			// C_sco2_recomp_csp::S_des_par  Hardcoded Parameters (for now...)
+			// ****************************************
+				// Cycle design parameters
+			std::vector<double> DP_LT(2);
+					/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+			DP_LT[0] = 0;
+			DP_LT[1] = 0;
+					/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+			std::vector<double> DP_HT(2);
+			DP_HT[0] = 0;
+			DP_HT[1] = 0;
+					/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+			std::vector<double> DP_PC(2);
+			DP_PC[0] = 0;
+			DP_PC[1] = 0;
+					/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+			std::vector<double> DP_PHX(2);
+			DP_PHX[0] = 0;
+			DP_PHX[1] = 0;
+			sco2_rc_csp_par.m_DP_LT = DP_LT;
+			sco2_rc_csp_par.m_DP_HT = DP_HT;
+			sco2_rc_csp_par.m_DP_PC = DP_PC;
+			sco2_rc_csp_par.m_DP_PHX = DP_PHX;
+			sco2_rc_csp_par.m_N_sub_hxrs = 10;
+			sco2_rc_csp_par.m_tol = 1.E-3;
+			sco2_rc_csp_par.m_opt_tol = 1.E-3;
+			sco2_rc_csp_par.m_N_turbine = 3600.0;
+				// PHX design parameters
+			sco2_rc_csp_par.m_phx_dt_cold_approach = sco2_rc_csp_par.m_phx_dt_hot_approach;	//[K/C]
+				// Air cooler parameters
+			sco2_rc_csp_par.m_deltaP_cooler_frac = 0.002;		//[-]
+
+			sco2_pc.ms_params.ms_mc_sco2_recomp_params = sco2_rc_csp_par;
+
+			bool is_preprocess_udpc = as_integer("is_preprocess_udpc") == 1;
+
+			if( is_preprocess_udpc )
+			{
+				// For try/catch below
+				int out_type = -1;
+				std::string out_msg = "";
+
+				// Construction class and design system
+				C_sco2_recomp_csp sco2_recomp_csp;
+				try
+				{
+					sco2_recomp_csp.design(sco2_rc_csp_par);
+				}
+				catch( C_csp_exception &csp_exception )
+				{
+					// Report warning before exiting with error
+					while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+					{
+						log(out_msg);
+					}
+
+					log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+					return;
+				}
+
+				// Get sCO2 design outputs
+				double m_dot_htf_design = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;			//[kg/s]
+				double T_htf_cold_calc = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
+				double UA_LTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_LT;		//[kW/K]
+				double UA_HTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
+
+				// Get user-defined power cycle parameters
+				double T_htf_hot_low = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
+				double T_htf_hot_high = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 20.0;	//[C]
+				int n_T_htf_hot_in = floor((T_htf_hot_high - T_htf_hot_low)/2.0)+1;			//[-]
+				double T_amb_low = 0.0;				//[C]
+				double T_amb_high = 55.0;			//[C]
+				int n_T_amb_in = floor((T_amb_high - T_amb_low)/2.5)+1;					//[-]
+				double m_dot_htf_ND_low = 0.45;	//[-]
+				double m_dot_htf_ND_high = 1.25;	//[-]
+				int n_m_dot_htf_ND_in = floor((m_dot_htf_ND_high - m_dot_htf_ND_low)/0.025)+1;			//[-]
+
+				util::matrix_t<double> T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics;
+
+				try
+				{
+					sco2_recomp_csp.generate_ud_pc_tables(T_htf_hot_low, T_htf_hot_high, n_T_htf_hot_in,
+						T_amb_low, T_amb_high, n_T_amb_in,
+						m_dot_htf_ND_low, m_dot_htf_ND_high, n_m_dot_htf_ND_in,
+						T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics);
+				}
+				catch( C_csp_exception &csp_exception )
+				{
+					// Report warning before exiting with error
+					while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+					{
+						log(out_msg);
+					}
+
+					log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+					return;
+				}
+
+				//double T_htf_hot_test = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15;		//[C]
+				//double m_dot_htf_ND_test = 1.0;		//[-]
+				//double T_amb_test = T_amb_des;	//[C]
+
+				//double a_breakpoint_here = 1.23;
+
+				//HTFProperties mc_pc_htfProps;
+				//mc_pc_htfProps.SetFluid(as_integer("rec_htf"));
+
+				//C_sco2_recomp_csp::S_od_par od_pars;
+				//od_pars.m_T_htf_hot = T_htf_hot_test + 273.15;	//[K]
+				//od_pars.m_m_dot_htf = 95.95*m_dot_htf_ND_test;	//[kg/s]
+				//od_pars.m_T_amb = T_amb_test + 273.15;			//[K]
+
+				//sco2_recomp_csp.off_design_opt(od_pars, C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA);
+
+				//double T_htf_cold_1st = sco2_recomp_csp.get_od_solved()->ms_phx_od_solved.m_T_h_out;	//[K]
+
+				//// member class for User Defined Power Cycle
+				//C_ud_power_cycle mc_user_defined_pc;
+
+				//mc_user_defined_pc.init(T_htf_parametrics, sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15, T_htf_hot_low, T_htf_hot_high,
+				//	T_amb_parametrics, sco2_rc_csp_par.m_T_amb_des - 273.15, T_amb_low, T_amb_high,
+				//	m_dot_htf_ND_parametrics, 1.0, m_dot_htf_ND_low, m_dot_htf_ND_high);
+
+				//double P_cycle_udpc = sco2_recomp_csp.get_design_par()->m_W_dot_net*mc_user_defined_pc.get_W_dot_gross_ND(T_htf_hot_test, T_amb_test, m_dot_htf_ND_test);	//[kW]
+
+				//double q_dot_htf_des = sco2_recomp_csp.get_design_par()->m_W_dot_net/ 1.E3/ sco2_recomp_csp.get_design_par()->m_eta_thermal;	//[MWt]
+				//double q_dot_htf_udpc = q_dot_htf_des*mc_user_defined_pc.get_Q_dot_HTF_ND(T_htf_hot_test, T_amb_test, m_dot_htf_ND_test);		//[MWt]
+
+				//double m_cp_htf_design = mc_pc_htfProps.Cp_ave(T_htf_cold_1st, od_pars.m_T_htf_hot, 5);
+				//double T_htf_cold_udpc = T_htf_hot_test - q_dot_htf_udpc/(od_pars.m_m_dot_htf*m_cp_htf_design/1.E3);	//[C]
+
+				//double another_breakpoint_here = 1.23;
+
+				// ****************************************************
+				// ****************************************************
+				// Now, setup UDPC model
+				// ****************************************************
+				C_pc_Rankine_indirect_224::S_params *pc = &rankine_pc.ms_params;
+				pc->m_P_ref = as_double("P_ref");
+				pc->m_eta_ref = as_double("design_eff");
+				pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
+				pc->m_T_htf_cold_ref = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out - 273.15;
+				pc->m_cycle_max_frac = as_double("cycle_max_frac");
+				pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
+				pc->m_q_sby_frac = as_double("q_sby_frac");
+				pc->m_startup_time = as_double("startup_time");
+				pc->m_startup_frac = as_double("startup_frac");
+				pc->m_htf_pump_coef = as_double("pb_pump_coef");
+				pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
+				pc->m_pc_fl_props = as_matrix("field_fl_props");
+
+				// User-Defined Cycle Parameters
+				pc->m_is_user_defined_pc = true;
+
+				pc->m_T_amb_des = sco2_recomp_csp.get_design_par()->m_T_amb_des - 273.15;	//[C]
+				pc->m_W_dot_cooling_des = 0.0;		//[MWe]
+				pc->m_m_dot_water_des = 0.0;		//[kg/s]
+
+				// Also need lower and upper levels for the 3 independent variables...
+				pc->m_T_htf_low = T_htf_hot_low;			//[C]
+				pc->m_T_htf_high = T_htf_hot_high;			//[C]
+				pc->m_T_amb_low = T_amb_low;				//[C]
+				pc->m_T_amb_high = T_amb_high;				//[C]
+				pc->m_m_dot_htf_low = m_dot_htf_ND_low;		//[-]
+				pc->m_m_dot_htf_high = m_dot_htf_ND_high;	//[-]
+
+				// User-Defined Cycle Off-Design Tables 
+				pc->mc_T_htf_ind = T_htf_parametrics;
+				pc->mc_T_amb_ind = T_amb_parametrics;
+				pc->mc_m_dot_htf_ind = m_dot_htf_ND_parametrics;
+
+				p_csp_power_cycle = &rankine_pc;
+			}
+			else
+			{
+				// ****************************************
+				// ****************************************
+				// C_sco2_recomp_csp::S_des_par   User Defined Parameters
+				// ****************************************
+				sco2_pc.ms_params.m_cycle_max_frac = as_double("cycle_max_frac");			//[-]
+				sco2_pc.ms_params.m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");		//[-]
+				sco2_pc.ms_params.m_q_sby_frac = as_double("q_sby_frac");					//[-]
+				sco2_pc.ms_params.m_startup_time = as_double("startup_time");				//[hr]
+				sco2_pc.ms_params.m_startup_frac = as_double("startup_frac");				//[-]
+				sco2_pc.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");				//[kW/kg/s]
+
+				p_csp_power_cycle = &sco2_pc;
+			}
+		}
+		else
 		{
-			log("The sCO2 power cycle is not yet supported by the new CSP Solver and Dispatch Optimization models.\n", SSC_WARNING);
+			std::string err_msg = util::format("The specified power cycle configuration, %d, does not exist. See SSC Input Table for help.\n", pb_tech_type);
+			log(err_msg, SSC_WARNING);
 			return;
 		}
 
-		C_pc_Rankine_indirect_224 power_cycle;
-		C_pc_Rankine_indirect_224::S_params *pc = &power_cycle.ms_params;
-		pc->m_P_ref = as_double("P_ref");
-		pc->m_eta_ref = as_double("design_eff");
-		pc->m_T_htf_hot_ref = as_double("T_htf_hot_des");
-		pc->m_T_htf_cold_ref = as_double("T_htf_cold_des");
-		pc->m_cycle_max_frac = as_double("cycle_max_frac");
-		pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
-		pc->m_q_sby_frac = as_double("q_sby_frac");
-		pc->m_startup_time = as_double("startup_time");
-		pc->m_startup_frac = as_double("startup_frac");
-		pc->m_htf_pump_coef = as_double("pb_pump_coef");
-		pc->m_pc_fl = as_integer("rec_htf");							// power cycle HTF is same as receiver HTF
-		pc->m_pc_fl_props = as_matrix("field_fl_props");		
-
-		if( pb_tech_type == 0 )
-		{
-			pc->m_dT_cw_ref = as_double("dT_cw_ref");
-			pc->m_T_amb_des = as_double("T_amb_des");					
-			pc->m_P_boil = as_double("P_boil");
-			pc->m_CT = as_integer("CT");		
-			pc->m_tech_type = as_double("tech_type");									// compute module is for MSPT, so hardcode tech type
-			pc->m_T_approach = as_double("T_approach");
-			pc->m_T_ITD_des = as_double("T_ITD_des");
-			pc->m_P_cond_ratio = as_double("P_cond_ratio");
-			pc->m_pb_bd_frac = as_double("pb_bd_frac");
-			pc->m_P_cond_min = as_double("P_cond_min");		
-			pc->m_n_pl_inc = as_integer("n_pl_inc");
-
-			size_t n_F_wc = -1;
-			ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
-			pc->m_F_wc.resize(n_F_wc, 0.0);
-			for( int i = 0; i < n_F_wc; i++ )
-				pc->m_F_wc[i] = (double)p_F_wc[i];
-
-			// Set User Defined cycle parameters to appropriate values
-			pc->m_is_user_defined_pc = false;
-			pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
-		}
-		else if( pb_tech_type == 1 )
-		{
-			pc->m_is_user_defined_pc = true;
-			
-			// User-Defined Cycle Parameters
-			pc->m_T_amb_des = as_double("ud_T_amb_des");	//[C]
-			pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des")/100.0*as_double("P_ref");	//[MWe]
-			pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");		//[kg/s]
-
-			// Also need lower and upper levels for the 3 independent variables...
-			pc->m_T_htf_low = as_double("ud_T_htf_low");			//[C]
-			pc->m_T_htf_high = as_double("ud_T_htf_high");			//[C]
-			pc->m_T_amb_low = as_double("ud_T_amb_low");			//[C]
-			pc->m_T_amb_high = as_double("ud_T_amb_high");			//[C]
-			pc->m_m_dot_htf_low = as_double("ud_m_dot_htf_low");	//[-]
-			pc->m_m_dot_htf_high = as_double("ud_m_dot_htf_high");	//[-]
-
-			// User-Defined Cycle Off-Design Tables 
-			pc->mc_T_htf_ind = as_matrix("ud_T_htf_ind_od");
-			pc->mc_T_amb_ind = as_matrix("ud_T_amb_ind_od");
-			pc->mc_m_dot_htf_ind = as_matrix("ud_m_dot_htf_ind_od");
-		}
-		
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
-		power_cycle.mc_reported_outputs.assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
+		// Set power cycle outputs common to all power cycle technologies
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
+		p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
 
 		// Thermal energy storage 
 		C_csp_two_tank_tes storage;
@@ -1099,8 +1331,8 @@ public:
 		system.m_bop_par_1 = as_double("bop_par_1");
 		system.m_bop_par_2 = as_double("bop_par_2");
 
-  		// Instantiate Solver
-		C_csp_solver csp_solver(weather_reader, collector_receiver, power_cycle, storage, tou, system);
+  		// Instantiate Solver		
+		C_csp_solver csp_solver(weather_reader, collector_receiver, *p_csp_power_cycle, storage, tou, system);
 
 
 		int out_type = -1;
@@ -1266,8 +1498,7 @@ public:
 			// Simulate !
 			csp_solver.Ssimulate(sim_setup, 
 									ssc_mspt_sim_progress, (void*)this, 
-									ptr_array
-									/*post_proc_array*/);
+									ptr_array);
 		}
 		catch(C_csp_exception &csp_exception)
 		{
