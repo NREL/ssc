@@ -268,10 +268,12 @@ int C_sco2_recomp_csp::od_fix_T_mc__float_phx_dt__opt_eta()
 	opt_od_eta.set_lower_bounds(lb);
 	opt_od_eta.set_upper_bounds(ub);
 	opt_od_eta.set_initial_step(scale);
-	opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
+	//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
+	opt_od_eta.set_ftol_rel(10*0.001);
 
 	// Set max objective function
 	opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
+
 	double max_f = std::numeric_limits<double>::quiet_NaN();
 	nlopt::result          result_od_cycle = opt_od_eta.optimize(x, max_f);
 
@@ -279,15 +281,19 @@ int C_sco2_recomp_csp::od_fix_T_mc__float_phx_dt__opt_eta()
 	{
 		// For now, let's just catch this...
 
-		throw(C_csp_exception("C_sco2_recomp_csp::off_design_fix_T_mc__float_phx_dt__opt_eta","Cycle optimization did not succeed"));
+		return -1;
+
+		//throw(C_csp_exception("C_sco2_recomp_csp::off_design_fix_T_mc__float_phx_dt__opt_eta","Cycle optimization did not succeed"));
 	
 		// But, eventually, can probably trying modifying guesses and calling NLOPT again, like in C_RecompCycle::opt_od_eta_for_hx
 	}
 
 	// Call a final time with optimized parameters
-	double eta_opt = od_fix_T_mc_approach__float_phx_dt(x);
+	double opt_metric = od_fix_T_mc_approach__float_phx_dt(x);
 
-	if(eta_opt > 0.0)
+	double eta_at_opt = mc_rc_cycle.get_od_solved()->m_eta_thermal;		//[-]
+
+	if(eta_at_opt > 0.0)
 	{
 		return 0;
 	}
@@ -415,12 +421,19 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__float_phx_dt(const std::vector<d
 	//						eta_surge_mc_scale*
 	//						eta_surge_rc_scale;
 
-	double eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.3*
-		eta_T_t_in_scale*
+	double scale_product = eta_T_t_in_scale*
 		eta_P_high_scale*
 		eta_tip_ratio_scale*
 		eta_surge_mc_scale*
 		eta_surge_rc_scale;
+
+	//double eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.3*scale_product;
+
+	//double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*scale_product;
+
+	// Try to get a stable delta_T_HTF?
+	double eta_mult = 1.E3;
+	double eta_solved = scale_product*(eta_mult*mc_rc_cycle.get_od_solved()->m_eta_thermal + 20.0) - std::fabs(mc_phx.ms_od_solved.m_T_h_out - mc_phx.ms_des_solved.m_T_h_out);
 
 	// BUT, need to inform upstream code that a solution in this gradient is not acceptable
 	if( over_T_t_in == 0.0 && over_P_high == 0.0 && over_tip_ratio == 0.0 && over_surge_mc == 0.0 && over_surge_rc == 0.0 )
@@ -503,7 +516,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
 
-	mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
+	int off_design_code = mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
 
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_par()->m_W_dot_net;	//[kWe]
@@ -522,7 +535,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	outputs.m_m_dot_water_ND = 1.0;	
 
-	return 0;
+	return off_design_code;
 }
 
 int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_htf_high /*C*/, int n_T_htf /*-*/,
