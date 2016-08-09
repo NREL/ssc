@@ -405,13 +405,20 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 		for(int j = 0; j < 3; j++)
 		{
 			pc_inputs.m_m_dot_htf_ND = m_dot_htf_ND_levels[j];
-			mf_pc_eq(pc_inputs,pc_outputs);
+			int off_design_code = mf_pc_eq(pc_inputs,pc_outputs);
 
-			// Save outputs
-			T_htf_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
-			T_htf_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
-			T_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
-			T_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+			if( off_design_code == 0 )
+			{
+				// Save outputs
+				T_htf_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
+				T_htf_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
+				T_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
+				T_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+			}
+			else
+			{
+				throw(C_csp_exception("UDPC table generation failed, n_T_htf"));
+			}
 		}
 	}
 	// ******************************************
@@ -445,13 +452,20 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 		for(int j = 0; j < 3; j++)
 		{
 			pc_inputs.m_T_htf_hot = T_htf_levels[j];
-			mf_pc_eq(pc_inputs,pc_outputs);
+			int off_design_code = mf_pc_eq(pc_inputs,pc_outputs);
 
-			// Save outputs
-			T_amb_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
-			T_amb_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
-			T_amb_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
-			T_amb_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+			if( off_design_code == 0 )
+			{
+				// Save outputs
+				T_amb_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
+				T_amb_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
+				T_amb_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
+				T_amb_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+			}
+			else
+			{
+				throw(C_csp_exception("UDPC table generation failed, n_T_htf"));
+			}
 		}
 	}
 	// ******************************************
@@ -485,13 +499,20 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 		for(int j = 0; j < 3; j++)
 		{
 			pc_inputs.m_T_amb = T_amb_levels[j];
-			mf_pc_eq(pc_inputs, pc_outputs);
+			int off_design_code = mf_pc_eq(pc_inputs, pc_outputs);
 		
-			// Save outputs
-			m_dot_htf_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
-			m_dot_htf_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
-			m_dot_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
-			m_dot_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+			if( off_design_code == 0 )
+			{
+				// Save outputs
+				m_dot_htf_ind(i,1+j) = pc_outputs.m_W_dot_gross_ND;		//[-]
+				m_dot_htf_ind(i,4+j) = pc_outputs.m_Q_dot_in_ND;		//[-]
+				m_dot_htf_ind(i,7+j) = pc_outputs.m_W_dot_cooling_ND;	//[-]
+				m_dot_htf_ind(i,10+j) = pc_outputs.m_m_dot_water_ND;	//[-]
+			}
+			else
+			{
+				throw(C_csp_exception("UDPC table generation failed, n_T_htf"));
+			}
 		}
 	}
 	// ******************************************
