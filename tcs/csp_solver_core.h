@@ -587,6 +587,8 @@ public:
 	virtual void write_output_intervals(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end) = 0;
 
+	virtual void assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array) = 0;
+
 };
 
 class C_csp_tes

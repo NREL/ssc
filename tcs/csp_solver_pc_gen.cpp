@@ -273,3 +273,8 @@ void C_pc_gen::write_output_intervals(double report_time_start,
 	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
 		v_temp_ts_time_end, report_time_end);
 }
+
+void C_pc_gen::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
+{
+	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
+}
