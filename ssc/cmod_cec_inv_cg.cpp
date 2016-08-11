@@ -1,19 +1,23 @@
 #include "core.h"
-#include <algorithm>
+#include <vector>
 #include <sstream>
+
+#include "lsqfit.h"
 
 
   
 static var_info vtab_cec_inv_cg[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INPUT, SSC_NUMBER, "cec_inv_cg_Paco", "Rated max output", "W", "", "", "*", "", "" },
+
 	{ SSC_INPUT, SSC_NUMBER, "cec_inv_cg_power_units", "Sample data units for power output", "0=W,1=kW", "", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	// each sample has 18x3 entries:
 	// 6 output power percentages 10%, 20%, 30%, 50%, 75%, 100% of rated power
 	// 3 voltages Vmin, Vnom, Vmax that the 6 output powers measured at
 	// for a total of 18 (=6x3) rows
 	// 3 measured values for each row - Output Power, Input Voltage and Efficiency
-	{ SSC_INPUT, SSC_MATRIX, "cec_inv_cg_test_samples", "Sample data", "", "", "", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "cec_inv_cg_test_samples", "Sample data", "", "", "", "*", "", "" },
 	
 	/* from pvsamv1
 		{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
@@ -33,26 +37,50 @@ static var_info vtab_cec_inv_cg[] = {
 
 	// intermediate outputs for testing and validation
 	{ SSC_OUTPUT, SSC_MATRIX, "cec_inv_cg_J87_L91", "Excel cells J87:L91", "", "", "", "*", "", "" },
+
+	// test data reorganized
 	{ SSC_OUTPUT, SSC_MATRIX, "cec_inv_cg_Vmin", "Vmin for least squares fit", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_MATRIX, "cec_inv_cg_Vnom", "Vnom for least squares fit", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_MATRIX, "cec_inv_cg_Vmax", "Vmax for least squares fit", "", "", "", "*", "", "" },
 
+	// quadratic fits
 	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Vmin_abc", "Vmin a,b,c for least squares fit", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Vnom_abc", "Vnom a,b,c for least squares fit", "", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Vmax_abc", "Vmax a,b,c for least squares fit", "", "", "", "*", "", "" },
 
+	//intermediates based on quadratic least squares
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Vdc", "Vdc at Vmin, Vnom, Vmax", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Vdc_Vnom", "Vdc - Vnom at Vmin, Vnom, Vmax", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Pdco", "Pdco at Vmin, Vnom, Vmax", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_Psco", "Psco at Vmin, Vnom, Vmax", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_C0", "C0 at Vmin, Vnom, Vmax", "", "", "", "*", "", "" },
+
+	// intermediates based on linear least squares
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_C1", "C1 at m and b", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_C2", "C1 at m and b", "", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cec_inv_cg_C3", "C1 at m and b", "", "", "", "*", "", "" },
+
 	// outputs Pdco, Vdco, Pso, c0, c1, c2, c3
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_Pdco", "CEC generated Pdco", "Wac", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_Vdco", "CEC generated Vdco", "Vdc", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_Pso", "CEC generated Pso", "Wdc", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_c0", "CEC generated c0", "1/W", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_c1", "CEC generated c1", "1/V", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_c2", "CEC generated c2", "1/V", "", "", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "cec_inv_cg_c3", "CEC generated c3", "1/V", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "Pdco", "CEC generated Pdco", "Wac", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "Vdco", "CEC generated Vdco", "Vdc", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "Pso", "CEC generated Pso", "Wdc", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "c0", "CEC generated c0", "1/W", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "c1", "CEC generated c1", "1/V", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "c2", "CEC generated c2", "1/V", "", "", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "c3", "CEC generated c3", "1/V", "", "", "*", "", "" },
 
 	var_info_invalid };
 
 
+double Quadratic_fit_eqn(double _x, double *par, void *)
+{
+	return par[0] * _x * _x + par[1] * _x + par[2];
+}
+
+double Linear_fit_eqn(double _x, double *par, void *)
+{
+	return par[0] * _x + par[1];
+}
 
 class cm_cec_inv_cg : public compute_module
 {
@@ -67,6 +95,9 @@ public:
 	void exec( ) throw( general_error )
 	{
 		size_t count, i, j, nrows, ncols; 
+		// rated output ac
+		double Paco = as_double("cec_inv_cg_Paco");
+
 		// 6 columns period, tier, max usage, max usage units, buy, sell
 		ssc_number_t *cec_inv_cg_test_samples_in = as_matrix("cec_inv_cg_test_samples", &nrows, &ncols);
 		if (nrows != 18)
@@ -100,6 +131,19 @@ public:
 		util::matrix_t<ssc_number_t> &cec_inv_cg_Vnom = allocate_matrix("cec_inv_cg_Vnom", 6 * num_samples, 3);
 		util::matrix_t<ssc_number_t> &cec_inv_cg_Vmax = allocate_matrix("cec_inv_cg_Vmax", 6 * num_samples, 3);
 
+
+		ssc_number_t *cec_inv_cg_Vdc = allocate("cec_inv_cg_Vdc", 3);
+		ssc_number_t *cec_inv_cg_Vdc_Vnom = allocate("cec_inv_cg_Vdc_Vnom", 3);
+		ssc_number_t *cec_inv_cg_Pdco = allocate("cec_inv_cg_Pdco", 3);
+		ssc_number_t *cec_inv_cg_Psco = allocate("cec_inv_cg_Psco", 3);
+		ssc_number_t *cec_inv_cg_C0 = allocate("cec_inv_cg_C0", 3);
+		ssc_number_t *cec_inv_cg_C1 = allocate("cec_inv_cg_C1", 2);
+		ssc_number_t *cec_inv_cg_C2 = allocate("cec_inv_cg_C2", 2);
+		ssc_number_t *cec_inv_cg_C3 = allocate("cec_inv_cg_C3", 2);
+
+		for (i = 0; i < 3; i++)
+			cec_inv_cg_Vdc[i] = 0;
+
 		for (j = 0; j < num_samples; j++)
 		{
 			for (i = 0; i < cec_inv_cg_test_samples.nrows(); i++)
@@ -113,6 +157,7 @@ public:
 				if (i < 6) // Vmin 0 offset
 				{
 					cec_inv_cg_J87_L91.at(0, 0) += vdc;
+					cec_inv_cg_Vdc[0] += vdc;
 					cec_inv_cg_Vmin.at(j * 6 + i, 0) = Pout;
 					cec_inv_cg_Vmin.at(j * 6 + i, 1) = Pin;
 					cec_inv_cg_Vmin.at(j * 6 + i, 2) = Pin2;
@@ -123,7 +168,8 @@ public:
 				else if (i < 12) // Vnom 6 offset 
 				{
 					cec_inv_cg_J87_L91.at(0, 1) += vdc;
-					cec_inv_cg_Vnom.at(j * 6 + i-6, 0) = Pout;
+					cec_inv_cg_Vdc[1] += vdc;
+					cec_inv_cg_Vnom.at(j * 6 + i - 6, 0) = Pout;
 					cec_inv_cg_Vnom.at(j * 6 + i-6, 1) = Pin;
 					cec_inv_cg_Vnom.at(j * 6 + i-6, 2) = Pin2;
 					Vnom_Pout_avg += Pout;
@@ -133,6 +179,7 @@ public:
 				else // Vmax 12 offset
 				{
 					cec_inv_cg_J87_L91.at(0, 2) += vdc;
+					cec_inv_cg_Vdc[2] += vdc;
 					cec_inv_cg_Vmax.at(j * 6 + i - 12, 0) = Pout;
 					cec_inv_cg_Vmax.at(j * 6 + i - 12, 1) = Pin;
 					cec_inv_cg_Vmax.at(j * 6 + i - 12, 2) = Pin2;
@@ -143,15 +190,7 @@ public:
 			}
 		}
 		
-		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
-			cec_inv_cg_J87_L91.at(0, k) /= (6 * num_samples);
-
-		// Vdc-Vnom
-		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
-			cec_inv_cg_J87_L91.at(1, k) = cec_inv_cg_J87_L91.at(0, k) - cec_inv_cg_J87_L91.at(0, 1);
 		
-		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
-		assign("cec_inv_cg_Vdco", (var_data)cec_inv_cg_J87_L91.at(0, 1));
 
 
 		// do simple least square fit per CoefGenerator Worksheet
@@ -172,6 +211,7 @@ public:
 		ssc_number_t *cec_inv_cg_Vnom_abc = allocate("cec_inv_cg_Vnom_abc", 3);
 		ssc_number_t *cec_inv_cg_Vmax_abc = allocate("cec_inv_cg_Vmax_abc", 3);
 
+		/* linear least squares
 		ssc_number_t mPin_num = 0, mPin_den = 0, mPin=0;
 		ssc_number_t mPin2_num = 0, mPin2_den = 0, mPin2=0;
 		ssc_number_t mPout_b = 0;
@@ -193,14 +233,158 @@ public:
 		cec_inv_cg_Vmin_abc[0] = mPin;
 		cec_inv_cg_Vmin_abc[1] = mPin2;
 		cec_inv_cg_Vmin_abc[2] = mPout_b;
+		*/
 
-		assign("cec_inv_cg_Pdco", (var_data)0);
-		assign("cec_inv_cg_Pso", (var_data)0);
-		assign("cec_inv_cg_c0", (var_data)0);
-		assign("cec_inv_cg_c1", (var_data)0);
-		assign("cec_inv_cg_c2", (var_data)0);
-		assign("cec_inv_cg_c3", (var_data)0);
+
+
+		std::vector<double> Pout_vec(cec_inv_cg_Vmin.nrows());
+		std::vector<double> Pin_vec(cec_inv_cg_Vmin.nrows());
+		int info;
+		double C[3];// initial guesses for lsqfit
+
+		// Vmin non-linear
+		for (i = 0; i < cec_inv_cg_Vmin.nrows(); i++)
+		{
+			Pin_vec[i] = cec_inv_cg_Vmin.at(i, 1);
+			Pout_vec[i] = cec_inv_cg_Vmin.at(i, 0);
+		}
+		C[0] = -1e-6;
+		C[1] = 1;
+		C[2] = 1e3;
+		if (!(info=lsqfit(Quadratic_fit_eqn, 0, C, 3, &Pin_vec[0], &Pout_vec[0], cec_inv_cg_Vmin.nrows())))
+		{
+			throw exec_error("cec_inv_cg", util::format("error in nonlinear least squares fit, error %d", info));
+			return;
+		}
+		cec_inv_cg_Vmin_abc[0] = C[0];
+		cec_inv_cg_Vmin_abc[1] = C[1];
+		cec_inv_cg_Vmin_abc[2] = C[2];
+
+		// Vnom non-linear
+		for (i = 0; i < cec_inv_cg_Vnom.nrows(); i++)
+		{
+			Pin_vec[i] = cec_inv_cg_Vnom.at(i, 1);
+			Pout_vec[i] = cec_inv_cg_Vnom.at(i, 0);
+		}
+		C[0] = -1e-6;
+		C[1] = 1;
+		C[2] = 1e3;
+		if (!(info = lsqfit(Quadratic_fit_eqn, 0, C, 3, &Pin_vec[0], &Pout_vec[0], cec_inv_cg_Vnom.nrows())))
+		{
+			throw exec_error("cec_inv_cg", util::format("error in nonlinear least squares fit, error %d", info));
+			return;
+		}
+		cec_inv_cg_Vnom_abc[0] = C[0];
+		cec_inv_cg_Vnom_abc[1] = C[1];
+		cec_inv_cg_Vnom_abc[2] = C[2];
+
+		// Vmax non-linear
+		for (i = 0; i < cec_inv_cg_Vmax.nrows(); i++)
+		{
+			Pin_vec[i] = cec_inv_cg_Vmax.at(i, 1);
+			Pout_vec[i] = cec_inv_cg_Vmax.at(i, 0);
+		}
+		C[0] = -1e-6;
+		C[1] = 1;
+		C[2] = 1e3;
+		if (!(info = lsqfit(Quadratic_fit_eqn, 0, C, 3, &Pin_vec[0], &Pout_vec[0], cec_inv_cg_Vmax.nrows())))
+		{
+			throw exec_error("cec_inv_cg", util::format("error in nonlinear least squares fit, error %d", info));
+			return;
+		}
+		cec_inv_cg_Vmax_abc[0] = C[0];
+		cec_inv_cg_Vmax_abc[1] = C[1];
+		cec_inv_cg_Vmax_abc[2] = C[2];
+
+		// Fill in intermediate values
+		//Vdc (Vmin, Vnom, Vmax)
+		for (i = 0; i < 3;i++)
+			cec_inv_cg_Vdc[i] /= (6 * num_samples);
+		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
+			cec_inv_cg_J87_L91.at(0, k) /= (6 * num_samples);
+
+		// Vdc-Vnom
+		for (i = 0; i < 3; i++)
+			cec_inv_cg_Vdc_Vnom[i] = cec_inv_cg_Vdc[i] - cec_inv_cg_Vdc[1];
+		for (size_t k = 0; k < cec_inv_cg_J87_L91.ncols(); k++)
+			cec_inv_cg_J87_L91.at(1, k) = cec_inv_cg_J87_L91.at(0, k) - cec_inv_cg_J87_L91.at(0, 1);
+
+		ssc_number_t a, b, c;
+		// Pdco and Psco and C0
+		a = cec_inv_cg_Vmin_abc[0];
+		b = cec_inv_cg_Vmin_abc[1];
+		c = cec_inv_cg_Vmin_abc[2];
+		cec_inv_cg_Pdco[0] = (-b + sqrt(b*b - 4 * a*(c - Paco)));
+		cec_inv_cg_Psco[0] = (-b + sqrt(b*b - 4 * a*c));
+		cec_inv_cg_C0[0] = a;
+		if (a != 0)
+		{
+			cec_inv_cg_Pdco[0] /= (2.0*a);
+			cec_inv_cg_Psco[0] /= (2.0*a);
+		}
+
+		a = cec_inv_cg_Vnom_abc[0];
+		b = cec_inv_cg_Vnom_abc[1];
+		c = cec_inv_cg_Vnom_abc[2];
+		cec_inv_cg_Pdco[1] = (-b + sqrt(b*b - 4 * a*(c - Paco)));
+		cec_inv_cg_Psco[1] = (-b + sqrt(b*b - 4 * a*c));
+		cec_inv_cg_C0[1] = a;
+		if (a != 0)
+		{
+			cec_inv_cg_Pdco[1] /= (2.0*a);
+			cec_inv_cg_Psco[1] /= (2.0*a);
+		}
+
+		// TODO - limit Psco max to not be less than zero per note in Workbook
+		a = cec_inv_cg_Vmax_abc[0];
+		b = cec_inv_cg_Vmax_abc[1];
+		c = cec_inv_cg_Vmax_abc[2];
+		cec_inv_cg_Pdco[2] = (-b + sqrt(b*b - 4 * a*(c - Paco)));
+		cec_inv_cg_Psco[2] = (-b + sqrt(b*b - 4 * a*c));
+		cec_inv_cg_C0[2] = a;
+		if (a != 0)
+		{
+			cec_inv_cg_Pdco[2] /= (2.0*a);
+			cec_inv_cg_Psco[2] /= (2.0*a);
+		}
+
+		// C1, C2, C3 linear least squares
+		// C1 Y=Pdco, X=Vdc-Vnom
+		std::vector<double> X(3);
+		std::vector<double> Y(3);
+		double mb[2];// initial guesses for lsqfit
+
+		// Vmin non-linear
+		for (i = 0; i < 3; i++)
+		{
+			X[i] = cec_inv_cg_Pdco[i];
+			Y[i] = cec_inv_cg_Vdc_Vnom[i];
+		}
+		mb[0] = -10;
+		mb[1] = cec_inv_cg_Pdco[1];
+		if (!(info = lsqfit(Linear_fit_eqn, 0, mb, 2, &X[0], &Y[0], 3)))
+		{
+			throw exec_error("cec_inv_cg", util::format("error in linear least squares fit, error %d", info));
+			return;
+		}
+		cec_inv_cg_C1[0] = mb[0];
+		cec_inv_cg_C1[1] = mb[1];
+
+
+
+		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
+		assign("Vdco", (var_data)cec_inv_cg_Vdc[1]);
+
+		assign("Pdco", (var_data)0);
+		assign("Pso", (var_data)0);
+		assign("c0", (var_data)0);
+		assign("c1", (var_data)0);
+		assign("c2", (var_data)0);
+		assign("c3", (var_data)0);
 	}
+
+
+
 
 
 };
