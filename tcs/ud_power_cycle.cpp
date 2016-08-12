@@ -417,7 +417,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 			}
 			else
 			{
-				throw(C_csp_exception("UDPC table generation failed, n_T_htf"));
+				std::string err_msg = util::format("The 1st UDPC table (primary: T_htf, interaction: m_dot_htf_ND) generation failed at T_htf = %lg [C] and m_dot_htf = %lg [-]", pc_inputs.m_T_htf_hot, pc_inputs.m_m_dot_htf_ND);
+				throw(C_csp_exception(err_msg, "UDPC"));
 			}
 		}
 	}
@@ -464,7 +465,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 			}
 			else
 			{
-				throw(C_csp_exception("UDPC table generation failed, n_T_htf"));
+				std::string err_msg = util::format("The 2nd UDPC table (primary: T_amb, interaction: T_htf) generation failed at T_amb = %lg [C] and T_htf = %lg [C]", pc_inputs.m_T_amb, pc_inputs.m_T_htf_hot);
+				throw(C_csp_exception(err_msg, "UDPC"));
 			}
 		}
 	}
@@ -511,7 +513,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 			}
 			else
 			{
-				throw(C_csp_exception("UDPC table generation failed, n_T_htf"));
+				std::string err_msg = util::format("The 3rd UDPC table (primary: m_dot_htf_ND, interaction: T_amb) generation failed at T_amb = %lg [C] and m_dot_htf = %lg [-]", pc_inputs.m_T_amb, pc_inputs.m_m_dot_htf_ND);
+				throw(C_csp_exception(err_msg, "UDPC"));
 			}
 		}
 	}
