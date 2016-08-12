@@ -460,9 +460,8 @@ void C_pc_sco2::converged()
 void C_pc_sco2::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	return;
-	//mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
-	//	v_temp_ts_time_end, report_time_end);
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }
 
 void C_pc_sco2::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
