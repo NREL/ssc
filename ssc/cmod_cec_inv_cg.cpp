@@ -352,35 +352,60 @@ public:
 		// C1 Y=Pdco, X=Vdc-Vnom
 		std::vector<double> X(3);
 		std::vector<double> Y(3);
-		double mb[2];// initial guesses for lsqfit
+		double slope, intercept;
 
-		// Vmin non-linear
+		// C1 using linear least squares fit
 		for (i = 0; i < 3; i++)
 		{
-			X[i] = cec_inv_cg_Pdco[i];
-			Y[i] = cec_inv_cg_Vdc_Vnom[i];
+			X[i] = cec_inv_cg_Vdc_Vnom[i];
+			Y[i] = cec_inv_cg_Pdco[i];
 		}
-		mb[0] = -10;
-		mb[1] = cec_inv_cg_Pdco[1];
-		if (!(info = lsqfit(Linear_fit_eqn, 0, mb, 2, &X[0], &Y[0], 3)))
+		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], 3)))
 		{
 			throw exec_error("cec_inv_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
 		}
-		cec_inv_cg_C1[0] = mb[0];
-		cec_inv_cg_C1[1] = mb[1];
+		cec_inv_cg_C1[0] = slope;
+		cec_inv_cg_C1[1] = intercept;
 
 
+		// C2 using linear least squares fit
+		for (i = 0; i < 3; i++)
+		{
+			X[i] = cec_inv_cg_Vdc_Vnom[i];
+			Y[i] = cec_inv_cg_Psco[i];
+		}
+		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], 3)))
+		{
+			throw exec_error("cec_inv_cg", util::format("error in linear least squares fit, error %d", info));
+			return;
+		}
+		cec_inv_cg_C2[0] = slope;
+		cec_inv_cg_C2[1] = intercept;
+
+		// C2 using linear least squares fit
+		for (i = 0; i < 3; i++)
+		{
+			X[i] = cec_inv_cg_Vdc_Vnom[i];
+			Y[i] = cec_inv_cg_C0[i];
+		}
+		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], 3)))
+		{
+			throw exec_error("cec_inv_cg", util::format("error in linear least squares fit, error %d", info));
+			return;
+		}
+		cec_inv_cg_C3[0] = slope;
+		cec_inv_cg_C3[1] = intercept;
 
 		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
-		assign("Vdco", (var_data)cec_inv_cg_Vdc[1]);
 
-		assign("Pdco", (var_data)0);
-		assign("Pso", (var_data)0);
-		assign("c0", (var_data)0);
-		assign("c1", (var_data)0);
-		assign("c2", (var_data)0);
-		assign("c3", (var_data)0);
+		assign("Pdco", (var_data)cec_inv_cg_C1[1]);
+		assign("Vdco", (var_data)cec_inv_cg_Vdc[1]);
+		assign("Pso", (var_data)cec_inv_cg_C2[1]);
+		assign("c0", (var_data)cec_inv_cg_C3[1]);
+		assign("c1", (var_data)(cec_inv_cg_C1[0] / cec_inv_cg_C1[1]));
+		assign("c2", (var_data)(cec_inv_cg_C2[0] / cec_inv_cg_C2[1]));
+		assign("c3", (var_data)(cec_inv_cg_C3[0] / cec_inv_cg_C3[1]));
 	}
 
 

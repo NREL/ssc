@@ -2336,3 +2336,30 @@ int lsqfit( double (*function)( double _x, double *par, void *user_data ), void 
 	return info;
 }
 
+int linlsqfit(double *slope, double *intercept, double *xdata, double *ydata, size_t len)
+{
+	/* linear least squares */
+	double x_bar = 0, y_bar = 0;
+	size_t i;
+	if (len <= 0) return -1;
+	for (i = 0; i < len; i++)
+	{
+		x_bar += xdata[i];
+		y_bar += ydata[i];
+	}
+	x_bar /= len;
+	y_bar /= len;
+
+	double numerator = 0, denominator = 0;
+	for (i = 0; i < len; i++)
+	{
+		numerator += (xdata[i] - x_bar)*(ydata[i] - y_bar);
+		denominator += (xdata[i] - x_bar)*(xdata[i] - x_bar);
+	}
+	if (denominator == 0) return -2;
+	*slope = numerator / denominator;
+	*intercept = y_bar - (*slope) * x_bar;
+
+	return 0;
+}
+

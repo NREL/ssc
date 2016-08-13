@@ -224,6 +224,10 @@ int lsqfit( double (*function)( double _x, double *par, void *user_data ), void 
 
 
 
+/* linear least squares fit */
+int linlsqfit(double *slope, double *intercept, double *xdata, double *ydata, size_t len);
+
+
 /* C99 uses isfinite() instead of finite() */
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #define mpfinite(x) isfinite(x)
