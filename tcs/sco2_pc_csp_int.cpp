@@ -200,7 +200,13 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 	if( phx_cycle_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		return -2;
+		int n_call_history = c_phx_cycle_solver.get_solver_call_history()->size();
+
+		//std::vector<C_monotonic_eq_solver::S_eq_chars> *p_s_eq_chars = c_phx_cycle_solver.get_solver_call_history();
+		//
+		//C_monotonic_eq_solver::S_eq_chars s_eq_char = (*p_s_eq_chars)[0];
+
+		return (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history-1].err_code;
 	}
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
@@ -490,7 +496,10 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 
 	// If off-design cycle model did not solve, return to solver
 	if( rc_od_error_code != 0 )
-		return -1;
+	{
+		*diff_T_t_in = std::numeric_limits<double>::quiet_NaN();
+		return rc_od_error_code;
+	}
 
 	// Solve PHX heat exchanger performance using CO2 and HTF *inlet* conditions
 	mpc_sco2_rc->ms_phx_od_par.m_T_c_in = mpc_sco2_rc->mc_rc_cycle.get_od_solved()->m_temp[5-1];	//[K]
