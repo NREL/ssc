@@ -839,7 +839,6 @@ public:
 	{
 		add_var_info( _cm_vtab_pvsamv1 );
 		add_var_info(vtab_adjustment_factors);
-		add_var_info(vtab_dc_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
 		add_var_info(vtab_battery);
 	}
