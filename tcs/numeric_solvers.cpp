@@ -618,6 +618,8 @@ int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
 	ms_eq_tracker_temp.x = x;
 	ms_eq_tracker_temp.y = *y;
 	
+	ms_eq_call_tracker.push_back(ms_eq_tracker_temp);
+
 	return ms_eq_tracker_temp.err_code;
 }
 
