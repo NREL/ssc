@@ -146,7 +146,7 @@ private:
 
 	void design_core();
 
-	int od_fix_T_mc__float_phx_dt__opt_eta();
+	int od_fix_T_mc__nl_opt_shell__opt_eta();
 
 public:
 
@@ -200,8 +200,10 @@ public:
 
 	int off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
+	int off_design_core(double & eta_solved);
+
 	// Class methods linked to nlopt callbacks - must be public
-	double od_fix_T_mc_approach__float_phx_dt(const std::vector<double> &x);
+	double od_fix_T_mc_approach__nl_opt_shell(const std::vector<double> &x);
 
 	double get_T_mc_in_min()
 	{
