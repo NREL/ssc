@@ -72,6 +72,10 @@ double C_monotonic_eq_solver::calc_x_intercept(double x1, double y1, double x2, 
 int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_target,
 	double &x_solved, double &tol_solved, int &iter_solved)
 {
+	// Set / reset vector that tracks calls to equation
+	ms_eq_call_tracker.resize(0);
+	ms_eq_call_tracker.reserve(m_iter_max);
+
 	// Check that x guesses fall with bounds (set during initialization)
 	x_guess_1 = check_against_limits(x_guess_1);
 	x_guess_2 = check_against_limits(x_guess_2);
@@ -86,11 +90,11 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 	// Call function with x guesses
 	double y1, y2;
-	if(mf_mono_eq(x_guess_1,&y1) != 0)
+	if(call_mono_eq(x_guess_1,&y1) != 0)
 	{
 		y1 = std::numeric_limits<double>::quiet_NaN();
 	}
-	if(mf_mono_eq(x_guess_2,&y2) != 0)
+	if(call_mono_eq(x_guess_2,&y2) != 0)
 	{
 		y2 = std::numeric_limits<double>::quiet_NaN();
 	}
@@ -118,7 +122,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 			return NO_SOLUTION;
 		}
 
-		if( mf_mono_eq(x_guess_1, &y1) != 0 )
+		if( call_mono_eq(x_guess_1, &y1) != 0 )
 		{
 			y1 = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -146,7 +150,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 			return NO_SOLUTION;
 		}
 		
-		if( mf_mono_eq(x_guess_2, &y2) != 0 )
+		if( call_mono_eq(x_guess_2, &y2) != 0 )
 		{
 			y2 = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -180,7 +184,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 	{
 		// Last call to equation was with x_guess_2, so call again here...
 		// ... if equation is setting member data, this is required to have outputs matching calculated solution
-		mf_mono_eq(x_guess_1, &y1);
+		call_mono_eq(x_guess_1, &y1);
 		x_solved = x_guess_1;
 		tol_solved = E1;
 		iter_solved = 0;
@@ -355,7 +359,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 				// Call function again with value we know produces a result
 				double y_eq;
-				mf_mono_eq(x_solved, &y_eq);
+				call_mono_eq(x_solved, &y_eq);
 
 				if(E_slope > 0.0)
 					return SLOPE_POS_NO_NEG_ERR;
@@ -371,7 +375,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 				// Call function again with value we know produces a result
 				double y_eq;
-				mf_mono_eq(x_solved, &y_eq);
+				call_mono_eq(x_solved, &y_eq);
 
 				if(E_slope > 0.0)
 					return SLOPE_POS_NO_POS_ERR;
@@ -387,7 +391,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 				
 				// Call function again with value we know produces a result
 				double y_eq;
-				mf_mono_eq(x_solved, &y_eq);
+				call_mono_eq(x_solved, &y_eq);
 
 				if(E_slope > 0.0)
 					return SLOPE_POS_BOTH_ERRS;
@@ -407,7 +411,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 				// Call function again with value we know produces a result
 				double y_eq;
-				mf_mono_eq(x_solved, &y_eq);
+				call_mono_eq(x_solved, &y_eq);
 
 				if(E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_NO_NEG_ERR;
@@ -423,7 +427,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 				// Call function again with value we know produces a result
 				double y_eq;
-				mf_mono_eq(x_solved, &y_eq);
+				call_mono_eq(x_solved, &y_eq);
 
 				if(E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_NO_POS_ERR;
@@ -439,7 +443,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 				// Call function again with value we know produces a result
 				double y_eq;
-				mf_mono_eq(x_solved, &y_eq);
+				call_mono_eq(x_solved, &y_eq);
 
 				if(E_slope > 0.0)
 					return MAX_ITER_SLOPE_POS_BOTH_ERRS;
@@ -588,7 +592,7 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 
 		// Call function with new x_guess
 		double y_calc;
-		if(mf_mono_eq(m_x_guess, &y_calc) != 0)
+		if(call_mono_eq(m_x_guess, &y_calc) != 0)
 		{
 			y_calc = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -605,6 +609,16 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 	iter_solved = m_iter;
 
 	return CONVERGED;
+}
+
+int C_monotonic_eq_solver::call_mono_eq(double x, double *y)
+{
+	ms_eq_tracker_temp.err_code = mf_mono_eq(x, y);
+
+	ms_eq_tracker_temp.x = x;
+	ms_eq_tracker_temp.y = *y;
+	
+	return ms_eq_tracker_temp.err_code;
 }
 
 int C_monotonic_eq_solver::test_member_function(double x, double *y)

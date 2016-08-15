@@ -1,6 +1,8 @@
 #ifndef __NUMERIC_SOLVERS_
 #define __NUMERIC_SOLVERS_
 
+#include <vector>
+
 class C_monotonic_equation
 {
 public:
@@ -37,6 +39,21 @@ public:
 
 class C_monotonic_eq_solver
 {
+public:
+	struct S_eq_chars
+	{
+		double x;		//[...] Input value
+		double y;		//[...] Calculated output value
+		int err_code;	//[-] Integer error message
+
+		S_eq_chars()
+		{
+			x = y = std::numeric_limits<double>::quiet_NaN();
+
+			err_code = 0;
+		}
+	};
+
 private:
 
 	C_monotonic_equation &mf_mono_eq;
@@ -61,6 +78,11 @@ private:
 	double check_against_limits(double x);
 
 	double calc_x_intercept(double x1, double y1, double x2, double y2);
+
+	// Save x, y, and int_return of for each mono_eq call
+	std::vector<S_eq_chars> ms_eq_call_tracker;
+
+	S_eq_chars ms_eq_tracker_temp;
 
 protected:
 	double m_func_x_lower;		// Lower limit of independent variable
@@ -108,6 +130,8 @@ public:
 
 	int solve(double x_guess_1, double x_guess_2, double y_target,
 		double &x_solved, double &tol_solved, int &iter_solved);
+
+	int call_mono_eq(double x, double *y);
 
 	int test_member_function(double x, double *y);
 };
