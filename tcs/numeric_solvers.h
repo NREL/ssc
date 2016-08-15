@@ -133,6 +133,11 @@ public:
 
 	int call_mono_eq(double x, double *y);
 
+	const std::vector<S_eq_chars> *get_solver_call_history()
+	{
+		return &ms_eq_call_tracker;
+	}
+
 	int test_member_function(double x, double *y);
 };
 
