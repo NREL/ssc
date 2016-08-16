@@ -979,7 +979,7 @@ public:
 			
 			size_t soil_len = 0;
 			ssc_number_t *soiling = as_array(prefix+"soiling", &soil_len); // monthly soiling array
-			if (soil_len != 12) throw exec_error( "pvsamv1", "soiling derate must have 12 values: subarray " + util::to_string((int)(nn+1)) );
+			if (soil_len != 12) throw exec_error( "pvsamv1", "soiling loss array must have 12 values: subarray " + util::to_string((int)(nn+1)) );
 			for (int k=0;k<12;k++)
 				sa[nn].soiling[k] = 1- (double) soiling[k]/100; //convert from % to derate
 	
@@ -2035,7 +2035,7 @@ public:
 							return;		
 						}
 						if ( (wf.poa != wf.poa) && (radmode == POA_R || radmode == POA_P)){
-							log(util::format("missing plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+							log(util::format("missing POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;		
 						}
@@ -2061,7 +2061,7 @@ public:
 						}
 						if ( (wf.poa < 0 || wf.poa > IRRMAX) && (radmode == POA_R || radmode == POA_P) )
 						{
-							log(util::format("out of range plane of array irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
+							log(util::format("out of range POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], set to zero",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_WARNING, (float)idx);
 							wf.poa = 0;
 						}
