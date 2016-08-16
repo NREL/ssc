@@ -54,6 +54,17 @@ public:
 		}
 	};
 
+	struct S_xy_pair
+	{
+		double x;	//[...] Independent variable
+		double y;	//[...] Dependent variable
+
+		S_xy_pair()
+		{
+			x = y = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 private:
 
 	C_monotonic_equation &mf_mono_eq;
@@ -78,6 +89,9 @@ private:
 	double check_against_limits(double x);
 
 	double calc_x_intercept(double x1, double y1, double x2, double y2);
+
+	int solver_core(double x_guess_1, double y1, double x_guess_2, double y2, double y_target,
+		double &x_solved, double &tol_solved, int &iter_solved);
 
 	// Save x, y, and int_return of for each mono_eq call
 	std::vector<S_eq_chars> ms_eq_call_tracker;
@@ -130,6 +144,9 @@ public:
 
 	int solve(double x_guess_1, double x_guess_2, double y_target,
 		double &x_solved, double &tol_solved, int &iter_solved);
+		
+	int solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_2, double y_target,
+		double &x_solved, double &tol_solved, int &iter_solved);	
 
 	int call_mono_eq(double x, double *y);
 
