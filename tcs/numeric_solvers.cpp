@@ -87,17 +87,62 @@ int C_monotonic_eq_solver::solve(double x_guess_1, double x_guess_2, double y_ta
 		iter_solved = 0;
 		return EQUAL_GUESS_VALUES;
 	}
-
+	
 	// Call function with x guesses
 	double y1, y2;
-	if(call_mono_eq(x_guess_1,&y1) != 0)
+	if( call_mono_eq(x_guess_1, &y1) != 0 )
 	{
 		y1 = std::numeric_limits<double>::quiet_NaN();
 	}
-	if(call_mono_eq(x_guess_2,&y2) != 0)
+	if( call_mono_eq(x_guess_2, &y2) != 0 )
 	{
 		y2 = std::numeric_limits<double>::quiet_NaN();
 	}
+	
+	return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
+}
+
+int C_monotonic_eq_solver::solve(S_xy_pair solved_pair_1, S_xy_pair solved_pair_2, double y_target,
+	double &x_solved, double &tol_solved, int &iter_solved)
+{
+	// We could also call the equation before solving for an x value, so this solve method
+	//    allows us to pass in exactly 2 x-y pairs
+	// .... could improve this in future to accept a variable number of x-y pairs
+
+	// Set / reset vector that tracks calls to equation
+	ms_eq_call_tracker.resize(0);
+	ms_eq_call_tracker.reserve(m_iter_max);
+
+	// Get x & y values from solved_pairs
+	double x_guess_1 = solved_pair_1.x;
+	double x_guess_2 = solved_pair_2.x;
+
+	// Check that x guesses fall with bounds (set during initialization)
+	x_guess_1 = check_against_limits(x_guess_1);
+	x_guess_2 = check_against_limits(x_guess_2);
+
+	// Check that guesses are different
+	if( x_guess_1 == x_guess_2 )
+	{
+		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		iter_solved = 0;
+		return EQUAL_GUESS_VALUES;
+	}
+
+	double y1 = solved_pair_1.y;
+	double y2 = solved_pair_2.y;
+
+	return solver_core(x_guess_1, y1, x_guess_2, y2, y_target, x_solved, tol_solved, iter_solved);
+}
+
+int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_guess_2, double y2, double y_target,
+	double &x_solved, double &tol_solved, int &iter_solved)
+{
+	// At this point, upstream 'solve' methods should have:
+	// 1) Set/reset tracking vector
+	// 2) Checked X values
+	// 3) Found (but not checked) y values corresponding to each X value	
+	// *****************************************************************
 
 	// Check whether function returned real results
 	if( y1 != y1 && y2 != y2 )
