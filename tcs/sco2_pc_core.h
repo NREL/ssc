@@ -288,18 +288,33 @@ public:
 		double m_w_tip_ratio_1;	//[-] Max tip ratio at design, first stage
 		double m_w_tip_ratio_2;	//[-] Max tip ratio at design, 2nd stage
 
-		double m_phi_des;		//[-] Optimal flow coefficient
-		double m_phi_min;		//[-] Flow coefficient where compressor experiences surge
+		double m_phi_des;		//[-]
+		double m_phi_surge;		//[-]
+		double m_phi_max;		//[-]
 		int m_n_stages;			//[-]
 
 		S_design_solved()
 		{
 			m_D_rotor = m_D_rotor_2 = m_N_design = m_eta_design =
-				m_w_tip_ratio_1 = m_w_tip_ratio_2 = m_phi_min = m_phi_des = std::numeric_limits<double>::quiet_NaN();
+				m_w_tip_ratio_1 = m_w_tip_ratio_2 = m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
 
 			m_n_stages = -1;
 		}
 	};
+
+	struct S_od_inputs
+	{
+		double m_m_dot;		//[kg/s]
+		double m_rho_in;		//[kg/m^3]
+		double m_h_in;		//[kJ/kg]
+		double m_s_in;		//[kJ/kg-K]
+
+		S_od_inputs()
+		{
+			m_m_dot = m_rho_in = m_h_in = m_s_in = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	struct S_od_solved
 	{
 		double m_N;
@@ -309,13 +324,14 @@ public:
 		double m_w_tip_ratio;	//[-] Maximum of multiple stages
 		bool m_surge;
 
+		double m_T_out;			//[K] Compressor outlet temperature
 		double m_W_dot_in;		//[kWe] Power required to operate compressor. Expect positive value.
 		double m_surge_safety;	//[-] min of stages: Flow coefficient / min flow coefficient
 
 		S_od_solved()
 		{
 			m_N = m_eta = m_phi = m_phi_2 = m_w_tip_ratio = 
-				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+				m_T_out = m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
 			m_surge = false;
 		}
 	};
@@ -324,6 +340,7 @@ private:
 	S_design_parameters ms_des_par;
 	S_design_solved ms_des_solved;
 	S_od_solved ms_od_solved;
+	S_od_inputs ms_od_inputs;
 
 public:
 	~C_recompressor(){};
@@ -333,6 +350,20 @@ public:
 	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
 	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+
+	class C_mono_eq_phi_off_design : public C_monotonic_equation
+	{
+	private:
+		C_recompressor *mpc_recompressor;
+
+	public:
+		C_mono_eq_phi_off_design(C_recompressor *pc_recompressor)
+		{
+			mpc_recompressor = pc_recompressor;
+		}
+
+		virtual int operator()(double phi /*-*/, double *P_high /*kPa*/);
+	};
 
 	const S_design_solved * get_design_solved()
 	{
