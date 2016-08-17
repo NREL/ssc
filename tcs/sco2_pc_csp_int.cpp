@@ -164,6 +164,22 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy)
 
 }
 
+int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par)
+{
+	// Set-up off-design operation inputs
+	C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
+	sco2_rc_od_op_par.m_P_mc_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
+	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+	{	// Recompression Fraction
+		sco2_rc_od_op_par.m_recomp_frac = ms_des_solved.ms_rc_cycle_solved.m_recomp_frac;	//[-]
+	}
+	sco2_rc_od_op_par.m_phi_mc = ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
+	// Call off_design
+	int sco2_od_code = off_design(od_par, sco2_rc_od_op_par);
+
+	return -1;
+}
+
 int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 {
 	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
@@ -254,12 +270,21 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double eta_tip_ratio_scale = exp(-over_tip_ratio);
 	double eta_surge_mc_scale = exp(-over_surge_mc);
 	double eta_surge_rc_scale = exp(-over_surge_rc);
-	//double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*
-	//						eta_T_t_in_scale*
-	//						eta_P_high_scale*
-	//						eta_tip_ratio_scale*
-	//						eta_surge_mc_scale*
-	//						eta_surge_rc_scale;
+
+	int od_solve_code = 0;
+
+	// If a problem with the solved operation
+	//  then overwrite integer that code returns to calling program
+	if(over_T_t_in != 0.0)
+		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
+	else if(over_P_high != 0.0)
+		od_solve_code = E_OVER_PRESSURE;
+	else if(over_tip_ratio != 0.0)
+		od_solve_code = E_TIP_RATIO;
+	else if(over_surge_mc != 0.0)
+		od_solve_code = E_MC_SURGE;
+	else if(over_surge_rc != 0.0)
+		od_solve_code = E_RC_SURGE;
 
 	double scale_product = eta_T_t_in_scale*
 		eta_P_high_scale*
@@ -305,7 +330,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = over_P_high;
 	}
 
-	return 0;
+	return od_solve_code;
 }
 
 int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs)
@@ -472,7 +497,9 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__nl_opt_shell(const std::vector<d
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_code = off_design_core(eta_solved);
 
-	if(od_code != 0)
+	// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
+	if( !(od_code == 0 || od_code == E_TURBINE_INLET_OVER_TEMP || od_code == E_OVER_PRESSURE || 
+			od_code == E_TIP_RATIO || od_code == E_MC_SURGE || od_code == E_RC_SURGE) )
 		return 0.0;
 
 	return eta_solved;
