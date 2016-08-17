@@ -521,7 +521,9 @@ void C_HX_counterflow::od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/
 	int od_hx_code = od_hx_solver.solve(q_dot_guess_lower, q_dot_guess_upper, UA_target,
 		x_solved, tol_solved, iter_solved);
 
-	if( !(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR) )
+	// UA vs. q_dot is very nonlinear, with very large increases of UA as q_dot approaches q_dot_max
+	// As such, may not reach convergence on UA while the uncertainty on q_dot is very small, which should be ok
+	if( !(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS) )
 	{
 		throw(C_csp_exception("Off-design heat exchanger method failed"));
 	}
