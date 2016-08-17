@@ -156,6 +156,15 @@ public:
 	{
 		FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA
 	};
+
+	enum E_system_op_constraints
+	{
+		E_TURBINE_INLET_OVER_TEMP = -15,
+		E_OVER_PRESSURE,
+		E_TIP_RATIO,
+		E_MC_SURGE,
+		E_RC_SURGE
+	};
 	
 	C_sco2_recomp_csp();
 
@@ -199,6 +208,8 @@ public:
 	int off_design_opt(S_od_par od_par, int off_design_strategy);
 
 	int off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs);
+
+	int find_a_feasible_off_design_solution(S_od_par od_par);
 
 	int off_design_core(double & eta_solved);
 
