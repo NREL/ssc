@@ -82,7 +82,7 @@ OBJECTS = \
 	cmod_sco2_design_cycle.o \
 	cmod_sco2_csp_system.o \
 	cmod_sco2_csp_ud_pc_tables.o \
-	cmod_cec_inv_cg.o \
+	cmod_inv_cec_cg.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)

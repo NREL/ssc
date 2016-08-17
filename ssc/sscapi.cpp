@@ -85,7 +85,7 @@ extern module_entry_info
 	cm_entry_iscc_design_point,
 	cm_entry_battery,
    	cm_entry_lcoefcr,
-	cm_entry_cec_inv_cg;
+	cm_entry_inv_cec_cg;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -152,7 +152,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iscc_design_point,
 	&cm_entry_battery,
 	&cm_entry_lcoefcr,
-	&cm_entry_cec_inv_cg,
+	&cm_entry_inv_cec_cg,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
