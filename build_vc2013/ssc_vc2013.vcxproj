@@ -279,8 +279,12 @@
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath) $(SAMNTDIR)\deploy\$(Platform)
-copy $(OutDir)\$(TargetName).pdb $(SAMNTDIR)\deploy\$(Platform)</Command>
+      <Command>robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
+
+if %ERRORLEVEL% GEQ 8 (
+exit) else (
+exit 0    
+)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -306,8 +310,12 @@ copy $(OutDir)\$(TargetName).pdb $(SAMNTDIR)\deploy\$(Platform)</Command>
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetPath) $(SAMNTDIR)\deploy\$(Platform)
-copy $(OutDir)\$(TargetName).pdb $(SAMNTDIR)\deploy\$(Platform)</Command>
+      <Command>robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
+
+if %ERRORLEVEL% GEQ 8 (
+exit) else (
+exit 0    
+)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -321,6 +329,14 @@ copy $(OutDir)\$(TargetName).pdb $(SAMNTDIR)\deploy\$(Platform)</Command>
       <AdditionalDependencies>lpsolve.lib;solarpilot.lib;nlopt.lib;tcs.lib;shared.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
+    <PostBuildEvent>
+      <Command>robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
+
+if %ERRORLEVEL% GEQ 8 (
+exit) else (
+exit 0    
+)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -335,6 +351,14 @@ copy $(OutDir)\$(TargetName).pdb $(SAMNTDIR)\deploy\$(Platform)</Command>
       <StackReserveSize>
       </StackReserveSize>
     </Link>
+    <PostBuildEvent>
+      <Command>robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
+
+if %ERRORLEVEL% GEQ 8 (
+exit) else (
+exit 0    
+)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug32|Win32'">
     <ClCompile>
