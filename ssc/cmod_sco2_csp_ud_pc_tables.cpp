@@ -202,7 +202,7 @@ public:
 		assign("rc_N_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
 		assign("rc_D1", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
 		assign("rc_D2", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
-		assign("rc_phi_surge", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_min );//[-]
+//		assign("rc_phi_surge", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_min );//[-]
 			// Turbine
 		assign("t_nu_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
