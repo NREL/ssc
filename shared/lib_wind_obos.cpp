@@ -242,7 +242,7 @@ double wobos::MooringSys()
 {
 	double moorLeng;//stores the length of the mooring
 
-	if (moorDia == 0)//check if mooring diameter was given as input
+	if (moorDia <= 0)//check if mooring diameter was given as input
 	{
 		//the following if-else section selects required standard mooring sizes base on turbine rating
 		if (-0.0004*pow(turbR, 2) + 0.0132*turbR + 0.0536 <= 0.09)
@@ -280,7 +280,7 @@ double wobos::MooringSys()
 		anchorCost = moorLines*(moorBL / 9.806 / 20 * 2000);
 	}
 	//select appropriate mooring line cost factor depending on the line diameter
-	if ((moorDia == 0.09) && (moorCR == 0))
+	if ((moorDia == 0.09) && (moorCR <= 0))
 	{
 		moorCR = 399;
 	}
