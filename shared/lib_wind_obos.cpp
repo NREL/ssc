@@ -154,6 +154,7 @@ double wobos::SubstructTotalMass()
 	{
 	case JACKET:
 		return jlatticeM + jtransM + jpileM + sSteelM;
+		break;
 	case SPAR:
 		return spTapColM + spStifColM + sSteelM + ballM;
 		break;
@@ -263,7 +264,7 @@ double wobos::MooringSys()
 	{
 		moorLeng = moorLines*((0.0002*pow(waterD, 2) + 1.264*waterD + 47.776) + deaFixLeng);
 	}
-	else if (anchor == SUCTIONPILE)
+	else //(anchor == SUCTIONPILE)
 	{
 		moorLeng = moorLines*(0.0002*pow(waterD, 2) + 1.264*waterD + 47.776);
 	}
@@ -275,22 +276,22 @@ double wobos::MooringSys()
 	{
 		anchorCost = moorLines*(sqrt(moorBL / 9.806 / 1250) * 150000);
 	}
-	else if (anchor == DRAGEMBEDMENT)
+	else //(anchor == DRAGEMBEDMENT)
 	{
 		anchorCost = moorLines*(moorBL / 9.806 / 20 * 2000);
 	}
 	//select appropriate mooring line cost factor depending on the line diameter
-	if ((moorDia == 0.09) && (moorCR <= 0))
-	{
-		moorCR = 399;
-	}
-	else if (moorDia == 0.12)
+	if (moorDia == 0.12)
 	{
 		moorCR = 721;
 	}
 	else if (moorDia == 0.15)
 	{
 		moorCR = 1088;
+	}
+	else
+	{
+		moorCR = 399;
 	}
 	double moorSysCost = anchorCost + moorLeng*moorCR;
 
@@ -463,7 +464,7 @@ double wobos::Cable1Length(double& nTurbInter1)
 	{
 		return (arrayY*rotorD + waterD * 2)*(nTurbInter1 / 2)*(1 + exCabFac);
 	}
-	else if ((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
+	else //((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
 	{
 		return (2 * freeCabLeng + fixCabLeng)*(nTurbInter1 / 2)*(1 + exCabFac);
 	}
@@ -509,7 +510,7 @@ double wobos::Cable2Length(double& nTurbCab1, double& nTurbCab2, double& fullStr
 			((rotorD*arrayY) + sqrt(pow(((rotorD*arrayX)*(stringFac - 1)), 2) +
 			pow((rotorD*arrayY), 2)))) / 2 + stringFac*waterD))*(exCabFac + 1);
 	}
-	else if ((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
+	else //((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
 	{
 		return (((2 * freeCabLeng + fixCabLeng)*max1*fullStrings + max2) + nSubstation
 			*(stringFac*((2 * freeCabLeng + fixCabLeng) + sqrt(pow(((stringFac - 1)
@@ -534,7 +535,7 @@ double wobos::ExportCableLength(double& nExportCab)
 	{
 		return (distShore * 1000 + waterD)*nExportCab*1.1;
 	}
-	else if ((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
+	else //((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
 	{
 		return (distShore * 1000 + freeCabLeng + 500)*nExportCab*1.1;
 	}
@@ -778,7 +779,7 @@ double wobos::MooringSysInstall()
 	{
 		moorTime = 5 + waterD*moorTimeFac;
 	}
-	else if (anchor == SUCTIONPILE)
+	else // (anchor == SUCTIONPILE)
 	{
 		moorTime = 11 + waterD*moorTimeFac;
 	}
@@ -906,7 +907,6 @@ double wobos::SubPerTrip()
 double wobos::TurbineInstall()
 {
 	double sum;
-	double sum2;
 	//check turbine installation method
 	switch (turbInstallMethod)
 	{
@@ -923,21 +923,19 @@ double wobos::TurbineInstall()
 	//check tower installation method
 	if (towerInstallMethod == TWOPIECE)
 	{
-		sum = sum + boltTower;
+		sum += boltTower;
 	}
 	//check if floating substructure is selected
 	if ((substructure == SEMISUBMERSIBLE) || (substructure == SPAR))
 	{
-		sum = sum - vesselPosTurb + turbFasten;
+		sum -= vesselPosTurb + turbFasten;
 	}
+
+	double sum2 = 0;
 	//check installation vessel strategy
 	if (installStrategy == PRIMARYVESSEL)
 	{
 		sum2 = (ceil(nTurb / nTurbPerTrip))*(distPort / ((turbInstVessel[11] * 1852) / 1000)) * 2 + turbFasten*nTurb;
-	}
-	else
-	{
-		sum2 = 0;
 	}
 	if (nTurbPerTrip <= 0)//ensures turbines per trip is greater than or equal 1
 	{
@@ -956,7 +954,7 @@ double wobos::TurbineInstall()
 		return ceil(sum*(1 / (1 - turbCont))*nTurb / 24 + ((nTurb / 24)*(1 / (1 - substructCont))*
 			((prepTow + ssBall + ssMoorCheck + ssMoorCon) + (distPort / turbInstVessel[21]))));
 	}
-	else if ((substructure == MONOPILE) || (substructure == JACKET))
+	else // ((substructure == MONOPILE) || (substructure == JACKET))
 	{
 		return ceil((((sum + ((waterD + 10) / (turbInstVessel[6] * 60)) * 2)*nTurb + (nTurb
 			- ceil((nTurb / nTurbPerTrip)))*(arrayY*rotorD) / (turbInstVessel[11] * 1852)
@@ -968,8 +966,7 @@ double wobos::TurbineInstall()
 //calculate the total duration in days required to install all substructures
 double wobos::SubstructureInstTime()
 {
-	double fac1;
-	double sum1;
+	double fac1 = 0;
 	//check installation vessel strategy
 	if (installStrategy == PRIMARYVESSEL)
 	{
@@ -986,15 +983,14 @@ double wobos::SubstructureInstTime()
 			break;
 		}
 	}
-	else
-	{
-		fac1 = 0;
-	}
+
 	if (nSubPerTrip <= 0)//ensures substructures per trip is greater than or equal to 1
 	{
 		nSubPerTrip = 1;
 	}
+
 	//check substructure type
+	double sum1;
 	switch (substructure)
 	{
 	case JACKET:
@@ -1064,24 +1060,20 @@ double wobos::ArrayCabInstTime(double& cab1Leng, double& cab2Leng, double& inter
 	double& cab2SecPerTrip, double& fullStrings, double& nTurbPS,
 	double& nTurbCab1, double nTurbCab2)
 {
-	double fac1;
-	double fac2;
-
 	double max1 = nTurbCab2 - nTurbCab1;
     if(max1 <= 0) max1 = 0;
 	double max2 = nTurbPS - nTurbCab1 - 1;
     if(max2 <= 0) max2 = 0;
 
 	//check if cable is buried or not
+	double fac1 = 0;
 	if (buryDepth > 0)
 	{
 		fac1 = 1 / buryRate;
 	}
-	else
-	{
-		fac1 = 0;
-	}
+
 	//check if a partial string exists
+	double fac2;
 	if (nTurbPS == 0)
 	{
 		fac2 = (fullStrings*(fullStrings + 1)) / 2;
@@ -1115,15 +1107,11 @@ double wobos::ExportCabSecPerTrip(double& expCabSecM)
 //calculate the total duration in days required to install the export cable system
 double wobos::ExportCabInstallTime(double& expCabSecPerTrip, double& nExportCab)
 {
-	double fac;
+	double fac = 0;
 	//check if cable is buried or not
 	if (buryDepth > 0)
 	{
 		fac = 1 / buryRate;
-	}
-	else
-	{
-		fac = 0;
 	}
 
 	return ceil(ceil((ceil(nExportCab / expCabSecPerTrip)*(distPort /
@@ -1209,6 +1197,7 @@ void wobos::TurbInstCost()
 
 
 void wobos::SubInstCost()
+//looks like some entries don't get filled?
 {
 	//check installStrategy
 	if ((installStrategy == FEEDERBARGE) || (substructure == SPAR))
@@ -1276,6 +1265,7 @@ void wobos::SubInstCost()
 
 
 void wobos::ElectricalInstCost()
+//looks like some entries don't get filled?
 {
 	elecCostsByVessel.resize((5 + elecSupportVessels.size()));//size cost vector to fit all possible vessels
 	for (size_t i = 0; i < elecCostsByVessel.size(); i++)
@@ -1307,6 +1297,7 @@ void wobos::ElectricalInstCost()
 
 
 void wobos::VesselMobDemobCost()
+//looks like some entries don't get filled?
 {
 	//size cost vector to fit all support vessels for entire installation
 	mobDemobCostByVessel.resize(subSupportVessels.size() + turbSupportVessels.size() + elecSupportVessels.size() + 10);
@@ -1963,11 +1954,11 @@ void wobos::run()
 	rnaM = RNAMass();
 	towerD = TowerDiameter();
 	towerM = TowerMass();
-	if (mpileL <= 0)
+	if (mpileL <= 0) //assign monopile length if it is not assigned
 	{
 		mpileL = MonopileLength();
 	}
-	if (mpileD <= 0)
+	if (mpileD <= 0) //assign monopile depth if it is not assigned
 	{
 		mpileD = turbR;
 	}
