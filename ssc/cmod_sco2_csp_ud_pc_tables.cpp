@@ -202,7 +202,7 @@ public:
 		assign("rc_N_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
 		assign("rc_D1", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
 		assign("rc_D2", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
-//		assign("rc_phi_surge", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_min );//[-]
+		assign("rc_phi_surge", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge );//[-]
 			// Turbine
 		assign("t_nu_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
@@ -241,6 +241,17 @@ public:
 		double m_dot_htf_ND_low = as_double("m_dot_htf_ND_low");	//[-]
 		double m_dot_htf_ND_high = as_double("m_dot_htf_ND_high");	//[-]
 		int n_m_dot_htf_ND_in = as_integer("n_m_dot_htf_ND");			//[-]
+
+
+		
+		//C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
+		//sco2_rc_od_par.m_m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;		//[kg/s]
+		//sco2_rc_od_par.m_T_amb = 273.15;				//[K]
+		//sco2_rc_od_par.m_T_htf_hot = 720.0+273.15;		//[K]
+		//
+		//int sco2_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA);
+
+
 
 		util::matrix_t<double> T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics;
 
