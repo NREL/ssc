@@ -11,7 +11,7 @@ static var_info vtab_inv_cec_cg[] = {
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_paco", "Rated max output", "W", "", "", "*", "", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_power_units", "Sample data units for power output", "0=W,1=kW", "", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_sample_power_units", "Sample data units for power output", "0=W,1=kW", "", "", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	// each sample has 18x3 entries:
 	// 6 output power percentages 10%, 20%, 30%, 50%, 75%, 100% of rated power
 	// 3 voltages Vmin, Vnom, Vmax that the 6 output powers measured at
@@ -36,7 +36,6 @@ static var_info vtab_inv_cec_cg[] = {
 	*/
 
 	// intermediate outputs for testing and validation
-//	{ SSC_OUTPUT, SSC_MATRIX, "inv_cec_cg_J87_L91", "Excel cells J87:L91", "", "", "", "*", "", "" },
 
 	// test data reorganized
 	{ SSC_OUTPUT, SSC_MATRIX, "inv_cec_cg_Vmin", "Vmin for least squares fit", "", "", "", "*", "", "" },
@@ -97,6 +96,7 @@ public:
 		size_t count, i, j, nrows, ncols; 
 		// rated output ac
 		double Paco = as_double("inv_cec_cg_paco");
+		bool kW_units = (as_integer("inv_cec_cg_sample_power_units") == 1);
 
 		// 6 columns period, tier, max usage, max usage units, buy, sell
 		ssc_number_t *inv_cec_cg_test_samples_in = as_matrix("inv_cec_cg_test_samples", &nrows, &ncols);
@@ -117,13 +117,7 @@ public:
 		util::matrix_t<float> inv_cec_cg_test_samples(nrows, ncols);
 		inv_cec_cg_test_samples.assign(inv_cec_cg_test_samples_in, nrows, ncols);
 
-//		util::matrix_t<ssc_number_t> &inv_cec_cg_J87_L91 = allocate_matrix("inv_cec_cg_J87_L91", 5, 3);
 		ssc_number_t vdc = 0, Pout = 0, eff = 0, Pin=0, Pin2=0;
-//		ssc_number_t Vmin_Pout_avg = 0, Vmin_Pin_avg = 0, Vmin_Pin2_avg = 0;
-//		ssc_number_t Vnom_Pout_avg = 0, Vnom_Pin_avg = 0, Vnom_Pin2_avg = 0;
-//		ssc_number_t Vmax_Pout_avg = 0, Vmax_Pin_avg = 0, Vmax_Pin2_avg = 0;
-//		for (size_t k = 0; k < inv_cec_cg_J87_L91.ncols(); k++)
-//			inv_cec_cg_J87_L91.at(0, k) = 0.0;
 
 		// set Pout, Pin=Pout/eff and Pin^2 for least squares fit
 		// 6 is for the required power output percentages at each voltage for each sample
@@ -150,62 +144,36 @@ public:
 			{
 				vdc = inv_cec_cg_test_samples.at(i, j*columns_per_sample + 1);
 				Pout = inv_cec_cg_test_samples.at(i, j*columns_per_sample);
+				if (kW_units) Pout *= 1000; // kW to W
 				eff = inv_cec_cg_test_samples.at(i, j*columns_per_sample+2);
 				Pin = Pout;
 				if (eff != 0.0f) Pin = 100.0*Pout / eff;
 				Pin2 = Pin*Pin;
 				if (i < 6) // Vmin 0 offset
 				{
-//					inv_cec_cg_J87_L91.at(0, 0) += vdc;
 					inv_cec_cg_Vdc[0] += vdc;
 					inv_cec_cg_Vmin.at(j * 6 + i, 0) = Pout;
 					inv_cec_cg_Vmin.at(j * 6 + i, 1) = Pin;
 					inv_cec_cg_Vmin.at(j * 6 + i, 2) = Pin2;
-					//Vmin_Pout_avg += Pout;
-					//Vmin_Pin_avg += Pin;
-					//Vmin_Pin2_avg += Pin2;
 				}
 				else if (i < 12) // Vnom 6 offset 
 				{
-//					inv_cec_cg_J87_L91.at(0, 1) += vdc;
 					inv_cec_cg_Vdc[1] += vdc;
 					inv_cec_cg_Vnom.at(j * 6 + i - 6, 0) = Pout;
 					inv_cec_cg_Vnom.at(j * 6 + i-6, 1) = Pin;
 					inv_cec_cg_Vnom.at(j * 6 + i-6, 2) = Pin2;
-					//Vnom_Pout_avg += Pout;
-					//Vnom_Pin_avg += Pin;
-					//Vnom_Pin2_avg += Pin2;
 				}
 				else // Vmax 12 offset
 				{
-//					inv_cec_cg_J87_L91.at(0, 2) += vdc;
 					inv_cec_cg_Vdc[2] += vdc;
 					inv_cec_cg_Vmax.at(j * 6 + i - 12, 0) = Pout;
 					inv_cec_cg_Vmax.at(j * 6 + i - 12, 1) = Pin;
 					inv_cec_cg_Vmax.at(j * 6 + i - 12, 2) = Pin2;
-					//Vmax_Pout_avg += Pout;
-					//Vmax_Pin_avg += Pin;
-					//Vmax_Pin2_avg += Pin2;
 				}
 			}
 		}
 		
 		
-
-		/*
-		// do simple least square fit per CoefGenerator Worksheet
-		// y=Pout, x1=Pin=Pout/eff, x2=Pin^2
-		// 6 output power ranges for each Vmin, Vnom and Vmax for each sample
-		Vmin_Pout_avg /= (6 * num_samples);
-		Vmin_Pin_avg /= (6 * num_samples);
-		Vmin_Pin2_avg /= (6 * num_samples);
-		Vnom_Pout_avg /= (6 * num_samples);
-		Vnom_Pin_avg /= (6 * num_samples);
-		Vnom_Pin2_avg /= (6 * num_samples);
-		Vmax_Pout_avg /= (6 * num_samples);
-		Vmax_Pin_avg /= (6 * num_samples);
-		Vmax_Pin2_avg /= (6 * num_samples);
-		*/
 
 		ssc_number_t *inv_cec_cg_Vmin_abc = allocate("inv_cec_cg_Vmin_abc", 3);
 		ssc_number_t *inv_cec_cg_Vnom_abc = allocate("inv_cec_cg_Vnom_abc", 3);
@@ -275,14 +243,10 @@ public:
 		//Vdc (Vmin, Vnom, Vmax)
 		for (i = 0; i < 3;i++)
 			inv_cec_cg_Vdc[i] /= (6 * num_samples);
-//		for (size_t k = 0; k < inv_cec_cg_J87_L91.ncols(); k++)
-//			inv_cec_cg_J87_L91.at(0, k) /= (6 * num_samples);
 
 		// Vdc-Vnom
 		for (i = 0; i < 3; i++)
 			inv_cec_cg_Vdc_Vnom[i] = inv_cec_cg_Vdc[i] - inv_cec_cg_Vdc[1];
-//		for (size_t k = 0; k < inv_cec_cg_J87_L91.ncols(); k++)
-//			inv_cec_cg_J87_L91.at(1, k) = inv_cec_cg_J87_L91.at(0, k) - inv_cec_cg_J87_L91.at(0, 1);
 
 		ssc_number_t a, b, c;
 		// Pdco and Psco and C0
