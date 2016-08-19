@@ -279,7 +279,10 @@
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
+      <Command>copy $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
+copy $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+
+robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
 
 if %ERRORLEVEL% GEQ 8 (
 exit) else (
@@ -310,7 +313,10 @@ exit 0
       </StackReserveSize>
     </Link>
     <PostBuildEvent>
-      <Command>robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
+      <Command>copy $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc.dll $(SAMNTDIR)\deploy\$(Platform)
+copy $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ssc.pdb $(SAMNTDIR)\deploy\$(Platform)\
+
+robocopy $(WEXDIR)\build_vc2013\libcurl_ssl_$(Platform)\bin $(SSCDIR)\build_vc2013\$(Platform)\$(Configuration)\ /E /XC /XN /XO /XX 
 
 if %ERRORLEVEL% GEQ 8 (
 exit) else (
