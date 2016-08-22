@@ -25,6 +25,8 @@
 
 static bool ssc_mspt_solarpilot_callback(simulation_info *siminfo, void *data);
 
+static bool ssc_mspt_udpc_progress(void *data, double percent, std::string msg);
+
 static bool ssc_mspt_sim_progress(void *data, double percent, C_csp_messages *csp_messages, float time_sec);
 
 static var_info _cm_vtab_tcsmolten_salt[] = {
@@ -1104,13 +1106,16 @@ public:
 				// Get user-defined power cycle parameters
 				double T_htf_hot_low = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
 				double T_htf_hot_high = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 20.0;	//[C]
-				int n_T_htf_hot_in = floor((T_htf_hot_high - T_htf_hot_low)/2.0)+1;			//[-]
+				//int n_T_htf_hot_in = floor((T_htf_hot_high - T_htf_hot_low)/2.0)+1;			//[-]
+				int n_T_htf_hot_in = 21;			//[-]
 				double T_amb_low = 0.0;				//[C]
 				double T_amb_high = 55.0;			//[C]
-				int n_T_amb_in = floor((T_amb_high - T_amb_low)/2.5)+1;					//[-]
-				double m_dot_htf_ND_low = 0.45;	//[-]
-				double m_dot_htf_ND_high = 1.25;	//[-]
-				int n_m_dot_htf_ND_in = floor((m_dot_htf_ND_high - m_dot_htf_ND_low)/0.025)+1;			//[-]
+				//int n_T_amb_in = floor((T_amb_high - T_amb_low)/2.5)+1;					//[-]
+				int n_T_amb_in = 25;				//[-]
+				double m_dot_htf_ND_low = as_double("cycle_cutoff_frac") - 0.01;	//[-]
+				double m_dot_htf_ND_high = as_double("cycle_max_frac") + 0.01;		//[-]
+				//int n_m_dot_htf_ND_in = floor((m_dot_htf_ND_high - m_dot_htf_ND_low)/0.025)+1;			//[-]
+				int n_m_dot_htf_ND_in = 31;
 
 				util::matrix_t<double> T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics;
 
@@ -1630,6 +1635,16 @@ static bool ssc_mspt_solarpilot_callback( simulation_info *siminfo, void *data )
 	float simprogress = (float)siminfo->getCurrentSimulation() / (float)(max(siminfo->getTotalSimulationCount(), 1));
 
 	return cm->relay_message(*siminfo->getSimulationNotices(), simprogress*100.0f);
+}
+
+static bool ssc_mspt_udpc_progress( void *data, double percent, std::string msg)
+{
+	cm_tcsmolten_salt *cm = static_cast<cm_tcsmolten_salt*> (data);
+
+	if( !cm )
+		return false;
+
+	return cm->relay_message(msg, percent);	
 }
 
 static bool ssc_mspt_sim_progress( void *data, double percent, C_csp_messages *csp_msg, float time_sec )
