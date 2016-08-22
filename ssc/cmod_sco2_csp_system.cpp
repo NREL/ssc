@@ -27,44 +27,87 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "fan_power_frac",       "Fraction of net cycle power consumed by air cooler fan", "",           "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
 	// ** Off-design Inputs **
-	{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_htf_fracs",   "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_ARRAY,   "m_dot_htf_fracs_in",   "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_htf_fracs=1",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "is_T_amb_od",          "0 = N analysis of off design ambient temperature, 1 = Yes", "",        "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_ARRAY,   "T_amb_od_in",          "Array of ambient temperatures for off-design parametric","C",          "",    "",      "is_T_amb_od=1",     "",       "" },
+	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
+
+	//{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_htf_fracs",   "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
+	//{ SSC_INPUT,  SSC_ARRAY,   "m_dot_htf_fracs_in",   "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_htf_fracs=1",     "",       "" },
+	//{ SSC_INPUT,  SSC_NUMBER,  "is_T_amb_od",          "0 = N analysis of off design ambient temperature, 1 = Yes", "",        "",    "",      "*",     "",       "" },
+	//{ SSC_INPUT,  SSC_ARRAY,   "T_amb_od_in",          "Array of ambient temperatures for off-design parametric","C",          "",    "",      "is_T_amb_od=1",     "",       "" },
 	// ** Design OUTPUTS **
 		// System Design Solution
-	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold_des",       "HTF design colde temperature (PHX outlet)",              "C",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold_des",       "HTF design cold temperature (PHX outlet)",               "C",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "m_dot_htf_des",        "HTF mass flow rate",                                     "kg/s",       "",    "",      "*",     "",       "" },
-		// Cycle Design Solution																				 
 	{ SSC_OUTPUT, SSC_NUMBER,  "eta_thermal_calc",     "Calculated cycle thermal efficiency",                    "-",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "m_dot_co2_full",       "CO2 mass flow rate through HTR, PHX, turbine",           "kg/s",       "",    "",      "*",     "",       "" },	
+	{ SSC_OUTPUT, SSC_NUMBER,  "recomp_frac",          "Recompression fraction",                                 "-",          "",    "",      "*",     "",       "" },
+		// Compressor
+	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_in",            "Compressor inlet pressure",                              "MPa",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_out",           "Compressor outlet pressure",                             "MPa",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_des",           "Compressor design flow coefficient",					 "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_tip_ratio_des",     "Compressor design tip speed ratio",                      "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_n_stages",          "Compressor stages",                                      "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_N_des",             "Compressor design shaft speed",                          "rpm",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_D",                 "Compressor diameter",                                    "m",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "*",     "",       "" },
+		// Recompressor
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_des",           "Recompressor design flow coefficient",                   "",           "",    "",      "*",     "",       "" },					
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio1_des",    "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio2_des",    "Recompressor 2nd stage design tip speed ratio",          "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_n_stages",          "Recompressor stages",                                    "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_N_des",             "Recompressor design shaft speed",                        "rpm",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D1",                "Recompressor first stage diameter",                      "m",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D2",                "Recompressor second stage diameter",                     "m",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "*",     "",       "" },
+		// Turbine
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_tip_ratio_des",	   "Turbine design tip speed ratio",                         "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_N_des",			   "Turbine design shaft speed",	                         "rpm",        "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_D",                  "Turbine diameter",                                       "m",          "",    "",      "*",     "",       "" },
+		// Recuperators																				 
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_recup_total",       "Total recuperator UA",                                   "kW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_LTR",               "Low temp recuperator UA",                                "kW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_HTR",               "High temp recuperator UA",                               "kW/K",       "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "recomp_frac",          "Recompression fraction",                                 "-",          "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_in",            "Compressor inlet pressure",                              "MPa",        "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_out",           "Compressor outlet pressure",                             "MPa",        "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "T_co2_PHX_in",         "CO2 temperature at PHX inlet",                           "C",          "",    "",      "*",     "",       "" },	
 		// PHX Design Solution
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_PHX",               "PHX Conductance",                                        "kW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_PHX",              "PHX effectiveness",                                      "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_PHX",              "PHX NTU",                                                "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "T_co2_PHX_in",         "CO2 temperature at PHX inlet",                           "C",          "",    "",      "*",     "",       "" },	
+	
 		// Air Cooler Design
 	// ?????
 
-	// ** Off-Design Outputs
-	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_htf_fracs",      "Normalized mass flow rate",                              "",           "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_od",             "Ambient temperatures",                                   "C",          "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_hot_od",         "HTF hot temperatures",                                   "C",          "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "P_comp_in_od",         "Main compressor inlet pressures",                        "MPa",        "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "N_mc_od",              "Main compressor speed",                                  "rpm",        "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "recomp_frac_od",       "Recompression fractions",                                "",           "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "",    "",      "*",     "",       "" },
-
-
-
-
-
+	// ** Off-Design Outputs **
+		// Parameters
+	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_htf_fracs",      "Normalized mass flow rate",                              "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_od",             "Ambient temperatures",                                   "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_hot_od",         "HTF hot temperatures",                                   "C",          "",    "",      "",     "",       "" },
+		// Cycle control parameters
+	{ SSC_OUTPUT, SSC_ARRAY,   "od_opt_obj_code",      "1: MAX_ETA, 2: MAX_POWER",                               "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "P_comp_in_od",         "Main compressor inlet pressures",                        "MPa",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "mc_phi_od",            "Main compressor flow coefficient",                       "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "recomp_frac_od",       "Recompression fractions",                                "",           "",    "",      "",     "",       "" },
+		// System solution
+	{ SSC_OUTPUT, SSC_ARRAY,   "eta_thermal_od",       "Off-design cycle thermal efficiency",                    "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "P_mc_out",             "Off-design high side pressure",                          "MPa",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_htf_cold_od",        "Off-design cold return temperature",                     "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "m_dot_co2_full_od",    "Off-design mass flow rate through turbine",              "kg/s",       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "W_dot_net_od",         "Off-design cycle net output (no cooling pars)",          "MWe",        "",    "",      "",     "",       "" },
+		// Compressor
+	{ SSC_OUTPUT, SSC_ARRAY,   "N_mc_od",              "Off-design main compressor speed",                       "rpm",        "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "mc_tip_ratio_od",      "Off-design main compressor tip speed ratio",             "-",          "",    "",      "",     "",       "" },
+		// Recompressor
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_phi_1_od",          "Off-design recompressor 1st stage flow coefficient",     "-",		   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_phi_2_od",          "Off-design recompressor 2nd stage flow coefficient",     "-",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_tip_ratio_od",      "Off-design recompressor tip speed ratio",                "-",		   "",    "",      "",     "",       "" },
+		// Turbine																											   
+	{ SSC_OUTPUT, SSC_ARRAY,   "t_nu_od",              "Off-design turbine velocity ratio",	                     "-",	       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "t_N_od",               "Off-design turbine shaft speed",	                     "rpm",	       "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "t_tip_ratio_od",       "Off-design turbine tip speed ratio",                     "-",          "",    "",      "",     "",       "" },
+		// PHX 
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
 
 	var_info_invalid };
 
@@ -157,27 +200,49 @@ public:
 		}
 
 		// Set SSC design outputs
-			// System
+		// System
 		double m_dot_htf_design = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
 		double T_htf_cold_calc = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
-		assign("T_htf_cold_des",T_htf_cold_calc-273.15);		//[C] convert from K
-		assign("m_dot_htf_des",m_dot_htf_design);				//[kg/s]
-			// Cycle
-		assign("eta_thermal_calc",sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);	//[-]
+		assign("T_htf_cold_des", T_htf_cold_calc - 273.15);		//[C] convert from K
+		assign("m_dot_htf_des", m_dot_htf_design);				//[kg/s]
+		assign("eta_thermal_calc", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);	//[-]
 		assign("m_dot_co2_full", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);		//[kg/s]
+		assign("recomp_frac", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);		//[-]
+		// Compressor
+		assign("P_comp_in", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[1 - 1] / 1000.0);		//[MPa] convert from kPa
+		assign("P_comp_out", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[2 - 1] / 1000.0);		//[MPa] convert from kPa
+		assign("mc_phi_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
+		assign("mc_tip_ratio_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_w_tip_ratio);		//[-]
+		assign("mc_n_stages", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_n_stages);	//[-]
+		assign("mc_N_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);	//[rpm]
+		assign("mc_D", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_D_rotor);			//[m]
+		assign("mc_phi_surge", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);	//[-]
+		// Recompressor
+		assign("rc_phi_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_des);	//[-]
+		assign("rc_tip_ratio1_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_1);	//[-]
+		assign("rc_tip_ratio2_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_2);	//[-]
+		assign("rc_n_stages", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_n_stages);	//[-]
+		assign("rc_N_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
+		assign("rc_D1", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
+		assign("rc_D2", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
+		assign("rc_phi_surge", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge);//[-]
+		// Turbine
+		assign("t_nu_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
+		assign("t_tip_ratio_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
+		assign("t_N_des", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
+		assign("t_D", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_D_rotor);                  //[m]
+		// Recuperator
 		double UA_LTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_LT;		//[kW/K]
 		double UA_HTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
-		assign("UA_recup_total",UA_LTR + UA_HTR);		//[kW/K]
-		assign("UA_LTR",UA_LTR);						//[kW/K]
-		assign("UA_HTR",UA_HTR);						//[kW/K]
-		assign("recomp_frac",sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);		//[-]
-		assign("P_comp_in",sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[1-1]/1000.0);		//[MPa] convert from kPa
-		assign("P_comp_out",sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[2-1]/1000.0);	//[MPa] convert from kPa
-		assign("T_co2_PHX_in",sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT]-273.15);	//[C]
+		assign("UA_recup_total", UA_LTR + UA_HTR);		//[kW/K]
+		assign("UA_LTR", UA_LTR);						//[kW/K]
+		assign("UA_HTR", UA_HTR);						//[kW/K]
 			// PHX
 		assign("UA_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_UA_design_total);			//[kW/K]
 		assign("eff_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 		assign("NTU_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
+		assign("T_co2_PHX_in", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15);	//[C]
+
 
 		// Check that off-design model matches design-point with same operation inputs
 		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
@@ -190,8 +255,11 @@ public:
 		sco2_rc_od_par.m_T_htf_hot = T_htf_hot_in_des - T_htf_hot_in_offset;	//[K]	
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf_ND*m_dot_htf_des;				//[kg/s]
 		sco2_rc_od_par.m_T_amb = 273;										//[K]
-			// Set-up off-design operation inputs
+			
+		
 		C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
+			// Set-up one-off off-design operation inputs
+		// ***************************************************************************
 		sco2_rc_od_op_par.m_P_mc_in = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
 		if( sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc )
 		{	// Recompression Fraction
@@ -200,10 +268,15 @@ public:
 		sco2_rc_od_op_par.m_phi_mc = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
 			// Call off_design
 		int sco2_od_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
+		// ***************************************************************************
+		// ***************************************************************************
+
+
+
 
 		// Set up parametric sweep of operation inputs
-		int n_P_mc_in = 5;
-		std::vector<double> v_P_mc_in(n_P_mc_in);	//[kPa]
+		//int n_P_mc_in = 5;
+		//std::vector<double> v_P_mc_in(n_P_mc_in);	//[kPa]
 		//v_P_mc_in[0] = sco2_rc_od_op_par.m_P_mc_in - 1000.0;	//[kPa]
 		//v_P_mc_in[1] = sco2_rc_od_op_par.m_P_mc_in - 500.0;	//[kPa]
 		//v_P_mc_in[2] = sco2_rc_od_op_par.m_P_mc_in;				//[kPa]
@@ -245,75 +318,74 @@ public:
 		//	}		
 		//}
 
-		// Set up off-design analysis
-		bool is_m_dot_fracs = as_boolean("is_m_dot_htf_fracs");
-		bool is_T_amb_od = as_boolean("is_T_amb_od");
-
-		size_t n_m_dot_fracs = 1;
-		size_t n_T_amb_od = 1;
-
-		std::vector<double> m_dot_htf_fracs;
-		std::vector<double> T_amb_od;
-
-		if( is_m_dot_fracs )
-		{
-			ssc_number_t *p_m_dot_htf_fracs = as_array("m_dot_htf_fracs_in", &n_m_dot_fracs);
-			m_dot_htf_fracs.resize(n_m_dot_fracs);
-			for( int i = 0; i < n_m_dot_fracs; i++ )
-				m_dot_htf_fracs[i] = (double) p_m_dot_htf_fracs[i];
-		}
-		else
-		{
-			m_dot_htf_fracs.resize(1);
-			m_dot_htf_fracs[0] = 1.0;		//[-]
-		}
 		
-		if( is_T_amb_od )
+		// Set up off-design analysis
+		util::matrix_t<double> od_cases = as_matrix("od_cases");
+
+		// Check if off cases exist and correctly formatted
+		int n_od_cols = od_cases.ncols();
+		int n_od_runs = od_cases.nrows();
+
+		if( n_od_cols != 4 && n_od_runs == 1 )
 		{
-			ssc_number_t *p_T_amb_od = as_array("T_amb_od_in", &n_T_amb_od);
-			T_amb_od.resize(n_T_amb_od);
-			for( int i = 0; i < n_T_amb_od; i++ )
-				T_amb_od[i] = (double) p_T_amb_od[i];
-		}
-		else
-		{
+			// No off-design cases specified
+			log("No off-design cases specified");
 			return;
-			
-			T_amb_od.resize(1);
-			T_amb_od[0] = as_double("T_amb_des");	//[C]
+		}
+		if( n_od_cols != 4 && n_od_runs > 1 )
+		{
+			std::string err_msg = util::format("The matrix of off design cases requires 3 columns. The entered matrix has %d columns", n_od_cols);
+			log(err_msg);
+			return;
 		}
 
-		int n_od_runs = n_m_dot_fracs*n_T_amb_od;
 			// Off-design parameters
 		ssc_number_t *p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
 		ssc_number_t *p_T_amb_od = allocate("T_amb_od", n_od_runs);
 		ssc_number_t *p_T_htf_hot_od = allocate("T_htf_hot_od", n_od_runs);
 			// Optimized control parameters
+		ssc_number_t *p_od_opt_obj_code = allocate("od_opt_obj_code", n_od_runs);
 		ssc_number_t *p_P_comp_in_od = allocate("P_comp_in_od", n_od_runs);
-		ssc_number_t *p_N_mc_od = allocate("N_mc_od", n_od_runs);
+		ssc_number_t *p_mc_phi_od = allocate("mc_phi_od", n_od_runs);
 		ssc_number_t *p_recomp_frac_od = allocate("recomp_frac_od", n_od_runs);			
-			// Results
+			// Systems
 		ssc_number_t *p_eta_thermal_od = allocate("eta_thermal_od", n_od_runs);
+		ssc_number_t *p_P_mc_out = allocate("P_mc_out", n_od_runs);
+		ssc_number_t *p_T_htf_cold_od = allocate("T_htf_cold_od", n_od_runs);
+		ssc_number_t *p_m_dot_co2_full_od = allocate("m_dot_co2_full_od", n_od_runs);
+		ssc_number_t *p_W_dot_net_od = allocate("W_dot_net_od", n_od_runs);
+			// Compressor
+		ssc_number_t *p_N_mc_od = allocate("N_mc_od", n_od_runs);
+		ssc_number_t *p_mc_tip_ratio_od = allocate("mc_tip_ratio_od", n_od_runs);
+			// Recompressor
+		ssc_number_t *p_rc_phi_1_od = allocate("rc_phi_1_od", n_od_runs);
+		ssc_number_t *p_rc_phi_2_od = allocate("rc_phi_2_od", n_od_runs);
+		ssc_number_t *p_rc_N_od = allocate("rc_N_od", n_od_runs);
+		ssc_number_t *p_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs);
+			// Turbine
+		ssc_number_t *p_t_nu_od = allocate("t_nu_od", n_od_runs);
+		ssc_number_t *p_t_N_od = allocate("t_N_od", n_od_runs);
+		ssc_number_t *p_t_tip_ratio_od = allocate("t_tip_ratio_od", n_od_runs);
+			// PHX
+		ssc_number_t *p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
+		ssc_number_t *p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
+		ssc_number_t *p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
 
 		for(int n_run = 0; n_run < n_od_runs; n_run++)
 		{
-			// Setup off-design analysis for 'n_run'
-			int i_m_dot_htf = n_run / n_T_amb_od;
-			int j_T_amb_od = n_run % n_T_amb_od;
 
-			double m_dot_htf_od_run = m_dot_htf_fracs[i_m_dot_htf];		//[-]
-			double T_amb_od_run = T_amb_od[j_T_amb_od];					//[C]
-			double T_htf_od_run = as_double("T_htf_hot_des");			//[C]
-
-			p_m_dot_htf_fracs[n_run] = m_dot_htf_od_run;	//[-]
-			p_T_amb_od[n_run] = T_amb_od_run;				//[-]
-			p_T_htf_hot_od[n_run] = T_htf_od_run;			//[C]
 			
 			// Try calling off-design model with design parameters
-			sco2_rc_od_par.m_T_htf_hot = T_htf_od_run + 273.15;		//[K]
-			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*m_dot_htf_od_run;	//[kg/s]
-			sco2_rc_od_par.m_T_amb = T_amb_od_run + 273.15;			//[K]
-			int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
+				// Set outputs
+		 	p_T_htf_hot_od[n_run] = od_cases(n_run, 0);			//[C]
+			p_m_dot_htf_fracs[n_run] = od_cases(n_run, 1);		//[-]
+			p_T_amb_od[n_run] = od_cases(n_run, 2);				//[C]
+			p_od_opt_obj_code[n_run] = od_cases(n_run, 3);		//[-]
+				// Set input structure
+			sco2_rc_od_par.m_T_htf_hot = p_T_htf_hot_od[n_run] + 273.15;	//[K]
+			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
+			sco2_rc_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
+			int od_strategy = (int)p_od_opt_obj_code[n_run];
 
 			int off_design_code = 0;
 			try
@@ -337,22 +409,64 @@ public:
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
 				p_P_comp_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_pres[1-1]/1000.0;	//[MPa]
-				p_N_mc_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_N;		//[rpm]
+				p_mc_phi_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_phi;	//[-]
 				p_recomp_frac_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_recomp_frac;		//[-]
-					// Results
-				p_eta_thermal_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;
+					// System
+				p_eta_thermal_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+				p_P_mc_out[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_RecompCycle::MC_OUT]/1.E3;	//[MPa]
+				p_T_htf_cold_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_phx_od_solved.m_T_h_out - 273.15;		//[C]
+				p_m_dot_co2_full_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_t;		//[kg/s]
+				p_W_dot_net_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net/1.E3;	//[MWe]
+					// Compressor
+				p_N_mc_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_N;		//[rpm]
+				p_mc_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_w_tip_ratio;	//[-]
+					// Recompressor
+				p_rc_phi_1_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_phi;	//[-]
+				p_rc_phi_2_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_phi_2;	//[-]
+				p_rc_N_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_N;			//[rpm]
+				p_rc_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_w_tip_ratio;	//[-]
+					// Turbine
+				p_t_nu_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
+				p_t_N_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_N;		//[rpm]
+				p_t_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_w_tip_ratio;	//[-]
+					// PHX
+				p_T_co2_PHX_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15;	//[C]
+				p_T_co2_PHX_out_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15;		//[C]
+				p_phx_eff_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
 			}
 			else
 			{	// Off-design call failed, write NaN outptus
 					// Control parameters
 				p_P_comp_in_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_N_mc_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_mc_phi_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_recomp_frac_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-					// Results
+					// System
 				p_eta_thermal_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_P_mc_out[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_T_htf_cold_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_m_dot_co2_full_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_W_dot_net_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+					// Compressor
+				p_N_mc_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_mc_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+					// Recompressor
+				p_rc_phi_1_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_rc_phi_2_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_rc_N_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_rc_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+					// Turbine
+				p_t_nu_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_t_N_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_t_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+					// PHX
+				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_phx_eff_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 			}
 
+
 		}
+
 
 		// If all calls were successful, log to SSC any messages from sco2_recomp_csp
 		while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )

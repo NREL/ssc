@@ -245,11 +245,12 @@ public:
 
 		
 		//C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
-		//sco2_rc_od_par.m_m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;		//[kg/s]
-		//sco2_rc_od_par.m_T_amb = 273.15;				//[K]
-		//sco2_rc_od_par.m_T_htf_hot = 720.0+273.15;		//[K]
+		//double m_dot_htf_ND = 1.2;
+		//sco2_rc_od_par.m_m_dot_htf = m_dot_htf_ND*sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;		//[kg/s]
+		//sco2_rc_od_par.m_T_amb = 30.0 + 273.15;				//[K]
+		//sco2_rc_od_par.m_T_htf_hot = 670.0 + 273.15;		//[K]
 		//
-		//int sco2_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA);
+		//int sco2_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, C_sco2_recomp_csp::E_MAX_ETA);
 
 
 
