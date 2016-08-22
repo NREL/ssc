@@ -8,6 +8,8 @@
 #include "lib_util.h" // error message formatting
 #include "DB8_vmpp_impp_uint8_bin.h" // char* of binary compressed file
 
+// comment following define if do not want shading database validation outputs
+//#define SHADE_DB_DEBUG
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -413,7 +415,6 @@ double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<doub
 				{
 					//	The global max power point is NOT in range
 					double p_frac = 0;
-
 					for (size_t i = 0; i < TcVmps.size() && i < pmp_fracs.size(); i++)
 					{
 						if ((TcVmps[i] >= mppt_lo) && (TcVmps[i] <= mppt_hi))
@@ -425,6 +426,16 @@ double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<doub
 
 					shade_loss = 1.0 - p_frac;
 				}
+
+
+#ifdef SHADE_DB_DEBUG
+				p_warning_msg = "\ni,Vmpp,Impp,pmp_fracs,TcVmps\n";
+				for (size_t i = 0; i < TcVmps.size() && i < pmp_fracs.size(); i++)
+				{
+					p_warning_msg += util::to_string((int)i) + "," + util::to_string(vmpp[i]) + "," + util::to_string(impp[i]) + "," + util::to_string(pmp_fracs[i]) + "," + util::to_string(TcVmps[i]) + "\n";
+				}
+				p_warning_msg += "\nshade loss = " + util::to_string(shade_loss) + "\n";
+#endif
 
 			}
 			else // assume global max power point
@@ -439,6 +450,9 @@ double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<doub
 				shade_loss = 0.0;
 			else
 				shade_loss = 0.0;
+#ifdef SHADE_DB_DEBUG
+			p_warning_msg = util::format("\nglobal=%lg and shade fraction = %lg and shade loss = %lg\n", gpoa, s_sum, shade_loss);
+#endif
 		}
 	}
 	return shade_loss;
