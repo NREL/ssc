@@ -2241,7 +2241,7 @@ public:
 							}
 							if (iyear == 0)
 							{
-#ifdef SHADE_DB_OUPUTS
+#ifdef SHADE_DB_OUTPUTS
 								p_shadedb_gpoa[nn][idx] = (ssc_number_t)shadedb_gpoa;
 								p_shadedb_dpoa[nn][idx] = (ssc_number_t)shadedb_dpoa;
 								p_shadedb_pv_cell_temp[nn][idx] = (ssc_number_t)tcell;
@@ -2249,6 +2249,7 @@ public:
 								p_shadedb_str_vmp_stc[nn][idx] = (ssc_number_t)shadedb_str_vmp_stc;
 								p_shadedb_mppt_lo[nn][idx] = (ssc_number_t)shadedb_mppt_lo;
 								p_shadedb_mppt_hi[nn][idx] = (ssc_number_t)shadedb_mppt_hi;
+								log("shade db hour " + util::to_string((int)hour) +"\n" + p_shade_db->get_warning());
 #endif
 								// fraction shaded for comparison
 								p_shadedb_shade_frac[nn][idx] = (ssc_number_t)(sa[nn].shad.dc_shade_factor());
