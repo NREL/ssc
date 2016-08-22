@@ -11,6 +11,9 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 {
 	m_T_mc_in_min = mc_rc_cycle.get_design_limits().m_T_mc_in_min;		//[K]
 
+	// Set default optimization strategy
+	m_od_opt_objective = E_MAX_ETA;		//[-]
+
 	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
 
 	//sco2_od_opt_file << "P_mc_in_MPa,f_recomp,phi_mc,eta_ND,W_dot_MW\n";
@@ -118,66 +121,116 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy)
 {
 	ms_od_par = od_par;
 
-	if(off_design_strategy == FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA)
+	m_od_opt_objective = off_design_strategy;
+
+	// Define ms_rc_cycle_od_par
+		// Defined now
+	ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
+	if( ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min )
 	{
-		// Define ms_rc_cycle_od_par
-			// Defined now
-		ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
-		if( ms_rc_cycle_od_phi_par.m_T_mc_in < m_T_mc_in_min )
-		{
-			std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
-			" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
-			ms_rc_cycle_od_phi_par.m_T_mc_in - 273.15,
-			m_T_mc_in_min - 273.15);
-			ms_rc_cycle_od_phi_par.m_T_mc_in = m_T_mc_in_min;
-		}
-		ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
-		ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
-		ms_rc_cycle_od_phi_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
-			// Defined downstream
-		ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
-		ms_rc_cycle_od_phi_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
-		ms_rc_cycle_od_phi_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
-		ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[-]
-		// Define ms_phx_od_par
-			// Defined now
-		ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
-		ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
-		ms_phx_od_par.m_m_dot_h = ms_od_par.m_m_dot_htf;		//[kg/s]
-			// Defined downstream
-		ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
-		ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
-		ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
+		std::string msg = util::format("The off-design main compressor inlet temperature is %lg [C]."
+		" The sCO2 cycle off-design code reset it to the minimum allowable main compressor inlet temperature: %lg [C].",
+		ms_rc_cycle_od_phi_par.m_T_mc_in - 273.15,
+		m_T_mc_in_min - 273.15);
+		ms_rc_cycle_od_phi_par.m_T_mc_in = m_T_mc_in_min;
+	}		
 
-		int opt_eta_code = od_fix_T_mc__nl_opt_shell__opt_eta();
+	ms_rc_cycle_od_phi_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;			//[-]
+	ms_rc_cycle_od_phi_par.m_tol = ms_des_par.m_tol;						//[-]
+	ms_rc_cycle_od_phi_par.m_N_t = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_N_design;	//[rpm]
+		// Defined downstream
+	ms_rc_cycle_od_phi_par.m_T_t_in = std::numeric_limits<double>::quiet_NaN();			//[K]			
+	ms_rc_cycle_od_phi_par.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
+	ms_rc_cycle_od_phi_par.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();	//[-]
+	ms_rc_cycle_od_phi_par.m_phi_mc = std::numeric_limits<double>::quiet_NaN();			//[-]
+	// Define ms_phx_od_par
+		// Defined now
+	ms_phx_od_par.m_T_h_in = ms_od_par.m_T_htf_hot;			//[K]
+	ms_phx_od_par.m_P_h_in = ms_phx_des_par.m_P_h_in;		//[kPa] Assuming fluid is incompressible in that pressure doesn't affect its properties
+	ms_phx_od_par.m_m_dot_h = ms_od_par.m_m_dot_htf;		//[kg/s]
+		// Defined downstream
+	ms_phx_od_par.m_T_c_in = std::numeric_limits<double>::quiet_NaN();		//[K]
+	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
+	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
-		ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
-		ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+	int opt_eta_code = od_fix_T_mc__nl_opt_shell__opt_eta();
 
-		return opt_eta_code;
-	}
-	else
-	{
-		std::string msg = util::format("Off design strategy, %d, is not an available option", off_design_strategy);
-		throw(C_csp_exception("C_sco2_recomp_csp::off_design", msg));
-	}
+	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
+	return opt_eta_code;
 }
 
-int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par)
+int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par, double T_mc_in /*K*/,
+	S_od_operation_inputs & od_op_inputs)
 {
 	// Set-up off-design operation inputs
-	C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
-	sco2_rc_od_op_par.m_P_mc_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
+	//C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
+	
+	// Get density at design point
+	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
+	CO2_state co2_props;
+	int co2_code = CO2_TD(T_mc_in, mc_dens_in_des, &co2_props);
+
+	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
+	double P_mc_in_dens_des = co2_props.pres;		//[kPa]
+	od_op_inputs.m_P_mc_in = P_mc_in_dens_des;
+
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{	// Recompression Fraction
-		sco2_rc_od_op_par.m_recomp_frac = ms_des_solved.ms_rc_cycle_solved.m_recomp_frac;	//[-]
+		od_op_inputs.m_recomp_frac = ms_des_solved.ms_rc_cycle_solved.m_recomp_frac;	//[-]
 	}
-	sco2_rc_od_op_par.m_phi_mc = ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
-	// Call off_design
-	int sco2_od_code = off_design(od_par, sco2_rc_od_op_par);
+	od_op_inputs.m_phi_mc = ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
 
-	return -1;
+	int sco2_od_code = off_design(od_par, od_op_inputs);
+
+	while(sco2_od_code != 0)
+	{		
+		for(int i = 0; i < 6; i++)
+		{
+			od_op_inputs.m_P_mc_in = P_mc_in_dens_des - 1000*i;
+		
+			for(int j = 0; j < 6; j++)
+			{
+				od_op_inputs.m_recomp_frac = ms_des_solved.ms_rc_cycle_solved.m_recomp_frac*(1.0 - 0.5*(j/5.0));
+			
+				sco2_od_code = off_design(od_par, od_op_inputs);
+
+				if(sco2_od_code == 0)
+					break;
+			}
+			
+			if( sco2_od_code == 0 )
+				break;
+		}
+
+		if(sco2_od_code != 0)
+		{
+			std::string err_msg = util::format("Can't find a feasible solution at T_htf = %lg [C], "
+				"m_dot_htf_ND = %lg [-], "
+				"and T_amb = %lg [C]",
+				od_par.m_T_htf_hot - 273.15,
+				od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des,
+				od_par.m_T_amb - 273.15);
+
+			throw(C_csp_exception(err_msg,"Find feasible solution"));
+		}
+	}
+
+	return sco2_od_code;
+}
+
+void C_sco2_recomp_csp::reset_S_od_opt_eta_tracking()
+{
+	ms_od_opt_eta_tracking.m_is_opt_found = false;
+
+	ms_od_opt_eta_tracking.m_eta_max = 0.0;
+
+	ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in = 
+		ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac = 
+		ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc = 
+		ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = 
+		ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
 }
 
 int C_sco2_recomp_csp::off_design_core(double & eta_solved)
@@ -211,6 +264,8 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	}
 	catch( C_csp_exception )
 	{
+		eta_solved = 0.0;
+		
 		return -1;
 	}
 
@@ -218,11 +273,16 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	{
 		int n_call_history = c_phx_cycle_solver.get_solver_call_history()->size();
 
-		//std::vector<C_monotonic_eq_solver::S_eq_chars> *p_s_eq_chars = c_phx_cycle_solver.get_solver_call_history();
-		//
-		//C_monotonic_eq_solver::S_eq_chars s_eq_char = (*p_s_eq_chars)[0];
+		eta_solved = 0.0;
+		
+		int nested_error_code = (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 
-		return (*(c_phx_cycle_solver.get_solver_call_history()))[n_call_history-1].err_code;
+		if(nested_error_code == 0)
+		{
+			nested_error_code = phx_cycle_code;
+		}
+
+		return nested_error_code;
 	}
 
 	// Now, need to filter results that exceed temperature/pressure/other limitations
@@ -292,9 +352,27 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		eta_surge_mc_scale*
 		eta_surge_rc_scale;
 
-	//double eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.3*scale_product;
+	switch( m_od_opt_objective )
+	{
+	case E_MAX_ETA:
+		eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*scale_product;
+		break;
+	case E_MAX_W_DOT_NET:
+		eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net / 1.3*scale_product;
+		break;
+	case E_MOO_ETA_0p1Wnd:
+		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal + 0.05*mc_rc_cycle.get_od_solved()->m_W_dot_net/mc_rc_cycle.get_design_solved()->m_W_dot_net)*scale_product;
+		break;
+	case E_MOO_ETA_T_T_IN:
+		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal - 0.01*max(0.0, mc_rc_cycle.get_od_solved()->m_temp[C_RecompCycle::TURB_IN] - mc_rc_cycle.get_design_solved()->m_temp[C_RecompCycle::TURB_IN]))*scale_product;
+		break;
 
-	eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*scale_product;
+	default:
+		std::string err_msg = util::format("The off-design optimization objective code, %d, is not recognized.", m_od_opt_objective);
+		throw(C_csp_exception(err_msg, "C_sco2_recomp_csp::off_design_core"));
+		
+	}
+
 
 	// Weight delta_T_HTF with power cycle efficiency
 	//double eta_mult = 1.E3;
@@ -308,24 +386,37 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	//double eta_solved = scale_product*(work_mult*mc_rc_cycle.get_od_solved()->m_W_dot_net/mc_rc_cycle.get_design_solved()->m_W_dot_net + 20.0) - std::fabs(mc_phx.ms_od_solved.m_T_h_out - mc_phx.ms_des_solved.m_T_h_out);
 
 	// BUT, need to inform upstream code that a solution in this gradient is not acceptable
-	if( over_T_t_in == 0.0 && over_P_high == 0.0 && over_tip_ratio == 0.0 && over_surge_mc == 0.0 && over_surge_rc == 0.0 )
-	{
-		//sco2_od_opt_file << mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_IN]/1.E3 << ","
-		//				<< mc_rc_cycle.get_od_solved()->m_recomp_frac << ","
-		//				<< mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi << ","
-		//				<< mc_rc_cycle.get_od_solved()->m_eta_thermal << "," 
-		//				<< mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3 << "\n";
+	//if( over_T_t_in == 0.0 && over_P_high == 0.0 && over_tip_ratio == 0.0 && over_surge_mc == 0.0 && over_surge_rc == 0.0 )
+	//{
+	//	//sco2_od_opt_file << mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_IN]/1.E3 << ","
+	//	//				<< mc_rc_cycle.get_od_solved()->m_recomp_frac << ","
+	//	//				<< mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi << ","
+	//	//				<< mc_rc_cycle.get_od_solved()->m_eta_thermal << "," 
+	//	//				<< mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3 << "\n";
+	//
+	//	ms_od_opt_eta_tracking.m_is_opt_found = true;
+	//}
 
-		ms_od_opt_eta_tracking.m_is_opt_found = true;
+	if(eta_solved != eta_solved)
+	{
+		eta_solved = 0.0;
 	}
 
 	if( eta_solved > ms_od_opt_eta_tracking.m_eta_max )
 	{
-		if( over_T_t_in > 0.0 || over_P_high > 0.0 )
+		if( scale_product < 1.0 )
 		{	// Scaled eta could still be the current max that NLOPT sees, so need to communicate upstream that it's breaking limits
 			ms_od_opt_eta_tracking.m_is_opt_found = false;
 		}
-		ms_od_opt_eta_tracking.m_eta_max = eta_solved;
+		else
+		{
+			ms_od_opt_eta_tracking.m_is_opt_found = true;
+			ms_od_opt_eta_tracking.m_eta_max = eta_solved;
+			ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in = ms_rc_cycle_od_phi_par.m_P_mc_in;
+			ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac = ms_rc_cycle_od_phi_par.m_recomp_frac;
+			ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc = ms_rc_cycle_od_phi_par.m_phi_mc;
+		}
+		
 		ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = over_T_t_in;
 		ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = over_P_high;
 	}
@@ -370,6 +461,7 @@ int C_sco2_recomp_csp::off_design(S_od_par od_par, S_od_operation_inputs od_op_i
 
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
 
+	// Don't care about the objective for a single off design call, but need to set it to something...
 	int od_code = off_design_core(eta_solved);
 	
 	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
@@ -387,12 +479,16 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	std::vector<double> scale(0);
 	int index = 0;
 
+	// Try finding a feasible off-design solution
+	S_od_operation_inputs od_op_inputs;
+	int feas_code = find_a_feasible_off_design_solution(ms_od_par, ms_rc_cycle_od_phi_par.m_T_mc_in, od_op_inputs);
+
 	// Inlet pressure
 	// Might think of ways to generate better values here...
-	x.push_back(ms_des_solved.ms_rc_cycle_solved.m_pres[1-1]);
-	lb.push_back(1000.0);	
-	ub.push_back(17000.0);		
-	scale.push_back(-0.1*ms_des_solved.ms_rc_cycle_solved.m_pres[1-1]);	// Solution is probably less than design pressure
+	x.push_back(ms_des_solved.ms_rc_cycle_solved.m_pres[1 - 1]);
+	lb.push_back(1000.0);
+	ub.push_back(17000.0);
+	scale.push_back(-0.1*ms_des_solved.ms_rc_cycle_solved.m_pres[1 - 1]);	// Solution is probably less than design pressure
 	index++;
 
 	// Recompression Fraction
@@ -409,15 +505,13 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
 	lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);
 	ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max);
-	scale.push_back( ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des +
-			0.05*(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max - ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des) );
+	scale.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des +
+		0.05*(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max - ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des));
 	index++;
 
+
 	// Reset optimization tracking structure
-	ms_od_opt_eta_tracking.m_is_opt_found = false;
-	ms_od_opt_eta_tracking.m_eta_max = 0.0;
-	ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = std::numeric_limits<double>::quiet_NaN();
-	ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
+	reset_S_od_opt_eta_tracking();
 
 	// Save initial vectors
 	std::vector<double> x_base = x;
@@ -439,15 +533,233 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	double max_f = std::numeric_limits<double>::quiet_NaN();
 	nlopt::result          result_od_cycle = opt_od_eta.optimize(x, max_f);
 
-	if( !ms_od_opt_eta_tracking.m_is_opt_found )
+	if( max_f != max_f )
 	{
-		// For now, let's just catch this...
+		double blahhhh = 1.23;
+	}
 
-		return -1;
+	int n_opts_found = 0;
+	double obj_max_1 = std::numeric_limits<double>::quiet_NaN();
+	double obj_max_2 = std::numeric_limits<double>::quiet_NaN();
+	std::vector<double> x_opt_1;
+	std::vector<double> x_opt_2;
 
-		//throw(C_csp_exception("C_sco2_recomp_csp::off_design_fix_T_mc__float_phx_dt__opt_eta","Cycle optimization did not succeed"));
-	
-		// But, eventually, can probably trying modifying guesses and calling NLOPT again, like in C_RecompCycle::opt_od_eta_for_hx
+	if( !ms_od_opt_eta_tracking.m_is_opt_found && ms_od_opt_eta_tracking.m_eta_max <= 0.0 )
+	{
+		if( feas_code == 0 )
+		{
+			// Inlet pressure
+			// Might think of ways to generate better values here...
+			index = 0;
+			x[index] = od_op_inputs.m_P_mc_in;
+			index++;
+
+			// Recompression Fraction
+			if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+			{
+				x[index] = od_op_inputs.m_recomp_frac;
+				index++;
+			}
+
+			// Main Compressor Flow Coefficient
+			x[index] = od_op_inputs.m_phi_mc;
+			index++;
+			
+			//std::string err_msg = util::format("Can't find a feasible solution at T_htf = %lg [C], "
+			//	"m_dot_htf_ND = %lg [-], "
+			//	"and T_amb = %lg [C]",
+			//	ms_od_par.m_T_htf_hot - 273.15,
+			//	ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des,
+			//	ms_od_par.m_T_amb - 273.15);
+			//
+			//
+			//throw(C_csp_exception(err_msg, "Trying 2nd optimization by finding a feasible solution - need to debug through this for first time..."));
+
+			// Reset optimization tracking structure
+			reset_S_od_opt_eta_tracking();
+
+			opt_od_eta.set_lower_bounds(lb);
+			opt_od_eta.set_upper_bounds(ub);
+			opt_od_eta.set_initial_step(scale);
+			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
+			opt_od_eta.set_ftol_rel(0.001);
+
+			// Set max objective function
+			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
+
+			max_f = std::numeric_limits<double>::quiet_NaN();
+			result_od_cycle = opt_od_eta.optimize(x,max_f);			
+
+			if( max_f != max_f )
+			{
+				double blahhhh = 1.23;
+			}
+
+			if( !ms_od_opt_eta_tracking.m_is_opt_found && ms_od_opt_eta_tracking.m_eta_max <= 0.0 )
+			{
+				return -1;
+			}
+			else
+			{
+				n_opts_found = 1;
+				
+				if( !ms_od_opt_eta_tracking.m_is_opt_found )
+				{
+					int i = 0;
+					x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in);
+
+					if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+					{
+						x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac);
+						i++;
+					}
+
+					x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+
+					obj_max_1 = ms_od_opt_eta_tracking.m_eta_max;
+				}
+				else
+				{
+					x_opt_1 = x;
+					obj_max_1 = max_f;
+				}
+			}
+		}
+		else
+		{
+			std::string err_msg = util::format("Can't find a feasible solution at T_htf = %lg [C], "
+				"m_dot_htf_ND = %lg [-], "
+				"and T_amb = %lg [C]",
+				ms_od_par.m_T_htf_hot - 273.15,
+				ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des,
+				ms_od_par.m_T_amb - 273.15);
+
+			throw(C_csp_exception("Trying 2nd optimization but can't find a feasible solution..."));
+
+			return -1;
+		}
+
+	}
+	else
+	{
+		n_opts_found = 1;
+
+		if( !ms_od_opt_eta_tracking.m_is_opt_found )
+		{
+			int i = 0;
+			x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in);
+
+			if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+			{
+				x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac);
+				i++;
+			}
+
+			x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+			
+			obj_max_1 = ms_od_opt_eta_tracking.m_eta_max;
+		}
+		else
+		{
+			x_opt_1 = x;
+			obj_max_1 = max_f;
+		}				
+
+		if( feas_code == 0 )
+		{
+			// Inlet pressure
+			// Might think of ways to generate better values here...
+			index = 0;
+			x[index] = od_op_inputs.m_P_mc_in;
+			index++;
+
+			// Recompression Fraction
+			if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+			{
+				x[index] = od_op_inputs.m_recomp_frac;
+				index++;
+			}
+
+			// Main Compressor Flow Coefficient
+			x[index] = od_op_inputs.m_phi_mc;
+			index++;
+
+			//std::string err_msg = util::format("Can't find a feasible solution at T_htf = %lg [C], "
+			//	"m_dot_htf_ND = %lg [-], "
+			//	"and T_amb = %lg [C]",
+			//	ms_od_par.m_T_htf_hot - 273.15,
+			//	ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des,
+			//	ms_od_par.m_T_amb - 273.15);
+			//
+			//
+			//throw(C_csp_exception(err_msg, "Trying 2nd optimization by finding a feasible solution - need to debug through this for first time..."));
+
+			// Reset optimization tracking structure
+			ms_od_opt_eta_tracking.m_is_opt_found = false;
+			ms_od_opt_eta_tracking.m_eta_max = 0.0;
+			ms_od_opt_eta_tracking.m_over_T_t_in_at_eta_max = std::numeric_limits<double>::quiet_NaN();
+			ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
+
+			opt_od_eta.set_lower_bounds(lb);
+			opt_od_eta.set_upper_bounds(ub);
+			opt_od_eta.set_initial_step(scale);
+			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
+			opt_od_eta.set_ftol_rel(0.001);
+
+			// Set max objective function
+			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
+
+			max_f = std::numeric_limits<double>::quiet_NaN();
+			result_od_cycle = opt_od_eta.optimize(x, max_f);
+
+			if(max_f != max_f)
+			{
+				double blahhhh = 1.23;
+			}
+
+			if( ms_od_opt_eta_tracking.m_is_opt_found || ms_od_opt_eta_tracking.m_eta_max > 0.0 )
+			{
+				n_opts_found = 2;
+				
+				if( !ms_od_opt_eta_tracking.m_is_opt_found )
+				{
+					int i = 0;
+					x_opt_2.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_P_mc_in);
+					i++;
+
+					if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
+					{
+						x_opt_2.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_recomp_frac);
+						i++;
+					}
+
+					x_opt_2.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+
+					obj_max_2 = ms_od_opt_eta_tracking.m_eta_max;
+				}
+				else
+				{
+					x_opt_2 = x;
+					obj_max_2 = max_f;
+				}
+			}
+		}
+	}
+
+	if(n_opts_found == 2)
+	{
+		if(obj_max_2 > obj_max_1)
+		{
+			x = x_opt_2;
+		}
+		else
+		{
+			x = x_opt_1;
+		}
+	}
+	else
+	{
+		x = x_opt_1;
 	}
 
 	// Call a final time with optimized parameters
@@ -562,7 +874,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
 
-	int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
+	int od_strategy = C_sco2_recomp_csp::E_MOO_ETA_T_T_IN;
 
 	int off_design_code = mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
 

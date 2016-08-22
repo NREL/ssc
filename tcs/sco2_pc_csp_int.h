@@ -104,6 +104,7 @@ public:
 	{	// The values here are updated on NLOPT calls to the off design models
 		bool m_is_opt_found;
 		double m_eta_max;
+		S_od_operation_inputs ms_od_op_in_max;
 		double m_over_T_t_in_at_eta_max;
 		double m_over_P_high_at_eta_max;
 	
@@ -142,9 +143,13 @@ private:
 
 	S_od_solved ms_od_solved;
 
+	int m_od_opt_objective;
+
 	double m_T_mc_in_min;
 
 	void design_core();
+
+	void reset_S_od_opt_eta_tracking();
 
 	int od_fix_T_mc__nl_opt_shell__opt_eta();
 
@@ -154,7 +159,10 @@ public:
 
 	enum E_off_design_strategies
 	{
-		FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA
+		E_MAX_ETA = 1,
+		E_MAX_W_DOT_NET,
+		E_MOO_ETA_0p1Wnd,
+		E_MOO_ETA_T_T_IN
 	};
 
 	enum E_system_op_constraints
@@ -209,7 +217,8 @@ public:
 
 	int off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
-	int find_a_feasible_off_design_solution(S_od_par od_par);
+	int find_a_feasible_off_design_solution(S_od_par od_par, double T_mc_in /*K*/,
+				S_od_operation_inputs & od_op_inputs);
 
 	int off_design_core(double & eta_solved);
 

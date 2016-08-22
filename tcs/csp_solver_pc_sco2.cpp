@@ -269,7 +269,7 @@ void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf/3600.0;		//[kg/s]
 			sco2_rc_od_par.m_T_amb = weather.m_tdry+273.15;		//[K]
 
-			int od_strategy = C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA;
+			int od_strategy = C_sco2_recomp_csp::E_MOO_ETA_T_T_IN;
 
 			int off_design_code = 0;
 			try
@@ -455,6 +455,8 @@ void C_pc_sco2::converged()
 	m_standby_control_prev = m_standby_control_calc;
 	m_startup_time_remain_prev = m_startup_time_remain_calc;
 	m_startup_energy_remain_prev = m_startup_energy_remain_calc;
+
+	mc_reported_outputs.set_timestep_outputs();
 }
 
 void C_pc_sco2::write_output_intervals(double report_time_start,
