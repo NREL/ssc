@@ -995,7 +995,12 @@ void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_
 	{
 		int n_call_history = c_rd_od_solver.get_solver_call_history()->size();
 
-		error_code = (*(c_rd_od_solver.get_solver_call_history()))[n_call_history-1].err_code;
+		error_code = (*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+
+		if( error_code == 0 )
+		{
+			error_code = phi_code;
+		}
 
 		return;
 	}
@@ -4312,7 +4317,7 @@ int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/,
 	if(mc_err_code != 0)
 	{
 		*diff_m_dot_t = std::numeric_limits<double>::quiet_NaN();
-		return -1;
+		return mc_err_code;
 	}
 
 	mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] = P_mc_out;	//[kPa]
@@ -4363,7 +4368,7 @@ int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/,
 	if(t_err_code != 0)
 	{
 		*diff_m_dot_t = std::numeric_limits<double>::quiet_NaN();
-		return -1;
+		return t_err_code;
 	}
 
 	mpc_rc_cycle->m_temp_od[C_RecompCycle::TURB_OUT] = T_t_out;	//[K]
@@ -4640,7 +4645,7 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 
 	if( m_dot_t_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		error_code = 42;
+		error_code = m_dot_t_code;
 		return;
 	}
 
