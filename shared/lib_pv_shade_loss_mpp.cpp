@@ -5,9 +5,13 @@
 #include <cstring> // memcpy
 
 #include "lib_miniz.h" // decompression
-#include "lib_util.h" // error message formatting
 #include "DB8_vmpp_impp_uint8_bin.h" // char* of binary compressed file
 
+// define the following to use ssc message formatting 
+#define USE_SSC_UTIL
+#ifdef USE_SSC_UTIL
+#include "lib_util.h" // error message formatting
+#endif
 // comment following define if do not want shading database validation outputs
 //#define SHADE_DB_DEBUG
 
@@ -176,7 +180,9 @@ bool ShadeDB8_mpp::decompress_file_to_uint8()
 
 	if (status == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED)
 	{
+#ifdef USE_SSC_UTIL
 		p_error_msg = util::format("tinfl_decompress_mem_to_mem() failed with status %i!\n", (int)status);
+#endif
 		return EXIT_FAILURE;
 	}
 
