@@ -8,7 +8,7 @@
 #include "DB8_vmpp_impp_uint8_bin.h" // char* of binary compressed file
 
 // define the following to use ssc message formatting 
-//#define USE_SSC_UTIL
+#define USE_SSC_UTIL
 #ifdef USE_SSC_UTIL
 #include "lib_util.h" // error message formatting
 #endif
