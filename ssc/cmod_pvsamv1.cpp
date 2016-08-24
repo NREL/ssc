@@ -2636,9 +2636,9 @@ public:
 						//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
 						if (pv_lifetime_simulation == 1 && en_dc_lifetime_losses)
 						{
-							//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) + the number of complete days that have passed
-							int idx = iyear + (int)floor(hour / 24);
-							dcpwr_net *= (100 - dc_lifetime_losses[idx]) / 100;
+							//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
+							int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+							dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
 						}
 
 					}
@@ -2733,9 +2733,9 @@ public:
 					//apply lifetime daily AC losses only if they are enabled
 					if (pv_lifetime_simulation == 1 && en_ac_lifetime_losses)
 					{
-						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) + the number of complete days that have passed
-						int idx = iyear + (int)floor(hour / 24);
-						p_gen[idx] *= (100 - ac_lifetime_losses[idx]) / 100;
+						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
+						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 					}
 
 					if (en_batt && ac_or_dc == 1)
