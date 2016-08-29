@@ -8,12 +8,9 @@
 #include "DB8_vmpp_impp_uint8_bin.h" // char* of binary compressed file
 
 // define the following to use ssc message formatting 
-//#define USE_SSC_UTIL
-#ifdef USE_SSC_UTIL
-#include "lib_util.h" // error message formatting
-#endif
-// comment following define if do not want shading database validation outputs
-//#define SHADE_DB_DEBUG
+#include <sstream>
+// uncomment following define if shading database validation outputs desired
+#define SHADE_DB_DEBUG
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -180,9 +177,9 @@ bool ShadeDB8_mpp::decompress_file_to_uint8()
 
 	if (status == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED)
 	{
-#ifdef USE_SSC_UTIL
-		p_error_msg = util::format("tinfl_decompress_mem_to_mem() failed with status %i!\n", (int)status);
-#endif
+		std::stringstream outm;
+		outm << "tinfl_decompress_mem_to_mem() failed with status " << (int)status;
+		p_error_msg = outm.str();
 		return EXIT_FAILURE;
 	}
 
@@ -435,12 +432,14 @@ double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<doub
 
 
 #ifdef SHADE_DB_DEBUG
-				p_warning_msg = "\ni,Vmpp,Impp,pmp_fracs,TcVmps\n";
+				std::stringstream outm;
+				outm << "\ni,Vmpp,Impp,pmp_fracs,TcVmps\n";
 				for (size_t i = 0; i < TcVmps.size() && i < pmp_fracs.size(); i++)
 				{
-					p_warning_msg += util::to_string((int)i) + "," + util::to_string(vmpp[i]) + "," + util::to_string(impp[i]) + "," + util::to_string(pmp_fracs[i]) + "," + util::to_string(TcVmps[i]) + "\n";
+					outm << i << "," << vmpp[i] << "," << impp[i] << "," << pmp_fracs[i] << "," << TcVmps[i] << "\n";
 				}
-				p_warning_msg += "\nshade loss = " + util::to_string(shade_loss) + "\n";
+				outm << "\nshade loss = " << shade_loss << "\n";
+				p_warning_msg = outm.str();
 #endif
 
 			}
@@ -457,7 +456,9 @@ double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<doub
 			else
 				shade_loss = 0.0;
 #ifdef SHADE_DB_DEBUG
-			p_warning_msg = util::format("\nglobal=%lg and shade fraction = %lg and shade loss = %lg\n", gpoa, s_sum, shade_loss);
+			std::stringstream outm;
+			outm << "\nglobal = " << gpoa << " and shade fraction = " << s_sum << " and shade loss = " << shade_loss << "\n";
+			p_warning_msg = outm.str();
 #endif
 		}
 	}
