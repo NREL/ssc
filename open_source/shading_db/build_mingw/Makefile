@@ -2,7 +2,6 @@ DIR_FILES = ..\..\..\shared
 
 CXX = g++
 CFLAGS =  -g -O2 -I. 
-LDFLAGS = -std=gnu++11 
 CXXFLAGS= $(CFLAGS)
 
 

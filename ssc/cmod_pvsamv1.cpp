@@ -33,7 +33,7 @@
 // non linear shading database
 #include "lib_pv_shade_loss_mpp.h"
 // comment following define if do not want shading database validation outputs
-//#define SHADE_DB_OUTPUTS
+#define SHADE_DB_OUTPUTS
 
 
 #ifndef M_PI

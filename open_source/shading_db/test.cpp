@@ -24,7 +24,9 @@ int main()
 
 		double dc_factor = 1.0 - p_shade_db->get_shade_loss(gpoa, dpoa, shad_fracs, true, pv_cell_temp, mods_per_str, str_vmp_stc, mppt_lo, mppt_hi);
 
-		std::cout << "shading factor = " << dc_factor;
+		std::cout << "shading factor = " << dc_factor << "\n";
+		std::cout << "warning messages = " << p_shade_db->get_warning() << "\n";
+		std::cout << "error messages = " << p_shade_db->get_error() << "\n";
 
 		return 0;
 }
