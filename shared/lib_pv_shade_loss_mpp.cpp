@@ -10,7 +10,7 @@
 // define the following to use ssc message formatting 
 #include <sstream>
 // uncomment following define if shading database validation outputs desired
-#define SHADE_DB_DEBUG
+//#define SHADE_DB_DEBUG
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
