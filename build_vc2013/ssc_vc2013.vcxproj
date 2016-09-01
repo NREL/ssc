@@ -26,6 +26,7 @@
     <ClCompile Include="..\ssc\cmod_biomass.cpp" />
     <ClCompile Include="..\ssc\cmod_cashloan.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_construction_financing.cpp" />
+    <ClCompile Include="..\ssc\cmod_cb_empirical_hce_heat_loss.cpp" />
     <ClCompile Include="..\ssc\cmod_cb_mspt_system_costs.cpp" />
     <ClCompile Include="..\ssc\cmod_inv_cec_cg.cpp" />
     <ClCompile Include="..\ssc\cmod_dsg_flux_preprocess.cpp" />
@@ -68,8 +69,10 @@
     <ClCompile Include="..\ssc\cmod_tcsmslf.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_empirical.cpp" />
     <ClCompile Include="..\ssc\cmod_tcstrough_physical.cpp" />
+    <ClCompile Include="..\ssc\cmod_tcstrough_physical_csp_solver.cpp" />
     <ClCompile Include="..\ssc\cmod_thirdpartyownership.cpp" />
     <ClCompile Include="..\ssc\cmod_timeseq.cpp" />
+    <ClCompile Include="..\ssc\cmod_trough_physical_iph.cpp" />
     <ClCompile Include="..\ssc\cmod_ui_tes_calcs.cpp" />
     <ClCompile Include="..\ssc\cmod_user_htf_comparison.cpp" />
     <ClCompile Include="..\ssc\cmod_utilityrate.cpp" />
