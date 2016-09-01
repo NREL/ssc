@@ -255,7 +255,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	Azimuth angles are for N=0 or 2pi, E=pi/2, S=pi, and W=3pi/2.  8/13/98
 
 	List of Parameters Passed to Function:
-	mode         = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking
+	mode         = 0 for fixed-tilt, 1 for 1-axis tracking, 2 for 2-axis tracking, 3 for azimuth-axis tracking, 4 for timeseries tilt tracking (in "set surface" function, this is set as mode 0)
 	tilt         = tilt angle of surface from horizontal in degrees (mode 0),
 				   or tilt angle of tracker axis from horizontal in degrees (mode 1),
 				   MUST BE FROM 0 to 90 degrees.
@@ -283,6 +283,9 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	When xsazm = azm : rot = 0, tilt = xtilt, and sazm = xsazm = azm  */
 
 	double arg,inc=0,xsazm,xtilt,rot,btdiff=0;
+
+	if (mode == 4)
+		mode = 0; //treat timeseries tilt as fixed tilt for each timestep
 
 	switch ( mode )
 		{
@@ -923,7 +926,7 @@ int irrad::check()
 	if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
 	if ( lat < -90 || lat > 90 || lon < -180 || lon > 180 || tz < -15 || tz > 15 ) return -2;
 	if ( radmode < DN_DF || radmode > POA_P || skymodel < 0 || skymodel > 2 ) return -3;
-	if ( track < 0 || track > 3 ) return -4;
+	if ( track < 0 || track > 4 ) return -4;
 	if ( radmode == DN_DF && (dn < 0 || dn > 1500 || df < 0 || df > 1500)) return -5;
 	if ( radmode == DN_GH && (gh < 0 || gh > 1500 || dn < 0 || dn > 1500)) return -6;
 	if ( alb < 0 || alb > 1 ) return -7;
@@ -1023,6 +1026,8 @@ void irrad::set_sky_model( int skymodel, double albedo )
 void irrad::set_surface( int tracking, double tilt_deg, double azimuth_deg, double rotlim_deg, bool en_backtrack, double gcr )
 {
 	this->track = tracking;
+	if (tracking == 4)
+		this->track = 0; //treat timeseries tilt as fixed tilt
 	this->tilt = tilt_deg;
 	this->sazm = azimuth_deg;
 	this->rlim = rotlim_deg;
