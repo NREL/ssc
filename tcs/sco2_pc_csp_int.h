@@ -142,8 +142,12 @@ private:
 	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
 
 	S_od_solved ms_od_solved;
-
-	int m_od_opt_objective;
+	
+	// Optimization variables: could make into structure...
+	int m_od_opt_objective;		//[-]
+	bool m_is_phi_optimized;	//[-]
+	double m_od_opt_tol;		//[-] Relative tolerance for od optimization convergence
+	// ******************************************************
 
 	double m_T_mc_in_min;
 
@@ -160,9 +164,13 @@ public:
 	enum E_off_design_strategies
 	{
 		E_MAX_ETA = 1,
-		E_MAX_W_DOT_NET,
+		E_MAX_ETA_FIX_PHI,
+		E_MAX_POWER,
+		E_MAX_POWER_FIX_PHI,
 		E_MOO_ETA_0p1Wnd,
-		E_MOO_ETA_T_T_IN
+		E_MOO_ETA_0p1Wnd_FIX_PHI,
+		E_MOO_ETA_T_T_IN,
+		E_MOO_ETA_T_T_IN_FIX_PHI		
 	};
 
 	enum E_system_op_constraints
@@ -213,7 +221,7 @@ public:
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
-	int off_design_opt(S_od_par od_par, int off_design_strategy);
+	int off_design_opt(S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	int off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs);
 

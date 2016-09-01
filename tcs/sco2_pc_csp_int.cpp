@@ -13,6 +13,9 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 
 	// Set default optimization strategy
 	m_od_opt_objective = E_MAX_ETA;		//[-]
+	m_is_phi_optimized = true;			//[-]
+	m_od_opt_tol = 1.E-3;				//[-] Relative tolerance for od optimization convergence
+	// **************************************
 
 	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
 
@@ -117,11 +120,25 @@ void C_sco2_recomp_csp::design_core()
 	return;
 }
 
-int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy)
+int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	ms_od_par = od_par;
 
+	// Optimization variables:
 	m_od_opt_objective = off_design_strategy;
+	if( m_od_opt_objective == E_MAX_ETA_FIX_PHI || 
+		m_od_opt_objective == E_MAX_POWER_FIX_PHI || 
+		m_od_opt_objective == E_MOO_ETA_0p1Wnd_FIX_PHI ||
+		m_od_opt_objective == E_MOO_ETA_T_T_IN_FIX_PHI )
+	{
+		m_is_phi_optimized = false;
+	}
+	else
+	{
+		m_is_phi_optimized = true;
+	}
+	m_od_opt_tol = od_opt_tol;
+	// ****************************************
 
 	// Define ms_rc_cycle_od_par
 		// Defined now
@@ -355,15 +372,19 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	switch( m_od_opt_objective )
 	{
 	case E_MAX_ETA:
+	case E_MAX_ETA_FIX_PHI:
 		eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal*scale_product;
 		break;
-	case E_MAX_W_DOT_NET:
+	case E_MAX_POWER:
+	case E_MAX_POWER_FIX_PHI:
 		eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net / 1.3*scale_product;
 		break;
 	case E_MOO_ETA_0p1Wnd:
+	case E_MOO_ETA_0p1Wnd_FIX_PHI:
 		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal + 0.05*mc_rc_cycle.get_od_solved()->m_W_dot_net/mc_rc_cycle.get_design_solved()->m_W_dot_net)*scale_product;
 		break;
 	case E_MOO_ETA_T_T_IN:
+	case E_MOO_ETA_T_T_IN_FIX_PHI:
 		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal - 0.01*max(0.0, mc_rc_cycle.get_od_solved()->m_temp[C_RecompCycle::TURB_IN] - mc_rc_cycle.get_design_solved()->m_temp[C_RecompCycle::TURB_IN]))*scale_product;
 		break;
 
@@ -502,14 +523,16 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	}
 
 	// Main Compressor Flow Coefficient
-	x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
-	lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);
-	ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max);
-	scale.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des +
-		0.05*(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max - ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des));
-	index++;
-
-
+	if(m_is_phi_optimized)
+	{
+		x.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
+		lb.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);
+		ub.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max);
+		scale.push_back(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des +
+			0.05*(ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max - ms_des_solved.ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des));
+		index++;
+	}
+	
 	// Reset optimization tracking structure
 	reset_S_od_opt_eta_tracking();
 
@@ -525,7 +548,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	opt_od_eta.set_upper_bounds(ub);
 	opt_od_eta.set_initial_step(scale);
 	//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-	opt_od_eta.set_ftol_rel(0.001);
+	opt_od_eta.set_ftol_rel(m_od_opt_tol);
 
 	// Set max objective function
 	opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -562,8 +585,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			}
 
 			// Main Compressor Flow Coefficient
-			x[index] = od_op_inputs.m_phi_mc;
-			index++;
+			if( m_is_phi_optimized )
+			{
+				x[index] = od_op_inputs.m_phi_mc;
+				index++;
+			}
 			
 			//std::string err_msg = util::format("Can't find a feasible solution at T_htf = %lg [C], "
 			//	"m_dot_htf_ND = %lg [-], "
@@ -614,7 +640,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 						i++;
 					}
 
-					x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+					if( m_is_phi_optimized )
+					{
+						x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+						i++;
+					}
 
 					obj_max_1 = ms_od_opt_eta_tracking.m_eta_max;
 				}
@@ -655,7 +685,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 				i++;
 			}
 
-			x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+			if( m_is_phi_optimized )
+			{
+				x_opt_1.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+				i++;
+			}
 			
 			obj_max_1 = ms_od_opt_eta_tracking.m_eta_max;
 		}
@@ -681,8 +715,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			}
 
 			// Main Compressor Flow Coefficient
-			x[index] = od_op_inputs.m_phi_mc;
-			index++;
+			if( m_is_phi_optimized )
+			{
+				x[index] = od_op_inputs.m_phi_mc;
+				index++;
+			}
 
 			//std::string err_msg = util::format("Can't find a feasible solution at T_htf = %lg [C], "
 			//	"m_dot_htf_ND = %lg [-], "
@@ -733,7 +770,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 						i++;
 					}
 
-					x_opt_2.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+					if( m_is_phi_optimized )
+					{
+						x_opt_2.push_back(ms_od_opt_eta_tracking.ms_od_op_in_max.m_phi_mc);
+						i++;
+					}
 
 					obj_max_2 = ms_od_opt_eta_tracking.m_eta_max;
 				}
@@ -803,8 +844,15 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__nl_opt_shell(const std::vector<d
 		index++;
 	}
 
-	ms_rc_cycle_od_phi_par.m_phi_mc = x[index];
-	index++;
+	if( m_is_phi_optimized )
+	{
+		ms_rc_cycle_od_phi_par.m_phi_mc = x[index];
+		index++;
+	}
+	else
+	{
+		ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;
+	}
 
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_code = off_design_core(eta_solved);
@@ -874,7 +922,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
 
-	int od_strategy = C_sco2_recomp_csp::E_MOO_ETA_T_T_IN;
+	int od_strategy = C_sco2_recomp_csp::E_MAX_ETA_FIX_PHI;
 
 	int off_design_code = mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
 
