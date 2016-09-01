@@ -1,5 +1,5 @@
 // Output file directory
-file_dir = 'c:/Users/tneises/Documents/Projects/ssc_dev/examples/';
+file_dir = 'c:/Users/tneises/Documents/Projects/ssc_trunk/examples/';
 
 // Set Model Input Parameters
 	// System Design
@@ -31,7 +31,7 @@ var('T_amb_high', 55);
 var('n_T_amb', 15);
 var('m_dot_htf_ND_low',0.5);
 var('m_dot_htf_ND_high',1.2);
-var('n_m_dot_htf_ND',15);
+var('n_m_dot_htf_ND', 15);
 
 // Run Model
 run('sco2_csp_ud_pc_tables');
