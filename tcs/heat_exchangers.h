@@ -189,8 +189,17 @@ public:
 	virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props);
 
 	virtual void initialize(int hot_fl);
-
 	
+};
+
+class C_HX_co2_to_co2 : public C_HX_counterflow
+{
+
+public:
+
+	virtual void initialize(int N_sub_hx);
+
+	virtual void initialize();
 
 };
 

@@ -551,6 +551,23 @@ double C_HX_counterflow::od_UA_frac(double m_dot_c /*kg/s*/, double m_dot_h /*kg
 	return pow(m_dot_ratio, 0.8);
 }
 
+void C_HX_co2_to_co2::initialize()
+{
+	// If number of sub-heat exchangers is not specified, default to 10
+	int N_sub_hx = 10;
+
+	initialize(N_sub_hx);
+}
+
+void C_HX_co2_to_co2::initialize(int N_sub_hx)
+{
+	// Set design parameters member structure
+	ms_init_par.m_N_sub_hx = N_sub_hx;
+	ms_init_par.m_cold_fl = CO2;
+	ms_init_par.m_hot_fl = CO2;
+	m_is_HX_initialized = true;
+}
+
 void C_HX_co2_to_htf::initialize(int hot_fl, util::matrix_t<double> hot_fl_props)
 {
 	// Hard-code some of the design parameters
