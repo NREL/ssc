@@ -540,8 +540,11 @@ void C_pt_heliostatfield::init()
 
                 //fill the parameter matrix to return this data to calling program
                 //also fill the flux sun positions matrix
-                ms_params.m_eta_map(i,0) = m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i)*180./CSP::pi;
-                ms_params.m_eta_map(i,1) = m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i)*180./CSP::pi;
+                m_flux_positions.at(i).at(0) = fluxtab.azimuths.at(i);
+                ms_params.m_eta_map(i,0) = m_flux_positions.at(i).at(0)*180./CSP::pi;
+                m_flux_positions.at(i).at(1) = fluxtab.zeniths.at(i);
+                ms_params.m_eta_map(i,1) = m_flux_positions.at(i).at(1)*180./CSP::pi;
+                
                 ms_params.m_eta_map(i,2) = fluxtab.efficiency.at(i);
 			}
 
