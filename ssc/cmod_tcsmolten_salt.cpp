@@ -1141,7 +1141,7 @@ public:
 
 				//double T_htf_hot_test = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15;		//[C]
 				//double m_dot_htf_ND_test = 1.0;		//[-]
-				//double T_amb_test = T_amb_des;	//[C]
+				//double T_amb_test = as_double("sco2_T_amb_des");	//[C]
 
 				//double a_breakpoint_here = 1.23;
 
@@ -1153,16 +1153,16 @@ public:
 				//od_pars.m_m_dot_htf = 95.95*m_dot_htf_ND_test;	//[kg/s]
 				//od_pars.m_T_amb = T_amb_test + 273.15;			//[K]
 
-				//sco2_recomp_csp.off_design_opt(od_pars, C_sco2_recomp_csp::FIX_T_MC_APPROACH__FLOAT_PHX_DT__OPT_ETA);
+				//sco2_recomp_csp.off_design_opt(od_pars, C_sco2_recomp_csp::E_MOO_ETA_T_T_IN);
 
 				//double T_htf_cold_1st = sco2_recomp_csp.get_od_solved()->ms_phx_od_solved.m_T_h_out;	//[K]
 
-				//// member class for User Defined Power Cycle
+				// member class for User Defined Power Cycle
 				//C_ud_power_cycle mc_user_defined_pc;
 
 				//mc_user_defined_pc.init(T_htf_parametrics, sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15, T_htf_hot_low, T_htf_hot_high,
-				//	T_amb_parametrics, sco2_rc_csp_par.m_T_amb_des - 273.15, T_amb_low, T_amb_high,
-				//	m_dot_htf_ND_parametrics, 1.0, m_dot_htf_ND_low, m_dot_htf_ND_high);
+					//T_amb_parametrics, sco2_rc_csp_par.m_T_amb_des - 273.15, T_amb_low, T_amb_high,
+					//m_dot_htf_ND_parametrics, 1.0, m_dot_htf_ND_low, m_dot_htf_ND_high);
 
 				//double P_cycle_udpc = sco2_recomp_csp.get_design_par()->m_W_dot_net*mc_user_defined_pc.get_W_dot_gross_ND(T_htf_hot_test, T_amb_test, m_dot_htf_ND_test);	//[kW]
 
