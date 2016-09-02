@@ -116,6 +116,12 @@ public:
 		C_HX_counterflow::S_des_solved recup_des_solved;
 		mc_sco2_recup.design(recup_par, recup_des_solved);
 
+		C_HX_co2_to_co2 c_co2_to_co2;
+		c_co2_to_co2.initialize(10);
+
+		C_HX_counterflow::S_des_solved co2_to_co2_des_solved;
+		c_co2_to_co2.design(recup_par, co2_to_co2_des_solved);
+
 		//*************************************************************
 		//*************************************************************
 		// Set up PHX model from Type 424
