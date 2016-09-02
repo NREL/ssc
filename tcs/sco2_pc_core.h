@@ -8,6 +8,8 @@
 #include <math.h>
 #include "CO2_properties.h"
 
+#include "heat_exchangers.h"
+
 #include "numeric_solvers.h"
 
 using namespace std;
@@ -854,8 +856,10 @@ private:
 	C_turbine m_t;
 	C_compressor m_mc;
 	C_recompressor m_rc;
-	C_HeatExchanger m_LT, m_HT, m_PHX, m_PC;
-
+	C_HeatExchanger /*m_LT,*/ m_HT, m_PHX, m_PC;
+	
+	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
+	
 		// Input/Ouput structures for class methods
 	S_design_limits ms_des_limits;
 	S_design_parameters ms_des_par;
@@ -914,11 +918,11 @@ private:
 
 	void design_core_standard(int & error_code);
 	
-	void design_core_bypass(int & error_code);
+	//void design_core_bypass(int & error_code);
 
-	void design_core_bypass150C(int & error_code);
+	//void design_core_bypass150C(int & error_code);
 
-	void design_core_HTR_hs(int & error_code);
+	//void design_core_HTR_hs(int & error_code);
 
 	void opt_design_core(int & error_code);
 
