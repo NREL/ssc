@@ -163,9 +163,15 @@ public:
 
 	double od_delta_p_cold_frac(double m_dot_c /*kg/s*/);
 
+	double od_delta_p_cold(double m_dot_c /*kg/s*/);
+
 	double od_delta_p_hot_frac(double m_dot_h /*kg/s*/);
 
+	double od_delta_p_hot(double m_dot_h /*kg/s*/);
+
 	double od_UA_frac(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/);
+
+	double od_UA(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/); 
 
 	virtual void initialize(const S_init_par & init_par);
 
