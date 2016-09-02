@@ -540,9 +540,24 @@ double C_HX_counterflow::od_delta_p_cold_frac(double m_dot_c /*kg/s*/)
 	return pow(m_dot_c/ms_des_par.m_m_dot_cold_des, 1.75);
 }
 
+double C_HX_counterflow::od_delta_p_cold(double m_dot_c /*kg/s*/)
+{
+	return ms_des_solved.m_DP_cold_des*od_delta_p_cold_frac(m_dot_c);
+}
+
 double C_HX_counterflow::od_delta_p_hot_frac(double m_dot_h /*kg/s*/)
 {
 	return pow(m_dot_h/ms_des_par.m_m_dot_hot_des, 1.75);
+}
+
+double C_HX_counterflow::od_delta_p_hot(double m_dot_h /*kg/s*/)
+{
+	return ms_des_solved.m_DP_hot_des*od_delta_p_hot_frac(m_dot_h);
+}
+
+double C_HX_counterflow::od_UA(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/)
+{
+	return ms_des_solved.m_UA_design_total*od_UA_frac(m_dot_c, m_dot_h);	//[kW/K]
 }
 
 double C_HX_counterflow::od_UA_frac(double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/)
