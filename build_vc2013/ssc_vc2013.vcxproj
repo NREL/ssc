@@ -95,6 +95,7 @@
     <ClCompile Include="..\ssc\tckernel.cpp" />
     <ClCompile Include="..\ssc\vartab.cpp" />
     <ClCompile Include="..\ssc\common.cpp" />
+    <ClCompile Include="..\ssc\vbapi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ssc\cmod_battery.h" />
@@ -105,6 +106,7 @@
     <ClInclude Include="..\ssc\sscapi.h" />
     <ClInclude Include="..\ssc\tckernel.h" />
     <ClInclude Include="..\ssc\vartab.h" />
+    <ClInclude Include="..\ssc\vbapi.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{46D1EE84-840B-4325-910A-BC205A0D4C08}</ProjectGuid>
