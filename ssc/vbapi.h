@@ -38,19 +38,19 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_first(long p_data, const char *data_
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_next(long p_data, const char *data_next);
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_string(long p_data, const char *name, const char *value);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(long p_data, const char *name, ssc_number_t value);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_array(long p_data, const char *name, ssc_number_t *pvalues, long length);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_matrix(long p_data, const char *name, ssc_number_t *pvalues, long nrows, long ncols);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(long p_data, const char *name, double value);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_array(long p_data, const char *name, double *pvalues, long length);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_matrix(long p_data, const char *name, double *pvalues, long nrows, long ncols);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_table(long p_data, const char *name, long table);
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_string(long p_data, const char *name, const char *value);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_number(long p_data, const char *name, ssc_number_t *value);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_array(long p_data, const char *name, ssc_number_t *value, long length);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_matrix(long p_data, const char *name, ssc_number_t *value, long nrows, long ncols);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_number(long p_data, const char *name, double *value);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_array(long p_data, const char *name, double *value, long length);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_matrix(long p_data, const char *name, double *value, long *nrows, long *ncols);
 // TODO test this
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(long p_data, const char *name, long value);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(long p_data, const char *name, long table);
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_entry(long p_entry, long index);
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_entry( long index);
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_name(long p_entry, const char *name);
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_description(long p_entry, const char *description);
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_version(long p_entry, long index);
@@ -58,9 +58,9 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_entry_version(long p_entry, long index);
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_create(const char *name);
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_free(long p_mod);
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_var_info(long p_mod, long index, long p_inf);
-SSCEXPORT long VBCALL_CONVENTION sscvb_info_var_type(long p_inf, long var_type);
-SSCEXPORT long VBCALL_CONVENTION sscvb_info_data_type(long p_inf, long data_type);
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_var_info(long p_mod, long index);
+SSCEXPORT long VBCALL_CONVENTION sscvb_info_var_type(long p_inf);
+SSCEXPORT long VBCALL_CONVENTION sscvb_info_data_type(long p_inf);
 SSCEXPORT long VBCALL_CONVENTION sscvb_info_name(long p_inf, const char *name);
 SSCEXPORT long VBCALL_CONVENTION sscvb_info_label(long p_inf, const char *label);
 SSCEXPORT long VBCALL_CONVENTION sscvb_info_units(long p_inf, const char *units);
@@ -72,12 +72,12 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_info_uihint(long p_inf, const char *uihin
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_set_print(long print);
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_simple(const char *name, long p_data, long success);
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_simple(const char *name, long p_data);
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_simple_nothread(const char *name, long p_data, const char *msg);
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec(long p_mod, long p_data, long success);
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec(long p_mod, long p_data);
 
 // TODO test this
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_with_handler(long p_mod, long p_data, long pf_handler, long pf_user_data, long success);
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_with_handler(long p_mod, long p_data, long pf_handler, long pf_user_data);
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(long p_mod, long index, long *item_type, float *time, const char *msg);
 SSCEXPORT long VBCALL_CONVENTION __sscvb_segfault();
