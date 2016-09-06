@@ -68,7 +68,11 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 		// Recuperators																				 
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_recup_total",       "Total recuperator UA",                                   "kW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_LTR",               "Low temp recuperator UA",                                "kW/K",       "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "eff_LTR",              "Low temp recuperator effectiveness",                     "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_LTR",              "Low temp recuperator NTU",                               "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_HTR",               "High temp recuperator UA",                               "kW/K",       "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "eff_HTR",              "High temp recuperator effectiveness",                    "",           "",    "",      "*",     "",       "" },	
+	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_HTR",              "High temp recuperator NTRU",                             "",           "",    "",      "*",     "",       "" },
 		// PHX Design Solution
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_PHX",               "PHX Conductance",                                        "kW/K",       "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_PHX",              "PHX effectiveness",                                      "",           "",    "",      "*",     "",       "" },
@@ -110,6 +114,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_nu_od",              "Off-design turbine velocity ratio",	                     "-",	       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_N_od",               "Off-design turbine shaft speed",	                     "rpm",	       "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "t_tip_ratio_od",       "Off-design turbine tip speed ratio",                     "-",          "",    "",      "",     "",       "" },
+		// Recuperators
+	{ SSC_OUTPUT, SSC_ARRAY,   "eff_LTR_od",           "Off-design low temp recup effectiveness",                "",           "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "eff_HTR_od",           "Off-design high temp recup effectiveness",               "",           "",    "",      "",     "",       "" },
 		// PHX 
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
@@ -242,7 +249,11 @@ public:
 		double UA_HTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
 		assign("UA_recup_total", UA_LTR + UA_HTR);		//[kW/K]
 		assign("UA_LTR", UA_LTR);						//[kW/K]
+		assign("eff_LTR", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LT_recup_des_solved.m_eff_design);		//[-]
+		assign("NTU_LTR", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_LT_recup_des_solved.m_NTU_design);		//[-]
 		assign("UA_HTR", UA_HTR);						//[kW/K]
+		assign("eff_HTR", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HT_recup_des_solved.m_eff_design);		//[-]
+		assign("NTU_HTR", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_HT_recup_des_solved.m_NTU_design);		//[-]
 			// PHX
 		assign("UA_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_UA_design_total);			//[kW/K]
 		assign("eff_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
@@ -376,6 +387,9 @@ public:
 		ssc_number_t *p_t_nu_od = allocate("t_nu_od", n_od_runs);
 		ssc_number_t *p_t_N_od = allocate("t_N_od", n_od_runs);
 		ssc_number_t *p_t_tip_ratio_od = allocate("t_tip_ratio_od", n_od_runs);
+			// Recuperator
+		ssc_number_t *p_eff_LTR_od = allocate("eff_LTR_od", n_od_runs);
+		ssc_number_t *p_eff_HTR_od = allocate("eff_HTR_od", n_od_runs);
 			// PHX
 		ssc_number_t *p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
 		ssc_number_t *p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
@@ -448,6 +462,9 @@ public:
 				p_t_nu_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
 				p_t_N_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_N;		//[rpm]
 				p_t_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_w_tip_ratio;	//[-]
+					// Recuperator
+				p_eff_LTR_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_eff;	//[-]
+				p_eff_HTR_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_eff;	//[-]
 					// PHX
 				p_T_co2_PHX_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15;	//[C]
 				p_T_co2_PHX_out_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15;		//[C]
@@ -465,6 +482,7 @@ public:
 				p_T_htf_cold_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_m_dot_co2_full_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_W_dot_net_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_Q_dot_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 					// Compressor
 				p_N_mc_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_mc_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
@@ -477,6 +495,9 @@ public:
 				p_t_nu_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_t_N_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_t_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+					// Recuperator
+				p_eff_LTR_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_eff_HTR_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 					// PHX
 				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<double>::quiet_NaN();
 				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<double>::quiet_NaN();
