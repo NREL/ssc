@@ -591,6 +591,8 @@ public:
 		C_compressor::S_design_solved ms_mc_des_solved;
 		C_recompressor::S_design_solved ms_rc_des_solved;
 		C_turbine::S_design_solved ms_t_des_solved;
+		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
+		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
 
 		S_design_solved()
 		{
@@ -683,6 +685,8 @@ public:
 		C_compressor::S_od_solved ms_mc_od_solved;
 		C_recompressor::S_od_solved ms_rc_od_solved;
 		C_turbine::S_od_solved ms_t_od_solved;
+		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
+		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
 
 		S_od_solved()
 		{

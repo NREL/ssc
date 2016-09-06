@@ -3353,6 +3353,22 @@ void C_RecompCycle::design_core_standard(int & error_code)
 			return;
 		}
 
+		// Can't we move recompressor calcs here??
+
+
+
+
+
+
+
+
+
+
+
+		// ***************************************************
+
+
+
 		// State 3 can now be fully defined
 		m_enth_last[3 - cpp_offset] = m_enth_last[2 - cpp_offset] + Q_dot_LT / m_dot_mc;		// Energy balalnce on cold stream of low-temp recuperator
 		prop_error_code = CO2_PH(m_pres_last[3 - cpp_offset], m_enth_last[3 - cpp_offset], &co2_props);
@@ -4368,6 +4384,8 @@ void C_RecompCycle::finalize_design(int & error_code)
 	ms_des_solved.ms_mc_des_solved = *m_mc.get_design_solved();
 	ms_des_solved.ms_rc_des_solved = *m_rc.get_design_solved();
 	ms_des_solved.ms_t_des_solved = *m_t.get_design_solved();
+	ms_des_solved.ms_LT_recup_des_solved = mc_LT_recup.ms_des_solved;
+	ms_des_solved.ms_HT_recup_des_solved = mc_HT_recup.ms_des_solved;
 
 	// Set solved design point metrics
 	ms_des_solved.m_temp = m_temp_last;
@@ -5205,6 +5223,8 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	ms_od_solved.ms_mc_od_solved = *m_mc.get_od_solved();
 	ms_od_solved.ms_rc_od_solved = *m_rc.get_od_solved();
 	ms_od_solved.ms_t_od_solved = *m_t.get_od_solved();
+	ms_od_solved.ms_LT_recup_od_solved = mc_LT_recup.ms_od_solved;
+	ms_od_solved.ms_HT_recup_od_solved = mc_HT_recup.ms_od_solved;
 
 	// Set ms_od_solved
 	ms_od_solved.m_eta_thermal = m_eta_thermal_od;
