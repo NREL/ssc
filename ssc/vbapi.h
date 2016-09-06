@@ -29,7 +29,7 @@ extern "C" {
 SSCEXPORT long VBCALL_CONVENTION sscvb_version();
 SSCEXPORT long VBCALL_CONVENTION sscvb_build_info(const char *build_info);
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_create();
+SSCEXPORT void *VBCALL_CONVENTION sscvb_data_create();
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_free(long p_data);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_clear(long p_data);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_unassign(long p_data, const char *name);
@@ -38,7 +38,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_first(long p_data, const char *data_
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_next(long p_data, const char *data_next);
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_string(long p_data, const char *name, const char *value);
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(long p_data, const char *name, double value);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(void *p_data, const char *name, double value);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_array(long p_data, const char *name, double *pvalues, long length);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_matrix(long p_data, const char *name, double *pvalues, long nrows, long ncols);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_table(long p_data, const char *name, long table);

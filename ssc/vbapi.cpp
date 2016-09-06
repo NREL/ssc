@@ -15,9 +15,9 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_build_info(const char *build_info)
 	return (long)strlen(build_info);
 }
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_create()
+SSCEXPORT void* VBCALL_CONVENTION sscvb_data_create()
 {
-	return (long)ssc_data_create();
+	return ssc_data_create();
 }
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_free(long p_data)
@@ -97,7 +97,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_string(long p_data, const char *
 		return 0;
 }
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(long p_data, const char *name, double value)
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(void *p_data, const char *name, double value)
 {
 	if ((void*)p_data)
 	{
