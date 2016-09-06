@@ -18,8 +18,8 @@ using namespace std;
 void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & enth_in /*kJ/kg*/, double & entr_in /*kJ/kg-K*/,
 	double & dens_in /*kg/m3*/, double & temp_out /*K*/, double & enth_out /*kJ/kg*/, double & entr_out /*kJ/kg-K*/, double & dens_out /*kg/m3*/, double & spec_work /*kJ/kg*/);
 
-void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
-	int & error_code, double & UA, double & min_DT);
+//void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
+//	int & error_code, double & UA, double & min_DT);
 
 void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta);
 
@@ -856,7 +856,7 @@ private:
 	C_turbine m_t;
 	C_compressor m_mc;
 	C_recompressor m_rc;
-	C_HeatExchanger /*m_LT,*/ m_HT, m_PHX, m_PC;
+	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_PC;
 	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
 	
