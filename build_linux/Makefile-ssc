@@ -80,7 +80,7 @@ OBJECTS = \
 	cmod_user_htf_comparison.o \
 	cmod_cb_mspt_system_costs.o \
 	cmod_cb_construction_financing.o \
-	cmod_cb_empirical_heat_loss.o \
+	cmod_cb_empirical_hce_heat_loss.o \
 	cmod_sco2_design_point.o \
 	cmod_sco2_design_cycle.o \
 	cmod_sco2_csp_system.o \

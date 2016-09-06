@@ -221,11 +221,11 @@ public:
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
-	int off_design_opt(S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
-	int off_design(S_od_par od_par, S_od_operation_inputs od_op_inputs);
+	int off_design(C_sco2_recomp_csp::S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
-	int find_a_feasible_off_design_solution(S_od_par od_par, double T_mc_in /*K*/,
+	int find_a_feasible_off_design_solution(C_sco2_recomp_csp::S_od_par od_par, double T_mc_in /*K*/,
 				S_od_operation_inputs & od_op_inputs);
 
 	int off_design_core(double & eta_solved);
