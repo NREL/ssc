@@ -87,138 +87,138 @@ void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, d
 	return;
 };
 
-void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
-	int & error_code, double & UA, double & min_DT)
-{
-	/*Calculates the UA of a heat exchanger given its mass flow rates, inlet temperatures, and a heat transfer rate.
-	Note: the heat transfer rate must be positive.*/
-
-	// Check inputs
-	if( Q_dot < 0.0 )
-	{
-		error_code = 4;
-		return;
-	}
-	if( T_h_in < T_c_in )
-	{
-		error_code = 5;
-		return;
-	}
-	if( P_h_in < P_h_out )
-	{
-		error_code = 6;
-		return;
-	}
-	if( P_c_in < P_c_out )
-	{
-		error_code = 7;
-		return;
-	}
-	if( Q_dot <= 1.E-14 )		// very low Q_dot; assume it is zero
-	{
-		UA = 0.0;
-		min_DT = T_h_in - T_c_in;
-		return;
-	}
-
-	// Calculate inlet enthalpies from known state points
-	CO2_state co2_props;
-	int prop_error_code = CO2_TP(T_c_in, P_c_in, &co2_props);
-	if( prop_error_code != 0 )
-	{
-		error_code = prop_error_code;
-		return;
-	}
-	double h_c_in = co2_props.enth;
-
-	prop_error_code = CO2_TP(T_h_in, P_h_in, &co2_props);
-	if( prop_error_code != 0 )
-	{
-		error_code = 9;
-		return;
-	}
-	double h_h_in = co2_props.enth;
-
-	// Calculate outlet enthalpies from energy balance
-	double h_c_out = h_c_in + Q_dot / m_dot_c;
-	double h_h_out = h_h_in - Q_dot / m_dot_h;
-
-	int N_nodes = N_hxrs + 1;
-	double h_h_prev = 0.0;
-	double T_h_prev = 0.0;
-	double h_c_prev = 0.0;
-	double T_c_prev = 0.0;
-	UA = 0.0;
-	min_DT = T_h_in;
-	// Loop through the sub-heat exchangers
-	for( int i = 0; i < N_nodes; i++ )
-	{
-		// Assume pressure varies linearly through heat exchanger
-		double P_c = P_c_out + i*(P_c_in - P_c_out) / (N_nodes - 1);
-		double P_h = P_h_in - i*(P_h_in - P_h_out) / (N_nodes - 1);
-
-		// Calculate the entahlpy at the node
-		double h_c = h_c_out + i*(h_c_in - h_c_out) / (N_nodes - 1);
-		double h_h = h_h_in - i*(h_h_in - h_h_out) / (N_nodes - 1);
-
-		// Calculate the hot and cold temperatures at the node
-		prop_error_code = CO2_PH(P_h, h_h, &co2_props);
-		if( prop_error_code != 0 )
-		{
-			error_code = 12;
-			return;
-		}
-		double T_h = co2_props.temp;
-
-		prop_error_code = CO2_PH(P_c, h_c, &co2_props);
-		if( prop_error_code != 0 )
-		{
-			error_code = 13;
-			return;
-		}
-		double T_c = co2_props.temp;
-
-		// Check that 2nd law was not violated
-		if( T_c >= T_h )
-		{
-			error_code = 11;
-			return;
-		}
-
-		// Track the minimum temperature difference in the heat exchanger
-		min_DT = fmin(min_DT, T_h - T_c);
-
-		// Perform effectiveness-NTU and UA calculations 
-		if( i > 0 )
-		{
-			double C_dot_h = m_dot_h*(h_h_prev - h_h) / (T_h_prev - T_h);			// [kW/K] hot stream capacitance rate
-			double C_dot_c = m_dot_c*(h_c_prev - h_c) / (T_c_prev - T_c);			// [kW/K] cold stream capacitance rate
-			double C_dot_min = min(C_dot_h, C_dot_c);				// [kW/K] Minimum capacitance stream
-			double C_dot_max = max(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
-			double C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
-			double eff = (Q_dot / (double)N_hxrs) / (C_dot_min*(T_h_prev - T_c));	// [-] Effectiveness of each sub-heat exchanger
-			double NTU = 0.0;
-			if( C_R != 1.0 )
-				NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
-			else
-				NTU = eff / (1.0 - eff);
-			UA += NTU*C_dot_min;						// [kW/K] Sum UAs for each hx section			
-		}
-		h_h_prev = h_h;
-		T_h_prev = T_h;
-		h_c_prev = h_c;
-		T_c_prev = T_c;
-	}
-
-	// Check for NaNs that arose
-	if( UA != UA )
-	{
-		error_code = 14;
-		return;
-	}
-
-	return;
-};
+//void calculate_hxr_UA_1(int N_hxrs, double Q_dot /*units?*/, double m_dot_c, double m_dot_h, double T_c_in, double T_h_in, double P_c_in, double P_c_out, double P_h_in, double P_h_out,
+//	int & error_code, double & UA, double & min_DT)
+//{
+//	/*Calculates the UA of a heat exchanger given its mass flow rates, inlet temperatures, and a heat transfer rate.
+//	Note: the heat transfer rate must be positive.*/
+//
+//	// Check inputs
+//	if( Q_dot < 0.0 )
+//	{
+//		error_code = 4;
+//		return;
+//	}
+//	if( T_h_in < T_c_in )
+//	{
+//		error_code = 5;
+//		return;
+//	}
+//	if( P_h_in < P_h_out )
+//	{
+//		error_code = 6;
+//		return;
+//	}
+//	if( P_c_in < P_c_out )
+//	{
+//		error_code = 7;
+//		return;
+//	}
+//	if( Q_dot <= 1.E-14 )		// very low Q_dot; assume it is zero
+//	{
+//		UA = 0.0;
+//		min_DT = T_h_in - T_c_in;
+//		return;
+//	}
+//
+//	// Calculate inlet enthalpies from known state points
+//	CO2_state co2_props;
+//	int prop_error_code = CO2_TP(T_c_in, P_c_in, &co2_props);
+//	if( prop_error_code != 0 )
+//	{
+//		error_code = prop_error_code;
+//		return;
+//	}
+//	double h_c_in = co2_props.enth;
+//
+//	prop_error_code = CO2_TP(T_h_in, P_h_in, &co2_props);
+//	if( prop_error_code != 0 )
+//	{
+//		error_code = 9;
+//		return;
+//	}
+//	double h_h_in = co2_props.enth;
+//
+//	// Calculate outlet enthalpies from energy balance
+//	double h_c_out = h_c_in + Q_dot / m_dot_c;
+//	double h_h_out = h_h_in - Q_dot / m_dot_h;
+//
+//	int N_nodes = N_hxrs + 1;
+//	double h_h_prev = 0.0;
+//	double T_h_prev = 0.0;
+//	double h_c_prev = 0.0;
+//	double T_c_prev = 0.0;
+//	UA = 0.0;
+//	min_DT = T_h_in;
+//	// Loop through the sub-heat exchangers
+//	for( int i = 0; i < N_nodes; i++ )
+//	{
+//		// Assume pressure varies linearly through heat exchanger
+//		double P_c = P_c_out + i*(P_c_in - P_c_out) / (N_nodes - 1);
+//		double P_h = P_h_in - i*(P_h_in - P_h_out) / (N_nodes - 1);
+//
+//		// Calculate the entahlpy at the node
+//		double h_c = h_c_out + i*(h_c_in - h_c_out) / (N_nodes - 1);
+//		double h_h = h_h_in - i*(h_h_in - h_h_out) / (N_nodes - 1);
+//
+//		// Calculate the hot and cold temperatures at the node
+//		prop_error_code = CO2_PH(P_h, h_h, &co2_props);
+//		if( prop_error_code != 0 )
+//		{
+//			error_code = 12;
+//			return;
+//		}
+//		double T_h = co2_props.temp;
+//
+//		prop_error_code = CO2_PH(P_c, h_c, &co2_props);
+//		if( prop_error_code != 0 )
+//		{
+//			error_code = 13;
+//			return;
+//		}
+//		double T_c = co2_props.temp;
+//
+//		// Check that 2nd law was not violated
+//		if( T_c >= T_h )
+//		{
+//			error_code = 11;
+//			return;
+//		}
+//
+//		// Track the minimum temperature difference in the heat exchanger
+//		min_DT = fmin(min_DT, T_h - T_c);
+//
+//		// Perform effectiveness-NTU and UA calculations 
+//		if( i > 0 )
+//		{
+//			double C_dot_h = m_dot_h*(h_h_prev - h_h) / (T_h_prev - T_h);			// [kW/K] hot stream capacitance rate
+//			double C_dot_c = m_dot_c*(h_c_prev - h_c) / (T_c_prev - T_c);			// [kW/K] cold stream capacitance rate
+//			double C_dot_min = min(C_dot_h, C_dot_c);				// [kW/K] Minimum capacitance stream
+//			double C_dot_max = max(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
+//			double C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
+//			double eff = (Q_dot / (double)N_hxrs) / (C_dot_min*(T_h_prev - T_c));	// [-] Effectiveness of each sub-heat exchanger
+//			double NTU = 0.0;
+//			if( C_R != 1.0 )
+//				NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
+//			else
+//				NTU = eff / (1.0 - eff);
+//			UA += NTU*C_dot_min;						// [kW/K] Sum UAs for each hx section			
+//		}
+//		h_h_prev = h_h;
+//		T_h_prev = T_h;
+//		h_c_prev = h_c;
+//		T_c_prev = T_c;
+//	}
+//
+//	// Check for NaNs that arose
+//	if( UA != UA )
+//	{
+//		error_code = 14;
+//		return;
+//	}
+//
+//	return;
+//};
 
 void isen_eta_from_poly_eta(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double poly_eta /*-*/, bool is_comp, int & error_code, double & isen_eta)
 {
@@ -3494,6 +3494,23 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_entr_last[5 - cpp_offset] = co2_props.entr;
 	m_dens_last[5 - cpp_offset] = co2_props.dens;
 
+	//C_HeatExchanger::S_design_parameters LT_des_par;
+	//double C_dot_hot = m_dot_t*(m_enth_last[8 - cpp_offset] - m_enth_last[9 - cpp_offset]) / (m_temp_last[8 - cpp_offset] - m_temp_last[9 - cpp_offset]);		// LT recuperator hot stream capacitance rate
+	//double C_dot_cold = m_dot_mc*(m_enth_last[3 - cpp_offset] - m_enth_last[2 - cpp_offset]) / (m_temp_last[3 - cpp_offset] - m_temp_last[2 - cpp_offset]);	// LT recuperator cold stream capacitance rate
+	//double C_dot_min = min(C_dot_hot, C_dot_cold);
+	//double Q_dot_max = C_dot_min*(m_temp_last[8 - cpp_offset] - m_temp_last[2 - cpp_offset]);
+	//double hx_eff = Q_dot_LT / Q_dot_max;				// Definition of effectiveness
+	//LT_des_par.m_DP_design[0] = m_pres_last[2 - cpp_offset] - m_pres_last[3 - cpp_offset];
+	//LT_des_par.m_DP_design[1] = m_pres_last[8 - cpp_offset] - m_pres_last[9 - cpp_offset];
+	//LT_des_par.m_eff_design = hx_eff;
+	//LT_des_par.m_min_DT_design = min_DT_LT;
+	//LT_des_par.m_m_dot_design[0] = m_dot_mc;
+	//LT_des_par.m_m_dot_design[1] = m_dot_t;
+	//LT_des_par.m_N_sub = ms_des_par.m_N_sub_hxrs;
+	//LT_des_par.m_Q_dot_design = Q_dot_LT;
+	//LT_des_par.m_UA_design = UA_LT_calc;
+	//m_LT.initialize(LT_des_par);
+
 	// Calculate performance metrics for low-temperature recuperator
 	// ****************************************************************
 	C_HX_counterflow::S_des_par LT_recup_des_par;
@@ -3512,42 +3529,44 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	C_HX_counterflow::S_des_solved LT_recup_des_solved;
 	mc_LT_recup.design(LT_recup_des_par, LT_recup_des_solved);
 	// ****************************************************************
-	// ****************************************************************
-
-	//C_HeatExchanger::S_design_parameters LT_des_par;
-	//double C_dot_hot = m_dot_t*(m_enth_last[8 - cpp_offset] - m_enth_last[9 - cpp_offset]) / (m_temp_last[8 - cpp_offset] - m_temp_last[9 - cpp_offset]);		// LT recuperator hot stream capacitance rate
-	//double C_dot_cold = m_dot_mc*(m_enth_last[3 - cpp_offset] - m_enth_last[2 - cpp_offset]) / (m_temp_last[3 - cpp_offset] - m_temp_last[2 - cpp_offset]);	// LT recuperator cold stream capacitance rate
-	//double C_dot_min = min(C_dot_hot, C_dot_cold);
-	//double Q_dot_max = C_dot_min*(m_temp_last[8 - cpp_offset] - m_temp_last[2 - cpp_offset]);
-	//double hx_eff = Q_dot_LT / Q_dot_max;				// Definition of effectiveness
-	//LT_des_par.m_DP_design[0] = m_pres_last[2 - cpp_offset] - m_pres_last[3 - cpp_offset];
-	//LT_des_par.m_DP_design[1] = m_pres_last[8 - cpp_offset] - m_pres_last[9 - cpp_offset];
-	//LT_des_par.m_eff_design = hx_eff;
-	//LT_des_par.m_min_DT_design = min_DT_LT;
-	//LT_des_par.m_m_dot_design[0] = m_dot_mc;
-	//LT_des_par.m_m_dot_design[1] = m_dot_t;
-	//LT_des_par.m_N_sub = ms_des_par.m_N_sub_hxrs;
-	//LT_des_par.m_Q_dot_design = Q_dot_LT;
-	//LT_des_par.m_UA_design = UA_LT_calc;
-	//m_LT.initialize(LT_des_par);
+	// ****************************************************************	
 
 	// Calculate performance metrics for high-temperature recuperator
-	C_HeatExchanger::S_design_parameters HT_des_par;
-	double C_dot_hot = m_dot_t*(m_enth_last[7 - cpp_offset] - m_enth_last[8 - cpp_offset]) / (m_temp_last[7 - cpp_offset] - m_temp_last[8 - cpp_offset]);			// HT recuperator hot stream capacitance rate
-	double C_dot_cold = m_dot_t*(m_enth_last[5 - cpp_offset] - m_enth_last[4 - cpp_offset]) / (m_temp_last[5 - cpp_offset] - m_temp_last[4 - cpp_offset]);			// HT recuperator cold stream capacitance rate
-	double C_dot_min = min(C_dot_hot, C_dot_cold);
-	double Q_dot_max = C_dot_min*(m_temp_last[7 - cpp_offset] - m_temp_last[4 - cpp_offset]);
-	double hx_eff = Q_dot_HT / Q_dot_max;						// Definition of effectiveness
-	HT_des_par.m_DP_design[0] = m_pres_last[4 - cpp_offset] - m_pres_last[5 - cpp_offset];
-	HT_des_par.m_DP_design[1] = m_pres_last[7 - cpp_offset] - m_pres_last[8 - cpp_offset];
-	HT_des_par.m_eff_design = hx_eff;
-	HT_des_par.m_min_DT_design = min_DT_HT;
-	HT_des_par.m_m_dot_design[0] = m_dot_t;
-	HT_des_par.m_m_dot_design[1] = m_dot_t;
-	HT_des_par.m_N_sub = ms_des_par.m_N_sub_hxrs;
-	HT_des_par.m_Q_dot_design = Q_dot_HT;
-	HT_des_par.m_UA_design = UA_HT_calc;
-	m_HT.initialize(HT_des_par);
+	// *****************************************************************
+	C_HX_counterflow::S_des_par HT_recup_des_par;
+	HT_recup_des_par.m_Q_dot_design = Q_dot_HT;				//[kWt]
+		// Hot side
+	HT_recup_des_par.m_T_h_in = m_temp_last[TURB_OUT];		//[K]
+	HT_recup_des_par.m_P_h_in = m_pres_last[TURB_OUT];		//[kPa]
+	HT_recup_des_par.m_P_h_out = m_pres_last[HTR_LP_OUT];	//[kPa]
+	HT_recup_des_par.m_m_dot_hot_des = m_dot_t;				//[kg/s]
+		// Cold side
+	HT_recup_des_par.m_T_c_in = m_temp_last[MIXER_OUT];		//[K]
+	HT_recup_des_par.m_P_c_in = m_pres_last[MIXER_OUT];		//[kPa]
+	HT_recup_des_par.m_P_c_out = m_pres_last[HTR_HP_OUT];	//[kPa]
+	HT_recup_des_par.m_m_dot_cold_des = m_dot_t;			//[kg/s]
+		// Design()
+	C_HX_counterflow::S_des_solved HT_recup_des_solved;
+	mc_HT_recup.design(HT_recup_des_par, HT_recup_des_solved);
+	// *****************************************************************
+	// *****************************************************************
+
+	//C_HeatExchanger::S_design_parameters HT_des_par;
+	//double C_dot_hot = m_dot_t*(m_enth_last[7 - cpp_offset] - m_enth_last[8 - cpp_offset]) / (m_temp_last[7 - cpp_offset] - m_temp_last[8 - cpp_offset]);			// HT recuperator hot stream capacitance rate
+	//double C_dot_cold = m_dot_t*(m_enth_last[5 - cpp_offset] - m_enth_last[4 - cpp_offset]) / (m_temp_last[5 - cpp_offset] - m_temp_last[4 - cpp_offset]);			// HT recuperator cold stream capacitance rate
+	//double C_dot_min = min(C_dot_hot, C_dot_cold);
+	//double Q_dot_max = C_dot_min*(m_temp_last[7 - cpp_offset] - m_temp_last[4 - cpp_offset]);
+	//double hx_eff = Q_dot_HT / Q_dot_max;						// Definition of effectiveness
+	//HT_des_par.m_DP_design[0] = m_pres_last[4 - cpp_offset] - m_pres_last[5 - cpp_offset];
+	//HT_des_par.m_DP_design[1] = m_pres_last[7 - cpp_offset] - m_pres_last[8 - cpp_offset];
+	//HT_des_par.m_eff_design = hx_eff;
+	//HT_des_par.m_min_DT_design = min_DT_HT;
+	//HT_des_par.m_m_dot_design[0] = m_dot_t;
+	//HT_des_par.m_m_dot_design[1] = m_dot_t;
+	//HT_des_par.m_N_sub = ms_des_par.m_N_sub_hxrs;
+	//HT_des_par.m_Q_dot_design = Q_dot_HT;
+	//HT_des_par.m_UA_design = UA_HT_calc;
+	//m_HT.initialize(HT_des_par);
 
 	// Set relevant values for other heat exchangers
 	C_HeatExchanger::S_design_parameters PHX_des_par;
@@ -4433,10 +4452,13 @@ int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/,
 	DP_LT[0] = mpc_rc_cycle->mc_LT_recup.od_delta_p_cold(m_dot_mc);
 	DP_LT[1] = mpc_rc_cycle->mc_LT_recup.od_delta_p_hot(m_dot_t_in);
 
-	std::vector<double> m_dot_HT;
-	m_dot_HT.push_back(m_dot_t_in);
-	m_dot_HT.push_back(m_dot_t_in);
-	mpc_rc_cycle->m_HT.hxr_pressure_drops(m_dot_HT, DP_HT);
+	//std::vector<double> m_dot_HT;
+	//m_dot_HT.push_back(m_dot_t_in);
+	//m_dot_HT.push_back(m_dot_t_in);
+	//mpc_rc_cycle->m_HT.hxr_pressure_drops(m_dot_HT, DP_HT);
+	DP_HT.resize(2);
+	DP_HT[0] = mpc_rc_cycle->mc_HT_recup.od_delta_p_cold(m_dot_t_in);
+	DP_HT[1] = mpc_rc_cycle->mc_HT_recup.od_delta_p_hot(m_dot_t_in);
 
 	std::vector<double> m_dot_PHX;
 	m_dot_PHX.push_back(m_dot_t_in);
@@ -4805,7 +4827,8 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	m_dot_HT.push_back(m_dot_t);
 	//m_LT.hxr_conductance(m_dot_LT, UA_LT);
 	UA_LT = mc_LT_recup.od_UA(m_dot_mc, m_dot_t);
-	m_HT.hxr_conductance(m_dot_HT, UA_HT);
+	//m_HT.hxr_conductance(m_dot_HT, UA_HT);
+	UA_HT = mc_HT_recup.od_UA(m_dot_t, m_dot_t);
 
 	// Outer iteration loop: temp(8), checking against UA_HT
 	double T8_lower_bound = std::numeric_limits<double>::quiet_NaN();
@@ -5066,26 +5089,48 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 		else
 			Q_dot_HT = m_dot_t*(m_enth_od[7 - cpp_offset] - m_enth_od[8 - cpp_offset]);
 
-		int HT_hx_error_code = 0;
-		double min_DT_HT = std::numeric_limits<double>::quiet_NaN();
-		calculate_hxr_UA_1(ms_od_phi_par.m_N_sub_hxrs, Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[4 - cpp_offset], m_temp_od[7 - cpp_offset], m_pres_od[4 - cpp_offset], m_pres_od[5 - cpp_offset],
-			m_pres_od[7 - cpp_offset], m_pres_od[8 - cpp_offset], HT_hx_error_code, UA_HT_calc, min_DT_HT);
-
-		if( HT_hx_error_code != 0 )
+		double min_DT_HT, eff_HT_hx, NTU_HT_hx, T_h_out_HT_hx, T_c_out_HT_hx, q_dot_HT_hx;
+		min_DT_HT = eff_HT_hx = NTU_HT_hx = T_h_out_HT_hx = T_c_out_HT_hx = q_dot_HT_hx = std::numeric_limits<double>::quiet_NaN();
+		
+		try
 		{
-			if( HT_hx_error_code == 11 )		// second-law violation in hxr, therefore temp(8) is too low
+		mc_HT_recup.calc_req_UA(Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[MIXER_OUT], m_temp_od[TURB_OUT],
+			m_pres_od[MIXER_OUT], m_pres_od[HTR_HP_OUT], m_pres_od[TURB_OUT], m_pres_od[HTR_LP_OUT],
+			UA_HT_calc, min_DT_HT, eff_HT_hx, NTU_HT_hx, T_h_out_HT_hx, T_c_out_HT_hx, q_dot_HT_hx);
+		}
+		catch( C_csp_exception & csp_except )
+		{
+			if( csp_except.m_error_code == 11 )		// second-law violation in hxr, therefore temp(8) is too low
 			{
 				T8_lower_bound = m_temp_od[8 - cpp_offset];
 				m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
-				HT_hx_error_code = 0;
 				continue;
 			}
 			else
 			{
-				error_code = HT_hx_error_code;
+				error_code = csp_except.m_error_code;
 				return;
 			}
 		}
+
+		//calculate_hxr_UA_1(ms_od_phi_par.m_N_sub_hxrs, Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[4 - cpp_offset], m_temp_od[7 - cpp_offset], m_pres_od[4 - cpp_offset], m_pres_od[5 - cpp_offset],
+		//	m_pres_od[7 - cpp_offset], m_pres_od[8 - cpp_offset], HT_hx_error_code, UA_HT_calc, min_DT_HT);
+		//
+		//if( HT_hx_error_code != 0 )
+		//{
+		//	if( HT_hx_error_code == 11 )		// second-law violation in hxr, therefore temp(8) is too low
+		//	{
+		//		T8_lower_bound = m_temp_od[8 - cpp_offset];
+		//		m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
+		//		HT_hx_error_code = 0;
+		//		continue;
+		//	}
+		//	elseb
+		//	{
+		//		error_code = HT_hx_error_code;
+		//		return;
+		//	}
+		//}
 
 		// Check for convergence and adjust T8 appropriately
 		double UA_HT_residual = UA_HT - UA_HT_calc;
@@ -5261,11 +5306,14 @@ void C_RecompCycle::off_design_core(int & error_code)
 		DP_LT[0] = mc_LT_recup.od_delta_p_cold(m_dot_mc);
 		DP_LT[1] = mc_LT_recup.od_delta_p_hot(m_dot_t);
 
-		std::vector<double> m_dot_HT;
-		m_dot_HT.push_back( m_dot_t );
-		m_dot_HT.push_back( m_dot_t );
-		m_HT.hxr_pressure_drops(m_dot_HT, DP_HT);
-		
+		//std::vector<double> m_dot_HT;
+		//m_dot_HT.push_back( m_dot_t );
+		//m_dot_HT.push_back( m_dot_t );
+		//m_HT.hxr_pressure_drops(m_dot_HT, DP_HT);
+		DP_HT.resize(2);
+		DP_HT[0] = mc_HT_recup.od_delta_p_cold(m_dot_t);
+		DP_HT[1] = mc_HT_recup.od_delta_p_hot(m_dot_t);
+
 		std::vector<double> m_dot_PHX;
 		m_dot_PHX.push_back( m_dot_t );
 		m_dot_PHX.push_back( 0.0 );
@@ -5394,7 +5442,8 @@ void C_RecompCycle::off_design_core(int & error_code)
 	m_dot_HT.push_back( m_dot_t );
 	//m_LT.hxr_conductance(m_dot_LT, UA_LT);
 	UA_LT = mc_LT_recup.od_UA(m_dot_mc, m_dot_t);
-	m_HT.hxr_conductance(m_dot_HT, UA_HT);
+	//m_HT.hxr_conductance(m_dot_HT, UA_HT);
+	UA_HT = mc_HT_recup.od_UA(m_dot_t, m_dot_t);
 
 	// Outer iteration loop: temp(8), checking against UA_HT
 	double T8_lower_bound = std::numeric_limits<double>::quiet_NaN();
@@ -5515,26 +5564,48 @@ void C_RecompCycle::off_design_core(int & error_code)
 			else
 				Q_dot_LT = m_dot_t * (m_enth_od[8-cpp_offset] - m_enth_od[9-cpp_offset]);
 
-			int hx_error_code = 0;
-			double min_DT_LT = std::numeric_limits<double>::quiet_NaN();
-			calculate_hxr_UA_1(ms_od_par.m_N_sub_hxrs, Q_dot_LT, m_dot_mc, m_dot_t, m_temp_od[2-cpp_offset], m_temp_od[8-cpp_offset], 
-				m_pres_od[2-cpp_offset], m_pres_od[3-cpp_offset], m_pres_od[8-cpp_offset], m_pres_od[9-cpp_offset], hx_error_code, UA_LT_calc, min_DT_LT);
+			double min_DT_LT, eff_LT_hx, NTU_LT_hx, T_h_out_LT_hx, T_c_out_LT_hx, q_dot_LT_hx;
+			min_DT_LT = eff_LT_hx = NTU_LT_hx = T_h_out_LT_hx = T_c_out_LT_hx = q_dot_LT_hx = std::numeric_limits<double>::quiet_NaN();
 
-			if(hx_error_code > 0)
+			try
 			{
-				if(hx_error_code == 11)			// second-law violation in hxr, therefore temp(9) is too low
+				mc_LT_recup.calc_req_UA(Q_dot_LT, m_dot_mc, m_dot_t, m_temp_od[MC_OUT], m_temp_od[HTR_LP_OUT],
+					m_pres_od[MC_OUT], m_pres_od[LTR_HP_OUT], m_pres_od[HTR_LP_OUT], m_pres_od[LTR_LP_OUT],
+					UA_LT_calc, min_DT_LT, eff_LT_hx, NTU_LT_hx, T_h_out_LT_hx, T_c_out_LT_hx, q_dot_LT_hx);
+			}
+			catch( C_csp_exception & csp_except )
+			{
+				if( csp_except.m_error_code == 11 )		// second-law violation in hxr, therefore temp(9) is too low
 				{
-					T9_lower_bound = m_temp_od[9-cpp_offset];
-					m_temp_od[9-cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);	// bisect bounds for next guess
-					hx_error_code = 0;
-					continue;				
+					T9_lower_bound = m_temp_od[9 - cpp_offset];
+					m_temp_od[9 - cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);	// bisect bounds for next guess
+					continue;
 				}
 				else
 				{
-					error_code = hx_error_code;
+					error_code = csp_except.m_error_code;
 					return;
 				}
 			}
+
+			//calculate_hxr_UA_1(ms_od_par.m_N_sub_hxrs, Q_dot_LT, m_dot_mc, m_dot_t, m_temp_od[2-cpp_offset], m_temp_od[8-cpp_offset], 
+			//	m_pres_od[2-cpp_offset], m_pres_od[3-cpp_offset], m_pres_od[8-cpp_offset], m_pres_od[9-cpp_offset], hx_error_code, UA_LT_calc, min_DT_LT);
+			//
+			//if(hx_error_code > 0)
+			//{
+			//	if(hx_error_code == 11)			// second-law violation in hxr, therefore temp(9) is too low
+			//	{
+			//		T9_lower_bound = m_temp_od[9-cpp_offset];
+			//		m_temp_od[9-cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);	// bisect bounds for next guess
+			//		hx_error_code = 0;
+			//		continue;				
+			//	}
+			//	else
+			//	{
+			//		error_code = hx_error_code;
+			//		return;
+			//	}
+			//}
 
 			// Check for convergence and adjust T9 appropriately
 			double UA_LT_residual = UA_LT - UA_LT_calc;
@@ -5629,26 +5700,51 @@ void C_RecompCycle::off_design_core(int & error_code)
 		else
 			Q_dot_HT = m_dot_t*(m_enth_od[7-cpp_offset] - m_enth_od[8-cpp_offset]);
 
-		int HT_hx_error_code = 0;
-		double min_DT_HT = std::numeric_limits<double>::quiet_NaN();
-		calculate_hxr_UA_1(ms_od_par.m_N_sub_hxrs, Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[4-cpp_offset], m_temp_od[7-cpp_offset], m_pres_od[4-cpp_offset], m_pres_od[5-cpp_offset],
-			m_pres_od[7-cpp_offset], m_pres_od[8-cpp_offset], HT_hx_error_code, UA_HT_calc, min_DT_HT);
 
-		if(HT_hx_error_code != 0)
+		double min_DT_HT, eff_HT_hx, NTU_HT_hx, T_h_out_HT_hx, T_c_out_HT_hx, q_dot_HT_hx;
+		min_DT_HT = eff_HT_hx = NTU_HT_hx = T_h_out_HT_hx = T_c_out_HT_hx = q_dot_HT_hx = std::numeric_limits<double>::quiet_NaN();
+
+		try
 		{
-			if(HT_hx_error_code == 11)		// second-law violation in hxr, therefore temp(8) is too low
+			mc_HT_recup.calc_req_UA(Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[MIXER_OUT], m_temp_od[TURB_OUT],
+				m_pres_od[MIXER_OUT], m_pres_od[HTR_HP_OUT], m_pres_od[TURB_OUT], m_pres_od[HTR_LP_OUT],
+				UA_HT_calc, min_DT_HT, eff_HT_hx, NTU_HT_hx, T_h_out_HT_hx, T_c_out_HT_hx, q_dot_HT_hx);
+		}
+		catch( C_csp_exception & csp_except )
+		{
+			if( csp_except.m_error_code == 11 )		// second-law violation in hxr, therefore temp(8) is too low
 			{
-				T8_lower_bound = m_temp_od[8-cpp_offset];
-				m_temp_od[8-cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
-				HT_hx_error_code = 0;
+				T8_lower_bound = m_temp_od[8 - cpp_offset];
+				m_temp_od[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
 				continue;
 			}
 			else
 			{
-				error_code = HT_hx_error_code;
+				error_code = csp_except.m_error_code;
 				return;
-			}		
+			}
 		}
+
+		//int HT_hx_error_code = 0;
+		//double min_DT_HT = std::numeric_limits<double>::quiet_NaN();
+		//calculate_hxr_UA_1(ms_od_par.m_N_sub_hxrs, Q_dot_HT, m_dot_t, m_dot_t, m_temp_od[4-cpp_offset], m_temp_od[7-cpp_offset], m_pres_od[4-cpp_offset], m_pres_od[5-cpp_offset],
+		//	m_pres_od[7-cpp_offset], m_pres_od[8-cpp_offset], HT_hx_error_code, UA_HT_calc, min_DT_HT);
+		//
+		//if(HT_hx_error_code != 0)
+		//{
+		//	if(HT_hx_error_code == 11)		// second-law violation in hxr, therefore temp(8) is too low
+		//	{
+		//		T8_lower_bound = m_temp_od[8-cpp_offset];
+		//		m_temp_od[8-cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
+		//		HT_hx_error_code = 0;
+		//		continue;
+		//	}
+		//	else
+		//	{
+		//		error_code = HT_hx_error_code;
+		//		return;
+		//	}		
+		//}
 
 		// Check for convergence and adjust T8 appropriately
 		double UA_HT_residual = UA_HT - UA_HT_calc;
