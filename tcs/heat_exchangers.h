@@ -20,6 +20,11 @@ private:
 	double calc_max_q_dot(double T_h_in, double P_h_in, double P_h_out, double m_dot_h,
 		double T_c_in, double P_c_in, double P_c_out, double m_dot_c);
 
+	void hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+		double UA_target /*kW/K*/, double eff_limit /*-*/,
+		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
+
 protected:
 	bool m_is_HX_initialized;		//[-] True = yes!
 	bool m_is_HX_designed;			//[-] True = yes!
@@ -59,10 +64,15 @@ public:
 		double m_P_c_out;			//[kPa] Cold fluid outlet temperature
 		double m_m_dot_cold_des;	//[kg/s] cold fluid design mass flow rate
 
+		double m_UA_target;			//[kW/K] Target design conductance
+		double m_eff_max;			//[-] Maximum allowable effectiveness
+
 		S_des_par()
 		{
 			m_Q_dot_design = m_T_h_in = m_P_h_in = m_P_h_out = m_m_dot_hot_des = 
-				m_T_c_in = m_P_c_in = m_P_c_out = m_m_dot_cold_des = std::numeric_limits<double>::quiet_NaN();
+				m_T_c_in = m_P_c_in = m_P_c_out = m_m_dot_cold_des = 
+				
+				m_UA_target = m_eff_max = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -96,6 +106,22 @@ public:
 
 		S_od_par()
 		{
+			m_T_c_in = m_P_c_in = m_m_dot_c =
+				m_T_h_in = m_P_h_in = m_m_dot_h = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	struct S_hx_sol_par
+	{
+		double m_T_c_in;		//[K] Cold fluid inlet temperature
+		double m_P_c_in;		//[kPa] Cold fluid inlet pressure
+		double m_m_dot_c;		//[kg/s] Cold fluid design mass flow rate
+		double m_T_h_in;		//[K] Hot fluid inlet temperature
+		double m_P_h_in;		//[kPa] Hot fluid inlet pressure
+		double m_m_dot_h;		//[kg/s] Hot fluid design mass flow rate
+
+		S_hx_sol_par()
+		{
 			m_T_c_in = m_P_c_in = m_m_dot_c = 
 				m_T_h_in = m_P_h_in = m_m_dot_h = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -120,6 +146,26 @@ public:
 				m_UA_total = m_min_DT = m_eff = m_NTU = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
+	
+	struct S_hx_sol_solved
+	{
+		double m_q_dot;		//[kWt] Thermal power to cold fluid
+		double m_T_c_out;	//[K] Cold fluid outlet temperature
+		double m_P_c_out;	//[kPa] Cold fluid outlet pressure
+		double m_T_h_out;	//[K] Hot fluid outlet temperature
+		double m_P_h_out;	//[kPa] Hot fluid outlet temperature
+		double m_UA_total;	//[kW/K] Conductance
+		double m_min_DT;	//[K] Min temp difference
+		double m_eff;		//[-]
+		double m_NTU;
+
+		S_hx_sol_solved()
+		{
+			m_q_dot =
+				m_T_c_out = m_P_c_out = m_T_h_out = m_P_h_out =
+				m_UA_total = m_min_DT = m_eff = m_NTU = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
 
 	class C_mono_eq_UA_v_q : public C_monotonic_equation
 	{
@@ -138,6 +184,8 @@ public:
 	S_init_par ms_init_par;
 	S_des_par ms_des_par;
 	S_des_solved ms_des_solved;
+	S_hx_sol_par ms_hx_sol_par;
+	S_hx_sol_solved ms_hx_sol_solved;
 	S_od_par ms_od_par;
 	S_od_solved ms_od_solved;
 
@@ -157,7 +205,13 @@ public:
 		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & T_h_out /*K*/, double & T_c_out /*K*/, double & q_dot_calc /*kWt*/);
 
-	void od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
+	
+
+	void design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
+
+	void off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
 
