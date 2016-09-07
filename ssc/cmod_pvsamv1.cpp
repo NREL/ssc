@@ -78,11 +78,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt",                              "Sub-array 1 Tilt",                                      "deg",     "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray1_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_tilt_eq_lat",                       "Sub-array 1 Tilt=latitude override",                    "0/1",     "",                              "pvsamv1",              "na:subarray1_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_azimuth",                           "Sub-array 1 Azimuth",                                   "deg",     "0=N,90=E,180=S,270=W",          "pvsamv1",              "*",                        "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_track_mode",                        "Sub-array 1 Tracking mode",                             "",        "0=fixed,1=1axis,2=2axis,3=azi,4=timestep", "pvsamv1",   "*",                        "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_track_mode",                        "Sub-array 1 Tracking mode",                             "",        "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "*",                        "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_rotlim",                            "Sub-array 1 Tracker rotation limit",                    "deg",     "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray1_shade_mode",				     	"Sub-array 1 shading mode (fixed tilt or 1x tracking)",	 "0/1/2",   "0=none,1=standard(non-linear),2=thin film(linear)",  "pvsamv1",			     "*",                        "INTEGER,MIN=0,MAX=2",		      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray1_gcr",                               "Sub-array 1 Ground coverage ratio",                     "0..1",    "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_timeseries_tilt",                   "Sub-array 1 timestep tilt input",                       "deg",     "",                              "pvsamv1",              "subarray1_track_mode=4",   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray1_monthly_tilt",                      "Sub-array 1 monthly tilt input",                        "deg",     "",                              "pvsamv1",              "subarray1_track_mode=4",   "LENGTH=12",                     "" },
 //	{ SSC_INPUT, SSC_ARRAY, "subarray1_shading:hourly", "Sub-array 1 Hourly beam shading losses", "%", "", "pvsamv1", "?", "", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray1_shading:shading_db_lookup", "Sub-array 1 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray1_shading:string_option", "Sub-array 1 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
@@ -137,11 +137,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt",                              "Sub-array 2 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray2_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_tilt_eq_lat",                       "Sub-array 2 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray2_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_azimuth",                           "Sub-array 2 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "subarray2_enable=1",       "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_track_mode",                        "Sub-array 2 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=timestep", "pvsamv1",   "subarray2_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_track_mode",                        "Sub-array 2 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "subarray2_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_rotlim",                            "Sub-array 2 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray2_shade_mode",				     	"Sub-array 2 shading mode (fixed tilt or 1x tracking)",	   "0/1/2",   "0=none,1=standard(non-linear),2=thin film(linear)",  "pvsamv1",		      "*",                        "INTEGER,MIN=0,MAX=2",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray2_gcr",                               "Sub-array 2 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_timeseries_tilt",                   "Sub-array 2 timestep tilt input",                         "deg",    "",                             "pvsamv1",              "subarray2_track_mode=4",   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_monthly_tilt",                      "Sub-array 2 monthly tilt input",                          "deg",    "",                              "pvsamv1",              "subarray2_track_mode=4",   "LENGTH=12",                     "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "subarray2_shading:hourly",                    "Sub-array 2 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray2_shading:shading_db_lookup", "Sub-array 2 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray2_shading:string_option", "Sub-array 2 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
@@ -161,11 +161,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt",                              "Sub-array 3 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray3_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_tilt_eq_lat",                       "Sub-array 3 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray3_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_azimuth",                           "Sub-array 3 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "subarray3_enable=1",       "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_track_mode",                        "Sub-array 3 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=timestep", "pvsamv1",     "subarray3_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_track_mode",                        "Sub-array 3 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "subarray3_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_rotlim",                            "Sub-array 3 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray3_shade_mode",				     	"Sub-array 3 shading mode (fixed tilt or 1x tracking)",	   "0/1/2",   "0=none,1=standard(non-linear),2=thin film(linear)", "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=2",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray3_gcr",                               "Sub-array 3 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_timeseries_tilt",                   "Sub-array 3 timestep tilt input",                         "deg",    "",                              "pvsamv1",              "subarray3_track_mode=4",   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_monthly_tilt",                      "Sub-array 3 monthly tilt input",                          "deg",    "",                              "pvsamv1",              "subarray3_track_mode=4",   "LENGTH=12",                     "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "subarray3_shading:hourly",                    "Sub-array 3 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray3_shading:shading_db_lookup", "Sub-array 3 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray3_shading:string_option", "Sub-array 3 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
@@ -185,11 +185,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt",                              "Sub-array 4 Tilt",                                        "deg",    "0=horizontal,90=vertical",      "pvsamv1",              "naof:subarray4_tilt_eq_lat", "MIN=0,MAX=90",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_tilt_eq_lat",                       "Sub-array 4 Tilt=latitude override",                      "0/1",    "",                              "pvsamv1",              "na:subarray4_tilt",          "BOOLEAN",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_azimuth",                           "Sub-array 4 Azimuth",                                     "deg",    "0=N,90=E,180=S,270=W",          "pvsamv1",              "subarray4_enable=1",       "MIN=0,MAX=359.9",               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_track_mode",                        "Sub-array 4 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=timestep", "pvsamv1",   "subarray4_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_track_mode",                        "Sub-array 4 Tracking mode",                               "",       "0=fixed,1=1axis,2=2axis,3=azi,4=monthly", "pvsamv1",    "subarray4_enable=1",       "INTEGER,MIN=0,MAX=4",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_rotlim",                            "Sub-array 4 Tracker rotation limit",                      "deg",    "",                              "pvsamv1",              "?=45",                     "MIN=5,MAX=85",                  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "subarray4_shade_mode",				     	"Sub-array 4 shading mode (fixed tilt or 1x tracking)",	   "0/1/2",  "0=none,1=standard(non-linear),2=thin film(linear)",  "pvsamv1",			  "*",                        "INTEGER,MIN=0,MAX=2",		   "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "subarray4_gcr",                               "Sub-array 4 Ground coverage ratio",                       "0..1",   "",                              "pvsamv1",              "?=0.3",                    "MIN=0,MAX=3",               "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_timeseries_tilt",                   "Sub-array 4 timestep tilt input",                         "deg",    "",                              "pvsamv1",              "subarray4_track_mode=4",   "",                              "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_monthly_tilt",                      "Sub-array 4 monthly tilt input",                          "deg",    "",                              "pvsamv1",              "subarray4_track_mode=4",   "LENGTH=12",                     "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "subarray4_shading:hourly",                    "Sub-array 4 Hourly beam shading losses",                 "%",       "",                              "pvsamv1",              "?",                        "",                              "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray4_shading:shading_db_lookup", "Sub-array 4 enable shading database lookup", "", "", "pvsamv1", "?=0", "BOOLEAN", "" },
 //	{ SSC_INPUT, SSC_NUMBER, "subarray4_shading:string_option", "Sub-array 4 shading string option", "", "0=shadingdb,1=average,2=maximum,3=minimum", "pvsamv1", "?=-1", "INTEGER,MIN=-1,MAX=3", "" },
@@ -793,7 +793,7 @@ struct subarray
 	int nstrings;
 	double tilt;
 	bool tilt_eq_lat;
-	ssc_number_t *timeseries_tilt;
+	ssc_number_t *monthly_tilt;
 	double azimuth;
 	int track_mode;
 	double rotlim;
@@ -1005,11 +1005,10 @@ public:
 			sa[nn].tilt = fabs(hdr.lat);
 			if (sa[nn].track_mode == 4) //timeseries tilt input
 			{
-				size_t timeseries_tilt_count = 0;
-				sa[nn].timeseries_tilt = as_array(prefix + "timeseries_tilt", &timeseries_tilt_count);
-				if (timeseries_tilt_count != nrec)
-					throw exec_error("pvsamv1", "Number of tilt values in the timestep tilt array must be equal to the number of records in the weather file: subarray " + util::to_string((int)(nn+1)));
+				size_t monthly_tilt_count = 0;
+				sa[nn].monthly_tilt = as_array(prefix + "monthly_tilt", &monthly_tilt_count);
 			}
+	
 			if ( !lookup( prefix+"tilt_eq_lat" ) || !as_boolean( prefix+"tilt_eq_lat" ) )
 				sa[nn].tilt = fabs( as_double( prefix+"tilt" ) );
 
@@ -1849,9 +1848,10 @@ public:
 				for (int h=0; h<8760; h++){
 					for	(int m=0; m < step_per_hour; m++){
 						int ii = h * step_per_hour + m;
+						int month_idx = wf.month - 1;
 
 						if (sa[nn].track_mode == 4) //timeseries tilt input
-							sa[nn].tilt = sa[nn].timeseries_tilt[ii]; //overwrite the tilt input with the current tilt to be used in calculations
+							sa[nn].tilt = sa[nn].monthly_tilt[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
 						
 						if (!wdprov->read( &wf ))
 							throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file while loading POA data");
@@ -2099,7 +2099,7 @@ public:
 						else if (radmode == POA_P) irr.set_poa_pyranometer(wf.poa, &sa[nn].poa.poaAll);
 
 						if (sa[nn].track_mode == 4) //timeseries tilt input
-							sa[nn].tilt = sa[nn].timeseries_tilt[idx]; //overwrite the tilt input with the current tilt to be used in calculations
+							sa[nn].tilt = sa[nn].monthly_tilt[month_idx]; //overwrite the tilt input with the current tilt to be used in calculations
 
 						irr.set_surface(sa[nn].track_mode,
 							sa[nn].tilt,
