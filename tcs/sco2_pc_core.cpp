@@ -3288,27 +3288,6 @@ void C_RecompCycle::design_core_standard(int & error_code)
 
 			}
 
-			//int hx_error_code = 0;
-			//min_DT_LT = std::numeric_limits<double>::quiet_NaN();
-			//calculate_hxr_UA_1(ms_des_par.m_N_sub_hxrs, Q_dot_LT, m_dot_mc, m_dot_t, m_temp_last[2 - cpp_offset], m_temp_last[8 - cpp_offset],
-			//	m_pres_last[2 - cpp_offset], m_pres_last[3 - cpp_offset], m_pres_last[8 - cpp_offset], m_pres_last[9 - cpp_offset],
-			//	hx_error_code, UA_LT_calc, min_DT_LT);
-			//
-			//if( hx_error_code != 0 )
-			//{
-			//	if( hx_error_code == 11 )		// second-law violation in hxr, therefore temp(9) is too low
-			//	{
-			//		T9_lower_bound = m_temp_last[9 - cpp_offset];
-			//		m_temp_last[9 - cpp_offset] = 0.5*(T9_lower_bound + T9_upper_bound);		// bisect bounds for next guess
-			//		continue;
-			//	}
-			//	else
-			//	{
-			//		error_code = hx_error_code;
-			//		return;
-			//	}
-			//}
-
 			// Check for convergence and adjust T9 appropriately
 			double UA_LT_residual = ms_des_par.m_UA_LT - UA_LT_calc;
 
@@ -3352,22 +3331,6 @@ void C_RecompCycle::design_core_standard(int & error_code)
 			error_code = 31;
 			return;
 		}
-
-		// Can't we move recompressor calcs here??
-
-
-
-
-
-
-
-
-
-
-
-		// ***************************************************
-
-
 
 		// State 3 can now be fully defined
 		m_enth_last[3 - cpp_offset] = m_enth_last[2 - cpp_offset] + Q_dot_LT / m_dot_mc;		// Energy balalnce on cold stream of low-temp recuperator
@@ -3541,6 +3504,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	LT_recup_des_par.m_P_c_in = m_pres_last[MC_OUT];		//[kPa]
 	LT_recup_des_par.m_P_c_out = m_pres_last[LTR_HP_OUT];	//[kPa]
 	LT_recup_des_par.m_m_dot_cold_des = m_dot_mc;			//[kg/s]
+		// Performance
+	LT_recup_des_par.m_eff_max = 1.0;											//[-]
+	LT_recup_des_par.m_UA_target = std::numeric_limits<double>::quiet_NaN();	//[kW/K]
 		// Design()
 	C_HX_counterflow::S_des_solved LT_recup_des_solved;
 	mc_LT_recup.design(LT_recup_des_par, LT_recup_des_solved);
@@ -3561,6 +3527,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	HT_recup_des_par.m_P_c_in = m_pres_last[MIXER_OUT];		//[kPa]
 	HT_recup_des_par.m_P_c_out = m_pres_last[HTR_HP_OUT];	//[kPa]
 	HT_recup_des_par.m_m_dot_cold_des = m_dot_t;			//[kg/s]
+		// Performance
+	HT_recup_des_par.m_eff_max = 1.0;											//[-]
+	HT_recup_des_par.m_UA_target = std::numeric_limits<double>::quiet_NaN();	//[kW/K]
 		// Design()
 	C_HX_counterflow::S_des_solved HT_recup_des_solved;
 	mc_HT_recup.design(HT_recup_des_par, HT_recup_des_solved);
