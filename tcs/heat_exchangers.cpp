@@ -492,6 +492,15 @@ void C_HX_counterflow::design_solution(double T_c_in /*K*/, double P_c_in /*kPa*
 	double eff_target = ms_des_par.m_eff_max;		//[-]
 
 	hx_solution(T_c_in, P_c_in, m_dot_c, P_c_out, T_h_in, P_h_in, m_dot_h, P_h_out, UA_target, eff_target, q_dot, T_c_out, T_h_out);
+
+	ms_des_solved.m_UA_design_total = ms_hx_sol_solved.m_UA_total;		//[kW/K]
+	ms_des_solved.m_min_DT_design = ms_hx_sol_solved.m_min_DT;			//[K]
+	ms_des_solved.m_eff_design = ms_hx_sol_solved.m_eff;				//[-]
+	ms_des_solved.m_NTU_design = ms_hx_sol_solved.m_NTU;				//[-]
+	ms_des_solved.m_T_h_out = ms_hx_sol_solved.m_T_h_out;				//[K]
+	ms_des_solved.m_T_c_out = ms_hx_sol_solved.m_T_c_out;				//[K]
+	ms_des_solved.m_DP_cold_des = ms_des_par.m_P_c_in - ms_hx_sol_solved.m_P_c_out;		//[kPa]
+	ms_des_solved.m_DP_hot_des = ms_des_par.m_P_h_in - ms_hx_sol_solved.m_P_h_out;		//[kPa]
 }
 
 void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
