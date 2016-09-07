@@ -107,6 +107,8 @@ void C_sco2_recomp_csp::design_core()
 	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
 		// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
 	ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
+		// Set maximum effectiveness
+	ms_phx_des_par.m_eff_max = 1.0;
 	
 	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
 

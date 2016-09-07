@@ -401,6 +401,15 @@ void C_HX_counterflow::design(C_HX_counterflow::S_des_par des_par, C_HX_counterf
 		ms_des_par.m_T_c_in, ms_des_par.m_T_h_in, ms_des_par.m_P_c_in, ms_des_par.m_P_c_out, ms_des_par.m_P_h_in, ms_des_par.m_P_h_out,
 		UA_calc, min_DT_calc, eff_calc, NTU_calc, T_h_out_calc, T_c_out_calc, q_dot_calc);
 
+	// Check that calculated effectiveness is less than limit
+	if( eff_calc > ms_des_par.m_eff_max )
+	{
+		std::string msg = util::format("Calculated design effectiveness, %lg [-] is greater than the specified maximum effectiveness, %lg [-].", eff_calc, ms_des_par.m_eff_max);
+
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"Calculated design effectiveness, %lg [-] is greater than the specified maximum effectiveness, %lg [-]."));
+	}
+
 	ms_des_solved.m_UA_design_total = UA_calc;
 	ms_des_solved.m_min_DT_design = min_DT_calc;
 	ms_des_solved.m_eff_design = eff_calc;
