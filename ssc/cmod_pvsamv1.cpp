@@ -2451,8 +2451,10 @@ public:
 					// compute dc power output of one module in each subarray
 					double module_voltage = -1;
 
-					if (enable_mismatch_vmax_calc && num_subarrays > 1)
+					if (enable_mismatch_vmax_calc)
 					{
+						if (num_subarrays <= 1)
+							throw exec_error("pvsamv1", "Subarray voltage mismatch calculation requires more than one subarray. Please check your inputs.");
 						double vmax = module_model->VocRef()*1.3; // maximum voltage
 						double vmin = 0.4 * vmax; // minimum voltage
 						const int NP = 100;
