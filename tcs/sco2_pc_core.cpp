@@ -3158,10 +3158,6 @@ void C_RecompCycle::design_core_standard(int & error_code)
 
 	int prop_error_code = 0;
 
-	double T9_lower_bound, T9_upper_bound, last_LT_residual, last_T9_guess;
-	T9_lower_bound = T9_upper_bound = last_LT_residual = last_T9_guess = std::numeric_limits<double>::quiet_NaN();
-
-	double min_DT_LT = std::numeric_limits<double>::quiet_NaN();
 	double min_DT_HT = std::numeric_limits<double>::quiet_NaN();
 
 	int T8_iter = -1;
