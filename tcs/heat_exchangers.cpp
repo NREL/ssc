@@ -268,7 +268,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 			double C_dot_min = fmin(C_dot_h, C_dot_c);				// [kW/K] Minimum capacitance stream
 			double C_dot_max = fmax(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
 			double C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
-			double eff = (q_dot / (double)ms_init_par.m_N_sub_hx) / (C_dot_min*(T_h_prev - T_c));	// [-] Effectiveness of each sub-heat exchanger
+			double eff = min(0.99999, (q_dot / (double)ms_init_par.m_N_sub_hx) / (C_dot_min*(T_h_prev - T_c)));	// [-] Effectiveness of each sub-heat exchanger
 			double NTU = 0.0;
 			if( C_R != 1.0 )
 				NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
@@ -466,8 +466,10 @@ int C_HX_counterflow::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, double 
 		ms_hx_sol_solved->m_min_DT, ms_hx_sol_solved->m_eff, ms_hx_sol_solved->m_NTU,
 		ms_hx_sol_solved->m_T_h_out, ms_hx_sol_solved->m_T_c_out, ms_hx_sol_solved->m_q_dot);
 	}
-	catch( C_csp_exception )
+	catch( C_csp_exception &csp_except )
 	{
+		int hx_error_code = csp_except.m_error_code;
+		
 		// Reset solved OD parameters to NaN
 		ms_hx_sol_solved->m_q_dot = ms_hx_sol_solved->m_T_c_out =
 			ms_hx_sol_solved->m_T_h_out = ms_hx_sol_solved->m_UA_total =
@@ -549,7 +551,13 @@ void C_HX_counterflow::hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, d
 	double q_dot_upper = eff_limit*q_dot_max;
 
 	// Use design point effectiveness to generate 2 guess values
-	double q_dot_guess_upper = ms_des_solved.m_eff_design*q_dot_upper;
+	double q_dot_mult = 1.0;
+	if( ms_des_solved.m_eff_design == ms_des_solved.m_eff_design )
+	{
+		q_dot_mult = ms_des_solved.m_eff_design;
+	}
+
+	double q_dot_guess_upper = q_dot_mult*q_dot_upper;
 	double q_dot_guess_lower = 0.85*q_dot_guess_upper;		
 	
 	// Complete solver settings
@@ -559,22 +567,33 @@ void C_HX_counterflow::hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, d
 	C_mono_eq_UA_v_q od_hx_eq(this);
 	C_monotonic_eq_solver od_hx_solver(od_hx_eq);
 
-	// Set solver settings
-	od_hx_solver.settings(tol, 1000, q_dot_lower, q_dot_upper, true);
+	// First, test at q_dot_upper
+	double UA_max_eff = std::numeric_limits<double>::quiet_NaN();
+	int test_code = od_hx_solver.test_member_function(q_dot_upper, &UA_max_eff);
 
-	// Solve
-	double x_solved, tol_solved;
-	x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
-	int iter_solved = -1;
-	
-	int od_hx_code = od_hx_solver.solve(q_dot_guess_lower, q_dot_guess_upper, UA_target,
-		x_solved, tol_solved, iter_solved);
-
-	// UA vs. q_dot is very nonlinear, with very large increases of UA as q_dot approaches q_dot_max
-	// As such, may not reach convergence on UA while the uncertainty on q_dot is very small, which should be ok
-	if( !(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS) )
+	if( test_code != 0 || UA_max_eff > UA_target )
 	{
-		throw(C_csp_exception("Off-design heat exchanger method failed"));
+		// Set solver settings
+		od_hx_solver.settings(tol, 1000, q_dot_lower, q_dot_upper, true);
+
+		// Solve
+		double x_solved, tol_solved;
+		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		int iter_solved = -1;
+	
+		int od_hx_code = od_hx_solver.solve(q_dot_guess_lower, q_dot_guess_upper, UA_target,
+			x_solved, tol_solved, iter_solved);
+
+		// UA vs. q_dot is very nonlinear, with very large increases of UA as q_dot approaches q_dot_max
+		// As such, may not reach convergence on UA while the uncertainty on q_dot is very small, which should be ok
+		if( !(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS) )
+		{
+			throw(C_csp_exception("Off-design heat exchanger method failed"));
+		}
+	}
+	else
+	{
+		double hit_max_eff = 1.23;
 	}
 
 	q_dot = ms_hx_sol_solved.m_q_dot;
