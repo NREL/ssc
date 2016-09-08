@@ -967,7 +967,7 @@ public:
 		m_W_dot_mc = m_W_dot_rc = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
 
 		m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
-			
+
 		m_eta_thermal_opt = m_eta_thermal_opt = std::numeric_limits<double>::quiet_NaN();
 
 		m_temp_od = m_pres_od = m_enth_od = m_entr_od = m_dens_od = m_temp_last;
@@ -1067,6 +1067,29 @@ public:
 		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
 
 		CO2_state mc_co2_props;
+	};
+
+	class C_mono_eq_LTR_des : public C_monotonic_equation
+	{
+	private:
+		C_RecompCycle *mpc_rc_cycle;
+
+	public:
+		C_mono_eq_LTR_des(C_RecompCycle *pc_rc_cycle, double w_mc, double w_t)
+		{
+			mpc_rc_cycle = pc_rc_cycle;
+			m_w_mc = w_mc;
+			m_w_t = w_t;
+		}
+	
+		// These values are calculated in the operator() method and need to be extracted from this class
+		//     after convergence
+		double m_w_rc, m_m_dot_t, m_m_dot_rc, m_m_dot_mc, m_Q_dot_LT;
+
+		// These values are passed in as arguments to Constructor call and should not be reset
+		double m_w_mc, m_w_t;
+
+		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_HP_out /*K*/);
 	};
 
 	// Called by 'nlopt_callback_opt_des_1', so needs to be public
