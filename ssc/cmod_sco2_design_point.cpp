@@ -191,10 +191,14 @@ public:
 		// Need to check what is happening when one mass flow rate decreases
 		// Solver *should* return a notice...
 
-		mc_phx.od_performance(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2,
+/*		mc_phx.od_performance(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2,
 			T_htf_hot, 1.0, m_dot_htf_des,
 			q_dot_od, T_c_out_od, T_h_out_od);
-		
+*/
+		mc_phx.off_design_solution(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2,
+			T_htf_hot, 1.0, m_dot_htf_des,
+			q_dot_od, T_c_out_od, T_h_out_od);
+
 		//od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
 		//	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
 		//	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/)
