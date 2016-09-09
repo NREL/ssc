@@ -52,12 +52,13 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "arrayX",                         "Spacing Between Turbine Rows",                             "rotor diameters",    "",                       "wobos",            "?=9",                     "MIN=1",                         ""},
    //{ SSC_INPUT,        SSC_ARRAY,       "arrVoltage",                     "Array Cable System Voltage",                              "kV",                 "",                       "wobos",            "*",                       "",                              ""},
    //{ SSC_INPUT,        SSC_ARRAY,       "expVoltage",                     "Export Cable System Voltage",                             "kV",                 "",                       "wobos",            "*",                       "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "substructCont",                  "Substructure Install Weather Contingency",                 "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "turbCont",                       "Turbine Install Weather Contingency",                      "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "elecCont",                       "Electrical Install Weather Contingency",                   "%",                  "",                       "wobos",            "?=0.3",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "substructCont",                  "Substructure Install Weather Contingency",                 "%",                  "",                       "wobos",            "?=30",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "turbCont",                       "Turbine Install Weather Contingency",                      "%",                  "",                       "wobos",            "?=30",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "elecCont",                       "Electrical Install Weather Contingency",                   "%",                  "",                       "wobos",            "?=30",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "interConVolt",                   "Grid Interconnect Voltage",                                "kV",                 "",                       "wobos",            "?=345",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "distInterCon",                   "Distance Over Land to Grid Interconnect",                  "miles",              "",                       "wobos",            "?=3",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "scrapVal",                       "Total Scrap Value of Decommissioned Components",           "$",                  "",                       "wobos",            "?=0",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
 
 //General
    { SSC_INPUT,        SSC_NUMBER,      "projLife",                       "Project Economic Life",                                    "years",              "",                       "wobos",            "?=20",                    "",                              ""},
@@ -406,12 +407,13 @@ public:
 		obos.buryDepth = (double)as_number("buryDepth");//array and export cable burial depth (m)
 		obos.arrayY = (double)as_number("arrayY");//turbine array spacing between turbines on same row (rotor diameters)
 		obos.arrayX = (double)as_number("arrayX");// turbine array spacing between turbine rows (rotor diameters)
-		obos.substructCont = (double)as_number("substructCont");//substructure install weather contingency
-		obos.turbCont = (double)as_number("turbCont");//turbine install weather contingency
-		obos.elecCont = (double)as_number("elecCont");//turbine install weather contingency
+		obos.substructCont = (double)as_number("substructCont") / 100;//substructure install weather contingency, convert from percentage to decimal
+		obos.turbCont = (double)as_number("turbCont") / 100;//turbine install weather contingency, convert from percentage to decimal
+		obos.elecCont = (double)as_number("elecCont") / 100;//turbine install weather contingency, convert from percentage to decimal
 		obos.interConVolt = (double)as_number("interConVolt");//grid interconnect voltage (kV)
 		obos.distInterCon = (double)as_number("distInterCon");//distance from onshore substation to grid interconnect (miles)
 		obos.scrapVal = (double)as_number("scrapVal");//scrap value of decommissioned components ($)
+        obos.number_install_seasons = (double)as_number("number_install_seasons");//number of installation seasons
 
 		//Detailed inputs
 		//General

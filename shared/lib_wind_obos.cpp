@@ -1365,6 +1365,10 @@ void wobos::VesselMobDemobCost()
 		mobDemobCostByVessel[i].resize(2);
 	}
 
+        for (int i = 0; i < mobDemobCostByVessel.size(); i++)
+        {
+            mobDemobCostByVessel[i][1] = mobDemobCostByVessel[i][1]*number_install_seasons;
+        }
 
 }
 
