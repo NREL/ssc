@@ -149,15 +149,16 @@ public:
 	
 	struct S_hx_sol_solved
 	{
+		double m_P_c_out;	//[kPa] Cold fluid outlet pressure
+		double m_P_h_out;	//[kPa] Hot fluid outlet temperature
+		
 		double m_q_dot;		//[kWt] Thermal power to cold fluid
 		double m_T_c_out;	//[K] Cold fluid outlet temperature
-		double m_P_c_out;	//[kPa] Cold fluid outlet pressure
 		double m_T_h_out;	//[K] Hot fluid outlet temperature
-		double m_P_h_out;	//[kPa] Hot fluid outlet temperature
 		double m_UA_total;	//[kW/K] Conductance
 		double m_min_DT;	//[K] Min temp difference
 		double m_eff;		//[-]
-		double m_NTU;
+		double m_NTU;		//[-]
 
 		S_hx_sol_solved()
 		{

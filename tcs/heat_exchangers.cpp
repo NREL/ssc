@@ -127,10 +127,11 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 	if( q_dot <= 1.E-14 )	// very low Q_dot; assume it is zero
 	{
 		// Set outputs, and S_des_solved members		
-		UA = 0.0;						//[kW/K]
-		q_dot_calc = 0.0;				//[kW]
-		min_DT = T_h_in - T_c_in;		//[K]
-		eff = 0.0;							//[-]
+		UA = 0.0;					//[kW/K]
+		NTU = 0.0;					//[-]
+		q_dot_calc = 0.0;			//[kW]
+		min_DT = T_h_in - T_c_in;	//[K]
+		eff = 0.0;			//[-]
 		T_h_out = T_h_in;	//[K]
 		T_c_out = T_c_in;	//[K]
 
@@ -199,6 +200,7 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 	double T_h_prev = 0.0;
 	double h_c_prev = 0.0;
 	double T_c_prev = 0.0;
+
 	UA = 0.0;
 	min_DT = T_h_in;
 	// Loop through the sub-heat exchangers
@@ -473,7 +475,7 @@ int C_HX_counterflow::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, double 
 		// Reset solved OD parameters to NaN
 		ms_hx_sol_solved->m_q_dot = ms_hx_sol_solved->m_T_c_out =
 			ms_hx_sol_solved->m_T_h_out = ms_hx_sol_solved->m_UA_total =
-			ms_hx_sol_solved->m_min_DT = ms_hx_sol_solved->m_eff = std::numeric_limits<double>::quiet_NaN();
+			ms_hx_sol_solved->m_min_DT = ms_hx_sol_solved->m_eff = ms_hx_sol_solved->m_NTU = std::numeric_limits<double>::quiet_NaN();
 
 		// reset 'UA_calc' to NaN
 		*UA_calc = ms_hx_sol_solved->m_UA_total;		//[kW/K]
@@ -493,7 +495,20 @@ void C_HX_counterflow::design_solution(double T_c_in /*K*/, double P_c_in /*kPa*
 	double UA_target = ms_des_par.m_UA_target;		//[kW/K]
 	double eff_target = ms_des_par.m_eff_max;		//[-]
 
+	ms_des_solved.m_UA_design_total = ms_des_solved.m_min_DT_design = ms_des_solved.m_eff_design = ms_des_solved.m_NTU_design =
+		ms_des_solved.m_T_h_out = ms_des_solved.m_T_c_out = ms_des_solved.m_DP_cold_des = ms_des_solved.m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
+
 	hx_solution(T_c_in, P_c_in, m_dot_c, P_c_out, T_h_in, P_h_in, m_dot_h, P_h_out, UA_target, eff_target, q_dot, T_c_out, T_h_out);
+
+	ms_des_par.m_Q_dot_design = q_dot;		//[kW]
+	ms_des_par.m_T_h_in = T_h_in;			//[K]
+	ms_des_par.m_P_h_in = P_h_in;			//[kPa]
+	ms_des_par.m_P_h_out = P_h_out;			//[kPa]
+	ms_des_par.m_m_dot_hot_des = m_dot_h;	//[kg/s]
+	ms_des_par.m_T_c_in = T_c_in;			//[K]
+	ms_des_par.m_P_c_in = P_c_in;			//[kPa]
+	ms_des_par.m_P_c_out = P_c_out;			//[kPa]
+	ms_des_par.m_m_dot_cold_des = m_dot_c;	//[kg/s]
 
 	ms_des_solved.m_UA_design_total = ms_hx_sol_solved.m_UA_total;		//[kW/K]
 	ms_des_solved.m_min_DT_design = ms_hx_sol_solved.m_min_DT;			//[K]
@@ -501,8 +516,8 @@ void C_HX_counterflow::design_solution(double T_c_in /*K*/, double P_c_in /*kPa*
 	ms_des_solved.m_NTU_design = ms_hx_sol_solved.m_NTU;				//[-]
 	ms_des_solved.m_T_h_out = ms_hx_sol_solved.m_T_h_out;				//[K]
 	ms_des_solved.m_T_c_out = ms_hx_sol_solved.m_T_c_out;				//[K]
-	ms_des_solved.m_DP_cold_des = ms_des_par.m_P_c_in - ms_hx_sol_solved.m_P_c_out;		//[kPa]
-	ms_des_solved.m_DP_hot_des = ms_des_par.m_P_h_in - ms_hx_sol_solved.m_P_h_out;		//[kPa]
+	ms_des_solved.m_DP_cold_des = P_c_in - ms_hx_sol_solved.m_P_c_out;		//[kPa]
+	ms_des_solved.m_DP_hot_des = P_h_in - ms_hx_sol_solved.m_P_h_out;		//[kPa]
 }
 
 void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
@@ -544,6 +559,9 @@ void C_HX_counterflow::hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, d
 	ms_hx_sol_solved.m_P_c_out = P_c_out;	//[kPa]
 	ms_hx_sol_solved.m_P_h_out = P_h_out;	//[kPa]
 
+	ms_hx_sol_solved.m_q_dot = ms_hx_sol_solved.m_T_c_out = ms_hx_sol_solved.m_T_h_out =
+		ms_hx_sol_solved.m_UA_total = ms_hx_sol_solved.m_min_DT = ms_hx_sol_solved.m_eff = ms_hx_sol_solved.m_NTU = std::numeric_limits<double>::quiet_NaN();
+
 	// Calculate maximum possible heat transfer, use to set upper bound
 	double q_dot_max = calc_max_q_dot(ms_hx_sol_par.m_T_h_in, ms_hx_sol_par.m_P_h_in, P_h_out, ms_hx_sol_par.m_m_dot_h,
 							ms_hx_sol_par.m_T_c_in, ms_hx_sol_par.m_P_c_in, P_c_out, ms_hx_sol_par.m_m_dot_c);
@@ -551,7 +569,7 @@ void C_HX_counterflow::hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, d
 	double q_dot_upper = eff_limit*q_dot_max;
 
 	// Use design point effectiveness to generate 2 guess values
-	double q_dot_mult = 1.0;
+	double q_dot_mult = max(0.99, min(0.95,eff_limit)/eff_limit);
 	if( ms_des_solved.m_eff_design == ms_des_solved.m_eff_design )
 	{
 		q_dot_mult = ms_des_solved.m_eff_design;
