@@ -2975,62 +2975,60 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	int max_iter = 500;
 	double temperature_tolerance = 1.E-6;		// Temp differences below this are considered zero
 
-	int cpp_offset = 1;
-
 	// Initialize a few variables
 	double m_dot_t, m_dot_mc, m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
 	m_dot_t = m_dot_mc = m_dot_rc = Q_dot_LT = Q_dot_HT = UA_LT_calc = UA_HT_calc = 0.0;
 
-	m_temp_last[1 - cpp_offset] = ms_des_par.m_T_mc_in;
-	m_pres_last[1 - cpp_offset] = ms_des_par.m_P_mc_in;
-	m_pres_last[2 - cpp_offset] = ms_des_par.m_P_mc_out;
-	m_temp_last[6 - cpp_offset] = ms_des_par.m_T_t_in;
+	m_temp_last[MC_IN] = ms_des_par.m_T_mc_in;
+	m_pres_last[MC_IN] = ms_des_par.m_P_mc_in;
+	m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;
+	m_temp_last[TURB_IN] = ms_des_par.m_T_t_in;
 
 	// Apply pressure drops to heat exchangers, fully defining the pressures at all states
-	if( ms_des_par.m_DP_LT[1 - cpp_offset] < 0.0 )
-		m_pres_last[3 - cpp_offset] = m_pres_last[2 - cpp_offset] - m_pres_last[2 - cpp_offset] * fabs(ms_des_par.m_DP_LT[1 - cpp_offset]);	// relative pressure drop specified for LT recuperator (cold stream)
+	if( ms_des_par.m_DP_LT[0] < 0.0 )
+		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - m_pres_last[MC_OUT] * fabs(ms_des_par.m_DP_LT[0]);		// relative pressure drop specified for LT recuperator (cold stream)
 	else
-		m_pres_last[3 - cpp_offset] = m_pres_last[2 - cpp_offset] - ms_des_par.m_DP_LT[1 - cpp_offset];									// absolute pressure drop specified for LT recuperator (cold stream)
+		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT] - ms_des_par.m_DP_LT[0];				// absolute pressure drop specified for LT recuperator (cold stream)
 
 	if( ms_des_par.m_UA_LT < 1.0E-12 )
-		m_pres_last[3 - cpp_offset] = m_pres_last[2 - cpp_offset];		// If there is no LT recuperator, there is no pressure drop
+		m_pres_last[LTR_HP_OUT] = m_pres_last[MC_OUT];			// If there is no LT recuperator, there is no pressure drop
 
-	m_pres_last[4 - cpp_offset] = m_pres_last[3 - cpp_offset];			// Assume no pressure drop in mixing valve
-	m_pres_last[10 - cpp_offset] = m_pres_last[3 - cpp_offset];			// Assume no pressure drop in mixing valve
+	m_pres_last[MIXER_OUT] = m_pres_last[LTR_HP_OUT];			// Assume no pressure drop in mixing valve
+	m_pres_last[RC_OUT] = m_pres_last[LTR_HP_OUT];				// Assume no pressure drop in mixing valve
 
-	if( ms_des_par.m_DP_HT[1 - cpp_offset] < 0.0 )
-		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset] - m_pres_last[4 - cpp_offset] * fabs(ms_des_par.m_DP_HT[1 - cpp_offset]);	// relative pressure drop specified for HT recuperator (cold stream)
+	if( ms_des_par.m_DP_HT[0] < 0.0 )
+		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - m_pres_last[MIXER_OUT] * fabs(ms_des_par.m_DP_HT[0]);	// relative pressure drop specified for HT recuperator (cold stream)
 	else
-		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset] - ms_des_par.m_DP_HT[1 - cpp_offset];									// absolute pressure drop specified for HT recuperator (cold stream)
+		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT] - ms_des_par.m_DP_HT[0];				// absolute pressure drop specified for HT recuperator (cold stream)
 
 	if( ms_des_par.m_UA_HT < 1.0E-12 )
-		m_pres_last[5 - cpp_offset] = m_pres_last[4 - cpp_offset];		// If there is no HT recuperator, there is no pressure drop
+		m_pres_last[HTR_HP_OUT] = m_pres_last[MIXER_OUT];		// If there is no HT recuperator, there is no pressure drop
 
-	if( ms_des_par.m_DP_PHX[1 - cpp_offset] < 0.0 )
-		m_pres_last[6 - cpp_offset] = m_pres_last[5 - cpp_offset] - m_pres_last[5 - cpp_offset] * fabs(ms_des_par.m_DP_PHX[1 - cpp_offset]);	// relative pressure drop specified for PHX
+	if( ms_des_par.m_DP_PHX[0] < 0.0 )
+		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] - m_pres_last[HTR_HP_OUT] * fabs(ms_des_par.m_DP_PHX[0]);	// relative pressure drop specified for PHX
 	else
-		m_pres_last[6 - cpp_offset] = m_pres_last[5 - cpp_offset] - ms_des_par.m_DP_PHX[1 - cpp_offset];									// absolute pressure drop specified for PHX
+		m_pres_last[TURB_IN] = m_pres_last[HTR_HP_OUT] - ms_des_par.m_DP_PHX[0];									// absolute pressure drop specified for PHX
 
-	if( ms_des_par.m_DP_PC[2 - cpp_offset] < 0.0 )
-		m_pres_last[9 - cpp_offset] = m_pres_last[1 - cpp_offset] / (1.0 - fabs(ms_des_par.m_DP_PC[2 - cpp_offset]));	// relative pressure drop specified for precooler: P1=P9-P9*rel_DP => P1=P9*(1-rel_DP)
+	if( ms_des_par.m_DP_PC[1] < 0.0 )
+		m_pres_last[LTR_LP_OUT] = m_pres_last[MC_IN] / (1.0 - fabs(ms_des_par.m_DP_PC[1]));					// relative pressure drop specified for precooler: P1=P9-P9*rel_DP => P1=P9*(1-rel_DP)
 	else
-		m_pres_last[9 - cpp_offset] = m_pres_last[1 - cpp_offset] + ms_des_par.m_DP_PC[2 - cpp_offset];
+		m_pres_last[LTR_LP_OUT] = m_pres_last[MC_IN] + ms_des_par.m_DP_PC[1];
 
-	if( ms_des_par.m_DP_LT[2 - cpp_offset] < 0.0 )
-		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset] / (1.0 - fabs(ms_des_par.m_DP_LT[2 - cpp_offset]));	// relative pressure drop specified for LT recuperator (hot stream)
+	if( ms_des_par.m_DP_LT[1] < 0.0 )
+		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] / (1.0 - fabs(ms_des_par.m_DP_LT[1]));	// relative pressure drop specified for LT recuperator (hot stream)
 	else
-		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset] + ms_des_par.m_DP_LT[2 - cpp_offset];				// absolute pressure drop specified for LT recuperator (hot stream)
+		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT] + ms_des_par.m_DP_LT[1];					// absolute pressure drop specified for LT recuperator (hot stream)
 
 	if( ms_des_par.m_UA_LT < 1.0E-12 )
-		m_pres_last[8 - cpp_offset] = m_pres_last[9 - cpp_offset];		// if there is no LT recuperator, there is no pressure drop
+		m_pres_last[HTR_LP_OUT] = m_pres_last[LTR_LP_OUT];			// if there is no LT recuperator, there is no pressure drop
 
-	if( ms_des_par.m_DP_HT[2 - cpp_offset] < 0.0 )
-		m_pres_last[7 - cpp_offset] = m_pres_last[8 - cpp_offset] / (1.0 - fabs(ms_des_par.m_DP_HT[2 - cpp_offset]));	// relative pressure drop specified for HT recuperator (hot stream)
+	if( ms_des_par.m_DP_HT[1] < 0.0 )
+		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] / (1.0 - fabs(ms_des_par.m_DP_HT[1]));	// relative pressure drop specified for HT recuperator (hot stream)
 	else
-		m_pres_last[7 - cpp_offset] = m_pres_last[8 - cpp_offset] + ms_des_par.m_DP_HT[2 - cpp_offset];				// absolute pressure drop specified for HT recuperator (hot stream)
+		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT] + ms_des_par.m_DP_HT[1];				// absolute pressure drop specified for HT recuperator (hot stream)
 
 	if( ms_des_par.m_UA_HT < 1.0E-12 )
-		m_pres_last[7 - cpp_offset] = m_pres_last[8 - cpp_offset];		// if there is no HT recuperator, there is no pressure drop
+		m_pres_last[TURB_OUT] = m_pres_last[HTR_LP_OUT];		// if there is no HT recuperator, there is no pressure drop
 
 	// Determine equivalent isentropic efficiencies for main compressor and turbine, if necessary.
 	double eta_mc_isen = std::numeric_limits<double>::quiet_NaN();
@@ -3039,7 +3037,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[1 - cpp_offset], m_pres_last[1 - cpp_offset], m_pres_last[2 - cpp_offset], fabs(ms_des_par.m_eta_mc),
+		isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], fabs(ms_des_par.m_eta_mc),
 			true, poly_error_code, eta_mc_isen);
 
 		if( poly_error_code != 0 )
@@ -3055,7 +3053,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	{
 		int poly_error_code = 0;
 
-		isen_eta_from_poly_eta(m_temp_last[6 - cpp_offset], m_pres_last[6 - cpp_offset], m_pres_last[7 - cpp_offset], fabs(ms_des_par.m_eta_t),
+		isen_eta_from_poly_eta(m_temp_last[TURB_IN], m_pres_last[TURB_IN], m_pres_last[TURB_OUT], fabs(ms_des_par.m_eta_t),
 			false, poly_error_code, eta_t_isen);
 
 		if( poly_error_code != 0 )
@@ -3071,9 +3069,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	int comp_error_code = 0;
 	double w_mc = std::numeric_limits<double>::quiet_NaN();
 	// Main compressor
-	calculate_turbomachinery_outlet_1(m_temp_last[1 - cpp_offset], m_pres_last[1 - cpp_offset], m_pres_last[2 - cpp_offset], eta_mc_isen, true,
-		comp_error_code, m_enth_last[1 - cpp_offset], m_entr_last[1 - cpp_offset], m_dens_last[1 - cpp_offset], m_temp_last[2 - cpp_offset],
-		m_enth_last[2 - cpp_offset], m_entr_last[2 - cpp_offset], m_dens_last[2 - cpp_offset], w_mc);
+	calculate_turbomachinery_outlet_1(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], eta_mc_isen, true,
+		comp_error_code, m_enth_last[MC_IN], m_entr_last[MC_IN], m_dens_last[MC_IN], m_temp_last[MC_OUT],
+		m_enth_last[MC_OUT], m_entr_last[MC_OUT], m_dens_last[MC_OUT], w_mc);
 
 	if( comp_error_code != 0 )
 	{
@@ -3084,9 +3082,9 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	int turbine_error_code = 0;
 	double w_t = std::numeric_limits<double>::quiet_NaN();
 	// Turbine
-	calculate_turbomachinery_outlet_1(m_temp_last[6 - cpp_offset], m_pres_last[6 - cpp_offset], m_pres_last[7 - cpp_offset], eta_t_isen, false,
-		turbine_error_code, m_enth_last[6 - cpp_offset], m_entr_last[6 - cpp_offset], m_dens_last[6 - cpp_offset], m_temp_last[7 - cpp_offset],
-		m_enth_last[7 - cpp_offset], m_entr_last[7 - cpp_offset], m_dens_last[7 - cpp_offset], w_t);
+	calculate_turbomachinery_outlet_1(m_temp_last[TURB_IN], m_pres_last[TURB_IN], m_pres_last[TURB_OUT], eta_t_isen, false,
+		turbine_error_code, m_enth_last[TURB_IN], m_entr_last[TURB_IN], m_dens_last[TURB_IN], m_temp_last[TURB_OUT],
+		m_enth_last[TURB_OUT], m_entr_last[TURB_OUT], m_dens_last[TURB_OUT], w_t);
 
 	if( turbine_error_code != 0 )
 	{
@@ -3103,7 +3101,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		{
 			int rc_error_code = 0;
 
-			isen_eta_from_poly_eta(m_temp_last[2 - cpp_offset], m_pres_last[9 - cpp_offset], m_pres_last[10 - cpp_offset], fabs(ms_des_par.m_eta_rc),
+			isen_eta_from_poly_eta(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], fabs(ms_des_par.m_eta_rc),
 				true, rc_error_code, eta_rc_isen);
 
 			if( rc_error_code != 0 )
@@ -3116,7 +3114,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 			eta_rc_isen = ms_des_par.m_eta_rc;
 
 		int rc_error_code = 0;
-		calculate_turbomachinery_outlet_1(m_temp_last[2 - cpp_offset], m_pres_last[9 - cpp_offset], m_pres_last[10 - cpp_offset], eta_rc_isen,
+		calculate_turbomachinery_outlet_1(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], eta_rc_isen,
 			true, rc_error_code, w_rc);
 
 		if( rc_error_code != 0 )
@@ -3170,213 +3168,6 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	Q_dot_LT = HTR_des_eq.m_Q_dot_LT;
 	Q_dot_HT = HTR_des_eq.m_Q_dot_HT;
 
-	// Outer iteration loop: temp(8), checking against UA_HT
-	//double T8_lower_bound, T8_upper_bound, last_HT_residual, last_T8_guess;
-	//T8_lower_bound = T8_upper_bound = last_HT_residual = last_T8_guess = std::numeric_limits<double>::quiet_NaN();
-	//if( ms_des_par.m_UA_HT < 1.0E-12 )		// no high-temp recuperator
-	//{
-	//	T8_lower_bound = m_temp_last[7 - cpp_offset];		// no iteration necessary
-	//	T8_upper_bound = m_temp_last[7 - cpp_offset];		// no iteration necessary
-	//	m_temp_last[8 - cpp_offset] = m_temp_last[7 - cpp_offset];
-	//	UA_HT_calc = 0.0;
-	//	last_HT_residual = 0.0;
-	//	last_T8_guess = m_temp_last[7 - cpp_offset];
-	//}
-	//else
-	//{
-	//	T8_lower_bound = m_temp_last[2 - cpp_offset];		// the absolute lower temp(8) could be
-	//	T8_upper_bound = m_temp_last[7 - cpp_offset];		// the absolutely highest temp(8) could be
-	//	m_temp_last[8 - cpp_offset] = (T8_lower_bound + T8_upper_bound)*0.5;		// bisect bounds for first guess
-	//	UA_HT_calc = -1.0;
-	//	last_HT_residual = ms_des_par.m_UA_HT;			// know a priori that with T8 = T7, UA_calc = 0 therefore residual is UA_HT - 0.0
-	//	last_T8_guess = m_temp_last[7 - cpp_offset];
-	//}
-
-	//double min_DT_HT = std::numeric_limits<double>::quiet_NaN();
-
-	//int T8_iter = -1;
-	//for( T8_iter = 0; T8_iter < max_iter; T8_iter++ )
-	//{
-	//	// Fully define state 8
-	//	prop_error_code = CO2_TP(m_temp_last[8 - cpp_offset], m_pres_last[8 - cpp_offset], &co2_props);
-	//	if( prop_error_code != 0 )
-	//	{
-	//		error_code = prop_error_code;
-	//		return;
-	//	}
-	//	m_enth_last[8 - cpp_offset] = co2_props.enth;
-	//	m_entr_last[8 - cpp_offset] = co2_props.entr;
-	//	m_dens_last[8 - cpp_offset] = co2_props.dens;
-
-	//	// **************************************************************************************
-	//	// **************************************************************************************
-	//	// Solve for the LTR solution
-	//	double T_LTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
-	//	double T_LTR_LP_out_upper = m_temp_last[HTR_LP_OUT];	//[K] Hottest possible temperature
-
-	//	double T_LTR_LP_out_guess_upper = min(T_LTR_LP_out_upper, T_LTR_LP_out_lower + 15.0);
-	//	double T_LTR_LP_out_guess_lower = min(T_LTR_LP_out_guess_upper*0.99, T_LTR_LP_out_lower + 2.0);
-
-	//	C_mono_eq_LTR_des LTR_des_eq(this, w_mc, w_t);
-	//	C_monotonic_eq_solver LTR_des_solver(LTR_des_eq);
-
-	//	LTR_des_solver.settings(ms_des_par.m_tol*m_temp_last[MC_IN], 1000, T_LTR_LP_out_lower, T_LTR_LP_out_upper, false);
-
-	//	double T_LTR_LP_out_solved, tol_T_LTR_LP_out_solved;
-	//	T_LTR_LP_out_solved = tol_T_LTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
-	//	int iter_T_LTR_LP_out = -1;
-
-	//	int T_LTR_LP_out_code = LTR_des_solver.solve(T_LTR_LP_out_guess_lower, T_LTR_LP_out_guess_upper, 0,
-	//								T_LTR_LP_out_solved, tol_T_LTR_LP_out_solved, iter_T_LTR_LP_out);
-
-	//	if( T_LTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
-	//	{
-	//		error_code = 31;
-	//		return;
-	//	}
-
-	//	// Get information set in Monotonic Equation class
-	//	w_rc = LTR_des_eq.m_w_rc;
-	//	m_dot_t = LTR_des_eq.m_m_dot_t;
-	//	m_dot_rc = LTR_des_eq.m_m_dot_rc;
-	//	m_dot_mc = LTR_des_eq.m_m_dot_mc;
-	//	Q_dot_LT = LTR_des_eq.m_Q_dot_LT;
-
-	//		// Solver should have set the following member data:
-	//		//	* state points
-
-	//	// **************************************************************************************
-	//	// **************************************************************************************
-
-	//	// State 3 can now be fully defined
-	//	m_enth_last[3 - cpp_offset] = m_enth_last[2 - cpp_offset] + Q_dot_LT / m_dot_mc;		// Energy balalnce on cold stream of low-temp recuperator
-	//	prop_error_code = CO2_PH(m_pres_last[3 - cpp_offset], m_enth_last[3 - cpp_offset], &co2_props);
-	//	if( prop_error_code != 0 )
-	//	{
-	//		error_code = prop_error_code;
-	//		return;
-	//	}
-	//	m_temp_last[3 - cpp_offset] = co2_props.temp;
-	//	m_entr_last[3 - cpp_offset] = co2_props.entr;
-	//	m_dens_last[3 - cpp_offset] = co2_props.dens;
-
-	//	// Go through the mixing valve
-	//	if( ms_des_par.m_recomp_frac >= 1.E-12 )
-	//	{
-	//		m_enth_last[4 - cpp_offset] = (1.0 - ms_des_par.m_recomp_frac)*m_enth_last[3 - cpp_offset] + ms_des_par.m_recomp_frac*m_enth_last[10 - cpp_offset];	// conservation of energy (both sides divided by m_dot_t)
-	//		prop_error_code = CO2_PH(m_pres_last[4 - cpp_offset], m_enth_last[4 - cpp_offset], &co2_props);
-	//		if( prop_error_code != 0 )
-	//		{
-	//			error_code = prop_error_code;
-	//			return;
-	//		}
-	//		m_temp_last[4 - cpp_offset] = co2_props.temp;
-	//		m_entr_last[4 - cpp_offset] = co2_props.entr;
-	//		m_dens_last[4 - cpp_offset] = co2_props.dens;
-	//	}
-	//	else		// no mixing valve, therefore state 4 is equal to state 3
-	//	{
-	//		m_temp_last[4 - cpp_offset] = m_temp_last[3 - cpp_offset];
-	//		m_enth_last[4 - cpp_offset] = m_enth_last[3 - cpp_offset];
-	//		m_entr_last[4 - cpp_offset] = m_entr_last[3 - cpp_offset];
-	//		m_dens_last[4 - cpp_offset] = m_dens_last[3 - cpp_offset];
-	//	}
-
-	//	// Check for a second law violation at the outlet of the high-temp recuperator
-	//	if( m_temp_last[4 - cpp_offset] >= m_temp_last[8 - cpp_offset] )		// temp(8) is not valid and it must be increased
-	//	{
-	//		T8_lower_bound = m_temp_last[8 - cpp_offset];
-	//		m_temp_last[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);
-	//		continue;
-	//	}
-
-	//	// Calculate the UA value of the high-temp recuperator
-	//	if( ms_des_par.m_UA_HT < 1.E-12 )			// no high-temp recuperator
-	//		Q_dot_HT = 0.0;
-	//	else
-	//		Q_dot_HT = m_dot_t * (m_enth_last[7 - cpp_offset] - m_enth_last[8 - cpp_offset]);
-
-	//	min_DT_HT = std::numeric_limits<double>::quiet_NaN();
-	//	double eff_HT_hx, NTU_HT_hx, T_h_out_HT_hx, T_c_out_HT_hx, q_dot_HT_hx;
-	//	eff_HT_hx = NTU_HT_hx = T_h_out_HT_hx = T_c_out_HT_hx = q_dot_HT_hx = std::numeric_limits<double>::quiet_NaN();
-
-	//	try
-	//	{
-	//		mc_HT_recup.calc_req_UA(Q_dot_HT, m_dot_t, m_dot_t, m_temp_last[MIXER_OUT], m_temp_last[TURB_OUT], 
-	//			m_pres_last[MIXER_OUT], m_pres_last[HTR_HP_OUT], m_pres_last[TURB_OUT], m_pres_last[HTR_LP_OUT], 
-	//			UA_HT_calc, min_DT_HT, eff_HT_hx, NTU_HT_hx, T_h_out_HT_hx, T_c_out_HT_hx, q_dot_HT_hx);
-	//	}
-	//	catch( C_csp_exception & csp_except )
-	//	{
-	//		if( csp_except.m_error_code == 11 )		// second-law violation in hxr, therefore temp(8) is too low
-	//		{
-	//			T8_lower_bound = m_temp_last[8 - cpp_offset];
-	//			m_temp_last[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);	// bisect bounds for next guess
-	//			continue;
-	//		}
-	//		else
-	//		{
-	//			error_code = csp_except.m_error_code;
-	//			return;
-	//		}
-	//	}
-
-	//	//calculate_hxr_UA_1(ms_des_par.m_N_sub_hxrs, Q_dot_HT, m_dot_t, m_dot_t, m_temp_last[4 - cpp_offset], m_temp_last[7 - cpp_offset], m_pres_last[4 - cpp_offset],
-	//	//	m_pres_last[5 - cpp_offset], m_pres_last[7 - cpp_offset], m_pres_last[8 - cpp_offset], HT_error_code, UA_HT_calc, min_DT_HT);
-	//	//
-	//	//if( HT_error_code != 0 )
-	//	//{
-	//	//	if( HT_error_code == 11 )			
-	//	//	{
-	//	//		
-	//	//	}
-	//	//	else
-	//	//	{
-	//	//		error_code = HT_error_code;
-	//	//		return;
-	//	//	}
-	//	//}
-
-	//	// Check for convergence and adjust T8 appropriately
-	//	double UA_HT_residual = ms_des_par.m_UA_HT - UA_HT_calc;
-
-	//	if( fabs(UA_HT_residual) < 1.0E-12 )		// catches no HT case
-	//		break;
-
-	//	double secant_guess = m_temp_last[8 - cpp_offset] - UA_HT_residual*(last_T8_guess - m_temp_last[8 - cpp_offset]) / (last_HT_residual - UA_HT_residual);		// Next guess predicted using secant method
-
-	//	if( UA_HT_residual < 0.0 )	// UA_HT_calc is too big, temp(8) needs to be higher
-	//	{
-	//		if( fabs(UA_HT_residual) / ms_des_par.m_UA_HT < ms_des_par.m_tol )
-	//			break;
-	//		T8_lower_bound = m_temp_last[8 - cpp_offset];
-	//	}
-	//	else						// UA_HT_calc is too small, temp(8) needs to be lower
-	//	{
-	//		if( UA_HT_residual / ms_des_par.m_UA_HT < ms_des_par.m_tol )		// UA_HT converged
-	//			break;
-	//		if( min_DT_HT < temperature_tolerance )								// UA_calc is still too low, but there isn't anywhere to go so it's okay
-	//			break;
-	//		T8_upper_bound = m_temp_last[8 - cpp_offset];
-	//	}
-	//	last_HT_residual = UA_HT_residual;				// reset last stored residual value
-	//	last_T8_guess = m_temp_last[8 - cpp_offset];		// reset last stored guess value
-
-	//	// Check if the secant method overshoots and fall back to bisection if it does
-	//	if( secant_guess <= T8_lower_bound || secant_guess >= T8_upper_bound )		// secant method overshot, use bisection
-	//		m_temp_last[8 - cpp_offset] = 0.5*(T8_lower_bound + T8_upper_bound);
-	//	else
-	//		m_temp_last[8 - cpp_offset] = secant_guess;
-
-	//}	// End T8 iteration
-
-	//// Check that T8_loop converged
-	//if( T8_iter >= max_iter )
-	//{
-	//	error_code = 35;
-	//	return;
-	//}
-
 	// State 5 can now be fully defined
 	m_enth_last[HTR_HP_OUT] = m_enth_last[MIXER_OUT] + Q_dot_HT / m_dot_t;						// Energy balance on cold stream of high-temp recuperator
 	int prop_error_code = CO2_PH(m_pres_last[HTR_HP_OUT], m_enth_last[HTR_HP_OUT], &co2_props);
@@ -3389,101 +3180,21 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_entr_last[HTR_HP_OUT] = co2_props.entr;
 	m_dens_last[HTR_HP_OUT] = co2_props.dens;
 
-	//C_HeatExchanger::S_design_parameters LT_des_par;
-	//double C_dot_hot = m_dot_t*(m_enth_last[8 - cpp_offset] - m_enth_last[9 - cpp_offset]) / (m_temp_last[8 - cpp_offset] - m_temp_last[9 - cpp_offset]);		// LT recuperator hot stream capacitance rate
-	//double C_dot_cold = m_dot_mc*(m_enth_last[3 - cpp_offset] - m_enth_last[2 - cpp_offset]) / (m_temp_last[3 - cpp_offset] - m_temp_last[2 - cpp_offset]);	// LT recuperator cold stream capacitance rate
-	//double C_dot_min = min(C_dot_hot, C_dot_cold);
-	//double Q_dot_max = C_dot_min*(m_temp_last[8 - cpp_offset] - m_temp_last[2 - cpp_offset]);
-	//double hx_eff = Q_dot_LT / Q_dot_max;				// Definition of effectiveness
-	//LT_des_par.m_DP_design[0] = m_pres_last[2 - cpp_offset] - m_pres_last[3 - cpp_offset];
-	//LT_des_par.m_DP_design[1] = m_pres_last[8 - cpp_offset] - m_pres_last[9 - cpp_offset];
-	//LT_des_par.m_eff_design = hx_eff;
-	//LT_des_par.m_min_DT_design = min_DT_LT;
-	//LT_des_par.m_m_dot_design[0] = m_dot_mc;
-	//LT_des_par.m_m_dot_design[1] = m_dot_t;
-	//LT_des_par.m_N_sub = ms_des_par.m_N_sub_hxrs;
-	//LT_des_par.m_Q_dot_design = Q_dot_LT;
-	//LT_des_par.m_UA_design = UA_LT_calc;
-	//m_LT.initialize(LT_des_par);
-
-	// Calculate performance metrics for low-temperature recuperator
-	// ****************************************************************
-	//C_HX_counterflow::S_des_par LT_recup_des_par;
-	//LT_recup_des_par.m_Q_dot_design = Q_dot_LT;				//[kWt]
-	//	// Hot side
-	//LT_recup_des_par.m_T_h_in = m_temp_last[HTR_LP_OUT];	//[K]
-	//LT_recup_des_par.m_P_h_in = m_pres_last[HTR_LP_OUT];	//[kPa]
-	//LT_recup_des_par.m_P_h_out = m_pres_last[LTR_LP_OUT];	//[kPa]
-	//LT_recup_des_par.m_m_dot_hot_des = m_dot_t;				//[kg/s]
-	//	// Cold side
-	//LT_recup_des_par.m_T_c_in = m_temp_last[MC_OUT];		//[K]
-	//LT_recup_des_par.m_P_c_in = m_pres_last[MC_OUT];		//[kPa]
-	//LT_recup_des_par.m_P_c_out = m_pres_last[LTR_HP_OUT];	//[kPa]
-	//LT_recup_des_par.m_m_dot_cold_des = m_dot_mc;			//[kg/s]
-	//	// Performance
-	//LT_recup_des_par.m_eff_max = 1.0;											//[-]
-	//LT_recup_des_par.m_UA_target = std::numeric_limits<double>::quiet_NaN();	//[kW/K]
-	//	// Design()
-	//C_HX_counterflow::S_des_solved LT_recup_des_solved;
-	//mc_LT_recup.design(LT_recup_des_par, LT_recup_des_solved);
-	//// ****************************************************************
-	//// ****************************************************************	
-	//
-	//// Calculate performance metrics for high-temperature recuperator
-	//// *****************************************************************
-	//C_HX_counterflow::S_des_par HT_recup_des_par;
-	//HT_recup_des_par.m_Q_dot_design = Q_dot_HT;				//[kWt]
-	//	// Hot side
-	//HT_recup_des_par.m_T_h_in = m_temp_last[TURB_OUT];		//[K]
-	//HT_recup_des_par.m_P_h_in = m_pres_last[TURB_OUT];		//[kPa]
-	//HT_recup_des_par.m_P_h_out = m_pres_last[HTR_LP_OUT];	//[kPa]
-	//HT_recup_des_par.m_m_dot_hot_des = m_dot_t;				//[kg/s]
-	//	// Cold side
-	//HT_recup_des_par.m_T_c_in = m_temp_last[MIXER_OUT];		//[K]
-	//HT_recup_des_par.m_P_c_in = m_pres_last[MIXER_OUT];		//[kPa]
-	//HT_recup_des_par.m_P_c_out = m_pres_last[HTR_HP_OUT];	//[kPa]
-	//HT_recup_des_par.m_m_dot_cold_des = m_dot_t;			//[kg/s]
-	//	// Performance
-	//HT_recup_des_par.m_eff_max = 1.0;											//[-]
-	//HT_recup_des_par.m_UA_target = std::numeric_limits<double>::quiet_NaN();	//[kW/K]
-	//	// Design()
-	//C_HX_counterflow::S_des_solved HT_recup_des_solved;
-	//mc_HT_recup.design(HT_recup_des_par, HT_recup_des_solved);
-	// *****************************************************************
-	// *****************************************************************
-
-	//C_HeatExchanger::S_design_parameters HT_des_par;
-	//double C_dot_hot = m_dot_t*(m_enth_last[7 - cpp_offset] - m_enth_last[8 - cpp_offset]) / (m_temp_last[7 - cpp_offset] - m_temp_last[8 - cpp_offset]);			// HT recuperator hot stream capacitance rate
-	//double C_dot_cold = m_dot_t*(m_enth_last[5 - cpp_offset] - m_enth_last[4 - cpp_offset]) / (m_temp_last[5 - cpp_offset] - m_temp_last[4 - cpp_offset]);			// HT recuperator cold stream capacitance rate
-	//double C_dot_min = min(C_dot_hot, C_dot_cold);
-	//double Q_dot_max = C_dot_min*(m_temp_last[7 - cpp_offset] - m_temp_last[4 - cpp_offset]);
-	//double hx_eff = Q_dot_HT / Q_dot_max;						// Definition of effectiveness
-	//HT_des_par.m_DP_design[0] = m_pres_last[4 - cpp_offset] - m_pres_last[5 - cpp_offset];
-	//HT_des_par.m_DP_design[1] = m_pres_last[7 - cpp_offset] - m_pres_last[8 - cpp_offset];
-	//HT_des_par.m_eff_design = hx_eff;
-	//HT_des_par.m_min_DT_design = min_DT_HT;
-	//HT_des_par.m_m_dot_design[0] = m_dot_t;
-	//HT_des_par.m_m_dot_design[1] = m_dot_t;
-	//HT_des_par.m_N_sub = ms_des_par.m_N_sub_hxrs;
-	//HT_des_par.m_Q_dot_design = Q_dot_HT;
-	//HT_des_par.m_UA_design = UA_HT_calc;
-	//m_HT.initialize(HT_des_par);
-
 	// Set relevant values for other heat exchangers
 	C_HeatExchanger::S_design_parameters PHX_des_par;
-	PHX_des_par.m_DP_design[0] = m_pres_last[5 - cpp_offset] - m_pres_last[6 - cpp_offset];
+	PHX_des_par.m_DP_design[0] = m_pres_last[HTR_HP_OUT] - m_pres_last[TURB_IN];
 	PHX_des_par.m_DP_design[1] = 0.0;
 	PHX_des_par.m_m_dot_design[0] = m_dot_t;
 	PHX_des_par.m_m_dot_design[1] = 0.0;
-	PHX_des_par.m_Q_dot_design = m_dot_t*(m_enth_last[6 - cpp_offset] - m_enth_last[5 - cpp_offset]);
+	PHX_des_par.m_Q_dot_design = m_dot_t*(m_enth_last[TURB_IN] - m_enth_last[HTR_HP_OUT]);
 	m_PHX.initialize(PHX_des_par);
 
 	C_HeatExchanger::S_design_parameters PC_des_par;
 	PC_des_par.m_DP_design[0] = 0.0;
-	PC_des_par.m_DP_design[1] = m_pres_last[9 - cpp_offset] - m_pres_last[1 - cpp_offset];
+	PC_des_par.m_DP_design[1] = m_pres_last[LTR_LP_OUT] - m_pres_last[MC_IN];
 	PC_des_par.m_m_dot_design[0] = 0.0;
 	PC_des_par.m_m_dot_design[1] = m_dot_mc;
-	PC_des_par.m_Q_dot_design = m_dot_mc*(m_enth_last[9 - cpp_offset] - m_enth_last[1 - cpp_offset]);
+	PC_des_par.m_Q_dot_design = m_dot_mc*(m_enth_last[LTR_LP_OUT] - m_enth_last[MC_IN]);
 	m_PC.initialize(PC_des_par);
 
 	// Calculate/set cycle performance metrics
