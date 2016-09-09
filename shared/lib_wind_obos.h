@@ -33,6 +33,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double interConVolt;//grid interconnect voltage (kV)
 	double distInterCon;//distance from onshore substation to grid interconnect (miles)
 	double scrapVal;//scrap value of decommissioned components ($)
+    double number_install_seasons; //number of vessel mobilization/install seasons
 
 	//DETAILED INPUTS************************************************************************************************************
 	//General
