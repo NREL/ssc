@@ -124,8 +124,12 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_array(void *p_data, const char *
 {
 	if (p_data)
 	{
-
-		//ssc_data_set_array(p_data, name, pvalues, length);
+		size_t len = (size_t(length));
+		ssc_number_t *values = new ssc_number_t[length];
+		for (size_t i = 0; i < len; i++)
+			values[i] = (ssc_number_t)pvalues[i];
+		ssc_data_set_array(p_data, name, values, len);
+		delete[] values;
 		return 1;
 	}
 	else
@@ -136,7 +140,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_matrix(void *p_data, const char 
 {
 	if (p_data)
 	{
-//		ssc_data_set_matrix(p_data, name, pvalues, nrows, ncols);
+//	 	ssc_data_set_matrix(p_data, name, pvalues, nrows, ncols);
 		return 1;
 	}
 	else
@@ -190,12 +194,18 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_number(void *p_data, const char 
 		return 0;
 }
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_array(void *p_data, const char *name, double *value, long length)
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_array(void *p_data, const char *name, double *pvalue, long length)
 {
 	if (p_data)
 	{
-		int len;
-//		value = ssc_data_get_array(p_data, name, &len);
+		int len = (int)length;
+		 ssc_number_t *values = ssc_data_get_array(p_data, name, &len);
+		 if (!values)
+			 return (long)0;
+		 if (length == 0)
+			return (long)len;
+		for (int i = 0; i < len; i++)
+			pvalue[i] = (double)values[i];
 		return (long)len;
 	}
 	else
