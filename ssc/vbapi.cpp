@@ -124,9 +124,11 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_array(void *p_data, const char *
 {
 	if (p_data)
 	{
-		size_t len = (size_t(length));
-		ssc_number_t *values = new ssc_number_t[length];
-		for (size_t i = 0; i < len; i++)
+		int len = (int)length;
+		if (len == 0)
+			return 0;
+		ssc_number_t *values = new ssc_number_t[len];
+		for (int i = 0; i < len; i++)
 			values[i] = (ssc_number_t)pvalues[i];
 		ssc_data_set_array(p_data, name, values, len);
 		delete[] values;
@@ -140,7 +142,16 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_matrix(void *p_data, const char 
 {
 	if (p_data)
 	{
-//	 	ssc_data_set_matrix(p_data, name, pvalues, nrows, ncols);
+		int rows = (int)nrows;
+		int cols = (int)ncols;
+		int len = rows* cols;
+		if (len == 0)
+			return 0;
+		ssc_number_t *values = new ssc_number_t[len];
+		for (int i = 0; i < len; i++)
+			values[i] = (ssc_number_t)pvalues[i];
+		ssc_data_set_matrix(p_data, name, values, rows, cols);
+		delete[] values;
 		return 1;
 	}
 	else
@@ -212,22 +223,30 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_array(void *p_data, const char *
 		return 0;
 }
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_matrix(void *p_data, const char *name, double *value, long *nrows, long *ncols)
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_matrix(void *p_data, const char *name, double *pvalue, long nrows, long ncols)
 {
 	if (p_data)
 	{
-		int nrow, ncol;
-//		value = ssc_data_get_matrix(p_data, name, &nrow, &ncol);
-		*nrows = (long)nrow;
-		*ncols = (long)ncol;
-		return 1;
+		int rows = (int)nrows;
+		int cols = (int)ncols;
+		ssc_number_t *values = ssc_data_get_matrix(p_data, name, &rows, &cols);
+		if (!values)
+			return (long)0;
+		if (nrows == 0)
+			return (long)rows;
+		if (ncols == 0)
+			return (long)cols;
+		size_t len = rows * cols;
+		for (size_t i = 0; i < len; i++)
+			pvalue[i] = (double)values[i];
+		return (long)len;
 	}
 	else
 		return 0;
-}
+	}
 
 // TODO test this
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *name, long table)
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *name, void *table)
 {
 	if (p_data && table)
 	{
@@ -238,9 +257,9 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *
 }
 
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_entry(long index)
+SSCEXPORT void *VBCALL_CONVENTION sscvb_module_entry(long index)
 {
-	return (long)ssc_module_entry((int)index);
+	return ssc_module_entry((int)index);
 }
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_name(void *p_entry, const char *name)
@@ -413,7 +432,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_set_print(long print)
 }
 
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_simple(const char *name, void *p_data, long success)
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_simple(const char *name, void *p_data)
 {
 	if (p_data)
 		return (long)ssc_module_exec_simple(name, p_data);
