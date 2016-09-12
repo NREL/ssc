@@ -472,6 +472,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_with_handler(void *p_mod, voi
 
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(void *p_mod, long index, long *item_type, float *time, const char *msg)
 {
+	// TODO ASAP
 	return 0;
 }
 
