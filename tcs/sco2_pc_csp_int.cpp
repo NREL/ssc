@@ -207,7 +207,7 @@ int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par, doub
 	{		
 		for(int i = 0; i < 6; i++)
 		{
-			od_op_inputs.m_P_mc_in = P_mc_in_dens_des - 1000*i;
+			od_op_inputs.m_P_mc_in = od_op_inputs.m_P_mc_in*0.95;
 		
 			for(int j = 0; j < 6; j++)
 			{
