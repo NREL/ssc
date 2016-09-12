@@ -4535,8 +4535,6 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 {
 	CO2_state co2_props;
 
-	int cpp_offset = 1;
-
 	// Initialize a few variables
 	m_temp_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_T_mc_in;
 	m_pres_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_P_mc_in;
@@ -4585,45 +4583,45 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	double m_dot_mc = m_dot_t - m_dot_rc;
 
 	// Fully define known states
-	int prop_error_code = CO2_TP(m_temp_od[1 - cpp_offset], m_pres_od[1 - cpp_offset], &co2_props);
+	int prop_error_code = CO2_TP(m_temp_od[MC_IN], m_pres_od[MC_IN], &co2_props);
 	if( prop_error_code != 0 )
 	{
 		error_code = prop_error_code;
 		return;
 	}
-	m_enth_od[1 - cpp_offset] = co2_props.enth;
-	m_entr_od[1 - cpp_offset] = co2_props.entr;
-	m_dens_od[1 - cpp_offset] = co2_props.dens;
+	m_enth_od[MC_IN] = co2_props.enth;
+	m_entr_od[MC_IN] = co2_props.entr;
+	m_dens_od[MC_IN] = co2_props.dens;
 
-	prop_error_code = CO2_TP(m_temp_od[2 - cpp_offset], m_pres_od[2 - cpp_offset], &co2_props);
+	prop_error_code = CO2_TP(m_temp_od[MC_OUT], m_pres_od[MC_OUT], &co2_props);
 	if( prop_error_code != 0 )
 	{
 		error_code = prop_error_code;
 		return;
 	}
-	m_enth_od[2 - cpp_offset] = co2_props.enth;
-	m_entr_od[2 - cpp_offset] = co2_props.entr;
-	m_dens_od[2 - cpp_offset] = co2_props.dens;
+	m_enth_od[MC_OUT] = co2_props.enth;
+	m_entr_od[MC_OUT] = co2_props.entr;
+	m_dens_od[MC_OUT] = co2_props.dens;
 
-	prop_error_code = CO2_TP(m_temp_od[6 - cpp_offset], m_pres_od[6 - cpp_offset], &co2_props);
+	prop_error_code = CO2_TP(m_temp_od[TURB_IN], m_pres_od[TURB_IN], &co2_props);
 	if( prop_error_code != 0 )
 	{
 		error_code = prop_error_code;
 		return;
 	}
-	m_enth_od[6 - cpp_offset] = co2_props.enth;
-	m_entr_od[6 - cpp_offset] = co2_props.entr;
-	m_dens_od[6 - cpp_offset] = co2_props.dens;
+	m_enth_od[TURB_IN] = co2_props.enth;
+	m_entr_od[TURB_IN] = co2_props.entr;
+	m_dens_od[TURB_IN] = co2_props.dens;
 
-	prop_error_code = CO2_TP(m_temp_od[7 - cpp_offset], m_pres_od[7 - cpp_offset], &co2_props);
+	prop_error_code = CO2_TP(m_temp_od[TURB_OUT], m_pres_od[TURB_OUT], &co2_props);
 	if( prop_error_code != 0 )
 	{
 		error_code = prop_error_code;
 		return;
 	}
-	m_enth_od[7 - cpp_offset] = co2_props.enth;
-	m_entr_od[7 - cpp_offset] = co2_props.entr;
-	m_dens_od[7 - cpp_offset] = co2_props.dens;
+	m_enth_od[TURB_OUT] = co2_props.enth;
+	m_entr_od[TURB_OUT] = co2_props.entr;
+	m_dens_od[TURB_OUT] = co2_props.dens;
 
 	// Get the recuperator conductances corresponding to the converged mass flow rates
 	double UA_LT, UA_HT;
@@ -4634,10 +4632,11 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	std::vector<double> m_dot_HT;
 	m_dot_HT.push_back(m_dot_t);
 	m_dot_HT.push_back(m_dot_t);
-	//m_LT.hxr_conductance(m_dot_LT, UA_LT);
 	UA_LT = mc_LT_recup.od_UA(m_dot_mc, m_dot_t);
-	//m_HT.hxr_conductance(m_dot_HT, UA_HT);
 	UA_HT = mc_HT_recup.od_UA(m_dot_t, m_dot_t);
+
+
+	int cpp_offset = 1;
 
 	// Outer iteration loop: temp(8), checking against UA_HT
 	double T8_lower_bound = std::numeric_limits<double>::quiet_NaN();
