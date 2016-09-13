@@ -270,6 +270,7 @@ bool winddata_provider::read( double requested_height,
 windfile::windfile()
 	: winddata_provider()
 {
+	m_nrec = 0;
 	m_buf = new char[MBUFLEN];
 	m_fp = 0;
 	close();
@@ -278,6 +279,7 @@ windfile::windfile()
 windfile::windfile( const std::string &file )
 	: winddata_provider()
 {
+	m_nrec = 0;
 	m_buf = new char[MBUFLEN];
 	m_fp = 0;
 	close();
@@ -320,15 +322,14 @@ bool windfile::open( const std::string &file )
 		
 	/* read header information */
 	
-
 	// read line 1 (header info
 	fgets( m_buf, MBUFLEN-1, m_fp );
 	char *cols[128];
 	int ncols = locate2(m_buf, cols, 128, ',');
 
-	if (ncols < 10) // TFF changed Oct 11, 2012. Excel may add extra commas at the end of the line - ignore them, but don't create error.
+	if (ncols < 8)
 	{
-		m_errorMsg = util::format("error reading header (line 1).  At least 10 columns required, %d found.", ncols);
+		m_errorMsg = util::format("error reading header (line 1).  At least 8 columns required, %d found.", ncols);
 		fclose( m_fp );
 		m_fp = 0;
 		return false;
@@ -401,9 +402,20 @@ bool windfile::open( const std::string &file )
 	for (size_t i=0;i<m_heights.size();i++)
 		m_heights[i] = atof( cols[i] );
 	
+
+	// read all the lines to determine the nubmer of records in the file
+	m_nrec = 0;
+	while( fgets( m_buf, MBUFLEN-1, m_fp ) )
+		m_nrec++;
+
+	// rewind the file and reposition right after the header information
+	rewind( m_fp );
+	for( size_t i=0;i<5;i++ )
+		fgets( m_buf, MBUFLEN-1, m_fp );
+
+	
 	// ready to read line-by-line.  subsequent columns of data correspond to the
 	// data types in m_dataid and measurement heights in m_heights
-
 	m_file = file;
 	return true;
 }
@@ -421,6 +433,12 @@ void windfile::close()
 	desc.clear();
 	year = 1900;
 	lat = lon = elev = 0.0;
+	m_nrec = 0;
+}
+
+size_t windfile::nrecords()
+{
+	return m_nrec;
 }
 
 bool windfile::read_line( std::vector<double> &values )
