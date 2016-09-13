@@ -16,7 +16,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_build_info(char *build_info, long len)
 	if (info == NULL)
 		return 0;
 
-	info_len = strlen(info) + 1;
+	info_len = (int)strlen(info) + 1;
 
 	if (build_info == NULL || len == 0)
 		return info_len;
@@ -112,7 +112,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_number(void *p_data, const char 
 {
 	if (p_data)
 	{
-		ssc_number_t val = value;
+		ssc_number_t val = (ssc_number_t)value;
 		ssc_data_set_number(p_data, name, val);
 		return 1;
 	}
@@ -144,7 +144,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_set_matrix(void *p_data, const char 
 	{
 		int rows = (int)nrows;
 		int cols = (int)ncols;
-		int len = rows* cols;
+		int len = rows * cols;
 		if (len == 0)
 			return 0;
 		ssc_number_t *values = new ssc_number_t[len];
@@ -179,7 +179,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_string(void *p_data, const char 
 		if (val == NULL)
 			return 0;
 
-		val_len = strlen(val) + 1;
+		val_len = (int)strlen(val) + 1;
 
 		if (value == NULL || len == 0)
 			return val_len;
@@ -284,7 +284,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_entry_description(void *p_entry, const ch
 		return 0;
 }
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_entry_version(void *p_entry, long index)
+SSCEXPORT long VBCALL_CONVENTION sscvb_entry_version(void *p_entry)
 {
 	if (p_entry)
 	{
@@ -470,10 +470,30 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_with_handler(void *p_mod, voi
 }
 
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(void *p_mod, long index, long *item_type, float *time, const char *msg)
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(void *p_mod, long index, long *item_type, double *time, char *msg, long msg_len)
 {
-	// TODO ASAP
-	return 0;
+	int sscmsg_len;
+	int ndx = (int)index;
+	int it;
+	ssc_number_t ts;
+	if (p_mod)
+	{
+		const char* sscmsg = ssc_module_log(p_mod, ndx, &it, &ts);
+		if (sscmsg == NULL)
+			return 0;
+
+		sscmsg_len = (int)strlen(sscmsg) + 1;
+
+		if (msg == NULL || msg_len == 0)
+			return sscmsg_len;
+
+		strncpy(msg, sscmsg, msg_len);
+		*time = (double)ts;
+		*item_type = (long)it;
+		return msg_len < (long)sscmsg_len ? msg_len : (long)sscmsg_len;
+	}
+	else
+		return 0;
 }
 
 SSCEXPORT long VBCALL_CONVENTION __sscvb_segfault()
