@@ -106,8 +106,9 @@ typedef struct water_state
 const char * water_error_message( int error_code );
 void get_water_info( water_info * info );
 
-// Thermodynamic property functions.
-int water_TD( double T, double D, water_state * state );
+// Thermodynamic property functions. 
+// T: Temperature; D: density; P: Pressure; H: enthalpy; S: entropy; Q: quality; 
+int water_TD( double T, double D, water_state * state ); 
 int water_TP( double T, double P, water_state * state );
 int water_PH( double P, double H, water_state * state );
 int water_PS( double P, double S, water_state * state );
