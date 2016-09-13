@@ -43,7 +43,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "wind_speed",                              "Wind speed",                          "m/s",    "",      "Time Series",      "*",                                        "",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "temp",                                    "Air temperature",                     "'C",     "",      "Time Series",      "*",                                        "",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pressure",                                "Pressure",                            "atm",    "",      "Time Series",      "*",                                        "",                                      "" },
-
+	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                          "Monthly Energy",                      "kWh",     "",      "Monthly",     "*",                                        "LENGTH=12",                                        "" },
 
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                           "Annual Energy",                       "kWh",     "",      "Annual",      "*",                                        "",                                                 "" },
@@ -414,8 +414,8 @@ public:
 				}
 
 				// accumulate monthly and annual energy
-				monthly[imonth] += farmpwr[i];
-				annual += farmpwr[i];
+				monthly[imonth] += farmpwr[i]/steps_per_hour;
+				annual += farmpwr[i]/steps_per_hour;
 				
 				i++;
 			} // end steps_per_hour loop
