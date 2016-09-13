@@ -53,7 +53,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *
 SSCEXPORT void *VBCALL_CONVENTION sscvb_module_entry( long index);
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_name(void *p_entry, const char *name);
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_description(void *p_entry, const char *description);
-SSCEXPORT long VBCALL_CONVENTION sscvb_entry_version(void *p_entry, long index);
+SSCEXPORT long VBCALL_CONVENTION sscvb_entry_version(void *p_entry);
 
 SSCEXPORT void *VBCALL_CONVENTION sscvb_module_create(const char *name);
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_free(void *p_mod);
@@ -79,7 +79,7 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec(void *p_mod, void *p_data);
 // TODO test this
 SSCEXPORT long VBCALL_CONVENTION sscvb_module_exec_with_handler(void *p_mod, void *p_data, long pf_handler, void *pf_user_data);
 
-SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(void *p_mod, long index, long *item_type, float *time, const char *msg);
+SSCEXPORT long VBCALL_CONVENTION sscvb_module_log(void *p_mod, long index, long *item_type, double *time, char *msg, long msg_len);
 SSCEXPORT long VBCALL_CONVENTION __sscvb_segfault();
 
 
