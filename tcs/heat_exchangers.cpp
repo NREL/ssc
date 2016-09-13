@@ -520,16 +520,17 @@ void C_HX_counterflow::design_solution(double T_c_in /*K*/, double P_c_in /*kPa*
 	ms_des_solved.m_DP_hot_des = P_h_in - ms_hx_sol_solved.m_P_h_out;		//[kPa]
 }
 
-void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
-	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
+void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/)
 {
 	// Set o.d. UA as solver target
 	double UA_target = ms_des_solved.m_UA_design_total*od_UA_frac(m_dot_c, m_dot_h);	//[kW/K]
 	double eff_target = ms_des_par.m_eff_max;
 
-	double P_c_out = P_c_in - ms_des_solved.m_DP_cold_des*od_delta_p_cold_frac(m_dot_c);
-	double P_h_out = P_h_in - ms_des_solved.m_DP_hot_des*od_delta_p_hot_frac(m_dot_h);
+	ms_od_solved.m_q_dot = ms_od_solved.m_T_c_out = ms_od_solved.m_P_c_out = 
+		ms_od_solved.m_T_h_out = ms_od_solved.m_P_h_out = ms_od_solved.m_UA_total = 
+		ms_od_solved.m_min_DT = ms_od_solved.m_eff = ms_od_solved.m_NTU = std::numeric_limits<double>::quiet_NaN();
 
 	hx_solution(T_c_in, P_c_in, m_dot_c, P_c_out, T_h_in, P_h_in, m_dot_h, P_h_out, UA_target, eff_target, q_dot, T_c_out, T_h_out);
 
@@ -542,6 +543,17 @@ void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*
 	ms_od_solved.m_T_c_out = ms_hx_sol_solved.m_T_c_out;	//[K]
 	ms_od_solved.m_T_h_out = ms_hx_sol_solved.m_T_h_out;	//[K]
 	ms_od_solved.m_UA_total = ms_hx_sol_solved.m_UA_total;	//[kW/K]
+}
+
+void C_HX_counterflow::off_design_solution_calc_dP(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
+	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
+	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & P_c_out /*kPa*/, double & T_h_out /*K*/, double & P_h_out /*kPa*/)
+{
+	// Calculate pressure drops
+	P_c_out = P_c_in - ms_des_solved.m_DP_cold_des*od_delta_p_cold_frac(m_dot_c);
+	P_h_out = P_h_in - ms_des_solved.m_DP_hot_des*od_delta_p_hot_frac(m_dot_h);
+
+	off_design_solution(T_c_in, P_c_in, m_dot_c, P_c_out, T_h_in, P_h_in, m_dot_h, P_h_out, q_dot, T_c_out, T_h_out);
 }
 
 void C_HX_counterflow::hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,

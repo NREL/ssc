@@ -3206,7 +3206,7 @@ void C_RecompCycle::design_core_standard(int & error_code)
 	m_m_dot_t = m_dot_t;
 }
 
-int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_HP_out /*K*/)
+int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/)
 {
 	m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = std::numeric_limits<double>::quiet_NaN();
 	
@@ -3226,7 +3226,7 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 
 			if( rc_error_code != 0 )
 			{
-				*diff_T_LTR_HP_out = std::numeric_limits<double>::quiet_NaN();
+				*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 				return rc_error_code;
 			}		
 		}
@@ -3243,7 +3243,7 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 
 		if( rc_error_code != 0 )
 		{
-			*diff_T_LTR_HP_out = std::numeric_limits<double>::quiet_NaN();
+			*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 			return rc_error_code;
 		}
 	}
@@ -3253,7 +3253,7 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 		int prop_error_code = CO2_TP(mpc_rc_cycle->m_temp_last[LTR_LP_OUT], mpc_rc_cycle->m_pres_last[LTR_LP_OUT], &mpc_rc_cycle->mc_co2_props);
 		if( prop_error_code != 0 )
 		{
-			*diff_T_LTR_HP_out = std::numeric_limits<double>::quiet_NaN();
+			*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 			return prop_error_code;
 		}
 		mpc_rc_cycle->m_enth_last[LTR_LP_OUT] = mpc_rc_cycle->mc_co2_props.enth;
@@ -3269,7 +3269,7 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 	m_m_dot_t = mpc_rc_cycle->ms_des_par.m_W_dot_net / (m_w_mc*(1.0 - mpc_rc_cycle->ms_des_par.m_recomp_frac) + m_w_rc*mpc_rc_cycle->ms_des_par.m_recomp_frac + m_w_t);		//[kg/s]
 	if( m_m_dot_t < 0.0 )
 	{
-		*diff_T_LTR_HP_out = std::numeric_limits<double>::quiet_NaN();
+		*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 		return 29;
 	}
 	m_m_dot_rc = m_m_dot_t * mpc_rc_cycle->ms_des_par.m_recomp_frac;		//[kg/s]
@@ -3285,12 +3285,12 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 	}
 	catch( C_csp_exception & csp_except)
 	{
-		*diff_T_LTR_HP_out = std::numeric_limits<double>::quiet_NaN();
+		*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 
 		return -1;
 	}
 
-	*diff_T_LTR_HP_out = T_LTR_LP_out_calc - mpc_rc_cycle->m_temp_last[LTR_LP_OUT];		//[K]
+	*diff_T_LTR_LP_out = T_LTR_LP_out_calc - mpc_rc_cycle->m_temp_last[LTR_LP_OUT];		//[K]
 
 	return 0;
 }
@@ -4529,6 +4529,58 @@ double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<doub
 		return frame->od_turbo_bal_csp_Wnet(x);
 	else
 		return std::numeric_limits<double>::quiet_NaN();
+}
+
+int C_RecompCycle::C_mono_eq_LTR_od::operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/)
+{
+	m_Q_dot_LTR = std::numeric_limits<double>::quiet_NaN();
+
+	mpc_rc_cycle->m_temp_od[LTR_LP_OUT] = T_LTR_LP_out;		//[K]
+
+	int prop_error_code = CO2_TP(mpc_rc_cycle->m_temp_od[LTR_LP_OUT], mpc_rc_cycle->m_pres_od[LTR_LP_OUT], &mpc_rc_cycle->mc_co2_props);
+	if( prop_error_code != 0 )
+	{
+		*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+		return prop_error_code;
+	}
+	
+	if( mpc_rc_cycle->ms_od_phi_par.m_recomp_frac >= 1.E-12 )		// Determine the required shaft speed for the recompressor
+	{
+		int rc_error_code = 0;
+		mpc_rc_cycle->m_rc.off_design_recompressor(mpc_rc_cycle->m_temp_od[LTR_LP_OUT], mpc_rc_cycle->m_pres_od[LTR_LP_OUT], m_m_dot_rc,
+							mpc_rc_cycle->m_pres_od[RC_OUT], rc_error_code, mpc_rc_cycle->m_temp_od[RC_OUT]);
+
+		if( rc_error_code != 0 )
+		{
+			*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+			return rc_error_code;
+		}
+
+		// Fully define state 10
+		prop_error_code = CO2_TP(mpc_rc_cycle->m_temp_od[RC_OUT], mpc_rc_cycle->m_pres_od[RC_OUT], &mpc_rc_cycle->mc_co2_props);
+		if( prop_error_code != 0 )
+		{
+			*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+			return prop_error_code;
+		}
+
+		mpc_rc_cycle->m_enth_od[RC_OUT] = mpc_rc_cycle->mc_co2_props.enth;	//[kJ/kg]
+		mpc_rc_cycle->m_entr_od[RC_OUT] = mpc_rc_cycle->mc_co2_props.entr;	//[kJ/kg-K]
+		mpc_rc_cycle->m_dens_od[RC_OUT] = mpc_rc_cycle->mc_co2_props.dens;	//[kg/m^3]
+	}
+	else
+	{	// No meaningful recompression
+		mpc_rc_cycle->m_temp_od[RC_OUT] = mpc_rc_cycle->m_temp_od[LTR_LP_OUT];	//[K]
+		mpc_rc_cycle->m_enth_od[RC_OUT]	= mpc_rc_cycle->m_enth_od[LTR_LP_OUT];	//[K]
+		mpc_rc_cycle->m_entr_od[RC_OUT]	= mpc_rc_cycle->m_entr_od[LTR_LP_OUT];	//[K]
+		mpc_rc_cycle->m_dens_od[RC_OUT]	= mpc_rc_cycle->m_dens_od[LTR_LP_OUT];	//[K]
+	}
+
+	mpc_rc_cycle->mc_LT_recup.off_design_solution(mpc_rc_cycle->m_temp_od[MC_OUT], mpc_rc_cycle->m_pres_od[MC_OUT], m_m_dot_mc, mpc_rc_cycle->m_pres_od[LTR_HP_OUT],
+					mpc_rc_cycle->m_temp_od[HTR_LP_OUT], mpc_rc_cycle->m_pres_od[HTR_LP_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_od[LTR_LP_OUT],
+					m_Q_dot_LTR, mpc_rc_cycle->m_temp_od[LTR_HP_OUT], mpc_rc_cycle->m_temp_last[LTR_HP_OUT]);
+
+	return 0;
 }
 
 void C_RecompCycle::off_design_phi_core(int & error_code)
