@@ -40,6 +40,8 @@ public:
 		bool bInterpolate = false);
 	
 	virtual bool read_line( std::vector<double> &values ) = 0;
+	virtual size_t nrecords() = 0;
+
 	
 	std::string error() { return m_errorMsg; }
 
@@ -60,6 +62,7 @@ private:
 	FILE *m_fp;
 	char *m_buf;
 	std::string m_file;
+	size_t m_nrec;
 
 public:
 	windfile();
@@ -72,6 +75,7 @@ public:
 	bool open( const std::string &file );
 	
 	virtual bool read_line( std::vector<double> &values );
+	virtual size_t nrecords();
 	
 };
 
