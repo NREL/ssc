@@ -525,7 +525,7 @@ void C_HX_counterflow::off_design_solution(double T_c_in /*K*/, double P_c_in /*
 	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/)
 {
 	// Set o.d. UA as solver target
-	double UA_target = ms_des_solved.m_UA_design_total*od_UA_frac(m_dot_c, m_dot_h);	//[kW/K]
+	double UA_target = od_UA(m_dot_c, m_dot_h);	//[kW/K]
 	double eff_target = ms_des_par.m_eff_max;
 
 	ms_od_solved.m_q_dot = ms_od_solved.m_T_c_out = ms_od_solved.m_P_c_out = 
@@ -573,6 +573,28 @@ void C_HX_counterflow::hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, d
 
 	ms_hx_sol_solved.m_q_dot = ms_hx_sol_solved.m_T_c_out = ms_hx_sol_solved.m_T_h_out =
 		ms_hx_sol_solved.m_UA_total = ms_hx_sol_solved.m_min_DT = ms_hx_sol_solved.m_eff = ms_hx_sol_solved.m_NTU = std::numeric_limits<double>::quiet_NaN();
+
+	if( UA_target < 1.E-10 )
+	{
+		q_dot = 0.0;
+
+		try
+		{
+		calc_req_UA(q_dot, m_dot_c, m_dot_h, T_c_in, T_h_in, P_c_in, P_c_out, P_h_in, P_h_out,
+			ms_hx_sol_solved.m_UA_total, ms_hx_sol_solved.m_min_DT, ms_hx_sol_solved.m_eff, ms_hx_sol_solved.m_NTU, ms_hx_sol_solved.m_T_h_out,
+			ms_hx_sol_solved.m_T_c_out, ms_hx_sol_solved.m_q_dot);
+		}
+		catch(C_csp_exception &csp_except)
+		{
+			throw(C_csp_exception("C_HX_counterflow::hx_solution(...) failed with UA_target < 1.E-10"));
+		}
+
+		q_dot = ms_hx_sol_solved.m_q_dot;
+		T_c_out = ms_hx_sol_solved.m_T_c_out;
+		T_h_out = ms_hx_sol_solved.m_T_h_out;
+
+		return;
+	}
 
 	// Calculate maximum possible heat transfer, use to set upper bound
 	double q_dot_max = calc_max_q_dot(ms_hx_sol_par.m_T_h_in, ms_hx_sol_par.m_P_h_in, P_h_out, ms_hx_sol_par.m_m_dot_h,
