@@ -550,7 +550,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	opt_od_eta.set_upper_bounds(ub);
 	opt_od_eta.set_initial_step(scale);
 	//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-	opt_od_eta.set_ftol_rel(m_od_opt_tol);
+	opt_od_eta.set_ftol_rel(m_od_opt_tol/10.0);
 
 	// Set max objective function
 	opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -610,7 +610,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			opt_od_eta.set_upper_bounds(ub);
 			opt_od_eta.set_initial_step(scale);
 			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-			opt_od_eta.set_ftol_rel(0.001);
+			opt_od_eta.set_ftol_rel(m_od_opt_tol / 10.0);
 
 			// Set max objective function
 			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -743,7 +743,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			opt_od_eta.set_upper_bounds(ub);
 			opt_od_eta.set_initial_step(scale);
 			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-			opt_od_eta.set_ftol_rel(0.001);
+			opt_od_eta.set_ftol_rel(m_od_opt_tol/10.0);
 
 			// Set max objective function
 			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
