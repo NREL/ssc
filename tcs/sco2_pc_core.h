@@ -1116,6 +1116,30 @@ public:
 		virtual int operator()(double T_LTR_LP_out /*K*/, double *diff_T_LTR_LP_out /*K*/);
 	};
 
+	class C_mono_eq_HTR_od : public C_monotonic_equation
+	{
+	private:
+		C_RecompCycle *mpc_rc_cycle;
+
+	public:
+		C_mono_eq_HTR_od(C_RecompCycle *pc_rc_cycle, double m_dot_rc, double m_dot_mc, double m_dot_t)
+		{
+			mpc_rc_cycle = pc_rc_cycle;
+			m_m_dot_rc = m_dot_rc;
+			m_m_dot_mc = m_dot_mc;
+			m_m_dot_t = m_dot_t;
+		}
+	
+		// These values are passed in as arguments to Constructor call and should not be reset
+		double m_m_dot_rc, m_m_dot_mc, m_m_dot_t;
+
+		// These values are calculated in the operator() method and need to be extracted from this class
+		//     after convergence
+		double m_Q_dot_LTR, m_Q_dot_HTR;
+
+		virtual int operator()(double T_HTR_LP_out_guess /*K*/, double *diff_T_HTR_LP_out /*K*/);
+	};
+
 	class C_mono_eq_HTR_des : public C_monotonic_equation
 	{
 	private:
