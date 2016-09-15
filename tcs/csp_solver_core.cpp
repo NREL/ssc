@@ -235,6 +235,11 @@ void C_csp_solver::init()
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
 
+	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
+	{
+		throw(C_csp_exception("The collector-receiver and power cycle models have incompatible HTF - direct/indirect assumptions", "CSP Solver"));
+	}
+
     /* 
     If no TES exists, initialize values to zero. They won't be touched again
     */

@@ -309,9 +309,13 @@ public:
 	// Maximum step for collector-receiver model
 	double m_max_step;		//[s]
 
+	// Collector-receiver technology type
+	bool m_is_sensible_htf;
+
 	C_csp_collector_receiver()
 	{
-		m_max_step = -1.0;	//[s]
+		m_max_step = -1.0;			//[s]
+		m_is_sensible_htf = true;	//[-]
 	};
 
 	~C_csp_collector_receiver(){};
@@ -481,7 +485,14 @@ class C_csp_power_cycle
 {
 
 public:
-	C_csp_power_cycle(){};
+	
+	// Collector-receiver technology type
+	bool m_is_sensible_htf;		//[-] True = indirect, sensible HTF, e.g. molten salt. False = direct steam
+
+	C_csp_power_cycle()
+	{
+		m_is_sensible_htf = true;
+	};
 
 	~C_csp_power_cycle(){};
 
