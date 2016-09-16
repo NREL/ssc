@@ -1,5 +1,7 @@
 #include "heliodata.h"
 
+using namespace std;
+
 //helio data
 helio_perf_data::helio_perf_data(){
 	resetMetrics();

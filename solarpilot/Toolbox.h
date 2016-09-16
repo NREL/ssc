@@ -4,11 +4,12 @@
 #include <math.h>
 //#include <ctime>
 #include <vector>
-#include "exceptions.hpp"
 #include <time.h>
 #if defined(_WIN64)
 #include <assert.h>
 #endif
+
+#include "exceptions.hpp"
 
 //Double vector - sparse
 /*
@@ -542,20 +543,32 @@ public:
 
 struct Point {
 	double x, y, z;
-	
-    void Set(double _x, double _y, double _z);
+
+    Point();
+
+    Point( const Point &P );
+
+    Point(double X, double Y, double Z);
+
+    void Set(double X, double Y, double Z);
 
     void Set( Point &P );
 
     void Add( Point &P );
 
-    void Add(double _x, double _y, double _z);
+    void Add(double X, double Y, double Z);
 
     void Subtract( Point &P );
 
-    double operator [](const int &index);
+    double& operator [](const int &index);
 
     bool operator <(const Point &p) const;
+
+
+};
+inline bool operator==(const Point& lhs, const Point& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;   
 };
 
 struct Vect {
@@ -674,9 +687,12 @@ public:
 		Step_weight;	//[-]	Weighting factor for this weather step (used in layout simulations)
 	
 	int size(){return _N_items;}
+    void clear();
 	void resizeAll(int size, double val=0.);	//resizes all of the arrays
 	void getStep(int step, double &day, double &hour, double &dni, double &step_weight);
 	void getStep(int step, double &day, double &hour, double &month, double &dni, double &tdb, double &pres, double &vwind, double &step_weight);
+	void append(double day, double hour, double dni, double step_weight);
+	void append(double day, double hour, double month, double dni, double tdb, double pres, double vwind, double step_weight);
 	void setStep(int step, double day, double hour, double dni, double step_weight);
 	void setStep(int step, double day, double hour, double month, double dni, double tdb, double pres, double vwind, double step_weight);
 	std::vector<std::vector<double>*> *getEntryPointers();

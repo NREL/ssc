@@ -5,7 +5,7 @@
 
 using namespace std;
 	
-void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
+void LayoutSimThread::Setup(string &tname, SolarField *SF, sim_results *results, WeatherData *wdata, 
 	int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
 {
 	/* 
@@ -25,12 +25,11 @@ void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_re
 	_is_user_sun_pos = false;
 	_is_shadow_detail = is_shadow_detail;
 	_is_flux_detail = is_flux_detail;
-	_vset = vset;
 	_is_flux_normalized = true;
 };
 
-void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
-	double *args, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
+void LayoutSimThread::Setup(string &tname, SolarField *SF, sim_results *results, matrix_t<double> *sol_azzen, 
+	sim_params &simpars, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail)
 {
 	/* 
 	overload to allow specification of simulation sun positions. 
@@ -61,11 +60,9 @@ void LayoutSimThread::Setup(string &tname, SolarField *SF, var_set *vset, sim_re
 	Nsim_complete = 0;
 	Nsim_total = _sim_last - _sim_first;
 	_is_user_sun_pos = true;
-	for(int i=0; i<4; i++)
-		_user_args[i] = args[i];
+	_sim_params = simpars;
 	_is_shadow_detail = is_shadow_detail;
 	_is_flux_detail = is_flux_detail;
-	_vset = vset;
 	_is_flux_normalized = true;
 };
 
@@ -147,10 +144,10 @@ void LayoutSimThread::StartThread() //Entry()
         FinErrLock.unlock();
         _sim_messages.clear();
 
-	    double pi = acos(-1.);
+	    double pi = PI;
 	    //Run the simulation 
-	    double dni, dom, doy, hour, month, tdb, pres, wind, step_weight;
-	    double az, zen, azzen[2];
+	    double dom, doy, hour, month;
+	    double az, zen;
 			
 	    int Npos = _SF->getHeliostats()->size();
 				
@@ -171,7 +168,9 @@ void LayoutSimThread::StartThread() //Entry()
 	    int nsim = _sim_last - _sim_first + 1;
 	    for(int i=_sim_first; i<_sim_last; i++){
 		    //_SF->getSimInfoObject()->setCurrentSimulation(i+1);
-		    double args[5];
+		    //double args[5];
+            sim_params P;
+            DateTime DT;
 
 		    //either calculate the sun position based on weather data steps, or use user-defined values
 		    if(! _is_user_sun_pos){
@@ -179,39 +178,30 @@ void LayoutSimThread::StartThread() //Entry()
 			    //---- Calculate sun positions
 
 			    //Get the design-point day, hour, and DNI
-			    _wdata->getStep(i, dom, hour, month, dni, tdb, pres, wind, step_weight);
+			    _wdata->getStep(i, dom, hour, month, P.dni, P.Tamb, P.Patm, P.Vwind, P.Simweight);
+                P.Patm*=.001;
 
 			    //Convert the day of the month to a day of year
-			    doy = _SF->getAmbientObject()->getDateTimeObj()->GetDayOfYear(2011,int(month),int(dom));
-				
+				doy = DT.GetDayOfYear(2011,int(month),int(dom));
 
 			    //Calculate the sun position
-			    _SF->getAmbientObject()->setDateTime(hour, doy);
+			    Ambient::setDateTime(DT, hour, doy);
 			    //latitude, longitude, and elevation should be set in the input file
-			    _SF->getAmbientObject()->calcSunPosition(azzen);
-			    az = azzen[0]; 
-			    zen = azzen[1];
-			    //If the sun is not above the horizon, don't continue
-			    if( zen > pi*0.5 ) 
-					    continue;
-				
-			    //Simulate field performance
-			    args[0] = dni;
-			    args[1] = tdb;
-			    args[2] = wind;
-			    args[3] = pres/1000.;
-			    args[4] = step_weight;
+			    Ambient::calcSunPosition(*_SF->getVarMap(), DT, &az, &zen );
+		        //If the sun is not above the horizon, don't continue
+		        if( zen > 90. )
+				        continue;
+		
+		        az *= D2R;
+                zen *= D2R;
+			    
 		    }
 		    else{
 			    //set the user-specified values
 			    az = _sol_azzen->at(i,0);
 			    zen = _sol_azzen->at(i,1);
 
-			    //Update the solar field to match specified sun position
-			    _SF->getAmbientObject()->setSolarPosition(az, zen);
-
-			    for(int j=0; j<4; j++)
-				    args[j] = _user_args[j];
+			    P = _sim_params;
 		    }
 
 		    bool is_cancel;
@@ -220,28 +210,29 @@ void LayoutSimThread::StartThread() //Entry()
 		    is_cancel = this->CancelFlag; 
 		    StatusLock.unlock();
 
-		    if( (_is_shadow_detail || _is_flux_detail ) && !is_cancel)
+		    /*if( (_is_shadow_detail || _is_flux_detail ) && !is_cancel)
 			    interop::AimpointUpdateHandler(*_SF);
 		
 		    StatusLock.lock();
 		    is_cancel = this->CancelFlag; 
-		    StatusLock.unlock();
+		    StatusLock.unlock();*/
+
+            P.is_layout = !_is_shadow_detail;
 
 		    if(! is_cancel)
-			    _SF->Simulate(args, 5, !_is_shadow_detail);
+			    _SF->Simulate(az, zen, P); 
 
 		    if((! is_cancel) && _is_flux_detail)
 			    _SF->HermiteFluxSimulation( *_SF->getHeliostats() );
 							
-		
-
 		    StatusLock.lock();
 		    is_cancel = this->CancelFlag; 
 		    StatusLock.unlock();
 
 		    //store the _results
+            double azzen[] = {az, zen};
 		    if(! is_cancel)
-			    _results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0); //2);
+			    _results->at(i).process_analytical_simulation(*_SF, _is_flux_detail ? 2 : 0, azzen); //2);
 		
 		    StatusLock.lock();
 		    is_cancel = this->CancelFlag; 

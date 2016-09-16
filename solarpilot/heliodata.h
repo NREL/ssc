@@ -2,12 +2,11 @@
 #define _HELIODATA_ 1
 
 #include <vector>
-using namespace std;
 
 struct helio_perf_data
 {
 private:
-	vector<double*> _dvars;
+	std::vector<double*> _dvars;
 public:
 	//Power to receiver=0;Total efficiency=1;Cosine efficiency=2;Attenuation efficiency=3;Intercept efficiency=4;Blocking efficiency=5;Shadowing efficiency=6;TOU-weighted power=7
 	

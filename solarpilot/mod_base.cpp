@@ -1,6 +1,15 @@
-#include "mod_base.h"
 #include <algorithm>
 #include <stdio.h>
+#include <sstream>
+
+#include "mod_base.h"
+#include "exceptions.hpp"
+
+template<typename T> static std::string my_to_string(const T &value) {
+	ostringstream x;
+	x << value;
+	return x.str();
+}
 
 //------ simulation info --------
 
@@ -21,7 +30,7 @@ void simulation_info::getSimulationInfo(int &current, int &total, double &progre
 	total = _total_sim_count;
 	progress = _sim_progress;
 };
-string *simulation_info::getSimulationNotices(){return &_sim_notice;}	//Returns a pointer to the vector of simulation notices 
+std::string *simulation_info::getSimulationNotices(){return &_sim_notice;}	//Returns a pointer to the vector of simulation notices 
 
 void simulation_info::ResetValues(){
 	_current_simulation = 0; 
@@ -64,7 +73,7 @@ void simulation_info::clearSimulationNotices()
 	_sim_notice.clear();
 }
 
-bool simulation_info::addSimulationNotice(string &notice)
+bool simulation_info::addSimulationNotice(std::string &notice)
 {
 	if(!_is_active) return true; 
 	_sim_notice =  notice; 
@@ -72,7 +81,7 @@ bool simulation_info::addSimulationNotice(string &notice)
 	
 }
 
-bool simulation_info::addSimulationNotice(string notice)
+bool simulation_info::addSimulationNotice(std::string notice)
 {
 	if(!_is_active) return true; 
 	_sim_notice = notice; 
@@ -83,199 +92,54 @@ bool simulation_info::addSimulationNotice(string notice)
 void simulation_info::isEnabled(bool state){_is_active = state;}
 //-------------------------------
 
-mod_base::mod_base(){
-	//Reused trig values
-	pi=acos(-1.);
-	Pi = pi;
-	r2d=180./pi;
-	d2r=1./r2d;
-}
 
 
-//Setvars
-void mod_base::setVar(string varname, int &variable, var_map &V, int def, string range)
+//
+//
+//void mod_base::setVar(std::string varname, bounds_array &variable, var_map &V){
+//	//Specifically loads the field boundary arrays
+//	//The format should be [POLY][P]x1,y1,z1[P]x2,y2,z2...[POLY][P]...
+//	if(V.find(varname) != V.end()) {
+//		vector<std::string> spolys = split(V[varname].value, "[POLY]");
+//		vector<std::string> line, pnt;
+//		double x, y, z;
+//		int npoly = (int)spolys.size();
+//		variable.resize(npoly);
+//		for(int i=0; i<npoly; i++){
+//			line.clear();
+//			line = split(spolys.at(i), "[P]");
+//			int npt = (int)line.size();	//The number of points in the polygon
+//			variable.at(i).resize(npt);	//Resize the polygon container
+//
+//			for(int j=0; j<npt; j++){
+//				pnt = split(line.at(j), ",");	//Split by comma
+//				to_double(pnt.at(0), &x);
+//				to_double(pnt.at(1), &y);
+//				to_double(pnt.at(2), &z);
+//				variable.at(i).at(j).Set(x, y, z);
+//			}
+//		}
+//
+//	}
+//	else{
+//		variable.resize(1);
+//		variable.at(0).resize(1);
+//		variable.at(0).at(0).Set(0.,0.,0.);
+//	}
+//
+//}
+
+bool mod_base::checkRange(std::string range, double &val, int *flag)
 {
-	if(V.find(varname) != V.end()) {
-		to_integer(V[varname].value, &variable);
-		//if(!checkRange(range, variable)){error_range(variable, varname, range);};
-	} 
-	else 
-	{
-		variable = def;
-	}
-};
-
-void mod_base::setVar(string varname, double &variable, var_map &V, double def, string range)
-{
-	if(V.find(varname) != V.end()) {
-		to_double(V[varname].value, &variable);
-		//if(!checkRange(range, variable)){error_range(variable, varname, range);};
-	} 
-	else {
-		variable = def;
-	}
-};
-
-void mod_base::setVar(string varname, string &variable, var_map &V, string def, string range)
-{
-	if(V.find(varname) != V.end()) {
-		variable = V[varname].value;
-	} 
-	else {
-		variable = def;
-	}
-};
-
-void mod_base::setVar(string varname, bool &variable, var_map &V, bool def, string range)
-{
-	if(V.find(varname) != V.end()) {
-		to_bool(V[varname].value, variable);
-	}
-	else {
-		variable = def;
-	}
-};
-
-void mod_base::setVar(string varname, matrix_t<double> &variable, var_map &V, string range)
-{
-	//converts a string with comma-separated values in sequence into a 2-D matrix of doubles
-	if(V.find(varname) != V.end()) {
-		vector<string> content = split(V[varname].value, ";");
-		int nrows = (int)content.size();
-		if(nrows == 0) { variable.resize_fill(1,2,0.0); return; }
-		vector<string> line;
-		line = split(content.at(0), ",");
-		int rowlen = (int)line.size();
-		variable.resize(nrows, rowlen);
-		for (int i=0; i<nrows; i++){
-			line = split(content.at(i), ",");
-			for (int j=0; j<rowlen; j++){
-				to_double(line.at(j), &variable.at(i, j));
-			}
-		}
-	}
-	else {
-		variable.resize_fill(1,2,0.0);
-	}
-}
-
-void mod_base::setVar(string varname, matrix_t<int> &variable, var_map &V, string range)
-{
-	//converts a string with comma-separated values in sequence into a 2-D matrix of integers
-	if(V.find(varname) != V.end()) {
-		vector<string> content = split(V[varname].value, ";");
-		int nrows = (int)content.size();
-		if(nrows == 0){ variable.resize_fill(1,2,0); return; }
-		vector<string> line;
-		line = split(content.at(0), ",");
-		int rowlen = (int)line.size();
-		variable.resize(nrows, rowlen);
-		for (int i=0; i<nrows; i++){
-			line = split(content.at(i), ",");
-			for (int j=0; j<rowlen; j++){
-				to_integer(line.at(j), &variable.at(i, j));
-			}
-		}
-	}
-	else {
-		variable.resize_fill(1,2,0);
-	}
-}	
-
-void mod_base::setVar(string varname, vector<Point> &variable, var_map &V, string range)
-{
-	//splits a set of 3d points into a vector<Point>
-	//should be [P]x1,y1,z1[P]x2,y2,z2...
-	if(V.find(varname) != V.end()) {
-		vector<string> content = split(V[varname].value, "[P]");
-		vector<string> line;
-		double x, y, z;
-		int nrows = (int)content.size();
-		variable.resize(nrows);
-		for(int i=0; i<nrows; i++) {
-			//split each text by comma
-			line = split(content.at(i), ",");
-			to_double(line.at(0), &x);
-			to_double(line.at(1), &y);
-			to_double(line.at(2), &z);
-			variable.at(i).Set(x, y, z);
-		}
-	}
-	else {
-		variable.resize(1);
-		variable.at(0).Set(0.,0.,0.);
-	}
-}
-
-void mod_base::setVar(string varname, bounds_array &variable, var_map &V){
-	//Specifically loads the field boundary arrays
-	//The format should be [POLY][P]x1,y1,z1[P]x2,y2,z2...[POLY][P]...
-	if(V.find(varname) != V.end()) {
-		vector<string> spolys = split(V[varname].value, "[POLY]");
-		vector<string> line, pnt;
-		double x, y, z;
-		int npoly = (int)spolys.size();
-		variable.resize(npoly);
-		for(int i=0; i<npoly; i++){
-			line.clear();
-			line = split(spolys.at(i), "[P]");
-			int npt = (int)line.size();	//The number of points in the polygon
-			variable.at(i).resize(npt);	//Resize the polygon container
-
-			for(int j=0; j<npt; j++){
-				pnt = split(line.at(j), ",");	//Split by comma
-				to_double(pnt.at(0), &x);
-				to_double(pnt.at(1), &y);
-				to_double(pnt.at(2), &z);
-				variable.at(i).at(j).Set(x, y, z);
-			}
-		}
-
-	}
-	else{
-		variable.resize(1);
-		variable.at(0).resize(1);
-		variable.at(0).at(0).Set(0.,0.,0.);
-	}
-
-}
-
-void mod_base::setVar(string varname, WeatherData &WD, var_map &V){
-	//Converts a string with comma-separated values in sequence into a WeatherData object. Each row of data is separated with a [P] flag.
-	if(V.find(varname) != V.end()){
-		vector<string>
-			vals,
-			entries = split(V[varname].value, "[P]");
-		int nrows = (int)entries.size();
-		int nv, i, j;
-		WD.resizeAll(nrows, 0.0);
-		vector<vector<double>*> *wdvars = WD.getEntryPointers();
-
-		for(i=0; i<nrows; i++){
-			vals = split(entries.at(i), ",");
-			nv = min((int)vals.size(), (int)wdvars->size());
-			for(j=0; j<nv; j++){
-				to_double(vals.at(j), &wdvars->at(j)->at(i));
-			}
-		}
-	}
-	else{
-		WD.resizeAll(1);
-		WD.setStep(0, 81., 12., 950.,1.);
-	}
-}
-
-bool mod_base::checkRange(string range, double &val, int *flag)
-{
-	//take range string of form:
+	//take range std::string of form:
 	// {dlow,dhi} 
 	// where {} can be replaced by ( ), [ ], ( ], [ )
 
-	//parse the string
-	vector<string> t1 = split(range, ",");
+	//parse the std::string
+	vector<std::string> t1 = split(range, ",");
 	if(t1.size()<2) return true;
 
-	string lop, rop, ops, ls, rs;
+	std::string lop, rop, ops, ls, rs;
 	ls = t1.at(0);
 	rs = t1.at(1);
 	lop = ls.at(0);
@@ -301,67 +165,14 @@ bool mod_base::checkRange(string range, double &val, int *flag)
 
 }
 
-bool mod_base::checkRange(string range, int &val, int *flag)
+bool mod_base::checkRange(std::string range, int &val, int *flag)
 {
 	double dval = double(val); 
 	return checkRange(range, dval, flag);
 };
 
-string *mod_base::getWorkingDir(){return &_working_dir;}
-void mod_base::setWorkingDir(string &dir){_working_dir = dir;}
-
-//--------------
-//   var data
-//--------------
-
-bool spvar::value_bool(){
-	if(dattype == "bool")
-		return lower_case(value) == "true";
-	else
-        throw spexception("Value error: Attempting to convert non-boolean data to bool. (" + this->varpath + ").");
-}
-
-int spvar::value_int(){
-	if(dattype == "int"){
-		int d;
-		to_integer(value, &d);
-		return d;
-	}
-	else{ 
-        throw spexception("Value error: Attempting to convert non-integer data to integer. (" + this->varpath + ").");
-    }
-}
-
-double spvar::value_double(){
-	if(dattype == "double"){
-		double d;
-		to_double(value, &d);
-		return d;
-	}
-	else{ 
-        throw spexception("Value error: Attempting to convert non-float data to float. (" + this->varpath + ").");
-    }
-}
-
-#include <sstream>
-template<typename T> static string my_to_string(const T &value) {
-	ostringstream x;
-	x << value;
-	return x.str();
-}
-
-void spvar::set(double val){
-	value = my_to_string(val);
-}
-
-void spvar::set(int val){
-	value = my_to_string(val);
-}
-
-void spvar::set(bool val){
-	value = val ? "true" : "false";
-}
-
+std::string *mod_base::getWorkingDir(){return &_working_dir;}
+void mod_base::setWorkingDir(std::string &dir){_working_dir = dir;}
 
 //-------------------- simulation error ------------
 simulation_error::simulation_error(){ 
@@ -382,7 +193,7 @@ void simulation_error::setCallbackFunction(void (*errorFunc)(simulation_error* s
 
 bool simulation_error::isFatal(){return _is_fatal;}
 bool simulation_error::isDisplayNow(){return _force_display;}
-string *simulation_error::getSimulationErrors(){return &_message_log;}
+std::string *simulation_error::getSimulationErrors(){return &_message_log;}
 bool simulation_error::checkForErrors(){return _terminate_status || _is_fatal;}
 
 void simulation_error::Reset(){
@@ -392,7 +203,7 @@ void simulation_error::Reset(){
 	_message_log.clear(); 
 }
 //If any error has already been recorded, don't reset the error flag.
-void simulation_error::addSimulationError(string error, bool is_fatal, bool force_display){
+void simulation_error::addSimulationError(std::string error, bool is_fatal, bool force_display){
 	if(! _is_connected ) return;	//only deal with this if the object has been connected to a callback
 
 	_is_fatal = _is_fatal ? true : is_fatal; 
@@ -401,7 +212,7 @@ void simulation_error::addSimulationError(string error, bool is_fatal, bool forc
 	(*_callback)(this, _callback_data);
 	//(*_parent.*_ferror)();
 }
-void simulation_error::addRangeError(double val, string varname, string range){
+void simulation_error::addRangeError(double val, std::string varname, std::string range){
 	char fmt[] = "Variable %s is out of range with value %f. The valid range is %s.\n";
 	char msg[200];
 	sprintf(msg, fmt, varname.c_str(), val, range.c_str());

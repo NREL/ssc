@@ -1,13 +1,30 @@
-#include "Toolbox.h"
 #include "math.h"
 #include <stdio.h>
 #include <ctime>
 #include <vector>
 #include <algorithm>
 
+#include "Toolbox.h"
+#include "definitions.h"
+
 using namespace std;
 
 // ----------- points and vectors -----------------------
+Point::Point(){};
+
+Point::Point( const Point &P )
+{
+    x = P.x;
+    y = P.y; 
+    z = P.z;
+}
+
+Point::Point(double X, double Y, double Z)
+{
+    x = X;
+    y = Y; 
+    z = Z;
+}
 
 void Point::Set(double _x, double _y, double _z)
 {
@@ -44,11 +61,23 @@ void Point::Subtract( Point &P )
 	this->z += -P.z;
 }
 
-double Point::operator [](const int &index){
-	if(index==0) {return this->x;}
-	else if(index==1) {return this->y;}
-	else if(index==2) {return this->z;}
-	else {throw spexception("Index out of range in Point()"); }	//range error
+double& Point::operator [](const int &index){
+
+    switch (index)
+    {
+    case 0:
+        return x;
+        break;
+    case 1:
+        return y;
+        break;
+    case 2:
+        return z;
+        break;
+    default:
+        throw spexception("Index out of range in Point()");
+        break;
+    }
 };
 
 bool Point::operator <(const Point &p) const {
@@ -416,6 +445,14 @@ void WeatherData::resizeAll(int size, double val){
 	}
 };
 
+void WeatherData::clear()
+{
+	for(unsigned int i=0; i<v_ptrs.size(); i++){
+		v_ptrs.at(i)->clear();
+		_N_items = 0;
+	}
+}
+
 void WeatherData::getStep(int step, double &day, double &hour, double &dni, double &step_weight){
 	//retrieve weather data from the desired time step
 	day = Day.at(step);
@@ -432,6 +469,27 @@ void WeatherData::getStep(int step, double &day, double &hour, double &month, do
 	for(unsigned int i=0; i<v_ptrs.size(); i++){
 		*args[i] = v_ptrs.at(i)->at(step);
 	}
+}
+
+void WeatherData::append(double day, double hour, double dni, double step_weight){
+	Day.push_back(day);
+	Hour.push_back( hour );
+	DNI.push_back( dni );
+	Step_weight.push_back( step_weight );
+    _N_items ++;
+}
+
+void WeatherData::append(double day, double hour, double month, double dni, 
+	double tdb, double pres, double vwind, double step_weight){
+	Day.push_back( day );
+	Hour.push_back( hour );
+	Month.push_back( month );
+	DNI.push_back( dni );
+	T_db.push_back( tdb );
+	Pres.push_back( pres );
+	V_wind.push_back( vwind );
+	Step_weight.push_back( step_weight );
+    _N_items ++;
 }
 
 void WeatherData::setStep(int step, double day, double hour, double dni, double step_weight){
@@ -550,7 +608,7 @@ void Toolbox::swap(double *a, double *b){
 
 double Toolbox::atan3(double &x, double &y){
 	double v = atan2(x,y); 
-	return v < 0. ? v += 2.*acos(-1.) : v; 
+	return v < 0. ? v += 2.*PI : v; 
 }
 
 void Toolbox::map_profiles(double *source, int nsource, double *dest, int ndest, double *weights){
@@ -1029,7 +1087,7 @@ void Toolbox::ellipse_bounding_box(double &A, double &B, double &phi, double sid
 	--> t = aan( B*cot(phi)/A )
 	
 	*/
-	double pi = acos(-1.);
+	double pi = PI;
 
 	//X first
 	//double tx = atan( -B*tan(phi)/A );
@@ -1267,7 +1325,7 @@ double Toolbox::ZRotationTransform(Vect &normal_vect){
 
 
 	*/
-	double Pi = acos(-1.);
+	double Pi = PI;
 	double az = atan3(normal_vect.i,normal_vect.j);
 	double el = asin(normal_vect.k);
 
@@ -1320,7 +1378,7 @@ double Toolbox::ZRotationTransform(double Az, double Zen){
 	Az and Zen are both in Radians.
 	*/
 	//Calculate the normal vector to the heliostat based on elevation and azimuth
-	double Pi = acos(-1.);
+	double Pi = PI;
 	double el = Pi/2.-Zen;
 	double az = Az+Pi;	//Transform to 0..360 (in radians)
 	Vect aim;

@@ -1,8 +1,10 @@
-#include "OpticalMesh.h"
 #include <math.h>
 #include <algorithm>
-#include "exceptions.hpp"
 #include <stdio.h>
+
+#include "OpticalMesh.h"
+#include "exceptions.hpp"
+#include "definitions.h"
 
 void LayoutData::set_data(double Extents_r[2], double Extents_az[2], double Tht, double Alpha, double Theta, double l_f, 
 		double h_h, double h_w, double S_h, double W_rec, double F_tol, double T_res, bool Flat, bool Onslant, int Nph, int Npw)
@@ -32,7 +34,7 @@ void LayoutData::set_data(double Extents_r[2], double Extents_az[2], double Tht,
 
 derivatives::derivatives(LayoutData &data)
 {
-	pi = acos(-1.);
+	pi = PI;
         
     Data = data;
     //calculate the value of the coefficients
@@ -252,7 +254,7 @@ double *opt_element::get_xr(){return xr;}
 //-------------------------------------------------------------------------------------------------
 optical_hash_tree::optical_hash_tree()
 {
-	pi = acos(-1.);
+	pi = PI;
 	divs_updated = false;
 	log2inv = 1./log(2.);
 }

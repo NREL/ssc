@@ -23,7 +23,7 @@ class LayoutSimThread;
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-class AutoPilot 
+class SPEXPORT AutoPilot 
 {
 
 protected:
@@ -33,7 +33,7 @@ protected:
 	void *_detail_callback_data;
 
 	SolarField *_SF;
-	var_set _variables;
+	//var_map _variables;
 	int _sim_total;
 	int _sim_complete;
 	
@@ -45,20 +45,22 @@ protected:
 		_setup_ok,	//The variable structure has been created
 		_simflag;	//add bool flags here to indicate simulation/setup status
 
-	sp_layout *_layout;
+    sp_optimize _opt;
+
+	/*sp_layout *_layout;
     sp_cost *_cost;
 
-	void update_ambient(var_set &vset, sp_ambient &ambient);
-	void update_cost(var_set &vset, sp_cost &cost);
-	void update_layout(var_set &vset, sp_layout &layout);
-	void update_heliostats(var_set &vset, sp_heliostats &helios);
-	void update_receivers(var_set &vset, sp_receivers &recs);
+	void update_ambient(var_map &V, sp_ambient &ambient);
+	void update_cost(var_map &V, sp_cost &cost);
+	void update_layout(var_map &V, sp_layout &layout);
+	void update_heliostats(var_map &V, sp_heliostats &helios);
+	void update_receivers(var_map &V, sp_receivers &recs);*/
 
 	vector<double> interpolate_vectors( vector<double> &A, vector<double> &B, double alpha);
 
 
 	void PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized);
-	void PostProcessLayout();
+	void PostProcessLayout(sp_layout &layout);
 	void PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer = 0);
 	
 
@@ -78,31 +80,33 @@ public:
 	void SetDetailCallbackStatus(bool is_enabled);
 	//setup
 	void PreSimCallbackUpdate();
-    void LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_set *variables = 0);
+    //void LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_map *V = 0);
 	void SetExternalSFObject(SolarField *SF);
-	bool Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, bool for_optimize = false);
-	bool SetupExpert(var_set &variables, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
+	bool Setup(var_map &V, bool for_optimize = false);
+	/*bool SetupExpert(var_map &V, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
                                          sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, 
-                                         vector<string> &weather_data, bool defaults_only=false);
+                                         vector<string> &weather_data, bool defaults_only=false);*/
 	//generate weather data
-	void GenerateDesignPointSimulations(sp_ambient &amb, var_set &variables, vector<string> &hourly_weather_data);
+	void GenerateDesignPointSimulations(var_map &V, vector<string> &hourly_weather_data);
 	//Simulation methods
-	bool SimulateFlux(sp_flux_map &fluxmap);  //individual flux simulation - not multi-threaded
-	bool EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max);
+	//bool SimulateFlux(sp_flux_map &fluxmap);  //individual flux simulation - not multi-threaded
+	bool EvaluateDesign(double &obj_metric, double &flux_max);
 	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux);
-	virtual bool CreateLayout(bool do_post_process = true);
+	virtual bool CreateLayout(sp_layout &layout, bool do_post_process = true);
 	virtual bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	virtual bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
 		int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
-	bool Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout);
-	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, 
-                  sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
-    bool OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr,
-                      sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names=0);
+	bool Optimize(var_map &V);
+	bool Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names=0);
+    bool OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names=0);
 	//cancellation methods
 	void CancelSimulation();
 	bool IsSimulationCancelled();
+    
+    struct CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
+	struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
+	struct ATTEN_MODEL { enum A { DELSOL_CLEAR_DAY, DELSOL_HAZY_DAY, USER_DEFINED }; };
 	
 };
 
@@ -113,7 +117,7 @@ class SPEXPORT AutoPilot_S : public AutoPilot
 	
 public:
 	//methods
-	bool CreateLayout(bool do_post_process = true);
+	bool CreateLayout(sp_layout &layout, bool do_post_process = true);
 	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 
@@ -136,7 +140,7 @@ public:
 	AutoPilot_MT();
 
 	//methods
-	bool CreateLayout(bool do_post_process = true);
+	bool CreateLayout(sp_layout &layout, bool do_post_process = true);
 	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 	bool CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, 

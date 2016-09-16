@@ -1,12 +1,13 @@
 #ifndef _HELIOSTAT_H_
 #define _HELIOSTAT_H_ 1
-#include "math.h"
+#include <vector>
+#include <math.h>
 //#include "SolarField.h"
 //#include "Flux.h"
 #include "heliodata.h"
 #include "mod_base.h"
-#include <vector>
-using namespace std;
+#include "definitions.h"
+//using namespace std;
 //using namespace util;
 
 //declare derived classes referenced in the heliostat class
@@ -47,59 +48,17 @@ class Heliostat : public mod_base
 
 	bool
 		_in_layout, // Is the heliostat included in the final layout?
-		_is_round, // Is the heliostat round (true) or rectangular (false)
-		_is_focal_equal, //Both the X and Y focal lengths will use a single value as indicated by the X focal length
-		_is_xfocus, // Is the reflector focused w/r/t the x-axis?
-		_is_yfocus, // Is the reflector focused w/r/t the y-axis?
 		_is_user_canted,	//Are the panels canted according to user-specified values?
-		_is_cant_vect_slant,	//Multiply the canting vector by the slant range
-		_is_cant_rad_scaled,	//The cant radius scales with tower height
-		_is_faceted,		//The number of reflective panels per heliostat is greater than 1
 		_is_enabled;		//Is template enabled?
 
 
 	int 
 		_id, //Unique ID number for the heliostat/surface
-		_type,	//Integer used to group heliostats into geometries within a field, (e.g. 5 different focal length designs)
-        _template_order,    //internal variable used to track the order of the heliostat templates relative to each other. Used for multi-template layouts
-		_group[2],	//Integers {row,col} used to determine which local group the heliostat is in. 
-		_cant_method,	//Integer to specify the canting method {0=none, -1=Cant on-axis equal to slant range, 1=user-defined on-axis, 3=user-defined off-axis at hour + day}
-		_focus_method,		//The focusing method {0=Flat, 1=Each at slant, 2=Average of group, 3=User defined}
-		_ncantx, //Number of cant panels in the X direction
-		_ncanty, //Number of cant panels in the Y direction
-		_nrotax, //Number of rotational axes on the tracker (1 for LFresnel, 2 for heliostat)
-		_dcant, //[day] ...'dcant' day of the year.
-    	_track_method;		//Specify how often heliostats update their tracking position 
+		_group[2];	//Integers {row,col} used to determine which local group the heliostat is in. 
 
 	double
-		_temp_rad_min,		//Minimum radius at which this heliostat geometry can be used
-		_temp_rad_max,		//Maximum radius at which this heliostat geometry can be used
-		_temp_az_min, 		//Angular boundary for heliostat geometry - on the counter-clockwise side of the region
-		_temp_az_max,	//Angular boundary for heliostat geometry - on the clockwise side of the region
-		_wm, //[m] Width of the heliostat structure
-		_hm, //[m] height of the heliostat structure
-		_wgap,	//[m] Separation between panels in the horizontal direction
-		_hgap,	//[m] Separation between panels in the vertical direction
-		_hcant, //[hr] Mirror panels are canted at 'hcant' hours past noon on...
-		_rcant, //[m] Radius for canting focal point assuming on-axis canting
-		_densmr, //[-] Ratio of mirror area to total area of the heliostat defined by wm x hm
-		_sigel, //[rad] Standard deviation of the normal error dist. of the elevation angle
-		_sigaz, //[rad] Standard deviation of the normal error dist. of the azimuth angle
-		_sigsx, //[rad] Std.dev. of the normal error dist. of the reflective surface normal in the X (horizontal)
-		_sigsy, //[rad] Same as above, but in the vertical direction
-		_sigtx, //[rad] error in reflected vector (horiz.) caused by atmospheric refraction, tower sway, etc.
-		_sigty, //[rad] error in reflected vector (vert.) caused by atmospheric refraction, tower sway, etc.
 		_xfocal, //[m] focal length in the i^ direction
-		_yfocal, //[m] focal length in the j^ direction
-		_maxrvelx, //[rad/s] maximum rotational velocity about the x axis
-		_maxrvelz, //[rad/s] maximum rotational velocity about the z axis
-		_rcoll, //[m] Collision avoidance radius
-		_area, //[m2] reflective aperture area
-		_dm,	//Diameter of the heliostat structure (round heliostats only)
-		_rcant_scaled,	//Canting radius - scaled by tower height
-		_cant_vect_scale,	//Value to scale the canting unit vector to determine actual canting magnitude
-	    _track_period,		//The amount of time between tracking updates for each heliostat (PERIODIC only)
-        _track_queue;       //The fractional time from -1 to 1 at which this heliostat updates its tracking position (PERIODIC only, otherwise 0)
+		_yfocal; //[m] focal length in the j^ direction
 
 	helio_perf_data
 		eff_data;
@@ -107,22 +66,26 @@ class Heliostat : public mod_base
 		_slant,		//[m] Heliostat slant range - path length from centroid to receiver aim point
 		_zenith,	//[rad] Heliostat tracking zenith angle
 		_azimuth,	//[rad] Heliostat tracking azimuth angle
+        _r_collision,   //[m] Collision radius of the heliostat
+        _area,          //[m2] reflective area of the heliostat
 		_image_size_xy[2];	//[m/m] Image size on the receiver plane in {x,y}, normalized by tower height
 	string
 		_helio_name;		//Heliostat template name
 	Receiver *_which_rec;	//Which of the receivers is the heliostat pointing at?
+
+    var_heliostat *_var_helio; //pointer to applicable variable map
 		
 public:
 	//constructor and destructor
-	/*Heliostat(){};
-	~Heliostat(){};*/
 	struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, ON_AXIS_USER=1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
+    struct FOCUS_METHOD { enum A {FLAT, AT_SLANT, GROUP_AVERAGE, USER_DEFINED}; };
     struct TRACK_METHOD { enum A {CONTINUOUS, PERIODIC}; };
 
 	//Declare other subroutines
+	void Create(var_map &V, int htemp_number);
+    void updateCalculatedParameters(var_map &V, int htemp_number);
+
 	void installPanels();	//Define the cant panel locations, pointing vectors, and shape
-	void setDefaults();
-	void Create(var_map &V);
 	void updateTrackVector(Vect &sunvect);	//Update the tracking vector for the heliostat
 	double calcTotalEfficiency();
     static void calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, Heliostat &H);
@@ -133,27 +96,10 @@ public:
 	int getId();
 	int *getGroupId();		//(row,col) nodes
 	bool getInLayout();
-	double getWidth();
-	double getHeight();
-	double getCollisionRadius();
-	double getWGap(); //[m] Gap in the horizontal direction (width)
-	double getHGap(); //[m] Gap in the vertical direction
-	double getArea();
-	double getReflectiveAreaDerate();
 	double getFocalX();
 	double getFocalY();
 	double getSlantRange();
-	double getCantRadius();
-	int getCantDay();
-	double getCantHour();
-    double getCantVectScale();
-	int getNumCantY();
-	int getNumCantX();
-	int getCantMethod();
-	int getFocusMethod();
-    int getTemplateOrder();
 	Receiver *getWhichReceiver();
-	int getType();
 	double getRadialPos();
 	double getAzimuthalPos();
 	Reflector *getPanelById(int id);
@@ -165,9 +111,6 @@ public:
 	Point *getLocation(); //Get location vector
 	Point *getAimPoint();	//Get the heliostat aim point on the receiver
 	Point *getAimPointFluxPlane();	//aim point in the flux plane coordinates 
-	void getErrorAngular(double err[2]);
-	void getErrorSurface(double err[2]);
-	void getErrorReflected(double err[2]);
 	helio_perf_data *getEfficiencyObject();
 	double getTotalReflectivity();
 	double getEfficiencyTotal();
@@ -182,6 +125,8 @@ public:
 	double getRankingMetricValue();
 	double getAzimuthTrack();
 	double getZenithTrack();
+    double getArea();
+    double getCollisionRadius();
 	vector<Heliostat*> *getNeighborList();
 	vector<Point> *getCornerCoords();
 	vector<Point> *getShadowCoords();
@@ -197,26 +142,16 @@ public:
 	string *getHeliostatName();
 	void getSummaryResults( vector<double> &results );
 	Heliostat* getMasterTemplate();
-	void getTemplateRange(double &rmin, double &rmax, double &azmin, double &azmax);
+    var_heliostat* getVarMap();
 
-	bool IsRound();	//Fetch
-	void IsRound(bool setting);
 	bool IsUserCant(); //Fetch
 	void IsUserCant(bool setting);	//Set
-	bool IsUserFocus();
-	void IsUserFocus(bool setting);
-	bool IsFacetDetail();	//Is characterization of multiple facets required?
-	void IsFacetDetail(bool setting);
     bool IsEnabled(); //fetch
 
 	void setId(int id);
 	void setGroupId(int row, int col);
-	void setType(int type);
 	void setInLayout(bool in_layout);
 	void setNeighborList(vector<Heliostat*> *list);
-	void setWidth(double &val, bool update_cant = false);
-	void setHeight(double &val, bool update_cant = false);
-	void setDiameter(double &val, bool update_cant = false);
 	void setEfficiencyCosine(double eta_cos);
 	void setEfficiencyAtmAtten(double eta_att);
 	void setEfficiencyIntercept(double eta_int);
@@ -235,7 +170,6 @@ public:
 	void setTrackAngleZenith(double zenith);
 	void setTrackAngleAzimuth(double azimuth);
 	void setTrackAngles(double azimuth, double zenith);
-    void setTemplateOrder(int tord);
 	void setCantMethod(int method);
 	void setCantVector(Vect &cant);
 	void setCantVector(double cant[3]);
@@ -244,19 +178,13 @@ public:
 	void setFocalLengthX(double L);
 	void setFocalLengthY(double L);
 	void setFocalLength(double L);
-	void setCantRadius(double L);
-	void setErrorAngular(matrix_t<double> &E);
-	void setErrorAngular(double sigaz, double sigel);
-	void setErrorSurface(matrix_t<double> &E);
-	void setErrorSurface(double sigsx, double sigsy);
-	void setErrorReflected(matrix_t<double> &E);
-	void setErrorReflected(double sigtx, double sigty);
-	//void setWhichReceiver(int rec){_which_rec = rec;}
+	//void setCantRadius(double L);
 	void setWhichReceiver(Receiver *rec);
 	void setPowerToReceiver(double P);
 	void setPowerValue(double P);
 	void setImageSize(double sigx_n, double sigy_n);
 	void setMasterTemplate(Heliostat *htemp);
+
  } ;
 
 class Reflector {

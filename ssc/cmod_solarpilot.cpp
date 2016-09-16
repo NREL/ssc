@@ -3,10 +3,13 @@
 #include "lib_util.h"
 
 // solarpilot header files
-#include "AutoPilot_API.h"
-#include "SolarField.h"
-#include "IOUtil.h"
+//#include "AutoPilot_API.h"
+//#include "SolarField.h"
+//#include "IOUtil.h"
 #include "csp_common.h"
+
+#include "AutoPilot_API.h"  //solarpilot
+#include "definitions.h"    //solarpilot
 
 #define pi 3.141592654
 
@@ -125,17 +128,16 @@ public:
         spi.run();
         AutoPilot_S *sapi = spi.GetSAPI();
 
-        assign("h_tower_opt", spi.layout.h_tower);
-        assign("rec_height_opt", spi.recs.front().height);
-        assign("rec_aspect_opt", spi.recs.front().aspect);
-        assign("cost_rec_tot", spi.cost.cost_rec_tot);
-        assign("cost_sf_tot", spi.cost.cost_heliostat_tot);
-        assign("cost_tower_tot", spi.cost.cost_tower_tot);
-        assign("cost_land_tot", spi.cost.cost_land_tot);
-        assign("cost_site_tot", spi.cost.cost_site_tot);
-        assign("land_area", spi.layout.land_area);
-        assign("area_sf", spi.layout.area_sf);
-
+        assign("h_tower_opt", spi.sf.tht.val);
+        assign("rec_height_opt", spi.recs.front().rec_height.val);
+        assign("rec_aspect_opt", spi.recs.front().rec_aspect.Val() );
+        assign("cost_rec_tot", spi.fin.rec_cost.Val() );
+        assign("cost_sf_tot", spi.fin.heliostat_cost.Val() );
+        assign("cost_tower_tot", spi.fin.tower_cost.Val() );
+        assign("cost_land_tot", spi.fin.land_cost.Val() );
+        assign("cost_site_tot", spi.fin.site_cost.Val() );
+        assign("land_area", spi.land.land_area.Val() );
+        assign("area_sf", spi.sf.sf_area.Val() );
 
 		//Collect the heliostat position data
 		if(  spi.layout.heliostat_positions.size() > 0 )
@@ -153,7 +155,7 @@ public:
 		assign("number_heliostats",  spi.layout.heliostat_positions.size() ); 
 		
 		//return the land area
-		assign("base_land_area",  spi.layout.land_area );
+		assign("base_land_area",  spi.land.land_area.Val() );
 
 		//check if flux map calculations are desired
 		if( as_boolean("calc_fluxmaps") ){

@@ -10,6 +10,7 @@
 #include "Heliostat.h"
 #include "Receiver.h"
 //#include "procs.h"
+#include "definitions.h"
 
 #ifdef SP_USE_SOLTRACE
 
@@ -495,7 +496,6 @@ void ST_Stage::Write(FILE *fdat){
 ST_System::ST_System()
 {
 	SunRayCount = 0;
-	Pi = acos(-1);
 	sim_raycount=1000;
 	sim_raymax=100000;
 	sim_errors_sunshape=true;
@@ -534,13 +534,12 @@ void ST_System::ClearAll()
 	StageList.clear();
 }
 
-bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
+bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	/* 
 	Take the geometry specified in the SolarField SF and the heliostats listed in helios and create a 
 	SolTrace simulation object.
 	*/
 
-	double pi = acos(-1.), r2d = 180./pi;
 
 	//Resize the stage list. There will be 2 stages -- the heliostat field and the reciever
 	if(StageList.size() != 0) ClearAll();
@@ -548,9 +547,11 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 		StageList.push_back( new ST_Stage() );
 	}
 	
+    var_map *V = SF.getVarMap();
+
 	/*--- Configure sun shape ---*/
-	int sun_type = SF.getAmbientObject()->getSunType();
-	double sigma = SF.getAmbientObject()->getSunRadLimit();
+	int sun_type = V->amb.sun_type.val; 
+	double sigma = V->amb.sun_rad_limit.val; 
 	char shape = 'i';	//invalid
 	Sun.PointSource = sun_type == 0;
 	if(sun_type == 2){ shape = 'p'; }	//Pillbox sun
@@ -587,7 +588,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 		double
 			kappa, gamma, theta, chi;
 		//calculate coefficients
-        chi = SF.getAmbientObject()->getSunCSR();
+        chi = V->amb.sun_csr.val; 
 		kappa = 0.9*log(13.5 * chi)*pow(chi, -0.3);
 		gamma = 2.2*log(0.52 * chi)*pow(chi, 0.43) - 0.1;
 
@@ -622,14 +623,13 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	else if(sun_type == 0){}	//Point sun
 	else if(sun_type == 3){	//User sun
 		shape = 'd';
-		matrix_t<double> *sundat = SF.getAmbientObject()->getUserSun();
-		int np = sundat->nrows();
+		int np = V->amb.user_sun.val.nrows();
 		double
 			*angle = new double[np],
 			*intens = new double[np];
 		for(int i=0; i<np; i++){
-			angle[i] = sundat->at(i,0);
-			intens[i] = sundat->at(i,1);
+			angle[i] = V->amb.user_sun.val.at(i,0);
+			intens[i] = V->amb.user_sun.val.at(i,1);
 			//angle[i] *= 1000.; //mrad
 		}
 
@@ -650,10 +650,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	Sun.Sigma = sigma;
 	
 	/*--- Set the sun position ---*/
-	Vect *svect = SF.getAmbientObject()->getSunVector();
-	Sun.Origin[0] = svect->i*1.e4;
-	Sun.Origin[1] = svect->j*1.e4;
-	Sun.Origin[2] = svect->k*1.e4;
+	Sun.Origin[0] = sunvect.i*1.e4;
+	Sun.Origin[1] = sunvect.j*1.e4;
+	Sun.Origin[2] = sunvect.k*1.e4;
 	
 	/*
 	--- Set up optical property set ---
@@ -700,12 +699,20 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 		double refl = H->getTotalReflectivity();	//reflectivity * soiling
 		//Note that the reflected energy is also reduced by the fraction of inactive heliostat aperture. Since
 		//we input the actual heliostat dimensions into soltrace, apply this derate on the reflectivity.
-		refl *= H->getReflectiveAreaDerate();
+		var_heliostat *Hv = H->getVarMap();
+
+        refl *= Hv->reflect_ratio.val; //->getReflectiveAreaDerate();
 
         double errang[2], errsurf[2], errrefl[2];
-        H->getErrorAngular(errang);
-        H->getErrorSurface(errsurf);
-        H->getErrorReflected(errrefl);
+
+        errang[0] = Hv->err_azimuth.val;
+        errang[1] = Hv->err_elevation.val;
+
+        errsurf[0] = Hv->err_surface_x.val;
+        errsurf[1] = Hv->err_surface_y.val;
+
+        errrefl[0] = Hv->err_reflect_x.val;
+        errrefl[1] = Hv->err_reflect_y.val;
 
         double 
             errnorm = sqrt( errang[0]*errang[0] + errang[1]*errang[1]  
@@ -821,7 +828,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 
 	try
 	{
-		h_stage->ElementList.reserve(nh * (helios.front()->IsFacetDetail() ? helios.front()->getNumCantX()*helios.front()->getNumCantY() : 1));
+        var_heliostat *hv = helios.front()->getVarMap();
+        h_stage->ElementList.reserve(nh * (hv->is_faceted.val ? hv->n_cant_x.val * hv->n_cant_y.val : 1));
 	}
 	catch(...){
 		//memory allocation error
@@ -837,10 +845,12 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	for(int i=0; i<nh; i++){
 		
 		Heliostat *H = helios.at(i);
+        var_heliostat *Hv = H->getVarMap();
+
 		Ahtot += H->getArea();
 
 		matrix_t<Reflector> *panels = H->getPanels();
-		bool isdetail = H->IsFacetDetail();
+		bool isdetail = Hv->is_faceted.val; 
 		int 
 			ncantx = isdetail ? panels->ncols() : 1,
 			ncanty = isdetail ? panels->nrows() : 1,
@@ -854,9 +864,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 		P = H->getLocation();
 		V = H->getTrackVector();
 		
-		double zrot = r2d*Toolbox::ZRotationTransform(*V);
+		double zrot = R2D*Toolbox::ZRotationTransform(*V);
 
-		char shape = H->IsRound() ? 'c' : 'r';
+		char shape = Hv->is_round.val ? 'c' : 'r';
 
 		string opticname = (*H->getHeliostatName()).c_str();
 
@@ -907,8 +917,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 				element->ShapeIndex = shape;
 				
 				//Set up the surface description
-				if(H->IsRound()){
-					element->Ap_A = H->getWidth();
+				if(Hv->is_round.val){
+					element->Ap_A = Hv->width.val;
 				}
 				else{
 					if(isdetail){
@@ -917,15 +927,15 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 						element->Ap_B = panels->at(k, j).getHeight();
 					}
 					else{
-						element->Ap_A = H->getWidth();
-						element->Ap_B = H->getHeight();
+						element->Ap_A = Hv->width.val;
+						element->Ap_B = Hv->height.val;
 					}
 				}
 				
 		
 				//Model surface as either flat or parabolic focus in X and/or Y
 				//double spar[] ={0., 0., 0., 0., 0., 0., 0., 0.};
-				if(H->getFocusMethod() == 0){	//Flat
+				if(Hv->focus_method.val == Heliostat::FOCUS_METHOD::FLAT){	//Flat
 					element->SurfaceIndex = 'f';
 				}
 				else{	//Not flat
@@ -974,10 +984,12 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	for(int i=0; i<nrecs; i++){
 		//Get the receiver
 		Receiver *rec = recs->at(i);
+        var_receiver *rv = rec->getVarMap();
+
 		if(! rec->isReceiverEnabled() ) continue;
 		rstage_map[i] = rec;	//keep track of the element number 
 		//Get the receiver geometry type
-		int recgeom = rec->getReceiverGeomType();
+		int recgeom = rec->getGeometryType();
 		
 		//append an optics set, required for the receiver
 		OpticsList.push_back( new ST_OpticalPropertySet() );
@@ -988,34 +1000,34 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 		case Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED:
 		{
 			//Add optics stage
-			copt->Name = (*rec->getReceiverName()).c_str();
+			copt->Name = (rv->rec_name.val).c_str();
 			
 			//set the optical properties. This should be a diffuse surface, make it a pillbox distribution w/ equal angular reflection probability.
 			copt->Front.DistributionType = 'g';
 			copt->Front.OpticSurfNumber = 0;
 			copt->Front.ApertureStopOrGratingType = 0;
-			copt->Front.Reflectivity = 1.-rec->getAbsorptance();
+			copt->Front.Reflectivity = 1.-rv->absorptance.val;
 			copt->Front.RMSSlopeError = 100.;
 			copt->Front.RMSSpecError = 100.;
 			//back
 			copt->Back.DistributionType = 'g';
 			copt->Back.OpticSurfNumber = 0;
 			copt->Back.ApertureStopOrGratingType = 0;
-			copt->Back.Reflectivity = 1.-rec->getAbsorptance();
+			copt->Back.Reflectivity = 1.-rv->absorptance.val;
 			copt->Back.RMSSlopeError = 100.;
 			copt->Back.RMSSpecError = 100.;
 
 			//displace by radius, inside is front, x1 and x2 = 0 for closed cylinder ONLY
 			//Add a closed cylindrical receiver to the stage 
-			double diam = rec->getReceiverWidth();
+			double diam = rv->rec_diameter.val;
 			Point pos;
 			Vect aim;
 
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
-			pos.x = rec->getOffsetX();
-			pos.y = rec->getOffsetY() - diam/2.;
-			pos.z = rec->getOpticalHeight();    //optical height includes z offset
+			pos.x = rv->rec_offset_x.val; 
+			pos.y = rv->rec_offset_y.val - diam/2.;
+			pos.z = rv->optical_height.Val();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
 			element->Origin[2] = pos.z;
@@ -1024,8 +1036,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 			//position. The aim vector defines the Z axis with respect to the SolTrace receiver coordinates, and
 			//in SolTrace, the cylindrical cross section lies in the X-Z plane.
 			double 
-				az = rec->getReceiverAzimuth(),
-				el = rec->getReceiverElevation();
+				az = rv->rec_azimuth.val,
+				el = rv->rec_elevation.val;
 			aim.i = cos(el)*sin(az);
 			aim.j = cos(el)*cos(az);
 			aim.k = sin(el);
@@ -1035,13 +1047,13 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 			
 			element->ZRot = 0.;
 			/* in the special case of a closed cylinder, use parameters X1=0, X2=0, L = rec height */
-			element->Ap_C = rec->getReceiverHeight();
+			element->Ap_C = rv->rec_height.val;
 			
 			element->ShapeIndex = 'l';		//single axis curvature section
 			element->SurfaceIndex = 't';
 			element->Su_A = 2./diam;
 			element->InteractionType = 2;
-			element->OpticName = (*rec->getReceiverName()).c_str();
+			element->OpticName = (rv->rec_name.val).c_str();
 			element->Optics = copt;
 			break;
 		}
@@ -1057,8 +1069,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 		case Receiver::REC_GEOM_TYPE::PLANE_RECT:
 		{
 			double
-				width = rec->getReceiverWidth(),
-				height = rec->getReceiverHeight();
+				width = rv->rec_width.val,
+				height = rv->rec_height.val;
 			//For the elliptical cavity, SolTrace can only handle circular apertures. Check to make sure and return an error if necessary.
 			bool is_ellipse = recgeom == 4;
 			if(is_ellipse && fabs(width - height) > 1.e-4){
@@ -1068,44 +1080,44 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 				return false;
 			}
 			
-			copt->Name = (*rec->getReceiverName()).c_str();
+			copt->Name = (rv->rec_name.val).c_str();
 			//set the optical properties. This should be a diffuse surface, make it a pillbox distribution w/ equal angular reflection probability.
 			copt->Front.DistributionType = 'g';
 			copt->Front.OpticSurfNumber = 0;
 			copt->Front.ApertureStopOrGratingType = 0;
-			copt->Front.Reflectivity = 1.-rec->getAbsorptance();
-			copt->Front.RMSSlopeError = Pi/4.;
-			copt->Front.RMSSpecError = Pi/4.;
+			copt->Front.Reflectivity = 1.-rv->absorptance.val;
+			copt->Front.RMSSlopeError = PI/4.;
+			copt->Front.RMSSpecError = PI/4.;
 			
 			copt->Back.DistributionType = 'g';
 			copt->Back.OpticSurfNumber = 0;
 			copt->Back.ApertureStopOrGratingType = 0;
-			copt->Back.Reflectivity = 1.-rec->getAbsorptance();
-			copt->Back.RMSSlopeError = Pi/4.;
-			copt->Back.RMSSpecError = Pi/4.;
+			copt->Back.Reflectivity = 1.-rv->absorptance.val;
+			copt->Back.RMSSlopeError = PI/4.;
+			copt->Back.RMSSpecError = PI/4.;
 			
 			//Add a flat aperture to the stage
 			Point pos;
 			Vect aim;
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
-			pos.x = rec->getOffsetX();
-			pos.y = rec->getOffsetY();
-			pos.z = rec->getOpticalHeight();    //optical height includes z offset
+			pos.x = rv->rec_offset_x.val;
+			pos.y = rv->rec_offset_y.val;
+			pos.z = rv->optical_height.Val();    //optical height includes z offset
 			element->Origin[0] = pos.x;
 			element->Origin[1] = pos.y;
 			element->Origin[2] = pos.z;
 			
 			//Calculate the receiver aperture aim point
 			double 
-				az = rec->getReceiverAzimuth(),
-				el = rec->getReceiverElevation();
+				az = rv->rec_azimuth.val,
+				el = rv->rec_elevation.val;
 			aim.Set(cos(el)*sin(az), cos(el)*cos(az), sin(el));
 			element->AimPoint[0] = pos.x + aim.i*1000.;
 			element->AimPoint[1] = pos.y + aim.j*1000.;
 			element->AimPoint[2] = pos.z + aim.k*1000.;
 			
-			element->ZRot = r2d*Toolbox::ZRotationTransform(aim);
+			element->ZRot = R2D*Toolbox::ZRotationTransform(aim);
 			
 			//Set up the aperture arguments array
 			element->Ap_A = width;
@@ -1114,7 +1126,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 			element->ShapeIndex = is_ellipse ? 'c' : 'r';
 			element->SurfaceIndex = 'f';
 			element->InteractionType = 2;
-			element->OpticName = (*rec->getReceiverName()).c_str();
+			element->OpticName = (rv->rec_name.val).c_str();
 			element->Optics = copt;
 			break;
 		}
@@ -1130,11 +1142,11 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios){
 	}
 
 	//Simulation options
-	int minrays = SF.getFluxSimObject()->_min_rays;
-    int maxrays = SF.getFluxSimObject()->_max_rays;
-    int seed = SF.getFluxSimObject()->_seed;
-    sim_errors_sunshape = SF.getFluxSimObject()->_is_sunshape_err;
-	sim_errors_optical = SF.getFluxSimObject()->_is_optical_err; 
+	int minrays = V->flux.min_rays.val; 
+    int maxrays = V->flux.max_rays.val;
+    int seed = V->flux.seed.val;
+    sim_errors_sunshape = V->flux.is_sunshape_err.val;
+	sim_errors_optical = V->flux.is_optical_err.val; 
 	
 	sim_raycount = minrays;
 	sim_raymax = maxrays;
