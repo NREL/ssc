@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <stdio.h>
+
 #include "string_util.h"
 #include "mod_base.h"
 #include "heliodata.h"
@@ -17,11 +18,10 @@ class SolarField;
 class Heliostat;
 class FluxSurface;
 struct ST_System;
-typedef vector<FluxSurface> FluxSurfaces;
-typedef vector<Heliostat*> Hvector;
+typedef std::vector<FluxSurface> FluxSurfaces;
+typedef std::vector<Heliostat*> Hvector;
 //struct helio_perf_data;
 
-//using namespace std;
 
 /* 
 NOTE
@@ -37,39 +37,39 @@ No references to WX library.
 
 class ArrayString
 {
-	vector<string> data;
+	std::vector<std::string> data;
 	//unordered_map<string,int> ind_map;
 public:
 	ArrayString();
 	
 	//wxArrayStr &operator=( ArrayString &array );
-	ArrayString &operator=( vector<string> &array );
+	ArrayString &operator=( std::vector<std::string> &arr );
 	
 
 	int size();
-	string operator[](int i);
-	string& at(int i);
+	std::string operator[](int i);
+	std::string& at(int i);
 	
 	void clear();
 	void Clear();
 
 	void resize(int newsize);
-	void push_back(string value);
-	void Add(string value);
+	void push_back(std::string value);
+	void Add(std::string value);
 
-	string back();
-	int Index(string item);
+	std::string back();
+	int Index(std::string item);
 
-	vector<string>::iterator erase(vector<string>::iterator position);
-	vector<string>::iterator begin();
+	std::vector<std::string>::iterator erase(vector<std::string>::iterator position);
+	std::vector<std::string>::iterator begin();
 };
 
 struct par_variable
 {
-	string varname;	//The variable map name 
-	string display_text;
-	string units;
-	string data_type;	//one of {"int", "double", "string", "bool", "combo", "checkbox", "location"}
+    std::string varname;	//The variable map name 
+	std::string display_text;
+	std::string units;
+	std::string data_type;	//one of {"int", "double", "string", "bool", "combo", "checkbox", "location"}
 	ArrayString selections;
 	ArrayString choices;
 	ArrayString sim_values;
@@ -88,7 +88,7 @@ class parametric
 	//wxArrayStr _weather_files;
 public:
 	parametric();
-	void addVar(spvar *var);	//Add a variable by reference to its variable map object
+	void addVar(spbase *var);	//Add a variable by reference to its variable map object
 	int size();
 	void clear();
 	void SetWeatherFileList(ArrayString &list);
@@ -96,16 +96,16 @@ public:
 	par_variable &operator[](int index);
 	par_variable &back();
 	void remove(int index);
-	int Index(string pathname);	//Returns the index if the pathname is found as a current variable. Otherwise returns -1.
+	int Index(std::string pathname);	//Returns the index if the pathname is found as a current variable. Otherwise returns -1.
 };
 
 class simulation_table
 {
-	unordered_map<string, ArrayString> data;
+	unordered_map<std::string, ArrayString> data;
 
 public:
-	ArrayString &operator[](const string &varname);
-	ArrayString &at(const string &varname);
+	ArrayString &operator[](const std::string &varname);
+	ArrayString &at(const std::string &varname);
 	size_t nvar();
 	size_t nsim();
 	void getKeys(ArrayString &keys);
@@ -125,27 +125,26 @@ namespace interop
 	*/
 
 	//-- Methods for calculating simulation input values
-	void UpdateCalculatedMapValues(var_set &V);
-	void GenerateSimulationWeatherData(var_set &vset, int design_method, ArrayString &wf_entries);
-	void GenerateSimulationWeatherData(var_set &vset, int design_method, vector<string> &wf_entries);	//overload
-	bool parseRange(string &range, int &rangelow, int &rangehi, bool &include_low, bool &include_hi);
+	void GenerateSimulationWeatherData(var_map &V, int design_method, ArrayString &wf_entries);
+	void GenerateSimulationWeatherData(var_map &V, int design_method, std::vector<std::string> &wf_entries);	//overload
+	bool parseRange(std::string &range, int &rangelow, int &rangehi, bool &include_low, bool &include_hi);
 	void ticker_initialize(int indices[], int n);
 	bool ticker_increment(int lengths[], int indices[], bool changed[], int n);
 
 	//Simulation setup methods
-	void AimpointUpdateHandler(SolarField &SF);
-	bool PerformanceSimulationPrep(SolarField &SF, var_set &vset, Hvector &helios, int sim_method);
+	//void AimpointUpdateHandler(SolarField &SF);
+	bool PerformanceSimulationPrep(SolarField &SF, Hvector &helios, int sim_method);
 #ifdef SP_USE_SOLTRACE
-	bool SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, var_set &vset, Hvector &helios,
+	bool SolTraceFluxSimulation_ST(st_context_t cxt, SolarField &SF, Hvector &helios, Vect &sunvect,
                                 int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
                                 void *par, 
-                                vector<vector<double> > *st0data, vector<vector<double> > *st1data, bool save_stage_data, bool load_stage_data);
-	bool SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &ST,
+                                std::vector<std::vector<double> > *st0data, std::vector<std::vector<double> > *st1data, bool save_stage_data, bool load_stage_data);
+	bool SolTraceFluxSimulation_ST(st_context_t cxt, int seed, ST_System &ST, 
                                 int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void *data),
                                 void *par, 
-vector<vector<double> > *st0data, vector<vector<double> > *st1data, bool save_stage_data, bool load_stage_data);
+std::vector<std::vector<double> > *st0data, std::vector<std::vector<double> > *st1data, bool save_stage_data, bool load_stage_data);
 #endif
-	void UpdateMapLayoutData(var_set &vset, Hvector *helios);
+	void UpdateMapLayoutData(var_map &V, Hvector *helios);
 };
 
 
@@ -234,19 +233,19 @@ public:
 
 	//cost_categories cap_cost;
 	
-	vector<std::string> receiver_names;
+	std::vector<std::string> receiver_names;
 
-	vector<FluxSurfaces> flux_surfaces;
+	std::vector<FluxSurfaces> flux_surfaces;
 
 	void initialize();
 
 	void add_heliostat(Heliostat &H);
 
-	void process_analytical_simulation(SolarField &SF, int nsim_type, Hvector &helios);
+	void process_analytical_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios);
 
-	void process_analytical_simulation(SolarField &SF, int sim_type);
+	void process_analytical_simulation(SolarField &SF, int sim_type, double sun_az_zen[2]);
 
-	void process_raytrace_simulation(SolarField &SF, int nsim_type, Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo);
+	void process_raytrace_simulation(SolarField &SF, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo);
 
 	void process_flux(SolarField *SF, bool normalize);
 	
@@ -256,6 +255,6 @@ public:
 	
 };
 
-typedef vector<sim_result> sim_results;
+typedef std::vector<sim_result> sim_results;
 
 #endif

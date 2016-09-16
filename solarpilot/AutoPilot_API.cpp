@@ -1,19 +1,20 @@
+#include <sstream>
+#include <string>
+#include <algorithm>
+#include <iomanip> 
+
+#include <nlopt.hpp>
+
 #include "AutoPilot_API.h"
 #include "LayoutSimulateThread.h"
 #include "IOUtil.h"
 #include "SolarField.h"
 #include "definitions.h"
-#include <iomanip> 
 
 #ifdef SP_USE_THREADS
 #include <thread>
 #endif
 
-#include <sstream>
-#include <string>
-#include <algorithm>
-
-#include <nlopt.hpp>
 
 using namespace std;
 
@@ -227,16 +228,18 @@ struct AutoOptHelper
     vector<double> m_flux;
     vector<double*> m_opt_vars;
     vector<string> m_opt_names;
-    sp_receivers *m_recs;
-    sp_optimize *m_opt;
-    sp_layout *m_layout;
+    //sp_receivers *m_recs;
+    //sp_optimize *m_opt;
+    //sp_layout *m_layout;
     nlopt::opt *m_opt_obj;
+    var_map *m_variables;
 
-    void SetObjects( void *autopilot, sp_receivers *recs, sp_optimize *opt, sp_layout *layout, nlopt::opt *optobj ){
+    void SetObjects( void *autopilot, var_map &V, nlopt::opt *optobj ){
         m_autopilot = static_cast<AutoPilot*>( autopilot );
-        m_recs = recs;
-        m_opt = opt;
-        m_layout = layout;
+        //m_recs = recs;
+        //m_opt = opt;
+        //m_layout = layout;
+        m_variables = &V;
         m_opt_obj = optobj;
     };
 
@@ -244,9 +247,9 @@ struct AutoOptHelper
     {
         m_iter = 0;
         m_autopilot = 0;
-        m_recs = 0;
-        m_opt = 0;
-        m_layout = 0;
+        //m_recs = 0;
+        //m_opt = 0;
+        //m_layout = 0;
         m_opt_obj = 0;
         m_all_points.clear();
         m_normalizers.clear();
@@ -284,7 +287,7 @@ struct AutoOptHelper
         
         //Evaluate the objective function value
         if(! 
-        m_autopilot->EvaluateDesign( *m_opt, *m_recs, *m_layout, obj, flux) 
+        m_autopilot->EvaluateDesign( obj, flux) 
             ){
             string errmsg = "Optimization failed at iteration " + my_to_string(m_iter) + ". Terminating simulation.";   
             throw spexception(errmsg.c_str());
@@ -426,7 +429,7 @@ AutoPilot::~AutoPilot()
 	return;
 }
 
-bool AutoPilot::CreateLayout(bool do_post_process)
+bool AutoPilot::CreateLayout(sp_layout &layout, bool do_post_process)
 {
 	
 	//override in inherited class
@@ -480,7 +483,8 @@ void AutoPilot::SetExternalSFObject( SolarField *SF )
 	_is_solarfield_external = true;
 }
 
-bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, bool for_optimize){
+bool AutoPilot::Setup(var_map &V, bool for_optimize)
+{
 
 	/* 
 	Using the information provided in the data structures, construct a new SolarField object.
@@ -495,33 +499,40 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	_cancel_simulation = false;	
 
 	//start by initializing the variables structure
-	ioutil::parseDefinitionArray(_variables, "custom_rec");
+	//ioutil::parseDefinitionArray(_variables, "custom_rec");
+    //V.reset();
 
-	//Save pointers for later reference
-	_layout = &layout;
-    _cost = &cost;
+	////Save pointers for later reference
+	//_layout = &layout;
+ //   _cost = &cost;
 
 	//-----------------------------------------------------------------
 	//	Alter settings according to what's provided in the structures
 	//-----------------------------------------------------------------
 	
-	//ambient
-	update_ambient(_variables, ambient);
+	////ambient
+	//update_ambient(V, ambient);
 
-	//cost
-	update_cost(_variables, cost);
+	////cost
+	//update_cost(V, cost);
 
-	//layout
-	update_layout(_variables, layout);
+	////layout
+	//update_layout(V, layout);
 
-	//heliostats
-	update_heliostats(_variables, helios);
+	////heliostats
+	//update_heliostats(V, helios);
 
-	//receivers
-	update_receivers(_variables, recs);
+	////receivers
+	//update_receivers(V, recs);
 	
 	//update any calculated values
-	interop::UpdateCalculatedMapValues(_variables);
+	//interop::UpdateCalculatedMapValues(_variables);
+
+    //need to set up the template combo
+    V.sf.temp_which.combo_clear();
+    std::string name = "Template 1", val = "0";
+    V.sf.temp_which.combo_add_choice(name, val);
+    V.sf.temp_which.combo_select_by_choice_index( 0 ); //use the first heliostat template
 
 	//Dynamically allocate the solar field object, if needed
 	if(! _is_solarfield_external ){
@@ -531,38 +542,42 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	//---Set a couple of parameters here that should be consistent for simple API use
 	
 	//make sure the aiming strategy is correct
-	if(recs.front().type == sp_receiver::TYPE::CYLINDRICAL && !for_optimize)
-		_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::SIMPLE );
+	if(V.recs.front().rec_type.val == Receiver::REC_TYPE::CYLINDRICAL && !for_optimize)
+		V.flux.aim_method.val =  FluxSimData::AIM_STRATEGY::SIMPLE ;
 	else
     {
-		_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::IMAGE_SIZE );
-        _variables["fluxsim"][0]["sigma_limit"].set(2.5);
+		V.flux.aim_method.val =  FluxSimData::AIM_STRATEGY::IMAGE_SIZE ;
+        V.flux.sigma_limit_y.val = 2.5;
     }
 
 	//set the receiver flux surfaces to the correct resolution to balance run time with accuracy
-	if( _variables["receiver"][0]["rec_type"].value_int() == 0 ){
+	if( V.recs[0].rec_type.val == 0 ){
 		//external receiver
-		_variables["fluxsim"][0]["x_res"].set(12);
-		_variables["fluxsim"][0]["y_res"].set(20);
+		V.flux.x_res.val = 12;
+		V.flux.y_res.val = 20;
 	
 	}
 	else{
 		//flat plate receiver
-		_variables["fluxsim"][0]["x_res"].set(15);
-		_variables["fluxsim"][0]["y_res"].set(15);
+		V.flux.x_res.val = 15;
+		V.flux.y_res.val = 15;
 	}
 	
 	//Create the solar field object
-	_SF->Create(_variables);
+	_SF->Create(V);
 
 	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
-	if(layout.heliostat_positions.size() > 0){
+	//if( layout.heliostat_positions.size() > 0){
+    if( ! V.sf.layout_data.val.empty() )
+    {
 		WeatherData empty;
 		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
-		_SF->calcHeliostatShadows();
-        double area = _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
-		_variables["land"][0]["bound_area"].set( area );
-        layout.land_area = area;
+        Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
+		_SF->calcHeliostatShadows(sun);
+        double area = V.land.land_area.Val();  //acre
+		V.land.bound_area.Setval( area );
+        V.land.land_area.Setval( area );
+        //layout.land_area = area;
 	}
 
 	
@@ -572,410 +587,395 @@ bool AutoPilot::Setup(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_
 	return true;
 }
 
-void AutoPilot::LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
-                                     sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_set *variables)
-{
-    bool var_in = variables == 0;
+//void AutoPilot::LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
+//                                     sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_map *variables)
+//{
+//    bool var_in = variables == 0;
+//
+//    var_map *var_use;
+//
+//    if(var_in){
+//        var_use = variables;
+//    }
+//    else{
+//        var_use = new var_map();
+//    }
+//
+//    //ioutil::parseDefinitionArray(*var_use);
+//
+//    vector<string> wfdummy; //not used
+//    SetupExpert(*var_use, ambient, cost, layout, helios, recs, opt, wfdummy, true);
+//
+//
+//    if(! var_in) delete var_use;
+//
+//
+//}
 
-    var_set *var_use;
+//bool AutoPilot::SetupExpert(var_map &vset, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, 
+//                            sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data, bool defaults_only)
+//{
+//	_cancel_simulation = false;
+//
+//	//load the values from the var_set into the input structures
+//	ambient.LoadDefaults(vset);
+//	cost.LoadDefaults(vset);
+//	layout.LoadDefaults(vset);
+//	helios.resize(1);
+//	for(int i=0; i<(int)helios.size(); i++)
+//		helios.at(i).LoadDefaults(vset);
+//	recs.resize(1);
+//	for(int i=0; i<(int)recs.size(); i++)
+//		recs.at(i).LoadDefaults(vset);
+//	opt.LoadDefaults(vset);
+//
+//    if(defaults_only) return true;
+//	
+//    //set up the weather data for simulation
+//	GenerateDesignPointSimulations(ambient, vset, weather_data);
+//
+//
+//	//Dynamically allocate the solar field object, if needed
+//	if(! _is_solarfield_external ){
+//		_SF = new SolarField();
+//	}
+//	
+//	//update any calculated values
+//	//interop::UpdateCalculatedMapValues(_variables);
+//
+//	//Create the solar field object
+//	_SF->Create(vset);
+//	
+//	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
+//	if(layout.heliostat_positions.size() > 0){
+//		WeatherData empty;
+//		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
+//        Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
+//		_SF->calcHeliostatShadows(sun);
+//		//_variables.land.bound_area.val =  _SF->getLandObject()->getLandArea(); 
+//	}
+//
+//	//pass the callback along to the solar field, if applicable
+//	if(_has_detail_callback){
+//		_detail_siminfo = _SF->getSimInfoObject();
+//		_detail_siminfo->setCallbackFunction(_detail_callback, _detail_callback_data);
+//		_detail_siminfo->isEnabled(true);
+//	}
+//	if(_has_summary_callback){
+//		_summary_siminfo = new simulation_info();
+//		_summary_siminfo->ResetValues();
+//		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
+//	}
+//	_setup_ok = true;
+//	return true;
+//		
+//};
 
-    if(var_in){
-        var_use = variables;
-    }
-    else{
-        var_use = new var_set();
-    }
-
-    ioutil::parseDefinitionArray(*var_use);
-
-    vector<string> wfdummy; //not used
-    SetupExpert(*var_use, ambient, cost, layout, helios, recs, opt, wfdummy, true);
-
-
-    if(! var_in) delete var_use;
-
-
-}
-
-bool AutoPilot::SetupExpert(var_set &vset, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, 
-                            sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data, bool defaults_only)
-{
-	_cancel_simulation = false;
-
-	//load the values from the var_set into the input structures
-	ambient.LoadDefaults(vset);
-	cost.LoadDefaults(vset);
-	layout.LoadDefaults(vset);
-	helios.resize(1);
-	for(int i=0; i<(int)helios.size(); i++)
-		helios.at(i).LoadDefaults(vset);
-	recs.resize(1);
-	for(int i=0; i<(int)recs.size(); i++)
-		recs.at(i).LoadDefaults(vset);
-	opt.LoadDefaults(vset);
-
-    if(defaults_only) return true;
-	
-    //set up the weather data for simulation
-	GenerateDesignPointSimulations(ambient, vset, weather_data);
-
-
-	//Dynamically allocate the solar field object, if needed
-	if(! _is_solarfield_external ){
-		_SF = new SolarField();
-	}
-	_variables = vset;	//copy
-	
-	//update any calculated values
-	interop::UpdateCalculatedMapValues(_variables);
-
-	//Create the solar field object
-	_SF->Create(_variables);
-	
-	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
-	if(layout.heliostat_positions.size() > 0){
-		WeatherData empty;
-		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
-		_SF->calcHeliostatShadows();
-		_variables["land"][0]["bound_area"].set( _SF->getLandObject()->getLandArea() );
-	}
-
-	//pass the callback along to the solar field, if applicable
-	if(_has_detail_callback){
-		_detail_siminfo = _SF->getSimInfoObject();
-		_detail_siminfo->setCallbackFunction(_detail_callback, _detail_callback_data);
-		_detail_siminfo->isEnabled(true);
-	}
-	if(_has_summary_callback){
-		_summary_siminfo = new simulation_info();
-		_summary_siminfo->ResetValues();
-		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
-	}
-	_setup_ok = true;
-	return true;
-		
-};
-
-void AutoPilot::update_ambient(var_set &vset, sp_ambient &ambient){
-	_variables["ambient"][0]["elevation"].set(ambient.site_elevation);
-	_variables["ambient"][0]["longitude"].set(ambient.site_longitude);
-	_variables["ambient"][0]["latitude"].set(ambient.site_latitude);
-	_variables["ambient"][0]["time_zone"].set(ambient.site_time_zone);
-	
-	//attenuation model
-	string avals;
-	switch (ambient.atten_model)
-	{
-	case sp_ambient::ATTEN_MODEL::DELSOL_CLEAR_DAY:
-		_variables["ambient"][0]["atm_model"].value = "0";
-		_variables["ambient"][0]["atm_model"].cselect = 0;
-		_variables["ambient"][0]["atm_coefs"].value = _variables["ambient"][0]["atm_coefs"].choices.at(0);
-		break;
-	case sp_ambient::ATTEN_MODEL::DELSOL_HAZY_DAY:
-		_variables["ambient"][0]["atm_model"].value = "1";
-		_variables["ambient"][0]["atm_model"].cselect = 1;
-		_variables["ambient"][0]["atm_coefs"].value = _variables["ambient"][0]["atm_coefs"].choices.at(1);
-		break;
-	case sp_ambient::ATTEN_MODEL::USER_DEFINED:
-		avals.clear();
-		for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++){
-			avals.append( my_to_string(ambient.user_atten_coefs.at(i)) );
-			if( i < ambient.user_atten_coefs.size()-1 ) avals.append(",");
-		}
-		
-		_variables["ambient"][0]["atm_model"].value = "2";
-		_variables["ambient"][0]["atm_model"].cselect = 2;
-		_variables["ambient"][0]["atm_coefs"].value = avals;
-		_variables["ambient"][0]["atm_coefs"].choices.at(2) = avals;
-		break;
-	default:
-		if( _has_summary_callback ){
-			_summary_siminfo->addSimulationNotice("Invalid atmospheric model number provided. Options are 0=Delsol clear day, 1=Delsol hazy day, 2=user coefs");
-			return;
-		}
-		break;
-	}
-	
-	//Sun shape
-	_variables["ambient"][0]["sun_type"].set(ambient.sun_type);
-	string *valptr;
-	switch (ambient.sun_type)
-	{
-	case sp_ambient::SUN_TYPE::PILLBOX:
-		if(ambient.sun_type_params.pillbox_width != std::numeric_limits<double>::quiet_NaN() )
-			_variables["ambient"][0]["sun_rad_limit"].set(ambient.sun_type_params.pillbox_width);
-		else
-			_variables["ambient"][0]["sun_rad_limit"].value = "4.65";	//default to sun disc
-
-		break;
-	case sp_ambient::SUN_TYPE::GAUSSIAN:
-		if(ambient.sun_type_params.gaussian_stdev != std::numeric_limits<double>::quiet_NaN() )
-			_variables["ambient"][0]["sun_rad_limit"].set(ambient.sun_type_params.gaussian_stdev);
-		else
-			_variables["ambient"][0]["sun_rad_limit"].value = "2.73";	//default to SolTrace value
-
-		break;
-	case sp_ambient::SUN_TYPE::LIMB_DARKENED:
-		break;
-	case sp_ambient::SUN_TYPE::POINT:
-		break;
-	case sp_ambient::SUN_TYPE::BUIE:
-		if(ambient.sun_type_params.circumsolar_ratio != std::numeric_limits<double>::quiet_NaN() )
-			_variables["ambient"][0]["sun_csr"].set(ambient.sun_type_params.circumsolar_ratio);
-		else
-			_variables["ambient"][0]["sun_csr"].value = "0.1";
-
-		break;
-	case sp_ambient::SUN_TYPE::USER:
-		//set up the table from the user-supplied values
-		valptr = &_variables["ambient"][0]["user_sun"].value;
-		valptr->clear();
-		for(int i=0; i<(int)ambient.user_sun_data.size(); i++){
-			valptr->append(my_to_string(ambient.user_sun_data.at(i).angle) );
-			valptr->append(",");
-			valptr->append(my_to_string(ambient.user_sun_data.at(i).intensity) );
-			valptr->append(";");
-		}
-		break;
-	default:
-		if( _has_summary_callback )
-			_summary_siminfo->addSimulationNotice("The specified sun shape model is invalid. Options are "
-			"Pillbox sun=2;Gaussian sun=4;Limb-darkened sun=1;Point sun=0;Buie CSR=5;User sun=3;");
-		break;
-	}
-
-
-	//Weather data
-	
-	valptr = &_variables["solarfield"][0]["sim_step_data"].value;
-	valptr->clear();
-	for(int i=0; i<(int)ambient.weather_data.size(); i++){
-		valptr->append( ambient.weather_data.at(i).get_formatted_entry() );
-	}
-
-}
-
-void AutoPilot::update_cost(var_set &vset, sp_cost &cost){
-	vset["financial"][0]["tower_fixed_cost"].set(cost.tower_fixed_cost);
-	vset["financial"][0]["tower_exp"].set(cost.tower_exp);
-	vset["financial"][0]["rec_ref_cost"].set(cost.rec_ref_cost);
-	vset["financial"][0]["rec_ref_area"].set(cost.rec_ref_area);
-	vset["financial"][0]["rec_cost_exp"].set(cost.rec_cost_exp);
-	vset["financial"][0]["site_spec_cost"].set(cost.site_spec_cost);
-	vset["financial"][0]["heliostat_spec_cost"].set(cost.heliostat_spec_cost);
-	vset["financial"][0]["wiring_user_spec"].set(cost.wiring_user_spec);
-	vset["financial"][0]["plant_spec_cost"].set(cost.plant_spec_cost);
-	vset["financial"][0]["tes_spec_cost"].set(cost.tes_spec_cost);
-	vset["financial"][0]["land_spec_cost"].set(cost.land_spec_cost);
-	vset["financial"][0]["contingency_rate"].set(cost.contingency_rate);
-	vset["financial"][0]["sales_tax_rate"].set(cost.sales_tax_rate);
-	vset["financial"][0]["sales_tax_frac"].set(cost.sales_tax_frac);
-	vset["financial"][0]["sales_tax_cost"].set(cost.sales_tax_cost);
-    vset["financial"][0]["fixed_cost"].set(cost.cost_fixed);
-}
-
-void AutoPilot::update_layout(var_set &vset, sp_layout &layout){
-	//set the one-off values
-	vset["solarfield"][0]["q_des"].set(layout.q_design);
-	vset["solarfield"][0]["accept_max"].set(layout.span_cw);
-	vset["solarfield"][0]["accept_min"].set(layout.span_ccw);
-	vset["solarfield"][0]["tht"].set(layout.h_tower);
-	vset["solarfield"][0]["dni_des"].set( layout.dni_design );
-
-	//Handle land restrictions here
-	switch (layout.land_bound_type)
-	{
-	case sp_layout::LAND_BOUND_TYPE::SCALED:
-		vset["land"][0]["max_scaled_rad"].set(layout.land_max);
-		vset["land"][0]["min_scaled_rad"].set(layout.land_min);
-		vset["land"][0]["is_bounds_scaled"].set(true);
-		vset["land"][0]["is_bounds_fixed"].set(false);
-		vset["land"][0]["is_bouds_array"].set(false);
-		break;
-	case sp_layout::LAND_BOUND_TYPE::FIXED:
-		vset["land"][0]["max_fixed_rad"].set(layout.land_max);
-		vset["land"][0]["min_fixed_rad"].set(layout.land_min);
-		vset["land"][0]["is_bounds_scaled"].set(false);
-		vset["land"][0]["is_bounds_fixed"].set(true);
-		vset["land"][0]["is_bouds_array"].set(false);
-		break;
-	case sp_layout::LAND_BOUND_TYPE::POLYGON:
-	{
-		vset["land"][0]["is_bounds_scaled"].set(false);
-		vset["land"][0]["is_bounds_fixed"].set(true);
-		vset["land"][0]["is_bouds_array"].set(false);
-
-		//add the land table
-		string incs, excs;
-		//inclusions
-		for( int i = 0; i<layout.landtable.inclusions.size(); i++){
-			incs.append("[POLY]");
-			for( int j = 0; j<layout.landtable.inclusions.at(i).size(); j++){
-				incs.append("[P]" + 
-					my_to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
-					my_to_string(layout.landtable.inclusions.at(i).at(j).y));
-			}
-		}
-		//exclusions
-		for( int i = 0; i<layout.landtable.exclusions.size(); i++){
-			incs.append("[POLY]");
-			for( int j = 0; j<layout.landtable.exclusions.at(i).size(); j++){
-				incs.append("[P]" + 
-					my_to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
-					my_to_string(layout.landtable.exclusions.at(i).at(j).y));
-			}
-		}
-
-		vset["land"][0]["inclusions"].value = incs;
-		vset["land"][0]["exclusions"].value = excs;
-		break;
-	}
-	default:
-		if( _has_summary_callback )
-			_summary_siminfo->addSimulationNotice("The specified land bound type is invalid. Options are Scaled=0, Fixed=1, Polygon=2.");
-		break;
-	}
-
-	//Handle specified layout positions, if needed
-	if(layout.heliostat_positions.size() > 0){
-		string layout_data;
-		for(vector<sp_layout::h_position>::iterator hpos = layout.heliostat_positions.begin(); 
-			hpos != layout.heliostat_positions.end(); hpos ++){
-					layout_data.append( 
-						my_to_string(hpos->template_number) + "," + 
-						my_to_string(hpos->location.x) + "," +
-						my_to_string(hpos->location.y) + "," +
-						my_to_string(hpos->location.z) + ",");
-			//if the user provides optics, use them here. Otherwise set values to null
-			if(hpos->user_optics){
-				layout_data.append(
-					my_to_string(hpos->focal_length) + "," + 
-					my_to_string(hpos->focal_length) + "," + 
-					my_to_string(hpos->cant_vector.i) + "," +
-					my_to_string(hpos->cant_vector.j) + "," +
-					my_to_string(hpos->cant_vector.k) + "," +
-					my_to_string(hpos->aimpoint.x) + "," + 
-					my_to_string(hpos->aimpoint.y) + "," + 
-					my_to_string(hpos->aimpoint.z) );
-			}
-			else{
-				layout_data.append("NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL");
-			}
-			layout_data.append(";");	//end of line
-		}
-		vset["solarfield"][0]["layout_data"].value = layout_data;
-	}
-
-}
-
-void AutoPilot::update_heliostats(var_set &vset, sp_heliostats &helios){
-	int h=0;
-	for( sp_heliostats::iterator helio = helios.begin(); helio != helios.end(); helio++){
-		_variables["heliostat"][h]["width"].set(helio->width);
-		_variables["heliostat"][h]["height"].set(helio->height);
-		_variables["heliostat"][h]["n_cant_x"].set(helio->npanels_w);
-		_variables["heliostat"][h]["n_cant_y"].set(helio->npanels_h);
-        _variables["heliostat"][h]["is_faceted"].set( helio->npanels_h > 1 || helio->npanels_w > 1 );
-		_variables["heliostat"][h]["err_elevation"].value = "0.";
-		_variables["heliostat"][h]["err_azimuth"].value = "0.";
-		_variables["heliostat"][h]["err_surface_x"].set(helio->optical_error);
-		_variables["heliostat"][h]["err_surface_y"].set(helio->optical_error);
-		_variables["heliostat"][h]["err_reflect_x"].value = "0.";
-		_variables["heliostat"][h]["err_reflect_y"].value = "0.";
-		_variables["heliostat"][h]["reflectivity"].set(helio->reflectance);
-        _variables["heliostat"][h]["reflect_ratio"].set( helio->active_fraction );
-		_variables["heliostat"][h]["soiling"].value = "1.";
-
-		//Canting
-		_variables["heliostat"][h]["cant_method"].set(helio->cant_type);
-        
-        switch (helio->cant_type)
-        {
-        case sp_heliostat::CANT_TYPE::NONE:
-        case sp_heliostat::CANT_TYPE::ON_AXIS:
-            //do nothing
-            break;
-        case sp_heliostat::CANT_TYPE::EQUINOX:
-        case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
-        case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
-            //set the day
-            _variables["heliostat"][h]["cant_day"].set(helio->cant_settings.point_day);
-			_variables["heliostat"][h]["cant_hour"].set(helio->cant_settings.point_hour);
-            break;
-        case -99:
-            //this one isn't handled right now. This will be a placeholder
-            _variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
-			_variables["heliostat"][h]["cant_vect_i"].set(helio->cant_settings.point_vector.i);
-			_variables["heliostat"][h]["cant_vect_j"].set(helio->cant_settings.point_vector.j);
-			_variables["heliostat"][h]["cant_vect_k"].set(helio->cant_settings.point_vector.k);
-        default:
-            break;
-        }
-/*
-		switch (helio->focus_type)
-		{
-		case sp_heliostat::CANT_TYPE::FLAT:
-		case sp_heliostat::CANT_TYPE::AT_SLANT:
-			break;
-		case sp_heliostat::CANT_TYPE::AT_DAY_HOUR:
-			_variables["heliostat"][h]["cant_day"].set(helio->cant_settings.point_day);
-			_variables["heliostat"][h]["cant_hour"].set(helio->cant_settings.point_hour);
-			break;
-		case sp_heliostat::CANT_TYPE::USER_VECTOR:
-			_variables["heliostat"][h]["is_cant_vect_slant"].value = helio->cant_settings.scale_with_slant ? "TRUE" : "FALSE";
-			_variables["heliostat"][h]["cant_vect_i"].set(helio->cant_settings.point_vector.i);
-			_variables["heliostat"][h]["cant_vect_j"].set(helio->cant_settings.point_vector.j);
-			_variables["heliostat"][h]["cant_vect_k"].set(helio->cant_settings.point_vector.k);
-			break;
-		default:
-			break;
-		}*/
-
-		//Focusing
-		_variables["heliostat"][h]["focus_method"].set(helio->focus_type);
-		_variables["heliostat"][h]["is_focal_equal"].value = "TRUE";
-		switch (helio->focus_type)
-		{
-		case sp_heliostat::FOCUS_TYPE::FLAT:
-			_variables["heliostat"][h]["is_xfocus"].value = "FALSE";
-			_variables["heliostat"][h]["is_yfocus"].value = "FALSE";
-			break;
-		case sp_heliostat::FOCUS_TYPE::USER_DEFINED:
-			_variables["heliostat"][h]["x_focal_length"].set(helio->user_focal_length);
-			//don't break.. also set the x and y focus bools to true
-		case sp_heliostat::FOCUS_TYPE::AT_SLANT:
-			_variables["heliostat"][h]["is_xfocus"].value = "TRUE";
-			_variables["heliostat"][h]["is_yfocus"].value = "TRUE";
-			break;
-		default:
-			break;
-		}
-
-		h++;
-	}
-}
-
-void AutoPilot::update_receivers(var_set &vset, sp_receivers &recs){
-	int r=0;
-	for(sp_receivers::iterator rec = recs.begin(); rec != recs.end(); rec++){
-		_variables["receiver"][r]["rec_type"].set(rec->type);
-
-		_variables["receiver"][r]["rec_offset_x"].set(rec->offset.x);
-		_variables["receiver"][r]["rec_offset_y"].set(rec->offset.y);
-		_variables["receiver"][r]["rec_offset_z"].set(rec->offset.z);
-
-		_variables["receiver"][r]["absorptance"].set( rec->absorptance );
-		_variables["receiver"][r]["therm_loss_base"].set( rec->q_hl_perm2 );
-		
-		double rw = rec->height / rec->aspect;
-		_variables["receiver"][r]["rec_height"].set( rec->height );
-		_variables["receiver"][r]["rec_width"].set( rw );
-		_variables["receiver"][r]["rec_aspect"].set( rec->aspect ); 
-		_variables["receiver"][r]["rec_diameter"].set( rw );
-		
-		r++;
-	}
-}
+//void AutoPilot::update_ambient(var_map &vset, sp_ambient &ambient){
+//	vset.amb.elevation.val = ambient.site_elevation;
+//	vset.amb.longitude.val = ambient.site_longitude;
+//	vset.amb.latitude.val = ambient.site_latitude;
+//	vset.amb.time_zone.val = ambient.site_time_zone;
+//	vset.amb.sim_time_step.Setval( vset.amb.sim_time_step.Val() );
+//
+//	//attenuation model
+//    vset.amb.atm_model.combo_select_by_choice_index(ambient.atten_model);
+//
+//	//string avals;
+//	//switch (ambient.atten_model)
+//	//{
+//	//case sp_ambient::ATTEN_MODEL::DELSOL_CLEAR_DAY:
+//	//	_variables.amb.atm_model.combo_select(0);
+//	//	_variables.amb.atm_coefs.set_from_string( _variables.amb.atm_coefs.choices.at(0) );
+//	//	break;
+//	//case sp_ambient::ATTEN_MODEL::DELSOL_HAZY_DAY:
+//	//	_variables.amb.atm_model.combo_select(1);
+//	//	_variables.amb.atm_coefs.set_from_string( _variables.amb.atm_coefs.choices.at(1) );
+//	//	break;
+//	//case sp_ambient::ATTEN_MODEL::USER_DEFINED:
+//	//	avals.clear();
+//	//	for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++){
+//	//		avals.append( my_to_string(ambient.user_atten_coefs.at(i)) );
+//	//		if( i < ambient.user_atten_coefs.size()-1 ) avals.append(",");
+//	//	}
+//	//	
+//	//	_variables.amb.atm_model.val = 2;
+//	//	_variables.amb.atm_model.cselect = 2;
+//	//	_variables.amb.atm_coefs.set_from_string( avals );
+// //       //update the user coefficients in the matrix
+// //       for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++)
+// //           _variables.amb.atm_coefs.val.at(2,i) = ambient.user_atten_coefs.at(i);
+//	//	break;
+//	//default:
+//	//	if( _has_summary_callback ){
+//	//		_summary_siminfo->addSimulationNotice("Invalid atmospheric model number provided. Options are 0=Delsol clear day, 1=Delsol hazy day, 2=user coefs");
+//	//		return;
+//	//	}
+//	//	break;
+//	//}
+//	
+//	//Sun shape
+//	vset.amb.sun_type.val = ambient.sun_type;
+//	switch (ambient.sun_type)
+//	{
+//	case sp_ambient::SUN_TYPE::PILLBOX:
+//		if(ambient.sun_type_params.pillbox_width != std::numeric_limits<double>::quiet_NaN() )
+//			vset.amb.sun_rad_limit.val = ambient.sun_type_params.pillbox_width;
+//		else
+//			vset.amb.sun_rad_limit.val = 4.65;	//default to sun disc
+//
+//		break;
+//	case sp_ambient::SUN_TYPE::GAUSSIAN:
+//		if(ambient.sun_type_params.gaussian_stdev != std::numeric_limits<double>::quiet_NaN() )
+//			vset.amb.sun_rad_limit.val = ambient.sun_type_params.gaussian_stdev;
+//		else
+//			vset.amb.sun_rad_limit.val = 2.73;	//default to SolTrace value
+//
+//		break;
+//	case sp_ambient::SUN_TYPE::LIMB_DARKENED:
+//		break;
+//	case sp_ambient::SUN_TYPE::POINT:
+//		break;
+//	case sp_ambient::SUN_TYPE::BUIE:
+//		if(ambient.sun_type_params.circumsolar_ratio != std::numeric_limits<double>::quiet_NaN() )
+//			vset.amb.sun_csr.val = ambient.sun_type_params.circumsolar_ratio;
+//		else
+//			vset.amb.sun_csr.val = 0.1;
+//
+//		break;
+//	case sp_ambient::SUN_TYPE::USER:
+//		//set up the table from the user-supplied values
+//        vset.amb.user_sun.val.clear();
+//        vset.amb.user_sun.val.resize(ambient.user_sun_data.size(), 2);
+//
+//		for(int i=0; i<(int)ambient.user_sun_data.size(); i++)
+//        {
+//            vset.amb.user_sun.val.at(i,0) = ambient.user_sun_data.at(i).angle;
+//            vset.amb.user_sun.val.at(i,1) = ambient.user_sun_data.at(i).intensity;
+//		}
+//		break;
+//	default:
+//		if( _has_summary_callback )
+//			_summary_siminfo->addSimulationNotice("The specified sun shape model is invalid. Options are "
+//			"Pillbox sun=2;Gaussian sun=4;Limb-darkened sun=1;Point sun=0;Buie CSR=5;User sun=3;");
+//		break;
+//	}
+//
+//
+//	//Weather data
+//	WeatherData *wd = &vset.sf.sim_step_data.Val();
+//    wd->clear();
+//    wd->resizeAll( ambient.weather_data.size() );
+//    for(int i=0; i<(int)ambient.weather_data.size(); i++)
+//    {
+//        sp_ambient::weather_step *s = &ambient.weather_data.at(i);
+//        wd->setStep(i, (double)s->day_of_month, s->time_hours, (double)s->month_of_year, s->dni, s->tdb, s->pres, s->vwind, s->step_weight );
+//    }
+//
+//}
+//
+//void AutoPilot::update_cost(var_map &vset, sp_cost &cost){
+//	vset.fin.tower_fixed_cost.val = cost.tower_fixed_cost;
+//	vset.fin.tower_exp.val = cost.tower_exp;
+//	vset.fin.rec_ref_cost.val = cost.rec_ref_cost;
+//	vset.fin.rec_ref_area.val = cost.rec_ref_area;
+//	vset.fin.rec_cost_exp.val = cost.rec_cost_exp;
+//	vset.fin.site_spec_cost.val = cost.site_spec_cost;
+//	vset.fin.heliostat_spec_cost.val = cost.heliostat_spec_cost;
+//	vset.fin.wiring_user_spec.val = cost.wiring_user_spec;
+//	vset.fin.plant_spec_cost.val = cost.plant_spec_cost;
+//	vset.fin.tes_spec_cost.val = cost.tes_spec_cost;
+//	vset.fin.land_spec_cost.val = cost.land_spec_cost;
+//	vset.fin.contingency_rate.val = cost.contingency_rate;
+//	vset.fin.sales_tax_rate.val = cost.sales_tax_rate;
+//	vset.fin.sales_tax_frac.val = cost.sales_tax_frac;
+//	//vset.fin.sales_tax_cost.val = cost.sales_tax_cost;
+//    vset.fin.fixed_cost.val = cost.cost_fixed;
+//}
+//
+//void AutoPilot::update_layout(var_map &vset, sp_layout &layout){
+//	//set the one-off values
+//	vset.sf.q_des.val = layout.q_design;
+//	vset.sf.accept_max.val = layout.span_cw;
+//	vset.sf.accept_min.val = layout.span_ccw;
+//	vset.sf.tht.val = layout.h_tower;
+//	vset.sf.dni_des.val =  layout.dni_design ;
+//
+//	//Handle land restrictions here
+//	switch (layout.land_bound_type)
+//	{
+//	case sp_layout::LAND_BOUND_TYPE::SCALED:
+//		vset.land.max_scaled_rad.val = layout.land_max;
+//		vset.land.min_scaled_rad.val = layout.land_min;
+//		vset.land.is_bounds_scaled.val = true;
+//		vset.land.is_bounds_fixed.val = false;
+//		vset.land.is_bounds_array.val = false;
+//		break;
+//	case sp_layout::LAND_BOUND_TYPE::FIXED:
+//		vset.land.max_fixed_rad.val = layout.land_max;
+//		vset.land.min_fixed_rad.val = layout.land_min;
+//		vset.land.is_bounds_scaled.val = false;
+//		vset.land.is_bounds_fixed.val = true;
+//		vset.land.is_bounds_array.val = false;
+//		break;
+//	case sp_layout::LAND_BOUND_TYPE::POLYGON:
+//	{
+//		vset.land.is_bounds_scaled.val = false;
+//		vset.land.is_bounds_fixed.val = true;
+//		vset.land.is_bounds_array.val = false;
+//
+//		//add the land table
+//		string incs, excs;
+//		//inclusions
+//		for( int i = 0; i<layout.landtable.inclusions.size(); i++){
+//			incs.append("[POLY]");
+//			for( int j = 0; j<layout.landtable.inclusions.at(i).size(); j++){
+//				incs.append("[P]" + 
+//					my_to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
+//					my_to_string(layout.landtable.inclusions.at(i).at(j).y));
+//			}
+//		}
+//		//exclusions
+//		for( int i = 0; i<layout.landtable.exclusions.size(); i++){
+//			incs.append("[POLY]");
+//			for( int j = 0; j<layout.landtable.exclusions.at(i).size(); j++){
+//				incs.append("[P]" + 
+//					my_to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
+//					my_to_string(layout.landtable.exclusions.at(i).at(j).y));
+//			}
+//		}
+//
+//		vset.land.inclusions.set_from_string( incs );
+//		vset.land.exclusions.set_from_string( excs );
+//		break;
+//	}
+//	default:
+//		if( _has_summary_callback )
+//			_summary_siminfo->addSimulationNotice("The specified land bound type is invalid. Options are Scaled=0, Fixed=1, Polygon=2.");
+//		break;
+//	}
+//
+//	//Handle specified layout positions, if needed
+//	if(layout.heliostat_positions.size() > 0){
+//		string layout_data;
+//		for(vector<sp_layout::h_position>::iterator hpos = layout.heliostat_positions.begin(); 
+//			hpos != layout.heliostat_positions.end(); hpos ++){
+//					layout_data.append( 
+//						my_to_string(hpos->template_number) + "," + 
+//						my_to_string(hpos->location.x) + "," +
+//						my_to_string(hpos->location.y) + "," +
+//						my_to_string(hpos->location.z) + ",");
+//			//if the user provides optics, use them here. Otherwise set values to null
+//			if(hpos->user_optics){
+//				layout_data.append(
+//					my_to_string(hpos->focal_length) + "," + 
+//					my_to_string(hpos->focal_length) + "," + 
+//					my_to_string(hpos->cant_vector.i) + "," +
+//					my_to_string(hpos->cant_vector.j) + "," +
+//					my_to_string(hpos->cant_vector.k) + "," +
+//					my_to_string(hpos->aimpoint.x) + "," + 
+//					my_to_string(hpos->aimpoint.y) + "," + 
+//					my_to_string(hpos->aimpoint.z) );
+//			}
+//			else{
+//				layout_data.append("NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL");
+//			}
+//			layout_data.append(";");	//end of line
+//		}
+//		vset.sf.layout_data.set_from_string( layout_data );
+//	}
+//
+//}
+//
+//void AutoPilot::update_heliostats(var_map &vset, sp_heliostats &helios){
+//	int h=0;
+//	for( sp_heliostats::iterator helio = helios.begin(); helio != helios.end(); helio++){
+//		vset.hels[h].width.val = helio->width;
+//		vset.hels[h].height.val = helio->height;
+//		vset.hels[h].n_cant_x.val = helio->npanels_w;
+//		vset.hels[h].n_cant_y.val = helio->npanels_h;
+//        vset.hels[h].is_faceted.val =  helio->npanels_h > 1 || helio->npanels_w > 1 ;
+//		vset.hels[h].err_elevation.val = 0.;
+//		vset.hels[h].err_azimuth.val = 0.;
+//		vset.hels[h].err_surface_x.val = helio->optical_error;
+//		vset.hels[h].err_surface_y.val = helio->optical_error;
+//		vset.hels[h].err_reflect_x.val = 0.;
+//		vset.hels[h].err_reflect_y.val = 0.;
+//		vset.hels[h].reflectivity.val = helio->reflectance;
+//        vset.hels[h].reflect_ratio.val =  helio->active_fraction ;
+//		vset.hels[h].soiling.val = 1.;
+//
+//		//Canting
+//		vset.hels[h].cant_method.val = helio->cant_type;
+//        
+//        switch (helio->cant_type)
+//        {
+//        case sp_heliostat::CANT_TYPE::NONE:
+//        case sp_heliostat::CANT_TYPE::ON_AXIS:
+//            //do nothing
+//            break;
+//        case sp_heliostat::CANT_TYPE::EQUINOX:
+//        case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
+//        case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
+//            //set the day
+//            vset.hels[h].cant_day.val = helio->cant_settings.point_day;
+//			vset.hels[h].cant_hour.val = helio->cant_settings.point_hour;
+//            break;
+//        case -99:
+//            //this one isn't handled right now. This will be a placeholder
+//            vset.hels[h].is_cant_vect_slant.val = helio->cant_settings.scale_with_slant;
+//			vset.hels[h].cant_vect_i.val = helio->cant_settings.point_vector.i;
+//			vset.hels[h].cant_vect_j.val = helio->cant_settings.point_vector.j;
+//			vset.hels[h].cant_vect_k.val = helio->cant_settings.point_vector.k;
+//        default:
+//            break;
+//        }
+//
+//		//Focusing
+//		vset.hels[h].focus_method.val = helio->focus_type;
+//		vset.hels[h].is_focal_equal.val = true;
+//		switch (helio->focus_type)
+//		{
+//		case sp_heliostat::FOCUS_TYPE::FLAT:
+//			vset.hels[h].is_xfocus.val = false;
+//			vset.hels[h].is_yfocus.val = false;
+//			break;
+//		case sp_heliostat::FOCUS_TYPE::USER_DEFINED:
+//			vset.hels[h].x_focal_length.val = helio->user_focal_length;
+//			//don't break.. also set the x and y focus bools to true
+//		case sp_heliostat::FOCUS_TYPE::AT_SLANT:
+//			vset.hels[0].is_xfocus.val = true;
+//			vset.hels[0].is_yfocus.val = true;
+//			break;
+//		default:
+//			break;
+//		}
+//
+//		h++;
+//	}
+//}
+//
+//void AutoPilot::update_receivers(var_map &vset, sp_receivers &recs){
+//	int r=0;
+//	for(sp_receivers::iterator rec = recs.begin(); rec != recs.end(); rec++){
+//		vset.recs[r].rec_type.val = rec->type;
+//
+//		vset.recs[r].rec_offset_x.val = rec->offset.x;
+//		vset.recs[r].rec_offset_y.val = rec->offset.y;
+//		vset.recs[r].rec_offset_z.val = rec->offset.z;
+//
+//		vset.recs[r].absorptance.val =  rec->absorptance ;
+//		vset.recs[r].therm_loss_base.val =  rec->q_hl_perm2 ;
+//		
+//		double rw = rec->height / rec->aspect;
+//		vset.recs[r].rec_height.val =  rec->height ;
+//		vset.recs[r].rec_width.val =  rw ;
+//		//vset.recs[r].rec_aspect.val =  rec->aspect ; 
+//		vset.recs[r].rec_diameter.val =  rw ;
+//		
+//		r++;
+//	}
+//}
 
 vector<double> AutoPilot::interpolate_vectors(vector<double> &A, vector<double> &B, double alpha)
 {
@@ -993,7 +993,7 @@ vector<double> AutoPilot::interpolate_vectors(vector<double> &A, vector<double> 
 
 }
 
-void AutoPilot::GenerateDesignPointSimulations(sp_ambient &amb, var_set &variables, vector<string> &wdata)
+void AutoPilot::GenerateDesignPointSimulations(var_map &V, vector<string> &wdata)
 {
 	/* 
 	Generate the design simulation hours using the SolarPILOT macros. Options must be specified
@@ -1007,23 +1007,29 @@ void AutoPilot::GenerateDesignPointSimulations(sp_ambient &amb, var_set &variabl
 	day, hour, month,  dni, tdry, pres, wspd
 	1..,  0..,  1-12, W/m2,    C,  bar,  m/s
 	*/
+    
+	//amb.weather_data.clear();
+	interop::GenerateSimulationWeatherData(V, LAYOUT_DETAIL::FOR_OPTIMIZATION, wdata);	
 
-	amb.weather_data.clear();
-	interop::GenerateSimulationWeatherData(variables, LAYOUT_DETAIL::FOR_OPTIMIZATION, wdata);	
-	vector<double> stepdat;
-	vector<string> sim_step_data = split(variables["solarfield"][0]["sim_step_data"].value, "[P]");
-	for(int i=0; i<(int)sim_step_data.size(); i++){
-		vector<string> sdata = split(sim_step_data.at(i), ",");
-		vector<double> fdata;
-		for(int j=0; j<(int)sdata.size(); j++){
-			double tt; 
-			to_double(sdata.at(j), &tt);
-			fdata.push_back(tt);
-		}
-		//add each step
-		amb.AddWeatherStep((int)fdata.at(0), (int)fdata.at(2), fdata.at(1), fdata.at(3), 
-			fdata.at(4), fdata.at(6), fdata.at(5), fdata.at(7));
-	}
+    /*WeatherData *w = &V.sf.sim_step_data.Val();
+
+    for(int i=0; i<w->size(); i++)
+        amb.AddWeatherStep((int)w->Day[i], (int)w->Month[i], w->Hour[i], w->DNI[i], w->T_db[i], w->V_wind[i], w->Pres[i], w->Step_weight[i] );*/
+
+	//vector<double> stepdat;
+	//vector<string> sim_step_data = split(variables["solarfield"][0]["sim_step_data"].value, "[P]");
+	//for(int i=0; i<(int)sim_step_data.size(); i++){
+	//	vector<string> sdata = split(sim_step_data.at(i), ",");
+	//	vector<double> fdata;
+	//	for(int j=0; j<(int)sdata.size(); j++){
+	//		double tt; 
+	//		to_double(sdata.at(j), &tt);
+	//		fdata.push_back(tt);
+	//	}
+	//	//add each step
+	//	amb.AddWeatherStep((int)fdata.at(0), (int)fdata.at(2), fdata.at(1), fdata.at(3), 
+	//		fdata.at(4), fdata.at(6), fdata.at(5), fdata.at(7));
+	//}
 
 }
 
@@ -1043,15 +1049,16 @@ void AutoPilot::PreSimCallbackUpdate()
 	}
 }
 
-void AutoPilot::PostProcessLayout()
+void AutoPilot::PostProcessLayout(sp_layout &layout)
 {
 	/* 
 	Layout post-process.. collect the layout results and fill the data into the
 	layout structure for later use
 	*/
 
+
 	Hvector *hpos = _SF->getHeliostats();
-	_layout->heliostat_positions.clear();
+	layout.heliostat_positions.clear();
 	for(int i=0; i<(int)hpos->size(); i++){
 		sp_layout::h_position hp;
 		//hp.location.Set( *hpos->at(i)->getLocation() );
@@ -1069,46 +1076,45 @@ void AutoPilot::PostProcessLayout()
 
 		hp.focal_length = hpos->at(i)->getFocalX();
 		hp.template_number = -1;
-		hp.user_optics = false;
-		_layout->heliostat_positions.push_back( hp );
+		//hp.user_optics = false;
+		layout.heliostat_positions.push_back( hp );
 	}
-	_layout->land_area = _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
 
-    //Update calculated cost values here
-    double sfarea = _SF->getHeliostatArea();
-    //set the solar field area
-    _layout->area_sf = sfarea;
 
-    Financial *f = _SF->getFinancialObject();
+ //   var_map *V = _SF->getVarMap();
+ //   _SF->updateAllCalculatedParameters( *V );
 
-    f->calcPlantCapitalCost( *_SF );
-    
-    _cost->cost_rec_tot = f->getReceiverCost(); 
-    _cost->cost_tower_tot = f->getTowerCost(); 
-    _cost->cost_land_tot = f->getLandCost(); 
-    _cost->cost_heliostat_tot =  f->getHeliostatCost(); 
-    _cost->cost_site_tot = f->getSiteCost(); 
-    _cost->cost_plant_tot = f->getPlantCost(); 
-    _cost->cost_tes_tot = f->getTESCost(); 
-    _cost->cost_fossil_tot = 0.;
-    _cost->cost_salestax_tot = f->getSalesTaxCost();
-    _cost->cost_direct_tot = f->getTotalDirectCost();
-    _cost->cost_epc_tot = 0.;
-    _cost->cost_indirect_tot = f->getTotalIndirectCost();
-    _cost->cost_installed_tot = f->getTotalInstalledCost();
+	//_layout->land_area = V->land.land_area.Val(); // _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
+ //   _layout->area_sf = V->sf.sf_area.Val();
+
+ //   _cost->cost_rec_tot = V->fin.rec_cost.Val(); //f->getReceiverCost(); 
+ //   _cost->cost_tower_tot = V->fin.tower_cost.Val(); //f->getTowerCost(); 
+ //   _cost->cost_land_tot = V->fin.land_cost.Val(); //f->getLandCost(); 
+ //   _cost->cost_heliostat_tot = V->fin.heliostat_cost.Val(); // f->getHeliostatCost(); 
+ //   _cost->cost_site_tot = V->fin.site_cost.Val(); // f->getSiteCost(); 
+ //   _cost->cost_plant_tot = V->fin.plant_cost.Val(); // f->getPlantCost(); 
+ //   _cost->cost_tes_tot = V->fin.tes_cost.Val(); // f->getTESCost(); 
+ //   _cost->cost_fossil_tot = 0.;
+ //   _cost->cost_salestax_tot = V->fin.sales_tax_cost.Val(); // f->getSalesTaxCost();
+ //   _cost->cost_direct_tot = V->fin.total_direct_cost.Val(); // f->getTotalDirectCost();
+ //   _cost->cost_epc_tot = 0.;
+ //   _cost->cost_indirect_tot = V->fin.total_indirect_cost.Val(); //f->getTotalIndirectCost();
+ //   _cost->cost_installed_tot = V->fin.total_installed_cost.Val(); // f->getTotalInstalledCost();
     
 }
 
 void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)
 {
-	//simulate flux maps for all of the receivers
+	var_map *V = _SF->getVarMap();
+    V->amb.sim_time_step.Setval(0.);    //sest the simulation time step for flux
+
+    //simulate flux maps for all of the receivers
 	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
-	int fluxmap_format;
-	to_integer(_variables["parametric"][0]["fluxmap_format"].value, &fluxmap_format);
+	int fluxmap_format = V->par.fluxmap_format.val;
 	
 	if(flux_res_y > 1)
-        _SF->getFluxSimObject()->_aim_method = FluxSimData::AIM_STRATEGY::IMAGE_SIZE;
+        V->flux.aim_method.val = FluxSimData::AIM_STRATEGY::IMAGE_SIZE;
 		//_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::IMAGE_SIZE );
 
 	//Shape the flux surface files to match
@@ -1120,14 +1126,14 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 
 	vector<int> uday;
 	vector<vector<double> > utime;
-	Ambient *amb =_SF->getAmbientObject();
+	//Ambient *amb =_SF->getAmbientObject();
 
 	if(! fluxtab.is_user_spacing){
 		fluxtab.n_flux_days = 8;
 		fluxtab.delta_flux_hrs = 1.;
 	}
 
-	Ambient::calcSpacedDaysHours(amb->getPlantLatitude(), amb->getPlantLongitude(), amb->getTimeZone(), 
+	Ambient::calcSpacedDaysHours(V->amb.latitude.val, V->amb.longitude.val, V->amb.time_zone.val, 
 		fluxtab.n_flux_days, fluxtab.delta_flux_hrs, utime, uday);
 	 
 	int nflux_sim = 0;
@@ -1137,11 +1143,6 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	//Arrays to keep track of input values
 	fluxtab.azimuths.clear();
 	fluxtab.zeniths.clear();
-
-	//trig
-	double 
-		pi = acos(-1.),
-		r2d = 180./pi;
 
 	fluxtab.flux_surfaces.clear();
 	//resize the results to accommodate each receiver surface
@@ -1156,20 +1157,19 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	for(int i=0; i<nsurftot; i++)
 		fluxtab.flux_surfaces.at(i).flux_data.resize(flux_res_y, flux_res_x, nflux_sim);
 
-	int k=0;
+    DateTime DT;
 	int nday = (int)uday.size();
 	for(int i=0; i<nday; i++){
 		int nhour_day = (int)utime.at(i).size();
 		for(int j=0; j<nhour_day; j++){
 			
-			_SF->getAmbientObject()->setDateTime(utime.at(i).at(j)+12, (double)uday[i]);
-			_SF->getAmbientObject()->calcSunPosition();
+            Ambient::setDateTime(DT, utime.at(i).at(j)+12, uday[i]);
+            double az,zen;
+            Ambient::calcSunPosition(*V, DT, &az, &zen);
 			
 			//--- keep track of input values
-			double az,zen;
-			_SF->getAmbientObject()->getSolarPosition(az, zen);
-			fluxtab.azimuths.push_back(az);
-			fluxtab.zeniths.push_back(zen);
+			fluxtab.azimuths.push_back(az*D2R);
+			fluxtab.zeniths.push_back(zen*D2R);
 		}
 	}
 
@@ -1189,7 +1189,7 @@ void AutoPilot::PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int fl
 			int nrecsurf = (int)rec->getFluxSurfaces()->size();
 			for( int isurf=0; isurf<nrecsurf; isurf++){
 				//transfer data from the result flux map to the sp_flux_table data structure
-				fluxmap.flux_surfaces.at(itot).map_name = *rec->getReceiverName() + " surface " + my_to_string(isurf+1);
+				fluxmap.flux_surfaces.at(itot).map_name = rec->getVarMap()->rec_name.val + " surface " + my_to_string(isurf+1);
 				FluxSurface *fs = &result.flux_surfaces.at(irec).at(isurf);
 				int 
 					nflux_x = fs->getFluxNX(),
@@ -1220,48 +1220,48 @@ void AutoPilot::CancelSimulation()
 	_SF->CancelSimulation();
 }
 
-bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
-{
-	_cancel_simulation = false;
+//bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
+//{
+//	_cancel_simulation = false;
+//
+//	//Check if a layout is available for simulation
+//	if(_SF->getHeliostats()->size() == 0){
+//		// no field layout
+//		throw spexception("Performance simulation requires an existing layout. Please create a system geometry before simulating performance.");
+//	}
+//
+//	//provide an update if we aren't expecting one from the SF object
+//	/*if(_has_summary_callback){
+//		_summary_siminfo->ResetValues();
+//		_summary_siminfo->addSimulationNotice("Simulating receiver flux profile");
+//	}*/
+//
+//	sim_result result;
+//	try{
+//		Hvector helios = *_SF->getHeliostats();
+//		_SF->HermiteFluxSimulation(helios);
+//		result.process_analytical_simulation(*_SF, 2, helios);
+//	}
+//	catch( std::exception &e ){
+//		string emsg = e.what();
+//		if(_has_summary_callback)
+//			_summary_siminfo->addSimulationNotice( "Caught an exception during the flux simulation: " + emsg );
+//		return false;
+//	}
+//	catch( ... ){
+//		if(_has_summary_callback)
+//			_summary_siminfo->addSimulationNotice( "Caught an unhandled exception during the flux simulation. The simulation terminated unsuccessfully.");
+//		return false;
+//	}
+//
+//	//transfer results data into sp_flux_map
+//	if(! _cancel_simulation)
+//		PostProcessFlux(result, fluxmap, 0);
+//	
+//	return true;
+//}
 
-	//Check if a layout is available for simulation
-	if(_SF->getHeliostats()->size() == 0){
-		// no field layout
-		throw spexception("Performance simulation requires an existing layout. Please create a system geometry before simulating performance.");
-	}
-
-	//provide an update if we aren't expecting one from the SF object
-	/*if(_has_summary_callback){
-		_summary_siminfo->ResetValues();
-		_summary_siminfo->addSimulationNotice("Simulating receiver flux profile");
-	}*/
-
-	sim_result result;
-	try{
-		Hvector helios = *_SF->getHeliostats();
-		_SF->HermiteFluxSimulation(helios);
-		result.process_analytical_simulation(*_SF, 2, helios);
-	}
-	catch( std::exception &e ){
-		string emsg = e.what();
-		if(_has_summary_callback)
-			_summary_siminfo->addSimulationNotice( "Caught an exception during the flux simulation: " + emsg );
-		return false;
-	}
-	catch( ... ){
-		if(_has_summary_callback)
-			_summary_siminfo->addSimulationNotice( "Caught an unhandled exception during the flux simulation. The simulation terminated unsuccessfully.");
-		return false;
-	}
-
-	//transfer results data into sp_flux_map
-	if(! _cancel_simulation)
-		PostProcessFlux(result, fluxmap, 0);
-	
-	return true;
-}
-
-bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &layout, double &obj_metric, double &flux_max)
+bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
 {
 	/* 
 	Create a layout and evaluate the optimization objective function value with as little 
@@ -1271,22 +1271,23 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	returns FALSE.
 	*/
 
+    var_map *V = _SF->getVarMap();
 
-	//Update the variable map
-	if(opt.is_optimize_rec_height || opt.is_optimize_rec_aspect)
-		update_receivers(_variables, recs);
-	if(opt.is_optimize_tht || opt.is_optimize_bound)
-		update_layout(_variables, layout);
-	//update any calculated values
-	interop::UpdateCalculatedMapValues(_variables);
+    //if optimizing receiver aspect, make sure diameter is set appropriately
+	if(V->recs.front().is_height_opt.val || V->recs.front().is_aspect_opt.val ) 
+        V->recs.front().rec_diameter.val = V->recs.front().rec_height.val / V->recs.front().rec_aspect.Val();
 
 	//create the solar field object
-	if(! _cancel_simulation){
-		_SF->Create(_variables);	if(_SF->ErrCheck()){return false;}
+	if(! _cancel_simulation)
+    {
+		_SF->Create(*V);	
+        if(_SF->ErrCheck()){return false;}
 	}
 	//Do the layout simulation
-	if(! _cancel_simulation){
-		if(! CreateLayout(false) )
+	if(! _cancel_simulation)
+    {
+        sp_layout layout;  //dummy
+		if(! CreateLayout(layout, false) )
         {
             CancelSimulation();
             obj_metric = 0.;
@@ -1298,35 +1299,33 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	//Do the flux simulation at the design point
 	if(! _cancel_simulation){
 		//update the flux simulation sun position to match the layout reference point sun position
-		double az_des, zen_des;
-		if(! 
-            _SF->CalcDesignPtSunPosition( _variables["solarfield"][0]["sun_loc_des"].value_int(), az_des, zen_des) 
-            ) return false;
+		//double az_des, zen_des;
+		//if(! 
+            //_SF->CalcDesignPtSunPosition( _variables.sf.sun_loc_des.val, az_des, zen_des) 
+            //) return false;
 
-		double d2r = acos(-1.)/180.;
-		_SF->getAmbientObject()->setSolarPosition( az_des*d2r, zen_des*d2r );
-        FluxSimData *fd = _SF->getFluxSimObject();
-		fd->_flux_solar_az_in = az_des;	//[deg]
-		fd->_flux_solar_el_in = 90.0 - zen_des;
-		fd->_flux_time_type = FluxSimData::FLUX_TIME::POSITION;	//sun position specified
+		//_SF->getAmbientObject()->setSolarPosition( az_des*D2R, zen_des*D2R );
+        //FluxSimData *fd = _SF->getFluxSimObject();
+		//fd->_flux_solar_az_in = az_des;	//[deg]
+		//fd->_flux_solar_el_in = 90.0 - zen_des;
+		_SF->getVarMap()->flux.flux_time_type.val = FluxSimData::FLUX_TIME::POSITION;	//sun position specified
 
 		//prep for performance simulation (aim points, etc.)
-		interop::PerformanceSimulationPrep(*_SF, _variables, *_SF->getHeliostats(), 0 /*analytical*/);
+		interop::PerformanceSimulationPrep(*_SF, *_SF->getHeliostats(), 0 /*analytical*/);
 		
 		//do flux simulation
-		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), fd->_aim_method == FluxSimData::AIM_STRATEGY::IMAGE_SIZE);	
+		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), V->flux.aim_method.val == FluxSimData::AIM_STRATEGY::IMAGE_SIZE);	
 		if(_SF->ErrCheck()){return false;}		
 	}
 	
 	//get the annual optical power estimate
 	double optical_power = _SF->getAnnualPowerApproximation();
 	//power cycle efficiency
-	double cycle_eff = _SF->getPlantObject()->getCycleEfficiency() * _SF->getPlantObject()->getGrossToNetFactor();
+	double cycle_eff = V->plt.eta_cycle.val * V->plt.par_factor.val;
 	double power = optical_power * cycle_eff*1.e-6;		//MW-h
 
-	//calculate the total plant cost
-	_SF->getFinancialObject()->calcPlantCapitalCost(*_SF);
-	double cost = _SF->getFinancialObject()->getTotalInstalledCost();
+	//get the total plant cost
+	double cost = V->fin.total_installed_cost.Val();
 	
 	//Get the maximum flux value
 	flux_max=0.;
@@ -1344,10 +1343,10 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	double power_shortage_ratio = min(qactual/qminimum, 1.);
 
 	//Set the optimization objective value
-	double flux_overage_ratio = max(flux_max/opt.flux_max, 1.);
+	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
 	obj_metric = cost/power 
-		* (1. + (flux_overage_ratio - 1.) * opt.flux_penalty) 
-		* (1. + (1. - power_shortage_ratio)*opt.power_penalty);
+		* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
+		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
 
     /*obj_metric = (cost - power*3250)*1.e-7 + 
         max(flux_max - opt.flux_max, 0.)*opt.flux_penalty + 
@@ -1365,7 +1364,7 @@ bool AutoPilot::EvaluateDesign(sp_optimize &opt, sp_receivers &recs, sp_layout &
 	return true;
 }
 
-bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout)
+bool AutoPilot::Optimize(var_map &V)
 {
 	/* 
 	
@@ -1382,76 +1381,89 @@ bool AutoPilot::Optimize(sp_optimize &opt, sp_receivers &recs, sp_layout &layout
 		lower_range;	//A vector of lower variable limits
 	vector<bool>
         is_range_constr;
-    if(opt.is_optimize_tht){
+    if(V.sf.is_tht_opt.val)
+    {
         names.push_back("THT");
-		optvars.push_back( &layout.h_tower );
-		if(opt.is_range_constr_tht){
-			lower_range.push_back( opt.range_tht[0]/layout.h_tower );
-			upper_range.push_back( opt.range_tht[1]/layout.h_tower );
+		optvars.push_back( &V.sf.tht.val );
+		if(V.sf.is_tht_restrict.val) 
+        {
+			lower_range.push_back( V.sf.tht_opt_min.val / V.sf.tht.val );
+			upper_range.push_back( V.sf.tht_opt_max.val / V.sf.tht.val ); 
+            is_range_constr.push_back(true);
 		}
 		else
 		{
 			lower_range.push_back( .5 );
 			upper_range.push_back( 2. );
+            is_range_constr.push_back(false);
 		}
-        is_range_constr.push_back(opt.is_range_constr_tht);
-	}
-	if(opt.is_optimize_rec_aspect){
-        names.push_back("Aspect");
-		optvars.push_back( &recs.front().aspect);
-		if(opt.is_range_constr_aspect){
-			lower_range.push_back( opt.range_rec_aspect[0] );
-			upper_range.push_back( opt.range_rec_aspect[1] );
-		}
-		else
-		{
-			lower_range.push_back( .5 );
-			upper_range.push_back( 2. );
-		}
-        is_range_constr.push_back(opt.is_range_constr_aspect);
-	}
-	if(opt.is_optimize_rec_height){
-        names.push_back("RecHeight");
-		optvars.push_back( &recs.front().height);
-		if(opt.is_range_constr_rech){
-			lower_range.push_back( opt.range_rec_height[0]/recs.front().height );
-			upper_range.push_back( opt.range_rec_height[1]/recs.front().height );
-		}
-		else
-		{
-			lower_range.push_back( .5 );
-			upper_range.push_back( 2. );
-		}
-        is_range_constr.push_back(opt.is_range_constr_rech);
-	}
-	if(opt.is_optimize_bound){
-        names.push_back("MaxRad");
-		optvars.push_back( &layout.land_max);
-		if(opt.is_range_constr_bound){
-			lower_range.push_back( opt.range_land_bound[0]/layout.land_max );
-			upper_range.push_back( opt.range_land_bound[1]/layout.land_max );
-		}
-		else
-		{
-			lower_range.push_back( .5 );
-			upper_range.push_back( 2. );
-		}
-        is_range_constr.push_back(opt.is_range_constr_bound);
 	}
 
-    switch(opt.method)
+	if(V.recs.front().is_aspect_opt.val )
     {
-    case sp_optimize::METHOD::RSGS:  //Response surface gradient search - original method
-	    return Optimize(optvars, upper_range, lower_range, is_range_constr, opt, recs, layout);
+        names.push_back("Aspect");
+		optvars.push_back( &V.recs.front().rec_aspect.Val() );
+		if(V.recs.front().is_aspect_restrict.val)
+        {
+			lower_range.push_back( V.recs.front().aspect_opt_min.val );
+			upper_range.push_back( V.recs.front().aspect_opt_max.val );
+            is_range_constr.push_back(true);
+		}
+		else
+		{
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
+            is_range_constr.push_back(false);
+		}
+	}
+
+	if(V.recs.front().is_height_opt.val)
+    {
+        names.push_back("RecHeight");
+		optvars.push_back( &V.recs.front().rec_height.val );
+		if(V.recs.front().is_height_restrict.val) 
+        {
+			lower_range.push_back( V.recs.front().height_opt_min.val / V.recs.front().rec_height.val ); 
+			upper_range.push_back( V.recs.front().height_opt_max.val / V.recs.front().rec_height.val );
+            is_range_constr.push_back(true);
+		}
+		else
+		{
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
+            is_range_constr.push_back(false);
+		}
+	}
+	if(V.land.is_land_max_opt.val)
+    {
+        names.push_back("MaxRad");
+		optvars.push_back( &V.land.max_scaled_rad.val);
+		if(V.land.is_land_max_restrict.val)
+        {
+			lower_range.push_back( V.land.land_max_opt_min.val / V.land.max_scaled_rad.val ); 
+			upper_range.push_back( V.land.land_max_opt_max.val / V.land.max_scaled_rad.val ); 
+            is_range_constr.push_back(true);
+		}
+		else
+		{
+			lower_range.push_back( .5 );
+			upper_range.push_back( 2. );
+            is_range_constr.push_back(false);
+		}
+	}
+
+    switch(V.opt.algorithm.val)     //"BOBYQA=0;COBYLA=1;NEWOUA=2;Nelder-Mead=3;Subplex=4;RSGS=5"
+    {
+    case 5:  //Response surface gradient search - original method
+	    return Optimize(optvars, upper_range, lower_range, is_range_constr);
         break;
     default:
-        return OptimizeAuto( optvars, upper_range, lower_range, is_range_constr, opt, recs, layout, &names);
+        return OptimizeAuto( optvars, upper_range, lower_range, is_range_constr, &names);
     }
 
 }
 
-bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, 
-                         sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
+bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
 {
 	//Number of variables to be optimized
 	int nvars = (int)optvars.size();
@@ -1474,6 +1486,8 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 	double objective_old=9.e22;
 	double objective_new=9.e21;
 	int sim_count_begin = 0;
+    double converge_tol = _SF->getVarMap()->opt.converge_tol.val;
+    double max_step =  _SF->getVarMap()->opt.max_step.val;
 
     //Add a formatted simulation notice
     ostringstream os;
@@ -1509,7 +1523,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
 		double base_obj, base_flux;
-		EvaluateDesign(opt, recs, layout, base_obj, base_flux);			
+		EvaluateDesign(base_obj, base_flux);			
 		PostEvaluationUpdate(sim_count++, current, normalizers, base_obj, base_flux);
 		if(_cancel_simulation) return false;
 		objective.push_back( base_obj );
@@ -1522,7 +1536,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 		//Check to see if no further improvement has been made in the objective function
 		objective_new = base_obj;
-		if( (objective_old - objective_new)/objective_old < opt.converge_tol ){
+		if( (objective_old - objective_new)/objective_old < converge_tol ){
 			converged = true;
 
 			//Find the best point simulated and return that
@@ -1549,7 +1563,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 		//Generate the set of points required for the response surface characterization
 		vector<vector<double> > runs;
-		Reg.GenerateSurfaceEvalPoints( current, runs, opt.max_step);
+		Reg.GenerateSurfaceEvalPoints( current, runs, max_step );
 
 		//Run the evaluation points
 		_summary_siminfo->setTotalSimulationCount((int)runs.size());
@@ -1570,7 +1584,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			//Evaluate the design
 			double obj, flux;
 			all_sim_points.push_back( runs.at(i) );
-			EvaluateDesign(opt, recs, layout, obj, flux);
+			EvaluateDesign(obj, flux);
 			PostEvaluationUpdate(sim_count++, runs.at(i), normalizers, obj, flux);
 			if(_cancel_simulation) return false;
 			surface_objective.push_back(obj);
@@ -1626,7 +1640,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		
 		//now we have a response surface described by BETA coefficients. we need to choose the steepest descent
 		Reg.ncalls = 0;
-		Reg.max_step_size = opt.max_step;
+		Reg.max_step_size = max_step;
 		//nlopt::opt steep(nlopt::LN_COBYLA, nvars);		//optimize with constraint on step size - use COBYLA
 		nlopt::opt steep(nlopt::GN_ESCH, nvars);
 		steep.set_min_objective( optimize_stdesc_eval, &Reg);
@@ -1637,8 +1651,8 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		vector<double>
 			range_max, range_min;
 		for(int i=0; i<nvars; i++){
-			range_max.push_back( fmin(upper_range.at(i), current.at(i) + opt.max_step) );
-			range_min.push_back( fmax(lower_range.at(i), current.at(i) - opt.max_step) );
+			range_max.push_back( fmin(upper_range.at(i), current.at(i) + max_step) );
+			range_min.push_back( fmax(lower_range.at(i), current.at(i) - max_step) );
 		}
 
 		steep.set_upper_bounds( range_max );
@@ -1699,7 +1713,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
 		//Check to see whether the projected minimum is significantly better than the current point
 		double checktol = (base_obj - min_val)/base_obj;
-		if(fabs(checktol) < opt.converge_tol){
+		if(fabs(checktol) < converge_tol){
 			_summary_siminfo->addSimulationNotice(
 				"\nConvergence in the objective function value has been achieved. Final step variation: "
 				+ my_to_string(checktol) );
@@ -1717,7 +1731,9 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		int minmax_iter = 0;
 		bool steep_converged = false;
 		double prev_obj = base_obj;
-		_summary_siminfo->setTotalSimulationCount(opt.max_desc_iter);
+        double max_desc_iter = _SF->getVarMap()->opt.max_desc_iter.val;
+
+		_summary_siminfo->setTotalSimulationCount(max_desc_iter);
 		_summary_siminfo->addSimulationNotice("...Moving along steepest descent");
 		
 		vector<double> start_point = current;
@@ -1738,7 +1754,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			//Evaluate the design
 			double obj, flux;
 			all_sim_points.push_back( current );
-			EvaluateDesign(opt, recs, layout, obj, flux);
+			EvaluateDesign(obj, flux);
 			PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
 			if(_cancel_simulation) return false;
 			if(minmax_iter > 0)
@@ -1748,7 +1764,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			max_flux.push_back( flux );
 
 			minmax_iter++;
-			if(minmax_iter >= opt.max_desc_iter)
+			if(minmax_iter >= max_desc_iter)
 				break;
 
 			//break here if the objective has increased
@@ -1779,7 +1795,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 							double ds = new_step_vector.at(i) - step_vector.at(i);
 							step_diff += ds * ds;
 						}
-						if( sqrt(step_diff) > opt.max_step/100. && new_step_size > 1.e-8){
+						if( sqrt(step_diff) > max_step/100. && new_step_size > 1.e-8){
 							tried_steep_mod = true;
 							_summary_siminfo->addSimulationNotice("...Moving back to original point, trying alternate descent direction.");
 						
@@ -1803,7 +1819,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				}
 
 				//is the overall steepest descent loop converged?
-				if(fabs(obj/prev_obj - 1.) < opt.converge_tol)
+				if(fabs(obj/prev_obj - 1.) < converge_tol)
 					steep_converged = true;
 				//Move the current point back to the lowest value
 				current = all_sim_points.at( all_sim_points.size() - 2);
@@ -1815,7 +1831,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			for(int i=0; i<(int)step_vector.size(); i++)
 				step_mag += step_vector.at(i) * step_vector.at(i);
 			step_mag = sqrt(step_mag);
-			if(step_mag < opt.max_step/10.){
+			if(step_mag < max_step/10.){
 				steep_converged = true;
 				break;
 			}
@@ -1827,7 +1843,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		//did we manage to converge the steepest descent in the inner loop? If so, skip the golden section refinement.
 		if(steep_converged){
 			opt_iter++;
-			if( opt_iter >= opt.max_iter )
+			if( opt_iter >= _SF->getVarMap()->opt.max_iter.val )
 				break;
 			continue;
 		}
@@ -1844,14 +1860,14 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				upper_gs = all_sim_points.back(),
 				site_a_gs, site_b_gs;
 		
-		_summary_siminfo->setTotalSimulationCount(opt.max_gs_iter*2);
+		_summary_siminfo->setTotalSimulationCount(_SF->getVarMap()->opt.max_gs_iter.val*2);
 		_summary_siminfo->addSimulationNotice("...Refining with golden section");
 
 		bool site_a_sim_ok = false;
 		bool site_b_sim_ok = false;
 		double za, zb;
 
-		for(int gsiter=0; gsiter<opt.max_gs_iter; gsiter++)
+		for(int gsiter=0; gsiter<_SF->getVarMap()->opt.max_gs_iter.val; gsiter++)
 		{
             if(! _summary_siminfo->setCurrentSimulation(gsiter*2) ){
                 CancelSimulation();
@@ -1869,7 +1885,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				for(int i=0; i<(int)optvars.size(); i++)
 					*optvars.at(i) = current.at(i) * normalizers.at(i);
 				all_sim_points.push_back( current );
-				EvaluateDesign(opt, recs, layout, obj, flux);			
+				EvaluateDesign(obj, flux);			
 				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
 				if(_cancel_simulation) return false;
 				za = obj;
@@ -1888,7 +1904,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				for(int i=0; i<(int)optvars.size(); i++)
 					*optvars.at(i) = current.at(i) * normalizers.at(i);
 				all_sim_points.push_back( current );
-				EvaluateDesign(opt, recs, layout, obj, flux);			
+				EvaluateDesign(obj, flux);			
 				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
 				if(_cancel_simulation) return false;
 				zb = obj;
@@ -1897,11 +1913,11 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			}
 
 			//if there's no difference between the two objective functions, don't keep iterating
-			if( fabs((za - zb)/za) < opt.converge_tol)
+			if( fabs((za - zb)/za) < _SF->getVarMap()->opt.converge_tol.val)
 				break;
 
 			//Decide how to shift the bounds
-			if( gsiter == opt.max_gs_iter -1 ) break;
+			if( gsiter == _SF->getVarMap()->opt.max_gs_iter.val -1 ) break;
 			if( za > zb ){
 				lower_gs = site_a_gs;
 				//the lower bound moves up and site a becomes the old site b location
@@ -1922,7 +1938,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		//update the current point
 		current = za < zb ? site_a_gs : site_b_gs;
 		opt_iter++;
-		if( opt_iter >= opt.max_iter )
+		if( opt_iter >= _SF->getVarMap()->opt.max_iter.val )
 			break;
 	}
 	
@@ -1969,14 +1985,13 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
         }
         dimsimpt.push_back(tmp);
     }
-	opt.setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
+	_opt.setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
 
 	return true;
 
 }
 
-bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, 
-                             sp_optimize &opt, sp_receivers &recs, sp_layout &layout, vector<string> *names)
+bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
 {
     /* 
     Use canned algorithm to optimize
@@ -1985,23 +2000,25 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     
     //set up NLOPT algorithm
    
+    var_map *V = _SF->getVarMap();
+
     //map the method
     nlopt::algorithm nlm;
-    switch(opt.method)
+    switch(V->opt.algorithm.val)
     {
-    case sp_optimize::METHOD::BOBYQA:
+    case 0: //sp_optimize::METHOD::BOBYQA:
         nlm = nlopt::LN_BOBYQA;
         break;
-    case sp_optimize::METHOD::COBYLA:
+    case 1: //sp_optimize::METHOD::COBYLA:
         nlm = nlopt::LN_COBYLA;
         break;
-    case sp_optimize::METHOD::NelderMead:
+    case 2: //sp_optimize::METHOD::NelderMead:
         nlm = nlopt::LN_NELDERMEAD;
         break;
-    case sp_optimize::METHOD::NEWOUA:
+    case 3: //sp_optimize::METHOD::NEWOUA:
         nlm = nlopt::LN_NEWUOA;
         break;
-    case sp_optimize::METHOD::Subplex:
+    case 4: //sp_optimize::METHOD::Subplex:
         nlm = nlopt::LN_SBPLX;
         break;
     }
@@ -2011,14 +2028,14 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     //Create optimization helper class
     AutoOptHelper AO;
     AO.Initialize();
-    AO.SetObjects( (void*)this,  &recs, &opt, &layout, &nlobj);
+    AO.SetObjects( (void*)this,  *V, &nlobj);
     AO.m_opt_vars = optvars;
     //-------
     nlobj.set_min_objective( optimize_auto_eval, &AO  );
     nlobj.set_xtol_rel(1.e-4);
-    nlobj.set_ftol_rel(opt.converge_tol);
-    nlobj.set_initial_step( vector<double>( optvars.size(), opt.max_step ) );
-    nlobj.set_maxeval( opt.max_iter );
+    nlobj.set_ftol_rel(V->opt.converge_tol.val);
+    nlobj.set_initial_step( vector<double>( optvars.size(), V->opt.max_step.val ) );
+    nlobj.set_maxeval( V->opt.max_iter.val );
 
     vector<double>
         range_l, 
@@ -2096,7 +2113,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         }
         dimsimpt.push_back(tmp);
     }
-    opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
+    _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
 
     return true;
 }
@@ -2164,7 +2181,7 @@ bool AutoPilot::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector
 }
 
 //---------------- API_S --------------------------
-bool AutoPilot_S::CreateLayout(bool do_post_process)
+bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 {
 	/* 
 	Create a layout using the variable structure that has been created
@@ -2174,9 +2191,9 @@ bool AutoPilot_S::CreateLayout(bool do_post_process)
 
 	int nsim_req = _SF->calcNumRequiredSimulations();
 
-	if(! _SF->isSolarFieldCreated()){
-		throw spexception("The solar field Create() method must be called before generating the field layout.");
-	}
+	//if(! _SF->isSolarFieldCreated()){
+		//throw spexception("The solar field Create() method must be called before generating the field layout.");
+	//}
 	if(! _cancel_simulation){
 		bool simok = _SF->FieldLayout();			
         
@@ -2184,10 +2201,13 @@ bool AutoPilot_S::CreateLayout(bool do_post_process)
 	}
 	if(do_post_process){
 		if(! _cancel_simulation)
-			_SF->calcHeliostatShadows();	if(_SF->ErrCheck()){return false;}
+        {
+            Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
 
+			_SF->calcHeliostatShadows(sun);	if(_SF->ErrCheck()){return false;}
+        }
 		if(! _cancel_simulation)
-			PostProcessLayout();
+			PostProcessLayout(layout);
 	}
 
 	return true;
@@ -2198,8 +2218,6 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 {
 	_cancel_simulation = false;
 	PreSimCallbackUpdate();
-	double pi = acos(-1.);
-	double d2r = pi/180.;
 
 	//set the solar positions to calculate
 	int neff_az;
@@ -2224,9 +2242,11 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 		neff_zen = (int)opttab.zeniths.size();
 	}
 
-	double dni;
-	to_double(_variables["solarfield"][0]["dni_des"].value, &dni);
-	double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+	double dni = _SF->getVarMap()->sf.dni_des.val;
+	//double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+    sim_params P;
+    P.dni = dni;
+    P.Tamb = 25.;
 	
 	int neff_tot = neff_az * neff_zen;
 	
@@ -2254,16 +2274,19 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 					CancelSimulation();
 			
 			//Update the solar position
-			if(! _cancel_simulation)
-				_SF->getAmbientObject()->setSolarPosition((opttab.azimuths.at(i)-180.)*d2r, opttab.zeniths.at(j)*d2r);	
+			//if(! _cancel_simueclation)
+				//_SF->getAmbientObject()->setSolarPosition((opttab.azimuths.at(i)-180.)*D2R, opttab.zeniths.at(j)*D2R);	
 			//Update the aim points and images based on the new solar position and tracking angles
-			if(! _cancel_simulation)
-				interop::AimpointUpdateHandler(*_SF);	
+			//if(! _cancel_simulation)
+				//interop::AimpointUpdateHandler(*_SF);
+            double azzen[2];
+            azzen[0] = opttab.azimuths.at(i)-180.;
+            azzen[1] = opttab.zeniths.at(j) ;
 			//Run the performance simulation
 			if(! _cancel_simulation)
-				_SF->Simulate(args, 4);
+				_SF->Simulate(azzen[0], azzen[1], P);
 			if(! _cancel_simulation)
-				results.at(k++).process_analytical_simulation(*_SF, 0);	
+				results.at(k++).process_analytical_simulation(*_SF, 0, azzen);	
 
 
 			if(_cancel_simulation)
@@ -2320,9 +2343,12 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 	PrepareFluxSimulation(fluxtab, flux_res_x, flux_res_y, is_normalized);
 	
 	//ambient conditions
-	double dni;
-	to_double(_variables["solarfield"][0]["dni_des"].value, &dni);
-	double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+	double dni = _SF->getVarMap()->sf.dni_des.val;
+	
+	//double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+    sim_params P;
+    P.dni = dni;
+    P.Tamb = 25.;
 
 	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
@@ -2344,19 +2370,22 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 				) 
 				CancelSimulation();
 
-		if(! _cancel_simulation){
-			_SF->getAmbientObject()->setSolarPosition( fluxtab.azimuths.at(i), fluxtab.zeniths.at(i) );
-			interop::AimpointUpdateHandler(*_SF);	//update the aim points and image properties
-		}
+		//if(! _cancel_simulation){
+		//	_SF->getAmbientObject()->setSolarPosition( fluxtab.azimuths.at(i), fluxtab.zeniths.at(i) );
+		//	interop::AimpointUpdateHandler(*_SF);	//update the aim points and image properties
+		//}
+        double azzen[2];
+        azzen[0] = fluxtab.azimuths.at(i);
+        azzen[1] = fluxtab.zeniths.at(i);
 
 		if(! _cancel_simulation)
-			_SF->Simulate(args, 4);
+			_SF->Simulate(azzen[0], azzen[1], P);
 		if(! _cancel_simulation)
 			_SF->HermiteFluxSimulation( *_SF->getHeliostats() );
 			
 		sim_result result;
 		if(! _cancel_simulation){
-			result.process_analytical_simulation(*_SF, 2);	
+			result.process_analytical_simulation(*_SF, 2, azzen);	
 			fluxtab.efficiency.push_back( result.eff_total_sf.ave );
 		}
 						
@@ -2404,7 +2433,7 @@ AutoPilot_MT::AutoPilot_MT()
 	SetMaxThreadCount(999999);
 }
 
-bool AutoPilot_MT::CreateLayout(bool do_post_process)
+bool AutoPilot_MT::CreateLayout(sp_layout &layout, bool do_post_process)
 {
 	/* 
 	Create a layout using the variable structure that has been created
@@ -2463,7 +2492,7 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 					sim_last = npert;
 				for(int i=0; i<nthreads; i++){
                     std::string istr = my_to_string(i+1);
-                    _simthread[i].Setup(istr, SFarr[i], &_variables, &results, &wdata, sim_first, sim_last, false, false);
+                    _simthread[i].Setup(istr, SFarr[i], &results, &wdata, sim_first, sim_last, false, false);
 					sim_first = sim_last;
 					sim_last = min(sim_last+npert, nsim_req);
 				}
@@ -2546,9 +2575,9 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
 	            }
 			
 				//For the map-to-annual case, run a simulation here
-				if(_variables["solarfield"][0]["des_sim_detail"].value_int() == LAYOUT_DETAIL::MAP_TO_ANNUAL)	
+				if(_SF->getVarMap()->sf.des_sim_detail.val == LAYOUT_DETAIL::MAP_TO_ANNUAL)	
 					if(! _cancel_simulation)
-						SolarField::AnnualEfficiencySimulation(_variables, *_SF, results); 
+						SolarField::AnnualEfficiencySimulation(_SF->getVarMap()->amb.weather_file.val, _SF, results); 
 
 				//Process the results
 				if(! _cancel_simulation)
@@ -2567,10 +2596,12 @@ bool AutoPilot_MT::CreateLayout(bool do_post_process)
             }
 		}
 		if(do_post_process){
+            Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
+
 			if(! _cancel_simulation)
-				_SF->calcHeliostatShadows();	if(_SF->ErrCheck()){return false;}
+				_SF->calcHeliostatShadows(sun);	if(_SF->ErrCheck()){return false;}
 			if(! _cancel_simulation)
-				PostProcessLayout();
+				PostProcessLayout(layout);
 		}
 	}
 	catch(std::exception &e){
@@ -2604,8 +2635,6 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	
 	_cancel_simulation = false;
 	PreSimCallbackUpdate();
-	double pi = acos(-1.);
-	double d2r = pi/180.;
 
 	//set the solar positions to calculate
 	int neff_az;
@@ -2630,9 +2659,13 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 		neff_zen = (int)opttab.zeniths.size();
 	}
 
-	double dni;
-	to_double(_variables["solarfield"][0]["dni_des"].value, &dni);
-	double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+    var_map *V = _SF->getVarMap();
+
+	double dni = V->sf.dni_des.val;
+	//double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+    sim_params P;
+    P.dni = dni;
+    P.Tamb = 25.;
 	
 	int neff_tot = neff_az * neff_zen;
 	
@@ -2649,8 +2682,8 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	int k=0;
 	for(int j=0; j<neff_zen; j++){
 		for(int i=0; i<neff_az; i++){
-			sunpos.at(k,0) = (opttab.azimuths.at(i) - 180.)*d2r;
-			sunpos.at(k++,1) = opttab.zeniths.at(j)*d2r;
+			sunpos.at(k,0) = (opttab.azimuths.at(i) - 180.)*D2R;
+			sunpos.at(k++,1) = opttab.zeniths.at(j)*D2R;
 		}
 	}
 
@@ -2679,7 +2712,7 @@ bool AutoPilot_MT::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 		sim_last = npert;
 	for(int i=0; i<_n_threads; i++){
         std::string istr = my_to_string(i);
-		_simthread[i].Setup(istr, SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, false);
+		_simthread[i].Setup(istr, SFarr[i], &results, &sunpos, P, sim_first, sim_last, true, false);
 		sim_first = sim_last;
 		sim_last = min(sim_last+npert, _sim_total);
 	}
@@ -2799,9 +2832,11 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 	PrepareFluxSimulation(fluxtab, flux_res_x, flux_res_y, is_normalized);
 	
 	//ambient conditions
-	double dni;
-	to_double(_variables["solarfield"][0]["dni_des"].value, &dni);
-	double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+	double dni = _SF->getVarMap()->sf.dni_des.val;
+	//double args[] = {dni, 25., 1., 0.};		//DNI, Tdb, Pamb, Vwind
+    sim_params P;
+    P.dni = dni;
+    P.Tamb = 25.;
 
 	_sim_total = fluxtab.azimuths.size();	//update the expected number of simulations
 	_sim_complete = 0;
@@ -2847,7 +2882,7 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 		sim_last = npert;
 	for(int i=0; i<_n_threads; i++){
         std::string istr = my_to_string(i);
-        _simthread[i].Setup(istr, SFarr[i], &_variables, &results, &sunpos, args, sim_first, sim_last, true, true);
+        _simthread[i].Setup(istr, SFarr[i], &results, &sunpos, P, sim_first, sim_last, true, true);
 		_simthread[i].IsFluxmapNormalized(is_normalized);
 		sim_first = sim_last;
 		sim_last = min(sim_last+npert, _sim_total);

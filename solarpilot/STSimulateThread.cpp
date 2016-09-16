@@ -40,7 +40,8 @@ void STSimThread::CopyStageRayData( vector<vector<double> > &src, int which_stag
     }
     catch(std::exception &e)
     {
-        string msg = "Error resizing raytrace data array";
+        string msg = e.what();
+        msg.append(": Error resizing raytrace data array");
         throw spexception(msg.c_str());
     }
 

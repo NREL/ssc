@@ -47,64 +47,86 @@ bool solarpilot_invoke::run()
 
     m_sapi = new AutoPilot_S();
 
-	var_set V;
-	ioutil::parseDefinitionArray(V);
+	//var_set V;
+	//ioutil::parseDefinitionArray(V);
+    //var_map V;
 	
 	// define stuff and load default values
-	opt.LoadDefaults(V);
-	amb.LoadDefaults(V);
-	cost.LoadDefaults(V);
-	helios.resize(1);
-	helios.front().LoadDefaults(V);
-	recs.resize(1);
-	recs.front().LoadDefaults(V);
-	layout.LoadDefaults(V);
+	//opt.LoadDefaults(V);
+	//amb.LoadDefaults(V);
+	//cost.LoadDefaults(V);
+	//helios.resize(1);
+	//helios.front().LoadDefaults(V);
+	//recs.resize(1);
+	//recs.front().LoadDefaults(V);
+	//layout.LoadDefaults(V);
 
 	// read inputs from SSC module
 		
 	bool isopt = m_cmod->as_boolean( "is_optimize" );
-    if(isopt){
-		opt.flux_max = m_cmod->as_double("flux_max");
-        opt.max_step = m_cmod->as_double("opt_init_step");
-        opt.max_iter = m_cmod->as_integer("opt_max_iter");
-        opt.converge_tol = m_cmod->as_double("opt_conv_tol");
-        opt.method = m_cmod->as_integer("opt_algorithm");
-        opt.is_optimize_bound = false;
-        opt.flux_penalty = m_cmod->as_double("opt_flux_penalty");
+    if(isopt)
+    {
+		//opt.flux_max = m_cmod->as_double("flux_max");
+        recs.front().peak_flux.val = m_cmod->as_double("flux_max");
+        opt.max_step.val = m_cmod->as_double("opt_init_step");
+        opt.max_iter.val = m_cmod->as_integer("opt_max_iter");
+        opt.converge_tol.val = m_cmod->as_double("opt_conv_tol");
+        opt.algorithm.val = m_cmod->as_integer("opt_algorithm"); //map correctly?
+        //opt.is_optimize_bound = false;
+        opt.flux_penalty.val = m_cmod->as_double("opt_flux_penalty");
     }
 
-	helios.front().width = m_cmod->as_double("helio_width");
-	helios.front().height = m_cmod->as_double("helio_height");
-	helios.front().optical_error = m_cmod->as_double("helio_optical_error"); 
-	helios.front().active_fraction = m_cmod->as_double("helio_active_fraction") * m_cmod->as_double("dens_mirror");
-	helios.front().reflectance = m_cmod->as_double("helio_reflectance");
-	helios.front().npanels_h = m_cmod->as_integer("n_facet_y");
-	helios.front().npanels_w = m_cmod->as_integer("n_facet_x");
+    var_heliostat *hf = &hels.front();
+    //need to set up the template combo
+    sf.temp_which.combo_clear();
+    std::string name = "Template 1", val = "0";
+    sf.temp_which.combo_add_choice(name, val);
+    sf.temp_which.combo_select_by_choice_index( 0 ); //use the first heliostat template
+
+	hf->width.val = m_cmod->as_double("helio_width");
+	hf->height.val = m_cmod->as_double("helio_height");
+    hf->err_azimuth.val = hf->err_elevation.val = hf->err_reflect_x.val = hf->err_reflect_y.val = 0.;   //all other error =0
+    hf->err_surface_x.val = hf->err_surface_y.val = m_cmod->as_double("helio_optical_error");       //slope error
+    hf->soiling.val = 1.;   //reflectivity is the only consideration for this model
+
+	hf->reflect_ratio.val = m_cmod->as_double("helio_active_fraction") * m_cmod->as_double("dens_mirror");
+	hf->reflectivity.val = m_cmod->as_double("helio_reflectance");
+	hf->n_cant_x.val = m_cmod->as_integer("n_facet_x");
+	hf->n_cant_y.val = m_cmod->as_integer("n_facet_y");
+
+    std:string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
+
 	int cmap[5];
+    //cmap[0] = 0; //FLAT
+    //cmap[1] = 1; //AT_SLANT
+    //cmap[2] = cmap[3] = cmap[4] = 3; //AT_DAY_HOUR
+	
     cmap[0] = Heliostat::CANT_TYPE::FLAT;
     cmap[1] = Heliostat::CANT_TYPE::AT_SLANT;
     cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_TYPE::AT_DAY_HOUR;
-	
+
 	int cant_type = m_cmod->as_integer("cant_type");
 
-	helios.front().cant_type = cmap[ cant_type ];       //Convert to the Heliostat::CANT_METHOD list
+	//hf->cant_method.val = cmap[ cant_type ];       //Convert to the Heliostat::CANT_METHOD list
+    //hf->cant_method.combo_select( cant_choices[cmap[cant_type]] );
+    hf->cant_method.combo_select( cant_choices[cant_type] );
     switch (cant_type)
     {
-    case sp_heliostat::CANT_TYPE::NONE:
-    case sp_heliostat::CANT_TYPE::ON_AXIS:
+    case AutoPilot::CANT_TYPE::NONE:
+    case AutoPilot::CANT_TYPE::ON_AXIS:
         //do nothing
         break;
-    case sp_heliostat::CANT_TYPE::EQUINOX:
-        helios.front().cant_settings.point_day = 81;  //spring equinox
-		helios.front().cant_settings.point_hour = 12.;
+    case AutoPilot::CANT_TYPE::EQUINOX:
+        hf->cant_day.val = 81;  //spring equinox
+		hf->cant_hour.val = 12;
         break;
-    case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
-        helios.front().cant_settings.point_day = 172;  //Summer solstice
-		helios.front().cant_settings.point_hour = 12.;
+    case AutoPilot::CANT_TYPE::SOLSTICE_SUMMER:
+        hf->cant_day.val = 172;  //Summer solstice
+		hf->cant_hour.val = 12;
         break;
-    case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
-        helios.front().cant_settings.point_day = 355;  //Winter solstice
-		helios.front().cant_settings.point_hour = 12.;
+    case AutoPilot::CANT_TYPE::SOLSTICE_WINTER:
+        hf->cant_day.val = 355;  //Winter solstice
+		hf->cant_hour.val = 12;
         break;
     default:
     {
@@ -118,38 +140,38 @@ bool solarpilot_invoke::run()
     }
 
 
+    hf->focus_method.combo_select_by_choice_index( m_cmod->as_integer("focus_type") );
 
-	int fmap[2];
-	fmap[0] = sp_heliostat::FOCUS_TYPE::FLAT;
-	fmap[1] = sp_heliostat::FOCUS_TYPE::AT_SLANT;
-	helios.front().focus_type = fmap[ m_cmod->as_integer("focus_type") ];
+    var_receiver *rf = &recs.front();
 
-
-	recs.front().absorptance = m_cmod->as_double("rec_absorptance");
-	recs.front().height = m_cmod->as_double("rec_height");
-	recs.front().aspect = m_cmod->as_double("rec_aspect");
-	recs.front().q_hl_perm2 = m_cmod->as_double("rec_hl_perm2");
+	rf->absorptance.val = m_cmod->as_double("rec_absorptance");
+	rf->rec_height.val = m_cmod->as_double("rec_height");
+	rf->rec_width.val = rf->rec_diameter.val = rf->rec_height.val/m_cmod->as_double("rec_aspect"); 
+	rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");
 		
-	layout.q_design = m_cmod->as_double("q_design");
-	layout.dni_design = m_cmod->as_double("dni_des");
-	layout.land_max = m_cmod->as_double("land_max");
-	layout.land_min = m_cmod->as_double("land_min");
-	layout.h_tower = m_cmod->as_double("h_tower");
+    sf.q_des.val = m_cmod->as_double("q_design");
+	sf.dni_des.val = m_cmod->as_double("dni_des");
+    land.is_bounds_scaled.val = true;
+    land.is_bounds_fixed.val = false;
+    land.is_bounds_array.val = false;
+	land.max_scaled_rad.val = m_cmod->as_double("land_max");
+	land.min_scaled_rad.val = m_cmod->as_double("land_min");
+	sf.tht.val = m_cmod->as_double("h_tower");
 		
-	cost.tower_fixed_cost = m_cmod->as_double("tower_fixed_cost");
-	cost.tower_exp = m_cmod->as_double("tower_exp");
-	cost.rec_ref_cost = m_cmod->as_double("rec_ref_cost");
-	cost.rec_ref_area = m_cmod->as_double("rec_ref_area");
-	cost.rec_cost_exp = m_cmod->as_double("rec_cost_exp");
-	cost.site_spec_cost = m_cmod->as_double("site_spec_cost");
-	cost.heliostat_spec_cost = m_cmod->as_double("heliostat_spec_cost");
-	cost.plant_spec_cost = m_cmod->as_double("plant_spec_cost") + m_cmod->as_double("bop_spec_cost");
-	cost.tes_spec_cost = m_cmod->as_double("tes_spec_cost");
-	cost.land_spec_cost = m_cmod->as_double("land_spec_cost");
-	cost.contingency_rate = m_cmod->as_double("contingency_rate");
-	cost.sales_tax_rate = m_cmod->as_double("sales_tax_rate");
-	cost.sales_tax_rate = m_cmod->as_double("sales_tax_frac");
-	cost.cost_fixed = m_cmod->as_double("cost_sf_fixed");
+	fin.tower_fixed_cost.val = m_cmod->as_double("tower_fixed_cost");
+	fin.tower_exp.val = m_cmod->as_double("tower_exp");
+	fin.rec_ref_cost.val = m_cmod->as_double("rec_ref_cost");
+	fin.rec_ref_area.val = m_cmod->as_double("rec_ref_area");
+	fin.rec_cost_exp.val = m_cmod->as_double("rec_cost_exp");
+	fin.site_spec_cost.val = m_cmod->as_double("site_spec_cost");
+	fin.heliostat_spec_cost.val = m_cmod->as_double("heliostat_spec_cost");
+	fin.plant_spec_cost.val = m_cmod->as_double("plant_spec_cost") + m_cmod->as_double("bop_spec_cost");
+	fin.tes_spec_cost.val = m_cmod->as_double("tes_spec_cost");
+	fin.land_spec_cost.val = m_cmod->as_double("land_spec_cost");
+	fin.contingency_rate.val = m_cmod->as_double("contingency_rate");
+	fin.sales_tax_rate.val = m_cmod->as_double("sales_tax_rate");
+	fin.sales_tax_rate.val = m_cmod->as_double("sales_tax_frac");
+	fin.fixed_cost.val = m_cmod->as_double("cost_sf_fixed");
 	
 	//set up the weather data for simulation
 	const char *wffile = m_cmod->as_string("solar_resource_file" );
@@ -160,15 +182,15 @@ bool solarpilot_invoke::run()
 	weather_header hdr;
 	wFile.header( &hdr );
 		
-	amb.site_latitude = hdr.lat;
-	amb.site_longitude = hdr.lon;
-	amb.site_time_zone = hdr.tz;
-	amb.atten_model = sp_ambient::ATTEN_MODEL::USER_DEFINED;
-	amb.user_atten_coefs.clear();
-	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_0") );
-	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_1") );
-	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_2") );
-	amb.user_atten_coefs.push_back( m_cmod->as_double("c_atm_3") );
+    amb.latitude.val = hdr.lat;
+	amb.longitude.val = hdr.lon;
+	amb.time_zone.val = hdr.tz;
+	amb.atm_model.combo_select_by_choice_index(2); //USER_DEFINED
+	
+	amb.atm_coefs.val.at(2,0) = m_cmod->as_double("c_atm_0");
+    amb.atm_coefs.val.at(2,1) = m_cmod->as_double("c_atm_1");
+    amb.atm_coefs.val.at(2,2) = m_cmod->as_double("c_atm_2");
+    amb.atm_coefs.val.at(2,3) = m_cmod->as_double("c_atm_3");
 
 	weather_record wf;
 
@@ -187,14 +209,14 @@ bool solarpilot_invoke::run()
 	m_sapi->SetDetailCallback( solarpilot_callback, m_cmod);
 	m_sapi->SetSummaryCallbackStatus(false);
 
-	m_sapi->GenerateDesignPointSimulations( amb, V, wfdata );
+	m_sapi->GenerateDesignPointSimulations( *this, wfdata );
 	
     if(isopt){
         m_cmod->log("Optimizing...", SSC_WARNING, 0.);
         m_sapi->SetSummaryCallback( optimize_callback, m_cmod);
-		m_sapi->Setup(amb, cost, layout, helios, recs, true);
+		m_sapi->Setup(*this, true);
             
-        if(! m_sapi->Optimize(opt, recs, layout) )
+        if(! m_sapi->Optimize(*this) )
             return false;
 
         m_sapi->SetSummaryCallbackStatus(false);
@@ -202,9 +224,9 @@ bool solarpilot_invoke::run()
             
     }
     else{
-		m_sapi->Setup(amb, cost, layout, helios, recs);
+		m_sapi->Setup(*this);
     }
-    if(! m_sapi->CreateLayout() )
+    if(! m_sapi->CreateLayout(layout) )
         return false;
 
     
@@ -251,11 +273,11 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
 
 
     //receiver calculations
-    double H_rec = recs.front().height;
-    double rec_aspect = recs.front().aspect;
-    double THT = layout.h_tower;
+    double H_rec = recs.front().rec_height.val;
+    double rec_aspect = recs.front().rec_aspect.Val();
+    double THT = sf.tht.val;
     //update heliostat position table
-    int nr = (int)layout.heliostat_positions.size();
+    int nr = (int)heliotab.positions.size();
     ssc_number_t *ssc_hl = cm->allocate( "helio_positions", nr, 2 );
     for(int i=0; i<nr; i++){
         ssc_hl[i*2] = (ssc_number_t)layout.heliostat_positions.at(i).location.x;
@@ -280,19 +302,19 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
     //Update the total installed cost
     double total_direct_cost = 0.;
     double A_rec;
-    switch (recs.front().type)
+    switch (recs.front().rec_type.val)
     {
-    case sp_receiver::TYPE::CYLINDRICAL:
+    case Receiver::REC_TYPE::CYLINDRICAL:
     {
-        double h = recs.front().height;
-        double d = h/recs.front().aspect;
+        double h = recs.front().rec_height.val;
+        double d = h/recs.front().rec_aspect.Val();
         A_rec =  h*d*3.1415926;
         break;
     }
-    case sp_receiver::TYPE::CAVITY:
-    case sp_receiver::TYPE::FLAT:
-        double h = recs.front().height;
-        double w = h/recs.front().aspect;
+    case Receiver::REC_TYPE::CAVITY:
+    case Receiver::REC_TYPE::FLAT_PLATE:
+        double h = recs.front().rec_height.val;
+        double w = h/recs.front().rec_aspect.Val();
         A_rec = h*w;
         break;
     }
@@ -327,7 +349,7 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
     //-----
 
     //land area
-    double land_area = layout.land_area * cm->as_double("csp.pt.sf.land_overhead_factor") + cm->as_double("csp.pt.sf.fixed_land_area");
+    double land_area = land.land_area.Val() * cm->as_double("csp.pt.sf.land_overhead_factor") + cm->as_double("csp.pt.sf.fixed_land_area");
 
     //EPC
     double cost_epc = 
@@ -357,6 +379,26 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
     return true;
 
 }
+
+
+void solarpilot_invoke::getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
+{
+	/* 
+	Return the addresses of the optimization simulation history data, if applicable.
+	*/
+	sim_points = _optimization_sim_points;
+	obj_values = _optimization_objectives;
+	flux_values = _optimization_fluxes;
+}
+
+void solarpilot_invoke::setOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
+{
+	//Create local copies
+	_optimization_sim_points = sim_points;
+	_optimization_objectives = obj_values;
+	_optimization_fluxes = flux_values;
+}
+
 
 static bool solarpilot_callback( simulation_info *siminfo, void *data )
 {

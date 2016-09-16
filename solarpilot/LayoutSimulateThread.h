@@ -37,8 +37,7 @@ class LayoutSimThread
 	WeatherData *_wdata;
 	sim_results *_results;
 	matrix_t<double> *_sol_azzen;
-	double _user_args[4];
-	var_set *_vset;
+	sim_params _sim_params; 
     vector<string> _sim_messages;
 
 	//wxMutex
@@ -50,11 +49,11 @@ class LayoutSimThread
 
 public:
 
-	void Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, WeatherData *wdata, 
+	void Setup(string &tname, SolarField *SF, sim_results *results, WeatherData *wdata, 
 		int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
-	void Setup(string &tname, SolarField *SF, var_set *vset, sim_results *results, matrix_t<double> *sol_azzen, 
-		double *args, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
+	void Setup(string &tname, SolarField *SF, sim_results *results, matrix_t<double> *sol_azzen, 
+		sim_params &simpars, int sim_first, int sim_last, bool is_shadow_detail, bool is_flux_detail);
 
 	void IsFluxmapNormalized(bool is_normal);	//set whether the fluxmap should be normalized (default TRUE)
 

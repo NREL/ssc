@@ -574,7 +574,7 @@ public:
 			    //Optimization iteration history
 			    vector<vector<double> > steps;
 			    vector<double> obj, flux;
-			    spi.opt.getOptimizationSimulationHistory(steps, obj, flux);
+			    spi.getOptimizationSimulationHistory(steps, obj, flux);
 			    int nr = steps.size();
 			    int nc = steps.front().size() + 2;
 			    ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
@@ -589,9 +589,9 @@ public:
             }
 		
 			//receiver calculations
-			H_rec = spi.recs.front().height;
-			rec_aspect = spi.recs.front().aspect;
-			THT = spi.layout.h_tower;
+			H_rec = spi.recs.front().rec_height.val;
+			rec_aspect = spi.recs.front().rec_aspect.Val();
+			THT = spi.sf.tht.val;
 			//update heliostat position table
 			int nr = (int)spi.layout.heliostat_positions.size();
 			assign("N_hel", nr);
@@ -619,19 +619,22 @@ public:
 			//Update the total installed cost
 			double total_direct_cost = 0.;
 			double A_rec;
-			switch( spi.recs.front().type )
+			switch( spi.recs.front().rec_type.val )
 			{
-			case sp_receiver::TYPE::CYLINDRICAL:
+			//case sp_receiver::TYPE::CYLINDRICAL:
+            case Receiver::REC_TYPE::CYLINDRICAL:
 			{
-                double h = spi.recs.front().height;
-                double d = h / spi.recs.front().aspect;
+                double h = spi.recs.front().rec_height.val;
+                double d = h / spi.recs.front().rec_aspect.Val();
                 A_rec = h*d*3.1415926;
                 break;
 			}
-			case sp_receiver::TYPE::CAVITY:
-			case sp_receiver::TYPE::FLAT:
-				double h = spi.recs.front().height;
-				double w = h / spi.recs.front().aspect;
+			//case sp_receiver::TYPE::CAVITY:
+            case Receiver::REC_TYPE::CAVITY:
+            //case sp_receiver::TYPE::FLAT:
+            case Receiver::REC_TYPE::FLAT_PLATE:
+				double h = spi.recs.front().rec_height.val;
+				double w = h / spi.recs.front().rec_aspect.Val();
 				A_rec = h*w;
 				break;
 			}
@@ -669,8 +672,8 @@ public:
 			sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
 
 			//land area
-			double land_area_base = spi.layout.land_area;		//[acres] Land area occupied by heliostats
-			sys_costs.ms_par.total_land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+			double land_area_base = spi.land.land_area.Val();		//[acres] Land area occupied by heliostats
+			sys_costs.ms_par.total_land_area = spi.land.land_area.Val() * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
 			assign("land_area_base", land_area_base);
 			assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
 			
@@ -822,6 +825,8 @@ public:
 		if( run_type == 1 || run_type == 0 )
 		{
 			heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
+            //if run_type==0, then a layout has already been generated. Set to 1 to avoid regenerating in csp_solver_pt_heliostatfield::init()
+            heliostatfield.ms_params.m_run_type = run_type = 1;
 		}
 		else if( run_type == 2 )
 		{

@@ -5,9 +5,9 @@
 #include <vector>
 #include "Toolbox.h"
 #include "mod_base.h"
+#include "definitions.h"
 
-
-using namespace std;
+//using namespace std;
 
 
 
@@ -24,9 +24,9 @@ struct FluxPoint {
 		/*x, //[m] Node x-position (-East, +West) in global coordinates
 		y, //[m] Node y-position (-South, +North) in global coordinates
 		z, //[m] Node z-position (+vertical) relative to receiver optical height
-		i,	//Normal vector to the point, i direction
-		j,	//Normal vector to the point, j direction
-		k,	//Normal vector to the point, k direction*/
+		i,	//Normal std::vector to the point, i direction
+		j,	//Normal std::vector to the point, j direction
+		k,	//Normal std::vector to the point, k direction*/
 		maxflux, //[W/m2] Maximum allowable flux on this element
 		flux, //[W/m2] Actual flux on this element
 		area_factor;	//[0..1] Factor adjusting the area of the point to accommodate edge effects
@@ -39,7 +39,7 @@ struct FluxPoint {
 
 };
 
-typedef vector<vector<FluxPoint> > FluxGrid;
+typedef std::vector<std::vector<FluxPoint> > FluxGrid;
 
 //The FluxSurface class
 class FluxSurface : public mod_base
@@ -47,7 +47,7 @@ class FluxSurface : public mod_base
 	/* 
 	The FluxSurface class provides a data structure that describes in detail the surface on which 
 	flux from the heliostat field will be collected. The class is a set of points with associated 
-	normal vectors describing their location in x,y,z space and a unit vector that is normal to 
+	normal vectors describing their location in x,y,z space and a unit std::vector that is normal to 
 	that point which indicates the orientation of the absorber surface.
 
 	The class contains methods to develop the flux surface from standard receiver geometries as 
@@ -85,7 +85,7 @@ class FluxSurface : public mod_base
 	Point
 		_offset;
 
-	FluxGrid _flux_grid; // Vector containing grid
+	FluxGrid _flux_grid; // std::vector containing grid
 
 	Receiver *_rec_parent;
 
@@ -114,13 +114,13 @@ public:
 	void setMaxObservedFlux(double fmax);
 	
 	//Declare the scripts
-	void DefineFluxPoints(int rec_geom=-1, int nx=-1, int ny=-1);
+	void DefineFluxPoints(var_receiver &V, int rec_geom, int nx=-1, int ny=-1);
 	void Normalize();
 	void Reshape(int nx, int ny);
 	void ClearFluxGrid();
 };
 
-typedef vector<FluxSurface> FluxSurfaces;
+typedef std::vector<FluxSurface> FluxSurfaces;
 
 
 //Create the main receiver class
@@ -128,73 +128,76 @@ class Receiver : public mod_base
  {
 
 	double
-		_span_min,	//Minimum (CCW) bound of the arc defining the receiver surface
-		_span_max,	//Maximum (CW) bound of the arc defining the receiver surface
-		_panel_rotation,	//Azimuth angle between the normal vector to the primary "north" panel and North
-		_aspect_opt_max,	//Maximum receiver aspect ratio during optimization
-		_aspect_opt_min,	//Minimum receiver aspect ratio during optimization
-		_height_opt_max,	//Maximum receiver height during optimization
-		_height_opt_min,	//Minimum receiver height during optimization
-		_h,				//Height of the absorbing component
-		_rec_aspect,	//Ratio of receiver height to width
-		_d,				//Receiver diameter for cylindrical receivers
-		_w,				//Receiver width for cavity or flat receivers
-		_rec_az,	//Receiver azimuth orientation: 0 deg is north, positive clockwise
-		_rec_elevation,	//Receiver elevation orientation: 0 deg to the horizon, negative rotating downward
-		_rec_cav_rad,	//Radius of the receiver cavity absorbing surface
-		_rec_cav_cdepth,	//Offset of centroid of cavity absorber surface from the aperture plane. (Positive->Increased depth)
+	//	_span_min,	//Minimum (CCW) bound of the arc defining the receiver surface
+	//	_span_max,	//Maximum (CW) bound of the arc defining the receiver surface
+	//	_panel_rotation,	//Azimuth angle between the normal std::vector to the primary "north" panel and North
+	//	_aspect_opt_max,	//Maximum receiver aspect ratio during optimization
+	//	_aspect_opt_min,	//Minimum receiver aspect ratio during optimization
+	//	_height_opt_max,	//Maximum receiver height during optimization
+	//	_height_opt_min,	//Minimum receiver height during optimization
+	//	_h,				//Height of the absorbing component
+	//	_rec_aspect,	//Ratio of receiver height to width
+	//	_d,				//Receiver diameter for cylindrical receivers
+	//	_w,				//Receiver width for cavity or flat receivers
+	//	_rec_az,	//Receiver azimuth orientation: 0 deg is north, positive clockwise
+	//	_rec_elevation,	//Receiver elevation orientation: 0 deg to the horizon, negative rotating downward
+	//	_rec_cav_rad,	//Radius of the receiver cavity absorbing surface
+	//	_rec_cav_cdepth,	//Offset of centroid of cavity absorber surface from the aperture plane. (Positive->Increased depth)
 		_absorber_area,	//Effective area of the receiver absorber panels
-		_opt_height,	//Calculated height of the centerline of the receiver above the plane of the heliostats
-		_rec_offset_x,	//Offset of receiver center in the East(+)/West(-) direction from the tower
-		_rec_offset_y,	//Offset of receiver center in the North(+)/South(-) direction from the tower
-		_rec_offset_z,	//Offset of the receiver center in the vertical direction, positive upwards
-		_peak_flux,	//Maximum allowable flux intensity on any portion of the receiver surface
-		_absorptance,	//Energy absorbed by the receiver surface before accounting for radiation/convection losses
-		_therm_loss_base,	//Thermal loss from the receiver at design-point conditions
+	//	_opt_height,	//Calculated height of the centerline of the receiver above the plane of the heliostats
+	//	_rec_offset_x,	//Offset of receiver center in the East(+)/West(-) direction from the tower
+	//	_rec_offset_y,	//Offset of receiver center in the North(+)/South(-) direction from the tower
+	//	_rec_offset_z,	//Offset of the receiver center in the vertical direction, positive upwards
+	//	_peak_flux,	//Maximum allowable flux intensity on any portion of the receiver surface
+	//	_absorptance,	//Energy absorbed by the receiver surface before accounting for radiation/convection losses
+	//	_therm_loss_base,	//Thermal loss from the receiver at design-point conditions
 		_therm_loss,	//Receiver thermal loss at design
-		_piping_loss_coef,	//Loss per meter of tower height
-		_piping_loss_const,	//Constant thermal loss due to piping - doesn't scale with tower height
-		_piping_loss,	//Thermal loss from non-absorber receiver piping
-		_accept_ang_x,		//Acceptance angle of the receiver in the horizontal direction (in aperture coordinates)
-		_accept_ang_y;		//Acceptance angle of the receiver in the vertical direction (in aperture coordinates)
+	//	_piping_loss_coef,	//Loss per meter of tower height
+	//	_piping_loss_const,	//Constant thermal loss due to piping - doesn't scale with tower height
+		_piping_loss;	//Thermal loss from non-absorber receiver piping
+	//	_accept_ang_x,		//Acceptance angle of the receiver in the horizontal direction (in aperture coordinates)
+	//	_accept_ang_y;		//Acceptance angle of the receiver in the vertical direction (in aperture coordinates)
 
-		
+	//	
 	bool
-		_is_aspect_opt, 		//Optimize aspect ratio (h/w)
-		_is_aspect_restrict, 		//Restrict aperture aspect ratio range
-		_is_height_opt, 		//Optimize receiver height
-		_is_height_restrict,		//Restrict receiver height range
-		_is_enabled,		//Is template enabled?
-		_is_open_geom,		//If true, the receiver is represented by an arc rather than a closed circle/polygon
-		_is_polygon;		//Receiver geometry is represented as discrete polygon of N panels rather than continuous arc
+	//	_is_aspect_opt, 		//Optimize aspect ratio (h/w)
+	//	_is_aspect_restrict, 		//Restrict aperture aspect ratio range
+	//	_is_height_opt, 		//Optimize receiver height
+	//	_is_height_restrict,		//Restrict receiver height range
+		_is_enabled;		//Is template enabled?
+	//	_is_open_geom,		//If true, the receiver is represented by an arc rather than a closed circle/polygon
+	//	_is_polygon;		//Receiver geometry is represented as discrete polygon of N panels rather than continuous arc
 
 	double _thermal_eff;	//An estimate of the thermal efficiency
 
-	string 
-		_rec_name;		//Receiver template name
+	//string 
+	//	_rec_name;		//Receiver template name
 
 	PointVect
-		_normal; //Unit vector of the normal to the reciever
+		_normal; //Unit std::vector of the normal to the reciever
 	int
-		_rec_type, //General receiver type, 0=External cylinder, 1=Cavity, 2=Flat plate
-		_rec_geom, //Specific receiver geometry, defined in DefineReceiverGeometry
-		_id,	//Template ID
-		_n_panels,		//Number of receiver panels (polygon facets) for a polygonal receiver geometry
-		_aperture_type,		//The shape of the receiver aperture. 0=Rectangular, 1=Elliptical
-		_accept_ang_type;		//Receiver angular acceptance window defines angles about the aperture normal, can be rectangular or elliptical shape
+	//	_rec_type, //General receiver type, 0=External cylinder, 1=Cavity, 2=Flat plate
+		_rec_geom; //Specific receiver geometry, defined in DefineReceiverGeometry
+	//	_id,	//Template ID
+	//	_n_panels,		//Number of receiver panels (polygon facets) for a polygonal receiver geometry
+	//	_aperture_type,		//The shape of the receiver aperture. 0=Rectangular, 1=Elliptical
+	//	_accept_ang_type;		//Receiver angular acceptance window defines angles about the aperture normal, can be rectangular or elliptical shape
 
-	matrix_t<double>
-		_therm_loss_load,		//Load-based thermal loss adjustment	Temperature-dependant thermal loss
-		_therm_loss_wind;		//Wind speed-dependant thermal loss
+	//matrix_t<double>
+	//	_therm_loss_load,		//Load-based thermal loss adjustment	Temperature-dependant thermal loss
+	//	_therm_loss_wind;		//Wind speed-dependant thermal loss
 
 	FluxSurfaces 
-		_surfaces; //A vector containing sub-vectors that define the geometry of receiver surfaces
+		_surfaces; //A std::vector containing sub-vectors that define the geometry of receiver surfaces
+    
+    var_receiver *_var_receiver;    //pointer to applicable parameter map
 
 public:	
 	//Receiver (){}; // Constructor 
 	//~Receiver(){};
 	
-	void Create(var_map &V);	//create from variable map
+	void Create(var_receiver &V, double tht);	//create from variable map
+    void updateCalculatedParameters(var_receiver &V, double tht);
 	
 	/* Define an enumeration structure for receiver geometry types */
 	struct REC_GEOM_TYPE { 
@@ -207,51 +210,27 @@ public:
 	};
 
 	//Declare "GET" access functions
-	int getReceiverType(); //[-] Returns receiver type integer (see definitions above)
-	int getReceiverGeomType();	//Receiver geometry type, see DefineReceiverGeometry()
-	int getReceiverApertureType();	//Receiver aperture type. 0=Rectangular, 1=Elliptical
-	int getAcceptAngleType();
-	double getReceiverWidth(); //[m] Returns either receiver width or diameter, depending on configuration
-	double getReceiverHeight(); //[m]  Returns receiver height
-	double getReceiverAzimuth();	//[rad] Returns receiver azimuth {0 = North}
-	double getReceiverElevation();  //[rad] returns receiver zenith
-	double getOffsetX();
-	double getOffsetY();
-	double getOffsetZ();
-	double getOpticalHeight();	//[m] Optical height
-	double getAbsorptance();
-	double getReceiverAbsorberArea();
+	static double getReceiverWidth(var_receiver &V); //[m] Returns either receiver width or diameter, depending on configuration
 	double getReceiverThermalLoss();
 	double getReceiverPipingLoss();
-	double getReceiverThermalEfficiency();
-	int getNumberPanels();
-	double getPanelRotation();
-	void getAcceptAngles(double &theta_x, double &theta_y);
-	void getReceiverOffset(Point &offset);
-	void getReceiverSpan(double &span_min, double &span_max, double &azimuth);
-    double getReceiverCavityRadius();
-    double getReceiverCavityDepth();
-	void CalculateNormalVector(PointVect &NV);	//Returns the normal vector and receiver centroid that represents the optimal optical incidence
-	void CalculateNormalVector(Point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal vector given a viewpoint vector
+    double getThermalEfficiency();
+    double getAbsorberArea();
+    int getGeometryType();
+    var_receiver* getVarMap();
+	void CalculateNormalVector(PointVect &NV);	//Returns the normal std::vector and receiver centroid that represents the optimal optical incidence
+	void CalculateNormalVector(Point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal std::vector given a viewpoint std::vector
 	FluxSurfaces *getFluxSurfaces();
-	string *getReceiverName();
-	bool isReceiverEnabled();
-	void isReceiverEnabled(bool enable);
 
-	//Declare "SET" access functions
-	bool setReceiverType(const int &val); //Sets receiver type. Must be among -1..4
-	bool setOpticalHeight(const double &val); //[m] Sets the optical height of the receiver
-	void setReceiverHeight(double &val);
-	void setReceiverDiameter(double &val);
-	void setReceiverWidth(double &val);
-		
+    bool isReceiverEnabled();
+    void isReceiverEnabled(bool enable);
+
 	//Declare the scripts
-	void setDefaults();
 	void DefineReceiverGeometry(int nflux_x = 1, int nflux_y = 1);
 	void CalculateAbsorberArea();
 	void CalculateThermalLoss(double load, double v_wind);
 	void CalculateThermalEfficiency(double dni, double dni_des, double v_wind, double q_des);
 	double CalculateApparentDiameter(Point &Hloc); //[m] Return the apparent receiver diameter given the polygonal structure
+
  } ;
 
 #endif

@@ -2,14 +2,11 @@
 #define _FLUX_H_ 1
 
 #include <vector>
-#include "Toolbox.h"
-//#include "Heliostat.h"
-//#include "Ambient.h"
-//#include "Land.h"
 #include <time.h>
 #include <random>
 
-using namespace std;
+#include "Toolbox.h"
+#include "definitions.h"
 
 /*Notes:
 * For Hermite polynomials, refer to DELSOL code, line 1471
@@ -98,7 +95,7 @@ class Flux
 	matrix_t<double> hermitePoly( double x );	//This will return a vector<double> of hermite coefficients
 
 	//moments of sunshape distribution. If user-defined, also requires specification of the _user_sun vector
-	void hermiteSunCoefs(matrix_t<double> &mSun, Ambient &A);
+	void hermiteSunCoefs(var_map &V, matrix_t<double> &mSun);
 
 	//moments of the error distribution
 	void hermiteErrDistCoefs(block_t<double> &errDM);
@@ -107,30 +104,30 @@ class Flux
 	void hermiteMirrorCoefs(Heliostat &H, double tht);
 
 	//Evaluate the hermite coefficients in the array _mu_F
-	double hermiteIntEval(SolarField &SF, Heliostat &H, Receiver *Rec);
+	double hermiteIntEval(Heliostat &H, Receiver *Rec);
 
 	//The Hermite integral - determine the flux intercept
 	void hermiteIntegral(double G[5], double F[5], double X[2], double A[2], double TA[2], double WT, matrix_t<double> &hspill);
 
 	//Detailed intercept calculation
-	void hermiteIntegralSetup(SolarField &SF, double A[2], Heliostat &H, matrix_t<double> &hspill, Receiver *Rec);
+	void hermiteIntegralSetup(double A[2], Heliostat &H, matrix_t<double> &hspill, Receiver *Rec);
 
 	//  >>>> This is the main method for intercept calculation, this calls other methods <<<<<<
 	//Returns the total image intercept.
 	//This method to calculate and convolve all moments of error distribution in the image plane
-	double imagePlaneIntercept(Heliostat &H, SolarField &SF, Receiver *Rec) ;
+	double imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *Sun);
 
 	//An algorithm to initialize the polynomial coefficients
-	void initHermiteCoefs(Ambient &A);
+	void initHermiteCoefs(var_map &V);
 
 	//A method to calculate the flux density given a map of values and a solar field
-	void fluxDensity(FluxSurface &flux_surface, SolarField &SF, vector<Heliostat*> &helios, bool clear_grid = true, bool norm_grid = true, bool show_progress=false);
+	void fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, std::vector<Heliostat*> &helios, bool clear_grid = true, bool norm_grid = true, bool show_progress=false);
 
 	double hermiteFluxEval(Heliostat *H, double xs, double ys);
 
 	//-------------End DELSOL3 methods--------------------
 
-	void calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh=0);
+	void calcBestReceiverTarget(Heliostat *H, std::vector<Receiver*> *Recs, double tht, int &rec_index, Vect *rtoh=0);
 
 	void simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF);
 	void simpleAimPoint(Heliostat &H, SolarField &SF);	//Method for quick calculation of the aim point to maximize intercept
@@ -141,7 +138,7 @@ class Flux
 
 	void imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool islast);
 
-    void frozenAimPoint(Heliostat &H, SolarField &SF, double args[]);
+    void frozenAimPoint(Heliostat &H, double tht, double args[]);
 
     void keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[]);
  } ;

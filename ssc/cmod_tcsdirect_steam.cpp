@@ -409,9 +409,9 @@ public:
             spi.run();
             //AutoPilot_S *sapi = spi.GetSAPI();
 
-            H_rec = spi.recs.front().height;
-            rec_aspect = spi.recs.front().aspect;
-            THT = spi.layout.h_tower;
+            H_rec = spi.recs.front().rec_height.val;
+            rec_aspect = spi.recs.front().rec_aspect.Val();
+            THT = spi.sf.tht.val;
             //update heliostat position table
             int nr = (int)spi.layout.heliostat_positions.size();
             ssc_number_t *ssc_hl = allocate( "helio_positions", nr, 2 );
@@ -438,19 +438,22 @@ public:
             //Update the total installed cost
             double total_direct_cost = 0.;
             double A_rec;
-            switch (spi.recs.front().type)
+            switch (spi.recs.front().rec_type.val)
             {
-            case sp_receiver::TYPE::CYLINDRICAL:
+            //case sp_receiver::TYPE::CYLINDRICAL:
+            case Receiver::REC_TYPE::CYLINDRICAL:
             {
-                double h = spi.recs.front().height;
-                double d = h/spi.recs.front().aspect;
+                double h = spi.recs.front().rec_height.val;
+                double d = h/spi.recs.front().rec_aspect.Val();
                 A_rec =  h*d*3.1415926;
                 break;
             }
-            case sp_receiver::TYPE::CAVITY:
-            case sp_receiver::TYPE::FLAT:
-                double h = spi.recs.front().height;
-                double w = h/spi.recs.front().aspect;
+            //case sp_receiver::TYPE::CAVITY:
+            case Receiver::REC_TYPE::CAVITY:
+            //case sp_receiver::TYPE::FLAT:
+            case Receiver::REC_TYPE::FLAT_PLATE:
+                double h = spi.recs.front().rec_height.val;
+                double w = h/spi.recs.front().rec_aspect.Val();
                 A_rec = h*w;
                 break;
             }
@@ -485,7 +488,7 @@ public:
             //-----
 
             //land area
-            double land_area = spi.layout.land_area * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+            double land_area = spi.land.land_area.Val() * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
 
             //EPC
             double cost_epc = 

@@ -1,9 +1,11 @@
+#include <vector>
+#include "math.h"
+
 #include "Heliostat.h"
 #include "SolarField.h"
 #include "Flux.h"
 #include "heliodata.h"
-#include "math.h"
-#include <vector>
+#include "solpos00.h"
 using namespace std;
 
 //declare referenced classes
@@ -13,27 +15,10 @@ double Heliostat::calcTotalEfficiency(){ return eff_data.calcTotalEfficiency(); 
 int Heliostat::getId(){return _id;}
 int *Heliostat::getGroupId(){return _group;}		//(row,col) nodes
 bool Heliostat::getInLayout(){return _in_layout;}
-double Heliostat::getWidth(){return _is_round ? _dm : _wm;} //[m]
-double Heliostat::getHeight(){return _is_round ? _dm : _hm;} //[m]
-double Heliostat::getCollisionRadius(){return _rcoll;}
-double Heliostat::getWGap(){return _wgap;} //[m] Gap in the horizontal direction (width)
-double Heliostat::getHGap(){return _hgap;} //[m] Gap in the vertical direction
-double Heliostat::getArea(){return _area;}
-double Heliostat::getReflectiveAreaDerate(){return _densmr;}
 double Heliostat::getFocalX(){return _xfocal;}
 double Heliostat::getFocalY(){return _yfocal;}
 double Heliostat::getSlantRange(){return _slant;}	//[m]
-double Heliostat::getCantRadius(){return _rcant;}	//[m]
-int Heliostat::getCantDay(){return _dcant;}
-double Heliostat::getCantHour(){return _hcant;}
-double Heliostat::getCantVectScale(){return _cant_vect_scale;}
-int Heliostat::getNumCantY(){return _ncanty;}
-int Heliostat::getNumCantX(){return _ncantx;}
-int Heliostat::getCantMethod(){return _cant_method;}
-int Heliostat::getFocusMethod(){return _focus_method;}
 Receiver *Heliostat::getWhichReceiver(){return _which_rec;}
-int Heliostat::getType(){return _type;}
-int Heliostat::getTemplateOrder(){return _template_order; }
 double Heliostat::getRadialPos(){ return sqrt( pow(_location.x, 2) + pow(_location.y, 2) + pow(_location.z, 2) ); }
 double Heliostat::getAzimuthalPos(){return atan2(_location.x, _location.y); }	//Radians
 matrix_t<Reflector> *Heliostat::getPanels(){return &_panels;}
@@ -57,6 +42,8 @@ double Heliostat::getPowerValue(){return eff_data.power_value;}
 double Heliostat::getRankingMetricValue(){return eff_data.rank_metric;}
 double Heliostat::getAzimuthTrack(){return _azimuth;}
 double Heliostat::getZenithTrack(){return _zenith;}
+double Heliostat::getCollisionRadius(){return _r_collision;}
+double Heliostat::getArea(){return _area;}
 vector<Heliostat*> *Heliostat::getNeighborList(){return _neighbors;}
 vector<Point> *Heliostat::getCornerCoords(){return &_corners;}
 vector<Point> *Heliostat::getShadowCoords(){return &_shadow;}
@@ -71,25 +58,16 @@ double *Heliostat::getImageSize(){return _image_size_xy;}
 void Heliostat::getImageSize(double &sigx_n, double &sigy_n){ sigx_n = _image_size_xy[0]; sigy_n = _image_size_xy[1];}
 string *Heliostat::getHeliostatName(){return &_helio_name;}
 Heliostat* Heliostat::getMasterTemplate(){return _master_template;}
+var_heliostat* Heliostat::getVarMap(){return _var_helio;}
 
-bool Heliostat::IsRound(){return _is_round;}	//Fetch
-void Heliostat::IsRound(bool setting){_is_round = setting;}	//Set
 bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
-bool Heliostat::IsUserFocus(){return _focus_method == 3 ? true : false; }
-void Heliostat::IsUserFocus(bool setting){if(setting) _focus_method = 3;}
-bool Heliostat::IsFacetDetail(){return _is_faceted;}	//Is characterization of multiple facets required?
-void Heliostat::IsFacetDetail(bool setting){_is_faceted = setting;}
 bool Heliostat::IsEnabled(){return _is_enabled;}
 
 void Heliostat::setId(int id){_id = id;}
 void Heliostat::setGroupId(int row, int col){_group[0] = row; _group[1] = col;}
-void Heliostat::setType(int type){_type = type;}
 void Heliostat::setInLayout(bool in_layout){_in_layout = in_layout;}
 void Heliostat::setNeighborList(vector<Heliostat*> *list){_neighbors = list;}
-void Heliostat::setWidth(double &val, bool update_cant){_wm = val; if(update_cant){installPanels();}}
-void Heliostat::setHeight(double &val, bool update_cant){_hm = val; if(update_cant){installPanels();}}
-void Heliostat::setDiameter(double &val, bool update_cant){_dm = val; if(update_cant){installPanels();}}
 void Heliostat::setEfficiencyCosine(double eta_cos){eff_data.eta_cos = fmin(fmax(eta_cos,0.),1.);}
 void Heliostat::setEfficiencyAtmAtten(double eta_att){eff_data.eta_att = eta_att;}
 void Heliostat::setEfficiencyIntercept(double eta_int){eff_data.eta_int = eta_int;}
@@ -105,129 +83,210 @@ void Heliostat::setTowerVector(Vect &tow){ _tower_vect = tow; } //Set the helio-
 void Heliostat::setTrackAngleZenith(double zenith){_zenith = zenith;}
 void Heliostat::setTrackAngleAzimuth(double azimuth){_azimuth = azimuth;}
 void Heliostat::setTrackAngles(double azimuth, double zenith){_zenith = zenith; _azimuth = azimuth;}
-void Heliostat::setTemplateOrder(int tord){_template_order = tord; }
-void Heliostat::setCantMethod(int method){
-	if(method != CANT_TYPE::USER_VECTOR )
-        _cant_method = method;
-	if(method == CANT_TYPE::ON_AXIS_USER )
-        _is_user_canted = true; 
-    else 
-        _is_user_canted = false;
-};
 void Heliostat::setCantVector(Vect &cant){_cant_vect.Set(cant.i, cant.j, cant.k);}
 void Heliostat::setCantVector(double cant[3]){_cant_vect.Set(cant[0], cant[1], cant[2]);}
-void Heliostat::setFocusMethod(int method){_focus_method = method;}
-void Heliostat::setSlantRange(double L){_slant = L;} // if(_cant_method == CANT_TYPE::AT_SLANT){_xfocal = L; _yfocal = L;}}
+void Heliostat::setSlantRange(double L)
+{
+    _slant = L; 
+    if(_var_helio->cant_method.val == CANT_TYPE::AT_SLANT)
+    {
+        _xfocal = L; 
+        _yfocal = L;
+    }
+}
+
 void Heliostat::setFocalLengthX(double L){_xfocal = L;}
 void Heliostat::setFocalLengthY(double L){_yfocal = L;}
 void Heliostat::setFocalLength(double L){_yfocal = L; _xfocal = L;}
-void Heliostat::setCantRadius(double L){_rcant = L;}
-void Heliostat::setErrorAngular(matrix_t<double> &E){setErrorAngular(E.at(0), E.at(1));}
-void Heliostat::setErrorAngular(double sigaz, double sigel){_sigaz = sigaz; _sigty = sigel;}
-void Heliostat::setErrorSurface(matrix_t<double> &E){setErrorSurface(E.at(0), E.at(1));}
-void Heliostat::setErrorSurface(double sigsx, double sigsy){_sigsx = sigsx; _sigsy = sigsy;}
-void Heliostat::setErrorReflected(matrix_t<double> &E){setErrorReflected(E.at(0), E.at(1));}
-void Heliostat::setErrorReflected(double sigtx, double sigty){_sigtx = sigtx; _sigty = sigty;}
-//void setWhichReceiver(int rec){_which_rec = rec;}
 void Heliostat::setWhichReceiver(Receiver *rec){_which_rec = rec;}
 void Heliostat::setPowerToReceiver(double P){eff_data.power_to_rec = P;}
 void Heliostat::setPowerValue(double P){eff_data.power_value = P;}
 void Heliostat::setImageSize(double sigx_n, double sigy_n){ _image_size_xy[0] = sigx_n; _image_size_xy[1] = sigy_n;}
 void Heliostat::setMasterTemplate(Heliostat *htemp){_master_template = htemp;}
 
-//Set the default values for the heliostat class
-void Heliostat::setDefaults () {
-	
-	var_map V;	//empty variable map, all will be set to the default value
-	Create(V);
-		
-}
-
 void Heliostat::resetMetrics(){
 	eff_data.resetMetrics();
 }
 
-void Heliostat::Create(var_map &V)
+void Heliostat::Create(var_map &V, int htnum)
 {
-	setVar("helio_name", _helio_name, V, "Template 1");		//Heliostat template name
-	setVar("id", _id, V, -1, "[-1,9e99]");		//Unique ID number for the heliostat template
-	setVar("is_enabled", _is_enabled, V, true);		//Is template enabled?
-	setVar("temp_rad_min", _temp_rad_min, V, 0.75, "[0,9e9]");		//Minimum radius at which this heliostat geometry can be used
-	setVar("temp_rad_max", _temp_rad_max, V, 7.5, "[0,9e9]");		//Maximum radius at which this heliostat geometry can be used
-	setVar("temp_az_min", _temp_az_min, V, 0., "[-180.,180]");		//Angular boundary for heliostat geometry - on the counter-clockwise side of the region
-	setVar("temp_az_max", _temp_az_max, V, 360., "[-180.,180]");		//Angular boundary for heliostat geometry - on the clockwise side of the region
-	setVar("location_x", _location.x, V, 0., "[-9e9,9e9]");		//X Location of heliostat in the field (0,0,Zt) is the location of the tower base
-	setVar("location_y", _location.y, V, 0., "[-9e9,9e9]");		//Y Location of heliostat in the field (0,0,Zt) is the location of the tower base
-	setVar("location_z", _location.z, V, 0., "[-9e9,9e9]");		//Z Location of heliostat in the field (0,0,Zt) is the location of the tower base
-	setVar("is_round", _is_round, V, 0 );		//Is the heliostat round (true) or rectangular (false)
-	setVar("focus_method", _focus_method, V, 1, "[0,3]");		//The focusing method {0=Flat, 1=Each at slant, 2=Average of group, 3=User defined}
-	setVar("is_xfocus", _is_xfocus, V, true );		//Reflector is focused in with respect to the heliostat X axis
-	setVar("is_yfocus", _is_yfocus, V, true );		//Reflector is focused in with respect to the heliostat Y axis
-	setVar("is_focal_equal", _is_focal_equal, V, true);		//Both the X and Y focal lengths will use a single value as indicated by the X focal length
-	setVar("x_focal_length", _xfocal, V, 1000., "(0.,9e99]");		//Reflector focal length with respect to the heliostat X (horizontal) axis
-	setVar("y_focal_length", _yfocal, V, 1000., "(0.,9e99]");		//Reflector focal length with respect to the heliostat Y (vertical) axis
-	setVar("is_faceted", _is_faceted, V, true);		//The number of reflective panels per heliostat is greater than 1
-	setVar("cant_method", _cant_method, V, -1, "[-1,3]");		//Integer to specify the canting method {0=none, -1=Cant on-axis equal to slant range, 1=user-defined on-axis, 3=user-defined off-axis at hour + day}
-	setVar("type", _type, V, 0, "[0,9e9]");		//Integer used to group heliostats into geometries within a field, (e.g. 5 different focal length designs)
-	setVar("n_cant_x", _ncantx, V, 2, "[1,1000]");		//Number of cant panels in the X direction
-	setVar("n_cant_y", _ncanty, V, 8, "[1,1000]");		//Number of cant panels in the Y direction
-	setVar("n_rot_axes", _nrotax, V, 2, "[0,2]");		//Number of rotational axes on the tracker (1 for LFresnel, 2 for heliostat)
-	setVar("width", _wm, V, 12.2, "(0.,1000.]");		//Width of the heliostat structure
-	setVar("height", _hm, V, 12.2, "(0.,1000.]");		//Height of the heliostat structure
-	setVar("diameter", _dm, V, 13.77, "(0.,1000.]");		//Diameter of the heliostat structure (round heliostats only)
-	setVar("x_gap", _wgap, V, 0., "[0.,1000.]");		//Separation between panels in the horizontal direction
-	setVar("y_gap", _hgap, V, 0., "[0.,1000.]");		//Separation between panels in the vertical direction
-	setVar("cant_hour", _hcant, V, 0., "(-12.,12.]");		//Hours past noon at which the mirror panels are canted (-12 to 12)
-	setVar("cant_day", _dcant, V, 82, "[1,365]");		//Day of the year used for canting the heliostats (1-365)
-	setVar("cant_radius", _rcant, V, 1000., "(0.,9e99]");		//Radius for canting focal point assuming on-axis canting
-	setVar("is_cant_rad_scaled", _is_cant_rad_scaled, V, true);		//The cant radius scales with tower height
-	setVar("cant_rad_scaled", _rcant_scaled, V, 1., "[-9e9,9e9]");		//Canting radius value (absolute value if radius is not scaled, multiplied by tower height if scaled)
-	setVar("cant_vect_i", _cant_vect.i, V, 0., "[-9e9,9e9]");		//Canting vector - x-component
-	setVar("cant_vect_j", _cant_vect.j, V, 0., "[-9e9,9e9]");		//Canting vector y-component
-	setVar("cant_vect_k", _cant_vect.k, V, 1., "[-9e9,9e9]");		//Canting vector z-component
-	setVar("cant_vect_scale", _cant_vect_scale, V, 400., "[-9e9,9e9]");		//Value to scale the canting unit vector to determine actual canting magnitude
-	setVar("is_cant_vect_slant", _is_cant_vect_slant, V, false);		//Multiply the canting vector by the slant range
-	setVar("reflect_ratio", _densmr, V, 0.97, "(0.,1.]");		//Ratio of mirror area to total area of the heliostat defined by wm x hm
-	setVar("reflectivity", eff_data.reflectivity, V, 0.95, "(0.,1.]");		//Average reflectivity (clean) of the mirrored surface
-	setVar("soiling", eff_data.soiling, V, 0.95, "[0.,1.]");		//Average soiling factor
-	setVar("err_elevation", _sigel, V, 0.00075, "[0.,1000.]");		//Standard deviation of the normal error dist. of the elevation angle
-	setVar("err_azimuth", _sigaz, V, 0.00075, "[0.,1000.]");		//Standard deviation of the normal error dist. of the azimuth angle
-	setVar("err_surface_x", _sigsx, V, 0.001, "[0.,1000.]");		//Std.dev. of the normal error dist. of the reflective surface normal in the X (horizontal)
-	setVar("err_surface_y", _sigsy, V, 0.001, "[0.,1000.]");		//Same as above, but in the vertical direction
-	setVar("err_reflect_x", _sigtx, V, 0., "[0.,1000.]");		//error in reflected vector (horiz.) caused by atmospheric refraction, tower sway, etc.
-	setVar("err_reflect_y", _sigty, V, 0., "[0.,1000.]");		//error in reflected vector (vert.) caused by atmospheric refraction, tower sway, etc.
-	setVar("rvel_max_x", _maxrvelx, V, 1000., "(0.,9e99]");		//maximum rotational velocity about the x axis
-	setVar("rvel_max_y", _maxrvelz, V, 1000., "(0.,9e99]");		//maximum rotational velocity about the z axis
-	setVar("r_collision", _rcoll, V, 0., "(0.,1000.]");		//Heliostat reflector maximum footprint diameter
-    setVar("track_method", _track_method, V, 0);		//Specify how often heliostats update their tracking position 
-	setVar("track_period", _track_period, V, 10., "[0,99999]");		//The amount of time between tracking updates for each heliostat
+    _var_helio = &V.hels.at(htnum);
+	//set some defaults for local values
+    _helio_name = _var_helio->helio_name.val;
+    _id = _var_helio->id.val;
+    _is_enabled = _var_helio->is_enabled.val;
+    _location.Set(0., 0., 0.);  //default
+    _xfocal = _var_helio->x_focal_length.val;
+    _yfocal = _var_helio->y_focal_length.val;
+    _cant_vect.Set(0., 0., 1.);
+
+    eff_data.reflectivity = _var_helio->reflectivity.val;
+    eff_data.soiling = _var_helio->soiling.val;
 
 	_track = Vect(); //The tracking vector for the heliostat, defaults to 0,0,1
 	_tower_vect = Vect();  //Heliostat-to-tower unit vector
 	
-	//units
-	_temp_az_min *= d2r;		//Angular boundary for heliostat geometry - on the counter-clockwise side of the region
-	_temp_az_max *= d2r;		//Angular boundary for heliostat geometry - on the clockwise side of the region
-	
+    //calculate dependent parameters
+    updateCalculatedParameters(V, htnum);  //updates var_map
     
 	//Now define panel geometry
 	installPanels();
 
 }
 
-void Heliostat::getErrorAngular(double err[2]){
-	err[0] = _sigaz; 
-	err[1] = _sigel; 
-}
+void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
+{
+    double tht = Vm.sf.tht.val;
 
-void Heliostat::getErrorSurface(double err[2]){
-	err[0] = _sigsx; 
-	err[1] = _sigsy; 
-}
+    var_heliostat* V = &Vm.hels.at(htnum);
+    //Calculate the area and collision radius
+	if(V->is_round.val){
+		_r_collision =  V->diameter.val/2. ;
+		_area =  PI*pow(V->diameter.val/2.,2)*V->reflect_ratio.val ;
+	}
+	else{
+        _r_collision =
+            sqrt( V->height.val * V->height.val / 4. + V->width.val * V->width.val /4. );
+		_area =
+            V->width.val * V->height.val * V->reflect_ratio.val              //width * height * structural density is the base area
+            - V->x_gap.val * V->height.val * (V->n_cant_x.val - 1) - V->y_gap.val * V->width.val * (V->n_cant_y.val - 1)     //subtract off gap areas
+            + (V->n_cant_y.val - 1)*(V->n_cant_x.val - 1)* V->x_gap.val * V->y_gap.val 
+            ;        //but don't double-count the little squares in both gaps
+	}
 
-void Heliostat::getErrorReflected(double err[2]){
-	err[0] = _sigtx; 
-	err[1] = _sigty; 
+    V->area.Setval( _area );
+    V->r_collision.Setval( _r_collision );
+    
+    //calculate the total convolved optical error to report back
+	double err_elevation, err_azimuth, err_surface_x, err_surface_y, err_reflect_x, err_reflect_y;
+	err_elevation = V->err_elevation.val;
+	err_azimuth = V->err_azimuth.val;
+	err_surface_x = V->err_surface_x.val;
+	err_surface_y = V->err_surface_y.val;
+	err_reflect_x = V->err_reflect_x.val;
+	err_reflect_y = V->err_reflect_y.val;
+	double err_tot = sqrt( pow(2.*err_elevation, 2) + pow(2.*err_azimuth, 2) + pow(2.*err_surface_x, 2) + 
+		pow(2.*err_surface_y, 2) + pow(err_reflect_x, 2) + pow(err_reflect_y, 2));
+    
+    V->err_total.Setval( err_tot );
+
+    //Calculate the total optical reflectivity to report back
+	double ref = V->reflectivity.val;
+	double soil = V->soiling.val;
+    V->ref_total.Setval( ref*soil );
+
+    //Heliostat cant radius
+	int cant_method = V->cant_method.val; 
+		/* 
+		No canting=0
+		On-axis at slant=-1
+		On-axis, user-defined=1
+		Off-axis, day and hour=3
+		User-defined vector=4 
+		*/
+    switch (cant_method)
+    {
+    case Heliostat::CANT_TYPE::FLAT:
+    case Heliostat::CANT_TYPE::AT_SLANT:
+        //nothing to calculate
+        break;
+    case Heliostat::CANT_TYPE::ON_AXIS_USER:
+    {
+        //On-axis, user-defined
+		double cant_radius; 
+		double cant_rad_scaled = V->cant_rad_scaled.val;
+			
+		if(V->is_cant_rad_scaled.val){ cant_radius = cant_rad_scaled * tht; }
+		else{ cant_radius = cant_rad_scaled; }
+
+        //set the cant radius
+		V->cant_radius.Setval( cant_radius );
+        break;
+    }
+    case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+    {
+        //Off-axis, day and hour
+		/* Calculate the sun position at this day and hour */
+		int cant_day =  V->cant_day.val;
+		
+        double cant_hour = V->cant_hour.val;
+		double lat = Vm.amb.latitude.val; 
+		double lon = Vm.amb.longitude.val; 
+		double tmz = Vm.amb.time_zone.val;
+
+		DateTime DT;
+		int month, dom;
+		DT.hours_to_date((cant_day-1)*24+cant_hour+12, month, dom);
+
+		//Instantiate the solpos object
+		struct posdata SP, *pdat;
+		pdat = &SP;	//point to structure for convenience
+		S_init(pdat);		//Initialize the values
+	
+		//get hours and minutes from the cant hour
+		int cant_hour_int, cant_min_int;
+		cant_hour_int = (int)floor(cant_hour + .001);
+		cant_min_int = (int)(floor( (cant_hour - (double)cant_hour_int)*60. ) );
+			
+		pdat->latitude = float(lat);		//[deg] {float} North is positive
+		pdat->longitude = float(lon);		//[deg] {float} Degrees east. West is negative
+		pdat->timezone = float(tmz);			//[hr] {float} Time zone, east pos. west negative. Mountain -7, Central -6, etc..
+		pdat->year = 2011;		//[year] {int} 4-digit year
+		pdat->month = month;	//[mo] {int} (1-12)
+		pdat->day = dom;		//[day] {int} Day of the month
+		pdat->daynum = cant_day;	//[day] {int} Day of the year
+		pdat->hour = cant_hour_int+12;		//[hr] {int} 0-23
+		pdat->minute = cant_min_int;	//[min] {int} 0-59
+		pdat->second = 0;	//[sec]	{int} 0-59
+		pdat->interval = 0;		//[sec] {int} Measurement interval. See solpos documentation.
+
+
+		long retcode = 0;		//Initialize with no errors
+		retcode = S_solpos(pdat);	//Call the solar posotion algorithm
+		S_decode(retcode, pdat);	//Check the return code
+
+		/* Check to see if the time/day entered is below sunset. If so, notify the user */
+		DT.SetHour(12);
+		DT.SetDate(2011,month,dom);
+		DT.SetYearDay(cant_day+1);
+		double hrs[2];
+		//Calculate the daytime hours
+		Ambient::calcDaytimeHours(hrs, lat*D2R, lon*D2R, tmz, DT);
+		hrs[0] += -12.;
+		hrs[1] += -12.;
+
+        //Set the cant sun position
+        V->cant_sun_el.Setval( 90. - SP.zenetr );
+        V->cant_sun_az.Setval( SP.azim );
+
+        break;
+    }
+    case Heliostat::CANT_TYPE::USER_VECTOR:
+    {
+		//Calculate the magnitude of the vector components
+        double i = V->cant_vect_i.val * V->cant_vect_i.val;
+        double j = V->cant_vect_j.val * V->cant_vect_j.val;
+        double k = V->cant_vect_k.val * V->cant_vect_k.val;
+        double cmag = sqrt(i*i + j*j + k*k);
+		
+
+        //set normal and cant vector values
+        V->cant_norm_i.Setval( i/cmag );
+        V->cant_norm_j.Setval( j/cmag );
+        V->cant_norm_k.Setval( k/cmag );
+		
+        double scale = V->cant_vect_scale.val; 
+		V->cant_mag_i.Setval( i/cmag*scale );
+		V->cant_mag_j.Setval( j/cmag*scale );
+		V->cant_mag_k.Setval( k/cmag*scale );
+        break;
+    }
+    default:
+        break;
+    }
+
+
+
 }
 
 void Heliostat::getSummaryResults( vector<double> &results){
@@ -261,38 +320,38 @@ void Heliostat::installPanels() {
 	arrangement is more conveniently conceptualized as an attribute of the heliostat
 	rather than as part of the flux algorithm, so it is placed here instead.
 	*/
+    var_heliostat *V = _var_helio;
 
-    //Calculate the collision radius
-	if(_is_round){
-		_rcoll = _dm/2.;
-		_area = Pi*pow(_dm/2.,2)*_densmr;
-	}
-	else{
-		_rcoll = sqrt( pow(_hm/2.,2) + pow(_wm/2.,2) );
-		_area = _wm * _hm * _densmr             //width * height * structural density is the base area
-                - _wgap * _hm * (_ncantx - 1) - _hgap * _wm * (_ncanty - 1)     //subtract off gap areas
-                + (_ncanty - 1)*(_ncantx - 1)*_hgap * _wgap;        //but don't double-count the little squares in both gaps
-	}
+ //   //Calculate the collision radius
+	//if(V->is_round.val){
+	//	_r_collision =  V->diameter.val/2. ;
+	//	_area =  PI*pow(V->diameter.val/2.,2)*V->reflect_ratio.val ;
+	//}
+	//else{
+ //       _r_collision =
+ //           sqrt( V->height.val * V->height.val / 4. + V->width.val * V->width.val /4. );
+	//	_area =
+ //           V->width.val * V->height.val * V->reflect_ratio.val              //width * height * structural density is the base area
+ //           - V->x_gap.val * V->height.val * (V->n_cant_x.val - 1) - V->y_gap.val * V->width.val * (V->n_cant_y.val - 1)     //subtract off gap areas
+ //           + (V->n_cant_y.val - 1)*(V->n_cant_x.val - 1)* V->x_gap.val * V->y_gap.val 
+ //           ;        //but don't double-count the little squares in both gaps
+	//}
 
 	//Initialize the image plane image size for this heliostat to zero until it's calculated in the Flux methods
 	setImageSize(0.,0.);
 
-	if(_is_round){
+	if(V->is_round.val){
 
 		/* 
 		This configuration allows only 1 facet per heliostat. By default, the canting is normal.
 		*/
-
-		//Correct the settings if any are inconsistent
-		_ncantx = 1;
-		_ncanty = 1;
-		_panels.resize(1,1);
+        _panels.resize(1,1);
 
 		_panels.at(0,0).setId(0);
 		_panels.at(0,0).setType(2);	//Circular
-		_panels.at(0,0).setDiameter(_dm);
-		_panels.at(0,0).setHeight(_dm);
-		_panels.at(0,0).setWidth(_dm);
+		_panels.at(0,0).setDiameter(V->diameter.val);
+		_panels.at(0,0).setHeight(V->diameter.val);
+		_panels.at(0,0).setWidth(V->diameter.val);
 		_panels.at(0,0).setPosition(0.,0.,0.);
 		_panels.at(0,0).setAim(0.,0.,1.);
 
@@ -304,11 +363,11 @@ void Heliostat::installPanels() {
 	
 		//--------Calculate canting from other inputs-----------
 		//Calculate height and width of each facet
-		dx = (_wm - _wgap * (_ncantx - 1.) ) / (double)_ncantx;	//[m] width of each canting panel
-		dy = (_hm - _hgap * (_ncanty - 1.) ) / (double)_ncanty;	//[m] height of each panel
+		dx = (V->width.val - V->x_gap.val * (V->n_cant_x.val - 1.) ) / (double)V->n_cant_x.val;	//[m] width of each canting panel
+		dy = (V->height.val - V->y_gap.val * (V->n_cant_y.val - 1.) ) / (double)V->n_cant_y.val;	//[m] height of each panel
 
 		int id=0;
-		_panels.resize(_ncanty, _ncantx);
+		_panels.resize(V->n_cant_y.val, V->n_cant_x.val);
         
 		//back-calculate the aim point
         Point paim;     //heliostat aimpoint
@@ -317,13 +376,13 @@ void Heliostat::installPanels() {
 		paim.z = _location.z + _slant*_tower_vect.k;
 
         //initialize X and Y location of the facet
-		y = -_hm/2. + dy*0.5;
+		y = -V->height.val/2. + dy*0.5;
 
-		for (int j=0; j<_ncanty; j++) {
+		for (int j=0; j<V->n_cant_y.val; j++) {
             //initialize the X location of the facet
-		    x = -_wm/2. + dx*0.5;
+		    x = -V->width.val/2. + dx*0.5;
 
-			for (int i=0; i<_ncantx; i++) {
+			for (int i=0; i<V->n_cant_x.val; i++) {
 				//Assign an ID
 				_panels.at(j,i).setId(id); id++;
 				_panels.at(j,i).setType(1);	//Type=1, rectangular panel
@@ -332,7 +391,7 @@ void Heliostat::installPanels() {
 				//Set the position in the reflector plane. Assume the centroid is in the plane (z=0)
 				_panels.at(j,i).setPosition(x, y, 0.0);
 				//Determine how each panel is canted
-				switch(_cant_method)
+				switch(V->cant_method.val)
 				{
                 case CANT_TYPE::AT_SLANT:	//Individual on-axis cant at distance equal to the slant range
                 {
@@ -345,8 +404,8 @@ void Heliostat::installPanels() {
 					break;
                 case CANT_TYPE::ON_AXIS_USER:		//User-defined on-axis canting. Canting specified in array.
                 {
-					double hyp = sqrt( pow(_rcant,2) + pow(x, 2) + pow(y, 2) );	//cant focal length
-					_panels.at(j,i).setAim(-x/hyp, -y/hyp, 2.*_rcant/hyp);
+					double hyp = sqrt( V->cant_radius.Val()*V->cant_radius.Val() + x*x + y*y );	//cant focal length
+					_panels.at(j,i).setAim(-x/hyp, -y/hyp, 2.*V->cant_radius.Val()/hyp);
 					break;
                 }
                 case CANT_TYPE::AT_DAY_HOUR:		//Individual off-axis cant at time defined by tracking vector
@@ -388,7 +447,7 @@ void Heliostat::installPanels() {
 
                     //The canting correction vector ensures that the user-specified vector is the focus of the canting operation. 
                     Vect paim;
-                    double rscale = _rcant_scaled ? _cant_vect_scale : 1.;
+                    double rscale = V->is_cant_rad_scaled.val ? V->cant_vect_scale.val : 1.;
 
                     /* 
                     coordinate system: looking at the heliostat face on, +x is horizontal, +y vertical. Vector is assumed to come out of the 
@@ -407,10 +466,10 @@ void Heliostat::installPanels() {
 				}
 
                 //increment the x panel position
-                x += dx + _wgap;
+                x += dx + V->x_gap.val;
 			}
             //increment the y panel position
-            y += dy + _hgap;
+            y += dy + V->y_gap.val;
 		}
 	}
 	
@@ -478,13 +537,15 @@ void Heliostat::updateTrackVector(Vect &sunvect) {
 	Assume that the heliostat is starting out facing upward in the z direction with the 
 	upper and lower edges parallel to the global x axis (i.e. zenth=0, azimuth=0)
 	*/
-	if(! _is_round){
+	if(! _var_helio->is_round.val){
+        double wm2 = _var_helio->width.val/2.;
+        double hm2 = _var_helio->height.val/2.;
 		_corners.resize(4);
 	
-		_corners.at(0).Set(-_wm/2., -_hm/2., 0.);	//Upper right corner
-		_corners.at(1).Set(_wm/2., -_hm/2., 0.);	//upper left corner
-		_corners.at(2).Set(_wm/2., _hm/2., 0.);	//lower left
-		_corners.at(3).Set(-_wm/2., _hm/2., 0.);	//lower right
+		_corners.at(0).Set(-wm2, -hm2, 0.);	//Upper right corner
+		_corners.at(1).Set(wm2, -hm2, 0.);	//upper left corner
+		_corners.at(2).Set(wm2, hm2, 0.);	//lower left
+		_corners.at(3).Set(-wm2, hm2, 0.);	//lower right
 		
 		for(int i=0; i<4; i++){ //For each point of interest...
 			//Rotate first about the x axis (zenith)
@@ -518,9 +579,11 @@ void Heliostat::calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, He
     double az = atan2(NV.i, NV.j);
     double el = atan2(NV.k*NV.k, NV.i*NV.i + NV.j*NV.j); 
 
+    var_receiver* R = Rec.getVarMap();
+
     //rotate into flux plane coordinates
-    Toolbox::rotation(H.pi - az,2,aimpos);
-	Toolbox::rotation(H.pi/2. - el,0,aimpos);
+    Toolbox::rotation(PI - az,2,aimpos);
+	Toolbox::rotation(PI/2. - el,0,aimpos);
 	//The z component should be very small, so zero out
 	if( fabs(aimpos.z) < 1.e-6 ) aimpos.z = 0.;
 	//The X and Y coordinates now indicate the image plane position
@@ -598,8 +661,11 @@ void Reflector::setOrientation(PointVect &PV){
 }
 
 Reflector *Heliostat::getPanelById(int id){
-	for (int j=0; j<_ncantx; j++) {
-		for (int i=0; i<_ncanty; i++) {
+    size_t ncantx, ncanty;
+    _panels.size(ncantx, ncanty);  //is this the right order?
+
+	for (int j=0; j<ncantx; j++) {
+		for (int i=0; i<ncanty; i++) {
 			if (_panels[j,i].getId() == id){
 				return &_panels[j,i];
 			}
@@ -687,13 +753,4 @@ void Heliostat::CopyImageData(const Heliostat *Hsrc){
 	for(int i=0; i<nr; i++)
 		for(int j=0; j<nc; j++)
 			_hc_tht.at(i,j) = Hsrc->_hc_tht.at(i,j);
-
-
-}
-
-void Heliostat::getTemplateRange(double &rmin, double &rmax, double &azmin, double &azmax){
-	rmin = _temp_rad_min;
-	rmax = _temp_rad_max;
-	azmin = _temp_az_min;
-	azmax = _temp_az_max;
 }

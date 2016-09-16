@@ -1,10 +1,10 @@
-#include "IOUtil.h"
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <string.h>
+#include <sstream>
 #include "rapidxml.hpp"
 #include "definitions.h"
+#include "sort_method.h"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -14,6 +14,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #endif
+#include "IOUtil.h"
+
+using namespace std;
 
 //extern vardefs variable_definition_array;
 
@@ -215,110 +218,8 @@ void ioutil::read_file( const string &fname, string &file, string &eol_marker)
 
 }
 
-void ioutil::parseInputFile(const string &fname,var_set &V, var_set &Defs){
-/*
 
-DEPRECATED -- Used only for importing old file versions
-
-This algorithm takes file fname, reads in the contents and assigns the values to a map
-structure for later variable assignment. 
-
-The file can contain header lines beginning with the phrase "<HDR>"
-
-The remainder of the file is 2-line combinations following the format:
-<VAR> component.instance#.varname units
-data line 1
-data line 2
-...
-
-For example:
-<VAR> solarfield.0.tht m
-180.000
-
-
---The data structure returned is a set of maps 'V' where:
-V[<module type, str>][<instance, int>][<variable name, str>] = spvar{name, units, value}
-
-*/
-	//Read in the file to a string
-	string file;		//contents of the file
-	string eol;
-	read_file(fname, file, eol);
-	
-	//Replace all instances of the characters '<' and '>' with '[' and ']', respectively
-	ReplaceStringInPlace(file, ">", "]");
-	ReplaceStringInPlace(file,"<","[");
-	//file.Replace('>',']');
-	//file.Replace('<','[');
-
-	std::vector<std::string> lines;
-	lines = split(file, eol);
-
-	std::string line, dlines, varmodule, varname, varunits;
-	int moduleinst; //vartype, 
-	std::vector<std::string> vline, vardef;
-	bool inrec=false;
-	bool multiline = false;
-	//spvar vd; 
-
-	for (unsigned int i=0; i<lines.size(); i++){
-		line = lines.at(i);
-		if( line.find("[HDR]") != std::string::npos ) continue; // header line, don't parse 
-		
-		if( line.find("[VAR]") != std::string::npos || i==lines.size()-1) { //new variable line or end of file
-			if(! inrec){	// Have we read any data yet?
-				//no we haven't...
-				inrec = true;	//we have now started reading data that will need to be stored
-				//Nothing needs to be stored
-			}
-			else
-			{
-				if(i==lines.size()-1){dlines += line;}	//end line of file should be added here
-
-				//Set up variable attributes according to the variable definitions. File data overwritten below...
-				V[varmodule][moduleinst][varname] = Defs[varmodule][0][varname];
-				//we need to store the info that we've been reading
-				V[varmodule][moduleinst][varname].name = varname;
-				V[varmodule][moduleinst][varname].units = varunits;
-				V[varmodule][moduleinst][varname].value = dlines;
-
-				//clear the data line string
-				dlines.clear();
-				multiline = false;	//reset the multiline flag
-			}
-
-			if(i==lines.size()-1) continue; //on the last line, don't parse as if its a var line
-
-			//parse the variable string, type, and units
-			vline = split(line, " ");
-			
-			//parse the variable string into module, instance, and name
-			vardef = split(vline.at(1),".");
-			if(vardef.size() != 3){ continue; }
-			varmodule = vardef.at(0);
-			to_integer(vardef.at(1), &moduleinst);
-			varname = vardef.at(2);
-
-			//to_integer(vline.at(2), &vartype);
-			if(vline.size() > 2) varunits = vline.at(2);
-			
-
-		}
-		else
-		{
-			//Get all of the associated data input lines
-			if(multiline) dlines += "\n";	//Prepend a newline character if we're reading a multiline entry
-			dlines += line;
-			multiline = true;	//Set the multi line flag for the next line, if applicable
-						
-		}
-		
-	}
-
-	return;
-}
-
-void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, parametric &par_data){
+void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_data){
 	/*
 	This algorithm takes file fname, reads in the contents and assigns the values to a map
 	structure for later variable assignment. 
@@ -398,9 +299,14 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 	//skip any header lines for now
 
     //Clean out the variable map
-    V.clear();
-    V = Defs;   //makes sure all structures are represented
+    V.reset();
+    //remove existing instances of heliostat and receiver - they will be added later
+    V.drop_heliostat(0);
+    V.drop_receiver(0);
     
+    vector<int> rec_insts;
+    vector<int> hel_insts;
+
 	//Read in all of the variables
 	xml_node<> *var_node = top_node->first_node("variable");
     std::string component0 = "";
@@ -415,20 +321,47 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 		int inst;
 		to_integer(sinst, &inst);
 
-        //if parsing a new component or instance, first copy the defaults as a basis
-        if(component != component0 || inst != inst0 )
-            V[component][inst] = Defs[component][0];
+        //add new instances on the fly, if needed
+        if(component == "receiver")
+        {
+            if(inst != inst0 || component != component0)
+            {
+                if( find(rec_insts.begin(), rec_insts.end(), inst) == rec_insts.end() )
+                {
+                    V.add_receiver( inst );
+                    rec_insts.push_back( inst );
+                }
+            }
+        }
+        if(component == "heliostat")
+        {
+            if(inst != inst0 || component != component0)
+            {
+                if( find(hel_insts.begin(), hel_insts.end(), inst) == hel_insts.end() )
+                {
+                    V.add_heliostat( inst );
+                    hel_insts.push_back( inst );
+                }
+            }
+        }
 
         component0 = component;
         inst0 = inst;
 
 		//Set up variable attributes according to the variable definitions. File data overwritten below...
-		V[component][inst][varname] = Defs[component][0][varname];
+		//V[component][inst][varname] = Defs[component][0][varname];
 		//we need to store the info that we've been reading
-		V[component][inst][varname].name = varname;
-		V[component][inst][varname].units = (char*)var_node->first_node("units")->value();
-		V[component][inst][varname].value = (char*)var_node->first_node("value")->value();
-		
+        unordered_map<string, spbase*>::iterator v = V._varptrs.find( component + "." + sinst + "." + varname );
+        if( v != V._varptrs.end() )
+        {
+            v->second->set_from_string( (string)var_node->first_node("value")->value() );
+            v->second->units = (char*)var_node->first_node("units")->value();
+        }
+        else
+        {
+            //variable isn't in the map.. what to do about that? Nothing for now
+        }
+
 		var_node = var_node->next_sibling("variable");
 	}
 
@@ -439,7 +372,15 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 		xml_node<> *par = par_node->first_node("par_variable");
 		while(par != 0){
 			//Add the variable by reference to the variable map object, then set relevant fields
-			par_data.addVar( getVarByString(V, (char*)par->first_node("varname")->value() ) );
+			//par_data.addVar( getVarByString(V, (char*)par->first_node("varname")->value() ) );
+            unordered_map<string, spbase*>::iterator v = V._varptrs.find( (string)par->first_node("varname")->value() );
+            if( v != V._varptrs.end() )
+                par_data.addVar( v->second );
+            else
+            {
+			    par = par->next_sibling("par_variable");
+                continue;
+            }
 
 			par_variable *pvar = &par_data.back();
 			
@@ -486,120 +427,6 @@ void ioutil::parseXMLInputFile(const string &fname,var_set &V, var_set &Defs, pa
 	return;
 }
 
-void ioutil::parseDefinitionArray(var_set &V, string disabled_mods)
-{
-	//figure out which modules, if any, shouldn't be loaded
-	vector<string> vdmods = split(disabled_mods, ";");
-	
-	//Clean out the variable set
-	V.clear();
-	string varmodule, var, control, special;
-	int i=0; 
-	while( true )
-	{
-		varmodule = variable_definition_array[i].domain; //Variable grouping (solarfield, heliostat...)
-		
-		//don't even load omitted modules 
-		for(vector<string>::iterator mod = vdmods.begin(); mod != vdmods.end(); mod ++){
-			if( (string)varmodule == *mod ){
-				i++;
-				continue;
-			}
-		}
-		
-		if( varmodule == "--end--" ) break;
-
-		var = variable_definition_array[i].name; //Variable name
-		spvar *vdat = &V[varmodule][0][var];
-		vdat->varpath = varmodule + ".0." + var;
-
-		//Get the information for this variable
-		vdat->dattype = lower_case(variable_definition_array[i].type); 
-		vdat->value = variable_definition_array[i].value; //Default value
-		vdat->units = variable_definition_array[i].units; //Units
-		vdat->range = variable_definition_array[i].range; //valid range
-		vdat->is_param = (string)variable_definition_array[i].isparam == "TRUE";	//is parameterizable?
-		control = variable_definition_array[i].control; 
-		vdat->ctype = control;	//Control type
-		special = variable_definition_array[i].special;
-		if(special.size()>0) vdat->choices = split( special, ";" ); 
-		vdat->is_disabled = (string)lower_case(variable_definition_array[i].disable) == "x";
-		vdat->short_desc = variable_definition_array[i].label;	//Short description - variable label
-		vdat->long_desc = variable_definition_array[i].description;	//Long description
-
-		if(control=="combo"){
-			//create the options map.. <selection id -> string name>
-			for(int j=0; j<(int)vdat->choices.size(); j++){
-				vector<string> dat = split(vdat->choices.at(j), "=");
-				int vind;
-				to_integer(dat.at(1), &vind);
-				vdat->index_map[vind] = dat.at(0);
-			}
-		}
-		i++;
-		
-	}
-}
-
-//void ioutil::parseDefinitionFile(const std::string &fname, var_set &V){
-//	/*
-//	This reads the inputs definition file and parses all of the descriptive data into the variable array. 
-//	All of the inputs in the GUI are defined in the GUI text file, and information on labels, units, etc., 
-//	are defined within the file. Reading of this file should happen before the input file is parsed so
-//	that saved inputs can overwrite the default value.
-//	*/
-//
-//	//Read in the file to a string
-//	string file, eol;		//contents of the file
-//	read_file(fname, file, eol);
-//	
-//	std::vector<std::string> lines, line;
-//	lines = split(file, eol);
-//
-//	std::string varmodule, var, control, special;
-//
-//	int i, nl = lines.size();
-//
-//	//Clean out the variable set
-//	V.clear();
-//
-//	for(i=0; i<nl; i++){
-//		//For each line in the file.. each line is a unique record
-//		line = split(lines.at(i), "\t", true);
-//		varmodule = line.at(VMAP::VDOMAIN);	//Variable grouping (solarfield, heliostat...)
-//		var = line.at(VMAP::STRING_NAME);	//Variable name
-//		spvar *vdat = &V[varmodule][0][var];
-//		vdat->varpath = varmodule + ".0." + var;
-//
-//		//Get the information for this variable
-//		vdat->dattype = lower_case(line.at(VMAP::TYPE));
-//		vdat->value = line.at(VMAP::VALUE);	//Default value
-//		vdat->units = line.at(VMAP::UNITS);	//Units
-//		vdat->range = line.at(VMAP::RANGE);	//valid range
-//		vdat->is_param = line.at(VMAP::IS_PARAM) == "TRUE";	//is parameterizable?
-//		control = line.at(VMAP::CONTROL);	
-//		vdat->ctype = control;	//Control type
-//		if(line.at(VMAP::SPECIAL).size()>0) vdat->choices = split( line.at(VMAP::SPECIAL), ";" ); 
-//		vdat->is_disabled = lower_case(line.at(VMAP::UI_DISABLE)) == "x";
-//		vdat->short_desc = line.at(VMAP::LABEL);	//Short description - variable label
-//		vdat->long_desc = line.at(VMAP::DESCRIPTION);	//Long description
-//
-//		if(control=="combo"){
-//			//create the options map.. <selection id -> string name>
-//			for(int j=0; j<(int)vdat->choices.size(); j++){
-//				vector<string> dat = split(vdat->choices.at(j), "=");
-//				int vind;
-//				to_integer(dat.at(1), &vind);
-//				vdat->index_map[vind] = dat.at(0);
-//			}
-//		}
-//
-//		
-//	}
-//	
-//}
-
-#include <sstream>
 template<typename T> static std::string my_to_string( T value )
 {
 	std::ostringstream os;
@@ -609,7 +436,7 @@ template<typename T> static std::string my_to_string( T value )
 
 
 
-bool ioutil::saveXMLInputFile(const string &fname, var_set &V, var_set &Defs, parametric &par_data, const string &version){
+bool ioutil::saveXMLInputFile(const string &fname, var_map &V, parametric &par_data, const string &version){
 
 	ofstream fobj(fname.c_str());
 	if(fobj.is_open())
@@ -623,109 +450,85 @@ bool ioutil::saveXMLInputFile(const string &fname, var_set &V, var_set &Defs, pa
 		string t4 = "\t\t\t\t";
 	
 		//version
-		//fobj.AddLine( wxString::Format("%s<version>%s</version>",t1, _software_version) );
 		fobj << t1 << "<version>" << version << "</version>\n"; 
 		//Add a header line with info on the last save time
 		DTobj dt; dt.Now();
 		fobj << t1 << "<header>Last saved " << dt._month << "-" << dt._mday << "-" << dt._year << " at " << dt._hour << ":" << dt._min << ":" << dt._sec << "</header>\n";
 		
-		//fobj.AddLine( wxString::Format("%s<header>Last saved %d-%d-%d at %d:%d:%d</header>", t1, dt._month, dt._mday, dt._year, dt._hour, dt._min, dt._sec) );
-	
 		//Write each variable
 		string module, inst, varname, units;
-		for(var_set::iterator it0 = V.begin(); it0 != V.end(); it0++){
-			module = it0->first;
-			for(map<int, var_map>::iterator it1 = it0->second.begin(); it1 != it0->second.end(); it1++){
-				inst = my_to_string(it1->first);
-				for(var_map::iterator it2 = it1->second.begin(); it2 != it1->second.end(); it2++){
-					varname = it2->first;
 
-					//fobj.AddLine( wxString::Format("%s<variable>",t1) );
-					fobj << t1 << "<variable>\n";
+        //get all of the keys, then sort alphabetically
+        vector<string> keys;
+        for( unordered_map<string, spbase*>::iterator it=V._varptrs.begin(); it != V._varptrs.end(); it++)
+            keys.push_back(it->first);
 
-					//fobj.AddLine( wxString::Format("%s<component>%s</component>",t2, module) );
-					fobj << t2 << "<component>" << module << "</component>\n";
-					//fobj.AddLine( wxString::Format("%s<instance>%s</instance>",t2, inst) );
-					fobj << t2 << "<instance>" << inst << "</instance>\n";
-					//fobj.AddLine( wxString::Format("%s<varname>%s</varname>",t2, varname) );
-					fobj << t2 << "<varname>" << varname << "</varname>\n";
-					//fobj.AddLine( wxString::Format("%s<units>%s</units>",t2, it2->second.units) );
-					fobj << t2 << "<units>" << it2->second.units << "</units>\n";
-					//fobj.AddLine( wxString::Format("%s<value>%s</value>",t2, it2->second.value.c_str()) );
-					fobj << t2 << "<value>" << it2->second.value << "</value>\n";
+        quicksort(keys);
+
+
+        for(int i=0; i<keys.size(); i++)
+        {
+            spbase *v = V._varptrs[keys.at(i)];
+
+            vector<string> nm = split(v->name, ".");
+
+            fobj << t1 << "<variable>\n";
+
+			fobj << t2 << "<component>" << nm[0] << "</component>\n";
+			fobj << t2 << "<instance>" << nm[1] << "</instance>\n";
+			fobj << t2 << "<varname>" << nm[2] << "</varname>\n";
+			fobj << t2 << "<units>" << v->units << "</units>\n";
+            string val;
+            v->as_string(val);
+			fobj << t2 << "<value>" << val << "</value>\n";
 				
-					//fobj.AddLine( wxString::Format("%s</variable>",t1) );
-					fobj << t1 << "</variable>\n";
-				}
-			}
-		}
+			fobj << t1 << "</variable>\n";
+        }
 
 		//Write any parametric data
 		if(par_data.size() > 0){
-			//fobj.AddLine( wxString::Format("%s<parametric>",t1) );
 			fobj << t1 << "<parametric>\n";
 			for(int i=0; i<par_data.size(); i++){
-				//fobj.AddLine( wxString::Format("%s<par_variable>",t2) );
 				fobj << t2 << "<par_variable>\n";
 				par_variable *pv = &par_data[i];
 
 				//varname
-				//fobj.AddLine( wxString::Format("%s<varname>%s</varname>",t3, pv->varname) );
 				fobj << t3 << "<varname>" << pv->varname << "</varname>\n";
 				//display text
-				//fobj.AddLine( wxString::Format("%s<display_text>%s</display_text>",t3, pv->display_text) );
 				fobj << t3 << "<display_text>" << pv->display_text << "</display_text>\n";
 				//units
-				//fobj.AddLine( wxString::Format("%s<units>%s</units>",t3, pv->units) );
 				fobj << t3 << "<units>" << pv->units << "</units>\n";
 				//data type
-				//fobj.AddLine( wxString::Format("%s<data_type>%s</data_type>",t3, pv->data_type) );
 				fobj << t3 << "<data_type>" << pv->data_type << "</data_type>\n";
 				//linked
-				//fobj.AddLine( wxString::Format("%s<linked>%s</linked>",t3, (pv->linked ? "true" : "false") ) );
 				fobj << t3 << "<linked>" << (pv->linked ? "true" : "false") << "</linked>\n";
 				//layout required
-				//fobj.AddLine( wxString::Format("%s<layout_required>%s</layout_required>",t3, (pv->layout_required ? "true" : "false") ) );
 				fobj << t3 << "<layout_required>" << (pv->layout_required ? "true" : "false") << "</layout_required>\n";
 
 				//Selections
-				//fobj.AddLine( wxString::Format("%s<selections>",t3) );
 				fobj << t3 << "<selections>\n";
 				for(int j=0; j<(int)pv->selections.size(); j++)
-					//fobj.AddLine( wxString::Format("%s<selection>%s</selection>",t4, pv->selections[j] ) );
 					fobj << t4 << "<selection>" << pv->selections[j] << "</selection>\n";
-				//fobj.AddLine( wxString::Format("%s</selections>",t3) );
 				fobj << t3 << "</selections>\n";
 
 				//choices
-				//fobj.AddLine( wxString::Format("%s<choices>",t3) );
 				fobj << t3 << "<choices>\n";
 				for(int j=0; j<(int)pv->choices.size(); j++)
-					//fobj.AddLine( wxString::Format("%s<choice>%s</choice>",t4, pv->choices[j] ) );
 					fobj << t4 << "<choice>" << pv->choices[j] << "</choice>\n";
-				//fobj.AddLine( wxString::Format("%s</choices>",t3) );
 				fobj << t3 << "</choices>\n";
 
 				//sim_values
-				//fobj.AddLine( wxString::Format("%s<sim_values>",t3) );
 				fobj << t3 << "<sim_values>\n";
 				for(int j=0; j<(int)pv->sim_values.size(); j++)
-					//fobj.AddLine( wxString::Format("%s<sim_value>%s</sim_value>",t4, pv->sim_values[j] ) );
 					fobj << t4 << "<sim_value>" << pv->sim_values[j] << "</sim_value>\n";
-				//fobj.AddLine( wxString::Format("%s</sim_values>",t3) );
 				fobj << t3 << "</sim_values>\n";
 
-				//fobj.AddLine( wxString::Format("%s</par_variable>",t2) );
 				fobj << t2 << "</par_variable>\n";
 			}
-			//fobj.AddLine( wxString::Format("%s</parametric>",t1) );
 			fobj << t1 << "</parametric>\n";
 		}
-		//fobj.AddLine("</data>");
 		fobj << "</data>\n";
 
-		//fobj.Write();
-		//fobj.Close();
 		fobj.close();
 		//--------------
 		return true;

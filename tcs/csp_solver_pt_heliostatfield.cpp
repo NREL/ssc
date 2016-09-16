@@ -288,93 +288,85 @@ void C_pt_heliostatfield::init()
 			AutoPilot_S sapi;
 
 			sp_optimize opt;
-			sp_ambient amb;
+			/*sp_ambient amb;
 			sp_cost cost;
 			sp_heliostats helios;
-			sp_receivers recs;
+			sp_receivers recs;*/
 			sp_layout layout;
 	
-			var_set V;
-			ioutil::parseDefinitionArray(V);
+			//var_set V;
+			//ioutil::parseDefinitionArray(V);
+            var_map V;
 	
 			// define stuff and load default values
-			opt.LoadDefaults(V);
-			amb.LoadDefaults(V);
-			cost.LoadDefaults(V);
-			helios.resize(1);
-			helios.front().LoadDefaults(V);
-			recs.resize(1);
-			recs.front().LoadDefaults(V);
-			layout.LoadDefaults(V);
+			//opt.LoadDefaults(V);
+			//amb.LoadDefaults(V);
+			//cost.LoadDefaults(V);
+			//helios.resize(1);
+			//helios.front().LoadDefaults(V);
+			//recs.resize(1);
+			//recs.front().LoadDefaults(V);
+			//layout.LoadDefaults(V);
 
-			helios.front().width = helio_width;
-			helios.front().height = helio_height;
-			helios.front().optical_error = helio_optical_error;
-			helios.front().active_fraction = helio_active_fraction * dens_mirror;   //availability * mirror area fraction
-			helios.front().reflectance = helio_reflectance;
+            var_heliostat *hf = &V.hels.front();
+			hf->width.val = helio_width;
+			hf->height.val = helio_height;
+			hf->err_surface_x.val = hf->err_surface_y.val = helio_optical_error;
+			hf->reflect_ratio.val = helio_active_fraction * dens_mirror;   //availability * mirror area fraction
+			hf->reflectivity.val = helio_reflectance;
+            hf->soiling.val = 1.;   //all in the reflectance
 			int cmap[5];
 			cmap[0] = Heliostat::CANT_TYPE::FLAT;
             cmap[1] = Heliostat::CANT_TYPE::AT_SLANT;
             cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_TYPE::AT_DAY_HOUR;
-			helios.front().cant_type = cmap[ cant_type ];
+			hf->cant_method.val = cmap[ cant_type ];
 
             switch (cant_type)
             {
-            case sp_heliostat::CANT_TYPE::NONE:
-            case sp_heliostat::CANT_TYPE::ON_AXIS:
+            case AutoPilot::CANT_TYPE::NONE:
+            case AutoPilot::CANT_TYPE::ON_AXIS:
                 //do nothing
                 break;
-            case sp_heliostat::CANT_TYPE::EQUINOX:
-                helios.front().cant_settings.point_day = 81;  //spring equinox
-		        helios.front().cant_settings.point_hour = 12.;
+            case AutoPilot::CANT_TYPE::EQUINOX:
+                hf->cant_day.val = 81;  //spring equinox
+	            hf->cant_hour.val = 12;
                 break;
-            case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
-                helios.front().cant_settings.point_day = 172;  //Summer solstice
-		        helios.front().cant_settings.point_hour = 12.;
+            case AutoPilot::CANT_TYPE::SOLSTICE_SUMMER:
+                hf->cant_day.val = 172;  //Summer solstice
+	            hf->cant_hour.val = 12;
                 break;
-            case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
-                helios.front().cant_settings.point_day = 355;  //Winter solstice
-		        helios.front().cant_settings.point_hour = 12.;
+            case AutoPilot::CANT_TYPE::SOLSTICE_WINTER:
+                hf->cant_day.val = 355;  //Winter solstice
+	            hf->cant_hour.val = 12;
                 break;
             default:
             {
                 stringstream msg;
-                msg << "Invalid Cant Type specified in CSP SOLVER PT HELIOSTAT. Method must be one of: \n" <<
-                       "NONE(0), ON_AXIS(1), EQUINOX(2), SOLSTICE_SUMMER(3), SOLSTICE_WINTER(4).\n" <<
-                       "Method specified is: " << cant_type << ".";
+                msg << "Invalid Cant Type specified in AutoPILOT API. Method must be one of: \n" <<
+                        "NONE(0), ON_AXIS(1), EQUINOX(2), SOLSTICE_SUMMER(3), SOLSTICE_WINTER(4).\n" <<
+                        "Method specified is: " << cant_type << ".";
                 throw spexception(msg.str());
             }
                 break;
             }
 
-			if( cant_type == 2 ){
-				helios.front().cant_settings.point_day = 81;  //spring equinox
-				helios.front().cant_settings.point_hour = 12.;
-			}
-			else if( cant_type == 3 ){
-				helios.front().cant_settings.point_day = 172;  //Summer solstice
-				helios.front().cant_settings.point_hour = 12.;
-			}
-			else if( cant_type == 4){
-				helios.front().cant_settings.point_day = 355;  //Winter solstice
-				helios.front().cant_settings.point_hour = 12.;
-			}
+			/*int fmap[2];
+			fmap[0] = AutoPilot::FOCUS_TYPE::FLAT;
+			fmap[1] = AutoPilot::FOCUS_TYPE::AT_SLANT;
+			hf->focus_method.val = fmap[ focus_type ];*/
+            hf->focus_method.combo_select_by_choice_index( focus_type );
 
-			int fmap[2];
-			fmap[0] = sp_heliostat::FOCUS_TYPE::FLAT;
-			fmap[1] = sp_heliostat::FOCUS_TYPE::AT_SLANT;
-			helios.front().focus_type = fmap[ focus_type ];
-
-			recs.front().absorptance = rec_absorptance;
-			recs.front().height = rec_height;
-			recs.front().aspect = rec_aspect;
-			recs.front().q_hl_perm2 = rec_hl_perm2;
+            var_receiver *rf = &V.recs.front();
+			rf->absorptance.val = rec_absorptance;
+			rf->rec_height.val = rec_height;
+			rf->rec_diameter.val = rec_height / rec_aspect;
+			rf->therm_loss_base.val = rec_hl_perm2;
 			
-			layout.q_design = q_design;
-			layout.dni_design = dni_des;
-			layout.land_max = land_max;
-			layout.land_min = land_min;
-			layout.h_tower = h_tower;
+			V.sf.q_des.val = q_design;
+			V.sf.dni_des.val = dni_des;
+			V.land.max_scaled_rad.val = land_max;
+			V.land.min_scaled_rad.val = land_min;
+			V.sf.tht.val = h_tower;
 
 			//set up the weather data for simulation
 			const char *wffile = weather_file.c_str();
@@ -393,15 +385,16 @@ void C_pt_heliostatfield::init()
 			weather_header hdr;
 			wfile.header( &hdr );
 
-			amb.site_latitude = hdr.lat;
-			amb.site_longitude = hdr.lon;
-			amb.site_time_zone = hdr.tz;
-			amb.atten_model = sp_ambient::ATTEN_MODEL::USER_DEFINED;
-			amb.user_atten_coefs.clear();
-			amb.user_atten_coefs.push_back(c_atm_0);
-			amb.user_atten_coefs.push_back(c_atm_1);
-			amb.user_atten_coefs.push_back(c_atm_2);
-			amb.user_atten_coefs.push_back(c_atm_3);
+			V.amb.latitude.val = hdr.lat;
+			V.amb.longitude.val = hdr.lon;
+			V.amb.time_zone.val = hdr.tz;
+			V.amb.atm_model.val = AutoPilot::ATTEN_MODEL::USER_DEFINED;
+            V.amb.atm_coefs.val.clear();
+            V.amb.atm_coefs.val.resize(4);
+			V.amb.atm_coefs.val.at(0) = c_atm_0;
+			V.amb.atm_coefs.val.at(1) = c_atm_1;
+			V.amb.atm_coefs.val.at(2) = c_atm_2;
+			V.amb.atm_coefs.val.at(3) = c_atm_3;
 
 			if(run_type == RUN_TYPE::AUTO)
 			{
@@ -436,11 +429,11 @@ void C_pt_heliostatfield::init()
 
 
 
-				sapi.GenerateDesignPointSimulations( amb, V, wfdata );
+				sapi.GenerateDesignPointSimulations( V, wfdata );
 	
-				sapi.Setup(amb, cost, layout, helios, recs);
+				sapi.Setup(V);
 
-				sapi.CreateLayout();
+				sapi.CreateLayout(layout);
 
 
 				//Copy the heliostat field positions into the 'helio_positions' data structure
@@ -470,15 +463,22 @@ void C_pt_heliostatfield::init()
 				/* 
 				Load in the heliostat field positions that are provided by the user.
 				*/
-				layout.heliostat_positions.clear();
-				layout.heliostat_positions.resize(m_N_hel);
-				
+				//layout.heliostat_positions.clear();
+				//layout.heliostat_positions.resize(m_N_hel);
+				string format = "0,%f,%f,%f,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL;";
+                V.sf.layout_data.val.clear();
+
+                char row[200];
 				for( int i=0; i<m_N_hel; i++)
 				{
-					layout.heliostat_positions.at(i).location.x = helio_positions(i,0);
-					layout.heliostat_positions.at(i).location.y = helio_positions(i,1);
-					if(pos_dim==3)
-						layout.heliostat_positions.at(i).location.z = helio_positions(i,2);
+                    sprintf(row, format.c_str(), helio_positions(i,0), helio_positions(i,1), pos_dim == 3 ? helio_positions(i,2) : 0. );
+
+                    V.sf.layout_data.val.append( row );
+
+					//layout.heliostat_positions.at(i).location.x = helio_positions(i,0);
+					//layout.heliostat_positions.at(i).location.y = helio_positions(i,1);
+					//if(pos_dim==3)
+						//layout.heliostat_positions.at(i).location.z = helio_positions(i,2);
 					//layout.heliostat_positions.at(i).location.x = TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 );
 					//layout.heliostat_positions.at(i).location.y = TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 );
 					//if(pos_dim==3)
@@ -486,11 +486,11 @@ void C_pt_heliostatfield::init()
 					
 				}
 
-                sapi.Setup(amb, cost, layout, helios, recs);
+                sapi.Setup(V);
 								
 			}
             //land area update
-			ms_params.m_land_area = layout.land_area;		//value(P_land_area, layout.land_area);
+			ms_params.m_land_area = V.land.land_area.Val();		//value(P_land_area, layout.land_area);
             //number of heliostats
 				//twn: get from matrix_t: ms_params.m_helio_positions
 			//ms_params.m_N_hel = m_N_hel;					//value(P_N_hel, (double)m_N_hel);

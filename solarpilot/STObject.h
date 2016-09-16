@@ -241,8 +241,6 @@ struct ST_Stage
 
 struct ST_System
 {
-	double Pi;
-
 	ST_System();
 	~ST_System();
 
@@ -265,7 +263,7 @@ struct ST_System
     ST_IntersectionData IntData;
 
 	//method for loading the solar field geometry into the ST_System object
-	bool CreateSTSystem(SolarField &SF, Hvector &helios);
+	bool CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect);
 
 	static void LoadIntoContext(ST_System *System, st_context_t spcxt);
 	void Write(FILE *fdat);
