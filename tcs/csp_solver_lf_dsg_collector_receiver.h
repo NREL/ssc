@@ -196,7 +196,7 @@ public:
 	double m_q_inc_loop;
 
 	// Stored
-	util::matrix_t<double> m_T_ave_prev;
+	vector<double> m_T_ave_prev;
 	double m_defocus_prev;
 	double m_t_sby_prev;
 	double m_t_sby;
@@ -244,7 +244,7 @@ public:
 	double m_T_sys_c_t_end;				//[K] Temperature (bulk) of cold runners & headers at end of current timestep
 	//double m_T_sys_c_t_int;				//[K] Temperature (bulk) of cold runners & headers at time-INTegrated-average	
 	//std::vector<double> m_T_htf_in_t_int;	//[K] time-integrated-average inlet HTF temperature to each SCA
-	std::vector<double> m_T_htf_out_t_end;	//[K] end-of-timestep outlet HTF temperature of each SCA
+	//std::vector<double> m_T_htf_out_t_end;	//[K] end-of-timestep outlet HTF temperature of each SCA
 	//std::vector<double> m_T_htf_out_t_int;	//[K] time-integrated-average outlet HTF temp of each SCA
 	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
 	//double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
@@ -439,6 +439,12 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
+	void call_bk(const C_csp_weatherreader::S_outputs &weather,
+		const C_csp_solver_htf_1state &htf_state_in,
+		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
+		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+		const C_csp_solver_sim_info &sim_info);
+
 	class C_mono_eq_xb_loop_out : public C_monotonic_equation
 	{
 	private:
@@ -450,7 +456,7 @@ public:
 			mpc_csp = pc_csp;
 		}
 
-		virtual int operator()(double m_dot_htf_loop /*kg/s*/, double *xb_loop_out /*K*/);
+		virtual int operator()(double m_dot_htf_loop /*kg/s*/, double *xb_loop_out /*-*/);
 	};
 
 	void apply_control_defocus(double defocus /*-*/);
