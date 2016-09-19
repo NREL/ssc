@@ -327,7 +327,7 @@ void var_map::reset()
 
 void var_map::add_heliostat(int id)
 {
-	std::string sid=std::to_string(id);
+	std::string sid=my_to_string(id); //std::to_string(id);
 	hels.push_back(var_heliostat());
 
 	hels.back().cant_day             .set("heliostat."+sid+".cant_day"       , SP_DATTYPE::SP_INT       ,                 "82",        "day",     true,         "",    "",    false,                "Canting day of the year", "Day of the year used for canting the heliostats (1-365)");
@@ -399,7 +399,7 @@ void var_map::add_heliostat(int id)
 
 void var_map::add_receiver(int id)
 {
-	std::string sid=std::to_string(id);
+	std::string sid= my_to_string(id); //std::to_string(id);
 	recs.push_back(var_receiver());
 
 	recs.back().absorptance          .set("receiver."+sid+".absorptance"     , SP_DATTYPE::SP_DOUBLE    ,               "0.94",       "none",     true,         "",    "",    false,           "Receiver thermal absorptance", "Energy absorbed by the receiver surface before accounting for radiation/convection losses");

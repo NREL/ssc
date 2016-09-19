@@ -4,7 +4,7 @@
 #define _VARDEFS_ 1
 
 #include "mod_base.h"
-#include "toolbox.h"
+#include "Toolbox.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4267)

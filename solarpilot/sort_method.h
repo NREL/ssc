@@ -1,8 +1,10 @@
 #ifndef _SORT_
 #define _SORT_ 1
 
+#include <algorithm>
 #include <vector>
 using namespace std;
+
 template <typename Comparable, typename Tag>
 void insertionSort( vector<Comparable> & a, vector<Tag> & b, int left, int right );
 /**
@@ -104,7 +106,7 @@ void quicksort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
 template <typename Comparable>
 void quicksort( vector<Comparable> & a)
 {
-    quicksort( a, 0, a.size( ) - 1 );
+    quicksort( a, 0, (int)a.size( ) - 1 );
 }
 
 
