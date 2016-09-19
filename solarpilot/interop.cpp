@@ -1357,7 +1357,7 @@ void parametric::addVar(spbase *var)
 		string ts;
         var->as_string(ts);
 		vback->selections.Add(ts);
-		vback->data_type = var->dattype;
+		vback->data_type = "double"; //var->dattype;
 	}
 }
 
