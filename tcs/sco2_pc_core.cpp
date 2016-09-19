@@ -3888,6 +3888,34 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 		ms_auto_opt_des_par.m_eta_t = 0.1;
 	}
 
+	if( ms_auto_opt_des_par.m_LT_eff_max > 1.0 )
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_LT_eff_max));
+
+		ms_auto_opt_des_par.m_LT_eff_max = 1.0;
+	}
+
+	if( ms_auto_opt_des_par.m_LT_eff_max < 0.70 )
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_LT_eff_max));
+
+		ms_auto_opt_des_par.m_LT_eff_max = 0.7;
+	}
+
+	if( ms_auto_opt_des_par.m_HT_eff_max > 1.0 )
+	{
+		error_msg.append(util::format("The HT recuperator max effectiveness, %lg, was decreased to the limit of 1.0\n", ms_auto_opt_des_par.m_HT_eff_max));
+
+		ms_auto_opt_des_par.m_HT_eff_max = 1.0;
+	}
+
+	if( ms_auto_opt_des_par.m_HT_eff_max < 0.70 )
+	{
+		error_msg.append(util::format("The LT recuperator max effectiveness, %lg, was increased to the internal limit of 0.70 improve convergence\n", ms_auto_opt_des_par.m_HT_eff_max));
+
+		ms_auto_opt_des_par.m_HT_eff_max = 0.7;
+	}
+
 		// Limits on high pressure limit
 	if( ms_auto_opt_des_par.m_P_high_limit >= N_co2_props::P_upper_limit )
 	{
