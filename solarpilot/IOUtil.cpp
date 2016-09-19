@@ -1,7 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <sstream>
+#include <algorithm>
 #include "rapidxml.hpp"
 #include "definitions.h"
 #include "sort_method.h"
