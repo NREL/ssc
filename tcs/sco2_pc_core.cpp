@@ -2966,11 +2966,11 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		// LTR
 	mc_LT_recup.initialize(ms_des_par.m_N_sub_hxrs);
 	mc_LT_recup.ms_des_par.m_UA_target = ms_des_par.m_UA_LT;
-	mc_LT_recup.ms_des_par.m_eff_max = 1.0;
+	mc_LT_recup.ms_des_par.m_eff_max = ms_des_par.m_LT_eff_max;
 		// HTR
 	mc_HT_recup.initialize(ms_des_par.m_N_sub_hxrs);
 	mc_HT_recup.ms_des_par.m_UA_target = ms_des_par.m_UA_HT;
-	mc_HT_recup.ms_des_par.m_eff_max = 1.0;
+	mc_HT_recup.ms_des_par.m_eff_max = ms_des_par.m_HT_eff_max;
 
 	int max_iter = 500;
 	double temperature_tolerance = 1.E-6;		// Temp differences below this are considered zero
@@ -3469,6 +3469,8 @@ void C_RecompCycle::opt_design_core(int & error_code)
 	ms_des_par.m_DP_HT = ms_opt_des_par.m_DP_HT;
 	ms_des_par.m_DP_PC = ms_opt_des_par.m_DP_PC;
 	ms_des_par.m_DP_PHX = ms_opt_des_par.m_DP_PHX;
+	ms_des_par.m_LT_eff_max = ms_opt_des_par.m_LT_eff_max;
+	ms_des_par.m_HT_eff_max = ms_opt_des_par.m_HT_eff_max;
 	ms_des_par.m_eta_mc = ms_opt_des_par.m_eta_mc;
 	ms_des_par.m_eta_rc = ms_opt_des_par.m_eta_rc;
 	ms_des_par.m_eta_t = ms_opt_des_par.m_eta_t;
@@ -3685,6 +3687,8 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	ms_opt_des_par.m_DP_HT = ms_auto_opt_des_par.m_DP_HT;
 	ms_opt_des_par.m_DP_PC = ms_auto_opt_des_par.m_DP_PC;
 	ms_opt_des_par.m_DP_PHX = ms_auto_opt_des_par.m_DP_PHX;
+	ms_opt_des_par.m_LT_eff_max = ms_auto_opt_des_par.m_LT_eff_max;
+	ms_opt_des_par.m_HT_eff_max = ms_auto_opt_des_par.m_HT_eff_max;
 	ms_opt_des_par.m_UA_rec_total = ms_auto_opt_des_par.m_UA_rec_total;
 	ms_opt_des_par.m_eta_mc = ms_auto_opt_des_par.m_eta_mc;
 	ms_opt_des_par.m_eta_rc = ms_auto_opt_des_par.m_eta_rc;
@@ -3770,6 +3774,8 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 	ms_auto_opt_des_par.m_DP_PC = auto_opt_des_hit_eta_in.m_DP_PC;						//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_DP_PHX = auto_opt_des_hit_eta_in.m_DP_PHX;					//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 	ms_auto_opt_des_par.m_UA_rec_total = std::numeric_limits<double>::quiet_NaN();		// ***** This method finds the UA required to hit the input efficiency! *****
+	ms_auto_opt_des_par.m_LT_eff_max = auto_opt_des_hit_eta_in.m_LT_eff_max;
+	ms_auto_opt_des_par.m_HT_eff_max = auto_opt_des_hit_eta_in.m_HT_eff_max;
 	ms_auto_opt_des_par.m_eta_mc = auto_opt_des_hit_eta_in.m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_eta_rc = auto_opt_des_hit_eta_in.m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 	ms_auto_opt_des_par.m_eta_t = auto_opt_des_hit_eta_in.m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative

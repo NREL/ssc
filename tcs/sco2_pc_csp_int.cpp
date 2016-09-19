@@ -48,6 +48,8 @@ void C_sco2_recomp_csp::design_core()
 	ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
 	ms_rc_cycle_des_par.m_DP_PC = ms_des_par.m_DP_PC;
 	ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
+	ms_rc_cycle_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
+	ms_rc_cycle_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
 	ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
 	ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
 	ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
