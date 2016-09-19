@@ -22,6 +22,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_t",           "Design turbine isentropic efficiency",                   "-",          "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "P_high_limit",         "High pressure limit in cycle",                           "MPa",        "",    "",      "*",     "",       "" },
 		// PHX Design
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_PHX_cold_approach", "Temp diff btw cold HTF and cold CO2",                    "C",          "",    "",      "*",     "",       "" },
@@ -176,7 +178,9 @@ public:
 		sco2_rc_des_par.m_tol = 1.E-3;
 		sco2_rc_des_par.m_opt_tol = 1.E-3;
 		
-			// Remaining cycle design parameters	
+			// Remaining cycle design parameters
+		sco2_rc_des_par.m_LT_eff_max = as_double("LT_recup_eff_max");
+		sco2_rc_des_par.m_HT_eff_max = as_double("HT_recup_eff_max");
 		sco2_rc_des_par.m_eta_mc = as_double("eta_isen_mc");
 		sco2_rc_des_par.m_eta_rc = as_double("eta_isen_rc");
 		sco2_rc_des_par.m_eta_t = as_double("eta_isen_t");
@@ -267,24 +271,32 @@ public:
 		double m_dot_htf_des = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;		//[kg/s]
 		double T_amb_des = sco2_recomp_csp.get_design_par()->m_T_amb_des;				//[K]
 		
-		double m_dot_htf_ND = 0.5;
+		double m_dot_htf_ND = 1.0;
 		double T_htf_hot_in_offset = 0;
 		sco2_rc_od_par.m_T_htf_hot = T_htf_hot_in_des - T_htf_hot_in_offset;	//[K]	
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf_ND*m_dot_htf_des;				//[kg/s]
-		sco2_rc_od_par.m_T_amb = 273;										//[K]
+		sco2_rc_od_par.m_T_amb = 273.15;										//[K]
 			
 		
 		C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
 			// Set-up one-off off-design operation inputs
 		// ***************************************************************************
-		sco2_rc_od_op_par.m_P_mc_in = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
-		if( sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc )
-		{	// Recompression Fraction
-			sco2_rc_od_op_par.m_recomp_frac = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac;	//[-]
-		}
-		sco2_rc_od_op_par.m_phi_mc = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
-			// Call off_design
-		int sco2_od_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
+		//sco2_rc_od_op_par.m_P_mc_in = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
+		//if( sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc )
+		//{	// Recompression Fraction
+		//	sco2_rc_od_op_par.m_recomp_frac = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac;	//[-]
+		//}
+		//sco2_rc_od_op_par.m_phi_mc = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
+		//	
+		//sco2_rc_od_op_par.m_P_mc_in = 7534.0;		//[kPa]
+		//if( sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_is_rc )
+		//{	// Recompression Fraction
+		//	sco2_rc_od_op_par.m_recomp_frac = 0.1556;	//[-]
+		//}
+		//sco2_rc_od_op_par.m_phi_mc = 0.002971;	//[-]
+		//
+		//	// Call off_design
+		//int sco2_od_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
 		// ***************************************************************************
 		// ***************************************************************************
 
