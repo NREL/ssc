@@ -35,6 +35,11 @@ struct var_map;
 //The land boundary arrays should be described with sets of polygons for inclusions and exclusions
 //typedef std::vector<std::vector<Point> > bounds_array;
 
+template<typename T> static std::string my_to_string(const T &value) {
+	ostringstream x;
+	x << value;
+	return x.str();
+}
 
 class simulation_info
 {
@@ -324,7 +329,7 @@ protected:
 
     void _as_str(std::string &vout, int &v)
     {
-        vout = std::to_string(v);
+        vout = my_to_string(v);
     };
 
     void _as_str(std::string &vout, std::string &v)
@@ -334,7 +339,7 @@ protected:
 
     void _as_str(std::string &vout, double &v)
     {
-        vout = std::to_string(v);
+        vout = my_to_string(v);
     };
 
     void _as_str(std::string &vout, bool &v)
@@ -349,7 +354,7 @@ protected:
         {
             for(size_t j=0; j<v.ncols(); j++)
             {
-                vout.append( std::to_string(v.at(i,j)) );
+                vout.append( my_to_string(v.at(i,j)) );
                 if( j < v.ncols()-1 )
                     vout.append(",");
             }
@@ -362,7 +367,7 @@ protected:
         vout.clear();
 
         for(size_t i=0; i<v.size(); i++)
-            vout.append("[P]" + std::to_string(v.at(i).x) + "," + std::to_string(v.at(i).y) + "," + std::to_string(v.at(i).z) );
+            vout.append("[P]" + my_to_string(v.at(i).x) + "," + my_to_string(v.at(i).y) + "," + my_to_string(v.at(i).z) );
     };
 
     void _as_str(std::string &vout, std::vector< double > &v)
@@ -370,7 +375,7 @@ protected:
         vout.clear();
         for(size_t i=0; i<v.size(); i++)
         {
-            vout.append( std::to_string(v.at(i)) );
+            vout.append( my_to_string(v.at(i)) );
             if(i<v.size()-1)
                 vout.append(",");
         }
@@ -381,7 +386,7 @@ protected:
         vout.clear();
         for(size_t i=0; i<v.size(); i++)
         {
-            vout.append( std::to_string(v.at(i)) );
+            vout.append( my_to_string(v.at(i)) );
             if(i<v.size()-1)
                 vout.append(",");
         }
@@ -432,7 +437,7 @@ protected:
 
                 for(int k=0; k<3; k++)
                 {
-                    vout.append(std::to_string(v.at(i).at(j)[k]));
+                    vout.append(my_to_string(v.at(i).at(j)[k]));
                     if( k<2 )
                         vout.append(",");
                 }

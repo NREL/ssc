@@ -10,6 +10,7 @@
 #include "IOUtil.h"
 #include "SolarField.h"
 #include "definitions.h"
+#include "mod_base.h"
 
 #ifdef SP_USE_THREADS
 #include <thread>
@@ -19,12 +20,12 @@
 using namespace std;
 
 
-template<typename T> static std::string my_to_string( T value )
-{
-	std::ostringstream os;
-	os << value;
-	return os.str();
-}
+//template<typename T> static std::string my_to_string( T value )
+//{
+//	std::ostringstream os;
+//	os << value;
+//	return os.str();
+//}
 
 class response_surface_data
 {
