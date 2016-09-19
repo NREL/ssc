@@ -14,6 +14,7 @@ using std::unordered_map;
 #include <vector>
 #include <string>
 #include <time.h>
+#include <algorithm>
 
 //#include "std::string_util.h"
 #include "Toolbox.h"
