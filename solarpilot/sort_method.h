@@ -101,13 +101,7 @@ void quicksort( vector<Comparable> & a, vector<Tag> & b, int left, int right )
 	}
 }
 
-/*------------------ Quicksort for one vector -------------------- */
 
-template <typename Comparable>
-void quicksort( vector<Comparable> & a)
-{
-    quicksort( a, 0, (int)a.size( ) - 1 );
-}
 
 
 /**
@@ -203,4 +197,11 @@ void quicksort( vector<Comparable> & a, vector<Tag> & b)
     quicksort( a, b, 0, a.size( ) - 1 );
 }
 
+/*------------------ Quicksort for one vector -------------------- */
+
+template <typename Comparable>
+void quicksort( vector<Comparable> & a)
+{
+    quicksort( a, 0, (int)a.size( ) - 1 );
+}
 #endif
