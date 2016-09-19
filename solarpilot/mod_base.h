@@ -463,9 +463,9 @@ public:
     bool is_param;	//Is this variable parameterizable?
 	bool is_disabled;	//Is this variable disabled (overridden)?
 
-    virtual bool set_from_string(std::string &Val){ (void)Val; return false;};
+    //virtual bool set_from_string(std::string &Val){ (void)Val; return false;};
     virtual bool set_from_string(const char* Val){(void)Val; return false;};
-    virtual bool set_from_string(std::string Val){ (void)Val; return false;};
+    //virtual bool set_from_string(std::string Val){ (void)Val; return false;};
     virtual void as_string(std::string &ValAsStr){ (void)ValAsStr; throw spexception("Virtual method as_string cannot be executed in base class");};
     virtual std::string as_string(){throw spexception("Virtual method as_string cannot be executed in base class");};
     virtual bool combo_select(std::string choice){ (void)choice; throw spexception("Virtual method combo_select cannot be executed in base class"); };
@@ -560,10 +560,10 @@ public:
     /* ------------------------------- */
 
     
-    bool set_from_string(std::string &Val)
-    {
-        return _setv(Val, val);
-    };
+    //bool set_from_string(std::string &Val)
+    //{
+    //    return _setv(Val, val);
+    //};
     
     bool set_from_string(const char* Val)
     {
@@ -571,10 +571,10 @@ public:
     	return _setv(sval, val);
     };
     
-    bool set_from_string(std::string Val)
-    {
-    	return _setv(Val, val);
-    };
+    //bool set_from_string(std::string Val)
+    //{
+    //	return _setv(Val, val);
+    //};
 
     void as_string(std::string &ValAsStr)
     {
@@ -667,9 +667,10 @@ private:
     T _val;
 public:
 
-    bool set_from_string(std::string &Val)
+    bool set_from_string(const char* Val)
     {
-        return _setv(Val, _val);
+        std::string sval = Val;
+        return _setv(sval, _val);
     };
     void as_string(std::string &ValAsStr)
     {
