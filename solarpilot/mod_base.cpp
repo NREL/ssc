@@ -5,11 +5,11 @@
 #include "mod_base.h"
 #include "exceptions.hpp"
 
-template<typename T> static std::string my_to_string(const T &value) {
-	ostringstream x;
-	x << value;
-	return x.str();
-}
+//template<typename T> static std::string my_to_string(const T &value) {
+//	ostringstream x;
+//	x << value;
+//	return x.str();
+//}
 
 //------ simulation info --------
 
