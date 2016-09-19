@@ -12,12 +12,12 @@
 //using namespace std;
 
 
-template<typename T> static std::string my_to_string( T value )
-{
-	std::ostringstream os;
-	os << value;
-	return os.str();
-}
+//template<typename T> static std::string my_to_string( T value )
+//{
+//	std::ostringstream os;
+//	os << value;
+//	return os.str();
+//}
 
 //-------------------  arraystring ----------------
 

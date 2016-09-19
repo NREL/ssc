@@ -647,7 +647,7 @@ void var_fluxsim::addptrs(unordered_map<std::string, spbase*> &pmap)
 
 void var_heliostat::addptrs(unordered_map<std::string, spbase*> &pmap)
 {
-	std::string sid = std::to_string(id.val);
+	std::string sid = my_to_string(id.val);
 	pmap["heliostat."+sid+".cant_day"] = &cant_day;
 	pmap["heliostat."+sid+".cant_hour"] = &cant_hour;
 	pmap["heliostat."+sid+".cant_method"] = &cant_method;
@@ -787,7 +787,7 @@ void var_plant::addptrs(unordered_map<std::string, spbase*> &pmap)
 
 void var_receiver::addptrs(unordered_map<std::string, spbase*> &pmap)
 {
-	std::string sid = std::to_string(id.val);
+	std::string sid = my_to_string(id.val);
 	pmap["receiver."+sid+".absorptance"] = &absorptance;
 	pmap["receiver."+sid+".accept_ang_type"] = &accept_ang_type;
 	pmap["receiver."+sid+".accept_ang_x"] = &accept_ang_x;
