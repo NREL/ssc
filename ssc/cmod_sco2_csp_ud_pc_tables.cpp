@@ -20,6 +20,8 @@ static var_info _cm_vtab_sco2_csp_ud_pc_tables[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_t",           "Design turbine isentropic efficiency",                   "-",          "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "LT_recup_eff_max",     "Maximum allowable effectiveness in LT recuperator",      "-",          "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "HT_recup_eff_max",     "Maximum allowable effectiveness in HT recuperator",      "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "P_high_limit",         "High pressure limit in cycle",                           "MPa",        "",    "",      "*",     "",       "" },
 		// PHX Design
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_PHX_cold_approach", "Temp diff btw cold HTF and cold CO2",                    "C",          "",    "",      "*",     "",       "" },
@@ -140,7 +142,9 @@ public:
 		sco2_rc_des_par.m_tol = 1.E-3;
 		sco2_rc_des_par.m_opt_tol = 1.E-3;
 		
-			// Remaining cycle design parameters	
+			// Remaining cycle design parameters
+		sco2_rc_des_par.m_LT_eff_max = as_double("LT_recup_eff_max");
+		sco2_rc_des_par.m_HT_eff_max = as_double("HT_recup_eff_max");
 		sco2_rc_des_par.m_eta_mc = as_double("eta_isen_mc");
 		sco2_rc_des_par.m_eta_rc = as_double("eta_isen_rc");
 		sco2_rc_des_par.m_eta_t = as_double("eta_isen_t");

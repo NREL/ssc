@@ -1032,6 +1032,8 @@ public:
 			sco2_rc_csp_par.m_W_dot_net = as_double("P_ref")*1.E3;					//[kWe]
 			sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");					//[-]
 				// Cycle Design Parameters
+			sco2_rc_csp_par.m_LT_eff_max = 1.0;
+			sco2_rc_csp_par.m_HT_eff_max = 1.0;
 			sco2_rc_csp_par.m_eta_mc = as_double("eta_c");					//[-]
 			sco2_rc_csp_par.m_eta_rc = as_double("eta_c");					//[-]
 			sco2_rc_csp_par.m_eta_t = as_double("eta_t");					//[-]
