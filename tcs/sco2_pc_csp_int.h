@@ -35,6 +35,8 @@ public:
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PC;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+		double m_LT_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+		double m_HT_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
 		double m_eta_mc;					//[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
 		double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
@@ -57,7 +59,7 @@ public:
 			m_hot_fl_code = m_N_sub_hxrs = -1;
 
 			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
-				m_elevation = m_W_dot_net = m_eta_thermal =
+				m_elevation = m_W_dot_net = m_eta_thermal = m_LT_eff_max = m_HT_eff_max =
 
 				m_eta_mc = m_eta_rc = m_eta_t =
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
