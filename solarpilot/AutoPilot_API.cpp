@@ -1435,7 +1435,7 @@ bool AutoPilot::Optimize(var_map &V)
             is_range_constr.push_back(false);
 		}
 	}
-	if(V.land.is_land_max_opt.val)
+	/*if(V.land.is_land_max_opt.val)
     {
         names.push_back("MaxRad");
 		optvars.push_back( &V.land.max_scaled_rad.val);
@@ -1451,7 +1451,7 @@ bool AutoPilot::Optimize(var_map &V)
 			upper_range.push_back( 2. );
             is_range_constr.push_back(false);
 		}
-	}
+	}*/
 
     switch(V.opt.algorithm.val)     //"BOBYQA=0;COBYLA=1;NEWOUA=2;Nelder-Mead=3;Subplex=4;RSGS=5"
     {
