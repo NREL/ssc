@@ -32,6 +32,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
 	// ** Off-design Inputs **
 	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "*",     "",       "" },
 
 	//{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_htf_fracs",   "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
 	//{ SSC_INPUT,  SSC_ARRAY,   "m_dot_htf_fracs_in",   "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_htf_fracs=1",     "",       "" },
@@ -123,6 +124,17 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
+
+		// Off-design Polynomial Outputs
+	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_fracs_out", "Array of part load fractions that SOLVED at off design", "-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_eta",       "Matrix of power cycle efficiency results for q_dot_in part load", "-", "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_coefs",     "Part load polynomial coefficients",                      "-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "part_load_r_squared", "Part load curve fit R squared",							"-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_array_out",     "Array of ambient temps that SOLVED at off design",       "C",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_eta",           "Matrix of ambient temps and power cycle efficiency",     "-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "T_amb_coefs",         "Part load polynomial coefficients",                      "-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "T_amb_r_squared",     "T amb curve fit R squared",                              "-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
+
 
 	var_info_invalid };
 
@@ -346,6 +358,164 @@ public:
 		//		}
 		//	}		 
 		//}
+
+		// ********************************************************************
+		//  Generate off-design polynomials, if necessary
+		bool is_gen_od_poly = as_boolean("is_gen_od_polynomials");
+		if( is_gen_od_poly )
+		{
+			// We are never changing the HTF hot temperature and Optimization strategy & tolerance
+			sco2_rc_od_par.m_T_htf_hot = T_htf_hot_in_des;			//[K]
+			int od_strategy = C_sco2_recomp_csp::E_MAX_ETA_FIX_PHI;	//[-]
+			double od_opt_tol = 1.E-3;			//[-]
+			
+			// For the part-load parameterics, we can set ambient temperature
+			sco2_rc_od_par.m_T_amb = T_amb_des;
+
+			double part_load_max = 1.1;		//[-]
+			double part_load_min = 0.5;		//[-]
+			double part_load_step = 0.1;	//[-]
+
+			std::vector<double> part_load_fracs_out(0);
+			std::vector<double> part_load_eta(0);
+
+			// First, solve for part-load conditions
+			for(double part_load = part_load_max; part_load >= part_load_min; part_load = part_load - part_load_step)
+			{
+				// Set input structure
+				sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*part_load;	//[kg/s]
+
+				int off_design_code = 0;
+				try
+				{
+					off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy, od_opt_tol);
+				}
+				catch( C_csp_exception &csp_exception )
+				{
+					// Report warning before exiting with error
+					while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+					{
+						log(out_msg);
+					}
+
+					log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+					return;
+				}
+
+				if( off_design_code != 0 )
+				{	// Off-design call was successful, so write outputs
+					log("Part load off design calcs for polynomials failed");
+					return;
+				}
+			
+				part_load_fracs_out.push_back(part_load);
+				part_load_eta.push_back(sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal / sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal );
+			}
+
+			// Next, solve for off-design ambient temperature conditions
+				// Reset mass flow rate to design
+			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design;	//[kg/s]
+
+			double T_amb_high = 50.0;		//[C]
+			double T_amb_low = 34.0 - sco2_recomp_csp.get_design_par()->m_dt_mc_approach;	//[C]
+			double T_amb_step = 5.0;		//[C/K]
+
+			std::vector<double> T_amb_out(0);
+			std::vector<double> T_amb_eta(0);
+
+			for(double T_amb_C = T_amb_high; T_amb_C >= T_amb_low; T_amb_C = T_amb_C - T_amb_step)
+			{
+				// Set input structure
+				sco2_rc_od_par.m_T_amb = T_amb_C + 273.15;		//[K]
+
+				int off_design_code = 0;
+				try
+				{
+					off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy, od_opt_tol);
+				}
+				catch( C_csp_exception &csp_exception )
+				{
+					// Report warning before exiting with error
+					while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+					{
+						log(out_msg);
+					}
+
+					log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+					return;
+				}
+
+				if( off_design_code != 0 )
+				{	// Off-design call was successful, so write outputs
+					log("Part load off design calcs for polynomials failed");
+					return;
+				}
+
+				T_amb_out.push_back(T_amb_C);
+				T_amb_eta.push_back(sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal / sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);
+			}
+
+			// Ok, if we've made it this far, let's generate polynomial coefficients
+				// Part-load
+			std::vector<double> pl_coefs;
+			double pl_r_squared = std::numeric_limits<double>::quiet_NaN();
+			int n_coefs = 4;
+			bool pl_poly_success = find_polynomial_coefs(part_load_fracs_out, part_load_eta, n_coefs, pl_coefs, pl_r_squared);
+
+			if( !pl_poly_success )
+			{
+				log("Part load polynomial coefficient generation failed");
+				return;
+			}
+
+			int n_pl_runs = part_load_fracs_out.size();
+			ssc_number_t * p_part_load_fracs_out = allocate("part_load_fracs_out", n_pl_runs);
+			ssc_number_t * p_part_load_eta = allocate("part_load_eta", n_pl_runs);
+			for(int i = 0; i < n_pl_runs; i++)
+			{
+				p_part_load_fracs_out[i] = part_load_fracs_out[i];
+				p_part_load_eta[i] = part_load_eta[i];
+			}
+
+			assign("part_load_r_squared", pl_r_squared);
+			ssc_number_t * p_part_load_coefs = allocate("part_load_coefs", n_coefs);
+			for(int i = 0; i < n_coefs; i++)
+				p_part_load_coefs[i] = pl_coefs[i];
+
+				// Ambient temperature
+			std::vector<double> T_amb_coefs;
+			std::vector<double> T_amb_od_less_des;
+			double T_amb_r_squared = std::numeric_limits<double>::quiet_NaN();
+
+			int n_T_amb_runs = T_amb_out.size();
+			
+			T_amb_od_less_des.resize(n_T_amb_runs);
+			for(int i = 0; i < n_T_amb_runs; i++)
+				T_amb_od_less_des[i] = T_amb_out[i] - (T_amb_des - 273.15);		//[C]
+
+			bool T_amb_poly_success = find_polynomial_coefs(T_amb_od_less_des, T_amb_eta, n_coefs, T_amb_coefs, T_amb_r_squared);
+
+			if( !T_amb_poly_success )
+			{
+				log("Ambient temperature polynomial coefficient generation failed");
+				return;
+			}
+
+			ssc_number_t * p_T_amb_array_out = allocate("T_amb_array_out", n_T_amb_runs);
+			ssc_number_t * p_T_amb_eta = allocate("T_amb_eta", n_T_amb_runs);
+			for(int i = 0; i < n_T_amb_runs; i++)
+			{
+				p_T_amb_array_out[i] = T_amb_out[i];
+				p_T_amb_eta[i] = T_amb_eta[i];
+			}
+
+			assign("T_amb_r_squared", T_amb_r_squared);
+			ssc_number_t * p_T_amb_coefs = allocate("T_amb_coefs", n_coefs);
+			for(int i = 0; i < n_coefs; i++)
+				p_T_amb_coefs[i] = T_amb_coefs[i];
+		}
 
 		
 		// Set up off-design analysis
