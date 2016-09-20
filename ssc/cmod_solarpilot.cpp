@@ -81,6 +81,7 @@ static var_info _cm_vtab_solarpilot[] = {
     { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",              "Optimization convergence tol",               "",       "",         "SolarPILOT",   "?=0.001",          "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",             "Optimization algorithm",                     "",       "",         "SolarPILOT",   "?=0",              "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_flux_penalty",          "Optimization flux overage penalty",          "",       "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "helio_positions_in",        "Heliostat position table",                   "",       "",         "SolarPILOT",   "",                "",                "" },
 
 
 	/* outputs */
@@ -139,20 +140,36 @@ public:
         assign("land_area", spi.land.land_area.Val() );
         assign("area_sf", spi.sf.sf_area.Val() );
 
-		//Collect the heliostat position data
-		if(  spi.layout.heliostat_positions.size() > 0 )
-		{
-			ssc_number_t *hpos = allocate( "heliostat_positions",  spi.layout.heliostat_positions.size(), 2 );
-			for(size_t i=0; i< spi.layout.heliostat_positions.size(); i++){
-				hpos[ i*2     ] = (float) spi.layout.heliostat_positions.at(i).location.x;
-				hpos[ i*2 + 1 ] = (float) spi.layout.heliostat_positions.at(i).location.y;
+        if( is_assigned("helio_positions_in") )
+        {
+            util::matrix_t<double> hposin = as_matrix("helio_positions_in");
+			ssc_number_t *hpos = allocate( "heliostat_positions",  hposin.nrows(), 2 );
+			for(size_t i=0; i< hposin.nrows(); i++){
+				hpos[ i*2     ] = hposin.at(i,0);
+				hpos[ i*2 + 1 ] = hposin.at(i,1);
 			}
-		}
-		else
-			throw exec_error("solarpilot", "failed to generate a heliostat field layout");
+            //return the number of heliostats
+		    assign("number_heliostats",  hposin.nrows() );
+        }
+        else
+        {
+		    //Collect the heliostat position data
+		    if(  spi.layout.heliostat_positions.size() > 0 )
+		    {
+			    ssc_number_t *hpos = allocate( "heliostat_positions",  spi.layout.heliostat_positions.size(), 2 );
+			    for(size_t i=0; i< spi.layout.heliostat_positions.size(); i++){
+				    hpos[ i*2     ] = (float) spi.layout.heliostat_positions.at(i).location.x;
+				    hpos[ i*2 + 1 ] = (float) spi.layout.heliostat_positions.at(i).location.y;
+			    }
+		    }
+		    else
+			    throw exec_error("solarpilot", "failed to generate a heliostat field layout");
+ 		    
+            //return the number of heliostats
+		    assign("number_heliostats",  spi.layout.heliostat_positions.size() );
+        }
 
-		//return the number of heliostats
-		assign("number_heliostats",  spi.layout.heliostat_positions.size() ); 
+ 
 		
 		//return the land area
 		assign("base_land_area",  spi.land.land_area.Val() );
@@ -165,14 +182,6 @@ public:
 			if ( spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
 				&& spi.fluxtab.efficiency.size() > 0 )
 			{
-				/*ssc_number_t *zeniths = allocate( "opteff_zeniths", spi.fluxtab.zeniths.size() );
-				for( size_t i=0;i<spi.fluxtab.zeniths.size();i++ )
-					zeniths[i] = (float)spi.fluxtab.zeniths[i];
-
-				ssc_number_t *azimuths = allocate( "opteff_azimuths", spi.fluxtab.azimuths.size() );
-				for( size_t i=0;i<spi.fluxtab.azimuths.size();i++ )
-					azimuths[i] = (float)spi.fluxtab.azimuths[i];*/
-
 				size_t nvals = spi.fluxtab.efficiency.size();
 				ssc_number_t *opteff = allocate( "opteff_table", nvals, 3 );
 				for( size_t i=0;i<nvals;i++ )

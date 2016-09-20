@@ -192,43 +192,68 @@ bool solarpilot_invoke::run()
     amb.atm_coefs.val.at(2,2) = m_cmod->as_double("c_atm_2");
     amb.atm_coefs.val.at(2,3) = m_cmod->as_double("c_atm_3");
 
-	weather_record wf;
+    if(! m_cmod->is_assigned("helio_positions_in") ) 
+    {
 
-	vector<string> wfdata;
-	wfdata.reserve( 8760 );
-	char buf[1024];
-	for( int i=0;i<8760;i++ )
-	{
-		if( !wFile.read( &wf ) )
-			throw compute_module::exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
+	    weather_record wf;
 
-		mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
-		wfdata.push_back( std::string(buf) );
-	}
+	    vector<string> wfdata;
+	    wfdata.reserve( 8760 );
+	    char buf[1024];
+	    for( int i=0;i<8760;i++ )
+	    {
+		    if( !wFile.read( &wf ) )
+			    throw compute_module::exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
 
-	m_sapi->SetDetailCallback( solarpilot_callback, m_cmod);
-	m_sapi->SetSummaryCallbackStatus(false);
+		    mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
+		    wfdata.push_back( std::string(buf) );
+	    }
 
-	m_sapi->GenerateDesignPointSimulations( *this, wfdata );
+	    m_sapi->SetDetailCallback( solarpilot_callback, m_cmod);
+	    m_sapi->SetSummaryCallbackStatus(false);
+
+	    m_sapi->GenerateDesignPointSimulations( *this, wfdata );
 	
-    if(isopt){
-        m_cmod->log("Optimizing...", SSC_WARNING, 0.);
-        m_sapi->SetSummaryCallback( optimize_callback, m_cmod);
-		m_sapi->Setup(*this, true);
+        if(isopt){
+            m_cmod->log("Optimizing...", SSC_WARNING, 0.);
+            m_sapi->SetSummaryCallback( optimize_callback, m_cmod);
+		    m_sapi->Setup(*this, true);
             
-        if(! m_sapi->Optimize(*this) )
-            return false;
+            if(! m_sapi->Optimize(*this) )
+                return false;
 
-        m_sapi->SetSummaryCallbackStatus(false);
-        m_sapi->PreSimCallbackUpdate();
+            m_sapi->SetSummaryCallbackStatus(false);
+            m_sapi->PreSimCallbackUpdate();
             
+        }
+        else{
+		    m_sapi->Setup(*this);
+        }
+        if(! m_sapi->CreateLayout(layout) )
+            return false;
     }
-    else{
+    else
+    {
+        /* 
+		Load in the heliostat field positions that are provided by the user.
+		*/
+		//layout.heliostat_positions.clear();
+		//layout.heliostat_positions.resize(m_N_hel);
+		string format = "0,%f,%f,%f,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL;";
+        sf.layout_data.val.clear();
+
+        util::matrix_t<double> hpos = m_cmod->as_matrix("helio_positions_in");
+
+        char row[200];
+		for( int i=0; i<hpos.nrows(); i++)
+		{
+            sprintf(row, format.c_str(), hpos.at(i,0), hpos.at(i,1),  0. );
+
+            sf.layout_data.val.append( row );
+		}
+
 		m_sapi->Setup(*this);
     }
-    if(! m_sapi->CreateLayout(layout) )
-        return false;
-
     
     //check if flux map calculations are desired
 	if( m_cmod->as_boolean("calc_fluxmaps") ){      // <<--- was set "false" for some reason
