@@ -223,7 +223,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 		// sCO2 Powerblock (type 424) inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_c",                "Isentropic efficiency of compressor(s)",                            "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "eta_t",                "Isentropic efficiency of turbine",							      "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "recup_eff_max",        "Maximum recuperator effectiveness",                                 "none",         "",            "sco2_pc",     "pc_congif=2",                "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "recup_eff_max",        "Maximum recuperator effectiveness",                                 "none",         "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "P_high_limit",         "Upper pressure limit in cycle",								      "MPa",          "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "deltaT_PHX",           "Design temperature difference in PHX",						      "C",	          "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "sco2_pc",     "pc_config=2",                "",                      "" },	
