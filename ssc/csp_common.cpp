@@ -231,6 +231,7 @@ bool solarpilot_invoke::run()
         }
         if(! m_sapi->CreateLayout(layout) )
             return false;
+
     }
     else
     {
