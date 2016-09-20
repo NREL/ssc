@@ -89,6 +89,7 @@ extern module_entry_info
 	cm_entry_iscc_design_point,
 	cm_entry_battery,
    	cm_entry_lcoefcr,
+	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg;
 
 /* official module table */
@@ -160,6 +161,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iscc_design_point,
 	&cm_entry_battery,
 	&cm_entry_lcoefcr,
+	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	0 };
 
