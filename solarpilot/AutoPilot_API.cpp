@@ -1459,7 +1459,7 @@ bool AutoPilot::Optimize(var_map &V)
 	    return Optimize(optvars, upper_range, lower_range, is_range_constr);
         break;
     default:
-        return OptimizeAuto( optvars, upper_range, lower_range, is_range_constr, &names);
+        return OptimizeSemiAuto( optvars, upper_range, lower_range, is_range_constr, &names);
     }
 
 }
@@ -2118,6 +2118,279 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
 
     return true;
 }
+
+
+bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
+{
+    /* 
+    Use canned algorithm to optimize
+    */
+
+    
+    //set up NLOPT algorithm
+   
+    var_map *V = _SF->getVarMap();
+
+    //map the method
+    nlopt::algorithm nlm;
+    switch(V->opt.algorithm.val)
+    {
+    case 0: //sp_optimize::METHOD::BOBYQA:
+        nlm = nlopt::LN_BOBYQA;
+        break;
+    case 1: //sp_optimize::METHOD::COBYLA:
+        nlm = nlopt::LN_COBYLA;
+        break;
+    case 2: //sp_optimize::METHOD::NelderMead:
+        nlm = nlopt::LN_NELDERMEAD;
+        break;
+    case 3: //sp_optimize::METHOD::NEWOUA:
+        nlm = nlopt::LN_NEWUOA;
+        break;
+    case 4: //sp_optimize::METHOD::Subplex:
+        nlm = nlopt::LN_SBPLX;
+        break;
+    }
+
+    int tot_max_iter = V->opt.max_iter.val;
+    int step_max_iter = tot_max_iter / 3;
+    V->opt.max_iter.val = step_max_iter;   //reset at end of run
+
+    int iter_counter = 0;
+    //------- first optimize the tower height without any flux penalty -------------
+    {
+        nlopt::opt nlobj(nlm, 1 );
+        vector<double*> towvar;
+        towvar.push_back(optvars.front());
+        double flux_penalty_save = V->opt.flux_penalty.val;
+        V->opt.flux_penalty.val = 0.;
+
+        //Create optimization helper class
+        AutoOptHelper AO;
+        AO.Initialize();
+        AO.SetObjects( (void*)this,  *V, &nlobj);
+        AO.m_opt_vars = towvar;
+        //-------
+        nlobj.set_min_objective( optimize_auto_eval, &AO  );
+        nlobj.set_xtol_rel(1.e-4);
+        nlobj.set_ftol_rel(V->opt.converge_tol.val);
+        nlobj.set_initial_step( vector<double>( 1, V->opt.max_step.val ) );
+        nlobj.set_maxeval( V->opt.max_iter.val );
+
+	    //Store the initial dimensional value of each variable
+		AO.m_normalizers.push_back( *towvar.front() );
+	
+	    //the initial normalized point is '1'
+	    vector<double> start(1, 1.);
+    
+        //Add a formatted simulation notice
+        ostringstream os;
+        os << "\n\nOptimizing Tower Height\nIter ";
+        os << setw(9) << (names==0 ? "Var 1" : names->front()) << "|";
+        os << "| Obj.    | Flux";
+
+        string hmsg = os.str();
+
+        string ol;
+        for(int i=0; i<(int)hmsg.size(); i++)
+            ol.append("-");
+
+        _summary_siminfo->addSimulationNotice( os.str() );
+        _summary_siminfo->addSimulationNotice( ol.c_str() );
+
+        double fmin;
+        try{
+            nlopt::result resopt = nlobj.optimize( start, fmin );
+        
+            _summary_siminfo->addSimulationNotice( ol.c_str() );
+        
+            int iopt = 0;
+            double objbest = 9.e9;
+            for(int i=0; i<(int)AO.m_all_points.size(); i++){
+                double obj = AO.m_objective.at(i);
+                if( obj < objbest ){
+                    objbest = obj;
+                    iopt = i;
+                }
+            }
+            iter_counter += AO.m_all_points.size();
+
+        }
+        catch(...)
+        {
+            V->opt.flux_penalty.val = flux_penalty_save;
+            return false;
+        }
+
+        V->opt.flux_penalty.val = flux_penalty_save;
+    }
+
+
+    //-------- using optimal tower height, now optimize receiver dimensions -------------
+
+
+    {
+        vector<double*> recvars;
+        recvars.push_back(optvars.at(1));
+        recvars.push_back(optvars.at(2));
+        
+        nlopt::opt nlobj(nlm, recvars.size() );
+
+        //Create optimization helper class
+        AutoOptHelper AO;
+        AO.Initialize();
+        AO.m_iter = iter_counter;
+        AO.SetObjects( (void*)this,  *V, &nlobj);
+        AO.m_opt_vars = recvars;
+        //-------
+        nlobj.set_min_objective( optimize_auto_eval, &AO  );
+        nlobj.set_xtol_rel(1.e-4);
+        nlobj.set_ftol_rel(V->opt.converge_tol.val);
+        nlobj.set_initial_step( vector<double>( recvars.size(), V->opt.max_step.val ) );
+        nlobj.set_maxeval( V->opt.max_iter.val );
+
+        //Number of variables to be optimized
+	    int nvars = (int)recvars.size();
+	    //Store the initial dimensional value of each variable
+	    for(int i=0; i<nvars; i++)
+		    AO.m_normalizers.push_back( *recvars.at(i) );
+	
+	    //the initial normalized point is '1'
+	    vector<double> start(nvars, 1.);
+    
+        //Add a formatted simulation notice
+        ostringstream os;
+        os << "**Optimizing Receiver Dimensions at THT="<< *optvars.front() << "[m]\nIter ";
+        for(int i=0; i<(int)recvars.size(); i++)
+            os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i+1)) << "|";
+        os << "| Obj.    | Flux";
+
+        string hmsg = os.str();
+
+        string ol;
+        for(int i=0; i<(int)hmsg.size(); i++)
+            ol.append("-");
+
+        _summary_siminfo->addSimulationNotice( os.str() );
+        _summary_siminfo->addSimulationNotice( ol.c_str() );
+
+        double fmin;
+        try{
+            nlopt::result resopt = nlobj.optimize( start, fmin );
+        
+            _summary_siminfo->addSimulationNotice( ol.c_str() );
+        
+            int iopt = 0;
+            double objbest = 9.e9;
+            for(int i=0; i<(int)AO.m_all_points.size(); i++){
+                double obj = AO.m_objective.at(i);
+                if( obj < objbest ){
+                    objbest = obj;
+                    iopt = i;
+                }
+            }
+            iter_counter += AO.m_all_points.size();
+        }
+        catch(...){
+            return false;
+        }
+
+    }
+    
+
+    //--------- co-optimize all 3 variables ---------------------------------------------
+    {
+        V->opt.max_iter.val = step_max_iter + (tot_max_iter % 3);   //allow any extra runs here
+
+
+        nlopt::opt nlobj(nlm, optvars.size() );
+    
+        //Create optimization helper class
+        AutoOptHelper AO;
+        AO.Initialize();
+        AO.m_iter = iter_counter;
+        AO.SetObjects( (void*)this,  *V, &nlobj);
+        AO.m_opt_vars = optvars;
+        //-------
+        nlobj.set_min_objective( optimize_auto_eval, &AO  );
+        nlobj.set_xtol_rel(1.e-4);
+        nlobj.set_ftol_rel(V->opt.converge_tol.val);
+        nlobj.set_initial_step( vector<double>( optvars.size(), V->opt.max_step.val ) );
+        nlobj.set_maxeval( V->opt.max_iter.val );
+
+        //Number of variables to be optimized
+	    int nvars = (int)optvars.size();
+	    //Store the initial dimensional value of each variable
+	    for(int i=0; i<nvars; i++)
+		    AO.m_normalizers.push_back( *optvars.at(i) );
+	
+	    //the initial normalized point is '1'
+	    vector<double> start(nvars, 1.);
+    
+        //Add a formatted simulation notice
+        ostringstream os;
+        os << "**Co-optimizing geometry\nIter ";
+        for(int i=0; i<(int)optvars.size(); i++)
+            os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
+        os << "| Obj.    | Flux";
+
+        string hmsg = os.str();
+
+        string ol;
+        for(int i=0; i<(int)hmsg.size(); i++)
+            ol.append("-");
+
+        _summary_siminfo->addSimulationNotice( os.str() );
+        _summary_siminfo->addSimulationNotice( ol.c_str() );
+
+        double fmin;
+        try{
+            nlopt::result resopt = nlobj.optimize( start, fmin );
+        
+            _summary_siminfo->addSimulationNotice( ol.c_str() );
+        
+            int iopt = 0;
+            double objbest = 9.e9;
+            for(int i=0; i<(int)AO.m_all_points.size(); i++){
+                double obj = AO.m_objective.at(i);
+                if( obj < objbest ){
+                    objbest = obj;
+                    iopt = i;
+                }
+            }
+
+            //write the optimal point found
+            ostringstream oo;
+            oo << "Best point found:\n";
+            for(int i=0; i<(int)optvars.size(); i++)
+                oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) * AO.m_normalizers.at(i) << "   ";
+            oo << "\nObjective: " << objbest;
+            _summary_siminfo->addSimulationNotice(oo.str() );
+        }
+        catch(...){
+            return false;
+        }
+
+        //copy the optimization data to the optimization structure
+        vector<vector<double> > dimsimpt;
+        size_t nr = AO.m_all_points.size();
+        size_t nc = AO.m_all_points.front().size();
+
+        for(size_t i=0; i<nr; i++){
+            if( nc == 0 ) break;
+            vector<double> tmp;
+            for(size_t j=0; j<nc; j++){
+                tmp.push_back( AO.m_all_points.at(i).at(j) * AO.m_normalizers.at(j) );
+            }
+            dimsimpt.push_back(tmp);
+        }
+        _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
+    }
+    V->opt.max_iter.val = tot_max_iter;   //reset
+
+    return true;
+}
+
 
 
 bool AutoPilot::IsSimulationCancelled()

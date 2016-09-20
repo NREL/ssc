@@ -568,7 +568,6 @@ public:
 			//Run solarpilot right away to update values as needed
 			solarpilot_invoke spi(this);
 			spi.run();
-			//AutoPilot_S *sapi = spi.GetSAPI();
 
             if(is_optimize)
             {
@@ -577,15 +576,17 @@ public:
 			    vector<double> obj, flux;
 			    spi.getOptimizationSimulationHistory(steps, obj, flux);
 			    int nr = steps.size();
-			    int nc = steps.front().size() + 2;
-			    ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-			    for( size_t i = 0; i<nr; i++ ){
+                if(nr > 0)
+                {
+			        int nc = steps.front().size() + 2;
+			        ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
+			        for( size_t i = 0; i<nr; i++ ){
 
-				    for( size_t j = 0; j<steps.front().size(); j++ )
-					    ssc_hist[i*nc + j] = steps.at(i).at(j);
-				    ssc_hist[i*nc + nc - 2] = obj.at(i);
-				    ssc_hist[i*nc + nc - 1] = flux.at(i);
-
+				        for( size_t j = 0; j<steps.front().size(); j++ )
+					        ssc_hist[i*nc + j] = steps.at(i).at(j);
+				        ssc_hist[i*nc + nc - 2] = obj.at(i);
+				        ssc_hist[i*nc + nc - 1] = flux.at(i);
+                    }
 			    }
             }
 		
@@ -594,6 +595,7 @@ public:
 			rec_aspect = spi.recs.front().rec_aspect.Val();
 			THT = spi.sf.tht.val;
 			//update heliostat position table
+
 			int nr = (int)spi.layout.heliostat_positions.size();
 			assign("N_hel", nr);
 			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
