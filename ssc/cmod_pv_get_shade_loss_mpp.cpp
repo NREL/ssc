@@ -152,6 +152,7 @@ public:
 						if (diffuse_frac < 1) diffuse_frac = 1;
 						int counter = 1;
 						bool found = false;
+						std::vector<int> cur_case;
 						if (num_strings > 1)
 						{
 							counter = 0;
@@ -160,7 +161,10 @@ public:
 								if (num_strings == 2)
 								{
 									counter++;
-									std::vector<int> cur_case{ s_max, i2 };
+									//std::vector<int> cur_case{ s_max, i2 };
+									cur_case.clear();
+									cur_case.push_back(s_max);
+									cur_case.push_back(i2);
 									if (str_shade == cur_case)
 										found = true;
 								}
@@ -171,7 +175,11 @@ public:
 										if (num_strings == 3)
 										{
 											counter++;
-											std::vector<int> cur_case{ s_max, i2, i3 };
+											//std::vector<int> cur_case{ s_max, i2, i3 };
+											cur_case.clear();
+											cur_case.push_back(s_max);
+											cur_case.push_back(i2);
+											cur_case.push_back(i3);
 											if (str_shade == cur_case)
 												found = true;
 										}
@@ -182,7 +190,12 @@ public:
 												if (num_strings == 4)
 												{
 													counter++;
-													std::vector<int> cur_case{ s_max, i2, i3, i4 };
+													//std::vector<int> cur_case{ s_max, i2, i3, i4 };
+													cur_case.clear();
+													cur_case.push_back(s_max);
+													cur_case.push_back(i2);
+													cur_case.push_back(i3);
+													cur_case.push_back(i4);
 													if (str_shade == cur_case)
 														found = true;
 												}
@@ -193,7 +206,13 @@ public:
 														if (num_strings == 5)
 														{
 															counter++;
-															std::vector<int> cur_case{ s_max, i2, i3, i4, i5 };
+															//std::vector<int> cur_case{ s_max, i2, i3, i4, i5 };
+															cur_case.clear();
+															cur_case.push_back(s_max);
+															cur_case.push_back(i2);
+															cur_case.push_back(i3);
+															cur_case.push_back(i4);
+															cur_case.push_back(i5);
 															if (str_shade == cur_case)
 																found = true;
 														}
@@ -204,7 +223,14 @@ public:
 																if (num_strings == 6)
 																{
 																	counter++;
-																	std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6 };
+																	//std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6 };
+																	cur_case.clear();
+																	cur_case.push_back(s_max);
+																	cur_case.push_back(i2);
+																	cur_case.push_back(i3);
+																	cur_case.push_back(i4);
+																	cur_case.push_back(i5);
+																	cur_case.push_back(i6);
 																	if (str_shade == cur_case)
 																		found = true;
 																}
@@ -215,7 +241,15 @@ public:
 																		if (num_strings == 7)
 																		{
 																			counter++;
-																			std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6, i7 };
+																			//std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6, i7 };
+																			cur_case.clear();
+																			cur_case.push_back(s_max);
+																			cur_case.push_back(i2);
+																			cur_case.push_back(i3);
+																			cur_case.push_back(i4);
+																			cur_case.push_back(i5);
+																			cur_case.push_back(i6);
+																			cur_case.push_back(i7);
 																			if (str_shade == cur_case)
 																				found = true;
 																		}
@@ -226,7 +260,16 @@ public:
 																				if (num_strings == 8)
 																				{
 																					counter++;
-																					std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6, i7, i8 };
+																					//std::vector<int> cur_case{ s_max, i2, i3, i4, i5, i6, i7, i8 };
+																					cur_case.clear();
+																					cur_case.push_back(s_max);
+																					cur_case.push_back(i2);
+																					cur_case.push_back(i3);
+																					cur_case.push_back(i4);
+																					cur_case.push_back(i5);
+																					cur_case.push_back(i6);
+																					cur_case.push_back(i7);
+																					cur_case.push_back(i8);
 																					if (str_shade == cur_case)
 																						found = true;
 																				}
@@ -237,7 +280,6 @@ public:
 																				}
 																			} // for i7
 																			if (found) break;
-
 																		}
 																	} // for i7
 																	if (found) break;
