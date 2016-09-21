@@ -31,8 +31,6 @@ static var_info _cm_vtab_pv_get_shade_loss_mpp[] = {
 	{ SSC_INPUT, SSC_ARRAY, "v_mppt_high", "Upper bound of inverter MPPT range", "", "", "PV Shade Loss DB", "*", "", "" },
 
 
-
-
 	// testing indices from lookup
 	{ SSC_OUTPUT, SSC_ARRAY, "N", "N", "", "", "PV Shade Loss DB", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "d", "d", "", "", "PV Shade Loss DB", "*", "", "" },
