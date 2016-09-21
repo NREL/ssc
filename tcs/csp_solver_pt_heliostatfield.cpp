@@ -288,26 +288,10 @@ void C_pt_heliostatfield::init()
 			AutoPilot_S sapi;
 
 			sp_optimize opt;
-			/*sp_ambient amb;
-			sp_cost cost;
-			sp_heliostats helios;
-			sp_receivers recs;*/
 			sp_layout layout;
 	
-			//var_set V;
-			//ioutil::parseDefinitionArray(V);
             var_map V;
 	
-			// define stuff and load default values
-			//opt.LoadDefaults(V);
-			//amb.LoadDefaults(V);
-			//cost.LoadDefaults(V);
-			//helios.resize(1);
-			//helios.front().LoadDefaults(V);
-			//recs.resize(1);
-			//recs.front().LoadDefaults(V);
-			//layout.LoadDefaults(V);
-
             var_heliostat *hf = &V.hels.front();
 			hf->width.val = helio_width;
 			hf->height.val = helio_height;
@@ -350,10 +334,6 @@ void C_pt_heliostatfield::init()
                 break;
             }
 
-			/*int fmap[2];
-			fmap[0] = AutoPilot::FOCUS_TYPE::FLAT;
-			fmap[1] = AutoPilot::FOCUS_TYPE::AT_SLANT;
-			hf->focus_method.val = fmap[ focus_type ];*/
             hf->focus_method.combo_select_by_choice_index( focus_type );
 
             var_receiver *rf = &V.recs.front();
@@ -403,7 +383,6 @@ void C_pt_heliostatfield::init()
 				*/
 				vector<string> wfdata;
 				wfdata.reserve( 8760 );
-				//char buf[1024];
 				for( int i=0;i<8760;i++ )
 				{
 					weather_record rec;
@@ -411,14 +390,11 @@ void C_pt_heliostatfield::init()
 					{
 						error_msg = "solarpilot: could not read data line " + util::to_string(i+1) + " of 8760 in weather file";
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-						//message(TCS_WARNING, msg.c_str());
 					}
 
 					error_msg = util::format("%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", 
 						rec.day, rec.hour, rec.month, rec.dn, rec.tdry, rec.pres / 1000., rec.wspd);
 					wfdata.push_back(error_msg);
-					//mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
-					//wfdata.push_back( std::string(buf) );
 				}
 
 				if( mf_callback && m_cdata )
@@ -448,10 +424,6 @@ void C_pt_heliostatfield::init()
 					ms_params.m_helio_positions(i,1) = layout.heliostat_positions.at(i).location.y;
 					if(pos_dim==3)
 						ms_params.m_helio_positions(i, 2) = layout.heliostat_positions.at(i).location.z;
-					//TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 ) = layout.heliostat_positions.at(i).location.x;
-					//TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 ) = layout.heliostat_positions.at(i).location.y;
-					//if(pos_dim==3)
-					//	TCS_MATRIX_INDEX( var(P_helio_positions), i, 2) = layout.heliostat_positions.at(i).location.z;
 				}
 				
 				//update the callbacks
@@ -463,8 +435,6 @@ void C_pt_heliostatfield::init()
 				/* 
 				Load in the heliostat field positions that are provided by the user.
 				*/
-				//layout.heliostat_positions.clear();
-				//layout.heliostat_positions.resize(m_N_hel);
 				string format = "0,%f,%f,%f,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL;";
                 V.sf.layout_data.val.clear();
 
@@ -475,15 +445,6 @@ void C_pt_heliostatfield::init()
 
                     V.sf.layout_data.val.append( row );
 
-					//layout.heliostat_positions.at(i).location.x = helio_positions(i,0);
-					//layout.heliostat_positions.at(i).location.y = helio_positions(i,1);
-					//if(pos_dim==3)
-						//layout.heliostat_positions.at(i).location.z = helio_positions(i,2);
-					//layout.heliostat_positions.at(i).location.x = TCS_MATRIX_INDEX( var(P_helio_positions), i, 0 );
-					//layout.heliostat_positions.at(i).location.y = TCS_MATRIX_INDEX( var(P_helio_positions), i, 1 );
-					//if(pos_dim==3)
-					//	layout.heliostat_positions.at(i).location.z = TCS_MATRIX_INDEX( var(P_helio_positions), i, 2);
-					
 				}
 
                 sapi.Setup(V);
@@ -491,9 +452,6 @@ void C_pt_heliostatfield::init()
 			}
             //land area update
 			ms_params.m_land_area = V.land.land_area.Val();		//value(P_land_area, layout.land_area);
-            //number of heliostats
-				//twn: get from matrix_t: ms_params.m_helio_positions
-			//ms_params.m_N_hel = m_N_hel;					//value(P_N_hel, (double)m_N_hel);
 
 			if(!mf_callback || !m_cdata)
 				sapi.SetSummaryCallbackStatus(false);
@@ -514,8 +472,6 @@ void C_pt_heliostatfield::init()
 			if(! sapi.CalculateFluxMaps(fluxtab, m_n_flux_x, m_n_flux_y, true) )
 			{
 				throw(C_csp_exception("Simulation cancelled during fluxmap preparation","heliostat field initialization"));
-                //message(TCS_ERROR, "Simulation cancelled during fluxmap preparation");
-                //return -1;
             }
 
 			//collect efficiencies
@@ -549,7 +505,6 @@ void C_pt_heliostatfield::init()
 			}
 
 			//collect flux's
-			//flux_maps = allocate( P_flux_maps, m_n_flux_y * npos, m_n_flux_x );
 			ms_params.m_flux_maps.resize_fill(m_n_flux_y*npos, m_n_flux_x, 0.0);
 			
 			block_t<double> *f = &fluxtab.flux_surfaces.front().flux_data;
@@ -563,7 +518,6 @@ void C_pt_heliostatfield::init()
 					for(int k=0; k<m_n_flux_x; k++)
 					{
 						ms_params.m_flux_maps(i*m_n_flux_y + j, k) = f->at(j, k, i);
-						//TCS_MATRIX_INDEX( var(P_flux_maps), i*m_n_flux_y + j, k) = f->at(j, k, i);
 					}
 				}
 			}
@@ -573,8 +527,6 @@ void C_pt_heliostatfield::init()
 		case RUN_TYPE::USER_DATA:
 		{
 
-			//int nrows, ncols;
-			//double *p_map = value( P_eta_map, &nrows, &ncols);
 			int nrows = ms_params.m_eta_map.nrows();
 			int ncols = ms_params.m_eta_map.ncols();
 		
@@ -584,10 +536,6 @@ void C_pt_heliostatfield::init()
 					" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
 
 				throw(C_csp_exception(error_msg, "heliostat field initialization"));
-
-				//message(TCS_ERROR,  "The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
-				//	" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
-				//return -1;
 			}
 		
 			//read the data from the array into the local storage arrays
@@ -598,9 +546,6 @@ void C_pt_heliostatfield::init()
 				sunpos.at(i).at(0) = eta_map(i, 0) / az_scale * CSP::pi / 180.0;
 				sunpos.at(i).at(1) = eta_map(i, 1) / zen_scale * CSP::pi / 180.0;
 				effs.at(i) = eta_map(i, 2) / eff_scale;
-				//sunpos.at(i).at(0) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 0 ) / az_scale * CSP::pi/180.;
-				//sunpos.at(i).at(1) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 1 ) / zen_scale * CSP::pi/180.;
-				//effs.at(i) = TCS_MATRIX_INDEX( var( P_eta_map ), i, 2 ) / eff_scale;
 			}
 
             break;
@@ -614,14 +559,11 @@ void C_pt_heliostatfield::init()
 		//report back the flux positions used
 		int nflux = (int)m_flux_positions.size();
 		ms_params.m_flux_positions.resize_fill(nflux, 2, 0.0);
-		//flux_positions = allocate(P_flux_positions, nflux, 2);
 		
 		for( int i = 0; i<nflux; i++ )
 		{
 			ms_params.m_flux_positions(i,0) = m_flux_positions.at(i).at(0);
 			ms_params.m_flux_positions(i,1) = m_flux_positions.at(i).at(1);
-			//flux_positions[i * 2] = m_flux_positions.at(i).at(0);
-			//flux_positions[i * 2 + 1] = m_flux_positions.at(i).at(1);
 		}
 
 		/*
@@ -652,7 +594,6 @@ void C_pt_heliostatfield::init()
 		{
 			error_msg = util::format("The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
 			mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-			//message(TCS_WARNING, "The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
 		}
 		
 		// Calculate the total solar field reflective area
@@ -674,7 +615,6 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 	// Get sim info
 	double time = sim_info.ms_ts.m_time;
 	double step = sim_info.ms_ts.m_step;
-	//int ncall = p_sim_info->m_ncall;
 
     double sf_adjust = 1.;
     if( ms_params.m_sf_adjust.ncells() == 8760 )
@@ -730,10 +670,8 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 
 		//Set the active flux map
 		VectDoub pos_now(sunpos);
-		/*VectDoub pos_now(2);
-		pos_now.at(0) = solaz/az_scale;
-		pos_now.at(1) = solzen/zen_scale;*/
-		//find the nearest neighbors to the current point
+		
+        //find the nearest neighbors to the current point
 		vector<double> distances;
 		vector<int> indices;
 		for( int i = 0; i<(int)m_flux_positions.size(); i++ ){
@@ -766,8 +704,6 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 				for( int i = 0; i<m_n_flux_x; i++ )
 				{
 					ms_outputs.m_flux_map_out(j, i) += ms_params.m_flux_maps(imap*m_n_flux_y + j, i)*weights.at(k);
-					//TCS_MATRIX_INDEX(var(O_flux_map), j, i) +=
-					//	TCS_MATRIX_INDEX(var(P_flux_maps), imap*n_flux_y + j, i) * weights.at(k);
 				}
 			}
 		}
