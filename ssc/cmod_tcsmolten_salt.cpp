@@ -624,7 +624,6 @@ public:
 			double A_rec;
 			switch( spi.recs.front().rec_type.val )
 			{
-			//case sp_receiver::TYPE::CYLINDRICAL:
             case Receiver::REC_TYPE::CYLINDRICAL:
 			{
                 double h = spi.recs.front().rec_height.val;
@@ -632,9 +631,7 @@ public:
                 A_rec = h*d*3.1415926;
                 break;
 			}
-			//case sp_receiver::TYPE::CAVITY:
             case Receiver::REC_TYPE::CAVITY:
-            //case sp_receiver::TYPE::FLAT:
             case Receiver::REC_TYPE::FLAT_PLATE:
 				double h = spi.recs.front().rec_height.val;
 				double w = h / spi.recs.front().rec_aspect.Val();

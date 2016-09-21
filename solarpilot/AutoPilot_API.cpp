@@ -20,13 +20,6 @@
 using namespace std;
 
 
-//template<typename T> static std::string my_to_string( T value )
-//{
-//	std::ostringstream os;
-//	os << value;
-//	return os.str();
-//}
-
 class response_surface_data
 {
 public:
@@ -38,7 +31,6 @@ public:
 	vector<double> cur_pos;
 	vector<double> Beta;
 	int ncalls;
-	//double big_M;
 	double max_step_size;
 
 	response_surface_data(){
@@ -229,17 +221,11 @@ struct AutoOptHelper
     vector<double> m_flux;
     vector<double*> m_opt_vars;
     vector<string> m_opt_names;
-    //sp_receivers *m_recs;
-    //sp_optimize *m_opt;
-    //sp_layout *m_layout;
     nlopt::opt *m_opt_obj;
     var_map *m_variables;
 
     void SetObjects( void *autopilot, var_map &V, nlopt::opt *optobj ){
         m_autopilot = static_cast<AutoPilot*>( autopilot );
-        //m_recs = recs;
-        //m_opt = opt;
-        //m_layout = layout;
         m_variables = &V;
         m_opt_obj = optobj;
     };
@@ -248,9 +234,6 @@ struct AutoOptHelper
     {
         m_iter = 0;
         m_autopilot = 0;
-        //m_recs = 0;
-        //m_opt = 0;
-        //m_layout = 0;
         m_opt_obj = 0;
         m_all_points.clear();
         m_normalizers.clear();
@@ -499,35 +482,9 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
 	*/
 	_cancel_simulation = false;	
 
-	//start by initializing the variables structure
-	//ioutil::parseDefinitionArray(_variables, "custom_rec");
-    //V.reset();
-
-	////Save pointers for later reference
-	//_layout = &layout;
- //   _cost = &cost;
-
 	//-----------------------------------------------------------------
 	//	Alter settings according to what's provided in the structures
 	//-----------------------------------------------------------------
-	
-	////ambient
-	//update_ambient(V, ambient);
-
-	////cost
-	//update_cost(V, cost);
-
-	////layout
-	//update_layout(V, layout);
-
-	////heliostats
-	//update_heliostats(V, helios);
-
-	////receivers
-	//update_receivers(V, recs);
-	
-	//update any calculated values
-	//interop::UpdateCalculatedMapValues(_variables);
 
     //need to set up the template combo
     V.sf.temp_which.combo_clear();
@@ -568,7 +525,6 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
 	_SF->Create(V);
 
 	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
-	//if( layout.heliostat_positions.size() > 0){
     if( ! V.sf.layout_data.val.empty() )
     {
 		WeatherData empty;
@@ -578,7 +534,6 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
         double area = V.land.land_area.Val();  //acre
 		V.land.bound_area.Setval( area );
         V.land.land_area.Setval( area );
-        //layout.land_area = area;
 	}
 
 	
@@ -588,395 +543,6 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
 	return true;
 }
 
-//void AutoPilot::LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
-//                                     sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_map *variables)
-//{
-//    bool var_in = variables == 0;
-//
-//    var_map *var_use;
-//
-//    if(var_in){
-//        var_use = variables;
-//    }
-//    else{
-//        var_use = new var_map();
-//    }
-//
-//    //ioutil::parseDefinitionArray(*var_use);
-//
-//    vector<string> wfdummy; //not used
-//    SetupExpert(*var_use, ambient, cost, layout, helios, recs, opt, wfdummy, true);
-//
-//
-//    if(! var_in) delete var_use;
-//
-//
-//}
-
-//bool AutoPilot::SetupExpert(var_map &vset, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, 
-//                            sp_receivers &recs, sp_optimize &opt, vector<string> &weather_data, bool defaults_only)
-//{
-//	_cancel_simulation = false;
-//
-//	//load the values from the var_set into the input structures
-//	ambient.LoadDefaults(vset);
-//	cost.LoadDefaults(vset);
-//	layout.LoadDefaults(vset);
-//	helios.resize(1);
-//	for(int i=0; i<(int)helios.size(); i++)
-//		helios.at(i).LoadDefaults(vset);
-//	recs.resize(1);
-//	for(int i=0; i<(int)recs.size(); i++)
-//		recs.at(i).LoadDefaults(vset);
-//	opt.LoadDefaults(vset);
-//
-//    if(defaults_only) return true;
-//	
-//    //set up the weather data for simulation
-//	GenerateDesignPointSimulations(ambient, vset, weather_data);
-//
-//
-//	//Dynamically allocate the solar field object, if needed
-//	if(! _is_solarfield_external ){
-//		_SF = new SolarField();
-//	}
-//	
-//	//update any calculated values
-//	//interop::UpdateCalculatedMapValues(_variables);
-//
-//	//Create the solar field object
-//	_SF->Create(vset);
-//	
-//	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
-//	if(layout.heliostat_positions.size() > 0){
-//		WeatherData empty;
-//		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
-//        Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
-//		_SF->calcHeliostatShadows(sun);
-//		//_variables.land.bound_area.val =  _SF->getLandObject()->getLandArea(); 
-//	}
-//
-//	//pass the callback along to the solar field, if applicable
-//	if(_has_detail_callback){
-//		_detail_siminfo = _SF->getSimInfoObject();
-//		_detail_siminfo->setCallbackFunction(_detail_callback, _detail_callback_data);
-//		_detail_siminfo->isEnabled(true);
-//	}
-//	if(_has_summary_callback){
-//		_summary_siminfo = new simulation_info();
-//		_summary_siminfo->ResetValues();
-//		_summary_siminfo->setCallbackFunction(_summary_callback, _summary_callback_data);
-//	}
-//	_setup_ok = true;
-//	return true;
-//		
-//};
-
-//void AutoPilot::update_ambient(var_map &vset, sp_ambient &ambient){
-//	vset.amb.elevation.val = ambient.site_elevation;
-//	vset.amb.longitude.val = ambient.site_longitude;
-//	vset.amb.latitude.val = ambient.site_latitude;
-//	vset.amb.time_zone.val = ambient.site_time_zone;
-//	vset.amb.sim_time_step.Setval( vset.amb.sim_time_step.Val() );
-//
-//	//attenuation model
-//    vset.amb.atm_model.combo_select_by_choice_index(ambient.atten_model);
-//
-//	//string avals;
-//	//switch (ambient.atten_model)
-//	//{
-//	//case sp_ambient::ATTEN_MODEL::DELSOL_CLEAR_DAY:
-//	//	_variables.amb.atm_model.combo_select(0);
-//	//	_variables.amb.atm_coefs.set_from_string( _variables.amb.atm_coefs.choices.at(0) );
-//	//	break;
-//	//case sp_ambient::ATTEN_MODEL::DELSOL_HAZY_DAY:
-//	//	_variables.amb.atm_model.combo_select(1);
-//	//	_variables.amb.atm_coefs.set_from_string( _variables.amb.atm_coefs.choices.at(1) );
-//	//	break;
-//	//case sp_ambient::ATTEN_MODEL::USER_DEFINED:
-//	//	avals.clear();
-//	//	for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++){
-//	//		avals.append( my_to_string(ambient.user_atten_coefs.at(i)) );
-//	//		if( i < ambient.user_atten_coefs.size()-1 ) avals.append(",");
-//	//	}
-//	//	
-//	//	_variables.amb.atm_model.val = 2;
-//	//	_variables.amb.atm_model.cselect = 2;
-//	//	_variables.amb.atm_coefs.set_from_string( avals );
-// //       //update the user coefficients in the matrix
-// //       for(int i=0; i<(int)ambient.user_atten_coefs.size(); i++)
-// //           _variables.amb.atm_coefs.val.at(2,i) = ambient.user_atten_coefs.at(i);
-//	//	break;
-//	//default:
-//	//	if( _has_summary_callback ){
-//	//		_summary_siminfo->addSimulationNotice("Invalid atmospheric model number provided. Options are 0=Delsol clear day, 1=Delsol hazy day, 2=user coefs");
-//	//		return;
-//	//	}
-//	//	break;
-//	//}
-//	
-//	//Sun shape
-//	vset.amb.sun_type.val = ambient.sun_type;
-//	switch (ambient.sun_type)
-//	{
-//	case sp_ambient::SUN_TYPE::PILLBOX:
-//		if(ambient.sun_type_params.pillbox_width != std::numeric_limits<double>::quiet_NaN() )
-//			vset.amb.sun_rad_limit.val = ambient.sun_type_params.pillbox_width;
-//		else
-//			vset.amb.sun_rad_limit.val = 4.65;	//default to sun disc
-//
-//		break;
-//	case sp_ambient::SUN_TYPE::GAUSSIAN:
-//		if(ambient.sun_type_params.gaussian_stdev != std::numeric_limits<double>::quiet_NaN() )
-//			vset.amb.sun_rad_limit.val = ambient.sun_type_params.gaussian_stdev;
-//		else
-//			vset.amb.sun_rad_limit.val = 2.73;	//default to SolTrace value
-//
-//		break;
-//	case sp_ambient::SUN_TYPE::LIMB_DARKENED:
-//		break;
-//	case sp_ambient::SUN_TYPE::POINT:
-//		break;
-//	case sp_ambient::SUN_TYPE::BUIE:
-//		if(ambient.sun_type_params.circumsolar_ratio != std::numeric_limits<double>::quiet_NaN() )
-//			vset.amb.sun_csr.val = ambient.sun_type_params.circumsolar_ratio;
-//		else
-//			vset.amb.sun_csr.val = 0.1;
-//
-//		break;
-//	case sp_ambient::SUN_TYPE::USER:
-//		//set up the table from the user-supplied values
-//        vset.amb.user_sun.val.clear();
-//        vset.amb.user_sun.val.resize(ambient.user_sun_data.size(), 2);
-//
-//		for(int i=0; i<(int)ambient.user_sun_data.size(); i++)
-//        {
-//            vset.amb.user_sun.val.at(i,0) = ambient.user_sun_data.at(i).angle;
-//            vset.amb.user_sun.val.at(i,1) = ambient.user_sun_data.at(i).intensity;
-//		}
-//		break;
-//	default:
-//		if( _has_summary_callback )
-//			_summary_siminfo->addSimulationNotice("The specified sun shape model is invalid. Options are "
-//			"Pillbox sun=2;Gaussian sun=4;Limb-darkened sun=1;Point sun=0;Buie CSR=5;User sun=3;");
-//		break;
-//	}
-//
-//
-//	//Weather data
-//	WeatherData *wd = &vset.sf.sim_step_data.Val();
-//    wd->clear();
-//    wd->resizeAll( ambient.weather_data.size() );
-//    for(int i=0; i<(int)ambient.weather_data.size(); i++)
-//    {
-//        sp_ambient::weather_step *s = &ambient.weather_data.at(i);
-//        wd->setStep(i, (double)s->day_of_month, s->time_hours, (double)s->month_of_year, s->dni, s->tdb, s->pres, s->vwind, s->step_weight );
-//    }
-//
-//}
-//
-//void AutoPilot::update_cost(var_map &vset, sp_cost &cost){
-//	vset.fin.tower_fixed_cost.val = cost.tower_fixed_cost;
-//	vset.fin.tower_exp.val = cost.tower_exp;
-//	vset.fin.rec_ref_cost.val = cost.rec_ref_cost;
-//	vset.fin.rec_ref_area.val = cost.rec_ref_area;
-//	vset.fin.rec_cost_exp.val = cost.rec_cost_exp;
-//	vset.fin.site_spec_cost.val = cost.site_spec_cost;
-//	vset.fin.heliostat_spec_cost.val = cost.heliostat_spec_cost;
-//	vset.fin.wiring_user_spec.val = cost.wiring_user_spec;
-//	vset.fin.plant_spec_cost.val = cost.plant_spec_cost;
-//	vset.fin.tes_spec_cost.val = cost.tes_spec_cost;
-//	vset.fin.land_spec_cost.val = cost.land_spec_cost;
-//	vset.fin.contingency_rate.val = cost.contingency_rate;
-//	vset.fin.sales_tax_rate.val = cost.sales_tax_rate;
-//	vset.fin.sales_tax_frac.val = cost.sales_tax_frac;
-//	//vset.fin.sales_tax_cost.val = cost.sales_tax_cost;
-//    vset.fin.fixed_cost.val = cost.cost_fixed;
-//}
-//
-//void AutoPilot::update_layout(var_map &vset, sp_layout &layout){
-//	//set the one-off values
-//	vset.sf.q_des.val = layout.q_design;
-//	vset.sf.accept_max.val = layout.span_cw;
-//	vset.sf.accept_min.val = layout.span_ccw;
-//	vset.sf.tht.val = layout.h_tower;
-//	vset.sf.dni_des.val =  layout.dni_design ;
-//
-//	//Handle land restrictions here
-//	switch (layout.land_bound_type)
-//	{
-//	case sp_layout::LAND_BOUND_TYPE::SCALED:
-//		vset.land.max_scaled_rad.val = layout.land_max;
-//		vset.land.min_scaled_rad.val = layout.land_min;
-//		vset.land.is_bounds_scaled.val = true;
-//		vset.land.is_bounds_fixed.val = false;
-//		vset.land.is_bounds_array.val = false;
-//		break;
-//	case sp_layout::LAND_BOUND_TYPE::FIXED:
-//		vset.land.max_fixed_rad.val = layout.land_max;
-//		vset.land.min_fixed_rad.val = layout.land_min;
-//		vset.land.is_bounds_scaled.val = false;
-//		vset.land.is_bounds_fixed.val = true;
-//		vset.land.is_bounds_array.val = false;
-//		break;
-//	case sp_layout::LAND_BOUND_TYPE::POLYGON:
-//	{
-//		vset.land.is_bounds_scaled.val = false;
-//		vset.land.is_bounds_fixed.val = true;
-//		vset.land.is_bounds_array.val = false;
-//
-//		//add the land table
-//		string incs, excs;
-//		//inclusions
-//		for( int i = 0; i<layout.landtable.inclusions.size(); i++){
-//			incs.append("[POLY]");
-//			for( int j = 0; j<layout.landtable.inclusions.at(i).size(); j++){
-//				incs.append("[P]" + 
-//					my_to_string(layout.landtable.inclusions.at(i).at(j).x) + "," +
-//					my_to_string(layout.landtable.inclusions.at(i).at(j).y));
-//			}
-//		}
-//		//exclusions
-//		for( int i = 0; i<layout.landtable.exclusions.size(); i++){
-//			incs.append("[POLY]");
-//			for( int j = 0; j<layout.landtable.exclusions.at(i).size(); j++){
-//				incs.append("[P]" + 
-//					my_to_string(layout.landtable.exclusions.at(i).at(j).x) + "," +
-//					my_to_string(layout.landtable.exclusions.at(i).at(j).y));
-//			}
-//		}
-//
-//		vset.land.inclusions.set_from_string( incs );
-//		vset.land.exclusions.set_from_string( excs );
-//		break;
-//	}
-//	default:
-//		if( _has_summary_callback )
-//			_summary_siminfo->addSimulationNotice("The specified land bound type is invalid. Options are Scaled=0, Fixed=1, Polygon=2.");
-//		break;
-//	}
-//
-//	//Handle specified layout positions, if needed
-//	if(layout.heliostat_positions.size() > 0){
-//		string layout_data;
-//		for(vector<sp_layout::h_position>::iterator hpos = layout.heliostat_positions.begin(); 
-//			hpos != layout.heliostat_positions.end(); hpos ++){
-//					layout_data.append( 
-//						my_to_string(hpos->template_number) + "," + 
-//						my_to_string(hpos->location.x) + "," +
-//						my_to_string(hpos->location.y) + "," +
-//						my_to_string(hpos->location.z) + ",");
-//			//if the user provides optics, use them here. Otherwise set values to null
-//			if(hpos->user_optics){
-//				layout_data.append(
-//					my_to_string(hpos->focal_length) + "," + 
-//					my_to_string(hpos->focal_length) + "," + 
-//					my_to_string(hpos->cant_vector.i) + "," +
-//					my_to_string(hpos->cant_vector.j) + "," +
-//					my_to_string(hpos->cant_vector.k) + "," +
-//					my_to_string(hpos->aimpoint.x) + "," + 
-//					my_to_string(hpos->aimpoint.y) + "," + 
-//					my_to_string(hpos->aimpoint.z) );
-//			}
-//			else{
-//				layout_data.append("NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL");
-//			}
-//			layout_data.append(";");	//end of line
-//		}
-//		vset.sf.layout_data.set_from_string( layout_data );
-//	}
-//
-//}
-//
-//void AutoPilot::update_heliostats(var_map &vset, sp_heliostats &helios){
-//	int h=0;
-//	for( sp_heliostats::iterator helio = helios.begin(); helio != helios.end(); helio++){
-//		vset.hels[h].width.val = helio->width;
-//		vset.hels[h].height.val = helio->height;
-//		vset.hels[h].n_cant_x.val = helio->npanels_w;
-//		vset.hels[h].n_cant_y.val = helio->npanels_h;
-//        vset.hels[h].is_faceted.val =  helio->npanels_h > 1 || helio->npanels_w > 1 ;
-//		vset.hels[h].err_elevation.val = 0.;
-//		vset.hels[h].err_azimuth.val = 0.;
-//		vset.hels[h].err_surface_x.val = helio->optical_error;
-//		vset.hels[h].err_surface_y.val = helio->optical_error;
-//		vset.hels[h].err_reflect_x.val = 0.;
-//		vset.hels[h].err_reflect_y.val = 0.;
-//		vset.hels[h].reflectivity.val = helio->reflectance;
-//        vset.hels[h].reflect_ratio.val =  helio->active_fraction ;
-//		vset.hels[h].soiling.val = 1.;
-//
-//		//Canting
-//		vset.hels[h].cant_method.val = helio->cant_type;
-//        
-//        switch (helio->cant_type)
-//        {
-//        case sp_heliostat::CANT_TYPE::NONE:
-//        case sp_heliostat::CANT_TYPE::ON_AXIS:
-//            //do nothing
-//            break;
-//        case sp_heliostat::CANT_TYPE::EQUINOX:
-//        case sp_heliostat::CANT_TYPE::SOLSTICE_SUMMER:
-//        case sp_heliostat::CANT_TYPE::SOLSTICE_WINTER:
-//            //set the day
-//            vset.hels[h].cant_day.val = helio->cant_settings.point_day;
-//			vset.hels[h].cant_hour.val = helio->cant_settings.point_hour;
-//            break;
-//        case -99:
-//            //this one isn't handled right now. This will be a placeholder
-//            vset.hels[h].is_cant_vect_slant.val = helio->cant_settings.scale_with_slant;
-//			vset.hels[h].cant_vect_i.val = helio->cant_settings.point_vector.i;
-//			vset.hels[h].cant_vect_j.val = helio->cant_settings.point_vector.j;
-//			vset.hels[h].cant_vect_k.val = helio->cant_settings.point_vector.k;
-//        default:
-//            break;
-//        }
-//
-//		//Focusing
-//		vset.hels[h].focus_method.val = helio->focus_type;
-//		vset.hels[h].is_focal_equal.val = true;
-//		switch (helio->focus_type)
-//		{
-//		case sp_heliostat::FOCUS_TYPE::FLAT:
-//			vset.hels[h].is_xfocus.val = false;
-//			vset.hels[h].is_yfocus.val = false;
-//			break;
-//		case sp_heliostat::FOCUS_TYPE::USER_DEFINED:
-//			vset.hels[h].x_focal_length.val = helio->user_focal_length;
-//			//don't break.. also set the x and y focus bools to true
-//		case sp_heliostat::FOCUS_TYPE::AT_SLANT:
-//			vset.hels[0].is_xfocus.val = true;
-//			vset.hels[0].is_yfocus.val = true;
-//			break;
-//		default:
-//			break;
-//		}
-//
-//		h++;
-//	}
-//}
-//
-//void AutoPilot::update_receivers(var_map &vset, sp_receivers &recs){
-//	int r=0;
-//	for(sp_receivers::iterator rec = recs.begin(); rec != recs.end(); rec++){
-//		vset.recs[r].rec_type.val = rec->type;
-//
-//		vset.recs[r].rec_offset_x.val = rec->offset.x;
-//		vset.recs[r].rec_offset_y.val = rec->offset.y;
-//		vset.recs[r].rec_offset_z.val = rec->offset.z;
-//
-//		vset.recs[r].absorptance.val =  rec->absorptance ;
-//		vset.recs[r].therm_loss_base.val =  rec->q_hl_perm2 ;
-//		
-//		double rw = rec->height / rec->aspect;
-//		vset.recs[r].rec_height.val =  rec->height ;
-//		vset.recs[r].rec_width.val =  rw ;
-//		//vset.recs[r].rec_aspect.val =  rec->aspect ; 
-//		vset.recs[r].rec_diameter.val =  rw ;
-//		
-//		r++;
-//	}
-//}
 
 vector<double> AutoPilot::interpolate_vectors(vector<double> &A, vector<double> &B, double alpha)
 {
@@ -1062,7 +628,6 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 	layout.heliostat_positions.clear();
 	for(int i=0; i<(int)hpos->size(); i++){
 		sp_layout::h_position hp;
-		//hp.location.Set( *hpos->at(i)->getLocation() );
 		hp.location.x = hpos->at(i)->getLocation()->x;
 		hp.location.y = hpos->at(i)->getLocation()->y;
 		hp.location.z = hpos->at(i)->getLocation()->z;
@@ -1082,8 +647,8 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 	}
 
 
- //   var_map *V = _SF->getVarMap();
- //   _SF->updateAllCalculatedParameters( *V );
+    //var_map *V = _SF->getVarMap();
+    //_SF->updateAllCalculatedParameters( *V );
 
 	//_layout->land_area = V->land.land_area.Val(); // _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
  //   _layout->area_sf = V->sf.sf_area.Val();
@@ -1221,46 +786,7 @@ void AutoPilot::CancelSimulation()
 	_SF->CancelSimulation();
 }
 
-//bool AutoPilot::SimulateFlux(sp_flux_map &fluxmap)
-//{
-//	_cancel_simulation = false;
-//
-//	//Check if a layout is available for simulation
-//	if(_SF->getHeliostats()->size() == 0){
-//		// no field layout
-//		throw spexception("Performance simulation requires an existing layout. Please create a system geometry before simulating performance.");
-//	}
-//
-//	//provide an update if we aren't expecting one from the SF object
-//	/*if(_has_summary_callback){
-//		_summary_siminfo->ResetValues();
-//		_summary_siminfo->addSimulationNotice("Simulating receiver flux profile");
-//	}*/
-//
-//	sim_result result;
-//	try{
-//		Hvector helios = *_SF->getHeliostats();
-//		_SF->HermiteFluxSimulation(helios);
-//		result.process_analytical_simulation(*_SF, 2, helios);
-//	}
-//	catch( std::exception &e ){
-//		string emsg = e.what();
-//		if(_has_summary_callback)
-//			_summary_siminfo->addSimulationNotice( "Caught an exception during the flux simulation: " + emsg );
-//		return false;
-//	}
-//	catch( ... ){
-//		if(_has_summary_callback)
-//			_summary_siminfo->addSimulationNotice( "Caught an unhandled exception during the flux simulation. The simulation terminated unsuccessfully.");
-//		return false;
-//	}
-//
-//	//transfer results data into sp_flux_map
-//	if(! _cancel_simulation)
-//		PostProcessFlux(result, fluxmap, 0);
-//	
-//	return true;
-//}
+
 
 bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
 {
@@ -1300,15 +826,6 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
 	//Do the flux simulation at the design point
 	if(! _cancel_simulation){
 		//update the flux simulation sun position to match the layout reference point sun position
-		//double az_des, zen_des;
-		//if(! 
-            //_SF->CalcDesignPtSunPosition( _variables.sf.sun_loc_des.val, az_des, zen_des) 
-            //) return false;
-
-		//_SF->getAmbientObject()->setSolarPosition( az_des*D2R, zen_des*D2R );
-        //FluxSimData *fd = _SF->getFluxSimObject();
-		//fd->_flux_solar_az_in = az_des;	//[deg]
-		//fd->_flux_solar_el_in = 90.0 - zen_des;
 		_SF->getVarMap()->flux.flux_time_type.val = FluxSimData::FLUX_TIME::POSITION;	//sun position specified
 
 		//prep for performance simulation (aim points, etc.)
@@ -1348,19 +865,6 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
 	obj_metric = cost/power 
 		* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
-
-    /*obj_metric = (cost - power*3250)*1.e-7 + 
-        max(flux_max - opt.flux_max, 0.)*opt.flux_penalty + 
-        max(qminimum - qactual, 0.)*opt.power_penalty;*/
-
-	//Additive? may cause too much interaction
-	
-	//Set the aiming method back to the original value
-	//_variables["fluxsim"][0]["aim_method"].value = my_to_string( aim_method_save );
-
-	//Set the flux resolution back to the original values
-	/*_variables["fluxsim"][0]["x_res"].set( flux_x_save );
-	_variables["fluxsim"][0]["y_res"].set( flux_y_save );*/
 
 	return true;
 }

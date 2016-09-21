@@ -47,15 +47,6 @@ protected:
 
     sp_optimize _opt;
 
-	/*sp_layout *_layout;
-    sp_cost *_cost;
-
-	void update_ambient(var_map &V, sp_ambient &ambient);
-	void update_cost(var_map &V, sp_cost &cost);
-	void update_layout(var_map &V, sp_layout &layout);
-	void update_heliostats(var_map &V, sp_heliostats &helios);
-	void update_receivers(var_map &V, sp_receivers &recs);*/
-
 	vector<double> interpolate_vectors( vector<double> &A, vector<double> &B, double alpha);
 
 
@@ -80,16 +71,11 @@ public:
 	void SetDetailCallbackStatus(bool is_enabled);
 	//setup
 	void PreSimCallbackUpdate();
-    //void LoadAllDefaultValues(sp_ambient &ambient, sp_cost &cost, sp_layout &layout, sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, var_map *V = 0);
 	void SetExternalSFObject(SolarField *SF);
 	bool Setup(var_map &V, bool for_optimize = false);
-	/*bool SetupExpert(var_map &V, sp_ambient &ambient, sp_cost &cost, sp_layout &layout, 
-                                         sp_heliostats &helios, sp_receivers &recs, sp_optimize &opt, 
-                                         vector<string> &weather_data, bool defaults_only=false);*/
 	//generate weather data
 	void GenerateDesignPointSimulations(var_map &V, vector<string> &hourly_weather_data);
 	//Simulation methods
-	//bool SimulateFlux(sp_flux_map &fluxmap);  //individual flux simulation - not multi-threaded
 	bool EvaluateDesign(double &obj_metric, double &flux_max);
 	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux);
 	virtual bool CreateLayout(sp_layout &layout, bool do_post_process = true);
