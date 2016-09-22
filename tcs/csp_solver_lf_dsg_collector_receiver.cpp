@@ -120,7 +120,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	
 	// inputs parameters
 	m_P_max = 190.0;		// [bar]
-	m_eta_optical.resize(m_n_rows_matrix, 1);	
+	m_eta_optical.resize(m_n_rows_matrix, 1);
+	m_eta_optical_0.resize(m_n_rows_matrix, 1);
 	
 	//[-] Outer glass envelope emissivities (Pyrex)
 	m_EPSILON_5 = m_EPSILON_4;
@@ -772,14 +773,14 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_P_htf_out_t_end.resize(m_nModTot);
 	m_P_htf_t_ave.resize(m_nModTot);
 	m_xb_htf_out_t_end.resize(m_nModTot);
+	m_xb_htf_out_t_end.assign(m_xb_htf_out_t_end.size(), 0.0);
 	m_xb_htf_t_ave.resize(m_nModTot);
 
 	m_h_htf_out_t_end_converged.resize(m_nModTot);
 	m_h_htf_out_t_end_last.resize(m_nModTot);
 	m_T_htf_t_ave_converged.resize(m_nModTot);
 	m_T_htf_t_ave_last.resize(m_nModTot);
-	for (int i = 0; i < m_nModTot; i++)
-		m_T_htf_t_ave_last[i] = m_T_field_ini;
+	m_T_htf_t_ave_last.assign(m_T_htf_t_ave_last.size(), m_T_field_ini);
 	
 	m_T_htf_out_t_end_converged.resize(m_nModTot);
 	m_T_htf_out_t_end_last.resize(m_nModTot);
@@ -882,7 +883,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// This iteration would end here, and step forward
 
 		// Check freeze protection
-		if (m_T_htf_out_t_end[m_nSCA - 1] < m_T_fp + 10.0)
+		if (m_T_htf_out_t_end[m_nModTot - 1] < m_T_fp + 10.0)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs!
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1020,7 +1021,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		loop_energy_balance_T_t_int_RC(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
 		// Check freeze protection
-		if (m_T_htf_out_t_end[m_nSCA - 1] < m_T_fp + 10.0)
+		if (m_T_htf_out_t_end[m_nModTot - 1] < m_T_fp + 10.0)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs!
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1179,7 +1180,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	// If the outlet temperature (of last SCA!) is greater than the target (considering some convergence tolerance)
 	// then adjust mass flow rate and see what happens
-	if ((m_xb_htf_out_t_end[m_nSCA - 1] - m_x_b_des) > 0.001 && on_success)
+	if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001 && on_success)
 	{
 		// Try the maximum mass flow rate
 		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
@@ -1189,7 +1190,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 		// Is the outlet temperature (of the last SCA!) still greater than the target (considering some convergence tolerance)
 		// then need to defocus
-		if ((m_xb_htf_out_t_end[m_nSCA - 1] - m_x_b_des) > 0.001)
+		if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1209,8 +1210,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// Set guess values... can be smarter about this...
 			//double defocus_guess_upper = min(1.0, (m_h_field_out_des - m_h_field_in_des) / (m_h_field_out - m_h_field_in_des));
 			//double defocus_guess_lower = 0.9*defocus_guess_upper;	//[-]
-			double defocus_guess_upper = defocus_upper;
-			double defocus_guess_lower = defocus_lower;
+			double defocus_guess_upper = 0.9;
+			double defocus_guess_lower = 0.5;
 
 			//// test begin
 			//double defocus_test, x_out;
@@ -1401,7 +1402,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 	}
 
 	// Set the outlet temperature at end of timestep
-	*xb_loop_out = mpc_csp->m_xb_htf_out_t_end[mpc_csp->m_nSCA - 1];
+	*xb_loop_out = mpc_csp->m_xb_htf_out_t_end[mpc_csp->m_nModTot - 1];
 
 	return 0;
 }
@@ -1426,20 +1427,10 @@ void C_csp_lf_dsg_collector_receiver::apply_component_defocus(double defocus /*-
 	}
 	if (m_fthrctrl == 2)
 	{
-			for (int i = 0; i < m_nModTot; i++)
-			{
-				// Calculate the incident energy on each module 
-				m_q_inc.at(i, 0) *= defocus;		//[kW]
-				// Calculate the energy on the receiver
-				m_q_rec.at(i, 0) *= defocus;
-				m_eta_optical.at(i, 0) *= defocus;
-			} 
-			// loop value
-			m_eta_opt_ave *= defocus;
-			m_q_rec_loop *= defocus;
-			m_q_inc_loop *= defocus;
+		
+		m_ftrack = defocus;
 
-		//for (int i = 0; i < m_nSCA; i++)
+		//for (int i = 0; i < m_nModTot; i++)
 		//{
 		//	int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
 		//	m_q_SCA[i] = defocus*m_q_SCA_control_df[i];
@@ -1568,7 +1559,7 @@ void C_csp_lf_dsg_collector_receiver::reset_last_temps()
 	//// Update "_last" temperatures
 	//m_T_sys_c_t_end_last = m_T_sys_c_t_end_converged;		//[K]
 	//m_T_sys_h_t_end_last = m_T_sys_h_t_end_converged;		//[K]
-	//for (int i = 0; i<m_nSCA; i++)
+	//for (int i = 0; i<m_nModTot; i++)
 	//{
 	//	m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end_converged[i];	//[K]
 	//}
@@ -1589,7 +1580,7 @@ void C_csp_lf_dsg_collector_receiver::update_last_temps()
 	// Update "_last" temperatures
 	//m_T_sys_c_t_end_last = m_T_sys_c_t_end;		//[K]
 	//m_T_sys_h_t_end_last = m_T_sys_h_t_end;		//[K]
-	//for (int i = 0; i<m_nSCA; i++)
+	//for (int i = 0; i<m_nModTot; i++)
 	//{
 	//	m_T_htf_out_t_end_last[i] = m_T_htf_out_t_end[i];	//[K]
 	//}
@@ -1734,18 +1725,18 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 			case 1:		//sun position
 				//user provides an optical table as a function of solar position
 				//m_eta_optical.at(i,0) = m_eta_opt_fixed.at(i,0)*max( b_optical_table.interpolate(SolarAz, min(SolarZen, CSP::pi/2.)), 0.0);
-				m_eta_optical.at(i, 0) = m_eta_opt_fixed.at(i, 0)*max(optical_tables.interpolate(SolarAz, min(SolarZen, CSP::pi / 2.0), i), 0.0);
+				m_eta_optical_0.at(i, 0) = m_eta_opt_fixed.at(i, 0)*max(optical_tables.interpolate(SolarAz, min(SolarZen, CSP::pi / 2.0), i), 0.0);
 				break;
 			case 2:		//incidence angle table
 				//user provides an optical table as a function of collector incidence angles
 				//m_eta_optical.at(i,0) = m_eta_opt_fixed.at(i,0)*max( b_optical_table.interpolate(phi_t, max(theta_L, 0.0)), 0.0);
-				m_eta_optical.at(i, 0) = m_eta_opt_fixed.at(i, 0)*max(optical_tables.interpolate(phi_t, max(theta_L, 0.0), i), 0.0);
+				m_eta_optical_0.at(i, 0) = m_eta_opt_fixed.at(i, 0)*max(optical_tables.interpolate(phi_t, max(theta_L, 0.0), i), 0.0);
 				break;
 			case 3:		//incidence angle modifier polys
 				//Otherwise, calculate the collector incidence angles for the IAM equations
 				Iam_T = m_IAM_T.at(i, 0) + m_IAM_T.at(i, 1)*phi_t + m_IAM_T.at(i, 2)*pow(phi_t, 2) + m_IAM_T.at(i, 3)*pow(phi_t, 3) + m_IAM_T.at(i, 4)*pow(phi_t, 4);
 				Iam_L = m_IAM_L.at(i, 0) + m_IAM_L.at(i, 1)*phi_t + m_IAM_L.at(i, 2)*pow(phi_t, 2) + m_IAM_L.at(i, 3)*pow(phi_t, 3) + m_IAM_L.at(i, 4)*pow(phi_t, 4);
-				m_eta_optical.at(i, 0) = m_eta_opt_fixed.at(i, 0) * Iam_T * Iam_L;
+				m_eta_optical_0.at(i, 0) = m_eta_opt_fixed.at(i, 0) * Iam_T * Iam_L;
 				break;
 			default:
 				//error
@@ -1754,27 +1745,21 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 				/*message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
 				return -1;*/
 			}
-			m_eta_optical.at(i, 0) *= m_ftrack;
+			//m_eta_optical.at(i, 0) *= m_ftrack;
 		}
 	}
 	else
 	{
-		m_eta_optical.fill(0.0);
+		m_eta_optical_0.fill(0.0);
 		phi_t = CSP::pi / 2.;
 		theta_L = 0.0;
 	}
-
 
 	int gset = 0; // used to represent different collector geometry (i.e., boiler and superheater). but now it is one single geometry
 	for (int i = 0; i < m_nModTot; i++)
 	{
 		// Calculate the incident energy on each module
 		m_q_inc.at(i, 0) = I_bn*m_A_aperture.at(0, 0) / 1000.0;		//[kW]
-		// Calculate the energy on the receiver
-		m_q_rec.at(i, 0) = m_q_inc.at(i, 0)*m_eta_optical.at(gset, 0);
-		// Average optical efficiency
-		m_eta_opt_ave += m_eta_optical.at(gset, 0)*m_A_aperture.at(gset, 0)*m_nLoops / m_Ap_tot;
-		m_q_rec_loop += m_q_rec.at(i, 0);
 		m_q_inc_loop += m_q_inc.at(i, 0);
 	}
 
@@ -1806,6 +1791,7 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 	m_q_inc.fill(0.0);			//[W/m] calculate the incidence energy on each module
 	m_q_rec.fill(0.0);			//[W/m] Calculate the energy on the receiver on each module
 	m_eta_optical.fill(0.0); //[-] optical efficiency
+	m_eta_optical_0.fill(0.0); //[-] optical efficiency
 	// for each loop
 	m_eta_opt_ave = 0.0;
 	m_q_rec_loop = 0.0;
@@ -1894,7 +1880,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	if (m_is_oncethru || m_ftrack <= 0.0)
 		loop_energy_balance_T_t_int_OT(weather, T_htf_cold_in /*K*/, m_dot_htf_loop /*kg/s*/, sim_info);
 	else
-		loop_energy_balance_T_t_int_RC(weather, T_htf_cold_in /*K*/, m_dot_htf_loop /*kg/s*/, sim_info);
+		loop_energy_balance_T_t_int_OT(weather, T_htf_cold_in /*K*/, m_dot_htf_loop /*kg/s*/, sim_info);
 	
 	m_T_sys_c_t_end = T_htf_cold_in;
 	m_T_sys_h_t_end = m_T_htf_out_t_end[m_nModTot - 1];
@@ -1925,6 +1911,22 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_OT(const C_csp_
 	for (int i = 0; i < m_nModTot; i++)
 		m_T_ave_prev[i] = m_T_htf_t_ave_last[i];
 
+	// thermal energy calculation
+	int gset = 0; // used to represent different collector geometry (i.e., boiler and superheater). but now it is one single geometry
+	for (int i = 0; i < m_n_rows_matrix; i++)
+		m_eta_optical.at(i, 0) = m_eta_optical_0.at(i, 0)*m_ftrack;
+
+	m_q_rec_loop = 0.0;
+	m_eta_opt_ave = 0.0;
+	for (int i = 0; i < m_nModTot; i++)
+	{
+		// Calculate the energy on the receiver
+		m_q_rec.at(i, 0) = m_q_inc.at(i, 0)*m_eta_optical.at(gset, 0);
+		// Average optical efficiency
+		m_eta_opt_ave += m_eta_optical.at(gset, 0)*m_A_aperture.at(gset, 0)*m_nLoops / m_Ap_tot;
+		m_q_rec_loop += m_q_rec.at(i, 0);
+	}
+
 	// Guess the turbine pressure.. turbine inlet pressure is highly insensitive to condenser pressure, so
 	// simplify the expression to eliminate condenser pressure
 	//double P_loop_out = turb_pres_frac(m_dot_htf_loop*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des;
@@ -1941,8 +1943,9 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_OT(const C_csp_
 	// guess average enthalpy for each module
 	double dh_guess = (h_b_out_guess - m_h_field_in) / (double)m_nModTot;
 	for (int i = 0; i < m_nModTot; i++)
+	{
 		m_h_ave.at(i, 0) = m_h_field_in + dh_guess*(double)(i + 1) - dh_guess / 2.0;
-
+	}
 		// Set the loop inlet enthalpy
 	    m_h_in.at(0, 0) = m_h_field_in;
 		
@@ -1951,7 +1954,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_OT(const C_csp_
 		m_q_abs.fill(0.0);
 
 		// define solar geometry
-		int gset = 0;
+		//int gset = 0;
 
 		for (int i = 0; i < m_nModTot; i++)
 		{
@@ -2028,9 +2031,9 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_OT(const C_csp_
 			{
 				iter_t++;
 				// Calculate the average enthalpy value in the collector module
-				m_h_out.at(i, 0) = (m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+				m_h_out.at(i,0) = (m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
 				// Update guesses for h_ave and T_ave
-				double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+				double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 				// Update the average temperature for the heat loss calculation
 				water_PH(P_loc*100.0, h_aveg, &wp);
 				m_T_ave.at(i, 0) = wp.temp;
@@ -2040,19 +2043,19 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_OT(const C_csp_
 
 			}
 			if (i < m_nModTot - 1)
-				m_h_ave.at(i + 1, 0) = (m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5); //question: why 1.5?
-			//m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+				m_h_ave.at(i + 1, 0) = (m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5); //
+			//m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 			// update data at each time step			
-			m_h_htf_out_t_end[i] = m_h_out[i];	//
+			m_h_htf_out_t_end[i] = m_h_out.at(i,0);	//
 			m_P_htf_out_t_end[i] = P_loc;	//
 			
-			water_PH(m_P_htf_out_t_end[i] * 100.0, m_h_out.at(i, 0), &wp);
+			water_PH(m_P_htf_out_t_end[i] * 100.0, m_h_out.at(i,0), &wp);
 			m_T_htf_out_t_end[i] = wp.temp;
 			m_xb_htf_out_t_end[i] = wp.qual;	//
 
-			m_h_htf_t_ave[i] = m_h_ave[i];	//
-			m_T_htf_t_ave[i] = m_T_ave[i];	//
+			m_h_htf_t_ave[i] = m_h_ave.at(i, 0);	//
+			m_T_htf_t_ave[i] = m_T_ave.at(i, 0);	//
 			m_P_htf_t_ave[i] = P_loc;	//
 
 			water_PH(m_P_htf_t_ave[i] * 100.0, m_h_ave.at(i, 0), &wp);
@@ -2132,6 +2135,22 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_RC(const C_csp_
 	for (int i = 0; i < m_nModTot; i++)
 		m_T_ave_prev[i,0] = m_T_htf_t_ave_last[i];
 
+	// thermal energy calculation
+	int gset = 0; // used to represent different collector geometry (i.e., boiler and superheater). but now it is one single geometry
+	for (int i = 0; i < m_n_rows_matrix; i++)
+		m_eta_optical.at(i, 0) = m_eta_optical_0.at(i,0)*m_ftrack;
+	
+	m_q_rec_loop = 0.0;
+	m_eta_opt_ave = 0.0;
+	for (int i = 0; i < m_nModTot; i++)
+	{
+		// Calculate the energy on the receiver
+		m_q_rec.at(i, 0) = m_q_inc.at(i, 0)*m_eta_optical.at(gset, 0);
+		// Average optical efficiency
+		m_eta_opt_ave += m_eta_optical.at(gset, 0)*m_A_aperture.at(gset, 0)*m_nLoops / m_Ap_tot;
+		m_q_rec_loop += m_q_rec.at(i, 0);
+	}
+
 	// Guess the turbine pressure.. turbine inlet pressure is highly insensitive to condenser pressure, so
 	// simplify the expression to eliminate condenser pressure
 	//double P_loop_out = turb_pres_frac(m_dot_htf_loop*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des;
@@ -2150,7 +2169,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_RC(const C_csp_
 	
 	// Determin the mixed inlet enthalpy
 	//double h_b_in = P_loop_out*m_x_b_des + h_b_recirc*(1.0 - m_x_b_des);
-	m_h_field_in = P_loop_out*m_x_b_des + h_b_recirc*(1.0 - m_x_b_des);
+	m_h_field_in = h_feedwater*m_x_b_des + h_b_recirc*(1.0 - m_x_b_des);
 	
 	// guess average enthalpy for each module
 	double dh_guess = (h_b_out_guess - m_h_field_in) / (double)m_nModTot;
@@ -2166,7 +2185,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_RC(const C_csp_
 	m_q_abs.fill(0.0);
 
 	// define solar geometry
-	int gset = 0;
+	//int gset = 0;
 
 	for (int i = 0; i < m_nModTot; i++)
 	{
@@ -2246,9 +2265,9 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_RC(const C_csp_
 		{
 			iter_t++;
 			// Calculate the average enthalpy value in the collector module
-			m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+			m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
 			// Update guesses for h_ave and T_ave
-			double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+			double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 			// Update the average temperature for the heat loss calculation
 			water_PH(P_loc*100.0, h_aveg, &wp);
 			m_T_ave.at(i, 0) = wp.temp;
@@ -2258,18 +2277,18 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_RC(const C_csp_
 
 		// Predict the next outlet enthalpy
 		if (i < m_nModTot - 1)
-			m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+			m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 		// update data at each time step			
-		m_h_htf_out_t_end[i] = m_h_out[i];	//
+		m_h_htf_out_t_end[i] = m_h_out.at(i,0);	//
 		m_P_htf_out_t_end[i] = P_loc;	//
 
-		water_PH(m_P_htf_out_t_end[i] * 100.0, m_h_out.at(i, 0), &wp);
+		water_PH(m_P_htf_out_t_end[i] * 100.0, m_h_out.at(i,0), &wp);
 		m_T_htf_out_t_end[i] = wp.temp;
 		m_xb_htf_out_t_end[i] = wp.qual;	//
 
-		m_h_htf_t_ave[i] = m_h_ave[i];	//
-		m_T_htf_t_ave[i] = m_T_ave[i];	//
+		m_h_htf_t_ave[i] = m_h_ave.at(i, 0);	//
+		m_T_htf_t_ave[i] = m_T_ave.at(i, 0);	//
 		m_P_htf_t_ave[i] = P_loc;	//
 
 		water_PH(m_P_htf_t_ave[i] * 100.0, m_h_ave.at(i, 0), &wp);
@@ -2340,7 +2359,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
  	field_control = 0;
 	if (time_t == 12 * 3600)
 	{
-		//loop_optical_eta(weather, sim_info);
+		loop_optical_eta(weather, sim_info);
 		on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
 	}
 
@@ -2749,9 +2768,9 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
 						// Update guesses for h_ave and T_ave
-						double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
 						water_PH(P_loc*100.0, h_aveg, &wp);
 						m_T_ave.at(i, 0) = wp.temp;
@@ -2759,7 +2778,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						m_h_ave.at(i, 0) = h_aveg;
 					}
 					if (i < m_nModTot - 1)
-						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 				}   // End step through receivers in flow path
 
@@ -2998,9 +3017,9 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
 						// Update guesses for h_ave and T_ave
-						double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
 						water_PH(P_loc*100.0, h_aveg, &wp);
 						m_T_ave.at(i, 0) = wp.temp;
@@ -3010,7 +3029,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 					// Predict the next outlet enthalpy
 					if (i < m_nModTot - 1)
-						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 				}	// End step through boiler receiver modules
 
@@ -3220,9 +3239,9 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						while (err_t > tol_t && iter_t < 50)
 						{
 							// Calculate the average enthalpy value in the collector module
-							m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
 							// Update guesses for h_ave and T_ave
-							double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+							double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 							// Update the average temperature for the heat loss calculation
 							water_PH(P_loc*100.0, h_aveg, &wp);
 							m_T_ave.at(i, 0) = wp.temp;
@@ -4019,9 +4038,9 @@ void C_csp_lf_dsg_collector_receiver::call_bk(const C_csp_weatherreader::S_outpu
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt);
 						// Update guesses for h_ave and T_ave
-						double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
 						water_PH(P_loc*100.0, h_aveg, &wp);
 						m_T_ave.at(i, 0) = wp.temp;
@@ -4029,7 +4048,7 @@ void C_csp_lf_dsg_collector_receiver::call_bk(const C_csp_weatherreader::S_outpu
 						m_h_ave.at(i, 0) = h_aveg;
 					}
 					if (i < m_nModTot - 1)
-						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 				}   // End step through receivers in flow path
 
@@ -4268,9 +4287,9 @@ void C_csp_lf_dsg_collector_receiver::call_bk(const C_csp_weatherreader::S_outpu
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt);
 						// Update guesses for h_ave and T_ave
-						double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
 						water_PH(P_loc*100.0, h_aveg, &wp);
 						m_T_ave.at(i, 0) = wp.temp;
@@ -4280,7 +4299,7 @@ void C_csp_lf_dsg_collector_receiver::call_bk(const C_csp_weatherreader::S_outpu
 
 					// Predict the next outlet enthalpy
 					if (i < m_nModTot - 1)
-						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
+						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 				}	// End step through boiler receiver modules
 
@@ -4490,9 +4509,9 @@ void C_csp_lf_dsg_collector_receiver::call_bk(const C_csp_weatherreader::S_outpu
 						while (err_t > tol_t && iter_t < 50)
 						{
 							// Calculate the average enthalpy value in the collector module
-							m_h_out.at(i, 0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt);
+							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs.at(i, 0) / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt);
 							// Update guesses for h_ave and T_ave
-							double h_aveg = (m_h_out.at(i, 0) + m_h_in.at(i, 0)) / 2.0;
+							double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 							// Update the average temperature for the heat loss calculation
 							water_PH(P_loc*100.0, h_aveg, &wp);
 							m_T_ave.at(i, 0) = wp.temp;
