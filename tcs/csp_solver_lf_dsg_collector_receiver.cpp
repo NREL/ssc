@@ -647,7 +647,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		throw(C_csp_exception(err_msg, "LF DSG init()"));
 	}
 
-	m_m_dot_des = q_abs_tot_des / (h_sh_out_des - h_pb_out_des);
+	m_m_dot_des = q_abs_tot_des / (h_sh_out_des - h_pb_out_des);	//[kg/s]
 
 	// Calculate the design-point mass flow rate in the boiler only (include recirculation mass)
 	m_m_dot_b_des = 0.0;
@@ -1460,6 +1460,8 @@ double C_csp_lf_dsg_collector_receiver::turb_pres_frac(double m_dot_nd, int fmod
 		return max(fP_min, max(m_dot_nd, min(1.0, m_dot_nd + ffrac)));
 	case 3:			// Temperature topping mode - series
 		return max(fP_min, m_dot_nd);
+	case 4:
+		return 1.0;	// IPH case where heat sink is not utilizing pressure for expansion
 	}
 }
 
