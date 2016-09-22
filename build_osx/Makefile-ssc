@@ -77,7 +77,7 @@ OBJECTS = \
 	cmod_cb_mspt_system_costs.o \
 	cmod_cb_construction_financing.o \
 	cmod_sco2_design_cycle.o \
-	cmod_pv_get_shade_loss_mpp \
+	cmod_pv_get_shade_loss_mpp.o \
 	tckernel.o 
 
 $(TARGET) : $(OBJECTS)
