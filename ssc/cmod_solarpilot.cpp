@@ -58,6 +58,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",            "Hourly frequency in flux map lookup",        "",       "",         "SolarPILOT",   "?=1",              "",                "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "SolarPILOT",   "?=0",              "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "check_max_flux",            "Check max flux at design point",             "",       "",         "SolarPILOT",   "?=0",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",              "Receiver reference cost",                    "$",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -95,7 +96,8 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "h_tower_opt",               "Optimized tower height",                     "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_height_opt",            "Optimized receiver height",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_aspect_opt",            "Optimized receiver aspect ratio",            "-",      "",         "SolarPILOT",   "*",                "",                "" },
-    
+	{ SSC_OUTPUT,       SSC_NUMBER,      "flux_max_observed",         "Maximum observed flux at design",            "kW/m2",  "",         "SolarPILOT",   "check_max_flux=1", "",                "" },
+
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_rec_tot",              "Total receiver cost",                        "$",      "",         "SolarPILOT",   "*",                "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_sf_tot",               "Total heliostat field cost",                 "$",      "",         "SolarPILOT",   "*",                "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_tower_tot",            "Total tower cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },

@@ -647,8 +647,8 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 	}
 
 
-    //var_map *V = _SF->getVarMap();
-    //_SF->updateAllCalculatedParameters( *V );
+    var_map *V = _SF->getVarMap();
+    _SF->updateAllCalculatedParameters( *V );
 
 	//_layout->land_area = V->land.land_area.Val(); // _SF->getLandObject()->getLandArea() /4046.85642;  //m2->acre
  //   _layout->area_sf = V->sf.sf_area.Val();
@@ -689,26 +689,50 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	}
 	
 	//------------ 
+    int nflux_sim;
 
-	vector<int> uday;
-	vector<vector<double> > utime;
-	//Ambient *amb =_SF->getAmbientObject();
+    if(fluxtab.azimuths.size() == 0)
+    {
+	    vector<int> uday;
+	    vector<vector<double> > utime;
+	    //Ambient *amb =_SF->getAmbientObject();
 
-	if(! fluxtab.is_user_spacing){
-		fluxtab.n_flux_days = 8;
-		fluxtab.delta_flux_hrs = 1.;
-	}
+	    if(! fluxtab.is_user_spacing){
+		    fluxtab.n_flux_days = 8;
+		    fluxtab.delta_flux_hrs = 1.;
+	    }
 
-	Ambient::calcSpacedDaysHours(V->amb.latitude.val, V->amb.longitude.val, V->amb.time_zone.val, 
-		fluxtab.n_flux_days, fluxtab.delta_flux_hrs, utime, uday);
+	    Ambient::calcSpacedDaysHours(V->amb.latitude.val, V->amb.longitude.val, V->amb.time_zone.val, 
+		    fluxtab.n_flux_days, fluxtab.delta_flux_hrs, utime, uday);
 	 
-	int nflux_sim = 0;
-	for(int i=0; i<(int)utime.size(); i++)
-		nflux_sim += (int)utime.at(i).size();
+	    nflux_sim = 0;
+	    for(int i=0; i<(int)utime.size(); i++)
+		    nflux_sim += (int)utime.at(i).size();
 
-	//Arrays to keep track of input values
-	fluxtab.azimuths.clear();
-	fluxtab.zeniths.clear();
+	    //Arrays to keep track of input values
+	    fluxtab.azimuths.clear();
+	    fluxtab.zeniths.clear();
+
+        DateTime DT;
+        int nday = (int)uday.size();
+        for(int i=0; i<nday; i++){
+	        int nhour_day = (int)utime.at(i).size();
+	        for(int j=0; j<nhour_day; j++){
+			
+                Ambient::setDateTime(DT, utime.at(i).at(j)+12, uday[i]);
+                double az,zen;
+                Ambient::calcSunPosition(*V, DT, &az, &zen);
+			
+		        //--- keep track of input values
+		        fluxtab.azimuths.push_back(az*D2R);
+		        fluxtab.zeniths.push_back(zen*D2R);
+	        }
+        }
+    }
+    else
+    {
+        nflux_sim = fluxtab.azimuths.size();
+    }
 
 	fluxtab.flux_surfaces.clear();
 	//resize the results to accommodate each receiver surface
@@ -722,23 +746,6 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	//resize the flux surfaces to match the flux data and the number of annual simulation positions
 	for(int i=0; i<nsurftot; i++)
 		fluxtab.flux_surfaces.at(i).flux_data.resize(flux_res_y, flux_res_x, nflux_sim);
-
-    DateTime DT;
-	int nday = (int)uday.size();
-	for(int i=0; i<nday; i++){
-		int nhour_day = (int)utime.at(i).size();
-		for(int j=0; j<nhour_day; j++){
-			
-            Ambient::setDateTime(DT, utime.at(i).at(j)+12, uday[i]);
-            double az,zen;
-            Ambient::calcSunPosition(*V, DT, &az, &zen);
-			
-			//--- keep track of input values
-			fluxtab.azimuths.push_back(az*D2R);
-			fluxtab.zeniths.push_back(zen*D2R);
-		}
-	}
-
 }
 
 void AutoPilot::PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer)
