@@ -47,20 +47,6 @@ bool solarpilot_invoke::run()
 
     m_sapi = new AutoPilot_S();
 
-	//var_set V;
-	//ioutil::parseDefinitionArray(V);
-    //var_map V;
-	
-	// define stuff and load default values
-	//opt.LoadDefaults(V);
-	//amb.LoadDefaults(V);
-	//cost.LoadDefaults(V);
-	//helios.resize(1);
-	//helios.front().LoadDefaults(V);
-	//recs.resize(1);
-	//recs.front().LoadDefaults(V);
-	//layout.LoadDefaults(V);
-
 	// read inputs from SSC module
 		
 	bool isopt = m_cmod->as_boolean( "is_optimize" );
@@ -283,6 +269,44 @@ bool solarpilot_invoke::run()
 		if( flux_data->ncols() == 0 || flux_data->nlayers() == 0 )
 			throw compute_module::exec_error("solarpilot", "failed to calculate a correct flux map table");
 	}
+
+    //check if max flux check is desired
+    if( m_cmod->as_boolean("check_max_flux") )
+    {
+        m_sapi->SetDetailCallbackStatus(false);
+		m_sapi->SetSummaryCallbackStatus(true);
+		m_sapi->SetSummaryCallback( solarpilot_callback, m_cmod );
+		
+	    sp_flux_table flux_temp;
+
+		//sp_optical_table opttab;
+		flux_temp.is_user_spacing = false;
+        flux_temp.azimuths.clear();
+        flux_temp.zeniths.clear();
+
+        flux_temp.azimuths.push_back( (flux.flux_solar_az.Val())*D2R );
+        flux_temp.zeniths.push_back( (90.-flux.flux_solar_el.Val())*D2R );
+
+		
+		if(! m_sapi->CalculateFluxMaps(flux_temp, 20, 15, false) )
+            return false;  //simulation failed or was cancelled.
+            
+        
+		block_t<double> *flux_data = &flux_temp.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
+        
+        double flux_max_observed = 0.;
+
+        for(int i=0; i<flux_data->nrows(); i++)
+        {
+            for(int j=0; j<flux_data->ncols(); j++)
+            {
+                if( flux_data->at(i, j, 0) > flux_max_observed ) 
+                    flux_max_observed = flux_data->at(i, j, 0);
+            }
+        }
+
+        m_cmod->assign("flux_max_observed", flux_max_observed);
+    }
         
     return true;
 }
