@@ -51,8 +51,8 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_fossil_mode = -1;
 	m_I_bn_des = std::numeric_limits<double>::quiet_NaN();
 	m_is_sh = false;
-	m_is_oncethru = std::numeric_limits<double>::quiet_NaN();
-	m_is_multgeom = std::numeric_limits<double>::quiet_NaN();
+	m_is_oncethru = true;
+	m_is_multgeom = false;
 	m_nModBoil = -1;
 	m_nModSH = -1;
 	m_nLoops = -1;

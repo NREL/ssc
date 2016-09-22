@@ -78,10 +78,10 @@ public:
 	double m_T_startup;
 
 	int m_fossil_mode;			//[-]
-	double m_I_bn_des;
-	bool m_is_sh;
-	double m_is_oncethru;
-	double m_is_multgeom;
+	double m_I_bn_des;			//[W/m2]
+	bool m_is_sh;				//[-]
+	bool m_is_oncethru;			//[-]
+	bool m_is_multgeom;			//[-]
 	int m_nModBoil;
 	int m_nModSH;
 	int m_nLoops;
