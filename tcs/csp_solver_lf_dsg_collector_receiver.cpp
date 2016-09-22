@@ -661,6 +661,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	double m_dot_pb_max = m_m_dot_pb_des * m_cycle_max_fraction;
 	m_m_dot_max = m_dot_pb_max / (double)m_nLoops;
 	m_m_dot_b_max = m_m_dot_max / m_x_b_des;
+	
+	m_m_dot_min = 0.1 * m_m_dot_max; // added by Ty, 9/22/2016
 
 	// Convert the thermal inertia term here
 	m_e_trans = m_e_startup * m_Ap_tot / (double)(m_nModTot*m_nLoops);		//[kJ/m2-K] -> [kJ/K] Average transient energy per collector
@@ -1170,6 +1172,12 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
 	// Call energy balance with updated info
 	int balance_code = loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info);
+
+	if (balance_code == -1)
+	{
+
+		// do something
+	}
 
 	bool on_success = true;
 
@@ -2050,7 +2058,12 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int_OT(const C_csp_
 			m_h_htf_out_t_end[i] = m_h_out.at(i,0);	//
 			m_P_htf_out_t_end[i] = P_loc;	//
 			
-			water_PH(m_P_htf_out_t_end[i] * 100.0, m_h_out.at(i,0), &wp);
+			int water_code = water_PH(m_P_htf_out_t_end[i] * 100.0, m_h_out.at(i,0), &wp);
+			if (water_code != 0)
+			{
+				return -1;
+			}
+
 			m_T_htf_out_t_end[i] = wp.temp;
 			m_xb_htf_out_t_end[i] = wp.qual;	//
 
