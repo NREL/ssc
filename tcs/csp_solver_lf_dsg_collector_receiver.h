@@ -211,6 +211,7 @@ public:
 
 	// Calculated - ncall = 0
 	util::matrix_t<double> m_eta_optical;
+	util::matrix_t<double> m_eta_optical_0;
 	double m_defocus;
 	double m_defocus_new;
 	double m_defocus_old;
