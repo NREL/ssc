@@ -42,33 +42,33 @@ public:
 	water_state wp;
 	Evacuated_Receiver evac_tube_model;
 	HTFProperties htfProps;
-
+	
 	// Parameters
 	double m_ncall;
 	double m_dt;
 	int m_touperiod;
-	double m_tes_hours;
-	double m_q_max_aux;
-	double m_LHV_eff;
-	double m_T_set_aux;
-	double m_T_field_in_des;
-	double m_T_field_out_des;
-	double m_x_b_des;
-	double m_P_turb_des;
-	double m_fP_hdr_c;
-	double m_fP_sf_boil;
-	double m_fP_boil_to_sh;
-	double m_fP_sf_sh;
-	double m_fP_hdr_h;
-	double m_q_pb_des;
-	double m_W_pb_des;
-	double m_cycle_max_fraction;
-	double m_cycle_cutoff_frac;
-	double m_t_sby_des;
-	double m_q_sby_frac;
-	double m_solarm;
-	double m_PB_pump_coef;
-	double m_PB_fixed_par;
+	double m_tes_hours;			//[hr] ... why is this here?
+	double m_q_max_aux;			//[kWt] 
+	double m_LHV_eff;			//[-]
+	double m_T_set_aux;			//[K]
+	double m_T_field_in_des;	//[K]
+	double m_T_field_out_des;	//[K]
+	double m_x_b_des;			//[-]
+	double m_P_turb_des;		//[bar]
+	double m_fP_hdr_c;			//[-]
+	double m_fP_sf_boil;		//[-]
+	double m_fP_boil_to_sh;		//[-]
+	double m_fP_sf_sh;			//[-]
+	double m_fP_hdr_h;			//[-]
+	double m_q_pb_des;			//[kWt]
+	double m_W_pb_des;			//[kWe]
+	double m_cycle_cutoff_frac;		//[-]
+	double m_cycle_max_fraction;	//[-]
+	double m_t_sby_des;			//[hr]
+	double m_q_sby_frac;		//[-]
+	double m_solarm;			//[-] ... why is this here?
+	double m_PB_pump_coef;		//[kW/kg]
+	double m_PB_fixed_par;		//[-]
 	//double * m_bop_array;
 	//int m_l_bop_array;
 	std::vector<double> m_bop_array;
@@ -77,7 +77,7 @@ public:
 	std::vector<double> m_aux_array;
 	double m_T_startup;
 
-	int m_fossil_mode;
+	int m_fossil_mode;			//[-]
 	double m_I_bn_des;
 	bool m_is_sh;
 	double m_is_oncethru;
