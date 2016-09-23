@@ -7,6 +7,10 @@
 
 void C_pc_steam_heat_sink::check_double_params_are_set()
 {
+	if( !check_double(ms_params.m_x_hot_des) )
+	{
+		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_x_hot_des"));
+	}
 	if( !check_double(ms_params.m_T_hot_des) )
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_T_hot_des"));
@@ -39,10 +43,22 @@ void C_pc_steam_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_param
 
 	// Get enthalpy at design inlet and outlet
 		// Hot inlet
-	int prop_error_code = water_TP(ms_params.m_T_hot_des+273.15, ms_params.m_P_hot_des, &mc_water_props);
-	if( prop_error_code != 0 )
+	int prop_error_code = -1;
+	if( ms_params.m_x_hot_des < 0.0 || ms_params.m_x_hot_des > 1.0 )
 	{
-		throw(C_csp_exception("C_pc_steam_heat_sink::init(...) Design hot state point property calcs failed"));
+		prop_error_code = water_TP(ms_params.m_T_hot_des + 273.15, ms_params.m_P_hot_des, &mc_water_props);
+		if( prop_error_code != 0 )
+		{
+			throw(C_csp_exception("C_pc_steam_heat_sink::init(...) Design hot state point property calcs failed"));
+		}
+	}
+	else
+	{
+		prop_error_code = water_PQ(ms_params.m_P_hot_des, ms_params.m_x_hot_des, &mc_water_props);
+		if( prop_error_code != 0 )
+		{
+			throw(C_csp_exception("C_pc_steam_heat_sink::init(...) Design hot state point property calcs failed"));
+		}
 	}
 	double h_hot = mc_water_props.enth;		//[kJ/kg]
 		// Cold outlet
@@ -55,8 +71,6 @@ void C_pc_steam_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_param
 	double h_cold = mc_water_props.enth;	//[kJ/kg]
 
 	double m_dot_steam_des = ms_params.m_q_dot_des*1.E3 / (h_hot - h_cold);		//[kg/s]
-
-	throw(C_csp_exception("C_pc_steam_heat_sink::init(...) not ready yet"));
 
 	// Set 'solved_params' structure
 	solved_params.m_W_dot_des = 0.0;		//[MWe] Assuming heat sink is not generating electricity FOR THIS MODEL
