@@ -895,7 +895,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// This iteration would end here, and step forward
 
 		// Check freeze protection
-		if (m_T_field_out < m_T_fp + 10.0)
+		if (m_T_htf_out_t_end[m_nModTot - 1] < m_T_fp + 10.0)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs!
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1033,7 +1033,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		loop_energy_balance_T_t_int_RC(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
 		// Check freeze protection
-		if (m_T_field_out < m_T_fp + 10.0)
+		if (m_T_htf_out_t_end[m_nModTot - 1] < m_T_fp + 10.0)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs!
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1207,7 +1207,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	// If the outlet temperature (of last SCA!) is greater than the target (considering some convergence tolerance)
 	// then adjust mass flow rate and see what happens
-	if ((m_xb_field_out - m_x_b_des) > 0.001 && on_success)
+	if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001 && on_success)
 	{
 		// Try the maximum mass flow rate
 		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
@@ -1217,7 +1217,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 		// Is the outlet temperature (of the last SCA!) still greater than the target (considering some convergence tolerance)
 		// then need to defocus
-		if ((m_xb_field_out - m_x_b_des) > 0.001)
+		if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1429,7 +1429,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 	}
 
 	// Set the outlet temperature at end of timestep
-	*xb_loop_out = mpc_csp->m_xb_field_out;
+	*xb_loop_out = mpc_csp->m_xb_htf_out_t_end[mpc_csp->m_nModTot - 1];
 
 	return 0;
 }
