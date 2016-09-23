@@ -22,6 +22,7 @@ public:
 
 	struct S_params
 	{
+		double m_x_hot_des;		//[-]
 		double m_T_hot_des;		//[C]
 		double m_P_hot_des;		//[kPa]
 		double m_T_cold_des;	//[C]
