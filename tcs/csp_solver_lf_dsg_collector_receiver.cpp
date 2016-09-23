@@ -888,7 +888,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// This iteration would end here, and step forward
 
 		// Check freeze protection
-		if (m_T_htf_out_t_end[m_nModTot - 1] < m_T_fp + 10.0)
+		if (m_T_field_out < m_T_fp + 10.0)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs!
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -957,9 +957,9 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	//cr_out_solver.m_T_salt_hot = m_T_htf_out_t_end[m_nModTot-1] - 273.15;		//[C]
 
 	cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]
-	cr_out_solver.m_h_htf_hot = m_h_htf_out_t_end[m_nModTot-1];		//[C]
-	cr_out_solver.m_xb_htf_hot = m_xb_htf_out_t_end[m_nModTot-1];		//[C]
-	cr_out_solver.m_P_htf_hot = m_P_htf_out_t_end[m_nModTot-1];		//[C]
+	cr_out_solver.m_h_htf_hot = m_h_field_out;		//[C]
+	cr_out_solver.m_xb_htf_hot = m_xb_field_out;		//[C]
+	cr_out_solver.m_P_htf_hot = m_P_out_des;		//[C]
 
 	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1026,7 +1026,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		loop_energy_balance_T_t_int_RC(weather, T_cold_in, m_dot_htf_loop, sim_info_temp);
 
 		// Check freeze protection
-		if (m_T_htf_out_t_end[m_nModTot - 1] < m_T_fp + 10.0)
+		if (m_T_field_out < m_T_fp + 10.0)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs!
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1098,10 +1098,10 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	// These outputs need some more thought
-	cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]
-	cr_out_solver.m_h_htf_hot = m_h_htf_out_t_end[m_nModTot - 1];		//[C]
-	cr_out_solver.m_xb_htf_hot = m_xb_htf_out_t_end[m_nModTot - 1];		//[C]
-	cr_out_solver.m_P_htf_hot = m_P_htf_out_t_end[m_nModTot - 1];		//[C]
+	cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]	
+	cr_out_solver.m_h_htf_hot = m_h_field_out;		//[C]
+	cr_out_solver.m_xb_htf_hot = m_xb_field_out;		//[C]
+	cr_out_solver.m_P_htf_hot = m_P_out_des;		//[C]
 
 	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1171,27 +1171,36 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	// Solve the loop energy balance at the minimum mass flow rate
 	// Set mass flow rate to minimum allowable
 	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
-	// Get inlet condition from input argument
+
+	int bal_code = -2;
 	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
-	// Call energy balance with updated info
-	int balance_code = loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info);
-
-	if (balance_code == -1)
-	{
-
-		// do something
-	}
-
 	bool on_success = true;
 
-	if (balance_code != E_loop_energy_balance_exit::SOLVED)
+	while (true)
 	{
-		on_success = false;
+		// Call energy balance with updated info
+		int balance_code = loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info);
+		
+		if (balance_code == -1)
+		{
+			m_dot_htf_loop = m_dot_htf_loop*2.0;
+		}
+		else if (balance_code == E_loop_energy_balance_exit::SOLVED)
+		{
+			break;
+		}
+		else
+		{
+			on_success = false;
+		}
 	}
+	double m_dot_htf_min_local = m_dot_htf_loop;	//[kg/s]
+	// if you had to iterate on min mass flow, then check that outlet quality is GREATER than target
+
 
 	// If the outlet temperature (of last SCA!) is greater than the target (considering some convergence tolerance)
 	// then adjust mass flow rate and see what happens
-	if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001 && on_success)
+	if ((m_xb_field_out - m_x_b_des) > 0.001 && on_success)
 	{
 		// Try the maximum mass flow rate
 		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
@@ -1201,7 +1210,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 		// Is the outlet temperature (of the last SCA!) still greater than the target (considering some convergence tolerance)
 		// then need to defocus
-		if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001)
+		if ((m_xb_field_out - m_x_b_des) > 0.001)
 		{
 			// Set up the member structure that contains loop_energy_balance inputs
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
@@ -1273,11 +1282,11 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			// Set upper and lower bounds
 			double m_dot_upper = m_m_dot_htfmax;	//[kg/s]
-			double m_dot_lower = m_m_dot_htfmin;	//[kg/s]
+			double m_dot_lower = m_dot_htf_min_local;	//[kg/s]
 
 			// Set guess values... can be smarter about this...
-			double m_dot_guess_upper = 0.75*m_m_dot_htfmax + 0.25*m_m_dot_htfmin;	//[kg/s]
-			double m_dot_guess_lower = 0.25*m_m_dot_htfmax + 0.75*m_m_dot_htfmin;	//[kg/s]
+			double m_dot_guess_upper = 0.75*m_m_dot_htfmax + 0.25*m_dot_lower;	//[kg/s]
+			double m_dot_guess_lower = 0.25*m_m_dot_htfmax + 0.75*m_dot_lower;	//[kg/s]
 
 			// Set solver settings
 			// Relative error
@@ -1315,9 +1324,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	{
 		// These outputs need some more thought
 		cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]
-		cr_out_solver.m_h_htf_hot = m_h_htf_out_t_end[m_nModTot - 1];		//[C]
-		cr_out_solver.m_xb_htf_hot = m_xb_htf_out_t_end[m_nModTot - 1];		//[C]
-		cr_out_solver.m_P_htf_hot = m_P_htf_out_t_end[m_nModTot - 1];		//[C]
+		cr_out_solver.m_h_htf_hot = m_h_field_out;		//[C]
+		cr_out_solver.m_xb_htf_hot = m_xb_field_out;		//[C]
+		cr_out_solver.m_P_htf_hot = m_P_out_des;		//[C]
 
 		cr_out_solver.m_E_fp_total = 0.0;	//[MWt]
 		cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1413,7 +1422,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 	}
 
 	// Set the outlet temperature at end of timestep
-	*xb_loop_out = mpc_csp->m_xb_htf_out_t_end[mpc_csp->m_nModTot - 1];
+	*xb_loop_out = mpc_csp->m_xb_field_out;
 
 	return 0;
 }
@@ -1448,7 +1457,6 @@ void C_csp_lf_dsg_collector_receiver::apply_component_defocus(double defocus /*-
 		//}
 	}
 }
-
 
 double C_csp_lf_dsg_collector_receiver::turb_pres_frac(double m_dot_nd, int fmode, double ffrac, double fP_min)
 {
@@ -2378,7 +2386,9 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	if (time_t == 12 * 3600)
 	{
 		loop_optical_eta(weather, sim_info);
-		on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
+		startup(weather,htf_state_in,cr_out_solver, sim_info);
+		//on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
+		m_is_oncethru = true;
 	}
 
 	
