@@ -253,7 +253,6 @@ public:
 	double m_Q_field_losses_total;		//[MJ] scas + xover + hot_HR + cold_HR
 	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
 	
-	int m_nSCA;
 	double m_m_dot_htfmin;
 	double m_m_dot_htfmax;
 
