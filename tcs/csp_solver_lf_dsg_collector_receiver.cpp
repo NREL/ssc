@@ -117,10 +117,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 	C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
-	m_n_rows_matrix = 1;
-	if( m_is_multgeom )
-		m_n_rows_matrix = 2;
-
+	
 	// inputs parameters
 	m_P_max = 190.0;		// [bar]
 	m_eta_optical.resize(m_n_rows_matrix, 1);
