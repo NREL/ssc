@@ -82,22 +82,22 @@ public:
 	bool m_is_sh;				//[-]
 	bool m_is_oncethru;			//[-]
 	bool m_is_multgeom;			//[-]
-	int m_nModBoil;
-	int m_nModSH;
-	int m_nLoops;
-	double m_eta_pump;
-	double m_latitude;
-	double m_theta_stow;
-	double m_theta_dep;
-	double m_m_dot_min;
-	double m_T_field_ini;
-	double m_T_fp;
-	double m_Pipe_hl_coef;
-	double m_SCA_drives_elec;
-	double m_ColAz;
-	double m_e_startup;
-	double m_T_amb_des_sf;
-	double m_V_wind_max;
+	int m_nModBoil;				//[-]
+	int m_nModSH;				//[-]
+	int m_nLoops;				//[-]
+	double m_eta_pump;			//[-]
+	double m_latitude;			//[rad]
+	double m_theta_stow;		//[rad]
+	double m_theta_dep;			//[rad]
+	double m_m_dot_min;			//[kg/s]
+	double m_T_field_ini;		//[K]
+	double m_T_fp;				//[K]
+	double m_Pipe_hl_coef;		//[W/m2-K]
+	double m_SCA_drives_elec;	//[W/SCA]
+	double m_ColAz;				//[rad]
+	double m_e_startup;			//[kJ/K-m2], Thermal inertia contribution per sq meter of solar field
+	double m_T_amb_des_sf;		//[K]
+	double m_V_wind_max;		//[m/s]
 	//double * m_ffrac;
 	//int    m_l_ffrac;
 	std::vector<double> m_ffrac;
@@ -178,7 +178,7 @@ public:
 	util::matrix_t<double> m_q_inc, m_q_loss, m_q_abs, m_h_in, m_h_out, m_x, m_q_rec;
 	util::matrix_t<double> m_eta_opt_fixed, m_opteff_des;
 	double m_fP_sf_tot;
-	int m_n_rows_matrix;
+	int m_n_rows_matrix;		//[-] 1 if Single Geom, 2 if Multigeom
 	int m_nModTot;
 	double m_Ap_tot;
 	double m_m_dot_des;
