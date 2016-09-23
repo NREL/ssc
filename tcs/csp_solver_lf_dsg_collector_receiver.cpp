@@ -117,7 +117,17 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 	C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
-	
+	// *************************************
+	// Set redundant variables here:
+	m_m_dot_htfmin = m_m_dot_min;
+	m_m_dot_htfmax = m_m_dot_max;
+	m_P_out_des = m_P_turb_des;
+	// *************************************
+
+	m_n_rows_matrix = 1;
+	if( m_is_multgeom )
+		m_n_rows_matrix = 2;
+
 	// inputs parameters
 	m_P_max = 190.0;		// [bar]
 	m_eta_optical.resize(m_n_rows_matrix, 1);
