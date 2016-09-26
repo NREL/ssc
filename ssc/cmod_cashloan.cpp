@@ -24,7 +24,9 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_real",                "Real LCOE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lcoe_nom",                 "Nominal LCOE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "payback",                  "Payback period",                            "years",        "",                      "Cash Flow",      "*",                       "",                                         "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "npv",                      "Net present value",				   "$",            "",                      "Cash Flow",      "*",                       "",                                         "" },
+	// added 9/26/16 for Owen Zinaman Mexico
+	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "Cash Flow", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -107,9 +109,17 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_net_equity_cost_flow",        "After-tax annual costs",           "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_after_tax_cash_flow",                   "After-tax cash flow",                      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_costs", "Discounted costs", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_savings", "Discounted savings", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_payback", "Discounted payback", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_discounted_cumulative_payback", "Cumulative discounted payback", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+
+
+
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_payback_with_expenses", "Payback with expenses", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_cumulative_payback_with_expenses", "Cumulative payback with expenses", "$", "", "Cash Flow", "*", "LENGTH_EQUAL=cf_length", "" },
+
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_without_expenses",              "Payback without expenses",                 "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_without_expenses",   "Cumulative payback without expenses",      "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
@@ -191,6 +201,14 @@ enum {
 
 	CF_payback_with_expenses,
 	CF_cumulative_payback_with_expenses,
+
+	// Added for Owen Zinaman for Mexico Rates and analyses 9/26/16
+	//- see C:\Projects\SAM\Documentation\Payback\DiscountedPayback_2016.9.26
+	CF_discounted_costs,
+	CF_discounted_savings,
+	CF_discounted_payback,
+	CF_discounted_cumulative_payback,
+
 	
 	CF_payback_without_expenses,
 	CF_cumulative_payback_without_expenses,
@@ -535,9 +553,13 @@ public:
 		cf.at(CF_after_tax_net_equity_cost_flow,0) = -first_cost + state_tax_savings + federal_tax_savings;
 		cf.at(CF_after_tax_cash_flow,0) = cf.at(CF_after_tax_net_equity_cost_flow,0);
 
-		cf.at(CF_payback_with_expenses,0) = -capital_investment;
-		cf.at(CF_cumulative_payback_with_expenses,0) = -capital_investment;
-		
+		cf.at(CF_payback_with_expenses, 0) = -capital_investment;
+		cf.at(CF_cumulative_payback_with_expenses, 0) = -capital_investment;
+
+		cf.at(CF_discounted_costs, 0) = capital_investment;
+		cf.at(CF_discounted_payback, 0) = cf.at(CF_discounted_savings, 0) - cf.at(CF_discounted_costs, 0);
+		cf.at(CF_discounted_cumulative_payback, 0) = cf.at(CF_discounted_payback, 0);
+
 		cf.at(CF_payback_without_expenses,0) = -capital_investment;
 		cf.at(CF_cumulative_payback_without_expenses,0) = -capital_investment;
 
@@ -697,6 +719,29 @@ public:
 				+ cf.at(CF_pbi_total, i)
 				+ cf.at(CF_sta_and_fed_tax_savings,i);
 
+			/*
+			Calculate discounted payback period from March 1995 NREL/TP-462-5173 p.58
+			CF_discounted_costs,
+			CF_discounted_savings,
+			CF_discounted_payback,
+			CF_discounted_cumulative_payback,
+			*/
+			// take costs to be positive in this context
+			cf.at(CF_discounted_costs, i) = -cf.at(CF_after_tax_net_equity_cost_flow, i) - cf.at(CF_debt_payment_total, i);
+			// interest already deducted and accounted for in tax savings (so add back here)
+			if (is_commercial || is_mortgage)
+				cf.at(CF_discounted_costs, i) += cf.at(CF_debt_payment_interest, i) * effective_tax_rate;
+			// discount at nominal discount rate
+			cf.at(CF_discounted_costs, i) /= pow((1.0 + nom_discount_rate), (i - 1));
+			// savings reduced by effective tax rate for commercial since already included in tax savings
+			cf.at(CF_discounted_savings, i) = ((is_commercial ? (1.0 - effective_tax_rate) : 1.0)*cf.at(CF_energy_value, i)) / pow((1.0 + nom_discount_rate), (i - 1));
+			cf.at(CF_discounted_payback, i) = cf.at(CF_discounted_savings, i) - cf.at(CF_discounted_costs, i);
+			cf.at(CF_discounted_cumulative_payback, i) =
+				cf.at(CF_discounted_cumulative_payback, i - 1)
+				+ cf.at(CF_discounted_payback, i);
+
+
+
 			cf.at(CF_after_tax_cash_flow,i) = 
 				cf.at(CF_after_tax_net_equity_cost_flow, i)
 				+ ((is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i));
@@ -711,7 +756,6 @@ public:
 					cf.at(CF_after_tax_cash_flow,i)
 					+ cf.at(CF_debt_payment_interest,i)
 					+ cf.at(CF_debt_payment_principal,i);
-
 
 			cf.at(CF_cumulative_payback_with_expenses,i) = 
 				cf.at(CF_cumulative_payback_with_expenses,i-1)
@@ -766,7 +810,10 @@ public:
 
 		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
-		double payback = compute_payback( CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears );
+		double payback = compute_payback(CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears);
+		// Added for Owen Zinaman for Mexico Rates and analyses 9/26/16
+		//- see C:\Projects\SAM\Documentation\Payback\DiscountedPayback_2016.9.26
+		double discounted_payback = compute_payback(CF_discounted_cumulative_payback, CF_discounted_payback, nyears);
 
 		// save outputs
 
@@ -808,8 +855,9 @@ public:
 
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 
-		assign( "payback", var_data((ssc_number_t)payback) );
-		assign( "lcoe_real", var_data((ssc_number_t)lcoe_real) );
+		assign("payback", var_data((ssc_number_t)payback));
+		assign("discounted_payback", var_data((ssc_number_t)discounted_payback));
+		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
@@ -908,7 +956,13 @@ public:
 
 		save_cf( CF_payback_with_expenses, nyears, "cf_payback_with_expenses" );
 		save_cf( CF_cumulative_payback_with_expenses, nyears, "cf_cumulative_payback_with_expenses" );
-	
+
+		// For Owen and discounted payback period
+		save_cf(CF_discounted_costs, nyears, "cf_discounted_costs");
+		save_cf(CF_discounted_savings, nyears, "cf_discounted_savings");
+		save_cf(CF_discounted_payback, nyears, "cf_discounted_payback");
+		save_cf(CF_discounted_cumulative_payback, nyears, "cf_discounted_cumulative_payback");
+
 		save_cf( CF_payback_without_expenses, nyears, "cf_payback_without_expenses" );
 		save_cf( CF_cumulative_payback_without_expenses, nyears, "cf_cumulative_payback_without_expenses" );
 
@@ -946,7 +1000,6 @@ public:
 
 	double compute_payback( int cf_cpb, int cf_pb, int nyears )
 	{	
-//		double dPayback = 1e99; // report as > analysis period
 		// may need to determine last negative to positive transition for high replacement costs - see C:\Projects\SAM\Documentation\FinancialIssues\Payback_2015.9.8
 		double dPayback = std::numeric_limits<double>::quiet_NaN(); // report as > analysis period
 		bool bolPayback = false;
@@ -972,7 +1025,8 @@ public:
 		return dPayback;
 	}
 
-	double npv( int cf_line, int nyears, double rate ) throw ( general_error )
+
+	double npv(int cf_line, int nyears, double rate) throw (general_error)
 	{		
 		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
 
