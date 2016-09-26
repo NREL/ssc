@@ -124,38 +124,28 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_P_out_des = m_P_turb_des;
 	// *************************************
 
-	m_n_rows_matrix = 1;
-	if( m_is_multgeom )
-		m_n_rows_matrix = 2;
-
 	// inputs parameters
 	m_P_max = 190.0;		// [bar]
-	m_eta_optical.resize(m_n_rows_matrix, 1);
-	m_eta_optical_0.resize(m_n_rows_matrix, 1);
-	
+		
 	//[-] Outer glass envelope emissivities (Pyrex)
-	m_EPSILON_5 = m_EPSILON_4;
-
-	// m_n_rows_matrix
-	m_n_rows_matrix = 1;
-	if (m_is_multgeom)
-		m_n_rows_matrix = 2;
+	m_EPSILON_5 = m_EPSILON_4;	
 
 	//m_AbsorberMaterial
 	int n_rows_abs = m_AbsorberMaterial_in.nrows();
 	int n_cols_abs = m_AbsorberMaterial_in.ncols();
 
-	if(!(n_rows_abs == m_n_rows_matrix && n_cols_abs == 1))
+	int n_rows_matrix_lk_in = 2;
+	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 1) )
 	{
 		std::string err_msg = util::format("Absorber material type matrix should have %d rows" 
-			"(b,SH) and 1 columns - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows_abs, n_cols_abs);
+			"(b,SH) and 1 columns - the input matrix has %d rows and %d columns", n_rows_matrix_lk_in, n_rows_abs, n_cols_abs);
 
 		throw(C_csp_exception(err_msg, "LF DSG init()"));
 	}
 
 	int ii = 3;
 	m_AbsorberMaterial.resize(n_rows_abs, n_cols_abs);
-	for (int i = 0; i < m_n_rows_matrix; i++)
+	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
 		m_AbsorberMaterial.at(i, 0) = new AbsorberProps;
 		m_AbsorberMaterial.at(i, 0)->setMaterial(m_AbsorberMaterial_in.at(i, 0));
@@ -164,16 +154,17 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//m_AnnulusGas [-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
 	n_rows_abs = m_AnnulusGas_in.nrows();
 	n_cols_abs = m_AnnulusGas_in.ncols();
-	if (!(n_rows_abs == m_n_rows_matrix && n_cols_abs == 4))
+	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 4) )
 	{
-		std::string err_msg = util::format("HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", m_n_rows_matrix, n_rows_abs, n_cols_abs);
+		std::string err_msg = util::format("HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", 
+								n_rows_matrix_lk_in, n_rows_abs, n_cols_abs);
 
 		throw(C_csp_exception(err_msg, "LF DSG init()"));
 	}
 
 	// Set up matrix_t of pointers to HTFproperties class
 	m_AnnulusGas.resize(n_rows_abs, n_cols_abs);
-	for (int i = 0; i < m_n_rows_matrix; i++)
+	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
 		for (int j = 0; j < 4; j++)
 		{
@@ -183,9 +174,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	// set up m_D_h and m_A_cs
-	m_D_h.resize(m_n_rows_matrix, 1);
-	m_A_cs.resize(m_n_rows_matrix, 1);
-	for (int i = 0; i < m_n_rows_matrix; i++)
+	m_D_h.resize(n_rows_matrix_lk_in, 1);
+	m_A_cs.resize(n_rows_matrix_lk_in, 1);
+	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
 		if (m_Flow_type.at(i, 0) == 2.0)
 			m_D_h.at(i, 0) = m_D_2.at(i, 0) - m_D_p.at(i, 0);		// [m] The hydraulic diameter for plug flow
@@ -201,7 +192,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	if (m_is_multgeom)
 	{
 		//[-] Organize the boiler/superheater emittance tables here
-		eps_abs.init(m_n_rows_matrix, 4);
+		eps_abs.init(n_rows_matrix_lk_in, 4);
 		eps_abs.addTable(&m_b_eps_HCE1);
 		eps_abs.addTable(&m_b_eps_HCE2);
 		eps_abs.addTable(&m_b_eps_HCE3);
@@ -214,7 +205,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	else
 	{
 		// Organize the boiler emittance tables here
-		eps_abs.init(m_n_rows_matrix, 4);
+		eps_abs.init(n_rows_matrix_lk_in, 4);
 		eps_abs.addTable(&m_b_eps_HCE1);
 		eps_abs.addTable(&m_b_eps_HCE2);
 		eps_abs.addTable(&m_b_eps_HCE3);
@@ -358,6 +349,13 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	// Initialize any member matrix_t values
 	if (!m_is_sh)
 		m_nModSH = 0;
+
+	m_n_rows_matrix = 1;
+	if( m_is_multgeom )
+		m_n_rows_matrix = 2;
+
+	m_eta_optical.resize(m_n_rows_matrix, 1);
+	m_eta_optical_0.resize(m_n_rows_matrix, 1);
 
 	m_nModTot = m_nModBoil + m_nModSH;
 	m_q_inc.resize(m_nModTot, 1);
