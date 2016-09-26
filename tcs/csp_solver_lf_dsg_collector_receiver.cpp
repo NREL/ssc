@@ -787,12 +787,18 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_h_htf_out_t_end_last.resize(m_nModTot);
 	m_T_htf_t_ave_converged.resize(m_nModTot);
 	m_T_htf_t_ave_last.resize(m_nModTot);
-	m_T_htf_t_ave_last.assign(m_T_htf_t_ave_last.size(), m_T_field_ini);
 	
 	m_T_htf_out_t_end_converged.resize(m_nModTot);
 	m_T_htf_out_t_end_last.resize(m_nModTot);
 
-	
+	// Set initial field temperatures
+	m_T_sys_c_t_end_converged = m_T_sys_c_t_end_last = m_T_field_ini;	//[K]
+	m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = m_T_field_ini;	//[K]
+	for( int i = 0; i < m_nModTot; i++ )
+	{
+		m_T_htf_out_t_end_converged[i] = m_T_htf_out_t_end_last[i] = m_T_field_ini;	//[K]
+	}
+
 	m_ncall = -1;
 
 	m_defocus_old = 0.;
