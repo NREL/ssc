@@ -42,6 +42,8 @@ public:
 	C_pc_steam_heat_sink()
 	{
 		m_max_frac = 100.0;
+
+		m_is_sensible_htf = false;	//[-] STEAM
 	}
 
 	~C_pc_steam_heat_sink(){};
