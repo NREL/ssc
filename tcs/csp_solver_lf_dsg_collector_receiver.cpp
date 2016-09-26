@@ -804,6 +804,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	m_defocus_old = 0.;
 
+	// Set previous operating mode
+	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+
 	return;
 
 } // init
@@ -824,7 +827,7 @@ bool C_csp_lf_dsg_collector_receiver::init_fieldgeom()
 
 int C_csp_lf_dsg_collector_receiver::get_operating_state()
 {
-	return -1;
+	return m_operating_mode_converged;
 }
 
 
