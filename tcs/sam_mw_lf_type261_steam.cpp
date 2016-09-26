@@ -371,7 +371,7 @@ private:
 	double m_I_bn_des;			
 	bool m_is_sh;			
 	double m_is_oncethru;		
-	double m_is_multgeom;		
+	bool m_is_multgeom;		
 	int m_nModBoil;			
 	int m_nModSH;			
 	int m_nLoops;			
