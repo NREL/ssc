@@ -190,7 +190,6 @@ public:
 	double m_m_dot_b_max;
 	double m_m_dot_b_des;
 	double m_m_dot_htf_tot;
-	double m_P_out_des;
 
 	double m_eta_opt_ave;
 	double m_q_rec_loop;
@@ -253,9 +252,6 @@ public:
 
 	double m_Q_field_losses_total;		//[MJ] scas + xover + hot_HR + cold_HR
 	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
-	
-	double m_m_dot_htfmin;
-	double m_m_dot_htfmax;
 
 	// DSG system-specific -start
 	std::vector<double> m_h_htf_out_t_end;	// end-of-timestep outlet HTF enthalpy of each SCA

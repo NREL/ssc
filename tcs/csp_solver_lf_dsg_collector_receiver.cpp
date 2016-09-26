@@ -119,14 +119,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 	C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
-	// *************************************
-	// Set redundant variables here:
-	m_m_dot_htfmin = m_m_dot_min;
-	m_m_dot_htfmax = m_m_dot_max;
-	m_P_out_des = m_P_turb_des;
-	// *************************************
-
-	// inputs parameters
+	// Harcoded Parameter:
 	m_P_max = 190.0;		// [bar]
 		
 	//[-] Outer glass envelope emissivities (Pyrex)
@@ -875,7 +868,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	loop_optical_eta_off();
 
 	// Set mass flow rate to minimum allowable
-	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
+	double m_dot_htf_loop = m_m_dot_min;		//[kg/s]
 
 	// Set duration for recirculation timestep
 	if (m_step_recirc != m_step_recirc)
@@ -977,9 +970,9 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	//cr_out_solver.m_T_salt_hot = m_T_htf_out_t_end[m_nModTot-1] - 273.15;		//[C]
 
 	cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]
-	cr_out_solver.m_h_htf_hot = m_h_field_out;		//[C]
-	cr_out_solver.m_xb_htf_hot = m_xb_field_out;		//[C]
-	cr_out_solver.m_P_htf_hot = m_P_out_des;		//[C]
+	cr_out_solver.m_h_htf_hot = m_h_field_out;		//[kJ/kg]
+	cr_out_solver.m_xb_htf_hot = m_xb_field_out;	//[-]
+	cr_out_solver.m_P_htf_hot = m_P_turb_des;		//[kPa]
 
 	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1010,7 +1003,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	loop_optical_eta(weather, sim_info);
 
 	// Set mass flow rate to minimum allowable
-	double m_dot_htf_loop = 0.8*m_m_dot_htfmax + 0.2*m_m_dot_htfmin;		//[kg/s]
+	double m_dot_htf_loop = 0.8*m_m_dot_max + 0.2*m_m_dot_min;		//[kg/s]
 
 	// Set duration for recirculation timestep
 	if (m_step_recirc != m_step_recirc)
@@ -1119,9 +1112,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 	// These outputs need some more thought
 	cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]	
-	cr_out_solver.m_h_htf_hot = m_h_field_out;		//[C]
-	cr_out_solver.m_xb_htf_hot = m_xb_field_out;		//[C]
-	cr_out_solver.m_P_htf_hot = m_P_out_des;		//[C]
+	cr_out_solver.m_h_htf_hot = m_h_field_out;		//[kJ/kg]
+	cr_out_solver.m_xb_htf_hot = m_xb_field_out;	//[-]
+	cr_out_solver.m_P_htf_hot = m_P_turb_des;		//[kPa]
 
 	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1190,7 +1183,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	// Solve the loop energy balance at the minimum mass flow rate
 	// Set mass flow rate to minimum allowable
-	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
+	double m_dot_htf_loop = m_m_dot_min;		//[kg/s]
 
 	int bal_code = -2;
 	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
@@ -1223,7 +1216,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	if ((m_xb_htf_out_t_end[m_nModTot - 1] - m_x_b_des) > 0.001 && on_success)
 	{
 		// Try the maximum mass flow rate
-		m_dot_htf_loop = m_m_dot_htfmax;		//[kg/s]
+		m_dot_htf_loop = m_m_dot_max;		//[kg/s]
 
 		// We set T_cold_in above, so call loop energy balance
 		loop_energy_balance_T_t_int(weather, T_cold_in, m_dot_htf_loop, sim_info);
@@ -1235,7 +1228,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// Set up the member structure that contains loop_energy_balance inputs
 			ms_loop_energy_balance_inputs.ms_weather = &weather;
 			ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_cold_in;
-			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_m_dot_htfmax;
+			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_m_dot_max;
 			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info;
 
 			// The Monotonic Solver will iterate on defocus that achieves the target outlet temperature
@@ -1301,12 +1294,12 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			C_monotonic_eq_solver c_htf_m_dot_solver(c_xb_out_calc);
 
 			// Set upper and lower bounds
-			double m_dot_upper = m_m_dot_htfmax;	//[kg/s]
+			double m_dot_upper = m_m_dot_max;	//[kg/s]
 			double m_dot_lower = m_dot_htf_min_local;	//[kg/s]
 
 			// Set guess values... can be smarter about this...
-			double m_dot_guess_upper = 0.75*m_m_dot_htfmax + 0.25*m_dot_lower;	//[kg/s]
-			double m_dot_guess_lower = 0.25*m_m_dot_htfmax + 0.75*m_dot_lower;	//[kg/s]
+			double m_dot_guess_upper = 0.75*m_m_dot_max + 0.25*m_dot_lower;	//[kg/s]
+			double m_dot_guess_lower = 0.25*m_m_dot_max + 0.75*m_dot_lower;	//[kg/s]
 
 			// Set solver settings
 			// Relative error
@@ -1344,9 +1337,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	{
 		// These outputs need some more thought
 		cr_out_solver.m_T_field_out_C = m_T_field_out - 273.15;		//[C]
-		cr_out_solver.m_h_htf_hot = m_h_field_out;		//[C]
-		cr_out_solver.m_xb_htf_hot = m_xb_field_out;		//[C]
-		cr_out_solver.m_P_htf_hot = m_P_out_des;		//[C]
+		cr_out_solver.m_h_htf_hot = m_h_field_out;		//[kJ/kg]
+		cr_out_solver.m_xb_htf_hot = m_xb_field_out;	//[-]
+		cr_out_solver.m_P_htf_hot = m_P_turb_des;		//[kPa]
 
 		cr_out_solver.m_E_fp_total = 0.0;	//[MWt]
 		cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1848,7 +1841,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 	
 	// Solve the loop energy balance at the HTF inlet temperature
 	// Use the minimum HTF mass flow rate for the freeze protection mass flow rate
-	mpc_csp->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = mpc_csp->m_m_dot_htfmin;	//[kg/s]
+	mpc_csp->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = mpc_csp->m_m_dot_min;	//[kg/s]
 
 	int exit_code = mpc_csp->loop_energy_balance_T_t_int();
 
@@ -1971,8 +1964,8 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	// Guess the turbine pressure.. turbine inlet pressure is highly insensitive to condenser pressure, so
 	// simplify the expression to eliminate condenser pressure
 	//double P_loop_out = turb_pres_frac(m_dot_htf_loop*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des;
-	double P_loop_out = m_P_out_des;
-	double dP_loss = pow(m_m_dot_htf_tot / m_m_dot_des, 2)*m_P_out_des;
+	double P_loop_out = m_P_turb_des;	//[kPa]
+	double dP_loss = pow(m_m_dot_htf_tot / m_m_dot_des, 2)*m_P_turb_des;
 
 	// Guess the loop inlet/outlet enthalpies
 	water_TP(T_htf_cold_in, (P_loop_out + dP_loss*(m_fP_sf_boil + m_fP_hdr_h))*100.0, &wp);
