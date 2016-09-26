@@ -6,6 +6,8 @@ using namespace std;
 
 C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 {
+	// Set parent class public member data
+	m_is_sensible_htf = false;		//[-] STEAM
 
 	// Set maximum timestep from parent class member data
 	m_max_step = 60.0*60.0;			//[s]: [m] * [s/m]

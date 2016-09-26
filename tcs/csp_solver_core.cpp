@@ -1284,7 +1284,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Assuming here that partial defocus is allowed, so should always be able to reach full power to PC
 				// If CR and PC for some reason don't solve or produce power, will shut down CR and PC
 
-				
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Get collector-receiver performance with no defocus
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				double field_control = 1.0;									//[-] no defocusing for initial simulation
@@ -1598,6 +1603,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// 2) Receiver cannot maintain minimum operation fraction
 				//		* Go to power cycle standby or shutdown
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -1738,6 +1749,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// so shouldn't need to iterate between CR and PC
 				// Assume power cycle can remain in standby the entirety of the timestep
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -1802,6 +1819,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// During startup, assume power cycle HTF return temperature is constant and = m_T_htf_cold_des
 				// so shouldn't need to iterate between collector/receiver and power cycle
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -1882,6 +1905,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// **************
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -1949,6 +1978,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Solve all models as 'off' or 'idle'
 				// Collector/receiver
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -2001,6 +2036,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// This solver iterates to find the thermal storage outlet temperature to the power cycle
 				//    and the power cycle demand mass flow rate that reach system equilibrium
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -2049,6 +2090,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// and charging TES. No PC operating or AUX, so the output of the CR connects directly to TES
 
 				// (the following is modeled after 'solver_cr_to_pc_to_cr'... perhaps this could be generalized in the future)
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -2343,6 +2390,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// PC is on and hitting specified target
 				// TES is charging
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -2433,6 +2486,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The collector receiver is on and returning hot HTF to the PC
 				// TES is discharging hot HTF that is mixed with the CR HTF
 				// to operating the PC at its target value
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -2529,6 +2588,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The collector receiver is on and return hot HTF to the Pc
 				// TES is discharging hot HTF that is then mixed with the CR HTF
 				// The power cycle operates between its minimum operation fraction and target operation
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -2861,6 +2926,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// Assuming here that partial defocus is allowed, so should always be able to reach full power to PC
 				
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Get collector-receiver performance with no defocus
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 				double field_control = 1.0;									//[-] no defocusing for initial simulation
@@ -3330,6 +3401,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Assume that power cycle HTF return temperature is constant and = m_T_htf_cold_des
 				// Assume power cycle can remain in standby the entirety of the timestep
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -3613,6 +3690,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The power cycle runs at its minimum operating fraction until storage is depleted
 				// A new, shorter timestep is calculated here
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -3716,6 +3799,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			{
 				// The collector-receiver is off
 				// The power cycle runs somewhere between its minimum operating fraction and target operation, with thermal input from TES, which is depleted at the end of the timestep
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -3966,6 +4055,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// PC is in standby and requires standby fraction of design thermal input
 				// TES is charging with balance of CR output
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -4053,6 +4148,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The collector-receiver is in startup
 				// The power cycle runs at its minimum fraction until storage is depleted
 				// A new, shorter timestep is calculated here
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -4292,6 +4393,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// TES is discharging hot HTF that is mixed with the CR HTF
 				// to operate the PC at standby
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -4380,6 +4487,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The power cycle run at the target thermal input level
 				// The TES supplies the thermal power to the power cycle
 				
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -4528,6 +4641,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The PC is operating between its target and maximum thermal power
 				// The TES is fully charging over the timestep
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -4603,6 +4722,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The CR + TES output over the initial controller timestep is less than the PC min fraction
 				// so the controller calculates a new timestep such that the TES completely discharges and 
 				//  ... the CR + TES output is = the PC min fraction
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -5071,6 +5196,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// TES is fully charged at the end of the timestep
 				// The CR is still delivering too much mass flow rate and needs to be defocused
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set up iteration to find defocus that results in completely filled storage
 				// Upper bound, error, and booleans
@@ -5313,6 +5443,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The power cycle is operating at standby
 				// and the TES is fully charging
 
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
 				// The thermal input to the power at standby can go over target standby
 				// ... but it cannot go UNDER
 
@@ -5377,6 +5513,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Power cycle is starting up, with thermal power from TES
 				// Code calculates the shortest timestep of: (CR SU, PC SU, initial timestep)
 				//      and then recalculates the other component startup as necessary
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -5521,6 +5663,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// PC is starting up with its maximum thermal power for startup
 				//      and is returning the startup time required
 				// Excess CR output is charging TES
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
@@ -5841,6 +5989,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The PC is operating at the maximum startup thermal power
 				// TES is fully charged at the end of the timestep
 				// The CR is still delivering too much mass flow rate and needs to be defocused
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// Set up iteration to find defocus that results in completely filled storage
 				// Upper bound, error, and booleans
@@ -6312,6 +6466,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Running the CR at full power results in too much thermal power for power cycle start up
 				// No available TES charging
 				// So, must defocus CR during PC startup
+
+				if( !mc_collector_receiver.m_is_sensible_htf )
+				{
+					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
+					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
 
 				// This mode fails to CR_ON__PC_SU__TES_OFF__AUX_OFF
 
