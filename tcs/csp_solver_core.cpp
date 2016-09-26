@@ -121,8 +121,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	reset_hierarchy_logic();
 
 	// Inititalize non-reference member data
-	m_T_htf_cold_des = m_q_dot_rec_on_min = m_q_dot_rec_des =
-		
+	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
+		m_q_dot_rec_on_min = m_q_dot_rec_des =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
 
@@ -214,6 +214,8 @@ void C_csp_solver::init()
 	C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
 	mc_collector_receiver.init(init_inputs, cr_solved_params);
 	m_T_htf_cold_des = cr_solved_params.m_T_htf_cold_des;		//[K]
+	m_P_cold_des = cr_solved_params.m_P_cold_des;				//[kPa]
+	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
 	m_q_dot_rec_on_min = cr_solved_params.m_q_dot_rec_on_min;	//[MW]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
 		// Power cycle
@@ -1977,23 +1979,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			case CR_OFF__PC_OFF__TES_OFF__AUX_OFF:
 				// Solve all models as 'off' or 'idle'
 				// Collector/receiver
+				
+				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
+				m_defocus = 1.0;
+
+				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_pres = m_P_cold_des;					//[kPa]
+				mc_cr_htf_state_in.m_qual = m_x_cold_des;					//[-]
+
+				mc_collector_receiver.off(mc_weather.ms_outputs,
+					mc_cr_htf_state_in,
+					mc_cr_out_solver,
+					mc_kernel.mc_sim_info);
 
 				if( !mc_collector_receiver.m_is_sensible_htf )
 				{
 					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
-
-				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
-				m_defocus = 1.0;
-
-				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-				
-				mc_collector_receiver.off(mc_weather.ms_outputs,
-					mc_cr_htf_state_in,
-					mc_cr_out_solver,
-					//mc_cr_out_report,
-					mc_kernel.mc_sim_info);
 
 				// Power Cycle: OFF
 				// HTF State
