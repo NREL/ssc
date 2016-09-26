@@ -805,7 +805,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_defocus_old = 0.;
 
 	// Set solved parameters
-	solved_params.m_T_htf_cold_des = m_T_field_in_des;	//[K] Design point
+	solved_params.m_T_htf_cold_des = m_T_field_in_des;	//[K] Design point inlet temperature
+	solved_params.m_P_cold_des = m_P_turb_des*(1.0 + m_fP_sf_tot)*100.0;	//[kPa] Design point inlet pressure
+	solved_params.m_x_cold_des = -1;					//[-] Design point inlet quality
 	solved_params.m_q_dot_rec_on_min = 0.0;				//[W/m^2] Not sure that this is super important for LF
 	solved_params.m_q_dot_rec_des = q_abs_tot_des/1.E3;	//[MWt] Absorbed thermal power delivered to HTF at design
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m2]
