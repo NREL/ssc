@@ -180,8 +180,8 @@ public:
 	util::matrix_t<double> m_eta_opt_fixed, m_opteff_des;
 	double m_fP_sf_tot;
 	int m_n_rows_matrix;		//[-] 1 if Single Geom, 2 if Multigeom
-	int m_nModTot;
-	double m_Ap_tot;
+	int m_nModTot;				//[-] nBoiler + nSH
+	double m_Ap_tot;			//[m2] Total solar field aperture area
 	double m_m_dot_des;
 	double m_q_rec_tot_des;
 	double m_m_dot_max;

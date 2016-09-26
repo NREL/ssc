@@ -621,11 +621,11 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	// Calculate total solar field aperture area
-	m_Ap_tot = 0.0;
+	m_Ap_tot = 0.0;		//[m2]
 	if (m_is_multgeom)
-		m_Ap_tot = (m_A_aperture.at(0, 0)*m_nModBoil + m_A_aperture.at(1, 0)*m_nModSH)*m_nLoops;
+		m_Ap_tot = (m_A_aperture.at(0, 0)*m_nModBoil + m_A_aperture.at(1, 0)*m_nModSH)*m_nLoops;	//[m2]
 	else
-		m_Ap_tot = m_A_aperture.at(0, 0)*(double)(m_nModTot*m_nLoops);
+		m_Ap_tot = m_A_aperture.at(0, 0)*(double)(m_nModTot*m_nLoops);		//[m2]
 
 	// Estimate piping thermal loss
 	double q_loss_piping = m_Ap_tot*m_Pipe_hl_coef / 1000.0*((m_T_field_in_des + m_T_field_out_des) / 2.0 - m_T_amb_des_sf);		// hl coef is [W/m2-K], use average field temp as driving difference
@@ -642,7 +642,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
 	m_q_rec_tot_des = q_rec_tot_loop*(double)m_nLoops;
 	double q_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
-	double q_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;
+	double q_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;				//[kWt]
 
 	double eta_therm_sf_des = 1.0 - q_loss_tot_des / m_q_rec_tot_des;		// Design solar field efficiency
 
@@ -803,6 +803,12 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_ncall = -1;
 
 	m_defocus_old = 0.;
+
+	// Set solved parameters
+	solved_params.m_T_htf_cold_des = m_T_field_in_des;	//[K] Design point
+	solved_params.m_q_dot_rec_on_min = 0.0;				//[W/m^2] Not sure that this is super important for LF
+	solved_params.m_q_dot_rec_des = q_abs_tot_des/1.E3;	//[MWt] Absorbed thermal power delivered to HTF at design
+	solved_params.m_A_aper_total = m_Ap_tot;			//[m2]
 
 	// Set previous operating mode
 	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
