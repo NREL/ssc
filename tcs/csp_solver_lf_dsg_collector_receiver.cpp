@@ -347,8 +347,10 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	// Initialize any member matrix_t values
-	if (!m_is_sh)
-		m_nModSH = 0;
+	if( m_nModSH > 0 )
+		m_is_sh = true;
+	else
+		m_is_sh = false;
 
 	m_n_rows_matrix = 1;
 	if( m_is_multgeom )

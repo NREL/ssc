@@ -22,9 +22,11 @@ private:
 	util::matrix_t<AbsorberProps*> m_AbsorberMaterial;
 	util::matrix_t<HTFProperties*> m_AnnulusGas;
 
-
 	int m_operating_mode_converged;
 	int m_operating_mode;
+
+	bool m_is_sh;				//[-]
+
 
 public:
 
@@ -79,7 +81,6 @@ public:
 
 	int m_fossil_mode;			//[-]
 	double m_I_bn_des;			//[W/m2]
-	bool m_is_sh;				//[-]
 	bool m_is_oncethru;			//[-]
 	bool m_is_multgeom;			//[-]
 	int m_nModBoil;				//[-]
