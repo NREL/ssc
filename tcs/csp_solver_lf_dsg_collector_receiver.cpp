@@ -662,12 +662,13 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		m_m_dot_b_des = m_m_dot_des / m_x_b_des;
 
 	// Calculate maximum flow rate to the power block
-	m_m_dot_pb_des = m_q_pb_des / (h_sh_out_des - h_pb_out_des);
-	double m_dot_pb_max = m_m_dot_pb_des * m_cycle_max_fraction;
-	m_m_dot_max = m_dot_pb_max / (double)m_nLoops;
-	m_m_dot_b_max = m_m_dot_max / m_x_b_des;
+	m_m_dot_pb_des = m_q_pb_des / (h_sh_out_des - h_pb_out_des);	//[kg/s] SYSTEM mass flow rate at design
+	double m_dot_pb_max = m_m_dot_pb_des * m_cycle_max_fraction;	//[kg/s] SYSTEM max mass flow rate
+	m_m_dot_max = m_dot_pb_max / (double)m_nLoops;					//[kg/s] LOOP max mass flow rate
+	m_m_dot_b_max = m_m_dot_max / m_x_b_des;						//[kg/s] LOOP max mass flow rate through boiler
 	
-	m_m_dot_min = 0.1 * m_m_dot_max; // added by Ty, 9/22/2016
+	// 9.26.16 twn: For now, hardcode min fraction as 0.2, but eventually make this a user input
+	m_m_dot_min = 0.2 * m_m_dot_pb_des / (double)m_nLoops;		//[kg/s] LOOP min mass flow rate
 
 	// Convert the thermal inertia term here
 	m_e_trans = m_e_startup * m_Ap_tot / (double)(m_nModTot*m_nLoops);		//[kJ/m2-K] -> [kJ/K] Average transient energy per collector
@@ -1970,7 +1971,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	// Guess the turbine pressure.. turbine inlet pressure is highly insensitive to condenser pressure, so
 	// simplify the expression to eliminate condenser pressure
 	//double P_loop_out = turb_pres_frac(m_dot_htf_loop*(double)m_nLoops / m_m_dot_pb_des, m_fossil_mode, m_ffrac[tou_period], m_fP_turb_min)*m_P_turb_des;
-	double P_loop_out = m_P_turb_des;	//[kPa]
+	double P_loop_out = m_P_turb_des;	//[bar]
 	double dP_loss = pow(m_m_dot_htf_tot / m_m_dot_des, 2)*m_P_turb_des;
 
 	// Guess the loop inlet/outlet enthalpies
