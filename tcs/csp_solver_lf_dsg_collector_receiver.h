@@ -415,13 +415,13 @@ public:
 		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
 
-	int loop_energy_balance_T_t_int_OT(const C_csp_weatherreader::S_outputs &weather,
-		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-		const C_csp_solver_sim_info &sim_info);
+	//int loop_energy_balance_T_t_int_OT(const C_csp_weatherreader::S_outputs &weather,
+	//	double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
+	//	const C_csp_solver_sim_info &sim_info);
 
-	int loop_energy_balance_T_t_int_RC(const C_csp_weatherreader::S_outputs &weather,
-		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-		const C_csp_solver_sim_info &sim_info);
+	//int loop_energy_balance_T_t_int_RC(const C_csp_weatherreader::S_outputs &weather,
+	//	double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
+	//	const C_csp_solver_sim_info &sim_info);
 
 	int loop_energy_balance_T_t_int();
 	
