@@ -6,8 +6,6 @@ using namespace std;
 
 C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 {
-	// Set parent class public member data
-	m_is_sensible_htf = false;		//[-] STEAM
 
 	// Set maximum timestep from parent class member data
 	m_max_step = 60.0*60.0;			//[s]: [m] * [s/m]
@@ -121,6 +119,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 {
 	// Harcoded Parameter:
 	m_P_max = 190.0;		// [bar]
+	m_T_startup = m_T_field_out_des;
 		
 	//[-] Outer glass envelope emissivities (Pyrex)
 	m_EPSILON_5 = m_EPSILON_4;	
@@ -2120,7 +2119,8 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			m_h_field_out = m_h_out.at(m_nModTot - 1, 0);
 
 		water_PH(P_loop_out*100.0, m_h_field_out, &wp);
-		m_T_field_out = wp.temp - 273.15;		// [C]
+		//m_T_field_out = wp.temp - 273.15;		// [C]
+		m_T_field_out = wp.temp;		// [C]
 		m_xb_field_out = wp.qual;
 
 		// total power
@@ -2177,13 +2177,11 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	time_t = sim_info.ms_ts.m_time;
 	double field_control; // dummy parameter
  	field_control = 0;
-	if (time_t == 9 * 3600)
+	if (time_t == 8 * 3600)
 	{
 		//loop_optical_eta(weather, sim_info);
 		//m_T_sys_c_t_end = T_htf_cold_in;
-		m_T_sys_h_t_end = m_T_htf_out_t_end[m_nModTot - 1];
-		m_h_sys_c_t_end = m_h_in[0];
-		m_h_sys_h_t_end = m_h_htf_out_t_end[m_nModTot - 1];
+		m_T_sys_h_t_end = m_T_field_out + 273.15;
 		update_last_temps();
 		startup(weather,htf_state_in,cr_out_solver, sim_info);
 		//on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
