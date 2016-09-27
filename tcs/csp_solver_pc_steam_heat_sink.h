@@ -28,12 +28,16 @@ public:
 		double m_T_cold_des;	//[C]
 		double m_dP_frac_des;	//[-]
 		double m_q_dot_des;		//[MWt]
+		double m_m_dot_max_frac;	//[-]
 	
 		double m_pump_eta_isen;	//[-] Isentropic efficiency of pump
 
 		S_params()
 		{
-			m_T_hot_des = m_P_hot_des = m_T_cold_des = m_dP_frac_des = m_q_dot_des = std::numeric_limits<double>::quiet_NaN();
+			m_T_hot_des = m_P_hot_des = m_T_cold_des = 
+				m_dP_frac_des = m_q_dot_des = m_m_dot_max_frac =
+				
+				m_pump_eta_isen = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
