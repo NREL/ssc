@@ -100,7 +100,6 @@ private:
 	double m_RowShadow_ave;				//[-] Field average row shadowing loss
 	double m_EndLoss_ave;				//[-] Field average end loss
 	
-	double m_ftrack;			//[-] Fraction of timestep that solar field is deployed
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
 	
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*

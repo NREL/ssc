@@ -1149,8 +1149,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 void C_csp_trough_collector_receiver::loop_optical_eta_off()
 {
 	// If trough is not absorbing any sunlight (night or 100% defocus), then set member data as necessary
-
-	m_ftrack = 0.0;		//[-] Fraction of timestep that solar field is deployed
 	m_costh = 0.0;		//[-] Cosine of the incident angle between the sun and trough aperture
 
 	m_q_i.assign(m_q_i.size(),0.0);		//[W/m] DNI * A_aper / L_sca
@@ -1213,6 +1211,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	double HrB = hour;
 
 	double  MidTrack;
+	double m_ftrack = std::numeric_limits<double>::quiet_NaN();
 	// Solar field operates
 	if( (HrB > DepTime) && (HrA < StwTime) )
 	{
