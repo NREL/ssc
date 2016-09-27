@@ -31,6 +31,10 @@ void C_pc_steam_heat_sink::check_double_params_are_set()
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_q_dot_des"));
 	}
+	if( !check_double(ms_params.m_m_dot_max_frac) )
+	{
+		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_m_dot_max_frac"));
+	}
 	if( !check_double(ms_params.m_pump_eta_isen) )
 	{
 		throw(C_csp_exception("The following parameter was not set prior to calling the C_pc_heat_sink init() method: ", "m_pump_eta_isen"));
@@ -77,7 +81,11 @@ void C_pc_steam_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_param
 	solved_params.m_eta_des = 0.0;			//[-] Same
 	solved_params.m_q_dot_des = ms_params.m_q_dot_des;	//[MWt]
 	solved_params.m_q_startup = 0.0;		//[MWt-hr] Assuming heat sink does not require any startup energy
-	solved_params.m_max_frac = m_max_frac;	//[-] For now (set in constructor), make this really large so heat sink can handle any collector-receiver output
+	
+	// This *should be* really large so heat sink can handle any collector - receiver output
+		// But want to set at Compute Module level so it's consistent with value going to CR model
+	solved_params.m_max_frac = ms_params.m_m_dot_max_frac;	//[-] 
+	
 	solved_params.m_cutoff_frac = 0.0;		//[-] Similarly, don't put a floor on the thermal power input
 	solved_params.m_sb_frac = 0.0;			//[-] So, don't need standby
 	solved_params.m_T_htf_hot_ref = ms_params.m_T_hot_des;	//[C]
