@@ -25,7 +25,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	// *******************************************
 	// Design Calculations
 		// Geometry and Layout
-	m_e_trans = std::numeric_limits<double>::quiet_NaN();		//[kJ/K]
+	m_C_thermal = std::numeric_limits<double>::quiet_NaN();		//[kJ/K]
 	m_fP_sf_tot = std::numeric_limits<double>::quiet_NaN();		//[-]
 	m_n_rows_matrix = -1;		//[-]
 	m_nModTot = -1;				//[-]
@@ -665,7 +665,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	// *****************************************************
 
 	// Convert the thermal inertia term here
-	m_e_trans = m_e_startup * m_Ap_tot / (double)(m_nModTot*m_nLoops);		//[kJ/m2-K] -> [kJ/K] Average transient energy per collector
+	m_C_thermal = m_e_startup * m_Ap_tot / (double)(m_nModTot*m_nLoops);		//[kJ/m2-K] -> [kJ/K] Average transient energy per collector
 
 	// Check to see if the design provided by the user is reasonable. If not, return a warning message
 	double T_burn = 0.0;
@@ -1939,7 +1939,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		{
 			iter_t++;
 			// Calculate the average enthalpy value in the collector module
-			m_h_out.at(i,0) = (m_h_in.at(i, 0) + m_q_abs[i] / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+			m_h_out.at(i,0) = (m_h_in.at(i, 0) + m_q_abs[i] / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
 			// Update guesses for h_ave and T_ave
 			double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 			// Update the average temperature for the heat loss calculation
@@ -2446,7 +2446,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
 						// Update guesses for h_ave and T_ave
 						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
@@ -2695,7 +2695,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
 						// Update guesses for h_ave and T_ave
 						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
@@ -2917,7 +2917,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						while (err_t > tol_t && iter_t < 50)
 						{
 							// Calculate the average enthalpy value in the collector module
-							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_e_trans / m_dt);
+							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
 							// Update guesses for h_ave and T_ave
 							double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 							// Update the average temperature for the heat loss calculation
@@ -3011,8 +3011,8 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double E_field = 0.0;
 	for (int i = 0; i < m_nModTot; i++)
 	{
-		E_bal_startup += (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_e_trans / m_dt*(double)m_nLoops / 1000.0;	//[MW]
-		E_field += (m_T_ave.at(i, 0) - m_T_field_ini)*m_e_trans / m_dt*(double)m_nLoops / 1000.0;				//[MW]
+		E_bal_startup += (m_T_ave.at(i, 0) - m_T_ave_prev[i] )*m_C_thermal / m_dt*(double)m_nLoops / 1000.0;	//[MW]
+		E_field += (m_T_ave.at(i, 0) - m_T_field_ini)*m_C_thermal / m_dt*(double)m_nLoops / 1000.0;				//[MW]
 	}
 
 

@@ -41,7 +41,7 @@ private:
 	util::matrix_t<double> m_EPSILON_5;	//[-]
 	util::matrix_t<double> m_eta_opt_fixed;
 	util::matrix_t<double> m_opteff_des;
-	double m_e_trans;					//[kJ/K] Thermal capacity per receiver
+	double m_C_thermal;			//[kJ/K] Thermal capacity per receiver
 	double m_fP_sf_tot;			//[-] Total fractional pressure drop across the solar field
 	int m_n_rows_matrix;		//[-] 1 if Single Geom, 2 if Multigeom
 	int m_nModTot;				//[-] nBoiler + nSH
