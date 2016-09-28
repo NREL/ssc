@@ -430,7 +430,6 @@ public:
 		//C_csp_lf_dsg_collector_receiver c_lf_dsg;
 
 		// Now set solar field collector unit parameters
-		dsg_lf.m_tes_hours = value(P_TESHOURS);  // TSHOURS );
 		dsg_lf.m_q_max_aux = value(P_Q_MAX_AUX)*1.0E3; // q_max_aux );
 		dsg_lf.m_LHV_eff = value(P_Q_MAX_AUX); // LHV_eff );
 		dsg_lf.m_T_set_aux = value(P_T_SET_AUX) + 273.15;
@@ -445,20 +444,24 @@ public:
 		dsg_lf.m_fP_hdr_h = value(P_FP_HDR_H); // fP_hdr_h );
 		dsg_lf.m_q_pb_des = value(P_Q_PB_DES)*1000.0; // Q_ref ); // = P_ref/eta_ref;
 		dsg_lf.m_W_pb_des = value(P_W_PB_DES)*1000.0;
+		
+		
+		dsg_lf.m_m_dot_max_frac = 3.0;		//[kg/s] Let cycle fractions control mass flow rate limits
+		dsg_lf.m_m_dot_min_frac = 0.0;		//[kg/s] Let cycle fractions control mass flow rate limits
+
+
 		dsg_lf.m_cycle_max_fraction = value(P_CYCLE_MAX_FRAC); // cycle_max_fraction );
 		dsg_lf.m_cycle_cutoff_frac = value(P_CYCLE_CUTOFF_FRAC); // cycle_cutoff_frac );
+		
+		
 		dsg_lf.m_t_sby_des = value(P_T_SBY); // t_sby );
 		dsg_lf.m_q_sby_frac = value(P_Q_SBY_FRAC); // q_sby_frac );
-		dsg_lf.m_solarm = value(P_SOLARM); // solarm );
 		dsg_lf.m_PB_pump_coef = value(P_PB_PUMP_COEF); // PB_pump_coef );
 		dsg_lf.m_PB_fixed_par = value(P_PB_FIXED_PAR); // PB_fixed_par );	dsg_lf.q_max_aux = value("T_startup", value("T_hot"));
 		dsg_lf.m_fossil_mode = (int)value(P_FOSSIL_MODE); // fossil_mode );
 		dsg_lf.m_I_bn_des = value(P_I_BN_DES); // I_bn_des );
-		dsg_lf.m_is_sh = (bool) value( P_IS_SH ); // is_sh ); ? bool
-		//dsg_lf.m_is_sh = 0; // remove superheaters
 		dsg_lf.m_is_oncethru = (bool)value(P_IS_ONCETHRU); // is_oncethru ); ? bool
 		dsg_lf.m_is_multgeom = (bool)value(P_IS_MULTGEOM); // is_multgeom ); 
-		//dsg_lf.m_is_multgeom = 0; // is_multgeom ); to remove superheater
 		dsg_lf.m_nModBoil = (int)value(P_NMODBOIL); // nModBoil );
 		dsg_lf.m_nModSH = (int)value(P_NMODSH); // nModSH );
 		dsg_lf.m_nLoops = (int)value(P_NLOOPS); // nLoops );
@@ -466,7 +469,6 @@ public:
 		dsg_lf.m_latitude = value(P_LATITUDE)*0.0174533; // latitude );
 		dsg_lf.m_theta_stow = value(P_THETA_STOW)*0.0174533; // theta_stow );
 		dsg_lf.m_theta_dep = value(P_THETA_DEP)*0.0174533; // theta_dep );
-		dsg_lf.m_m_dot_min = value(P_M_DOT_MIN); // m_dot_min );
 		dsg_lf.m_T_field_ini = value(P_T_FIELD_INI) + 275.15;
 		dsg_lf.m_T_fp = value(P_T_FP) + 273.15; // T_fp );
 		dsg_lf.m_Pipe_hl_coef = value(P_PIPE_HL_COEF); // Pipe_hl_coef );
@@ -476,38 +478,23 @@ public:
 		dsg_lf.m_T_amb_des_sf = value(P_T_AMB_DES_SF) + 273.15; // T_amb_des_sf );
 		dsg_lf.m_V_wind_max = value(P_V_WIND_MAX); // V_wind_max );		
 
-		//set_unit_value_ssc_array(type261_solarfield, "bop_array"); // [BOP_parVal, BOP_parPF, BOP_par0, BOP_par1, BOP_par2] );
-		//dsg_lf.m_bop_array = value(P_BOP_ARRAY, &m_l_bop_array)
-		//	int n_W_aper = -1;
-		//double *W_aper = value(P_W_APERTURE, &n_W_aper);		//The collector aperture width (Total structural area.. used for shadowing) [m]
-		//ms_trough.m_W_aperture.resize(n_W_aper);
-		//for (int i = 0; i < n_W_aper; i++)
-		//	ms_trough.m_W_aperture[i] = W_aper[i];
 		int nval_bop_array = -1;
 		double *bop_array = value(P_BOP_ARRAY, &nval_bop_array);		//The collector aperture width (Total structural area.. used for shadowing) [m]
 		dsg_lf.m_bop_array.resize(nval_bop_array);
 		for (int i = 0; i < nval_bop_array; i++)
 			dsg_lf.m_bop_array[i] = bop_array[i];
 
-		//set_unit_value_ssc_array(type261_solarfield, "aux_array"); // [Aux_parVal, Aux_parPF, Aux_par0, Aux_par1, Aux_par2] );
 		int nval_aux_array = -1;
 		double *aux_array = value(P_AUX_ARRAY, &nval_aux_array);
 		dsg_lf.m_aux_array.resize(nval_aux_array);
 		for (int i = 0; i < nval_aux_array; i++)
 			dsg_lf.m_aux_array[i] = (double)aux_array[i];
 
-		//set_unit_value_ssc_array(type261_solarfield, "ffrac"); // [FFRAC_1,FFRAC_2,FFRAC_3,FFRAC_4,FFRAC_5,FFRAC_6,FFRAC_7,FFRAC_8,FFRAC_9] );
 		int nval_ffrac = -1;
 		double *ffrac = value(P_FFRAC, &nval_ffrac);
 		dsg_lf.m_ffrac.resize(nval_ffrac);
 		for (int i = 0; i < nval_ffrac; i++)
 			dsg_lf.m_ffrac[i] = (double)ffrac[i];
-
-		// Set all matrix parameters
-		double m_n_rows_matrix = 1;
-		if (dsg_lf.m_is_multgeom)
-			m_n_rows_matrix = 2;
-		dsg_lf.m_n_rows_matrix = m_n_rows_matrix;
 
 		set_matrix_t(P_A_APERTURE, dsg_lf.m_A_aperture); //A_aper);
 		set_matrix_t(P_L_COL, dsg_lf.m_L_col); //L_col);
@@ -657,12 +644,12 @@ public:
 
 		// Set Outputs
 
-		value(O_CYCLE_PL_CONTROL, dsg_out_solver.m_cycle_pl_control);	//[none] Part-load control flag - used by Type224
-		value(O_T_FIELD_OUT, dsg_out_solver.m_T_field_out);				//[C] HTF Temperature from the field
-		value(O_M_DOT_TO_PB, dsg_out_solver.m_m_dot_to_pb * 3600);		//[kg/s] --> [kg/hr] Flow rate delivered to the power block         
-		value(O_STANDBY_CONTROL, dsg_out_solver.m_standby_control);			   //[none] Standby control flag - used by Type224
-		value(O_DP_SF_SH, dsg_out_solver.m_dP_sf_sh);						  //[bar] Pressure drop across the solar field superheater
-		value(O_W_DOT_PAR_TOT, dsg_out_solver.m_W_dot_par_tot);	//[MW] Total parasitic power losses
+		value(O_CYCLE_PL_CONTROL, cycle_pl_control);					//[none] Part-load control flag - used by Type224
+		value(O_T_FIELD_OUT, dsg_out_solver.m_T_salt_hot);				//[C] HTF Temperature from the field
+		value(O_M_DOT_TO_PB, dsg_out_solver.m_m_dot_salt_tot);			//[kg/hr] Flow rate delivered to the power block         
+		value(O_STANDBY_CONTROL, dsg_out_solver.m_standby_control);		//[none] Standby control flag - used by Type224
+		value(O_DP_SF_SH, dsg_out_solver.m_dP_sf_sh);					//[bar] Pressure drop across the solar field superheater
+		value(O_W_DOT_PAR_TOT, dsg_out_solver.m_W_dot_par_tot);			//[MW] Total parasitic power losses
 
 		value(O_DP_TOT, 0.0);							  //[bar] Total HTF pressure drop
 		value(O_DP_HDR_C, 0.0);						  //[bar] Average cold header pressure drop
