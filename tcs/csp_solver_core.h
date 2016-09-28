@@ -7,6 +7,20 @@
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
+class C_csp_solver_steam_state
+{
+public:
+	double m_temp;	//[K]
+	double m_pres;	//[bar]
+	double m_enth;	//[kJ/kg]
+	double m_x;		//[-]
+
+	C_csp_solver_steam_state()
+	{
+		m_temp = m_pres = m_enth = m_x = std::numeric_limits<double>::quiet_NaN();
+	}
+};
+
 class C_csp_solver_htf_1state
 {
 public:
