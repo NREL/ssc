@@ -2361,7 +2361,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 				h_b_in = wp.enth;
 				h_pb_out = h_b_in;
 				water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in + dP_basis*m_fP_hdr_h)*100.0, &wp);
-				double h_sh_out = wp.enth;
+				double h_sh_out_target = wp.enth;
 
 				// Set the loop inlet enthalpy
 				m_h_in.at(0, 0) = h_b_in;
@@ -2460,7 +2460,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 				}   // End step through receivers in flow path
 
-				err = (h_sh_out - m_h_out.at(m_nModTot - 1, 0)) / h_sh_out;
+				err = (h_sh_out_target - m_h_out.at(m_nModTot - 1, 0)) / h_sh_out_target;
 
 				if (m_dot == m_m_dot_min && err > 0.0)			// m_dot may already equal m_dot_min while the temperature is still too low, this saves 1 more iteration
 					break;
@@ -2506,7 +2506,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 							double q_abs_sum = 0.0;
 							for (int ii = 0; ii < m_nModTot; ii++)
 								q_abs_sum += m_q_abs[ii];				//[kWt] LOOP total Thermal power absorbed by steam in each receiver
-							m_dot_guess = q_abs_sum / (h_sh_out - h_b_in);
+							m_dot_guess = q_abs_sum / (h_sh_out_target - h_b_in);
 							m_dot_guess = max(m_m_dot_min*0.5, min(m_dot_guess, m_m_dot_max*1.5));
 						}
 						else
