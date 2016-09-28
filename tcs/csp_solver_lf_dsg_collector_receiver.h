@@ -19,14 +19,117 @@ class C_csp_lf_dsg_collector_receiver : public C_csp_collector_receiver
 {
 private:
 
-	util::matrix_t<AbsorberProps*> m_AbsorberMaterial;
-	util::matrix_t<HTFProperties*> m_AnnulusGas;
+	// *******************************************
+	// Hardcoded member data
+		// Timestep management
+	double m_step_recirc;		//[s] 
+		// Conversion constants
+	double m_d2r;				//[deg/rad] Degree-to-radian conversion
+	double m_r2d;				//[rad/deg] Radian-to-degree conversion
+	double m_mtoinch;			//[m/in] meter-to-inch conversion
+		// DSG Model Constants
+	double m_P_max;				//[bar]
+	double m_fP_turb_min;		//[-] Minimum fractional operating pressure (of design) at the turbine inlet
+	// *******************************************
+	// *******************************************
 
+	// *******************************************
+	// Design Calculations
+		// Geometry and Layout
+	util::matrix_t<double> m_D_h;		//[m]
+	util::matrix_t<double> m_A_cs;		//[m2]
+	util::matrix_t<double> m_EPSILON_5;	//[-]
+	util::matrix_t<double> m_eta_opt_fixed;
+	util::matrix_t<double> m_opteff_des;
+	double m_e_trans;					//[kJ/K] Thermal capacity per receiver
+	double m_fP_sf_tot;			//[-] Total fractional pressure drop across the solar field
+	int m_n_rows_matrix;		//[-] 1 if Single Geom, 2 if Multigeom
+	int m_nModTot;				//[-] nBoiler + nSH
+	bool m_is_sh;				//[-]
+	double m_Ap_tot;			//[m2] Total solar field aperture area	
+		// Energy and mass balance calcs
+	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
+	double m_m_dot_min;			//[kg/s]
+	double m_m_dot_max;			//[kg/s]
+	double m_m_dot_b_max;		//[kg/s]
+	double m_m_dot_b_des;		//[kg/s]
+	double m_m_dot_pb_des;		//[kg/s]
+	double m_m_dot_des;			//[kg/s]
+	double m_m_dot_tot;			//[kg/s] SYSTEM mass flow rate off-design
+	// *******************************************
+	// *******************************************
+
+	// *******************************************
+	// Timestep Calculations
+		// Control & operation
 	int m_operating_mode_converged;
 	int m_operating_mode;
+	int m_ncall;
+	double m_dt;
+		// *********************************************
+		// CSP Solver Temperature Tracking
+		// Cold System/Field Headers Inlet
+	C_csp_solver_steam_state mc_sys_c_in;
 
-	bool m_is_sh;				//[-]
 
+		// Hot System/Field Headers Outlet
+	C_csp_solver_steam_state mc_sys_h_out;
+
+
+	double m_T_sys_h_t_end;					//[K] Temperature (bulk) of hot runners & headers at end of current timestep
+	double m_T_sys_h_t_end_last;			//[K] Temperature (bulk) of hot runners & headers at end of previous timestep
+	double m_T_sys_h_t_end_converged;
+	
+	std::vector<double> m_T_htf_t_ave_last;	//[K] Temperature of HTF temperature & material at end of previous timestep
+	vector<double> m_T_ave_prev;
+	util::matrix_t<double> m_T_ave; 
+	util::matrix_t<double> m_h_ave;
+	util::matrix_t<double> m_h_in;
+	util::matrix_t<double> m_h_out;
+	util::matrix_t<double> m_x;
+	
+	// DSG system-specific -start
+	std::vector<double> m_T_htf_out_t_end;	// end-of-timestep outlet HTF temperature of each SCA
+	std::vector<double> m_T_htf_t_ave;	// end-of-timestep average HTF temperature of each SCA
+	std::vector<double> m_xb_htf_out_t_end;	// end-of-timestep outlet HTF steam quality of each SCA
+
+	std::vector<double> m_T_htf_t_ave_converged;
+
+	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
+		// ****************************************************************
+		// ****************************************************************
+		// Sun Position
+	double m_phi_t;
+	double m_theta_L;
+		// Energy Balance
+	double m_eta_opt_ave;		//[-] SYSTEM & LOOP weighted optical efficiency (uses m_eta_optical)
+	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
+	util::matrix_t<double> m_eta_optical;	//[-] Optical efficiency for each collector geometry
+	std::vector<double> m_q_rec;		//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+	std::vector<double> m_q_loss;		//[kWt] Thermal loss for each receiver in loop
+	std::vector<double> m_q_abs;		//[kWt] Thermal power absorbed by steam in each receiver
+	
+	double m_Q_field_losses_total;		//[MJ] scas + xover + hot_HR + cold_HR
+	double m_q_rec_loop;		//[kWt] LOOP total thermal power on receiver after *optical* losses and *defocus*
+	double m_q_inc_loop;		//[kWt] LOOP total incident beam radiation
+
+	// *********************************************
+	// Required for backwards compatability with TCS - call & init & converged only!
+	// *********************************************
+	double m_ftrack;		//[-]
+	double m_defocus_prev;	//[-]
+	double m_t_sby_prev;	//[-]
+	double m_t_sby;			//[-]
+	bool m_is_pb_on_prev;	//[-]
+	bool m_is_pb_on;		//[-]
+	double m_T_sys_prev;	//[K]
+	double m_defocus;		//[-]
+	bool m_is_def;			//[-]
+	double m_err_def;		//[-]
+	double m_tol_def;		//[-]
+	double m_rc;			//[-]
+	// *********************************************
+	// *********************************************
 
 public:
 
@@ -46,10 +149,6 @@ public:
 	HTFProperties htfProps;
 	
 	// Parameters
-	double m_ncall;
-	double m_dt;
-	int m_touperiod;
-	double m_tes_hours;			//[hr] ... why is this here?
 	double m_q_max_aux;			//[kWt] 
 	double m_LHV_eff;			//[-]
 	double m_T_set_aux;			//[K]
@@ -66,18 +165,15 @@ public:
 	double m_W_pb_des;			//[kWe]
 	double m_cycle_cutoff_frac;		//[-]
 	double m_cycle_max_fraction;	//[-]
+	double m_m_dot_min_frac;	//[-]
+	double m_m_dot_max_frac;	//[-]
 	double m_t_sby_des;			//[hr]
 	double m_q_sby_frac;		//[-]
-	double m_solarm;			//[-] ... why is this here?
 	double m_PB_pump_coef;		//[kW/kg]
 	double m_PB_fixed_par;		//[-]
-	//double * m_bop_array;
-	//int m_l_bop_array;
 	std::vector<double> m_bop_array;
-	//double * m_aux_array;
-	//int m_l_aux_array;
 	std::vector<double> m_aux_array;
-	double m_T_startup;
+	double m_T_startup;			//[K]
 
 	int m_fossil_mode;			//[-]
 	double m_I_bn_des;			//[W/m2]
@@ -90,7 +186,6 @@ public:
 	double m_latitude;			//[rad]
 	double m_theta_stow;		//[rad]
 	double m_theta_dep;			//[rad]
-	double m_m_dot_min;			//[kg/s]
 	double m_T_field_ini;		//[K]
 	double m_T_fp;				//[K]
 	double m_Pipe_hl_coef;		//[W/m2-K]
@@ -99,8 +194,6 @@ public:
 	double m_e_startup;			//[kJ/K-m2], Thermal inertia contribution per sq meter of solar field
 	double m_T_amb_des_sf;		//[K]
 	double m_V_wind_max;		//[m/s]
-	//double * m_ffrac;
-	//int    m_l_ffrac;
 	std::vector<double> m_ffrac;
 
 	util::matrix_t<double> m_A_aperture;
@@ -144,147 +237,7 @@ public:
 	util::matrix_t<double> m_Shadowing;
 	util::matrix_t<double> m_Dirt_HCE;
 	util::matrix_t<double> m_b_OpticalTable;
-	util::matrix_t<double> m_sh_OpticalTable;
-
-	////Type 261 (solar field collector) inputs
-	//double m_dnifc;					//[W/m2] Forecast DNI
-	//double m_I_bn;						//[W/m2] Current DNI
-	//double m_T_db;				//[K] Dry bulb temp, convert from C
-	//double m_T_dp;				//[K] Dewpoint temp, convert from C
-	//double m_P_amb;				//[Pa] Ambient pressure, convert from mbar
-	//double m_V_wind;					//[m/s] Ambient windspeed
-	//double m_m_dot_htf_ref;	//[kg/s] Reference HTF flow rate at design conditions, convert from kg/hr
-	//double m_m_pb_demand;		//[kg/s] Demand HTF flow from the power block, convert from kg/hr
-	//double m_shift;			//[deg] Shift in longitude from local standard meridian
-	//double m_SolarAz;				//[deg] Solar azimuth angle
-	//double m_SolarZen;		//Solar zenith angle [deg]
-	//double m_T_pb_out;
-	
-	// Stored Variables
-	util::matrix_t<double> m_T_ave, m_T_ave0, m_h_ave, m_h_ave0;
-
-	// Constants
-	double m_P_max;
-	double m_fP_turb_min;
-	double m_d2r;
-	double m_r2d;
-	double m_mtoinch;
-	double m_T_htf_prop_min;
-	//int	m_accept_loc;
-
-	// Calculated
-	util::matrix_t<double> m_D_h;
-	util::matrix_t<double> m_A_cs;
-	util::matrix_t<double> m_EPSILON_5;
-	util::matrix_t<double> m_q_inc, m_q_loss, m_q_abs, m_h_in, m_h_out, m_x, m_q_rec;
-	util::matrix_t<double> m_eta_opt_fixed, m_opteff_des;
-	double m_fP_sf_tot;
-	int m_n_rows_matrix;		//[-] 1 if Single Geom, 2 if Multigeom
-	int m_nModTot;				//[-] nBoiler + nSH
-	double m_Ap_tot;			//[m2] Total solar field aperture area
-	double m_m_dot_des;
-	double m_q_rec_tot_des;
-	double m_m_dot_max;
-	double m_m_dot_pb_des;
-	double m_e_trans;
-	double m_m_dot_b_max;
-	double m_m_dot_b_des;
-	double m_m_dot_htf_tot;
-
-	double m_eta_opt_ave;
-	double m_q_rec_loop;
-	double m_q_inc_loop;
-
-	// Stored
-	vector<double> m_T_ave_prev;
-	double m_defocus_prev;
-	double m_t_sby_prev;
-	double m_t_sby;
-	bool   m_is_pb_on_prev;
-	bool   m_is_pb_on;
-	double m_T_sys_prev;
-	double m_T_field_in;
-	double m_T_field_out;
-	double m_h_field_in;
-	double m_h_field_out;
-	double m_xb_field_out;
-
-	// Calculated - ncall = 0
-	util::matrix_t<double> m_eta_optical;
-	util::matrix_t<double> m_eta_optical_0;
-	double m_defocus;
-	double m_defocus_new;
-	double m_defocus_old;
-	bool m_is_def;
-	double m_err_def;
-	double m_tol_def;
-	double m_rc;
-	double phi_t;
-	double theta_L;
-	double m_ftrack;
-
-	// *********************************************
-	// *********************************************
-
-	// *********************************************
-	// CSP Solver Temperature Tracking
-	// Temperatures from the most recent converged() operation
-	double m_T_sys_c_t_end_converged;
-	std::vector<double> m_T_htf_out_t_end_converged;
-	double m_T_sys_h_t_end_converged;
-	// ** Check for these in other methods developed for CSP Solver **
-
-	// Temperatures from the most recent timstep (in the event that a method solves multiple, shorter timesteps
-	double m_T_sys_c_t_end_last;			//[K] Temperature (bulk) of cold runners & headers at end of previous timestep
-	std::vector<double> m_T_htf_out_t_end_last;			//[K] Temperature of HTF temperature & material at end of previous timestep
-	double m_T_sys_h_t_end_last;			//[K] Temperature (bulk) of hot runners & headers at end of previous timestep
-
-	// ** Check for these in other methods developed for CSP Solver **
-
-	// Latest temperature solved during present call to this class
-	double m_T_sys_c_t_end;				//[K] Temperature (bulk) of cold runners & headers at end of current timestep
-	//double m_T_sys_c_t_int;				//[K] Temperature (bulk) of cold runners & headers at time-INTegrated-average	
-	//std::vector<double> m_T_htf_in_t_int;	//[K] time-integrated-average inlet HTF temperature to each SCA
-	//std::vector<double> m_T_htf_out_t_end;	//[K] end-of-timestep outlet HTF temperature of each SCA
-	//std::vector<double> m_T_htf_out_t_int;	//[K] time-integrated-average outlet HTF temp of each SCA
-	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
-	//double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
-
-	double m_Q_field_losses_total;		//[MJ] scas + xover + hot_HR + cold_HR
-	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
-
-	// DSG system-specific -start
-	std::vector<double> m_h_htf_out_t_end;	// end-of-timestep outlet HTF enthalpy of each SCA
-	std::vector<double> m_h_htf_t_ave;	// end-of-timestep average HTF enthapy of each SCA
-	std::vector<double> m_T_htf_out_t_end;	// end-of-timestep outlet HTF temperature of each SCA
-	std::vector<double> m_T_htf_t_ave;	// end-of-timestep average HTF temperature of each SCA
-	std::vector<double> m_P_htf_out_t_end;	// end-of-timestep outlet HTF pressure of each SCA
-	std::vector<double> m_P_htf_t_ave;	// end-of-timestep average HTF pressure of each SCA
-	std::vector<double> m_xb_htf_out_t_end;	// end-of-timestep outlet HTF steam quality of each SCA
-	std::vector<double> m_xb_htf_t_ave;	// end-of-timestep average HTF steam quality of each SCA
-
-	// enthalpy from the most recent converged() operation
-	double m_h_sys_c_t_end_converged;
-	double m_h_sys_c_t_end;
-	std::vector<double> m_h_htf_out_t_end_converged;
-	std::vector<double> m_T_htf_t_ave_converged;
-	double m_h_sys_h_t_end_converged;
-	double m_h_sys_h_t_end;
-	// ** Check for these in other methods developed for CSP Solver **
-
-	// entalpy from the most recent timstep (in the event that a method solves multiple, shorter timesteps
-	double m_h_sys_c_t_end_last;			//[K] Temperature (bulk) of cold runners & headers at end of previous timestep
-	std::vector<double> m_h_htf_out_t_end_last;			//[K] Temperature of HTF temperature & material at end of previous timestep
-	std::vector<double> m_T_htf_t_ave_last;			//[K] Temperature of HTF temperature & material at end of previous timestep
-	double m_h_sys_h_t_end_last;			//[K] Temperature (bulk) of hot runners & headers at end of previous timestep
-
-	// DSG system-specific -end
-
-
-	// ***** T  E  M  P ******
-	double m_step_recirc;
-	// *********************************************
-	// *********************************************
+	util::matrix_t<double> m_sh_OpticalTable;	
 
 	// **************************************************************************
 	// **************************************************************************
@@ -294,8 +247,6 @@ public:
 
 	~C_csp_lf_dsg_collector_receiver(){};
 
-		// GD version
-	//virtual void init();
 		// Trunk version
 	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
@@ -345,19 +296,6 @@ public:
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
 	double turb_pres_frac(double m_dot_nd, int fmode, double ffrac, double fP_min);
-
-	
-	//void call(const C_csp_weatherreader::S_outputs &weather,
-	//	C_csp_solver_htf_state &htf_state,
-	//	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-	//	C_csp_collector_receiver::S_csp_cr_outputs &cr_outputs,
-	//	const C_csp_solver_sim_info &sim_info);
-
-	/*void call(const C_csp_weatherreader::S_outputs &weather,
-		const C_csp_solver_htf_1state &htf_state_in,
-		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		const C_csp_solver_sim_info &sim_info);*/
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
 	class E_piping_config
@@ -411,14 +349,6 @@ public:
 		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
 
-	//int loop_energy_balance_T_t_int_OT(const C_csp_weatherreader::S_outputs &weather,
-	//	double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-	//	const C_csp_solver_sim_info &sim_info);
-
-	//int loop_energy_balance_T_t_int_RC(const C_csp_weatherreader::S_outputs &weather,
-	//	double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-	//	const C_csp_solver_sim_info &sim_info);
-
 	int loop_energy_balance_T_t_int();
 	
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
@@ -436,11 +366,11 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
-	void call_bk(const C_csp_weatherreader::S_outputs &weather,
-		const C_csp_solver_htf_1state &htf_state_in,
-		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		const C_csp_solver_sim_info &sim_info);
+	//void call_bk(const C_csp_weatherreader::S_outputs &weather,
+	//	const C_csp_solver_htf_1state &htf_state_in,
+	//	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
+	//	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
+	//	const C_csp_solver_sim_info &sim_info);
 
 	class C_mono_eq_xb_loop_out : public C_monotonic_equation
 	{
