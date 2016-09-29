@@ -366,11 +366,34 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
-	//void call_bk(const C_csp_weatherreader::S_outputs &weather,
-	//	const C_csp_solver_htf_1state &htf_state_in,
-	//	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
-	//	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	//	const C_csp_solver_sim_info &sim_info);
+	void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
+			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
+			double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
+
+	class C_mono_eq_transient_energy_bal : public C_monotonic_equation
+	{
+	private:
+		water_state mc_wp;
+
+		double m_h_in;		//[kJ/kg]
+		double m_P_in;		//[kPa]
+		double m_q_dot_abs;	//[kWt]
+		double m_m_dot;		//[kg/s]
+		double m_T_out_t_end_prev;	//[K]
+		double m_C_thermal;	//[kJ/K]
+		double m_step;		//[s]
+
+	public:
+		C_mono_eq_transient_energy_bal(double h_in /*kJ/kg*/, double P_in /*kPa*/,
+			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
+			double C_thermal /*kJ/K*/, double step /*s*/)
+		{
+			m_h_in = h_in; m_P_in = P_in; m_q_dot_abs = q_dot_abs; m_m_dot = m_dot;
+				m_T_out_t_end_prev = T_out_t_end_prev; m_C_thermal = C_thermal; m_step = step;
+		}
+
+		virtual int operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/);
+	};
 
 	class C_mono_eq_xb_loop_out : public C_monotonic_equation
 	{
