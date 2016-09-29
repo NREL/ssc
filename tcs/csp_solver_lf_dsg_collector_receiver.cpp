@@ -344,7 +344,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_q_loss.resize(m_nModTot);
 	m_q_abs.resize(m_nModTot);
 	m_T_ave.resize(m_nModTot, 1);
-	m_h_ave.resize(m_nModTot, 1);
 	m_h_in.resize(m_nModTot, 1);
 	m_h_out.resize(m_nModTot, 1);
 	m_x.resize(m_nModTot, 1);
@@ -354,7 +353,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_q_loss.assign(m_q_loss.size(),0.0);	//[kWt]
 	m_q_abs.assign(m_q_abs.size(), 0.0);	//[kWt] Thermal power absorbed by steam in each receiver
 	m_T_ave.fill(0.0);
-	m_h_ave.fill(0.0);
 	m_h_in.fill(0.0);
 	m_h_out.fill(0.0);
 	m_x.fill(0.0);
@@ -763,8 +761,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 				m_alpha_env, &eps_abs, m_AnnulusGas, m_AbsorberMaterial, m_EPSILON_4, m_EPSILON_5, m_L_col, &htfProps, m_A_cs, m_D_h, m_Flow_type);
 		}
 	}
-
-	m_T_htf_t_ave_last.resize(m_nModTot);
 
 	m_ncall = -1;
 
@@ -1353,8 +1349,10 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 			// Do a rough guess of the receiver enthlapy for the whole loop
 			double dh_guess = (h_sh_out_guess - h_b_in_guess) / (double)m_nModTot;
+			std::vector<double> h_ave;
+			h_ave.resize(m_nModTot, std::numeric_limits<double>::quiet_NaN());
 			for (int i = 0; i < m_nModTot; i++)
-				m_h_ave.at(i, 0) = h_b_in_guess + dh_guess*(double)(i + 1) - dh_guess / 2.0;
+				h_ave[i] = h_b_in_guess + dh_guess*(double)(i + 1) - dh_guess / 2.0;
 
 			double err = 10.0*tol;
 			int iter = 0;
@@ -1395,7 +1393,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					double P_loc = check_pressure.P_check(P_turb_in + dP_basis * (m_fP_hdr_h + (m_fP_sf_sh + m_fP_boil_to_sh + m_fP_sf_boil)*(1.0 - (double)i / (double)m_nModTot)));
 
 					// Get the temperature at each state point in the loop
-					water_PH(P_loc*100.0, m_h_ave.at(i, 0), &wp);
+					water_PH(P_loc*100.0, h_ave[i], &wp);
 					m_T_ave.at(i, 0) = wp.temp;
 
 					// Calculate the heat loss at each temperature
@@ -1466,8 +1464,8 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						// Update the average temperature for the heat loss calculation
 						water_PH(P_loc*100.0, h_aveg, &wp);
 						m_T_ave.at(i, 0) = wp.temp;
-						err_t = fabs((m_h_ave.at(i, 0) - h_aveg) / m_h_ave.at(i, 0));
-						m_h_ave.at(i, 0) = h_aveg;
+						err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
+						h_ave[i] = h_aveg;
 					}
 
 					// Test transient energy balance convergence
@@ -1475,7 +1473,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					// transient_energy_bal_numeric_int(m_h_in.at(i, 0), P_loc*100.0, m_q_abs[i], m_dot_guess, m_T_ave_prev[i], m_C_thermal, m_dt, h_out_comp);
 					
 					if (i < m_nModTot - 1)
-						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
+						h_ave[i + 1] = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
 				}   // End step through receivers in flow path
 
@@ -1605,8 +1603,10 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 
 			// Do a rough guess of the receiver enthalpy for the boiler
 			double dh_b_guess = (h_b_out_guess - h_b_in_guess) / (double)m_nModBoil;
+			std::vector<double> h_ave;
+			h_ave.resize(m_nModTot, std::numeric_limits<double>::quiet_NaN());
 			for (int i = 0; i < m_nModBoil; i++)
-				m_h_ave.at(i, 0) = h_b_in_guess + dh_b_guess*(double)(i + 1) - dh_b_guess / 2.0;
+				h_ave[i] = h_b_in_guess + dh_b_guess*(double)(i + 1) - dh_b_guess / 2.0;
 
 			double err = 10.0*tol;
 			int iter = 0;
@@ -1648,7 +1648,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					double P_loc = check_pressure.P_check(P_turb_in + dP_basis*(m_fP_sf_tot - m_fP_sf_boil*(1.0 - (double)i / (double)m_nModBoil)));
 
 					// Get the temperature at each state in the boiler
-					water_PH(P_loc*100.0, m_h_ave.at(i, 0), &wp);
+					water_PH(P_loc*100.0, h_ave[i], &wp);
 					m_T_ave.at(i, 0) = wp.temp;
 
 					gset = 0;
@@ -1720,13 +1720,13 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						// Update the average temperature for the heat loss calculation
 						water_PH(P_loc*100.0, h_aveg, &wp);
 						m_T_ave.at(i, 0) = wp.temp;
-						err_t = fabs((m_h_ave.at(i, 0) - h_aveg) / m_h_ave.at(i, 0));
-						m_h_ave.at(i, 0) = h_aveg;
+						err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
+						h_ave[i] = h_aveg;
 					}
 
 					// Predict the next outlet enthalpy
 					if (i < m_nModTot - 1)
-						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
+						h_ave[i+1] = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i, 0) - m_h_in.at(i, 0))*1.5);
 
 				}	// End step through boiler receiver modules
 
@@ -1841,7 +1841,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 				for (int ii = 0; ii < m_nModSH; ii++)
 				{
 					int i = ii + m_nModBoil;
-					m_h_ave.at(i, 0) = h_sh_in + dh_sh*(double)(ii + 1) - dh_sh / 2.0;
+					h_ave[i] = h_sh_in + dh_sh*(double)(ii + 1) - dh_sh / 2.0;
 				}
 
 				m_dot = m_dot_b*m_x_b_des;
@@ -1872,7 +1872,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						double P_loc = check_pressure.P_check(P_turb_in + dP_basis*(m_fP_hdr_h + m_fP_sf_sh*(1.0 - (double)ii / (double)m_nModSH)));
 
 						// Get the temperature at each state in the boiler
-						water_PH(P_loc*100.0, m_h_ave.at(i, 0), &wp);
+						water_PH(P_loc*100.0, h_ave[i], &wp);
 						m_T_ave.at(i, 0) = wp.temp;
 
 						// Calculate the heat loss at each temperature
@@ -1942,8 +1942,8 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 							// Update the average temperature for the heat loss calculation
 							water_PH(P_loc*100.0, h_aveg, &wp);
 							m_T_ave.at(i, 0) = wp.temp;
-							err_t = fabs((m_h_ave.at(i, 0) - h_aveg) / m_h_ave.at(i, 0));
-							m_h_ave.at(i, 0) = h_aveg;
+							err_t = fabs((h_ave[i] - h_aveg) / h_ave[i]);
+							h_ave[i] = h_aveg;
 						}
 
 					}	// Step through superheater receivers
