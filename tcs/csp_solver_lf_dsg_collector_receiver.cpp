@@ -49,13 +49,11 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_operating_mode_converged = -1;	//[-]
 	m_operating_mode = -1;				//[-]
 	m_ncall = -1;						//[-]
-	m_dt = std::numeric_limits<double>::quiet_NaN();	//[s]
 		// CSP Solver Temperature Tracking
 		// Sun Position
 	m_phi_t = std::numeric_limits<double>::quiet_NaN();		//[rad]
 	m_theta_L = std::numeric_limits<double>::quiet_NaN();	//[rad]
 		// Energy Balance
-	m_eta_opt_ave = std::numeric_limits<double>::quiet_NaN();				//[-]
 	m_Q_field_losses_total = std::numeric_limits<double>::quiet_NaN();		//[MJ]
 	m_q_rec_loop = std::numeric_limits<double>::quiet_NaN();				//[kWt]
 	m_q_inc_loop = std::numeric_limits<double>::quiet_NaN();				//[kWt]
@@ -931,9 +929,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 
 	SolarAz = (SolarAz - 180.0) * 0.0174533;			//[rad] Convert to TRNSYS convention, radians
 
-	double time;
-	time = sim_info.ms_ts.m_time;
-	m_dt = sim_info.ms_ts.m_step;
+	double time = sim_info.ms_ts.m_time;
+	double m_dt = sim_info.ms_ts.m_step;
 	double hour = (double)((int)(time / 3600.0) % 24);
 
 	// Optical calculations
@@ -1058,21 +1055,16 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 {
 	// If solar collectors are not absorbing any sunlight (night or 100% defocus), then set member data as necessary
-	
-	// DSG
-	m_q_inc.assign(m_q_inc.size(), 0.0);	//[kWt] calculate the incidence energy on each module
-	m_q_rec.assign(m_q_rec.size(), 0.0);	//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
 	m_eta_optical.fill(0.0);	//[-] Optical efficiency for each collector geometry
-	
-	// for each loop
-	m_eta_opt_ave = 0.0;		//[-] SYSTEM & LOOP weighted optical efficiency (uses m_eta_optical)
-	m_q_rec_loop = 0.0;			//[kWt] LOOP total thermal power on receiver after *optical* losses and *defocus*
-	m_q_inc_loop = 0.0;			//[kWt] LOOP total incident beam radiation
 	
 	m_ftrack = 0.0;
 
 	return;
 }
+
+
+
+
 
 void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/, 
 	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
@@ -1156,33 +1148,6 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence"));
 	}
 
-	// Now calculate outlet enthalpy assuming deltaT in thermal capacitance term is = 0
-		// But for now let's recalculate T_out_t_end to illustrate the process
-	//water_prop_error = water_PH(P_in, h_out_t_end_guess1, &wp);
-	//if(water_prop_error != 0)
-	//{
-	//	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PH error", water_prop_error));
-	//}
-	//double T_out_t_end_guess1 = wp.temp;		//[K]
-	//
-	//double h_out_t_end_calc1 = h_in + q_dot_abs/m_dot - (T_out_t_end_guess1-T_out_t_end_prev)*C_thermal/(step*m_dot);	//[kJ/kg]
-	//
-	//double diff_h_out_t_end1 = (h_out_t_end_guess1 - h_out_t_end_calc1) / h_in;	//[kJ/kg]
-	//
-	//
-	//// Now calculate outlet enthalpy assuming deltaT in thermal capacitance term is = 0
-	//// But for now let's recalculate T_out_t_end to illustrate the process
-	//water_prop_error = water_PH(P_in, h_out_t_end_guess2, &wp);
-	//if( water_prop_error != 0 )
-	//{
-	//	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PH error", water_prop_error));
-	//}
-	//double T_out_t_end_guess2 = wp.temp;		//[K]
-	//
-	//double h_out_t_end_calc2 = h_in + q_dot_abs / m_dot - (T_out_t_end_guess2 - T_out_t_end_prev)*C_thermal / (step*m_dot);	//[kJ/kg]
-	//
-	//double diff_h_out_t_end2 = (h_out_t_end_guess2 - h_out_t_end_calc2) / h_in;	//[kJ/kg]
-
 }
 
 int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/)
@@ -1227,9 +1192,8 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 
-	double time;
-	time = sim_info.ms_ts.m_time;
-	m_dt = sim_info.ms_ts.m_step;
+	double time = sim_info.ms_ts.m_time;
+	double m_dt = sim_info.ms_ts.m_step;
 	double hour = (double)((int)(time / 3600.0) % 24);
 
 	double T_sky = CSP::skytemp(T_db, T_dp, hour);
