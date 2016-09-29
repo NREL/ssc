@@ -318,40 +318,10 @@ public:
 		};
 	};
 
-	struct S_loop_energy_balance_inputs
-	{
-		const C_csp_weatherreader::S_outputs *ms_weather;
-		double m_T_htf_cold_in;		//[K]
-		double m_m_dot_htf_loop;		//[kg/s]
-		const C_csp_solver_sim_info *ms_sim_info;
-
-		S_loop_energy_balance_inputs()
-		{
-			m_T_htf_cold_in = m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
-			ms_weather = 0;
-			ms_sim_info = 0;
-		}
-	};
-
-	void reset_S_loop_energy_balance_inputs();
-
-	S_loop_energy_balance_inputs ms_loop_energy_balance_inputs;
-
-	// This method is designed to pass the timestep integrated HTF temperature to successive energy balance nodes
-	int loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
-		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-		const C_csp_solver_sim_info &sim_info);
-
-	int loop_energy_balance_T_t_int();
-	
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
 
 	void loop_optical_eta_off();
-
-	void update_last_temps();
-
-	void reset_last_temps();
 
 	void call(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
@@ -387,62 +357,6 @@ public:
 
 		virtual int operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/);
 	};
-
-	class C_mono_eq_xb_loop_out : public C_monotonic_equation
-	{
-	private:
-		C_csp_lf_dsg_collector_receiver *mpc_csp;
-
-	public:
-		C_mono_eq_xb_loop_out(C_csp_lf_dsg_collector_receiver *pc_csp)
-		{
-			mpc_csp = pc_csp;
-		}
-
-		virtual int operator()(double m_dot_htf_loop /*kg/s*/, double *xb_loop_out /*-*/);
-	};
-
-	void apply_control_defocus(double defocus /*-*/);
-	void apply_component_defocus(double defocus /*-*/);
-
-	class C_mono_eq_defocus : public C_monotonic_equation
-	{	// The solver chooses a defocus and sends it to the operator. The operator 
-		//    calculates a new m_q_SCA and then solves the loop_energy_balance *at max HTF mass flow rate* 
-		//    and returns T_htf_SCA_out. The solver finds the defocus resulting in the target HTF outlet temp
-	private:
-		C_csp_lf_dsg_collector_receiver *mpc_csp;
-
-	public:
-		C_mono_eq_defocus(C_csp_lf_dsg_collector_receiver *pc_csp)
-		{
-			mpc_csp = pc_csp;
-		}
-
-		virtual int operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/);
-	};
-
-	class C_mono_eq_freeze_prot_E_bal : public C_monotonic_equation
-	{	// The solver chooses a cold inlet temperature and sends it to the operator. The operator
-		//		call the loop energy balance at the recirculation mass flow rate
-		//		and returns the total field heat loss. The solver finds the T_cold_in such that E_fp_htf = E_losses
-	private:
-		C_csp_lf_dsg_collector_receiver *mpc_csp;
-
-	public:
-
-		double Q_htf_fp;	//[MJ]
-
-		C_mono_eq_freeze_prot_E_bal(C_csp_lf_dsg_collector_receiver *pc_csp)
-		{
-			mpc_csp = pc_csp;
-			Q_htf_fp = std::numeric_limits<double>::quiet_NaN();
-		}
-
-
-		virtual int operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/);
-	};
-
-
 
 };
 
