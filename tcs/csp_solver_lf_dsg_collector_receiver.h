@@ -76,10 +76,8 @@ private:
 	C_csp_solver_steam_state mc_sys_h_out;
 
 
-	std::vector<double> m_T_htf_t_ave_last;	//[K] Temperature of HTF temperature & material at end of previous timestep
-	vector<double> m_T_ave_prev;
-	util::matrix_t<double> m_T_ave; 
-	util::matrix_t<double> m_h_ave;
+	std::vector<double> m_T_ave_prev;
+	util::matrix_t<double> m_T_ave;
 	util::matrix_t<double> m_h_in;
 	util::matrix_t<double> m_h_out;
 	util::matrix_t<double> m_x;
