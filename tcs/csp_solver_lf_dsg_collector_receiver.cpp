@@ -51,10 +51,6 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_ncall = -1;						//[-]
 	m_dt = std::numeric_limits<double>::quiet_NaN();	//[s]
 		// CSP Solver Temperature Tracking
-	m_T_sys_h_t_end = std::numeric_limits<double>::quiet_NaN();				//[K]
-	m_T_sys_h_t_end_last = std::numeric_limits<double>::quiet_NaN();		//[K]
-	m_T_sys_h_t_end_converged = std::numeric_limits<double>::quiet_NaN();	//[K]
-	m_c_htf_ave_ts_ave_temp = std::numeric_limits<double>::quiet_NaN();		//[J/kg-K]
 		// Sun Position
 	m_phi_t = std::numeric_limits<double>::quiet_NaN();		//[rad]
 	m_theta_L = std::numeric_limits<double>::quiet_NaN();	//[rad]
@@ -768,20 +764,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		}
 	}
 
-	// Write Calculated Design Parameters
-	//value(PO_A_APER_TOT, m_Ap_tot);		//[m]
-
-	//resize CSP Solver Tracking Vectors
-	m_T_htf_out_t_end.resize(m_nModTot);
-	m_T_htf_t_ave.resize(m_nModTot);
-	m_xb_htf_out_t_end.resize(m_nModTot);
-	m_xb_htf_out_t_end.assign(m_xb_htf_out_t_end.size(), 0.0);
-
-	m_T_htf_t_ave_converged.resize(m_nModTot);
 	m_T_htf_t_ave_last.resize(m_nModTot);
-
-	// Set Initial Values
-	m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = m_T_field_ini;	//[K]
 
 	m_ncall = -1;
 
@@ -896,24 +879,7 @@ double C_csp_lf_dsg_collector_receiver::turb_pres_frac(double m_dot_nd, int fmod
 
 void C_csp_lf_dsg_collector_receiver::converged()
 {
-	// Check that, if trough is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
-	if (m_operating_mode == ON && m_T_sys_h_t_end < m_T_startup)
-	{
-		m_operating_mode = OFF;
-	}
-
-	m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = m_T_sys_h_t_end;		//[K]
-
 	m_ncall = -1;	//[-]
-
-	//if (m_operating_mode == C_csp_collector_receiver::STEADY_STATE)
-	//{
-	//	throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
-	//		"Linear Fresnel converged method"));
-	//}
-
-	m_operating_mode_converged = m_operating_mode;	//[-]
-
 	// Always reset the m_defocus control at the first call of a timestep
 	m_defocus = 1.0;		//[-]
 
@@ -922,16 +888,6 @@ void C_csp_lf_dsg_collector_receiver::converged()
 
 	for (int i = 0; i < m_nModTot; i++)
 		m_T_ave_prev[i] = m_T_ave.at(i, 0);
-
-	//m_t_sby_prev = m_t_sby;
-
-	//m_is_pb_on_prev = m_is_pb_on;
-
-	//m_T_sys_prev = min(m_T_field_in, m_T_field_out) + 273.15;	//[K] Last field outlet temperature
-
-	//check_pressure.report_and_reset();
-
-	//m_ncall = -1;	//[-]
 
 	return;
 }
