@@ -336,14 +336,6 @@ public:
 
 	S_loop_energy_balance_inputs ms_loop_energy_balance_inputs;
 
-	// Input weather, and inlet HTF conditions
-	// Calculates energy balances for headers (if applicable) and receivers
-	// This method uses TCS convention where the End Of Timestep HTF temperature
-	//    is passed to the next receiver
-	int loop_energy_balance_T_t_end(const C_csp_weatherreader::S_outputs &weather,
-		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
-		const C_csp_solver_sim_info &sim_info);
-
 	// This method is designed to pass the timestep integrated HTF temperature to successive energy balance nodes
 	int loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
