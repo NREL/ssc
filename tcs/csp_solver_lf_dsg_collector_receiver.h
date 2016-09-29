@@ -65,7 +65,6 @@ private:
 	int m_operating_mode_converged;
 	int m_operating_mode;
 	int m_ncall;
-	double m_dt;
 		// *********************************************
 		// CSP Solver Temperature Tracking
 		// Cold System/Field Headers Inlet
@@ -89,7 +88,6 @@ private:
 		// Optical calcs
 	double m_ftrack;		//[-] Fraction of timestep that solar field is tracking
 		// Energy Balance
-	double m_eta_opt_ave;		//[-] SYSTEM & LOOP weighted optical efficiency (uses m_eta_optical)
 	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
 	util::matrix_t<double> m_eta_optical;	//[-] Optical efficiency for each collector geometry
 	std::vector<double> m_q_rec;		//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
@@ -317,6 +315,10 @@ public:
 	void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
 			double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
+
+	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
+		double h_htf_cold_in /*kJ/kg*/, double m_dot_htf_loop /*kg/s*/,
+		const C_csp_solver_sim_info &sim_info);
 
 	class C_mono_eq_transient_energy_bal : public C_monotonic_equation
 	{
