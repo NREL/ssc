@@ -80,7 +80,7 @@ private:
 	util::matrix_t<double> m_T_ave;
 	util::matrix_t<double> m_h_in;
 	util::matrix_t<double> m_h_out;
-	util::matrix_t<double> m_x;
+	//util::matrix_t<double> m_x;
 
 	// ****************************************************************
 		// ****************************************************************

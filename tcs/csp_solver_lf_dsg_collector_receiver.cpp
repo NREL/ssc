@@ -346,7 +346,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_T_ave.resize(m_nModTot, 1);
 	m_h_in.resize(m_nModTot, 1);
 	m_h_out.resize(m_nModTot, 1);
-	m_x.resize(m_nModTot, 1);
 	m_q_rec.resize(m_nModTot);
 
 	m_q_inc.assign(m_q_inc.size(),0.0);		//[kWt]
@@ -355,7 +354,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_T_ave.fill(0.0);
 	m_h_in.fill(0.0);
 	m_h_out.fill(0.0);
-	m_x.fill(0.0);
 	m_q_rec.assign(m_q_rec.size(), 0.0);	//[kWt]
 
 	// Set any constants
@@ -492,7 +490,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			// Get the temperature and quality at each state in the boiler
 			water_PH(check_pressure.P_check(P_loc)*100.0, (h_b_in_des + dh_b_des*(double)(i + 1) - dh_b_des / 2.0), &wp);
 			m_T_ave.at(i, 0) = wp.temp;		//[K]
-			m_x.at(i, 0) = wp.qual;
+			//m_x.at(i, 0) = wp.qual;
 
 			// Calculate the heat loss at each temperature
 			if (m_HLCharType.at(0, 0) == 1)
@@ -571,7 +569,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			// Get the temperature/quality at each state in the loop
 			water_PH(check_pressure.P_check(P_loc)*100.0, (h_pb_out_des + dh_ot_des*(double)(i + 1) - dh_ot_des / 2.0), &wp);
 			m_T_ave.at(i, 0) = wp.temp;
-			m_x.at(i, 0) = wp.qual;
+			//m_x.at(i, 0) = wp.qual;
 
 			// Calculate the heat loss at each temperature
 			if (m_HLCharType.at(gset, 0) == 1)
