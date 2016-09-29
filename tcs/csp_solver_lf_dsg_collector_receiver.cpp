@@ -1615,39 +1615,38 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	double HrB = hour;
 
 	double MidTrack = std::numeric_limits<double>::quiet_NaN();
-	double ftrack = std::numeric_limits<double>::quiet_NaN();
 	// Solar field operates
 	if ((HrB > DepTime) && (HrA < StwTime))
 	{
 		// solar field deploys during time period
 		if (HrA < DepTime)
 		{
-			ftrack = (HrB - DepTime) / (m_dt / 3600.0);
-			MidTrack = HrB - ftrack * 0.5 * (m_dt / 3600.0);
+			m_ftrack = (HrB - DepTime) / (m_dt / 3600.0);
+			MidTrack = HrB - m_ftrack * 0.5 * (m_dt / 3600.0);
 		}
 		// Solar field stows during time period
 		else if (HrB > StwTime)
 		{
-			ftrack = (StwTime - HrA) / (m_dt / 3600.0);
-			MidTrack = HrA + ftrack * 0.5 * (m_dt / 3600.0);
+			m_ftrack = (StwTime - HrA) / (m_dt / 3600.0);
+			MidTrack = HrA + m_ftrack * 0.5 * (m_dt / 3600.0);
 		}
 		// solar field operates during entire period
 		else
 		{
-			ftrack = 1.0;
+			m_ftrack = 1.0;
 			MidTrack = HrA + 0.5 * (m_dt / 3600.0);
 		}
 		// solar field doesn't operate
 	}
 	else
 	{
-		ftrack = 0.0;
+		m_ftrack = 0.0;
 		MidTrack = HrA + 0.5 * (m_dt / 3600.0);
 	}
 
 	// Maximum wind speed value
 	if (V_wind >= m_V_wind_max)
-		ftrack = 0.0;
+		m_ftrack = 0.0;
 
 	double StdTime = MidTrack;
 	double SolarTime = StdTime + ((shift)* 180 / CSP::pi) / 15.0 + EOT / 60.0;
@@ -1690,7 +1689,7 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 				/*message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
 				return -1;*/
 			}
-			m_eta_optical[i] *= ftrack;
+			m_eta_optical[i] *= m_ftrack;
 		}
 	}
 	else
@@ -1698,14 +1697,6 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		m_eta_optical.fill(0.0);	//[-]
 		m_phi_t = CSP::pi / 2.;
 		m_theta_L = 0.0;
-	}
-
-	int gset = 0; // used to represent different collector geometry (i.e., boiler and superheater). but now it is one single geometry
-	for (int i = 0; i < m_nModTot; i++)
-	{
-		// Calculate the incident energy on each module
-		m_q_inc[i] = I_bn*m_A_aperture.at(0, 0) / 1000.0;		//[kWt] Incident beam radiation for each receiver in loop
-		m_q_inc_loop += m_q_inc[i];								//[kWt] LOOP total incident beam radiation
 	}
 
 }
@@ -1725,6 +1716,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 	m_q_rec_loop = 0.0;			//[kWt] LOOP total thermal power on receiver after *optical* losses and *defocus*
 	m_q_inc_loop = 0.0;			//[kWt] LOOP total incident beam radiation
 	
+	m_ftrack = 0.0;
+
 	return;
 }
 
@@ -2155,42 +2148,17 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	const C_csp_solver_sim_info &sim_info)
 {
 
-	//double time_t;
-	//time_t = sim_info.ms_ts.m_time;
-	//double field_control; // dummy parameter
- 	//field_control = 0;
-	//if (time_t == 8 * 3600)
-	//{
-	//	//loop_optical_eta(weather, sim_info);
-	//	//m_T_sys_c_t_end = T_htf_cold_in;
-	//	m_T_sys_h_t_end = mc_sys_h_out.m_temp + 273.15;
-	//	update_last_temps();
-	//	startup(weather,htf_state_in,cr_out_solver, sim_info);
-	//	//on(weather, htf_state_in, field_control, cr_out_solver, sim_info);
-	//	m_is_oncethru = true;
-	//}				
-
-	// Get optical performance (no defocus applied in this method)
-	// This returns m_q_SCA with NO defocus
-	//loop_optical_eta(weather, sim_info);
-
-	////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
 	// start optical function
-	//double dnifc = m_dnifc;					//[W/m2] Forecast DNI
 	double I_bn = weather.m_beam;						//[W/m2] Current DNI
 	double T_db = weather.m_tdry + 273.15;				//[K] Dry bulb temp, convert from C
 	double T_dp = weather.m_tdew + 273.15;				//[K] Dewpoint temp, convert from C
 	double P_amb = weather.m_pres*100.0;				//[Pa] Ambient pressure, convert from mbar
-	double V_wind = weather.m_wspd;					//[m/s] Ambient windspeed
-	//double m_dot_htf_ref = m_V_wind / 3600.0;	//[kg/s] Reference HTF flow rate at design conditions, convert from kg/hr
-	//double m_pb_demand = m_m_pb_demand / 3600.0;		//[kg/s] Demand HTF flow from the power block, convert from kg/hr
+	double V_wind = weather.m_wspd;						//[m/s] Ambient windspeed
 	double shift = weather.m_shift*0.0174533;			//[deg] Shift in longitude from local standard meridian
-	double SolarAz = weather.m_solazi;				//[deg] Solar azimuth angle
+	double SolarAz = weather.m_solazi;					//[deg] Solar azimuth angle
 	double SolarZen = weather.m_solzen*0.0174533;;		//Solar zenith angle [deg]
 	double T_pb_out = htf_state_in.m_temp + 273.15;		//[K] Fluid temperature from the power block, convert from C
-	//  int tou_period = (int) value( I_TOUPERIOD );		//[-] Time-of-use period
-	int tou_period = sim_info.m_tou - 1;	// control value between 1 & 9, have to change to 0-8 for array index
+	int tou_period = sim_info.m_tou - 1;				//[-] control value between 1 & 9, have to change to 0-8 for array index
 
 	SolarAz = (SolarAz - 180.0) * 0.0174533;			//[rad] Convert to TRNSYS convention, radians
 
@@ -2203,166 +2171,16 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	m_dt = sim_info.ms_ts.m_step;
 	double hour = (double)((int)(time / 3600.0) % 24);
 
-
-	/****** Read in stored variables every timestep*******
-	call getStorageVars(stored,nS,info)
-	do i=1,nModTot
-	T_ave0(i) = stored(i)
-	enddo
-	defocus0 = stored(nModTot + 1)
-	t_sby0 = stored(nModTot + 2)
-	is_pb_on0 = .false.
-	if(stored(nModTot+3)==1) is_pb_on0 = .true.
-	T_sys0 = stored(nModTot + 4)
-	!-------------------------------- */
-
-	//************************************************
-	// If Debugging, Set Stored Variables Here
-	//************************************************
-	//m_T_ave_prev.at(0, 0) = 537.00918998909697;
-	//m_T_ave_prev.at(1, 0) = 558.92918877110310;
-	//m_T_ave_prev.at(2, 0) = 575.21121116990764;
-	//m_T_ave_prev.at(3, 0) = 575.45685009545116;
-	//m_T_ave_prev.at(4, 0) = 575.70184190989198;
-	//m_T_ave_prev.at(5, 0) = 575.94619043247701;
-	//m_T_ave_prev.at(6, 0) = 576.18989944614509;
-	//m_T_ave_prev.at(7, 0) = 576.43297269800155;
-	//m_T_ave_prev.at(8, 0) = 576.67541389978396;
-	//m_T_ave_prev.at(9, 0) = 576.91722672832145;
-	//m_T_ave_prev.at(10, 0) = 577.15841482598455;
-	//m_T_ave_prev.at(11, 0) = 577.39898180112959;
-	//m_T_ave_prev.at(12, 0) = 587.39207667613994;
-	//m_T_ave_prev.at(13, 0) = 622.37421763974805;
-	//m_T_ave_prev.at(14, 0) = 666.84508325342688;
-	//m_T_ave_prev.at(15, 0) = 716.60770110443343;
-	//m_defocus_prev = 1.0;
-	//m_t_sby_prev = 2.0;
-	//m_is_pb_on_prev = false;
-	//m_T_sys_prev = 525.44991883913224;
-
-	//hour = 12.0; 
-	//*************************************************
-	//*************************************************
-
 	double T_sky = CSP::skytemp(T_db, T_dp, hour);
 
 	// Calculations for values once per timestep
 	if (m_ncall == 0)
 	{
-		// Optical calculations
-		// Time calculations
-		int day_of_year = (int)(time / 3600.0) / 24 + 1;					//[-] Day of year
-		// Duffie and Beckman 1.5.3b
-		double B = (int)(day_of_year - 1)*2.0*CSP::pi / 365.0;
-		// Eqn of time in minutes
-		double EOT = 229.2*(0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B*2.0) - 0.04089 * sin(B*2.0));
-		// Declination in radians (Duffie and Beckman 1.6.1)
-		double Dec = 23.45 * sin(360.0*(284.0 + (double)day_of_year) / 365.0*CSP::pi / 180.0) * CSP::pi / 180.0;
-		// Solar Noon and time in hours
-		double SolarNoon = 12.0 - ((shift)*180.0 / CSP::pi) / 15.0 - EOT / 60.0;
-
-		// Deploy & stow times in hours
-		// Calculations modified by MJW 11/30/2009 to correct bug
-		double theta_dep = max(m_theta_dep, 1.E-6);
-		double DepHr1 = cos(m_latitude) / tan(theta_dep);
-		double DepHr2 = -tan(Dec)*sin(m_latitude) / tan(theta_dep);
-		double DepHr3 = CSP::sign(tan(CSP::pi - theta_dep)) * acos((DepHr1*DepHr2 + sqrt(DepHr1*DepHr1 - DepHr2*DepHr2 + 1.0)) / (DepHr1 * DepHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
-		double DepTime = SolarNoon + DepHr3;
-
-		double theta_stow = max(m_theta_stow, 1.e-6);
-		double StwHr1 = cos(m_latitude) / tan(theta_stow);
-		double StwHr2 = -tan(Dec) * sin(m_latitude) / tan(theta_stow);
-		double StwHr3 = CSP::sign(tan(CSP::pi - theta_stow))*acos((StwHr1*StwHr2 + sqrt(StwHr1*StwHr1 - StwHr2*StwHr2 + 1.0)) / (StwHr1 * StwHr1 + 1.0)) * 180.0 / CSP::pi / 15.0;
-		double StwTime = SolarNoon + StwHr3;
-
-		// ftrack is the fraction of the time period that the field is tracking. MidTrack is time at midpoint of operation
-		//double HrA = hour - (step / 3600.0);		
-		double HrA = hour - (m_dt / 3600.0);
-		double HrB = hour;
-
-		double MidTrack = std::numeric_limits<double>::quiet_NaN();
-		// Solar field operates
-		if ((HrB > DepTime) && (HrA < StwTime))
-		{
-			// solar field deploys during time period
-			if (HrA < DepTime)
-			{
-				m_ftrack = (HrB - DepTime) / (m_dt / 3600.0);
-				MidTrack = HrB - m_ftrack * 0.5 * (m_dt / 3600.0);
-			}
-			// Solar field stows during time period
-			else if (HrB > StwTime)
-			{
-				m_ftrack = (StwTime - HrA) / (m_dt / 3600.0);
-				MidTrack = HrA + m_ftrack * 0.5 * (m_dt / 3600.0);
-			}
-			// solar field operates during entire period
-			else
-			{
-				m_ftrack = 1.0;
-				MidTrack = HrA + 0.5 * (m_dt / 3600.0);
-			}
-			// solar field doesn't operate
-		}
+		if(I_bn > 0.0)
+			loop_optical_eta(weather, sim_info);
 		else
 		{
-			m_ftrack = 0.0;
-			MidTrack = HrA + 0.5 * (m_dt / 3600.0);
-		}
-
-		// Maximum wind speed value
-		if (V_wind >= m_V_wind_max)
-			m_ftrack = 0.0;
-
-		double StdTime = MidTrack;
-		double SolarTime = StdTime + ((shift)* 180 / CSP::pi) / 15.0 + EOT / 60.0;
-		// hour angle (arc of sun) in radians
-		double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
-		// B. Stine equation for Solar Altitude angle in radians
-		double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
-		SolarZen = CSP::pi / 2 - SolarAlt;
-
-		if (SolarZen < CSP::pi / 2.0)
-		{
-			//Convert the solar angles to collector incidence angles
-			CSP::theta_trans(SolarAz, SolarZen, m_ColAz, m_phi_t, m_theta_L);
-
-			for (int i = 0; i < m_n_rows_matrix; i++)
-			{
-				double Iam_T, Iam_L;
-				switch ((int)m_OptCharType.at(i, 0))
-				{
-				case 1:		//sun position
-					//user provides an optical table as a function of solar position
-					//m_eta_optical.at(i,0) = m_eta_opt_fixed.at(i,0)*max( b_optical_table.interpolate(SolarAz, min(SolarZen, CSP::pi/2.)), 0.0);
-					m_eta_optical[i] = m_eta_opt_fixed.at(i, 0)*max(optical_tables.interpolate(SolarAz, min(SolarZen, CSP::pi / 2.0), i), 0.0);
-					break;
-				case 2:		//incidence angle table
-					//user provides an optical table as a function of collector incidence angles
-					//m_eta_optical.at(i,0) = m_eta_opt_fixed.at(i,0)*max( b_optical_table.interpolate(phi_t, max(theta_L, 0.0)), 0.0);
-					m_eta_optical[i] = m_eta_opt_fixed.at(i, 0)*max(optical_tables.interpolate(m_phi_t, max(m_theta_L, 0.0), i), 0.0);
-					break;
-				case 3:		//incidence angle modifier polys
-					//Otherwise, calculate the collector incidence angles for the IAM equations
-					Iam_T = m_IAM_T.at(i, 0) + m_IAM_T.at(i, 1)*m_phi_t + m_IAM_T.at(i, 2)*pow(m_phi_t, 2) + m_IAM_T.at(i, 3)*pow(m_phi_t, 3) + m_IAM_T.at(i, 4)*pow(m_phi_t, 4);
-					Iam_L = m_IAM_L.at(i, 0) + m_IAM_L.at(i, 1)*m_phi_t + m_IAM_L.at(i, 2)*pow(m_phi_t, 2) + m_IAM_L.at(i, 3)*pow(m_phi_t, 3) + m_IAM_L.at(i, 4)*pow(m_phi_t, 4);
-					m_eta_optical[i] = m_eta_opt_fixed.at(i, 0) * Iam_T * Iam_L;
-					break;
-				default:
-					//error
-					std::string err_msg = util::format("No corresponding optical model. Error in solar angle calculation.");
-					throw(C_csp_exception(err_msg, "LF DSG call()"));
-					/*message(TCS_ERROR, "No corresponding optical model. Error in solar angle calculation.");
-					return -1;*/
-				}
-				m_eta_optical[i] *= m_ftrack;
-			}
-		}
-		else
-		{
-			m_eta_optical.fill(0.0);
-			m_phi_t = CSP::pi / 2.;
-			m_theta_L = 0.0;
+			loop_optical_eta_off();
 		}
 
 		// Set initial defocus

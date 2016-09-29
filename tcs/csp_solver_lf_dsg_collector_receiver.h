@@ -101,6 +101,8 @@ private:
 		// Sun Position
 	double m_phi_t;
 	double m_theta_L;
+		// Optical calcs
+	double m_ftrack;		//[-] Fraction of timestep that solar field is tracking
 		// Energy Balance
 	double m_eta_opt_ave;		//[-] SYSTEM & LOOP weighted optical efficiency (uses m_eta_optical)
 	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
@@ -116,7 +118,6 @@ private:
 	// *********************************************
 	// Required for backwards compatability with TCS - call & init & converged only!
 	// *********************************************
-	double m_ftrack;		//[-]
 	double m_defocus_prev;	//[-]
 	double m_t_sby_prev;	//[-]
 	double m_t_sby;			//[-]
