@@ -1939,7 +1939,7 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		{
 			iter_t++;
 			// Calculate the average enthalpy value in the collector module
-			m_h_out.at(i,0) = (m_h_in.at(i, 0) + m_q_abs[i] / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
+			m_h_out.at(i,0) = (m_h_in.at(i, 0) + m_q_abs[i] / m_dot_htf_loop - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_htf_loop));
 			// Update guesses for h_ave and T_ave
 			double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 			// Update the average temperature for the heat loss calculation
@@ -2446,7 +2446,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i,0) + m_q_abs[i]/m_dot_guess - (m_T_ave.at(i,0)-m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_guess));	//[kJ/kg]
 						// Update guesses for h_ave and T_ave
 						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
@@ -2695,7 +2695,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 					{
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
-						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
+						m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot_b_guess - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_b_guess));
 						// Update guesses for h_ave and T_ave
 						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
@@ -2917,7 +2917,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						while (err_t > tol_t && iter_t < 50)
 						{
 							// Calculate the average enthalpy value in the collector module
-							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal / m_dt);
+							m_h_out.at(i,0) = check_h.check(m_h_in.at(i, 0) + m_q_abs[i] / m_dot - (m_T_ave.at(i, 0) - m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot));
 							// Update guesses for h_ave and T_ave
 							double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 							// Update the average temperature for the heat loss calculation
