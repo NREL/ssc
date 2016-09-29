@@ -2020,7 +2020,133 @@ int C_csp_lf_dsg_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
+void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/, 
+	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
+	double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end)
+{
+	// Get boiling temperature at operating pressure
+	int water_prop_error = water_PQ(P_in, 0.0, &wp);
+	if(water_prop_error != 0)
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PQ error", water_prop_error));
+	}
+	double T_boiling = wp.temp;		//[K]
 
+	// Guess1: outlet enthalpy is same as initial condition
+		// Essentially this guess value represents scenario where thermal capacitance dominates
+		// and outlet temperature at end of timestep is equal to outlet temperature at beginning of timestep
+	double h_out_t_end_guess1 = std::numeric_limits<double>::quiet_NaN();
+	if( fabs(T_boiling-T_out_t_end_prev) < 0.1 )
+	{
+		// If boiling temperature is close to previous, just use that
+		h_out_t_end_guess1 = wp.enth;		//[kJ/kg]
+	}
+	else
+	{
+		// Else use water_TP to calculate enthalpy initial condition
+		water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
+		if(water_prop_error != 0)
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_TP error", water_prop_error));
+		}
+		h_out_t_end_guess1 = wp.enth;		//[kJ/kg]
+	}
+
+	// Guess2: outlet enthalpy is from a steady state calculation
+	double h_out_t_end_guess2 = h_in + q_dot_abs/m_dot;		//[kJ/kg]
+
+
+	// Check that this guess is not too close to Guess1
+	double diff_guess = (h_out_t_end_guess2 - h_out_t_end_guess1) / h_out_t_end_guess1;
+	if( abs(diff_guess) < 0.01 )
+	{
+		if(diff_guess > 0.0)
+		{
+			h_out_t_end_guess2 = 1.05*h_out_t_end_guess1;
+		}
+		else
+		{
+			h_out_t_end_guess2 = 0.95*h_out_t_end_guess1;
+		}
+	}
+
+	// Apply 1 var solver to find the mass flow rate that achieves the target outlet temperature
+	C_mono_eq_transient_energy_bal c_transient_energy_bal(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev, C_thermal, step);
+	C_monotonic_eq_solver c_h_out_t_end_solver(c_transient_energy_bal);
+
+	double h_out_t_end_lower = check_h.check(0.0);
+	double h_out_t_end_upper = check_h.check(1.E10);
+
+	// Set solver settings
+		// Absolute error
+	c_h_out_t_end_solver.settings(0.001, 30, h_out_t_end_lower, h_out_t_end_upper, false);
+
+	int iter_solved = -1;
+	double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+	int h_out_t_end_code = 0;
+
+	h_out_t_end = std::numeric_limits<double>::quiet_NaN();
+
+	try
+	{
+		h_out_t_end_code = c_h_out_t_end_solver.solve(h_out_t_end_guess1, h_out_t_end_guess2, 0.0, h_out_t_end, tol_solved, iter_solved);
+	}
+	catch( C_csp_exception & csp_excpet )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed"));
+	}
+
+	if( h_out_t_end_code != C_monotonic_eq_solver::CONVERGED )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence"));
+	}
+
+	// Now calculate outlet enthalpy assuming deltaT in thermal capacitance term is = 0
+		// But for now let's recalculate T_out_t_end to illustrate the process
+	//water_prop_error = water_PH(P_in, h_out_t_end_guess1, &wp);
+	//if(water_prop_error != 0)
+	//{
+	//	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PH error", water_prop_error));
+	//}
+	//double T_out_t_end_guess1 = wp.temp;		//[K]
+	//
+	//double h_out_t_end_calc1 = h_in + q_dot_abs/m_dot - (T_out_t_end_guess1-T_out_t_end_prev)*C_thermal/(step*m_dot);	//[kJ/kg]
+	//
+	//double diff_h_out_t_end1 = (h_out_t_end_guess1 - h_out_t_end_calc1) / h_in;	//[kJ/kg]
+	//
+	//
+	//// Now calculate outlet enthalpy assuming deltaT in thermal capacitance term is = 0
+	//// But for now let's recalculate T_out_t_end to illustrate the process
+	//water_prop_error = water_PH(P_in, h_out_t_end_guess2, &wp);
+	//if( water_prop_error != 0 )
+	//{
+	//	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PH error", water_prop_error));
+	//}
+	//double T_out_t_end_guess2 = wp.temp;		//[K]
+	//
+	//double h_out_t_end_calc2 = h_in + q_dot_abs / m_dot - (T_out_t_end_guess2 - T_out_t_end_prev)*C_thermal / (step*m_dot);	//[kJ/kg]
+	//
+	//double diff_h_out_t_end2 = (h_out_t_end_guess2 - h_out_t_end_calc2) / h_in;	//[kJ/kg]
+
+}
+
+int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/)
+{
+	int water_prop_error = water_PH(m_P_in, h_out_t_end, &mc_wp);
+	if( water_prop_error != 0 )
+	{
+		*diff_h_out_t_end = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+	double T_out_t_end = mc_wp.temp;	//[K]
+
+	double h_out_t_end_calc = m_h_in + m_q_dot_abs/m_m_dot - (T_out_t_end-m_T_out_t_end_prev)*m_C_thermal/(m_step*m_m_dot);	//[kJ/kg]
+
+	*diff_h_out_t_end = (h_out_t_end_calc - h_out_t_end) / m_h_in;		//[-]
+
+	return 0;
+}
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
@@ -2447,6 +2573,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						iter_t++;
 						// Calculate the average enthalpy value in the collector module
 						m_h_out.at(i,0) = check_h.check(m_h_in.at(i,0) + m_q_abs[i]/m_dot_guess - (m_T_ave.at(i,0)-m_T_ave_prev[i])*m_C_thermal/(m_dt*m_dot_guess));	//[kJ/kg]
+						
 						// Update guesses for h_ave and T_ave
 						double h_aveg = (m_h_out.at(i,0) + m_h_in.at(i, 0)) / 2.0;
 						// Update the average temperature for the heat loss calculation
@@ -2455,6 +2582,11 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 						err_t = fabs((m_h_ave.at(i, 0) - h_aveg) / m_h_ave.at(i, 0));
 						m_h_ave.at(i, 0) = h_aveg;
 					}
+
+					// Test transient energy balance convergence
+					// double h_out_comp = std::numeric_limits<double>::quiet_NaN();
+					// transient_energy_bal_numeric_int(m_h_in.at(i, 0), P_loc*100.0, m_q_abs[i], m_dot_guess, m_T_ave_prev[i], m_C_thermal, m_dt, h_out_comp);
+					
 					if (i < m_nModTot - 1)
 						m_h_ave.at(i + 1, 0) = check_h.check(m_h_in.at(i, 0) + (m_h_out.at(i,0) - m_h_in.at(i, 0))*1.5);
 
