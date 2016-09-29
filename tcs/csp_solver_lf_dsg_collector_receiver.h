@@ -76,10 +76,6 @@ private:
 	C_csp_solver_steam_state mc_sys_h_out;
 
 
-	double m_T_sys_h_t_end;					//[K] Temperature (bulk) of hot runners & headers at end of current timestep
-	double m_T_sys_h_t_end_last;			//[K] Temperature (bulk) of hot runners & headers at end of previous timestep
-	double m_T_sys_h_t_end_converged;
-	
 	std::vector<double> m_T_htf_t_ave_last;	//[K] Temperature of HTF temperature & material at end of previous timestep
 	vector<double> m_T_ave_prev;
 	util::matrix_t<double> m_T_ave; 
@@ -87,16 +83,8 @@ private:
 	util::matrix_t<double> m_h_in;
 	util::matrix_t<double> m_h_out;
 	util::matrix_t<double> m_x;
-	
-	// DSG system-specific -start
-	std::vector<double> m_T_htf_out_t_end;	// end-of-timestep outlet HTF temperature of each SCA
-	std::vector<double> m_T_htf_t_ave;	// end-of-timestep average HTF temperature of each SCA
-	std::vector<double> m_xb_htf_out_t_end;	// end-of-timestep outlet HTF steam quality of each SCA
 
-	std::vector<double> m_T_htf_t_ave_converged;
-
-	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
-		// ****************************************************************
+	// ****************************************************************
 		// ****************************************************************
 		// Sun Position
 	double m_phi_t;
