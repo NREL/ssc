@@ -542,6 +542,10 @@ public:
 		double m_T_htf_hot_ref;		//[C]
 		double m_m_dot_design;		//[kg/hr]
 
+		// The following may not be set for sensible HTF systems
+		double m_P_hot_des;			//[kPa]
+		double m_x_hot_des;			//[-]
+
 		S_solved_params()
 		{
 			m_W_dot_des = m_eta_des = m_q_dot_des = m_q_startup = m_max_frac = m_cutoff_frac = 

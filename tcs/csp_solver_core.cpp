@@ -230,6 +230,8 @@ void C_csp_solver::init()
 	m_cycle_sb_frac_des = pc_solved_params.m_sb_frac;					//[-]
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
+	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
+	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
 		// TES
 	mc_tes.init();
 		// TOU
@@ -1993,27 +1995,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_out_solver,
 					mc_kernel.mc_sim_info);
 
-				if( !mc_collector_receiver.m_is_sensible_htf )
-				{
-					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
-					throw(C_csp_exception(err_msg, "CSP Solver"));
-				}
-
 				// Power Cycle: OFF
-				// HTF State
+					// HTF State
 				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
 				mc_pc_htf_state_in.m_pres = m_cycle_P_hot_des;		//[kPa]
 				mc_pc_htf_state_in.m_qual = m_cycle_x_hot_des;		//[-]
 				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
-				// Inputs
+					// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
-				//mc_pc_inputs.m_tou = tou_timestep;
-				// Performance Call
+					// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( m_is_tes )
