@@ -49,12 +49,12 @@ private:
 	double m_Ap_tot;			//[m2] Total solar field aperture area	
 		// Energy and mass balance calcs
 	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
-	double m_m_dot_min;			//[kg/s]
-	double m_m_dot_max;			//[kg/s]
-	double m_m_dot_b_max;		//[kg/s]
-	double m_m_dot_b_des;		//[kg/s]
-	double m_m_dot_pb_des;		//[kg/s]
-	double m_m_dot_des;			//[kg/s]
+	double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
+	double m_m_dot_max;			//[kg/s] LOOP max mass flow rate - min of field & PC bases
+	double m_m_dot_b_max;		//[kg/s] LOOP max mass flow rate through boiler (m_m_dot_max/x_b_des)
+	double m_m_dot_b_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
+	double m_m_dot_pb_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
+	double m_m_dot_des;			//[kg/s] SYSTEM design point mass flow rate - field design basis
 	double m_m_dot_tot;			//[kg/s] SYSTEM mass flow rate off-design
 	// *******************************************
 	// *******************************************
@@ -68,18 +68,28 @@ private:
 		// *********************************************
 		// CSP Solver Temperature Tracking
 		// Cold System/Field Headers Inlet
-	C_csp_solver_steam_state mc_sys_c_in;
+	C_csp_solver_steam_state mc_sys_cold_in_t_int;		// Time-integrated inlet condition to cold system/header/field
+	C_csp_solver_steam_state mc_sys_cold_out_t_end;		// End-of-timestep outlet condition from cold system/header/field
+	C_csp_solver_steam_state mc_sys_cold_out_t_int;		// Time-integrated outlet condition from cold system/header/field
+	
+	std::vector<C_csp_solver_steam_state> mc_sca_in_t_int;     // Time-integrated inlet condition to each SCA in loop
+	std::vector<C_csp_solver_steam_state> mc_sca_out_t_end;	   // End-of-timestep outlet condition from each SCA in loop
+	std::vector<C_csp_solver_steam_state> mc_sca_out_t_int;	   // Time-integrated outlet condition from each SCA in loop
+	
+	C_csp_solver_steam_state mc_sys_hot_in_t_int;		// Time-integrated inlet condition to hot system/header/field
+	C_csp_solver_steam_state mc_sys_hot_out_t_end;		// End-of-timestep outlet condition hot cold system/header/field
+	C_csp_solver_steam_state mc_sys_hot_out_t_int;		// Time-integrated outlet condition hot cold system/header/field
 
-
+		// *********************************************
+		// TCS Shell Stuff State-Point Tracking
 		// Hot System/Field Headers Outlet
 	C_csp_solver_steam_state mc_sys_h_out;
-
-
 	std::vector<double> m_T_ave_prev;
 	util::matrix_t<double> m_T_ave;
 	util::matrix_t<double> m_h_in;
 	util::matrix_t<double> m_h_out;
-
+		// *********************************************
+		// *********************************************
 	// ****************************************************************
 		// ****************************************************************
 		// Sun Position
@@ -317,7 +327,7 @@ public:
 			double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
 
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
-		double h_htf_cold_in /*kJ/kg*/, double m_dot_htf_loop /*kg/s*/,
+		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
 
 	class C_mono_eq_transient_energy_bal : public C_monotonic_equation
