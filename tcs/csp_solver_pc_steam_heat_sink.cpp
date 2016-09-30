@@ -91,6 +91,9 @@ void C_pc_steam_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_param
 	solved_params.m_T_htf_hot_ref = ms_params.m_T_hot_des;	//[C]
 	solved_params.m_m_dot_design = m_dot_steam_des*3600.0;	//[kg/hr]
 
+	solved_params.m_P_hot_des = ms_params.m_P_hot_des;		//[kPa]
+	solved_params.m_x_hot_des = ms_params.m_x_hot_des;		//[-]
+
 }
 
 int C_pc_steam_heat_sink::get_operating_state()
