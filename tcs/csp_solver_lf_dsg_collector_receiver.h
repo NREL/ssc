@@ -30,6 +30,11 @@ private:
 		// DSG Model Constants
 	double m_P_max;				//[bar]
 	double m_fP_turb_min;		//[-] Minimum fractional operating pressure (of design) at the turbine inlet
+		// Water props limits
+	double m_wp_max_temp;		//[K]
+	double m_wp_min_temp;		//[K]
+	double m_wp_max_pres;		//[kPa]
+	double m_wp_min_pres;		//[kPa]
 	// *******************************************
 	// *******************************************
 

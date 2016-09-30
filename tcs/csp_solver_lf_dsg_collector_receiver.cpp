@@ -19,6 +19,11 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 		// DSG Model Constants
 	m_P_max = std::numeric_limits<double>::quiet_NaN();			//[bar]
 	m_fP_turb_min = std::numeric_limits<double>::quiet_NaN();	//[-]
+		// Water props limits
+	m_wp_max_temp = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_wp_min_temp = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_wp_max_pres = std::numeric_limits<double>::quiet_NaN();	//[kPa]
+	m_wp_min_pres = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	// *******************************************
 	// *******************************************
 
@@ -138,6 +143,14 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_P_max = 190.0;					//[bar]
 	m_T_startup = m_T_field_out_des;	//[K]
 		
+	// Get limits from water properties code
+	water_info wp_info;
+	get_water_info( &wp_info );
+	m_wp_max_temp = wp_info.temp_upper_limit;	//[K]
+	m_wp_min_temp = wp_info.temp_lower_limit;	//[K]
+	m_wp_max_pres = wp_info.pres_upper_limit;	//[kPa]
+	m_wp_min_pres = wp_info.pres_lower_limit;	//[kPa]
+
 	//[-] Outer glass envelope emissivities (Pyrex)
 	m_EPSILON_5 = m_EPSILON_4;	
 
@@ -1159,10 +1172,10 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 			//   and are instead using aperture area.
 			// Older version applied this loss after the loop calculations converged
 			//  So let's apply half (of aperture area) at cold inlet and half at hot outlet
-		double q_dot_loss_piping = m_Ap_tot/2.0 * m_Pipe_hl_coef / 1000.0 * (mc_sys_cold_out_t_int.m_temp - T_db);		//[kWt]
+		double q_dot_loss_cold_piping = m_Ap_tot/2.0 * m_Pipe_hl_coef / 1000.0 * (mc_sys_cold_out_t_int.m_temp - T_db);		//[kWt]
 		
 		mc_sca_in_t_int[0].m_pres = mc_sys_cold_out_t_int.m_pres;		//[bar]
-		mc_sca_in_t_int[0].m_enth = mc_sys_cold_out_t_int.m_enth - q_dot_loss_piping/(m_dot_loop*double(m_nLoops));		//[kJ/kg]
+		mc_sca_in_t_int[0].m_enth = mc_sys_cold_out_t_int.m_enth - q_dot_loss_cold_piping/(m_dot_loop*double(m_nLoops));		//[kJ/kg]
 
 		wp_code = water_PH(mc_sca_in_t_int[0].m_pres*100.0, mc_sca_in_t_int[0].m_enth, &wp);
 		if( wp_code != 0 )
@@ -1205,7 +1218,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		mc_sca_in_t_int[i].m_pres = 
 			P_field_out + dP_basis*(m_fP_hdr_h+(m_fP_sf_sh+m_fP_boil_to_sh+m_fP_sf_boil)*(1.0-(double)i/(double)m_nModTot));	//[bar]
 		
-		double h_ave_i = mc_sca_in_t_int[i].m_enth + dh_per_sca*(i+0.5);	//[kJ/kg]
+		double h_ave_i = mc_sca_in_t_int[i].m_enth + dh_per_sca*0.5;	//[kJ/kg]
 
 		// Get the temperature at each state point in the loop
 		wp_code = water_PH(mc_sca_in_t_int[i].m_pres*100.0, h_ave_i, &wp);
@@ -1243,21 +1256,55 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Geometry type not recognized!"));
 		}
 
-		double T_out_t_end_prev = m_T_ave_prev[i];
+		double T_out_t_end_prev = m_T_ave_prev[i];		//[K]
 
 		transient_energy_bal_numeric_int(mc_sca_in_t_int[i].m_enth, mc_sca_in_t_int[i].m_pres*100.0, m_q_abs[i], m_dot_loop,
 									T_out_t_end_prev, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth);
 		
-		//void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
-		//	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/,
-		//	double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
-	
-		double blahblahblah = 1.2345;
+		mc_sca_out_t_int[i].m_enth = mc_sca_out_t_end[i].m_enth;	//[kJ/kg]
+		mc_sca_out_t_end[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]
+
+		wp_code = water_PH(mc_sca_out_t_end[i].m_pres*100.0, mc_sca_out_t_end[i].m_enth, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int ith sca outlet",
+				"water_PH error", wp_code));
+		}
+		mc_sca_out_t_end[i].m_temp = mc_sca_out_t_int[i].m_temp = wp.temp;		//[K]
+		mc_sca_out_t_end[i].m_x = mc_sca_in_t_int[i].m_x = wp.qual;				//[-]
 	}
 
+	mc_sys_hot_in_t_int.m_enth = mc_sca_out_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
+	mc_sys_hot_in_t_int.m_pres = mc_sca_out_t_int[m_nModTot-1].m_pres;	//[bar]
+	mc_sys_hot_in_t_int.m_temp = mc_sca_out_t_int[m_nModTot-1].m_temp;	//[K]
+	mc_sys_hot_in_t_int.m_x = mc_sca_out_t_int[m_nModTot-1].m_x;		//[-]
 
+	if( m_is_model_headers )
+	{
+		double q_dot_loss_hot_piping = m_Ap_tot / 2.0 * m_Pipe_hl_coef / 1000.0 * (mc_sys_hot_in_t_int.m_temp - T_db);		//[kWt]
 
-
+		// Calculate outlet state
+		mc_sys_hot_out_t_int.m_pres = mc_sys_hot_out_t_end.m_pres = P_field_out;	//[bar]
+		mc_sys_hot_out_t_int.m_enth = mc_sys_hot_out_t_end.m_enth = mc_sys_hot_in_t_int.m_enth - q_dot_loss_hot_piping/(m_dot_loop*double(m_nLoops));
+		
+		wp_code = water_PH(mc_sys_hot_out_t_int.m_pres*100.0, mc_sys_hot_out_t_int.m_enth, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int hot header",
+				"water_PH error", wp_code));
+		}
+		mc_sys_hot_out_t_int.m_temp = mc_sys_hot_out_t_end.m_temp = wp.temp;	//[K]
+		mc_sys_hot_out_t_int.m_x = mc_sys_hot_out_t_end.m_x = wp.qual;			//[-]
+	}
+	else
+	{
+		// Set all system/header/field inlet and outlet states and mc_sca_in_t_int[0]
+		mc_sys_hot_out_t_int.m_enth = mc_sys_hot_out_t_end.m_enth = mc_sys_hot_in_t_int.m_enth;		//[kJ/kg]
+		mc_sys_hot_out_t_int.m_pres = mc_sys_hot_out_t_end.m_pres = mc_sys_hot_in_t_int.m_pres;		//[bar]
+		mc_sys_hot_out_t_int.m_temp = mc_sys_hot_out_t_end.m_temp = mc_sys_hot_in_t_int.m_temp;		//[K]
+		mc_sys_hot_out_t_int.m_x = mc_sys_hot_out_t_end.m_x = mc_sys_hot_in_t_int.m_x;				//[-]
+	}
+	
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
@@ -1317,8 +1364,23 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	C_mono_eq_transient_energy_bal c_transient_energy_bal(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev, C_thermal, step);
 	C_monotonic_eq_solver c_h_out_t_end_solver(c_transient_energy_bal);
 
-	double h_out_t_end_lower = check_h.check(0.0);
-	double h_out_t_end_upper = check_h.check(1.E10);
+	// Get minimum enthalpy at this pressure
+	water_prop_error = water_TP(m_wp_min_temp*1.01, P_in, &wp);
+	if(water_prop_error != 0)
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", 
+			"water_TP error trying to find min enthalpy", water_prop_error));
+	}
+	double h_out_t_end_lower = wp.enth;		//[kJ/kg]
+	
+	// Get maximum enthalpy at this pressure
+	water_prop_error = water_TP(m_wp_max_temp*0.99, P_in, &wp);
+	if(water_prop_error != 0)
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+			"water_TP error trying to find MAX enthalpy", water_prop_error));
+	}
+	double h_out_t_end_upper = wp.enth;		//[kJ/kg]
 
 	// Set solver settings
 		// Absolute error
