@@ -406,9 +406,9 @@ public:
 		int m_standby_control;		//[-]
 		double m_dP_sf_sh;			//[bar] Pressure drop across the solar field superheater
 		double m_W_dot_par_tot;		//[MWe] Total parasitic power losses	
-		double m_h_htf_hot;
-		double m_xb_htf_hot;
-		double m_P_htf_hot;
+		double m_h_htf_hot;			//[kJ/kg]
+		double m_xb_htf_hot;		//[-]
+		double m_P_htf_hot;			//[kPa]
 			
 		S_csp_cr_out_solver()
 		{
