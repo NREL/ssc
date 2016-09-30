@@ -1049,9 +1049,6 @@ void C_csp_lf_dsg_collector_receiver::converged()
 void C_csp_lf_dsg_collector_receiver::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-
-	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
 	return;
 }
 
