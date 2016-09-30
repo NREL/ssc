@@ -359,6 +359,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_h_out.resize(m_nModTot, 1);
 	m_q_rec.resize(m_nModTot);
 
+	mc_sca_out_t_end_converged.resize(m_nModTot);
+	mc_sca_out_t_end_last.resize(m_nModTot);
 	mc_sca_in_t_int.resize(m_nModTot);
 	mc_sca_out_t_end.resize(m_nModTot);
 	mc_sca_out_t_int.resize(m_nModTot);
@@ -896,6 +898,26 @@ void C_csp_lf_dsg_collector_receiver::converged()
 	for (int i = 0; i < m_nModTot; i++)
 		m_T_ave_prev[i] = m_T_ave.at(i, 0);
 
+
+	// Update '_last' temperatures from temperature solved in loop_energy_balance  
+	mc_sys_cold_out_t_end_last.m_enth = mc_sys_cold_out_t_end_converged.m_enth = mc_sys_cold_out_t_end.m_enth; //[kJ/kg]
+	mc_sys_cold_out_t_end_last.m_pres = mc_sys_cold_out_t_end_converged.m_pres = mc_sys_cold_out_t_end.m_pres; //[bar]
+	mc_sys_cold_out_t_end_last.m_temp = mc_sys_cold_out_t_end_converged.m_temp = mc_sys_cold_out_t_end.m_temp; //[K]
+	mc_sys_cold_out_t_end_last.m_x    = mc_sys_cold_out_t_end_converged.m_x	= mc_sys_cold_out_t_end.m_x;	   //[-]
+																				               
+	mc_sys_hot_out_t_end_last.m_enth = mc_sys_hot_out_t_end_converged.m_enth = mc_sys_hot_out_t_end.m_enth;		//[kJ/kg]
+	mc_sys_hot_out_t_end_last.m_pres = mc_sys_hot_out_t_end_converged.m_pres = mc_sys_hot_out_t_end.m_pres;     //[bar]
+	mc_sys_hot_out_t_end_last.m_temp = mc_sys_hot_out_t_end_converged.m_temp = mc_sys_hot_out_t_end.m_temp;     //[K]
+	mc_sys_hot_out_t_end_last.m_x    = mc_sys_hot_out_t_end_converged.m_x = mc_sys_hot_out_t_end.m_x;			//[-]
+																				               
+	for( int i = 0; i < m_nModTot; i++ )										               
+	{																			               
+		mc_sca_out_t_end_last[i].m_enth = mc_sca_out_t_end_converged[i].m_enth = mc_sca_out_t_end[i].m_enth;	//[kJ/kg]
+		mc_sca_out_t_end_last[i].m_pres = mc_sca_out_t_end_converged[i].m_pres = mc_sca_out_t_end[i].m_pres;    //[bar]
+		mc_sca_out_t_end_last[i].m_temp = mc_sca_out_t_end_converged[i].m_temp = mc_sca_out_t_end[i].m_temp;    //[K]
+		mc_sca_out_t_end_last[i].m_x    = mc_sca_out_t_end_converged[i].m_x = mc_sca_out_t_end[i].m_x;		    //[-]
+	}
+
 	return;
 }
 
@@ -1079,6 +1101,53 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 	return;
 }
 
+void C_csp_lf_dsg_collector_receiver::update_last_temps()
+{
+	// Update '_last' temperatures from temperature solved in loop_energy_balance
+	mc_sys_cold_out_t_end_last.m_enth = mc_sys_cold_out_t_end.m_enth;	//[kJ/kg]
+	mc_sys_cold_out_t_end_last.m_pres = mc_sys_cold_out_t_end.m_pres;	//[bar]
+	mc_sys_cold_out_t_end_last.m_temp = mc_sys_cold_out_t_end.m_temp;	//[K]
+	mc_sys_cold_out_t_end_last.m_x = mc_sys_cold_out_t_end.m_x;			//[-]
+
+	mc_sys_hot_out_t_end_last.m_enth = mc_sys_hot_out_t_end.m_enth;		//[kJ/kg]
+	mc_sys_hot_out_t_end_last.m_pres = mc_sys_hot_out_t_end.m_pres;		//[bar]
+	mc_sys_hot_out_t_end_last.m_temp = mc_sys_hot_out_t_end.m_temp;		//[K]
+	mc_sys_hot_out_t_end_last.m_x = mc_sys_hot_out_t_end.m_x;			//[-]
+
+	for(int i = 0; i < m_nModTot; i++)
+	{
+		mc_sca_out_t_end_last[i].m_enth = mc_sca_out_t_end[i].m_enth;	//[kJ/kg]
+		mc_sca_out_t_end_last[i].m_pres = mc_sca_out_t_end[i].m_pres;	//[bar]
+		mc_sca_out_t_end_last[i].m_temp = mc_sca_out_t_end[i].m_temp;	//[K]
+		mc_sca_out_t_end_last[i].m_x = mc_sca_out_t_end[i].m_x;			//[-]
+	}
+	
+	return;
+}
+
+void C_csp_lf_dsg_collector_receiver::reset_last_temps()
+{
+	// Update '_last' temperatures from temperature solved in loop_energy_balance
+	mc_sys_cold_out_t_end_last.m_enth = mc_sys_cold_out_t_end_converged.m_enth;	//[kJ/kg]
+	mc_sys_cold_out_t_end_last.m_pres = mc_sys_cold_out_t_end_converged.m_pres;	//[bar]
+	mc_sys_cold_out_t_end_last.m_temp = mc_sys_cold_out_t_end_converged.m_temp;	//[K]
+	mc_sys_cold_out_t_end_last.m_x = mc_sys_cold_out_t_end_converged.m_x;		//[-]
+
+	mc_sys_hot_out_t_end_last.m_enth = mc_sys_hot_out_t_end_converged.m_enth;	//[kJ/kg]
+	mc_sys_hot_out_t_end_last.m_pres = mc_sys_hot_out_t_end_converged.m_pres;	//[bar]
+	mc_sys_hot_out_t_end_last.m_temp = mc_sys_hot_out_t_end_converged.m_temp;	//[K]
+	mc_sys_hot_out_t_end_last.m_x = mc_sys_hot_out_t_end_converged.m_x;			//[-]
+
+	for( int i = 0; i < m_nModTot; i++ )
+	{
+		mc_sca_out_t_end_last[i].m_enth = mc_sca_out_t_end_converged[i].m_enth;	//[kJ/kg]
+		mc_sca_out_t_end_last[i].m_pres = mc_sca_out_t_end_converged[i].m_pres;	//[bar]
+		mc_sca_out_t_end_last[i].m_temp = mc_sca_out_t_end_converged[i].m_temp;	//[K]
+		mc_sca_out_t_end_last[i].m_x = mc_sca_out_t_end_converged[i].m_x;		//[-]
+	}
+
+	return;
+}
 
 int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 	double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,
@@ -1256,10 +1325,10 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Geometry type not recognized!"));
 		}
 
-		double T_out_t_end_prev = m_T_ave_prev[i];		//[K]
+		mc_sca_out_t_end_last[i].m_temp = m_T_ave_prev[i];		//[K]
 
 		transient_energy_bal_numeric_int(mc_sca_in_t_int[i].m_enth, mc_sca_in_t_int[i].m_pres*100.0, m_q_abs[i], m_dot_loop,
-									T_out_t_end_prev, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth);
+					mc_sca_out_t_end_last[i].m_temp, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth);
 		
 		mc_sca_out_t_int[i].m_enth = mc_sca_out_t_end[i].m_enth;	//[kJ/kg]
 		mc_sca_out_t_end[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]

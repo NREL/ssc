@@ -72,7 +72,17 @@ private:
 	int m_ncall;
 		// *********************************************
 		// CSP Solver Temperature Tracking
-		// Cold System/Field Headers Inlet
+		// *********************************************
+			// Temperatures from the most recent converged() operation
+	C_csp_solver_steam_state mc_sys_cold_out_t_end_converged;			// End-of-previously-converged-timestep outlet condition from cold system/header/field
+	std::vector<C_csp_solver_steam_state> mc_sca_out_t_end_converged;	// End-of-previously-converged-timestep outlet condition from each SCA in loop
+	C_csp_solver_steam_state mc_sys_hot_out_t_end_converged;			// End-of-previously-converged-timestep outlet condition hot cold system/header/field
+			// Temperature from the most recent timestep (in the event that a method solves multiple, shorter timesteps
+	C_csp_solver_steam_state mc_sys_cold_out_t_end_last;			// End-of-previous-timestep outlet condition from cold system/header/field
+	std::vector<C_csp_solver_steam_state> mc_sca_out_t_end_last;	// End-of-previous-timestep outlet condition from each SCA in loop
+	C_csp_solver_steam_state mc_sys_hot_out_t_end_last;				// End-of-previous-timestep outlet condition hot cold system/header/field
+
+			// Latest temperature solved in loop_energy_balance
 	C_csp_solver_steam_state mc_sys_cold_in_t_int;		// Time-integrated inlet condition to cold system/header/field
 	C_csp_solver_steam_state mc_sys_cold_out_t_end;		// End-of-timestep outlet condition from cold system/header/field
 	C_csp_solver_steam_state mc_sys_cold_out_t_int;		// Time-integrated outlet condition from cold system/header/field
@@ -334,6 +344,10 @@ public:
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,
 		const C_csp_solver_sim_info &sim_info);
+
+	void update_last_temps();
+
+	void reset_last_temps();
 
 	class C_mono_eq_transient_energy_bal : public C_monotonic_equation
 	{
