@@ -405,7 +405,6 @@ public:
 		// 07/08/2016, GZ: add new variables for DSG LF 
 		int m_standby_control;		//[-]
 		double m_dP_sf_sh;			//[bar] Pressure drop across the solar field superheater
-		double m_W_dot_par_tot;		//[MWe] Total parasitic power losses	
 		double m_h_htf_hot;			//[kJ/kg]
 		double m_xb_htf_hot;		//[-]
 		double m_P_htf_hot;			//[kPa]
@@ -414,8 +413,7 @@ public:
 		{
 			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump =
 				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total =
-				m_dP_sf_sh = m_W_dot_par_tot =
-				m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
+				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
 
 			m_standby_control = -1;
 		}

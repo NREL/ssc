@@ -260,16 +260,12 @@ public:
 	virtual void init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
-	virtual bool init_fieldgeom();
-
 	virtual int get_operating_state();
 
 	virtual double get_startup_time();
 	virtual double get_startup_energy(double step /*sec*/); //MWh
 	virtual double get_pumping_parasitic_coef();  //MWe/MWt
 	virtual double get_min_power_delivery();    //MWt
-
-	virtual void get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params);
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,

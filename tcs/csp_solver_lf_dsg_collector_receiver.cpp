@@ -792,20 +792,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 } // init
 
-
-bool C_csp_lf_dsg_collector_receiver::init_fieldgeom()
-{
-
-	/*
-	Call this method once when call() is first invoked. The calculations require location information that
-	is provided by the weatherreader class and not set until after init() and before the first call().
-	*/
-	//Calculate the actual length of the SCA's based on the aperture length and the collectors per SCA
-
-	return true;
-}
-
-
 int C_csp_lf_dsg_collector_receiver::get_operating_state()
 {
 	return m_operating_mode_converged;
@@ -814,24 +800,31 @@ int C_csp_lf_dsg_collector_receiver::get_operating_state()
 
 double C_csp_lf_dsg_collector_receiver::get_startup_time()
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_csp_lf_dsg_collector_receiver::get_startup_energy(double m_dt /*sec*/)
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_csp_lf_dsg_collector_receiver::get_pumping_parasitic_coef()
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_csp_lf_dsg_collector_receiver::get_min_power_delivery()
 {
-	return std::numeric_limits<double>::quiet_NaN();
-}
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
-void C_csp_lf_dsg_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
-{
-	return;
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -839,6 +832,101 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Always reset last temps
+	reset_last_temps();
+
+	// Get optical properties
+		// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
+	loop_optical_eta_off();
+
+	// Set mass flow rat to minimum allowable
+	double m_dot_loop = m_m_dot_min;	//[kg/s]
+
+	// Not varying mass flow rate, so calculate the field outlet pressure [bar]
+	double P_field_out = check_pressure.P_check(turb_pres_frac(m_dot_loop*(double)m_nLoops / m_m_dot_des, m_fossil_mode, 0.0, m_fP_turb_min)*m_P_turb_des);
+
+	// Set duration for recirculation timestep
+	if(m_step_recirc != m_step_recirc)
+		m_step_recirc = 10.0*60.0;		//[s]
+
+	// Calculate number of steps required given timestep from solver and recirculation step
+	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
+
+	// Define a copy of the sim_info structure
+	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
+	double step_local = sim_info.ms_ts.m_step / (double)n_steps_recirc;	//[s] Recirculation time step
+
+	// Create local sim_info structure to handle recirculation timesteps
+	C_csp_solver_sim_info sim_info_temp = sim_info;
+	sim_info_temp.ms_ts.m_step = step_local;		//[s]
+
+	double h_sys_hot_out_t_int_sum = 0.0;		//[kJ/kg]
+	double Q_fp_sum = 0.0;						//[MJ]
+	for(int i = 0; i < n_steps_recirc; i++)
+	{
+		sim_info_temp.ms_ts.m_time = time_start + step_local*(i+1);	//[s]
+
+		// Could iterate here for each step such that T_cold_in = mc_sys_hot_out_t_int.m_temp
+		//    This would significantly slow the code
+
+			// Set inlet temperature to previous timestep outlet temperature
+			double T_cold_in = mc_sys_cold_out_t_end_last.m_temp;	//[K]
+
+			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
+			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
+			if( wp_code != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off", "water_TP error", wp_code));
+			}
+			if( wp.qual > 0.0 )
+			{
+				throw(C_csp_exception("The inlet to the once thru loop off mode, pre-pump, is 2-phase, this is not good"));
+			}
+			double h_target = wp.enth;	//[kJ/kg]
+
+			// Call energy balance with updated timestep and temperature info
+			once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_target, sim_info_temp);
+
+		// This iteration would end here, and step forward
+
+		// Check if freeze protection is required
+		if( mc_sca_out_t_int[m_nModTot-1].m_temp < m_T_fp + 10.0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off::freeze_protection() is not complete"));
+		}
+
+		// Add current enthalpy to summation
+		h_sys_hot_out_t_int_sum += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
+	
+		update_last_temps();
+	}
+
+	// Find average enthalpy over recirculation timesteps
+	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / (double)n_steps_recirc;	//[kJ/kg]
+	int wp_code = water_PH(P_field_out*100.0, h_sys_hot_out_t_int_ts_ave, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off::recirculation", "water_PH error", wp_code));
+	}
+	double T_sys_hot_out_t_int_ts_ave = wp.temp;	//[K]
+
+	// Set outputs
+	cr_out_solver.m_q_startup = 0.0;								//[MWt-hr] Receiver thermal output used to warm up the receiver
+	cr_out_solver.m_time_required_su = sim_info.ms_ts.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
+	cr_out_solver.m_m_dot_salt_tot = m_dot_loop*3600.0*(double)m_nLoops;	//[kg/hr] SYSTEM mass flow rate
+	cr_out_solver.m_q_thermal = 0.0;								//[MWt] No available receiver thermal output
+	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;	//[C] Average timestep field outlet temperature
+
+	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;		//[MWt]
+	cr_out_solver.m_W_dot_col_tracking = 0.0;							//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = 0.0;								//[MWe]
+
+	cr_out_solver.m_standby_control = -1;
+	cr_out_solver.m_dP_sf_sh = 0.0;
+
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off(...) is not complete"));
+
+
 	return;
 }
 
@@ -848,6 +936,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return;
 }
 
@@ -857,6 +948,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return;
 }
 
@@ -865,6 +959,28 @@ void C_csp_lf_dsg_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	C_csp_collector_receiver::S_csp_cr_est_out &est_out,
 	const C_csp_solver_sim_info &sim_info)
 {
+	if( m_operating_mode == C_csp_collector_receiver::ON )
+	{
+		C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
+
+		on(weather, htf_state_in, 1.0, cr_out_solver, sim_info);
+
+		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;	//[MWt]
+		est_out.m_q_startup_avail = 0.0;		//[MWt]
+	}
+	else
+	{
+		if( weather.m_beam > 1.0 )
+		{
+			est_out.m_q_startup_avail = 1.0;	//[MWt] Recirculating, so going into startup isn't sig. different than OFF
+		}
+		else
+		{
+			est_out.m_q_startup_avail = 0.0;
+		}
+		est_out.m_q_dot_avail = 0.0;
+	}
+
 	return;
 }
 
@@ -932,16 +1048,25 @@ void C_csp_lf_dsg_collector_receiver::write_output_intervals(double report_time_
 
 double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_lf_dsg_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_lf_dsg_collector_receiver::get_collector_area()
 {
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+
+
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -2572,7 +2697,10 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	cr_out_solver.m_m_dot_salt_tot = m_dot_to_pb*3600.0;		//[kg/hr] not really "salt", but ok
 	cr_out_solver.m_standby_control = standby_control;			//[-]
 	cr_out_solver.m_dP_sf_sh = dP_sf_sh;						//[bar]
-	cr_out_solver.m_W_dot_par_tot = W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump;	//[MWe]
+	
+	cr_out_solver.m_W_dot_col_tracking = W_dot_col;				//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = W_dot_aux + W_dot_bop + W_dot_fixed + W_dot_pump;	//[MWe]
+	//cr_out_solver.m_W_dot_par_tot = W_dot_aux + W_dot_bop + W_dot_col + W_dot_fixed + W_dot_pump;	//[MWe]
 	//value(O_CYCLE_PL_CONTROL, cycle_pl_control);        //[none] Part-load control flag - used by Type224
 	//value(O_DP_TOT, dP_tot);							  //[bar] Total HTF pressure drop
 	//value(O_DP_HDR_C, dP_hdr_c);						  //[bar] Average cold header pressure drop

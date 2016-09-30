@@ -649,7 +649,8 @@ public:
 		value(O_M_DOT_TO_PB, dsg_out_solver.m_m_dot_salt_tot);			//[kg/hr] Flow rate delivered to the power block         
 		value(O_STANDBY_CONTROL, dsg_out_solver.m_standby_control);		//[none] Standby control flag - used by Type224
 		value(O_DP_SF_SH, dsg_out_solver.m_dP_sf_sh);					//[bar] Pressure drop across the solar field superheater
-		value(O_W_DOT_PAR_TOT, dsg_out_solver.m_W_dot_par_tot);			//[MW] Total parasitic power losses
+		value(O_W_DOT_PAR_TOT, dsg_out_solver.m_W_dot_col_tracking + 
+									dsg_out_solver.m_W_dot_htf_pump);	//[MW] Total parasitic power losses
 
 		value(O_DP_TOT, 0.0);							  //[bar] Total HTF pressure drop
 		value(O_DP_HDR_C, 0.0);						  //[bar] Average cold header pressure drop
