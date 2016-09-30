@@ -1068,7 +1068,7 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 
 
 int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
-	double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/,
+	double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// assumes the following calculations/metrics are up-to-date:
@@ -1077,6 +1077,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	// * P_field_out
 
 	double T_db = weather.m_tdry + 273.15;		//[K] Dry bulb temperature, convert from C
+	double V_wind = weather.m_wspd;				//[m/s] Ambient windspeed
 
 	// Basis pressure used to calculate off-design pressure drop through field
 	double dP_basis = m_dot_loop*(double)m_nLoops/m_m_dot_des*m_P_turb_des;	//[bar]
@@ -1141,7 +1142,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	{
 		// Apply header/runner transients here
 			// Current none...
-		mc_sys_cold_out_t_int.m_pres = mc_sys_cold_out_t_end.m_pres = P_field_out + dP_basis*(m_fP_sf_tot - m_fP_hdr_c);		//[bar];		//[bar]
+		mc_sys_cold_out_t_int.m_pres = mc_sys_cold_out_t_end.m_pres = P_field_out + dP_basis*(m_fP_sf_tot - m_fP_hdr_c);	//[bar]
 		mc_sys_cold_out_t_int.m_enth = mc_sys_cold_out_t_end.m_enth = mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
 		
 		wp_code = water_PH(mc_sys_cold_out_t_int.m_pres*100.0, mc_sys_cold_out_t_int.m_enth, &wp);
@@ -1182,10 +1183,77 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		mc_sca_in_t_int[0].m_x = mc_sys_cold_out_t_int.m_x = mc_sys_cold_out_t_end.m_x = mc_sys_cold_in_t_int.m_x;				//[-]
 	}
 
-	
-	
+	// Initialize thermal loss and total thermal power absorbed vectors
+	m_q_loss.assign(m_q_loss.size(), 0.0);		//[kWt] Thermal loss for each receiver in loop
+	m_q_abs.assign(m_q_abs.size(), 0.0);		//[kWt] Thermal power absorbed by steam in each receiver
 
+	// Guess the enthalpy at the next SCA
+	double dh_per_sca = (h_sca_out_target - mc_sca_in_t_int[0].m_enth)/(double)m_nModTot;	//[kJ/kg]
 
+	// Begin loop through SCAs
+	for(int i = 0; i < m_nModTot; i++)
+	{
+		// Update sca inlet enthalpy
+		if( i > 0 )
+			mc_sca_in_t_int[i] = mc_sca_out_t_int[i-1];		//[kJ/kg]
+		
+		// Which geometry set?
+		int geom_type = 0;
+		if( i >= m_nModBoil && m_is_multgeom )
+			geom_type = 1;
+
+		mc_sca_in_t_int[i].m_pres = 
+			P_field_out + dP_basis*(m_fP_hdr_h+(m_fP_sf_sh+m_fP_boil_to_sh+m_fP_sf_boil)*(1.0-(double)i/(double)m_nModTot));	//[bar]
+		
+		double h_ave_i = mc_sca_in_t_int[i].m_enth + dh_per_sca*(i+0.5);	//[kJ/kg]
+
+		// Get the temperature at each state point in the loop
+		wp_code = water_PH(mc_sca_in_t_int[i].m_pres*100.0, h_ave_i, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int ith sca inlet",
+				"water_PH error", wp_code));
+		}
+
+		double T_ave_i = wp.temp;	//[K]
+
+		// Estimate the heat loss for each receiver using the average temperature
+		if( m_HLCharType.at(geom_type, 0) == 1 )
+		{
+			// Estimate based on the user-specified polynomial heat loss adjustments
+			double dT_loc = T_ave_i - T_db;		//[K/C]
+			double c_hl = m_HL_dT.at(geom_type, 0) + m_HL_dT.at(geom_type, 1)*dT_loc + m_HL_dT.at(geom_type, 2)*pow(dT_loc, 2) + 
+							m_HL_dT.at(geom_type, 3)*pow(dT_loc, 3) + m_HL_dT.at(geom_type, 4)*pow(dT_loc, 4);	//[W/m] Effect from temperature difference between fluid and dry bulb
+			
+			if( m_HL_W.at(geom_type, 0) != 0 || m_HL_W.at(geom_type, 1) != 0 || m_HL_W.at(geom_type, 2) != 0 || m_HL_W.at(geom_type, 3) != 0 || m_HL_W.at(geom_type, 0) != 0 )
+			{
+				c_hl *= m_HL_W.at(geom_type, 0) + m_HL_W.at(geom_type, 1)*V_wind + m_HL_W.at(geom_type, 2)*pow(V_wind, 2) + 
+							m_HL_W.at(geom_type, 3)*pow(V_wind, 3) + m_HL_W.at(geom_type, 4)*pow(V_wind, 4);
+			}
+			
+			m_q_loss[i] = c_hl*m_L_col.at(geom_type, 0) / 1000.0;	//[kWt] Thermal loss for each receiver in loop
+			m_q_abs[i] = m_q_rec[i] - m_q_loss[i];					//[kWt] Thermal power absorbed by steam in each receiver
+		}
+		else if( m_HLCharType.at(geom_type, 0) == 2 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Forristall model not ready yet!"));
+		}
+		else
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Geometry type not recognized!"));
+		}
+
+		double T_out_t_end_prev = m_T_ave_prev[i];
+
+		transient_energy_bal_numeric_int(mc_sca_in_t_int[i].m_enth, mc_sca_in_t_int[i].m_pres*100.0, m_q_abs[i], m_dot_loop,
+									T_out_t_end_prev, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth);
+		
+		//void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
+		//	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/,
+		//	double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
+	
+		double blahblahblah = 1.2345;
+	}
 
 
 
@@ -1461,7 +1529,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 				// *****************************************
 				// Test 'once_thru_loop_energy_balance_T_t_in
 				// *****************************************
-				// once_thru_loop_energy_balance_T_t_int(weather, T_pb_out, P_turb_in, m_dot, sim_info);
+				once_thru_loop_energy_balance_T_t_int(weather, T_pb_out, P_turb_in, m_dot, h_sh_out_guess, sim_info);
 
 
 

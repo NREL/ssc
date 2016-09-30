@@ -327,7 +327,7 @@ public:
 			double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
 
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
-		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/,
+		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,
 		const C_csp_solver_sim_info &sim_info);
 
 	class C_mono_eq_transient_energy_bal : public C_monotonic_equation
