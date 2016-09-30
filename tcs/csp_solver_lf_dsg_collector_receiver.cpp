@@ -9,6 +9,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 
 	// *******************************************
 	// Hardcoded member data
+	m_is_sensible_htf = false;
 		// Set maximum timestep from parent class member data
 	m_max_step = 60.0*60.0;			//[s]: [m] * [s/m] :: this is declared in parent CR class
 	m_step_recirc = 10.0*60.0;		//[s]
@@ -758,6 +759,13 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_T_ave_prev.resize(m_nModTot, 1);
 	m_T_ave_prev.assign(m_T_ave_prev.size(), m_T_field_ini);
 
+	mc_sys_cold_out_t_end_converged.m_temp = m_T_field_ini;		//[K]
+	mc_sys_hot_out_t_end_converged.m_temp = m_T_field_ini;		//[K]
+	for(int i = 0; i < m_nModTot; i++)
+	{
+		mc_sca_out_t_end_converged[i].m_temp = m_T_field_ini;	//[K]
+	}
+
 	m_defocus_prev = 1.0;
 	m_t_sby_prev = m_t_sby_des;
 	m_t_sby = m_t_sby_des;
@@ -923,9 +931,10 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	cr_out_solver.m_standby_control = -1;
 	cr_out_solver.m_dP_sf_sh = 0.0;
+	cr_out_solver.m_h_htf_hot = h_sys_hot_out_t_int_ts_ave;		//[kJ/kg]
+	cr_out_solver.m_xb_htf_hot = wp.qual;						//[-]
 
-	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off(...) is not complete"));
-
+	m_operating_mode = C_csp_collector_receiver::OFF;		//[-]
 
 	return;
 }
@@ -1219,7 +1228,9 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 {
 	// If solar collectors are not absorbing any sunlight (night or 100% defocus), then set member data as necessary
+	m_q_inc.assign(m_q_inc.size(), 0.0);	//[kWt]
 	m_eta_optical.fill(0.0);	//[-] Optical efficiency for each collector geometry
+	m_q_rec.assign(m_q_rec.size(), 0.0);	//[kWt]
 	
 	m_ftrack = 0.0;
 
@@ -1450,13 +1461,11 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Geometry type not recognized!"));
 		}
 
-		mc_sca_out_t_end_last[i].m_temp = m_T_ave_prev[i];		//[K]
-
 		transient_energy_bal_numeric_int(mc_sca_in_t_int[i].m_enth, mc_sca_in_t_int[i].m_pres*100.0, m_q_abs[i], m_dot_loop,
 					mc_sca_out_t_end_last[i].m_temp, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth);
 		
 		mc_sca_out_t_int[i].m_enth = mc_sca_out_t_end[i].m_enth;	//[kJ/kg]
-		mc_sca_out_t_end[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]
+		mc_sca_out_t_int[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]
 
 		wp_code = water_PH(mc_sca_out_t_end[i].m_pres*100.0, mc_sca_out_t_end[i].m_enth, &wp);
 		if( wp_code != 0 )
@@ -1465,7 +1474,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 				"water_PH error", wp_code));
 		}
 		mc_sca_out_t_end[i].m_temp = mc_sca_out_t_int[i].m_temp = wp.temp;		//[K]
-		mc_sca_out_t_end[i].m_x = mc_sca_in_t_int[i].m_x = wp.qual;				//[-]
+		mc_sca_out_t_end[i].m_x = mc_sca_out_t_int[i].m_x = wp.qual;			//[-]
 	}
 
 	mc_sys_hot_in_t_int.m_enth = mc_sca_out_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
@@ -1785,7 +1794,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 				// *****************************************
 				// Test 'once_thru_loop_energy_balance_T_t_in
 				// *****************************************
-				once_thru_loop_energy_balance_T_t_int(weather, T_pb_out, P_turb_in, m_dot, h_sh_out_guess, sim_info);
+				//once_thru_loop_energy_balance_T_t_int(weather, T_pb_out, P_turb_in, m_dot, h_sh_out_guess, sim_info);
 
 
 
