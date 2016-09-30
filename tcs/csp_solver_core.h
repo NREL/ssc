@@ -956,6 +956,8 @@ private:
 	double m_cycle_cutoff_frac;			//[-]
 	double m_cycle_sb_frac_des;			//[-]
 	double m_cycle_T_htf_hot_des;		//[K]
+	double m_cycle_P_hot_des;			//[kPa]
+	double m_cycle_x_hot_des;			//[-]
 	double m_m_dot_pc_des;				//[kg/hr]
 
 		// Storage logic
@@ -963,9 +965,6 @@ private:
 
 		// Reporting and Output Tracking
 	int m_i_reporting;					//[-]
-	//double m_sim_time_start;			//[s]
-	//double m_sim_time_end;			//[s]
-	//double m_sim_step_size_baseline;	//[s]
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]
 	double m_report_step;				//[s]

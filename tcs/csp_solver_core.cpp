@@ -124,7 +124,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
 		m_q_dot_rec_on_min = m_q_dot_rec_des =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
-		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
+		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
+		m_cycle_P_hot_des = m_cycle_x_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
 
 	// Reporting and Output Tracking
 	m_i_reporting = -1;
@@ -2001,6 +2002,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Power Cycle: OFF
 				// HTF State
 				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_htf_state_in.m_pres = m_cycle_P_hot_des;		//[kPa]
+				mc_pc_htf_state_in.m_qual = m_cycle_x_hot_des;		//[-]
 				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
 				// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
