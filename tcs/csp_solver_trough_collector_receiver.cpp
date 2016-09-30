@@ -1451,8 +1451,8 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
-	cr_out_solver.m_time_required_su = sim_info.ms_ts.m_step;		//[s] Time required for receiver to startup - at least the entire timestep because it's off
-	cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr] Total HTF mass flow rate
+	cr_out_solver.m_time_required_su = sim_info.ms_ts.m_step;					//[s] Time required for receiver to startup - at least the entire timestep because it's off
+	cr_out_solver.m_m_dot_salt_tot = m_dot_htf_loop*3600.0*(double)m_nLoops;	//[kg/hr] Total HTF mass flow rate
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
 		// 7.12.16: Return timestep-end or timestep-integrated-average?
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
