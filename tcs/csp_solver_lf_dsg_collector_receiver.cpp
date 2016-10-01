@@ -116,6 +116,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_fossil_mode = -1;													//[-]
 	m_I_bn_des = std::numeric_limits<double>::quiet_NaN();				//[W/m2]
 	m_is_oncethru = true;												//[-]
+	m_is_sh_target = true;												//[-]
 	m_is_multgeom = false;												//[-]
 	m_nModBoil = -1;													//[-]
 	m_nModSH = -1;														//[-]
@@ -151,6 +152,29 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_wp_min_temp = wp_info.temp_lower_limit;	//[K]
 	m_wp_max_pres = wp_info.pres_upper_limit;	//[kPa]
 	m_wp_min_pres = wp_info.pres_lower_limit;	//[kPa]
+
+	// Compare the startup to final temperature
+	int wp_code = water_PQ(m_P_turb_des*100.0, m_x_b_des, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init", "Design point water_PQ failed", wp_code));
+	}
+	double T_boil_des = wp.temp;	//[K]
+	double T_startup_max = T_boil_des - 5.0;	//[K]
+
+	if( !m_is_sh_target )
+	{
+		if( m_T_startup > T_startup_max )
+		{
+			std::string msg = util::format("The specified configuration returns 2-phase steam"
+								"The model requires the specified startup temperature, %lg, [C] to be at least"
+								"5 [C] less than the boiling temperature, %lg, [C] at the design pressure"
+								"The startup temperature was reset to %lg [C].", m_T_startup, T_boil_des, T_startup_max);
+			mc_csp_messages.add_message(C_csp_messages::NOTICE,msg);
+			m_T_startup = T_startup_max;
+		}
+	}
+
 
 	//[-] Outer glass envelope emissivities (Pyrex)
 	m_EPSILON_5 = m_EPSILON_4;	
@@ -485,8 +509,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	check_pressure.set_P_max(m_P_max);
-	double h_sh_out_des = 0.0;
-	double h_pb_out_des = 0.0;
+	double h_field_in = 0.0;	//[kJ/kg]
+	double h_field_out = 0.0;	//[kJ/kg]
 
 	// Estimate the design-point thermal losses
 	// *********** "standard" boiler + optional superheater design *******
@@ -495,11 +519,21 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		// Calculate boiler inlet/outlet enthalpies
 		water_PQ(check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_hdr_h + m_fP_sf_sh + m_fP_boil_to_sh))*100.0, m_x_b_des, &wp);
 		double h_b_out_des = wp.enth;		//[kJ/kg]
+		
 		// Power block outlet/field inlet enthalpy
-		water_TP(m_T_field_in_des, check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
-		h_pb_out_des = wp.enth;		//[kJ/kg]
+		int wp_code = water_TP(m_T_field_in_des, check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point state point calcs failed", "water_TP error", wp_code));
+		}
+		if( wp.qual > 0.0 )
+		{
+			throw(C_csp_exception("The design inlet to the once thru loop at the design field inlet pressure this is not good"));
+		}
+		h_field_in = wp.enth;		//[kJ/kg]
+
 		// Determine the mixed boiler inlet enthalpy
-		double h_b_in_des = h_pb_out_des*m_x_b_des + h_b_out_des*(1.0 - m_x_b_des);
+		double h_b_in_des = h_field_in*m_x_b_des + h_b_out_des*(1.0 - m_x_b_des);
 		double dh_b_des = (h_b_out_des - h_b_in_des) / (double)m_nModBoil;
 		for (int i = 0; i < m_nModBoil; i++)
 		{
@@ -536,9 +570,11 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			// Calculate superheater inlet/outlet enthalpies
 			water_PQ(check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_hdr_h + m_fP_sf_sh))*100.0, 1.0, &wp);
 			double h_sh_in_des = wp.enth;
+			
 			water_TP((m_T_field_out_des), check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_hdr_h))*100.0, &wp);
-			h_sh_out_des = wp.enth;
-			double dh_sh_des = (h_sh_out_des - h_sh_in_des) / (double)m_nModSH;
+			h_field_out = wp.enth;
+			
+			double dh_sh_des = (h_field_out - h_sh_in_des) / (double)m_nModSH;
 			for (int ii = 0; ii < m_nModSH; ii++)
 			{
 				int i = ii + m_nModBoil;
@@ -569,12 +605,38 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	else	// Analyze the once-through boiler+superheater options
 	{
 		// Calculate the total enthalpy rise across the loop
-		water_TP((m_T_field_in_des), check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_sf_tot))*100.0, &wp);
-		h_pb_out_des = wp.enth;
-		water_TP((m_T_field_out_des), check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_hdr_h))*100.0, &wp);
-		h_sh_out_des = wp.enth;
+		int wp_code = water_TP((m_T_field_in_des), check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_sf_tot))*100.0, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point inlet state point calcs failed", "water_TP error", wp_code));
+		}
+		if( wp.qual > 0.0 )
+		{
+			throw(C_csp_exception("The design inlet to the once thru loop at the design field inlet pressure this is not good"));
+		}
+		h_field_in = wp.enth;	//[kJ/kg]
+
+		if( m_is_sh_target )
+		{
+			wp_code = water_TP(m_T_field_out_des, check_pressure.P_check(m_P_turb_des*(1.0 + m_fP_hdr_h))*100.0, &wp);
+			if( wp_code != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_TP error", wp_code));
+			}
+			h_field_out = wp.enth;	//[kJ/kg]
+		}
+		else
+		{
+			wp_code = water_PQ(m_P_turb_des*(1.0+m_fP_hdr_h)*100.0, m_x_b_des, &wp);
+			if( wp_code != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_PQ error", wp_code));
+			}
+			h_field_out = wp.enth;	//[kJ/kg]
+		}
+
 		// Enthalpy rise across each collector module
-		double dh_ot_des = (h_sh_out_des - h_pb_out_des) / (double)m_nModTot;		//[kJ/kg]
+		double dh_ot_des = (h_field_out - h_field_in) / (double)m_nModTot;		//[kJ/kg]
 		for (int i = 0; i < m_nModTot; i++)
 		{
 			// Decide which geometry set to use
@@ -584,7 +646,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			// Calculate the local pressure in the loop, assume a linear pressure drop
 			double P_loc = m_P_turb_des*(1.0 + (m_fP_sf_boil + m_fP_sf_sh)*(1.0 - (double)(i) / (double)m_nModTot) + m_fP_hdr_h);
 			// Get the temperature/quality at each state in the loop
-			water_PH(check_pressure.P_check(P_loc)*100.0, (h_pb_out_des + dh_ot_des*(double)(i + 1) - dh_ot_des / 2.0), &wp);
+			water_PH(check_pressure.P_check(P_loc)*100.0, (h_field_in + dh_ot_des*(double)(i + 1) - dh_ot_des / 2.0), &wp);
 			m_T_ave.at(i, 0) = wp.temp;
 
 			// Calculate the heat loss at each temperature
@@ -639,17 +701,17 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		eta_tot_sf_des = m_opteff_des.at(0, 0)*eta_therm_sf_des;
 
 	// Calculate the design-point mass flow rate leaving the solar field
-	if (h_sh_out_des == 0.0 || h_pb_out_des == 0.0)
+	if(h_field_out == 0.0 || h_field_in == 0.0)
 	{
-		std::string err_msg = util::format("At design, either the superheater outlet enthlalpy (%.1f) or the solarfield inlet density (%f) is not set", h_sh_out_des, h_pb_out_des);
+		std::string err_msg = util::format("At design, either the superheater outlet enthlalpy (%.1f) or the solarfield inlet density (%f) is not set", h_field_out, h_field_in);
 		throw(C_csp_exception(err_msg, "LF DSG init()"));
 	}
 
-	m_m_dot_des = m_q_dot_abs_tot_des / (h_sh_out_des - h_pb_out_des);	//[kg/s] SYSTEM design point mass flow rate - field design basis
+	m_m_dot_des = m_q_dot_abs_tot_des / (h_field_out - h_field_in);	//[kg/s] SYSTEM design point mass flow rate - field design basis
 
 	// Calculate the Solar Field design-point mass flow rate in the boiler only (include recirculation mass)
 	m_m_dot_b_des = 0.0;
-	if (m_x_b_des == 0.0)
+	if( m_x_b_des == 0.0 || !m_is_sh_target )
 		m_m_dot_b_des = m_m_dot_des;
 	else
 		m_m_dot_b_des = m_m_dot_des / m_x_b_des;
@@ -658,12 +720,16 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	// Ty: modified code for IPH additional to PowerGen baseline
 	// ***************************************************
 	// Calculate maximum flow rate to the power block
-	m_m_dot_pb_des = m_q_pb_des / (h_sh_out_des - h_pb_out_des);	//[kg/s] SYSTEM mass flow rate at power cycle design
+	m_m_dot_pb_des = m_q_pb_des / (h_field_out - h_field_in);	//[kg/s] SYSTEM mass flow rate at power cycle design
 	double m_dot_pb_max = m_m_dot_pb_des * m_cycle_max_fraction;	//[kg/s] SYSTEM max mass flow rate - power cycle design basis
 	double m_dot_sf_max = m_m_dot_max_frac * m_m_dot_des;			//[kg/s] SYSTEM max mass flow rate - field design basis
 	
 	m_m_dot_max = min(m_dot_sf_max, m_dot_pb_max) / (double)m_nLoops;			//[kg/s] LOOP max mass flow rate - min of field & PC bases
-	m_m_dot_b_max = m_m_dot_max / m_x_b_des;									//[kg/s] LOOP max mass flow rate through boiler
+
+	if( m_x_b_des == 0.0 || !m_is_sh_target )
+		m_m_dot_b_max = m_m_dot_max;											//[kg/s] LOOP max mass flow rate through boiler
+	else
+		m_m_dot_b_max = m_m_dot_max / m_x_b_des;								//[kg/s] LOOP max mass flow rate through boiler
 	
 	// 9.26.16 twn: Added m_m_dot_max_frac and m_m_dot_min_frac as Design Parameters
 	double m_m_dot_min_sf = m_m_dot_min_frac * m_m_dot_des;			//[kg/s] SYSTEM min mass flow rate - solar field basis
@@ -945,6 +1011,36 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Always reset last temps
+	reset_last_temps();
+
+	// Get optical properties
+	// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
+	loop_optical_eta_off();
+
+	// Set mass flow rate to what I imagine might be an appropriate value
+	double m_dot_loop = 0.8*m_m_dot_max + 0.2*m_m_dot_min;	//[kg/s]
+
+	// Not varying mass flow rate, so calculate the field outlet pressure [bar]
+	double P_field_out = check_pressure.P_check(turb_pres_frac(m_dot_loop*(double)m_nLoops / m_m_dot_des, m_fossil_mode, 0.0, m_fP_turb_min)*m_P_turb_des);
+
+	// Set duration for recirculation timestep
+	if( m_step_recirc != m_step_recirc )
+		m_step_recirc = 10.0*60.0;		//[s]
+
+	// Calculate number of steps required given timestep from solver and recirculation step
+	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
+
+	// Define a copy of the sim_info structure
+	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
+	double step_local = sim_info.ms_ts.m_step / (double)n_steps_recirc;	//[s] Recirculation time step
+
+	// Create local sim_info structure to handle recirculation timesteps
+	C_csp_solver_sim_info sim_info_temp = sim_info;
+	sim_info_temp.ms_ts.m_step = step_local;		//[s]
+
+	bool is_T_startup_achieved = false;
+
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
 
