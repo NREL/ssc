@@ -461,6 +461,7 @@ public:
 		dsg_lf.m_fossil_mode = (int)value(P_FOSSIL_MODE); // fossil_mode );
 		dsg_lf.m_I_bn_des = value(P_I_BN_DES); // I_bn_des );
 		dsg_lf.m_is_oncethru = (bool)value(P_IS_ONCETHRU); // is_oncethru ); ? bool
+		dsg_lf.m_is_sh_target = true;
 		dsg_lf.m_is_multgeom = (bool)value(P_IS_MULTGEOM); // is_multgeom ); 
 		dsg_lf.m_nModBoil = (int)value(P_NMODBOIL); // nModBoil );
 		dsg_lf.m_nModSH = (int)value(P_NMODSH); // nModSH );
