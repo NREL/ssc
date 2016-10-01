@@ -187,6 +187,10 @@ public:
 	int m_fossil_mode;			//[-]
 	double m_I_bn_des;			//[W/m2]
 	bool m_is_oncethru;			//[-]
+	
+	// True = target outlet state is superheat and uses(m_T_field_out_des), False = target outlet state is 2-phase and uses (m_x_b_des)
+	bool m_is_sh_target;		//[-] 
+	
 	bool m_is_multgeom;			//[-]
 	int m_nModBoil;				//[-]
 	int m_nModSH;				//[-]
