@@ -1479,7 +1479,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	// Get optical performance
 	loop_optical_eta(weather, sim_info);
 
-	// Set mass flow rate to minimum allowable
+	// Set mass flow rate to what I imagine might be an appropriate value
 	double m_dot_htf_loop = 0.8*m_m_dot_htfmax + 0.2*m_m_dot_htfmin;		//[kg/s]
 
 	// Set duration for recirculation timestep
