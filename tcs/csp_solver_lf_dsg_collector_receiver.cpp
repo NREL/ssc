@@ -922,6 +922,53 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 	return 0;
 }
 
+double C_csp_lf_dsg_collector_receiver::od_pressure(double m_dot_loop /*kg/s*/)
+{
+	return check_pressure.P_check(turb_pres_frac(m_dot_loop*(double)m_nLoops / m_m_dot_des, m_fossil_mode, 0.0, m_fP_turb_min)*m_P_turb_des);
+}
+
+int C_csp_lf_dsg_collector_receiver::C_mono_eq_h_loop_out_target::operator()(double m_dot_loop /*kg/s*/, double *diff_h_loop_out /*kJ/kg*/)
+{
+	// Need to recalculate pressure, and therefore target enthalpy
+		// Calculate the field outlet pressure as a function of mass flow rate [bar]
+	m_P_field_out = mpc_dsg_lf->od_pressure(m_dot_loop);
+	// Calculate the target outlet enthalpy
+	int wp_code = 0;
+	m_h_sca_out_target = std::numeric_limits<double>::quiet_NaN();
+	if( mpc_dsg_lf->m_is_sh_target )
+	{
+		wp_code = water_TP(mpc_dsg_lf->m_T_field_out_des, m_P_field_out*100.0, &mpc_dsg_lf->wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_TP error", wp_code));
+		}
+		m_h_sca_out_target = mpc_dsg_lf->wp.enth;	//[kJ/kg]
+	}
+	else
+	{
+		wp_code = water_PQ(m_P_field_out*100.0, mpc_dsg_lf->m_x_b_des, &mpc_dsg_lf->wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_PQ error", wp_code));
+		}
+		m_h_sca_out_target = mpc_dsg_lf->wp.enth;	//[kJ/kg]
+	}
+
+	int exit_code = mpc_dsg_lf->once_thru_loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_P_field_out,
+									m_dot_loop, m_h_sca_out_target, ms_sim_info);
+
+	if( exit_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		*diff_h_loop_out = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Set the relative difference between calculated and target sca outlet enthalpies
+	*diff_h_loop_out = (mpc_dsg_lf->mc_sca_out_t_end[mpc_dsg_lf->m_nModTot-1].m_enth - m_h_sca_out_target)/m_h_sca_out_target;	//[-]
+
+	return 0;
+}
+
 int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader::S_outputs &weather, double P_field_out /*bar*/,
 	double T_cold_in /*K*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/, 
 	const C_csp_solver_sim_info &sim_info_temp, double & Q_fp /*MJ*/)
@@ -1215,6 +1262,201 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
+	// Always reset last temps
+	reset_last_temps();
+
+	// Get optical performance (no defocus applied yet...)
+	// This calculates member data m_q_inc[] with NO defocus applied
+	loop_optical_eta(weather, sim_info);
+
+	// If Control Defocus: field_control < 1, then apply it here
+	if( field_control < 1.0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on::control_defocus() is not complete"));	
+	}
+
+	// Solve the loop energy balance at the minimum mass flow rate
+		// Set mass flow rate to the minimum allowable
+	double m_dot_loop = m_m_dot_min;		//[kg/s]
+		// Calculate the field outlet pressure as a function of mass flow rate [bar]
+	double P_field_out = check_pressure.P_check(turb_pres_frac(m_dot_loop*(double)m_nLoops / m_m_dot_des, m_fossil_mode, 0.0, m_fP_turb_min)*m_P_turb_des);
+		// Calculate the target outlet enthalpy
+	int wp_code = 0;
+	double h_sca_out_target = std::numeric_limits<double>::quiet_NaN();
+	if( m_is_sh_target )
+	{
+		wp_code = water_TP(m_T_field_out_des, P_field_out*100.0, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_TP error", wp_code));
+		}
+		h_sca_out_target = wp.enth;	//[kJ/kg]
+	}
+	else
+	{
+		wp_code = water_PQ(P_field_out*100.0, m_x_b_des, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_PQ error", wp_code));
+		}
+		h_sca_out_target = wp.enth;	//[kJ/kg]
+	}
+
+		// Get inlet condition from input argument
+	double T_cold_in = htf_state_in.m_temp + 273.15;	//[K]
+		// Call energy balance with updated info
+	int balance_code = once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_sca_out_target, sim_info);
+
+	bool on_success = true;
+
+	if( balance_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		on_success = false;
+	}
+
+	// If the outlet enthalpy (of final SCA in loop!) is greater than the target (considering some convergence tolerance)
+		// then adjust mass flow rate and see what happens
+	if( (mc_sca_out_t_end[m_nModTot-1].m_enth - h_sca_out_target)/h_sca_out_target > 0.001 && on_success )
+	{
+		// Next, try the maximum mass flow rate
+		m_dot_loop = m_m_dot_max;		//[kg/s]
+
+		// Need to recalculate pressure, and therefore target enthalpy
+			// Calculate the field outlet pressure as a function of mass flow rate [bar]
+		P_field_out = check_pressure.P_check(turb_pres_frac(m_dot_loop*(double)m_nLoops / m_m_dot_des, m_fossil_mode, 0.0, m_fP_turb_min)*m_P_turb_des);
+		// Calculate the target outlet enthalpy
+		wp_code = 0;
+		h_sca_out_target = std::numeric_limits<double>::quiet_NaN();
+		if( m_is_sh_target )
+		{
+			wp_code = water_TP(m_T_field_out_des, P_field_out*100.0, &wp);
+			if( wp_code != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_TP error", wp_code));
+			}
+			h_sca_out_target = wp.enth;	//[kJ/kg]
+		}
+		else
+		{
+			wp_code = water_PQ(P_field_out*100.0, m_x_b_des, &wp);
+			if( wp_code != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::init design point outlet state point calcs failed", "water_PQ error", wp_code));
+			}
+			h_sca_out_target = wp.enth;	//[kJ/kg]
+		}
+
+		// Call energy balance with updated info
+		int balance_code = once_thru_loop_energy_balance_T_t_int(weather, T_cold_in, P_field_out, m_dot_loop, h_sca_out_target, sim_info);
+	
+		if( balance_code != E_loop_energy_balance_exit::SOLVED )
+		{
+			on_success = false;
+		}
+
+		// Is the outlet enthalpy (of the final SCA in the loop!) greater than the target (considering some convergence tolerance)?
+			// then need to defocus
+		if( (mc_sca_out_t_end[m_nModTot - 1].m_enth - h_sca_out_target) / h_sca_out_target > 0.001 && on_success )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on::COMPONENT_defocus() is not complete"));
+		}
+		else if(on_success)
+		{	
+			// The mass flow rate resulting in the target outlet enthalpy is somewhere between the min and max. Iterate!
+			
+			// Mass flow rate is changing, so solver calculates and stores:
+			//   * P_field_out
+			//   * h_sca_out_target
+
+			C_mono_eq_h_loop_out_target c_h_out_target(this, weather, T_cold_in, sim_info);
+			C_monotonic_eq_solver c_h_out_target_solver(c_h_out_target);
+
+			// Set upper and lower bounds
+			double m_dot_upper = m_m_dot_max;		//[kg/s]
+			double m_dot_lower = m_m_dot_min;		//[kg/s]
+
+			// Set guess values... can be smarter about this, maybe
+			double m_dot_guess_upper = 0.75*m_dot_upper + 0.25*m_dot_upper;	//[kg/s]
+			double m_dot_guess_lower = 0.25*m_dot_upper + 0.75*m_dot_upper;	//[kg/s]
+
+			// Set solver settings
+			c_h_out_target_solver.settings(0.001, 30, m_dot_lower, m_dot_upper, false);
+
+			int iter_solved = -1;
+			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+			int m_dot_code = 0;
+			try
+			{
+				m_dot_code = c_h_out_target_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0, 
+													m_dot_loop, tol_solved, iter_solved);
+			}
+			catch( C_csp_exception &csp_except )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
+				on_success = false;
+			}
+
+			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
+				on_success = false;
+			}
+
+		}	// end iteration on mass flow rate to hit target enthalpy
+
+	}
+	
+	if( on_success )
+	{
+		// Call final metrics method?
+		// (i.e. pressure drops, parasitics...)
+
+		// Set solver outputs & return
+			// Receiver is already on, so the controller is not looking for this value
+		cr_out_solver.m_q_startup = 0.0;		//[MWt-hr] 
+			// Receiver is already on, so the controller is not looking for the required startup time
+		cr_out_solver.m_time_required_su = 0.0;	//[s]
+			// The controller requires the total mass flow rate from the CR
+		cr_out_solver.m_m_dot_salt_tot = m_dot_loop*(double)m_nLoops*3600.0;	//[kg/hr]
+			// Thermal power absorbed by steam/water
+		cr_out_solver.m_q_thermal = m_dot_loop*(double)m_nLoops*(mc_sys_cold_in_t_int.m_enth - mc_sys_hot_out_t_int.m_enth)/1.E3;	//[MWt]
+			// Outlet temperature (set quality below)
+		cr_out_solver.m_T_salt_hot = mc_sys_hot_out_t_int.m_temp;
+
+		// For now, set parasitic outputs to 0
+		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
+		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+
+		cr_out_solver.m_standby_control = -1;		//[-]
+		cr_out_solver.m_dP_sf_sh = 0.0;				//[bar]
+		cr_out_solver.m_h_htf_hot = mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
+		cr_out_solver.m_xb_htf_hot = mc_sys_hot_out_t_int.m_x;			//[-]
+		cr_out_solver.m_P_htf_hot = mc_sys_hot_out_t_int.m_pres;		//[kPa]
+	}
+	else
+	{
+		// Solution failed, so tell controller/solver
+		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
+		cr_out_solver.m_time_required_su = 0.0;		//[s]
+		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
+		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
+		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
+		
+		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
+		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+
+		cr_out_solver.m_standby_control = -1;		//[-]
+		cr_out_solver.m_dP_sf_sh = 0.0;				//[bar]
+		cr_out_solver.m_h_htf_hot = 0.0;			//[kJ/kg]
+		cr_out_solver.m_xb_htf_hot = 0.0;			//[-]
+		cr_out_solver.m_P_htf_hot = 0.0;			//[kPa]
+	}
+
+	// Else, we can run at min mass flow without overheating the loop, so we're finished here
+
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on() is not complete"));
 
 
