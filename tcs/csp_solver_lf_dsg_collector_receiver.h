@@ -374,6 +374,33 @@ public:
 		virtual int operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/);
 	};
 
+	class C_mono_eq_freeze_prot_E_bal : public C_monotonic_equation
+	{	// The solver chooses a cold inlet temperature and sends it to the operator. The operator
+		//		calls the loop energy balance at the recirculation mass flow rate
+		//		and returns the total field heat loss. The solver finds the T_cold_in such that E_fp = E_losses
+	private:
+		C_csp_lf_dsg_collector_receiver *mpc_dsg_lf;
+		C_csp_weatherreader::S_outputs ms_weather;
+		double m_P_field_out;	//[bar]
+		double m_m_dot_loop;	//[kg/s]
+		double m_h_sca_out_target;	//[kJ/kg]
+		C_csp_solver_sim_info ms_sim_info;
+
+	public:
+
+		double m_Q_fp;		//[MJ]
+
+		C_mono_eq_freeze_prot_E_bal(C_csp_lf_dsg_collector_receiver *pc_dsg_lf, const C_csp_weatherreader::S_outputs &weather,
+						double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, 
+						double h_sca_out_target /*kJ/kg*/, const C_csp_solver_sim_info &sim_info)
+		{
+			mpc_dsg_lf = pc_dsg_lf;
+			m_Q_fp = std::numeric_limits<double>::quiet_NaN();
+		}
+	
+		virtual int operator()(double T_cold_in /*K*/, double *E_loss_balance /*-*/);	
+	};
+
 };
 
 
