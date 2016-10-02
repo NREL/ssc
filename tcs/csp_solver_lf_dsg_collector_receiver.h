@@ -144,6 +144,8 @@ private:
 		double T_cold_in /*K*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/, 
 		const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
 
+	double od_pressure(double m_dot_loop /*kg/s*/);
+
 public:
 
 	// Class to save messages for up stream classes
@@ -399,10 +401,43 @@ public:
 						double h_sca_out_target /*kJ/kg*/, const C_csp_solver_sim_info &sim_info)
 		{
 			mpc_dsg_lf = pc_dsg_lf;
-			m_Q_fp = std::numeric_limits<double>::quiet_NaN();
+			ms_weather = weather;
+			m_P_field_out = P_field_out;	//[bar]
+			m_m_dot_loop = m_dot_loop;		//[kg/s]
+			m_h_sca_out_target = h_sca_out_target;	//[kJ/kg]
+			ms_sim_info = sim_info;
+
+			m_Q_fp = std::numeric_limits<double>::quiet_NaN();	//[MJ]
 		}
 	
 		virtual int operator()(double T_cold_in /*K*/, double *E_loss_balance /*-*/);	
+	};
+
+	class C_mono_eq_h_loop_out_target : public C_monotonic_equation
+	{
+	private:
+		C_csp_lf_dsg_collector_receiver *mpc_dsg_lf;
+		C_csp_weatherreader::S_outputs ms_weather;
+		double m_T_cold_in;		//[K]
+		C_csp_solver_sim_info ms_sim_info;
+
+	public:
+		C_mono_eq_h_loop_out_target(C_csp_lf_dsg_collector_receiver *pc_dsg_lf, const C_csp_weatherreader::S_outputs &weather,
+			double T_cold_in /*K*/, const C_csp_solver_sim_info &sim_info)
+		{
+			mpc_dsg_lf = pc_dsg_lf;
+			ms_weather = weather;
+			m_T_cold_in = T_cold_in;		//[K]
+			ms_sim_info = sim_info;
+
+			m_P_field_out = std::numeric_limits<double>::quiet_NaN();
+			m_h_sca_out_target = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_P_field_out;		//[bar]
+		double m_h_sca_out_target;	//[kJ/kg]
+	
+		virtual int operator()(double m_dot_loop /*kg/s*/, double *diff_h_loop_out /*kJ/kg*/);
 	};
 
 };
