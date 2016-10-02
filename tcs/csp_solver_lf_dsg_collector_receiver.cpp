@@ -917,6 +917,57 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 	m_Q_fp = m_m_dot_loop*(mpc_dsg_lf->mc_sys_cold_in_t_int.m_enth-mpc_dsg_lf->mc_sys_hot_out_t_int.m_enth)/1.E3*ms_sim_info.ms_ts.m_step;	//[MJ]
 
 	// Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
+	*E_loss_balance = (m_Q_fp - mpc_dsg_lf->m_Q_field_losses_total) / mpc_dsg_lf->m_Q_field_losses_total;		//[-]
+
+	return 0;
+}
+
+int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader::S_outputs &weather, double P_field_out /*bar*/,
+	double T_cold_in /*K*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/, 
+	const C_csp_solver_sim_info &sim_info_temp, double & Q_fp /*MJ*/)
+{
+	C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this, weather, P_field_out, m_dot_loop, h_sca_out_target, sim_info_temp);
+	C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
+
+	// Set upper and lower bounds on independent variable: T_cold_in
+	double T_cold_in_lower = T_cold_in;		//[K]
+	double T_cold_in_upper = std::numeric_limits<double>::quiet_NaN();	//[K]
+
+	// Set two initial guess values
+	double q_dot_field_losses_tot = m_Q_field_losses_total / sim_info_temp.ms_ts.m_step*1.E3;		//[kWt]
+	double h_guess_lower = h_sca_out_target + q_dot_field_losses_tot / m_dot_loop;		//[kJ/kg]
+	int wp_code = water_PH(P_field_out*100.0, h_guess_lower, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::freeze protection initial guess", "water_PH error", wp_code));
+	}
+	double T_guess_lower = wp.temp;		//[K]
+	double T_guess_upper = T_guess_lower + T_guess_upper;	//[K]
+
+	// Set solver settings - monotonic equation is calculating an eror, so want to get to 0
+	c_fp_solver.settings(0.01, 30, T_cold_in_lower, T_cold_in_upper, false);
+
+	int iter_solved = -1;
+	double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+	int fp_code = 0;
+	double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
+
+	try
+	{
+		fp_code = c_fp_solver.solve(T_guess_lower, T_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
+	}
+	catch( C_csp_exception &csp_except )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed"));
+	}
+
+	if( fp_code != C_monotonic_eq_solver::CONVERGED )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed to converge"));
+	}
+
+	Q_fp = c_freeze_protection_eq.m_Q_fp;		//[MJ]
 
 	return 0;
 }
@@ -964,7 +1015,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		//    This would significantly slow the code
 
 			// Set inlet temperature to previous timestep outlet temperature
-			double T_cold_in = mc_sys_cold_out_t_end_last.m_temp;	//[K]
+			double T_cold_in = mc_sys_hot_out_t_end_last.m_temp;	//[K]
 
 			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
 			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
@@ -986,7 +1037,12 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// Check if freeze protection is required
 		if( mc_sca_out_t_int[m_nModTot-1].m_temp < m_T_fp + 10.0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off::freeze_protection() is not complete"));
+			double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+			int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
+
+			Q_fp_sum += Q_fp_i;		//[MJ]
+
+			throw(C_csp_exception("Step through off::freeze protection before deleting this..."));
 		}
 
 		// Add current enthalpy to summation
@@ -1072,7 +1128,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		//    This would significantly slow the code
 
 			// Set inlet temperature to previous timestep outlet temperature
-			double T_cold_in = mc_sys_cold_out_t_end_last.m_temp;	//[K]
+			double T_cold_in = mc_sys_hot_out_t_end_last.m_temp;	//[K]
 
 			// Recirculating, so the target enthalpy is roughly the outlet enthalpy
 			int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
@@ -1094,7 +1150,12 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Check if freeze protection is required
 		if( mc_sca_out_t_int[m_nModTot - 1].m_temp < m_T_fp + 10.0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off::freeze_protection() is not complete"));
+			double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+			int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
+
+			Q_fp_sum += Q_fp_i;		//[MJ]
+
+			throw(C_csp_exception("Step through off::freeze protection before deleting this..."));
 		}
 
 		// Add current enthalpy to summation
@@ -1154,7 +1215,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
-	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on() is not complete"));
 
 
 	return;
@@ -1414,6 +1475,17 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		m_eta_optical.fill(0.0);	//[-]
 		m_phi_t = CSP::pi / 2.;
 		m_theta_L = 0.0;
+	}
+
+	for( int i = 0; i < m_nModTot; i++ )
+	{
+		int gset = 0;
+		if( i >= m_nModBoil && m_is_multgeom )
+			gset = 1;
+		// Calculate the incident energy on each module
+		m_q_inc[i] = I_bn*m_A_aperture.at(gset, 0) / 1000.0;		//[kWt] Incident beam radiation for each receiver in loop
+		// Calculate the energy on the receiver
+		m_q_rec[i] = m_q_inc[i] * m_eta_optical[gset];				//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
 	}
 
 }
