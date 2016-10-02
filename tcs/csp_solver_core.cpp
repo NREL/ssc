@@ -1910,12 +1910,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// **************
 				// This will probably result in a local timestep shorter than the baseline simulation timestep (governed by weather file)
 
-				if( !mc_collector_receiver.m_is_sensible_htf )
-				{
-					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
-					throw(C_csp_exception(err_msg, "CSP Solver"));
-				}
-
+				
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 

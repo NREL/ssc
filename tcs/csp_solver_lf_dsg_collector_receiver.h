@@ -140,6 +140,10 @@ private:
 	// *********************************************
 	// *********************************************
 
+	int freeze_protection(const C_csp_weatherreader::S_outputs &weather, double P_field_out /*bar*/, 
+		double T_cold_in /*K*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/, 
+		const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
+
 public:
 
 	// Class to save messages for up stream classes
