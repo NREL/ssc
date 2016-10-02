@@ -1833,7 +1833,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_q_startup = 0.0;		//[MWt-hr] 
 		// Receiver is already on, so the controller is not looking for the required startup time
 		cr_out_solver.m_time_required_su = 0.0;	//[s]
-		// The controller requires the total mass flow rate from the collector-receiver
+			// The controller requires the total mass flow rate from the collector-receiver
+				// This value is set in the most recent call to the loop energy balance
 		cr_out_solver.m_m_dot_salt_tot = m_m_dot_htf_tot*3600.0;	//[kg/hr]
 		
 			// The controller also requires the receiver thermal output
