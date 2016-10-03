@@ -124,6 +124,8 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_in_od",      "Off-design PHX co2 inlet temperature",                   "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "T_co2_PHX_out_od",     "Off-design PHX co2 outlet temperature",                  "C",          "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "phx_eff_od",           "Off-design PHX effectiveness",                           "-",          "",    "",      "",     "",       "" },
+		// Solver Metrics
+	{ SSC_OUTPUT, SSC_ARRAY,   "od_code",              "Diagnostic info",                                        "-",          ""     "",      "",     "",       "" },
 
 		// Off-design Polynomial Outputs
 	{ SSC_OUTPUT, SSC_ARRAY,   "part_load_fracs_out", "Array of part load fractions that SOLVED at off design", "-",          "",    "",      "deltaP_cooler_frac=1", "",  "" },
@@ -143,6 +145,47 @@ int test_mono_function(double x, double *y);
 class cm_sco2_csp_system : public compute_module
 {
 public:
+
+	// Off-design parameters
+	ssc_number_t *p_m_dot_htf_fracs;
+	ssc_number_t *p_T_amb_od;
+	ssc_number_t *p_T_htf_hot_od;
+	// Optimized control parameters
+	ssc_number_t *p_od_opt_obj_code;
+	ssc_number_t *p_od_opt_conv_tol;
+	ssc_number_t *p_P_comp_in_od;
+	ssc_number_t *p_mc_phi_od;
+	ssc_number_t *p_recomp_frac_od;
+	// Optimizer parameters
+	ssc_number_t *p_sim_time_od;
+	// Systems
+	ssc_number_t *p_eta_thermal_od;
+	ssc_number_t *p_P_mc_out;
+	ssc_number_t *p_T_htf_cold_od;
+	ssc_number_t *p_m_dot_co2_full_od;
+	ssc_number_t *p_W_dot_net_od;
+	ssc_number_t *p_Q_dot_od;
+	// Compressor
+	ssc_number_t *p_N_mc_od;
+	ssc_number_t *p_mc_tip_ratio_od;
+	// Recompressor
+	ssc_number_t *p_rc_phi_1_od;
+	ssc_number_t *p_rc_phi_2_od;
+	ssc_number_t *p_rc_N_od;
+	ssc_number_t *p_rc_tip_ratio_od;
+	// Turbine
+	ssc_number_t *p_t_nu_od;
+	ssc_number_t *p_t_N_od;
+	ssc_number_t *p_t_tip_ratio_od;
+	// Recuperator
+	ssc_number_t *p_eff_LTR_od;
+	ssc_number_t *p_eff_HTR_od;
+	// PHX
+	ssc_number_t *p_T_co2_PHX_in_od;
+	ssc_number_t *p_T_co2_PHX_out_od;
+	ssc_number_t *p_phx_eff_od;
+	// Solver Metrics
+	ssc_number_t *p_od_code;
 
 	cm_sco2_csp_system()
 	{
@@ -288,9 +331,7 @@ public:
 		sco2_rc_od_par.m_T_htf_hot = T_htf_hot_in_des - T_htf_hot_in_offset;	//[K]	
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf_ND*m_dot_htf_des;				//[kg/s]
 		sco2_rc_od_par.m_T_amb = 273.15;										//[K]
-			
-		
-		C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
+					
 			// Set-up one-off off-design operation inputs
 		// ***************************************************************************
 		//sco2_rc_od_op_par.m_P_mc_in = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
@@ -313,51 +354,146 @@ public:
 		// ***************************************************************************
 
 
+		bool is_od_input_screen = false;
+		if( is_od_input_screen )
+		{
+			// Set up parametric sweep of operation inputs
+			double f_recomp_start = 0.0;
+			double f_recomp_end = 1.0;
+			int n_f_recomp = 101;
+			double f_recomp_step = (f_recomp_end - f_recomp_start) / (n_f_recomp - 1);
 
+			std::vector<double> v_f_recomp(n_f_recomp);	//[-]
+			
+			allocate_ssc_outputs(n_f_recomp);
 
-		// Set up parametric sweep of operation inputs
-		//int n_P_mc_in = 5;
-		//std::vector<double> v_P_mc_in(n_P_mc_in);	//[kPa]
-		//v_P_mc_in[0] = sco2_rc_od_op_par.m_P_mc_in - 1000.0;	//[kPa]
-		//v_P_mc_in[1] = sco2_rc_od_op_par.m_P_mc_in - 500.0;	//[kPa]
-		//v_P_mc_in[2] = sco2_rc_od_op_par.m_P_mc_in;				//[kPa]
-		//v_P_mc_in[3] = sco2_rc_od_op_par.m_P_mc_in + 500.0;	//[kPa]
-		//v_P_mc_in[4] = sco2_rc_od_op_par.m_P_mc_in + 1000.0;	//[kPa]
+			// Set off-design parameters
+			sco2_rc_od_par.m_T_htf_hot = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in;		//[K]
+			sco2_rc_od_par.m_m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
+			sco2_rc_od_par.m_T_amb = sco2_recomp_csp.get_design_par()->m_T_amb_des;				//[K]
 
-		//int n_f_recomp = 5;
-		//std::vector<double> v_f_recomp(n_f_recomp);	//[-]
-		//v_f_recomp[0] = sco2_rc_od_op_par.m_recomp_frac - 0.05;	//[-]
-		//v_f_recomp[1] = sco2_rc_od_op_par.m_recomp_frac - 0.025;	//[-]
-		//v_f_recomp[2] = sco2_rc_od_op_par.m_recomp_frac;		//[-]
-		//v_f_recomp[3] = sco2_rc_od_op_par.m_recomp_frac + 0.025;	//[-]
-		//v_f_recomp[4] = sco2_rc_od_op_par.m_recomp_frac + 0.05;	//[-]
+			C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
+				// Keep these constant, for this analysis
+			sco2_rc_od_op_par.m_P_mc_in = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
+			sco2_rc_od_op_par.m_phi_mc = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
 
-		//int n_phi_mc = 5;
-		//std::vector<double> v_phi_mc(n_phi_mc);	//[-]
-		//double phi_min = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge;
-		//double phi_max = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max;
-		//v_phi_mc[0] = sco2_rc_od_op_par.m_phi_mc*0.8 + phi_min*0.8;
-		//v_phi_mc[1] = sco2_rc_od_op_par.m_phi_mc*0.9 + phi_min*0.1;
-		//v_phi_mc[2] = sco2_rc_od_op_par.m_phi_mc;
-		//v_phi_mc[3] = sco2_rc_od_op_par.m_phi_mc*0.9 + phi_max*0.1;
-		//v_phi_mc[4] = sco2_rc_od_op_par.m_phi_mc*0.8 * phi_max*0.2;
-		//
-		//for(int i = 0; i < n_P_mc_in; i++)
-		//{
-		//	for(int j = 0; j < n_f_recomp; j++)
-		//	{
-		//		for(int k = 0; k < n_phi_mc; k++)
-		//		{
-		//			sco2_rc_od_op_par.m_P_mc_in = v_P_mc_in[i];			//[kPa]
-		//			sco2_rc_od_op_par.m_recomp_frac = v_f_recomp[j];	//[-]
-		//			sco2_rc_od_op_par.m_phi_mc = v_phi_mc[k];			//[-]
+			for(int n_run = 0; n_run < n_f_recomp; n_run++)
+			{
+				p_T_htf_hot_od[n_run] = sco2_rc_od_par.m_T_htf_hot - 273.15;			//[C]
+				p_m_dot_htf_fracs[n_run] = sco2_rc_od_par.m_m_dot_htf / m_dot_htf_des;	//[-]
+				p_T_amb_od[n_run] = sco2_rc_od_par.m_T_amb - 273.15;					//[C]
+				p_od_opt_obj_code[n_run] = 0;		//[-]
+				p_od_opt_conv_tol[n_run] = 0;		//[-]
+				
+				double f_recomp_od = f_recomp_start + f_recomp_step*n_run;
+				
+				sco2_rc_od_op_par.m_recomp_frac = f_recomp_od;	//[-]
 
-		//			int od_err_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
+				int sco2_od_code = 0;
+				std::clock_t clock_start = std::clock();
 
-		//			double blah = 1.23;
-		//		}
-		//	}		 
-		//}
+				try
+				{
+					sco2_od_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
+				}
+				catch( C_csp_exception &csp_exception )
+				{
+					// Report warning before exiting with error
+					while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+					{
+						log(out_msg);
+					}
+
+					log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+					return;				
+				}
+				std::clock_t clock_end = std::clock();
+
+				double od_opt_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+
+				p_od_code[n_run] = sco2_od_code;
+				// Can we just... see what happens getting metrics from sco2_recomp_csp when off-design fails
+					// Control parameters
+				p_P_comp_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_pres[1 - 1] / 1000.0;	//[MPa]
+				p_mc_phi_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_phi;	//[-]
+				p_recomp_frac_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_recomp_frac;		//[-]
+					// Optimizer parameters
+				p_sim_time_od[n_run] = od_opt_duration;		//[s]
+					// System
+				p_eta_thermal_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+				p_P_mc_out[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_pres[C_RecompCycle::MC_OUT] / 1.E3;	//[MPa]
+				p_T_htf_cold_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_phx_od_solved.m_T_h_out - 273.15;		//[C]
+				p_m_dot_co2_full_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_m_dot_t;		//[kg/s]
+				p_W_dot_net_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net / 1.E3;	//[MWe]
+				p_Q_dot_od[n_run] = p_W_dot_net_od[n_run] / p_eta_thermal_od[n_run];		//[MWt]
+					// Compressor
+				p_N_mc_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_N;		//[rpm]
+				p_mc_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_w_tip_ratio;	//[-]
+					// Recompressor
+				p_rc_phi_1_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_phi;	//[-]
+				p_rc_phi_2_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_phi_2;	//[-]
+				p_rc_N_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_N;			//[rpm]
+				p_rc_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_w_tip_ratio;	//[-]
+					// Turbine
+				p_t_nu_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
+				p_t_N_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_N;		//[rpm]
+				p_t_tip_ratio_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_w_tip_ratio;	//[-]
+					// Recuperator
+				p_eff_LTR_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_LT_recup_od_solved.m_eff;	//[-]
+				p_eff_HTR_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_HT_recup_od_solved.m_eff;	//[-]
+					// PHX
+				p_T_co2_PHX_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15;	//[C]
+				p_T_co2_PHX_out_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_temp[C_RecompCycle::TURB_IN] - 273.15;		//[C]
+				p_phx_eff_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_phx_od_solved.m_eff;		//[-]
+
+			}
+
+			return;
+
+			//int n_P_mc_in = 5;
+			//std::vector<double> v_P_mc_in(n_P_mc_in);	//[kPa]
+			//v_P_mc_in[0] = sco2_rc_od_op_par.m_P_mc_in - 1000.0;	//[kPa]
+			//v_P_mc_in[1] = sco2_rc_od_op_par.m_P_mc_in - 500.0;	//[kPa]
+			//v_P_mc_in[2] = sco2_rc_od_op_par.m_P_mc_in;				//[kPa]
+			//v_P_mc_in[3] = sco2_rc_od_op_par.m_P_mc_in + 500.0;	//[kPa]
+			//v_P_mc_in[4] = sco2_rc_od_op_par.m_P_mc_in + 1000.0;	//[kPa]
+
+			//int n_f_recomp = 101;
+			//std::vector<double> v_f_recomp(n_f_recomp);	//[-]
+			//v_f_recomp[0] = sco2_rc_od_op_par.m_recomp_frac - 0.05;	//[-]
+			//v_f_recomp[1] = sco2_rc_od_op_par.m_recomp_frac - 0.025;	//[-]
+			//v_f_recomp[2] = sco2_rc_od_op_par.m_recomp_frac;		//[-]
+			//v_f_recomp[3] = sco2_rc_od_op_par.m_recomp_frac + 0.025;	//[-]
+			//v_f_recomp[4] = sco2_rc_od_op_par.m_recomp_frac + 0.05;	//[-]
+
+			//int n_phi_mc = 5;
+			//std::vector<double> v_phi_mc(n_phi_mc);	//[-]
+			//double phi_min = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge;
+			//double phi_max = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_max;
+			//v_phi_mc[0] = sco2_rc_od_op_par.m_phi_mc*0.8 + phi_min*0.8;
+			//v_phi_mc[1] = sco2_rc_od_op_par.m_phi_mc*0.9 + phi_min*0.1;
+			//v_phi_mc[2] = sco2_rc_od_op_par.m_phi_mc;
+			//v_phi_mc[3] = sco2_rc_od_op_par.m_phi_mc*0.9 + phi_max*0.1;
+			//v_phi_mc[4] = sco2_rc_od_op_par.m_phi_mc*0.8 * phi_max*0.2;
+			//
+			//for(int i = 0; i < n_P_mc_in; i++)
+			//{
+			//	for(int j = 0; j < n_f_recomp; j++)
+			//	{
+			//		for(int k = 0; k < n_phi_mc; k++)
+			//		{
+			//			sco2_rc_od_op_par.m_P_mc_in = v_P_mc_in[i];			//[kPa]
+			//			sco2_rc_od_op_par.m_recomp_frac = v_f_recomp[j];	//[-]
+			//			sco2_rc_od_op_par.m_phi_mc = v_phi_mc[k];			//[-]
+
+			//			int od_err_code = sco2_recomp_csp.off_design(sco2_rc_od_par, sco2_rc_od_op_par);
+
+			//			double blah = 1.23;
+			//		}
+			//	}		 
+			//}
+		}
 
 		// ********************************************************************
 		//  Generate off-design polynomials, if necessary
@@ -538,44 +674,7 @@ public:
 			return;
 		}
 
-			// Off-design parameters
-		ssc_number_t *p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
-		ssc_number_t *p_T_amb_od = allocate("T_amb_od", n_od_runs);
-		ssc_number_t *p_T_htf_hot_od = allocate("T_htf_hot_od", n_od_runs);
-			// Optimized control parameters
-		ssc_number_t *p_od_opt_obj_code = allocate("od_opt_obj_code", n_od_runs);
-		ssc_number_t *p_od_opt_conv_tol = allocate("od_opt_conv_tol", n_od_runs);
-		ssc_number_t *p_P_comp_in_od = allocate("P_comp_in_od", n_od_runs);
-		ssc_number_t *p_mc_phi_od = allocate("mc_phi_od", n_od_runs);
-		ssc_number_t *p_recomp_frac_od = allocate("recomp_frac_od", n_od_runs);	
-			// Optimizer parameters
-		ssc_number_t *p_sim_time_od = allocate("sim_time_od", n_od_runs);
-			// Systems
-		ssc_number_t *p_eta_thermal_od = allocate("eta_thermal_od", n_od_runs);
-		ssc_number_t *p_P_mc_out = allocate("P_mc_out", n_od_runs);
-		ssc_number_t *p_T_htf_cold_od = allocate("T_htf_cold_od", n_od_runs);
-		ssc_number_t *p_m_dot_co2_full_od = allocate("m_dot_co2_full_od", n_od_runs);
-		ssc_number_t *p_W_dot_net_od = allocate("W_dot_net_od", n_od_runs);
-		ssc_number_t *p_Q_dot_od = allocate("Q_dot_od", n_od_runs);
-			// Compressor
-		ssc_number_t *p_N_mc_od = allocate("N_mc_od", n_od_runs);
-		ssc_number_t *p_mc_tip_ratio_od = allocate("mc_tip_ratio_od", n_od_runs);
-			// Recompressor
-		ssc_number_t *p_rc_phi_1_od = allocate("rc_phi_1_od", n_od_runs);
-		ssc_number_t *p_rc_phi_2_od = allocate("rc_phi_2_od", n_od_runs);
-		ssc_number_t *p_rc_N_od = allocate("rc_N_od", n_od_runs);
-		ssc_number_t *p_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs);
-			// Turbine
-		ssc_number_t *p_t_nu_od = allocate("t_nu_od", n_od_runs);
-		ssc_number_t *p_t_N_od = allocate("t_N_od", n_od_runs);
-		ssc_number_t *p_t_tip_ratio_od = allocate("t_tip_ratio_od", n_od_runs);
-			// Recuperator
-		ssc_number_t *p_eff_LTR_od = allocate("eff_LTR_od", n_od_runs);
-		ssc_number_t *p_eff_HTR_od = allocate("eff_HTR_od", n_od_runs);
-			// PHX
-		ssc_number_t *p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
-		ssc_number_t *p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
-		ssc_number_t *p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
+		allocate_ssc_outputs(n_od_runs);
 
 		for(int n_run = 0; n_run < n_od_runs; n_run++)
 		{
@@ -617,6 +716,7 @@ public:
 
 			double od_opt_duration = (clock_end - clock_start)/(double) CLOCKS_PER_SEC;		//[s]
 
+			p_od_code[n_run] = off_design_code;
 			if(off_design_code == 0)
 			{	// Off-design call was successful, so write outputs
 					// Control parameters
@@ -696,6 +796,52 @@ public:
 			log(out_msg);
 		}
 		
+	}
+
+	void allocate_ssc_outputs(int n_od_runs)
+	{
+		// Off-design parameters
+		p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
+		p_T_amb_od = allocate("T_amb_od", n_od_runs);
+		p_T_htf_hot_od = allocate("T_htf_hot_od", n_od_runs);
+		// Optimized control parameters
+		p_od_opt_obj_code = allocate("od_opt_obj_code", n_od_runs);
+		p_od_opt_conv_tol = allocate("od_opt_conv_tol", n_od_runs);
+		p_P_comp_in_od = allocate("P_comp_in_od", n_od_runs);
+		p_mc_phi_od = allocate("mc_phi_od", n_od_runs);
+		p_recomp_frac_od = allocate("recomp_frac_od", n_od_runs);
+		// Optimizer parameters
+		p_sim_time_od = allocate("sim_time_od", n_od_runs);
+		// Systems
+		p_eta_thermal_od = allocate("eta_thermal_od", n_od_runs);
+		p_P_mc_out = allocate("P_mc_out", n_od_runs);
+		p_T_htf_cold_od = allocate("T_htf_cold_od", n_od_runs);
+		p_m_dot_co2_full_od = allocate("m_dot_co2_full_od", n_od_runs);
+		p_W_dot_net_od = allocate("W_dot_net_od", n_od_runs);
+		p_Q_dot_od = allocate("Q_dot_od", n_od_runs);
+		// Compressor
+		p_N_mc_od = allocate("N_mc_od", n_od_runs);
+		p_mc_tip_ratio_od = allocate("mc_tip_ratio_od", n_od_runs);
+		// Recompressor
+		p_rc_phi_1_od = allocate("rc_phi_1_od", n_od_runs);
+		p_rc_phi_2_od = allocate("rc_phi_2_od", n_od_runs);
+		p_rc_N_od = allocate("rc_N_od", n_od_runs);
+		p_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs);
+		// Turbine
+		p_t_nu_od = allocate("t_nu_od", n_od_runs);
+		p_t_N_od = allocate("t_N_od", n_od_runs);
+		p_t_tip_ratio_od = allocate("t_tip_ratio_od", n_od_runs);
+		// Recuperator
+		p_eff_LTR_od = allocate("eff_LTR_od", n_od_runs);
+		p_eff_HTR_od = allocate("eff_HTR_od", n_od_runs);
+		// PHX
+		p_T_co2_PHX_in_od = allocate("T_co2_PHX_in_od", n_od_runs);
+		p_T_co2_PHX_out_od = allocate("T_co2_PHX_out_od", n_od_runs);
+		p_phx_eff_od = allocate("phx_eff_od", n_od_runs);
+		// Solver Metrics
+		p_od_code = allocate("od_code", n_od_runs);
+
+		return;
 	}
 
 };
