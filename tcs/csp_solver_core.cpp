@@ -1608,12 +1608,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// 2) Receiver cannot maintain minimum operation fraction
 				//		* Go to power cycle standby or shutdown
 
-				if( !mc_collector_receiver.m_is_sensible_htf )
-				{
-					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
-					throw(C_csp_exception(err_msg, "CSP Solver"));
-				}
-
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -9448,6 +9442,10 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 	bool is_upper_error = false;
 	bool is_lower_error = false;
 
+	// Assume for now that we don't need to iterate between power cycle and solar field pressures and qualities
+	double P_field_out = m_P_cold_des;		//[kPa]
+	double x_field_in = -1;					//[-]
+
 	double diff_T_in = 999.9*tol;		// (Calc - Guess)/Guess: (+) Guess was too low, (-) Guess was too high
 
 	int iter_T_in = 0;
@@ -9539,12 +9537,13 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 		// CR: ON
 		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C], convert from [K]
+		mc_cr_htf_state_in.m_pres = P_field_out;			//[kPa]
+		mc_cr_htf_state_in.m_qual = x_field_in;				//[-]
 
 		mc_collector_receiver.on(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
 			field_control_in,
 			mc_cr_out_solver,
-			//mc_cr_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check if receiver is OFF or model didn't solve
@@ -9598,17 +9597,28 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 		// 3) Solve the power cycle model using receiver outputs
 		// Power Cycle: ON
+			// Inlet State
 		mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
-		mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle
-		// Inputs
+		mc_pc_htf_state_in.m_pres = mc_cr_out_solver.m_P_htf_hot;		//[kPa]
+		mc_pc_htf_state_in.m_qual = mc_cr_out_solver.m_xb_htf_hot;		//[-]
+
+		// For now, check the CR return pressure against the assumed constant system interface pressure
+		if( fabs((mc_cr_out_solver.m_P_htf_hot - P_field_out)/P_field_out) > 0.001 && !mc_collector_receiver.m_is_sensible_htf )
+		{
+			std::string msg = util::format("C_csp_solver::solver_cr_to_pc_to_cr(...) The pressure returned from the CR model, %lg [bar],"
+												" is different than the assumed constant pressure, %lg [bar]",
+												mc_cr_out_solver.m_P_htf_hot/100.0, P_field_out/100.0);
+			mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
+		}
+
+			// Inputs
+		mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle		
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
-			//mc_pc_inputs.m_tou = tou_timestep;
 		// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			//mc_pc_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Check that power cycle is producing power or model didn't solve
