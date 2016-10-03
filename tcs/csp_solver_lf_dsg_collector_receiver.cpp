@@ -1376,8 +1376,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			double m_dot_lower = m_m_dot_min;		//[kg/s]
 
 			// Set guess values... can be smarter about this, maybe
-			double m_dot_guess_upper = 0.75*m_dot_upper + 0.25*m_dot_upper;	//[kg/s]
-			double m_dot_guess_lower = 0.25*m_dot_upper + 0.75*m_dot_upper;	//[kg/s]
+			double m_dot_guess_upper = 0.75*m_dot_upper + 0.25*m_dot_lower;	//[kg/s]
+			double m_dot_guess_lower = 0.25*m_dot_upper + 0.75*m_dot_lower;	//[kg/s]
 
 			// Set solver settings
 			c_h_out_target_solver.settings(0.001, 30, m_dot_lower, m_dot_upper, false);
@@ -1403,9 +1403,14 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				on_success = false;
 			}
 
+			// Get pressure and target enthalpy calculated in Solver Class
+			h_sca_out_target = c_h_out_target.m_h_sca_out_target;	//[kJ/kg]
+			P_field_out = c_h_out_target.m_P_field_out;				//[bar]
+
 		}	// end iteration on mass flow rate to hit target enthalpy
 
 	}
+	// Else, we can run at min mass flow without overheating the loop, so we're finished here
 	
 	if( on_success )
 	{
@@ -1420,7 +1425,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// The controller requires the total mass flow rate from the CR
 		cr_out_solver.m_m_dot_salt_tot = m_dot_loop*(double)m_nLoops*3600.0;	//[kg/hr]
 			// Thermal power absorbed by steam/water
-		cr_out_solver.m_q_thermal = m_dot_loop*(double)m_nLoops*(mc_sys_cold_in_t_int.m_enth - mc_sys_hot_out_t_int.m_enth)/1.E3;	//[MWt]
+		cr_out_solver.m_q_thermal = m_dot_loop*(double)m_nLoops*(mc_sys_hot_out_t_int.m_enth - mc_sys_cold_in_t_int.m_enth) / 1.E3;	//[MWt]
 			// Outlet temperature (set quality below)
 		cr_out_solver.m_T_salt_hot = mc_sys_hot_out_t_int.m_temp;
 
@@ -1433,7 +1438,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_dP_sf_sh = 0.0;				//[bar]
 		cr_out_solver.m_h_htf_hot = mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
 		cr_out_solver.m_xb_htf_hot = mc_sys_hot_out_t_int.m_x;			//[-]
-		cr_out_solver.m_P_htf_hot = mc_sys_hot_out_t_int.m_pres;		//[kPa]
+		cr_out_solver.m_P_htf_hot = mc_sys_hot_out_t_int.m_pres*100.0;	//[kPa], convert from bar
 	}
 	else
 	{
@@ -1454,11 +1459,6 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_xb_htf_hot = 0.0;			//[-]
 		cr_out_solver.m_P_htf_hot = 0.0;			//[kPa]
 	}
-
-	// Else, we can run at min mass flow without overheating the loop, so we're finished here
-
-	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on() is not complete"));
-
 
 	return;
 }
@@ -1542,6 +1542,20 @@ void C_csp_lf_dsg_collector_receiver::converged()
 		mc_sca_out_t_end_last[i].m_temp = mc_sca_out_t_end_converged[i].m_temp = mc_sca_out_t_end[i].m_temp;    //[K]
 		mc_sca_out_t_end_last[i].m_x    = mc_sca_out_t_end_converged[i].m_x = mc_sca_out_t_end[i].m_x;		    //[-]
 	}
+
+	// Check that, if trough is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
+	if( m_operating_mode == ON && mc_sys_hot_out_t_end.m_temp < m_T_startup )
+	{
+		m_operating_mode = OFF;
+	}
+
+	if( m_operating_mode == C_csp_collector_receiver::STEADY_STATE )
+	{
+		throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
+			"Trough converged method"));
+	}
+
+	m_operating_mode_converged = m_operating_mode;	//[-]
 
 	return;
 }
