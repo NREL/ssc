@@ -11,6 +11,8 @@
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_two_tank_tes.h"
 
+static bool ssc_linear_fresnel_dsg_iph_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec);
+
 static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 /*	EXAMPLE LINES FOR INPUTS
     { SSC_INPUT,        SSC_NUMBER,      "XXXXXXXXXXXXXX",    "Label",                                                                               "",              "",            "sca",            "*",                       "",                      "" },
@@ -187,8 +189,6 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	// Type 261 (net energy calculator) outputs
 	{ SSC_OUTPUT, SSC_ARRAY, "Q_thermal", "Thermal power to HTF", "MWt", "", "CR", "", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "gen", "Total electric power to grid w/ avail. derate", "kWe", "", "System", "", "", "" },
-
 	var_info_invalid };
 
 class cm_linear_fresnel_dsg_iph : public tcKernel
@@ -205,10 +205,34 @@ public:
 
 	void exec( ) throw( general_error )
 	{
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		weather_reader.m_filename = as_string("file_name");
+		weather_reader.m_trackmode = 0;
+		weather_reader.m_tilt = 0.0;
+		weather_reader.m_azimuth = 0.0;
+		weather_reader.init();
+
+		// Set up ssc output arrays
+		// Set steps per hour
+		double nhourssim = 8760.0;				//[hr] Number of hours to simulate
+		C_csp_solver::S_sim_setup sim_setup;
+		sim_setup.m_sim_time_start = 0.0;				//[s] starting first hour of year
+		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
+
+		int steps_per_hour = 1;			//[-]
+
+		int n_wf_records = weather_reader.get_n_records();
+		steps_per_hour = n_wf_records / 8760;	//[-]
+
+		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
+		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
+		//***************************************************************************
+		//***************************************************************************
+
 		C_csp_lf_dsg_collector_receiver c_lf_dsg;
 		
 		// Now set solar field collector unit parameters
-		c_lf_dsg.m_tes_hours = 0.0;			//[hr] No TES for DSG... -> need to remove from LFDSG CR
 		c_lf_dsg.m_q_max_aux = 0.0;			//[kWt] No aux for IPH
 		c_lf_dsg.m_LHV_eff = 1.0;			//[-] No aux for IPH
 		c_lf_dsg.m_T_set_aux = as_double("T_hot") + 273.15;				//[K], convert from [C]
@@ -223,17 +247,29 @@ public:
 		c_lf_dsg.m_fP_hdr_h = as_double("fP_hdr_h");			//[-]
 		c_lf_dsg.m_q_pb_des = as_double("q_pb_des")*1000.0;		//[kWt]   Q_ref ); // = P_ref/eta_ref;
 		c_lf_dsg.m_W_pb_des = 0.0;								//[kWe]
-		c_lf_dsg.m_cycle_max_fraction = as_double("cycle_max_fraction"); //[-] Used to calculate max mass flow - replace w/ actual variable that does this...
-		c_lf_dsg.m_cycle_cutoff_frac = 0.9;						//[-] Scales the design pressure to find the lowest expected pressure in system
+		
+		// These parameters describe the mass flow rate limits of specifically the solar field
+		c_lf_dsg.m_m_dot_max_frac = 1.2;
+		c_lf_dsg.m_m_dot_min_frac = 0.2;
+
+		// These parameters describe the limits on what the power cycle / heat sink can accept
+		// So, this *could* be left to the controller. 
+		// In the process heat model, we assume the heat sink can accept everything the solar field produces
+		// So we set these values to extremes.
+		// In the Power Generation model, these values are used to scale pressure, which makes things more complicated
+		// And is why we can't use min/max calcs to combine these with the m_m_dot_min/max_frac values above
+		c_lf_dsg.m_cycle_max_fraction = 100.0;					//[-]
+		c_lf_dsg.m_cycle_cutoff_frac = 0.0;						//[-] Scales the design pressure to find the lowest expected pressure in system
+		
+		
 		c_lf_dsg.m_t_sby_des = 0.0;								//[hr] Used to calculated q_dot_aux, so hardcode = 0
 		c_lf_dsg.m_q_sby_frac = 0.0;							//[-] Used to calculated q_dot_aux, so hardcode = 0
-		c_lf_dsg.m_solarm = 0.0;								//[-] Parameter not used -> need to remove from LFDSG CR
 		c_lf_dsg.m_PB_pump_coef = 0.0;							//[kW/kg] Parameter not used -> need to remove from LFDSG CR
 		c_lf_dsg.m_PB_fixed_par = 0.0;							//[-] Calculates fixed parasitics in CR class. Set to 0 and calculate this parasitic somewhere else
 		c_lf_dsg.m_fossil_mode = 4;								//[-] in mode 4 the fossil mode sets the off-design pressure to the design pressure
 		c_lf_dsg.m_I_bn_des = as_double("I_bn_des");			//[W/m2]
-		c_lf_dsg.m_is_sh = 0;									//[-] IPH is boiler, for now
 		c_lf_dsg.m_is_oncethru = true;							//[-] Once through because assuming boiler only, for now
+		c_lf_dsg.m_is_sh_target = false;						//[-] Targeting 2-phase outlet
 		c_lf_dsg.m_is_multgeom = false;							//[-] Only one geometry because assuming boiler only, for now
 		c_lf_dsg.m_nModBoil = as_integer("nModBoil");			//[-] Number of modules in a loop
 		c_lf_dsg.m_nModSH = 0;									//[-] No superheat, for now
@@ -242,7 +278,6 @@ public:
 		c_lf_dsg.m_latitude = as_double("latitude")*0.0174533;	//[rad], convert from [deg]
 		c_lf_dsg.m_theta_stow = as_double("theta_stow")*0.0174533;	//[rad], convert from [deg]
 		c_lf_dsg.m_theta_dep = as_double("theta_dep")*0.0174533;	//[rad], convert from [deg]
-		c_lf_dsg.m_m_dot_min = as_double("m_dot_min");			//[kg/s] 
 		c_lf_dsg.m_T_field_ini = as_double("T_cold_ref") +275.15;	//[K], convert from [C]
 		c_lf_dsg.m_T_fp = as_double("T_fp") + 273.15;			//[K], convert from [C]
 		c_lf_dsg.m_Pipe_hl_coef = as_double("Pipe_hl_coef");	//[W/m2-K]
@@ -326,6 +361,9 @@ public:
 		steam_heat_sink.ms_params.m_T_cold_des = as_double("T_cold_ref");	//[C] Outlet temperature = FIELD design inlet temperature
 		steam_heat_sink.ms_params.m_dP_frac_des = 0.0;						//[-] Fractional pressure drop through heat sink at design
 		steam_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_des");		//[MWt] Design thermal power to heat sink
+		steam_heat_sink.ms_params.m_m_dot_max_frac = c_lf_dsg.m_cycle_max_fraction;	//[-]
+		steam_heat_sink.ms_params.m_pump_eta_isen = 1.0;					//[-]
+
 
 		// ********************************
 		// ********************************
@@ -351,21 +389,175 @@ public:
 		// ********************************
 		// ********************************
 		C_csp_two_tank_tes storage;
-		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;
-
-		// Weather reader
-		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("file_name");
-		weather_reader.m_trackmode = 0;
-		weather_reader.m_tilt = 0.0;
-		weather_reader.m_azimuth = 0.0;
-		weather_reader.init();
+		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;		
 
 		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, c_lf_dsg, steam_heat_sink, storage, tou, system);
 
+		int out_type = -1;
+		std::string out_msg = "";
+		try
+		{
+			// Initialize Solver
+			csp_solver.init(); 
+		}
+		catch( C_csp_exception &csp_exception )
+		{
+			// Report warning before exiting with error
+			while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
+			{
+				log(out_msg, out_type);
+			}
+
+			log(csp_exception.m_error_message, SSC_ERROR, -1.0);
+
+			return;
+		}
+
+		float **ptr_array = new float*[C_csp_solver::N_END];
+
+		for( int i = 0; i < C_csp_solver::N_END; i++ )
+		{
+			ptr_array[i] = 0;
+		}
+
+		// Simulation outputs
+		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr1", n_steps_fixed);
+		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen1", n_steps_fixed);
+		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz1", n_steps_fixed);
+		ptr_array[C_csp_solver::BEAM] = allocate("beam1", n_steps_fixed);
+		ptr_array[C_csp_solver::TDRY] = allocate("tdry1", n_steps_fixed);
+		ptr_array[C_csp_solver::TWET] = allocate("twet1", n_steps_fixed);
+		ptr_array[C_csp_solver::RH] = allocate("rh1", n_steps_fixed);
+
+		// Collector-receiver outputs
+		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus1", n_steps_fixed);
+		// 7.26.16, twn: Need to keep this for now, for mass balance
+		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
+		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec1", n_steps_fixed);
+
+		// Power cycle outputs
+		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
+
+		// Thermal energy storage outputs
+		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc1", n_steps_fixed);
+		ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch1", n_steps_fixed);
+
+		// Parasitics outputs
+		ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi1", n_steps_fixed);
+		ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump1", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot1", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed1", n_steps_fixed);
+		ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot1", n_steps_fixed);
+
+		// System outputs
+		ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net1", n_steps_fixed);
+
+		// Controller outputs
+		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value1", n_steps_fixed);
+		ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult1", n_steps_fixed);
+		ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
+		ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
+		ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance1", n_steps_fixed);
+		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance1", n_steps_fixed);
+
+
+		ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max1", n_steps_fixed);
+		ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target1", n_steps_fixed);
+
+		ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc1", n_steps_fixed);
+		ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch1", n_steps_fixed);
+
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b1", n_steps_fixed);
+		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c1", n_steps_fixed);
+
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar1", n_steps_fixed);
+		ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time1", n_steps_fixed);
+
+		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
+
+		try
+		{
+			// Simulate !
+			csp_solver.Ssimulate(sim_setup,
+				ssc_linear_fresnel_dsg_iph_sim_progress, (void*)this,
+				ptr_array);
+		}
+		catch( C_csp_exception &csp_exception )
+		{
+			// Report warning before exiting with error
+			while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
+			{
+				log(out_msg);
+			}
+
+			log(csp_exception.m_error_message, SSC_WARNING);
+			delete[] ptr_array;
+
+			return;
+		}
+
+		// ************************************
+		// ************************************
+		delete[] ptr_array;
+		// ************************************
+		// ************************************
+
 	}
 
 };
+
+static bool ssc_linear_fresnel_dsg_iph_sim_progress(void *data, double percent, C_csp_messages *csp_msg, float time_sec)
+{
+	cm_linear_fresnel_dsg_iph *cm = static_cast<cm_linear_fresnel_dsg_iph*> (data);
+	if( !cm )
+		false;
+
+	if( csp_msg != 0 )
+	{
+		int out_type;
+		string message;
+		while( csp_msg->get_message(&out_type, &message) )
+		{
+			cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
+		}
+	}
+	bool ret = cm->update("", percent);
+
+	return ret;
+}
 
 DEFINE_TCS_MODULE_ENTRY(linear_fresnel_dsg_iph, "CSP model using the linear fresnel TCS types.", 4)
