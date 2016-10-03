@@ -115,7 +115,8 @@ private:
 		// Energy Balance
 	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
 	util::matrix_t<double> m_eta_optical;	//[-] Optical efficiency for each collector geometry
-	std::vector<double> m_q_rec;		//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+	std::vector<double> m_q_rec;			//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+	std::vector<double> m_q_rec_control_df;	//[kWt] Incident thermal power on receiver after *optical* and CONTROL defocus
 	std::vector<double> m_q_loss;		//[kWt] Thermal loss for each receiver in loop
 	std::vector<double> m_q_abs;		//[kWt] Thermal power absorbed by steam in each receiver
 	
@@ -145,6 +146,8 @@ private:
 		const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
 
 	double od_pressure(double m_dot_loop /*kg/s*/);
+
+	void apply_component_defocus(double defocus /*-*/);
 
 public:
 
@@ -438,6 +441,34 @@ public:
 		double m_h_sca_out_target;	//[kJ/kg]
 	
 		virtual int operator()(double m_dot_loop /*kg/s*/, double *diff_h_loop_out /*kJ/kg*/);
+	};
+
+	class C_mono_eq_defocus : public C_monotonic_equation
+	{
+	private:
+		C_csp_lf_dsg_collector_receiver *mpc_dsg_lf;
+		C_csp_weatherreader::S_outputs ms_weather;
+		double m_T_cold_in;		//[K]
+		double m_P_field_out;	//[bar]
+		double m_m_dot_loop;	//[kg/s]
+		double m_h_sca_out_target;	//[kJ/kg]
+		C_csp_solver_sim_info ms_sim_info;
+
+	public:
+		C_mono_eq_defocus(C_csp_lf_dsg_collector_receiver *pc_dsg_lf, const C_csp_weatherreader::S_outputs &weather,
+			double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/,
+			double h_sca_out_target /*kJ/kg*/, const C_csp_solver_sim_info &sim_info)
+		{
+			mpc_dsg_lf = pc_dsg_lf;
+			ms_weather = weather;
+			m_T_cold_in = T_cold_in;		//[K]
+			m_P_field_out = P_field_out;	//[bar]
+			m_m_dot_loop = m_dot_loop;		//[kg/s]
+			m_h_sca_out_target = h_sca_out_target;	//[kJ/kg]
+			ms_sim_info = sim_info;
+		}
+	
+		virtual int operator()(double defocus /*-*/, double *diff_h_loop_out /*kJ/kg*/);
 	};
 
 };
