@@ -27,6 +27,9 @@ static var_info vtab_cashloan[] = {
 	// added 9/26/16 for Owen Zinaman Mexico
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "Cash Flow", "*", "", "" },
+	// added 10/2/16
+	{ SSC_INPUT, SSC_NUMBER, "en_real_discount_eq_wacc", "Set real discount rate to WACC", "0/1", "0=No,1=Yes", "Cashloan", "?=0", "BOOLEAN", "" },
+
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -261,6 +264,7 @@ public:
 		bool is_commercial = (as_integer("market")==1);
 		bool is_mortgage = (as_integer("mortgage")==1);
 
+		bool real_discount_eq_wacc = (as_integer("en_real_discount_eq_wacc") == 1);
 
 //		throw exec_error("cmod_cashloan", "mortgage = " + util::to_string(as_integer("mortgage")));
 //		if (is_commercial) log("commercial market"); else log("residential market");
@@ -349,8 +353,20 @@ public:
 		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
 		double state_tax_rate = as_double("state_tax_rate")*0.01;
 		double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
-		
+
+		int loan_term = as_integer("loan_term");
+		double loan_rate = as_double("loan_rate")*0.01;
+		double debt_frac = as_double("debt_fraction")*0.01;
+
 		double real_discount_rate = as_double("real_discount_rate")*0.01;
+
+		// calculate real discount rate to set using wacc=dr
+		if (real_discount_eq_wacc)
+		{
+			real_discount_rate = (inflation_rate * (1.0 - debt_frac) + (1.0 - effective_tax_rate) * loan_rate * debt_frac) 
+				/ (1.0 - (1.0 + inflation_rate) * (1.0 - debt_frac));
+		}
+
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
 
@@ -360,10 +376,6 @@ public:
 //		double total_cost = hard_cost + soft_cost;
 		double total_cost = as_double("total_installed_cost");
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
-
-		int loan_term = as_integer("loan_term");
-		double loan_rate = as_double("loan_rate")*0.01;
-		double debt_frac = as_double("debt_fraction")*0.01;
 				
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
