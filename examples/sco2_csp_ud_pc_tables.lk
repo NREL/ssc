@@ -16,6 +16,8 @@ var('eta_thermal_des', 0.50);	//[-] Power cycle thermal efficiency
 var('eta_isen_mc', 0.89);		//[-] Main compressor isentropic efficiency
 var('eta_isen_rc', 0.89);		//[-] Re-compressor isentropic efficiency
 var('eta_isen_t', 0.93);		//[-] Turbine isentropic efficiency
+var('LT_recup_eff_max', 1.0);	//[-] Maximum allowable effectiveness in LT recuperator
+var('HT_recup_eff_max', 1.0);	//[-] Maximum allowable effectiveness in HT recuperator
 var('P_high_limit',25);			//[MPa] Cycle high pressure limit
 	// PHX design
 var('dT_PHX_cold_approach', 20);	//[C] Temperature difference between cold HTF and cold CO2 PHX inlet
