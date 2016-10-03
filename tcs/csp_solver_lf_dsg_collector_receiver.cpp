@@ -383,6 +383,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_h_in.resize(m_nModTot, 1);
 	m_h_out.resize(m_nModTot, 1);
 	m_q_rec.resize(m_nModTot);
+	m_q_rec_control_df.resize(m_nModTot);
 
 	mc_sca_out_t_end_converged.resize(m_nModTot);
 	mc_sca_out_t_end_last.resize(m_nModTot);
@@ -397,6 +398,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_h_in.fill(0.0);
 	m_h_out.fill(0.0);
 	m_q_rec.assign(m_q_rec.size(), 0.0);	//[kWt]
+	m_q_rec_control_df.assign(m_q_rec_control_df.size(), 0.0);	//[kWt]
 
 	// Set any constants
 	m_fP_turb_min = 0.5;								//[-] Minimum fractional operating pressure at the turbine inlet
@@ -1264,6 +1266,36 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	return;
 }
 
+void C_csp_lf_dsg_collector_receiver::apply_component_defocus(double defocus /*-*/)
+{
+	// Calculate the design-point incident energy on each module for a single loop
+	for( int i = 0; i < m_nModTot; i++ )
+	{
+		m_q_rec[i] = defocus * m_q_rec_control_df[i];		//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+	}
+}
+
+int C_csp_lf_dsg_collector_receiver::C_mono_eq_defocus::operator()(double defocus /*-*/, double *diff_h_loop_out /*kJ/kg*/)
+{
+	// Apply the component defocus to calculate a new m_q_rec
+	mpc_dsg_lf->apply_component_defocus(defocus);
+
+	// Solve the once through loop energy balance
+	int exit_code = mpc_dsg_lf->once_thru_loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_P_field_out,
+										m_m_dot_loop, m_h_sca_out_target, ms_sim_info);
+
+	if( exit_code != E_loop_energy_balance_exit::SOLVED )
+	{
+		*diff_h_loop_out = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Set the relative difference between calculated and target sca outlet enthalpies
+	*diff_h_loop_out = (mpc_dsg_lf->mc_sca_out_t_end[mpc_dsg_lf->m_nModTot - 1].m_enth - m_h_sca_out_target) / m_h_sca_out_target;	//[-]
+
+	return 0;
+}
+
 void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,
@@ -1280,7 +1312,28 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	// If Control Defocus: field_control < 1, then apply it here
 	if( field_control < 1.0 )
 	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on::control_defocus() is not complete"));	
+		// Calculate the design-point incident energy on each module for a single loop
+		for( int i = 0; i < m_nModTot; i++ )
+		{
+			int gset = 0;
+			if( (i >= m_nModBoil) && (m_is_multgeom) )
+				gset = 1;
+			else
+				gset = 0;
+			m_q_rec_control_df[i] = field_control* m_q_inc[i] * m_opteff_des.at(gset, 0);	//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+		}
+
+		m_q_rec = m_q_rec_control_df;	//[kWt]
+	}
+	else if(field_control == 1.0)
+	{
+		// If no CONTROL defocus, then baseline against the vector return by 'loop_optical_eta'
+		m_q_rec_control_df = m_q_rec;		//[kWt]
+	}
+	else
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) received a CONTROL defocus > 1.0, "
+			"and that is not ok!"));
 	}
 
 	// Solve the loop energy balance at the minimum mass flow rate
@@ -1366,7 +1419,41 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// then need to defocus
 		if( (mc_sca_out_t_end[m_nModTot - 1].m_enth - h_sca_out_target) / h_sca_out_target > 0.001 && on_success )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on::COMPONENT_defocus() is not complete"));
+			C_mono_eq_defocus c_defocus_eq(this, weather, T_cold_in, P_field_out, m_dot_loop, h_sca_out_target, sim_info);
+			C_monotonic_eq_solver c_defocus_solver(c_defocus_eq);
+
+			// Set upper and lower bounds
+			double defocus_upper = 1.0;		//[-]
+			double defocus_lower = 0.0;		//[-]
+
+			// Generate guess values
+			double defocus_guess_upper = min(1.0, (h_sca_out_target - mc_sys_cold_in_t_int.m_enth)/(mc_sca_out_t_end[m_nModTot - 1].m_enth - mc_sys_cold_in_t_int.m_enth));
+			double defocus_guess_lower = 0.9*defocus_guess_upper;
+
+			// Set solver settings
+			c_defocus_solver.settings(0.001, 30, defocus_lower, defocus_upper, false);
+
+			int defocus_iter = -1;
+			double defocus_tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+			int defocus_code = 0;
+			double defocus_solved = 1.0;
+			try
+			{
+				defocus_code = c_defocus_solver.solve(defocus_guess_lower, defocus_guess_upper, 0.0, 
+													defocus_solved, defocus_tol_solved, defocus_iter);
+			}
+			catch( C_csp_exception & csp_except )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed."));
+				on_success = false;
+			}
+
+			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed."));
+				on_success = false;
+			}
 		}
 		else if(on_success)
 		{	
