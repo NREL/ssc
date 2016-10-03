@@ -914,7 +914,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 	}
 
 	// Calculate energy added to water
-	m_Q_fp = m_m_dot_loop*(mpc_dsg_lf->mc_sys_cold_in_t_int.m_enth-mpc_dsg_lf->mc_sys_hot_out_t_int.m_enth)/1.E3*ms_sim_info.ms_ts.m_step;	//[MJ]
+	m_Q_fp = m_m_dot_loop*(double)mpc_dsg_lf->m_nLoops*(mpc_dsg_lf->mc_sys_cold_in_t_int.m_enth-mpc_dsg_lf->mc_sys_hot_out_t_int.m_enth)/1.E3*ms_sim_info.ms_ts.m_step;	//[MJ]
 
 	// Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
 	*E_loss_balance = (m_Q_fp - mpc_dsg_lf->m_Q_field_losses_total) / mpc_dsg_lf->m_Q_field_losses_total;		//[-]
@@ -978,18 +978,23 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 
 	// Set upper and lower bounds on independent variable: T_cold_in
 	double T_cold_in_lower = T_cold_in;		//[K]
-	double T_cold_in_upper = std::numeric_limits<double>::quiet_NaN();	//[K]
+	int wp_code = water_PQ(P_field_out*100.0, 0.5, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::freeze protection find Boiling Temperature", "water_PQ error", wp_code));
+	}
+	double T_cold_in_upper = wp.temp - 1.0;		//[K]
 
 	// Set two initial guess values
-	double q_dot_field_losses_tot = m_Q_field_losses_total / sim_info_temp.ms_ts.m_step*1.E3;		//[kWt]
-	double h_guess_lower = h_sca_out_target + q_dot_field_losses_tot / m_dot_loop;		//[kJ/kg]
-	int wp_code = water_PH(P_field_out*100.0, h_guess_lower, &wp);
+	double q_dot_field_losses_tot = m_Q_field_losses_total / sim_info_temp.ms_ts.m_step*1.E3;			//[kWt]
+	double h_guess_lower = h_sca_out_target + q_dot_field_losses_tot / ((double)m_nLoops*m_dot_loop);	//[kJ/kg]
+	wp_code = water_PH(P_field_out*100.0, h_guess_lower, &wp);
 	if( wp_code != 0 )
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::freeze protection initial guess", "water_PH error", wp_code));
 	}
 	double T_guess_lower = wp.temp;		//[K]
-	double T_guess_upper = T_guess_lower + T_guess_upper;	//[K]
+	double T_guess_upper = T_guess_lower + 10.0;	//[K]
 
 	// Set solver settings - monotonic equation is calculating an eror, so want to get to 0
 	c_fp_solver.settings(0.01, 30, T_cold_in_lower, T_cold_in_upper, false);
@@ -1084,12 +1089,13 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// Check if freeze protection is required
 		if( mc_sca_out_t_int[m_nModTot-1].m_temp < m_T_fp + 10.0 )
 		{
-			double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
-			int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
+			if(m_Q_field_losses_total > 0.0)
+			{
+				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+				int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
 
-			Q_fp_sum += Q_fp_i;		//[MJ]
-
-			throw(C_csp_exception("Step through off::freeze protection before deleting this..."));
+				Q_fp_sum += Q_fp_i;		//[MJ]
+			}
 		}
 
 		// Add current enthalpy to summation
@@ -1197,12 +1203,13 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Check if freeze protection is required
 		if( mc_sca_out_t_int[m_nModTot - 1].m_temp < m_T_fp + 10.0 )
 		{
-			double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
-			int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
+			if(m_Q_field_losses_total > 0.0)
+			{
+				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+				int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
 
-			Q_fp_sum += Q_fp_i;		//[MJ]
-
-			throw(C_csp_exception("Step through off::freeze protection before deleting this..."));
+				Q_fp_sum += Q_fp_i;		//[MJ]
+			}
 		}
 
 		// Add current enthalpy to summation
@@ -1244,7 +1251,8 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_q_thermal = 0.0;
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;		//[C]
 
-	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;		//[MWt]
+	// Should never have freeze protection AND a sub-timestep, but let's calculate this correctly anyway
+	cr_out_solver.m_E_fp_total = Q_fp_sum / time_required_su;		//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;							//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = 0.0;								//[MWe]
 
