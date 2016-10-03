@@ -231,9 +231,6 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 // The names of the output variables should match the parameter names for the TCS units in order to signal the TCS kernel to store the values by timestep
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Thermal power to HTF",                                                   "MWt",          "",            "CR",             "",                       "",           "" },
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "gen",                  "Total electric power to grid w/ avail. derate",                          "kWe",          "",            "System",         "",                       "",           "" },
-
-
 	var_info_invalid };
 	
 	
@@ -786,6 +783,8 @@ public:
 		ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr1", n_steps_fixed);
 		ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar1", n_steps_fixed);
 		ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time1", n_steps_fixed);
+
+		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 
 		try
 		{
