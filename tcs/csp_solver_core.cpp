@@ -1915,11 +1915,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				m_defocus = 1.0;
 
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+				mc_cr_htf_state_in.m_pres = m_P_cold_des;					//[kPa]
+				mc_cr_htf_state_in.m_qual = m_x_cold_des;					//[-]
 
 				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check that startup happened
@@ -1942,16 +1943,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// Power Cycle: OFF
 				mc_pc_htf_state_in.m_temp = m_cycle_T_htf_hot_des - 273.15;	//[C]
+				mc_pc_htf_state_in.m_pres = m_cycle_P_hot_des;		//[kPa]
+				mc_pc_htf_state_in.m_qual = m_cycle_x_hot_des;		//[-]
 				mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr] no mass flow rate to power cycle
-				// Inputs
+					// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::OFF;
-				//mc_pc_inputs.m_tou = tou_timestep;
-				// Performance Call
+					// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( m_is_tes )
