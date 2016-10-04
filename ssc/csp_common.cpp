@@ -49,6 +49,10 @@ bool solarpilot_invoke::run()
 
 	// read inputs from SSC module
 		
+    //fin.is_pmt_factors.val = true;
+    //testing <<<
+
+
 	bool isopt = m_cmod->as_boolean( "is_optimize" );
     if(isopt)
     {
@@ -156,8 +160,17 @@ bool solarpilot_invoke::run()
 	fin.land_spec_cost.val = m_cmod->as_double("land_spec_cost");
 	fin.contingency_rate.val = m_cmod->as_double("contingency_rate");
 	fin.sales_tax_rate.val = m_cmod->as_double("sales_tax_rate");
-	fin.sales_tax_rate.val = m_cmod->as_double("sales_tax_frac");
+	fin.sales_tax_frac.val = m_cmod->as_double("sales_tax_frac");
 	fin.fixed_cost.val = m_cmod->as_double("cost_sf_fixed");
+    ////update financial tables
+    //fin.weekday_sched.val = m_cmod->value("dispatch_sched_weekday").str;
+    //fin.weekend_sched.val = m_cmod->value("dispatch_sched_weekend").str;
+    //std::string ps;
+    //for(int i=0; i<9; i++)
+    //    ps.append( m_cmod->as_double("dispatch_factor" + my_to_string(i+1)) + i < 8 ? "," : "" );
+    //fin.pricing_array.Val().clear();
+    //fin.pricing_array.set_from_string( ps.c_str() );
+
 	
 	//set up the weather data for simulation
 	const char *wffile = m_cmod->as_string("solar_resource_file" );

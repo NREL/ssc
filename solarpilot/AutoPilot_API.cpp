@@ -267,17 +267,17 @@ struct AutoOptHelper
 
         m_all_points.push_back( current );
 
-        double obj, flux;
+        double obj, flux, cost;
         
         //Evaluate the objective function value
         if(! 
-        m_autopilot->EvaluateDesign( obj, flux) 
+        m_autopilot->EvaluateDesign( obj, flux, cost) 
             ){
             string errmsg = "Optimization failed at iteration " + my_to_string(m_iter) + ". Terminating simulation.";   
             throw spexception(errmsg.c_str());
         }
         //Update variables as needed
-        m_autopilot->PostEvaluationUpdate(m_iter, current, m_normalizers, obj, flux);
+        m_autopilot->PostEvaluationUpdate(m_iter, current, m_normalizers, obj, flux, cost);
 
         m_objective.push_back(obj);
         m_flux.push_back(flux);
@@ -795,7 +795,7 @@ void AutoPilot::CancelSimulation()
 
 
 
-bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
+bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot_cost)
 {
 	/* 
 	Create a layout and evaluate the optimization objective function value with as little 
@@ -850,7 +850,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
 	double power = optical_power * cycle_eff*1.e-6;		//MW-h
 
 	//get the total plant cost
-	double cost = V->fin.total_installed_cost.Val();
+	tot_cost = V->fin.total_installed_cost.Val();
 	
 	//Get the maximum flux value
 	flux_max=0.;
@@ -869,7 +869,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max)
 
 	//Set the optimization objective value
 	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
-	obj_metric = cost/power 
+	obj_metric = tot_cost/power 
 		* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
 
@@ -995,6 +995,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 	vector<vector<double> > all_sim_points; //keep track of all of the positions simulated
 	vector<double> objective;
 	vector<double> max_flux;
+	vector<double> tot_costs;
 	double objective_old=9.e22;
 	double objective_new=9.e21;
 	int sim_count_begin = 0;
@@ -1006,7 +1007,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     os << "\n\nBeginning Simulation\nIter ";
     for(int i=0; i<(int)optvars.size(); i++)
         os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
-    os << "| Obj.    | Flux";
+    os << "| Obj.    | Flux    | Plant cost";
 
 	_summary_siminfo->addSimulationNotice(os.str());
 	while( ! converged ){
@@ -1034,12 +1035,13 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 		for(int i=0; i<(int)optvars.size(); i++)
 			*optvars.at(i) = current.at(i) * normalizers.at(i);
 		all_sim_points.push_back( current );
-		double base_obj, base_flux;
-		EvaluateDesign(base_obj, base_flux);			
-		PostEvaluationUpdate(sim_count++, current, normalizers, base_obj, base_flux);
+		double base_obj, base_flux, cost;
+		EvaluateDesign(base_obj, base_flux, cost);			
+		PostEvaluationUpdate(sim_count++, current, normalizers, base_obj, base_flux, cost);
 		if(_cancel_simulation) return false;
 		objective.push_back( base_obj );
 		max_flux.push_back( base_flux );
+		tot_costs.push_back( cost );
 		vector<double> surface_objective;
 		vector<vector<double> > surface_eval_points;
 		surface_objective.push_back( base_obj );
@@ -1094,15 +1096,16 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				*optvars.at(j) = runs.at(i).at(j) * normalizers.at(j);
 			
 			//Evaluate the design
-			double obj, flux;
+			double obj, flux, cost;
 			all_sim_points.push_back( runs.at(i) );
-			EvaluateDesign(obj, flux);
-			PostEvaluationUpdate(sim_count++, runs.at(i), normalizers, obj, flux);
+			EvaluateDesign(obj, flux, cost);
+			PostEvaluationUpdate(sim_count++, runs.at(i), normalizers, obj, flux, cost);
 			if(_cancel_simulation) return false;
 			surface_objective.push_back(obj);
 			surface_eval_points.push_back( runs.at(i) );
 			objective.push_back( obj);
 			max_flux.push_back(flux);
+		    tot_costs.push_back( cost );
 		}
 
 		//construct a bilinear regression model
@@ -1264,16 +1267,17 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			}
 
 			//Evaluate the design
-			double obj, flux;
+			double obj, flux, cost;
 			all_sim_points.push_back( current );
-			EvaluateDesign(obj, flux);
-			PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
+			EvaluateDesign(obj, flux, cost);
+			PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux, cost);
 			if(_cancel_simulation) return false;
 			if(minmax_iter > 0)
 				prev_obj = objective.back();	//update the latest objective function value
 			objective.push_back( obj );
 			all_steep_objs.push_back( obj );
 			max_flux.push_back( flux );
+		    tot_costs.push_back( cost );
 
 			minmax_iter++;
 			if(minmax_iter >= max_desc_iter)
@@ -1390,19 +1394,20 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 			site_a_gs = interpolate_vectors(lower_gs, upper_gs, 1. - golden_ratio);
 			site_b_gs = interpolate_vectors(lower_gs, upper_gs, golden_ratio);
 				
-			double obj, flux;
+			double obj, flux, cost;
 			//Evaluate at the lower point
 			if(! site_a_sim_ok ){
 				current = site_a_gs;
 				for(int i=0; i<(int)optvars.size(); i++)
 					*optvars.at(i) = current.at(i) * normalizers.at(i);
 				all_sim_points.push_back( current );
-				EvaluateDesign(obj, flux);			
-				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
+				EvaluateDesign(obj, flux, cost);			
+				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux, cost);
 				if(_cancel_simulation) return false;
 				za = obj;
 				objective.push_back( obj );
 				max_flux.push_back( flux );
+		        tot_costs.push_back( cost );
 			}
 
             if(! _summary_siminfo->setCurrentSimulation(gsiter*2 + 1) ){
@@ -1416,12 +1421,13 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 				for(int i=0; i<(int)optvars.size(); i++)
 					*optvars.at(i) = current.at(i) * normalizers.at(i);
 				all_sim_points.push_back( current );
-				EvaluateDesign(obj, flux);			
-				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux);
+				EvaluateDesign(obj, flux, cost);			
+				PostEvaluationUpdate(sim_count++, current, normalizers, obj, flux, cost);
 				if(_cancel_simulation) return false;
 				zb = obj;
 				objective.push_back( obj );
 				max_flux.push_back( flux );
+		        tot_costs.push_back( cost );
 			}
 
 			//if there's no difference between the two objective functions, don't keep iterating
@@ -1479,7 +1485,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 	best_point = all_sim_points.at(ibest);
 	_summary_siminfo->addSimulationNotice("\nBest point found:");
 	vector<double> ones(best_point.size(), 1.);
-	PostEvaluationUpdate(sim_count++, best_point, ones, zbest, max_flux.at(ibest));
+	PostEvaluationUpdate(sim_count++, best_point, ones, zbest, max_flux.at(ibest), tot_costs.at(ibest));
 
 	_summary_siminfo->addSimulationNotice("\n\nOptimization complete!");
 	
@@ -1573,7 +1579,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     os << "\n\nBeginning Simulation\nIter ";
     for(int i=0; i<(int)optvars.size(); i++)
         os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
-    os << "| Obj.    | Flux";
+    os << "| Obj.    | Flux    | Plant cost";
 
     string hmsg = os.str();
 
@@ -1698,7 +1704,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         ostringstream os;
         os << "\n\nOptimizing Tower Height\nIter ";
         os << setw(9) << (names==0 ? "Var 1" : names->front()) << "|";
-        os << "| Obj.    | Flux";
+        os << "| Obj.    | Flux    | Plant cost";
 
         string hmsg = os.str();
 
@@ -1774,7 +1780,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         os << "**Optimizing Receiver Dimensions at THT="<< *optvars.front() << "[m]\nIter ";
         for(int i=0; i<(int)recvars.size(); i++)
             os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i+1)) << "|";
-        os << "| Obj.    | Flux";
+        os << "| Obj.    | Flux    | Plant cost";
 
         string hmsg = os.str();
 
@@ -1843,8 +1849,8 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         os << "**Co-optimizing geometry\nIter ";
         for(int i=0; i<(int)optvars.size(); i++)
             os << setw(9) << (names==0 ? "Var "+my_to_string(i+1) : names->at(i)) << "|";
-        os << "| Obj.    | Flux";
-
+        os << "| Obj.    | Flux    | Plant cost";
+        
         string hmsg = os.str();
 
         string ol;
@@ -1909,14 +1915,14 @@ bool AutoPilot::IsSimulationCancelled()
 	return _cancel_simulation;
 }
 
-void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux)
+void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux, double &cost)
 {
 	ostringstream os;
     os << "[" << setw(2) << iter << "] ";
     for(int i=0; i<(int)pos.size(); i++)
         os << setw(8) << pos.at(i) * normalizers.at(i) << " |";
 
-    os << "|" << setw(8) << obj << " |" << setw(8) << flux;
+    os << "|" << setw(8) << obj << " |" << setw(8) << flux << " | $" << setw(8) << cost;
 
     _summary_siminfo->addSimulationNotice( os.str() );
 

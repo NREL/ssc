@@ -89,7 +89,7 @@ void Financial::CreateHourlyTODSchedule(var_map &V){
 				ss = dow<5 ? V.fin.weekday_sched.val.at(i*24+k) : V.fin.weekend_sched.val.at(i*24+k);
 				to_integer(ss, &tod);
 				_schedule_array[h] = tod;
-                _pricing_array[h] = tod * V.fin.pmt_factors.val.at(tod-1);
+                _pricing_array[h] = V.fin.pmt_factors.val.at(tod-1);
 				h++;
 			}
 			dow==6 ? dow = 0 : dow++ ;
