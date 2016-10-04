@@ -425,7 +425,11 @@ public:
 		obos.mpileCR = (double)as_number("mpileCR");//monopile pile cost rate ($/tonne)
 		obos.mtransCR = (double)as_number("mtransCR");//monopile transition piece cost rate ($/tonne)
 		if (is_assigned("mpileD")) obos.mpileD = (double)as_number("mpileD"); else obos.mpileD = -999; //monopile diameter(m), negative filtered by wobos::run()
+		if (obos.mpileD <= 0 && obos.mpileD != -999)
+			throw exec_error("wind_obos", "Monopile diameter (mpileD) must be > 0, or -999 to allow the model to calculate the diameter.");
 		if (is_assigned("mpileL")) obos.mpileL = (double)as_number("mpileL"); else obos.mpileL = -999; //monopile length (m), negative filtered by wobos::run()
+		if (obos.mpileL <= 0 && obos.mpileL != -999)
+			throw exec_error("wind_obos", "Monopile length (mpileL) must be > 0, or -999 to allow the model to calculate the length.");
 		obos.jlatticeCR = (double)as_number("jlatticeCR");//jacket lattice cost rate ($/tonne)
 		obos.jtransCR = (double)as_number("jtransCR");//jacket transition piece cost rate ($/tonne)
 		obos.jpileCR = (double)as_number("jpileCR");//jacket pile cost rate ($/tonne)
@@ -441,7 +445,11 @@ public:
 		obos.ssHeaveCR = (double)as_number("ssHeaveCR");//semisubmersible heave plate cost rate ($/tonne)
 		obos.sSteelCR = (double)as_number("sSteelCR");//secondary steel cost rate ($/tonne)
 		if (is_assigned("moorDia")) obos.moorDia = (double)as_number("moorDia"); else obos.moorDia = -999; //this gets filtered in the MooringSys function
+		if (obos.moorDia < 0.09 && obos.moorDia != -999)
+			throw exec_error("wind_obos", "Mooring line diameter (moorDia) must be >= 0.09, or -999 to allow the model to calculate the diameter.");
 		if (is_assigned("moorCR")) obos.moorCR = (double)as_number("moorCR"); else obos.moorCR = -999; //this gets filtered in the MooringSys function
+		if (obos.moorCR < 399 && obos.moorCR != -999)
+			throw exec_error("wind_obos", "Mooring line cost rate (moorCR) must be >= 399, or -999 to allow the model to calculate the diameter.");
 		obos.mpEmbedL = (double)as_number("mpEmbedL");//monopile embedment length (m)
 		obos.scourMat = (double)as_number("scourMat");
 
@@ -536,6 +544,8 @@ public:
 		obos.elecWork = (double)as_number("elecWork");
 
 		//Port & Staging
+		if (is_assigned("nCrane600")) obos.nCrane600 = (double)as_number("nCrane600"); else obos.nCrane600 = -999; //this gets filtered in the NumCranes function
+		if (is_assigned("nCrane1000")) obos.nCrane1000 = (double)as_number("nCrane1000"); else obos.nCrane1000 = -999; //this gets filtered in the NumCranes function
 		obos.crane600DR = (double)as_number("crane600DR");//600 tonne capacity crawler crane day rate ($/day)
 		obos.crane1000DR = (double)as_number("crane1000DR");//1000 tonne capacity crawler crane day rate ($/day)
 		obos.craneMobDemob = (double)as_number("craneMobDemob");//crane mobilization and demobilization cost ($)
