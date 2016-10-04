@@ -214,6 +214,18 @@ public:
         int presolve_nvar;
     } outputs;
     
+    struct s_forecast_params
+    {
+        double coef;
+
+
+    } forecast_params;
+
+    struct s_forecast_outputs
+    {
+
+    } forecast_outputs;
+
     //----- public member functions ----
 
     csp_dispatch_opt();
@@ -224,14 +236,13 @@ public:
     //copy the weather data over
     bool copy_weather_data(C_csp_weatherreader &weather_source);
 
+    //multi-variate forecasts
+    //bool dispatch_forecast();
+
     //Predict performance out nstep values. 
     bool predict_performance(int step_start, int nstep);    
 
     //declare dispatch function in csp_dispatch.cpp
-    static int optimize_demo();
-
-    static int optimize_demo2();
-
     bool optimize();
 
     std::string write_ampl();

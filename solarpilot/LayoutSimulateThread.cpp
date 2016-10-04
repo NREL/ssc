@@ -148,7 +148,12 @@ void LayoutSimThread::StartThread() //Entry()
 	    //Run the simulation 
 	    double dom, doy, hour, month;
 	    double az, zen;
-			
+		
+        int hoy;
+	    bool is_pmt_factors = _SF->getVarMap()->fin.is_pmt_factors.val;
+
+        vector<double> *tous = &_SF->getVarMap()->fin.pricing_array.Val();
+
 	    int Npos = _SF->getHeliostats()->size();
 				
 	    //Simulate for each time
@@ -186,6 +191,9 @@ void LayoutSimThread::StartThread() //Entry()
 
 			    //Calculate the sun position
 			    Ambient::setDateTime(DT, hour, doy);
+                if(is_pmt_factors)
+                    P.TOUweight = tous->at(DT.GetHourOfYear());
+
 			    //latitude, longitude, and elevation should be set in the input file
 			    Ambient::calcSunPosition(*_SF->getVarMap(), DT, &az, &zen );
 		        //If the sun is not above the horizon, don't continue

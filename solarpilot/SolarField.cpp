@@ -1686,8 +1686,11 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 		lpos.at(i) = *_heliostats.at(i)->getLocation();
 	//_land.setLayoutPositions(lpos);
     _land.calcLandArea(_var_map->land, lpos );
+    //_var_map->land.bound_area.Setval( _land.getLandBoundArea() );
 	//update the layout data
     interop::UpdateMapLayoutData(*_var_map, &_heliostats);
+    //update costs
+    updateAllCalculatedParameters(*_var_map);
 
 	return;
 }
