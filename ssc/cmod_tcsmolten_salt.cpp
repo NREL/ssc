@@ -1349,8 +1349,39 @@ public:
 
 		// Set solver reporting outputs
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
-		
-		
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_Q_DOT, allocate("q_balance", n_steps_fixed), n_steps_fixed);
+
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solaz", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::BEAM, allocate("beam", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TDRY, allocate("tdry", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::RH, allocate("RH", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CR_DEFOCUS, allocate("defocus", n_steps_fixed), n_steps_fixed);
+
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_W_DOT_HEATER, allocate("q_heater", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dc_tes", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, allocate("q_ch_tes", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_E_CH_STATE, allocate("e_ch_tes", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_DC, allocate("m_dot_tes_dc", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_M_DOT_CH, allocate("m_dot_tes_ch", n_steps_fixed), n_steps_fixed);
+
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, allocate("pparasi", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, allocate("P_tower_pump", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, allocate("htf_pump_power", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("P_fixed", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("P_plant_balance_tot", n_steps_fixed), n_steps_fixed);
+
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
+
+
+
+
 		int out_type = -1;
 		std::string out_msg = "";
 		try
@@ -1409,60 +1440,60 @@ public:
 
 			// Simulation outputs
 		//ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
-		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen", n_steps_fixed);
-		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz", n_steps_fixed);
-        ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
-        ptr_array[C_csp_solver::TDRY] = allocate("tdry", n_steps_fixed);
-        ptr_array[C_csp_solver::TWET] = allocate("twet", n_steps_fixed);
-        ptr_array[C_csp_solver::RH] = allocate("rh", n_steps_fixed);
-        
-
-			// Collector-receiver outputs
-		//ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field1", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
-        //ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out1", n_steps_fixed);
-		//ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc1", n_steps_fixed);
-		//ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm1", n_steps_fixed);
-			// 7.26.16, twn: Need to keep this for now, for mass balance
-		ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal1", n_steps_fixed);
-		ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec1", n_steps_fixed);
-		//ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup1", n_steps_fixed);
-		//ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in1", n_steps_fixed);
-		//ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses1", n_steps_fixed);
-
-			// Power cycle outputs
-		//ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
-
-			// Thermal energy storage outputs
-		ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes", n_steps_fixed);
-        ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc", n_steps_fixed);
-		ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch", n_steps_fixed);
-
-			// Parasitics outputs
-		ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi", n_steps_fixed);
-		ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump", n_steps_fixed);
-		ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot", n_steps_fixed);
-		ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed", n_steps_fixed);
-		ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot", n_steps_fixed);
-
-			// System outputs
-		ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net", n_steps_fixed);
+		//ptr_array[C_csp_solver::SOLZEN] = allocate("solzen", n_steps_fixed);
+		//ptr_array[C_csp_solver::SOLAZ] = allocate("solaz", n_steps_fixed);
+        //ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
+        //ptr_array[C_csp_solver::TDRY] = allocate("tdry", n_steps_fixed);
+        //ptr_array[C_csp_solver::TWET] = allocate("twet", n_steps_fixed);
+        //ptr_array[C_csp_solver::RH] = allocate("rh", n_steps_fixed);
+        //
+		//
+		//	// Collector-receiver outputs
+		////ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc1", n_steps_fixed);
+		////ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus", n_steps_fixed);
+        ////ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out1", n_steps_fixed);
+		////ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc1", n_steps_fixed);
+		////ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm1", n_steps_fixed);
+		//	// 7.26.16, twn: Need to keep this for now, for mass balance
+		//ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal1", n_steps_fixed);
+		//ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec1", n_steps_fixed);
+		////ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup1", n_steps_fixed);
+		////ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in1", n_steps_fixed);
+		////ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out1", n_steps_fixed);
+		////ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses1", n_steps_fixed);
+		//
+		//	// Power cycle outputs
+		////ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
+		////ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
+		////ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
+		////ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
+		////ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
+		////ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
+		//
+		//	// Thermal energy storage outputs
+		//ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes", n_steps_fixed);
+        //ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc", n_steps_fixed);
+		//ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch", n_steps_fixed);
+		//
+		//	// Parasitics outputs
+		//ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi", n_steps_fixed);
+		//ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump", n_steps_fixed);
+		//ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot", n_steps_fixed);
+		//ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed", n_steps_fixed);
+		//ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot", n_steps_fixed);
+		//
+		//	// System outputs
+		//ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net", n_steps_fixed);
 		
 			// Controller outputs
 		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value", n_steps_fixed);
@@ -1471,8 +1502,8 @@ public:
 		ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_1", n_steps_fixed);
 		ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_2", n_steps_fixed);
 		ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_3", n_steps_fixed);
-		ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance", n_steps_fixed);
-		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance", n_steps_fixed);
+		//ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance", n_steps_fixed);
+		//ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance", n_steps_fixed);
 
 
 		ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb", n_steps_fixed);
