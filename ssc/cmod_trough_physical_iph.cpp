@@ -664,125 +664,6 @@ public:
 
 			return;
 		}
-		
-		
-
-		float **ptr_array = new float*[0];
-		//float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
-		//
-		//for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++ )
-		//{
-		//	post_proc_array[i] = 0;
-		//}
-		//
-		//post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
-
-		//for( int i = 0; i < C_csp_solver::N_END; i++ )
-		//{
-		//	ptr_array[i] = 0;
-		//}
-
-			// Simulation outputs
-		//ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr1", n_steps_fixed);
-		//ptr_array[C_csp_solver::SOLZEN] = allocate("solzen1", n_steps_fixed);
-		//ptr_array[C_csp_solver::SOLAZ] = allocate("solaz1", n_steps_fixed);
-		//ptr_array[C_csp_solver::BEAM] = allocate("beam1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TDRY] = allocate("tdry1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TWET] = allocate("twet1", n_steps_fixed);
-		//ptr_array[C_csp_solver::RH] = allocate("rh1", n_steps_fixed);
-
-
-		//// Collector-receiver outputs
-		////ptr_array[C_csp_solver::CR_Q_INC] = allocate("q_sf_inc", n_steps_fixed);
-		////ptr_array[C_csp_solver::CR_OPT_ETA] = allocate("eta_field", n_steps_fixed);
-		//ptr_array[C_csp_solver::CR_DEFOCUS] = allocate("defocus1", n_steps_fixed);
-		////ptr_array[C_csp_solver::CR_ADJUST] = allocate("sf_adjust_out", n_steps_fixed);
-		////ptr_array[C_csp_solver::REC_Q_DOT_INC] = allocate("q_dot_rec_inc", n_steps_fixed);
-		////ptr_array[C_csp_solver::REC_ETA_THERMAL] = allocate("eta_therm", n_steps_fixed);
-		//	// 7.26.16, twn: Need to keep this for now, for mass balance
-		//ptr_array[C_csp_solver::REC_Q_DOT] = allocate("Q_thermal", n_steps_fixed);
-		//ptr_array[C_csp_solver::REC_M_DOT] = allocate("m_dot_rec1", n_steps_fixed);
-		////ptr_array[C_csp_solver::REC_Q_DOT_STARTUP] = allocate("q_startup", n_steps_fixed);
-		////ptr_array[C_csp_solver::REC_T_IN] = allocate("T_rec_in", n_steps_fixed);
-		////ptr_array[C_csp_solver::REC_T_OUT] = allocate("T_rec_out", n_steps_fixed);
-		////ptr_array[C_csp_solver::CR_Q_DOT_PIPING_LOSS] = allocate("q_piping_losses", n_steps_fixed);
-
-		//// Power cycle outputs
-		////ptr_array[C_csp_solver::PC_ETA_THERMAL] = allocate("eta1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_Q_DOT] = allocate("q_pb1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_M_DOT] = allocate("m_dot_pc1", n_steps_fixed);
-		////ptr_array[C_csp_solver::PC_Q_DOT_STARTUP] = allocate("q_dot_pc_startup1", n_steps_fixed);
-		////ptr_array[C_csp_solver::PC_W_DOT] = allocate("P_cycle1", n_steps_fixed);
-		////ptr_array[C_csp_solver::PC_T_IN] = allocate("T_pc_in1", n_steps_fixed);
-		////ptr_array[C_csp_solver::PC_T_OUT] = allocate("T_pc_out1", n_steps_fixed);
-		////ptr_array[C_csp_solver::PC_M_DOT_WATER] = allocate("m_dot_water_pc1", n_steps_fixed);
-
-		//// Thermal energy storage outputs
-		//ptr_array[C_csp_solver::TES_Q_DOT_LOSS] = allocate("tank_losses1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_W_DOT_HEATER] = allocate("q_heater1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_T_HOT] = allocate("T_tes_hot1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_T_COLD] = allocate("T_tes_cold1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_Q_DOT_DC] = allocate("q_dc_tes1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_Q_DOT_CH] = allocate("q_ch_tes1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_E_CH_STATE] = allocate("e_ch_tes1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_M_DOT_DC] = allocate("m_dot_tes_dc1", n_steps_fixed);
-		//ptr_array[C_csp_solver::TES_M_DOT_CH] = allocate("m_dot_tes_ch1", n_steps_fixed);
-
-		//// Parasitics outputs
-		//ptr_array[C_csp_solver::COL_W_DOT_TRACK] = allocate("pparasi1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CR_W_DOT_PUMP] = allocate("P_tower_pump1", n_steps_fixed);
-		//ptr_array[C_csp_solver::SYS_W_DOT_PUMP] = allocate("htf_pump_power1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_W_DOT_COOLING] = allocate("P_cooling_tower_tot1", n_steps_fixed);
-		//ptr_array[C_csp_solver::SYS_W_DOT_FIXED] = allocate("P_fixed1", n_steps_fixed);
-		//ptr_array[C_csp_solver::SYS_W_DOT_BOP] = allocate("P_plant_balance_tot1", n_steps_fixed);
-
-		//// System outputs
-		//ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net1", n_steps_fixed);
-
-		// Controller outputs
-		//ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult1", n_steps_fixed);
-		////ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
-		////ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
-		////ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
-		////ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
-		///*ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance1", n_steps_fixed);
-		//ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance1", n_steps_fixed);*/
-		//
-		//
-		//ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max1", n_steps_fixed);
-		//ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target1", n_steps_fixed);
-		//
-		//ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed1", n_steps_fixed);
-		//ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su1", n_steps_fixed);
-		//ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on1", n_steps_fixed);
-		//ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc1", n_steps_fixed);
-		//ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch1", n_steps_fixed);
-		//
-		//ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b1", n_steps_fixed);
-		//ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c1", n_steps_fixed);
-		//
-		//ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar1", n_steps_fixed);
-		//ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time1", n_steps_fixed);
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 
@@ -790,8 +671,8 @@ public:
 		{
 			// Simulate !
 			csp_solver.Ssimulate(sim_setup,
-				ssc_trough_physical_process_heat_sim_progress, (void*)this,
-				ptr_array);
+				ssc_trough_physical_process_heat_sim_progress, 
+				(void*)this);
 		}
 		catch( C_csp_exception &csp_exception )
 		{
@@ -802,18 +683,9 @@ public:
 			}
 
 			log(csp_exception.m_error_message, SSC_WARNING);
-			delete[] ptr_array;
 
 			return;
 		}
-
-
-		// ************************************
-		// ************************************
-		delete[] ptr_array;
-		// ************************************
-		// ************************************
-
 
 	}
 
