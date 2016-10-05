@@ -419,23 +419,6 @@ public:
 		}
 	};
 
-	//struct S_csp_cr_out_report
-	//{
-	//	double m_q_dot_field_inc;		//[MWt] Field incident thermal power (from the sun!)
-	//	double m_eta_field;				//[-] Field optical efficiency
-    //    double m_sf_adjust_out;         //[-] Field adjustment factor used
-	//	
-	//	double m_q_dot_rec_inc;         //[MWt] Receiver incident thermal power (after reflection losses)
-	//	double m_eta_thermal;			//[-] Receiver thermal efficiency
-	//	double m_q_dot_piping_loss;		//[MWt] Thermal power lost from piping to surroundings
-	//
-	//	S_csp_cr_out_report()
-	//	{
-	//		m_q_dot_field_inc = m_eta_field = 
-	//			m_q_dot_rec_inc = m_eta_thermal = m_q_dot_piping_loss = m_sf_adjust_out = std::numeric_limits<double>::quiet_NaN();
-	//	}
-	//};
-
 	virtual void init( const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 		C_csp_collector_receiver::S_csp_cr_solved_params & solved_params) = 0;
 
@@ -576,27 +559,6 @@ public:
 		}
 	};
 
-	//struct S_csp_pc_out_report
-	//{
-	//	double m_eta;				//[-] Cycle thermal efficiency
-	//	double m_m_dot_makeup;		//[kg/hr] Cooling water makeup flow rate
-	//	double m_m_dot_demand;		//[kg/hr] HTF required flow rate to meet power load
-	//	double m_m_dot_htf_ref;		//[kg/hr] Calculated reference HTF flow rate at design
-	//	double m_P_ref;				//[MWe] Reference power level output at design
-	//	double m_f_hrsys;			//[-] Fraction of operating heat rejection system
-	//	double m_P_cond;			//[Pa] Condenser pressure		
-	//	
-	//	double m_q_startup;			//[MWt-hr] Startup energy required
-
-	//	S_csp_pc_out_report()
-	//	{
-	//		m_eta = m_m_dot_makeup = m_m_dot_demand = m_m_dot_htf_ref =
-	//			m_P_ref = m_f_hrsys = m_P_cond = std::numeric_limits<double>::quiet_NaN();
-	//		
-	//		m_q_startup = std::numeric_limits<double>::quiet_NaN();
-	//	}
-	//};
-	
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
 	virtual int get_operating_state() = 0;
@@ -697,13 +659,6 @@ class C_csp_solver
 {
 
 public:
-
-	//enum E_post_proc_outputs
-	//{
-	//	PC_Q_STARTUP,				//[MWt-hr] Receiver startup thermal energy consumed
-	//
-	//	N_END_POST_PROC
-	//};
 	
 	class C_solver_outputs
 	{
@@ -785,106 +740,6 @@ public:
 			W_DOT_NET             //[MWe] System total electric power to grid
 		};
 	};
-
-	//enum E_reported_outputs
-	//{
-		// Ouputs that are NOT reported as weighted averages
-		//TIME_FINAL,       //[hr]		
-		//N_OP_MODES,       //[-]
-		////ERR_M_DOT,        //[-] Relative mass conservation error
-		////ERR_Q_DOT,        //[-] Relative energy conservation error
-		//OP_MODE_1,        //[-] First operating mode in reporting timestep - always should be valid
-		//OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
-		//OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
-		
-
-		// **************************************************************
-		//      ONLY instantaneous outputs that are reported as the first value
-		//        if multiple csp-timesteps for one reporting timestep
-		// **************************************************************
-		// TOU_PERIOD,       //[-] CSP operating TOU period
-		// PRICING_MULT,     //[-] PPA price multiplier
-		// PC_Q_DOT_SB,      //[MWt] PC required standby thermal power
-		// PC_Q_DOT_MIN,     //[MWt] PC required min thermal power
-		// PC_Q_DOT_TARGET,  //[MWt] PC target thermal power
-		// PC_Q_DOT_MAX,     //[MWt] PC allowable max thermal power
-		// CTRL_IS_REC_SU,   //[-] Control decision: is receiver startup allowed?
-		// CTRL_IS_PC_SU,    //[-] Control decision: is power cycle startup allowed?
-		// CTRL_IS_PC_SB,    //[-] Control decision: is power cycle standby allowed?
-		// EST_Q_DOT_CR_SU,  //[MWt] Estimate receiver startup thermal power
-		// EST_Q_DOT_CR_ON,  //[MWt] Estimate receiver thermal power to HTF
-		// EST_Q_DOT_DC,     //[MWt] Estimate max TES dc thermal power
-		// EST_Q_DOT_CH,     //[MWt] Estimate max TES ch thermal power
-		// CTRL_OP_MODE_SEQ_A,   //[-] First 3 operating modes tried
-		// CTRL_OP_MODE_SEQ_B,   //[-] Next 3 operating modes tried
-		// CTRL_OP_MODE_SEQ_C,   //[-] Final 3 operating modes tried
-        // DISPATCH_SOLVE_STATE,   //[-] The status of the dispatch optimization solver
-        // DISPATCH_SOLVE_ITER,    //[-] Number of iterations before completing dispatch optimization
-        // DISPATCH_SOLVE_OBJ,     //[?] Objective function value achieved by the dispatch optimization solver
-        // DISPATCH_SOLVE_OBJ_RELAX,   //[?] Objective function value for the relaxed continuous problem 
-        // DISPATCH_QSF_EXPECT,        //MWt Expected total solar field energy generation in dispatch model
-        // DISPATCH_QSFPROD_EXPECT,    //MWt Expected useful solar field energy generation in dispatch model
-        // DISPATCH_QSFSU_EXPECT,      //MWt Solar field startup energy in dispatch model
-        // DISPATCH_TES_EXPECT,        //MWht Thermal energy storage charge state in dispatch model
-        // DISPATCH_PCEFF_EXPECT,      //-  Expected power cycle efficiency adjustment in dispatch model
-        // DISPATCH_SFEFF_EXPECT,      //-  Expected solar field thermal efficiency adjustment in dispatch model
-        // DISPATCH_QPBSU_EXPECT,      //MWt   Power cycle startup energy consumption in dispatch model
-        // DISPATCH_WPB_EXPECT,        //MWe   Power cycle electricity production in dispatch model
-        // DISPATCH_REV_EXPECT,        //MWe*fact Power cycle electricity production times revenue factor in dispatch model
-        // DISPATCH_PRES_NCONSTR,      //- Number of constraint relationships in dispatch model formulation
-        // DISPATCH_PRES_NVAR,         //- Number of variables in dispatch model formulation
-        // DISPATCH_SOLVE_TIME,         //sec   Time required to solve the dispatch model at each instance
-
-		// **************************************************************
-		//      ONLY Outputs that are reported as weighted averages if 
-		//       multiple csp-timesteps for one reporting timestep
-		// **************************************************************
-		//SOLZEN,			      //[deg] Solar zenith angle
-  //      SOLAZ,
-		//BEAM,			      //[W/m^2] Resource beam normal irradiance
-  //      TDRY,
-  //      TWET,
-  //      RH,
-		////CR_Q_INC,             //[MWt] Field incident thermal power
-		////CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
-		//CR_DEFOCUS,           //[-] Field optical focus fraction
-  //      //CR_ADJUST,            //[-] Field adjustment factor
-		////REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
-		////REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
-		//	// 7.26.16, twn: Need to keep this for now, for mass balance
-		//REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses			
-		//REC_M_DOT,            //[kg/hr] Receiver mass flow rate
-		////REC_Q_DOT_STARTUP,    //[MWt] Receiver startup thermal power consumed
-		////REC_T_IN,             //[C] Receiver HTF inlet temperature
-		////REC_T_OUT,            //[C] Receiver HTF outlet temperature
-		////CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
-		////PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
-		//PC_Q_DOT,             //[MWt] Cycle input thermal power
-		//PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
-		////PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
-		////PC_W_DOT,             //[MWe] Cycle electric power output (gross)
-		////PC_T_IN,              //[C] Cycle HTF inlet temperature
-		////PC_T_OUT,             //[C] Cycle HTF outlet temperature
-		////PC_M_DOT_WATER,       //[kg/hr] Cycle water consumption: makeup + cooling
-		//TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
-		//TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
-		//TES_T_HOT,            //[C] TES final hot tank temperature
-		//TES_T_COLD,           //[C] TES final cold tank temperature
-		//TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
-		//TES_Q_DOT_CH,         //[MWt] TES charge thermal power
-  //      TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
-		//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
-		//TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
-		//COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
-		//CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
-		//SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
-		//PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
-		//SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
-		//SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
-		//W_DOT_NET,            //[MWe] System total electric power to grid
-
-		//N_END	
-	//};
 	
 	C_csp_reported_outputs mc_reported_outputs;
 
@@ -959,12 +814,10 @@ private:
 
 	C_csp_solver_htf_1state mc_cr_htf_state_in;
 	C_csp_collector_receiver::S_csp_cr_out_solver mc_cr_out_solver;
-	//C_csp_collector_receiver::S_csp_cr_out_report mc_cr_out_report;
 
 	C_csp_solver_htf_1state mc_pc_htf_state_in;
 	C_csp_power_cycle::S_control_inputs mc_pc_inputs;
 	C_csp_power_cycle::S_csp_pc_out_solver mc_pc_out_solver;
-	//C_csp_power_cycle::S_csp_pc_out_report mc_pc_out_report;
 
 	C_csp_solver_htf_state mc_tes_ch_htf_state;
 	C_csp_solver_htf_state mc_tes_dc_htf_state;
@@ -973,7 +826,6 @@ private:
     C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
 	C_csp_solver::C_csp_solver_kernel mc_kernel;
-	//C_csp_solver_sim_info mc_sim_info;
 
 	// Hierarchy logic
 	bool m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail;
@@ -1191,13 +1043,9 @@ public:
 
 	void Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
 					bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
-					float **ptr_array
-					/*float **post_proc_array*/);
-
-
+					float **ptr_array);
 
 	float **mp_reporting_array;
-	//float **mp_post_proc_array;
 
 	int steps_per_hour();
 
