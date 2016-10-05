@@ -666,7 +666,12 @@ public:
 		enum
 		{
 			// Ouputs that are NOT reported as weighted averages
-			TIME_FINAL,       //[hr]		
+				// Simulation
+			TIME_FINAL,       //[hr] Simulation timestep
+				// Weather Reader
+			MONTH,            //[-] Month of year
+			HOUR_DAY,         //[hr] hour of day
+				// Controller
 			ERR_M_DOT,        //[-] Relative mass conservation error
 			ERR_Q_DOT,        //[-] Relative energy conservation error
 			N_OP_MODES,       //[-] Number of subtimesteps in reporting timestep
@@ -715,12 +720,16 @@ public:
 			//      Outputs that are reported as weighted averages if 
 			//       multiple csp-timesteps for one reporting timestep
 			// **************************************************************
+				// Weather Reader			
 			SOLZEN,           //[deg] Solar zenith angle
 			SOLAZ,            //[deg] Solar azimuth angle
 			BEAM,			  //[W/m^2] Resource beam normal irradiance
 			TDRY,             //[C] Dry bulb temperature
 			TWET,             //[C] Wet bulb temperature
 			RH,	              //[-] Relative humidity
+			WSPD,             //[m/s] Wind speed
+			PRES,             //[mbar] Atmospheric pressure
+				// Controller and Storage
 			CR_DEFOCUS,       //[-] Field optical focus fraction
 			TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
 			TES_W_DOT_HEATER,     //[MWe] TES freeze protection power

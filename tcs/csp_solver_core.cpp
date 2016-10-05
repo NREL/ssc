@@ -106,15 +106,18 @@ void C_csp_solver::C_csp_solver_kernel::baseline_step_forward()
 static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 {
 	// Ouputs that are NOT reported as weighted averages
+		// Simulation
 	{C_csp_solver::C_solver_outputs::TIME_FINAL, false},	//[hr]
+		// Weather Reader
+	{C_csp_solver::C_solver_outputs::MONTH, false},			//[-] Month of year
+	{C_csp_solver::C_solver_outputs::HOUR_DAY, false},		//[hr] hour of day
+		// Controller, TES, & Dispatch
 	{C_csp_solver::C_solver_outputs::ERR_M_DOT, false},		//[-] Relative mass conservation error
 	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, false},		//[-] Relative energy conservation error
 	{C_csp_solver::C_solver_outputs::N_OP_MODES, false},	//[-] Number of subtimesteps in reporting timestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_1, false},     //[-] Operating mode in first subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_2, false},		//[-] Operating mode in second subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_3, false},		//[-] Operating mode in third subtimestep
-
-
 	{C_csp_solver::C_solver_outputs::TOU_PERIOD, false},                  //[-] CSP operating TOU period
 	{C_csp_solver::C_solver_outputs::PRICING_MULT, false},				  //[-] PPA price multiplier
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, false},				  //[MWt] PC required standby thermal power
@@ -148,6 +151,10 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, false},		  //[-] Number of variables in dispatch model formulation
 	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, false},		  //[sec]   Time required to solve the dispatch model at each instance
 
+	// **************************************************************
+	//      Outputs that are reported as weighted averages if 
+	//       multiple csp-timesteps for one reporting timestep
+	// **************************************************************
 
 	{C_csp_solver::C_solver_outputs::SOLZEN, true},			//[deg] Solar zenith angle
 	{C_csp_solver::C_solver_outputs::SOLAZ, true},			//[deg] Solar azimuth angle
@@ -155,8 +162,11 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::TDRY, true},			//[C] Dry bulb temperature
 	{C_csp_solver::C_solver_outputs::TWET, true},			//[C] Wet bulb temperature
 	{C_csp_solver::C_solver_outputs::RH, true},				//[-] Relative humidity
+	{C_csp_solver::C_solver_outputs::WSPD, true},           //[m/s] Wind speed
+	{C_csp_solver::C_solver_outputs::PRES, true}, 			//[mbar] Atmospheric pressure
+		
+		// Controller and TES
 	{C_csp_solver::C_solver_outputs::CR_DEFOCUS, true},		//[-] Field optical focus fraction
-
 	{C_csp_solver::C_solver_outputs::TES_Q_DOT_LOSS, true},       //[MWt] TES thermal losses
 	{C_csp_solver::C_solver_outputs::TES_W_DOT_HEATER, true},	  //[MWe] TES freeze protection power
 	{C_csp_solver::C_solver_outputs::TES_T_HOT, true},			  //[C] TES final hot tank temperature
@@ -7021,11 +7031,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			// Simulation outputs
 		mv_time_local.push_back(mc_kernel.mc_sim_info.ms_ts.m_time);
 		mc_reported_outputs.value(C_solver_outputs::TIME_FINAL, mc_kernel.mc_sim_info.ms_ts.m_time/3600.0);
-		//mvv_outputs_temp[TIME_FINAL].push_back(mc_kernel.mc_sim_info.ms_ts.m_time);				//[s] Time at end of timestep		
-		
-		//mvv_outputs_temp[N_OP_MODES].push_back(0.0);                            //[-] Need to push this back, but elements aren't used
-		//mvv_outputs_temp[ERR_M_DOT].push_back(0.0);
-		//mvv_outputs_temp[ERR_Q_DOT].push_back(0.0);
+		mc_reported_outputs.value(C_solver_outputs::MONTH, mc_weather.ms_outputs.m_month);	//[-]
+		mc_reported_outputs.value(C_solver_outputs::HOUR_DAY, (int)(m_report_time_end/3600) % 24);	//[hr]
+
 
 		int n_sub_ts = mv_time_local.size();
 		mc_reported_outputs.overwrite_vector_to_constant(C_solver_outputs::N_OP_MODES, n_sub_ts);	//[-]
@@ -7090,8 +7098,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::TDRY, mc_weather.ms_outputs.m_tdry);		//[C] Dry bulb temperature
 		mc_reported_outputs.value(C_solver_outputs::TWET, mc_weather.ms_outputs.m_twet);		//[C] Wet bulb temperature
 		mc_reported_outputs.value(C_solver_outputs::RH, mc_weather.ms_outputs.m_rhum);			//[-] Relative humidity
+		mc_reported_outputs.value(C_solver_outputs::WSPD, mc_weather.ms_outputs.m_wspd);		//[m/s]
+		mc_reported_outputs.value(C_solver_outputs::PRES, mc_weather.ms_outputs.m_pres);		//[mbar]
+		
 		mc_reported_outputs.value(C_solver_outputs::CR_DEFOCUS, m_defocus);						//[-] Controller defocus
-
 			// Thermal energy storage outputs
 		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_LOSS, mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment  
 		mc_reported_outputs.value(C_solver_outputs::TES_W_DOT_HEATER, mc_tes_outputs.m_q_heater);       //[MWe] Energy into TES from heaters (hot+cold) to maintain tank temperatures
