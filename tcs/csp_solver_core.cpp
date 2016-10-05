@@ -214,15 +214,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	error_msg = "";
 
-	// Initializie temporary output 2D vector
-	//mvv_outputs_temp.resize(N_END, std::vector<double>(0,std::numeric_limits<double>::quiet_NaN()));
-	//for( int i = 0; i < C_csp_solver::N_END; i++ )
-	//	mvv_outputs_temp[i].reserve(10);
-
 	mv_time_local.reserve(10);
-
-	// Initialize ssc output reporting arrays
-	mp_reporting_array = 0;
 
 	// Solved Controller Variables
 	m_defocus = std::numeric_limits<double>::quiet_NaN();
@@ -363,18 +355,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								float **ptr_array
 								/*float **post_proc_array*/)
 {
-	// Load ssc arrays here, for now...
-	mp_reporting_array = ptr_array;
-	//mp_post_proc_array = post_proc_array;
-
-	//for( int i = 0; i < C_csp_solver::N_END; i++ )
-	//{
-	//	if( mp_reporting_array[i] == 0 )
-	//	{
-	//		throw(C_csp_exception("Not all required reported outputs are allocated", "CSP Solver"));
-	//	}
-	//}
-	
 	// Get number of records in weather file
 	int n_wf_records = mc_weather.get_n_records();
 	int step_per_hour = n_wf_records / 8760;
@@ -7090,59 +7070,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_DC, q_dot_tes_dc);            //[MWt]    
 		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CH, q_dot_tes_ch);            //[MWt]    
 
-
-		//mvv_outputs_temp[TOU_PERIOD].push_back(tou_period);         //[-] 
-		//mvv_outputs_temp[PRICING_MULT].push_back(pricing_mult);		//[-]
-		//mvv_outputs_temp[PC_Q_DOT_SB].push_back(q_pc_sb);           //[MW]
-		//mvv_outputs_temp[PC_Q_DOT_MIN].push_back(q_pc_min);         //[MW]
-		//mvv_outputs_temp[PC_Q_DOT_TARGET].push_back(q_pc_target);   //[MW]
-		//mvv_outputs_temp[PC_Q_DOT_MAX].push_back(q_pc_max);         //[MW]
-		//mvv_outputs_temp[CTRL_IS_REC_SU].push_back((int)is_rec_su_allowed);     //[-]
-		//mvv_outputs_temp[CTRL_IS_PC_SU].push_back((int)is_pc_su_allowed);       //[-]
-		//mvv_outputs_temp[CTRL_IS_PC_SB].push_back((int)is_pc_sb_allowed);       //[-]
-		//mvv_outputs_temp[EST_Q_DOT_CR_SU].push_back(is_pc_sb_allowed);       //[-]
-		//mvv_outputs_temp[EST_Q_DOT_CR_ON].push_back(q_dot_cr_on);               //[MWt]
-		//mvv_outputs_temp[EST_Q_DOT_DC].push_back(q_dot_tes_dc);                 //[MWt]
-		//mvv_outputs_temp[EST_Q_DOT_CH].push_back(q_dot_tes_ch);                 //[MWt]
-
-		//mvv_outputs_temp[SOLZEN].push_back(mc_weather.ms_outputs.m_solzen);		//[deg] Solar zenith
-        //mvv_outputs_temp[SOLAZ].push_back(mc_weather.ms_outputs.m_solazi);
-		//mvv_outputs_temp[BEAM].push_back(mc_weather.ms_outputs.m_beam);		    //[W/m2] DNI
-        //mvv_outputs_temp[TDRY].push_back(mc_weather.ms_outputs.m_tdry);
-        //mvv_outputs_temp[TWET].push_back(mc_weather.ms_outputs.m_twet);
-        //mvv_outputs_temp[RH].push_back(mc_weather.ms_outputs.m_rhum);
-		//
-		//	// Collector-receiver outputs
-		////mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_out_report.m_q_dot_field_inc);	//[MWt] Field incident thermal power
-		////mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_out_report.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
-		//mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
-        ////mvv_outputs_temp[CR_ADJUST].push_back(mc_cr_out_report.m_sf_adjust_out);
-		////mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
-		////mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
-		//	// 7.26.16, twn: Need to keep these for now, for mass balance
-		//mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  			
-		//mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_out_solver.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
-		//	// **************************************************************
-		////mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
-		////mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
-		////mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
-		////mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
-		//
-		//	// Power cycle outputs
-		////mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
-		//mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_out_solver.m_q_dot_htf);            //[MWt] Power cycle input thermal power
-		//mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_inputs.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
-		////mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt-hr] Power cycle startup thermal energy
-		////mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
-		////mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
-		////mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
-		////mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
-		////mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_out_report.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
-		//
-		//	// Thermal energy storage outputs
-		//mvv_outputs_temp[TES_Q_DOT_LOSS].push_back(mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment
-		//mvv_outputs_temp[TES_W_DOT_HEATER].push_back(mc_tes_outputs.m_q_heater);       //[MWe] Energy into TES from heaters (hot+cold) to maintain tank temperatures
-		
 		double m_dot_bal = (mc_cr_out_solver.m_m_dot_salt_tot +
 							mc_tes_dc_htf_state.m_m_dot -
 							mc_pc_inputs.m_m_dot -
@@ -7202,26 +7129,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NCONSTR, dispatch.outputs.presolve_nconstr);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nconstr);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
-				
-		//mvv_outputs_temp[DISPATCH_SOLVE_STATE].push_back(dispatch.outputs.solve_state);
-        //mvv_outputs_temp[DISPATCH_SOLVE_ITER].push_back(dispatch.outputs.solve_iter);
-        //mvv_outputs_temp[DISPATCH_SOLVE_OBJ].push_back(dispatch.outputs.objective);
-		//mvv_outputs_temp[DISPATCH_SOLVE_OBJ_RELAX].push_back(dispatch.outputs.objective);
-        //
-        //mvv_outputs_temp[DISPATCH_QSF_EXPECT].push_back(disp_qsf_expect);
-        //mvv_outputs_temp[DISPATCH_QSFPROD_EXPECT].push_back(disp_qsfprod_expect);
-		//mvv_outputs_temp[DISPATCH_QSFSU_EXPECT].push_back(disp_qsfprod_expect);
-        //mvv_outputs_temp[DISPATCH_TES_EXPECT].push_back(disp_tes_expect);
-        //mvv_outputs_temp[DISPATCH_PCEFF_EXPECT].push_back(disp_etapb_expect);
-        //mvv_outputs_temp[DISPATCH_SFEFF_EXPECT].push_back(disp_etasf_expect);
-        //mvv_outputs_temp[DISPATCH_QPBSU_EXPECT].push_back(disp_qpbsu_expect);
-        //mvv_outputs_temp[DISPATCH_WPB_EXPECT].push_back(disp_wpb_expect);
-        //mvv_outputs_temp[DISPATCH_REV_EXPECT].push_back(disp_rev_expect);
-		//
-        //mvv_outputs_temp[DISPATCH_PRES_NCONSTR].push_back(dispatch.outputs.presolve_nconstr);
-		//mvv_outputs_temp[DISPATCH_PRES_NVAR].push_back(dispatch.outputs.presolve_nconstr);
-        //mvv_outputs_temp[DISPATCH_SOLVE_TIME].push_back(dispatch.outputs.solve_time);
-
 
 
 		mc_reported_outputs.set_timestep_outputs();
@@ -7301,8 +7208,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Overwrite TIME_FINAL
 				mc_reported_outputs.overwrite_most_recent_timestep(C_solver_outputs::TIME_FINAL, m_report_time_end / 3600.0);	//[hr]
 				mc_reported_outputs.send_to_reporting_ts_array(m_report_time_start, mv_time_local, m_report_time_end);
-
-				set_outputs_at_reporting_interval();
 
 				// Check if the most recent csp solver timestep aligns with the end of the reporting timestep
 				bool delete_last_step = false;
@@ -7390,135 +7295,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 }	// End simulate() method
 
-void C_csp_solver::set_outputs_at_reporting_interval()
-{
-	return;
-	
-	// Step through each uniform reporting period
-	//int n_report = mvv_outputs_temp[TOU_PERIOD].size();
-	//
-	//if( n_report < 1 )
-	//{
-	//	throw(C_csp_exception("No data to send to SSC", "Reporting Intervals"));
-	//}
-	//
-	//double time_prev = m_report_time_start;		//[s]
-
-	// Save final time, and convert to hours
-	// mp_reporting_array[C_csp_solver::TIME_FINAL][m_i_reporting] = m_report_time_end/3600.0;		//[hr] time at end of reporting timestep, convert from s
-
-	// Report number of csp solver operating modes (= timesteps) in reporting timestep
-	//mp_reporting_array[C_csp_solver::N_OP_MODES][m_i_reporting] = n_report;
-
-	//double m_dot_bal = 0.0;
-	//double q_dot_bal = 0.0;
-	//for( int i = 0; i < n_report; i++ )
-	//{
-	//	m_dot_bal += 
-	//		(mvv_outputs_temp[REC_M_DOT][i]       //[kg/hr]
-	//		+ mvv_outputs_temp[TES_M_DOT_DC][i]   //[kg/hr]
-	//		- mvv_outputs_temp[PC_M_DOT][i]       //[kg/hr]
-	//		- mvv_outputs_temp[TES_M_DOT_CH][i])  //[kg/hr]
-	//		/ (double) n_report;  
-	//		
-	//	q_dot_bal += 
-	//		(mvv_outputs_temp[REC_Q_DOT][i]       //[MWt]
-	//		+ mvv_outputs_temp[TES_Q_DOT_DC][i]   //[MWt]
-	//		- mvv_outputs_temp[PC_Q_DOT][i]       //[MWt]
-	//		- mvv_outputs_temp[TES_Q_DOT_CH][i])  //[MWt]
-	//		/ (double) n_report;
-	//}
-	//mp_reporting_array[ERR_M_DOT][m_i_reporting] = m_dot_bal / m_m_dot_pc_des;
-	//mp_reporting_array[ERR_Q_DOT][m_i_reporting] = q_dot_bal / m_cycle_q_dot_des;
-
-	//double check_op_mode_1 = mvv_outputs_temp[OP_MODE_1][0];
-	//
-	//if( n_report == 1 )
-	//{
-	//	mp_reporting_array[C_csp_solver::OP_MODE_1][m_i_reporting] = 
-	//		mvv_outputs_temp[OP_MODE_1][0];
-	//	mp_reporting_array[C_csp_solver::OP_MODE_2][m_i_reporting] = 0.0;
-	//	mp_reporting_array[C_csp_solver::OP_MODE_3][m_i_reporting] = 0.0;
-	//}
-	//else if( n_report == 2 )
-	//{
-	//	mp_reporting_array[C_csp_solver::OP_MODE_1][m_i_reporting] = 
-	//		mvv_outputs_temp[OP_MODE_1][0];
-	//	mp_reporting_array[C_csp_solver::OP_MODE_2][m_i_reporting] =
-	//		mvv_outputs_temp[OP_MODE_2][1];
-	//	mp_reporting_array[C_csp_solver::OP_MODE_3][m_i_reporting] = 0.0;
-	//}
-	//else if( n_report >= 3 )
-	//{
-	//	mp_reporting_array[C_csp_solver::OP_MODE_1][m_i_reporting] =
-	//		mvv_outputs_temp[OP_MODE_1][0];
-	//	mp_reporting_array[C_csp_solver::OP_MODE_2][m_i_reporting] =
-	//		mvv_outputs_temp[OP_MODE_2][1];
-	//	mp_reporting_array[C_csp_solver::OP_MODE_3][m_i_reporting] = 
-	//		mvv_outputs_temp[OP_MODE_3][2];
-	//}
-
-	// ************************************************************
-	// Set instantaneous outputs that are reported as the first value
-	//   if multiple csp-timesteps for one reporting timestep
-	// ************************************************************
-	//for( int j = C_csp_solver::TOU_PERIOD; j < C_csp_solver::DISPATCH_SOLVE_TIME + 1; j++ )
-	//{
-	//	mp_reporting_array[j][m_i_reporting] = mvv_outputs_temp[j][0];
-	//}
-
-	// ***********************************************************
-	//      Set outputs that are reported as weighted averages if 
-	//       multiple csp-timesteps for one reporting timestep
-	//    The following code assumes 'SOLZEN' is the first such output
-	//    and that all names following it in 'E_reported_outputs' are weight averages
-	// **************************************************************
-	//for( int j = C_csp_solver::SOLZEN; j < C_csp_solver::N_END; j++ )
-	//{
-	//	time_prev = m_report_time_start;		//[s]
-	//	for( int i = 0; i < n_report; i++ )
-	//	{
-	//		mp_reporting_array[j][m_i_reporting] += (fmin(mv_time_local[i], m_report_time_end) - time_prev)*mvv_outputs_temp[j][i]; //[units]*[s]
-	//		time_prev = fmin(mv_time_local[i], m_report_time_end);
-	//	}
-	//	mp_reporting_array[j][m_i_reporting] /= m_report_step;
-	//}
-
-
-
-
-	// Check if the most recent csp solver timestep aligns with the end of the reporting timestep
-	//bool delete_last_step = false;
-	//int pop_back_start = 1;
-	//
-	//if( mv_time_local[n_report - 1] == m_report_time_end )
-	//{
-	//	delete_last_step = true;
-	//	pop_back_start = 0;
-	//}
-	//
-	//// If more than 1 element in temp vectors, only keep most recent value
-	//if( n_report > 1 || delete_last_step)
-	//{
-	//	for( int j = 0; j < C_csp_solver::N_END; j++ )
-	//	{
-	//		if( !delete_last_step )
-	//		{
-	//			mvv_outputs_temp[j][0] = mvv_outputs_temp[j][n_report - 1];
-	//		}
-	//
-	//		for( int i = pop_back_start; i < n_report; i++ )
-	//		{
-	//			mvv_outputs_temp[j].pop_back();
-	//		}
-	//	}
-	//}
-
-	// Populate post-processed outputs
-	//mp_post_proc_array[C_csp_solver::PC_Q_STARTUP][m_i_reporting] = 
-	//	mp_reporting_array[PC_Q_DOT_STARTUP][m_i_reporting] * (m_report_step/3600.0);	//[MW]*[hr]
-
-}
 
 void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 	double &time_pc_su /*s*/, 
