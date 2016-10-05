@@ -1045,11 +1045,7 @@ public:
 					bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
 					float **ptr_array);
 
-	float **mp_reporting_array;
-
 	int steps_per_hour();
-
-	void set_outputs_at_reporting_interval();
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
