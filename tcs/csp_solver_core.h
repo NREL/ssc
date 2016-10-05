@@ -714,6 +714,10 @@ public:
 			TIME_FINAL,       //[hr]		
 			ERR_M_DOT,        //[-] Relative mass conservation error
 			ERR_Q_DOT,        //[-] Relative energy conservation error
+			N_OP_MODES,       //[-] Number of subtimesteps in reporting timestep
+			OP_MODE_1,        //[-] First operating mode in reporting timestep - always should be valid
+			OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
+			OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
 
 			SOLZEN,           //[deg] Solar zenith angle
 			SOLAZ,            //[deg] Solar azimuth angle
@@ -745,12 +749,12 @@ public:
 	{
 		// Ouputs that are NOT reported as weighted averages
 		//TIME_FINAL,       //[hr]		
-		N_OP_MODES,       //[-]
-		//ERR_M_DOT,        //[-] Relative mass conservation error
-		//ERR_Q_DOT,        //[-] Relative energy conservation error
-		OP_MODE_1,        //[-] First operating mode in reporting timestep - always should be valid
-		OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
-		OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
+		//N_OP_MODES,       //[-]
+		////ERR_M_DOT,        //[-] Relative mass conservation error
+		////ERR_Q_DOT,        //[-] Relative energy conservation error
+		//OP_MODE_1,        //[-] First operating mode in reporting timestep - always should be valid
+		//OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
+		//OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
 		
 
 		// **************************************************************
