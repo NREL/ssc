@@ -34,6 +34,12 @@ public:
 
 		void set_timestep_output(double output_value);
 
+		void overwrite_most_recent_timestep(double value);
+
+		void overwrite_vector_to_constant(double value);
+
+		std::vector<double> get_output_vector();
+
 		void send_to_reporting_ts_array(double report_time_start, int n_report,
 			const std::vector<double> & v_temp_ts_time_end, double report_time_end, bool is_save_last_step, int n_pop_back);
 	};
@@ -65,9 +71,17 @@ public:
 	void send_to_reporting_ts_array(double report_time_start,
 		const std::vector<double> & v_temp_ts_time_end, double report_time_end);
 
+	std::vector<double> get_output_vector(int index);
+
 	void value(int index, double value);
 
 	double value(int index);
+
+	void overwrite_most_recent_timestep(int index, double value);
+
+	void overwrite_vector_to_constant(int index, double value);
+
+	int size(int index);
 
 	void set_timestep_outputs();
 

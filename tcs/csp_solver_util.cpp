@@ -121,6 +121,16 @@ void C_csp_reported_outputs::send_to_reporting_ts_array(double report_time_start
 	}
 }
 
+std::vector<double> C_csp_reported_outputs::C_output::get_output_vector()
+{
+	return mv_temp_outputs;
+}
+
+std::vector<double> C_csp_reported_outputs::get_output_vector(int index)
+{
+	return mvc_outputs[index].get_output_vector();
+}
+
 void C_csp_reported_outputs::construct(const S_output_info *output_info)
 {
 	int n_outputs = 0;
@@ -169,6 +179,38 @@ void C_csp_reported_outputs::set_timestep_outputs()
 {
 	for(int i = 0; i < m_n_outputs; i++)
 		mvc_outputs[i].set_timestep_output(mv_latest_calculated_outputs[i]);
+}
+
+void C_csp_reported_outputs::C_output::overwrite_vector_to_constant(double value)
+{
+	int n_timesteps = get_vector_size();
+
+	for( int i = 0; i < n_timesteps; i++ )
+	{
+		mv_temp_outputs[i] = value;
+	}
+}
+
+void C_csp_reported_outputs::overwrite_vector_to_constant(int index, double value)
+{
+	mvc_outputs[index].overwrite_vector_to_constant(value);
+}
+
+void C_csp_reported_outputs::C_output::overwrite_most_recent_timestep(double value)
+{
+	int n_timesteps = get_vector_size();
+
+	mv_temp_outputs[n_timesteps-1] = value;
+}
+
+void C_csp_reported_outputs::overwrite_most_recent_timestep(int index, double value)
+{
+	mvc_outputs[index].overwrite_most_recent_timestep(value);
+}
+
+int C_csp_reported_outputs::size(int index)
+{
+	return mvc_outputs[index].get_vector_size();
 }
 
 void C_csp_reported_outputs::value(int index, double value)
