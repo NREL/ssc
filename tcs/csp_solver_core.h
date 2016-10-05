@@ -719,6 +719,47 @@ public:
 			OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
 			OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
 
+			// **************************************************************
+			//      ONLY instantaneous outputs that are reported as the first value
+			//        if multiple csp-timesteps for one reporting timestep
+			// **************************************************************
+			TOU_PERIOD,                 //[-] CSP operating TOU period
+			PRICING_MULT,               //[-] PPA price multiplier
+			PC_Q_DOT_SB,                //[MWt] PC required standby thermal power
+			PC_Q_DOT_MIN,               //[MWt] PC required min thermal power
+			PC_Q_DOT_TARGET,            //[MWt] PC target thermal power
+			PC_Q_DOT_MAX,               //[MWt] PC allowable max thermal power
+			CTRL_IS_REC_SU,             //[-] Control decision: is receiver startup allowed?
+			CTRL_IS_PC_SU,              //[-] Control decision: is power cycle startup allowed?
+			CTRL_IS_PC_SB,              //[-] Control decision: is power cycle standby allowed?
+			EST_Q_DOT_CR_SU,            //[MWt] Estimate receiver startup thermal power
+			EST_Q_DOT_CR_ON,            //[MWt] Estimate receiver thermal power to HTF
+			EST_Q_DOT_DC,               //[MWt] Estimate max TES dc thermal power
+			EST_Q_DOT_CH,               //[MWt] Estimate max TES ch thermal power
+			CTRL_OP_MODE_SEQ_A,         //[-] First 3 operating modes tried
+			CTRL_OP_MODE_SEQ_B,         //[-] Next 3 operating modes tried
+			CTRL_OP_MODE_SEQ_C,         //[-] Final 3 operating modes tried
+			DISPATCH_SOLVE_STATE,       //[-] The status of the dispatch optimization solver
+			DISPATCH_SOLVE_ITER,        //[-] Number of iterations before completing dispatch optimization
+			DISPATCH_SOLVE_OBJ,         //[?] Objective function value achieved by the dispatch optimization solver
+			DISPATCH_SOLVE_OBJ_RELAX,   //[?] Objective function value for the relaxed continuous problem 
+			DISPATCH_QSF_EXPECT,        //[MWt] Expected total solar field energy generation in dispatch model
+			DISPATCH_QSFPROD_EXPECT,    //[MWt] Expected useful solar field energy generation in dispatch model
+			DISPATCH_QSFSU_EXPECT,      //[MWt] Solar field startup energy in dispatch model
+			DISPATCH_TES_EXPECT,        //[MWht] Thermal energy storage charge state in dispatch model
+			DISPATCH_PCEFF_EXPECT,      //[-] Expected power cycle efficiency adjustment in dispatch model
+			DISPATCH_SFEFF_EXPECT,      //[-] Expected solar field thermal efficiency adjustment in dispatch model
+			DISPATCH_QPBSU_EXPECT,      //[MWt] Power cycle startup energy consumption in dispatch model
+			DISPATCH_WPB_EXPECT,        //[MWe] Power cycle electricity production in dispatch model
+			DISPATCH_REV_EXPECT,        //[MWe*fact] Power cycle electricity production times revenue factor in dispatch model
+			DISPATCH_PRES_NCONSTR,      //[-] Number of constraint relationships in dispatch model formulation
+			DISPATCH_PRES_NVAR,         //[-] Number of variables in dispatch model formulation
+			DISPATCH_SOLVE_TIME,        //[sec]   Time required to solve the dispatch model at each instance
+
+			// **************************************************************
+			//      Outputs that are reported as weighted averages if 
+			//       multiple csp-timesteps for one reporting timestep
+			// **************************************************************
 			SOLZEN,           //[deg] Solar zenith angle
 			SOLAZ,            //[deg] Solar azimuth angle
 			BEAM,			  //[W/m^2] Resource beam normal irradiance
@@ -745,8 +786,8 @@ public:
 		};
 	};
 
-	enum E_reported_outputs
-	{
+	//enum E_reported_outputs
+	//{
 		// Ouputs that are NOT reported as weighted averages
 		//TIME_FINAL,       //[hr]		
 		//N_OP_MODES,       //[-]
@@ -761,38 +802,38 @@ public:
 		//      ONLY instantaneous outputs that are reported as the first value
 		//        if multiple csp-timesteps for one reporting timestep
 		// **************************************************************
-		TOU_PERIOD,       //[-] CSP operating TOU period
-		PRICING_MULT,     //[-] PPA price multiplier
-		PC_Q_DOT_SB,      //[MWt] PC required standby thermal power
-		PC_Q_DOT_MIN,     //[MWt] PC required min thermal power
-		PC_Q_DOT_TARGET,  //[MWt] PC target thermal power
-		PC_Q_DOT_MAX,     //[MWt] PC allowable max thermal power
-		CTRL_IS_REC_SU,   //[-] Control decision: is receiver startup allowed?
-		CTRL_IS_PC_SU,    //[-] Control decision: is power cycle startup allowed?
-		CTRL_IS_PC_SB,    //[-] Control decision: is power cycle standby allowed?
-		EST_Q_DOT_CR_SU,  //[MWt] Estimate receiver startup thermal power
-		EST_Q_DOT_CR_ON,  //[MWt] Estimate receiver thermal power to HTF
-		EST_Q_DOT_DC,     //[MWt] Estimate max TES dc thermal power
-		EST_Q_DOT_CH,     //[MWt] Estimate max TES ch thermal power
-		CTRL_OP_MODE_SEQ_A,   //[-] First 3 operating modes tried
-		CTRL_OP_MODE_SEQ_B,   //[-] Next 3 operating modes tried
-		CTRL_OP_MODE_SEQ_C,   //[-] Final 3 operating modes tried
-        DISPATCH_SOLVE_STATE,   //[-] The status of the dispatch optimization solver
-        DISPATCH_SOLVE_ITER,    //[-] Number of iterations before completing dispatch optimization
-        DISPATCH_SOLVE_OBJ,     //[?] Objective function value achieved by the dispatch optimization solver
-        DISPATCH_SOLVE_OBJ_RELAX,   //[?] Objective function value for the relaxed continuous problem 
-        DISPATCH_QSF_EXPECT,        //MWt Expected total solar field energy generation in dispatch model
-        DISPATCH_QSFPROD_EXPECT,    //MWt Expected useful solar field energy generation in dispatch model
-        DISPATCH_QSFSU_EXPECT,      //MWt Solar field startup energy in dispatch model
-        DISPATCH_TES_EXPECT,        //MWht Thermal energy storage charge state in dispatch model
-        DISPATCH_PCEFF_EXPECT,      //-  Expected power cycle efficiency adjustment in dispatch model
-        DISPATCH_SFEFF_EXPECT,      //-  Expected solar field thermal efficiency adjustment in dispatch model
-        DISPATCH_QPBSU_EXPECT,      //MWt   Power cycle startup energy consumption in dispatch model
-        DISPATCH_WPB_EXPECT,        //MWe   Power cycle electricity production in dispatch model
-        DISPATCH_REV_EXPECT,        //MWe*fact Power cycle electricity production times revenue factor in dispatch model
-        DISPATCH_PRES_NCONSTR,      //- Number of constraint relationships in dispatch model formulation
-        DISPATCH_PRES_NVAR,         //- Number of variables in dispatch model formulation
-        DISPATCH_SOLVE_TIME,         //sec   Time required to solve the dispatch model at each instance
+		// TOU_PERIOD,       //[-] CSP operating TOU period
+		// PRICING_MULT,     //[-] PPA price multiplier
+		// PC_Q_DOT_SB,      //[MWt] PC required standby thermal power
+		// PC_Q_DOT_MIN,     //[MWt] PC required min thermal power
+		// PC_Q_DOT_TARGET,  //[MWt] PC target thermal power
+		// PC_Q_DOT_MAX,     //[MWt] PC allowable max thermal power
+		// CTRL_IS_REC_SU,   //[-] Control decision: is receiver startup allowed?
+		// CTRL_IS_PC_SU,    //[-] Control decision: is power cycle startup allowed?
+		// CTRL_IS_PC_SB,    //[-] Control decision: is power cycle standby allowed?
+		// EST_Q_DOT_CR_SU,  //[MWt] Estimate receiver startup thermal power
+		// EST_Q_DOT_CR_ON,  //[MWt] Estimate receiver thermal power to HTF
+		// EST_Q_DOT_DC,     //[MWt] Estimate max TES dc thermal power
+		// EST_Q_DOT_CH,     //[MWt] Estimate max TES ch thermal power
+		// CTRL_OP_MODE_SEQ_A,   //[-] First 3 operating modes tried
+		// CTRL_OP_MODE_SEQ_B,   //[-] Next 3 operating modes tried
+		// CTRL_OP_MODE_SEQ_C,   //[-] Final 3 operating modes tried
+        // DISPATCH_SOLVE_STATE,   //[-] The status of the dispatch optimization solver
+        // DISPATCH_SOLVE_ITER,    //[-] Number of iterations before completing dispatch optimization
+        // DISPATCH_SOLVE_OBJ,     //[?] Objective function value achieved by the dispatch optimization solver
+        // DISPATCH_SOLVE_OBJ_RELAX,   //[?] Objective function value for the relaxed continuous problem 
+        // DISPATCH_QSF_EXPECT,        //MWt Expected total solar field energy generation in dispatch model
+        // DISPATCH_QSFPROD_EXPECT,    //MWt Expected useful solar field energy generation in dispatch model
+        // DISPATCH_QSFSU_EXPECT,      //MWt Solar field startup energy in dispatch model
+        // DISPATCH_TES_EXPECT,        //MWht Thermal energy storage charge state in dispatch model
+        // DISPATCH_PCEFF_EXPECT,      //-  Expected power cycle efficiency adjustment in dispatch model
+        // DISPATCH_SFEFF_EXPECT,      //-  Expected solar field thermal efficiency adjustment in dispatch model
+        // DISPATCH_QPBSU_EXPECT,      //MWt   Power cycle startup energy consumption in dispatch model
+        // DISPATCH_WPB_EXPECT,        //MWe   Power cycle electricity production in dispatch model
+        // DISPATCH_REV_EXPECT,        //MWe*fact Power cycle electricity production times revenue factor in dispatch model
+        // DISPATCH_PRES_NCONSTR,      //- Number of constraint relationships in dispatch model formulation
+        // DISPATCH_PRES_NVAR,         //- Number of variables in dispatch model formulation
+        // DISPATCH_SOLVE_TIME,         //sec   Time required to solve the dispatch model at each instance
 
 		// **************************************************************
 		//      ONLY Outputs that are reported as weighted averages if 
@@ -842,8 +883,8 @@ public:
 		//SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
 		//W_DOT_NET,            //[MWe] System total electric power to grid
 
-		N_END	
-	};
+		//N_END	
+	//};
 	
 	C_csp_reported_outputs mc_reported_outputs;
 

@@ -114,6 +114,41 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::OP_MODE_2, false},		//[-] Operating mode in second subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_3, false},		//[-] Operating mode in third subtimestep
 
+
+	{C_csp_solver::C_solver_outputs::TOU_PERIOD, false},                  //[-] CSP operating TOU period
+	{C_csp_solver::C_solver_outputs::PRICING_MULT, false},				  //[-] PPA price multiplier
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, false},				  //[MWt] PC required standby thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, false},				  //[MWt] PC required min thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, false},			  //[MWt] PC target thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, false},				  //[MWt] PC allowable max thermal power
+	{C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, false},			  //[-] Control decision: is receiver startup allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, false},				  //[-] Control decision: is power cycle startup allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, false},				  //[-] Control decision: is power cycle standby allowed?
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, false},			  //[MWt] Estimate receiver startup thermal power
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, false},			  //[MWt] Estimate receiver thermal power to HTF
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, false},				  //[MWt] Estimate max TES dc thermal power
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CH, false},				  //[MWt] Estimate max TES ch thermal power
+	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, false},		  //[-] First 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, false},		  //[-] Next 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, false},		  //[-] Final 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, false},		  //[-] The status of the dispatch optimization solver
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, false},		  //[-] Number of iterations before completing dispatch optimization
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, false},		  //[?] Objective function value achieved by the dispatch optimization solver
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, false},	  //[?] Objective function value for the relaxed continuous problem 
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, false},		  //[MWt] Expected total solar field energy generation in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, false},	  //[MWt] Expected useful solar field energy generation in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, false},		  //[MWt] Solar field startup energy in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, false},		  //[MWht] Thermal energy storage charge state in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, false},		  //[-] Expected power cycle efficiency adjustment in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, false},		  //[-] Expected solar field thermal efficiency adjustment in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, false},		  //[MWt] Power cycle startup energy consumption in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, false},		  //[MWe] Power cycle electricity production in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, false},		  //[MWe*fact] Power cycle electricity production times revenue factor in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, false},		  //[-] Number of constraint relationships in dispatch model formulation
+	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, false},		  //[-] Number of variables in dispatch model formulation
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, false},		  //[sec]   Time required to solve the dispatch model at each instance
+
+
 	{C_csp_solver::C_solver_outputs::SOLZEN, true},			//[deg] Solar zenith angle
 	{C_csp_solver::C_solver_outputs::SOLAZ, true},			//[deg] Solar azimuth angle
 	{C_csp_solver::C_solver_outputs::BEAM, true},			//[W/m^2] Resource beam normal irradiance
@@ -180,9 +215,9 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	error_msg = "";
 
 	// Initializie temporary output 2D vector
-	mvv_outputs_temp.resize(N_END, std::vector<double>(0,std::numeric_limits<double>::quiet_NaN()));
-	for( int i = 0; i < C_csp_solver::N_END; i++ )
-		mvv_outputs_temp[i].reserve(10);
+	//mvv_outputs_temp.resize(N_END, std::vector<double>(0,std::numeric_limits<double>::quiet_NaN()));
+	//for( int i = 0; i < C_csp_solver::N_END; i++ )
+	//	mvv_outputs_temp[i].reserve(10);
 
 	mv_time_local.reserve(10);
 
@@ -332,13 +367,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	mp_reporting_array = ptr_array;
 	//mp_post_proc_array = post_proc_array;
 
-	for( int i = 0; i < C_csp_solver::N_END; i++ )
-	{
-		if( mp_reporting_array[i] == 0 )
-		{
-			throw(C_csp_exception("Not all required reported outputs are allocated", "CSP Solver"));
-		}
-	}
+	//for( int i = 0; i < C_csp_solver::N_END; i++ )
+	//{
+	//	if( mp_reporting_array[i] == 0 )
+	//	{
+	//		throw(C_csp_exception("Not all required reported outputs are allocated", "CSP Solver"));
+	//	}
+	//}
 	
 	// Get number of records in weather file
 	int n_wf_records = mc_weather.get_n_records();
@@ -7040,19 +7075,35 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_reported_outputs.value(C_solver_outputs::OP_MODE_3, 0.0);
 		}
 		
-		mvv_outputs_temp[TOU_PERIOD].push_back(tou_period);         //[-] 
-		mvv_outputs_temp[PRICING_MULT].push_back(pricing_mult);		//[-]
-		mvv_outputs_temp[PC_Q_DOT_SB].push_back(q_pc_sb);           //[MW]
-		mvv_outputs_temp[PC_Q_DOT_MIN].push_back(q_pc_min);         //[MW]
-		mvv_outputs_temp[PC_Q_DOT_TARGET].push_back(q_pc_target);   //[MW]
-		mvv_outputs_temp[PC_Q_DOT_MAX].push_back(q_pc_max);         //[MW]
-		mvv_outputs_temp[CTRL_IS_REC_SU].push_back((int)is_rec_su_allowed);     //[-]
-		mvv_outputs_temp[CTRL_IS_PC_SU].push_back((int)is_pc_su_allowed);       //[-]
-		mvv_outputs_temp[CTRL_IS_PC_SB].push_back((int)is_pc_sb_allowed);       //[-]
-		mvv_outputs_temp[EST_Q_DOT_CR_SU].push_back(q_dot_cr_startup);          //[MWt]
-		mvv_outputs_temp[EST_Q_DOT_CR_ON].push_back(q_dot_cr_on);               //[MWt]
-		mvv_outputs_temp[EST_Q_DOT_DC].push_back(q_dot_tes_dc);                 //[MWt]
-		mvv_outputs_temp[EST_Q_DOT_CH].push_back(q_dot_tes_ch);                 //[MWt]
+
+		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, tou_period);        //[-]       
+		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	//[-] 
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);          //[MW]     
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);        //[MW]    
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET, q_pc_target);  //[MW]
+		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, q_pc_max);         //[MW]    
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_REC_SU, is_rec_su_allowed);     //[-] 
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SU, is_pc_su_allowed);       //[-] 
+		mc_reported_outputs.value(C_solver_outputs::CTRL_IS_PC_SB, is_pc_sb_allowed);       //[-]  
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_SU, is_pc_sb_allowed);     //[-]
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CR_ON, q_dot_cr_on);          //[MWt]
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_DC, q_dot_tes_dc);            //[MWt]    
+		mc_reported_outputs.value(C_solver_outputs::EST_Q_DOT_CH, q_dot_tes_ch);            //[MWt]    
+
+
+		//mvv_outputs_temp[TOU_PERIOD].push_back(tou_period);         //[-] 
+		//mvv_outputs_temp[PRICING_MULT].push_back(pricing_mult);		//[-]
+		//mvv_outputs_temp[PC_Q_DOT_SB].push_back(q_pc_sb);           //[MW]
+		//mvv_outputs_temp[PC_Q_DOT_MIN].push_back(q_pc_min);         //[MW]
+		//mvv_outputs_temp[PC_Q_DOT_TARGET].push_back(q_pc_target);   //[MW]
+		//mvv_outputs_temp[PC_Q_DOT_MAX].push_back(q_pc_max);         //[MW]
+		//mvv_outputs_temp[CTRL_IS_REC_SU].push_back((int)is_rec_su_allowed);     //[-]
+		//mvv_outputs_temp[CTRL_IS_PC_SU].push_back((int)is_pc_su_allowed);       //[-]
+		//mvv_outputs_temp[CTRL_IS_PC_SB].push_back((int)is_pc_sb_allowed);       //[-]
+		//mvv_outputs_temp[EST_Q_DOT_CR_SU].push_back(is_pc_sb_allowed);       //[-]
+		//mvv_outputs_temp[EST_Q_DOT_CR_ON].push_back(q_dot_cr_on);               //[MWt]
+		//mvv_outputs_temp[EST_Q_DOT_DC].push_back(q_dot_tes_dc);                 //[MWt]
+		//mvv_outputs_temp[EST_Q_DOT_CH].push_back(q_dot_tes_ch);                 //[MWt]
 
 		//mvv_outputs_temp[SOLZEN].push_back(mc_weather.ms_outputs.m_solzen);		//[deg] Solar zenith
         //mvv_outputs_temp[SOLAZ].push_back(mc_weather.ms_outputs.m_solazi);
@@ -7135,24 +7186,41 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::W_DOT_NET, W_dot_net);								//[MWe] Total electric power output to grid        
 		
             //Dispatch optimization outputs
-        mvv_outputs_temp[DISPATCH_SOLVE_STATE].push_back(dispatch.outputs.solve_state);
-        mvv_outputs_temp[DISPATCH_SOLVE_ITER].push_back(dispatch.outputs.solve_iter);
-        mvv_outputs_temp[DISPATCH_SOLVE_OBJ].push_back(dispatch.outputs.objective);
-        mvv_outputs_temp[DISPATCH_SOLVE_OBJ_RELAX].push_back(dispatch.outputs.objective_relaxed);
-        
-        mvv_outputs_temp[DISPATCH_QSF_EXPECT].push_back(disp_qsf_expect);
-        mvv_outputs_temp[DISPATCH_QSFPROD_EXPECT].push_back(disp_qsfprod_expect);
-        mvv_outputs_temp[DISPATCH_QSFSU_EXPECT].push_back(disp_qsfsu_expect);
-        mvv_outputs_temp[DISPATCH_TES_EXPECT].push_back(disp_tes_expect);
-        mvv_outputs_temp[DISPATCH_PCEFF_EXPECT].push_back(disp_etapb_expect);
-        mvv_outputs_temp[DISPATCH_SFEFF_EXPECT].push_back(disp_etasf_expect);
-        mvv_outputs_temp[DISPATCH_QPBSU_EXPECT].push_back(disp_qpbsu_expect);
-        mvv_outputs_temp[DISPATCH_WPB_EXPECT].push_back(disp_wpb_expect);
-        mvv_outputs_temp[DISPATCH_REV_EXPECT].push_back(disp_rev_expect);
-
-        mvv_outputs_temp[DISPATCH_PRES_NCONSTR].push_back(dispatch.outputs.presolve_nconstr);
-        mvv_outputs_temp[DISPATCH_PRES_NVAR].push_back(dispatch.outputs.presolve_nvar);
-        mvv_outputs_temp[DISPATCH_SOLVE_TIME].push_back(dispatch.outputs.solve_time);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_STATE, dispatch.outputs.solve_state);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_ITER, dispatch.outputs.solve_iter);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ, dispatch.outputs.objective);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, dispatch.outputs.objective);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSF_EXPECT, disp_qsf_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFPROD_EXPECT, disp_qsfprod_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFSU_EXPECT, disp_qsfprod_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_TES_EXPECT, disp_tes_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PCEFF_EXPECT, disp_etapb_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SFEFF_EXPECT, disp_etasf_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QPBSU_EXPECT, disp_qpbsu_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_WPB_EXPECT, disp_wpb_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_REV_EXPECT, disp_rev_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NCONSTR, dispatch.outputs.presolve_nconstr);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nconstr);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
+				
+		//mvv_outputs_temp[DISPATCH_SOLVE_STATE].push_back(dispatch.outputs.solve_state);
+        //mvv_outputs_temp[DISPATCH_SOLVE_ITER].push_back(dispatch.outputs.solve_iter);
+        //mvv_outputs_temp[DISPATCH_SOLVE_OBJ].push_back(dispatch.outputs.objective);
+		//mvv_outputs_temp[DISPATCH_SOLVE_OBJ_RELAX].push_back(dispatch.outputs.objective);
+        //
+        //mvv_outputs_temp[DISPATCH_QSF_EXPECT].push_back(disp_qsf_expect);
+        //mvv_outputs_temp[DISPATCH_QSFPROD_EXPECT].push_back(disp_qsfprod_expect);
+		//mvv_outputs_temp[DISPATCH_QSFSU_EXPECT].push_back(disp_qsfprod_expect);
+        //mvv_outputs_temp[DISPATCH_TES_EXPECT].push_back(disp_tes_expect);
+        //mvv_outputs_temp[DISPATCH_PCEFF_EXPECT].push_back(disp_etapb_expect);
+        //mvv_outputs_temp[DISPATCH_SFEFF_EXPECT].push_back(disp_etasf_expect);
+        //mvv_outputs_temp[DISPATCH_QPBSU_EXPECT].push_back(disp_qpbsu_expect);
+        //mvv_outputs_temp[DISPATCH_WPB_EXPECT].push_back(disp_wpb_expect);
+        //mvv_outputs_temp[DISPATCH_REV_EXPECT].push_back(disp_rev_expect);
+		//
+        //mvv_outputs_temp[DISPATCH_PRES_NCONSTR].push_back(dispatch.outputs.presolve_nconstr);
+		//mvv_outputs_temp[DISPATCH_PRES_NVAR].push_back(dispatch.outputs.presolve_nconstr);
+        //mvv_outputs_temp[DISPATCH_SOLVE_TIME].push_back(dispatch.outputs.solve_time);
 
 
 
@@ -7178,7 +7246,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				op_mode_key = 100.0*op_mode_key + op_mode_step;
 			}
 		}
-		mvv_outputs_temp[CTRL_OP_MODE_SEQ_A].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_A, op_mode_key);
+		//mvv_outputs_temp[CTRL_OP_MODE_SEQ_A].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 		//mv_operating_modes_a.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 
 		op_mode_key = 0.0;
@@ -7195,7 +7264,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				op_mode_key = 100.0*op_mode_key + op_mode_step;
 			}
 		}
-		mvv_outputs_temp[CTRL_OP_MODE_SEQ_B].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_B, op_mode_key);
+		//mvv_outputs_temp[CTRL_OP_MODE_SEQ_B].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 		//mv_operating_modes_b.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 
 		op_mode_key = 0.0;
@@ -7212,7 +7282,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				op_mode_key = 100.0*op_mode_key + op_mode_step;
 			}
 		}
-		mvv_outputs_temp[CTRL_OP_MODE_SEQ_C].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_C, op_mode_key);
+		//mvv_outputs_temp[CTRL_OP_MODE_SEQ_C].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 		//mv_operating_modes_c.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 
 		// ****************************************************
@@ -7321,15 +7392,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 void C_csp_solver::set_outputs_at_reporting_interval()
 {
+	return;
+	
 	// Step through each uniform reporting period
-	int n_report = mvv_outputs_temp[TOU_PERIOD].size();
-
-	if( n_report < 1 )
-	{
-		throw(C_csp_exception("No data to send to SSC", "Reporting Intervals"));
-	}
-
-	double time_prev = m_report_time_start;		//[s]
+	//int n_report = mvv_outputs_temp[TOU_PERIOD].size();
+	//
+	//if( n_report < 1 )
+	//{
+	//	throw(C_csp_exception("No data to send to SSC", "Reporting Intervals"));
+	//}
+	//
+	//double time_prev = m_report_time_start;		//[s]
 
 	// Save final time, and convert to hours
 	// mp_reporting_array[C_csp_solver::TIME_FINAL][m_i_reporting] = m_report_time_end/3600.0;		//[hr] time at end of reporting timestep, convert from s
@@ -7389,10 +7462,10 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	// Set instantaneous outputs that are reported as the first value
 	//   if multiple csp-timesteps for one reporting timestep
 	// ************************************************************
-	for( int j = C_csp_solver::TOU_PERIOD; j < C_csp_solver::DISPATCH_SOLVE_TIME + 1; j++ )
-	{
-		mp_reporting_array[j][m_i_reporting] = mvv_outputs_temp[j][0];
-	}
+	//for( int j = C_csp_solver::TOU_PERIOD; j < C_csp_solver::DISPATCH_SOLVE_TIME + 1; j++ )
+	//{
+	//	mp_reporting_array[j][m_i_reporting] = mvv_outputs_temp[j][0];
+	//}
 
 	// ***********************************************************
 	//      Set outputs that are reported as weighted averages if 
@@ -7415,31 +7488,31 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 
 
 	// Check if the most recent csp solver timestep aligns with the end of the reporting timestep
-	bool delete_last_step = false;
-	int pop_back_start = 1;
-
-	if( mv_time_local[n_report - 1] == m_report_time_end )
-	{
-		delete_last_step = true;
-		pop_back_start = 0;
-	}
-
-	// If more than 1 element in temp vectors, only keep most recent value
-	if( n_report > 1 || delete_last_step)
-	{
-		for( int j = 0; j < C_csp_solver::N_END; j++ )
-		{
-			if( !delete_last_step )
-			{
-				mvv_outputs_temp[j][0] = mvv_outputs_temp[j][n_report - 1];
-			}
-
-			for( int i = pop_back_start; i < n_report; i++ )
-			{
-				mvv_outputs_temp[j].pop_back();
-			}
-		}
-	}
+	//bool delete_last_step = false;
+	//int pop_back_start = 1;
+	//
+	//if( mv_time_local[n_report - 1] == m_report_time_end )
+	//{
+	//	delete_last_step = true;
+	//	pop_back_start = 0;
+	//}
+	//
+	//// If more than 1 element in temp vectors, only keep most recent value
+	//if( n_report > 1 || delete_last_step)
+	//{
+	//	for( int j = 0; j < C_csp_solver::N_END; j++ )
+	//	{
+	//		if( !delete_last_step )
+	//		{
+	//			mvv_outputs_temp[j][0] = mvv_outputs_temp[j][n_report - 1];
+	//		}
+	//
+	//		for( int i = pop_back_start; i < n_report; i++ )
+	//		{
+	//			mvv_outputs_temp[j].pop_back();
+	//		}
+	//	}
+	//}
 
 	// Populate post-processed outputs
 	//mp_post_proc_array[C_csp_solver::PC_Q_STARTUP][m_i_reporting] = 
