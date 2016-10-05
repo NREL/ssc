@@ -103,6 +103,14 @@ void C_csp_solver::C_csp_solver_kernel::baseline_step_forward()
 	mc_ts_sim_baseline.step_forward();
 }
 
+static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
+{
+	// Ouputs that are NOT reported as weighted averages
+	{C_csp_solver::C_solver_outputs::TIME_FINAL, false},	//[hr]
+	
+	csp_info_invalid
+};
+
 C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	C_csp_collector_receiver &collector_receiver,
 	C_csp_power_cycle &power_cycle,
@@ -128,6 +136,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_cycle_P_hot_des = m_cycle_x_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
 
 	// Reporting and Output Tracking
+	mc_reported_outputs.construct(S_solver_output_info);
+
 	m_i_reporting = -1;
 	//m_sim_time_start = 
 	//m_sim_time_end = 
@@ -6965,7 +6975,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		
 			// Simulation outputs
 		mv_time_local.push_back(mc_kernel.mc_sim_info.ms_ts.m_time);
-		mvv_outputs_temp[TIME_FINAL].push_back(mc_kernel.mc_sim_info.ms_ts.m_time);				//[s] Time at end of timestep		
+		mc_reported_outputs.value(C_solver_outputs::TIME_FINAL, mc_kernel.mc_sim_info.ms_ts.m_time/3600.0);
+		//mvv_outputs_temp[TIME_FINAL].push_back(mc_kernel.mc_sim_info.ms_ts.m_time);				//[s] Time at end of timestep		
+		
 		mvv_outputs_temp[N_OP_MODES].push_back(0.0);                            //[-] Need to push this back, but elements aren't used
 		mvv_outputs_temp[ERR_M_DOT].push_back(0.0);
 		mvv_outputs_temp[ERR_Q_DOT].push_back(0.0);
@@ -7078,6 +7090,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
         mvv_outputs_temp[DISPATCH_PRES_NVAR].push_back(dispatch.outputs.presolve_nvar);
         mvv_outputs_temp[DISPATCH_SOLVE_TIME].push_back(dispatch.outputs.solve_time);
 
+
+
+		mc_reported_outputs.set_timestep_outputs();
+
+
+
+
 		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
 		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
 		int n_op_modes = m_op_mode_tracking.size();
@@ -7143,6 +7162,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			{
 				mc_collector_receiver.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
 				mc_power_cycle.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+
+				// Overwrite TIME_FINAL
+				mc_reported_outputs.overwrite_most_recent_timestep(C_solver_outputs::TIME_FINAL, m_report_time_end / 3600.0);	//[hr]
+				mc_reported_outputs.send_to_reporting_ts_array(m_report_time_start, mv_time_local, m_report_time_end);
 
 				set_outputs_at_reporting_interval();
 
@@ -7211,7 +7234,7 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	double time_prev = m_report_time_start;		//[s]
 
 	// Save final time, and convert to hours
-	mp_reporting_array[C_csp_solver::TIME_FINAL][m_i_reporting] = m_report_time_end/3600.0;		//[hr] time at end of reporting timestep, convert from s
+	// mp_reporting_array[C_csp_solver::TIME_FINAL][m_i_reporting] = m_report_time_end/3600.0;		//[hr] time at end of reporting timestep, convert from s
 
 	// Report number of csp solver operating modes (= timesteps) in reporting timestep
 	mp_reporting_array[C_csp_solver::N_OP_MODES][m_i_reporting] = n_report;

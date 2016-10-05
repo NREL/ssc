@@ -705,10 +705,20 @@ public:
 	//	N_END_POST_PROC
 	//};
 	
+	class C_solver_outputs
+	{
+	public:
+		enum
+		{
+			// Ouputs that are NOT reported as weighted averages
+			TIME_FINAL       //[hr]		
+		};
+	};
+
 	enum E_reported_outputs
 	{
 		// Ouputs that are NOT reported as weighted averages
-		TIME_FINAL,       //[hr]		
+		//TIME_FINAL,       //[hr]		
 		N_OP_MODES,       //[-]
 		ERR_M_DOT,        //[-] Relative mass conservation error
 		ERR_Q_DOT,        //[-] Relative energy conservation error
@@ -804,6 +814,8 @@ public:
 
 		N_END	
 	};
+	
+	C_csp_reported_outputs mc_reported_outputs;
 
 	struct S_sim_setup
 	{
