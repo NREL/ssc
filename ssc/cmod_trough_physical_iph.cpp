@@ -667,7 +667,7 @@ public:
 		
 		
 
-		float **ptr_array = new float*[C_csp_solver::N_END];
+		float **ptr_array = new float*[0];
 		//float **post_proc_array = new float*[C_csp_solver::N_END_POST_PROC];
 		//
 		//for( int i = 0; i < C_csp_solver::N_END_POST_PROC; i++ )
@@ -677,10 +677,10 @@ public:
 		//
 		//post_proc_array[C_csp_solver::PC_Q_STARTUP] = allocate("q_pc_startup", n_steps_fixed);
 
-		for( int i = 0; i < C_csp_solver::N_END; i++ )
-		{
-			ptr_array[i] = 0;
-		}
+		//for( int i = 0; i < C_csp_solver::N_END; i++ )
+		//{
+		//	ptr_array[i] = 0;
+		//}
 
 			// Simulation outputs
 		//ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr1", n_steps_fixed);
@@ -740,49 +740,49 @@ public:
 		//ptr_array[C_csp_solver::W_DOT_NET] = allocate("P_out_net1", n_steps_fixed);
 
 		// Controller outputs
-		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value1", n_steps_fixed);
-		ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult1", n_steps_fixed);
-		//ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
-		//ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
-		//ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
-		//ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
-		/*ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance1", n_steps_fixed);
-		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance1", n_steps_fixed);*/
-
-
-		ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max1", n_steps_fixed);
-		ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target1", n_steps_fixed);
-
-		ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed1", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed1", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed1", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su1", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on1", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc1", n_steps_fixed);
-		ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch1", n_steps_fixed);
-
-		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a1", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b1", n_steps_fixed);
-		ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c1", n_steps_fixed);
-
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar1", n_steps_fixed);
-		ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time1", n_steps_fixed);
+		//ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult1", n_steps_fixed);
+		////ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
+		////ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
+		////ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
+		////ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
+		///*ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance1", n_steps_fixed);
+		//ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance1", n_steps_fixed);*/
+		//
+		//
+		//ptr_array[C_csp_solver::PC_Q_DOT_SB] = allocate("q_dot_pc_sb1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_Q_DOT_MIN] = allocate("q_dot_pc_min1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_Q_DOT_MAX] = allocate("q_dot_pc_max1", n_steps_fixed);
+		//ptr_array[C_csp_solver::PC_Q_DOT_TARGET] = allocate("q_dot_pc_target1", n_steps_fixed);
+		//
+		//ptr_array[C_csp_solver::CTRL_IS_REC_SU] = allocate("is_rec_su_allowed1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CTRL_IS_PC_SU] = allocate("is_pc_su_allowed1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CTRL_IS_PC_SB] = allocate("is_pc_sb_allowed1", n_steps_fixed);
+		//ptr_array[C_csp_solver::EST_Q_DOT_CR_SU] = allocate("q_dot_est_cr_su1", n_steps_fixed);
+		//ptr_array[C_csp_solver::EST_Q_DOT_CR_ON] = allocate("q_dot_est_cr_on1", n_steps_fixed);
+		//ptr_array[C_csp_solver::EST_Q_DOT_DC] = allocate("q_dot_est_tes_dc1", n_steps_fixed);
+		//ptr_array[C_csp_solver::EST_Q_DOT_CH] = allocate("q_dot_est_tes_ch1", n_steps_fixed);
+		//
+		//ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_A] = allocate("operating_modes_a1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_B] = allocate("operating_modes_b1", n_steps_fixed);
+		//ptr_array[C_csp_solver::CTRL_OP_MODE_SEQ_C] = allocate("operating_modes_c1", n_steps_fixed);
+		//
+		//ptr_array[C_csp_solver::DISPATCH_SOLVE_STATE] = allocate("disp_solve_state1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_SOLVE_ITER] = allocate("disp_solve_iter1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ] = allocate("disp_objective1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_SOLVE_OBJ_RELAX] = allocate("disp_obj_relax1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_QSF_EXPECT] = allocate("disp_qsf_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_QSFPROD_EXPECT] = allocate("disp_qsfprod_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_QSFSU_EXPECT] = allocate("disp_qsfsu_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_TES_EXPECT] = allocate("disp_tes_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_PCEFF_EXPECT] = allocate("disp_pceff_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_SFEFF_EXPECT] = allocate("disp_thermeff_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_QPBSU_EXPECT] = allocate("disp_qpbsu_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_WPB_EXPECT] = allocate("disp_wpb_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_REV_EXPECT] = allocate("disp_rev_expected1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_PRES_NCONSTR] = allocate("disp_presolve_nconstr1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_PRES_NVAR] = allocate("disp_presolve_nvar1", n_steps_fixed);
+		//ptr_array[C_csp_solver::DISPATCH_SOLVE_TIME] = allocate("disp_solve_time1", n_steps_fixed);
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 
