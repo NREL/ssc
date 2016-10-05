@@ -742,10 +742,10 @@ public:
 		// Controller outputs
 		ptr_array[C_csp_solver::TOU_PERIOD] = allocate("tou_value1", n_steps_fixed);
 		ptr_array[C_csp_solver::PRICING_MULT] = allocate("pricing_mult1", n_steps_fixed);
-		ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
-		ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
-		ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
-		ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
+		//ptr_array[C_csp_solver::N_OP_MODES] = allocate("n_op_modes1", n_steps_fixed);
+		//ptr_array[C_csp_solver::OP_MODE_1] = allocate("op_mode_11", n_steps_fixed);
+		//ptr_array[C_csp_solver::OP_MODE_2] = allocate("op_mode_21", n_steps_fixed);
+		//ptr_array[C_csp_solver::OP_MODE_3] = allocate("op_mode_31", n_steps_fixed);
 		/*ptr_array[C_csp_solver::ERR_M_DOT] = allocate("m_dot_balance1", n_steps_fixed);
 		ptr_array[C_csp_solver::ERR_Q_DOT] = allocate("q_balance1", n_steps_fixed);*/
 
