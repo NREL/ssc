@@ -77,7 +77,7 @@ public:
 	void GenerateDesignPointSimulations(var_map &V, vector<string> &hourly_weather_data);
 	//Simulation methods
 	bool EvaluateDesign(double &obj_metric, double &flux_max, double &tot_cost);
-	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux, double &cost);
+	void PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux, double &cost, std::string *note=0);
 	virtual bool CreateLayout(sp_layout &layout, bool do_post_process = true);
 	virtual bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
 	virtual bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
