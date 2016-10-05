@@ -7221,6 +7221,31 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				set_outputs_at_reporting_interval();
 
+				// Check if the most recent csp solver timestep aligns with the end of the reporting timestep
+				bool delete_last_step = false;
+				int pop_back_start = 1;
+
+				int n_time_local = mv_time_local.size();
+				if( mv_time_local[n_time_local - 1] == m_report_time_end )
+				{
+					delete_last_step = true;
+					pop_back_start = 0;
+				}
+
+				// If more than 1 element in temp vectors, only keep most recent value
+				if( n_time_local > 1 || delete_last_step )
+				{
+					if( !delete_last_step )
+					{
+						mv_time_local[0] = mv_time_local[n_time_local - 1];
+					}
+
+					for( int i = pop_back_start; i < n_time_local; i++ )
+					{
+						mv_time_local.pop_back();
+					}
+				}
+
 				// Advance time_reporting_hr index
 				m_i_reporting++;
 				m_report_time_start = m_report_time_end;	//[s]
@@ -7401,16 +7426,12 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 				}
 				else
 				{
-					if(j==1)
-						mv_time_local[0] = mv_time_local[n_report - 1];
 					mvv_outputs_temp[j][0] = mvv_outputs_temp[j][n_report - 1];
 				}				
 			}
 
 			for( int i = pop_back_start; i < n_report; i++ )
 			{
-				if( j == 1 )
-					mv_time_local.pop_back();
 				mvv_outputs_temp[j].pop_back();
 			}
 		}
