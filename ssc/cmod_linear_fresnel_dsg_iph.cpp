@@ -422,7 +422,7 @@ public:
 		}
 
 		// Simulation outputs
-		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr1", n_steps_fixed);
+		//ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr1", n_steps_fixed);
 		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen1", n_steps_fixed);
 		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz1", n_steps_fixed);
 		ptr_array[C_csp_solver::BEAM] = allocate("beam1", n_steps_fixed);

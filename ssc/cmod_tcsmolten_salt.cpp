@@ -1347,6 +1347,10 @@ public:
 		C_csp_solver csp_solver(weather_reader, collector_receiver, *p_csp_power_cycle, storage, tou, system);
 
 
+		// Set solver reporting outputs
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
+		
+		
 		int out_type = -1;
 		std::string out_msg = "";
 		try
@@ -1404,7 +1408,7 @@ public:
 		}
 
 			// Simulation outputs
-		ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
+		//ptr_array[C_csp_solver::TIME_FINAL] = allocate("time_hr", n_steps_fixed);
 		ptr_array[C_csp_solver::SOLZEN] = allocate("solzen", n_steps_fixed);
 		ptr_array[C_csp_solver::SOLAZ] = allocate("solaz", n_steps_fixed);
         ptr_array[C_csp_solver::BEAM] = allocate("beam", n_steps_fixed);
