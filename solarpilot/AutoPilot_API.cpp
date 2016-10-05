@@ -224,6 +224,49 @@ struct AutoOptHelper
     nlopt::opt *m_opt_obj;
     var_map *m_variables;
 
+    class {
+        struct _inst { 
+            double obj; 
+            double flux; 
+            _inst(double o, double f){
+                obj=o; flux=f; 
+            }; 
+            _inst(){};
+        };
+        unordered_map<std::string, _inst> items;
+
+        std::string format(std::vector<double> vars)
+        {
+            stringstream buf;
+            for(int i=0; i<(int)vars.size(); i++)
+                buf << setw(8) << vars.at(i) << ",";
+            return buf.str();
+        };
+
+    public:
+        void add_call(std::vector<double> vars, double objective, double flux)
+        {
+            items[ format(vars) ] = _inst(objective, flux);
+        };
+
+        bool check_call(std::vector<double> vars, double* obj, double* flux)
+        {
+            std::string hash = format(vars);
+            if( items.find( hash ) == items.end() )
+                return false;
+
+            *obj = items[ hash ].obj;
+            *flux = items[ hash ].flux;
+
+            return true;
+        };
+
+        size_t size(){
+            return items.size();
+        };
+
+    } m_history_map;
+
     void SetObjects( void *autopilot, var_map &V, nlopt::opt *optobj ){
         m_autopilot = static_cast<AutoPilot*>( autopilot );
         m_variables = &V;
@@ -243,7 +286,7 @@ struct AutoOptHelper
         m_opt_names.clear();
     };
 
-    double Simulate(const double *x, int n)
+    double Simulate(const double *x, int n, std::string *note=0)
     {
         /* 
         Run a simulation and update points as needed. Report outcome from each step.
@@ -277,10 +320,11 @@ struct AutoOptHelper
             throw spexception(errmsg.c_str());
         }
         //Update variables as needed
-        m_autopilot->PostEvaluationUpdate(m_iter, current, m_normalizers, obj, flux, cost);
+        m_autopilot->PostEvaluationUpdate(m_iter, current, m_normalizers, obj, flux, cost, note);
 
         m_objective.push_back(obj);
         m_flux.push_back(flux);
+        m_history_map.add_call( current, obj, flux );
                 
         return obj;
     };
@@ -366,17 +410,29 @@ double optimize_auto_eval(unsigned n, const double *x, double *grad, void *data)
 };
 
 
-
-void TestQuadSurface(vector<double*> &vptrs, double &opt, double &flux)
+double constraint_auto_eval(unsigned n, const double *x, double *grad, void *data)
 {
-	//something random but regressable.
-	opt = 0.;
-	for(int i=0; i<(int)vptrs.size(); i++)
-		//opt += sin(*vptrs.at(i) );
-		opt += i * (*vptrs.at(i) ) + (*vptrs.at(i))*(*vptrs.at(max(i-1,0))) + (*vptrs.at(i))*(*vptrs.at(i))*i;
-	flux = 2 * opt;
-
+    AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
+    
+    std::vector<double> vars;
+    for(int i=0; i<n; i++)
+        vars.push_back( x[i] );
+    double obj, flux;
+    if( D->m_history_map.check_call( vars, &obj, &flux ) )
+    {
+        /*vector<double> empty;
+        std::string note = ">>>>   Constraint point";
+        D->m_autopilot->PostEvaluationUpdate(-1, empty, empty, flux, D->m_variables->recs.front().peak_flux.val, obj, &note);*/
+        return flux - D->m_variables->recs.front().peak_flux.val;
+    }
+    else
+    {
+        std::string comment = " >> Checking flux constraint";
+        D->Simulate(x, n, &comment);
+        return D->m_flux.back() - D->m_variables->recs.front().peak_flux.val;
+    }
 };
+
 
 AutoPilot::AutoPilot()
 {
@@ -964,11 +1020,20 @@ bool AutoPilot::Optimize(var_map &V)
 		}
 	}*/
 
+    //names.push_back("HelioAz");
+    //optvars.push_back( &V.sf.az_spacing.val );
+    //names.push_back("ResetLim");
+    //optvars.push_back( &V.sf.spacing_reset.val );
+    
+
+
     switch(V.opt.algorithm.val)     //"BOBYQA=0;COBYLA=1;NEWOUA=2;Nelder-Mead=3;Subplex=4;RSGS=5"
     {
     case 5:  //Response surface gradient search - original method
 	    return Optimize(optvars, upper_range, lower_range, is_range_constr);
         break;
+    case 1: //COBYLA
+        return OptimizeAuto( optvars, upper_range, lower_range, is_range_constr, &names);        
     default:
         return OptimizeSemiAuto( optvars, upper_range, lower_range, is_range_constr, &names);
     }
@@ -1520,26 +1585,12 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
    
     var_map *V = _SF->getVarMap();
 
-    //map the method
-    nlopt::algorithm nlm;
-    switch(V->opt.algorithm.val)
-    {
-    case 0: //sp_optimize::METHOD::BOBYQA:
-        nlm = nlopt::LN_BOBYQA;
-        break;
-    case 1: //sp_optimize::METHOD::COBYLA:
-        nlm = nlopt::LN_COBYLA;
-        break;
-    case 2: //sp_optimize::METHOD::NelderMead:
-        nlm = nlopt::LN_NELDERMEAD;
-        break;
-    case 3: //sp_optimize::METHOD::NEWOUA:
-        nlm = nlopt::LN_NEWUOA;
-        break;
-    case 4: //sp_optimize::METHOD::Subplex:
-        nlm = nlopt::LN_SBPLX;
-        break;
-    }
+    //this always uses COBYLA to handle arbitrary bound constraints
+    nlopt::algorithm nlm = nlopt::LN_COBYLA; 
+
+    //flux max is enforced by constraint, so temporarily suspend it
+    double flux_penalty_save = V->opt.flux_penalty.val;
+    V->opt.flux_penalty.val = 0.;
 
     nlopt::opt nlobj(nlm, optvars.size() );
     
@@ -1565,14 +1616,36 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     //nlobj.set_lower_bounds(range_l);
     //nlobj.set_upper_bounds(range_u);
     
+    //constraint
+    nlobj.add_inequality_constraint( constraint_auto_eval, &AO, 0. );
+
     //Number of variables to be optimized
 	int nvars = (int)optvars.size();
 	//Store the initial dimensional value of each variable
 	for(int i=0; i<nvars; i++)
 		AO.m_normalizers.push_back( *optvars.at(i) );
 	
-	//the initial normalized point is '1'
+    //the initial normalized point is '1'
 	vector<double> start(nvars, 1.);
+
+    //Check feasibility
+    double *xtemp = new double[ optvars.size() ]; 
+    for(int i=0; i<optvars.size(); i++)
+        xtemp[i] = 1.;
+    AO.Simulate(xtemp, optvars.size());
+    delete [] xtemp;
+    double feas_mult = 1.;
+    if( AO.m_flux.back() > V->recs.front().peak_flux.val )
+    {
+        feas_mult += (AO.m_flux.back() / V->recs.front().peak_flux.val - 1. )*3.;
+        int iht = std::find(names->begin(), names->end(), "RecHeight") - names->begin();
+        if( iht < names->size() )
+        {
+            start.at(iht) *= feas_mult;
+            _summary_siminfo->addSimulationNotice( "Modifying initial receiver height for feasibility" );
+        }
+    }
+    	
     
     //Add a formatted simulation notice
     ostringstream os;
@@ -1596,25 +1669,27 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
-        int iopt = 0;
-        double objbest = 9.e9;
+        //int iopt = 0;
+        int iopt = AO.m_objective.size()-1;
+        /*double objbest = 9.e9;
         for(int i=0; i<(int)AO.m_all_points.size(); i++){
             double obj = AO.m_objective.at(i);
             if( obj < objbest ){
                 objbest = obj;
                 iopt = i;
             }
-        }
+        }*/
 
         //write the optimal point found
         ostringstream oo;
-        oo << "Best point found:\n";
+        oo << "Algorithm converged:\n";
         for(int i=0; i<(int)optvars.size(); i++)
             oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) * AO.m_normalizers.at(i) << "   ";
-        oo << "\nObjective: " << objbest;
+        oo << "\nObjective: " << AO.m_objective.back(); //objbest;
         _summary_siminfo->addSimulationNotice(oo.str() );
     }
     catch(...){
+        V->opt.flux_penalty.val = flux_penalty_save;
         return false;
     }
 
@@ -1633,6 +1708,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     }
     _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
 
+    V->opt.flux_penalty.val = flux_penalty_save; //reset
     return true;
 }
 
@@ -1672,6 +1748,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
     int tot_max_iter = V->opt.max_iter.val;
     int step_max_iter = tot_max_iter / 3;
     V->opt.max_iter.val = step_max_iter;   //reset at end of run
+    double flux_penalty_save = V->opt.flux_penalty.val;
 
     int iter_counter = 0;
     //------- first optimize the tower height without any flux penalty -------------
@@ -1679,7 +1756,6 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         nlopt::opt nlobj(nlm, 1 );
         vector<double*> towvar;
         towvar.push_back(optvars.front());
-        double flux_penalty_save = V->opt.flux_penalty.val;
         V->opt.flux_penalty.val = 0.;
 
         //Create optimization helper class
@@ -1735,6 +1811,8 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         }
         catch(...)
         {
+            //reset
+            V->opt.max_iter.val = tot_max_iter;   
             V->opt.flux_penalty.val = flux_penalty_save;
             return false;
         }
@@ -1809,6 +1887,8 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
             iter_counter += AO.m_all_points.size();
         }
         catch(...){
+            //reset
+            V->opt.max_iter.val = tot_max_iter;   
             return false;
         }
 
@@ -1885,6 +1965,8 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
             _summary_siminfo->addSimulationNotice(oo.str() );
         }
         catch(...){
+            //reset
+            V->opt.max_iter.val = tot_max_iter;   
             return false;
         }
 
@@ -1903,7 +1985,8 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         }
         _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
     }
-    V->opt.max_iter.val = tot_max_iter;   //reset
+    //reset
+    V->opt.max_iter.val = tot_max_iter;   
 
     return true;
 }
@@ -1915,7 +1998,7 @@ bool AutoPilot::IsSimulationCancelled()
 	return _cancel_simulation;
 }
 
-void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux, double &cost)
+void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<double> &normalizers, double &obj, double &flux, double &cost, std::string *note)
 {
 	ostringstream os;
     os << "[" << setw(2) << iter << "] ";
@@ -1923,6 +2006,9 @@ void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, vector<doubl
         os << setw(8) << pos.at(i) * normalizers.at(i) << " |";
 
     os << "|" << setw(8) << obj << " |" << setw(8) << flux << " | $" << setw(8) << cost;
+
+    if( note != 0 )
+        os << *note;
 
     _summary_siminfo->addSimulationNotice( os.str() );
 
