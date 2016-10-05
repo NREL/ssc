@@ -143,6 +143,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	for( int i = 0; i < C_csp_solver::N_END; i++ )
 		mvv_outputs_temp[i].reserve(10);
 
+	mv_time_local.reserve(10);
+
 	// Initialize ssc output reporting arrays
 	mp_reporting_array = 0;
 
@@ -6962,24 +6964,25 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
 		
 			// Simulation outputs
+		mv_time_local.push_back(mc_kernel.mc_sim_info.ms_ts.m_time);
 		mvv_outputs_temp[TIME_FINAL].push_back(mc_kernel.mc_sim_info.ms_ts.m_time);				//[s] Time at end of timestep		
 		mvv_outputs_temp[N_OP_MODES].push_back(0.0);                            //[-] Need to push this back, but elements aren't used
 		mvv_outputs_temp[ERR_M_DOT].push_back(0.0);
 		mvv_outputs_temp[ERR_Q_DOT].push_back(0.0);
 
-		if( mvv_outputs_temp[TIME_FINAL].size() == 1 )
+		if( mvv_outputs_temp[N_OP_MODES].size() == 1 )
 		{
 			mvv_outputs_temp[OP_MODE_1].push_back(operating_mode);
 			mvv_outputs_temp[OP_MODE_2].push_back(0.0);
 			mvv_outputs_temp[OP_MODE_3].push_back(0.0);
 		}
-		else if( mvv_outputs_temp[TIME_FINAL].size() == 2 )
+		else if( mvv_outputs_temp[N_OP_MODES].size() == 2 )
 		{
 			mvv_outputs_temp[OP_MODE_1].push_back(mvv_outputs_temp[OP_MODE_1][0]);
 			mvv_outputs_temp[OP_MODE_2].push_back(operating_mode);
 			mvv_outputs_temp[OP_MODE_3].push_back(0.0);
 		}
-		else if( mvv_outputs_temp[TIME_FINAL].size() >= 3 )
+		else if( mvv_outputs_temp[N_OP_MODES].size() >= 3 )
 		{
 			mvv_outputs_temp[OP_MODE_1].push_back(mvv_outputs_temp[OP_MODE_1][0]);
 			mvv_outputs_temp[OP_MODE_2].push_back(mvv_outputs_temp[OP_MODE_2][1]);
@@ -7138,8 +7141,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		{			
 			if(mc_kernel.mc_sim_info.ms_ts.m_time >= m_report_time_end)
 			{
-				mc_collector_receiver.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
-				mc_power_cycle.write_output_intervals(m_report_time_start, mvv_outputs_temp[TIME_FINAL], m_report_time_end);
+				mc_collector_receiver.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
+				mc_power_cycle.write_output_intervals(m_report_time_start, mv_time_local, m_report_time_end);
 
 				set_outputs_at_reporting_interval();
 
@@ -7243,7 +7246,7 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 		mp_reporting_array[C_csp_solver::OP_MODE_2][m_i_reporting] = 0.0;
 		mp_reporting_array[C_csp_solver::OP_MODE_3][m_i_reporting] = 0.0;
 	}
-	else if( mvv_outputs_temp[TIME_FINAL].size() == 2 )
+	else if( n_report == 2 )
 	{
 		mp_reporting_array[C_csp_solver::OP_MODE_1][m_i_reporting] = 
 			mvv_outputs_temp[OP_MODE_1][0];
@@ -7251,7 +7254,7 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 			mvv_outputs_temp[OP_MODE_2][1];
 		mp_reporting_array[C_csp_solver::OP_MODE_3][m_i_reporting] = 0.0;
 	}
-	else if( mvv_outputs_temp[TIME_FINAL].size() >= 3 )
+	else if( n_report >= 3 )
 	{
 		mp_reporting_array[C_csp_solver::OP_MODE_1][m_i_reporting] =
 			mvv_outputs_temp[OP_MODE_1][0];
@@ -7281,8 +7284,8 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 		time_prev = m_report_time_start;		//[s]
 		for( int i = 0; i < n_report; i++ )
 		{
-			mp_reporting_array[j][m_i_reporting] += (fmin(mvv_outputs_temp[TIME_FINAL][i], m_report_time_end) - time_prev)*mvv_outputs_temp[j][i]; //[units]*[s]
-			time_prev = fmin(mvv_outputs_temp[TIME_FINAL][i], m_report_time_end);
+			mp_reporting_array[j][m_i_reporting] += (fmin(mv_time_local[i], m_report_time_end) - time_prev)*mvv_outputs_temp[j][i]; //[units]*[s]
+			time_prev = fmin(mv_time_local[i], m_report_time_end);
 		}
 		mp_reporting_array[j][m_i_reporting] /= m_report_step;
 	}
@@ -7294,7 +7297,7 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	bool delete_last_step = false;
 	int pop_back_start = 1;
 
-	if( mvv_outputs_temp[TIME_FINAL][n_report - 1] == m_report_time_end )
+	if( mv_time_local[n_report - 1] == m_report_time_end )
 	{
 		delete_last_step = true;
 		pop_back_start = 0;
@@ -7323,12 +7326,16 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 				}
 				else
 				{
+					if(j==1)
+						mv_time_local[0] = mv_time_local[n_report - 1];
 					mvv_outputs_temp[j][0] = mvv_outputs_temp[j][n_report - 1];
 				}				
 			}
 
 			for( int i = pop_back_start; i < n_report; i++ )
 			{
+				if( j == 1 )
+					mv_time_local.pop_back();
 				mvv_outputs_temp[j].pop_back();
 			}
 		}

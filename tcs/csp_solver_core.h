@@ -1025,6 +1025,7 @@ private:
 	// Solved Controller Variables
 	double m_defocus;		//[-] (1..0) Should only be less than 1 if receiver is on, but defocused
 	
+	std::vector<double> mv_time_local;
 
 public:
 
