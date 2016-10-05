@@ -711,7 +711,33 @@ public:
 		enum
 		{
 			// Ouputs that are NOT reported as weighted averages
-			TIME_FINAL       //[hr]		
+			TIME_FINAL,       //[hr]		
+			ERR_M_DOT,        //[-] Relative mass conservation error
+			ERR_Q_DOT,        //[-] Relative energy conservation error
+
+			SOLZEN,           //[deg] Solar zenith angle
+			SOLAZ,            //[deg] Solar azimuth angle
+			BEAM,			  //[W/m^2] Resource beam normal irradiance
+			TDRY,             //[C] Dry bulb temperature
+			TWET,             //[C] Wet bulb temperature
+			RH,	              //[-] Relative humidity
+			CR_DEFOCUS,       //[-] Field optical focus fraction
+			TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
+			TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
+			TES_T_HOT,            //[C] TES final hot tank temperature
+			TES_T_COLD,           //[C] TES final cold tank temperature
+			TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
+			TES_Q_DOT_CH,         //[MWt] TES charge thermal power
+			TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
+			TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
+			TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
+			COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
+			CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
+			SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
+			PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
+			SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
+			SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
+			W_DOT_NET             //[MWe] System total electric power to grid
 		};
 	};
 
@@ -720,8 +746,8 @@ public:
 		// Ouputs that are NOT reported as weighted averages
 		//TIME_FINAL,       //[hr]		
 		N_OP_MODES,       //[-]
-		ERR_M_DOT,        //[-] Relative mass conservation error
-		ERR_Q_DOT,        //[-] Relative energy conservation error
+		//ERR_M_DOT,        //[-] Relative mass conservation error
+		//ERR_Q_DOT,        //[-] Relative energy conservation error
 		OP_MODE_1,        //[-] First operating mode in reporting timestep - always should be valid
 		OP_MODE_2,        //[-] 2nd operating mode in reporting timestep - not always populated
 		OP_MODE_3,        //[-] 3rd operating mode in reporting timestep - usually NOT populated
@@ -762,55 +788,55 @@ public:
         DISPATCH_REV_EXPECT,        //MWe*fact Power cycle electricity production times revenue factor in dispatch model
         DISPATCH_PRES_NCONSTR,      //- Number of constraint relationships in dispatch model formulation
         DISPATCH_PRES_NVAR,         //- Number of variables in dispatch model formulation
-        DISPATCH_SOLVE_TIME,        //sec   Time required to solve the dispatch model at each instance
+        DISPATCH_SOLVE_TIME,         //sec   Time required to solve the dispatch model at each instance
 
 		// **************************************************************
 		//      ONLY Outputs that are reported as weighted averages if 
 		//       multiple csp-timesteps for one reporting timestep
 		// **************************************************************
-		SOLZEN,			      //[deg] Solar zenith angle
-        SOLAZ,
-		BEAM,			      //[W/m^2] Resource beam normal irradiance
-        TDRY,
-        TWET,
-        RH,
-		//CR_Q_INC,             //[MWt] Field incident thermal power
-		//CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
-		CR_DEFOCUS,           //[-] Field optical focus fraction
-        //CR_ADJUST,            //[-] Field adjustment factor
-		//REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
-		//REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
-			// 7.26.16, twn: Need to keep this for now, for mass balance
-		REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses			
-		REC_M_DOT,            //[kg/hr] Receiver mass flow rate
-		//REC_Q_DOT_STARTUP,    //[MWt] Receiver startup thermal power consumed
-		//REC_T_IN,             //[C] Receiver HTF inlet temperature
-		//REC_T_OUT,            //[C] Receiver HTF outlet temperature
-		//CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
-		//PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
-		PC_Q_DOT,             //[MWt] Cycle input thermal power
-		PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
-		//PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
-		//PC_W_DOT,             //[MWe] Cycle electric power output (gross)
-		//PC_T_IN,              //[C] Cycle HTF inlet temperature
-		//PC_T_OUT,             //[C] Cycle HTF outlet temperature
-		//PC_M_DOT_WATER,       //[kg/hr] Cycle water consumption: makeup + cooling
-		TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
-		TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
-		TES_T_HOT,            //[C] TES final hot tank temperature
-		TES_T_COLD,           //[C] TES final cold tank temperature
-		TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
-		TES_Q_DOT_CH,         //[MWt] TES charge thermal power
-        TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
-		TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
-		TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
-		COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
-		CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
-		SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
-		PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
-		SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
-		SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
-		W_DOT_NET,            //[MWe] System total electric power to grid
+		//SOLZEN,			      //[deg] Solar zenith angle
+  //      SOLAZ,
+		//BEAM,			      //[W/m^2] Resource beam normal irradiance
+  //      TDRY,
+  //      TWET,
+  //      RH,
+		////CR_Q_INC,             //[MWt] Field incident thermal power
+		////CR_OPT_ETA,		      //[-] Collector-receiver optical efficiency
+		//CR_DEFOCUS,           //[-] Field optical focus fraction
+  //      //CR_ADJUST,            //[-] Field adjustment factor
+		////REC_Q_DOT_INC,        //[MWt] Receiver incident thermal power
+		////REC_ETA_THERMAL,      //[-] Receiver thermal efficiency
+		//	// 7.26.16, twn: Need to keep this for now, for mass balance
+		//REC_Q_DOT,            //[MWt] Receiver thermal power to HTF including piping losses			
+		//REC_M_DOT,            //[kg/hr] Receiver mass flow rate
+		////REC_Q_DOT_STARTUP,    //[MWt] Receiver startup thermal power consumed
+		////REC_T_IN,             //[C] Receiver HTF inlet temperature
+		////REC_T_OUT,            //[C] Receiver HTF outlet temperature
+		////CR_Q_DOT_PIPING_LOSS, //[MWt] Tower piping losses		   
+		////PC_ETA_THERMAL,       //[-] Cycle thermal efficiency (gross)
+		//PC_Q_DOT,             //[MWt] Cycle input thermal power
+		//PC_M_DOT,             //[kg/hr] Cycle HTF mass flow rate
+		////PC_Q_DOT_STARTUP,     //[MWt] Cycle startup thermal power
+		////PC_W_DOT,             //[MWe] Cycle electric power output (gross)
+		////PC_T_IN,              //[C] Cycle HTF inlet temperature
+		////PC_T_OUT,             //[C] Cycle HTF outlet temperature
+		////PC_M_DOT_WATER,       //[kg/hr] Cycle water consumption: makeup + cooling
+		//TES_Q_DOT_LOSS,       //[MWt] TES thermal losses
+		//TES_W_DOT_HEATER,     //[MWe] TES freeze protection power
+		//TES_T_HOT,            //[C] TES final hot tank temperature
+		//TES_T_COLD,           //[C] TES final cold tank temperature
+		//TES_Q_DOT_DC,         //[MWt] TES discharge thermal power
+		//TES_Q_DOT_CH,         //[MWt] TES charge thermal power
+  //      TES_E_CH_STATE,       //[MWht] TES charge state at the end of the time step
+		//TES_M_DOT_DC,         //[MWt] TES discharge mass flow rate
+		//TES_M_DOT_CH,         //[MWt] TES charge mass flow rate
+		//COL_W_DOT_TRACK,      //[MWe] Parasitic collector tracking, startup, stow power consumption
+		//CR_W_DOT_PUMP,        //[MWe] Parasitic tower HTF pump power
+		//SYS_W_DOT_PUMP,       //[MWe] Parasitic PC and TES HTF pump power
+		//PC_W_DOT_COOLING,     //[MWe] Parasitic condenser operation power
+		//SYS_W_DOT_FIXED,      //[MWe] Parasitic fixed power consumption
+		//SYS_W_DOT_BOP,        //[MWe] Parasitic BOP power consumption
+		//W_DOT_NET,            //[MWe] System total electric power to grid
 
 		N_END	
 	};

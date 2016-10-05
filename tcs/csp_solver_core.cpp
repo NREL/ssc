@@ -107,7 +107,34 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 {
 	// Ouputs that are NOT reported as weighted averages
 	{C_csp_solver::C_solver_outputs::TIME_FINAL, false},	//[hr]
-	
+	{C_csp_solver::C_solver_outputs::ERR_M_DOT, false},		//[-] Relative mass conservation error
+	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, false},		//[-] Relative energy conservation error
+
+	{C_csp_solver::C_solver_outputs::SOLZEN, true},			//[deg] Solar zenith angle
+	{C_csp_solver::C_solver_outputs::SOLAZ, true},			//[deg] Solar azimuth angle
+	{C_csp_solver::C_solver_outputs::BEAM, true},			//[W/m^2] Resource beam normal irradiance
+	{C_csp_solver::C_solver_outputs::TDRY, true},			//[C] Dry bulb temperature
+	{C_csp_solver::C_solver_outputs::TWET, true},			//[C] Wet bulb temperature
+	{C_csp_solver::C_solver_outputs::RH, true},				//[-] Relative humidity
+	{C_csp_solver::C_solver_outputs::CR_DEFOCUS, true},		//[-] Field optical focus fraction
+
+	{C_csp_solver::C_solver_outputs::TES_Q_DOT_LOSS, true},       //[MWt] TES thermal losses
+	{C_csp_solver::C_solver_outputs::TES_W_DOT_HEATER, true},	  //[MWe] TES freeze protection power
+	{C_csp_solver::C_solver_outputs::TES_T_HOT, true},			  //[C] TES final hot tank temperature
+	{C_csp_solver::C_solver_outputs::TES_T_COLD, true},			  //[C] TES final cold tank temperature
+	{C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, true},		  //[MWt] TES discharge thermal power
+	{C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, true},		  //[MWt] TES charge thermal power
+	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, true},		  //[MWht] TES charge state at the end of the time step
+	{C_csp_solver::C_solver_outputs::TES_M_DOT_DC, true},		  //[MWt] TES discharge mass flow rate
+	{C_csp_solver::C_solver_outputs::TES_M_DOT_CH, true},		  //[MWt] TES charge mass flow rate
+	{C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, true},	  //[MWe] Parasitic collector tracking, startup, stow power consumption
+	{C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, true},		  //[MWe] Parasitic tower HTF pump power
+	{C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, true},		  //[MWe] Parasitic PC and TES HTF pump power
+	{C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, true},	  //[MWe] Parasitic condenser operation power
+	{C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, true},	  //[MWe] Parasitic fixed power consumption
+	{C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, true},		  //[MWe] Parasitic BOP power consumption
+	{C_csp_solver::C_solver_outputs::W_DOT_NET, true},			  //[MWe] System total electric power to grid
+
 	csp_info_invalid
 };
 
@@ -6979,8 +7006,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		//mvv_outputs_temp[TIME_FINAL].push_back(mc_kernel.mc_sim_info.ms_ts.m_time);				//[s] Time at end of timestep		
 		
 		mvv_outputs_temp[N_OP_MODES].push_back(0.0);                            //[-] Need to push this back, but elements aren't used
-		mvv_outputs_temp[ERR_M_DOT].push_back(0.0);
-		mvv_outputs_temp[ERR_Q_DOT].push_back(0.0);
+		//mvv_outputs_temp[ERR_M_DOT].push_back(0.0);
+		//mvv_outputs_temp[ERR_Q_DOT].push_back(0.0);
 
 		if( mvv_outputs_temp[N_OP_MODES].size() == 1 )
 		{
@@ -7015,60 +7042,85 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mvv_outputs_temp[EST_Q_DOT_DC].push_back(q_dot_tes_dc);                 //[MWt]
 		mvv_outputs_temp[EST_Q_DOT_CH].push_back(q_dot_tes_ch);                 //[MWt]
 
-		mvv_outputs_temp[SOLZEN].push_back(mc_weather.ms_outputs.m_solzen);		//[deg] Solar zenith
-        mvv_outputs_temp[SOLAZ].push_back(mc_weather.ms_outputs.m_solazi);
-		mvv_outputs_temp[BEAM].push_back(mc_weather.ms_outputs.m_beam);		    //[W/m2] DNI
-        mvv_outputs_temp[TDRY].push_back(mc_weather.ms_outputs.m_tdry);
-        mvv_outputs_temp[TWET].push_back(mc_weather.ms_outputs.m_twet);
-        mvv_outputs_temp[RH].push_back(mc_weather.ms_outputs.m_rhum);
+		//mvv_outputs_temp[SOLZEN].push_back(mc_weather.ms_outputs.m_solzen);		//[deg] Solar zenith
+        //mvv_outputs_temp[SOLAZ].push_back(mc_weather.ms_outputs.m_solazi);
+		//mvv_outputs_temp[BEAM].push_back(mc_weather.ms_outputs.m_beam);		    //[W/m2] DNI
+        //mvv_outputs_temp[TDRY].push_back(mc_weather.ms_outputs.m_tdry);
+        //mvv_outputs_temp[TWET].push_back(mc_weather.ms_outputs.m_twet);
+        //mvv_outputs_temp[RH].push_back(mc_weather.ms_outputs.m_rhum);
+		//
+		//	// Collector-receiver outputs
+		////mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_out_report.m_q_dot_field_inc);	//[MWt] Field incident thermal power
+		////mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_out_report.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
+		//mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
+        ////mvv_outputs_temp[CR_ADJUST].push_back(mc_cr_out_report.m_sf_adjust_out);
+		////mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
+		////mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
+		//	// 7.26.16, twn: Need to keep these for now, for mass balance
+		//mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  			
+		//mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_out_solver.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
+		//	// **************************************************************
+		////mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
+		////mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
+		////mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
+		////mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
+		//
+		//	// Power cycle outputs
+		////mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
+		//mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_out_solver.m_q_dot_htf);            //[MWt] Power cycle input thermal power
+		//mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_inputs.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
+		////mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt-hr] Power cycle startup thermal energy
+		////mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
+		////mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
+		////mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
+		////mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
+		////mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_out_report.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
+		//
+		//	// Thermal energy storage outputs
+		//mvv_outputs_temp[TES_Q_DOT_LOSS].push_back(mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment
+		//mvv_outputs_temp[TES_W_DOT_HEATER].push_back(mc_tes_outputs.m_q_heater);       //[MWe] Energy into TES from heaters (hot+cold) to maintain tank temperatures
+		
+		double m_dot_bal = (mc_cr_out_solver.m_m_dot_salt_tot +
+							mc_tes_dc_htf_state.m_m_dot -
+							mc_pc_inputs.m_m_dot -
+							mc_tes_ch_htf_state.m_m_dot) / m_m_dot_pc_des;		//[-]
 
-			// Collector-receiver outputs
-		//mvv_outputs_temp[CR_Q_INC].push_back(mc_cr_out_report.m_q_dot_field_inc);	//[MWt] Field incident thermal power
-		//mvv_outputs_temp[CR_OPT_ETA].push_back(mc_cr_out_report.m_eta_field);	        //[-] Field efficiency (= eta_field_full * defocus)
-		mvv_outputs_temp[CR_DEFOCUS].push_back(m_defocus);                          //[-] Defocus
-        //mvv_outputs_temp[CR_ADJUST].push_back(mc_cr_out_report.m_sf_adjust_out);
-		//mvv_outputs_temp[REC_Q_DOT_INC].push_back(mc_cr_out_report.m_q_dot_rec_inc);   //[MWt] Rec. incident thermal power
-		//mvv_outputs_temp[REC_ETA_THERMAL].push_back(mc_cr_out_report.m_eta_thermal);   //[-] Receiver thermal efficiency    
-			// 7.26.16, twn: Need to keep these for now, for mass balance
-		mvv_outputs_temp[REC_Q_DOT].push_back(mc_cr_out_solver.m_q_thermal);           //[MWt] Receiver thermal power output  			
-		mvv_outputs_temp[REC_M_DOT].push_back(mc_cr_out_solver.m_m_dot_salt_tot);      //[kg/hr] Receiver mass flow rate output          
-			// **************************************************************
-		//mvv_outputs_temp[REC_Q_DOT_STARTUP].push_back(mc_cr_out_solver.m_q_startup/step_hr);		//[MWt] Receiver startup thermal power, convert from MWt-hr  
-		//mvv_outputs_temp[REC_T_IN].push_back(mc_cr_htf_state_in.m_temp);            //[C] Receiver HTF inlet temperature           
-		//mvv_outputs_temp[REC_T_OUT].push_back(mc_cr_out_solver.m_T_salt_hot);          //[C] Receiver HTF outlet temperature          
-		//mvv_outputs_temp[CR_Q_DOT_PIPING_LOSS].push_back(mc_cr_out_report.m_q_dot_piping_loss);    //[MWt] Tower piping thermal power loss
 
-			// Power cycle outputs
-		//mvv_outputs_temp[PC_ETA_THERMAL].push_back(mc_pc_out_report.m_eta);            //[-] Power cycle efficiency (gross - no parasitics outside of power block)
-		mvv_outputs_temp[PC_Q_DOT].push_back(mc_pc_out_solver.m_q_dot_htf);            //[MWt] Power cycle input thermal power
-		mvv_outputs_temp[PC_M_DOT].push_back(mc_pc_inputs.m_m_dot);              //[kg/hr] Mass flow rate to power cycle
-		//mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_outputs.m_q_startup);    //[MWt-hr] Power cycle startup thermal energy
-		//mvv_outputs_temp[PC_Q_DOT_STARTUP].push_back(mc_pc_out_report.m_q_startup);    //[MWt] Power cycle startup thermal energy
-		//mvv_outputs_temp[PC_W_DOT].push_back(mc_pc_out_solver.m_P_cycle);              //[MWe] Power cycle electric gross power (only parasitics baked into regression)
-		//mvv_outputs_temp[PC_T_IN].push_back(mc_pc_htf_state_in.m_temp);             //[C] Power cycle HTF inlet temperature
-		//mvv_outputs_temp[PC_T_OUT].push_back(mc_pc_out_solver.m_T_htf_cold);           //[C] Power cycle HTF outlet temperature
-		//mvv_outputs_temp[PC_M_DOT_WATER].push_back(mc_pc_out_report.m_m_dot_makeup);	//[kg/s] Cycle water consumption: makeup + cooling
+		double q_dot_bal = (mc_cr_out_solver.m_q_thermal +
+							mc_tes_outputs.m_q_dot_dc_to_htf -
+							mc_pc_out_solver.m_q_dot_htf -
+							mc_tes_outputs.m_q_dot_ch_from_htf) / m_cycle_q_dot_des;	//[-]
+
+
+		mc_reported_outputs.value(C_solver_outputs::ERR_M_DOT, m_dot_bal);
+		mc_reported_outputs.value(C_solver_outputs::ERR_Q_DOT, q_dot_bal);
+
+		mc_reported_outputs.value(C_solver_outputs::SOLZEN, mc_weather.ms_outputs.m_solzen);	//[deg] Solar zenith
+		mc_reported_outputs.value(C_solver_outputs::SOLAZ, mc_weather.ms_outputs.m_solazi);		//[deg] Solar azimuth
+		mc_reported_outputs.value(C_solver_outputs::BEAM, mc_weather.ms_outputs.m_beam);		//[W/m2] DNI
+		mc_reported_outputs.value(C_solver_outputs::TDRY, mc_weather.ms_outputs.m_tdry);		//[C] Dry bulb temperature
+		mc_reported_outputs.value(C_solver_outputs::TWET, mc_weather.ms_outputs.m_twet);		//[C] Wet bulb temperature
+		mc_reported_outputs.value(C_solver_outputs::RH, mc_weather.ms_outputs.m_rhum);			//[-] Relative humidity
+		mc_reported_outputs.value(C_solver_outputs::CR_DEFOCUS, m_defocus);						//[-] Controller defocus
 
 			// Thermal energy storage outputs
-		mvv_outputs_temp[TES_Q_DOT_LOSS].push_back(mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment
-		mvv_outputs_temp[TES_W_DOT_HEATER].push_back(mc_tes_outputs.m_q_heater);       //[MWe] Energy into TES from heaters (hot+cold) to maintain tank temperatures
-		mvv_outputs_temp[TES_T_HOT].push_back(mc_tes_outputs.m_T_hot_final-273.15);    //[C] TES hot temperature at end of timestep
-		mvv_outputs_temp[TES_T_COLD].push_back(mc_tes_outputs.m_T_cold_final-273.15);  //[C] TES cold temperature at end of timestep
-		mvv_outputs_temp[TES_Q_DOT_DC].push_back(mc_tes_outputs.m_q_dot_dc_to_htf);    //[MWt] TES discharge thermal power
-		mvv_outputs_temp[TES_Q_DOT_CH].push_back(mc_tes_outputs.m_q_dot_ch_from_htf);  //[MWt] TES charge thermal power
-        mvv_outputs_temp[TES_E_CH_STATE].push_back(e_tes_disch);                       //[MWht] TES charge state
-		mvv_outputs_temp[TES_M_DOT_DC].push_back(mc_tes_dc_htf_state.m_m_dot);         //[kg/hr] TES mass flow rate discharge
-		mvv_outputs_temp[TES_M_DOT_CH].push_back(mc_tes_ch_htf_state.m_m_dot);         //[kg/hr] TES mass flow rate charge
-
+		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_LOSS, mc_tes_outputs.m_q_dot_loss);       //[MWt] TES thermal power losses to environment  
+		mc_reported_outputs.value(C_solver_outputs::TES_W_DOT_HEATER, mc_tes_outputs.m_q_heater);       //[MWe] Energy into TES from heaters (hot+cold) to maintain tank temperatures
+		mc_reported_outputs.value(C_solver_outputs::TES_T_HOT, mc_tes_outputs.m_T_hot_final - 273.15);    //[C] TES hot temperature at end of timestep      
+		mc_reported_outputs.value(C_solver_outputs::TES_T_COLD, mc_tes_outputs.m_T_cold_final - 273.15);  //[C] TES cold temperature at end of timestep      
+		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_DC, mc_tes_outputs.m_q_dot_dc_to_htf);    //[MWt] TES discharge thermal power   
+		mc_reported_outputs.value(C_solver_outputs::TES_Q_DOT_CH, mc_tes_outputs.m_q_dot_ch_from_htf);  //[MWt] TES charge thermal power    
+		mc_reported_outputs.value(C_solver_outputs::TES_E_CH_STATE, e_tes_disch);                       //[MWht] TES charge state 
+		mc_reported_outputs.value(C_solver_outputs::TES_M_DOT_DC, mc_tes_dc_htf_state.m_m_dot);         //[kg/hr] TES mass flow rate discharge   
+		mc_reported_outputs.value(C_solver_outputs::TES_M_DOT_CH, mc_tes_ch_htf_state.m_m_dot);         //[kg/hr] TES mass flow rate charge   
 			// Parasitics outputs
-		mvv_outputs_temp[COL_W_DOT_TRACK].push_back(mc_cr_out_solver.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption
-		mvv_outputs_temp[CR_W_DOT_PUMP].push_back(mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power
-		mvv_outputs_temp[SYS_W_DOT_PUMP].push_back((mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)
-		mvv_outputs_temp[PC_W_DOT_COOLING].push_back(mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
-		mvv_outputs_temp[SYS_W_DOT_FIXED].push_back(W_dot_fixed);                           //[MWe] Fixed electric parasitic power load
-		mvv_outputs_temp[SYS_W_DOT_BOP].push_back(W_dot_bop);                               //[MWe] Balance-of-plant electric parasitic power load
-
-		mvv_outputs_temp[W_DOT_NET].push_back(W_dot_net);				//[MWe] Total electric power output to grid
+		mc_reported_outputs.value(C_solver_outputs::COL_W_DOT_TRACK, mc_cr_out_solver.m_W_dot_col_tracking);    //[MWe] Collector tracking, startup, stow power consumption 
+		mc_reported_outputs.value(C_solver_outputs::CR_W_DOT_PUMP, mc_cr_out_solver.m_W_dot_htf_pump);          //[MWe] Receiver/tower HTF pumping power   
+		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_PUMP, (mc_pc_out_solver.m_W_dot_htf_pump + mc_tes_outputs.m_W_dot_rhtf_pump));    //[MWe] TES & PC HTF pumping power (Receiver - PC side HTF)  
+		mc_reported_outputs.value(C_solver_outputs::PC_W_DOT_COOLING, mc_pc_out_solver.m_W_cool_par);           //[MWe] Power cycle cooling power consumption (fan, pumps, etc.)
+		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_FIXED, W_dot_fixed);								//[MWe] Fixed electric parasitic power load 
+		mc_reported_outputs.value(C_solver_outputs::SYS_W_DOT_BOP, W_dot_bop);									//[MWe] Balance-of-plant electric parasitic power load   
+		mc_reported_outputs.value(C_solver_outputs::W_DOT_NET, W_dot_net);								//[MWe] Total electric power output to grid        
 		
             //Dispatch optimization outputs
         mvv_outputs_temp[DISPATCH_SOLVE_STATE].push_back(dispatch.outputs.solve_state);
@@ -7224,7 +7276,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 void C_csp_solver::set_outputs_at_reporting_interval()
 {
 	// Step through each uniform reporting period
-	int n_report = mvv_outputs_temp[W_DOT_NET].size();
+	int n_report = mvv_outputs_temp[TOU_PERIOD].size();
 
 	if( n_report < 1 )
 	{
@@ -7239,26 +7291,26 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	// Report number of csp solver operating modes (= timesteps) in reporting timestep
 	mp_reporting_array[C_csp_solver::N_OP_MODES][m_i_reporting] = n_report;
 
-	double m_dot_bal = 0.0;
-	double q_dot_bal = 0.0;
-	for( int i = 0; i < n_report; i++ )
-	{
-		m_dot_bal += 
-			(mvv_outputs_temp[REC_M_DOT][i]       //[kg/hr]
-			+ mvv_outputs_temp[TES_M_DOT_DC][i]   //[kg/hr]
-			- mvv_outputs_temp[PC_M_DOT][i]       //[kg/hr]
-			- mvv_outputs_temp[TES_M_DOT_CH][i])  //[kg/hr]
-			/ (double) n_report;  
-			
-		q_dot_bal += 
-			(mvv_outputs_temp[REC_Q_DOT][i]       //[MWt]
-			+ mvv_outputs_temp[TES_Q_DOT_DC][i]   //[MWt]
-			- mvv_outputs_temp[PC_Q_DOT][i]       //[MWt]
-			- mvv_outputs_temp[TES_Q_DOT_CH][i])  //[MWt]
-			/ (double) n_report;
-	}
-	mp_reporting_array[ERR_M_DOT][m_i_reporting] = m_dot_bal / m_m_dot_pc_des;
-	mp_reporting_array[ERR_Q_DOT][m_i_reporting] = q_dot_bal / m_cycle_q_dot_des;
+	//double m_dot_bal = 0.0;
+	//double q_dot_bal = 0.0;
+	//for( int i = 0; i < n_report; i++ )
+	//{
+	//	m_dot_bal += 
+	//		(mvv_outputs_temp[REC_M_DOT][i]       //[kg/hr]
+	//		+ mvv_outputs_temp[TES_M_DOT_DC][i]   //[kg/hr]
+	//		- mvv_outputs_temp[PC_M_DOT][i]       //[kg/hr]
+	//		- mvv_outputs_temp[TES_M_DOT_CH][i])  //[kg/hr]
+	//		/ (double) n_report;  
+	//		
+	//	q_dot_bal += 
+	//		(mvv_outputs_temp[REC_Q_DOT][i]       //[MWt]
+	//		+ mvv_outputs_temp[TES_Q_DOT_DC][i]   //[MWt]
+	//		- mvv_outputs_temp[PC_Q_DOT][i]       //[MWt]
+	//		- mvv_outputs_temp[TES_Q_DOT_CH][i])  //[MWt]
+	//		/ (double) n_report;
+	//}
+	//mp_reporting_array[ERR_M_DOT][m_i_reporting] = m_dot_bal / m_m_dot_pc_des;
+	//mp_reporting_array[ERR_Q_DOT][m_i_reporting] = q_dot_bal / m_cycle_q_dot_des;
 
 	double check_op_mode_1 = mvv_outputs_temp[OP_MODE_1][0];
 
@@ -7291,7 +7343,7 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	// Set instantaneous outputs that are reported as the first value
 	//   if multiple csp-timesteps for one reporting timestep
 	// ************************************************************
-	for( int j = C_csp_solver::TOU_PERIOD; j < C_csp_solver::SOLZEN; j++ )
+	for( int j = C_csp_solver::TOU_PERIOD; j < C_csp_solver::DISPATCH_SOLVE_TIME + 1; j++ )
 	{
 		mp_reporting_array[j][m_i_reporting] = mvv_outputs_temp[j][0];
 	}
@@ -7302,16 +7354,16 @@ void C_csp_solver::set_outputs_at_reporting_interval()
 	//    The following code assumes 'SOLZEN' is the first such output
 	//    and that all names following it in 'E_reported_outputs' are weight averages
 	// **************************************************************
-	for( int j = C_csp_solver::SOLZEN; j < C_csp_solver::N_END; j++ )
-	{
-		time_prev = m_report_time_start;		//[s]
-		for( int i = 0; i < n_report; i++ )
-		{
-			mp_reporting_array[j][m_i_reporting] += (fmin(mv_time_local[i], m_report_time_end) - time_prev)*mvv_outputs_temp[j][i]; //[units]*[s]
-			time_prev = fmin(mv_time_local[i], m_report_time_end);
-		}
-		mp_reporting_array[j][m_i_reporting] /= m_report_step;
-	}
+	//for( int j = C_csp_solver::SOLZEN; j < C_csp_solver::N_END; j++ )
+	//{
+	//	time_prev = m_report_time_start;		//[s]
+	//	for( int i = 0; i < n_report; i++ )
+	//	{
+	//		mp_reporting_array[j][m_i_reporting] += (fmin(mv_time_local[i], m_report_time_end) - time_prev)*mvv_outputs_temp[j][i]; //[units]*[s]
+	//		time_prev = fmin(mv_time_local[i], m_report_time_end);
+	//	}
+	//	mp_reporting_array[j][m_i_reporting] /= m_report_step;
+	//}
 
 
 
