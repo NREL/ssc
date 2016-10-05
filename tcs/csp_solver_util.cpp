@@ -200,6 +200,9 @@ void C_csp_reported_outputs::C_output::overwrite_most_recent_timestep(double val
 {
 	int n_timesteps = get_vector_size();
 
+	if(n_timesteps == 0)
+		return;
+
 	mv_temp_outputs[n_timesteps-1] = value;
 }
 
