@@ -1042,8 +1042,8 @@ public:
 	void init();
 
 	void Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
-					bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
-					float **ptr_array);
+					bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), 
+					void *m_cdata);
 
 	int steps_per_hour();
 

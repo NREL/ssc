@@ -351,9 +351,8 @@ int C_csp_solver::steps_per_hour()
 }
 
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup, 
-								bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), void *m_cdata,
-								float **ptr_array
-								/*float **post_proc_array*/)
+								bool(*mf_callback)(void *data, double percent, C_csp_messages *csp_messages, float time_sec), 
+								void *m_cdata)
 {
 	// Get number of records in weather file
 	int n_wf_records = mc_weather.get_n_records();
