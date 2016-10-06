@@ -4,8 +4,22 @@
 
 using namespace std;
 
+static C_csp_reported_outputs::S_output_info S_output_info[] =
+{
+	{C_csp_trough_collector_receiver::E_THETA_AVE, true},
+	{C_csp_trough_collector_receiver::E_COSTH_AVE, true},
+	{C_csp_trough_collector_receiver::E_IAM_AVE, true},
+	{C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, true},
+	{C_csp_trough_collector_receiver::E_ENDLOSS_AVE, true},
+	{C_csp_trough_collector_receiver::E_DNI_COSTH, true},
+
+	csp_info_invalid
+};
+
 C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 { 
+	mc_reported_outputs.construct(S_output_info);
+	
 	// Set maximum timestep from parent class member data
 	m_max_step = 60.0*60.0;			//[s]: [m] * [s/m]
 	m_step_recirc = 10.0*60.0;		//[s]
@@ -94,6 +108,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_IAM_ave = std::numeric_limits<double>::quiet_NaN();
 	m_RowShadow_ave = std::numeric_limits<double>::quiet_NaN();
 	m_EndLoss_ave = std::numeric_limits<double>::quiet_NaN();
+	m_dni_costh = std::numeric_limits<double>::quiet_NaN();
 	m_c_htf_ave = std::numeric_limits<double>::quiet_NaN();
 
 	for (int i = 0; i < 5; i++)
@@ -1164,6 +1179,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 	m_IAM_ave = 0.0; 
 	m_RowShadow_ave = 0.0; 
 	m_EndLoss_ave = 0.0;
+	m_dni_costh = 0.0;
 
 	return;
 }
@@ -1338,13 +1354,24 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		int CT = (int)m_SCAInfoArray(i, 1) - 1;    //Collector type
 		m_q_SCA[i] = m_q_i[CT] * m_costh;        //The flux corresponding with the collector type
 		//Also use this chance to calculate average optical values
-		m_Theta_ave = m_Theta_ave + theta*m_L_actSCA[CT] / m_L_tot;
-		m_CosTh_ave = m_CosTh_ave + m_costh*m_L_actSCA[CT] / m_L_tot;
+		m_Theta_ave = m_Theta_ave + theta*m_L_actSCA[CT] / m_L_tot;		//[rad]
+		m_CosTh_ave = m_CosTh_ave + m_costh*m_L_actSCA[CT] / m_L_tot;	//[-]
 		m_IAM_ave = m_IAM_ave + m_IAM[CT] * m_L_actSCA[CT] / m_L_tot;
 		m_RowShadow_ave = m_RowShadow_ave + m_RowShadow[CT] * m_L_actSCA[CT] / m_L_tot;
 		m_EndLoss_ave = m_EndLoss_ave + m_EndLoss(CT, i)*m_L_actSCA[CT] / m_L_tot;
 	}
 
+	m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
+}
+
+void C_csp_trough_collector_receiver::set_output_value()
+{
+	mc_reported_outputs.value(E_THETA_AVE, m_Theta_ave*m_r2d);		//[deg], convert from rad
+	mc_reported_outputs.value(E_COSTH_AVE, m_CosTh_ave);			//[-]
+	mc_reported_outputs.value(E_IAM_AVE, m_IAM_ave);				//[-]
+	mc_reported_outputs.value(E_ROWSHADOW_AVE, m_RowShadow_ave);	//[-]
+	mc_reported_outputs.value(E_ENDLOSS_AVE, m_EndLoss_ave);		//[-]
+	mc_reported_outputs.value(E_DNI_COSTH, m_dni_costh);			//[W/m2]
 }
 
 void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -1463,6 +1490,8 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
 
 	m_operating_mode = C_csp_collector_receiver::OFF;
+
+	set_output_value();
 
 	return;
 }
@@ -1607,6 +1636,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
 
+	set_output_value();
 }
 
 void C_csp_trough_collector_receiver::apply_control_defocus(double defocus /*-*/)
@@ -1862,6 +1892,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;
 	}
+
+	set_output_value();
 
 	return;
 }
@@ -3108,13 +3140,16 @@ void C_csp_trough_collector_receiver::converged()
 	// Reset the optical efficiency member data
 	loop_optical_eta_off();
 
+	mc_reported_outputs.set_timestep_outputs();
+
 	return;
 }
 
 void C_csp_trough_collector_receiver::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	return;
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }
 
 double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
