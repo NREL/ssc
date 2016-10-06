@@ -70,6 +70,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_INPUT,        SSC_NUMBER,      "istableunsorted",  "Is optical table unsorted format?"                               "none",             "",             "type_260",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "OpticalTable",     "Optical table",                                                  "none",             "",             "type_260",       "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_MATRIX,      "OpticalTableUns",  "Optical table Unstructured",                                     "none",             "",             "type_260",       "*",                       "",                      "" },
+	{ SSC_INPUT, SSC_MATRIX, "exergy_table", "Exergy table", "none", "", "type_260", "*", "", "" },
 
 	// initial values
 	{ SSC_INPUT,        SSC_NUMBER,      "ibn",              "Beam-normal (DNI) irradiation",                                  "kJ/hr-m^2",        "",             "type_260",       "*",                       "",                      "" },
