@@ -12,6 +12,11 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, true},
 	{C_csp_trough_collector_receiver::E_ENDLOSS_AVE, true},
 	{C_csp_trough_collector_receiver::E_DNI_COSTH, true},
+	{C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, true},
+	{C_csp_trough_collector_receiver::E_DEFOCUS, true},
+
+	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, true},
 
 	csp_info_invalid
 };
@@ -110,6 +115,11 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_EndLoss_ave = std::numeric_limits<double>::quiet_NaN();
 	m_dni_costh = std::numeric_limits<double>::quiet_NaN();
 	m_c_htf_ave = std::numeric_limits<double>::quiet_NaN();
+
+	m_control_defocus = std::numeric_limits<double>::quiet_NaN();
+	m_component_defocus = std::numeric_limits<double>::quiet_NaN();
+
+	m_q_dot_inc_sf_tot = std::numeric_limits<double>::quiet_NaN();
 
 	for (int i = 0; i < 5; i++)
 		m_T_save[i] = std::numeric_limits<double>::quiet_NaN();
@@ -1181,6 +1191,11 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 	m_EndLoss_ave = 0.0;
 	m_dni_costh = 0.0;
 
+	m_control_defocus = 0.0;
+	m_component_defocus = 0.0;
+
+	m_q_dot_inc_sf_tot = 0.0;		//[MWt]
+
 	return;
 }
 
@@ -1362,6 +1377,10 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	}
 
 	m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
+
+	m_control_defocus = m_component_defocus = 1.0;	//[-]
+
+	m_q_dot_inc_sf_tot = m_Ap_tot*weather.m_beam/1.E6;	//[MWt]
 }
 
 void C_csp_trough_collector_receiver::set_output_value()
@@ -1372,6 +1391,11 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_ROWSHADOW_AVE, m_RowShadow_ave);	//[-]
 	mc_reported_outputs.value(E_ENDLOSS_AVE, m_EndLoss_ave);		//[-]
 	mc_reported_outputs.value(E_DNI_COSTH, m_dni_costh);			//[W/m2]
+	mc_reported_outputs.value(E_EQUIV_OPT_ETA_TOT, m_EqOpteff);		//[-]
+	mc_reported_outputs.value(E_DEFOCUS, m_control_defocus*m_component_defocus);	//[-]
+
+	mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_INC_SF_COSTH, m_dni_costh*m_Ap_tot/1.E6);	//[MWt]
 }
 
 void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -1642,6 +1666,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 void C_csp_trough_collector_receiver::apply_control_defocus(double defocus /*-*/)
 {
 	// Uses m_q_i, m_costh, and input defocus to calculate m_q_SCA_control_df
+	
+	// Store control defocus
+	m_control_defocus = defocus;
 
 	if( m_fthrctrl == 0 )
 	{
@@ -1668,6 +1695,9 @@ void C_csp_trough_collector_receiver::apply_control_defocus(double defocus /*-*/
 void C_csp_trough_collector_receiver::apply_component_defocus(double defocus /*-*/)
 {
 	// Uses m_q_SCA_control_df and input defocus to calculate m_q_SCA
+
+	// Store component defocus
+	m_component_defocus = defocus;
 
 	if( m_fthrctrl == 0 )
 	{
@@ -1702,7 +1732,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	reset_last_temps();
 	
 	// Get optical performance (no defocus applied in this method)
-	// This returns m_q_SCA with NO defocus
+		// This returns m_q_SCA with NO defocus
 	loop_optical_eta(weather, sim_info);
 
 	// If Control Defocus: field_control < 1, then apply it here
