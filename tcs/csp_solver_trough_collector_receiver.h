@@ -26,7 +26,12 @@ public:
 		E_IAM_AVE,
 		E_ROWSHADOW_AVE,
 		E_ENDLOSS_AVE,
-		E_DNI_COSTH
+		E_DNI_COSTH,
+		E_EQUIV_OPT_ETA_TOT,
+		E_DEFOCUS,
+
+		E_Q_DOT_INC_SF_TOT,
+		E_Q_DOT_INC_SF_COSTH
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -82,7 +87,6 @@ private:
 	int m_ncall;			//[-] Track number of calls per timestep, reset = -1 in converged() call
 	
 	// Variables that are passed between methods, but not necessary to carry over timesteps
-	double m_EqOpteff;		//[-] Collector equivalent (weighted over variants AND all SCAs) optical efficiency
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
 	double m_c_htf_ave;		//[J/kg-K] Average solar field specific heat
 
@@ -116,6 +120,13 @@ private:
 	double m_EndLoss_ave;		//[-] Field average end loss
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
 	double m_dni_costh;			//[W/m2] DNI x cos(theta) product
+	// Collector-receiver equivalent(weighted over variants AND all SCAs) optical efficiency
+		// m_ColOptEff * m_Shadowing * m_Dirt_HCE * m_alpha_abs * m_tau_envelope
+	double m_EqOpteff;			//[-] 
+	double m_control_defocus;	//[-] Defocus signal from control model
+	double m_component_defocus;	//[-] Defocus signal from this component (max mass flow rate reached and still over target...)
+
+	double m_q_dot_inc_sf_tot;	//[MWt] Total incident radiation on solar field
 
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
