@@ -16,6 +16,21 @@
 
 class C_csp_trough_collector_receiver : public C_csp_collector_receiver
 {
+
+public:
+
+	enum
+	{
+		E_THETA_AVE,
+		E_COSTH_AVE,
+		E_IAM_AVE,
+		E_ROWSHADOW_AVE,
+		E_ENDLOSS_AVE,
+		E_DNI_COSTH
+	};
+
+	C_csp_reported_outputs mc_reported_outputs;
+
 private:
 
 	// Member classes
@@ -94,14 +109,14 @@ private:
 	util::matrix_t<double> m_EndGain;	//[-] Light from different collector hitting receiver
 	util::matrix_t<double> m_EndLoss;	//[-] Light missing receiver due to length
 
-	double m_Theta_ave;					//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
-	double m_CosTh_ave;					//[-] Field average costheta value
-	double m_IAM_ave;					//[-] Field average incidence angle modifier
-	double m_RowShadow_ave;				//[-] Field average row shadowing loss
-	double m_EndLoss_ave;				//[-] Field average end loss
-	
+	double m_Theta_ave;			//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
+	double m_CosTh_ave;			//[-] Field average costheta value
+	double m_IAM_ave;			//[-] Field average incidence angle modifier
+	double m_RowShadow_ave;		//[-] Field average row shadowing loss
+	double m_EndLoss_ave;		//[-] Field average end loss
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
-	
+	double m_dni_costh;			//[W/m2] DNI x cos(theta) product
+
 	double m_Header_hl_cold;	//[W] Total heat loss from the cold headers *in one field section*
 	double m_Runner_hl_cold;	//[W] Total heat loss from the cold runners *in one field section*
 
@@ -178,6 +193,8 @@ private:
 
 	int m_operating_mode_converged;
 	int m_operating_mode;
+
+	void set_output_value();
 
 public:
 
