@@ -2011,7 +2011,7 @@ public:
 			cost_financing =
 				cost_debt_closing +
 				cost_debt_fee_frac * size_of_debt +
-				/*cost_equity_closing + */
+				cost_equity_closing + 
 				cost_other_financing +
 				cf.at(CF_reserve_debtservice, 0) +
 				constr_total_financing +
