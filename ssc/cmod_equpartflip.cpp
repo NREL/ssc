@@ -1791,7 +1791,7 @@ public:
 
 		// cpg subtract incentives as per DHF workbook capital structure and SO LPF models 10/7/2016
 		cost_installed = cost_prefinancing + cost_financing
-			/*- ibi_fed_amount
+			- ibi_fed_amount
 			- ibi_sta_amount
 			- ibi_uti_amount
 			- ibi_oth_amount
@@ -1802,7 +1802,7 @@ public:
 			- cbi_fed_amount
 			- cbi_sta_amount
 			- cbi_uti_amount
-			- cbi_oth_amount*/;
+			- cbi_oth_amount;
 
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
