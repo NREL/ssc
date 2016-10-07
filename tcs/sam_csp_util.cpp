@@ -119,12 +119,13 @@ double CSP::interp(double *xdat, double *ydat, double x, int low_bound, int up_b
 	}
 	//now interpolate between the upper and lower bounds
 	double y = ydat[jl] + (x - xdat[jl])/(xdat[ju] - xdat[jl])*(ydat[ju] - ydat[jl]);
-	if( (increasing && y<ydat[low_bound]) || (!increasing && y>ydat[low_bound]) ){ 
+	
+    if( (increasing && y<ydat[low_bound]) || (!increasing && y>ydat[low_bound]) )
 		y = ydat[low_bound];
-	}
-	else if( (!increasing && y < ydat[low_bound]) || (increasing && y>ydat[up_bound]) ){
+	
+    else if( (!increasing && y < ydat[up_bound]) || (increasing && y>ydat[up_bound]) )
 		y = ydat[up_bound];
-	}
+
 	return y;
 };
 

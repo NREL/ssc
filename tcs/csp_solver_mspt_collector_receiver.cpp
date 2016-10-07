@@ -15,6 +15,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_T_HTF_IN, true},
 	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, true},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, true},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, true},
 	
 	csp_info_invalid	
 };
@@ -151,6 +152,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_rad_sum + mc_mspt_receiver_222.ms_outputs.m_q_conv_sum ); //MWt
 }
 
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -197,7 +199,8 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);									//[C]
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
-
+    mc_reported_outputs.value(E_Q_DOT_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_rad_sum + mc_mspt_receiver_222.ms_outputs.m_q_conv_sum ); //MWt
+    
 	return;
 }
 

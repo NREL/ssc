@@ -227,7 +227,7 @@ void C_pc_gen::call(const C_csp_weatherreader::S_outputs &weather,
 	for( int i = 0; i < ms_params.mv_etaT_coefs.size(); i++ )
 		f_effpc_tamb += ms_params.mv_etaT_coefs[i] * pow(tnorm, i);
 	
-	double eta_cycle = ms_params.m_eta_des * f_effpc_qtpb * f_effpc_tamb;  //[-] Adjusted power conversion efficiency
+	double eta_cycle = ms_params.m_eta_des * (f_effpc_qtpb + f_effpc_tamb);  //[-] Adjusted power conversion efficiency
 
 	if( q_to_pb <= 0. )
 	{ 

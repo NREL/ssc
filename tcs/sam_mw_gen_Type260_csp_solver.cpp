@@ -56,6 +56,7 @@ enum{
 	P_F_WPAR_PROD,
 	P_WPAR_PRODQ_COEFS,
 	P_WPAR_PRODT_COEFS,
+	P_WPAR_PRODD_COEFS,
 	P_HRS_TES,
 	P_F_CHARGE,
 	P_F_DISCH,
@@ -73,6 +74,8 @@ enum{
 	P_OPTICALTABLE,
     //P_OPTICALTABLEUNS,
     P_ADJUST,
+    P_EXERGY_TABLE,
+    P_STORAGE_CONFIG,
 
 	I_IBN,
 	I_IBH,
@@ -159,7 +162,8 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
 	{ TCS_PARAM,          TCS_NUMBER,      P_F_WPAR_FIXED,           "f_Wpar_fixed",                                            "Fixed capacity-based parasitic loss fraction",    "MWe/MWcap",             "",             "",       "0.0055" },
 	{ TCS_PARAM,          TCS_NUMBER,       P_F_WPAR_PROD,            "f_Wpar_prod",                                                "Production-based parasitic loss fraction",      "MWe/MWe",             "",             "",         "0.08" },
 	{ TCS_PARAM,           TCS_ARRAY,  P_WPAR_PRODQ_COEFS,       "Wpar_prodQ_coefs",                                        "Part-load production parasitic adjustment coefs.",        "1/MWe",             "",             "",      "1,0,0,0" },
-	{ TCS_PARAM,           TCS_ARRAY,  P_WPAR_PRODT_COEFS,       "Wpar_prodT_coefs",                                      "Temp.-based production parasitic adjustment coefs.",          "1/C",             "",             "",      "1,0,0,0" },
+	{ TCS_PARAM,           TCS_ARRAY,  P_WPAR_PRODT_COEFS,       "Wpar_prodT_coefs",                                      "Temp.-based production parasitic adjustment coefs.",          "1/C",             "",             "",      "0,0,0,0" },
+	{ TCS_PARAM,           TCS_ARRAY,  P_WPAR_PRODD_COEFS,       "Wpar_prodD_coefs",                                        "DNI-based production parasitic adjustment coefs.",         "m2/W",             "",             "",      "0,0,0,0" },
 	{ TCS_PARAM,          TCS_NUMBER,           P_HRS_TES,                "hrs_tes",                                                   "Equivalent full-load hours of storage",        "hours",             "",             "",            "6" },
 	{ TCS_PARAM,          TCS_NUMBER,          P_F_CHARGE,               "f_charge",                                                          "Storage charging energy derate",         "none",             "",             "",         "0.98" },
 	{ TCS_PARAM,          TCS_NUMBER,           P_F_DISCH,                "f_disch",                                                       "Storage discharging energy derate",         "none",             "",             "",         "0.98" },
@@ -175,6 +179,8 @@ tcsvarinfo sam_mw_gen_type260_variables[] = {
     { TCS_PARAM,          TCS_NUMBER,   P_ISTABLEUNSORTED,        "istableunsorted",                                                "Is optical table unsorted? (1=yes, 0=no)",         "none",             "",             "",            "0" },
     { TCS_PARAM,          TCS_MATRIX,      P_OPTICALTABLE,           "OpticalTable",                                                                           "Optical table",         "none",             "",             "",             "" },
 	{ TCS_PARAM,           TCS_ARRAY,             P_ADJUST,             "sf_adjust",                                           "Time series solar field production adjustment",         "none",             "",             "",             "" },
+    { TCS_PARAM,          TCS_MATRIX,      P_EXERGY_TABLE,           "exergy_table",                                        "Exergy penalty as a function of TES charge state",         "none",             "",             "",             "" },
+    { TCS_PARAM,          TCS_NUMBER,      P_STORAGE_CONFIG,       "storage_config",                                                    "Thermal energy storage configuration",         "none",             "",             "",             "" },
 
 	{ TCS_INPUT,          TCS_NUMBER,               I_IBN,                    "ibn",                                                           "Beam-normal (DNI) irradiation",         "W/m2",             "",             "",             "" },
 	{ TCS_INPUT,          TCS_NUMBER,               I_IBH,                    "ibh",                                                             "Beam-horizontal irradiation",         "W/m2",             "",             "",             "" },
@@ -261,6 +267,8 @@ private:
 	int nval_Wpar_prodQ_coefs;
 	double* Wpar_prodT_coefs;		//Temp.-based production parasitic adjustment coefs.
 	int nval_Wpar_prodT_coefs;
+	double* Wpar_prodD_coefs;		//Temp.-based production parasitic adjustment coefs.
+	int nval_Wpar_prodD_coefs;
 	double hrs_tes;		//Equivalent full-load hours of storage
 	double f_charge;		//Storage charging energy derate
 	double f_disch;		//Storage discharging energy derate
@@ -271,6 +279,7 @@ private:
 	double* teshlT_coefs;		//Temp.-based thermal loss adjustment - constant coef.
 	int nval_teshlT_coefs;
 	int ntod;		//Number of time-of-dispatch periods in the dispatch schedule
+    int storage_config; //Direct storage=0, Indirect storage=1
 	//double* tod_sched;		//Array of touperiod indices
 	int nval_tod_sched;
 	double* disws;		//Time-of-dispatch control for with-solar conditions
@@ -283,6 +292,9 @@ private:
 	int nval_fdisp;
     double* sf_adjust;
     int nval_sf_adjust;
+    double* exergy_table_in;		
+	int nrow_exergy_table, ncol_exergy_table; 
+    util::matrix_t<double> exergy_table_T;
 
 	int pbmode;		//Power conversion mode
 
@@ -356,6 +368,8 @@ public:
 		nval_Wpar_prodQ_coefs = -1;
 		Wpar_prodT_coefs	= NULL;
 		nval_Wpar_prodT_coefs = -1;
+		Wpar_prodD_coefs	= NULL;
+		nval_Wpar_prodD_coefs = -1;
 		hrs_tes	= std::numeric_limits<double>::quiet_NaN();
 		f_charge	= std::numeric_limits<double>::quiet_NaN();
 		f_disch	= std::numeric_limits<double>::quiet_NaN();
@@ -366,6 +380,7 @@ public:
 		teshlT_coefs	= NULL;
 		nval_teshlT_coefs = -1;
 		ntod	= -1;
+        storage_config = -1;
 		//tod_sched	= NULL;
 		nval_tod_sched = -1;
 		disws	= NULL;
@@ -378,6 +393,8 @@ public:
 		nval_fdisp = -1;
         sf_adjust = NULL;
         nval_sf_adjust = -1;
+        exergy_table_in = NULL;
+	    nrow_exergy_table = ncol_exergy_table = -1; 
 
 		pbmode	= -1;
 
@@ -498,6 +515,7 @@ public:
 		f_Wpar_prod = value(P_F_WPAR_PROD);		//Production-based parasitic loss fraction [MWe/MWe]
 		Wpar_prodQ_coefs = value(P_WPAR_PRODQ_COEFS, &nval_Wpar_prodQ_coefs);		//Part-load production parasitic adjustment coefs. [1/MWe]
 		Wpar_prodT_coefs = value(P_WPAR_PRODT_COEFS, &nval_Wpar_prodT_coefs);		//Temp.-based production parasitic adjustment coefs. [1/C]
+		Wpar_prodD_coefs = value(P_WPAR_PRODD_COEFS, &nval_Wpar_prodD_coefs);		//DNI-based production parasitic adjustment coefs. [m2/W]
 		hrs_tes = value(P_HRS_TES);		//Equivalent full-load hours of storage [hours]
 		f_charge = value(P_F_CHARGE);		//Storage charging energy derate [none]
 		f_disch = value(P_F_DISCH);		//Storage discharging energy derate [none]
@@ -506,12 +524,19 @@ public:
 		teshlX_coefs = value(P_TESHLX_COEFS, &nval_teshlX_coefs);		//Charge-based thermal loss adjustment - constant coef. [1/MWhr-stored]
 		teshlT_coefs = value(P_TESHLT_COEFS, &nval_teshlT_coefs);		//Temp.-based thermal loss adjustment - constant coef. [1/C]
 		ntod = (int)value(P_NTOD);		//Number of time-of-dispatch periods in the dispatch schedule [none]
+        storage_config = (int)value(P_STORAGE_CONFIG); //storage type, direct=0, indirect=1
 
 		disws = value(P_DISWS, &nval_disws);		//Time-of-dispatch control for with-solar conditions [none]
 		diswos = value(P_DISWOS, &nval_diswos);		//Time-of-dispatch control for without-solar conditions [none]
 		qdisp = value(P_QDISP, &nval_qdisp);		//touperiod power output control factors [none]
 		fdisp = value(P_FDISP, &nval_fdisp);		//Fossil backup output control factors [none]
         sf_adjust = value(P_ADJUST, &nval_sf_adjust); //solar field adjust factors
+        exergy_table_in = value(P_EXERGY_TABLE, &nrow_exergy_table, &ncol_exergy_table);
+        exergy_table_T.resize(2, nrow_exergy_table);    //transpose
+
+        for(int i=0; i<2; i++)
+            for(int j=0; j<nrow_exergy_table; j++)
+                exergy_table_T.at(i,j) = TCS_MATRIX_INDEX( var(P_EXERGY_TABLE) , j, i);
 
 		// Update site parameters
 		mp_params->m_latitude = value(P_LATITUDE);
@@ -894,7 +919,7 @@ public:
 			for(int i=0; i<nval_teshlT_coefs; i++)
 				f_teshlT += teshlT_coefs[i]*pow(mp_params->m_T_sfdes - tdb, i);
 			//thermal storage heat losses adjusted by charge level and ambient temp.
-			q_hl_tes = f_teshl_ref*etesmax*f_teshlX*f_teshlT;
+			q_hl_tes = f_teshl_ref*etesmax*(f_teshlX + f_teshlT);
 
 			m_e_in_tes = max(m_e_in_tes - q_hl_tes*dt, 0.0); // Adjust the energy in thermal storage according to TES thermal losses
 
@@ -971,10 +996,39 @@ public:
 		C_csp_power_cycle::S_csp_pc_out_solver pc_out_solver;
 
 		mc_gen_pc.call(weather, pc_htf_state_in, pc_control_inputs, pc_out_solver, sim_info);
+        
+        //calculate exergy penalty
+        double exergy_adj = 1.;
+        if( exergy_table_T.ncols() > 1 )
+        {
+            exergy_adj = CSP::interp(&exergy_table_T.at(0,0), &exergy_table_T.at(1,0), m_e_in_tes/etesmax, 0, nrow_exergy_table-1, (exergy_table_T.at(0,1) > exergy_table_T.at(0,0)) );
+        }
+        else
+        {
+            exergy_adj = exergy_table_T.at(1,0);
+        }
+        if( storage_config == 1 ) //indirect
+        {
+            //for indirect storage, only the energy coming from storage impacts the exergy, since presumably the field and aux systems
+            //produce energy at full temperature. We need to weight the exergy adjustment based on the fraction coming from storage.
+            double weight = 0.;  
+            if( q_to_pb > 0. )
+                weight = q_from_tes / q_to_pb;
+            exergy_adj = (1. - weight) + weight*exergy_adj;
+        }
+
 
 		//Calculate the gross power
-		double w_gr = pc_out_solver.m_P_cycle;				//[MWe]
-		double eta_cycle = mc_gen_pc.mc_reported_outputs.value(C_pc_gen::E_ETA_THERMAL);	//[0[
+        double eta_cycle_raw = mc_gen_pc.mc_reported_outputs.value(C_pc_gen::E_ETA_THERMAL);
+		double eta_cycle = (eta_cycle_raw/mp_pc_params->m_eta_des + exergy_adj - 1.)*mp_pc_params->m_eta_des;	//[-]
+		double w_gr;
+        if( eta_cycle > 0.)
+            w_gr = pc_out_solver.m_P_cycle/eta_cycle_raw*eta_cycle;				//[MWe]
+        else
+        {
+            w_gr = 0.;
+            eta_cycle = 0.;
+        }
 
 		//Keep track of what portion is from solar
 		double w_gr_solar = (q_to_pb - q_fossil)*eta_cycle;
@@ -986,7 +1040,7 @@ public:
 		double w_par_fixed = f_Wpar_fixed * mc_pc_des_solved.m_W_dot_des;       //Fixed parasitic loss based on plant capacity
 		//Production-based parasitic loss
 		double qnorm = pc_out_solver.m_q_dot_htf / m_q_des;		//[-] Normalized thermal power to cycle
-		double wpar_prodq = 0., wpar_prodt = 0.;
+		double wpar_prodq = 0., wpar_prodt = 0., wpar_prodd = 0.;
 		for(int i=0; i<nval_Wpar_prodQ_coefs; i++)
 			wpar_prodq += Wpar_prodQ_coefs[i]*pow(qnorm, i);	//Power block part-load correction factor
 		
@@ -998,7 +1052,16 @@ public:
 
 		for(int i=0; i<nval_Wpar_prodT_coefs; i++)
 			wpar_prodt += Wpar_prodT_coefs[i]*pow(tnorm, i);	//Temperature correction factor
-		double w_par_prod = f_Wpar_prod * w_gr * wpar_prodq * wpar_prodt;
+		
+        double dnorm = irr_used/mp_params->m_irr_des;
+        for(int i=0; i<nval_Wpar_prodD_coefs; i++)
+			wpar_prodd += Wpar_prodD_coefs[i]*pow(dnorm, i);	//DNI correction factor
+		
+        double wpar_adj = (wpar_prodq + wpar_prodt + wpar_prodd);
+        if(wpar_adj < 0.)
+            wpar_adj = 0.;
+
+        double w_par_prod = f_Wpar_prod * w_gr * wpar_adj;    //MW 10/7/2016 : Making model additive to better fit regressions
 
 		double w_par_tot = w_par_fixed + w_par_prod;   //Total parasitic loss
 
@@ -1026,9 +1089,12 @@ public:
 		//solaz = solaz*r2d;       //[deg] Solar azimuth angle (-180..180, 0deg=South)
 		
 		double q_inc = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC);	// cr_out_report.m_q_dot_field_inc;            //[MWt] Qdni - Solar incident energy, before all losses
+		double q_rec_inc = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_Q_DOT_REC_INC);	//[MWt] Receiver incident energy before thermal losses
 		double q_dump_tot = q_dump_tesfull + q_dump_teschg + q_dump_umin; //[MWt] Total dumped energy
 		double w_gr_fossil = w_gr - w_gr_solar;          //[MWe] Power produced from the fossil component
-		
+		double f_sfhl_qdni = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_F_SFHL_QDNI);
+		double f_sfhl_tamb = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_F_SFHL_QTDRY);
+		double f_sfhl_vwind = mc_gen_cr.mc_reported_outputs.value(C_csp_gen_collector_receiver::E_F_SFHL_QWSPD);
 
 		//Set outputs and return
 		value(O_IRR_USED, irr_used);		//[W/m2] Irradiation value used in simulation
@@ -1040,10 +1106,10 @@ public:
 		//value(O_SOLALT, solalt);		//[deg] Solar elevation angle
 		//value(O_SOLAZ, solaz);		//[deg] Solar azimuth angle (-180..180, 0deg=South)
 		value(O_ETA_OPT_SF, eta_opt_sf);		//[none] Solar field optical efficiency
-		//value(O_F_SFHL_QDNI, f_sfhl_qdni);		//[none] Solar field load-based thermal loss correction
-		//value(O_F_SFHL_TAMB, f_sfhl_tamb);		//[none] Solar field temp.-based thermal loss correction
-		//value(O_F_SFHL_VWIND, f_sfhl_vwind);		//[none] Solar field wind-based thermal loss correction
-		value(O_Q_HL_SF, q_inc - cr_out_solver.m_q_thermal);		//[MWt] Solar field thermal losses
+		value(O_F_SFHL_QDNI, f_sfhl_qdni);		//[none] Solar field load-based thermal loss correction
+		value(O_F_SFHL_TAMB, f_sfhl_tamb);		//[none] Solar field temp.-based thermal loss correction
+		value(O_F_SFHL_VWIND, f_sfhl_vwind);		//[none] Solar field wind-based thermal loss correction
+		value(O_Q_HL_SF, q_sf > 0. ? q_rec_inc - cr_out_solver.m_q_thermal : 0.);		//[MWt] Solar field thermal losses
 		value(O_Q_SF, q_sf);		//[MWt] Solar field delivered thermal power
 		value(O_Q_INC, q_inc);		//[MWt] Qdni - Solar incident energy, before all losses
 		value(O_PBMODE, pbmode);		//[none] Power conversion mode
