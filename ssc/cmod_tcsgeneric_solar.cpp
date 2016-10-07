@@ -53,6 +53,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "f_Wpar_prod",      "Production-based parasitic loss fraction",                       "MWe/MWe",          "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "Wpar_prodQ_coefs", "Part-load production parasitic adjustment coefs.",               "1/MWe",            "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "Wpar_prodT_coefs", "Temp.-based production parasitic adjustment coefs.",             "1/C",              "",             "type_260",       "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "Wpar_prodD_coefs", "DNI-based production parasitic adjustment coefs.",               "m2/W",             "",            "type_260",       "*",                       "",                      "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "hrs_tes",          "Equivalent full-load hours of storage",                          "hours",            "",             "type_260",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "f_charge",         "Storage charging energy derate",                                 "none",             "",             "type_260",       "*",                       "",                      "" },
@@ -70,7 +71,8 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
     { SSC_INPUT,        SSC_NUMBER,      "istableunsorted",  "Is optical table unsorted format?"                               "none",             "",             "type_260",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "OpticalTable",     "Optical table",                                                  "none",             "",             "type_260",       "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_MATRIX,      "OpticalTableUns",  "Optical table Unstructured",                                     "none",             "",             "type_260",       "*",                       "",                      "" },
-	{ SSC_INPUT, SSC_MATRIX, "exergy_table", "Exergy table", "none", "", "type_260", "*", "", "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "exergy_table",     "Exergy table",                                                   "none",             "",             "type_260",       "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "storage_config",   "Thermal storage configuration",                                  "none",             "",             "type_260",       "*",                       "",                      "" },
 
 	// initial values
 	{ SSC_INPUT,        SSC_NUMBER,      "ibn",              "Beam-normal (DNI) irradiation",                                  "kJ/hr-m^2",        "",             "type_260",       "*",                       "",                      "" },
@@ -292,6 +294,7 @@ public:
         set_unit_value_ssc_double(type260_genericsolar, "f_Wpar_prod" ); //, f_Wpar_prod);
         set_unit_value_ssc_array(type260_genericsolar, "Wpar_prodQ_coefs" ); //, [1,0,0,0]);
         set_unit_value_ssc_array(type260_genericsolar, "Wpar_prodT_coefs" ); //, [1,0,0,0]);
+        set_unit_value_ssc_array(type260_genericsolar, "Wpar_prodD_coefs" ); //, [1,0,0,0]);
         set_unit_value_ssc_double(type260_genericsolar, "hrs_tes" ); //, hrs_tes);
         set_unit_value_ssc_double(type260_genericsolar, "f_charge" ); //, 0.98);
         set_unit_value_ssc_double(type260_genericsolar, "f_disch" ); //, 0.98);
@@ -304,6 +307,8 @@ public:
         set_unit_value_ssc_array(type260_genericsolar, "diswos" ); //, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]);
         set_unit_value_ssc_array(type260_genericsolar, "qdisp" ); //, [1,1,1,1,1,1,1,1,1]);
         set_unit_value_ssc_array(type260_genericsolar, "fdisp" ); //, [0,0,0,0,0,0,0,0,0]);
+        set_unit_value_ssc_matrix(type260_genericsolar, "exergy_table" );
+        set_unit_value_ssc_double(type260_genericsolar, "storage_config"); //Direct storage=0,Indirect storage=1
 
 
 		//Set the initial values
