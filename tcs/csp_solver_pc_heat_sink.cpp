@@ -3,8 +3,17 @@
 
 #include "htf_props.h"
 
+static C_csp_reported_outputs::S_output_info S_output_info[]=
+{
+	{C_pc_heat_sink::E_Q_DOT_HEAT_SINK, true},
+
+	csp_info_invalid
+};
+
 C_pc_heat_sink::C_pc_heat_sink()
 {
+	mc_reported_outputs.construct(S_output_info);
+
 	m_max_frac = 100.0;
 
 	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
@@ -189,6 +198,8 @@ void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	
 	out_solver.m_was_method_successful = true;
 
+	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
+
 	return;
 }
 
@@ -196,20 +207,23 @@ void C_pc_heat_sink::converged()
 {
 	// Nothing, so far, in model is time dependent
 	
+
+	// But need to set final timestep outputs to reported outputs class
+	mc_reported_outputs.set_timestep_outputs();
+
 	return;
 }
 
 void C_pc_heat_sink::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	return;
-	//mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
-	//	v_temp_ts_time_end, report_time_end);
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }
 
 void C_pc_heat_sink::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
 {
-	//mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
+	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 
 	return;
 }
