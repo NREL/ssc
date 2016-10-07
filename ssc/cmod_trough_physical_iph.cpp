@@ -130,7 +130,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	// *************************************************************************************************
 	//       OUTPUTS
 	// *************************************************************************************************
-
+		// Simulation Kernel
+	{ SSC_OUTPUT,       SSC_ARRAY,       "time_hr",              "Time at end of timestep",                                      "hr",           "",            "Solver",         "*",                       "",           "" },
+		
 		// Weather Reader
 	{ SSC_OUTPUT,       SSC_ARRAY,       "month",         "Resource Month",                         "",             "",            "weather",        "*",                      "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hour_day",      "Resource Hour of Day",                   "",             "",            "weather",        "*",                      "",                      "" },
@@ -142,17 +144,29 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "wspd",          "Resource Wind Speed",                    "m/s",          "",            "weather",        "*",                      "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pres",          "Resource Pressure",                      "mbar",         "",            "weather",        "*",                      "",                      "" },
    
-	// Solar field																																															 			             
+		// Solar field																																															 			             
     { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",     "Field collector solar incidence angle",     "deg",      "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",     "Field collector cosine efficiency",         "",         "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",       "Field collector incidence angle modifier",  "",         "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave", "Field collector row shadowing loss",        "",         "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "EndLoss_ave",   "Field collector optical end loss",          "",         "",            "Type250",        "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "dni_costh",     "Field collector DNI-cosine product",        "W/m2",     "",            "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",      "Total optical efficiency before defocus",   "",         "",            "Type250",        "*",                           "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "SCAs_def",      "Total fraction of focused SCAs",            "",         "",            "Type250",        "*",                           "",                      "" },
    
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_inc_sf_tot",      "Field thermal power incident",              "MWt",    "",          "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "qinc_costh",        "Field thermal power incident after cosine", "MWt",    "",          "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",     "Receiver thermal power incident",           "MWt",    "",          "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_thermal_loss", "Receiver thermal losses",              "MWt",    "",          "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_abs",     "Receiver thermal power absorbed",           "MWt",    "",          "Type250",        "*",                       "",                      "" },
 
-// The names of the output variables should match the parameter names for the TCS units in order to signal the TCS kernel to store the values by timestep
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Thermal power to HTF",                                                   "MWt",          "",            "CR",             "",                       "",           "" },
+		// Heat Sink
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
+	
+
+		// Annual Outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                             "MWt-hr", "",          "Net_E_Calc",     "*",                       "",                      "" },
+
 
 	var_info_invalid };
 	
@@ -384,8 +398,14 @@ public:
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, allocate("RowShadow_ave", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ENDLOSS_AVE, allocate("EndLoss_ave", n_steps_fixed), n_steps_fixed);  
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);    
-
-
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
+		
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, allocate("qinc_costh", n_steps_fixed), n_steps_fixed);  
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);
 
 		// ********************************
 		// ********************************
@@ -393,15 +413,20 @@ public:
 		// ********************************
 		// ********************************
 		// Heat Sink
-		C_pc_heat_sink heat_sink;
-		heat_sink.ms_params.m_T_htf_hot_des = as_double("T_loop_out");		//[C] FIELD design outlet temperature
-		heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
-		heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+		C_pc_heat_sink c_heat_sink;
+		c_heat_sink.ms_params.m_T_htf_hot_des = as_double("T_loop_out");		//[C] FIELD design outlet temperature
+		c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
+		c_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
 			// 9.18.2016 twn: assume for now there's no pressure drop though heat sink
-		heat_sink.ms_params.m_htf_pump_coef = 0.0;			//[kWe/kg/s]
+		c_heat_sink.ms_params.m_htf_pump_coef = 0.0;			//[kWe/kg/s]
 		
-		heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
-		heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+		c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
+		c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+
+
+		// Allocate heat sink outputs
+		c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+
 
 		// ********************************
 		// ********************************
@@ -432,7 +457,10 @@ public:
 		system.m_bop_par_2 = 0.0;
 
 		// Instantiate Solver
-		C_csp_solver csp_solver(weather_reader, c_trough, heat_sink, storage, tou, system);
+		C_csp_solver csp_solver(weather_reader, c_trough, c_heat_sink, storage, tou, system);
+
+		// Set solver reporting outputs
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
 
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::MONTH, allocate("month", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::HOUR_DAY, allocate("hour_day", n_steps_fixed), n_steps_fixed);
@@ -466,8 +494,6 @@ public:
 			return;
 		}
 
-		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
-
 		try
 		{
 			// Simulate !
@@ -488,6 +514,29 @@ public:
 			return;
 		}
 
+		size_t count;
+		
+		ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
+		if(count != n_steps_fixed)
+			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
+		
+		ssc_number_t *p_q_dot_heat_sink = as_array("q_dot_to_heat_sink", &count);
+		if(count != n_steps_fixed)	
+			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
+
+		// 'adjustment_factors' class stores factors in hourly array, so need to index as such
+		adjustment_factors haf(this, "adjust");
+		if( !haf.setup() )
+			throw exec_error("trough_physical_iph", "failed to setup adjustment factors: " + haf.error());
+
+		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
+		for(int i = 0; i < n_steps_fixed; i++)
+		{
+			size_t hour = ceil(p_time_final_hr[i]);
+			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt-hr]
+		}
+
+		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);
 	}
 
 };
