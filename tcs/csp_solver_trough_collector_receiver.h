@@ -31,7 +31,10 @@ public:
 		E_DEFOCUS,
 
 		E_Q_DOT_INC_SF_TOT,
-		E_Q_DOT_INC_SF_COSTH
+		E_Q_DOT_INC_SF_COSTH,
+		E_Q_DOT_REC_INC,
+		E_Q_DOT_REC_THERMAL_LOSS,
+		E_Q_DOT_REC_ABS
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -97,7 +100,7 @@ private:
 	std::vector<double> m_q_loss_SCAtot;//[W] Total heat losses from each SCA, weighted variants
 	std::vector<double> m_q_1abs_tot;	//[W/m] Thermal losses from each SCA, weighted variants
 
-	std::vector<double> m_q_loss;		//[W/m] Total losses (thermal + optical) per length in each SCA, one variant
+	std::vector<double> m_q_loss;		//[W/m] Total thermal losses per length in each SCA, one variant
 	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA, one variant
 	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA, one variant
 	std::vector<double> m_q_i;			//[W/m] DNI * A_aper / L_sca

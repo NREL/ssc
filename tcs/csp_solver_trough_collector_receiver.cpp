@@ -17,6 +17,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
 	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, true},
 	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, true},
 
 	csp_info_invalid
 };
@@ -1396,6 +1399,23 @@ void C_csp_trough_collector_receiver::set_output_value()
 
 	mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
 	mc_reported_outputs.value(E_Q_DOT_INC_SF_COSTH, m_dni_costh*m_Ap_tot/1.E6);	//[MWt]
+
+	double q_dot_thermal_loss_tot = 0.0;	//[MWt]
+	double q_dot_rec_abs_tot = 0.0;			//[MWt]
+
+	for(int i = 0; i < m_nSCA; i++)
+	{
+		q_dot_thermal_loss_tot += m_q_loss_SCAtot[i];	//[Wt]
+		q_dot_rec_abs_tot += m_q_abs_SCAtot[i];			//[Wt]
+	}
+
+	q_dot_thermal_loss_tot /= 1.E6;		//[MWt] convert from W
+	q_dot_rec_abs_tot /= 1.E6;			//[MWt] convert from W
+
+	mc_reported_outputs.value(E_Q_DOT_REC_INC, q_dot_rec_abs_tot + q_dot_thermal_loss_tot);	//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_REC_THERMAL_LOSS, q_dot_thermal_loss_tot);			//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_REC_ABS, q_dot_rec_abs_tot);							//[MWt]
+
 }
 
 void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -3766,7 +3786,9 @@ lab_keep_guess:
 	//Calculate specific heat in kJ/kg
 	c_1ave = cp_1 / 1000.;
 
-	q_heatloss = q_34tot + q_cond_bracket + q_5solabs;   //[W/m]
+	// 10.6.2016 twn: q_5solabs is already reported as an optical loss, so don't report as a thermal loss...
+		//q_heatloss = q_34tot + q_cond_bracket + q_5solabs;   //[W/m]
+	q_heatloss = q_34tot + q_cond_bracket;		//[W/m]
 
 	//Save temperatures
 	m_T_save[1] = T_2;
