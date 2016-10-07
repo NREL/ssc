@@ -10,6 +10,15 @@
 class C_pc_heat_sink : public C_csp_power_cycle
 {
 
+public:
+
+	enum
+	{
+		E_Q_DOT_HEAT_SINK	
+	};
+	
+	C_csp_reported_outputs mc_reported_outputs;
+
 private:
 
 	double m_max_frac;		//[-]
