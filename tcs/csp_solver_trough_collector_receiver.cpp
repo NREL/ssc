@@ -104,10 +104,33 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_T_sys_h_t_end = std::numeric_limits<double>::quiet_NaN();			//[K]
 	m_T_sys_h_t_int = std::numeric_limits<double>::quiet_NaN();			//[K]
 
-	m_Q_field_losses_total = std::numeric_limits<double>::quiet_NaN();	//[MJ]
+	m_Q_field_losses_total_subts = std::numeric_limits<double>::quiet_NaN();	//[MJ]
 	m_c_htf_ave_ts_ave_temp = std::numeric_limits<double>::quiet_NaN();	//[J/kg-K]
+
+	m_q_dot_sca_loss_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_sca_abs_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_xover_loss_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_HR_cold_loss_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_q_dot_HR_hot_loss_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_E_dot_sca_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_E_dot_xover_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_E_dot_HR_cold_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_E_dot_HR_hot_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_q_dot_htf_to_sink_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 	// ************************************************************************
 	// ************************************************************************
+
+	m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_sca_abs_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_xover_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_HR_cold_loss_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_q_dot_HR_hot_loss_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_E_dot_sca_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_E_dot_xover_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_E_dot_HR_cold_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_E_dot_HR_hot_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+	m_q_dot_htf_to_sink_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+
 
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
@@ -1129,6 +1152,46 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_T_sys_h_t_end = m_T_htf_out_t_end[m_nSCA - 1];	//[C]
 	}
 
+	// Calculate sub-timestep reporting energy (rate) balance metrics
+		// Loop metrics
+	m_q_dot_sca_loss_summed_subts = 0.0;	//[MWt]
+	m_q_dot_sca_abs_summed_subts = 0.0;		//[MWt]
+	m_q_dot_xover_loss_summed_subts = 0.0;	//[MWt]
+	m_E_dot_sca_summed_subts = 0.0;			//[MWt]
+	m_E_dot_xover_summed_subts = 0.0;		//[MWt]
+	
+	for(int i = 0; i < m_nSCA; i++)
+	{
+		if( i < m_nSCA - 1 )
+		{
+			m_q_dot_xover_loss_summed_subts += q_dot_loss_xover[i];		//[W] -> convert to MWt and multiply by nLoops below
+			m_E_dot_xover_summed_subts += E_xover[i];					//[MJ] -> convert to MWt and multiply by nLoops below
+		}
+		m_q_dot_sca_loss_summed_subts += m_q_loss_SCAtot[i];			//[W] -> convert to MWT and multiply by nLoops below
+		m_q_dot_sca_abs_summed_subts += m_q_abs_SCAtot[i];				//[W] -> convert to MWT and multiply by nLoops below
+		m_E_dot_sca_summed_subts += E_sca[i];							//[MJ] -> convert to MWt and multiply by nLoops below
+	}
+	m_q_dot_xover_loss_summed_subts *= 1.E-6 * m_nLoops;				//[MWt] 
+	m_E_dot_xover_summed_subts *= (m_nLoops / sim_info.ms_ts.m_step);	//[MWt]
+	m_q_dot_sca_loss_summed_subts *= 1.E-6 * m_nLoops;					//[MWt]
+	m_q_dot_sca_abs_summed_subts *= 1.E-6 * m_nLoops;					//[MWt]
+	m_E_dot_sca_summed_subts *= (m_nLoops / sim_info.ms_ts.m_step);		//[MWt]
+
+		// Header-runner metrics
+	m_q_dot_HR_cold_loss_subts = q_dot_loss_HR_cold*1.E-6;			//[MWt]
+	m_q_dot_HR_hot_loss_subts = q_dot_loss_HR_hot*1.E-6;			//[MWt]
+	m_E_dot_HR_cold_subts = E_HR_cold / sim_info.ms_ts.m_step;		//[MWt]
+	m_E_dot_HR_hot_subts = E_HR_hot / sim_info.ms_ts.m_step;		//[MWt]
+
+		// HTF out of system
+	m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5)*1000.0;	//[J/kg-K]
+	m_q_dot_htf_to_sink_subts = m_m_dot_htf_tot*m_c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*1.E-6;
+
+	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_subts - m_q_dot_xover_loss_summed_subts -
+									m_q_dot_HR_cold_loss_subts - m_q_dot_HR_hot_loss_subts - 
+									m_E_dot_sca_summed_subts - m_E_dot_xover_summed_subts -
+									m_E_dot_HR_cold_subts - m_E_dot_HR_hot_subts - m_q_dot_htf_to_sink_subts;	//[MWt]
+
 	// Calculate total field energy balance:
 	double Q_abs_scas_summed = 0.0;		//[MJ]
 	double Q_loss_xover = 0.0;			//[MJ]
@@ -1158,7 +1221,6 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	E_scas_htf_summed *= m_nLoops;			//[MJ] 
 	E_xovers_htf_summed *= m_nLoops;		//[MJ]
 
-	m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5)*1000.0;	//[J/kg-K]
 
 	double Q_htf = m_m_dot_htf_tot*m_c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 	double E_htf_bal = E_HR_cold_htf + E_scas_htf_summed + E_xovers_htf_summed + E_HR_hot_htf - Q_htf;				//[MJ]
@@ -1166,7 +1228,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	double Q_loss_HR_cold = q_dot_loss_HR_cold*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 	double Q_loss_HR_hot = q_dot_loss_HR_hot*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 
-	m_Q_field_losses_total = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
+	m_Q_field_losses_total_subts = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
 
 	double E_bal = Q_abs_scas_summed - Q_loss_xover - Q_loss_HR_cold  - Q_loss_HR_hot
 					- Q_htf - E_HR_cold - E_scas_summed - E_xovers_summed - E_HR_hot;
@@ -1400,21 +1462,9 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
 	mc_reported_outputs.value(E_Q_DOT_INC_SF_COSTH, m_dni_costh*m_Ap_tot/1.E6);	//[MWt]
 
-	double q_dot_thermal_loss_tot = 0.0;	//[MWt]
-	double q_dot_rec_abs_tot = 0.0;			//[MWt]
-
-	for(int i = 0; i < m_nSCA; i++)
-	{
-		q_dot_thermal_loss_tot += m_q_loss_SCAtot[i];	//[Wt]
-		q_dot_rec_abs_tot += m_q_abs_SCAtot[i];			//[Wt]
-	}
-
-	q_dot_thermal_loss_tot /= 1.E6;		//[MWt] convert from W
-	q_dot_rec_abs_tot /= 1.E6;			//[MWt] convert from W
-
-	mc_reported_outputs.value(E_Q_DOT_REC_INC, q_dot_rec_abs_tot + q_dot_thermal_loss_tot);	//[MWt]
-	mc_reported_outputs.value(E_Q_DOT_REC_THERMAL_LOSS, q_dot_thermal_loss_tot);			//[MWt]
-	mc_reported_outputs.value(E_Q_DOT_REC_ABS, q_dot_rec_abs_tot);							//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_REC_INC, m_q_dot_sca_abs_summed_fullts + m_q_dot_sca_loss_summed_fullts);	//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_REC_THERMAL_LOSS, m_q_dot_sca_loss_summed_fullts);			//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_REC_ABS, m_q_dot_sca_abs_summed_fullts);						//[MWt]
 
 }
 
@@ -1449,6 +1499,14 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	double T_sys_h_t_int_sum = 0.0;
 	double Q_fp_sum = 0.0;				//[MJ]
+
+	// Zero full timestep outputs
+	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts = 
+		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts = 
+		m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts = 
+		m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts = 
+		m_q_dot_htf_to_sink_fullts = 0.0;
+
 	for(int i = 0; i < n_steps_recirc; i++)
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i + 1);	//[s]
@@ -1482,7 +1540,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 			double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
 
 			// Set two initial guess values
-			double T_htf_guess_lower = (m_Q_field_losses_total/sim_info.ms_ts.m_step)*1.E6 / 
+			double T_htf_guess_lower = (m_Q_field_losses_total_subts/sim_info.ms_ts.m_step)*1.E6 / 
 									(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot ) + T_cold_in;	//[K]
 
 			double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
@@ -1516,9 +1574,42 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// Add current temperature so summation
 		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
 
+		// Add subtimestep calcs
+		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;		//[MWt]
+		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;			//[MWt]
+		m_q_dot_xover_loss_summed_fullts += m_q_dot_xover_loss_summed_subts;	//[MWt]
+		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts;				//[MWt]
+		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts;				//[MWt]
+		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts;					//[MWt]
+		m_E_dot_xover_summed_fullts += m_E_dot_xover_summed_subts;				//[MWt]
+		m_E_dot_HR_cold_fullts += m_E_dot_HR_cold_subts;						//[MWt]
+		m_E_dot_HR_hot_fullts += m_E_dot_HR_hot_subts;							//[MWt]
+		m_q_dot_htf_to_sink_fullts += m_q_dot_htf_to_sink_subts;				//[MWt]
+
 		update_last_temps();
 	}
+	
+	// Now, calculate average value over all subtimesteps
 	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)n_steps_recirc;		//[K]
+	
+	double nd_steps_recirc = (double)n_steps_recirc;			
+	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
+	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;			//[MWt]
+	m_q_dot_xover_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
+	m_q_dot_HR_cold_loss_fullts /= nd_steps_recirc;				//[MWt]
+	m_q_dot_HR_hot_loss_fullts /= nd_steps_recirc;				//[MWt]
+	m_E_dot_sca_summed_fullts /= nd_steps_recirc;				//[MWt]
+	m_E_dot_xover_summed_fullts /= nd_steps_recirc;				//[MWt]
+	m_E_dot_HR_cold_fullts /= nd_steps_recirc;					//[MWt]
+	m_E_dot_HR_hot_fullts /= nd_steps_recirc;					//[MWt]
+	m_q_dot_htf_to_sink_fullts /= nd_steps_recirc;				//[MWt]
+
+
+	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
+		m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+		m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
+		m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
+
 
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
@@ -1575,6 +1666,14 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	int i_step = 0;
 	double T_sys_h_t_int_sum = 0.0;
 	double Q_fp_sum = 0.0;				//[MJ]
+
+	// Zero full timestep outputs
+	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
+		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
+		m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
+		m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
+		m_q_dot_htf_to_sink_fullts = 0.0;
+
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i_step + 1);	//[s]
@@ -1606,7 +1705,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
 
 			// Set two initial guess values
-			double T_htf_guess_lower = (m_Q_field_losses_total / sim_info.ms_ts.m_step)*1.E6 /
+			double T_htf_guess_lower = (m_Q_field_losses_total_subts / sim_info.ms_ts.m_step)*1.E6 /
 				(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot) + T_cold_in;	//[K]
 
 			double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
@@ -1640,6 +1739,18 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Add current temperature so summation
 		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
 
+		// Add subtimestep calcs
+		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;		//[MWt]
+		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;			//[MWt]
+		m_q_dot_xover_loss_summed_fullts += m_q_dot_xover_loss_summed_subts;	//[MWt]
+		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts;				//[MWt]
+		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts;				//[MWt]
+		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts;					//[MWt]
+		m_E_dot_xover_summed_fullts += m_E_dot_xover_summed_subts;				//[MWt]
+		m_E_dot_HR_cold_fullts += m_E_dot_HR_cold_subts;						//[MWt]
+		m_E_dot_HR_hot_fullts += m_E_dot_HR_hot_subts;							//[MWt]
+		m_q_dot_htf_to_sink_fullts += m_q_dot_htf_to_sink_subts;				//[MWt]
+
 		// If the *outlet temperature at the end of the timestep* is greater than startup temperature,
 		if( m_T_sys_h_t_end > m_T_startup )
 		{
@@ -1652,6 +1763,23 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		update_last_temps();
 	}
 	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)(i_step + 1);		//[K]
+
+	double nd_steps_recirc = (double)(i_step + 1);
+	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
+	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;			//[MWt]
+	m_q_dot_xover_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
+	m_q_dot_HR_cold_loss_fullts /= nd_steps_recirc;				//[MWt]
+	m_q_dot_HR_hot_loss_fullts /= nd_steps_recirc;				//[MWt]
+	m_E_dot_sca_summed_fullts /= nd_steps_recirc;				//[MWt]
+	m_E_dot_xover_summed_fullts /= nd_steps_recirc;				//[MWt]
+	m_E_dot_HR_cold_fullts /= nd_steps_recirc;					//[MWt]
+	m_E_dot_HR_hot_fullts /= nd_steps_recirc;					//[MWt]
+	m_q_dot_htf_to_sink_fullts /= nd_steps_recirc;				//[MWt]
+
+	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
+		m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+		m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
+		m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 	// Check if startup is achieved in current controller/kernel timestep
 	if( !is_T_startup_achieved )
@@ -1905,6 +2033,22 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	if( on_success )
 	{
+		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
+		m_q_dot_sca_abs_summed_fullts = m_q_dot_sca_abs_summed_subts;		//[MWt]
+		m_q_dot_xover_loss_summed_fullts = m_q_dot_xover_loss_summed_subts;	//[MWt]
+		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_cold_loss_subts;			//[MWt]
+		m_q_dot_HR_hot_loss_fullts = m_q_dot_HR_hot_loss_subts;				//[MWt]
+		m_E_dot_sca_summed_fullts = m_E_dot_sca_summed_subts;				//[MWt]
+		m_E_dot_xover_summed_fullts = m_E_dot_xover_summed_subts;			//[MWt]
+		m_E_dot_HR_cold_fullts = m_E_dot_HR_cold_subts;						//[MWt]
+		m_E_dot_HR_hot_fullts = m_E_dot_HR_hot_subts;						//[MWt]
+		m_q_dot_htf_to_sink_fullts = m_q_dot_htf_to_sink_subts;				//[MWt]
+
+		double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
+			m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+			m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
+			m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
+
 		// Call final metrics method?
 		// (i.e. pressure drops, parasitics...)
 
@@ -1933,6 +2077,13 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	}
 	else
 	{	// Solution failed, so tell controller/solver
+
+		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
+			m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
+			m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
+			m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
+			m_q_dot_htf_to_sink_fullts = 0.0;
+
 		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
 		cr_out_solver.m_time_required_su = 0.0;		//[s]
 		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
@@ -2016,7 +2167,7 @@ int C_csp_trough_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 						(T_htf_cold_in - mpc_trough->m_T_sys_h_t_end_last)/1.E6*(mpc_trough->ms_loop_energy_balance_inputs.ms_sim_info->ms_ts.m_step);	//[MJ]
 	
 	// Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
-	*E_loss_balance = (Q_htf_fp - mpc_trough->m_Q_field_losses_total) / mpc_trough->m_Q_field_losses_total;		//[-]
+	*E_loss_balance = (Q_htf_fp - mpc_trough->m_Q_field_losses_total_subts) / mpc_trough->m_Q_field_losses_total_subts;		//[-]
 
 	return 0;
 }
