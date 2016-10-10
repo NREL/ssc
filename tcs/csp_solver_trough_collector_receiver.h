@@ -183,6 +183,7 @@ private:
 			// ** Check for these in other methods developed for CSP Solver **
 	
 		// Latest temperature solved during present call to this class
+			// SUB TIMESTEP outputs
 	double m_T_sys_c_t_end;				//[K] Temperature (bulk) of cold runners & headers at end of current timestep
 	double m_T_sys_c_t_int;				//[K] Temperature (bulk) of cold runners & headers at time-INTegrated-average	
 	std::vector<double> m_T_htf_in_t_int;	//[K] time-integrated-average inlet HTF temperature to each SCA
@@ -191,10 +192,33 @@ private:
 	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
 	double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
 
-	double m_Q_field_losses_total;		//[MJ] scas + xover + hot_HR + cold_HR
-	double m_c_htf_ave_ts_ave_temp;		//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
+	double m_Q_field_losses_total_subts;	//[MJ] scas + xover + hot_HR + cold_HR
+	double m_c_htf_ave_ts_ave_temp;			//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
+	
+	double m_q_dot_sca_loss_summed_subts;	//[MWt] SYSTEM SCA heat loss
+	double m_q_dot_sca_abs_summed_subts;	//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+	double m_q_dot_xover_loss_summed_subts;	//[MWt] SYSTEM Cross-over/connecting piping heat loss
+	double m_q_dot_HR_cold_loss_subts;		//[MWt] SYSTEM Cold header heat loss
+	double m_q_dot_HR_hot_loss_subts;		//[MWt] SYSTEM Hot header heat loss
+	double m_E_dot_sca_summed_subts;		//[MWt] SYSTEM SCA internal energy change over time
+	double m_E_dot_xover_summed_subts;		//[MWt] SYSTEM Cross-over/connecting piping internal energy change over time
+	double m_E_dot_HR_cold_subts;			//[MWt] SYSTEM Cold header internal energy change
+	double m_E_dot_HR_hot_subts;			//[MWt] SYSTEM hot header internal energy change
+	double m_q_dot_htf_to_sink_subts;		//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
 	// *********************************************
 	// *********************************************
+			// Full Timestep outputs
+	double m_q_dot_sca_loss_summed_fullts;	//[MWt] SYSTEM SCA heat loss
+	double m_q_dot_sca_abs_summed_fullts;	//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+	double m_q_dot_xover_loss_summed_fullts;//[MWt] SYSTEM Cross-over/connecting piping heat loss
+	double m_q_dot_HR_cold_loss_fullts;		//[MWt] SYSTEM Cold header heat loss
+	double m_q_dot_HR_hot_loss_fullts;		//[MWt] SYSTEM Hot header heat loss
+	double m_E_dot_sca_summed_fullts;		//[MWt] SYSTEM SCA internal energy change over time
+	double m_E_dot_xover_summed_fullts;		//[MWt] SYSTEM Cross-over/connecting piping internal energy change over time
+	double m_E_dot_HR_cold_fullts;			//[MWt] SYSTEM Cold header internal energy change
+	double m_E_dot_HR_hot_fullts;			//[MWt] SYSTEM hot header internal energy change
+	double m_q_dot_htf_to_sink_fullts;		//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
+
 
 	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
