@@ -521,7 +521,9 @@ struct var_map
     std::vector< var_receiver > recs;
    
     var_map();
+    var_map( var_map &vc );
     void reset();
+    void copy( var_map &vc );
 
     unordered_map<std::string, spbase*> _varptrs;
     void add_receiver(int id);

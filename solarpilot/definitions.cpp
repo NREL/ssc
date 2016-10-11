@@ -9,6 +9,20 @@ var_map::var_map()
     reset();
 }
 
+var_map::var_map( var_map &vc )
+{
+    reset();
+    copy( vc );
+}
+
+void var_map::copy( var_map &vc )
+{
+    for( unordered_map< std::string, spbase* >::iterator var=_varptrs.begin(); var!=_varptrs.end(); var++ )
+        var->second->set_from_string( vc._varptrs.at( var->first )->as_string().c_str() );
+    
+    return;
+}
+
 void var_map::reset()
 {
     //first clear the receiver and heliostat objects

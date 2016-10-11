@@ -1002,7 +1002,7 @@ bool AutoPilot::Optimize(var_map &V)
             is_range_constr.push_back(false);
 		}
 	}
-	/*if(V.land.is_land_max_opt.val)
+	if(V.land.is_land_max_opt.val)
     {
         names.push_back("MaxRad");
 		optvars.push_back( &V.land.max_scaled_rad.val);
@@ -1018,7 +1018,7 @@ bool AutoPilot::Optimize(var_map &V)
 			upper_range.push_back( 2. );
             is_range_constr.push_back(false);
 		}
-	}*/
+	}
 
     //names.push_back("HelioAz");
     //optvars.push_back( &V.sf.az_spacing.val );
@@ -1032,7 +1032,7 @@ bool AutoPilot::Optimize(var_map &V)
     case 5:  //Response surface gradient search - original method
 	    return Optimize(optvars, upper_range, lower_range, is_range_constr);
         break;
-    case 1: //COBYLA
+    case 1: //COBYLA with separate bound constraint
         return OptimizeAuto( optvars, upper_range, lower_range, is_range_constr, &names);        
     default:
         return OptimizeSemiAuto( optvars, upper_range, lower_range, is_range_constr, &names);
