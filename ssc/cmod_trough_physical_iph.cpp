@@ -145,20 +145,30 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "pres",          "Resource Pressure",                      "mbar",         "",            "weather",        "*",                      "",                      "" },
    
 		// Solar field																																															 			             
-    { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",     "Field collector solar incidence angle",     "deg",      "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",     "Field collector cosine efficiency",         "",         "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "IAM_ave",       "Field collector incidence angle modifier",  "",         "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "RowShadow_ave", "Field collector row shadowing loss",        "",         "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "EndLoss_ave",   "Field collector optical end loss",          "",         "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "dni_costh",     "Field collector DNI-cosine product",        "W/m2",     "",            "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "EqOpteff",      "Total optical efficiency before defocus",   "",         "",            "Type250",        "*",                           "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "SCAs_def",      "Total fraction of focused SCAs",            "",         "",            "Type250",        "*",                           "",                      "" },
-   
-	{ SSC_OUTPUT,       SSC_ARRAY,       "q_inc_sf_tot",      "Field thermal power incident",              "MWt",    "",          "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "qinc_costh",        "Field thermal power incident after cosine", "MWt",    "",          "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_inc",     "Receiver thermal power incident",           "MWt",    "",          "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_thermal_loss", "Receiver thermal losses",              "MWt",    "",          "Type250",        "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_rec_abs",     "Receiver thermal power absorbed",           "MWt",    "",          "Type250",        "*",                       "",                      "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "Theta_ave",     "Field collector solar incidence angle",     "deg",      "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "CosTh_ave",     "Field collector cosine efficiency",         "",         "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "IAM_ave",       "Field collector incidence angle modifier",  "",         "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "RowShadow_ave", "Field collector row shadowing loss",        "",         "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "EndLoss_ave",   "Field collector optical end loss",          "",         "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "dni_costh",     "Field collector DNI-cosine product",        "W/m2",     "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "EqOpteff",      "Field optical efficiency before defocus",   "",         "",            "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "SCAs_def",      "Field fraction of focused SCAs",            "",         "",            "trough_field",        "*",        "",     "" },
+   																														   
+	{ SSC_OUTPUT,   SSC_ARRAY,   "q_inc_sf_tot",      "Field thermal power incident",              "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "qinc_costh",        "Field thermal power incident after cosine", "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_rec_inc",     "Receiver thermal power incident",           "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_rec_thermal_loss", "Receiver thermal losses",              "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_rec_abs",     "Receiver thermal power absorbed",           "MWt",    "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "q_dot_piping_loss", "Field piping thermal losses",               "MWt",    "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "e_dot_field_int_energy", "Field change in material/htf internal energy", "MWt", "",     "trough_field",        "*",        "",     "" }, 
+	{ SSC_OUTPUT,   SSC_ARRAY,   "q_dot_htf_sf_out",  "Field thermal power leaving in HTF",        "MWt",    "",          "trough_field",        "*",        "",     "" },  
+
+	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_loop",   "Receiver mass flow rate",                   "kg/s",    "",              "trough_field",        "*",        "",     "" },  
+	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_field",  "Field total mass flow rate",                "kg/s",    "",              "trough_field",        "*",        "",     "" },  
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_cold_in", "Field inlet temperature",                "C",       "",              "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_cold_in",   "Receiver loop inlet temperature",        "C",       "",              "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_hot_out",   "Receiver loop outlet temperature",       "C",       "",              "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_hot_out", "Field outlet temperature",               "C",       "",              "trough_field",        "*",        "",     "" },
 
 		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
@@ -406,6 +416,16 @@ public:
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, allocate("q_dot_htf_sf_out", n_steps_fixed), n_steps_fixed);
+
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD, allocate("m_dot_field", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
 
 		// ********************************
 		// ********************************
