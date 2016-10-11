@@ -20,6 +20,16 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, true},
 	{C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, true},
 	{C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, true},
+	{C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, true},
+
+	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, true},
+	{C_csp_trough_collector_receiver::E_M_DOT_FIELD, true},
+	{C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, true},
+	{C_csp_trough_collector_receiver::E_T_REC_COLD_IN, true},
+	{C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, true},
+	{C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, true},
 
 	csp_info_invalid
 };
@@ -119,6 +129,11 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_q_dot_htf_to_sink_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 	// ************************************************************************
 	// ************************************************************************
+		// Full Timestep Outputs
+	m_T_cold_in_fullts = std::numeric_limits<double>::quiet_NaN();				//[K]
+	m_T_sys_c_rec_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_T_sys_h_rec_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_T_sys_h_t_int_fullts = std::numeric_limits<double>::quiet_NaN();			//[K]
 
 	m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 	m_q_dot_sca_abs_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
@@ -1466,6 +1481,24 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_REC_THERMAL_LOSS, m_q_dot_sca_loss_summed_fullts);			//[MWt]
 	mc_reported_outputs.value(E_Q_DOT_REC_ABS, m_q_dot_sca_abs_summed_fullts);						//[MWt]
 
+	mc_reported_outputs.value(E_Q_DOT_PIPING_LOSS, m_q_dot_xover_loss_summed_fullts +
+													m_q_dot_HR_cold_loss_fullts +
+													m_q_dot_HR_hot_loss_fullts);		//[MWt]
+	mc_reported_outputs.value(E_E_DOT_INTERNAL_ENERGY, m_E_dot_sca_summed_fullts +
+														m_E_dot_xover_summed_fullts +
+														m_E_dot_HR_cold_fullts +
+														m_E_dot_HR_hot_fullts);			//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_HTF_OUT, m_q_dot_htf_to_sink_fullts);				//[MWt]
+
+	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
+	mc_reported_outputs.value(E_M_DOT_FIELD, m_m_dot_htf_tot);						//[kg/s]
+
+	mc_reported_outputs.value(E_T_FIELD_COLD_IN, m_T_cold_in_fullts - 273.15);				//[C]
+	mc_reported_outputs.value(E_T_REC_COLD_IN, m_T_sys_c_rec_in_t_int_fullts - 273.15);		//[C]
+	mc_reported_outputs.value(E_T_REC_HOT_OUT, m_T_sys_h_rec_out_t_int_fullts - 273.15);	//[C]
+	mc_reported_outputs.value(E_T_FIELD_HOT_OUT, m_T_sys_h_t_int_fullts - 273.15);			//[C]
+
+	return;
 }
 
 void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -1497,10 +1530,12 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	C_csp_solver_sim_info sim_info_temp = sim_info;
 	sim_info_temp.ms_ts.m_step = step_local;		//[s]
 
-	double T_sys_h_t_int_sum = 0.0;
 	double Q_fp_sum = 0.0;				//[MJ]
 
 	// Zero full timestep outputs
+	m_T_cold_in_fullts = m_T_sys_c_rec_in_t_int_fullts = 
+		m_T_sys_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
+
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts = 
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts = 
 		m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts = 
@@ -1572,7 +1607,10 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		}
 
 		// Add current temperature so summation
-		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
+		m_T_cold_in_fullts += T_cold_in;						//[K]
+		m_T_sys_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0];	//[K]
+		m_T_sys_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA-1];	//[K]
+		m_T_sys_h_t_int_fullts += m_T_sys_h_t_int;				//[K]	
 
 		// Add subtimestep calcs
 		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;		//[MWt]
@@ -1590,9 +1628,12 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	}
 	
 	// Now, calculate average value over all subtimesteps
-	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)n_steps_recirc;		//[K]
+	double nd_steps_recirc = (double)n_steps_recirc;
+	m_T_cold_in_fullts /= nd_steps_recirc;				//[K]
+	m_T_sys_c_rec_in_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_sys_h_rec_out_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_sys_h_t_int_fullts /= nd_steps_recirc;			//[K]
 	
-	double nd_steps_recirc = (double)n_steps_recirc;			
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;			//[MWt]
 	m_q_dot_xover_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
@@ -1604,11 +1645,10 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	m_E_dot_HR_hot_fullts /= nd_steps_recirc;					//[MWt]
 	m_q_dot_htf_to_sink_fullts /= nd_steps_recirc;				//[MWt]
 
-
-	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
-		m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
-		m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
-		m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
+	//double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
+	//	m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+	//	m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
+	//	m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 
 	// Are any of these required by the solver for system-level iteration?
@@ -1618,7 +1658,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
 		// 7.12.16: Return timestep-end or timestep-integrated-average?
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
-	cr_out_solver.m_T_salt_hot = T_sys_h_int_ts_ave - 273.15;		//[C]
+	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
 	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
@@ -1664,8 +1704,12 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	// This code finds the first "Recirculation Step" when the outlet temperature is greater than the Startup Temperature
 	double time_required_su = sim_info.ms_ts.m_step;		//[s]
 	int i_step = 0;
-	double T_sys_h_t_int_sum = 0.0;
+	
 	double Q_fp_sum = 0.0;				//[MJ]
+
+	// Zero full timestep outputs
+	m_T_cold_in_fullts = m_T_sys_c_rec_in_t_int_fullts =
+		m_T_sys_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
 
 	// Zero full timestep outputs
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
@@ -1736,8 +1780,11 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			Q_fp_sum += c_freeze_protection_eq.Q_htf_fp;		//[MJ]
 		}
 
-		// Add current temperature so summation
-		T_sys_h_t_int_sum += m_T_sys_h_t_int;	//[K]
+		// Add current temperatures
+		m_T_cold_in_fullts += T_cold_in;						//[K]
+		m_T_sys_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0];	//[K]
+		m_T_sys_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA - 1];	//[K]
+		m_T_sys_h_t_int_fullts += m_T_sys_h_t_int;				//[K]	
 
 		// Add subtimestep calcs
 		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;		//[MWt]
@@ -1762,9 +1809,13 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		update_last_temps();
 	}
-	double T_sys_h_int_ts_ave = T_sys_h_t_int_sum / (double)(i_step + 1);		//[K]
 
 	double nd_steps_recirc = (double)(i_step + 1);
+	m_T_cold_in_fullts /= nd_steps_recirc;				//[K]
+	m_T_sys_c_rec_in_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_sys_h_rec_out_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_sys_h_t_int_fullts /= nd_steps_recirc;			//[K]
+
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;			//[MWt]
 	m_q_dot_xover_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
@@ -1799,7 +1850,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_q_thermal = 0.0;						//[MWt] No available receiver thermal output
 		// 7.12.16: Return timestep-end or timestep-integrated-average?
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
-	cr_out_solver.m_T_salt_hot = T_sys_h_int_ts_ave - 273.15;		//[C]
+	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = Q_fp_sum / time_required_su;		//[MWt]
@@ -2033,6 +2084,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	if( on_success )
 	{
+		m_T_cold_in_fullts = T_cold_in;									//[K]
+		m_T_sys_c_rec_in_t_int_fullts = m_T_htf_in_t_int[0];			//[K]
+		m_T_sys_h_rec_out_t_int_fullts = m_T_htf_out_t_int[m_nSCA - 1];	//[K]
+		m_T_sys_h_t_int_fullts = m_T_sys_h_t_int;						//[K]
+
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
 		m_q_dot_sca_abs_summed_fullts = m_q_dot_sca_abs_summed_subts;		//[MWt]
 		m_q_dot_xover_loss_summed_fullts = m_q_dot_xover_loss_summed_subts;	//[MWt]
@@ -2077,6 +2133,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	}
 	else
 	{	// Solution failed, so tell controller/solver
+
+		m_T_cold_in_fullts = 0.0;				//[K]
+		m_T_sys_c_rec_in_t_int_fullts = 0.0;	//[K]
+		m_T_sys_h_rec_out_t_int_fullts = 0.0;	//[K]
+		m_T_sys_h_t_int_fullts = 0.0;			//[K]
 
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
 			m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =

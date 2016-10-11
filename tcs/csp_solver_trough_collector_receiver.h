@@ -21,20 +21,30 @@ public:
 
 	enum
 	{
-		E_THETA_AVE,
-		E_COSTH_AVE,
-		E_IAM_AVE,
-		E_ROWSHADOW_AVE,
-		E_ENDLOSS_AVE,
-		E_DNI_COSTH,
-		E_EQUIV_OPT_ETA_TOT,
-		E_DEFOCUS,
+		E_THETA_AVE,			//[deg]
+		E_COSTH_AVE,			//[-]
+		E_IAM_AVE,				//[-]
+		E_ROWSHADOW_AVE,		//[-]
+		E_ENDLOSS_AVE,			//[-]
+		E_DNI_COSTH,			//[W/m2]
+		E_EQUIV_OPT_ETA_TOT,	//[-]
+		E_DEFOCUS,				//[-]
 
-		E_Q_DOT_INC_SF_TOT,
-		E_Q_DOT_INC_SF_COSTH,
-		E_Q_DOT_REC_INC,
-		E_Q_DOT_REC_THERMAL_LOSS,
-		E_Q_DOT_REC_ABS
+		E_Q_DOT_INC_SF_TOT,        //[MWt]
+		E_Q_DOT_INC_SF_COSTH,	   //[MWt]
+		E_Q_DOT_REC_INC,		   //[MWt]
+		E_Q_DOT_REC_THERMAL_LOSS,  //[MWt]
+		E_Q_DOT_REC_ABS,		   //[MWt]
+		E_Q_DOT_PIPING_LOSS,	   //[MWt]
+		E_E_DOT_INTERNAL_ENERGY,   //[MWt]
+		E_Q_DOT_HTF_OUT,		   //[MWt]
+
+		E_M_DOT_LOOP,		//[kg/s]
+		E_M_DOT_FIELD,		//[kg/s]
+		E_T_FIELD_COLD_IN,	//[C]
+		E_T_REC_COLD_IN,	//[C]
+		E_T_REC_HOT_OUT,	//[C]
+		E_T_FIELD_HOT_OUT	//[C]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -208,6 +218,11 @@ private:
 	// *********************************************
 	// *********************************************
 			// Full Timestep outputs
+	double m_T_cold_in_fullts;				//[K] Temperature (bulk) of cold runners & headers at end of current timestep
+	double m_T_sys_c_rec_in_t_int_fullts;	//[K] Time-integrated-average inlet HTF temperature to FIRST sca
+	double m_T_sys_h_rec_out_t_int_fullts;	//[K] Time-integrated-average outlet HTF temperature from LAST sca
+	double m_T_sys_h_t_int_fullts;			//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
+
 	double m_q_dot_sca_loss_summed_fullts;	//[MWt] SYSTEM SCA heat loss
 	double m_q_dot_sca_abs_summed_fullts;	//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
 	double m_q_dot_xover_loss_summed_fullts;//[MWt] SYSTEM Cross-over/connecting piping heat loss
