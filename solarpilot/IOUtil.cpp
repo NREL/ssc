@@ -73,7 +73,7 @@ bool ioutil::remove_file( const char *path )
 #ifdef SP_USE_MKDIR
 
 #ifdef _WIN32
-#define make_dir(x) ::_mkdir(x)
+#define make_dir(x)  ::CreateDirectory(x, NULL)
 #else
 #define make_dir(x) ::_mkdir(x, 0777)
 #endif

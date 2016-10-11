@@ -62,7 +62,6 @@ bool solarpilot_invoke::run()
         opt.max_iter.val = m_cmod->as_integer("opt_max_iter");
         opt.converge_tol.val = m_cmod->as_double("opt_conv_tol");
         opt.algorithm.val = m_cmod->as_integer("opt_algorithm"); //map correctly?
-        //opt.is_optimize_bound = false;
         opt.flux_penalty.val = m_cmod->as_double("opt_flux_penalty");
     }
 
@@ -144,6 +143,7 @@ bool solarpilot_invoke::run()
     land.is_bounds_scaled.val = true;
     land.is_bounds_fixed.val = false;
     land.is_bounds_array.val = false;
+    land.is_land_max_opt.val = false;   
 	land.max_scaled_rad.val = m_cmod->as_double("land_max");
 	land.min_scaled_rad.val = m_cmod->as_double("land_min");
 	sf.tht.val = m_cmod->as_double("h_tower");
@@ -170,7 +170,7 @@ bool solarpilot_invoke::run()
     //    ps.append( m_cmod->as_double("dispatch_factor" + my_to_string(i+1)) + i < 8 ? "," : "" );
     //fin.pricing_array.Val().clear();
     //fin.pricing_array.set_from_string( ps.c_str() );
-
+    
 	
 	//set up the weather data for simulation
 	const char *wffile = m_cmod->as_string("solar_resource_file" );
