@@ -23,6 +23,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, true},
 	{C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, true},
 	{C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, true},
 
 	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, true},
 	{C_csp_trough_collector_receiver::E_M_DOT_FIELD, true},
@@ -1489,6 +1490,7 @@ void C_csp_trough_collector_receiver::set_output_value()
 														m_E_dot_HR_cold_fullts +
 														m_E_dot_HR_hot_fullts);			//[MWt]
 	mc_reported_outputs.value(E_Q_DOT_HTF_OUT, m_q_dot_htf_to_sink_fullts);				//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_FREEZE_PROT, m_q_dot_freeze_protection);			//[MWt]
 
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
 	mc_reported_outputs.value(E_M_DOT_FIELD, m_m_dot_htf_tot);						//[kg/s]
@@ -1645,6 +1647,8 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	m_E_dot_HR_hot_fullts /= nd_steps_recirc;					//[MWt]
 	m_q_dot_htf_to_sink_fullts /= nd_steps_recirc;				//[MWt]
 
+	m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
+
 	//double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
 	//	m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
 	//	m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
@@ -1660,9 +1664,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
-	cr_out_solver.m_E_fp_total = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
-	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
+	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;	//[MWe]
+	cr_out_solver.m_W_dot_col_tracking = 0.0;				//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = 0.0;					//[MWe]
 
 	m_operating_mode = C_csp_collector_receiver::OFF;
 
@@ -1827,6 +1831,8 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	m_E_dot_HR_hot_fullts /= nd_steps_recirc;					//[MWt]
 	m_q_dot_htf_to_sink_fullts /= nd_steps_recirc;				//[MWt]
 
+	m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
+
 	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
 		m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
 		m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
@@ -1853,7 +1859,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
-	cr_out_solver.m_E_fp_total = Q_fp_sum / time_required_su;		//[MWt]
+	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
 	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
@@ -2100,6 +2106,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		m_E_dot_HR_hot_fullts = m_E_dot_HR_hot_subts;						//[MWt]
 		m_q_dot_htf_to_sink_fullts = m_q_dot_htf_to_sink_subts;				//[MWt]
 
+		m_q_dot_htf_to_sink_fullts = 0.0;
+
 		double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
 			m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
 			m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
@@ -2143,7 +2151,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
 			m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
 			m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
-			m_q_dot_htf_to_sink_fullts = 0.0;
+			m_q_dot_htf_to_sink_fullts = m_q_dot_freeze_protection = 0.0;
 
 		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
 		cr_out_solver.m_time_required_su = 0.0;		//[s]
