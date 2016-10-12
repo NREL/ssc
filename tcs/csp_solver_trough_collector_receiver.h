@@ -38,6 +38,7 @@ public:
 		E_Q_DOT_PIPING_LOSS,	   //[MWt]
 		E_E_DOT_INTERNAL_ENERGY,   //[MWt]
 		E_Q_DOT_HTF_OUT,		   //[MWt]
+		E_Q_DOT_FREEZE_PROT,       //[MWt]
 
 		E_M_DOT_LOOP,		//[kg/s]
 		E_M_DOT_FIELD,		//[kg/s]
@@ -202,7 +203,7 @@ private:
 	double m_T_sys_h_t_end;				//[K] Temperature (bulk) of hot runners & headers at end of current timestep
 	double m_T_sys_h_t_int;				//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
 
-	double m_Q_field_losses_total_subts;	//[MJ] scas + xover + hot_HR + cold_HR
+	double m_Q_field_losses_total_subts;	//[MJ] SYSTEM scas + xover + hot_HR + cold_HR
 	double m_c_htf_ave_ts_ave_temp;			//[J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
 	
 	double m_q_dot_sca_loss_summed_subts;	//[MWt] SYSTEM SCA heat loss
@@ -233,7 +234,7 @@ private:
 	double m_E_dot_HR_cold_fullts;			//[MWt] SYSTEM Cold header internal energy change
 	double m_E_dot_HR_hot_fullts;			//[MWt] SYSTEM hot header internal energy change
 	double m_q_dot_htf_to_sink_fullts;		//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
-
+	double m_q_dot_freeze_protection;		//[MWt] SYSTEM thermal freeze protection
 
 	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
