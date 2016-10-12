@@ -248,6 +248,10 @@ private:
 	int m_operating_mode_converged;
 	int m_operating_mode;
 
+	int freeze_protection(const C_csp_weatherreader::S_outputs &weather, 
+					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
+					const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
+
 	void set_output_value();
 
 public:
@@ -518,18 +522,25 @@ public:
 		//		and returns the total field heat loss. The solver finds the T_cold_in such that E_fp_htf = E_losses
 	private:
 		C_csp_trough_collector_receiver *mpc_trough;
+		C_csp_weatherreader::S_outputs ms_weather;
+		double m_m_dot_loop;					//[kg/s]
+		C_csp_solver_sim_info ms_sim_info;
 
 	public:
 		
-		double Q_htf_fp;	//[MJ]
+		double m_Q_htf_fp;	//[MJ]
 				
-		C_mono_eq_freeze_prot_E_bal(C_csp_trough_collector_receiver *pc_trough)
+		C_mono_eq_freeze_prot_E_bal(C_csp_trough_collector_receiver *pc_trough, const C_csp_weatherreader::S_outputs &weather,
+						double m_dot_loop /*kg/s*/, const C_csp_solver_sim_info &sim_info)
 		{
 			mpc_trough = pc_trough;
-			Q_htf_fp = std::numeric_limits<double>::quiet_NaN();
+			ms_weather = weather;
+			m_m_dot_loop = m_dot_loop;	//[kg/s]
+			ms_sim_info = sim_info;
+
+			m_Q_htf_fp = std::numeric_limits<double>::quiet_NaN();
 		}
 	
-
 		virtual int operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/);
 	};
 

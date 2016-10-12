@@ -1562,50 +1562,58 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// Check freeze protection
 		if( m_T_htf_out_t_end[m_nSCA-1] < m_T_fp + 10.0 ) 
 		{
-			// Set up the member structure that contains loop_energy_balance inputs!
-			ms_loop_energy_balance_inputs.ms_weather = &weather;
-			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info_temp;
-				// The following are set in the solver equation operator
-			ms_loop_energy_balance_inputs.m_T_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
-			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
+			//// Set up the member structure that contains loop_energy_balance inputs!
+			//ms_loop_energy_balance_inputs.ms_weather = &weather;
+			//ms_loop_energy_balance_inputs.ms_sim_info = &sim_info_temp;
+			//	// The following are set in the solver equation operator
+			//ms_loop_energy_balance_inputs.m_T_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
+			//ms_loop_energy_balance_inputs.m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
+			//
+			//C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this);
+			//C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
+			//
+			//// Set upper and lower bounds on T_htf_cold_in
+			//double T_htf_cold_in_lower = T_cold_in;		//[K]
+			//double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
+			//
+			//// Set two initial guess values
+			//double T_htf_guess_lower = (m_Q_field_losses_total_subts/sim_info.ms_ts.m_step)*1.E6 / 
+			//						(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot ) + T_cold_in;	//[K]
+			//
+			//double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
+			//
+			//// Set solver settings - relative error on E_balance
+			//c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
+			//
+			//int iter_solved = -1;
+			//double tol_solved = std::numeric_limits<double>::quiet_NaN();
+			//
+			//int fp_code = 0;
+			//double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
+			//
+			//try
+			//{
+			//	fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
+			//}
+			//catch( C_csp_exception )
+			//{
+			//	throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
+			//}
+			//
+			//if( fp_code != C_monotonic_eq_solver::CONVERGED )
+			//{
+			//	throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+			//}
 
-			C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this);
-			C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
-
-			// Set upper and lower bounds on T_htf_cold_in
-			double T_htf_cold_in_lower = T_cold_in;		//[K]
-			double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
-
-			// Set two initial guess values
-			double T_htf_guess_lower = (m_Q_field_losses_total_subts/sim_info.ms_ts.m_step)*1.E6 / 
-									(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot ) + T_cold_in;	//[K]
-
-			double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
-
-			// Set solver settings - relative error on E_balance
-			c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
-
-			int iter_solved = -1;
-			double tol_solved = std::numeric_limits<double>::quiet_NaN();
-
-			int fp_code = 0;
-			double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
-
-			try
+			if(m_Q_field_losses_total_subts > 0.0)
 			{
-				fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
-			}
-			catch( C_csp_exception )
-			{
-				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
-			}
+				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+				double T_cold_in_i = T_cold_in;
+				int fp_code = freeze_protection(weather, T_cold_in_i, m_dot_htf_loop, sim_info_temp, Q_fp_i);
 
-			if( fp_code != C_monotonic_eq_solver::CONVERGED )
-			{
-				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+				T_cold_in = T_cold_in_i;	//[K]
+				Q_fp_sum += Q_fp_i;			//[MJ]
 			}
-
-			Q_fp_sum += c_freeze_protection_eq.Q_htf_fp;		//[MJ]
 		}
 
 		// Add current temperature so summation
@@ -1738,50 +1746,60 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Check freeze protection
 		if( m_T_htf_out_t_end[m_nSCA - 1] < m_T_fp + 10.0 )
 		{
-			// Set up the member structure that contains loop_energy_balance inputs!
-			ms_loop_energy_balance_inputs.ms_weather = &weather;
-			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info_temp;
-			// The following are set in the solver equation operator
-			ms_loop_energy_balance_inputs.m_T_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
-			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
+			//// Set up the member structure that contains loop_energy_balance inputs!
+			//ms_loop_energy_balance_inputs.ms_weather = &weather;
+			//ms_loop_energy_balance_inputs.ms_sim_info = &sim_info_temp;
+			//// The following are set in the solver equation operator
+			//ms_loop_energy_balance_inputs.m_T_htf_cold_in = std::numeric_limits<double>::quiet_NaN();
+			//ms_loop_energy_balance_inputs.m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
 
-			C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this);
-			C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
+			//C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this);
+			//C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
 
-			// Set upper and lower bounds on T_htf_cold_in
-			double T_htf_cold_in_lower = T_cold_in;		//[K]
-			double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
+			//// Set upper and lower bounds on T_htf_cold_in
+			//double T_htf_cold_in_lower = T_cold_in;		//[K]
+			//double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();
 
-			// Set two initial guess values
-			double T_htf_guess_lower = (m_Q_field_losses_total_subts / sim_info.ms_ts.m_step)*1.E6 /
-				(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot) + T_cold_in;	//[K]
+			//// Set two initial guess values
+			//double T_htf_guess_lower = (m_Q_field_losses_total_subts / sim_info.ms_ts.m_step)*1.E6 /
+			//	(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot) + T_cold_in;	//[K]
 
-			double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
+			//double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
 
-			// Set solver settings - relative error on E_balance
-			c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
+			//// Set solver settings - relative error on E_balance
+			//c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
 
-			int iter_solved = -1;
-			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+			//int iter_solved = -1;
+			//double tol_solved = std::numeric_limits<double>::quiet_NaN();
 
-			int fp_code = 0;
-			double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
+			//int fp_code = 0;
+			//double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
 
-			try
+			//try
+			//{
+			//	fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
+			//}
+			//catch( C_csp_exception )
+			//{
+			//	throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
+			//}
+
+			//if( fp_code != C_monotonic_eq_solver::CONVERGED )
+			//{
+			//	throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+			//}
+
+			//Q_fp_sum += c_freeze_protection_eq.Q_htf_fp;		//[MJ]
+
+			if( m_Q_field_losses_total_subts > 0.0 )
 			{
-				fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
-			}
-			catch( C_csp_exception )
-			{
-				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
-			}
+				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+				double T_cold_in_i = T_cold_in;
+				int fp_code = freeze_protection(weather, T_cold_in_i, m_dot_htf_loop, sim_info_temp, Q_fp_i);
 
-			if( fp_code != C_monotonic_eq_solver::CONVERGED )
-			{
-				throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+				T_cold_in = T_cold_in_i;	//[K]
+				Q_fp_sum += Q_fp_i;			//[MJ]
 			}
-
-			Q_fp_sum += c_freeze_protection_eq.Q_htf_fp;		//[MJ]
 		}
 
 		// Add current temperatures
@@ -2214,29 +2232,76 @@ int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double
 	return 0;
 }
 
+int C_csp_trough_collector_receiver::freeze_protection(const C_csp_weatherreader::S_outputs &weather, 
+	double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/,
+	const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/)
+{
+	C_mono_eq_freeze_prot_E_bal c_freeze_protection_eq(this, weather, m_dot_loop, sim_info);
+	C_monotonic_eq_solver c_fp_solver(c_freeze_protection_eq);
+
+	// Set upper and lower bounds on T_htf_cold_in
+	double T_htf_cold_in_lower = T_cold_in;		//[K]
+	double T_htf_cold_in_upper = std::numeric_limits<double>::quiet_NaN();	//[K]
+
+	// Set two initial guess values
+	double T_htf_guess_lower = (m_Q_field_losses_total_subts / sim_info.ms_ts.m_step )*1.E6 / 
+							(m_c_htf_ave_ts_ave_temp * m_m_dot_htf_tot) + T_cold_in;	//[K]
+
+	double T_htf_guess_upper = T_htf_guess_lower + 10.0;		//[K]
+
+	// Set solver settings - relative error on E_balance
+	c_fp_solver.settings(0.01, 30, T_htf_cold_in_lower, T_htf_cold_in_upper, false);
+
+	int iter_solved = -1;
+	double tol_solved = std::numeric_limits<double>::quiet_NaN();
+
+	int fp_code = 0;
+	double T_cold_in_solved = std::numeric_limits<double>::quiet_NaN();
+
+	try
+	{
+		fp_code = c_fp_solver.solve(T_htf_guess_lower, T_htf_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
+	}
+	catch( C_csp_exception )
+	{
+		throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed"));
+	}
+
+	if( fp_code != C_monotonic_eq_solver::CONVERGED )
+	{
+		throw(C_csp_exception("C_csp_trough_collector::off - freeze protection failed to converge"));
+	}
+
+	T_cold_in = T_cold_in_solved;				//[K]
+	Q_fp = c_freeze_protection_eq.m_Q_htf_fp;	//[MJ]
+}
+
 int C_csp_trough_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/)
 {
 	// Update the HTF inlet temperature in 'ms_loop_energy_balance_inputs'
-	mpc_trough->ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_htf_cold_in;		//[K]
+	//mpc_trough->ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_htf_cold_in;		//[K]
+	//
+	//// Solve the loop energy balance at the HTF inlet temperature
+	//	// Use the minimum HTF mass flow rate for the freeze protection mass flow rate
+	//mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = mpc_trough->m_m_dot_htfmin;	//[kg/s]
+	//
+	//int exit_code = mpc_trough->loop_energy_balance_T_t_int();
+	//
+	//if( exit_code != E_loop_energy_balance_exit::SOLVED )
+	//{
+	//	*E_loss_balance = std::numeric_limits<double>::quiet_NaN();
+	//	return -1;
+	//}
 
-	// Solve the loop energy balance at the HTF inlet temperature
-		// Use the minimum HTF mass flow rate for the freeze protection mass flow rate
-	mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = mpc_trough->m_m_dot_htfmin;	//[kg/s]
-	
-	int exit_code = mpc_trough->loop_energy_balance_T_t_int();
-
-	if( exit_code != E_loop_energy_balance_exit::SOLVED )
-	{
-		*E_loss_balance = std::numeric_limits<double>::quiet_NaN();
-		return -1;
-	}
+	// Solve the loop energy balance at the input HTF inlet temperature
+	mpc_trough->loop_energy_balance_T_t_int(ms_weather, T_htf_cold_in, m_m_dot_loop, ms_sim_info);
 	
 	// Get energy added to the HTF
-	Q_htf_fp = mpc_trough->m_m_dot_htf_tot*mpc_trough->m_c_htf_ave_ts_ave_temp*
-						(T_htf_cold_in - mpc_trough->m_T_sys_h_t_end_last)/1.E6*(mpc_trough->ms_loop_energy_balance_inputs.ms_sim_info->ms_ts.m_step);	//[MJ]
+	m_Q_htf_fp = mpc_trough->m_m_dot_htf_tot*mpc_trough->m_c_htf_ave_ts_ave_temp*
+						(T_htf_cold_in - mpc_trough->m_T_sys_h_t_end_last)/1.E6*(ms_sim_info.ms_ts.m_step);	//[MJ]
 	
 	// Set the normalized difference between the Field Energy Loss and Freeze Protection Energy
-	*E_loss_balance = (Q_htf_fp - mpc_trough->m_Q_field_losses_total_subts) / mpc_trough->m_Q_field_losses_total_subts;		//[-]
+	*E_loss_balance = (m_Q_htf_fp - mpc_trough->m_Q_field_losses_total_subts) / mpc_trough->m_Q_field_losses_total_subts;		//[-]
 
 	return 0;
 }
