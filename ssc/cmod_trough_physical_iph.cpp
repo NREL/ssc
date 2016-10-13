@@ -171,6 +171,8 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_hot_out",   "Loop timestep-averaged outlet temperature",  "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_hot_out", "Field timestep-averaged outlet temperature", "C",       "",          "trough_field",        "*",        "",     "" },
 
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",             "MWe",     "",          "trough_field",        "*",        "",     "" },
+
 		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
 	
@@ -196,7 +198,6 @@ public:
 	{
 		add_var_info( _cm_vtab_trough_physical_process_heat );
 		add_var_info(vtab_adjustment_factors);
-		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( ) throw( general_error )
@@ -433,6 +434,8 @@ public:
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
+
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);		//[MWe]
 
 		// ********************************
 		// ********************************
