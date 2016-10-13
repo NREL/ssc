@@ -46,8 +46,10 @@ public:
 		E_T_REC_COLD_IN,	//[C]
 		E_T_REC_HOT_OUT,	//[C]
 		E_T_FIELD_HOT_OUT,	//[C]
+		E_PRESSURE_DROP,	//[bar]
 
-		E_W_DOT_SCA_TRACK	//[MWe]
+		E_W_DOT_SCA_TRACK,	//[MWe]
+		E_W_DOT_PUMP		//[MWe]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -240,6 +242,9 @@ private:
 	double m_q_dot_htf_to_sink_fullts;		//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
 	double m_q_dot_freeze_protection;		//[MWt] SYSTEM thermal freeze protection
 
+	double m_dP_total;						//[bar] FIELD pressure drop
+	double m_W_dot_pump;					//[MWe] FIELD pumping power
+
 	bool m_ss_init_complete;	//[-] For TCS-based model in acceptance testing, has model achieved steady state at first timestep?
 
 	// Member variables that are used to store information for the EvacReceiver method
@@ -255,6 +260,8 @@ private:
 	int freeze_protection(const C_csp_weatherreader::S_outputs &weather, 
 					double & T_cold_in /*K*/, double m_dot_loop /*kg/s*/, 
 					const C_csp_solver_sim_info &sim_info, double & Q_fp /*MJ*/);
+
+	void field_pressure_drop();
 
 	void set_output_value();
 
