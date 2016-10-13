@@ -170,9 +170,11 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_cold_in",   "Loop timestep-averaged inlet temperature",   "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_hot_out",   "Loop timestep-averaged outlet temperature",  "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_hot_out", "Field timestep-averaged outlet temperature", "C",       "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "deltaP_field",    "Field pressure drop",                    "bar",         "",          "trough_field",        "*",        "",     "" },
 
-	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",             "MWe",     "",          "trough_field",        "*",        "",     "" },
-
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",          "trough_field",        "*",        "",     "" },
+	
 		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
 	
@@ -183,7 +185,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	
 
 		// Annual Outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                             "MWt-hr", "",          "Net_E_Calc",     "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Thermal Energy Production w/ avail derate",     "MWt-hr", "",          "Net_E_Calc",     "*",                       "",                      "" },
 
 
 	var_info_invalid };
@@ -236,6 +238,7 @@ public:
 		c_trough.m_nColt = as_integer("nColt");						//[-] Number of collector types
 		c_trough.m_nHCEVar = as_integer("nHCEVar");					//[-] Number of HCE variants per t
 		c_trough.m_nLoops = as_integer("nLoops");					//[-] Number of loops in the field
+		c_trough.m_eta_pump = as_double("eta_pump");				//[-] HTF pump efficiency
 		c_trough.m_FieldConfig = as_integer("FieldConfig");			//[-] Number of subfield headers
 		c_trough.m_Fluid = as_integer("Fluid");						//[-] Field HTF fluid number
 		//c_trough.m_fthrok = as_integer("fthrok");					//[-] Flag to allow partial defocusing of the collectors
@@ -434,8 +437,10 @@ public:
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);			//[bar]
 
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);		//[MWe]
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);			//[MWe]
 
 		// ********************************
 		// ********************************
