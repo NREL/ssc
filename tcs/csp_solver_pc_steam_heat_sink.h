@@ -8,6 +8,16 @@
 
 class C_pc_steam_heat_sink : public C_csp_power_cycle
 {
+
+public:
+
+	enum
+	{
+		E_Q_DOT_HEAT_SINK
+	};
+
+	C_csp_reported_outputs mc_reported_outputs;
+
 private:
 
 	double m_max_frac;		//[-]
@@ -42,13 +52,8 @@ public:
 	};
 
 	S_params ms_params;
-
-	C_pc_steam_heat_sink()
-	{
-		m_max_frac = 100.0;
-
-		m_is_sensible_htf = false;	//[-] STEAM
-	}
+	
+	C_pc_steam_heat_sink();
 
 	~C_pc_steam_heat_sink(){};
 

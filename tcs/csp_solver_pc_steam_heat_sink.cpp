@@ -5,6 +5,22 @@
 
 #include "water_properties.h"
 
+static C_csp_reported_outputs::S_output_info S_output_info[] =
+{
+	{C_pc_steam_heat_sink::E_Q_DOT_HEAT_SINK, true},
+
+	csp_info_invalid
+};
+
+C_pc_steam_heat_sink::C_pc_steam_heat_sink()
+{
+	mc_reported_outputs.construct(S_output_info);
+
+	m_max_frac = 100.0;
+
+	m_is_sensible_htf = false;	//[-] STEAM
+}
+
 void C_pc_steam_heat_sink::check_double_params_are_set()
 {
 	if( !check_double(ms_params.m_x_hot_des) )
@@ -176,7 +192,7 @@ void C_pc_steam_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	double T_steam_hot = htf_state_in.m_temp + 273.15;	//[K], convert from C
 	double P_steam_hot = htf_state_in.m_pres;	//[kPa]
 	double x_steam_hot = htf_state_in.m_qual;	//[-]
-	double m_dot_steam = inputs.m_m_dot;		//[kg/s]
+	double m_dot_steam = inputs.m_m_dot/3600.0;	//[kg/s], convert from kg/hr
 
 	// Hot state point
 	int prop_error_code = -1;
@@ -230,20 +246,23 @@ void C_pc_steam_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_m_dot_htf = m_dot_steam*3600.0;		//[kg/hr] Return inlet mass flow rate
 	out_solver.m_W_cool_par = 0.0;			//[MWe] No cooling load
 	
-	out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
+	out_solver.m_time_required_su = 0.0;		//[s] No startup requirements, for now
 	out_solver.m_q_dot_htf = q_dot_steam;	//[MWt] Thermal power form HTF
 	out_solver.m_W_dot_htf_pump = m_dot_steam*(h_steam_cold_comp - h_steam_cold)/1.E3;	//[MWe]
 	
 	out_solver.m_was_method_successful = true;
+
+	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_steam);	//[MWt]
 
 	return;
 }
 
 void C_pc_steam_heat_sink::converged()
 {
-	// throw(C_csp_exception("C_pc_steam_heat_sink::converged(...) not ready yet"));
-
 	// Nothing, so far, in model is time dependent
+
+	// But need to set final timestep outputs to reported outputs class
+	mc_reported_outputs.set_timestep_outputs();
 
 	return;
 }
@@ -251,18 +270,11 @@ void C_pc_steam_heat_sink::converged()
 void C_pc_steam_heat_sink::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	// throw(C_csp_exception("C_pc_steam_heat_sink::write_output_intervals(...) not ready yet"));
-
-	return;
-	//mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
-	//	v_temp_ts_time_end, report_time_end);
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }
 
 void C_pc_steam_heat_sink::assign(int index, float *p_reporting_ts_array, int n_reporting_ts_array)
 {
-	// throw(C_csp_exception("C_pc_steam_heat_sink::assign(...) not ready yet"));
-
-	//mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
-
-	return;
+	mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }
