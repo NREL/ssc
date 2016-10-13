@@ -6,6 +6,7 @@
 static C_csp_reported_outputs::S_output_info S_output_info[]=
 {
 	{C_pc_heat_sink::E_Q_DOT_HEAT_SINK, true},
+	{C_pc_heat_sink::E_W_DOT_PUMPING, true},
 
 	csp_info_invalid
 };
@@ -199,6 +200,7 @@ void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 	out_solver.m_was_method_successful = true;
 
 	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
+	mc_reported_outputs.value(E_W_DOT_PUMPING, out_solver.m_W_dot_htf_pump);	//[MWe]
 
 	return;
 }

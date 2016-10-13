@@ -13,7 +13,8 @@ public:
 
 	enum
 	{
-		E_Q_DOT_HEAT_SINK
+		E_Q_DOT_HEAT_SINK,
+		E_W_DOT_PUMPING			//[MWe]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
