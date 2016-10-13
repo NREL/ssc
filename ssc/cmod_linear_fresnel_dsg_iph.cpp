@@ -208,6 +208,9 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_2",            "2nd op. mode, if applicable",                                  "",             "",            "Solver",        "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_3",            "3rd op. mode, if applicable",                                  "",             "",            "Solver",        "*",                       "",           "" },
 	
+		// Annual Outputs
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                             "MWt-hr", "",          "Net_E_Calc",     "*",                       "",                      "" },
+
 
 	var_info_invalid };
 
@@ -458,8 +461,6 @@ public:
 			return;
 		}
 
-		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
-
 		try
 		{
 			// Simulate !
@@ -479,6 +480,31 @@ public:
 
 			return;
 		}
+
+		size_t count;
+
+		ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
+		if( count != n_steps_fixed )
+			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
+
+		ssc_number_t *p_q_dot_heat_sink = as_array("q_dot_to_heat_sink", &count);
+		if( count != n_steps_fixed )
+			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
+
+		// 'adjustment_factors' class stores factors in hourly array, so need to index as such
+		adjustment_factors haf(this, "adjust");
+		if( !haf.setup() )
+			throw exec_error("trough_physical_iph", "failed to setup adjustment factors: " + haf.error());
+
+		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
+		for( int i = 0; i < n_steps_fixed; i++ )
+		{
+			size_t hour = ceil(p_time_final_hr[i]);
+			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt]
+		}
+
+
+		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[MWt-hr]
 
 	}
 

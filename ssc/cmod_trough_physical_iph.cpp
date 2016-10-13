@@ -563,10 +563,10 @@ public:
 		for(int i = 0; i < n_steps_fixed; i++)
 		{
 			size_t hour = ceil(p_time_final_hr[i]);
-			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt-hr]
+			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt]
 		}
 
-		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);
+		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[MWt-hr]
 	}
 
 };
