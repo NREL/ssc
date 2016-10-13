@@ -45,7 +45,9 @@ public:
 		E_T_FIELD_COLD_IN,	//[C]
 		E_T_REC_COLD_IN,	//[C]
 		E_T_REC_HOT_OUT,	//[C]
-		E_T_FIELD_HOT_OUT	//[C]
+		E_T_FIELD_HOT_OUT,	//[C]
+
+		E_W_DOT_SCA_TRACK	//[MWe]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -78,6 +80,7 @@ private:
 	double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
 	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
 	double m_q_design;		//[Wt] Design-point thermal power from the solar field
+	double m_W_dot_sca_tracking_nom;		//[MWe] Tracking parasitics when trough is on sun
 
 	std::vector<double> m_D_runner;	//[m] Diameters of runner sections
 	std::vector<double> m_L_runner;	//[m] Lengths of runner sections
@@ -134,6 +137,7 @@ private:
 	double m_EndLoss_ave;		//[-] Field average end loss
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
 	double m_dni_costh;			//[W/m2] DNI x cos(theta) product
+	double m_W_dot_sca_tracking;	//[MWe] SCA tracking power
 	// Collector-receiver equivalent(weighted over variants AND all SCAs) optical efficiency
 		// m_ColOptEff * m_Shadowing * m_Dirt_HCE * m_alpha_abs * m_tau_envelope
 	double m_EqOpteff;			//[-] 
