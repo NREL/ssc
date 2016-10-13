@@ -32,6 +32,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, true},
 	{C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, true},
 
+	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, true},
+
 	csp_info_invalid
 };
 
@@ -49,7 +51,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_mtoinch = 39.3700787;	//[m] -> [in]
 	m_T_htf_prop_min = 275.0;	//[K]
 	
-	
+	m_W_dot_sca_tracking_nom = std::numeric_limits<double>::quiet_NaN();
+
 	// set initial values for all parameters to prevent possible misuse
 	m_nSCA = -1;
 	m_nHCEt = -1;
@@ -352,6 +355,9 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	// for test start
 	init_fieldgeom();
 	// for test end
+
+	// Calculate tracking parasitics for when trough is on sun
+	m_W_dot_sca_tracking_nom = m_SCA_drives_elec*double(m_nSCA*m_nLoops)/1.E6;	//[MWe]
 
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
@@ -1271,6 +1277,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 	m_RowShadow_ave = 0.0; 
 	m_EndLoss_ave = 0.0;
 	m_dni_costh = 0.0;
+	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
 	m_control_defocus = 0.0;
 	m_component_defocus = 0.0;
@@ -1459,6 +1466,11 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 
 	m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
 
+	// Assume that whenever trough is in STARTUP OR ON, we're using the nominal tracking load
+	// This is because it takes power to move into and out of defocus, and we'd probably
+	//    just add complexity without any accuracy by trying to capture that
+	m_W_dot_sca_tracking = m_W_dot_sca_tracking_nom*m_ftrack;	//[MWe]
+
 	m_control_defocus = m_component_defocus = 1.0;	//[-]
 
 	m_q_dot_inc_sf_tot = m_Ap_tot*weather.m_beam/1.E6;	//[MWt]
@@ -1499,6 +1511,8 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_T_REC_COLD_IN, m_T_sys_c_rec_in_t_int_fullts - 273.15);		//[C]
 	mc_reported_outputs.value(E_T_REC_HOT_OUT, m_T_sys_h_rec_out_t_int_fullts - 273.15);	//[C]
 	mc_reported_outputs.value(E_T_FIELD_HOT_OUT, m_T_sys_h_t_int_fullts - 273.15);			//[C]
+
+	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
 
 	return;
 }
@@ -3374,6 +3388,8 @@ void C_csp_trough_collector_receiver::converged()
 	m_defocus_new = 1.0;	//[-]
 	m_defocus_old = 1.0;	//[-]
 	m_defocus = 1.0;		//[-]
+
+	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
 	// Reset the optical efficiency member data
 	loop_optical_eta_off();
