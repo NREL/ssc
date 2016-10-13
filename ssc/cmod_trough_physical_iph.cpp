@@ -127,6 +127,10 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     { SSC_INPUT,        SSC_MATRIX,      "SCAInfoArray",              "Receiver (,1) and collector (,2) type for each assembly in loop",                 "none",          "",             "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "SCADefocusArray",           "Collector defocus order",                                                         "none",          "",             "solar_field",    "*",                       "",                      "" },      
 
+		// Heat Sink
+    { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",               "kW/kg",        "",             "controller",     "*",                       "",                      "" },
+
+
 	// *************************************************************************************************
 	//       OUTPUTS
 	// *************************************************************************************************
@@ -176,8 +180,13 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",          "trough_field",        "*",        "",     "" },
 	
 		// Heat Sink
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",     "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_pump",      "Heat sink pumping power",     "MWe",    "",          "Heat_Sink",      "*",                       "",                      "" },
 	
+		// SYSTEM
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_parasitic_tot", "System total electrical parasitic", "MWe",    "",          "Heat_Sink",      "*",                       "",                      "" },
+
+
 		// Controller
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",            "1st operating mode",                                           "",             "",            "Solver",        "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_2",            "2nd op. mode, if applicable",                                  "",             "",            "Solver",        "*",                       "",           "" },
@@ -453,7 +462,7 @@ public:
 		c_heat_sink.ms_params.m_T_htf_cold_des = as_double("T_loop_in_des");	//[C] FIELD design inlet temperature
 		c_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_design");			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
 			// 9.18.2016 twn: assume for now there's no pressure drop though heat sink
-		c_heat_sink.ms_params.m_htf_pump_coef = 0.0;			//[kWe/kg/s]
+		c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
 		
 		c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
 		c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
@@ -461,7 +470,7 @@ public:
 
 		// Allocate heat sink outputs
 		c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
-
+		c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
 
 		// ********************************
 		// ********************************
@@ -507,6 +516,8 @@ public:
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::WSPD, allocate("wspd", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRES, allocate("pres", n_steps_fixed), n_steps_fixed);
 
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_parasitic_tot", n_steps_fixed), n_steps_fixed);
+		
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
@@ -568,10 +579,16 @@ public:
 			throw exec_error("trough_physical_iph", "failed to setup adjustment factors: " + haf.error());
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
+		ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
+		ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
+		if( count != n_steps_fixed )
+			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
 		for(int i = 0; i < n_steps_fixed; i++)
 		{
 			size_t hour = ceil(p_time_final_hr[i]);
 			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt]
+			p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
+			p_W_dot_par_tot_haf[i] = p_W_dot_parasitic_tot[i] * (ssc_number_t)haf(hour);
 		}
 
 		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[MWt-hr]
