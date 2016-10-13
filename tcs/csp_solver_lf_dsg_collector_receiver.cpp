@@ -1228,7 +1228,10 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		update_last_temps();
 	}
-	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / (double)(i_step + 1);		//[kJ/kg]
+	
+	double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
+
+	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / nd_steps_recirc;		//[kJ/kg]
 	int wp_code = water_PH(P_field_out*100.0, h_sys_hot_out_t_int_ts_ave, &wp);
 	if( wp_code != 0 )
 	{
