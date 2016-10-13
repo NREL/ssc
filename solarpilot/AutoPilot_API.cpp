@@ -556,26 +556,26 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
 	//---Set a couple of parameters here that should be consistent for simple API use
 	
 	//make sure the aiming strategy is correct
-	if(V.recs.front().rec_type.val == Receiver::REC_TYPE::CYLINDRICAL && !for_optimize)
-		V.flux.aim_method.val =  FluxSimData::AIM_STRATEGY::SIMPLE ;
-	else
-    {
-		V.flux.aim_method.val =  FluxSimData::AIM_STRATEGY::IMAGE_SIZE ;
-        V.flux.sigma_limit_y.val = 2.5;
-    }
+	//if(V.recs.front().rec_type.val == Receiver::REC_TYPE::CYLINDRICAL && !for_optimize)
+	//	V.flux.aim_method.val =  FluxSimData::AIM_STRATEGY::SIMPLE ;
+	//else
+ //   {
+	//	V.flux.aim_method.val =  FluxSimData::AIM_STRATEGY::IMAGE_SIZE ;
+ //       V.flux.sigma_limit_y.val = 2.5;
+ //   }
 
-	//set the receiver flux surfaces to the correct resolution to balance run time with accuracy
-	if( V.recs[0].rec_type.val == 0 ){
-		//external receiver
-		V.flux.x_res.val = 12;
-		V.flux.y_res.val = 20;
-	
-	}
-	else{
-		//flat plate receiver
-		V.flux.x_res.val = 15;
-		V.flux.y_res.val = 15;
-	}
+	////set the receiver flux surfaces to the correct resolution to balance run time with accuracy
+	//if( V.recs[0].rec_type.val == 0 ){
+	//	//external receiver
+	//	V.flux.x_res.val = 12;
+	//	V.flux.y_res.val = 20;
+	//
+	//}
+	//else{
+	//	//flat plate receiver
+	//	V.flux.x_res.val = 15;
+	//	V.flux.y_res.val = 15;
+	//}
 	
 	//Create the solar field object
 	_SF->Create(V);
@@ -865,7 +865,10 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 
     //if optimizing receiver aspect, make sure diameter is set appropriately
 	if(V->recs.front().is_height_opt.val || V->recs.front().is_aspect_opt.val ) 
-        V->recs.front().rec_diameter.val = V->recs.front().rec_height.val / V->recs.front().rec_aspect.Val();
+    {
+        double *dim_which = V->recs.front().rec_type.val == Receiver::REC_TYPE::CYLINDRICAL ? &V->recs.front().rec_diameter.val : &V->recs.front().rec_width.val;
+        *dim_which = V->recs.front().rec_height.val / V->recs.front().rec_aspect.Val();
+    }
 
 	//create the solar field object
 	if(! _cancel_simulation)
