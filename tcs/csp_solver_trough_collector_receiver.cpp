@@ -31,8 +31,10 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_T_REC_COLD_IN, true},
 	{C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, true},
 	{C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, true},
+	{C_csp_trough_collector_receiver::E_PRESSURE_DROP, true},
 
 	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, true},
+	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, true},
 
 	csp_info_invalid
 };
@@ -150,6 +152,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_E_dot_HR_hot_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_q_dot_htf_to_sink_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
+	m_dP_total = std::numeric_limits<double>::quiet_NaN();		//[bar]
+	m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();	//[MWe]
 
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
@@ -1476,6 +1480,121 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	m_q_dot_inc_sf_tot = m_Ap_tot*weather.m_beam/1.E6;	//[MWt]
 }
 
+void C_csp_trough_collector_receiver::field_pressure_drop()
+{
+	double dP_IOCOP = PressureDrop(m_m_dot_htf_tot/(double)m_nLoops,
+							(m_T_sys_c_rec_in_t_int_fullts+m_T_sys_h_rec_out_t_int_fullts)/2.0, 1.0, 
+							m_D_h((int)m_SCAInfoArray(0,0),0), m_HDR_rough, 40.0+m_Row_Distance,
+							0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 1.0, 0.0);		//[Pa]
+
+	std::vector<double> dP_rec(m_nSCA);
+
+	for(int i = 0; i < m_nSCA; i++)
+	{
+		int CT = (int)m_SCAInfoArray(i,1)-1;	//[-] Collector Type
+		int HT = (int)m_SCAInfoArray(i,0)-1;	//[-] HCE Type
+
+		// Account for extra fittings on the first HCE
+		double x1 = std::numeric_limits<double>::quiet_NaN();
+		double x2 = std::numeric_limits<double>::quiet_NaN();
+		if( i == 0 )
+		{
+			x1 = 10.0;
+			x2 = 3.0;
+		}
+		else
+		{
+			x1 = 0.0;
+			x2 = 1.0;
+		}
+
+		// Not averaging subtimesteps for the temperature
+		// So for OFF and STARTUP, we're using the final subtimestep temperature
+		dP_rec[i] = PressureDrop(m_m_dot_htf_tot/(double)m_nLoops,
+								m_T_htf_out_t_int[i], 1.0,
+								m_D_h((int)m_SCAInfoArray(0,0),0), m_Rough(HT,0)*m_D_h(HT,0), m_L_SCA[CT]+m_Distance_SCA[CT],
+								0.0, 0.0, x1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, x2);
+	}
+
+	double dP_loop = 0.0;
+	for(int i = 0; i < m_nSCA; i++)
+		dP_loop += dP_rec[i];
+
+	double dP_to_field = 0.0;			//[Pa]
+	double dP_from_field = 0.0;			//[Pa]
+	double dP_hdr_cold = 0.0;			//[Pa]
+	double dP_hdr_hot = 0.0;			//[Pa]
+
+	if( m_accept_loc == 1 )
+	{
+		double m_dot_run_in = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
+
+		if( m_nfsec > 2 )		// Correct the mass flow for situations where nfsec/2==odd
+		{
+			m_dot_run_in = m_m_dot_htf_tot / 2.0 * (1.0 - (double)(m_nfsec % 4) / (double)(m_nfsec));	//[kg/s]
+		}
+		else
+		{
+			m_dot_run_in = m_m_dot_htf_tot / 2.0;	//[kg/s]
+		}
+	
+		double x3 = (double)m_nrunsec - 1.0;		//[-] Number of contraction/expansions
+		double m_dot_temp = m_dot_run_in;			//[kg/s]
+		
+		for(int i = 0; i < m_nrunsec; i++)
+		{
+			dP_to_field += PressureDrop(m_dot_temp,
+								m_T_sys_c_rec_in_t_int_fullts, 1.0,
+								m_D_runner[i], m_HDR_rough, m_L_runner[i],
+								0.0, x3, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);	//[Pa]
+
+			dP_from_field += PressureDrop(m_dot_temp,
+								m_T_sys_h_rec_out_t_int_fullts, 1.0,
+								m_D_runner[i], m_HDR_rough, m_L_runner[i],
+								x3, 0.0, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);	//[Pa]
+
+			if( i > 1 )
+				m_dot_temp = max(m_dot_temp - 2.0*m_m_dot_htf_tot / (double)m_nfsec, 0.0);
+		}
+
+		double m_dot_header_in = m_m_dot_htf_tot / (double)m_nfsec;		//[kg/s]
+		double m_dot_header = m_dot_header_in;		//[kg/s]
+		
+		for(int i = 0; i < m_nhdrsec; i++)
+		{
+			// Determine whether the particular section has an expansion valve
+			double x2 = 0.0;
+			if( i > 0 )
+			{
+				if( m_D_hdr[i] != m_D_hdr[i-1] )
+					x2 = 1.0;
+			}
+
+			// Calculate pressure drop in cold header and hot header sections
+			dP_hdr_cold += PressureDrop(m_dot_header,
+								m_T_sys_c_rec_in_t_int_fullts, 1.0,
+								m_D_hdr[i], m_HDR_rough, (m_Row_Distance + 4.275)*2.0,
+								0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);		//[Pa]
+
+			dP_hdr_hot += PressureDrop(m_dot_header,
+								m_T_sys_h_rec_out_t_int_fullts, 1.0,
+								m_D_hdr[i], m_HDR_rough, (m_Row_Distance + 4.275)*2.0,
+								x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);		//[Pa]
+
+			// 10.13.16 twn: is there really a unique header section for each loop connection?
+			m_dot_header = max(m_dot_header - 2.0*m_m_dot_htf_tot/(double)m_nLoops, 0.0);	//[kg/s]
+		}
+	}
+
+	m_dP_total = dP_loop + dP_hdr_cold + dP_hdr_hot + dP_from_field + dP_to_field + dP_IOCOP;	//[Pa]
+
+	double rho_hdr_cold = m_htfProps.dens(m_T_cold_in_fullts, 1.0);		//[kg/m^3]
+	
+	m_W_dot_pump = m_dP_total*m_m_dot_htf_tot/(rho_hdr_cold*m_eta_pump)/1.E6;	//[MWe]
+	m_dP_total *= 1.E-5;		//[bar], convert from Pa
+
+}
+
 void C_csp_trough_collector_receiver::set_output_value()
 {
 	mc_reported_outputs.value(E_THETA_AVE, m_Theta_ave*m_r2d);		//[deg], convert from rad
@@ -1511,8 +1630,10 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_T_REC_COLD_IN, m_T_sys_c_rec_in_t_int_fullts - 273.15);		//[C]
 	mc_reported_outputs.value(E_T_REC_HOT_OUT, m_T_sys_h_rec_out_t_int_fullts - 273.15);	//[C]
 	mc_reported_outputs.value(E_T_FIELD_HOT_OUT, m_T_sys_h_t_int_fullts - 273.15);			//[C]
+	mc_reported_outputs.value(E_PRESSURE_DROP, m_dP_total);		//[bar]
 
 	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
+	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
 
 	return;
 }
@@ -1633,6 +1754,8 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	//	m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
 	//	m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
+	// Solve for pressure drop and pumping power
+	field_pressure_drop();
 
 	// Are any of these required by the solver for system-level iteration?
 	cr_out_solver.m_q_startup = 0.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
@@ -1643,9 +1766,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
 
-	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;	//[MWe]
-	cr_out_solver.m_W_dot_col_tracking = 0.0;				//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;					//[MWe]
+	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
+	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 
 	m_operating_mode = C_csp_collector_receiver::OFF;
 
@@ -1791,6 +1914,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		m_operating_mode = C_csp_collector_receiver::STARTUP;	//[-]
 	}
 
+	// Solve for pressure drop and pumping power
+	field_pressure_drop();
+
 	// These outputs need some more thought
 		// For now, just set this > 0.0 so that the controller knows that startup was successful
 	cr_out_solver.m_q_startup = 1.0;						//[MWt-hr] Receiver thermal output used to warm up the receiver
@@ -1807,9 +1933,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 		// Is this calculated in the 'optical' method, or a TBD 'metrics' method?
-	cr_out_solver.m_W_dot_col_tracking = 0.0;			//[MWe]
+	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		// Is this calculated in the 'energy balance' method, or a TBD 'metrics' method?
-	cr_out_solver.m_W_dot_htf_pump = 0.0;				//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 
 	set_output_value();
 }
@@ -2059,8 +2185,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
 			m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
-		// Call final metrics method?
-		// (i.e. pressure drops, parasitics...)
+		// Solve for pressure drop and pumping power
+		field_pressure_drop();
 
 		// Set solver outputs & return
 		// Receiver is already on, so the controller is not looking for this value
@@ -2082,8 +2208,8 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
-		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
-		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
+		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 	}
 	else
 	{	// Solution failed, so tell controller/solver
