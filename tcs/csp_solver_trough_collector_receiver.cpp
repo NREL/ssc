@@ -2119,7 +2119,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info;
 			
 			// Apply 1 var solver to find the mass flow rate that achieves the target outlet temperature
-			C_mono_eq_T_htf_loop_out c_T_htf_out_calc(this);
+			C_mono_eq_T_htf_loop_out c_T_htf_out_calc(this, weather, T_cold_in, sim_info);
 			C_monotonic_eq_solver c_htf_m_dot_solver(c_T_htf_out_calc);
 
 			// Set upper and lower bounds
@@ -2269,10 +2269,10 @@ int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/)
 {
 	// Update the mass flow rate in 'ms_loop_energy_balance_inputs'
-	mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_dot_htf_loop;	//[kg/s]
+	//mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_dot_htf_loop;	//[kg/s]
 	
 	// Solve the loop energy balance at the input mass flow rate
-	int exit_code = mpc_trough->loop_energy_balance_T_t_int();
+	int exit_code = mpc_trough->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_dot_htf_loop, ms_sim_info);
 
 	if( exit_code != E_loop_energy_balance_exit::SOLVED )
 	{
