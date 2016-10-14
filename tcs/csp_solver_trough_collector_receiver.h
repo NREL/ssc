@@ -498,11 +498,18 @@ public:
 	{
 	private:
 		C_csp_trough_collector_receiver *mpc_trough;
+		C_csp_weatherreader::S_outputs ms_weather;
+		double m_T_cold_in;				//[K]
+		C_csp_solver_sim_info ms_sim_info;
 
 	public:
-		C_mono_eq_T_htf_loop_out(C_csp_trough_collector_receiver *pc_trough)
+		C_mono_eq_T_htf_loop_out(C_csp_trough_collector_receiver *pc_trough, const C_csp_weatherreader::S_outputs &weather,
+			double T_htf_cold_in /*K*/, const C_csp_solver_sim_info &sim_info)
 		{
 			mpc_trough = pc_trough;
+			ms_weather = weather;
+			m_T_cold_in = T_htf_cold_in;	//[K]
+			ms_sim_info = sim_info;
 		}
 	
 		virtual int operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/);
