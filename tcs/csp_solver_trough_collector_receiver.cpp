@@ -2071,7 +2071,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			// The Monotonic Solver will iterate on defocus that achieves the target outlet temperature
 			//     at the maximum HTF mass flow rate
-			C_mono_eq_defocus c_defocus_function(this);
+			C_mono_eq_defocus c_defocus_function(this, weather, T_cold_in, m_dot_htf_loop, sim_info);
 			C_monotonic_eq_solver c_defocus_solver(c_defocus_function);
 
 			// Set upper and lower bounds
@@ -2252,7 +2252,7 @@ int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 	mpc_trough->apply_component_defocus(defocus);
 
 	// Solve the loop energy balance at the input mass flow rate
-	int exit_code = mpc_trough->loop_energy_balance_T_t_int();
+	int exit_code = mpc_trough->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_m_dot_loop, ms_sim_info);
 
 	if( exit_code != E_loop_energy_balance_exit::SOLVED )
 	{
