@@ -443,25 +443,6 @@ public:
 				NaN
 			};
 	};
-	
-	struct S_loop_energy_balance_inputs
-	{
-		const C_csp_weatherreader::S_outputs *ms_weather;
-		double m_T_htf_cold_in;		//[K]
-		double m_m_dot_htf_loop;		//[kg/s]
-		const C_csp_solver_sim_info *ms_sim_info;
-		
-		S_loop_energy_balance_inputs()
-		{
-			m_T_htf_cold_in = m_m_dot_htf_loop = std::numeric_limits<double>::quiet_NaN();
-			ms_weather = 0;
-			ms_sim_info = 0;
-		}	
-	};
-	
-	void reset_S_loop_energy_balance_inputs();
-
-	S_loop_energy_balance_inputs ms_loop_energy_balance_inputs;
 
 	// Input weather, and inlet HTF conditions
 	// Calculates energy balances for headers (if applicable) and receivers
@@ -475,8 +456,6 @@ public:
 	int loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
 		const C_csp_solver_sim_info &sim_info);
-
-	int loop_energy_balance_T_t_int();
 
 	void loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_sim_info &sim_info);
