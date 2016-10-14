@@ -194,7 +194,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	
 
 		// Annual Outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Field Thermal Energy Production w/ avail derate",     "MWt-hr", "",          "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy_MWt",  "Annual Field Thermal Energy Production w/ avail derate",     "MWt-hr", "",          "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_energy","Annual Field Thermal Energy Production w/ avail derate",     "MWt-hr", "",          "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",     "MWt-hr",  "",  "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate", "kWe-hr", ""   "Post-process",     "*",       "",   "" },
@@ -600,7 +600,7 @@ public:
 
 		ssc_number_t annual_field_energy = as_number("annual_field_energy");	//[MWt-hr]
 		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[MWt-hr]
-		assign("annual_energy", annual_field_energy - annual_thermal_consumption);	//[MWt-hr]
+		assign("annual_energy_MWt", annual_field_energy - annual_thermal_consumption);	//[MWt-hr]
 	}
 
 };
