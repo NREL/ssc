@@ -517,11 +517,20 @@ public:
 		//    and returns T_htf_SCA_out. The solver finds the defocus resulting in the target HTF outlet temp
 	private:
 		C_csp_trough_collector_receiver *mpc_trough;
+		C_csp_weatherreader::S_outputs ms_weather;
+		double m_T_cold_in;				//[K]
+		double m_m_dot_loop;			//[kg/s]
+		C_csp_solver_sim_info ms_sim_info;
 
 	public:
-		C_mono_eq_defocus(C_csp_trough_collector_receiver *pc_trough)
+		C_mono_eq_defocus(C_csp_trough_collector_receiver *pc_trough, const C_csp_weatherreader::S_outputs &weather,
+			double T_htf_cold_in /*K*/, double m_dot_loop /*kg/s*/, const C_csp_solver_sim_info &sim_info)
 		{
 			mpc_trough = pc_trough;
+			ms_weather = weather;
+			m_T_cold_in = T_htf_cold_in;	//[K]
+			m_m_dot_loop = m_dot_loop;		//[kg/s]
+			ms_sim_info = sim_info;
 		}
 	
 		virtual int operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/);
@@ -554,6 +563,10 @@ public:
 	
 		virtual int operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/);
 	};
+
+	//int loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
+	//	double T_htf_cold_in /*K*/, double m_dot_htf_loop /*kg/s*/,
+	//	const C_csp_solver_sim_info &sim_info);
 
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
