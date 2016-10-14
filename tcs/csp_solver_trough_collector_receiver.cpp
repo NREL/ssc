@@ -2063,12 +2063,6 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// then need to defocus
 		if( (m_T_htf_out_t_end[m_nSCA - 1] - m_T_loop_out_des) / m_T_loop_out_des > 0.001 )
 		{
-			// Set up the member structure that contains loop_energy_balance inputs
-			ms_loop_energy_balance_inputs.ms_weather = &weather;
-			ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_cold_in;
-			ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_m_dot_htfmax;
-			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info;
-
 			// The Monotonic Solver will iterate on defocus that achieves the target outlet temperature
 			//     at the maximum HTF mass flow rate
 			C_mono_eq_defocus c_defocus_function(this, weather, T_cold_in, m_dot_htf_loop, sim_info);
@@ -2106,18 +2100,9 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
 				on_success = false;
 			}
-
-			// Reset member structure
-			reset_S_loop_energy_balance_inputs();
 		}
 		else
 		{
-			// Set up the member structure that contains loop_energy_balance inputs
-			ms_loop_energy_balance_inputs.ms_weather = &weather;
-			ms_loop_energy_balance_inputs.m_T_htf_cold_in = T_cold_in;
-				// will set mass flow rate in solver
-			ms_loop_energy_balance_inputs.ms_sim_info = &sim_info;
-			
 			// Apply 1 var solver to find the mass flow rate that achieves the target outlet temperature
 			C_mono_eq_T_htf_loop_out c_T_htf_out_calc(this, weather, T_cold_in, sim_info);
 			C_monotonic_eq_solver c_htf_m_dot_solver(c_T_htf_out_calc);
@@ -2154,9 +2139,6 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
 				on_success = false;
 			}
-
-			// Reset member structure
-			reset_S_loop_energy_balance_inputs();
 		}
 	}
 
@@ -2240,12 +2222,6 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	return;
 }
 
-void C_csp_trough_collector_receiver::reset_S_loop_energy_balance_inputs()
-{
-	S_loop_energy_balance_inputs reset_inputs;
-	ms_loop_energy_balance_inputs = reset_inputs;
-}
-
 int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocus /*-*/, double *T_htf_loop_out /*K*/)
 {
 	// Apply the defocus to calculate a new m_q_SCA
@@ -2268,9 +2244,6 @@ int C_csp_trough_collector_receiver::C_mono_eq_defocus::operator()(double defocu
 
 int C_csp_trough_collector_receiver::C_mono_eq_T_htf_loop_out::operator()(double m_dot_htf_loop /*kg/s*/, double *T_htf_loop_out /*K*/)
 {
-	// Update the mass flow rate in 'ms_loop_energy_balance_inputs'
-	//mpc_trough->ms_loop_energy_balance_inputs.m_m_dot_htf_loop = m_dot_htf_loop;	//[kg/s]
-	
 	// Solve the loop energy balance at the input mass flow rate
 	int exit_code = mpc_trough->loop_energy_balance_T_t_int(ms_weather, m_T_cold_in, m_dot_htf_loop, ms_sim_info);
 
@@ -2347,30 +2320,6 @@ int C_csp_trough_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(dou
 	*E_loss_balance = (m_Q_htf_fp - mpc_trough->m_Q_field_losses_total_subts) / mpc_trough->m_Q_field_losses_total_subts;		//[-]
 
 	return 0;
-}
-
-int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int()
-{
-	// Check that 'ms_loop_energy_balance_inputs' is defined
-	if( ms_loop_energy_balance_inputs.ms_weather == 0 )
-	{
-		throw(C_csp_exception("The pointer to constant weather output structure is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance()'."));
-	}
-	if( ms_loop_energy_balance_inputs.m_T_htf_cold_in != ms_loop_energy_balance_inputs.m_T_htf_cold_in )
-	{
-		throw(C_csp_exception("The cold HTF inlet temperature [K] is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
-	}
-	if( ms_loop_energy_balance_inputs.m_m_dot_htf_loop != ms_loop_energy_balance_inputs.m_m_dot_htf_loop )
-	{
-		throw(C_csp_exception("The HTF mass flow rate [kg/s] is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
-	}
-	if( ms_loop_energy_balance_inputs.ms_sim_info == 0 )
-	{
-		throw(C_csp_exception("The pointer to constant sim info structure is not defined in 'ms_loop_energy_balance_inputs' in call to 'loop_energy_balance().'"));
-	}
-
-	return loop_energy_balance_T_t_int(*ms_loop_energy_balance_inputs.ms_weather, ms_loop_energy_balance_inputs.m_T_htf_cold_in,
-				ms_loop_energy_balance_inputs.m_m_dot_htf_loop, *ms_loop_energy_balance_inputs.ms_sim_info);
 }
 
 void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
