@@ -36,6 +36,7 @@
     <ClCompile Include="..\ssc\cmod_geothermal.cpp" />
     <ClCompile Include="..\ssc\cmod_hcpv.cpp" />
     <ClCompile Include="..\ssc\cmod_iec61853par.cpp" />
+    <ClCompile Include="..\ssc\cmod_iph_to_lcoefcr.cpp" />
     <ClCompile Include="..\ssc\cmod_ippppa.cpp" />
     <ClCompile Include="..\ssc\cmod_irradproc.cpp" />
     <ClCompile Include="..\ssc\cmod_iscc_design_point.cpp" />
