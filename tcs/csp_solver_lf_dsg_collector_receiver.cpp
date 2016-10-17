@@ -146,7 +146,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	// Harcoded Parameter:
 	m_P_max = 190.0;					//[bar]
-	m_T_startup = m_T_field_out_des;	//[K]
+	
 		
 	// Get limits from water properties code
 	water_info wp_info;
@@ -167,6 +167,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	if( !m_is_sh_target )
 	{
+		m_T_field_out_des = T_boil_des;		//[K]
+		m_T_startup = T_startup_max;		//[K]
+
 		if( m_T_startup > T_startup_max )
 		{
 			std::string msg = util::format("The specified configuration returns 2-phase steam"
@@ -176,6 +179,10 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			mc_csp_messages.add_message(C_csp_messages::NOTICE,msg);
 			m_T_startup = T_startup_max;
 		}
+	}
+	else
+	{
+		m_T_startup = m_T_field_out_des;	//[K]
 	}
 
 
