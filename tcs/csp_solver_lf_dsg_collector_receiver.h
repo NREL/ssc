@@ -187,7 +187,6 @@ public:
 	double m_m_dot_max_frac;	//[-]
 	double m_t_sby_des;			//[hr]
 	double m_q_sby_frac;		//[-]
-	double m_PB_pump_coef;		//[kW/kg]
 	double m_PB_fixed_par;		//[-]
 	std::vector<double> m_bop_array;
 	std::vector<double> m_aux_array;
