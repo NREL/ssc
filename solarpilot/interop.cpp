@@ -1246,19 +1246,21 @@ void sim_result::process_flux(SolarField *SF, bool normalize){
 }
 
 //------parametric------------------------
+multivar::multivar(){wf_are_set = false;}
+
 parametric::parametric(){wf_are_set = false;}
 
-int parametric::size(){ return (int)variables.size(); }
+int multivar::size(){ return (int)variables.size(); }
 
-void parametric::clear(){ variables.clear(); current_varpaths.Clear();}
+void multivar::clear(){ variables.clear(); current_varpaths.Clear();}
 
-par_variable &parametric::at(int index){ return variables.at(index); }
+par_variable &multivar::at(int index){ return variables.at(index); }
 
-par_variable &parametric::operator[](int index){ return variables.at(index); }
+par_variable &multivar::operator[](int index){ return variables.at(index); }
 
-par_variable &parametric::back(){ return variables.back(); }
+par_variable &multivar::back(){ return variables.back(); }
 
-void parametric::remove(int index){ 
+void multivar::remove(int index){ 
 	variables.erase(variables.begin()+index); 
 	current_varpaths.erase(current_varpaths.begin()+index); 
 }
@@ -1271,7 +1273,8 @@ void parametric::SetWeatherFileList(ArrayString &list){
 	wf_are_set = true;
 }
 
-void parametric::addVar(spbase *var)
+
+void multivar::addVar(spbase *var)
 {
 	/* 
 	Add a new variable to the parametric analysis. If the variable already exists, overwrite it.
@@ -1361,7 +1364,7 @@ void parametric::addVar(spbase *var)
 	}
 }
 
-int parametric::Index(string pathname){
+int multivar::Index(string pathname){
 	return current_varpaths.Index(pathname);
 }
 

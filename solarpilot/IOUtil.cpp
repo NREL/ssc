@@ -221,7 +221,7 @@ void ioutil::read_file( const string &fname, string &file, string &eol_marker)
 }
 
 
-void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_data){
+void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_data, optimization &opt_data){
 	/*
 	This algorithm takes file fname, reads in the contents and assigns the values to a map
 	structure for later variable assignment. 
@@ -425,7 +425,64 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
 		}
 
 	}
+    //Read in any optimization data
+	opt_data.clear();
+	xml_node<> *opt_node = top_node->first_node("optimization");
+	if(opt_node != 0){
+		xml_node<> *opt = opt_node->first_node("opt_variable");
+		while(opt != 0){
+			//Add the variable by reference to the variable map object, then set relevant fields
+			//par_data.addVar( getVarByString(V, (char*)par->first_node("varname")->value() ) );
+            unordered_map<string, spbase*>::iterator v = V._varptrs.find( (string)opt->first_node("varname")->value() );
+            if( v != V._varptrs.end() )
+                opt_data.addVar( v->second );
+            else
+            {
+			    opt = opt->next_sibling("opt_variable");
+                continue;
+            }
 
+			par_variable *ovar = &opt_data.back();
+			
+			//units
+			ovar->units = (char*)opt->first_node("units")->value();
+			//display text
+			ovar->display_text = (char*)opt->first_node("display_text")->value();
+			//data type
+			ovar->data_type = (char*)opt->first_node("data_type")->value();
+			//linked
+			ovar->linked = lower_case( (string)(char*)opt->first_node("linked")->value() ) == "true";
+			//layout required
+			ovar->layout_required = lower_case( (string)(char*)opt->first_node("layout_required")->value() ) == "true";
+
+			//Selections
+			xml_node<> *sel_node = opt->first_node("selections")->first_node("selection");
+			ovar->selections.Clear();
+			while(sel_node != 0){
+				ovar->selections.push_back( sel_node->value() );
+				sel_node = sel_node->next_sibling();
+			}
+
+			//Choices
+			xml_node<> *choice_node = opt->first_node("choices")->first_node("choice");
+			ovar->choices.Clear();
+			while(choice_node != 0){
+				ovar->choices.push_back( choice_node->value() );
+				choice_node = choice_node->next_sibling();
+			}
+
+			//Sim values
+			xml_node<> *sim_node = opt->first_node("sim_values")->first_node("sim_value");
+			ovar->sim_values.Clear();
+			while(sim_node != 0){
+				ovar->sim_values.push_back( sim_node->value() );
+				sim_node = sim_node->next_sibling();
+			}
+
+			opt = opt->next_sibling("opt_variable");
+		}
+
+	}
 	return;
 }
 
@@ -438,7 +495,7 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
 
 
 
-bool ioutil::saveXMLInputFile(const string &fname, var_map &V, parametric &par_data, const string &version){
+bool ioutil::saveXMLInputFile(const string &fname, var_map &V, parametric &par_data, optimization &opt_data, const string &version){
 
 	ofstream fobj(fname.c_str());
 	if(fobj.is_open())
@@ -529,6 +586,49 @@ bool ioutil::saveXMLInputFile(const string &fname, var_map &V, parametric &par_d
 			}
 			fobj << t1 << "</parametric>\n";
 		}
+        //Write any optimization data
+		if(opt_data.size() > 0){
+			fobj << t1 << "<optimization>\n";
+			for(int i=0; i<opt_data.size(); i++){
+				fobj << t2 << "<opt_variable>\n";
+				par_variable *ov = &opt_data[i];
+
+				//varname
+				fobj << t3 << "<varname>" << ov->varname << "</varname>\n";
+				//display text
+				fobj << t3 << "<display_text>" << ov->display_text << "</display_text>\n";
+				//units
+				fobj << t3 << "<units>" << ov->units << "</units>\n";
+				//data type
+				fobj << t3 << "<data_type>" << ov->data_type << "</data_type>\n";
+				//linked
+				fobj << t3 << "<linked>" << (ov->linked ? "true" : "false") << "</linked>\n";
+				//layout required
+				fobj << t3 << "<layout_required>" << (ov->layout_required ? "true" : "false") << "</layout_required>\n";
+
+				//Selections
+				fobj << t3 << "<selections>\n";
+				for(int j=0; j<(int)ov->selections.size(); j++)
+					fobj << t4 << "<selection>" << ov->selections[j] << "</selection>\n";
+				fobj << t3 << "</selections>\n";
+
+				//choices
+				fobj << t3 << "<choices>\n";
+				for(int j=0; j<(int)ov->choices.size(); j++)
+					fobj << t4 << "<choice>" << ov->choices[j] << "</choice>\n";
+				fobj << t3 << "</choices>\n";
+
+				//sim_values
+				fobj << t3 << "<sim_values>\n";
+				for(int j=0; j<(int)ov->sim_values.size(); j++)
+					fobj << t4 << "<sim_value>" << ov->sim_values[j] << "</sim_value>\n";
+				fobj << t3 << "</sim_values>\n";
+
+				fobj << t2 << "</opt_variable>\n";
+			}
+			fobj << t1 << "</optimization>\n";
+		}
+
 		fobj << "</data>\n";
 
 		fobj.close();
