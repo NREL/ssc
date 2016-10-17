@@ -109,7 +109,6 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_m_dot_max_frac = std::numeric_limits<double>::quiet_NaN();		//[-]
 	m_t_sby_des = std::numeric_limits<double>::quiet_NaN();				//[hr]
 	m_q_sby_frac = std::numeric_limits<double>::quiet_NaN();			//[-]
-	m_PB_pump_coef = std::numeric_limits<double>::quiet_NaN();			//[kW/kg]
 	m_PB_fixed_par = std::numeric_limits<double>::quiet_NaN();			//[-]
 	m_T_startup = std::numeric_limits<double>::quiet_NaN();				//[K]
 
@@ -141,6 +140,10 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs,
 	C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
+	// Save init_inputs to member data
+	m_latitude = init_inputs.m_latitude;	//[deg]
+	m_latitude *= m_d2r;					//[rad] convert from [deg]
+
 	// Harcoded Parameter:
 	m_P_max = 190.0;					//[bar]
 	m_T_startup = m_T_field_out_des;	//[K]

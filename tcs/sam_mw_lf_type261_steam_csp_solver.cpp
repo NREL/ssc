@@ -456,7 +456,6 @@ public:
 		
 		dsg_lf.m_t_sby_des = value(P_T_SBY); // t_sby );
 		dsg_lf.m_q_sby_frac = value(P_Q_SBY_FRAC); // q_sby_frac );
-		dsg_lf.m_PB_pump_coef = value(P_PB_PUMP_COEF); // PB_pump_coef );
 		dsg_lf.m_PB_fixed_par = value(P_PB_FIXED_PAR); // PB_fixed_par );	dsg_lf.q_max_aux = value("T_startup", value("T_hot"));
 		dsg_lf.m_fossil_mode = (int)value(P_FOSSIL_MODE); // fossil_mode );
 		dsg_lf.m_I_bn_des = value(P_I_BN_DES); // I_bn_des );
