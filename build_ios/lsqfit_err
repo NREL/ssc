@@ -1,0 +1,156 @@
+make -f Makefile-shared clean
+rm -rf shared.a lsqfit.o lib_snowmodel.o lib_iec61853.o lib_cec6par.o lib_financial.o lib_geothermal.o lib_irradproc.o lib_physics.o lib_powerblock.o lib_pvinv.o lib_pvmodel.o lib_pvshade.o lib_pvwatts.o lib_sandia.o lib_util.o lib_weatherfile.o lib_windfile.o lib_wind_obos.o lib_windwatts.o lib_battery.o lib_miniz.o lib_pv_shade_loss_mpp.o
+make -f Makefile-nlopt clean
+rm -rf nlopt.a auglag.o bobyqa.o ccsa_quadratic.o cdirect.o cobyla.o crs.o deprecated.o DIRect.o direct_wrap.o DIRserial.o DIRsubrout.o esch.o general.o hybrid.o isres.o mlsl.o mma.o mssubs.o mt19937ar.o newuoa.o nldrmd.o optimize.o options.o plip.o plis.o pnet.o praxis.o pssubs.o qsort_r.o redblack.o rescale.o sbplx.o slsqp.o sobolseq.o stop.o timer.o
+make -f Makefile-lpsolve clean
+rm -rf lpsolve.a colamd.o commonlib.o fortify.o ini.o lp_crash.o lp_Hash.o lp_lib.o lp_LUSOL.o lp_matrix.o lp_MDO.o lp_mipbb.o lp_MPS.o lp_params.o lp_presolve.o lp_price.o lp_pricePSE.o lp_report.o lp_rlp.o lp_scale.o lp_simplex.o lp_solve.o lp_SOS.o lp_utils.o lp_wlp.o lusol.o mmio.o myblas.o yacc_read.o
+make -f Makefile-solarpilot clean
+rm -rf solarpilot.a fluxsim.o API_structures.o Ambient.o AutoPilot_API.o Financial.o Flux.o Heliostat.o IOUtil.o Land.o LayoutSimulateThread.o OpticalMesh.o Plant.o Receiver.o STObject.o STSimulateThread.o SolarField.o Toolbox.o definitions.o heliodata.o interop.o mod_base.o optimize.o solpos.o string_util.o
+make -f Makefile-tcs clean
+rm -rf tcs.a tcskernel.o fmin_callbacks.o fmin.o direct_steam_receivers.o CO2_properties.o co2_compressor_library.o nlopt_callbacks.o numeric_solvers.o heat_exchangers.o sco2_pc_csp_int.o sco2_rec_util.o sco2_power_cycle.o water_properties.o tc_test_type402.o sam_sco2_recomp_type424.o sco2_test_type401.o sco2_pc_core.o cavity_calcs.o atmospheric_aod.o Heliostat_AzElAod.o datatest.o direct_steam_receivers.o tou_translator.o htf_props.o interpolation_routines.o powerblock.o pump.o sam_csp_util.o thermocline_tes.o ngcc_powerblock.o sam_dsg_controller_type265.o sam_lf_st_pt_type232.o sam_mw_csp_SumCalcs.o sam_mw_pt_heliostatfield_csp_solver.o sam_mw_gen_Type260_csp_solver.o sam_mw_lf_type261_steam.o sam_mw_lf_type261_Wnet.o sam_mw_lf_type262_salt.o sam_mw_pt_type221.o sam_mw_pt_type222.o sam_mw_pt_type224.o sam_mw_pt_type228.o sam_mw_trough_type250.o sam_type250_input_generator.o sam_mw_trough_type251.o sam_mw_type234.o sam_iscc_powerblock.o sam_iscc_parasitics.o sam_pf_dish_collector_type295.o sam_pf_dish_engine_type297.o sam_pf_dish_parasitic_type298.o sam_pf_dish_receiver_type296.o sam_trough_model_type805.o sam_trough_plant_type807.o sam_trough_storage_type806.o solarcollector.o storage_hx.o sumprod.o trnsys_weatherreader.o typelib.o waterprop.o weatherreader.o csp_solver_weatherreader.o csp_solver_util.o csp_solver_two_tank_tes.o csp_solver_tou_block_schedules.o csp_solver_pt_heliostatfield.o csp_solver_pc_Rankine_indirect_224.o csp_solver_pc_gen.o csp_solver_mspt_receiver_222.o csp_solver_mspt_collector_receiver.o csp_solver_trough_collector_receiver.o csp_solver_gen_collector_receiver.o csp_solver_core.o csp_system_costs.o ud_power_cycle.o csp_dispatch.o
+make -f Makefile-ssc clean
+rm -rf cmod_ui_tes_calcs.o csp_common.o cmod_lcoefcr.o cmod_thirdpartyownership.o cmod_snowmodel.o cmod_iec61853par.o cmod_layoutarea.o cmod_solarpilot.o cmod_dsg_flux_preprocess.o cmod_iscc_design_point.o cmod_sco2_design_point.o cmod_belpe.o cmod_biomass.o cmod_annualoutput.o cmod_generic_system.o cmod_wfcheck.o cmod_pvwattsv5.o cmod_windfile.o cmod_pvwattsv1_1ts.o cmod_pvwattsv1_poa.o cmod_wfcsv.o cmod_6parsolve.o cmod_windpower.o cmod_windbos.o cmod_wind_obos.o cmod_pv6parmod.o cmod_pvsandiainv.o cmod_pvsamv1.o cmod_wfreader.o cmod_irradproc.o cmod_fossilgen.o cmod_cashloan.o cmod_pvwattsv1.o cmod_pvwattsv0.o cmod_equpartflip.o cmod_levpartflip.o cmod_saleleaseback.o cmod_singleowner.o cmod_timeseq.o cmod_utilityrate.o cmod_utilityrate2.o cmod_utilityrate3.o cmod_utilityrate4.o cmod_ippppa.o cmod_swh.o cmod_geothermal.o cmod_poacalib.o core.o vartab.o sscapi.o common.o common_financial.o cmod_tcsdirect_steam.o cmod_tcsgeneric_solar.o cmod_tcslinear_fresnel.o cmod_tcsmolten_salt.o cmod_tcstrough_empirical.o cmod_tcstrough_physical.o cmod_tcsdish.o cmod_tcsiscc.o cmod_hcpv.o cmod_tcsmslf.o cmod_battery.o cmod_user_htf_comparison.o cmod_cb_mspt_system_costs.o cmod_cb_construction_financing.o cmod_sco2_design_point.o cmod_sco2_design_cycle.o cmod_sco2_csp_system.o cmod_sco2_csp_ud_pc_tables.o tckernel.o   ./dltest
+make -f Makefile-shared -j4
+c++  -arch armv7  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lsqfit.o ../shared/lsqfit.cpp
+c++  -arch armv7  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_snowmodel.o ../shared/lib_snowmodel.cpp
+c++  -arch armv7  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_iec61853.o ../shared/lib_iec61853.cpp
+c++  -arch armv7  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_cec6par.o ../shared/lib_cec6par.cpp
+../shared/lsqfit.cpp:589:6: error: call to unavailable function 'finite': not available on iOS
+        if (mpfinite(fjac[off+i]) == 0) nonfinite = 1;
+            ^~~~~~~~~~~~~~~~~~~~~
+../shared/lsqfit.h:238:21: note: expanded from macro 'mpfinite'
+#define mpfinite(x) finite(x)
+                    ^~~~~~
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/include/math.h:757:12: note: candidate function has been explicitly made unavailable
+extern int finite(double) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_0, __MAC_10_9, __IPHONE_NA, __IPHONE_NA);
+           ^
+1 error generated.
+make[1]: *** [lsqfit.o] Error 1
+make[1]: *** Waiting for unfinished jobs....
+make: *** [all] Error 2
+make: *** No rule to make target `install'.  Stop.
+make -f Makefile-shared clean
+rm -rf shared.a lsqfit.o lib_snowmodel.o lib_iec61853.o lib_cec6par.o lib_financial.o lib_geothermal.o lib_irradproc.o lib_physics.o lib_powerblock.o lib_pvinv.o lib_pvmodel.o lib_pvshade.o lib_pvwatts.o lib_sandia.o lib_util.o lib_weatherfile.o lib_windfile.o lib_wind_obos.o lib_windwatts.o lib_battery.o lib_miniz.o lib_pv_shade_loss_mpp.o
+make -f Makefile-nlopt clean
+rm -rf nlopt.a auglag.o bobyqa.o ccsa_quadratic.o cdirect.o cobyla.o crs.o deprecated.o DIRect.o direct_wrap.o DIRserial.o DIRsubrout.o esch.o general.o hybrid.o isres.o mlsl.o mma.o mssubs.o mt19937ar.o newuoa.o nldrmd.o optimize.o options.o plip.o plis.o pnet.o praxis.o pssubs.o qsort_r.o redblack.o rescale.o sbplx.o slsqp.o sobolseq.o stop.o timer.o
+make -f Makefile-lpsolve clean
+rm -rf lpsolve.a colamd.o commonlib.o fortify.o ini.o lp_crash.o lp_Hash.o lp_lib.o lp_LUSOL.o lp_matrix.o lp_MDO.o lp_mipbb.o lp_MPS.o lp_params.o lp_presolve.o lp_price.o lp_pricePSE.o lp_report.o lp_rlp.o lp_scale.o lp_simplex.o lp_solve.o lp_SOS.o lp_utils.o lp_wlp.o lusol.o mmio.o myblas.o yacc_read.o
+make -f Makefile-solarpilot clean
+rm -rf solarpilot.a fluxsim.o API_structures.o Ambient.o AutoPilot_API.o Financial.o Flux.o Heliostat.o IOUtil.o Land.o LayoutSimulateThread.o OpticalMesh.o Plant.o Receiver.o STObject.o STSimulateThread.o SolarField.o Toolbox.o definitions.o heliodata.o interop.o mod_base.o optimize.o solpos.o string_util.o
+make -f Makefile-tcs clean
+rm -rf tcs.a tcskernel.o fmin_callbacks.o fmin.o direct_steam_receivers.o CO2_properties.o co2_compressor_library.o nlopt_callbacks.o numeric_solvers.o heat_exchangers.o sco2_pc_csp_int.o sco2_rec_util.o sco2_power_cycle.o water_properties.o tc_test_type402.o sam_sco2_recomp_type424.o sco2_test_type401.o sco2_pc_core.o cavity_calcs.o atmospheric_aod.o Heliostat_AzElAod.o datatest.o direct_steam_receivers.o tou_translator.o htf_props.o interpolation_routines.o powerblock.o pump.o sam_csp_util.o thermocline_tes.o ngcc_powerblock.o sam_dsg_controller_type265.o sam_lf_st_pt_type232.o sam_mw_csp_SumCalcs.o sam_mw_pt_heliostatfield_csp_solver.o sam_mw_gen_Type260_csp_solver.o sam_mw_lf_type261_steam.o sam_mw_lf_type261_Wnet.o sam_mw_lf_type262_salt.o sam_mw_pt_type221.o sam_mw_pt_type222.o sam_mw_pt_type224.o sam_mw_pt_type228.o sam_mw_trough_type250.o sam_type250_input_generator.o sam_mw_trough_type251.o sam_mw_type234.o sam_iscc_powerblock.o sam_iscc_parasitics.o sam_pf_dish_collector_type295.o sam_pf_dish_engine_type297.o sam_pf_dish_parasitic_type298.o sam_pf_dish_receiver_type296.o sam_trough_model_type805.o sam_trough_plant_type807.o sam_trough_storage_type806.o solarcollector.o storage_hx.o sumprod.o trnsys_weatherreader.o typelib.o waterprop.o weatherreader.o csp_solver_weatherreader.o csp_solver_util.o csp_solver_two_tank_tes.o csp_solver_tou_block_schedules.o csp_solver_pt_heliostatfield.o csp_solver_pc_Rankine_indirect_224.o csp_solver_pc_gen.o csp_solver_mspt_receiver_222.o csp_solver_mspt_collector_receiver.o csp_solver_trough_collector_receiver.o csp_solver_gen_collector_receiver.o csp_solver_core.o csp_system_costs.o ud_power_cycle.o csp_dispatch.o
+make -f Makefile-ssc clean
+rm -rf cmod_ui_tes_calcs.o csp_common.o cmod_lcoefcr.o cmod_thirdpartyownership.o cmod_snowmodel.o cmod_iec61853par.o cmod_layoutarea.o cmod_solarpilot.o cmod_dsg_flux_preprocess.o cmod_iscc_design_point.o cmod_sco2_design_point.o cmod_belpe.o cmod_biomass.o cmod_annualoutput.o cmod_generic_system.o cmod_wfcheck.o cmod_pvwattsv5.o cmod_windfile.o cmod_pvwattsv1_1ts.o cmod_pvwattsv1_poa.o cmod_wfcsv.o cmod_6parsolve.o cmod_windpower.o cmod_windbos.o cmod_wind_obos.o cmod_pv6parmod.o cmod_pvsandiainv.o cmod_pvsamv1.o cmod_wfreader.o cmod_irradproc.o cmod_fossilgen.o cmod_cashloan.o cmod_pvwattsv1.o cmod_pvwattsv0.o cmod_equpartflip.o cmod_levpartflip.o cmod_saleleaseback.o cmod_singleowner.o cmod_timeseq.o cmod_utilityrate.o cmod_utilityrate2.o cmod_utilityrate3.o cmod_utilityrate4.o cmod_ippppa.o cmod_swh.o cmod_geothermal.o cmod_poacalib.o core.o vartab.o sscapi.o common.o common_financial.o cmod_tcsdirect_steam.o cmod_tcsgeneric_solar.o cmod_tcslinear_fresnel.o cmod_tcsmolten_salt.o cmod_tcstrough_empirical.o cmod_tcstrough_physical.o cmod_tcsdish.o cmod_tcsiscc.o cmod_hcpv.o cmod_tcsmslf.o cmod_battery.o cmod_user_htf_comparison.o cmod_cb_mspt_system_costs.o cmod_cb_construction_financing.o cmod_sco2_design_point.o cmod_sco2_design_cycle.o cmod_sco2_csp_system.o cmod_sco2_csp_ud_pc_tables.o tckernel.o   ./dltest
+make -f Makefile-shared -j4
+c++  -arch armv7s  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lsqfit.o ../shared/lsqfit.cpp
+c++  -arch armv7s  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_snowmodel.o ../shared/lib_snowmodel.cpp
+c++  -arch armv7s  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_iec61853.o ../shared/lib_iec61853.cpp
+c++  -arch armv7s  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_cec6par.o ../shared/lib_cec6par.cpp
+../shared/lsqfit.cpp:589:6: error: call to unavailable function 'finite': not available on iOS
+        if (mpfinite(fjac[off+i]) == 0) nonfinite = 1;
+            ^~~~~~~~~~~~~~~~~~~~~
+../shared/lsqfit.h:238:21: note: expanded from macro 'mpfinite'
+#define mpfinite(x) finite(x)
+                    ^~~~~~
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/include/math.h:757:12: note: candidate function has been explicitly made unavailable
+extern int finite(double) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_0, __MAC_10_9, __IPHONE_NA, __IPHONE_NA);
+           ^
+1 error generated.
+make[1]: *** [lsqfit.o] Error 1
+make[1]: *** Waiting for unfinished jobs....
+make: *** [all] Error 2
+make: *** No rule to make target `install'.  Stop.
+make -f Makefile-shared clean
+rm -rf shared.a lsqfit.o lib_snowmodel.o lib_iec61853.o lib_cec6par.o lib_financial.o lib_geothermal.o lib_irradproc.o lib_physics.o lib_powerblock.o lib_pvinv.o lib_pvmodel.o lib_pvshade.o lib_pvwatts.o lib_sandia.o lib_util.o lib_weatherfile.o lib_windfile.o lib_wind_obos.o lib_windwatts.o lib_battery.o lib_miniz.o lib_pv_shade_loss_mpp.o
+make -f Makefile-nlopt clean
+rm -rf nlopt.a auglag.o bobyqa.o ccsa_quadratic.o cdirect.o cobyla.o crs.o deprecated.o DIRect.o direct_wrap.o DIRserial.o DIRsubrout.o esch.o general.o hybrid.o isres.o mlsl.o mma.o mssubs.o mt19937ar.o newuoa.o nldrmd.o optimize.o options.o plip.o plis.o pnet.o praxis.o pssubs.o qsort_r.o redblack.o rescale.o sbplx.o slsqp.o sobolseq.o stop.o timer.o
+make -f Makefile-lpsolve clean
+rm -rf lpsolve.a colamd.o commonlib.o fortify.o ini.o lp_crash.o lp_Hash.o lp_lib.o lp_LUSOL.o lp_matrix.o lp_MDO.o lp_mipbb.o lp_MPS.o lp_params.o lp_presolve.o lp_price.o lp_pricePSE.o lp_report.o lp_rlp.o lp_scale.o lp_simplex.o lp_solve.o lp_SOS.o lp_utils.o lp_wlp.o lusol.o mmio.o myblas.o yacc_read.o
+make -f Makefile-solarpilot clean
+rm -rf solarpilot.a fluxsim.o API_structures.o Ambient.o AutoPilot_API.o Financial.o Flux.o Heliostat.o IOUtil.o Land.o LayoutSimulateThread.o OpticalMesh.o Plant.o Receiver.o STObject.o STSimulateThread.o SolarField.o Toolbox.o definitions.o heliodata.o interop.o mod_base.o optimize.o solpos.o string_util.o
+make -f Makefile-tcs clean
+rm -rf tcs.a tcskernel.o fmin_callbacks.o fmin.o direct_steam_receivers.o CO2_properties.o co2_compressor_library.o nlopt_callbacks.o numeric_solvers.o heat_exchangers.o sco2_pc_csp_int.o sco2_rec_util.o sco2_power_cycle.o water_properties.o tc_test_type402.o sam_sco2_recomp_type424.o sco2_test_type401.o sco2_pc_core.o cavity_calcs.o atmospheric_aod.o Heliostat_AzElAod.o datatest.o direct_steam_receivers.o tou_translator.o htf_props.o interpolation_routines.o powerblock.o pump.o sam_csp_util.o thermocline_tes.o ngcc_powerblock.o sam_dsg_controller_type265.o sam_lf_st_pt_type232.o sam_mw_csp_SumCalcs.o sam_mw_pt_heliostatfield_csp_solver.o sam_mw_gen_Type260_csp_solver.o sam_mw_lf_type261_steam.o sam_mw_lf_type261_Wnet.o sam_mw_lf_type262_salt.o sam_mw_pt_type221.o sam_mw_pt_type222.o sam_mw_pt_type224.o sam_mw_pt_type228.o sam_mw_trough_type250.o sam_type250_input_generator.o sam_mw_trough_type251.o sam_mw_type234.o sam_iscc_powerblock.o sam_iscc_parasitics.o sam_pf_dish_collector_type295.o sam_pf_dish_engine_type297.o sam_pf_dish_parasitic_type298.o sam_pf_dish_receiver_type296.o sam_trough_model_type805.o sam_trough_plant_type807.o sam_trough_storage_type806.o solarcollector.o storage_hx.o sumprod.o trnsys_weatherreader.o typelib.o waterprop.o weatherreader.o csp_solver_weatherreader.o csp_solver_util.o csp_solver_two_tank_tes.o csp_solver_tou_block_schedules.o csp_solver_pt_heliostatfield.o csp_solver_pc_Rankine_indirect_224.o csp_solver_pc_gen.o csp_solver_mspt_receiver_222.o csp_solver_mspt_collector_receiver.o csp_solver_trough_collector_receiver.o csp_solver_gen_collector_receiver.o csp_solver_core.o csp_system_costs.o ud_power_cycle.o csp_dispatch.o
+make -f Makefile-ssc clean
+rm -rf cmod_ui_tes_calcs.o csp_common.o cmod_lcoefcr.o cmod_thirdpartyownership.o cmod_snowmodel.o cmod_iec61853par.o cmod_layoutarea.o cmod_solarpilot.o cmod_dsg_flux_preprocess.o cmod_iscc_design_point.o cmod_sco2_design_point.o cmod_belpe.o cmod_biomass.o cmod_annualoutput.o cmod_generic_system.o cmod_wfcheck.o cmod_pvwattsv5.o cmod_windfile.o cmod_pvwattsv1_1ts.o cmod_pvwattsv1_poa.o cmod_wfcsv.o cmod_6parsolve.o cmod_windpower.o cmod_windbos.o cmod_wind_obos.o cmod_pv6parmod.o cmod_pvsandiainv.o cmod_pvsamv1.o cmod_wfreader.o cmod_irradproc.o cmod_fossilgen.o cmod_cashloan.o cmod_pvwattsv1.o cmod_pvwattsv0.o cmod_equpartflip.o cmod_levpartflip.o cmod_saleleaseback.o cmod_singleowner.o cmod_timeseq.o cmod_utilityrate.o cmod_utilityrate2.o cmod_utilityrate3.o cmod_utilityrate4.o cmod_ippppa.o cmod_swh.o cmod_geothermal.o cmod_poacalib.o core.o vartab.o sscapi.o common.o common_financial.o cmod_tcsdirect_steam.o cmod_tcsgeneric_solar.o cmod_tcslinear_fresnel.o cmod_tcsmolten_salt.o cmod_tcstrough_empirical.o cmod_tcstrough_physical.o cmod_tcsdish.o cmod_tcsiscc.o cmod_hcpv.o cmod_tcsmslf.o cmod_battery.o cmod_user_htf_comparison.o cmod_cb_mspt_system_costs.o cmod_cb_construction_financing.o cmod_sco2_design_point.o cmod_sco2_design_cycle.o cmod_sco2_csp_system.o cmod_sco2_csp_ud_pc_tables.o tckernel.o   ./dltest
+make -f Makefile-shared -j4
+c++  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lsqfit.o ../shared/lsqfit.cpp
+c++  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_snowmodel.o ../shared/lib_snowmodel.cpp
+c++  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_iec61853.o ../shared/lib_iec61853.cpp
+c++  -arch arm64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk -miphoneos-version-min=9.3  -c -o lib_cec6par.o ../shared/lib_cec6par.cpp
+../shared/lsqfit.cpp:589:6: error: call to unavailable function 'finite': not available on iOS
+        if (mpfinite(fjac[off+i]) == 0) nonfinite = 1;
+            ^~~~~~~~~~~~~~~~~~~~~
+../shared/lsqfit.h:238:21: note: expanded from macro 'mpfinite'
+#define mpfinite(x) finite(x)
+                    ^~~~~~
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/include/math.h:757:12: note: candidate function has been explicitly made unavailable
+extern int finite(double) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_0, __MAC_10_9, __IPHONE_NA, __IPHONE_NA);
+           ^
+1 error generated.
+make[1]: *** [lsqfit.o] Error 1
+make[1]: *** Waiting for unfinished jobs....
+make: *** [all] Error 2
+make: *** No rule to make target `install'.  Stop.
+make -f Makefile-shared clean
+rm -rf shared.a lsqfit.o lib_snowmodel.o lib_iec61853.o lib_cec6par.o lib_financial.o lib_geothermal.o lib_irradproc.o lib_physics.o lib_powerblock.o lib_pvinv.o lib_pvmodel.o lib_pvshade.o lib_pvwatts.o lib_sandia.o lib_util.o lib_weatherfile.o lib_windfile.o lib_wind_obos.o lib_windwatts.o lib_battery.o lib_miniz.o lib_pv_shade_loss_mpp.o
+make -f Makefile-nlopt clean
+rm -rf nlopt.a auglag.o bobyqa.o ccsa_quadratic.o cdirect.o cobyla.o crs.o deprecated.o DIRect.o direct_wrap.o DIRserial.o DIRsubrout.o esch.o general.o hybrid.o isres.o mlsl.o mma.o mssubs.o mt19937ar.o newuoa.o nldrmd.o optimize.o options.o plip.o plis.o pnet.o praxis.o pssubs.o qsort_r.o redblack.o rescale.o sbplx.o slsqp.o sobolseq.o stop.o timer.o
+make -f Makefile-lpsolve clean
+rm -rf lpsolve.a colamd.o commonlib.o fortify.o ini.o lp_crash.o lp_Hash.o lp_lib.o lp_LUSOL.o lp_matrix.o lp_MDO.o lp_mipbb.o lp_MPS.o lp_params.o lp_presolve.o lp_price.o lp_pricePSE.o lp_report.o lp_rlp.o lp_scale.o lp_simplex.o lp_solve.o lp_SOS.o lp_utils.o lp_wlp.o lusol.o mmio.o myblas.o yacc_read.o
+make -f Makefile-solarpilot clean
+rm -rf solarpilot.a fluxsim.o API_structures.o Ambient.o AutoPilot_API.o Financial.o Flux.o Heliostat.o IOUtil.o Land.o LayoutSimulateThread.o OpticalMesh.o Plant.o Receiver.o STObject.o STSimulateThread.o SolarField.o Toolbox.o definitions.o heliodata.o interop.o mod_base.o optimize.o solpos.o string_util.o
+make -f Makefile-tcs clean
+rm -rf tcs.a tcskernel.o fmin_callbacks.o fmin.o direct_steam_receivers.o CO2_properties.o co2_compressor_library.o nlopt_callbacks.o numeric_solvers.o heat_exchangers.o sco2_pc_csp_int.o sco2_rec_util.o sco2_power_cycle.o water_properties.o tc_test_type402.o sam_sco2_recomp_type424.o sco2_test_type401.o sco2_pc_core.o cavity_calcs.o atmospheric_aod.o Heliostat_AzElAod.o datatest.o direct_steam_receivers.o tou_translator.o htf_props.o interpolation_routines.o powerblock.o pump.o sam_csp_util.o thermocline_tes.o ngcc_powerblock.o sam_dsg_controller_type265.o sam_lf_st_pt_type232.o sam_mw_csp_SumCalcs.o sam_mw_pt_heliostatfield_csp_solver.o sam_mw_gen_Type260_csp_solver.o sam_mw_lf_type261_steam.o sam_mw_lf_type261_Wnet.o sam_mw_lf_type262_salt.o sam_mw_pt_type221.o sam_mw_pt_type222.o sam_mw_pt_type224.o sam_mw_pt_type228.o sam_mw_trough_type250.o sam_type250_input_generator.o sam_mw_trough_type251.o sam_mw_type234.o sam_iscc_powerblock.o sam_iscc_parasitics.o sam_pf_dish_collector_type295.o sam_pf_dish_engine_type297.o sam_pf_dish_parasitic_type298.o sam_pf_dish_receiver_type296.o sam_trough_model_type805.o sam_trough_plant_type807.o sam_trough_storage_type806.o solarcollector.o storage_hx.o sumprod.o trnsys_weatherreader.o typelib.o waterprop.o weatherreader.o csp_solver_weatherreader.o csp_solver_util.o csp_solver_two_tank_tes.o csp_solver_tou_block_schedules.o csp_solver_pt_heliostatfield.o csp_solver_pc_Rankine_indirect_224.o csp_solver_pc_gen.o csp_solver_mspt_receiver_222.o csp_solver_mspt_collector_receiver.o csp_solver_trough_collector_receiver.o csp_solver_gen_collector_receiver.o csp_solver_core.o csp_system_costs.o ud_power_cycle.o csp_dispatch.o
+make -f Makefile-ssc clean
+rm -rf cmod_ui_tes_calcs.o csp_common.o cmod_lcoefcr.o cmod_thirdpartyownership.o cmod_snowmodel.o cmod_iec61853par.o cmod_layoutarea.o cmod_solarpilot.o cmod_dsg_flux_preprocess.o cmod_iscc_design_point.o cmod_sco2_design_point.o cmod_belpe.o cmod_biomass.o cmod_annualoutput.o cmod_generic_system.o cmod_wfcheck.o cmod_pvwattsv5.o cmod_windfile.o cmod_pvwattsv1_1ts.o cmod_pvwattsv1_poa.o cmod_wfcsv.o cmod_6parsolve.o cmod_windpower.o cmod_windbos.o cmod_wind_obos.o cmod_pv6parmod.o cmod_pvsandiainv.o cmod_pvsamv1.o cmod_wfreader.o cmod_irradproc.o cmod_fossilgen.o cmod_cashloan.o cmod_pvwattsv1.o cmod_pvwattsv0.o cmod_equpartflip.o cmod_levpartflip.o cmod_saleleaseback.o cmod_singleowner.o cmod_timeseq.o cmod_utilityrate.o cmod_utilityrate2.o cmod_utilityrate3.o cmod_utilityrate4.o cmod_ippppa.o cmod_swh.o cmod_geothermal.o cmod_poacalib.o core.o vartab.o sscapi.o common.o common_financial.o cmod_tcsdirect_steam.o cmod_tcsgeneric_solar.o cmod_tcslinear_fresnel.o cmod_tcsmolten_salt.o cmod_tcstrough_empirical.o cmod_tcstrough_physical.o cmod_tcsdish.o cmod_tcsiscc.o cmod_hcpv.o cmod_tcsmslf.o cmod_battery.o cmod_user_htf_comparison.o cmod_cb_mspt_system_costs.o cmod_cb_construction_financing.o cmod_sco2_design_point.o cmod_sco2_design_cycle.o cmod_sco2_csp_system.o cmod_sco2_csp_ud_pc_tables.o tckernel.o   ./dltest
+make -f Makefile-shared -j4
+c++  -arch i386  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lsqfit.o ../shared/lsqfit.cpp
+c++  -arch i386  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lib_snowmodel.o ../shared/lib_snowmodel.cpp
+c++  -arch i386  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lib_iec61853.o ../shared/lib_iec61853.cpp
+c++  -arch i386  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lib_cec6par.o ../shared/lib_cec6par.cpp
+../shared/lsqfit.cpp:589:6: error: call to unavailable function 'finite': not available on iOS
+        if (mpfinite(fjac[off+i]) == 0) nonfinite = 1;
+            ^~~~~~~~~~~~~~~~~~~~~
+../shared/lsqfit.h:238:21: note: expanded from macro 'mpfinite'
+#define mpfinite(x) finite(x)
+                    ^~~~~~
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk/usr/include/math.h:757:12: note: candidate function has been explicitly made unavailable
+extern int finite(double) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_0, __MAC_10_9, __IPHONE_NA, __IPHONE_NA);
+           ^
+1 error generated.
+make[1]: *** [lsqfit.o] Error 1
+make[1]: *** Waiting for unfinished jobs....
+make: *** [all] Error 2
+make: *** No rule to make target `install'.  Stop.
+make -f Makefile-shared clean
+rm -rf shared.a lsqfit.o lib_snowmodel.o lib_iec61853.o lib_cec6par.o lib_financial.o lib_geothermal.o lib_irradproc.o lib_physics.o lib_powerblock.o lib_pvinv.o lib_pvmodel.o lib_pvshade.o lib_pvwatts.o lib_sandia.o lib_util.o lib_weatherfile.o lib_windfile.o lib_wind_obos.o lib_windwatts.o lib_battery.o lib_miniz.o lib_pv_shade_loss_mpp.o
+make -f Makefile-nlopt clean
+rm -rf nlopt.a auglag.o bobyqa.o ccsa_quadratic.o cdirect.o cobyla.o crs.o deprecated.o DIRect.o direct_wrap.o DIRserial.o DIRsubrout.o esch.o general.o hybrid.o isres.o mlsl.o mma.o mssubs.o mt19937ar.o newuoa.o nldrmd.o optimize.o options.o plip.o plis.o pnet.o praxis.o pssubs.o qsort_r.o redblack.o rescale.o sbplx.o slsqp.o sobolseq.o stop.o timer.o
+make -f Makefile-lpsolve clean
+rm -rf lpsolve.a colamd.o commonlib.o fortify.o ini.o lp_crash.o lp_Hash.o lp_lib.o lp_LUSOL.o lp_matrix.o lp_MDO.o lp_mipbb.o lp_MPS.o lp_params.o lp_presolve.o lp_price.o lp_pricePSE.o lp_report.o lp_rlp.o lp_scale.o lp_simplex.o lp_solve.o lp_SOS.o lp_utils.o lp_wlp.o lusol.o mmio.o myblas.o yacc_read.o
+make -f Makefile-solarpilot clean
+rm -rf solarpilot.a fluxsim.o API_structures.o Ambient.o AutoPilot_API.o Financial.o Flux.o Heliostat.o IOUtil.o Land.o LayoutSimulateThread.o OpticalMesh.o Plant.o Receiver.o STObject.o STSimulateThread.o SolarField.o Toolbox.o definitions.o heliodata.o interop.o mod_base.o optimize.o solpos.o string_util.o
+make -f Makefile-tcs clean
+rm -rf tcs.a tcskernel.o fmin_callbacks.o fmin.o direct_steam_receivers.o CO2_properties.o co2_compressor_library.o nlopt_callbacks.o numeric_solvers.o heat_exchangers.o sco2_pc_csp_int.o sco2_rec_util.o sco2_power_cycle.o water_properties.o tc_test_type402.o sam_sco2_recomp_type424.o sco2_test_type401.o sco2_pc_core.o cavity_calcs.o atmospheric_aod.o Heliostat_AzElAod.o datatest.o direct_steam_receivers.o tou_translator.o htf_props.o interpolation_routines.o powerblock.o pump.o sam_csp_util.o thermocline_tes.o ngcc_powerblock.o sam_dsg_controller_type265.o sam_lf_st_pt_type232.o sam_mw_csp_SumCalcs.o sam_mw_pt_heliostatfield_csp_solver.o sam_mw_gen_Type260_csp_solver.o sam_mw_lf_type261_steam.o sam_mw_lf_type261_Wnet.o sam_mw_lf_type262_salt.o sam_mw_pt_type221.o sam_mw_pt_type222.o sam_mw_pt_type224.o sam_mw_pt_type228.o sam_mw_trough_type250.o sam_type250_input_generator.o sam_mw_trough_type251.o sam_mw_type234.o sam_iscc_powerblock.o sam_iscc_parasitics.o sam_pf_dish_collector_type295.o sam_pf_dish_engine_type297.o sam_pf_dish_parasitic_type298.o sam_pf_dish_receiver_type296.o sam_trough_model_type805.o sam_trough_plant_type807.o sam_trough_storage_type806.o solarcollector.o storage_hx.o sumprod.o trnsys_weatherreader.o typelib.o waterprop.o weatherreader.o csp_solver_weatherreader.o csp_solver_util.o csp_solver_two_tank_tes.o csp_solver_tou_block_schedules.o csp_solver_pt_heliostatfield.o csp_solver_pc_Rankine_indirect_224.o csp_solver_pc_gen.o csp_solver_mspt_receiver_222.o csp_solver_mspt_collector_receiver.o csp_solver_trough_collector_receiver.o csp_solver_gen_collector_receiver.o csp_solver_core.o csp_system_costs.o ud_power_cycle.o csp_dispatch.o
+make -f Makefile-ssc clean
+rm -rf cmod_ui_tes_calcs.o csp_common.o cmod_lcoefcr.o cmod_thirdpartyownership.o cmod_snowmodel.o cmod_iec61853par.o cmod_layoutarea.o cmod_solarpilot.o cmod_dsg_flux_preprocess.o cmod_iscc_design_point.o cmod_sco2_design_point.o cmod_belpe.o cmod_biomass.o cmod_annualoutput.o cmod_generic_system.o cmod_wfcheck.o cmod_pvwattsv5.o cmod_windfile.o cmod_pvwattsv1_1ts.o cmod_pvwattsv1_poa.o cmod_wfcsv.o cmod_6parsolve.o cmod_windpower.o cmod_windbos.o cmod_wind_obos.o cmod_pv6parmod.o cmod_pvsandiainv.o cmod_pvsamv1.o cmod_wfreader.o cmod_irradproc.o cmod_fossilgen.o cmod_cashloan.o cmod_pvwattsv1.o cmod_pvwattsv0.o cmod_equpartflip.o cmod_levpartflip.o cmod_saleleaseback.o cmod_singleowner.o cmod_timeseq.o cmod_utilityrate.o cmod_utilityrate2.o cmod_utilityrate3.o cmod_utilityrate4.o cmod_ippppa.o cmod_swh.o cmod_geothermal.o cmod_poacalib.o core.o vartab.o sscapi.o common.o common_financial.o cmod_tcsdirect_steam.o cmod_tcsgeneric_solar.o cmod_tcslinear_fresnel.o cmod_tcsmolten_salt.o cmod_tcstrough_empirical.o cmod_tcstrough_physical.o cmod_tcsdish.o cmod_tcsiscc.o cmod_hcpv.o cmod_tcsmslf.o cmod_battery.o cmod_user_htf_comparison.o cmod_cb_mspt_system_costs.o cmod_cb_construction_financing.o cmod_sco2_design_point.o cmod_sco2_design_cycle.o cmod_sco2_csp_system.o cmod_sco2_csp_ud_pc_tables.o tckernel.o   ./dltest
+make -f Makefile-shared -j4
+c++  -arch x86_64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lsqfit.o ../shared/lsqfit.cpp
+c++  -arch x86_64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lib_snowmodel.o ../shared/lib_snowmodel.cpp
+c++  -arch x86_64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lib_iec61853.o ../shared/lib_iec61853.cpp
+c++  -arch x86_64  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk -miphoneos-version-min=9.3  -c -o lib_cec6par.o ../shared/lib_cec6par.cpp
+../shared/lsqfit.cpp:589:6: error: call to unavailable function 'finite': not available on iOS
+        if (mpfinite(fjac[off+i]) == 0) nonfinite = 1;
+            ^~~~~~~~~~~~~~~~~~~~~
+../shared/lsqfit.h:238:21: note: expanded from macro 'mpfinite'
+#define mpfinite(x) finite(x)
+                    ^~~~~~
+/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator9.3.sdk/usr/include/math.h:757:12: note: candidate function has been explicitly made unavailable
+extern int finite(double) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_0, __MAC_10_9, __IPHONE_NA, __IPHONE_NA);
+           ^
+1 error generated.
+make[1]: *** [lsqfit.o] Error 1
+make[1]: *** Waiting for unfinished jobs....
+make: *** [all] Error 2
+make: *** No rule to make target `install'.  Stop.
+fatal error: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/lipo: can't open input file: /Users/stevenjanzou/Public/Projects/trunk/ssc/build_ios/output/armv7/lib/ssc.a (No such file or directory)
