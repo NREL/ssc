@@ -1953,7 +1953,7 @@ public:
 					case 3:		//incidence angle modifier polys
 						//Otherwise, calculate the collector incidence angles for the IAM equations
 						Iam_T = m_IAM_T.at(i,0) + m_IAM_T.at(i,1)*phi_t + m_IAM_T.at(i,2)*pow(phi_t,2) + m_IAM_T.at(i,3)*pow(phi_t,3) + m_IAM_T.at(i,4)*pow(phi_t,4);
-						Iam_L = m_IAM_L.at(i,0) + m_IAM_L.at(i,1)*phi_t + m_IAM_L.at(i,2)*pow(phi_t,2) + m_IAM_L.at(i,3)*pow(phi_t,3) + m_IAM_L.at(i,4)*pow(phi_t,4);
+						Iam_L = m_IAM_L.at(i,0) + m_IAM_L.at(i,1)*theta_L + m_IAM_L.at(i,2)*pow(theta_L,2) + m_IAM_L.at(i,3)*pow(theta_L,3) + m_IAM_L.at(i,4)*pow(theta_L,4);
 						m_eta_optical.at(i,0) = m_eta_opt_fixed.at(i,0) * Iam_T * Iam_L;
 						break;
 					default:
