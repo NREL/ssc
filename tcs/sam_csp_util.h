@@ -27,7 +27,7 @@ namespace CSP
 
 	double interp2D(double *xvals, int &nx, double *yvals, int &ny, double *data2D, double x, double y, bool strict_range=false); 
 
-	void theta_trans(double alpha_sun, double phi_sun, double alpha_fix, double &phi_t, double &theta);
+	void theta_trans(double alpha_sun /*rad*/, double phi_sun /*rad*/, double alpha_fix /*rad*/, double &phi_t /*rad*/, double &theta /*rad*/);
 
 	//sky temp function
 	double skytemp(double T_amb, double T_dp, double hour);
