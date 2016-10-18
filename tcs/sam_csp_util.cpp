@@ -216,7 +216,8 @@ double CSP::interp2D(double *xvals, int &nx, double *yvals, int &ny, double *dat
 	
 }
 
-void CSP::theta_trans(double alpha_sun, double phi_sun, double alpha_fix, double &phi_t, double &theta){
+void CSP::theta_trans(double alpha_sun /*rad*/, double phi_sun /*rad*/, double alpha_fix /*rad*/, double &phi_t /*rad*/, double &theta /*rad*/)
+{
 	/*
 	Take solar position and convert it into longitudinal and transversal incidence angles
     Reference: G. Zhu (2011). Incidence Angle Modifier for Parabolic Trough Collector and its 
@@ -225,43 +226,37 @@ void CSP::theta_trans(double alpha_sun, double phi_sun, double alpha_fix, double
     ------------------------------------------------------------------------------------------
     INPUTS:
     ------------------------------------------------------------------------------------------
-        *   alpha_sun       Solar azimuth angle, range is (-90=E..0=S..+90=W)
-        *   phi_sun         Solar zenith angle, zero is directly overhead
-        *   alpha_fix       Angle of rotation of the collector axis. Zero when aligned north-
+        *   alpha_sun       [rad] Solar azimuth angle, range is (-90=E..0=S..+90=W)
+        *   phi_sun         [rad] Solar zenith angle, zero is directly overhead
+        *   alpha_fix       [rad] Angle of rotation of the collector axis. Zero when aligned north-
                             south, positive clockwise
     OUTPUTS:
     ------------------------------------------------------------------------------------------
-        *   phi_t           Collector angle in the transversal plane
-        *   theta           Collector angle in the longitudinal plane
-        *   is_deg          Optional boolean flag for specifying that units are in degrees 
-                            (default is radians)
+        *   phi_t           [rad] Collector angle in the transversal plane
+        *   theta           [rad] Collector angle in the longitudinal plane
     ------------------------------------------------------------------------------------------
     */
-    double pi, d2r, alpha_sunX;
-        
-    //Check to see if the user has specified the units to be degree
-    pi=3.1415926;
-    d2r = 1.;
-        
         
     //if the sun is below the horizon, return zeros
-    if(phi_sun*d2r >= pi/2.) {
-        phi_t=0.; 
-		theta=0.;
+    if(phi_sun >= pi/2.) 
+	{
+        phi_t = 0.0;	//[rad] 
+		theta = 0.0;	//[rad]
         return;
 	}
         
     //Convert the solar azimuth to 0=N
-    alpha_sunX = alpha_sun*d2r+pi;
+    double alpha_sunX = alpha_sun + pi;		//[rad]
         
     //Calculate angles
-    phi_t = fabs(atan(tan(phi_sun*d2r)*sin(alpha_sunX*d2r - alpha_fix*d2r)))/d2r; //collector angle in transversal plane
-    theta = fabs(asin(sin(phi_sun*d2r)*cos(alpha_sunX*d2r - alpha_fix*d2r)))/d2r; //collector angle in the longitudinal plane
+    phi_t = fabs(atan(tan(phi_sun)*sin(alpha_sunX - alpha_fix))); //[rad] collector angle in transversal plane
+    theta = fabs(asin(sin(phi_sun)*cos(alpha_sunX - alpha_fix))); //[rad] collector angle in the longitudinal plane
         
     //check for NaN
-    if(theta!=theta || phi_t != phi_t) {
-        phi_t = 0.; 
-		theta=0.;
+    if(theta!=theta || phi_t != phi_t) 
+	{
+        phi_t = 0.0;	//[rad] 
+		theta = 0.0;	//[rad]
 	}
         
 	return;
