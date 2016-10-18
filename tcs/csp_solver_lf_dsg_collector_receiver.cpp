@@ -1704,25 +1704,18 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	// First, clear all the values calculated below
 	loop_optical_eta_off();
 
-	//double dnifc = m_dnifc;					//[W/m2] Forecast DNI
-	double I_bn = weather.m_beam;						//[W/m2] Current DNI
-	double T_db = weather.m_tdry + 273.15;				//[K] Dry bulb temp, convert from C
-	double T_dp = weather.m_tdew + 273.15;				//[K] Dewpoint temp, convert from C
-	double P_amb = weather.m_pres*100.0;				//[Pa] Ambient pressure, convert from mbar
+	double I_bn = weather.m_beam;					//[W/m2] Current DNI
+	double T_db = weather.m_tdry + 273.15;			//[K] Dry bulb temp, convert from C
+	double T_dp = weather.m_tdew + 273.15;			//[K] Dewpoint temp, convert from C
+	double P_amb = weather.m_pres*100.0;			//[Pa] Ambient pressure, convert from mbar
 	double V_wind = weather.m_wspd;					//[m/s] Ambient windspeed
-	//double m_dot_htf_ref = m_V_wind / 3600.0;	//[kg/s] Reference HTF flow rate at design conditions, convert from kg/hr
-	//double m_pb_demand = m_m_pb_demand / 3600.0;		//[kg/s] Demand HTF flow from the power block, convert from kg/hr
-	double shift = weather.m_shift*0.0174533;			//[deg] Shift in longitude from local standard meridian
-	double SolarAz = weather.m_solazi;				//[deg] Solar azimuth angle
-	double SolarZen = weather.m_solzen*0.0174533;;		//Solar zenith angle [deg]
-	//double T_pb_out = m_T_htf_cold_des + 273.15;		//[K] Fluid temperature from the power block, convert from C
-	//  int tou_period = (int) value( I_TOUPERIOD );		//[-] Time-of-use period
-	//int tou_period = sim_info.m_tou - 1;	// control value between 1 & 9, have to change to 0-8 for array index
 
-	SolarAz = (SolarAz - 180.0) * 0.0174533;			//[rad] Convert to TRNSYS convention, radians
+	double shift = weather.m_shift*0.0174533;				//[rad] Shift in longitude from local standard meridian
+	double SolarAz = (weather.m_solazi - 180.0)*0.0174533;	//[rad] Solar azimuth angle, convert to [rad] below
+	double SolarZen = weather.m_solzen*0.0174533;;			//[rad] Solar zenith angle
 
-	double time = sim_info.ms_ts.m_time;
-	double m_dt = sim_info.ms_ts.m_step;
+	double time = sim_info.ms_ts.m_time;					//[s]
+	double m_dt = sim_info.ms_ts.m_step;					//[s]
 	double hour = (double)((int)(time / 3600.0) % 24);
 
 	// Optical calculations
@@ -1733,7 +1726,7 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	// Eqn of time in minutes
 	double EOT = 229.2*(0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B*2.0) - 0.04089 * sin(B*2.0));
 	// Declination in radians (Duffie and Beckman 1.6.1)
-	double Dec = 23.45 * sin(360.0*(284.0 + (double)day_of_year) / 365.0*CSP::pi / 180.0) * CSP::pi / 180.0;
+	double Dec = 23.45 * sin(360.0*(284.0 + (double)day_of_year) / 365.0*CSP::pi / 180.0) * CSP::pi / 180.0;	//[rad]
 	// Solar Noon and time in hours
 	double SolarNoon = 12.0 - ((shift)*180.0 / CSP::pi) / 15.0 - EOT / 60.0;
 
@@ -1795,8 +1788,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	// hour angle (arc of sun) in radians
 	double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
 	// B. Stine equation for Solar Altitude angle in radians
-	double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
-	SolarZen = CSP::pi / 2 - SolarAlt;
+	// double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
+	// SolarZen = CSP::pi / 2 - SolarAlt;
 
 	if (SolarZen < CSP::pi / 2.0)
 	{
