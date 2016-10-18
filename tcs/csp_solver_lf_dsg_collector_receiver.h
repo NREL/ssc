@@ -108,8 +108,8 @@ private:
 	// ****************************************************************
 		// ****************************************************************
 		// Sun Position
-	double m_phi_t;
-	double m_theta_L;
+	double m_phi_t;			//[rad] Traverse incident angle
+	double m_theta_L;		//[rad] Longitudinal incident angle
 		// Optical calcs
 	double m_ftrack;		//[-] Fraction of timestep that solar field is tracking
 		// Energy Balance

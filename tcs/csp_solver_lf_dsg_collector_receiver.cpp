@@ -1786,14 +1786,11 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	double StdTime = MidTrack;
 	double SolarTime = StdTime + ((shift)* 180 / CSP::pi) / 15.0 + EOT / 60.0;
 	// hour angle (arc of sun) in radians
-	double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;
-	// B. Stine equation for Solar Altitude angle in radians
-	// double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude)*cos(Dec)*cos(omega));
-	// SolarZen = CSP::pi / 2 - SolarAlt;
+	double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;		//[rad]
 
 	if (SolarZen < CSP::pi / 2.0)
 	{
-		//Convert the solar angles to collector incidence angles
+		//[rad] Convert the solar angles to collector incidence angles
 		CSP::theta_trans(SolarAz, SolarZen, m_ColAz, m_phi_t, m_theta_L);
 
 		for (int i = 0; i < m_n_rows_matrix; i++)
@@ -1814,7 +1811,7 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 			case 3:		//incidence angle modifier polys
 				//Otherwise, calculate the collector incidence angles for the IAM equations
 				Iam_T = m_IAM_T.at(i, 0) + m_IAM_T.at(i, 1)*m_phi_t + m_IAM_T.at(i, 2)*pow(m_phi_t, 2) + m_IAM_T.at(i, 3)*pow(m_phi_t, 3) + m_IAM_T.at(i, 4)*pow(m_phi_t, 4);
-				Iam_L = m_IAM_L.at(i, 0) + m_IAM_L.at(i, 1)*m_phi_t + m_IAM_L.at(i, 2)*pow(m_phi_t, 2) + m_IAM_L.at(i, 3)*pow(m_phi_t, 3) + m_IAM_L.at(i, 4)*pow(m_phi_t, 4);
+				Iam_L = m_IAM_L.at(i, 0) + m_IAM_L.at(i, 1)*m_theta_L + m_IAM_L.at(i, 2)*pow(m_theta_L, 2) + m_IAM_L.at(i, 3)*pow(m_theta_L, 3) + m_IAM_L.at(i, 4)*pow(m_theta_L, 4);
 				m_eta_optical[i] = m_eta_opt_fixed.at(i, 0) * Iam_T * Iam_L;
 				break;
 			default:
