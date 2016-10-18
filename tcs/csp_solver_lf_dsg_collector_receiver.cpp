@@ -4,8 +4,16 @@
 
 using namespace std;
 
+static C_csp_reported_outputs::S_output_info S_output_info[] =
+{
+	{C_csp_lf_dsg_collector_receiver::E_THETA_TRAVERSE, true},
+
+	csp_info_invalid
+};
+
 C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 {
+	mc_reported_outputs.construct(S_output_info);
 
 	// *******************************************
 	// Hardcoded member data
@@ -1143,6 +1151,8 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	m_operating_mode = C_csp_collector_receiver::OFF;		//[-]
 
+	set_output_values();
+
 	return;
 }
 
@@ -1275,6 +1285,8 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	cr_out_solver.m_dP_sf_sh = 0.0;
 	cr_out_solver.m_h_htf_hot = h_sys_hot_out_t_int_ts_ave;		//[kJ/kg]
 	cr_out_solver.m_xb_htf_hot = wp.qual;						//[-]
+
+	set_output_values();
 
 	return;
 }
@@ -1568,6 +1580,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_P_htf_hot = 0.0;			//[kPa]
 	}
 
+	set_output_values();
+
 	return;
 }
 
@@ -1665,13 +1679,16 @@ void C_csp_lf_dsg_collector_receiver::converged()
 
 	m_operating_mode_converged = m_operating_mode;	//[-]
 
+	mc_reported_outputs.set_timestep_outputs();
+
 	return;
 }
 
 void C_csp_lf_dsg_collector_receiver::write_output_intervals(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	return;
+	mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+		v_temp_ts_time_end, report_time_end);
 }
 
 double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
@@ -1852,6 +1869,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 	m_eta_optical.fill(0.0);	//[-] Optical efficiency for each collector geometry
 	m_q_rec.assign(m_q_rec.size(), 0.0);	//[kWt]
 	
+	m_phi_t = 0.0;		//[rad]
+
 	m_ftrack = 0.0;
 
 	return;
@@ -2266,6 +2285,11 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(
 	*diff_h_out_t_end = (h_out_t_end_calc - h_out_t_end) / m_h_in;		//[-]
 
 	return 0;
+}
+
+void C_csp_lf_dsg_collector_receiver::set_output_values()
+{
+	mc_reported_outputs.value(E_THETA_TRAVERSE, m_phi_t*180.0/CSP::pi);		//[deg], convert from rad
 }
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,

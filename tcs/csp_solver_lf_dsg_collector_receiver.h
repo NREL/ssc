@@ -17,6 +17,16 @@
 
 class C_csp_lf_dsg_collector_receiver : public C_csp_collector_receiver
 {
+
+public:
+
+	enum
+	{
+		E_THETA_TRAVERSE	//[deg]
+	};
+
+	C_csp_reported_outputs mc_reported_outputs;
+
 private:
 
 	// *******************************************
@@ -148,6 +158,8 @@ private:
 	double od_pressure(double m_dot_loop /*kg/s*/);
 
 	void apply_component_defocus(double defocus /*-*/);
+
+	void set_output_values();
 
 public:
 
