@@ -2726,7 +2726,7 @@ public:
 						p_solazi[idx] = (ssc_number_t)solazi;
 
 						// absolute relative airmass calculation as f(zenith angle, site elevation)
-						p_airmass[idx] = (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634)));
+						p_airmass[idx] =  sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen*3.1415926 / 180) + 0.5057*pow(96.080 - solzen, -1.634))) : 0.0f;
 						p_sunup[idx] = (ssc_number_t)sunup;
 
 						// save radiation values.  the ts_accum_* variables are units of (W), 
