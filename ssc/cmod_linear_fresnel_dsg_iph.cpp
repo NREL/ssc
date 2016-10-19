@@ -117,8 +117,12 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_ave",         "Field optical efficiency before defocus", "deg",          "",            "weather",        "*",                      "",                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",  		    "Field collector focus fraction",          "",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 	
-	{ SSC_OUTPUT,       SSC_ARRAY,   "q_inc_sf_tot",            "Field thermal power incident",        "MWt",    "",          "trough_field",        "*",        "",     "" },
-    { SSC_OUTPUT,       SSC_ARRAY,   "q_dot_rec_thermal_loss", "Receiver thermal losses",              "MWt",    "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,   "q_inc_sf_tot",           "Field thermal power incident",        "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,       SSC_ARRAY,   "q_dot_rec_inc",          "Receiver thermal power incident",     "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,       SSC_ARRAY,   "q_dot_rec_thermal_loss", "Receiver thermal losses",             "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,       SSC_ARRAY,   "q_dot_rec_abs",          "Receiver thermal power absorbed",     "MWt",    "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,   "q_dot_piping_loss",      "Field piping thermal losses",         "MWt",    "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,   "e_dot_field_int_energy", "Field change in material/htf internal energy", "MWt", "",     "trough_field",        "*",        "",     "" }, 
 
 
    		// Heat Sink
@@ -300,6 +304,10 @@ public:
 		
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);					//[MWt]
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);	//[MWt]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);						//[MWt]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);						//[MWt]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);				//[MWt]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);	//[MWt]
 
 		// ********************************
 		// ********************************
