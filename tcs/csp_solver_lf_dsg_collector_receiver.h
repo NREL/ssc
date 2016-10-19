@@ -28,7 +28,11 @@ public:
 		E_DEFOCUS,				//[-]
 
 		E_Q_DOT_INC_SF_TOT,			//[MWt]
-		E_Q_DOT_REC_THERMAL_LOSS	//[MWt]
+		E_Q_DOT_REC_INC,			//[MWt]
+		E_Q_DOT_REC_THERMAL_LOSS,	//[MWt]
+		E_Q_DOT_REC_ABS,			//[MWt]
+		E_Q_DOT_PIPING_LOSS,		//[MWt]
+		E_E_DOT_INTERNAL_ENERGY    //[MWt]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -113,10 +117,19 @@ private:
 	C_csp_solver_steam_state mc_sys_hot_out_t_end;		// End-of-timestep outlet condition hot cold system/header/field
 	C_csp_solver_steam_state mc_sys_hot_out_t_int;		// Time-integrated outlet condition hot cold system/header/field
 
-	double m_q_dot_sca_loss_summed_subts;			//[MWt] SYSTEM SCA heat loss
+	double m_q_dot_sca_loss_summed_subts;		//[MWt] SYSTEM SCA heat loss
+	double m_q_dot_sca_abs_summed_subts;		//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+	double m_q_dot_HR_cold_loss_subts;			//[MWt] SYSTEM Cold header heat loss
+	double m_q_dot_HR_hot_loss_subts;			//[MWt] SYSTEM Hot header heat loss
+	double m_E_dot_sca_summed_subts;			//[MWt] SYSTEM SCA internal energy change over time
 
 			// Full timestep outputs
-	double m_q_dot_sca_loss_summed_fullts;			//[MWt] SYSTEM SCA heat loss 
+	double m_q_dot_sca_loss_summed_fullts;		//[MWt] SYSTEM SCA heat loss 
+	double m_q_dot_sca_abs_summed_fullts;		//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+	double m_q_dot_HR_cold_loss_fullts;			//[MWt] SYSTEM Cold header heat loss
+	double m_q_dot_HR_hot_loss_fullts;			//[MWt] SYSTEM Hot header heat loss
+	double m_E_dot_sca_summed_fullts;			//[MWt] SYSTEM SCA internal energy change over time
+
 
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
