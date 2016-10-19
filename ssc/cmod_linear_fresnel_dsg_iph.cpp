@@ -111,6 +111,16 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "wspd",          "Resource Wind Speed",                    "m/s",          "",            "weather",        "*",                      "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pres",          "Resource Pressure",                      "mbar",         "",            "weather",        "*",                      "",                      "" },
    
+		// Solar Field
+    { SSC_OUTPUT,       SSC_ARRAY,       "theta_traverse",		"Field traverse incidence angle",          "deg",          "",            "weather",        "*",                      "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "theta_longitudinal",  "Field traverse incidence angle",          "deg",          "",            "weather",        "*",                      "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "eta_opt_ave",         "Field optical efficiency before defocus", "deg",          "",            "weather",        "*",                      "",                      "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",  		    "Field collector focus fraction",          "",         "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
+	
+	{ SSC_OUTPUT,       SSC_ARRAY,   "q_inc_sf_tot",            "Field thermal power incident",        "MWt",    "",          "trough_field",        "*",        "",     "" },
+    { SSC_OUTPUT,       SSC_ARRAY,   "q_dot_rec_thermal_loss", "Receiver thermal losses",              "MWt",    "",          "trough_field",        "*",        "",     "" },
+
+
    		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
 	
@@ -280,6 +290,16 @@ public:
 		c_lf_dsg.m_Dirt_HCE = as_matrix("Dirt_HCE");		//[-] Loss due to dirt on the receiver envelope
 		c_lf_dsg.m_b_OpticalTable = as_matrix("b_OpticalTable");	//[-] Boiler Optical Table
 		c_lf_dsg.m_sh_OpticalTable = as_matrix("sh_OpticalTable");	//[-] Superheater Optical Table
+
+
+		// Solar Field Outputs
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_THETA_TRAVERSE, allocate("theta_traverse", n_steps_fixed), n_steps_fixed);
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_THETA_LONGITUDINAL, allocate("theta_longitudinal", n_steps_fixed), n_steps_fixed);
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_ETA_OPTICAL, allocate("eta_opt_ave", n_steps_fixed), n_steps_fixed);
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_DEFOCUS, allocate("defocus", n_steps_fixed), n_steps_fixed);
+		
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);					//[MWt]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);	//[MWt]
 
 		// ********************************
 		// ********************************
