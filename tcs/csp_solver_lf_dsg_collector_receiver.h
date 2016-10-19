@@ -22,7 +22,13 @@ public:
 
 	enum
 	{
-		E_THETA_TRAVERSE	//[deg]
+		E_THETA_TRAVERSE,		//[deg]
+		E_THETA_LONGITUDINAL,	//[deg]
+		E_ETA_OPTICAL,			//[-]
+		E_DEFOCUS,				//[-]
+
+		E_Q_DOT_INC_SF_TOT,			//[MWt]
+		E_Q_DOT_REC_THERMAL_LOSS	//[MWt]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -62,6 +68,7 @@ private:
 	int m_nModTot;				//[-] nBoiler + nSH
 	bool m_is_sh;				//[-]
 	double m_Ap_tot;			//[m2] Total solar field aperture area	
+	double m_Ap_loop;			//[m2] Loop solar field aperture area
 		// Energy and mass balance calcs
 	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
 	double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
@@ -84,6 +91,7 @@ private:
 		// CSP Solver Temperature Tracking
 		// *********************************************
 			// Temperatures from the most recent converged() operation
+				// SUB TIMESTEP outputs
 	C_csp_solver_steam_state mc_sys_cold_out_t_end_converged;			// End-of-previously-converged-timestep outlet condition from cold system/header/field
 	std::vector<C_csp_solver_steam_state> mc_sca_out_t_end_converged;	// End-of-previously-converged-timestep outlet condition from each SCA in loop
 	C_csp_solver_steam_state mc_sys_hot_out_t_end_converged;			// End-of-previously-converged-timestep outlet condition hot cold system/header/field
@@ -105,6 +113,11 @@ private:
 	C_csp_solver_steam_state mc_sys_hot_out_t_end;		// End-of-timestep outlet condition hot cold system/header/field
 	C_csp_solver_steam_state mc_sys_hot_out_t_int;		// Time-integrated outlet condition hot cold system/header/field
 
+	double m_q_dot_sca_loss_summed_subts;			//[MWt] SYSTEM SCA heat loss
+
+			// Full timestep outputs
+	double m_q_dot_sca_loss_summed_fullts;			//[MWt] SYSTEM SCA heat loss 
+
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
 		// Hot System/Field Headers Outlet
@@ -122,7 +135,15 @@ private:
 	double m_theta_L;		//[rad] Longitudinal incident angle
 		// Optical calcs
 	double m_ftrack;		//[-] Fraction of timestep that solar field is tracking
+	double m_eta_opt;		//[-] Field optical efficiency before defocus
+
+	double m_control_defocus;	//[-] Defocus signal from control model
+	double m_component_defocus;	//[-] Defocus signal from this component (max mass flow rate reached and still over target...)
+
 		// Energy Balance
+			//  Single Values
+	double m_q_dot_inc_sf_tot;	//[MWt] Total incident radiation on the solar field
+
 	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
 	util::matrix_t<double> m_eta_optical;	//[-] Optical efficiency for each collector geometry
 	std::vector<double> m_q_rec;			//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*

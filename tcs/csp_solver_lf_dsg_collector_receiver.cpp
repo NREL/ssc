@@ -7,6 +7,12 @@ using namespace std;
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
 	{C_csp_lf_dsg_collector_receiver::E_THETA_TRAVERSE, true},
+	{C_csp_lf_dsg_collector_receiver::E_THETA_LONGITUDINAL, true},
+	{C_csp_lf_dsg_collector_receiver::E_ETA_OPTICAL, true},
+	{C_csp_lf_dsg_collector_receiver::E_DEFOCUS, true},
+	
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_INC_SF_TOT, true},		//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, true},	//[MWt]
 
 	csp_info_invalid
 };
@@ -45,6 +51,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_nModTot = -1;				//[-]
 	m_is_sh = false;			//[-]
 	m_Ap_tot = std::numeric_limits<double>::quiet_NaN();		//[m2]
+	m_Ap_loop = std::numeric_limits<double>::quiet_NaN();		//[m2]
 		// Energy and mass balance calcs
 	m_q_dot_abs_tot_des = std::numeric_limits<double>::quiet_NaN();	//[kWt]
 	m_m_dot_min = std::numeric_limits<double>::quiet_NaN();			//[kg/s]
@@ -64,9 +71,24 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_operating_mode = -1;				//[-]
 	m_ncall = -1;						//[-]
 		// CSP Solver Temperature Tracking
+			// SUB TIMESTEP outputs
+	m_q_dot_sca_loss_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+
+			// FULL TIMESTEP outputs
+	m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+
 		// Sun Position
 	m_phi_t = std::numeric_limits<double>::quiet_NaN();		//[rad]
 	m_theta_L = std::numeric_limits<double>::quiet_NaN();	//[rad]
+		// Optical calcs
+	m_ftrack = std::numeric_limits<double>::quiet_NaN();	//[-]
+	m_eta_opt = std::numeric_limits<double>::quiet_NaN();	//[-]
+
+	m_control_defocus = std::numeric_limits<double>::quiet_NaN();		//[-]
+	m_component_defocus = std::numeric_limits<double>::quiet_NaN();		//[-]
+
+	m_q_dot_inc_sf_tot = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+
 		// Energy Balance
 	m_Q_field_losses_total = std::numeric_limits<double>::quiet_NaN();		//[MJ]
 	m_q_rec_loop = std::numeric_limits<double>::quiet_NaN();				//[kWt]
@@ -77,7 +99,6 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	// *********************************************
 	// Required for backwards compatability with TCS - call & init & converged only!
 	// *********************************************
-	m_ftrack = std::numeric_limits<double>::quiet_NaN();			//[-]
 	m_defocus_prev = std::numeric_limits<double>::quiet_NaN();		//[-]
 	m_t_sby_prev = std::numeric_limits<double>::quiet_NaN();		//[-]
 	m_t_sby = std::numeric_limits<double>::quiet_NaN();				//[-]
@@ -690,10 +711,16 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	// Calculate total solar field aperture area
 	m_Ap_tot = 0.0;		//[m2]
+	m_Ap_loop = 0.0;	//[m2]
 	if (m_is_multgeom)
-		m_Ap_tot = (m_A_aperture.at(0, 0)*m_nModBoil + m_A_aperture.at(1, 0)*m_nModSH)*m_nLoops;	//[m2]
+	{
+		m_Ap_loop = (m_A_aperture.at(0, 0)*m_nModBoil + m_A_aperture.at(1, 0)*m_nModSH);	//[m2]
+	}
 	else
-		m_Ap_tot = m_A_aperture.at(0, 0)*(double)(m_nModTot*m_nLoops);		//[m2]
+		m_Ap_loop = m_A_aperture.at(0, 0)*(double)(m_nModTot);		//[m2]
+
+	m_Ap_tot = m_Ap_loop * m_nLoops;
+
 
 	// Estimate piping thermal loss
 	double q_loss_piping = m_Ap_tot*m_Pipe_hl_coef / 1000.0*((m_T_field_in_des + m_T_field_out_des) / 2.0 - m_T_amb_des_sf);		// hl coef is [W/m2-K], use average field temp as driving difference
@@ -1079,6 +1106,11 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	double h_sys_hot_out_t_int_sum = 0.0;		//[kJ/kg]
 	double Q_fp_sum = 0.0;						//[MJ]
+
+	// Zero full timestep outputs
+	m_q_dot_sca_loss_summed_fullts =
+		0.0;
+
 	for(int i = 0; i < n_steps_recirc; i++)
 	{
 		sim_info_temp.ms_ts.m_time = time_start + step_local*(i+1);	//[s]
@@ -1121,11 +1153,18 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// Add current enthalpy to summation
 		h_sys_hot_out_t_int_sum += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
 	
+		// Add subtimestep calcs
+		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
+
 		update_last_temps();
 	}
 
+	// Calculate average value over all subtimesteps
+	double nd_steps_recirc = (double)n_steps_recirc;
+	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
+
 	// Find average enthalpy over recirculation timesteps
-	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / (double)n_steps_recirc;	//[kJ/kg]
+	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / nd_steps_recirc;	//[kJ/kg]
 	int wp_code = water_PH(P_field_out*100.0, h_sys_hot_out_t_int_ts_ave, &wp);
 	if( wp_code != 0 )
 	{
@@ -1197,6 +1236,10 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	double h_sys_hot_out_t_int_sum = 0.0;		//[kJ/kg]
 	double Q_fp_sum = 0.0;						//[MJ]
 
+	// Zero full timestep outputs
+	m_q_dot_sca_loss_summed_fullts = 
+		0.0;
+
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
 	{
 		// Could iterate here for each step such that T_cold_in = mc_sys_hot_out_t_int.m_temp
@@ -1237,6 +1280,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Add current enthalpy to summation
 		h_sys_hot_out_t_int_sum += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
 
+		// Add subtimestep calcs
+		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
+
 		// If the *outlet temperature at the end of the timestep* is greater than the startup temperature
 		if( mc_sys_hot_out_t_end.m_temp > m_T_startup )
 		{
@@ -1250,6 +1296,8 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 	
 	double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
+
+	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
 
 	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / nd_steps_recirc;		//[kJ/kg]
 	int wp_code = water_PH(P_field_out*100.0, h_sys_hot_out_t_int_ts_ave, &wp);
@@ -1293,6 +1341,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 void C_csp_lf_dsg_collector_receiver::apply_component_defocus(double defocus /*-*/)
 {
+	// Store component defocus
+	m_component_defocus = defocus;
+
 	// Calculate the design-point incident energy on each module for a single loop
 	for( int i = 0; i < m_nModTot; i++ )
 	{
@@ -1333,6 +1384,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	// Get optical performance (no defocus applied yet...)
 	// This calculates member data m_q_inc[] with NO defocus applied
 	loop_optical_eta(weather, sim_info);
+
+	// After loop optical efficiency, reset defocus variables
+	m_control_defocus = field_control;
 
 	// If Control Defocus: field_control < 1, then apply it here
 	if( field_control < 1.0 )
@@ -1537,6 +1591,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// Call final metrics method?
 		// (i.e. pressure drops, parasitics...)
 
+		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
+
 		// Set solver outputs & return
 			// Receiver is already on, so the controller is not looking for this value
 		cr_out_solver.m_q_startup = 0.0;		//[MWt-hr] 
@@ -1562,6 +1618,10 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	}
 	else
 	{
+		
+		m_q_dot_sca_loss_summed_fullts =
+			0.0;
+
 		// Solution failed, so tell controller/solver
 		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
 		cr_out_solver.m_time_required_su = 0.0;		//[s]
@@ -1848,6 +1908,7 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		m_theta_L = 0.0;
 	}
 
+	m_eta_opt = 0.0;
 	for( int i = 0; i < m_nModTot; i++ )
 	{
 		int gset = 0;
@@ -1857,8 +1918,14 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		m_q_inc[i] = I_bn*m_A_aperture.at(gset, 0) / 1000.0;		//[kWt] Incident beam radiation for each receiver in loop
 		// Calculate the energy on the receiver
 		m_q_rec[i] = m_q_inc[i] * m_eta_optical[gset];				//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
-	}
 
+		m_eta_opt += m_eta_optical[gset]*m_A_aperture.at(gset,0);		//[-*m2]
+	}
+	m_eta_opt /= (m_Ap_loop);
+
+	m_control_defocus = m_component_defocus = 1.0;		//[-]
+
+	m_q_dot_inc_sf_tot = m_Ap_tot*weather.m_beam/1.E6;	//[MWt]
 }
 
 
@@ -1870,8 +1937,12 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 	m_q_rec.assign(m_q_rec.size(), 0.0);	//[kWt]
 	
 	m_phi_t = 0.0;		//[rad]
+	m_theta_L = 0.0;	//[rad]
+	m_ftrack = 0.0;		//[-]
+	m_eta_opt = 0.0;	//[-]
+	m_control_defocus = m_component_defocus = 0.0;	//[-]
 
-	m_ftrack = 0.0;
+	m_q_dot_inc_sf_tot = 0.0;	//[MWt]
 
 	return;
 }
@@ -2151,6 +2222,16 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		mc_sys_hot_out_t_int.m_x = mc_sys_hot_out_t_end.m_x = mc_sys_hot_in_t_int.m_x;				//[-]
 	}
 	
+	// Calculate sub-timestep reporting energy (rate) balance metrics
+		// Loop metrics
+	m_q_dot_sca_loss_summed_subts = 0.0;		//[MWt]
+
+	for(int i = 0; i < m_nModTot; i++)
+	{
+		m_q_dot_sca_loss_summed_subts += m_q_loss[i];	//[kWt] -> convert to MWt and multiply by nLoops below
+	}
+	m_q_dot_sca_loss_summed_subts *= 1.E-3 * m_nLoops;	//[MWt] SYSTEM
+
 	// *********************************************************
 	// Calculate total losses and energy balances
 	// *********************************************************
@@ -2289,7 +2370,13 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(
 
 void C_csp_lf_dsg_collector_receiver::set_output_values()
 {
-	mc_reported_outputs.value(E_THETA_TRAVERSE, m_phi_t*180.0/CSP::pi);		//[deg], convert from rad
+	mc_reported_outputs.value(E_THETA_TRAVERSE, m_phi_t*180.0/CSP::pi);			//[deg], convert from rad
+	mc_reported_outputs.value(E_THETA_LONGITUDINAL, m_theta_L*180.0/CSP::pi);	//[deg], convert from rad
+	mc_reported_outputs.value(E_ETA_OPTICAL, m_eta_opt);						//[-]
+	mc_reported_outputs.value(E_DEFOCUS, m_control_defocus*m_component_defocus);	//[-]
+
+	mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_REC_THERMAL_LOSS, m_q_dot_sca_loss_summed_fullts);	//[MWt]
 }
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
