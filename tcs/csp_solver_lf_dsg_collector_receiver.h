@@ -32,7 +32,8 @@ public:
 		E_Q_DOT_REC_THERMAL_LOSS,	//[MWt]
 		E_Q_DOT_REC_ABS,			//[MWt]
 		E_Q_DOT_PIPING_LOSS,		//[MWt]
-		E_E_DOT_INTERNAL_ENERGY    //[MWt]
+		E_E_DOT_INTERNAL_ENERGY,	//[MWt]
+		E_Q_DOT_OUT					//[MWt]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -123,13 +124,21 @@ private:
 	double m_q_dot_HR_hot_loss_subts;			//[MWt] SYSTEM Hot header heat loss
 	double m_E_dot_sca_summed_subts;			//[MWt] SYSTEM SCA internal energy change over time
 
+	double m_q_dot_to_sink_subts;			//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
+	
 			// Full timestep outputs
+	double m_h_sys_c_t_int_fullts;			//[kJ/kg] Temperature (bulk) of cold runners & headers at end of current timestep
+	double m_h_c_rec_in_t_int_fullts;		//[kJ/kg] Time-integrated-average inlet HTF temperature to FIRST sca
+	double m_h_h_rec_out_t_int_fullts;		//[kJ/kg] Time-integrated-average outlet HTF temperature from LAST sca
+	double m_h_sys_h_t_int_fullts;			//[kJ/kg] Temperature (bulk) of hot runners & headers at timestep-integrated-average
+
 	double m_q_dot_sca_loss_summed_fullts;		//[MWt] SYSTEM SCA heat loss 
 	double m_q_dot_sca_abs_summed_fullts;		//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
 	double m_q_dot_HR_cold_loss_fullts;			//[MWt] SYSTEM Cold header heat loss
 	double m_q_dot_HR_hot_loss_fullts;			//[MWt] SYSTEM Hot header heat loss
 	double m_E_dot_sca_summed_fullts;			//[MWt] SYSTEM SCA internal energy change over time
 
+	double m_q_dot_to_sink_fullts;			//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)			
 
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
