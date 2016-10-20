@@ -123,7 +123,8 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,   "q_dot_rec_abs",          "Receiver thermal power absorbed",     "MWt",    "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,   "q_dot_piping_loss",      "Field piping thermal losses",         "MWt",    "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,   "e_dot_field_int_energy", "Field change in material/htf internal energy", "MWt", "",     "trough_field",        "*",        "",     "" }, 
-
+	{ SSC_OUTPUT,       SSC_ARRAY,   "q_dot_sf_out",           "Field thermal power leaving in steam","MWt",    "",          "trough_field",        "*",        "",     "" },  
+	
 
    		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
@@ -308,6 +309,7 @@ public:
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);						//[MWt]
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);				//[MWt]
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);	//[MWt]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_Q_DOT_OUT, allocate("q_dot_sf_out", n_steps_fixed), n_steps_fixed);
 
 		// ********************************
 		// ********************************
