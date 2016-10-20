@@ -17,6 +17,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_ABS, true},			//[MWt]
 	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_PIPING_LOSS, true},		//[MWt]
 	{C_csp_lf_dsg_collector_receiver::E_E_DOT_INTERNAL_ENERGY, true},	//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_OUT, true},				//[MWt]
 
 	csp_info_invalid
 };
@@ -64,7 +65,6 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_m_dot_b_des = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 	m_m_dot_pb_des = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 	m_m_dot_des = std::numeric_limits<double>::quiet_NaN();			//[kg/s]
-	m_m_dot_tot = std::numeric_limits<double>::quiet_NaN();			//[kg/s]
 	// *******************************************
 	// *******************************************
 
@@ -82,12 +82,21 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_q_dot_HR_hot_loss_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_E_dot_sca_summed_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 
+	m_q_dot_to_sink_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+
 			// FULL TIMESTEP outputs
+	m_h_sys_c_t_int_fullts = std::numeric_limits<double>::quiet_NaN();		//[kJ/kg]
+	m_h_c_rec_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
+	m_h_h_rec_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
+	m_h_sys_h_t_int_fullts = std::numeric_limits<double>::quiet_NaN();		//[kJ/kg]
+
 	m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 	m_q_dot_sca_abs_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 	m_q_dot_HR_cold_loss_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_q_dot_HR_hot_loss_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_E_dot_sca_summed_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
+
+	m_q_dot_to_sink_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 
 		// Sun Position
 	m_phi_t = std::numeric_limits<double>::quiet_NaN();		//[rad]
@@ -1120,9 +1129,13 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	double Q_fp_sum = 0.0;						//[MJ]
 
 	// Zero full timestep outputs
+	m_h_sys_c_t_int_fullts = m_h_c_rec_in_t_int_fullts =
+		m_h_h_rec_out_t_int_fullts = m_h_sys_h_t_int_fullts = 0.0;
+
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
 		m_E_dot_sca_summed_fullts = 
+		m_q_dot_to_sink_fullts =
 		0.0;
 
 	for(int i = 0; i < n_steps_recirc; i++)
@@ -1168,11 +1181,18 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		h_sys_hot_out_t_int_sum += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
 	
 		// Add subtimestep calcs
+		m_h_sys_c_t_int_fullts += mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
+		m_h_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_enth;		//[kJ/kg]
+		m_h_h_rec_out_t_int_fullts += mc_sca_in_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
+		m_h_sys_h_t_int_fullts += mc_sys_hot_in_t_int.m_enth;		//[kJ/kg]
+
 		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
 		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;		//[MWt]
 		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts;			//[MWt]
 		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts;			//[MWt]
 		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts;				//[MWt]
+
+		m_q_dot_to_sink_fullts += m_q_dot_to_sink_subts;		//[MWt]
 
 		update_last_temps();
 	}
@@ -1180,11 +1200,18 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	// Calculate average value over all subtimesteps
 	double nd_steps_recirc = (double)n_steps_recirc;
 	
+	m_h_sys_c_t_int_fullts /= nd_steps_recirc;			//[kJ/kg]
+	m_h_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_h_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_h_sys_h_t_int_fullts /= nd_steps_recirc;			//[kJ/kg]
+
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;		//[MWt]
 	m_q_dot_HR_cold_loss_fullts /= nd_steps_recirc;			//[MWt]
 	m_q_dot_HR_hot_loss_fullts /= nd_steps_recirc;			//[MWt]
 	m_E_dot_sca_summed_fullts /= nd_steps_recirc;			//[MWt]
+
+	m_q_dot_to_sink_fullts /= nd_steps_recirc;		//[MWt]
 
 	// Find average enthalpy over recirculation timesteps
 	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / nd_steps_recirc;	//[kJ/kg]
@@ -1260,9 +1287,13 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	double Q_fp_sum = 0.0;						//[MJ]
 
 	// Zero full timestep outputs
+	m_h_sys_c_t_int_fullts = m_h_c_rec_in_t_int_fullts =
+		m_h_h_rec_out_t_int_fullts = m_h_sys_h_t_int_fullts = 0.0;
+
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
 		m_E_dot_sca_summed_fullts = 
+		m_q_dot_to_sink_fullts =
 		0.0;
 
 	for( i_step = 0; i_step < n_steps_recirc; i_step++ )
@@ -1306,11 +1337,18 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		h_sys_hot_out_t_int_sum += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
 
 		// Add subtimestep calcs
+		m_h_sys_c_t_int_fullts += mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
+		m_h_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_enth;		//[kJ/kg]
+		m_h_h_rec_out_t_int_fullts += mc_sca_in_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
+		m_h_sys_h_t_int_fullts += mc_sys_hot_in_t_int.m_enth;		//[kJ/kg]
+
 		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
 		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;		//[MWt]
 		m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts;			//[MWt]
 		m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts;			//[MWt]
 		m_E_dot_sca_summed_fullts += m_E_dot_sca_summed_subts;				//[MWt]
+
+		m_q_dot_to_sink_fullts += m_q_dot_to_sink_subts;		//[MWt]
 
 		// If the *outlet temperature at the end of the timestep* is greater than the startup temperature
 		if( mc_sys_hot_out_t_end.m_temp > m_T_startup )
@@ -1326,11 +1364,18 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	
 	double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
 
+	m_h_sys_c_t_int_fullts /= nd_steps_recirc;			//[kJ/kg]
+	m_h_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_h_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_h_sys_h_t_int_fullts /= nd_steps_recirc;			//[kJ/kg]
+
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;		//[MWt]
 	m_q_dot_HR_cold_loss_fullts /= nd_steps_recirc;			//[MWt]
 	m_q_dot_HR_hot_loss_fullts /= nd_steps_recirc;			//[MWt]
 	m_E_dot_sca_summed_fullts /= nd_steps_recirc;			//[MWt]
+
+	m_q_dot_to_sink_fullts /= nd_steps_recirc;
 
 	double h_sys_hot_out_t_int_ts_ave = h_sys_hot_out_t_int_sum / nd_steps_recirc;		//[kJ/kg]
 	int wp_code = water_PH(P_field_out*100.0, h_sys_hot_out_t_int_ts_ave, &wp);
@@ -1623,12 +1668,18 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	{
 		// Call final metrics method?
 		// (i.e. pressure drops, parasitics...)
+		m_h_sys_c_t_int_fullts = mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
+		m_h_c_rec_in_t_int_fullts = mc_sca_in_t_int[0].m_enth;		//[kJ/kg]
+		m_h_h_rec_out_t_int_fullts = mc_sca_in_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
+		m_h_sys_h_t_int_fullts = mc_sys_hot_in_t_int.m_enth;		//[kJ/kg]
 
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
 		m_q_dot_sca_abs_summed_fullts = m_q_dot_sca_abs_summed_subts;		//[MWt]
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_cold_loss_subts;			//[MWt]
 		m_q_dot_HR_hot_loss_fullts = m_q_dot_HR_hot_loss_subts;				//[MWt]
 		m_E_dot_sca_summed_fullts = m_E_dot_sca_summed_subts;				//[MWt]
+
+		m_q_dot_to_sink_fullts = m_q_dot_to_sink_subts;		//[MWt]
 
 		// Set solver outputs & return
 			// Receiver is already on, so the controller is not looking for this value
@@ -1640,7 +1691,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			// Thermal power absorbed by steam/water
 		cr_out_solver.m_q_thermal = m_dot_loop*(double)m_nLoops*(mc_sys_hot_out_t_int.m_enth - mc_sys_cold_in_t_int.m_enth) / 1.E3;	//[MWt]
 			// Outlet temperature (set quality below)
-		cr_out_solver.m_T_salt_hot = mc_sys_hot_out_t_int.m_temp;
+		cr_out_solver.m_T_salt_hot = mc_sys_hot_out_t_int.m_temp - 273.15;
 
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
@@ -1655,11 +1706,15 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	}
 	else
 	{
-		
+		m_h_sys_c_t_int_fullts = m_h_c_rec_in_t_int_fullts =
+			m_h_h_rec_out_t_int_fullts = m_h_sys_h_t_int_fullts = 0.0;
+
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
 			m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_subts =
 			m_E_dot_sca_summed_fullts =
 			0.0;
+
+		m_q_dot_to_sink_fullts = 0.0;
 
 		// Solution failed, so tell controller/solver
 		cr_out_solver.m_q_startup = 0.0;			//[MWt-hr]
@@ -2077,7 +2132,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	double h_pump_in = wp.enth;		//[kJ/kg]
 
 		// Calculate isentropic pump outlet enthalpy
-	wp_code = water_PS(P_system_in, s_pump_in, &wp);
+	wp_code = water_PS(P_system_in*100.0, s_pump_in, &wp);
 	if( wp_code != 0 )
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PS error", wp_code));
@@ -2286,6 +2341,9 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	m_q_dot_HR_cold_loss_subts = q_dot_loss_HR_cold*1.E-3;		//[MWt]
 	m_q_dot_HR_hot_loss_subts = q_dot_loss_HR_hot*1.E-3;		//[MWt]
 
+		// Q_dot out of system
+	m_q_dot_to_sink_subts = m_dot_loop*double(m_nLoops)*(mc_sys_hot_out_t_int.m_enth - mc_sys_cold_in_t_int.m_enth)*1.E-3;	//[MWt]
+
 	// *********************************************************
 	// Calculate total losses and energy balances
 	// *********************************************************
@@ -2435,6 +2493,7 @@ void C_csp_lf_dsg_collector_receiver::set_output_values()
 	mc_reported_outputs.value(E_Q_DOT_REC_ABS, m_q_dot_sca_abs_summed_fullts);	//[MWt]
 	mc_reported_outputs.value(E_Q_DOT_PIPING_LOSS, m_q_dot_HR_cold_loss_fullts + m_q_dot_HR_hot_loss_fullts);	//[MWt]
 	mc_reported_outputs.value(E_E_DOT_INTERNAL_ENERGY, m_E_dot_sca_summed_fullts);	//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_OUT, m_q_dot_to_sink_fullts);				//[MWt]
 }
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
