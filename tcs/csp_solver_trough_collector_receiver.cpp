@@ -136,9 +136,9 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	// ************************************************************************
 	// ************************************************************************
 		// Full Timestep Outputs
-	m_T_cold_in_fullts = std::numeric_limits<double>::quiet_NaN();				//[K]
-	m_T_sys_c_rec_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[K]
-	m_T_sys_h_rec_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_T_sys_c_t_int_fullts = std::numeric_limits<double>::quiet_NaN();			//[K]
+	m_T_htf_c_rec_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_T_htf_h_rec_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[K]
 	m_T_sys_h_t_int_fullts = std::numeric_limits<double>::quiet_NaN();			//[K]
 
 	m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
@@ -1483,7 +1483,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 void C_csp_trough_collector_receiver::field_pressure_drop()
 {
 	double dP_IOCOP = PressureDrop(m_m_dot_htf_tot/(double)m_nLoops,
-							(m_T_sys_c_rec_in_t_int_fullts+m_T_sys_h_rec_out_t_int_fullts)/2.0, 1.0, 
+							(m_T_htf_c_rec_in_t_int_fullts+m_T_htf_h_rec_out_t_int_fullts)/2.0, 1.0, 
 							m_D_h((int)m_SCAInfoArray(0,0),0), m_HDR_rough, 40.0+m_Row_Distance,
 							0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 2.0, 1.0, 0.0);		//[Pa]
 
@@ -1544,12 +1544,12 @@ void C_csp_trough_collector_receiver::field_pressure_drop()
 		for(int i = 0; i < m_nrunsec; i++)
 		{
 			dP_to_field += PressureDrop(m_dot_temp,
-								m_T_sys_c_rec_in_t_int_fullts, 1.0,
+								m_T_htf_c_rec_in_t_int_fullts, 1.0,
 								m_D_runner[i], m_HDR_rough, m_L_runner[i],
 								0.0, x3, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);	//[Pa]
 
 			dP_from_field += PressureDrop(m_dot_temp,
-								m_T_sys_h_rec_out_t_int_fullts, 1.0,
+								m_T_htf_h_rec_out_t_int_fullts, 1.0,
 								m_D_runner[i], m_HDR_rough, m_L_runner[i],
 								x3, 0.0, 0.0, 0.0,max(float(CSP::nint(m_L_runner[i]/70.0))*4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);	//[Pa]
 
@@ -1572,12 +1572,12 @@ void C_csp_trough_collector_receiver::field_pressure_drop()
 
 			// Calculate pressure drop in cold header and hot header sections
 			dP_hdr_cold += PressureDrop(m_dot_header,
-								m_T_sys_c_rec_in_t_int_fullts, 1.0,
+								m_T_htf_c_rec_in_t_int_fullts, 1.0,
 								m_D_hdr[i], m_HDR_rough, (m_Row_Distance + 4.275)*2.0,
 								0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);		//[Pa]
 
 			dP_hdr_hot += PressureDrop(m_dot_header,
-								m_T_sys_h_rec_out_t_int_fullts, 1.0,
+								m_T_htf_h_rec_out_t_int_fullts, 1.0,
 								m_D_hdr[i], m_HDR_rough, (m_Row_Distance + 4.275)*2.0,
 								x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);		//[Pa]
 
@@ -1588,7 +1588,7 @@ void C_csp_trough_collector_receiver::field_pressure_drop()
 
 	m_dP_total = dP_loop + dP_hdr_cold + dP_hdr_hot + dP_from_field + dP_to_field + dP_IOCOP;	//[Pa]
 
-	double rho_hdr_cold = m_htfProps.dens(m_T_cold_in_fullts, 1.0);		//[kg/m^3]
+	double rho_hdr_cold = m_htfProps.dens(m_T_sys_c_t_int_fullts, 1.0);		//[kg/m^3]
 	
 	m_W_dot_pump = m_dP_total*m_m_dot_htf_tot/(rho_hdr_cold*m_eta_pump)/1.E6;	//[MWe]
 	m_dP_total *= 1.E-5;		//[bar], convert from Pa
@@ -1626,9 +1626,9 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
 	mc_reported_outputs.value(E_M_DOT_FIELD, m_m_dot_htf_tot);						//[kg/s]
 
-	mc_reported_outputs.value(E_T_FIELD_COLD_IN, m_T_cold_in_fullts - 273.15);				//[C]
-	mc_reported_outputs.value(E_T_REC_COLD_IN, m_T_sys_c_rec_in_t_int_fullts - 273.15);		//[C]
-	mc_reported_outputs.value(E_T_REC_HOT_OUT, m_T_sys_h_rec_out_t_int_fullts - 273.15);	//[C]
+	mc_reported_outputs.value(E_T_FIELD_COLD_IN, m_T_sys_c_t_int_fullts - 273.15);			//[C]
+	mc_reported_outputs.value(E_T_REC_COLD_IN, m_T_htf_c_rec_in_t_int_fullts - 273.15);		//[C]
+	mc_reported_outputs.value(E_T_REC_HOT_OUT, m_T_htf_h_rec_out_t_int_fullts - 273.15);	//[C]
 	mc_reported_outputs.value(E_T_FIELD_HOT_OUT, m_T_sys_h_t_int_fullts - 273.15);			//[C]
 	mc_reported_outputs.value(E_PRESSURE_DROP, m_dP_total);		//[bar]
 
@@ -1670,8 +1670,8 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	double Q_fp_sum = 0.0;				//[MJ]
 
 	// Zero full timestep outputs
-	m_T_cold_in_fullts = m_T_sys_c_rec_in_t_int_fullts = 
-		m_T_sys_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
+	m_T_sys_c_t_int_fullts = m_T_htf_c_rec_in_t_int_fullts =
+		m_T_htf_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
 
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts = 
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts = 
@@ -1709,9 +1709,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		}
 
 		// Add current temperature so summation
-		m_T_cold_in_fullts += T_cold_in;						//[K]
-		m_T_sys_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0];	//[K]
-		m_T_sys_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA-1];	//[K]
+		m_T_sys_c_t_int_fullts += T_cold_in;					//[K]
+		m_T_htf_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0];	//[K]
+		m_T_htf_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA-1];	//[K]
 		m_T_sys_h_t_int_fullts += m_T_sys_h_t_int;				//[K]	
 
 		// Add subtimestep calcs
@@ -1731,9 +1731,9 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	
 	// Now, calculate average value over all subtimesteps
 	double nd_steps_recirc = (double)n_steps_recirc;
-	m_T_cold_in_fullts /= nd_steps_recirc;				//[K]
-	m_T_sys_c_rec_in_t_int_fullts /= nd_steps_recirc;	//[K]
-	m_T_sys_h_rec_out_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_sys_c_t_int_fullts /= nd_steps_recirc;			//[K]
+	m_T_htf_c_rec_in_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_htf_h_rec_out_t_int_fullts /= nd_steps_recirc;	//[K]
 	m_T_sys_h_t_int_fullts /= nd_steps_recirc;			//[K]
 	
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
@@ -1816,8 +1816,8 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	double Q_fp_sum = 0.0;				//[MJ]
 
 	// Zero full timestep outputs
-	m_T_cold_in_fullts = m_T_sys_c_rec_in_t_int_fullts =
-		m_T_sys_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
+	m_T_sys_c_t_int_fullts = m_T_htf_c_rec_in_t_int_fullts =
+		m_T_htf_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
 
 	// Zero full timestep outputs
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
@@ -1854,9 +1854,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		}
 
 		// Add current temperatures
-		m_T_cold_in_fullts += T_cold_in;						//[K]
-		m_T_sys_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0];	//[K]
-		m_T_sys_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA - 1];	//[K]
+		m_T_sys_c_t_int_fullts += T_cold_in;					//[K]
+		m_T_htf_c_rec_in_t_int_fullts += m_T_htf_in_t_int[0];	//[K]
+		m_T_htf_h_rec_out_t_int_fullts += m_T_htf_out_t_int[m_nSCA - 1];	//[K]
 		m_T_sys_h_t_int_fullts += m_T_sys_h_t_int;				//[K]	
 
 		// Add subtimestep calcs
@@ -1884,9 +1884,9 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	}
 
 	double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
-	m_T_cold_in_fullts /= nd_steps_recirc;				//[K]
-	m_T_sys_c_rec_in_t_int_fullts /= nd_steps_recirc;	//[K]
-	m_T_sys_h_rec_out_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_sys_c_t_int_fullts /= nd_steps_recirc;			//[K]
+	m_T_htf_c_rec_in_t_int_fullts /= nd_steps_recirc;	//[K]
+	m_T_htf_h_rec_out_t_int_fullts /= nd_steps_recirc;	//[K]
 	m_T_sys_h_t_int_fullts /= nd_steps_recirc;			//[K]
 
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
@@ -2144,9 +2144,9 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 	if( on_success )
 	{
-		m_T_cold_in_fullts = T_cold_in;									//[K]
-		m_T_sys_c_rec_in_t_int_fullts = m_T_htf_in_t_int[0];			//[K]
-		m_T_sys_h_rec_out_t_int_fullts = m_T_htf_out_t_int[m_nSCA - 1];	//[K]
+		m_T_sys_c_t_int_fullts = T_cold_in;								//[K]
+		m_T_htf_c_rec_in_t_int_fullts = m_T_htf_in_t_int[0];			//[K]
+		m_T_htf_h_rec_out_t_int_fullts = m_T_htf_out_t_int[m_nSCA - 1];	//[K]
 		m_T_sys_h_t_int_fullts = m_T_sys_h_t_int;						//[K]
 
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
@@ -2196,9 +2196,9 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	else
 	{	// Solution failed, so tell controller/solver
 
-		m_T_cold_in_fullts = 0.0;				//[K]
-		m_T_sys_c_rec_in_t_int_fullts = 0.0;	//[K]
-		m_T_sys_h_rec_out_t_int_fullts = 0.0;	//[K]
+		m_T_sys_c_t_int_fullts = 0.0;			//[K]
+		m_T_htf_c_rec_in_t_int_fullts = 0.0;	//[K]
+		m_T_htf_h_rec_out_t_int_fullts = 0.0;	//[K]
 		m_T_sys_h_t_int_fullts = 0.0;			//[K]
 
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =

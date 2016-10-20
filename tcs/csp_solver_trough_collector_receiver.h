@@ -225,9 +225,9 @@ private:
 	// *********************************************
 	// *********************************************
 			// Full Timestep outputs
-	double m_T_cold_in_fullts;				//[K] Temperature (bulk) of cold runners & headers at end of current timestep
-	double m_T_sys_c_rec_in_t_int_fullts;	//[K] Time-integrated-average inlet HTF temperature to FIRST sca
-	double m_T_sys_h_rec_out_t_int_fullts;	//[K] Time-integrated-average outlet HTF temperature from LAST sca
+	double m_T_sys_c_t_int_fullts;			//[K] Temperature (bulk) of cold runners & headers at end of current timestep
+	double m_T_htf_c_rec_in_t_int_fullts;	//[K] Time-integrated-average inlet HTF temperature to FIRST sca
+	double m_T_htf_h_rec_out_t_int_fullts;	//[K] Time-integrated-average outlet HTF temperature from LAST sca
 	double m_T_sys_h_t_int_fullts;			//[K] Temperature (bulk) of hot runners & headers at timestep-integrated-average
 
 	double m_q_dot_sca_loss_summed_fullts;	//[MWt] SYSTEM SCA heat loss
