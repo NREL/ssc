@@ -33,7 +33,11 @@ public:
 		E_Q_DOT_REC_ABS,			//[MWt]
 		E_Q_DOT_PIPING_LOSS,		//[MWt]
 		E_E_DOT_INTERNAL_ENERGY,	//[MWt]
-		E_Q_DOT_OUT					//[MWt]
+		E_Q_DOT_OUT,				//[MWt]
+		E_Q_DOT_FREEZE_PROT,		//[MWt]
+
+		E_M_DOT_LOOP,		//[kg/s]
+		E_M_DOT_FIELD		//[kg/s]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -74,6 +78,7 @@ private:
 	bool m_is_sh;				//[-]
 	double m_Ap_tot;			//[m2] Total solar field aperture area	
 	double m_Ap_loop;			//[m2] Loop solar field aperture area
+	double m_opt_eta_des;		//[-] Design point optical efficiency (theta = 0) from the solar field
 		// Energy and mass balance calcs
 	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
 	double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
@@ -82,7 +87,7 @@ private:
 	double m_m_dot_b_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
 	double m_m_dot_pb_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
 	double m_m_dot_des;			//[kg/s] SYSTEM design point mass flow rate - field design basis
-	double m_m_dot_tot;			//[kg/s] SYSTEM mass flow rate off-design
+	double m_m_dot_loop_des;	//[kg/s] LOOP design point mass flow rate
 	// *******************************************
 	// *******************************************
 
@@ -139,6 +144,9 @@ private:
 	double m_E_dot_sca_summed_fullts;			//[MWt] SYSTEM SCA internal energy change over time
 
 	double m_q_dot_to_sink_fullts;			//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)			
+	double m_q_dot_freeze_protection;		//[MWt] SYSTEM thermal freeze protection
+	
+	double m_m_dot_loop;				//[kg/s] LOOP mass flow rate
 
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
