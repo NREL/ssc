@@ -81,6 +81,7 @@ private:
 	double m_L_tot;			//[m] Total length of collectors in a loop
 	double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
 	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
+	double m_m_dot_loop_des;//[kg/s] LOOP design mass flow rate
 	double m_q_design;		//[Wt] Design-point thermal power from the solar field
 	double m_W_dot_sca_tracking_nom;		//[MWe] Tracking parasitics when trough is on sun
 
@@ -133,10 +134,12 @@ private:
 	util::matrix_t<double> m_EndLoss;	//[-] Light missing receiver due to length
 
 	double m_Theta_ave;			//[rad] Field average m_theta value (but... nothing in our model allows for this to different over SCAs)
+	
 	double m_CosTh_ave;			//[-] Field average costheta value
 	double m_IAM_ave;			//[-] Field average incidence angle modifier
 	double m_RowShadow_ave;		//[-] Field average row shadowing loss
 	double m_EndLoss_ave;		//[-] Field average end loss
+	
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
 	double m_dni_costh;			//[W/m2] DNI x cos(theta) product
 	double m_W_dot_sca_tracking;	//[MWe] SCA tracking power

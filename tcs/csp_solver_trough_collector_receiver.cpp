@@ -73,6 +73,9 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_T_loop_out_des = std::numeric_limits<double>::quiet_NaN();
 	m_Fluid = -1;
 
+	m_m_dot_design = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_loop_des = std::numeric_limits<double>::quiet_NaN();
+
 	m_T_fp = std::numeric_limits<double>::quiet_NaN();
 	m_I_bn_des = std::numeric_limits<double>::quiet_NaN();
 	m_V_hdr_max = std::numeric_limits<double>::quiet_NaN();
@@ -151,6 +154,7 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_E_dot_HR_cold_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_E_dot_HR_hot_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_q_dot_htf_to_sink_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	m_q_dot_freeze_protection = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
 	m_dP_total = std::numeric_limits<double>::quiet_NaN();		//[bar]
 	m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();	//[MWe]
@@ -482,6 +486,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		}
 		//the estimated mass flow rate at design
 		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
 		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
@@ -1792,7 +1797,11 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	// Set mass flow rate to what I imagine might be an appropriate value
 	double m_dot_htf_loop = m_m_dot_htfmin;
 	if( weather.m_beam > 50.0 && m_T_htf_out_t_end_converged[m_nSCA - 1] > (0.5*m_T_fp + 0.5*m_T_startup) )
-		m_dot_htf_loop = 0.8*m_m_dot_htfmax + 0.2*m_m_dot_htfmin;		//[kg/s]
+	{
+		double m_dot_ss = (weather.m_beam * m_CosTh_ave * m_IAM_ave * m_RowShadow_ave * m_EndLoss_ave) / 
+								(m_I_bn_des * m_opteff_des) * m_m_dot_loop_des;		//[kg/s]
+		m_dot_htf_loop = min( m_m_dot_htfmax, max(m_m_dot_htfmin, 0.8*m_dot_ss + 0.2*m_m_dot_htfmin) );		//[kg/s]
+	}
 
 	// Set duration for recirculation timestep
 	if( m_step_recirc != m_step_recirc )
