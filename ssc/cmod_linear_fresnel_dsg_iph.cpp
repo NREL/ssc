@@ -140,8 +140,12 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",          "trough_field",        "*",        "",     "" },
 	
    		// Heat Sink
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink",     "Heat sink thermal power",     "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_heat_sink_pump",   "Heat sink pumping power",     "MWe",    "",          "Heat_Sink",      "*",                       "",                      "" },
 	
+		// SYSTEM
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_parasitic_tot", "System total electrical parasitic", "MWe",    "",          "Heat_Sink",      "*",                       "",                      "" },
+
 
 		// Controller
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",            "1st operating mode",                                           "",             "",            "Solver",        "*",                       "",           "" },
@@ -349,15 +353,15 @@ public:
 		steam_heat_sink.ms_params.m_T_hot_des = as_double("T_hot");			//[C] Inlet temperature = field outlet
 		steam_heat_sink.ms_params.m_P_hot_des = as_double("P_turb_des")*100.0;	//[kPa], convert from [bar], Inlet pressure = field outlet = design
 		steam_heat_sink.ms_params.m_T_cold_des = as_double("T_cold_ref");	//[C] Outlet temperature = FIELD design inlet temperature
-		steam_heat_sink.ms_params.m_dP_frac_des = 0.0;						//[-] Fractional pressure drop through heat sink at design
+		steam_heat_sink.ms_params.m_dP_frac_des = 0.01;						//[-] Fractional pressure drop through heat sink at design
 		steam_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_des");		//[MWt] Design thermal power to heat sink
 		steam_heat_sink.ms_params.m_m_dot_max_frac = c_lf_dsg.m_cycle_max_fraction;	//[-]
-		steam_heat_sink.ms_params.m_pump_eta_isen = 1.0;					//[-]
+		steam_heat_sink.ms_params.m_pump_eta_isen = as_double("eta_pump");			//[-] 
 
 
 		// Allocate heat sink outputs
 		steam_heat_sink.mc_reported_outputs.assign(C_pc_steam_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
-
+		steam_heat_sink.mc_reported_outputs.assign(C_pc_steam_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_heat_sink_pump", n_steps_fixed), n_steps_fixed);
 
 
 
@@ -402,6 +406,8 @@ public:
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::WSPD, allocate("wspd", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRES, allocate("pres", n_steps_fixed), n_steps_fixed);
+
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("W_dot_parasitic_tot", n_steps_fixed), n_steps_fixed);
 
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
@@ -464,10 +470,12 @@ public:
 			throw exec_error("linear_fresnel_dsg_iph", "failed to setup adjustment factors: " + haf.error());
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
+		ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
 		for( int i = 0; i < n_steps_fixed; i++ )
 		{
 			size_t hour = ceil(p_time_final_hr[i]);
 			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt]
+			p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
 		}
 
 
