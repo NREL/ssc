@@ -42,7 +42,7 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "theta_dep",         "deploy angle",                                                                        "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",              "Freeze protection temperature (heat trace activation temperature)",                   "C",             "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Pipe_hl_coef",      "Loss coefficient from the header.. runner pipe.. and non-HCE pipin",                  "W/m2-K",        "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",   "Tracking power.. in Watts per SCA drive",                                             "W/SCA",         "",            "solarfield",     "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "SCA_drives_elec",   "Tracking power.. in Watts per m2",                                                    "W/m2",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "ColAz",             "Collector azimuth angle",                                                             "deg",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "e_startup",         "Thermal inertia contribution per sq meter of solar field",                            "kJ/K-m2",       "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des_sf",      "Design-point ambient temperature",                                                    "C",             "",            "solarfield",     "*",                       "",                      "" },
@@ -134,7 +134,10 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "x_rec_hot_out",   "Loop timestep-averaged outlet quality",      "",        "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_hot_out", "Field timestep-averaged outlet temperature", "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "x_field_hot_out", "Field timestep-averaged outlet quality",     "",        "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "deltaP_field",    "Field pressure drop",                    "bar",         "",          "trough_field",        "*",        "",     "" },
 	
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",          "trough_field",        "*",        "",     "" },
+
 
    		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
@@ -330,6 +333,9 @@ public:
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_X_REC_HOT_OUT, allocate("x_rec_hot_out", n_steps_fixed), n_steps_fixed);			//[-]
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);		//[C]
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_X_FIELD_HOT_OUT, allocate("x_field_hot_out", n_steps_fixed), n_steps_fixed);		//[-]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);			//[bar]
+
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);		//[MWe]
 
 		// ********************************
 		// ********************************
