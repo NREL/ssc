@@ -47,6 +47,7 @@ public:
 		E_PRESSURE_DROP,	//[bar]
 
 		E_W_DOT_SCA_TRACK,	//[MWe]
+		E_W_DOT_PUMP		//[MWe]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -165,6 +166,7 @@ private:
 	double m_m_dot_loop;				//[kg/s] LOOP mass flow rate
 
 	double m_W_dot_sca_tracking;		//[MWe]
+	double m_W_dot_pump;				//[MWe] FIELD pumping power
 
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
