@@ -43,7 +43,10 @@ public:
 		E_T_REC_HOT_OUT,	//[C]
 		E_X_REC_HOT_OUT,	//[-]
 		E_T_FIELD_HOT_OUT,	//[C]
-		E_X_FIELD_HOT_OUT	//[-]
+		E_X_FIELD_HOT_OUT,	//[-]
+		E_PRESSURE_DROP,	//[bar]
+
+		E_W_DOT_SCA_TRACK,	//[MWe]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -94,6 +97,8 @@ private:
 	double m_m_dot_pb_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
 	double m_m_dot_des;			//[kg/s] SYSTEM design point mass flow rate - field design basis
 	double m_m_dot_loop_des;	//[kg/s] LOOP design point mass flow rate
+
+	double m_W_dot_sca_tracking_nom;	//[MWe] Tracking parasitics when trough is on sun
 	// *******************************************
 	// *******************************************
 
@@ -158,6 +163,8 @@ private:
 	double m_q_dot_freeze_protection;		//[MWt] SYSTEM thermal freeze protection
 	
 	double m_m_dot_loop;				//[kg/s] LOOP mass flow rate
+
+	double m_W_dot_sca_tracking;		//[MWe]
 
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
