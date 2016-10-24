@@ -94,6 +94,10 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_INPUT,        SSC_MATRIX,      "b_OpticalTable",    "Values of the optical efficiency table",                                              "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "sh_OpticalTable",   "Values of the optical efficiency table",                                              "none",          "",            "solarfield",     "*",                       "",                      "" },
 
+		// Heat Sink
+    { SSC_INPUT,        SSC_NUMBER,      "heat_sink_dP_frac", "Fractional pressure drop through heat sink",									         "",              "",            "heat_sink",      "*",                       "",                      "" },
+	
+
     // *************************************************************************************************
 	//       OUTPUTS
 	// *************************************************************************************************
@@ -356,7 +360,7 @@ public:
 		steam_heat_sink.ms_params.m_T_hot_des = as_double("T_hot");			//[C] Inlet temperature = field outlet
 		steam_heat_sink.ms_params.m_P_hot_des = as_double("P_turb_des")*100.0;	//[kPa], convert from [bar], Inlet pressure = field outlet = design
 		steam_heat_sink.ms_params.m_T_cold_des = as_double("T_cold_ref");	//[C] Outlet temperature = FIELD design inlet temperature
-		steam_heat_sink.ms_params.m_dP_frac_des = 0.01;						//[-] Fractional pressure drop through heat sink at design
+		steam_heat_sink.ms_params.m_dP_frac_des = as_double("heat_sink_dP_frac");	//[-] Fractional pressure drop through heat sink at design
 		steam_heat_sink.ms_params.m_q_dot_des = as_double("q_pb_des");		//[MWt] Design thermal power to heat sink
 		steam_heat_sink.ms_params.m_m_dot_max_frac = c_lf_dsg.m_cycle_max_fraction;	//[-]
 		steam_heat_sink.ms_params.m_pump_eta_isen = as_double("eta_pump");			//[-] 
