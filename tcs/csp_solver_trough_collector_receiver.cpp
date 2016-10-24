@@ -159,6 +159,8 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_dP_total = std::numeric_limits<double>::quiet_NaN();		//[bar]
 	m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();	//[MWe]
 
+	m_W_dot_sca_tracking = std::numeric_limits<double>::quiet_NaN();	//[MWe]
+
 	m_EqOpteff = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_tot = std::numeric_limits<double>::quiet_NaN();
 	m_Theta_ave = std::numeric_limits<double>::quiet_NaN();
@@ -365,7 +367,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	// for test end
 
 	// Calculate tracking parasitics for when trough is on sun
-	m_W_dot_sca_tracking_nom = m_SCA_drives_elec*double(m_nSCA*m_nLoops)/1.E6;	//[MWe]
+	m_W_dot_sca_tracking_nom = m_SCA_drives_elec*(double)(m_nSCA*m_nLoops)/1.E6;	//[MWe]
 
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
