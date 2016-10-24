@@ -41,7 +41,9 @@ public:
 		E_T_FIELD_COLD_IN,	//[C]
 		E_T_REC_COLD_IN,	//[C]
 		E_T_REC_HOT_OUT,	//[C]
-		E_T_FIELD_HOT_OUT	//[C]
+		E_X_REC_HOT_OUT,	//[-]
+		E_T_FIELD_HOT_OUT,	//[C]
+		E_X_FIELD_HOT_OUT	//[-]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -136,10 +138,15 @@ private:
 	double m_q_dot_to_sink_subts;			//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
 	
 			// Full timestep outputs
-	double m_h_sys_c_in_t_int_fullts;		//[kJ/kg] Temperature (bulk) of cold runners & headers at end of current timestep
+	double m_h_sys_c_in_t_int_fullts;		//[kJ/kg] Temperature (bulk) of cold runners & headers integrated over subtimesteps
+	double m_P_sys_c_in_t_int_fullts;		//[bar] Pressure integrated over subtimesteps
 	double m_h_c_rec_in_t_int_fullts;		//[kJ/kg] Time-integrated-average inlet HTF temperature to FIRST sca
+	double m_P_c_rec_in_t_int_fullts;		//[bar]
 	double m_h_h_rec_out_t_int_fullts;		//[kJ/kg] Time-integrated-average outlet HTF temperature from LAST sca
+	double m_P_h_rec_out_t_int_fullts;		//[bar]
 	double m_h_sys_h_out_t_int_fullts;		//[kJ/kg] Temperature (bulk) of hot runners & headers at timestep-integrated-average
+	double m_P_sys_h_out_t_int_fullts;		//[bar]
+
 
 	double m_q_dot_sca_loss_summed_fullts;		//[MWt] SYSTEM SCA heat loss 
 	double m_q_dot_sca_abs_summed_fullts;		//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)

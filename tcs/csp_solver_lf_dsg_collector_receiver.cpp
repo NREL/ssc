@@ -25,7 +25,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_COLD_IN, true},	    //[C]
 	{C_csp_lf_dsg_collector_receiver::E_T_REC_COLD_IN, true},	    //[C]
 	{C_csp_lf_dsg_collector_receiver::E_T_REC_HOT_OUT, true},	    //[C]
+	{C_csp_lf_dsg_collector_receiver::E_X_REC_HOT_OUT, true},		//[-]
 	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_HOT_OUT, true},     //[C]
+	{C_csp_lf_dsg_collector_receiver::E_X_FIELD_HOT_OUT, true},		//[-]
 
 	csp_info_invalid
 };
@@ -94,10 +96,14 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_q_dot_to_sink_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 
 			// FULL TIMESTEP outputs
-	m_h_sys_c_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();		//[kJ/kg]
+	m_h_sys_c_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
+	m_P_sys_c_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[bar]
 	m_h_c_rec_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
+	m_P_c_rec_in_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[bar]
 	m_h_h_rec_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
-	m_h_sys_h_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();		//[kJ/kg]
+	m_P_h_rec_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[bar]
+	m_h_sys_h_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[kJ/kg]
+	m_P_sys_h_out_t_int_fullts = std::numeric_limits<double>::quiet_NaN();	//[bar]
 
 	m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 	m_q_dot_sca_abs_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
@@ -1149,8 +1155,10 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	double Q_fp_sum = 0.0;						//[MJ]
 
 	// Zero full timestep outputs
-	m_h_sys_c_in_t_int_fullts = m_h_c_rec_in_t_int_fullts =
-		m_h_h_rec_out_t_int_fullts = m_h_sys_h_out_t_int_fullts = 0.0;
+	m_h_sys_c_in_t_int_fullts = m_P_sys_c_in_t_int_fullts = 
+		m_h_c_rec_in_t_int_fullts = m_P_c_rec_in_t_int_fullts =
+		m_h_h_rec_out_t_int_fullts = m_P_h_rec_out_t_int_fullts =
+		m_h_sys_h_out_t_int_fullts = m_P_sys_h_out_t_int_fullts = 0.0;
 
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
@@ -1199,9 +1207,16 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	
 		// Add subtimestep calcs
 		m_h_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
+		m_P_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_pres;		//[bar]
+
 		m_h_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_enth;			//[kJ/kg]
-		m_h_h_rec_out_t_int_fullts += mc_sca_in_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
+		m_P_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_pres;			//[bar]
+		
+		m_h_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
+		m_P_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot-1].m_pres;	//[bar]
+
 		m_h_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
+		m_P_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_pres;		//[bar]
 
 		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
 		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;		//[MWt]
@@ -1217,10 +1232,17 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	// Calculate average value over all subtimesteps
 	double nd_steps_recirc = (double)n_steps_recirc;
 	
-	m_h_sys_c_in_t_int_fullts /= nd_steps_recirc;			//[kJ/kg]
+	m_h_sys_c_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_sys_c_in_t_int_fullts /= nd_steps_recirc;		//[bar]
+
 	m_h_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[bar]
+
 	m_h_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
-	m_h_sys_h_out_t_int_fullts /= nd_steps_recirc;			//[kJ/kg]
+	m_P_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[bar]
+
+	m_h_sys_h_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_sys_h_out_t_int_fullts /= nd_steps_recirc;		//[bar]
 
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;		//[MWt]
@@ -1311,8 +1333,10 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	double Q_fp_sum = 0.0;						//[MJ]
 
 	// Zero full timestep outputs
-	m_h_sys_c_in_t_int_fullts = m_h_c_rec_in_t_int_fullts =
-		m_h_h_rec_out_t_int_fullts = m_h_sys_h_out_t_int_fullts = 0.0;
+	m_h_sys_c_in_t_int_fullts = m_P_sys_c_in_t_int_fullts =
+		m_h_c_rec_in_t_int_fullts = m_P_c_rec_in_t_int_fullts =
+		m_h_h_rec_out_t_int_fullts = m_P_h_rec_out_t_int_fullts =
+		m_h_sys_h_out_t_int_fullts = m_P_sys_h_out_t_int_fullts = 0.0;
 
 	m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
 		m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
@@ -1361,9 +1385,16 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		// Add subtimestep calcs
 		m_h_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
+		m_P_sys_c_in_t_int_fullts += mc_sys_cold_in_t_int.m_pres;		//[bar]
+
 		m_h_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_enth;			//[kJ/kg]
-		m_h_h_rec_out_t_int_fullts += mc_sca_in_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
-		m_h_sys_h_out_t_int_fullts += mc_sys_hot_in_t_int.m_enth;		//[kJ/kg]
+		m_P_c_rec_in_t_int_fullts += mc_sca_in_t_int[0].m_pres;			//[bar]
+
+		m_h_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
+		m_P_h_rec_out_t_int_fullts += mc_sca_out_t_int[m_nModTot - 1].m_pres;	//[bar]
+
+		m_h_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
+		m_P_sys_h_out_t_int_fullts += mc_sys_hot_out_t_int.m_pres;		//[bar]
 
 		m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;	//[MWt]
 		m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;		//[MWt]
@@ -1388,9 +1419,16 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	double nd_steps_recirc = min((double)n_steps_recirc, (double)(i_step + 1));
 
 	m_h_sys_c_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_sys_c_in_t_int_fullts /= nd_steps_recirc;		//[bar]
+
 	m_h_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_c_rec_in_t_int_fullts /= nd_steps_recirc;		//[bar]
+
 	m_h_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_h_rec_out_t_int_fullts /= nd_steps_recirc;		//[bar]
+
 	m_h_sys_h_out_t_int_fullts /= nd_steps_recirc;		//[kJ/kg]
+	m_P_sys_h_out_t_int_fullts /= nd_steps_recirc;		//[bar]
 
 	m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
 	m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;		//[MWt]
@@ -1693,9 +1731,16 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// Call final metrics method?
 		// (i.e. pressure drops, parasitics...)
 		m_h_sys_c_in_t_int_fullts = mc_sys_cold_in_t_int.m_enth;		//[kJ/kg]
-		m_h_c_rec_in_t_int_fullts = mc_sca_in_t_int[0].m_enth;		//[kJ/kg]
-		m_h_h_rec_out_t_int_fullts = mc_sca_in_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
-		m_h_sys_h_out_t_int_fullts = mc_sys_hot_in_t_int.m_enth;		//[kJ/kg]
+		m_P_sys_c_in_t_int_fullts = mc_sys_cold_in_t_int.m_pres;		//[bar]
+
+		m_h_c_rec_in_t_int_fullts = mc_sca_in_t_int[0].m_enth;			//[kJ/kg]
+		m_P_c_rec_in_t_int_fullts = mc_sca_in_t_int[0].m_pres;			//[bar]
+
+		m_h_h_rec_out_t_int_fullts = mc_sca_out_t_int[m_nModTot - 1].m_enth;	//[kJ/kg]
+		m_P_h_rec_out_t_int_fullts = mc_sca_out_t_int[m_nModTot - 1].m_pres;	//[bar]
+
+		m_h_sys_h_out_t_int_fullts = mc_sys_hot_out_t_int.m_enth;		//[kJ/kg]
+		m_P_sys_h_out_t_int_fullts = mc_sys_hot_out_t_int.m_pres;		//[bar]
 
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
 		m_q_dot_sca_abs_summed_fullts = m_q_dot_sca_abs_summed_subts;		//[MWt]
@@ -1732,8 +1777,10 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 	}
 	else
 	{
-		m_h_sys_c_in_t_int_fullts = m_h_c_rec_in_t_int_fullts =
-			m_h_h_rec_out_t_int_fullts = m_h_sys_h_out_t_int_fullts = 0.0;
+		m_h_sys_c_in_t_int_fullts = m_P_sys_c_in_t_int_fullts =
+			m_h_c_rec_in_t_int_fullts = m_P_c_rec_in_t_int_fullts =
+			m_h_h_rec_out_t_int_fullts = m_P_h_rec_out_t_int_fullts =
+			m_h_sys_h_out_t_int_fullts = m_P_sys_h_out_t_int_fullts = 0.0;
 
 		m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
 			m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_subts =
@@ -2525,6 +2572,46 @@ void C_csp_lf_dsg_collector_receiver::set_output_values()
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_loop);				//[kg/s]
 	mc_reported_outputs.value(E_M_DOT_FIELD, m_m_dot_loop*m_nLoops);	//[kg/s]
 
+	// Calculate output statepoints
+	int wp_code = water_PH(m_P_sys_c_in_t_int_fullts*100.0, m_h_sys_c_in_t_int_fullts, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::set_output_values Field Cold In state point calcs failed", "water_PH error", wp_code));
+	}
+	mc_reported_outputs.value(E_T_FIELD_COLD_IN, wp.temp-273.15);		//[C]
+
+	wp_code = water_PH(m_P_c_rec_in_t_int_fullts*100.0, m_h_c_rec_in_t_int_fullts, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::set_output_values Rec Cold In state point calcs failed", "water_PH error", wp_code));
+	}
+	mc_reported_outputs.value(E_T_REC_COLD_IN, wp.temp-273.15);			//[C]
+
+	wp_code = water_PH(m_P_h_rec_out_t_int_fullts*100.0, m_h_h_rec_out_t_int_fullts, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::set_output_values Rec Hot Out state point calcs failed", "water_PH error", wp_code));
+	}
+	mc_reported_outputs.value(E_T_REC_HOT_OUT, wp.temp-273.15);			//[C]
+	double x_out = wp.qual;
+	if( x_out < 0.0 )
+		x_out = -1.0;
+	if( x_out > 1.0 )
+		x_out = 10.0;
+	mc_reported_outputs.value(E_X_REC_HOT_OUT, x_out);		//[-]		
+
+	wp_code = water_PH(m_P_sys_h_out_t_int_fullts*100.0, m_h_sys_h_out_t_int_fullts, &wp);
+	if( wp_code != 0 )
+	{
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::set_output_values Field Hot Out state point calcs failed", "water_PH error", wp_code));
+	}
+	mc_reported_outputs.value(E_T_FIELD_HOT_OUT, wp.temp-273.15);		//[C]
+	x_out = wp.qual;
+	if( x_out < 0.0 )
+		x_out = -1.0;
+	if( x_out > 1.0 )
+		x_out = 10.0;
+	mc_reported_outputs.value(E_X_FIELD_HOT_OUT, x_out);	//[-]
 }
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
