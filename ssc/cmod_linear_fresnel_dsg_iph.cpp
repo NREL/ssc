@@ -128,6 +128,12 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	
 	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_loop",   "Receiver mass flow rate",                   "kg/s",    "",              "trough_field",        "*",        "",     "" },  
 	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_field",  "Field total mass flow rate",                "kg/s",    "",              "trough_field",        "*",        "",     "" },  
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_cold_in", "Field timestep-averaged inlet temperature",  "C",       "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_cold_in",   "Loop timestep-averaged inlet temperature",   "C",       "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_hot_out",   "Loop timestep-averaged outlet temperature",  "C",       "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "x_rec_hot_out",   "Loop timestep-averaged outlet quality",      "",        "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_hot_out", "Field timestep-averaged outlet temperature", "C",       "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "x_field_hot_out", "Field timestep-averaged outlet quality",     "",        "",          "trough_field",        "*",        "",     "" },
 	
 
    		// Heat Sink
@@ -318,6 +324,12 @@ public:
 
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);	//[kg/s]
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_M_DOT_FIELD, allocate("m_dot_field", n_steps_fixed), n_steps_fixed);	//[kg/s]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);		//[C]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);			//[C]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);			//[C]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_X_REC_HOT_OUT, allocate("x_rec_hot_out", n_steps_fixed), n_steps_fixed);			//[-]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);		//[C]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_X_FIELD_HOT_OUT, allocate("x_field_hot_out", n_steps_fixed), n_steps_fixed);		//[-]
 
 		// ********************************
 		// ********************************
