@@ -137,8 +137,8 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "deltaP_field",    "Field pressure drop",                    "bar",         "",          "trough_field",        "*",        "",     "" },
 	
 	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",          "trough_field",        "*",        "",     "" },
-
-
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",          "trough_field",        "*",        "",     "" },
+	
    		// Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",                  "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
 	
@@ -336,6 +336,7 @@ public:
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);			//[bar]
 
 		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);		//[MWe]
+		c_lf_dsg.mc_reported_outputs.assign(C_csp_lf_dsg_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);			//[MWe]
 
 		// ********************************
 		// ********************************
@@ -451,16 +452,16 @@ public:
 
 		ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
 		if( count != n_steps_fixed )
-			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
+			throw exec_error("linear_fresnel_dsg_iph", "The number of fixed steps does not match the length of output data arrays");
 
 		ssc_number_t *p_q_dot_heat_sink = as_array("q_dot_to_heat_sink", &count);
 		if( count != n_steps_fixed )
-			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays");
+			throw exec_error("linear_fresnel_dsg_iph", "The number of fixed steps does not match the length of output data arrays");
 
 		// 'adjustment_factors' class stores factors in hourly array, so need to index as such
 		adjustment_factors haf(this, "adjust");
 		if( !haf.setup() )
-			throw exec_error("trough_physical_iph", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("linear_fresnel_dsg_iph", "failed to setup adjustment factors: " + haf.error());
 
 		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 		for( int i = 0; i < n_steps_fixed; i++ )
