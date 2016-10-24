@@ -31,6 +31,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_lf_dsg_collector_receiver::E_PRESSURE_DROP, true},		//[bar]
 
 	{C_csp_lf_dsg_collector_receiver::E_W_DOT_SCA_TRACK, true},		//[MWe]
+	{C_csp_lf_dsg_collector_receiver::E_W_DOT_PUMP, true},			//[MWe]
 
 	csp_info_invalid
 };
@@ -123,6 +124,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_m_dot_loop_des = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 
 	m_W_dot_sca_tracking = std::numeric_limits<double>::quiet_NaN();	//[MWe]
+	m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();			//[MWe]
 
 		// Sun Position
 	m_phi_t = std::numeric_limits<double>::quiet_NaN();		//[rad]
@@ -1281,7 +1283,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;								//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 
 	cr_out_solver.m_standby_control = -1;
 	cr_out_solver.m_dP_sf_sh = 0.0;
@@ -1477,7 +1479,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-	cr_out_solver.m_W_dot_htf_pump = 0.0;								//[MWe]
+	cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 
 	cr_out_solver.m_standby_control = -1;
 	cr_out_solver.m_dP_sf_sh = 0.0;
@@ -1777,7 +1779,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
-		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
+		cr_out_solver.m_W_dot_htf_pump = m_W_dot_pump;				//[MWe]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
 		cr_out_solver.m_dP_sf_sh = 0.0;				//[bar]
@@ -2232,7 +2234,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	double h_pump_out_isen = wp.enth;	//[kJ/kg]
 
 		// Calculate actual pump outlet enthalpy
-	double eta_isen = 1.0;
+	double eta_isen = m_eta_pump;		//[-]
 	double h_pump_out = (h_pump_out_isen - h_pump_in)/eta_isen + h_pump_in;	//[kJ/kg]
 
 		// Calculate pump outlet state
@@ -2245,6 +2247,9 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	{
 		throw(C_csp_exception("The inlet to the once thru loop, post-pump, is 2-phase, this is not good"));
 	}
+
+		// Calculate pumping power
+	m_W_dot_pump = m_m_dot_loop*(double)m_nLoops*(h_pump_out - h_pump_in)/1.E3;		//[MWe]
 
 	// Set system/header/field inlet state
 	mc_sys_cold_in_t_int.m_pres = P_system_in;	//[bar]
@@ -2636,6 +2641,7 @@ void C_csp_lf_dsg_collector_receiver::set_output_values()
 	mc_reported_outputs.value(E_PRESSURE_DROP, m_P_sys_c_in_t_int_fullts - m_P_sys_h_out_t_int_fullts);	//[bar]
 
 	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
+	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
 }
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
