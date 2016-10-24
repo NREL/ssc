@@ -28,6 +28,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_lf_dsg_collector_receiver::E_X_REC_HOT_OUT, true},		//[-]
 	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_HOT_OUT, true},     //[C]
 	{C_csp_lf_dsg_collector_receiver::E_X_FIELD_HOT_OUT, true},		//[-]
+	{C_csp_lf_dsg_collector_receiver::E_PRESSURE_DROP, true},		//[bar]
+
+	{C_csp_lf_dsg_collector_receiver::E_W_DOT_SCA_TRACK, true},		//[MWe]
 
 	csp_info_invalid
 };
@@ -76,6 +79,8 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 	m_m_dot_b_des = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 	m_m_dot_pb_des = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 	m_m_dot_des = std::numeric_limits<double>::quiet_NaN();			//[kg/s]
+
+	m_W_dot_sca_tracking_nom = std::numeric_limits<double>::quiet_NaN();	//[MWe]
 	// *******************************************
 	// *******************************************
 
@@ -116,6 +121,8 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 
 	m_m_dot_loop = std::numeric_limits<double>::quiet_NaN();		//[MWt]
 	m_m_dot_loop_des = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+
+	m_W_dot_sca_tracking = std::numeric_limits<double>::quiet_NaN();	//[MWe]
 
 		// Sun Position
 	m_phi_t = std::numeric_limits<double>::quiet_NaN();		//[rad]
@@ -946,6 +953,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	m_ncall = -1;
 
+	// Calculate the tracking parasitics for when trough is on sun
+	m_W_dot_sca_tracking_nom = m_SCA_drives_elec*m_Ap_tot/1.E6;		//[MWe]
+
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_field_in_des;	//[K] Design point inlet temperature
 	solved_params.m_P_cold_des = m_P_turb_des*100.0;	//[kPa] Design point *field outlet* pressure
@@ -1270,7 +1280,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;	//[C] Average timestep field outlet temperature
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
-	cr_out_solver.m_W_dot_col_tracking = 0.0;							//[MWe]
+	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = 0.0;								//[MWe]
 
 	cr_out_solver.m_standby_control = -1;
@@ -1466,7 +1476,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
-	cr_out_solver.m_W_dot_col_tracking = 0.0;							//[MWe]
+	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 	cr_out_solver.m_W_dot_htf_pump = 0.0;								//[MWe]
 
 	cr_out_solver.m_standby_control = -1;
@@ -1766,7 +1776,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
-		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
+		cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
 
 		cr_out_solver.m_standby_control = -1;		//[-]
@@ -1906,6 +1916,8 @@ void C_csp_lf_dsg_collector_receiver::converged()
 	m_operating_mode_converged = m_operating_mode;	//[-]
 
 	mc_reported_outputs.set_timestep_outputs();
+
+	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
 	return;
 }
@@ -2089,6 +2101,11 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	}
 	m_eta_opt /= (m_Ap_loop);
 
+	// Assume that whenever field is in STARTUP OR ON, we're using the nominal tracking load
+	// This is because it takes power to move into and out of defocus, and we'd probably
+	//    just add complexity without any accuracy by trying to capture that
+	m_W_dot_sca_tracking = m_W_dot_sca_tracking_nom*m_ftrack;	//[MWe]
+
 	m_control_defocus = m_component_defocus = 1.0;		//[-]
 
 	m_q_dot_inc_sf_tot = m_Ap_tot*weather.m_beam/1.E6;	//[MWt]
@@ -2109,6 +2126,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta_off()
 	m_control_defocus = m_component_defocus = 0.0;	//[-]
 
 	m_q_dot_inc_sf_tot = 0.0;	//[MWt]
+
+	m_W_dot_sca_tracking = 0.0;	//[MWe]
 
 	return;
 }
@@ -2612,6 +2631,11 @@ void C_csp_lf_dsg_collector_receiver::set_output_values()
 	if( x_out > 1.0 )
 		x_out = 10.0;
 	mc_reported_outputs.value(E_X_FIELD_HOT_OUT, x_out);	//[-]
+
+	// Total pressure drop
+	mc_reported_outputs.value(E_PRESSURE_DROP, m_P_sys_c_in_t_int_fullts - m_P_sys_h_out_t_int_fullts);	//[bar]
+
+	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
 }
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
