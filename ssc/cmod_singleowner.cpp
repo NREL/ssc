@@ -178,6 +178,8 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt percent,1=dscr", "Project Term Debt", "?=1", "INTEGER,MIN=0,MAX=1", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "debt_constant_principal", "Equal principal", "0/1", "0=Equal payments,1=Equal principal", "loan", "?=0", "Boolean", "" },
+
 
 
 /* DHF Capital Cost */                                                            
@@ -975,7 +977,8 @@ public:
 		int ppa_mode = as_integer("ppa_soln_mode");
 
 		bool constant_dscr_mode = (as_integer("debt_option")==1);
-//		log(util::format("debt option=%d and constant dscr mode=%s.",
+		bool constant_principal = as_boolean("debt_constant_principal"); 
+		//		log(util::format("debt option=%d and constant dscr mode=%s.",
 //			as_integer("debt_option"), (constant_dscr_mode ? "true":"false")),
 //			SSC_WARNING);
 
@@ -1716,12 +1719,19 @@ public:
 				// first iteration - calculate debt reserve account based on initial installed cost
 				old_ds_reserve = new_ds_reserve;
 				// debt service reserve
-				cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
-					1,           // Period
-					term_tenor,   // Number periods
-					loan_amount, // Present Value
-					0,           // future Value
-					0);         // cash flow at end of period
+				if (constant_principal)
+				{
+					if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+				}
+				else
+				{
+					cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
+						1,           // Period
+						term_tenor,   // Number periods
+						loan_amount, // Present Value
+						0,           // future Value
+						0);         // cash flow at end of period
+				}
 
 				cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
 				cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
@@ -1762,12 +1772,19 @@ public:
 				{
 					cf.at(CF_debt_balance, i - 1) = loan_amount;
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
-					cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
-						i,           // Period
-						term_tenor,   // Number periods
-						loan_amount, // Present Value
-						0,           // future Value
-						0);         // cash flow at end of period
+					if (constant_principal)
+					{
+						if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+					}
+					else
+					{
+						cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
+							i,           // Period
+							term_tenor,   // Number periods
+							loan_amount, // Present Value
+							0,           // future Value
+							0);         // cash flow at end of period
+					}
 					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 // update reserve account
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
@@ -1779,15 +1796,21 @@ public:
 					if (i <= term_tenor)
 					{
 						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
-
-						if (term_int_rate != 0.0)
+						if (constant_principal)
 						{
-							cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
-								- cf.at(CF_debt_payment_interest, i);
+							if (term_tenor > 0) cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor;
 						}
 						else
 						{
-							cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor -	cf.at(CF_debt_payment_interest, i);
+							if (term_int_rate != 0.0)
+							{
+								cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
+									- cf.at(CF_debt_payment_interest, i);
+							}
+							else
+							{
+								cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
+							}
 						}
 						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 
