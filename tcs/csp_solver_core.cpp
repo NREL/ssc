@@ -514,6 +514,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
 
+	mf_callback(m_cdata, 0.0, 0, 0.0);
+
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
 		// Report simulation progress
