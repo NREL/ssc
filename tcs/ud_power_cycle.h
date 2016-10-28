@@ -85,8 +85,7 @@ public:
 
 	double get_W_dot_cooling_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 
-	double get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
-
+	double get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);	
 };
 
 class C_od_pc_function
@@ -152,10 +151,12 @@ public:
 		double T_amb_ref /*C*/, double T_amb_low /*C*/, double T_amb_high /*C*/, int n_T_amb /*-*/,
 		double m_dot_htf_ND_ref /*-*/, double m_dot_htf_ND_low /*-*/, double m_dot_htf_ND_high /*-*/, int n_m_dot_htf_ND,
 		util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ind);
+
+	// Callback funtion
+	bool(*mf_callback)(void *data, double percent, std::string msg);
+	void *m_cdata;
+	std::string m_udpc_msg;
+
 };
-
-//S_f_outputs(*mf_cycle)(S_f_inputs inputs);
-
-
 
 #endif
