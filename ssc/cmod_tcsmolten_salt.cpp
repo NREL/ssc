@@ -1088,6 +1088,8 @@ public:
 				int out_type = -1;
 				std::string out_msg = "";
 
+				update("Calculating sCO2 design point...", 0.0);
+
 				// Construction class and design system
 				C_sco2_recomp_csp sco2_recomp_csp;
 				try
@@ -1107,6 +1109,8 @@ public:
 					return;
 				}
 
+				update("sCO2 design point calculations complete.", 100.0);
+
 				// Get sCO2 design outputs
 				double m_dot_htf_design = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;			//[kg/s]
 				double T_htf_cold_calc = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
@@ -1114,20 +1118,25 @@ public:
 				double UA_HTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
 
 				// Get user-defined power cycle parameters
-				double T_htf_hot_low = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
-				double T_htf_hot_high = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 20.0;	//[C]
+				double T_htf_hot_low = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 50.0;	//[C]
+				double T_htf_hot_high = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
 				//int n_T_htf_hot_in = floor((T_htf_hot_high - T_htf_hot_low)/2.0)+1;			//[-]
-				int n_T_htf_hot_in = 21;			//[-]
+				int n_T_htf_hot_in = 10;			//[-]
 				double T_amb_low = 0.0;				//[C]
 				double T_amb_high = 55.0;			//[C]
 				//int n_T_amb_in = floor((T_amb_high - T_amb_low)/2.5)+1;					//[-]
-				int n_T_amb_in = 25;				//[-]
-				double m_dot_htf_ND_low = as_double("cycle_cutoff_frac") - 0.01;	//[-]
-				double m_dot_htf_ND_high = as_double("cycle_max_frac") + 0.01;		//[-]
+				int n_T_amb_in = 10;				//[-]
+				double m_dot_htf_ND_low = as_double("cycle_cutoff_frac");	// - 0.01;	//[-]
+				double m_dot_htf_ND_high = max(1.2, as_double("cycle_max_frac"));		// + 0.01;		//[-]
 				//int n_m_dot_htf_ND_in = floor((m_dot_htf_ND_high - m_dot_htf_ND_low)/0.025)+1;			//[-]
-				int n_m_dot_htf_ND_in = 31;
+				int n_m_dot_htf_ND_in = 10;
 
 				util::matrix_t<double> T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics;
+
+				update("Calculating sCO2 off-design performance for lookup tables...", 0.0);
+
+				sco2_recomp_csp.mf_callback = ssc_mspt_udpc_progress;
+				sco2_recomp_csp.m_cdata = (void*)this;
 
 				try
 				{
@@ -1148,6 +1157,8 @@ public:
 
 					return;
 				}
+
+				update("sCO2 off-design performance calculations for lookup tables complete.", 100.0);
 
 				//double T_htf_hot_test = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15;		//[C]
 				//double m_dot_htf_ND_test = 1.0;		//[-]
@@ -1426,6 +1437,7 @@ public:
 
 
 
+		update("Initialize MSPT model...", 0.0);
 
 		int out_type = -1;
 		std::string out_msg = "";
@@ -1464,6 +1476,8 @@ public:
             for( int i=0; i<8760; i++)
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
+
+		update("Begin timeseries simulation...", 0.0);
 
 		try
 		{
@@ -1620,7 +1634,7 @@ static bool ssc_mspt_sim_progress( void *data, double percent, C_csp_messages *c
             cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
         }
     }
-    bool ret = cm->update("", percent);
+    bool ret = cm->update("Simulation progress", percent);
 
     return ret;
 }
