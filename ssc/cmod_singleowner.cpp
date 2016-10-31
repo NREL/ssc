@@ -178,7 +178,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt percent,1=dscr", "Project Term Debt", "?=1", "INTEGER,MIN=0,MAX=1", "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "debt_constant_principal", "Equal principal", "0/1", "0=Equal payments,1=Equal principal", "loan", "?=0", "Boolean", "" },
+	{ SSC_INPUT, SSC_NUMBER, "payment_option", "Debt repayment option", "0/1", "0=Equal payments (standard amortization),1=Fixed principal declining interest", "Project Term Debt", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 
 
 
@@ -977,7 +977,7 @@ public:
 		int ppa_mode = as_integer("ppa_soln_mode");
 
 		bool constant_dscr_mode = (as_integer("debt_option")==1);
-		bool constant_principal = as_boolean("debt_constant_principal"); 
+		bool constant_principal = (as_integer("payment_option") == 1);;
 		//		log(util::format("debt option=%d and constant dscr mode=%s.",
 //			as_integer("debt_option"), (constant_dscr_mode ? "true":"false")),
 //			SSC_WARNING);
