@@ -30,7 +30,7 @@ namespace CSP
 	void theta_trans(double alpha_sun /*rad*/, double phi_sun /*rad*/, double alpha_fix /*rad*/, double &phi_t /*rad*/, double &theta /*rad*/);
 
 	//sky temp function
-	double skytemp(double T_amb, double T_dp, double hour);
+	double skytemp(double T_amb_K, double T_dp_K, double hour);
 
 	double sign(double val);
 
