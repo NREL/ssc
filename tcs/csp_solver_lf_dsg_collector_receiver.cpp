@@ -38,6 +38,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
 C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 {
+	n_integration_steps = 10;  
+	
 	mc_reported_outputs.construct(S_output_info);
 
 	// *******************************************
@@ -56,6 +58,7 @@ C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 		// Water props limits
 	m_wp_max_temp = std::numeric_limits<double>::quiet_NaN();	//[K]
 	m_wp_min_temp = std::numeric_limits<double>::quiet_NaN();	//[K]
+	m_wp_T_crit = std::numeric_limits<double>::quiet_NaN();		//[K]
 	m_wp_max_pres = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	m_wp_min_pres = std::numeric_limits<double>::quiet_NaN();	//[kPa]
 	// *******************************************
@@ -231,6 +234,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	get_water_info( &wp_info );
 	m_wp_max_temp = wp_info.temp_upper_limit;	//[K]
 	m_wp_min_temp = wp_info.temp_lower_limit;	//[K]
+	m_wp_T_crit = wp_info.T_critical;			//[K]
 	m_wp_max_pres = wp_info.pres_upper_limit;	//[kPa]
 	m_wp_min_pres = wp_info.pres_lower_limit;	//[kPa]
 
@@ -1264,6 +1268,9 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 	m_q_dot_to_sink_fullts /= nd_steps_recirc;		//[MWt]
 
+	//double E_bal_check = m_q_dot_sca_abs_summed_fullts - m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+	//					m_q_dot_to_sink_fullts - m_E_dot_sca_summed_fullts;
+
 	m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 
 	// Find average enthalpy over recirculation timesteps
@@ -1449,6 +1456,9 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	m_E_dot_sca_summed_fullts /= nd_steps_recirc;			//[MWt]
 
 	m_q_dot_to_sink_fullts /= nd_steps_recirc;
+
+	//double E_bal_check = m_q_dot_sca_abs_summed_fullts - m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+	//	m_q_dot_to_sink_fullts - m_E_dot_sca_summed_fullts;
 
 	m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
 
@@ -1662,7 +1672,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			double defocus_guess_lower = 0.9*defocus_guess_upper;
 
 			// Set solver settings
-			c_defocus_solver.settings(0.001, 30, defocus_lower, defocus_upper, false);
+			c_defocus_solver.settings(0.001, 100, defocus_lower, defocus_upper, false);
 
 			int defocus_iter = -1;
 			double defocus_tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -1676,13 +1686,13 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			}
 			catch( C_csp_exception & csp_except )
 			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed."));
+				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus method reached exception."));
 				on_success = false;
 			}
 
 			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
 			{
-				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed."));
+				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed to converge"));
 				on_success = false;
 			}
 		}
@@ -1761,6 +1771,9 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		m_E_dot_sca_summed_fullts = m_E_dot_sca_summed_subts;				//[MWt]
 
 		m_q_dot_to_sink_fullts = m_q_dot_to_sink_subts;		//[MWt]
+
+		//double E_bal_check = m_q_dot_sca_abs_summed_fullts - m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+		//	m_q_dot_to_sink_fullts - m_E_dot_sca_summed_fullts;
 
 		m_q_dot_freeze_protection = 0.0;		//[MWt]
 
@@ -2216,7 +2229,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	int wp_code = water_TP(T_cold_in, P_field_out*100.0, &wp);
 	if( wp_code != 0 )
 	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_TP error", wp_code));
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int pump inlet", "water_TP error", wp_code));
 	}
 	if( wp.qual > 0.0 )
 	{
@@ -2229,7 +2242,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	wp_code = water_PS(P_system_in*100.0, s_pump_in, &wp);
 	if( wp_code != 0 )
 	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PS error", wp_code));
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int pump isentropic outlet", "water_PS error", wp_code));
 	}
 	double h_pump_out_isen = wp.enth;	//[kJ/kg]
 
@@ -2241,7 +2254,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	wp_code = water_PH(P_system_in*100.0, h_pump_out, &wp);
 	if( wp_code != 0 )
 	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int pump outlet", "water_PH error", wp_code));
+		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int pump outlet", "water_PH error", wp_code));
 	}
 	if( wp.qual > 0.0 )
 	{
@@ -2269,7 +2282,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		wp_code = water_PH(mc_sys_cold_out_t_int.m_pres*100.0, mc_sys_cold_out_t_int.m_enth, &wp);
 		if( wp_code != 0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int cold system/header/field outlet", 
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int cold system/header/field outlet", 
 				"water_PH error", wp_code));
 		}
 
@@ -2288,7 +2301,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		wp_code = water_PH(mc_sca_in_t_int[0].m_pres*100.0, mc_sca_in_t_int[0].m_enth, &wp);
 		if( wp_code != 0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int 1st sca inlet", 
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int 1st sca inlet", 
 				"water_PH error", wp_code));
 		}
 
@@ -2335,7 +2348,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		wp_code = water_PH(mc_sca_in_t_int[i].m_pres*100.0, h_ave_i, &wp);
 		if( wp_code != 0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int ith sca inlet",
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int ith sca inlet",
 				"water_PH error", wp_code));
 		}
 
@@ -2360,29 +2373,45 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		}
 		else if( m_HLCharType.at(geom_type, 0) == 2 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Forristall model not ready yet!"));
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int: Forristall model not ready yet!"));
 		}
 		else
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int: Geometry type not recognized!"));
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int: Geometry type not recognized!"));
 		}
 
-		transient_energy_bal_numeric_int(mc_sca_in_t_int[i].m_enth, mc_sca_in_t_int[i].m_pres*100.0, m_q_abs[i], m_m_dot_loop,
-					mc_sca_out_t_end_last[i].m_temp, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth);
-		
-		mc_sca_out_t_int[i].m_enth = mc_sca_out_t_end[i].m_enth;	//[kJ/kg]
 		mc_sca_out_t_int[i].m_pres = mc_sca_out_t_end[i].m_pres = mc_sca_in_t_int[i].m_pres;	//[bar]
+
+		transient_energy_bal_numeric_int_ave(mc_sca_in_t_int[i].m_enth, mc_sca_out_t_int[i].m_pres*100.0, m_q_abs[i], m_m_dot_loop,
+			mc_sca_out_t_end_last[i].m_temp, m_C_thermal, sim_info.ms_ts.m_step, mc_sca_out_t_end[i].m_enth, mc_sca_out_t_int[i].m_enth);
 
 		wp_code = water_PH(mc_sca_out_t_end[i].m_pres*100.0, mc_sca_out_t_end[i].m_enth, &wp);
 		if( wp_code != 0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int ith sca outlet",
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int ith sca t_end",
 				"water_PH error", wp_code));
 		}
-		mc_sca_out_t_end[i].m_temp = mc_sca_out_t_int[i].m_temp = wp.temp;		//[K]
-		mc_sca_out_t_end[i].m_x = mc_sca_out_t_int[i].m_x = wp.qual;			//[-]
+		mc_sca_out_t_end[i].m_temp = wp.temp;		//[K]
+		mc_sca_out_t_end[i].m_x = wp.qual;			//[-]
+
+		wp_code = water_PH(mc_sca_out_t_int[i].m_pres*100.0, mc_sca_out_t_int[i].m_enth, &wp);
+		if( wp_code != 0 )
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int ith sca t_end",
+				"water_PH error", wp_code));
+		}
+		mc_sca_out_t_int[i].m_temp = wp.temp;		//[K]
+		mc_sca_out_t_int[i].m_x = wp.qual;			//[-]
 
 		E_sca[i] = m_C_thermal*(mc_sca_out_t_end[i].m_temp - mc_sca_out_t_end_last[i].m_temp);	//[kJ]
+
+		//double q_bal_abs = m_q_abs[i];		//[kW]
+		//double q_bal_htf = m_m_dot_loop*(mc_sca_out_t_int[i].m_enth - mc_sca_in_t_int[i].m_enth);	//[kW]
+		//double q_bal_int_energy = E_sca[i] / sim_info.ms_ts.m_step;		//[kW]
+		//
+		//double q_max_abs = max( abs(q_bal_int_energy), max( abs(q_bal_abs), abs(q_bal_htf) ) );
+		//
+		//double E_bal_sca = q_bal_abs - q_bal_htf - q_bal_int_energy;
 	}
 
 	mc_sys_hot_in_t_int.m_enth = mc_sca_out_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
@@ -2403,7 +2432,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		wp_code = water_PH(mc_sys_hot_out_t_int.m_pres*100.0, mc_sys_hot_out_t_int.m_enth, &wp);
 		if( wp_code != 0 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int hot header",
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int hot header",
 				"water_PH error", wp_code));
 		}
 		mc_sys_hot_out_t_int.m_temp = mc_sys_hot_out_t_end.m_temp = wp.temp;	//[K]
@@ -2441,6 +2470,9 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		// Q_dot out of system
 	m_q_dot_to_sink_subts = m_m_dot_loop*double(m_nLoops)*(mc_sys_hot_out_t_int.m_enth - mc_sys_cold_in_t_int.m_enth)*1.E-3;	//[MWt]
 
+	//double E_bal = m_q_dot_sca_abs_summed_subts - m_q_dot_HR_cold_loss_subts - m_q_dot_HR_hot_loss_subts - 
+	//				m_q_dot_to_sink_subts - m_E_dot_sca_summed_subts;
+
 	// *********************************************************
 	// Calculate total losses and energy balances
 	// *********************************************************
@@ -2459,38 +2491,112 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 	return E_loop_energy_balance_exit::SOLVED;
 }
 
+void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
+	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/,
+	double C_thermal /*kJ/K*/, double step /*s*/,
+	double & h_out_t_end /*kJ/K*/, double & h_out_t_int /*kJ/K*/)
+{
+	int n_steps = n_integration_steps;	//[-]
+	double step_subts = step / (double)n_steps;	//[s]
 
+	double h_out_t_int_sum = 0.0;		//[kJ/K]
+	double h_out_t_end_local = 0.0;		//[kJ/K]
+	double T_out_t_end_prev_local = T_out_t_end_prev;		//[K]
+	double h_out_t_start_local = 0.0; 
+	double T_out_t_end_local = 0.0;
+	for(int i = 0; i < n_steps; i++)
+	{
+		transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
+										step_subts, h_out_t_end_local, h_out_t_start_local, T_out_t_end_local);
+		
+		h_out_t_int_sum += 0.5*(h_out_t_start_local + h_out_t_end_local);	//[kJ/K]
+		T_out_t_end_prev_local = T_out_t_end_local;		//[K]
+	}
+
+	h_out_t_int = h_out_t_int_sum / (double)n_steps;	//[kJ/K]
+	h_out_t_end = h_out_t_end_local;					//[kJ/K]
+
+	return;
+}
 
 void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/, 
 	double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
-	double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end)
+	double C_thermal /*kJ/K*/, double step /*s*/, 
+	double & h_out_t_end, double & h_out_t_end_prev /*kJ/K*/, double & T_out_t_end /*K*/)
 {
-	// Get boiling temperature at operating pressure
-	int water_prop_error = water_PQ(P_in, 0.0, &wp);
-	if(water_prop_error != 0)
-	{
-		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_PQ error", water_prop_error));
-	}
-	double T_boiling = wp.temp;		//[K]
+	double h_T_prev_x0 = std::numeric_limits<double>::quiet_NaN();
+	double h_T_prev_x1 = std::numeric_limits<double>::quiet_NaN();
+	double P_boil_T_prev = std::numeric_limits<double>::quiet_NaN();
 
-	// Guess1: outlet enthalpy is same as initial condition
-		// Essentially this guess value represents scenario where thermal capacitance dominates
-		// and outlet temperature at end of timestep is equal to outlet temperature at beginning of timestep
-	double h_out_t_end_guess1 = std::numeric_limits<double>::quiet_NaN();
-	if( fabs(T_boiling-T_out_t_end_prev) < 0.1 )
+	int water_prop_error = 0;
+	if( T_out_t_end_prev < m_wp_T_crit )
 	{
-		// If boiling temperature is close to previous, just use that
-		h_out_t_end_guess1 = wp.enth;		//[kJ/kg]
+		// Get enthalpy at T_prev and x = 0
+		water_prop_error = water_TQ(T_out_t_end_prev, 0.0, &wp);
+		if(water_prop_error != 0)
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "TQ0_T_prev error", water_prop_error));
+		}
+		h_T_prev_x0 = wp.enth;
+		P_boil_T_prev = wp.pres;	//[kPa]
+
+		// Get enthalpy at T_prev and x = 1
+		water_prop_error = water_TQ(T_out_t_end_prev, 1.0, &wp);
+		if(water_prop_error != 0)
+		{
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "TQ1_T_prev error", water_prop_error));
+		}
+		h_T_prev_x1 = wp.enth;
 	}
 	else
 	{
-		// Else use water_TP to calculate enthalpy initial condition
-		water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
-		if(water_prop_error != 0)
-		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_TP error", water_prop_error));
+		h_T_prev_x0 = h_T_prev_x1 = P_boil_T_prev = -1.2345;
+	}
+
+	h_out_t_end_prev = std::numeric_limits<double>::quiet_NaN();
+	// If h_in is between h_x0 and h_x1, then set h_prev = h_in
+	if( h_in > h_T_prev_x0 && h_in < h_T_prev_x1 )
+	{
+		h_out_t_end_prev = h_in;
+	}
+	else
+	{
+		bool is_two_phase = false;
+		if( fabs(P_in - P_boil_T_prev)/fabs(P_boil_T_prev) < 0.0001 )
+			is_two_phase = true;
+
+		if( h_in < h_T_prev_x0 )
+		{	// If h_in is less than h_x0 or greater than h_x1, then calculate enthalpy from water_TP(T_out_t_end_prev)
+			if( is_two_phase )
+			{
+				h_out_t_end_prev = h_T_prev_x0;			
+			}
+			else
+			{
+				water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
+				if(water_prop_error != 0)
+				{
+					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_TP error", water_prop_error));
+				}
+				h_out_t_end_prev = wp.enth;		//[kJ/kg]
+			}
 		}
-		h_out_t_end_guess1 = wp.enth;		//[kJ/kg]
+		else
+		{
+			if( is_two_phase )
+			{
+				h_out_t_end_prev = h_T_prev_x1;
+			}
+			else
+			{
+				water_prop_error = water_TP(T_out_t_end_prev, P_in, &wp);
+				if( water_prop_error != 0 )
+				{
+					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int", "water_TP error", water_prop_error));
+				}
+				h_out_t_end_prev = wp.enth;		//[kJ/kg]
+			}
+		}
 	}
 
 	// Guess2: outlet enthalpy is from a steady state calculation
@@ -2498,21 +2604,21 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 
 	// Check that this guess is not too close to Guess1
-	double diff_guess = (h_out_t_end_guess2 - h_out_t_end_guess1) / h_out_t_end_guess1;
+	double diff_guess = (h_out_t_end_guess2 - h_out_t_end_prev) / h_out_t_end_prev;
 	if( abs(diff_guess) < 0.01 )
 	{
 		if(diff_guess > 0.0)
 		{
-			h_out_t_end_guess2 = 1.05*h_out_t_end_guess1;
+			h_out_t_end_guess2 = 1.05*h_out_t_end_prev;
 		}
 		else
 		{
-			h_out_t_end_guess2 = 0.95*h_out_t_end_guess1;
+			h_out_t_end_guess2 = 0.95*h_out_t_end_prev;
 		}
 	}
 
 	// Apply 1 var solver to find the mass flow rate that achieves the target outlet temperature
-	C_mono_eq_transient_energy_bal c_transient_energy_bal(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev, C_thermal, step);
+	C_mono_eq_transient_energy_bal c_transient_energy_bal(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev, h_out_t_end_prev, C_thermal, step);
 	C_monotonic_eq_solver c_h_out_t_end_solver(c_transient_energy_bal);
 
 	// Get minimum enthalpy at this pressure
@@ -2535,7 +2641,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	// Set solver settings
 		// Absolute error
-	c_h_out_t_end_solver.settings(0.001, 30, h_out_t_end_lower, h_out_t_end_upper, false);
+	c_h_out_t_end_solver.settings(0.001, 100, h_out_t_end_lower, h_out_t_end_upper, false);
 
 	int iter_solved = -1;
 	double tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -2546,7 +2652,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	try
 	{
-		h_out_t_end_code = c_h_out_t_end_solver.solve(h_out_t_end_guess1, h_out_t_end_guess2, 0.0, h_out_t_end, tol_solved, iter_solved);
+		h_out_t_end_code = c_h_out_t_end_solver.solve(h_out_t_end_prev, h_out_t_end_guess2, 0.0, h_out_t_end, tol_solved, iter_solved);
 	}
 	catch( C_csp_exception & csp_excpet )
 	{
@@ -2558,6 +2664,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence"));
 	}
 
+	T_out_t_end = c_transient_energy_bal.m_T_out_t_end;		//[K]
 }
 
 int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/)
@@ -2568,14 +2675,15 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_transient_energy_bal::operator()(
 		*diff_h_out_t_end = std::numeric_limits<double>::quiet_NaN();
 		return -1;
 	}
-	double T_out_t_end = mc_wp.temp;	//[K]
+	m_T_out_t_end = mc_wp.temp;	//[K]
 
-	double h_out_t_end_calc = m_h_in + m_q_dot_abs/m_m_dot - (T_out_t_end-m_T_out_t_end_prev)*m_C_thermal/(m_step*m_m_dot);	//[kJ/kg]
+	double h_out_t_end_calc = 2.0*(m_q_dot_abs/m_m_dot + m_h_in - m_C_thermal/(m_m_dot*m_step)*(m_T_out_t_end - m_T_out_t_end_prev)) - m_h_out_t_end_prev;
 
 	*diff_h_out_t_end = (h_out_t_end_calc - h_out_t_end) / m_h_in;		//[-]
 
 	return 0;
 }
+
 
 void C_csp_lf_dsg_collector_receiver::set_output_values()
 {

@@ -68,6 +68,7 @@ private:
 		// Water props limits
 	double m_wp_max_temp;		//[K]
 	double m_wp_min_temp;		//[K]
+	double m_wp_T_crit;			//[K]
 	double m_wp_max_pres;		//[kPa]
 	double m_wp_min_pres;		//[kPa]
 	// *******************************************
@@ -231,6 +232,8 @@ private:
 	void apply_component_defocus(double defocus /*-*/);
 
 	void set_output_values();
+
+	int n_integration_steps;
 
 public:
 
@@ -428,9 +431,15 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
+	void transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
+		double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/,
+		double C_thermal /*kJ/K*/, double step /*s*/, 
+		double & h_out_t_end /*kJ/K*/, double & h_out_t_int /*kJ/K*/);
+
 	void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
-			double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
+			double C_thermal /*kJ/K*/, double step /*s*/, 
+			double & h_out_t_end /*kJ/K*/, double & h_out_t_end_prev /*kJ/K*/, double & T_out_t_end /*K*/);
 
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,
@@ -450,17 +459,24 @@ public:
 		double m_q_dot_abs;	//[kWt]
 		double m_m_dot;		//[kg/s]
 		double m_T_out_t_end_prev;	//[K]
+		double m_h_out_t_end_prev;	//[kJ/kg]
 		double m_C_thermal;	//[kJ/K]
 		double m_step;		//[s]
 
 	public:
 		C_mono_eq_transient_energy_bal(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
-			double C_thermal /*kJ/K*/, double step /*s*/)
+			double h_out_t_end_prev /*kJ/kg*/, double C_thermal /*kJ/K*/, double step /*s*/)
 		{
 			m_h_in = h_in; m_P_in = P_in; m_q_dot_abs = q_dot_abs; m_m_dot = m_dot;
-				m_T_out_t_end_prev = T_out_t_end_prev; m_C_thermal = C_thermal; m_step = step;
+				m_T_out_t_end_prev = T_out_t_end_prev; 
+				m_h_out_t_end_prev = h_out_t_end_prev;
+				m_C_thermal = C_thermal; m_step = step;
+
+			m_T_out_t_end = std::numeric_limits<double>::quiet_NaN();
 		}
+
+		double m_T_out_t_end;	//[K]
 
 		virtual int operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/);
 	};
