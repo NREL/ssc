@@ -38,7 +38,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
 C_csp_lf_dsg_collector_receiver::C_csp_lf_dsg_collector_receiver()
 {
-	n_integration_steps = 10;  
+	n_integration_steps = 5;  
 	
 	mc_reported_outputs.construct(S_output_info);
 
@@ -468,7 +468,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_eta_optical.resize(m_n_rows_matrix);
 
 	m_nModTot = m_nModBoil + m_nModSH;
-	m_q_inc.resize(m_nModTot);			//[kWt]
+	m_q_inc.resize(m_nModTot);				//[kWt]
+	m_q_inc_control_df.resize(m_nModTot);	//[kWt]
 	m_q_loss.resize(m_nModTot);
 	m_q_abs.resize(m_nModTot);
 	m_T_ave.resize(m_nModTot, 1);
@@ -484,6 +485,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	mc_sca_out_t_int.resize(m_nModTot);
 
 	m_q_inc.assign(m_q_inc.size(),0.0);		//[kWt]
+	m_q_inc_control_df.assign(m_q_inc_control_df.size(),0.0);	//[kWt]
 	m_q_loss.assign(m_q_loss.size(),0.0);	//[kWt]
 	m_q_abs.assign(m_q_abs.size(), 0.0);	//[kWt] Thermal power absorbed by steam in each receiver
 	m_T_ave.fill(0.0);
@@ -1509,6 +1511,7 @@ void C_csp_lf_dsg_collector_receiver::apply_component_defocus(double defocus /*-
 	// Calculate the design-point incident energy on each module for a single loop
 	for( int i = 0; i < m_nModTot; i++ )
 	{
+		m_q_inc[i] = defocus * m_q_inc[i];					//[kWt] Incident thermal power after defocus but before optical losses
 		m_q_rec[i] = defocus * m_q_rec_control_df[i];		//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
 	}
 }
@@ -1561,14 +1564,18 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				gset = 1;
 			else
 				gset = 0;
-			m_q_rec_control_df[i] = field_control* m_q_inc[i] * m_opteff_des.at(gset, 0);	//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
+			
+			m_q_inc_control_df[i] = field_control * m_q_inc[i];
+			m_q_rec_control_df[i] = m_q_inc_control_df[i] * m_opteff_des.at(gset, 0);	//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
 		}
 
+		m_q_inc = m_q_inc_control_df;
 		m_q_rec = m_q_rec_control_df;	//[kWt]
 	}
 	else if(field_control == 1.0)
 	{
 		// If no CONTROL defocus, then baseline against the vector return by 'loop_optical_eta'
+		m_q_inc_control_df = m_q_inc;		//[kWt]
 		m_q_rec_control_df = m_q_rec;		//[kWt]
 	}
 	else
@@ -2101,6 +2108,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 		m_theta_L = 0.0;
 	}
 
+	evac_tube_model.Update_Timestep_Properties(m_eta_optical);
+
 	m_eta_opt = 0.0;
 	for( int i = 0; i < m_nModTot; i++ )
 	{
@@ -2207,6 +2216,9 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 
 	double T_db = weather.m_tdry + 273.15;		//[K] Dry bulb temperature, convert from C
 	double V_wind = weather.m_wspd;				//[m/s] Ambient windspeed
+
+	double hour = (double)((int)(sim_info.ms_ts.m_time/3600.0) % 24);
+	double T_sky = CSP::skytemp(T_db, weather.m_tdew+273.15, hour);		//[K] Sky temperature
 
 	// Basis pressure used to calculate off-design pressure drop through field
 	double dP_basis = m_m_dot_loop*(double)m_nLoops/m_m_dot_des*m_P_turb_des;	//[bar]
@@ -2373,7 +2385,37 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		}
 		else if( m_HLCharType.at(geom_type, 0) == 2 )
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int: Forristall model not ready yet!"));
+			// Calculate thermal loss from Forristall receiver model
+			m_q_loss[i] = 0.0;		//[kWt] Thermal loss for each receiver in loop
+			m_q_abs[i] = 0.0;		//[kWt] Thermal power absorbed by steam in each receiver
+
+			for( int j = 0; j < 4; j++ )
+			{
+				// Only calculate if the HCE fraction is non-zero
+				if( m_HCE_FieldFrac.at(geom_type, j) <= 0.0 )
+					continue;
+
+				/*Call the receiver performance model - single point mode
+				!This call uses VP1 as the HTF since 2-phase heat transfer correlations have high uncertainty. The
+				!only use for the fluid type in the single point model is calculating the convective heat transfer
+				!coefficient between the HTF and inner absorber wall. This is sufficiently high for both HTF and
+				!steam that substituting the HTF here introduces negligible error.*/
+
+				// For LF, HT = CT && sca_num = 0
+				double q_rec_loss, q_rec_abs, dum1, dum2, dum3;
+				q_rec_loss = q_rec_abs = dum1 = dum2 = dum3 = std::numeric_limits<double>::quiet_NaN();
+				evac_tube_model.EvacReceiver(T_ave_i, 10.0, T_db, T_sky, V_wind, weather.m_pres*100.0, m_q_inc[i] / m_L_col.at(geom_type, 0)*1000.0, 
+					geom_type, j, geom_type, 0, true, m_ncall, sim_info.ms_ts.m_time/3600.0, q_rec_loss, q_rec_abs, dum1, dum2, dum3);
+
+				if( q_rec_loss != q_rec_loss || q_rec_abs != q_rec_abs )
+				{
+					q_rec_loss = 0.0;
+					q_rec_abs = 0.0;
+				}
+
+				m_q_loss[i] += q_rec_loss*m_L_col.at(geom_type, 0)*m_HCE_FieldFrac.at(geom_type, j) / 1000.0;	//[kWt] Thermal loss for each receiver in loop
+				m_q_abs[i] += q_rec_abs*m_L_col.at(geom_type, 0)*m_HCE_FieldFrac.at(geom_type, j) / 1000.0;		//[kWt] Thermal power absorbed by steam in each receiver
+			}
 		}
 		else
 		{
@@ -2781,7 +2823,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double m_dt = sim_info.ms_ts.m_step;
 	double hour = (double)((int)(time / 3600.0) % 24);
 
-	double T_sky = CSP::skytemp(T_db, T_dp, hour);
+	double T_sky = CSP::skytemp(T_db, T_dp, hour);		//[K]
 
 	// Calculations for values once per timestep
 	if (m_ncall == 0)
