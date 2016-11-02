@@ -1220,7 +1220,16 @@ public:
 		roe_input = as_array("roe_input", &roe_count);
 		if (roe_count > 0)
 		{
-			for (i = 0; i<nyears && i<(int)roe_count; i++) cf.at(CF_return_on_equity_input, i + 1) = roe_input[i];
+			if (roe_count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_return_on_equity_input, i + 1) = roe_input[0];
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)roe_count; i++) 
+					cf.at(CF_return_on_equity_input, i + 1) = roe_input[i];
+			}
 		}
 
 
