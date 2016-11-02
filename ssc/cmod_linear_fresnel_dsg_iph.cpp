@@ -309,7 +309,19 @@ public:
 		c_lf_dsg.m_alpha_env = as_matrix("alpha_env"); //[-] Envelope absorptance
 		c_lf_dsg.m_EPSILON_4 = as_matrix("EPSILON_4"); //[-] Inner glass envelope emissivities
 		c_lf_dsg.m_Tau_envelope = as_matrix("Tau_envelope"); //[-] Envelope transmittance
-		c_lf_dsg.m_GlazingIntactIn = (bool) as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+		
+		util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+		int n_gl_row = glazing_intact_double.nrows();
+		int n_gl_col = glazing_intact_double.ncols();
+		c_lf_dsg.m_GlazingIntactIn.resize(n_gl_row, n_gl_col);
+		for(int i = 0; i < n_gl_row; i++)
+		{
+			for(int j = 0; j < n_gl_col; j++)
+			{
+				c_lf_dsg.m_GlazingIntactIn(i,j) = (bool)glazing_intact_double(i,j);
+			}
+		}
+		
 		c_lf_dsg.m_AnnulusGas_in = as_matrix("AnnulusGas"); //[-]
 		c_lf_dsg.m_P_a = as_matrix("P_a");					//[torr] Annulus gas pressure 
 		c_lf_dsg.m_Design_loss = as_matrix("Design_loss");	//[W/m] Receiver heat loss at design
