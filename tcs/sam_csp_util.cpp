@@ -4,6 +4,8 @@
 //#include "waterprop.h"
 #include "water_properties.h"
 
+#include "csp_solver_util.h"
+
 using namespace std;
 
 /* 
@@ -1533,16 +1535,22 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 		C1 = 2.331e-20;  //[mmHg-cm**3/K]//
 
 		// Free-molecular heat transfer for an annular space between horizontal cylinders 
-		if (m_AnnulusGasMat.at(hn,hv)->GetFluid() == HTFProperties::Air) { //AIR
+		if (m_AnnulusGasMat.at(hn,hv)->GetFluid() == HTFProperties::Air) 
+		{ //AIR
 			Delta = 3.53e-8;  //[cm]
 		}
-
-		if (m_AnnulusGasMat.at(hn,hv)->GetFluid() == HTFProperties::Hydrogen_ideal){ //H2
+		else if (m_AnnulusGasMat.at(hn,hv)->GetFluid() == HTFProperties::Hydrogen_ideal)
+		{ //H2
 			Delta = 2.4e-8;  //[cm]
 		}
-
-		if (m_AnnulusGasMat.at(hn,hv)->GetFluid() == HTFProperties::Argon_ideal){  //Argon
+		else if (m_AnnulusGasMat.at(hn,hv)->GetFluid() == HTFProperties::Argon_ideal)
+		{  //Argon
 			Delta = 3.8e-8;  //[cm]
+		}
+		else
+		{
+			std::string err_msg = util::format("Annulus Gas code, %d, not recognized", m_AnnulusGasMat.at(hn, hv)->GetFluid());
+			throw(C_csp_exception(err_msg, "Evacuated Receiver solution"));
 		}
 
 		Lambda = C1 * T_34 / (P * Delta*Delta);  //[cm]
