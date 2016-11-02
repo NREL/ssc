@@ -195,7 +195,8 @@ private:
 			//  Single Values
 	double m_q_dot_inc_sf_tot;	//[MWt] Total incident radiation on the solar field
 
-	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
+	std::vector<double> m_q_inc;			//[kWt] Incident beam radiation for each receiver in loop
+	std::vector<double> m_q_inc_control_df;	//[kWt] Incident beam radiation for each receiver in loop with CONTROL defocus
 	util::matrix_t<double> m_eta_optical;	//[-] Optical efficiency for each collector geometry
 	std::vector<double> m_q_rec;			//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
 	std::vector<double> m_q_rec_control_df;	//[kWt] Incident thermal power on receiver after *optical* and CONTROL defocus
