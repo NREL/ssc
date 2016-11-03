@@ -329,6 +329,10 @@ enum {
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
 
+	CF_federal_tax_frac,
+	CF_state_tax_frac,
+	CF_effective_tax_frac,
+
 	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
 	CF_insurance_expense,
@@ -419,9 +423,9 @@ private:
 	double property_tax_decline_percentage;
 	double insurance_rate;
 	double salvage_frac;
-	double federal_tax_rate;
-	double state_tax_rate;
-	double effective_tax_rate;
+//	double federal_tax_rate;
+//	double state_tax_rate;
+//	double effective_tax_rate;
 	double real_discount_rate;
 	double nom_discount_rate;
 	double min_dscr_target;
@@ -573,9 +577,43 @@ public:
 		property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		insurance_rate = as_double("insurance_rate")*0.01;
 		salvage_frac = as_double("salvage_percentage")*0.01;
-		federal_tax_rate = as_double("federal_tax_rate")*0.01;
-		state_tax_rate = as_double("state_tax_rate")*0.01;
-		effective_tax_rate = federal_tax_rate + (1-federal_tax_rate)*state_tax_rate;
+//		federal_tax_rate = as_double("federal_tax_rate")*0.01;
+//		state_tax_rate = as_double("state_tax_rate")*0.01;
+//		effective_tax_rate = federal_tax_rate + (1-federal_tax_rate)*state_tax_rate;
+		size_t count;
+		ssc_number_t* arrp;
+		arrp = as_array("federal_tax_rate", &count);
+		if (count > 0)
+		{
+			if (count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_federal_tax_frac, i + 1) = arrp[0] * 0.01;
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)count; i++)
+					cf.at(CF_federal_tax_frac, i + 1) = arrp[i] * 0.01;
+			}
+		}
+		arrp = as_array("state_tax_rate", &count);
+		if (count > 0)
+		{
+			if (count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_state_tax_frac, i + 1) = arrp[0] * 0.01;
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)count; i++)
+					cf.at(CF_state_tax_frac, i + 1) = arrp[i] * 0.01;
+			}
+		}
+		for (i = 0; i <= nyears; i++)
+			cf.at(CF_effective_tax_frac, i) = cf.at(CF_state_tax_frac, i) +
+			(1.0 - cf.at(CF_state_tax_frac, i))*cf.at(CF_federal_tax_frac, i);
+
 
 		real_discount_rate = as_double("real_discount_rate")*0.01;
 		nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
@@ -950,9 +988,9 @@ public:
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
-	double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
-	npv_fed_ptc /= (1.0 - effective_tax_rate);
-	npv_sta_ptc /= (1.0 - effective_tax_rate);
+//	double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
+	npv_fed_ptc /= (1.0 - cf.at(CF_effective_tax_frac, 1));
+	npv_sta_ptc /= (1.0 - cf.at(CF_effective_tax_frac, 1));
 
 	double lcoptc_fed_nom=0.0;
 	if (npv_energy_nom != 0) lcoptc_fed_nom = npv_fed_ptc / npv_energy_nom * 100.0;
@@ -972,14 +1010,14 @@ public:
 
 
 	double wacc = 0.0;
-	wacc = (1.0-debt_frac)*aftertax_irr + debt_frac*loan_rate*(1.0-effective_tax_rate);
+	wacc = (1.0 - debt_frac)*aftertax_irr + debt_frac*loan_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));
 
 	wacc *= 100.0;
-	effective_tax_rate *= 100.0;
+//	effective_tax_rate *= 100.0;
 
 
 	assign("wacc", var_data( (ssc_number_t) wacc));
-	assign("effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("effective_tax_rate", var_data((ssc_number_t)(cf.at(CF_effective_tax_frac, 1)*100.0)));
 
 
 
@@ -1088,8 +1126,11 @@ public:
 		assign("itc_total", var_data((ssc_number_t)(itc_fed_total + itc_sta_total)));
 
 
+		save_cf(this, cf, CF_federal_tax_frac, nyears, "cf_federal_tax_frac");
+		save_cf(this, cf, CF_state_tax_frac, nyears, "cf_state_tax_frac");
+		save_cf(this, cf, CF_effective_tax_frac, nyears, "cf_effective_tax_frac");
 
-		save_cf( this, cf,  CF_sta_depr_sched, nyears, "cf_sta_depr_sched" );
+		save_cf(this, cf, CF_sta_depr_sched, nyears, "cf_sta_depr_sched");
 		save_cf( this, cf,  CF_sta_depreciation, nyears, "cf_sta_depreciation" );
 		save_cf( this, cf,  CF_sta_incentive_income_less_deductions, nyears, "cf_sta_incentive_income_less_deductions" );
 		save_cf( this, cf,  CF_sta_taxable_income_less_deductions, nyears, "cf_sta_taxable_income_less_deductions" );
@@ -1749,7 +1790,7 @@ void compute_cashflow()
 			- cf.at(CF_sta_depreciation,i)
 			- cf.at(CF_debt_payment_interest,i);
 
-		cf.at(CF_sta_income_taxes,i) = state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
+		cf.at(CF_sta_income_taxes, i) = cf.at(CF_state_tax_frac, i)*cf.at(CF_sta_taxable_income_less_deductions, i);
 
 		cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - cf.at(CF_sta_income_taxes,i);
 		if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
@@ -1772,7 +1813,7 @@ void compute_cashflow()
 			- cf.at(CF_debt_payment_interest,i)
 			+ cf.at(CF_sta_tax_savings, i);
 
-		cf.at(CF_fed_income_taxes,i) = federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
+		cf.at(CF_fed_income_taxes, i) = cf.at(CF_federal_tax_frac, i)*cf.at(CF_fed_taxable_income_less_deductions, i);
 
 		cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - cf.at(CF_fed_income_taxes,i);
 		if (i==1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
@@ -1803,7 +1844,7 @@ void compute_cashflow()
 
 		cf.at(CF_after_tax_cash_flow,i) =
 			cf.at(CF_after_tax_net_equity_cash_flow, i)
-			+ (1.0 - effective_tax_rate)*cf.at(CF_energy_value, i);
+			+ (1.0 - cf.at(CF_effective_tax_frac,i))*cf.at(CF_energy_value, i);
 
 	}
 

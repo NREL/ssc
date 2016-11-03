@@ -833,6 +833,10 @@ enum {
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
 
+	CF_federal_tax_frac,
+	CF_state_tax_frac,
+	CF_effective_tax_frac,
+
 	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
 	CF_insurance_expense,
@@ -1034,8 +1038,42 @@ public:
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		double ppa_escalation = as_double("ppa_escalation")*0.01;
 		double disc_real = as_double("real_discount_rate")*0.01;
-		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
-		double state_tax_rate = as_double("state_tax_rate")*0.01;
+//		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
+//		double state_tax_rate = as_double("state_tax_rate")*0.01;
+		size_t count;
+		ssc_number_t* arrp;
+		arrp = as_array("federal_tax_rate", &count);
+		if (count > 0)
+		{
+			if (count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_federal_tax_frac, i + 1) = arrp[0] * 0.01;
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)count; i++)
+					cf.at(CF_federal_tax_frac, i + 1) = arrp[i] * 0.01;
+			}
+		}
+		arrp = as_array("state_tax_rate", &count);
+		if (count > 0)
+		{
+			if (count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_state_tax_frac, i + 1) = arrp[0] * 0.01;
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)count; i++)
+					cf.at(CF_state_tax_frac, i + 1) = arrp[i] * 0.01;
+			}
+		}
+		for (i = 0; i <= nyears; i++)
+			cf.at(CF_effective_tax_frac, i) = cf.at(CF_state_tax_frac, i) +
+			(1.0 - cf.at(CF_state_tax_frac, i))*cf.at(CF_federal_tax_frac, i);
+
 
 		double nom_discount_rate = (1+inflation_rate)*(1+disc_real)-1;
 
@@ -2363,7 +2401,7 @@ public:
 			// pbi in ebitda - so remove if non-taxable
 			// 5/1/11
 			cf.at(CF_statax_income_with_incentives,i) = cf.at(CF_statax_income_prior_incentives,i) + cf.at(CF_statax_taxable_incentives,i);
-			cf.at(CF_statax,i) = -state_tax_rate * cf.at(CF_statax_income_with_incentives,i); 
+			cf.at(CF_statax, i) = -cf.at(CF_state_tax_frac, i) * cf.at(CF_statax_income_with_incentives, i);
 
 // federal 
 			cf.at(CF_feddepr_macrs_5,i) = cf.at(CF_macrs_5_frac,i) * depr_fedbas_macrs_5;
@@ -2398,7 +2436,7 @@ public:
 			// pbi in ebitda - so remove if non-taxable
 			// 5/1/11
 			cf.at(CF_fedtax_income_with_incentives,i) = cf.at(CF_fedtax_income_prior_incentives,i) + cf.at(CF_fedtax_taxable_incentives,i);
-			cf.at(CF_fedtax,i) = -federal_tax_rate * cf.at(CF_fedtax_income_with_incentives,i); 
+			cf.at(CF_fedtax, i) = -cf.at(CF_federal_tax_frac, i) * cf.at(CF_fedtax_income_with_incentives, i);
 
 			cf.at(CF_project_return_aftertax,i) = 
 				cf.at(CF_project_return_aftertax_cash,i) +
@@ -2499,7 +2537,7 @@ public:
 				cf.at(CF_sponsor_aftertax_ptc,i) +
 				cf.at(CF_sponsor_aftertax_tax,i);
 			// year 1 development fee tax
-			if (i==1) cf.at(CF_sponsor_aftertax,i) -= sponsor_pretax_development_fee * (state_tax_rate + federal_tax_rate * (1.0 - state_tax_rate));
+			if (i == 1) cf.at(CF_sponsor_aftertax, i) -= sponsor_pretax_development_fee * cf.at(CF_effective_tax_frac, i);
 			cf.at(CF_sponsor_pretax_irr,i) = irr(CF_sponsor_pretax,i)*100.0;
 			cf.at(CF_sponsor_pretax_npv,i) = npv(CF_sponsor_pretax,i,nom_discount_rate) +  cf.at(CF_sponsor_pretax,0) ;
 			cf.at(CF_sponsor_aftertax_irr,i) = irr(CF_sponsor_aftertax,i)*100.0;
@@ -2696,9 +2734,9 @@ public:
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
-	double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
-	npv_fed_ptc /= (1.0 - effective_tax_rate);
-	npv_sta_ptc /= (1.0 - effective_tax_rate);
+//	double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
+	npv_fed_ptc /= (1.0 - cf.at(CF_effective_tax_frac, 1));
+	npv_sta_ptc /= (1.0 - cf.at(CF_effective_tax_frac, 1));
 
 	
 	double lcoptc_fed_nom=0.0;
@@ -2729,18 +2767,18 @@ public:
 
 
 	double wacc = 0.0;
-	wacc = (1.0-debt_fraction)*analysis_period_irr + debt_fraction*term_int_rate*(1.0-effective_tax_rate);
+	wacc = (1.0 - debt_fraction)*analysis_period_irr + debt_fraction*term_int_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));
 
 	// percentages
 	debt_fraction *= 100.0;
 	wacc *= 100.0;
-	effective_tax_rate *= 100.0;
+//	effective_tax_rate *= 100.0;
 	analysis_period_irr *= 100.0;
 
 
 	assign("debt_fraction", var_data((ssc_number_t) debt_fraction ));
 	assign("wacc", var_data( (ssc_number_t) wacc));
-	assign("effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("effective_tax_rate", var_data((ssc_number_t)(cf.at(CF_effective_tax_frac, 1)*100.0)));
 	assign("analysis_period_irr", var_data( (ssc_number_t) analysis_period_irr));
 
 
@@ -2878,6 +2916,9 @@ public:
 		
 
 		// cash flow line items
+		save_cf(CF_federal_tax_frac, nyears, "cf_federal_tax_frac");
+		save_cf(CF_state_tax_frac, nyears, "cf_state_tax_frac");
+		save_cf(CF_effective_tax_frac, nyears, "cf_effective_tax_frac");
 
 		save_cf( CF_sponsor_pretax, nyears, "cf_sponsor_pretax" );
 		save_cf( CF_sponsor_pretax_irr, nyears, "cf_sponsor_pretax_irr" );
