@@ -382,8 +382,11 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outAnnualEnergyLoss[0] = 0;
 
 	// model initialization
-	voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_strings"), cm.as_double("batt_Vnom_default"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
+	if (chem == 0 || chem == 1)
+		voltage_model = new voltage_dynamic_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_strings"), cm.as_double("batt_Vnom_default"), cm.as_double("batt_Vfull"), cm.as_double("batt_Vexp"),
 		cm.as_double("batt_Vnom"), cm.as_double("batt_Qfull"), cm.as_double("batt_Qexp"), cm.as_double("batt_Qnom"), cm.as_double("batt_C_rate"), cm.as_double("batt_resistance"));
+	else if (chem == 2)
+		voltage_model = new voltage_vanadium_redox_t(cm.as_integer("batt_computed_series"), cm.as_integer("batt_computed_strings"), cm.as_double("batt_Vnom_default"), cm.as_double("batt_resistance"));
 
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix, replacement_option, cm.as_double("batt_replacement_capacity") );
 	util::matrix_t<double> cap_vs_temp = cm.as_matrix( "cap_vs_temp" );
@@ -404,7 +407,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		
 	battery_model = new battery_t( 
 		dt_hr,
-		chem);
+		chem); 
 
 	double Vfull = cm.as_double("batt_Vfull");
 	int ncell = cm.as_integer("batt_computed_series")*cm.as_integer("batt_computed_strings");
@@ -418,7 +421,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			cm.as_double("LeadAcid_q10_computed"),
 			cm.as_double("batt_maximum_soc"));
 	}
-	else if ( chem == 1 )
+	// for now assume Vanadium Redox responds quickly, like Lithium-ion
+	else if ( chem == 1 || chem == 2 )
 	{
 		capacity_model = new capacity_lithium_ion_t(
 			cm.as_double("batt_Qfull")*cm.as_integer("batt_computed_strings"), cm.as_double("batt_maximum_soc"));

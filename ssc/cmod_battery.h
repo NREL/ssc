@@ -35,7 +35,7 @@ struct battstor
 	double _dt_hour;
 
 	// member data
-	voltage_dynamic_t *voltage_model;
+	voltage_t *voltage_model;
 	lifetime_t *lifetime_model;
 	thermal_t *thermal_model;
 	capacity_t *capacity_model;
