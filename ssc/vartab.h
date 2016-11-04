@@ -25,6 +25,7 @@ public:
 	void clear();
 	var_data *assign( const std::string &name, const var_data &value );
 	void unassign( const std::string &name );
+	bool rename( const std::string &oldname, const std::string &newname );
 	var_data *lookup( const std::string &name );
 	const char *first();
 	const char *next();

@@ -217,6 +217,15 @@ SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name )
 	vt->unassign( name );
 }
 
+
+SSCEXPORT int ssc_data_rename( ssc_data_t p_data, const char *oldname, const char *newname )
+{
+	var_table *vt = static_cast<var_table*>(p_data);
+	if (!vt) return 0;
+
+	return vt->rename( oldname, newname ) ? 1 : 0;
+}
+
 SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name )
 {
 	var_table *vt = static_cast<var_table*>(p_data);
