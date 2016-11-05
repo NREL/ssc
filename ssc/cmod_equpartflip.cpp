@@ -189,8 +189,9 @@ static var_info _cm_vtab_equpartflip[] = {
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "Other Capital Costs",             "?=3",					    "MIN=0,MAX=100",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "Other Capital Costs",             "?=100000",					    "MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "months_working_reserve",		"Working capital reserve months of operating costs",		"months",	 "",					  "Other Capital Costs",             "?=6",					    "INTEGER,MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_other_financing",		"",		"$",	 "Other financing cost",					  "Other Capital Costs",             "?=150000",					    "MIN=0",      			        "" },
+	{ SSC_INPUT, SSC_NUMBER, "months_working_reserve", "Working capital reserve months of operating costs", "months", "", "Other Capital Costs", "?=6", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "months_receivables_reserve", "Receivables reserve months of PPA revenue", "months", "", "Other Capital Costs", "?=0", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "", "$", "Other financing cost", "Other Capital Costs", "?=150000", "MIN=0", "" },
 /* DHF Equity Structure */
 	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_equity_percent",		"Tax investor equity",				"%",	 "",					  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "tax_investor_preflip_cash_percent",		"Tax investor pre-flip cash ",		"%",	 "",  "IRR Targets",             "?=98",					  "MIN=0,MAX=100",     			        "" },
@@ -1175,7 +1176,8 @@ public:
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
 		double insurance_rate = as_double("insurance_rate")*0.01;
-		double months_working_reserve_frac = as_integer("months_working_reserve") / 12.0;
+		double months_working_reserve_frac = as_double("months_working_reserve") / 12.0;
+		double months_receivables_reserve_frac = as_double("months_receivables_reserve") / 12.0;
 		double equip1_reserve_cost = as_double("equip1_reserve_cost");
 		int equip1_reserve_freq = as_integer("equip1_reserve_freq");
 		double equip2_reserve_cost = as_double("equip2_reserve_cost");

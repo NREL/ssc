@@ -1142,8 +1142,8 @@ public:
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
 		double insurance_rate = as_double("insurance_rate")*0.01;
-		double months_working_reserve_frac = as_integer("months_working_reserve") / 12.0;
-		double months_receivables_reserve_frac = as_integer("months_receivables_reserve") / 12.0;
+		double months_working_reserve_frac = as_double("months_working_reserve") / 12.0;
+		double months_receivables_reserve_frac = as_double("months_receivables_reserve") / 12.0;
 		double equip1_reserve_cost = as_double("equip1_reserve_cost");
 		int equip1_reserve_freq = as_integer("equip1_reserve_freq");
 		double equip2_reserve_cost = as_double("equip2_reserve_cost");

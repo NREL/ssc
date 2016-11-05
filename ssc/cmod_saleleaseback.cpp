@@ -180,8 +180,9 @@ static var_info _cm_vtab_saleleaseback[] = {
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",					  "DHF",             "?=3",					    "MIN=0,MAX=100",      			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_equity_closing",		"Equity closing cost",				"$",	 "",					  "DHF",             "?=100000",					    "MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "months_working_reserve",		"Working capital reserve months of operating costs",		"months",	 "",					  "DHF",             "?=6",					    "INTEGER,MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "cost_other_financing",		"",		"$",	 "Other Financing Cost",					  "DHF",             "?=150000",					    "MIN=0",      			        "" },
+	{ SSC_INPUT, SSC_NUMBER, "months_working_reserve", "Working capital reserve months of operating costs", "months", "", "Other Capital Costs", "?=6", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "months_receivables_reserve", "Receivables reserve months of PPA revenue", "months", "", "Other Capital Costs", "?=0", "MIN=0", "" },
+	{ SSC_INPUT, SSC_NUMBER, "cost_other_financing", "", "$", "Other Financing Cost", "DHF", "?=150000", "MIN=0", "" },
 /* DHF Equity Structure */
 	{ SSC_INPUT,        SSC_NUMBER,     "sponsor_operating_margin",		"Annual Developer (Lessee) Operating Margin",		"$/kW",	 "",  "DHF",             "?=40",					  "",     			        "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "sponsor_operating_margin_escalation",			"Annual Developer (Lessee) Operating Margin Escalation",		"%",	 "",					  "DHF",             "?=2",					  "MIN=0,MAX=100",     			        "" },
@@ -1183,7 +1184,8 @@ public:
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double property_tax_rate = as_double("property_tax_rate")*0.01;
 		double insurance_rate = as_double("insurance_rate")*0.01;
-		double months_working_reserve_frac = as_integer("months_working_reserve") / 12.0;
+		double months_working_reserve_frac = as_double("months_working_reserve") / 12.0;
+		double months_receivables_reserve_frac = as_double("months_receivables_reserve") / 12.0;
 		double equip1_reserve_cost = as_double("equip1_reserve_cost");
 		int equip1_reserve_freq = as_integer("equip1_reserve_freq");
 		double equip2_reserve_cost = as_double("equip2_reserve_cost");
