@@ -885,14 +885,15 @@ ssc_number_t compute_module::accumulate_annual_for_year( const std::string &ts_v
 	const std::string &annual_var, 
 	double scale,
 	size_t step_per_hour, 
-	size_t year ) throw(exec_error)
+	size_t year, 
+    size_t steps) throw(exec_error)
 {
 	size_t count = 0;
 	ssc_number_t *ts = as_array(ts_var, &count);
 
-	size_t annual_values = step_per_hour * 8760;	
+	size_t annual_values = step_per_hour * steps;	
 
-	if (!ts || step_per_hour < 1 || step_per_hour > 60 || year*step_per_hour * 8760 > count)
+	if (!ts || step_per_hour < 1 || step_per_hour > 60 || year*step_per_hour * steps > count)
 		throw exec_error("generic", "Failed to accumulate time series (hourly or subhourly): " + ts_var + " to annual: " + annual_var);
 
 	size_t istart = (year-1)*annual_values;
