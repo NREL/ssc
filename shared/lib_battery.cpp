@@ -531,6 +531,10 @@ voltage_t(num_cells_series, num_strings, V_ref_50)
 	_I = 0;
 	_V_ref_50 = V_ref_50;
 	_R = R;
+	//mjw 11/6/16 need to initialize here, not in declaration. 
+        _R_molar = 8.314;  // Molar gas constant [J/mol/K]^M
+        _F = 26.801 * 3600;// Faraday constant [As/mol]^M
+        _C = 1.38;                 // model correction factor^M	
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
 void voltage_vanadium_redox_t::copy(voltage_vanadium_redox_t *& voltage)
