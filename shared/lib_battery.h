@@ -14,6 +14,7 @@ const double watt_to_kilowatt = 1. / 1000;
 const double kilowatt_to_watt = 1000;
 const double hour_to_min = 60.;
 const double tolerance = 0.001;
+const double Celsius_to_Kelvin = 273.15;
 
 typedef std::vector<double> double_vec;
 typedef std::vector<int> int_vec;
@@ -170,6 +171,7 @@ protected:
 Voltage Base class.  
 All voltage models are based on one-cell, but return the voltage for one battery
 */
+class thermal_t;
 class voltage_t
 {
 public:
@@ -178,8 +180,8 @@ public:
 	void copy(voltage_t *&);
 	virtual ~voltage_t(){};
 
-	virtual void updateVoltage(capacity_t * capacity, double dt)=0;
-	double battery_voltage(); // voltage of one battery
+	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
+	virtual double battery_voltage(); // voltage of one battery
 	double cell_voltage(); // voltage of one cell
 	double R(); // computed resistance
 
@@ -191,15 +193,6 @@ protected:
 
 };
 
-class voltage_basic_t : public voltage_t
-{
-public:
-	voltage_basic_t(int num_cells_series, int num_strings, double voltage);
-	voltage_basic_t * clone();
-	void copy(voltage_basic_t *&);
-	void updateVoltage(capacity_t * capacity, double dt);
-};
-
 // Shepard + Tremblay Model
 class voltage_dynamic_t : public voltage_t
 {
@@ -209,12 +202,10 @@ public:
 	void copy(voltage_dynamic_t *&);
 
 	void parameter_compute();
-	void updateVoltage(capacity_t * capacity, double dt);
+	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
 protected:
-	double voltage_model(double capacity, double current,  double q0);
 	double voltage_model_tremblay_hybrid(double capacity, double current, double q0);
-
 
 private:
 	double _Vfull;
@@ -228,6 +219,30 @@ private:
 	double _B;
 	double _E0;
 	double _K;
+
+};
+
+// D'Agostino Vanadium Redox Flow Model
+class voltage_vanadium_redox_t : public voltage_t
+{
+public:
+	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R);
+	voltage_vanadium_redox_t * clone();
+	void copy(voltage_vanadium_redox_t *&);
+
+	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
+	//double battery_voltage();
+
+protected:
+	double voltage_model(double q0, double qmax, double T);
+
+private:
+	double _V_ref_50;				// Reference voltage at 50% SOC
+	double _R;						// Internal resistance [Ohm]
+	double _I;						// Current level [A]
+	const double _R_molar = 8.314;	// Molar gas constant [J/mol/K]
+	const double _F = 26.801 * 3600;// Faraday constant [As/mol]
+	const double _C = 1.38;			// model correction factor
 };
 
 /*

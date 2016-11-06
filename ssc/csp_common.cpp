@@ -61,7 +61,7 @@ bool solarpilot_invoke::run()
         opt.max_step.val = m_cmod->as_double("opt_init_step");
         opt.max_iter.val = m_cmod->as_integer("opt_max_iter");
         opt.converge_tol.val = m_cmod->as_double("opt_conv_tol");
-        opt.algorithm.val = m_cmod->as_integer("opt_algorithm"); //map correctly?
+        opt.algorithm.combo_select_by_mapval( m_cmod->as_integer("opt_algorithm") ); //map correctly?
         opt.flux_penalty.val = m_cmod->as_double("opt_flux_penalty");
     }
 
@@ -86,13 +86,9 @@ bool solarpilot_invoke::run()
     std:string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
 
 	int cmap[5];
-    //cmap[0] = 0; //FLAT
-    //cmap[1] = 1; //AT_SLANT
-    //cmap[2] = cmap[3] = cmap[4] = 3; //AT_DAY_HOUR
-	
-    cmap[0] = Heliostat::CANT_TYPE::FLAT;
-    cmap[1] = Heliostat::CANT_TYPE::AT_SLANT;
-    cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_TYPE::AT_DAY_HOUR;
+    cmap[0] = var_heliostat::CANT_METHOD::NO_CANTING;
+    cmap[1] = var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT;
+    cmap[2] = cmap[3] = cmap[4] = var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR;
 
 	int cant_type = m_cmod->as_integer("cant_type");
 
@@ -100,22 +96,22 @@ bool solarpilot_invoke::run()
     //hf->cant_method.combo_select( cant_choices[cmap[cant_type]] );
     hf->cant_method.combo_select( cant_choices[cant_type] );
     switch (cant_type)
-    {
-    case AutoPilot::CANT_TYPE::NONE:
-    case AutoPilot::CANT_TYPE::ON_AXIS:
+{
+    case AutoPilot::API_CANT_TYPE::NONE:
+    case AutoPilot::API_CANT_TYPE::ON_AXIS:
         //do nothing
         break;
-    case AutoPilot::CANT_TYPE::EQUINOX:
+    case AutoPilot::API_CANT_TYPE::EQUINOX:
         hf->cant_day.val = 81;  //spring equinox
-		hf->cant_hour.val = 12;
+	    hf->cant_hour.val = 12;
         break;
-    case AutoPilot::CANT_TYPE::SOLSTICE_SUMMER:
+    case AutoPilot::API_CANT_TYPE::SOLSTICE_SUMMER:
         hf->cant_day.val = 172;  //Summer solstice
-		hf->cant_hour.val = 12;
+	    hf->cant_hour.val = 12;
         break;
-    case AutoPilot::CANT_TYPE::SOLSTICE_WINTER:
+    case AutoPilot::API_CANT_TYPE::SOLSTICE_WINTER:
         hf->cant_day.val = 355;  //Winter solstice
-		hf->cant_hour.val = 12;
+	    hf->cant_hour.val = 12;
         break;
     default:
     {
@@ -218,8 +214,31 @@ bool solarpilot_invoke::run()
             m_sapi->SetSummaryCallback( optimize_callback, m_cmod);
 		    m_sapi->Setup(*this, true);
             
-            if(! m_sapi->Optimize(*this) )
-                return false;
+            //set up optimization variables
+            {
+                int nv = 3;
+                vector<double*> optvars(nv);
+                vector<double> upper(nv, HUGE_VAL);
+                vector<double> lower(nv, -HUGE_VAL);
+                vector<double> stepsize(nv);
+                vector<string> names(nv);
+
+                //pointers
+                optvars.at(0) = &sf.tht.val;
+                optvars.at(1) = &recs.front().rec_height.val;
+                optvars.at(2) = &recs.front().rec_diameter.val;
+                //names
+                names.at(0) = (split(sf.tht.name, ".")).back();
+                names.at(1) = (split(recs.front().rec_height.name, ".")).back();
+                names.at(2) = (split(recs.front().rec_diameter.name, ".")).back();
+                //step size
+                stepsize.at(0) = sf.tht.val*opt.max_step.val;
+                stepsize.at(1) = recs.front().rec_height.val*opt.max_step.val;
+                stepsize.at(2) = recs.front().rec_diameter.val*opt.max_step.val;
+
+                if(! m_sapi->Optimize(opt.algorithm.mapval(), optvars, upper, lower, stepsize, &names) )
+                    return false;
+            }
 
             m_sapi->SetSummaryCallbackStatus(false);
             m_sapi->PreSimCallbackUpdate();
@@ -268,10 +287,18 @@ bool solarpilot_invoke::run()
 		fluxtab.n_flux_days = m_cmod->as_integer("n_flux_days");
 		fluxtab.delta_flux_hrs = m_cmod->as_integer("delta_flux_hrs");
 		
+        string aim_method_save = flux.aim_method.val;
+        flux.aim_method.combo_select( "Simple aim points" );
+
 		int nflux_x = 12, nflux_y = 1;
 		if(! m_sapi->CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
+        {
+            flux.aim_method.combo_select( aim_method_save );
             return false;  //simulation failed or was cancelled.
-            
+        }
+        flux.aim_method.combo_select( aim_method_save );
+
+
 		//collect the optical efficiency data and sun positions
 		if ( fluxtab.zeniths.size() == 0 || fluxtab.azimuths.size() == 0
 			|| fluxtab.efficiency.size() == 0 )
@@ -365,17 +392,17 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
     //Update the total installed cost
     double total_direct_cost = 0.;
     double A_rec;
-    switch (recs.front().rec_type.val)
+    switch (recs.front().rec_type.mapval())
     {
-    case Receiver::REC_TYPE::CYLINDRICAL:
+    case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
     {
         double h = recs.front().rec_height.val;
         double d = h/recs.front().rec_aspect.Val();
         A_rec =  h*d*3.1415926;
         break;
     }
-    case Receiver::REC_TYPE::CAVITY:
-    case Receiver::REC_TYPE::FLAT_PLATE:
+    //case Receiver::REC_TYPE::CAVITY:
+    case var_receiver::REC_TYPE::FLAT_PLATE:
         double h = recs.front().rec_height.val;
         double w = h/recs.front().rec_aspect.Val();
         A_rec = h*w;

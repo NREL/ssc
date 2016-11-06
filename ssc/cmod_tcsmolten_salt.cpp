@@ -235,6 +235,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "time_start",           "Simulation start time",                                             "s",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "time_stop",            "Simulation stop time",                                              "s",            "",            "sys_ctrl",          "?=31536000",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "time_steps_per_hour",  "Number of simulation time steps per hour",                          "-",            "",            "sys_ctrl",          "?=1",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "vacuum_arrays",        "Allocate arrays for only the required number of steps",             "-",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",         "Fixed parasitic load - runs at all times",                          "MWe/MWcap",    "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "aux_par",              "Aux heater, boiler parasitic",                                      "MWe/MWcap",    "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "aux_par_f",            "Aux heater, boiler parasitic - multiplying fraction",               "none",         "",            "sys_ctrl",          "*",                       "",                      "" },
@@ -539,7 +540,11 @@ public:
 		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
 
 		int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
-		int n_steps_fixed = steps_per_hour * 8760;	//[-]
+        int n_steps_fixed = steps_per_hour * 8760;	//[-]
+        if( as_boolean("vacuum_arrays") )
+        {
+            n_steps_fixed = steps_per_hour * (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
+        }
         //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
@@ -624,17 +629,17 @@ public:
 			//Update the total installed cost
 			double total_direct_cost = 0.;
 			double A_rec;
-			switch( spi.recs.front().rec_type.val )
+			switch( spi.recs.front().rec_type.mapval() )
 			{
-            case Receiver::REC_TYPE::CYLINDRICAL:
+            case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
 			{
                 double h = spi.recs.front().rec_height.val;
                 double d = h / spi.recs.front().rec_aspect.Val();
                 A_rec = h*d*3.1415926;
                 break;
 			}
-            case Receiver::REC_TYPE::CAVITY:
-            case Receiver::REC_TYPE::FLAT_PLATE:
+            case var_receiver::REC_TYPE::FLAT_PLATE:
+            //case Receiver::REC_TYPE::CAVITY:
 				double h = spi.recs.front().rec_height.val;
 				double w = h / spi.recs.front().rec_aspect.Val();
 				A_rec = h*w;
@@ -849,7 +854,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-        if (!sf_haf.setup())
+        if (!sf_haf.setup(n_steps_fixed))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
@@ -1088,6 +1093,8 @@ public:
 				int out_type = -1;
 				std::string out_msg = "";
 
+				update("Calculating sCO2 design point...", 0.0);
+
 				// Construction class and design system
 				C_sco2_recomp_csp sco2_recomp_csp;
 				try
@@ -1107,6 +1114,8 @@ public:
 					return;
 				}
 
+				update("sCO2 design point calculations complete.", 100.0);
+
 				// Get sCO2 design outputs
 				double m_dot_htf_design = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;			//[kg/s]
 				double T_htf_cold_calc = sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
@@ -1114,20 +1123,25 @@ public:
 				double UA_HTR = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
 
 				// Get user-defined power cycle parameters
-				double T_htf_hot_low = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 20.0;	//[C]
-				double T_htf_hot_high = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 20.0;	//[C]
+				double T_htf_hot_low = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 - 50.0;	//[C]
+				double T_htf_hot_high = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
 				//int n_T_htf_hot_in = floor((T_htf_hot_high - T_htf_hot_low)/2.0)+1;			//[-]
-				int n_T_htf_hot_in = 21;			//[-]
+				int n_T_htf_hot_in = 10;			//[-]
 				double T_amb_low = 0.0;				//[C]
 				double T_amb_high = 55.0;			//[C]
 				//int n_T_amb_in = floor((T_amb_high - T_amb_low)/2.5)+1;					//[-]
-				int n_T_amb_in = 25;				//[-]
-				double m_dot_htf_ND_low = as_double("cycle_cutoff_frac") - 0.01;	//[-]
-				double m_dot_htf_ND_high = as_double("cycle_max_frac") + 0.01;		//[-]
+				int n_T_amb_in = 10;				//[-]
+				double m_dot_htf_ND_low = as_double("cycle_cutoff_frac");	// - 0.01;	//[-]
+				double m_dot_htf_ND_high = max(1.2, as_double("cycle_max_frac"));		// + 0.01;		//[-]
 				//int n_m_dot_htf_ND_in = floor((m_dot_htf_ND_high - m_dot_htf_ND_low)/0.025)+1;			//[-]
-				int n_m_dot_htf_ND_in = 31;
+				int n_m_dot_htf_ND_in = 10;
 
 				util::matrix_t<double> T_htf_parametrics, T_amb_parametrics, m_dot_htf_ND_parametrics;
+
+				update("Calculating sCO2 off-design performance for lookup tables...", 0.0);
+
+				sco2_recomp_csp.mf_callback = ssc_mspt_udpc_progress;
+				sco2_recomp_csp.m_cdata = (void*)this;
 
 				try
 				{
@@ -1148,6 +1162,8 @@ public:
 
 					return;
 				}
+
+				update("sCO2 off-design performance calculations for lookup tables complete.", 100.0);
 
 				//double T_htf_hot_test = sco2_recomp_csp.get_design_par()->m_T_htf_hot_in - 273.15;		//[C]
 				//double m_dot_htf_ND_test = 1.0;		//[-]
@@ -1426,6 +1442,7 @@ public:
 
 
 
+		update("Initialize MSPT model...", 0.0);
 
 		int out_type = -1;
 		std::string out_msg = "";
@@ -1454,16 +1471,18 @@ public:
             size_t n_dispatch_series;
             ssc_number_t *dispatch_series = as_array("dispatch_series", &n_dispatch_series);
 
-            if( n_dispatch_series != 8760 )
-			    throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array must be 8760 in length.");
+            if( n_dispatch_series != 8760*steps_per_hour)
+			    throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array must be 8760*(steps per hour) in length.");
                 
 
-            for(int i=0; i<8760; i++)
+            for(int i=0; i<8760*steps_per_hour; i++)
                 tou_params->mc_pricing.m_hr_tou[i] = i+1;
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(8760);
-            for( int i=0; i<8760; i++)
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(8760*steps_per_hour);
+            for( int i=0; i<8760*steps_per_hour; i++)
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
+
+		update("Begin timeseries simulation...", 0.0);
 
 		try
 		{
@@ -1551,19 +1570,19 @@ public:
 			p_gen[i] = p_W_dot_net[i] * 1.E3 * (ssc_number_t)haf(hour);			//[kWe]
 		}
 
-		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);
+		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
 		
-		accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour);		//[kWe-hr]
+		accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);		//[kWe-hr]
 
-        accumulate_annual_for_year("disp_objective", "disp_objective_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour);
-        accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour);
-        accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour);
-        accumulate_annual_for_year("disp_presolve_nvar", "disp_presolve_nvar_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour);
-        accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step/3600. / as_double("disp_frequency"), steps_per_hour );
+        accumulate_annual_for_year("disp_objective", "disp_objective_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
+        accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
+        accumulate_annual_for_year("disp_presolve_nvar", "disp_presolve_nvar_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
+        accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step/3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour );
 
 		// Calculated Outputs
 			// First, sum power cycle water consumption timeseries outputs
-		accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 3600.0 / 1000.0, steps_per_hour); //[m^3], convert from kg
+		accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 3600.0 / 1000.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour); //[m^3], convert from kg
 			// Then, add water usage from mirror cleaning
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
@@ -1579,7 +1598,7 @@ public:
 		if(nameplate > 0.0)
 			kWh_per_kW = ae / nameplate;
 
-		assign("capacity_factor", kWh_per_kW/87.6);
+		assign("capacity_factor", kWh_per_kW/((double)n_steps_fixed/(double)steps_per_hour)*100. );
 		assign("kwh_per_kw", kWh_per_kW);
 		 
 	}
@@ -1620,7 +1639,7 @@ static bool ssc_mspt_sim_progress( void *data, double percent, C_csp_messages *c
             cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
         }
     }
-    bool ret = cm->update("", percent);
+    bool ret = cm->update("Simulation progress", percent);
 
     return ret;
 }

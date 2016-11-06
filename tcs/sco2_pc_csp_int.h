@@ -124,6 +124,10 @@ public:
 		C_HX_counterflow::S_od_solved ms_phx_od_solved;	
 	};
 
+	// Callback funtion
+	bool(*mf_callback)(void *data, double percent, std::string msg);
+	void *m_cdata;
+
 private:
 	C_RecompCycle mc_rc_cycle;
 	C_HX_co2_to_htf mc_phx;

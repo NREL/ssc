@@ -17,6 +17,9 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	m_od_opt_tol = 1.E-3;				//[-] Relative tolerance for od optimization convergence
 	// **************************************
 
+	mf_callback = 0;		// NULL
+	m_cdata = 0;			// NULL
+
 	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
 
 	//sco2_od_opt_file << "P_mc_in_MPa,f_recomp,phi_mc,eta_ND,W_dot_MW\n";
@@ -31,40 +34,82 @@ void C_sco2_recomp_csp::design(C_sco2_recomp_csp::S_des_par des_par)
 
 void C_sco2_recomp_csp::design_core()
 {
-	// Design the recompression cycle
-		// Define sCO2 cycle design parameter structure
-	ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
-	ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
-	ms_rc_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des+ms_des_par.m_dt_mc_approach;	//[K]
-	if(ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
-	{
-		std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]." 
-		" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
-		ms_rc_cycle_des_par.m_T_mc_in-273.15,
-		m_T_mc_in_min-273.15);
-	}
-	ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in-ms_des_par.m_phx_dt_hot_approach;	//[K]
-	ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
-	ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
-	ms_rc_cycle_des_par.m_DP_PC = ms_des_par.m_DP_PC;
-	ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-	ms_rc_cycle_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
-	ms_rc_cycle_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
-	ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
-	ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
-	ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
-	ms_rc_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
-	ms_rc_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
-	ms_rc_cycle_des_par.m_tol = ms_des_par.m_tol;
-	ms_rc_cycle_des_par.m_opt_tol = ms_des_par.m_opt_tol;
-	ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;
-
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
 	error_msg[0] = NULL;
 	int auto_err_code = 0;
 
-	mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, auto_err_code, error_msg);
+	if(true)
+	{
+
+
+		// Design the recompression cycle
+			// Define sCO2 cycle design parameter structure
+		ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+		ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
+		ms_rc_cycle_des_par.m_T_mc_in = ms_des_par.m_T_amb_des+ms_des_par.m_dt_mc_approach;	//[K]
+		if(ms_rc_cycle_des_par.m_T_mc_in < m_T_mc_in_min)
+		{
+			std::string msg = util::format("The input design main compressor inlet temperature is %lg [C]." 
+			" The sCO2 cycle design code reset it to the minimum allowable design main compressor inlet temperature: %lg [C].",
+			ms_rc_cycle_des_par.m_T_mc_in-273.15,
+			m_T_mc_in_min-273.15);
+		}
+		ms_rc_cycle_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in-ms_des_par.m_phx_dt_hot_approach;	//[K]
+		ms_rc_cycle_des_par.m_DP_LT = ms_des_par.m_DP_LT;
+		ms_rc_cycle_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+		ms_rc_cycle_des_par.m_DP_PC = ms_des_par.m_DP_PC;
+		ms_rc_cycle_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
+		ms_rc_cycle_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
+		ms_rc_cycle_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
+		ms_rc_cycle_des_par.m_eta_mc = ms_des_par.m_eta_mc;
+		ms_rc_cycle_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+		ms_rc_cycle_des_par.m_eta_t = ms_des_par.m_eta_t;
+		ms_rc_cycle_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+		ms_rc_cycle_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
+		ms_rc_cycle_des_par.m_tol = ms_des_par.m_tol;
+		ms_rc_cycle_des_par.m_opt_tol = ms_des_par.m_opt_tol;
+		ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;	
+
+		mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, auto_err_code, error_msg);
+
+
+	}
+	else
+	{
+
+
+		// twn 10.20.16 code for testing
+
+		double UA_FIXED_TEST = 1694.92;		//[kW/K]
+
+		C_RecompCycle::S_auto_opt_design_parameters s_rc_auto_opt_des_par;
+		s_rc_auto_opt_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
+		s_rc_auto_opt_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;		//[K]
+		s_rc_auto_opt_des_par.m_T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
+		s_rc_auto_opt_des_par.m_DP_LT = ms_des_par.m_DP_LT;
+		s_rc_auto_opt_des_par.m_DP_HT = ms_des_par.m_DP_HT;
+		s_rc_auto_opt_des_par.m_DP_PC = ms_des_par.m_DP_PC;
+		s_rc_auto_opt_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
+		s_rc_auto_opt_des_par.m_UA_rec_total = UA_FIXED_TEST;
+		s_rc_auto_opt_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
+		s_rc_auto_opt_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
+		s_rc_auto_opt_des_par.m_eta_mc = ms_des_par.m_eta_mc;
+		s_rc_auto_opt_des_par.m_eta_rc = ms_des_par.m_eta_rc;
+		s_rc_auto_opt_des_par.m_eta_t = ms_des_par.m_eta_t;
+		s_rc_auto_opt_des_par.m_N_sub_hxrs = ms_des_par.m_N_sub_hxrs;
+		s_rc_auto_opt_des_par.m_P_high_limit = ms_des_par.m_P_high_limit;
+		s_rc_auto_opt_des_par.m_tol = ms_des_par.m_tol;
+		s_rc_auto_opt_des_par.m_opt_tol = ms_des_par.m_opt_tol;
+		s_rc_auto_opt_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+	
+		mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par, auto_err_code);
+
+
+	}
+
+
+
 	ms_des_solved.ms_rc_cycle_solved = *mc_rc_cycle.get_design_solved();
 
 	if(auto_err_code != 0)
@@ -552,7 +597,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	opt_od_eta.set_upper_bounds(ub);
 	opt_od_eta.set_initial_step(scale);
 	//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-	opt_od_eta.set_ftol_rel(m_od_opt_tol/10.0);
+	opt_od_eta.set_ftol_rel(m_od_opt_tol);
 
 	// Set max objective function
 	opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -612,7 +657,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			opt_od_eta.set_upper_bounds(ub);
 			opt_od_eta.set_initial_step(scale);
 			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-			opt_od_eta.set_ftol_rel(m_od_opt_tol / 10.0);
+			opt_od_eta.set_ftol_rel(m_od_opt_tol);
 
 			// Set max objective function
 			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -744,8 +789,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			opt_od_eta.set_lower_bounds(lb);
 			opt_od_eta.set_upper_bounds(ub);
 			opt_od_eta.set_initial_step(scale);
-			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-			opt_od_eta.set_ftol_rel(m_od_opt_tol/10.0);
+			opt_od_eta.set_ftol_rel(m_od_opt_tol);
 
 			// Set max objective function
 			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -958,6 +1002,9 @@ int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_ht
 {
 	C_sco2_csp_od c_sco2_csp(this);
 	C_ud_pc_table_generator c_sco2_ud_pc(c_sco2_csp);
+
+	c_sco2_ud_pc.mf_callback = mf_callback;
+	c_sco2_ud_pc.m_cdata = m_cdata;
 
 	double T_htf_ref = ms_des_par.m_T_htf_hot_in - 273.15;	//[C] convert from K
 	double T_amb_ref = ms_des_par.m_T_amb_des - 273.15;		//[C] convert from K

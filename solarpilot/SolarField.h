@@ -18,22 +18,22 @@
 #include "fluxsim.h"
 #include "OpticalMesh.h"
 
-
-struct LAYOUT_DETAIL
-{
-	enum A {
-	//Subset of days/hours=2;Single simulation point=1;Do not filter heliostats=0;Annual simulation=3;Limited annual simulation=4;Representative profiles=5;Map to Annual=6
-	//Associated with _des_sim_detail
-	NO_FILTER=0,
-	SINGLE_POINT,
-	SUBSET_HOURS,
-	FULL_ANNUAL,
-	LIMITED_ANNUAL,
-	AVG_PROFILES,
-	MAP_TO_ANNUAL,
-	FOR_OPTIMIZATION
-	};
-};
+//
+//struct LAYOUT_DETAIL
+//{
+//	enum A {
+//	//Subset of days/hours=2;Single simulation point=1;Do not filter heliostats=0;Annual simulation=3;Limited annual simulation=4;Representative profiles=5;Map to Annual=6
+//	//Associated with _des_sim_detail
+//	NO_FILTER=0,
+//	SINGLE_POINT,
+//	SUBSET_HOURS,
+//	FULL_ANNUAL,
+//	LIMITED_ANNUAL,
+//	AVG_PROFILES,
+//	MAP_TO_ANNUAL,
+//	FOR_OPTIMIZATION
+//	};
+//};
 
 //using namespace std;
 
@@ -148,7 +148,6 @@ protected:
 		std::vector<Point> _all_locs;
 
 	public:
-		struct SHAPE { enum A {ELLIPTICAL, RECTANGULAR, FRONT}; }; //local enum
 		//methods
 		void Create(var_map &V, double extents[2]);
 		double ShadowLoss(var_map &V, Point &hloc);
@@ -156,9 +155,9 @@ protected:
 
 public:
 
-    struct HELIO_SPACING_METHOD { enum A {NO_BLOCK_DENSE=3, DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
-    struct SUNPOS_DESIGN { enum A {SOLSTICE_S, EQUINOX, SOLSTICE_W, ZENITH, USER }; };
-    struct TEMPLATE_RULE{ enum A {SINGLE=0, SPEC_RANGE=1, EVEN_DIST=2}; };
+    //struct HELIO_SPACING_METHOD { enum A {NO_BLOCK_DENSE=3, DELSOL_EMPIRICAL=1, NO_BLOCKING=2}; };
+    //struct SUNPOS_DESIGN { enum A {SOLSTICE_S, EQUINOX, SOLSTICE_W, ZENITH, USER }; };
+    //struct TEMPLATE_RULE{ enum A {SINGLE=0, SPEC_RANGE=1, EVEN_DIST=2}; };
 
 	//Constructors - destructor
 	SolarField (); //constructor

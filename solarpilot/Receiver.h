@@ -205,9 +205,9 @@ public:
 			PLANE_ELLIPSE, POLYGON_CLOSED, POLYGON_OPEN, POLYGON_CAV}; 
 	};
 	//define an enumeration for receiver base types
-	struct REC_TYPE {
-		enum A {CYLINDRICAL, CAVITY, FLAT_PLATE};
-	};
+	//struct REC_TYPE {
+	//	enum A {CYLINDRICAL, CAVITY, FLAT_PLATE};
+	//};
 
 	//Declare "GET" access functions
 	static double getReceiverWidth(var_receiver &V); //[m] Returns either receiver width or diameter, depending on configuration

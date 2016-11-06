@@ -327,6 +327,9 @@ double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*
 
 C_ud_pc_table_generator::C_ud_pc_table_generator(C_od_pc_function & f_pc_eq) : mf_pc_eq(f_pc_eq)
 {
+	mf_callback = 0;		// = NULL
+	m_cdata = 0;			// = NULL
+	std::string m_udpc_msg = "Power cycle preprocessing...";
 	return;
 }
 
@@ -390,6 +393,8 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 	T_htf_ind.resize(n_T_htf, 13);		// Set matrix size
 	double delta_T_htf = (T_htf_high - T_htf_low)/double(n_T_htf-1);
 
+	double n_runs_total = 3.0*(n_T_htf + n_T_amb + n_m_dot_htf_ND);
+
 	// Set ambient temperature because it is constant for the HTF temperature parametrics
 	pc_inputs.m_T_amb = T_amb_ref;	//[C]
 	for(int i = 0; i < n_T_htf; i++)
@@ -420,7 +425,13 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 				std::string err_msg = util::format("The 1st UDPC table (primary: T_htf, interaction: m_dot_htf_ND) generation failed at T_htf = %lg [C] and m_dot_htf = %lg [-]", pc_inputs.m_T_htf_hot, pc_inputs.m_m_dot_htf_ND);
 				throw(C_csp_exception(err_msg, "UDPC"));
 			}
+
+			double run_number = i*3 + j;
+
+			if( mf_callback != 0)
+				mf_callback(m_cdata, 100.0*run_number/n_runs_total, m_udpc_msg);
 		}
+
 	}
 	// ******************************************
 
@@ -468,6 +479,11 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 				std::string err_msg = util::format("The 2nd UDPC table (primary: T_amb, interaction: T_htf) generation failed at T_amb = %lg [C] and T_htf = %lg [C]", pc_inputs.m_T_amb, pc_inputs.m_T_htf_hot);
 				throw(C_csp_exception(err_msg, "UDPC"));
 			}
+
+			double run_number = 3.0*n_T_htf + i*3 + j;
+
+			if( mf_callback != 0 )
+				mf_callback(m_cdata, 100.0*run_number/n_runs_total, m_udpc_msg);
 		}
 	}
 	// ******************************************
@@ -516,6 +532,11 @@ int C_ud_pc_table_generator::generate_tables(double T_htf_ref /*C*/, double T_ht
 				std::string err_msg = util::format("The 3rd UDPC table (primary: m_dot_htf_ND, interaction: T_amb) generation failed at T_amb = %lg [C] and m_dot_htf = %lg [-]", pc_inputs.m_T_amb, pc_inputs.m_m_dot_htf_ND);
 				throw(C_csp_exception(err_msg, "UDPC"));
 			}
+
+			double run_number = 3.0*n_T_htf + 3.0*n_T_amb  + i*3 + j;
+
+			if( mf_callback != 0 )
+				mf_callback(m_cdata, 100.0*run_number/n_runs_total, m_udpc_msg);
 		}
 	}
 	// ******************************************

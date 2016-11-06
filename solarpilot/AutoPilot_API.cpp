@@ -632,7 +632,7 @@ void AutoPilot::GenerateDesignPointSimulations(var_map &V, vector<string> &wdata
 	*/
     
 	//amb.weather_data.clear();
-	interop::GenerateSimulationWeatherData(V, LAYOUT_DETAIL::FOR_OPTIMIZATION, wdata);	
+	interop::GenerateSimulationWeatherData(V, -1, wdata);	
 
     /*WeatherData *w = &V.sf.sim_step_data.Val();
 
@@ -733,11 +733,10 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
     //simulate flux maps for all of the receivers
 	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
-	int fluxmap_format = V->par.fluxmap_format.val;
+	int fluxmap_format = V->par.fluxmap_format.mapval();
 	
 	if(flux_res_y > 1)
-        V->flux.aim_method.val = FluxSimData::AIM_STRATEGY::IMAGE_SIZE;
-		//_variables["fluxsim"][0]["aim_method"].set( FluxSimData::AIM_STRATEGY::IMAGE_SIZE );
+        V->flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY );
 
 	//Shape the flux surface files to match
 	for(unsigned int i=0; i<rec_to_sim.size(); i++){
@@ -864,11 +863,11 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
     var_map *V = _SF->getVarMap();
 
     //if optimizing receiver aspect, make sure diameter is set appropriately
-	if(V->recs.front().is_height_opt.val || V->recs.front().is_aspect_opt.val ) 
-    {
-        double *dim_which = V->recs.front().rec_type.val == Receiver::REC_TYPE::CYLINDRICAL ? &V->recs.front().rec_diameter.val : &V->recs.front().rec_width.val;
-        *dim_which = V->recs.front().rec_height.val / V->recs.front().rec_aspect.Val();
-    }
+	//if(V->recs.front().is_height_opt.val || V->recs.front().is_aspect_opt.val ) 
+ //   {
+ //       double *dim_which = V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL ? &V->recs.front().rec_diameter.val : &V->recs.front().rec_width.val;
+ //       *dim_which = V->recs.front().rec_height.val / V->recs.front().rec_aspect.Val();
+ //   }
 
 	//create the solar field object
 	if(! _cancel_simulation)
@@ -892,13 +891,14 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	//Do the flux simulation at the design point
 	if(! _cancel_simulation){
 		//update the flux simulation sun position to match the layout reference point sun position
-		_SF->getVarMap()->flux.flux_time_type.val = FluxSimData::FLUX_TIME::POSITION;	//sun position specified
+		//_SF->getVarMap()->flux.flux_time_type.val = var_fluxsim::FLUX_TIME_TYPE::SUN_POSITION;	//sun position specified
+        _SF->getVarMap()->flux.flux_time_type.combo_select_by_mapval( var_fluxsim::FLUX_TIME_TYPE::SUN_POSITION );
 
 		//prep for performance simulation (aim points, etc.)
 		interop::PerformanceSimulationPrep(*_SF, *_SF->getHeliostats(), 0 /*analytical*/);
 		
 		//do flux simulation
-		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), V->flux.aim_method.val == FluxSimData::AIM_STRATEGY::IMAGE_SIZE);	
+		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), V->flux.aim_method.mapval() == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY);	
 		if(_SF->ErrCheck()){return false;}		
 	}
 	
@@ -1228,7 +1228,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		int minmax_iter = 0;
 		bool steep_converged = false;
 		double prev_obj = base_obj;
-        double max_desc_iter = _SF->getVarMap()->opt.max_desc_iter.val;
+        int max_desc_iter = _SF->getVarMap()->opt.max_desc_iter.val;
 
 		_summary_siminfo->setTotalSimulationCount(max_desc_iter);
 		_summary_siminfo->addSimulationNotice("...Moving along steepest descent");
@@ -1638,21 +1638,26 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
 
     //map the method
     nlopt::algorithm nlm;
-    switch(V->opt.algorithm.val)
+    switch(V->opt.algorithm.mapval())
     {
-    case 0: //sp_optimize::METHOD::BOBYQA:
+    //case 0: //sp_optimize::METHOD::BOBYQA:
+    case var_optimize::ALGORITHM::BOBYQA:
         nlm = nlopt::LN_BOBYQA;
         break;
-    case 1: //sp_optimize::METHOD::COBYLA:
+    //case 1: //sp_optimize::METHOD::COBYLA:
+    case var_optimize::ALGORITHM::COBYLA:
         nlm = nlopt::LN_COBYLA;
         break;
-    case 2: //sp_optimize::METHOD::NelderMead:
+    //case 2: //sp_optimize::METHOD::NelderMead:
+    case var_optimize::ALGORITHM::NELDERMEAD:
         nlm = nlopt::LN_NELDERMEAD;
         break;
-    case 3: //sp_optimize::METHOD::NEWOUA:
+    //case 3: //sp_optimize::METHOD::NEWOUA:
+    case var_optimize::ALGORITHM::NEWOUA:
         nlm = nlopt::LN_NEWUOA;
         break;
-    case 4: //sp_optimize::METHOD::Subplex:
+    //case 4: //sp_optimize::METHOD::Subplex:
+    case var_optimize::ALGORITHM::SUBPLEX:
         nlm = nlopt::LN_SBPLX;
         break;
     }
@@ -2365,7 +2370,7 @@ bool AutoPilot_MT::CreateLayout(sp_layout &layout, bool do_post_process)
 	            }
 			
 				//For the map-to-annual case, run a simulation here
-				if(_SF->getVarMap()->sf.des_sim_detail.val == LAYOUT_DETAIL::MAP_TO_ANNUAL)	
+				if(_SF->getVarMap()->sf.des_sim_detail.mapval() == var_solarfield::DES_SIM_DETAIL::EFFICIENCY_MAP__ANNUAL)	
 					if(! _cancel_simulation)
 						SolarField::AnnualEfficiencySimulation(_SF->getVarMap()->amb.weather_file.val, _SF, results); 
 

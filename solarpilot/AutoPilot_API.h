@@ -91,9 +91,9 @@ public:
 	void CancelSimulation();
 	bool IsSimulationCancelled();
     
-    struct CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
-	struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
-	struct ATTEN_MODEL { enum A { DELSOL_CLEAR_DAY, DELSOL_HAZY_DAY, USER_DEFINED }; };
+    struct API_CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
+	//struct FOCUS_TYPE { enum A { FLAT, AT_SLANT, USER_DEFINED }; };
+	//struct ATTEN_MODEL { enum A { DELSOL_CLEAR_DAY, DELSOL_HAZY_DAY, USER_DEFINED }; };
 	
 };
 
