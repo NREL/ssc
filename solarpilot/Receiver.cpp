@@ -417,25 +417,81 @@ void Receiver::Create(var_receiver &V, double tht)
 
 void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 {
+
+
+    //update the receiver geometry type
+    switch(_var_receiver->rec_type.mapval())
+    {
+        case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+        {
+		    if(! _var_receiver->is_open_geom.val)
+            {
+			    _rec_geom = _var_receiver->is_polygon.val ? 
+				    Receiver::REC_GEOM_TYPE::POLYGON_CLOSED : 
+				    Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED 
+                    ;		/*	0 | Continuous closed cylinder - external	*/
+
+		    }
+		    else{
+			    _rec_geom = _var_receiver->is_polygon.val ? 
+				    Receiver::REC_GEOM_TYPE::POLYGON_OPEN : 
+				    Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN
+                    ;		/*	1 | Continuous open cylinder - external	*/
+		    }
+			break;
+	    }
+        //case var_receiver::REC_TYPE::CAVITY: 
+        //{
+        //	if(! _var_receiver->is_polygon.val){		/*	2 | Continuous open cylinder - internal cavity	*/
+	    //		_rec_geom = Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV ;
+	    //	}
+	    //	else{
+	    //		_rec_geom = Receiver::REC_GEOM_TYPE::POLYGON_CAV;			/*	7 | Discrete open N-polygon - internal cavity	*/
+	    //	}
+	    //}
+        case var_receiver::REC_TYPE::FLAT_PLATE:
+        {   //Flat plate
+		    if(_var_receiver->aperture_type.mapval() == var_receiver::APERTURE_TYPE::RECTANGULAR){
+			    _rec_geom = ( Receiver::REC_GEOM_TYPE::PLANE_RECT );			/*	3 | Planar rectangle	*/
+		    }
+		    else{
+			    _rec_geom = ( Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE );			/* 4 | Planar ellipse		*/
+		    }
+            break;
+	    }
+        default:
+            break;
+    };
+
+
 	//Receiver area
 	CalculateAbsorberArea();
 
     //aspect
 	double height = V.rec_height.val;
 	double aspect;
-	if(V.rec_type.val == Receiver::REC_TYPE::CYLINDRICAL){
+    switch(V.rec_type.mapval() )
+    {
+    case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+    {
+	//if(V.rec_type.val == Receiver::REC_TYPE::CYLINDRICAL){
 		//External receiver
 		aspect = height/V.rec_diameter.val;
+        break;
 	}
-	else if(V.rec_type.val == Receiver::REC_TYPE::CAVITY){
+	//else if(V.rec_type.val == Receiver::REC_TYPE::CAVITY){
 		//cavity
-		aspect = height/V.rec_width.val;
-	}
-	else if(V.rec_type.val == Receiver::REC_TYPE::FLAT_PLATE){
+		//aspect = height/V.rec_width.val;
+	//}
+    case var_receiver::REC_TYPE::FLAT_PLATE:
+	//else if(V.rec_type.val == Receiver::REC_TYPE::FLAT_PLATE)
+    {
 		//flat plate
 		aspect = height/V.rec_width.val;
+        break;
 	}
-    else{
+    //else{
+    default:
         throw spexception("Invalid receiver type in UpdateCalculatedMapValues()");
     }
 
@@ -465,7 +521,7 @@ void Receiver::updateCalculatedParameters(var_receiver &V, double tht)
 double Receiver::getReceiverWidth(var_receiver &V) 
 {
     //[m] Returns either receiver width or diameter, depending on configuration
-    if(V.rec_type.val == 0) 
+    if(V.rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL) 
     {
         return V.rec_diameter.val;
     } 
@@ -607,8 +663,9 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 	6	|	Discrete open N-polygon - external
 	7	|	Discrete open N-polygon - internal cavity
 	*/
+    int rec_type = _var_receiver->rec_type.mapval();
 
-	if(_var_receiver->rec_type.val == REC_TYPE::CYLINDRICAL){ //External
+	if(rec_type == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL){ //External
 		//if(! _is_polygon){
 		/*continuous external cylinders. Setup shares some common features..*/
 			
@@ -633,20 +690,20 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 		S->setNormalVector(nv); 
 						
 		if(! _var_receiver->is_open_geom.val){
-			_rec_geom = _var_receiver->is_polygon.val ? 
-				Receiver::REC_GEOM_TYPE::POLYGON_CLOSED : 
-				Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED 
-                ;		/*	0 | Continuous closed cylinder - external	*/
+			//_rec_geom = _var_receiver->is_polygon.val ? 
+			//	Receiver::REC_GEOM_TYPE::POLYGON_CLOSED : 
+			//	Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED 
+   //             ;		/*	0 | Continuous closed cylinder - external	*/
 
 			S->setSurfaceSpanAngle(-PI,PI);	//Full surround
             //_var_receiver->span_min.val = -PI;
             //_var_receiver->span_max.val = PI; //enforce closedness - overwrite any other values
 		}
 		else{
-			_rec_geom = _var_receiver->is_polygon.val ? 
-				Receiver::REC_GEOM_TYPE::POLYGON_OPEN : 
-				Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN
-                ;		/*	1 | Continuous open cylinder - external	*/
+			//_rec_geom = _var_receiver->is_polygon.val ? 
+			//	Receiver::REC_GEOM_TYPE::POLYGON_OPEN : 
+			//	Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN
+   //             ;		/*	1 | Continuous open cylinder - external	*/
 			//A curved surface that doesn't form a closed circle. Extents are defined by the span angles.
 			S->setSurfaceSpanAngle(_var_receiver->span_min.val*D2R, _var_receiver->span_max.val*D2R);
 		}
@@ -717,111 +774,111 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 
 		//}
 	}
-	else if(_var_receiver->rec_type.val == REC_TYPE::CAVITY){ //Cavity
-		if(! _var_receiver->is_polygon.val){		/*	2 | Continuous open cylinder - internal cavity	*/
-			
-			//1) Indicate which specific geometry type should be used with "_rec_geom"
-			_rec_geom = Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV ;
+	//else if(rec_type == var_receiver::REC_TYPE::CAVITY){ //Cavity
+	//	if(! _var_receiver->is_polygon.val){		/*	2 | Continuous open cylinder - internal cavity	*/
+	//		
+	//		//1) Indicate which specific geometry type should be used with "_rec_geom"
+	//		_rec_geom = Receiver::REC_GEOM_TYPE::CYLINDRICAL_CAV ;
 
-			//2) Calculate and set the number of surfaces used for the recever. Resize "_surfaces".
-			_surfaces.resize(1);
-			FluxSurface *S = &_surfaces.at(0);
-			S->setParent(this);
+	//		//2) Calculate and set the number of surfaces used for the recever. Resize "_surfaces".
+	//		_surfaces.resize(1);
+	//		FluxSurface *S = &_surfaces.at(0);
+	//		S->setParent(this);
 
-			//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
+	//		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 
-			Point loc;
-            loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
-			S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, _var_receiver->rec_diameter.val/2. );
-			S->setSurfaceOffset( loc );
-			//For continuous cylindrical surfaces, the normal vector will define the azimuth and zenith of the receiver surface.
-			Vect nv;
-            double rec_az = _var_receiver->rec_azimuth.val * D2R;
-            double rec_el = _var_receiver->rec_elevation.val * D2R;
+	//		Point loc;
+ //           loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
+	//		S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, _var_receiver->rec_diameter.val/2. );
+	//		S->setSurfaceOffset( loc );
+	//		//For continuous cylindrical surfaces, the normal vector will define the azimuth and zenith of the receiver surface.
+	//		Vect nv;
+ //           double rec_az = _var_receiver->rec_azimuth.val * D2R;
+ //           double rec_el = _var_receiver->rec_elevation.val * D2R;
 
-			nv.i = sin(rec_az)*cos(rec_el);
-			nv.j = cos(rec_az)*cos(rec_el);
-			nv.k = sin(rec_el);
-			S->setNormalVector(nv); 
-						
-			//4) Setup the geometry etc.. including setSurfaceGeometry, setSurfaceOffset, setSurfaceSpanAngle, if applicable.
-			S->setSurfaceSpanAngle(_var_receiver->span_min.val*D2R, _var_receiver->span_max.val*D2R);
-						
-			//5) Define the precision of the flux map.
-			
-			//Default setup will be for a single flux test point on the surface. In more detailed
-			//flux mapping runs, this can be changed to whatever the desired resolution is.
-			S->setFluxPrecision(nflux_x,nflux_y);
-			
-			//6) Define the maximum flux for each panel.
-			S->setMaxFlux(_var_receiver->peak_flux.val);
-			
-			//7) Call the method to set up the flux hit test grid.
-			S->DefineFluxPoints(*_var_receiver, _rec_geom);			
+	//		nv.i = sin(rec_az)*cos(rec_el);
+	//		nv.j = cos(rec_az)*cos(rec_el);
+	//		nv.k = sin(rec_el);
+	//		S->setNormalVector(nv); 
+	//					
+	//		//4) Setup the geometry etc.. including setSurfaceGeometry, setSurfaceOffset, setSurfaceSpanAngle, if applicable.
+	//		S->setSurfaceSpanAngle(_var_receiver->span_min.val*D2R, _var_receiver->span_max.val*D2R);
+	//					
+	//		//5) Define the precision of the flux map.
+	//		
+	//		//Default setup will be for a single flux test point on the surface. In more detailed
+	//		//flux mapping runs, this can be changed to whatever the desired resolution is.
+	//		S->setFluxPrecision(nflux_x,nflux_y);
+	//		
+	//		//6) Define the maximum flux for each panel.
+	//		S->setMaxFlux(_var_receiver->peak_flux.val);
+	//		
+	//		//7) Call the method to set up the flux hit test grid.
+	//		S->DefineFluxPoints(*_var_receiver, _rec_geom);			
 
-		}
-		else{
-			_rec_geom = Receiver::REC_GEOM_TYPE::POLYGON_CAV;			/*	7 | Discrete open N-polygon - internal cavity	*/
+	//	}
+	//	else{
+	//		_rec_geom = Receiver::REC_GEOM_TYPE::POLYGON_CAV;			/*	7 | Discrete open N-polygon - internal cavity	*/
 
-			//Use the number of panels as the number of polygon facets. Each facet is its own surface.
-			_surfaces.resize(_var_receiver->n_panels.val);
+	//		//Use the number of panels as the number of polygon facets. Each facet is its own surface.
+	//		_surfaces.resize(_var_receiver->n_panels.val);
 
-			for(int i=0; i<_var_receiver->n_panels.val; i++){
-				FluxSurface *S = &_surfaces.at(i);
-				S->setParent(this);
+	//		for(int i=0; i<_var_receiver->n_panels.val; i++){
+	//			FluxSurface *S = &_surfaces.at(i);
+	//			S->setParent(this);
 
-				//Setup the geometry etc.. including setSurfaceGeometry, setSurfaceOffset
-				double pdaz, wpanel;
-				
-				/*
-				Calculate the panel width based on the total span angle. The span angle is defined
-				such that the minimum bound of the angle passes through (1) a vector from the center of
-				the polygon inscribed circle through the centroid of the farthest panel in the CCW 
-				direction, and (2) a vector from the center of teh polygon inscribed circle through 
-				the centroid of the farthest panel in the CW direction.
-				*/
-				pdaz = (_var_receiver->span_max.val*D2R - _var_receiver->span_min.val*D2R)/double(_var_receiver->n_panels.val-1);
-				wpanel = _var_receiver->rec_diameter.val/2.*tan(pdaz);	//width of each panel
-					
-				
-				S->setSurfaceGeometry(_var_receiver->rec_height.val, wpanel);
-                
-				//Calculate the azimuth angle of the receiver panel
-				double paz = _var_receiver->panel_rotation.val*D2R + pdaz*double(i);
-				//Calculate the elevation angle of the panel
-				double pzen = _var_receiver->rec_elevation.val*D2R*cos(_var_receiver->panel_rotation.val*D2R-paz);
-				//Set the surface normal vector
-				Vect nv;
-				nv.i = -sin(paz)*sin(pzen);
-				nv.j = -cos(paz)*sin(pzen);
-				nv.k = -cos(pzen);
-				S->setNormalVector(nv);
+	//			//Setup the geometry etc.. including setSurfaceGeometry, setSurfaceOffset
+	//			double pdaz, wpanel;
+	//			
+	//			/*
+	//			Calculate the panel width based on the total span angle. The span angle is defined
+	//			such that the minimum bound of the angle passes through (1) a vector from the center of
+	//			the polygon inscribed circle through the centroid of the farthest panel in the CCW 
+	//			direction, and (2) a vector from the center of teh polygon inscribed circle through 
+	//			the centroid of the farthest panel in the CW direction.
+	//			*/
+	//			pdaz = (_var_receiver->span_max.val*D2R - _var_receiver->span_min.val*D2R)/double(_var_receiver->n_panels.val-1);
+	//			wpanel = _var_receiver->rec_diameter.val/2.*tan(pdaz);	//width of each panel
+	//				
+	//			
+	//			S->setSurfaceGeometry(_var_receiver->rec_height.val, wpanel);
+ //               
+	//			//Calculate the azimuth angle of the receiver panel
+	//			double paz = _var_receiver->panel_rotation.val*D2R + pdaz*double(i);
+	//			//Calculate the elevation angle of the panel
+	//			double pzen = _var_receiver->rec_elevation.val*D2R*cos(_var_receiver->panel_rotation.val*D2R-paz);
+	//			//Set the surface normal vector
+	//			Vect nv;
+	//			nv.i = -sin(paz)*sin(pzen);
+	//			nv.j = -cos(paz)*sin(pzen);
+	//			nv.k = -cos(pzen);
+	//			S->setNormalVector(nv);
 
-				//Calculate the centroid of the panel in global XYZ coords
-				Point pc;
-				pc.x = nv.i * _var_receiver->rec_diameter.val/2.;
-				pc.y = nv.j * _var_receiver->rec_diameter.val/2.;
-				pc.z = nv.k * _var_receiver->rec_diameter.val/2.;
-				S->setSurfaceOffset(pc);
+	//			//Calculate the centroid of the panel in global XYZ coords
+	//			Point pc;
+	//			pc.x = nv.i * _var_receiver->rec_diameter.val/2.;
+	//			pc.y = nv.j * _var_receiver->rec_diameter.val/2.;
+	//			pc.z = nv.k * _var_receiver->rec_diameter.val/2.;
+	//			S->setSurfaceOffset(pc);
 
-				//Define the precision of the flux map.
-				S->setFluxPrecision(nflux_x,nflux_y);
-				S->setMaxFlux(_var_receiver->peak_flux.val);
-				//Call the method to set up the flux hit test grid.
-				S->DefineFluxPoints(*_var_receiver, _rec_geom);
+	//			//Define the precision of the flux map.
+	//			S->setFluxPrecision(nflux_x,nflux_y);
+	//			S->setMaxFlux(_var_receiver->peak_flux.val);
+	//			//Call the method to set up the flux hit test grid.
+	//			S->DefineFluxPoints(*_var_receiver, _rec_geom);
 
-			}
+	//		}
 
-		}
-	}
-	else if(_var_receiver->rec_type.val == REC_TYPE::FLAT_PLATE){ //Flat plate
+	//	}
+	//}
+	else if(rec_type == var_receiver::REC_TYPE::FLAT_PLATE){ //Flat plate
 		//1) Indicate which specific geometry type should be used with "_rec_geom"
-		if(_var_receiver->aperture_type.val == 0){
-			_rec_geom = ( Receiver::REC_GEOM_TYPE::PLANE_RECT );			/*	3 | Planar rectangle	*/
-		}
-		else{
-			_rec_geom = ( Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE );			/* 4 | Planar ellipse		*/
-		}
+		//if(_var_receiver->aperture_type.mapval() == var_receiver::APERTURE_TYPE::RECTANGULAR){
+		//	_rec_geom = ( Receiver::REC_GEOM_TYPE::PLANE_RECT );			/*	3 | Planar rectangle	*/
+		//}
+		//else{
+		//	_rec_geom = ( Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE );			/* 4 | Planar ellipse		*/
+		//}
 			
 		//2) Calculate and set the number of surfaces used for the recever. Resize "_surfaces".
 		_surfaces.resize(1);

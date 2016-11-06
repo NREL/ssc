@@ -448,7 +448,7 @@ protected:
         return;
     };
 
-    int cselect;	//Current selection for a combo, integer corresponding to the mapped options (not the choices vector)
+    //int cselect;	//Current selection for a combo, integer corresponding to the mapped options (not the choices vector)
 
 
 public:
@@ -471,11 +471,14 @@ public:
     virtual std::string as_string(){throw spexception("Virtual method as_string cannot be executed in base class");};
     virtual bool combo_select(std::string choice){ (void)choice; throw spexception("Virtual method combo_select cannot be executed in base class"); };
     virtual bool combo_select_by_choice_index(int index){ (void)index; throw spexception("Virtual method combo_select_by_choice_index cannot be executed in base class");};
-    virtual std::string combo_get_current_label(){throw spexception("Virtual method combo_get_current_label cannot be executed in base class");};
-    virtual std::vector<std::string> combo_get_keys(){throw spexception("Virtual method combo_get_keys cannot be executed in base class");};
-    virtual std::string combo_get_key(int index){(void)index; throw spexception("Virtual method combo_get_key cannot be executed in base class");};
+    virtual bool combo_select_by_mapval(int mapval){ (void)mapval; throw spexception("Virtual method combo_select_by_mapval cannot be executed in base class");};
+    //virtual std::string combo_get_current_label(){throw spexception("Virtual method combo_get_current_label cannot be executed in base class");};
+    virtual std::vector<std::string> combo_get_choices(){throw spexception("Virtual method combo_get_choices cannot be executed in base class");};
+    //virtual std::string combo_get_key(int index){(void)index; throw spexception("Virtual method combo_get_key cannot be executed in base class");};
     virtual int combo_get_count(){throw spexception("Virtual method combo_get_count cannot be executed in base class");};
-    virtual int Cselect(){throw spexception("Virtual method Cselect cannot be executed in base class"); };
+    //virtual int Cselect(){throw spexception("Virtual method Cselect cannot be executed in base class"); };
+    virtual int mapval(){throw spexception("Virtual method combo_get_current_mapval cannot be executed in base class");};
+    virtual int combo_get_current_index(){throw spexception("Virtual method combo_get_current_index cannot be executed in base class");};
     virtual SP_DATTYPE get_data_type(){ return dattype; }
 };
 
@@ -485,15 +488,24 @@ class spvar : public spbase
 
     struct combo_choices
     {
-        std::vector<std::string> _keys;
-        unordered_map<std::string, T> _choices;
+        std::vector<std::string> _choices;
+        std::vector<int> _intvals;
 
-        T &at(int ind) { return _choices[ _keys.at(ind) ]; };
-        T &operator[] (std::string ky) { return _choices[ ky ]; };
+        std::string &at_index(int ind){return _choices.at(ind); };
+        int at(std::string name){ 
+            int ind = index(name);
+            if(ind < _intvals.size() )
+                return _intvals.at( index(name) ); 
+            else 
+                throw spexception("Could not locate combo value " + name);
+        };
+        int index( std::string name) { 
+            return (int)(find(_choices.begin(), _choices.end(), name) - _choices.begin()); 
+        };
         void clear()
         {
-            _keys.clear();
             _choices.clear();
+            _intvals.clear();
         };
         
     };
@@ -507,56 +519,84 @@ public:
     {
         choices.clear();
     };
-    std::string combo_get_key(int index)
+    //std::string combo_get_key(int index)
+    //{
+    //    return choices._keys.at(index);
+    //};
+    
+    std::vector<std::string> combo_get_choices()
     {
-        return choices._keys.at(index);
-    };
-    std::vector<std::string> combo_get_keys()
-    {
-        return choices._keys;
+        int nv = (int)choices._choices.size();
+        std::vector<std::string> rv(nv);
+        for(int i=0; i<nv; i++)
+        {
+            _as_str(rv.at(i), choices._choices.at(i));
+        }
+
+        return rv;
     };
     
-    void combo_add_choice(std::string &key, std::string &val)
+    void combo_add_choice(std::string &name, string &mval)
     {
-        choices._keys.push_back(key);
-        _setv(val, choices._choices[key]);
+        int mapint;
+        to_integer(mval, &mapint);
+        choices._choices.push_back(name);
+        choices._intvals.push_back(mapint);
     };
 
-    T combo_get_choice(std::string &key)
-    {
-        return &choices._choices[key];
-    };
-
-    bool combo_set_from_string(std::string &choice, std::string &Val)
-    {
-        return _setv(Val, choices[choice]);
-    };
-    
     bool combo_select_by_choice_index(int index)
     {
-        cselect = index;
-        val = choices.at(index);
+        _setv(choices._choices.at(index), val);
         return true;
     };
+
+    bool combo_select_by_mapval(int mapval)
+    {
+        int index = (int)(find(choices._intvals.begin(), choices._intvals.end(), mapval) - choices._intvals.begin());
+        if( index < choices._intvals.size() )
+            _setv(choices._choices.at(index), val);
+        else
+            return false;
+        
+        return true;
+    };
+
     bool combo_select(std::string choice)
     {
-        val = choices[choice];
-        cselect = (int)(find(choices._keys.begin(), choices._keys.end(), choice) - choices._keys.begin());
+        int ind = (int)(find(choices._choices.begin(), choices._choices.end(), choice) - choices._choices.begin());
+        if( ind < choices._choices.size() )
+            _setv(choice, val);
+        else
+            throw spexception("Invalid combo value specified: " + choice);
+
         return true;
     };
-    std::string combo_get_current_label()
-    {
-        return combo_get_keys().at(cselect);
-    };
+    //std::string combo_get_current_label()
+    //{
+    //    return combo_get_keys().at(cselect);
+    //};
     
-    int Cselect()
+    //int Cselect()
+    //{
+    //    return cselect;
+    //};
+    int mapval()
     {
-        return cselect;
+        std::string valstr; 
+        _as_str(valstr, val);
+        return choices._intvals.at( choices.index( valstr ) );
+    };
+
+    int combo_get_current_index()
+    {
+        std::string valstr; 
+        _as_str(valstr, val);
+        return choices.index( valstr );
     };
 
     int combo_get_count()
     {
-        return (int)choices._keys.size();
+        return (int)choices._choices.size();
     };
     /* ------------------------------- */
 
@@ -716,7 +756,7 @@ public:
             choices = std::vector<std::string>(0);
         }*/
 
-        cselect = 0;	//Current selection for a combo, integer corresponding to the mapped options (not the choices std::vector)
+        //cselect = 0;	//Current selection for a combo, integer corresponding to the mapped options (not the choices std::vector)
     	
         is_param = Is_param;	//Is this variable parameterizable?
 	    is_disabled = UI_disable;	//Is this variable disabled (overridden)?

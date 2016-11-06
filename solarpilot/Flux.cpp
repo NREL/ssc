@@ -337,11 +337,12 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 	}
 	
 	//Get the sun type from the ambient settings
-	int suntype = V.amb.sun_type.val; //A.getSunType();
+	int suntype = V.amb.sun_type.mapval(); //A.getSunType();
 	double sun_rad_limit = V.amb.sun_rad_limit.val; //A.getSunRadLimit();
 	//Select a suntype case here 
 	switch(suntype) {
-	case 0:	
+	//case 0:	
+    case var_ambient::SUN_TYPE::POINT_SUN:
 		//---Point of sun unit intensity---
         
         for (int i=1; i<_n_terms+1; i+=2) {    //iterate 'i' from 1 to N_order by 2
@@ -353,7 +354,8 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 		mSun.at(0,0) = 1.;
 		break;
         
-	case 1:
+	//case 1:
+    case var_ambient::SUN_TYPE::LIMBDARKENED_SUN:
         //---Limb-darkened sunshape--- see DELSOL3 lines 6399-6414
 		for (int i=1; i<_n_terms+1; i+=2){		//iterate 'i' from 1 to N_order by 2
             int jmax = _n_terms-i+1;			//Set the upper bound on the iteration limit for j
@@ -372,7 +374,8 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 
 		break;
 		
-	case 2:
+	//case 2:
+    case var_ambient::SUN_TYPE::PILLBOX_SUN:
 		//---Square-wave sunshape--- see DELSOL3 lines 6416-6425
 		for (int i=1; i<_n_terms+1; i+=2) {	//Iterate 'i' from 1 to N_order by 2
             factdum1 = 1.; 
@@ -385,9 +388,12 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 			}
 		}
 		break;
-	case 4: //Gaussian
-	case 5: //Buie model
-	case 3:
+	//case 4: //Gaussian
+	//case 5: //Buie model
+	//case 3:
+    case var_ambient::SUN_TYPE::GAUSSIAN_SUN:
+    case var_ambient::SUN_TYPE::BUIE_CSR:
+    case var_ambient::SUN_TYPE::USER_SUN:
 		//---user-defined sunshape --- see DELSOL3 lines 6432-6454
             //User provides array of angle (radians) and intensity
 		matrix_t<double> *user_sun;
@@ -623,7 +629,7 @@ void Flux::hermiteMirrorCoefs(Heliostat &H, double tht) {
 	errMM->fill(0.0);
 	
 	//Calculate the moments depending on whether the heliostats are circular or rectangular
-	if (V->is_round.val) {
+	if (V->is_round.mapval() == var_heliostat::IS_ROUND::ROUND) {
 		//----Round heliostats----
 		double temp1=1.;
 		for (k=1; k<_n_terms+1; k+=2) {
@@ -730,11 +736,11 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	//Pointer to the relevant receiver
 	//Receiver *Rec = SF.getReceivers()->at(rec);
     var_receiver* Rv = Rec->getVarMap();
-    int rec_type = Rv->rec_type.val;
+    int rec_type = Rv->rec_type.mapval();
 
 	//Calculate the range-dependent expansion coefficients
 	//Calculate the slant range
-	if(rec_type == 0){	//External cylindrical 
+	if(rec_type == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL ){	//External cylindrical 
 		double rec_width = Receiver::getReceiverWidth( *Rv );;
 		double rec_opt_ht = Rv->optical_height.Val();
         double hmr = h_rad - rec_width*0.5;
@@ -896,7 +902,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	//Depending on the canting method, calculate the A[], B[] arrays differently.
 	double A11, A12, A21, A22, B11, B12, B21, B22;
 	//---Are the heliostats canted?
-	int cant_method = Hv->cant_method.val; //{0=none, -1=on-axis at slant, 1=on-axis at user def., 3=off-axis at hour-day}
+	int cant_method = Hv->cant_method.mapval(); //{0=none, -1=on-axis at slant, 1=on-axis at user def., 3=off-axis at hour-day}
 	
 	//reused terms:
 	//SAVE=SIGAZ2*SNP**2+SIGSX2 | 8304
@@ -909,9 +915,12 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
     
     switch (cant_method)
     {
-    case Heliostat::CANT_TYPE::FLAT:
-    case Heliostat::CANT_TYPE::AT_SLANT:
-    case Heliostat::CANT_TYPE::ON_AXIS_USER:
+    //case Heliostat::CANT_TYPE::FLAT:
+    //case Heliostat::CANT_TYPE::AT_SLANT:
+    //case Heliostat::CANT_TYPE::ON_AXIS_USER:
+    case var_heliostat::CANT_METHOD::NO_CANTING:
+    case var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT:
+    case var_heliostat::CANT_METHOD::ONAXIS_USERDEFINED:
     {
         //Everything except individual off-axis canting and vector canting
 
@@ -932,7 +941,8 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 
         break;
     }
-    case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+    //case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+    case var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR:
     {
         //case 3: individual off-axis canting at defined time
 		//Calculate sun angles at canting time 7097
@@ -1010,7 +1020,8 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 
         break;
     }
-    case Heliostat::CANT_TYPE::USER_VECTOR:
+    //case Heliostat::CANT_TYPE::USER_VECTOR:
+    case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
         throw spexception("User-vector cant method is not fully implemented (imagePlaneIntercept()).");
 
 
@@ -1194,14 +1205,16 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 		//Are the heliostats canted on or off axis?
         switch (cant_method)
         {
-        case Heliostat::CANT_TYPE::FLAT:
+        //case Heliostat::CANT_TYPE::FLAT:
+        case var_heliostat::CANT_METHOD::NO_CANTING:
             //No canting
 			gcanta = 0.;
 			gcantx = 0.;
 			gcantb = 0.;
 			gcanty = 0.;
             break;
-        case Heliostat::CANT_TYPE::AT_SLANT:
+        //case Heliostat::CANT_TYPE::AT_SLANT:
+        case var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT:
             //method -1 for on-axis at default slant range (6 tht)
 			gcanta = 0.;
 			gcanty = 0.;
@@ -1209,14 +1222,16 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 			gcantx = -.5*tht/H.getSlantRange()*srange[1];
 			gcantb = gcantx;
             break;
-        case Heliostat::CANT_TYPE::ON_AXIS_USER:
+        //case Heliostat::CANT_TYPE::ON_AXIS_USER:
+        case var_heliostat::CANT_METHOD::ONAXIS_USERDEFINED:
             //method 1 for on-axis at user defined length
 			gcanta = 0.;
 			gcanty = 0.;
 			gcantx = -.5*tht/Hv->cant_radius.Val()*srange[1];	
 			gcantb = gcantx;
             break;
-        case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+        //case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+        case var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR:
             //off-axis user defined time
 			tempmult = 1./(4.*eta_cosine*slant)*srange[1];
 			gcantx = (A21*B12 - A11*B22)*tempmult;
@@ -1224,7 +1239,8 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 			gcanty = (A11*B21 - A21*B11)*tempmult;
 			gcantb = (A12*B21 - A22*B11)*tempmult;
             break;
-        case Heliostat::CANT_TYPE::USER_VECTOR:
+        //case Heliostat::CANT_TYPE::USER_VECTOR:
+        case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
             throw spexception("User-vector cant method is not fully implemented (imagePlaneIntercept()).");
         default:
             throw spexception("Unspecified cant method is not implemented (imagePlaneIntercept()).");
@@ -1371,7 +1387,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	//Now evaluate the hermite coefficients and assign the spillage intercept value
 	double heval = hermiteIntEval(H, Rec);
 
-    if(Rv->rec_type.val == Receiver::REC_TYPE::CYLINDRICAL
+    if(Rv->rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL 
         && h_rad < Receiver::getReceiverWidth( *Rv )/2.)
         return 0.0;
     else
@@ -1587,8 +1603,8 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
 		//4	|	Planar ellipse
 	
 		//Get the aperture shape
-		bool is_elliptical = Rv->aperture_type.val == 1 
-						|| Rec->getGeometryType() == Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE;	//0=Rectangular, 1=elliptical
+		bool is_elliptical = /*Rv->aperture_type.mapval() == var_receiver::APERTURE_TYPE::ELLIPTICAL ||*/
+						Rec->getGeometryType() == Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE;	//0=Rectangular, 1=elliptical
 		
 		//Set up for cavity model | 2362
         Point *hloc = H.getLocation();

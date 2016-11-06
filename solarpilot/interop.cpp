@@ -77,7 +77,8 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 
 	switch (design_method)
 	{
-	case LAYOUT_DETAIL::SUBSET_HOURS:
+    case var_solarfield::DES_SIM_DETAIL::SUBSET_OF_DAYSHOURS:
+	//case LAYOUT_DETAIL::SUBSET_HOURS:
 
 	{		//Subset of days/hours
 		//Need to add this still
@@ -85,7 +86,8 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		V.amb.sim_time_step.Setval(0.);
 		break;
 	}
-	case LAYOUT_DETAIL::SINGLE_POINT:
+	//case LAYOUT_DETAIL::SINGLE_POINT:
+    case var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT:
 	{  //2) Single design point=1;
 		V.amb.sim_time_step.Setval(0.);
         vector<string> vdata = split(Ambient::getDefaultSimStep(), ",");
@@ -104,19 +106,22 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
         wdatvar->setStep(0, dom, hour, month, P.dni, P.Tamb, P.Patm, P.Vwind, P.Simweight);
 		break;
 	}
-	case LAYOUT_DETAIL::NO_FILTER:
+	//case LAYOUT_DETAIL::NO_FILTER:
+    case var_solarfield::DES_SIM_DETAIL::DO_NOT_FILTER_HELIOSTATS:
 	{	//3) Do not filter heliostats=0;
 		wdatvar->clear();
 		V.amb.sim_time_step.Setval(0.);
 		break;
 	}
-	case LAYOUT_DETAIL::FULL_ANNUAL:
+	//case LAYOUT_DETAIL::FULL_ANNUAL:
+    case var_solarfield::DES_SIM_DETAIL::ANNUAL_SIMULATION:
 	{	//4) Annual simulation=3;
 		*wdatvar = V.amb.wf_data.val; //vset["ambient"][0]["wf_data"].value;
 		V.amb.sim_time_step.Setval(3600.);
 		break;
 	}
-	case LAYOUT_DETAIL::MAP_TO_ANNUAL:
+	//case LAYOUT_DETAIL::MAP_TO_ANNUAL:
+    case var_solarfield::DES_SIM_DETAIL::EFFICIENCY_MAP__ANNUAL:
 	{  //Efficiency map + annual simulation
 		V.amb.sim_time_step.Setval(3600.);
 		wdatvar->clear();
@@ -154,9 +159,11 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		break;
 
 	}
-	case LAYOUT_DETAIL::LIMITED_ANNUAL:
-	case LAYOUT_DETAIL::AVG_PROFILES:
-	case LAYOUT_DETAIL::FOR_OPTIMIZATION:
+	//case LAYOUT_DETAIL::LIMITED_ANNUAL:
+	//case LAYOUT_DETAIL::AVG_PROFILES:
+    case var_solarfield::DES_SIM_DETAIL::LIMITED_ANNUAL_SIMULATION:
+    case var_solarfield::DES_SIM_DETAIL::REPRESENTATIVE_PROFILES:
+	case -1:  //for optimization
 	{	//5) Limited annual simulation=4 || Representative profiles=5
 		V.amb.sim_time_step.Setval(0.);  //calculate sun position at time specified
 		wdatvar->clear();
@@ -169,7 +176,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 			tmz = V.amb.time_zone.val;
 
 		int nday, nskip;
-		if( design_method == LAYOUT_DETAIL::FOR_OPTIMIZATION ){
+		if( design_method == -1 ){
 			nday = 4;
 			nskip = 2;
 		}
@@ -232,7 +239,7 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 				
 
 			//Handle the "limited annual.." and "representative profile" options differently
-			if(design_method == LAYOUT_DETAIL::LIMITED_ANNUAL){	//Limited annual simulation
+			if(design_method == var_solarfield::DES_SIM_DETAIL::LIMITED_ANNUAL_SIMULATION){	//Limited annual simulation
 				
                 //weighting fractions for DNI
 				double fthis = fmin(0.5, hr_st - floor(hr_st)) + fmin(0.5, ceil(hr_st) - hr_st);
@@ -659,7 +666,7 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, Hvector &helios, int sim
 
 	//need to update the SF sun position before continuing
     double az, zen;
-	if(V->flux.flux_time_type.val == FluxSimData::FLUX_TIME::POSITION){	//Sun position specified
+	if(V->flux.flux_time_type.mapval() == var_fluxsim::FLUX_TIME_TYPE::SUN_POSITION){	//Sun position specified
 		az = V->flux.flux_solar_az_in.val;
         zen = 90.0 - V->flux.flux_solar_el_in.val;
 	}
@@ -779,7 +786,7 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 		//Save the layout to the variable maps
 		//Take special care for user-specified values vs. program calculated values.
 		char tchar1[300];
-		if(H->getVarMap()->focus_method.val == Heliostat::FOCUS_METHOD::USER_DEFINED )
+		if(H->getVarMap()->focus_method.mapval() == var_heliostat::FOCUS_METHOD::USERDEFINED )
             std::sprintf(tchar1, "%f,%f", H->getFocalX(), H->getFocalY()); 
         else 
             std::sprintf(tchar1, "NULL,NULL"); 
@@ -1246,19 +1253,21 @@ void sim_result::process_flux(SolarField *SF, bool normalize){
 }
 
 //------parametric------------------------
+multivar::multivar(){wf_are_set = false;}
+
 parametric::parametric(){wf_are_set = false;}
 
-int parametric::size(){ return (int)variables.size(); }
+int multivar::size(){ return (int)variables.size(); }
 
-void parametric::clear(){ variables.clear(); current_varpaths.Clear();}
+void multivar::clear(){ variables.clear(); current_varpaths.Clear();}
 
-par_variable &parametric::at(int index){ return variables.at(index); }
+par_variable &multivar::at(int index){ return variables.at(index); }
 
-par_variable &parametric::operator[](int index){ return variables.at(index); }
+par_variable &multivar::operator[](int index){ return variables.at(index); }
 
-par_variable &parametric::back(){ return variables.back(); }
+par_variable &multivar::back(){ return variables.back(); }
 
-void parametric::remove(int index){ 
+void multivar::remove(int index){ 
 	variables.erase(variables.begin()+index); 
 	current_varpaths.erase(current_varpaths.begin()+index); 
 }
@@ -1271,7 +1280,8 @@ void parametric::SetWeatherFileList(ArrayString &list){
 	wf_are_set = true;
 }
 
-void parametric::addVar(spbase *var)
+
+void multivar::addVar(spbase *var)
 {
 	/* 
 	Add a new variable to the parametric analysis. If the variable already exists, overwrite it.
@@ -1312,10 +1322,10 @@ void parametric::addVar(spbase *var)
 		}
 	}
 	else if(var->ctype == "combo"){
-		vback->selections.Add( var->combo_get_current_label() );
+		vback->selections.Add( var->as_string() );
 		vback->data_type = "combo";
 		vback->choices.clear();
-        vector<string> vchoices = var->combo_get_keys();
+        vector<string> vchoices = var->combo_get_choices();
         for(int i=0; i<vchoices.size(); i++)
             vback->choices.Add(vchoices.at(i));
 
@@ -1361,7 +1371,7 @@ void parametric::addVar(spbase *var)
 	}
 }
 
-int parametric::Index(string pathname){
+int multivar::Index(string pathname){
 	return current_varpaths.Index(pathname);
 }
 

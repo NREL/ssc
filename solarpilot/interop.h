@@ -79,25 +79,49 @@ struct par_variable
 
 };
 
-class parametric
+
+class multivar
 {
-	vector<par_variable> variables;
-	ArrayString current_varpaths;
+private:
 	ArrayString weather_files;
-	bool wf_are_set;
-	//wxArrayStr _weather_files;
+	bool wf_are_set;  //disabled in base class
+protected:
+    vector<par_variable> variables;
+	ArrayString current_varpaths;
 public:
-	parametric();
+	multivar();
 	void addVar(spbase *var);	//Add a variable by reference to its variable map object
 	int size();
 	void clear();
-	void SetWeatherFileList(ArrayString &list);
 	par_variable &at(int index);
 	par_variable &operator[](int index);
 	par_variable &back();
 	void remove(int index);
 	int Index(std::string pathname);	//Returns the index if the pathname is found as a current variable. Otherwise returns -1.
 };
+
+class parametric : public multivar
+{
+	//vector<par_variable> variables;
+	//ArrayString current_varpaths;
+	ArrayString weather_files;
+	bool wf_are_set;
+	//wxArrayStr _weather_files;
+public:
+	parametric();
+	//void addVar(spbase *var);	//Add a variable by reference to its variable map object
+	//int size();
+	//void clear();
+	void SetWeatherFileList(ArrayString &list);
+	//par_variable &at(int index);
+	//par_variable &operator[](int index);
+	//par_variable &back();
+	//void remove(int index);
+	//int Index(std::string pathname);	//Returns the index if the pathname is found as a current variable. Otherwise returns -1.
+};
+
+class optimization : public multivar {};
+
 
 class simulation_table
 {
