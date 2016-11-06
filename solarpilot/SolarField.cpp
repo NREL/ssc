@@ -276,7 +276,8 @@ void SolarField::Create(var_map &V){
     {
 		_helio_template_objects.at(j).Create( V, j );
 		_helio_templates[ j ] = &_helio_template_objects.at(j);
-        V.sf.temp_which.combo_add_choice( V.hels.at(j).helio_name.val, my_to_string( j ) );
+	std::string js = my_to_string(j);	
+        V.sf.temp_which.combo_add_choice( V.hels.at(j).helio_name.val, js );
 	}
 	
 	//Land
