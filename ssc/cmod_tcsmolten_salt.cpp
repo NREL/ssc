@@ -629,17 +629,17 @@ public:
 			//Update the total installed cost
 			double total_direct_cost = 0.;
 			double A_rec;
-			switch( spi.recs.front().rec_type.val )
+			switch( spi.recs.front().rec_type.mapval() )
 			{
-            case Receiver::REC_TYPE::CYLINDRICAL:
+            case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
 			{
                 double h = spi.recs.front().rec_height.val;
                 double d = h / spi.recs.front().rec_aspect.Val();
                 A_rec = h*d*3.1415926;
                 break;
 			}
-            case Receiver::REC_TYPE::CAVITY:
-            case Receiver::REC_TYPE::FLAT_PLATE:
+            case var_receiver::REC_TYPE::FLAT_PLATE:
+            //case Receiver::REC_TYPE::CAVITY:
 				double h = spi.recs.front().rec_height.val;
 				double w = h / spi.recs.front().rec_aspect.Val();
 				A_rec = h*w;

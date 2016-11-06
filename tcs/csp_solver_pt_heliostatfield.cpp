@@ -300,26 +300,26 @@ void C_pt_heliostatfield::init()
 			hf->reflectivity.val = helio_reflectance;
             hf->soiling.val = 1.;   //all in the reflectance
 			int cmap[5];
-			cmap[0] = Heliostat::CANT_TYPE::FLAT;
-            cmap[1] = Heliostat::CANT_TYPE::AT_SLANT;
-            cmap[2] = cmap[3] = cmap[4] = Heliostat::CANT_TYPE::AT_DAY_HOUR;
-			hf->cant_method.val = cmap[ cant_type ];
+			cmap[0] = var_heliostat::CANT_METHOD::NO_CANTING;
+            cmap[1] = var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT;
+            cmap[2] = cmap[3] = cmap[4] = var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR;
+            hf->cant_method.combo_select_by_mapval( cmap[cant_type] );
 
             switch (cant_type)
             {
-            case AutoPilot::CANT_TYPE::NONE:
-            case AutoPilot::CANT_TYPE::ON_AXIS:
+            case AutoPilot::API_CANT_TYPE::NONE:
+            case AutoPilot::API_CANT_TYPE::ON_AXIS:
                 //do nothing
                 break;
-            case AutoPilot::CANT_TYPE::EQUINOX:
+            case AutoPilot::API_CANT_TYPE::EQUINOX:
                 hf->cant_day.val = 81;  //spring equinox
 	            hf->cant_hour.val = 12;
                 break;
-            case AutoPilot::CANT_TYPE::SOLSTICE_SUMMER:
+            case AutoPilot::API_CANT_TYPE::SOLSTICE_SUMMER:
                 hf->cant_day.val = 172;  //Summer solstice
 	            hf->cant_hour.val = 12;
                 break;
-            case AutoPilot::CANT_TYPE::SOLSTICE_WINTER:
+            case AutoPilot::API_CANT_TYPE::SOLSTICE_WINTER:
                 hf->cant_day.val = 355;  //Winter solstice
 	            hf->cant_hour.val = 12;
                 break;
@@ -369,13 +369,13 @@ void C_pt_heliostatfield::init()
 			V.amb.latitude.val = hdr.lat;
 			V.amb.longitude.val = hdr.lon;
 			V.amb.time_zone.val = hdr.tz;
-			V.amb.atm_model.val = AutoPilot::ATTEN_MODEL::USER_DEFINED;
-            V.amb.atm_coefs.val.clear();
-            V.amb.atm_coefs.val.resize(4);
-			V.amb.atm_coefs.val.at(0) = c_atm_0;
-			V.amb.atm_coefs.val.at(1) = c_atm_1;
-			V.amb.atm_coefs.val.at(2) = c_atm_2;
-			V.amb.atm_coefs.val.at(3) = c_atm_3;
+			V.amb.atm_model.combo_select_by_mapval( var_ambient::ATM_MODEL::USERDEFINED );
+            /*V.amb.atm_coefs.val.clear();
+            V.amb.atm_coefs.val.resize(4);*/
+			V.amb.atm_coefs.val.at(var_ambient::ATM_MODEL::USERDEFINED, 0) = c_atm_0;
+			V.amb.atm_coefs.val.at(var_ambient::ATM_MODEL::USERDEFINED, 1) = c_atm_1;
+			V.amb.atm_coefs.val.at(var_ambient::ATM_MODEL::USERDEFINED, 2) = c_atm_2;
+			V.amb.atm_coefs.val.at(var_ambient::ATM_MODEL::USERDEFINED, 3) = c_atm_3;
 
 			if(run_type == RUN_TYPE::AUTO)
 			{
@@ -470,6 +470,9 @@ void C_pt_heliostatfield::init()
 			fluxtab.delta_flux_hrs = delta_flux_hrs;
 
 			//run the flux maps
+            if( m_n_flux_y == 1 )
+                V.flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::SIMPLE_AIM_POINTS );
+
 			if(! sapi.CalculateFluxMaps(fluxtab, m_n_flux_x, m_n_flux_y, true) )
 			{
 				throw(C_csp_exception("Simulation cancelled during fluxmap preparation","heliostat field initialization"));

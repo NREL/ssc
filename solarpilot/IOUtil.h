@@ -30,9 +30,9 @@ namespace ioutil
 	bool read_line( FILE *fp, std::string &text, int prealloc = 256 );
 	void read_file( const string &fname, string &file, string &eol_marker);
 	//void parseInputFile(const string &fname, var_map &V, var_map &Defs);	//return a structure with a map of variable names and information
-    void parseXMLInputFile(const string &fname,var_map &V, parametric &par_data);
+    void parseXMLInputFile(const string &fname,var_map &V, parametric &par_data, optimization &opt_data);
 	//void parseDefinitionArray(var_map &V, string disabled_mods = ""); //no longer needed
-	bool saveXMLInputFile(const string &fname, var_map &V, parametric &par_data, const string &version);
+	bool saveXMLInputFile(const string &fname, var_map &V, parametric &par_data, optimization &opt_data, const string &version);
 	string getDelimiter(std::string &text);	//Return the delimiter separating the text
 	//--
 };
