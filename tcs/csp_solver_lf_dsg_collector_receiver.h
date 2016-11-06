@@ -17,6 +17,41 @@
 
 class C_csp_lf_dsg_collector_receiver : public C_csp_collector_receiver
 {
+
+public:
+
+	enum
+	{
+		E_THETA_TRAVERSE,		//[deg]
+		E_THETA_LONGITUDINAL,	//[deg]
+		E_ETA_OPTICAL,			//[-]
+		E_DEFOCUS,				//[-]
+
+		E_Q_DOT_INC_SF_TOT,			//[MWt]
+		E_Q_DOT_REC_INC,			//[MWt]
+		E_Q_DOT_REC_THERMAL_LOSS,	//[MWt]
+		E_Q_DOT_REC_ABS,			//[MWt]
+		E_Q_DOT_PIPING_LOSS,		//[MWt]
+		E_E_DOT_INTERNAL_ENERGY,	//[MWt]
+		E_Q_DOT_OUT,				//[MWt]
+		E_Q_DOT_FREEZE_PROT,		//[MWt]
+
+		E_M_DOT_LOOP,		//[kg/s]
+		E_M_DOT_FIELD,		//[kg/s]
+		E_T_FIELD_COLD_IN,	//[C]
+		E_T_REC_COLD_IN,	//[C]
+		E_T_REC_HOT_OUT,	//[C]
+		E_X_REC_HOT_OUT,	//[-]
+		E_T_FIELD_HOT_OUT,	//[C]
+		E_X_FIELD_HOT_OUT,	//[-]
+		E_PRESSURE_DROP,	//[bar]
+
+		E_W_DOT_SCA_TRACK,	//[MWe]
+		E_W_DOT_PUMP		//[MWe]
+	};
+
+	C_csp_reported_outputs mc_reported_outputs;
+
 private:
 
 	// *******************************************
@@ -33,6 +68,7 @@ private:
 		// Water props limits
 	double m_wp_max_temp;		//[K]
 	double m_wp_min_temp;		//[K]
+	double m_wp_T_crit;			//[K]
 	double m_wp_max_pres;		//[kPa]
 	double m_wp_min_pres;		//[kPa]
 	// *******************************************
@@ -52,6 +88,8 @@ private:
 	int m_nModTot;				//[-] nBoiler + nSH
 	bool m_is_sh;				//[-]
 	double m_Ap_tot;			//[m2] Total solar field aperture area	
+	double m_Ap_loop;			//[m2] Loop solar field aperture area
+	double m_opt_eta_des;		//[-] Design point optical efficiency (theta = 0) from the solar field
 		// Energy and mass balance calcs
 	double m_q_dot_abs_tot_des;	//[kWt] SYSTEM total thermal power absorbed by steam at design
 	double m_m_dot_min;			//[kg/s] LOOP min mass flow rate - max of field & PC bases
@@ -60,7 +98,9 @@ private:
 	double m_m_dot_b_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
 	double m_m_dot_pb_des;		//[kg/s] SYSTEM mass flow rate at power cycle design
 	double m_m_dot_des;			//[kg/s] SYSTEM design point mass flow rate - field design basis
-	double m_m_dot_tot;			//[kg/s] SYSTEM mass flow rate off-design
+	double m_m_dot_loop_des;	//[kg/s] LOOP design point mass flow rate
+
+	double m_W_dot_sca_tracking_nom;	//[MWe] Tracking parasitics when trough is on sun
 	// *******************************************
 	// *******************************************
 
@@ -74,6 +114,7 @@ private:
 		// CSP Solver Temperature Tracking
 		// *********************************************
 			// Temperatures from the most recent converged() operation
+				// SUB TIMESTEP outputs
 	C_csp_solver_steam_state mc_sys_cold_out_t_end_converged;			// End-of-previously-converged-timestep outlet condition from cold system/header/field
 	std::vector<C_csp_solver_steam_state> mc_sca_out_t_end_converged;	// End-of-previously-converged-timestep outlet condition from each SCA in loop
 	C_csp_solver_steam_state mc_sys_hot_out_t_end_converged;			// End-of-previously-converged-timestep outlet condition hot cold system/header/field
@@ -95,6 +136,39 @@ private:
 	C_csp_solver_steam_state mc_sys_hot_out_t_end;		// End-of-timestep outlet condition hot cold system/header/field
 	C_csp_solver_steam_state mc_sys_hot_out_t_int;		// Time-integrated outlet condition hot cold system/header/field
 
+	double m_q_dot_sca_loss_summed_subts;		//[MWt] SYSTEM SCA heat loss
+	double m_q_dot_sca_abs_summed_subts;		//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+	double m_q_dot_HR_cold_loss_subts;			//[MWt] SYSTEM Cold header heat loss
+	double m_q_dot_HR_hot_loss_subts;			//[MWt] SYSTEM Hot header heat loss
+	double m_E_dot_sca_summed_subts;			//[MWt] SYSTEM SCA internal energy change over time
+
+	double m_q_dot_to_sink_subts;			//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
+	
+			// Full timestep outputs
+	double m_h_sys_c_in_t_int_fullts;		//[kJ/kg] Temperature (bulk) of cold runners & headers integrated over subtimesteps
+	double m_P_sys_c_in_t_int_fullts;		//[bar] Pressure integrated over subtimesteps
+	double m_h_c_rec_in_t_int_fullts;		//[kJ/kg] Time-integrated-average inlet HTF temperature to FIRST sca
+	double m_P_c_rec_in_t_int_fullts;		//[bar]
+	double m_h_h_rec_out_t_int_fullts;		//[kJ/kg] Time-integrated-average outlet HTF temperature from LAST sca
+	double m_P_h_rec_out_t_int_fullts;		//[bar]
+	double m_h_sys_h_out_t_int_fullts;		//[kJ/kg] Temperature (bulk) of hot runners & headers at timestep-integrated-average
+	double m_P_sys_h_out_t_int_fullts;		//[bar]
+
+
+	double m_q_dot_sca_loss_summed_fullts;		//[MWt] SYSTEM SCA heat loss 
+	double m_q_dot_sca_abs_summed_fullts;		//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+	double m_q_dot_HR_cold_loss_fullts;			//[MWt] SYSTEM Cold header heat loss
+	double m_q_dot_HR_hot_loss_fullts;			//[MWt] SYSTEM Hot header heat loss
+	double m_E_dot_sca_summed_fullts;			//[MWt] SYSTEM SCA internal energy change over time
+
+	double m_q_dot_to_sink_fullts;			//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)			
+	double m_q_dot_freeze_protection;		//[MWt] SYSTEM thermal freeze protection
+	
+	double m_m_dot_loop;				//[kg/s] LOOP mass flow rate
+
+	double m_W_dot_sca_tracking;		//[MWe]
+	double m_W_dot_pump;				//[MWe] FIELD pumping power
+
 		// *********************************************
 		// TCS Shell Stuff State-Point Tracking
 		// Hot System/Field Headers Outlet
@@ -108,12 +182,21 @@ private:
 	// ****************************************************************
 		// ****************************************************************
 		// Sun Position
-	double m_phi_t;
-	double m_theta_L;
+	double m_phi_t;			//[rad] Traverse incident angle
+	double m_theta_L;		//[rad] Longitudinal incident angle
 		// Optical calcs
 	double m_ftrack;		//[-] Fraction of timestep that solar field is tracking
+	double m_eta_opt;		//[-] Field optical efficiency before defocus
+
+	double m_control_defocus;	//[-] Defocus signal from control model
+	double m_component_defocus;	//[-] Defocus signal from this component (max mass flow rate reached and still over target...)
+
 		// Energy Balance
-	std::vector<double> m_q_inc;		//[kWt] Incident beam radiation for each receiver in loop
+			//  Single Values
+	double m_q_dot_inc_sf_tot;	//[MWt] Total incident radiation on the solar field
+
+	std::vector<double> m_q_inc;			//[kWt] Incident beam radiation for each receiver in loop
+	std::vector<double> m_q_inc_control_df;	//[kWt] Incident beam radiation for each receiver in loop with CONTROL defocus
 	util::matrix_t<double> m_eta_optical;	//[-] Optical efficiency for each collector geometry
 	std::vector<double> m_q_rec;			//[kWt] Incident thermal power on receiver after *optical* losses and *defocus*
 	std::vector<double> m_q_rec_control_df;	//[kWt] Incident thermal power on receiver after *optical* and CONTROL defocus
@@ -148,6 +231,10 @@ private:
 	double od_pressure(double m_dot_loop /*kg/s*/);
 
 	void apply_component_defocus(double defocus /*-*/);
+
+	void set_output_values();
+
+	int n_integration_steps;
 
 public:
 
@@ -345,9 +432,15 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		const C_csp_solver_sim_info &sim_info);
 
+	void transient_energy_bal_numeric_int_ave(double h_in /*kJ/kg*/, double P_in /*kPa*/,
+		double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/,
+		double C_thermal /*kJ/K*/, double step /*s*/, 
+		double & h_out_t_end /*kJ/K*/, double & h_out_t_int /*kJ/K*/);
+
 	void transient_energy_bal_numeric_int(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
-			double C_thermal /*kJ/K*/, double step /*s*/, double & h_out_t_end);
+			double C_thermal /*kJ/K*/, double step /*s*/, 
+			double & h_out_t_end /*kJ/K*/, double & h_out_t_end_prev /*kJ/K*/, double & T_out_t_end /*K*/);
 
 	int once_thru_loop_energy_balance_T_t_int(const C_csp_weatherreader::S_outputs &weather,
 		double T_cold_in /*K*/, double P_field_out /*bar*/, double m_dot_loop /*kg/s*/, double h_sca_out_target /*kJ/kg*/,
@@ -367,17 +460,24 @@ public:
 		double m_q_dot_abs;	//[kWt]
 		double m_m_dot;		//[kg/s]
 		double m_T_out_t_end_prev;	//[K]
+		double m_h_out_t_end_prev;	//[kJ/kg]
 		double m_C_thermal;	//[kJ/K]
 		double m_step;		//[s]
 
 	public:
 		C_mono_eq_transient_energy_bal(double h_in /*kJ/kg*/, double P_in /*kPa*/,
 			double q_dot_abs /*kWt*/, double m_dot /*kg/s*/, double T_out_t_end_prev /*K*/, 
-			double C_thermal /*kJ/K*/, double step /*s*/)
+			double h_out_t_end_prev /*kJ/kg*/, double C_thermal /*kJ/K*/, double step /*s*/)
 		{
 			m_h_in = h_in; m_P_in = P_in; m_q_dot_abs = q_dot_abs; m_m_dot = m_dot;
-				m_T_out_t_end_prev = T_out_t_end_prev; m_C_thermal = C_thermal; m_step = step;
+				m_T_out_t_end_prev = T_out_t_end_prev; 
+				m_h_out_t_end_prev = h_out_t_end_prev;
+				m_C_thermal = C_thermal; m_step = step;
+
+			m_T_out_t_end = std::numeric_limits<double>::quiet_NaN();
 		}
+
+		double m_T_out_t_end;	//[K]
 
 		virtual int operator()(double h_out_t_end /*K*/, double *diff_h_out_t_end /*-*/);
 	};

@@ -73,6 +73,9 @@ SSCEXPORT void ssc_data_clear( ssc_data_t p_data );
 /** Unassigns the variable with the specified name. */
 SSCEXPORT void ssc_data_unassign( ssc_data_t p_data, const char *name );
 
+/** Rename a variable in the data table. returns 1 if succeeded*/
+SSCEXPORT int ssc_data_rename( ssc_data_t p_data, const char *oldname, const char *newname );
+
 /** Querys the data object for the data type of the variable with the specified name. Returns the data object's data type, or SSC_INVALID if that variable was not found. */
 SSCEXPORT int ssc_data_query( ssc_data_t p_data, const char *name );
 

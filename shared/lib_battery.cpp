@@ -492,7 +492,7 @@ void voltage_dynamic_t::parameter_compute()
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
-void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
+void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * themal, double dt)
 {
 
 	double Q = capacity->qmax();
@@ -507,17 +507,7 @@ void voltage_dynamic_t::updateVoltage(capacity_t * capacity,  double dt)
 	if (I <= 0 || (I > 0 && cell_voltage <= _cell_voltage) )
 		_cell_voltage = cell_voltage;
 }
-double voltage_dynamic_t::voltage_model(double Q, double I, double q0)
-{
-	// Should increase when charge increases, decrease when charge decreases
-	// everything in here is on a per-cell basis
-	// Unnewehr Universal Model
 
-	double term1 = _E0 - _R*I;
-	double term2 = _K*(1 - q0/Q);
-	double V = term1 - term2; 
-	return V;
-}
 double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, double q0)
 {
 	// everything in here is on a per-cell basis
@@ -534,19 +524,56 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 	return V;
 }
 
-// Basic voltage model
-voltage_basic_t::voltage_basic_t(int num_cells_series, int num_cells_parallel, double voltage) :
-voltage_t(num_cells_series, num_cells_parallel, voltage){}
-
-voltage_basic_t * voltage_basic_t::clone(){ return new voltage_basic_t(*this); }
-void voltage_basic_t::copy(voltage_basic_t *& voltage)
+// Vanadium redox flow model
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R):
+voltage_t(num_cells_series, num_strings, V_ref_50)
 {
-	voltage_t * tmp = dynamic_cast<voltage_t*>(voltage);
-	voltage_t::copy(tmp);
-	voltage = dynamic_cast<voltage_basic_t*>(tmp);
+	_I = 0;
+	_V_ref_50 = V_ref_50;
+	_R = R;
 }
+voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
+void voltage_vanadium_redox_t::copy(voltage_vanadium_redox_t *& voltage)
+{
+	voltage_t * tmp = dynamic_cast<voltage_vanadium_redox_t*>(voltage);
+	voltage_t::copy(tmp);
+	voltage = dynamic_cast<voltage_vanadium_redox_t*>(tmp);
 
-void voltage_basic_t::updateVoltage(capacity_t * capacity, double dt){}
+	voltage->_V_ref_50 = _V_ref_50;
+	voltage->_R = _R;
+}
+void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
+{
+
+	double Q = capacity->qmax();
+	_I = capacity->I();
+	double q0 = capacity->q0();
+
+	double T = thermal->T_battery() + Celsius_to_Kelvin;
+
+
+	// is on a per-cell basis.
+	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
+	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, T);
+
+	// the cell voltage should not increase when the battery is discharging
+	if (_I <= 0 || (_I > 0 && cell_voltage <= _cell_voltage))
+		_cell_voltage = cell_voltage;
+}
+double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
+{
+	double SOC = q0 / qmax;
+	double V_stack_cell = (_V_ref_50 + (_R_molar * T / _F) * (std::log(std::pow(SOC, 2) / std::pow(1 - SOC, 2))*_C));
+	return V_stack_cell;
+}
+/*
+// The I*R term makes the voltage increase when battery is discharging?
+double voltage_vanadium_redox_t::battery_voltage()
+{
+	double V_batt = (_num_cells_series * _cell_voltage) + (_I * _R);
+	return V_batt;
+}
+*/
 
 /*
 Define Lifetime Model
@@ -556,7 +583,7 @@ lifetime_t::lifetime_t(const util::matrix_t<double> &batt_lifetime_matrix, const
 {
 	_batt_lifetime_matrix = batt_lifetime_matrix;
 	_replacement_option = replacement_option;
-	_replacement_capacity = replacement_capacity;
+	_replacement_capacity = replacement_capacity; 
 	// issues as capacity approaches 0%
 	if (replacement_capacity == 0.) { _replacement_capacity = 2.; }
 	_replacements = 0;
@@ -1095,7 +1122,7 @@ void battery_t::runCapacityModel(double I)
 
 void battery_t::runVoltageModel()
 {
-	_voltage->updateVoltage(_capacity, _dt_hour);
+	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
 }
 
 void battery_t::runLifetimeModel(double DOD)

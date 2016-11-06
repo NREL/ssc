@@ -22,7 +22,7 @@ class Ambient : public mod_base
     var_ambient *_amb_map;
  
  public:
-	enum CLRSKY_MODEL { MEINEL, HOTTEL, CONSTANT, MOON, ALLEN, WEATHER=-1 };
+	//enum CLRSKY_MODEL { MEINEL, HOTTEL, CONSTANT, MOON, ALLEN, WEATHER=-1 };
 
 	void Create(var_map &V);
     void updateCalculatedParameters(var_map &V);

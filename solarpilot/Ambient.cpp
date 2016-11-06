@@ -217,19 +217,19 @@ double Ambient::calcAttenuation(var_map &V, double &len){
 	*/
 	double att=0.0;
 		
-	if(V.amb.atm_model.val < 3){ //Barstow 25k or 5km visibility from DELSOL, user coefs
+	//if(V.amb.atm_model.val < 3){ //Barstow 25k or 5km visibility from DELSOL, user coefs
 		double rkm = len*.001;
 		int nc = (int)V.amb.atm_coefs.val.ncols();
-        int atm_sel = V.amb.atm_model.Cselect();
+        int atm_sel = V.amb.atm_model.combo_get_current_index();
 		for(int i=0; i<nc; i++)
         { 
             att += V.amb.atm_coefs.val.at(atm_sel, i)*pow(rkm, i); 
         }
-	}
-	else if(V.amb.atm_model.val == 3){
-		//Sengupta model
-		throw spexception("The Sengupta/Wagner attenuation model is not yet implemented.");
-	}
+	//}
+	//else if(V.amb.atm_model.val == 3){
+	//	//Sengupta model
+	//	throw spexception("The Sengupta/Wagner attenuation model is not yet implemented.");
+	//}
 
 	return 1.-att;
 
@@ -312,21 +312,26 @@ double Ambient::calcInsolation(var_map &V, double azimuth, double zenith, int da
 	double ALT = V.amb.elevation.val / 1000.;
 	double dni;
 
-	switch (V.amb.insol_type.val)
+	switch (V.amb.insol_type.mapval())
 	{
-	case Ambient::MEINEL:
+	//case Ambient::MEINEL:
+    case var_ambient::INSOL_TYPE::MEINEL_MODEL:
 		dni = (1.-.14*ALT)*exp(-.357/pow(czen,.678))+.14*ALT;
 		break;
-	case Ambient::HOTTEL:
+	//case Ambient::HOTTEL:
+    case var_ambient::INSOL_TYPE::HOTTEL_MODEL:
 		dni = 0.4237-0.00821*pow(6.-ALT,2)+(0.5055+0.00595*pow(6.5-ALT,2))*exp(-(0.2711+0.01858*pow(2.5-ALT,2))/(czen+.00001));
 		break;
-	case Ambient::CONSTANT:
+	//case Ambient::CONSTANT:
+    case var_ambient::INSOL_TYPE::CONSTANT_VALUE:
 		dni = V.sf.dni_des.val / (S0 * 1000.);
 		break;
-	case Ambient::MOON:
+	//case Ambient::MOON:
+    case var_ambient::INSOL_TYPE::MOON_MODEL:
 		dni = 1.0-0.263*((V.amb.del_h2o.val+2.72)/(V.amb.del_h2o.val+5.0))*pow((save*V.amb.dpres.val),(0.367*((V.amb.del_h2o.val+11.53)/(V.amb.del_h2o.val+7.88))) );
 		break;
-	case Ambient::ALLEN:
+	//case Ambient::ALLEN:
+    case var_ambient::INSOL_TYPE::ALLEN_MODEL:
 		dni = 0.183*exp(-save*V.amb.dpres.val/0.48)+0.715*exp(-save*V.amb.dpres.val/4.15)+.102;
 		break;
 	default:

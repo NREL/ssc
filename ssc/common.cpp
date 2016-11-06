@@ -4,9 +4,19 @@ var_info vtab_standard_financial[] = {
 
 /*   VARTYPE           DATATYPE         NAME                                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                           "Analyis period",                                  "years",  "",                      "Financials",      "?=30",                   "INTEGER,MIN=0,MAX=50",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "federal_tax_rate",                         "Federal tax rate",                                "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "state_tax_rate",                           "State tax rate",                                  "%",      "",                      "Financials",      "*",                      "MIN=0,MAX=100",                 "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "property_tax_rate",                        "Property tax rate",                               "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
+//	{ SSC_INPUT, SSC_NUMBER, "federal_tax_rate", "Federal tax rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "state_tax_rate", "State tax rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_ARRAY, "federal_tax_rate", "Federal tax rate", "%", "", "Financials", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "state_tax_rate", "State tax rate", "%", "", "Financials", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_federal_tax_frac", "Federal tax rate", "(frac)", "", "Financials", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_state_tax_frac", "Federal tax rate", "(frac)", "", "Financials", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_effective_tax_frac", "Federal tax rate", "(frac)", "", "Financials", "*", "LENGTH_EQUAL=cf_length", "" },
+
+
+
+
+	{ SSC_INPUT, SSC_NUMBER, "property_tax_rate", "Property tax rate", "%", "", "Financials", "?=0.0", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_cost_assessed_percent",            "Percent of pre-financing costs assessed","%","",			  "Financials",			 "?=95",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "prop_tax_assessed_decline",                 "Assessed value annual decline",	"%",	 "",					  "Financials",             "?=5",                     "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",                           "Sales tax rate",                                  "%",      "",                      "Financials",      "?=0.0",                  "MIN=0,MAX=100",                 "" },
@@ -45,7 +55,6 @@ var_info vtab_standard_loan[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "loan_term",					"Loan term",					  "years",  "",                      "Loan",            "?=0",                    "INTEGER,MIN=0,MAX=50",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "loan_rate",					"Loan rate",					  "%",      "",                      "Loan",            "?=0",                    "MIN=0,MAX=100",                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "debt_fraction",                   "Debt percentage",                "%",      "",                      "Loan",			"?=0",                    "MIN=0,MAX=100",                 "" },
-
 var_info_invalid };
 
 var_info vtab_oandm[] = {
@@ -269,19 +278,19 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
-bool adjustment_factors::setup()
+bool adjustment_factors::setup(int nsteps)
 {
 	float f = (float)m_cm->as_number( m_prefix + ":constant" );
 	f = 1 - f / 100; //convert from percentage to factor
-	m_factors.resize( 8760, f );
+	m_factors.resize( nsteps, f );
 
 	if ( m_cm->is_assigned(m_prefix + ":hourly") )
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == 8760 )
+		if ( p != 0 && n == nsteps )
 		{
-			for( size_t i=0;i<8760;i++ )
+			for( size_t i=0;i<nsteps;i++ )
 				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
 		}
 	}
@@ -298,13 +307,13 @@ bool adjustment_factors::setup()
 				int end = (int) mat[ nc*r + 1 ];
 				float factor = (float) mat[ nc*r + 2 ];
 				
-				if ( start < 0 || start >= 8760 || end < start )
+				if ( start < 0 || start >= nsteps || end < start )
 				{
 					m_error = util::format( "period %d is invalid ( start: %d, end %d )", (int)r, start, end );
 					continue;
 				}
 
-				if ( end >= 8760 ) end = 8759;
+				if ( end >= nsteps ) end = nsteps-1;
 
 				for( int i=start;i<=end;i++ )
 					m_factors[i] *= (1 - factor/100); //convert from percentages to factors
@@ -326,19 +335,19 @@ sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
 {
 }
 
-bool sf_adjustment_factors::setup()
+bool sf_adjustment_factors::setup(int nsteps)
 {
 	float f = (float)m_cm->as_number("sf_adjust:constant");
 	f = 1 - f / 100; //convert from percentage to factor
-	m_factors.resize(8760, f);
+	m_factors.resize(nsteps, f);
 
 	if (m_cm->is_assigned("sf_adjust:hourly"))
 	{
 		size_t n;
 		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
-		if (p != 0 && n == 8760)
+		if (p != 0 && n == nsteps)
 		{
-			for (size_t i = 0; i<8760; i++)
+			for (size_t i = 0; i<nsteps; i++)
 				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
 		}
 	}
@@ -355,13 +364,13 @@ bool sf_adjustment_factors::setup()
 				int end = (int)mat[nc*r + 1];
 				float factor = (float)mat[nc*r + 2];
 
-				if (start < 0 || start >= 8760 || end < start)
+				if (start < 0 || start >= nsteps || end < start)
 				{
 					m_error = util::format("period %d is invalid ( start: %d, end %d )", (int)r, start, end);
 					continue;
 				}
 
-				if (end >= 8760) end = 8759;
+				if (end >= nsteps) end = nsteps-1;
 
 				for (int i = start; i <= end; i++)
 					m_factors[i] *= (1 - factor / 100); //convert from percentages to factors

@@ -88,7 +88,7 @@ void Heliostat::setCantVector(double cant[3]){_cant_vect.Set(cant[0], cant[1], c
 void Heliostat::setSlantRange(double L)
 {
     _slant = L; 
-    if(_var_helio->cant_method.val == CANT_TYPE::AT_SLANT)
+    if(_var_helio->cant_method.mapval() == var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT)
     {
         _xfocal = L; 
         _yfocal = L;
@@ -140,7 +140,7 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 
     var_heliostat* V = &Vm.hels.at(htnum);
     //Calculate the area and collision radius
-	if(V->is_round.val){
+	if(V->is_round.mapval() == var_heliostat::IS_ROUND::ROUND){
 		_r_collision =  V->diameter.val/2. ;
 		_area =  PI*pow(V->diameter.val/2.,2)*V->reflect_ratio.val ;
 	}
@@ -176,7 +176,7 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
     V->ref_total.Setval( ref*soil );
 
     //Heliostat cant radius
-	int cant_method = V->cant_method.val; 
+	int cant_method = V->cant_method.mapval(); 
 		/* 
 		No canting=0
 		On-axis at slant=-1
@@ -186,11 +186,14 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 		*/
     switch (cant_method)
     {
-    case Heliostat::CANT_TYPE::FLAT:
-    case Heliostat::CANT_TYPE::AT_SLANT:
+    //case Heliostat::CANT_TYPE::FLAT:
+    //case Heliostat::CANT_TYPE::AT_SLANT:
+    case var_heliostat::CANT_METHOD::NO_CANTING:
+    case var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT:
         //nothing to calculate
         break;
-    case Heliostat::CANT_TYPE::ON_AXIS_USER:
+    //case Heliostat::CANT_TYPE::ON_AXIS_USER:
+    case var_heliostat::CANT_METHOD::ONAXIS_USERDEFINED:
     {
         //On-axis, user-defined
 		double cant_radius; 
@@ -203,7 +206,8 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 		V->cant_radius.Setval( cant_radius );
         break;
     }
-    case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+    //case Heliostat::CANT_TYPE::AT_DAY_HOUR:
+    case var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR:
     {
         //Off-axis, day and hour
 		/* Calculate the sun position at this day and hour */
@@ -261,7 +265,8 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
 
         break;
     }
-    case Heliostat::CANT_TYPE::USER_VECTOR:
+    //case Heliostat::CANT_TYPE::USER_VECTOR:
+    case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
     {
 		//Calculate the magnitude of the vector components
         double i = V->cant_vect_i.val * V->cant_vect_i.val;
@@ -340,7 +345,7 @@ void Heliostat::installPanels() {
 	//Initialize the image plane image size for this heliostat to zero until it's calculated in the Flux methods
 	setImageSize(0.,0.);
 
-	if(V->is_round.val){
+	if(V->is_round.mapval() == var_heliostat::IS_ROUND::ROUND){
 
 		/* 
 		This configuration allows only 1 facet per heliostat. By default, the canting is normal.
@@ -391,24 +396,28 @@ void Heliostat::installPanels() {
 				//Set the position in the reflector plane. Assume the centroid is in the plane (z=0)
 				_panels.at(j,i).setPosition(x, y, 0.0);
 				//Determine how each panel is canted
-				switch(V->cant_method.val)
+				switch(V->cant_method.mapval())
 				{
-                case CANT_TYPE::AT_SLANT:	//Individual on-axis cant at distance equal to the slant range
+                //case CANT_TYPE::AT_SLANT:	//Individual on-axis cant at distance equal to the slant range
+                case var_heliostat::CANT_METHOD::ONAXIS_AT_SLANT:
                 {
 					double hyp = sqrt( pow(_slant,2) + pow(x, 2) + pow(y, 2) );	//hypotenuse length
 					_panels.at(j,i).setAim(-x/hyp, -y/hyp, 2.*_slant/hyp);
 					break;
                 }
-                case CANT_TYPE::FLAT:		//no canting
+                //case CANT_TYPE::FLAT:		//no canting
+                case var_heliostat::CANT_METHOD::NO_CANTING:
 					_panels.at(j,i).setAim(0.,0.,1.);
 					break;
-                case CANT_TYPE::ON_AXIS_USER:		//User-defined on-axis canting. Canting specified in array.
+                //case CANT_TYPE::ON_AXIS_USER:		//User-defined on-axis canting. Canting specified in array.
+                case var_heliostat::CANT_METHOD::ONAXIS_USERDEFINED:
                 {
 					double hyp = sqrt( V->cant_radius.Val()*V->cant_radius.Val() + x*x + y*y );	//cant focal length
 					_panels.at(j,i).setAim(-x/hyp, -y/hyp, 2.*V->cant_radius.Val()/hyp);
 					break;
                 }
-                case CANT_TYPE::AT_DAY_HOUR:		//Individual off-axis cant at time defined by tracking vector
+                //case CANT_TYPE::AT_DAY_HOUR:		//Individual off-axis cant at time defined by tracking vector
+                case var_heliostat::CANT_METHOD::OFFAXIS_DAY_AND_HOUR:
                 {
 					//Calculate the tracking azimuth/zenith based on the tracking vector
 					double track_az = atan2(_track.i,_track.j);
@@ -441,7 +450,8 @@ void Heliostat::installPanels() {
 				
 					break;
                 }
-                case CANT_TYPE::USER_VECTOR:
+                //case CANT_TYPE::USER_VECTOR:
+                case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
                 {
                     //throw spexception("The user cant vector option is not correctly implemented in the installPanels() algorithm. Contact support for help resolving this issue.");
 
@@ -537,7 +547,7 @@ void Heliostat::updateTrackVector(Vect &sunvect) {
 	Assume that the heliostat is starting out facing upward in the z direction with the 
 	upper and lower edges parallel to the global x axis (i.e. zenth=0, azimuth=0)
 	*/
-	if(! _var_helio->is_round.val){
+	if(! ( _var_helio->is_round.mapval() == var_heliostat::IS_ROUND::ROUND)){
         double wm2 = _var_helio->width.val/2.;
         double hm2 = _var_helio->height.val/2.;
 		_corners.resize(4);

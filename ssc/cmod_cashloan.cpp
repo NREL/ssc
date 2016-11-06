@@ -27,9 +27,6 @@ static var_info vtab_cashloan[] = {
 	// added 9/26/16 for Owen Zinaman Mexico
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "npv", "Net present value", "$", "", "Cash Flow", "*", "", "" },
-	// added 10/2/16
-	{ SSC_INPUT, SSC_NUMBER, "en_real_discount_eq_wacc", "Set real discount rate to WACC", "0/1", "0=No,1=Yes", "Cashloan", "?=0", "BOOLEAN", "" },
-
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -162,6 +159,9 @@ enum {
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
 
+	CF_federal_tax_frac,
+	CF_state_tax_frac,
+	CF_effective_tax_frac,
 
 	CF_property_tax_assessed_value,
 	CF_property_tax_expense,
@@ -264,7 +264,6 @@ public:
 		bool is_commercial = (as_integer("market")==1);
 		bool is_mortgage = (as_integer("mortgage")==1);
 
-		bool real_discount_eq_wacc = (as_integer("en_real_discount_eq_wacc") == 1);
 
 //		throw exec_error("cmod_cashloan", "mortgage = " + util::to_string(as_integer("mortgage")));
 //		if (is_commercial) log("commercial market"); else log("residential market");
@@ -350,23 +349,46 @@ public:
 		double property_tax_decline_percentage = as_double("prop_tax_assessed_decline");
 		double insurance_rate = as_double("insurance_rate")*0.01;
 		double salvage_frac = as_double("salvage_percentage")*0.01;
-		double federal_tax_rate = as_double("federal_tax_rate")*0.01;
-		double state_tax_rate = as_double("state_tax_rate")*0.01;
-		double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
 
-		int loan_term = as_integer("loan_term");
-		double loan_rate = as_double("loan_rate")*0.01;
-		double debt_frac = as_double("debt_fraction")*0.01;
-
-		double real_discount_rate = as_double("real_discount_rate")*0.01;
-
-		// calculate real discount rate to set using wacc=dr
-		if (real_discount_eq_wacc)
+		//double federal_tax_rate = as_double("federal_tax_rate")*0.01;
+		//double state_tax_rate = as_double("state_tax_rate")*0.01;
+		//double effective_tax_rate = state_tax_rate + (1.0-state_tax_rate)*federal_tax_rate;
+		arrp = as_array("federal_tax_rate", &count);
+		if (count > 0)
 		{
-			real_discount_rate = (inflation_rate * (1.0 - debt_frac) + (1.0 - effective_tax_rate) * loan_rate * debt_frac) 
-				/ (1.0 - (1.0 + inflation_rate) * (1.0 - debt_frac));
+			if (count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_federal_tax_frac, i + 1) = arrp[0]*0.01;
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)count; i++)
+					cf.at(CF_federal_tax_frac, i + 1) = arrp[i] * 0.01;
+			}
 		}
+		arrp = as_array("state_tax_rate", &count);
+		if (count > 0)
+		{
+			if (count == 1) // single value input
+			{
+				for (i = 0; i < nyears; i++)
+					cf.at(CF_state_tax_frac, i + 1) = arrp[0] * 0.01;
+			}
+			else // schedule
+			{
+				for (i = 0; i < nyears && i < (int)count; i++)
+					cf.at(CF_state_tax_frac, i + 1) = arrp[i] * 0.01;
+			}
+		}
+		for (i = 0; i <= nyears;i++)
+			cf.at(CF_effective_tax_frac, i) = cf.at(CF_state_tax_frac, i) +
+				(1.0 - cf.at(CF_state_tax_frac, i))*cf.at(CF_federal_tax_frac, i);
 
+
+
+		
+		double real_discount_rate = as_double("real_discount_rate")*0.01;
 		double nom_discount_rate = (1.0 + real_discount_rate) * (1.0 + inflation_rate) - 1.0;
 
 
@@ -376,6 +398,10 @@ public:
 //		double total_cost = hard_cost + soft_cost;
 		double total_cost = as_double("total_installed_cost");
 		double property_tax_assessed_value = total_cost * as_double("prop_tax_cost_assessed_percent") * 0.01;
+
+		int loan_term = as_integer("loan_term");
+		double loan_rate = as_double("loan_rate")*0.01;
+		double debt_frac = as_double("debt_fraction")*0.01;
 				
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
@@ -686,7 +712,7 @@ public:
 			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
 				cf.at(CF_sta_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 
-			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - state_tax_rate*cf.at(CF_sta_taxable_income_less_deductions,i);
+			cf.at(CF_sta_tax_savings, i) = cf.at(CF_ptc_sta,i) - cf.at(CF_state_tax_frac,i)*cf.at(CF_sta_taxable_income_less_deductions,i);
 			if (i==1) cf.at(CF_sta_tax_savings, i) += itc_sta_amount + itc_sta_per;
 			
 			// ************************************************
@@ -717,7 +743,7 @@ public:
 			if (is_commercial || is_mortgage) // interest only deductible if residential mortgage or commercial
 				cf.at(CF_fed_taxable_income_less_deductions, i) -= cf.at(CF_debt_payment_interest,i);
 			
-			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - federal_tax_rate*cf.at(CF_fed_taxable_income_less_deductions,i);
+			cf.at(CF_fed_tax_savings, i) = cf.at(CF_ptc_fed,i) - cf.at(CF_federal_tax_frac,i)*cf.at(CF_fed_taxable_income_less_deductions,i);
 			if (i==1) cf.at(CF_fed_tax_savings, i) += itc_fed_amount + itc_fed_per;
 			
 			// ************************************************
@@ -742,11 +768,11 @@ public:
 			cf.at(CF_discounted_costs, i) = -cf.at(CF_after_tax_net_equity_cost_flow, i) - cf.at(CF_debt_payment_total, i);
 			// interest already deducted and accounted for in tax savings (so add back here)
 			if (is_commercial || is_mortgage)
-				cf.at(CF_discounted_costs, i) += cf.at(CF_debt_payment_interest, i) * effective_tax_rate;
+				cf.at(CF_discounted_costs, i) += cf.at(CF_debt_payment_interest, i) * cf.at(CF_effective_tax_frac,i);
 			// discount at nominal discount rate
 			cf.at(CF_discounted_costs, i) /= pow((1.0 + nom_discount_rate), (i - 1));
 			// savings reduced by effective tax rate for commercial since already included in tax savings
-			cf.at(CF_discounted_savings, i) = ((is_commercial ? (1.0 - effective_tax_rate) : 1.0)*cf.at(CF_energy_value, i)) / pow((1.0 + nom_discount_rate), (i - 1));
+			cf.at(CF_discounted_savings, i) = ((is_commercial ? (1.0 - cf.at(CF_effective_tax_frac, i)) : 1.0)*cf.at(CF_energy_value, i)) / pow((1.0 + nom_discount_rate), (i - 1));
 			cf.at(CF_discounted_payback, i) = cf.at(CF_discounted_savings, i) - cf.at(CF_discounted_costs, i);
 			cf.at(CF_discounted_cumulative_payback, i) =
 				cf.at(CF_discounted_cumulative_payback, i - 1)
@@ -756,12 +782,12 @@ public:
 
 			cf.at(CF_after_tax_cash_flow,i) = 
 				cf.at(CF_after_tax_net_equity_cost_flow, i)
-				+ ((is_commercial?(1.0 - effective_tax_rate):1.0)*cf.at(CF_energy_value, i));
+				+ ((is_commercial ? (1.0 - cf.at(CF_effective_tax_frac, i)) : 1.0)*cf.at(CF_energy_value, i));
 
 			if ( is_commercial || is_mortgage )
 				cf.at(CF_payback_with_expenses,i) =
 					cf.at(CF_after_tax_cash_flow,i)
-					+ cf.at(CF_debt_payment_interest,i) * (1-effective_tax_rate)
+					+ cf.at(CF_debt_payment_interest, i) * (1 - cf.at(CF_effective_tax_frac, i))
 					+ cf.at(CF_debt_payment_principal,i);
 			else
 				cf.at(CF_payback_with_expenses,i) =
@@ -776,17 +802,17 @@ public:
 			if ( is_commercial || is_mortgage )
 				cf.at(CF_payback_without_expenses,i) =
 					+ cf.at(CF_after_tax_cash_flow,i)
-					+ cf.at(CF_debt_payment_interest,i) * (1.0 - effective_tax_rate)
+					+ cf.at(CF_debt_payment_interest, i) * (1.0 - cf.at(CF_effective_tax_frac, i))
 					+ cf.at(CF_debt_payment_principal,i)
 					- cf.at(CF_deductible_expenses,i)
-					+ cf.at(CF_deductible_expenses,i) * effective_tax_rate;
+					+ cf.at(CF_deductible_expenses, i) * cf.at(CF_effective_tax_frac, i);
 			else
 				cf.at(CF_payback_without_expenses,i) =
 					+ cf.at(CF_after_tax_cash_flow,i)
 					+ cf.at(CF_debt_payment_interest,i)
 					+ cf.at(CF_debt_payment_principal,i)
 					- cf.at(CF_deductible_expenses,i)
-					+ cf.at(CF_deductible_expenses,i) * effective_tax_rate;
+					+ cf.at(CF_deductible_expenses, i) * cf.at(CF_effective_tax_frac, i);
 
 
 			cf.at(CF_cumulative_payback_without_expenses,i) =
@@ -833,8 +859,11 @@ public:
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
-	npv_fed_ptc /= (1.0 - effective_tax_rate);
-	npv_sta_ptc /= (1.0 - effective_tax_rate);
+	// TODO check this
+//	npv_fed_ptc /= (1.0 - effective_tax_rate);
+//	npv_sta_ptc /= (1.0 - effective_tax_rate);
+	npv_fed_ptc /= (1.0 - cf.at(CF_effective_tax_frac,1));
+	npv_sta_ptc /= (1.0 - cf.at(CF_effective_tax_frac, 1));
 
 	double lcoptc_fed_nom=0.0;
 	if (npv_energy_nom != 0) lcoptc_fed_nom = npv_fed_ptc / npv_energy_nom * 100.0;
@@ -854,14 +883,14 @@ public:
 
 
 	double wacc = 0.0;
-	wacc = (1.0-debt_frac)*nom_discount_rate + debt_frac*loan_rate*(1.0-effective_tax_rate);
+	wacc = (1.0 - debt_frac)*nom_discount_rate + debt_frac*loan_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));
 
 	wacc *= 100.0;
-	effective_tax_rate *= 100.0;
+//	effective_tax_rate *= 100.0;
 
 
 	assign("wacc", var_data( (ssc_number_t) wacc));
-	assign("effective_tax_rate", var_data( (ssc_number_t) effective_tax_rate));
+	assign("effective_tax_rate", var_data((ssc_number_t)(cf.at(CF_effective_tax_frac, 1)*100.0)));
 
 
 
@@ -900,6 +929,9 @@ public:
 		}
 		save_cf( CF_value_added, nyears, "cf_value_added" );
 
+		save_cf(CF_federal_tax_frac, nyears, "cf_federal_tax_frac");
+		save_cf(CF_state_tax_frac, nyears, "cf_state_tax_frac");
+		save_cf(CF_effective_tax_frac, nyears, "cf_effective_tax_frac");
 
 
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );

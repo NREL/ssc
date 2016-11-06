@@ -189,6 +189,34 @@ void var_table::unassign( const std::string &name )
 	}
 }
 
+bool var_table::rename( const std::string &oldname, const std::string &newname )
+{
+	
+	var_hash::iterator it = m_hash.find( util::lower_case(oldname) );
+	if ( it != m_hash.end() )
+	{
+		std::string lcnewname( util::lower_case(newname) );
+
+		var_data *data = it->second; // save ptr to data
+		m_hash.erase( it );
+
+		// if a variable with 'newname' already exists, 
+		// delete its data, and reassign the name to the new data
+		it = m_hash.find( lcnewname );
+		if ( it != m_hash.end() )
+		{
+			delete it->second;
+			it->second = data;
+		}
+		else // otherwise, just add a new itme
+			m_hash[ lcnewname ] = data;
+
+		return true;
+	}
+	else
+		return false;
+}
+
 var_data *var_table::lookup( const std::string &name )
 {
 	var_hash::iterator it = m_hash.find( util::lower_case(name) );

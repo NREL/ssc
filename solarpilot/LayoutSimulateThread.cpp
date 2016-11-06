@@ -149,7 +149,6 @@ void LayoutSimThread::StartThread() //Entry()
 	    double dom, doy, hour, month;
 	    double az, zen;
 		
-        int hoy;
 	    bool is_pmt_factors = _SF->getVarMap()->fin.is_pmt_factors.val;
 
         vector<double> *tous = &_SF->getVarMap()->fin.pricing_array.Val();

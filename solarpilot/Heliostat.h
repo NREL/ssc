@@ -77,9 +77,9 @@ class Heliostat : public mod_base
 		
 public:
 	//constructor and destructor
-	struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, ON_AXIS_USER=1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
+	/*struct CANT_TYPE { enum A {FLAT=0, AT_SLANT=-1, ON_AXIS_USER=1, AT_DAY_HOUR=3, USER_VECTOR=4 }; };
     struct FOCUS_METHOD { enum A {FLAT, AT_SLANT, GROUP_AVERAGE, USER_DEFINED}; };
-    struct TRACK_METHOD { enum A {CONTINUOUS, PERIODIC}; };
+    struct TRACK_METHOD { enum A {CONTINUOUS, PERIODIC}; };*/
 
 	//Declare other subroutines
 	void Create(var_map &V, int htemp_number);

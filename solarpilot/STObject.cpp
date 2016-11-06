@@ -550,7 +550,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
     var_map *V = SF.getVarMap();
 
 	/*--- Configure sun shape ---*/
-	int sun_type = V->amb.sun_type.val; 
+	int sun_type = V->amb.sun_type.mapval(); 
 	double sigma = V->amb.sun_rad_limit.val; 
 	char shape = 'i';	//invalid
 	Sun.PointSource = sun_type == 0;
@@ -866,7 +866,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		
 		double zrot = R2D*Toolbox::ZRotationTransform(*V);
 
-		char shape = Hv->is_round.val ? 'c' : 'r';
+		char shape = Hv->is_round.mapval() == var_heliostat::IS_ROUND::ROUND ? 'c' : 'r';
 
 		string opticname = (*H->getHeliostatName()).c_str();
 
@@ -917,7 +917,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				element->ShapeIndex = shape;
 				
 				//Set up the surface description
-				if(Hv->is_round.val){
+				if(Hv->is_round.mapval() == var_heliostat::IS_ROUND::ROUND){
 					element->Ap_A = Hv->width.val;
 				}
 				else{
@@ -935,7 +935,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		
 				//Model surface as either flat or parabolic focus in X and/or Y
 				//double spar[] ={0., 0., 0., 0., 0., 0., 0., 0.};
-				if(Hv->focus_method.val == Heliostat::FOCUS_METHOD::FLAT){	//Flat
+				if(Hv->focus_method.mapval() == var_heliostat::FOCUS_METHOD::FLAT){	//Flat
 					element->SurfaceIndex = 'f';
 				}
 				else{	//Not flat
