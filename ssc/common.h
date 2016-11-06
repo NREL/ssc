@@ -28,7 +28,7 @@ class adjustment_factors
 	std::string m_prefix;
 public:
 	adjustment_factors(compute_module *cm, const std::string &prefix);
-	bool setup();
+	bool setup(int nsteps=8760);
 	float operator()(size_t time);
 	std::string error() { return m_error; }
 };
@@ -40,7 +40,7 @@ class sf_adjustment_factors
 	std::string m_error;
 public:
 	sf_adjustment_factors(compute_module *cm);
-	bool setup();
+	bool setup(int nsteps=8760);
     int size();
 	float operator()(size_t time);
 	std::string error() { return m_error; }

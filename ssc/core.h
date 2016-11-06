@@ -209,7 +209,7 @@ public:
 	ssc_number_t accumulate_annual(const std::string &hourly_var, const std::string &annual_var, double scale=1.0) throw(exec_error);
 	ssc_number_t *accumulate_monthly(const std::string &hourly_var, const std::string &annual_var, double scale=1.0) throw(exec_error);
 
-	ssc_number_t accumulate_annual_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1) throw(exec_error);
+	ssc_number_t accumulate_annual_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1, size_t steps = 8760) throw(exec_error);
 	ssc_number_t *accumulate_monthly_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1) throw(exec_error);
 
 private:
