@@ -700,8 +700,7 @@ void battstor::process_messages(compute_module &cm)
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	// system energy and load
+	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "Battery",       "?=0",                                 "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dc",										   "DC array power",                                          "W",       "",                     "",             "",                           "",                               "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "ac",										   "AC inverter power",                                       "W",       "",                     "",             "",                           "",                               "" },
 	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	     "",				     "",             "",	                       "",	                             "" },
@@ -722,58 +721,63 @@ public:
 
 	void exec() throw(general_error)
 	{
-		int ac_or_dc = as_integer("batt_ac_or_dc");
-		double inv_eff = as_double("inverter_efficiency");
-
-		size_t nrec, len;
-		ssc_number_t *power_input;
-		if (ac_or_dc == charge_controller::DC_CONNECTED)
-			power_input = as_array("DC", &nrec);
-		else
-			power_input = as_array("AC", &nrec);
-
-		ssc_number_t *power_load = as_array("load", &len);
-	
-		if (len != nrec) 
-			throw exec_error("battery", "Load and PV power do not match weatherfile length");
-
-		size_t step_per_hour = nrec / 8760;
-		double ts_hour = 1.0 / step_per_hour;
-		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
-			throw exec_error("battery", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
-
-		battstor batt(*this, true, as_integer("batt_replacement_option"), nrec, ts_hour);
-
-		int batt_dispatch = as_integer("batt_dispatch_choice");
-		bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
-		bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
-		if (look_behind)
-			batt.initialize_automated_dispatch(0, 0, batt_dispatch);
-		else if (look_ahead)
-			batt.initialize_automated_dispatch(power_input, power_load, batt_dispatch);
-
-		/* *********************************************************************************************
-		Run Simulation
-		*********************************************************************************************** */
-		size_t hour = 0;
-		int count = 0;
-
-		//ssc_number_t *p_gen = allocate("gen", nrec);
-		for (hour = 0; hour < 8760; hour++)
+		if (as_boolean("en_batt"))
 		{
-			for (size_t jj = 0; jj < step_per_hour; jj++)
-			{
-				batt.advance(*this, 0, hour, jj, power_input[count] * 0.001, power_load[count]);
+			int ac_or_dc = as_integer("batt_ac_or_dc");
+			double inv_eff = as_double("inverter_efficiency");
 
-				if (ac_or_dc == charge_controller::DC_CONNECTED)
+			size_t nrec, len;
+			ssc_number_t *power_input;
+			if (ac_or_dc == charge_controller::DC_CONNECTED)
+				power_input = as_array("DC", &nrec);
+			else
+				power_input = as_array("AC", &nrec);
+
+			ssc_number_t *power_load = as_array("load", &len);
+
+			if (len != nrec)
+				throw exec_error("battery", "Load and PV power do not match weatherfile length");
+
+			size_t step_per_hour = nrec / 8760;
+			double ts_hour = 1.0 / step_per_hour;
+			if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
+				throw exec_error("battery", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
+
+			battstor batt(*this, true, as_integer("batt_replacement_option"), nrec, ts_hour);
+
+			int batt_dispatch = as_integer("batt_dispatch_choice");
+			bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
+			bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
+			if (look_behind)
+				batt.initialize_automated_dispatch(0, 0, batt_dispatch);
+			else if (look_ahead)
+				batt.initialize_automated_dispatch(power_input, power_load, batt_dispatch);
+
+			/* *********************************************************************************************
+			Run Simulation
+			*********************************************************************************************** */
+			size_t hour = 0;
+			int count = 0;
+
+			//ssc_number_t *p_gen = allocate("gen", nrec);
+			for (hour = 0; hour < 8760; hour++)
+			{
+				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
-					double ac = batt.outGenPower[count] * inv_eff;
-					batt.update_post_inverted(*this, count, ac);
+					batt.advance(*this, 0, hour, jj, power_input[count] * 0.001, power_load[count]);
+
+					if (ac_or_dc == charge_controller::DC_CONNECTED)
+					{
+						double ac = batt.outGenPower[count] * inv_eff;
+						batt.update_post_inverted(*this, count, ac);
+					}
+					count++;
 				}
-				count++;
 			}
-		} 
-		batt.calculate_monthly_and_annual_outputs(*this);
+			batt.calculate_monthly_and_annual_outputs(*this);
+		}
+		else
+			assign("average_cycle_efficiency", var_data((ssc_number_t)0.));
 	}
 };
 
