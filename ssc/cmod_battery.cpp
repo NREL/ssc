@@ -724,16 +724,20 @@ public:
 		if (as_boolean("en_batt"))
 		{
 			int ac_or_dc = as_integer("batt_ac_or_dc");
+			int batt_meter_position = as_integer("batt_meter_position");
 			double inv_eff = as_double("inverter_efficiency");
 
-			size_t nrec, len;
+			size_t nrec,len;
 			ssc_number_t *power_input;
 			if (ac_or_dc == charge_controller::DC_CONNECTED)
 				power_input = as_array("DC", &nrec);
 			else
 				power_input = as_array("AC", &nrec);
 
-			ssc_number_t *power_load = as_array("load", &len);
+			ssc_number_t *power_load;
+			len = nrec;
+			if (batt_meter_position == dispatch_t::BEHIND)
+				power_load = as_array("load", &len);
 
 			if (len != nrec)
 				throw exec_error("battery", "Load and PV power do not match weatherfile length");
@@ -745,14 +749,16 @@ public:
 
 			battstor batt(*this, true, as_integer("batt_replacement_option"), nrec, ts_hour);
 
-			int batt_dispatch = as_integer("batt_dispatch_choice");
-			bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
-			bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
-			if (look_behind)
-				batt.initialize_automated_dispatch(0, 0, batt_dispatch);
-			else if (look_ahead)
-				batt.initialize_automated_dispatch(power_input, power_load, batt_dispatch);
-
+			if (batt_meter_position == dispatch_t::BEHIND)
+			{
+				int batt_dispatch = as_integer("batt_dispatch_choice");
+				bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
+				bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
+				if (look_behind)
+					batt.initialize_automated_dispatch(0, 0, batt_dispatch);
+				else if (look_ahead)
+					batt.initialize_automated_dispatch(power_input, power_load, batt_dispatch);
+			}
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
@@ -764,7 +770,11 @@ public:
 			{
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
-					batt.advance(*this, 0, hour, jj, power_input[count] * 0.001, power_load[count]);
+					double load = 0.0;
+					if (batt_meter_position == dispatch_t::BEHIND)
+						load = power_load[count];
+
+					batt.advance(*this, 0, hour, jj, power_input[count] * 0.001, load);
 
 					if (ac_or_dc == charge_controller::DC_CONNECTED)
 					{
