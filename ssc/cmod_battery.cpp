@@ -16,10 +16,11 @@ var_info vtab_battery[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
 
 	// configuration inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload", "",     "*",                           "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "Wdc",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "Wdc",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "Wdc",     "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=generic", "",     "",                           "INTEGER,MIN=0,MAX=3",           "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "%",       "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "%",       "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                      "",             "",                           "",                               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
@@ -89,8 +90,8 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q2",                                    "Battery bound charge",                                   "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_SOC",                                   "Battery state of charge",                                "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_DOD",                                   "Battery cycle depth of discharge",                       "%",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmaxI",                                 "Battery maximum capacity at current",                        "Ah",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmax",                                  "Battery maximum charge",                                     "Ah",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmaxI",                                 "Battery maximum capacity at current",                    "Ah",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmax",                                  "Battery maximum charge",                                 "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                                     "Battery current",                                        "A",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage_cell",                          "Battery cell voltage",                                   "V",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage",                               "Battery voltage",	                                     "V",        "",                     "Battery",       "",                           "",                              "" },
@@ -138,7 +139,7 @@ var_info vtab_battery[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
 
 	// test matrix output
-	{ SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",         "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
+	{ SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",        "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
 	
 
 var_info_invalid };
@@ -483,6 +484,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			inverter_efficiency = cm.as_integer("inv_ds_eff");
 		else if (inverter_model == inverter::PARTLOAD_INVERTER)
 			inverter_efficiency = cm.as_integer("inv_pd_eff");
+		else
+			inverter_efficiency = cm.as_integer("inverter_efficiency");
 
 		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, dc_dc, inverter_efficiency);
 	}
@@ -578,12 +581,9 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 	charge_control->run(year, hour_of_year, step, P_pv_dc, P_load_dc);
 	
 	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
-
-
 	if (idx == total_steps - 1)
 		process_messages(cm);
 	
-
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
@@ -699,14 +699,15 @@ void battstor::process_messages(compute_module &cm)
 
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
-	/*   VARTYPE           DATATYPE         NAME                      LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	
+	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
 	// system energy and load
-	{ SSC_INOUT, SSC_ARRAY, "hourly_energy", "Hourly energy", "kWh", "", "Time Series", "*", "", "" },
-	{ SSC_INOUT, SSC_ARRAY, "e_load", "Electric load", "kWh", "", "Load Profile Estimator", "", "", "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc",										   "DC array power",                                          "W",       "",                     "",             "",                           "",                               "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "ac",										   "AC inverter power",                                       "W",       "",                     "",             "",                           "",                               "" },
+	{ SSC_INPUT,		SSC_ARRAY,	     "load",			                           "Electricity load (year 1)",                               "kW",	     "",				     "",             "",	                       "",	                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_replacement_option",                    "Enable battery replacement?",                             "0=none,1=capacity based,2=user schedule", "", "Battery", "?=0",                 "INTEGER,MIN=0,MAX=2",            "" },
 
 	// other variables come from battstor common table
-
 	var_info_invalid };
 
 class cm_battery : public compute_module
@@ -721,41 +722,59 @@ public:
 
 	void exec() throw(general_error)
 	{
-		
-		size_t nrec, len;
-		ssc_number_t *hourly_energy = as_array("hourly_energy", &nrec);
-		ssc_number_t *e_load = as_array("e_load", &len);
+		int ac_or_dc = as_integer("batt_ac_or_dc");
+		double inv_eff = as_double("inverter_efficiency");
 
+		size_t nrec, len;
+		ssc_number_t *power_input;
+		if (ac_or_dc == charge_controller::DC_CONNECTED)
+			power_input = as_array("DC", &nrec);
+		else
+			power_input = as_array("AC", &nrec);
+
+		ssc_number_t *power_load = as_array("load", &len);
+	
 		if (len != nrec) 
 			throw exec_error("battery", "Load and PV power do not match weatherfile length");
 
 		size_t step_per_hour = nrec / 8760;
-		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
-			throw exec_error("swh", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
-
 		double ts_hour = 1.0 / step_per_hour;
-		double ts_sec = 3600.0 / step_per_hour;
+		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
+			throw exec_error("battery", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nrec));
 
+		battstor batt(*this, true, as_integer("batt_replacement_option"), nrec, ts_hour);
 
-		battstor batt( *this, true, true, nrec, ts_hour );
+		int batt_dispatch = as_integer("batt_dispatch_choice");
+		bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
+		bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
+		if (look_behind)
+			batt.initialize_automated_dispatch(0, 0, batt_dispatch);
+		else if (look_ahead)
+			batt.initialize_automated_dispatch(power_input, power_load, batt_dispatch);
 
-		size_t hour = 0;
-		
 		/* *********************************************************************************************
 		Run Simulation
 		*********************************************************************************************** */
-
+		size_t hour = 0;
 		int count = 0;
+
+		//ssc_number_t *p_gen = allocate("gen", nrec);
 		for (hour = 0; hour < 8760; hour++)
 		{
 			for (size_t jj = 0; jj < step_per_hour; jj++)
 			{
-				batt.advance(*this, 0, hour, jj, hourly_energy[count], e_load[count]);
+				batt.advance(*this, 0, hour, jj, power_input[count] * 0.001, power_load[count]);
+
+				if (ac_or_dc == charge_controller::DC_CONNECTED)
+				{
+					double ac = batt.outGenPower[count] * inv_eff;
+					batt.update_post_inverted(*this, count, ac);
+				}
 				count++;
 			}
 		} 
+		batt.calculate_monthly_and_annual_outputs(*this);
 	}
-
 };
 
 DEFINE_MODULE_ENTRY(battery, "Battery storage standalone model .", 10)
