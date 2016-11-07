@@ -86,7 +86,9 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "lon",                            "Longitude",                                   "deg", "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",  "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
-	
+	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                               "0=cec,1=datasheet,2=partload,3=generic", "", "", "INTEGER,MIN=0,MAX=2", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                   "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                        "Miscellaneous", "*",                       "INTEGER",                   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous", "*",                       "",                          "" },
 
@@ -525,7 +527,10 @@ public:
 		assign( "lon", var_data( (ssc_number_t)hdr.lon ) );
 		assign( "tz", var_data( (ssc_number_t)hdr.tz ) );
 		assign( "elev", var_data( (ssc_number_t)hdr.elev ) );
-		
+
+		// for battery model, force inverter model
+		assign("inverter_model", var_data((ssc_number_t)3) );
+		assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
 
 		// metric outputs moved to technology
 		double kWhperkW = 1000.0*annual_kwh / dc_nameplate;
