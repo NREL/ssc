@@ -632,8 +632,9 @@ static var_info _cm_vtab_singleowner[] = {
 
 	{ SSC_OUTPUT,       SSC_NUMBER,     "purchase_of_property",	                  "Purchase of property",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_dsra",                        "Reserve (increase)/decrease debt service ",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_wcra",                        "Reserve (increase)/decrease working capital",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_me1ra",                       "Reserve (increase)/decrease major equipment 1",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_project_wcra", "Reserve (increase)/decrease working capital", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_project_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_project_me1ra", "Reserve (increase)/decrease major equipment 1", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_me2ra",                       "Reserve (increase)/decrease major equipment 2",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_me3ra",                       "Reserve (increase)/decrease major equipment 3",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_project_ra",                          "Reserve (increase)/decrease total reserve account",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -823,6 +824,7 @@ enum {
 	CF_project_operating_activities,
 	CF_project_dsra,
 	CF_project_wcra,
+	CF_project_receivablesra,
 	CF_project_me1ra,
 	CF_project_me2ra,
 	CF_project_me3ra,
@@ -1958,14 +1960,6 @@ public:
 				cf.at(CF_net_salvage_value,i);
 
 
-			// receivables reserve account
-			cf.at(CF_reserve_receivables, i-1) = months_receivables_reserve_frac * cf.at(CF_energy_value, i);
-			cf.at(CF_funding_receivables, i - 1) = cf.at(CF_reserve_receivables, i - 1);
-			if (i>1)
-				cf.at(CF_funding_receivables, i - 1) -= cf.at(CF_reserve_receivables, i - 2);
-			// check		cf.at(CF_project_wcra, i) = -cf.at(CF_funding_om, i) - cf.at(CF_disbursement_om, i);
-
-
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
 
@@ -1989,8 +1983,22 @@ public:
 			}
 			
 		} // end of debt precalculation.
-		// disburse recevable reserves in last year
-		cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
+
+		// receivables precalculaiton
+		if (nyears>0)
+		{
+			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * cf.at(CF_energy_value, 1);
+			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
+			for (i = 1; i<nyears; i++)
+			{
+				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * cf.at(CF_energy_value, i + 1);
+				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
+			}
+			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
+		}
+		for (i = 0; i <= nyears; i++)
+			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
+
 
 
 		if (constant_dscr_mode)
@@ -2318,8 +2326,9 @@ public:
 			cf.at(CF_project_dsra,i) = -cf.at(CF_funding_debtservice,i) - cf.at(CF_disbursement_debtservice,i);
 			cf.at(CF_project_ra,i) =
 				cf.at(CF_project_dsra,i) +
-				cf.at(CF_project_wcra,i) +
-				cf.at(CF_project_me1ra,i) +
+				cf.at(CF_project_wcra, i) +
+				cf.at(CF_project_receivablesra, i) +
+				cf.at(CF_project_me1ra, i) +
 				cf.at(CF_project_me2ra,i) +
 				cf.at(CF_project_me3ra,i);
 			cf.at(CF_project_me1cs,i) = cf.at(CF_disbursement_equip1,i);
@@ -2878,8 +2887,9 @@ public:
 		save_cf( CF_pretax_cashflow, nyears, "cf_pretax_cashflow" );
 
 		save_cf( CF_project_dsra, nyears, "cf_project_dsra" );
-		save_cf( CF_project_wcra, nyears, "cf_project_wcra" );
-		save_cf( CF_project_me1ra, nyears, "cf_project_me1ra" );
+		save_cf(CF_project_wcra, nyears, "cf_project_wcra");
+		save_cf(CF_project_receivablesra, nyears, "cf_project_receivablesra");
+		save_cf(CF_project_me1ra, nyears, "cf_project_me1ra");
 		save_cf( CF_project_me2ra, nyears, "cf_project_me2ra" );
 		save_cf( CF_project_me3ra, nyears, "cf_project_me3ra" );
 		save_cf( CF_project_ra, nyears, "cf_project_ra" );
