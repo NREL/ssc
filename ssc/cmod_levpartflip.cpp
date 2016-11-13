@@ -181,6 +181,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
 	{ SSC_INPUT, SSC_NUMBER, "debt_option", "Debt option", "0/1", "0=debt percent,1=dscr", "Project Term Debt", "?=1", "INTEGER,MIN=0,MAX=1", "" },
 
+	{ SSC_INPUT, SSC_NUMBER, "payment_option", "Debt repayment option", "0/1", "0=Equal payments (standard amortization),1=Fixed principal declining interest", "Project Term Debt", "?=0", "INTEGER,MIN=0,MAX=1", "" },
+
 
 /* DHF Capital Cost */
 	{ SSC_INPUT,        SSC_NUMBER,     "cost_dev_fee_percent",		"Development fee (% pre-financing cost)","%",	 "",															"Other Capital Costs",             "?=3",					    "MIN=0,MAX=100",      			        "" },
@@ -601,21 +603,24 @@ static var_info _cm_vtab_levpartflip[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_debtservice",    "Reserve account debt service",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Reserve account working capital",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip1",    "Reserve account major equipment 1",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_receivables", "Reserve account receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_equip1", "Reserve account major equipment 1", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Reserve account major equipment 2",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Reserve account major equipment 3",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Reserve account total reserves",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_interest", "Interest earned on reserve accounts",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_debtservice",    "Reserve funding debt service",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "Reserve funding working capital",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_receivables", "Reserve funding receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_om", "Reserve funding working capital", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip1",    "Reserve funding major equipment 1",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip2",    "Reserve funding major equipment 2",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip3",    "Reserve funding major equipment 3",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_debtservice",    "Reserve disbursement debt service",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "Reserve disbursement working capital",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip1",    "Reserve disbursement major equipment 1",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_receivables", "Reserve disbursement receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip1", "Reserve disbursement major equipment 1", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Reserve disbursement major equipment 2",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip3",    "Reserve disbursement major equipment 3",       "$",            "",                      "Cash Flow Reserves",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 		
@@ -637,7 +642,8 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_property",	"Purchase of property",	"$",	 "",					  "Cash Flow Pre Tax",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_dsra",    "Reserve (increase)/decrease debt service",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me1ra",    "Reserve (increase)/decrease major equipment 1",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_project_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_project_me1ra", "Reserve (increase)/decrease major equipment 1", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me2ra",    "Reserve (increase)/decrease major equipment 2",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_me3ra",    "Reserve (increase)/decrease major equipment 3",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_project_ra",    "Reserve (increase)/decrease total reserve account",  "$", "",                      "Cash Flow Pre Tax",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -852,6 +858,9 @@ enum {
 	CF_reserve_om,
 	CF_funding_om,
 	CF_disbursement_om,
+	CF_reserve_receivables,
+	CF_funding_receivables,
+	CF_disbursement_receivables,
 	CF_reserve_equip1,
 	CF_funding_equip1,
 	CF_disbursement_equip1,
@@ -869,6 +878,7 @@ enum {
 	CF_project_operating_activities,
 	CF_project_dsra,
 	CF_project_wcra,
+	CF_project_receivablesra,
 	CF_project_me1ra,
 	CF_project_me2ra,
 	CF_project_me3ra,
@@ -1102,6 +1112,8 @@ public:
 		int ppa_mode = as_integer("ppa_soln_mode");
 
 		bool constant_dscr_mode = (as_integer("debt_option") == 1);
+		bool constant_principal = (as_integer("payment_option") == 1);;
+
 
 		// general financial expenses and incentives - stdlib?
 		// precompute expenses from annual schedules or value+escalation
@@ -1850,12 +1862,19 @@ public:
 				// first iteration - calculate debt reserve account based on initial installed cost
 				old_ds_reserve = new_ds_reserve;
 				// debt service reserve
-				cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
-					1,           // Period
-					term_tenor,   // Number periods
-					loan_amount, // Present Value
-					0,           // future Value
-					0);         // cash flow at end of period
+				if (constant_principal)
+				{
+					if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+				}
+				else
+				{
+					cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
+						1,           // Period
+						term_tenor,   // Number periods
+						loan_amount, // Present Value
+						0,           // future Value
+						0);         // cash flow at end of period
+				}
 
 				cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
 				cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
@@ -1896,12 +1915,19 @@ public:
 				{
 					cf.at(CF_debt_balance, i - 1) = loan_amount;
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
-					cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
-						i,           // Period
-						term_tenor,   // Number periods
-						loan_amount, // Present Value
-						0,           // future Value
-						0);         // cash flow at end of period
+					if (constant_principal)
+					{
+						if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+					}
+					else
+					{
+						cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
+							i,           // Period
+							term_tenor,   // Number periods
+							loan_amount, // Present Value
+							0,           // future Value
+							0);         // cash flow at end of period
+					}
 					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 
 					// update reserve account
@@ -1914,15 +1940,21 @@ public:
 					if (i <= term_tenor)
 					{
 						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
-
-						if (term_int_rate != 0.0)
+						if (constant_principal)
 						{
-							cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
-								- cf.at(CF_debt_payment_interest, i);
+							if (term_tenor > 0) cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor;
 						}
 						else
 						{
-							cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
+							if (term_int_rate != 0.0)
+							{
+								cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
+									- cf.at(CF_debt_payment_interest, i);
+							}
+							else
+							{
+								cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
+							}
 						}
 						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 
@@ -2010,6 +2042,23 @@ public:
 			}
 		}
 
+		// receivables precalculaiton
+		if (nyears>0)
+		{
+			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * cf.at(CF_energy_value, 1);
+			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
+			for (i = 1; i<nyears; i++)
+			{
+				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * cf.at(CF_energy_value, i + 1);
+				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
+			}
+			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
+		}
+		for (i = 0; i <= nyears; i++)
+			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
+
+
+
 		if (constant_dscr_mode)
 		{
 			cf.at(CF_debt_balance, 0) = size_of_debt;
@@ -2039,7 +2088,8 @@ public:
 			cf.at(CF_reserve_total,i) = 
 				cf.at(CF_reserve_debtservice,i) +
 				cf.at(CF_reserve_om,i) +
-				cf.at(CF_reserve_equip1,i) +
+				cf.at(CF_reserve_receivables, i) +
+				cf.at(CF_reserve_equip1, i) +
 				cf.at(CF_reserve_equip2,i) +
 				cf.at(CF_reserve_equip3,i);
 		for (i=1; i<=nyears; i++)
@@ -2055,7 +2105,8 @@ public:
 				cost_other_financing +
 				cf.at(CF_reserve_debtservice, 0) +
 				constr_total_financing +
-				cf.at(CF_reserve_om, 0);
+				cf.at(CF_reserve_om, 0) +
+				cf.at(CF_reserve_receivables, 0);
 
 			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
@@ -2317,7 +2368,7 @@ public:
 		depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39 + depr_fedbas_custom;
 
 
-		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice, 0) + cf.at(CF_reserve_om, 0);
+		purchase_of_property = -cost_installed + cf.at(CF_reserve_debtservice, 0) + cf.at(CF_reserve_om, 0) + cf.at(CF_reserve_receivables, 0);
 		//		issuance_of_equity = cost_installed - (size_of_debt + ibi_total + cbi_total);
 		issuance_of_equity = cost_installed - size_of_debt;
 
@@ -2338,6 +2389,7 @@ public:
 			cf.at(CF_project_ra,i) =
 				cf.at(CF_project_dsra,i) +
 				cf.at(CF_project_wcra,i) +
+				cf.at(CF_project_receivablesra, i) +
 				cf.at(CF_project_me1ra,i) +
 				cf.at(CF_project_me2ra,i) +
 				cf.at(CF_project_me3ra,i);
@@ -2866,7 +2918,7 @@ public:
 
 		// output variable and cashflow line item assignments
 
-		assign("0issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
+		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 		assign("purchase_of_property", var_data((ssc_number_t) purchase_of_property));
 		assign("cash_for_debt_service", var_data((ssc_number_t) cash_for_debt_service));
 		assign("pv_cafds", var_data((ssc_number_t) pv_cafds));
@@ -3002,7 +3054,8 @@ public:
 
 		save_cf( CF_project_dsra, nyears, "cf_project_dsra" );
 		save_cf( CF_project_wcra, nyears, "cf_project_wcra" );
-		save_cf( CF_project_me1ra, nyears, "cf_project_me1ra" );
+		save_cf(CF_project_receivablesra, nyears, "cf_project_receivablesra");
+		save_cf(CF_project_me1ra, nyears, "cf_project_me1ra");
 		save_cf( CF_project_me2ra, nyears, "cf_project_me2ra" );
 		save_cf( CF_project_me3ra, nyears, "cf_project_me3ra" );
 		save_cf( CF_project_ra, nyears, "cf_project_ra" );
@@ -3041,19 +3094,22 @@ public:
 		save_cf( CF_energy_net, nyears, "cf_energy_net" );
 		save_cf( CF_reserve_debtservice, nyears, "cf_reserve_debtservice" );
 		save_cf( CF_reserve_om, nyears, "cf_reserve_om" );
-		save_cf( CF_reserve_equip1, nyears, "cf_reserve_equip1" );
+		save_cf(CF_reserve_receivables, nyears, "cf_reserve_receivables");
+		save_cf(CF_reserve_equip1, nyears, "cf_reserve_equip1");
 		save_cf( CF_reserve_equip2, nyears, "cf_reserve_equip2" );
 		save_cf( CF_reserve_equip3, nyears, "cf_reserve_equip3" );
 
 		save_cf( CF_funding_debtservice, nyears, "cf_funding_debtservice" );
 		save_cf( CF_funding_om, nyears, "cf_funding_om" );
-		save_cf( CF_funding_equip1, nyears, "cf_funding_equip1" );
+		save_cf(CF_funding_receivables, nyears, "cf_funding_receivables");
+		save_cf(CF_funding_equip1, nyears, "cf_funding_equip1");
 		save_cf( CF_funding_equip2, nyears, "cf_funding_equip2" );
 		save_cf( CF_funding_equip3, nyears, "cf_funding_equip3" );
 
 		save_cf( CF_disbursement_debtservice, nyears, "cf_disbursement_debtservice" );
 		save_cf( CF_disbursement_om, nyears, "cf_disbursement_om" );
-		save_cf( CF_disbursement_equip1, nyears, "cf_disbursement_equip1" );
+		save_cf(CF_disbursement_receivables, nyears, "cf_disbursement_receivables");
+		save_cf(CF_disbursement_equip1, nyears, "cf_disbursement_equip1");
 		save_cf( CF_disbursement_equip2, nyears, "cf_disbursement_equip2" );
 		save_cf( CF_disbursement_equip3, nyears, "cf_disbursement_equip3" );
 
