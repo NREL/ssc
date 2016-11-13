@@ -1984,7 +1984,7 @@ public:
 			
 		} // end of debt precalculation.
 
-		// receivables precalculaiton
+		// receivables precalculation
 		if (nyears>0)
 		{
 			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * cf.at(CF_energy_value, 1);

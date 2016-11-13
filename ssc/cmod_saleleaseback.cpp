@@ -583,7 +583,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment",    "Reserve account lease payment reserve",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_leasepayment_interest",    "Reserve account lease payment reserve interest",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_om",    "Reserve account working capital",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip1",    "Reserve account major equipment 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_receivables", "Reserve account receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_reserve_equip1", "Reserve account major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip2",    "Reserve account major equipment 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_equip3",    "Reserve account major equipment 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_reserve_total",    "Reserve account total",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -591,13 +592,15 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_leasepayment",    "Reserve funding lease payment",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_om",    "Reserve funding working capital",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip1",    "Reserve funding major equipment 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_receivables", "Reserve funding receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_funding_equip1", "Reserve funding major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip2",    "Reserve funding major equipment 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_funding_equip3",    "Reserve funding major equipment 3",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_leasepayment",    "Reserve disbursement lease payment",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_om",    "Reserve disbursement working capital",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip1",    "Reserve disbursement major equipment 1",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_receivables", "Reserve disbursement receivables", "$", "", "Cash Flow Reserves", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip1", "Reserve disbursement major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_disbursement_equip2",    "Reserve disbursement major equipment 2",       "$",            "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_disbursement_equip3", "Reserve disbursement major equipment 3", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
 
@@ -613,7 +616,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "purchase_of_plant",	"Purchase of plant",	"$",	 "",					  "DHF",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_lpra",    "Reserve (increase)/decrease lease payment",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_wcra",    "Reserve (increase)/decrease working capital",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me1ra",    "Reserve (increase)/decrease major equipment 1",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_receivablesra", "Reserve (increase)/decrease receivables", "$", "", "Cash Flow Pre Tax", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_sponsor_me1ra", "Reserve (increase)/decrease major equipment 1", "$", "", "DHF", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me2ra",    "Reserve (increase)/decrease major equipment 2",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_me3ra",    "Reserve (increase)/decrease major equipment 3",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_sponsor_ra",    "Reserve (increase)/decrease total",  "$", "",                      "DHF",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -836,6 +840,9 @@ enum {
 	CF_reserve_om,
 	CF_funding_om,
 	CF_disbursement_om,
+	CF_reserve_receivables,
+	CF_funding_receivables,
+	CF_disbursement_receivables,
 	CF_reserve_equip1,
 	CF_funding_equip1,
 	CF_disbursement_equip1,
@@ -854,6 +861,7 @@ enum {
 	CF_sponsor_operating_activities,
 	CF_sponsor_lpra,
 	CF_sponsor_wcra,
+	CF_project_receivablesra,
 	CF_sponsor_me1ra,
 	CF_sponsor_me2ra,
 	CF_sponsor_me3ra,
@@ -1822,11 +1830,30 @@ public:
 			cf.at(CF_sponsor_operating_margin,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 
 		}
+
+		// receivables precalculaiton
+		if (nyears>0)
+		{
+			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * cf.at(CF_energy_value, 1);
+			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
+			for (i = 1; i<nyears; i++)
+			{
+				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * cf.at(CF_energy_value, i + 1);
+				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
+			}
+			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
+		}
+		for (i = 0; i <= nyears; i++)
+			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
+
+
+
 		// total reserves
 		for (i=0; i<=nyears; i++)
 			cf.at(CF_reserve_total,i) =
 				cf.at(CF_reserve_om,i) +
-				cf.at(CF_reserve_equip1,i) +
+				cf.at(CF_reserve_receivables, i) +
+				cf.at(CF_reserve_equip1, i) +
 				cf.at(CF_reserve_equip2,i) +
 				cf.at(CF_reserve_equip3,i);
 		for (i=1; i<=nyears; i++)
@@ -1838,7 +1865,8 @@ public:
 			cost_other_financing +
 			cf.at(CF_reserve_leasepayment,0) +
 			constr_total_financing +
-			cf.at(CF_reserve_om,0);
+			cf.at(CF_reserve_om, 0) +
+			cf.at(CF_reserve_receivables, 0);
 
 		cost_installed = cost_prefinancing + cost_financing;
 		sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
@@ -2095,6 +2123,7 @@ public:
 				cf.at(CF_sponsor_ra,i) =
 					cf.at(CF_sponsor_lpra,i) +
 					cf.at(CF_sponsor_wcra,i) +
+					cf.at(CF_project_receivablesra, i) +
 					cf.at(CF_sponsor_me1ra,i) +
 					cf.at(CF_sponsor_me2ra,i) +
 					cf.at(CF_sponsor_me3ra,i);
@@ -2763,7 +2792,7 @@ public:
 	save_cf( CF_stadepr_sl_15, nyears, "cf_stadepr_sl_15" );
 	save_cf( CF_stadepr_sl_20, nyears, "cf_stadepr_sl_20" );
 	save_cf( CF_stadepr_sl_39, nyears, "cf_stadepr_sl_39" );
-		save_cf( CF_stadepr_custom, nyears, "cf_stadepr_custom" );
+	save_cf( CF_stadepr_custom, nyears, "cf_stadepr_custom" );
 	save_cf( CF_stadepr_me1, nyears, "cf_stadepr_me1" );
 	save_cf( CF_stadepr_me2, nyears, "cf_stadepr_me2" );
 	save_cf( CF_stadepr_me3, nyears, "cf_stadepr_me3" );
@@ -2776,7 +2805,7 @@ public:
 	save_cf( CF_feddepr_sl_15, nyears, "cf_feddepr_sl_15" );
 	save_cf( CF_feddepr_sl_20, nyears, "cf_feddepr_sl_20" );
 	save_cf( CF_feddepr_sl_39, nyears, "cf_feddepr_sl_39" );
-		save_cf( CF_feddepr_custom, nyears, "cf_feddepr_custom" );
+	save_cf( CF_feddepr_custom, nyears, "cf_feddepr_custom" );
 	save_cf( CF_feddepr_me1, nyears, "cf_feddepr_me1" );
 	save_cf( CF_feddepr_me2, nyears, "cf_feddepr_me2" );
 	save_cf( CF_feddepr_me3, nyears, "cf_feddepr_me3" );
@@ -2810,6 +2839,7 @@ public:
 
 	save_cf( CF_sponsor_lpra, nyears, "cf_sponsor_lpra" );
 	save_cf( CF_sponsor_wcra, nyears, "cf_sponsor_wcra" );
+	save_cf(CF_project_receivablesra, nyears, "cf_project_receivablesra");
 	save_cf( CF_sponsor_me1ra, nyears, "cf_sponsor_me1ra" );
 	save_cf( CF_sponsor_me2ra, nyears, "cf_sponsor_me2ra" );
 	save_cf( CF_sponsor_me3ra, nyears, "cf_sponsor_me3ra" );
@@ -2848,18 +2878,21 @@ public:
 	save_cf( CF_reserve_leasepayment, nyears, "cf_reserve_leasepayment" );
 	save_cf( CF_reserve_leasepayment_interest, nyears, "cf_reserve_leasepayment_interest" );
 	save_cf( CF_reserve_om, nyears, "cf_reserve_om" );
-	save_cf( CF_reserve_equip1, nyears, "cf_reserve_equip1" );
+	save_cf(CF_reserve_receivables, nyears, "cf_reserve_receivables");
+	save_cf(CF_reserve_equip1, nyears, "cf_reserve_equip1");
 	save_cf( CF_reserve_equip2, nyears, "cf_reserve_equip2" );
 	save_cf( CF_reserve_equip3, nyears, "cf_reserve_equip3" );
 
 	save_cf( CF_funding_leasepayment, nyears, "cf_funding_leasepayment" );
 	save_cf( CF_funding_om, nyears, "cf_funding_om" );
-	save_cf( CF_funding_equip1, nyears, "cf_funding_equip1" );
+	save_cf(CF_funding_receivables, nyears, "cf_funding_receivables");
+	save_cf(CF_funding_equip1, nyears, "cf_funding_equip1");
 	save_cf( CF_funding_equip2, nyears, "cf_funding_equip2" );
 	save_cf( CF_funding_equip3, nyears, "cf_funding_equip3" );
 
 	save_cf( CF_disbursement_leasepayment, nyears, "cf_disbursement_leasepayment" );
-	save_cf( CF_disbursement_om, nyears, "cf_disbursement_om" );
+	save_cf(CF_disbursement_receivables, nyears, "cf_disbursement_receivables");
+	save_cf(CF_disbursement_om, nyears, "cf_disbursement_om");
 	save_cf( CF_disbursement_equip1, nyears, "cf_disbursement_equip1" );
 	save_cf( CF_disbursement_equip2, nyears, "cf_disbursement_equip2" );
 	save_cf( CF_disbursement_equip3, nyears, "cf_disbursement_equip3" );
