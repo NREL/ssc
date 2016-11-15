@@ -861,7 +861,7 @@ enum {
 	CF_sponsor_operating_activities,
 	CF_sponsor_lpra,
 	CF_sponsor_wcra,
-	CF_project_receivablesra,
+	CF_sponsor_receivablesra,
 	CF_sponsor_me1ra,
 	CF_sponsor_me2ra,
 	CF_sponsor_me3ra,
@@ -1844,7 +1844,7 @@ public:
 			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
 		}
 		for (i = 0; i <= nyears; i++)
-			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
+			cf.at(CF_sponsor_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
 
 
 
@@ -2123,7 +2123,7 @@ public:
 				cf.at(CF_sponsor_ra,i) =
 					cf.at(CF_sponsor_lpra,i) +
 					cf.at(CF_sponsor_wcra,i) +
-					cf.at(CF_project_receivablesra, i) +
+					cf.at(CF_sponsor_receivablesra, i) +
 					cf.at(CF_sponsor_me1ra,i) +
 					cf.at(CF_sponsor_me2ra,i) +
 					cf.at(CF_sponsor_me3ra,i);
@@ -2253,17 +2253,17 @@ public:
 			- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
 			- cf.at(CF_pretax_operating_cashflow,0);
 		cf.at(CF_sponsor_statax_income_with_incentives,0) = cf.at(CF_sponsor_statax_income_prior_incentives,0) + cf.at(CF_sponsor_statax_taxable_incentives,0);
-		cf.at(CF_sponsor_statax, 0) = -cf.at(CF_state_tax_frac, i) * cf.at(CF_sponsor_statax_income_with_incentives, 0);
+		cf.at(CF_sponsor_statax, 0) = -cf.at(CF_state_tax_frac, 0) * cf.at(CF_sponsor_statax_income_with_incentives, 0);
 
 		cf.at(CF_sponsor_fedtax_income_prior_incentives,0)=
 			cf.at(CF_energy_value,0) + cf.at(CF_reserve_interest,0) + cf.at(CF_reserve_leasepayment_interest,0)
 			- (cf.at(CF_om_fixed_expense,0) + cf.at(CF_om_capacity_expense,0) + cf.at(CF_om_production_expense,0) + cf.at(CF_om_fuel_expense,0) + cf.at(CF_om_opt_fuel_1_expense,0) + cf.at(CF_om_opt_fuel_2_expense,0) + cf.at(CF_insurance_expense,0) + cf.at(CF_property_tax_expense,0) )
 			- cf.at(CF_pretax_operating_cashflow,0) + cf.at(CF_sponsor_statax,0);
 		cf.at(CF_sponsor_fedtax_income_with_incentives,0) = cf.at(CF_sponsor_fedtax_income_prior_incentives,0) + cf.at(CF_sponsor_fedtax_taxable_incentives,0);
-		cf.at(CF_sponsor_fedtax, 0) = -cf.at(CF_federal_tax_frac, i) * cf.at(CF_sponsor_fedtax_income_with_incentives, 0);
+		cf.at(CF_sponsor_fedtax, 0) = -cf.at(CF_federal_tax_frac, 0) * cf.at(CF_sponsor_fedtax_income_with_incentives, 0);
 
 		
-		cf.at(CF_sponsor_aftertax_devfee, 1) = (sponsor_pretax_development_fee * -cf.at(CF_state_tax_frac, i)) + ((sponsor_pretax_development_fee * -cf.at(CF_state_tax_frac, i)) + sponsor_pretax_development_fee) * -cf.at(CF_federal_tax_frac, i);
+		cf.at(CF_sponsor_aftertax_devfee, 1) = (sponsor_pretax_development_fee * -cf.at(CF_state_tax_frac, 1)) + ((sponsor_pretax_development_fee * -cf.at(CF_state_tax_frac, 1)) + sponsor_pretax_development_fee) * -cf.at(CF_federal_tax_frac, 1);
 
 		for (i=1;i<=nyears;i++)
 		{
@@ -2839,7 +2839,7 @@ public:
 
 	save_cf( CF_sponsor_lpra, nyears, "cf_sponsor_lpra" );
 	save_cf( CF_sponsor_wcra, nyears, "cf_sponsor_wcra" );
-	save_cf(CF_project_receivablesra, nyears, "cf_project_receivablesra");
+	save_cf(CF_sponsor_receivablesra, nyears, "cf_sponsor_receivablesra");
 	save_cf( CF_sponsor_me1ra, nyears, "cf_sponsor_me1ra" );
 	save_cf( CF_sponsor_me2ra, nyears, "cf_sponsor_me2ra" );
 	save_cf( CF_sponsor_me3ra, nyears, "cf_sponsor_me3ra" );
