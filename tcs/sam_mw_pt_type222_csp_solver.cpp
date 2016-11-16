@@ -19,6 +19,7 @@ enum{	//Parameters
 		P_field_fl,
 		P_field_fl_props,
 		P_Flow_type,
+        P_crossover_shift,
 		P_epsilon,
 		P_hl_ffact,
 		P_T_htf_hot_des,
@@ -187,6 +188,7 @@ public:
 		mspt_receiver.m_th_tube = value(P_th_tu);				//[mm] Thickness of receiver tubes
 
 		mspt_receiver.m_flow_type = (int)value(P_Flow_type);	//[-] Numerical code to designate receiver flow type
+        mspt_receiver.m_crossover_shift = value(P_crossover_shift);
 
 		mspt_receiver.m_epsilon = value(P_epsilon);				//[-] Emissivity of receiver
 		mspt_receiver.m_hl_ffact = value(P_hl_ffact);			//[-] Heat Loss Fudge FACTor

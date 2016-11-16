@@ -119,7 +119,8 @@ public:
 	int m_field_fl;
 	util::matrix_t<double> m_field_fl_props;	
 	int m_mat_tube;
-	int m_flow_type;		
+	int m_flow_type;
+    int m_crossover_shift;
 
 		// ISCC specific
 	bool m_is_iscc;
