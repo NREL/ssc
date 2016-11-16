@@ -175,7 +175,7 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "term_tenor",               "Term financing tenor",				"years", "",				      "Project Term Debt",             "?=10",					"INTEGER,MIN=0",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "term_int_rate",            "Term financing interest rate",		"%",	 "",					  "Project Term Debt",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "dscr",						"Debt service coverage ratio",		"",	     "",				      "Project Term Debt",             "?=1.5",					"MIN=0",      			        "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		"Debt service reserve account",		"months P&I","",			      "Project Term Debt",             "?=6",					    "INTEGER,MIN=0",      			        "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		"Debt service reserve account",		"months P&I","",			      "Project Term Debt",             "?=6",					    "MIN=0",      			        "" },
 
 	/* Debt fraction input option */
 	{ SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Project Term Debt", "?=50", "MIN=0,MAX=100", "" },
@@ -1231,7 +1231,7 @@ public:
 		int term_tenor = as_integer("term_tenor"); 
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
-		int dscr_reserve_months = as_integer("dscr_reserve_months");
+		double dscr_reserve_months = as_double("dscr_reserve_months");
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
 		double size_of_debt=0;
