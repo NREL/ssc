@@ -1100,7 +1100,7 @@ double enth_lim::check( double h_in )
 		return h_in;
 }
 
-bool CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matrix_t<int> & flow_pattern, std::string *messages )
+bool CSP::flow_patterns( int n_panels, int crossover_shift, int flow_type, int & n_lines, util::matrix_t<int> & flow_pattern, std::string *messages )
 {
 	/* !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	! This subroutine takes the number of panels, the requested flow type, and 
@@ -1147,6 +1147,12 @@ bool CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
             nq2 = nq1 = (int)floor(npq + 1.e-6);
         }
         
+        nq1 += crossover_shift;
+        nq2 += -crossover_shift;
+
+        if( nq2 < 1 )
+            throw C_csp_exception("Invalid flowpath crossover shift has been specified; at least 1 panel must remain in each quadrant.");
+
         int nhalf = n_panels/n_lines;
 
         for( int i=0; i<nq1; i++){
@@ -1186,7 +1192,13 @@ bool CSP::flow_patterns( int n_panels, int flow_type, int & n_lines, util::matri
         else{
             nq2 = nq1 = (int)floor(npq + 1.e-6);
         }
-        
+
+        nq1 += crossover_shift;
+        nq2 += -crossover_shift;
+
+        if( nq2 < 1 )
+            throw C_csp_exception("Invalid flowpath crossover shift has been specified; at least 1 panel must remain in each quadrant.");
+
         int nhalf = n_panels/n_lines;
         for( int i=0; i<nq1; i++){
 			flow_pattern.at( 0, i ) = i;			        			// SW Quadrant - first half of flow path 0

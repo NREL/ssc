@@ -41,6 +41,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	error_msg = "";
 	m_mat_tube = -1;
 	m_flow_type = -1;
+    m_crossover_shift = 0;
 
 	m_A_rec_proj = std::numeric_limits<double>::quiet_NaN();
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
@@ -180,7 +181,7 @@ void C_mspt_receiver_222::init()
 	// *******************************************************************
 
 	std::string flow_msg;
-	if( !CSP::flow_patterns(m_n_panels, m_flow_type, m_n_lines, m_flow_pattern, &flow_msg) )
+	if( !CSP::flow_patterns(m_n_panels, m_crossover_shift, m_flow_type, m_n_lines, m_flow_pattern, &flow_msg) )
 	{
 		throw(C_csp_exception(flow_msg, "MSPT receiver initialization"));
 	}

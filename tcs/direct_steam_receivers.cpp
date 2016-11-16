@@ -86,7 +86,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 		{
 			util::matrix_t<int> flow_pattern_temp;
 			// Get full-receiver flow pattern
-			CSP::flow_patterns(m_dsg_rec.Get_n_panels_rec(), m_dsg_rec.Get_flowtype(), n_lines, flow_pattern_temp);
+			CSP::flow_patterns(m_dsg_rec.Get_n_panels_rec(), 0, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern_temp);
 			m_n_fr = n_lines;
 			m_nodes = m_n_panels / m_n_fr;			
 			flow_pattern.resize_fill(m_n_fr, m_nodes, -1);
@@ -101,7 +101,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 		}
 		else				// ISCC Boiler
 		{
-			CSP::flow_patterns(m_n_panels, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern);
+			CSP::flow_patterns(m_n_panels, 0, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern);
 			m_n_fr = n_lines;
 			m_nodes = m_n_panels / m_n_fr;
 			int m_nodes_sh = m_dsg_rec.Get_n_panels_sh() / m_n_fr;
@@ -121,7 +121,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	else
 	{
 		// Get flow pattern
-		CSP::flow_patterns(m_n_panels, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern);
+		CSP::flow_patterns(m_n_panels, 0, m_dsg_rec.Get_flowtype(), n_lines, flow_pattern);
 		m_n_fr = n_lines;
 		m_nodes = m_n_panels / m_n_fr;
 		m_h_rec.resize_fill(m_n_panels, h_rec_full);	//[m] Height of receiver section - can vary per panel in iscc model
