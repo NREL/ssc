@@ -233,11 +233,22 @@ public:
 
 		}
 
+		// check for leap day
+		bool contains_leap_day = false;
+		if (std::fmod(nstep, 8784) == 0)
+		{
+			contains_leap_day = true;
+			int leap_steps_per_hr = nstep / 8784; //this will be an even multiple of 8760 because of the if statement above
+			log("This weather file appears to contain leap day. SAM will skip all of the lines of the weather file that occur on leap day. If your weather file does not contain a leap day, please check your file.", SSC_WARNING);
+			//throw exec_error("windpower", "Error: this weather file appears to contain leap day. SAM requires weather files to be a multiple of 8760 timesteps long.");
+			nstep = leap_steps_per_hr * 8760; //need to resize nrec so that it is correct for holding output variables
+		}
+		
 		// check for even multiple of 8760 timesteps (subhourly)
 		size_t steps_per_hour = nstep / 8760;
 
-		if ( steps_per_hour * 8760 != nstep )
-			throw exec_error( "windpower", "error you did it all wrong! need a multiple of 8760 timesteps for subhourly simulation" );
+		if ( steps_per_hour * 8760 != nstep  && !contains_leap_day)
+			throw exec_error("windpower", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nstep));
 
 		// allocate the time step output vectors to the right length
 		ssc_number_t *turbine_output = allocate( "turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray );
@@ -346,9 +357,21 @@ public:
 				if ( i % (nstep/20) == 0)
 					update( "", 100.0f * ((float)i) / ((float)nstep), (float)i );
 
+				double wind, dir, temp, pres, closest_dir_meas_ht;
+
+				//skip leap day if applicable
+				if (contains_leap_day)
+				{
+					if (hr == 1416) //(31 days in Jan  + 28 days in Feb) * 24 hours a day, +1 to be the start of Feb 29, -1 because of 0 indexing
+						for (int j = 0; j < 24 * steps_per_hour; j++) //trash 24 hours' worth of lines in the weather file to skip the entire day of Feb 29
+						{
+							if (!wdprov->read(wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
+								throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());
+						}
+				} //now continue with the normal process, none of the counters have been incremented so everything else should be ok
+
 				// if wf.read is set to interpolate (last input), and it's able to do so, then it will set wpc.m_dMeasurementHeight equal to hub_ht
 				// direction will not be interpolated, pressure and temperature will be if possible
-				double wind, dir, temp, pres, closest_dir_meas_ht;
 				if (!wdprov->read( wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
 					throw exec_error( "windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error() );
 
