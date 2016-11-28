@@ -201,8 +201,16 @@ bool winddata_provider::read( double requested_height,
 		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
 		if ( interp_direction )
 		{
-			dir1 = (values[index]<360) ? values[index] : 0; // set any 360 deg values to zero
-			dir2 = (values[index2]<360) ? values[index2] : 0;
+			dir1 = values[index];
+			dir2 = values[index2];
+			if (my_isnan(dir1) || my_isnan(dir2))
+				return false;
+			while (dir1 < 0) dir1 += 360; //add 360 to negative values until it is positive
+			while (dir1 >= 360) dir1 -= 360; //360 is set to zero, anything above 360 has 360 subtracted until it's below 360
+			//dir1 = (values[index]<360) ? values[index] : 0; // set any 360 deg values to zero //error checking added 11/28/16 jmf
+			while (dir2 < 0) dir2 += 360;
+			while (dir2 >= 360) dir2 -= 360; //same error checking as above, added 11/28/16 jmf
+			//dir2 = (values[index2]<360) ? values[index2] : 0;
 			ht1 = m_heights[index];
 			ht2 = m_heights[index2];
 			if (dir1>dir2)
@@ -259,6 +267,23 @@ bool winddata_provider::read( double requested_height,
 		&& !my_isnan( *direction )
 		&& !my_isnan( *temperature )
 		&& !my_isnan( *pressure );
+
+	//add error checking. direction error checking performed in the averaging function.
+	if (*speed < 0 || *speed > 120) //units are m/s, wind speed cannot be negative and highest recorded wind speed ever was 113 m/s (https://en.wikipedia.org/wiki/Wind_speed)
+	{
+		found_all = false;
+		m_errorMsg = util::format("Error: wind speed of %d m/s found in weather file, this speed is outside the possible range of 0 to 120 m/s", *speed);
+	}
+	if (*temperature < -200 || *temperature > 100) //units are Celsius
+	{
+		found_all = false;
+		m_errorMsg = util::format("Error: temperature of %d degrees Celsius found in weather file, this temperature is outside the possible range of -200 to 100 degrees C", *pressure);
+	}
+	if (*pressure < 0.5 || *pressure > 1.1) //units are atm, highest recorded pressure was 1085.7 Hectopascals (1.07 atm)  (https://en.wikipedia.org/wiki/Atmospheric_pressure#Records)
+	{
+		found_all = false;
+		m_errorMsg = util::format("Error: atmospheric pressure of %d atm found in weather file, this pressure is outside the possible range of 0.5 to 1.1 atm", *pressure);
+	}
 
 	return found_all;
 
