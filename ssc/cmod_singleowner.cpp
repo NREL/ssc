@@ -23,6 +23,14 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity_input", "Return on equity input", "%", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity_dollars", "Return on equity dollars", "$", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
 
+	/*loan moratorium from Sara for India Documentation\India\Loan Moratorum
+	assumptions:
+	1) moratorium period begins at beginning of loan term 
+	2) moratorium affects principal payment and not interest
+	3) loan term remains the same
+	4) payments increase after moratorium period
+	*/
+	{ SSC_INPUT, SSC_NUMBER, "loan_moratorium", "Loan moratorium period", "years", "", "Moratorium", "?=0", "INTEGER,MIN=0", "" },
 
 
 /* Recapitalization */                                                            														           
@@ -1154,7 +1162,8 @@ public:
 		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
 
 		//  calculate debt for constant dscr mode
-		int term_tenor = as_integer("term_tenor"); 
+		int term_tenor = as_integer("term_tenor");
+		int loan_moratorium = as_integer("loan_moratorium");
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
 		double dscr_reserve_months = as_double("dscr_reserve_months");
@@ -1803,13 +1812,13 @@ public:
 				// debt service reserve
 				if (constant_principal)
 				{
-					if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+					if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / (term_tenor + loan_moratorium);
 				}
 				else
 				{
 					cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
 						1,           // Period
-						term_tenor,   // Number periods
+						(term_tenor + loan_moratorium),   // Number periods
 						loan_amount, // Present Value
 						0,           // future Value
 						0);         // cash flow at end of period
@@ -1856,13 +1865,13 @@ public:
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
 					if (constant_principal)
 					{
-						if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+						if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / (term_tenor + loan_moratorium);
 					}
 					else
 					{
 						cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
 							i,           // Period
-							term_tenor,   // Number periods
+							(term_tenor + loan_moratorium),   // Number periods
 							loan_amount, // Present Value
 							0,           // future Value
 							0);         // cash flow at end of period
@@ -1880,19 +1889,24 @@ public:
 						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
 						if (constant_principal)
 						{
-							if (term_tenor > 0) cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor;
+							if (term_tenor > 0) cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor + loan_moratorium);
 						}
 						else
 						{
-							if (term_int_rate != 0.0)
+							if (i > loan_moratorium)
 							{
-								cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
-									- cf.at(CF_debt_payment_interest, i);
+								if (term_int_rate != 0.0)
+								{
+									cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -(term_tenor + loan_moratorium)))
+										- cf.at(CF_debt_payment_interest, i);
+								}
+								else
+								{
+									cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor + loan_moratorium) - cf.at(CF_debt_payment_interest, i);
+								}
 							}
 							else
-							{
-								cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
-							}
+								cf.at(CF_debt_payment_principal, i) = 0;
 						}
 						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 
