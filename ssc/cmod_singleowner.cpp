@@ -1805,25 +1805,34 @@ public:
 			int i_repeat = 0;
 			double old_ds_reserve = 0, new_ds_reserve = 0;
 
+			// first year principal payment based on loan moratorium
+			ssc_number_t first_principal_payment = 0;
+
 			do
 			{
 				// first iteration - calculate debt reserve account based on initial installed cost
 				old_ds_reserve = new_ds_reserve;
 				// debt service reserve
-				if (constant_principal)
+				if (loan_moratorium < 1)
 				{
-					if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / (term_tenor + loan_moratorium);
+					if (constant_principal)
+					{
+						if ((term_tenor - loan_moratorium) > 0)
+							first_principal_payment = loan_amount / (term_tenor - loan_moratorium);
+					}
+					else
+					{
+						first_principal_payment = -ppmt(term_int_rate,       // Rate
+							1,           // Period
+							(term_tenor - loan_moratorium),   // Number periods
+							loan_amount, // Present Value
+							0,           // future Value
+							0);         // cash flow at end of period
+					}
 				}
 				else
-				{
-					cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
-						1,           // Period
-						(term_tenor + loan_moratorium),   // Number periods
-						loan_amount, // Present Value
-						0,           // future Value
-						0);         // cash flow at end of period
-				}
-
+					first_principal_payment = 0;
+				cf.at(CF_debt_payment_principal, 1) = first_principal_payment;
 				cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
 				cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
 				cf.at(CF_funding_debtservice, 0) = cf.at(CF_reserve_debtservice, 0);
@@ -1861,61 +1870,68 @@ public:
 			{
 				if (i == 1)
 				{
+					first_principal_payment = 0;
 					cf.at(CF_debt_balance, i - 1) = loan_amount;
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
-					if (constant_principal)
+					if (i > loan_moratorium)
 					{
-						if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / (term_tenor + loan_moratorium);
+						if (constant_principal)
+						{
+							if ((term_tenor - loan_moratorium) > 0)	
+								first_principal_payment = loan_amount / (term_tenor - loan_moratorium);
+						}
+						else
+						{
+							first_principal_payment = -ppmt(term_int_rate,       // Rate
+								i,           // Period
+								(term_tenor - loan_moratorium),   // Number periods
+								loan_amount, // Present Value
+								0,           // future Value
+								0);         // cash flow at end of period
+						}
 					}
-					else
-					{
-						cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
-							i,           // Period
-							(term_tenor + loan_moratorium),   // Number periods
-							loan_amount, // Present Value
-							0,           // future Value
-							0);         // cash flow at end of period
-					}
+					cf.at(CF_debt_payment_principal, 1) = first_principal_payment;
 					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 // update reserve account
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
 					cf.at(CF_reserve_debtservice, i-1) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
 					cf.at(CF_funding_debtservice, i-1) = cf.at(CF_reserve_debtservice, i-1);
 				}
-				else
+				else // i > 1 
 				{
 					if (i <= term_tenor)
 					{
 						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
-						if (constant_principal)
+						if (i > loan_moratorium)
 						{
-							if (term_tenor > 0) cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor + loan_moratorium);
-						}
-						else
-						{
-							if (i > loan_moratorium)
+							if (constant_principal)
+							{
+								if ((term_tenor - loan_moratorium) > 0) 
+									cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor - loan_moratorium);
+							}
+							else
 							{
 								if (term_int_rate != 0.0)
 								{
-									cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -(term_tenor + loan_moratorium)))
+									cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -(term_tenor - loan_moratorium)))
 										- cf.at(CF_debt_payment_interest, i);
 								}
 								else
 								{
-									cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor + loan_moratorium) - cf.at(CF_debt_payment_interest, i);
+									cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor - loan_moratorium) - cf.at(CF_debt_payment_interest, i);
 								}
 							}
-							else
-								cf.at(CF_debt_payment_principal, i) = 0;
 						}
-						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
-
-						// debt service reserve
-						cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at						(CF_debt_payment_interest, i));
-						cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
-						cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i	 - 2);
-						if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at		(CF_reserve_debtservice, i - 1);
+						else
+								cf.at(CF_debt_payment_principal, i) = 0;
 					}
+					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
+
+					// debt service reserve
+					cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at						(CF_debt_payment_interest, i));
+					cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
+					cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i	 - 2);
+					if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at		(CF_reserve_debtservice, i - 1);
 				}
 
 				cf.at(CF_debt_payment_total, i) = cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i);
@@ -1924,7 +1940,7 @@ public:
 
 				size_of_debt += cf.at(CF_debt_size, i);
 			}
-			cf.at(CF_debt_balance, 0) = size_of_debt;
+			cf.at(CF_debt_balance, 0) = loan_amount;
 //			log(util::format("size of debt=%lg.", size_of_debt), SSC_WARNING);
 
 		}
@@ -2050,8 +2066,8 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
-		if (constant_dscr_mode)
-		{
+//		if (constant_dscr_mode)
+//		{
 			cost_financing =
 				cost_debt_closing +
 				cost_debt_fee_frac * size_of_debt +
@@ -2077,7 +2093,7 @@ public:
 				- cbi_uti_amount
 				- cbi_oth_amount;
 			
-		}
+//		}
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
