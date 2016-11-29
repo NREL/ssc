@@ -39,6 +39,18 @@ void C_csp_weatherreader::init()
 	ms_solved_params.m_tz = m_hdr.tz;		//[deg]
 	ms_solved_params.m_shift = (m_hdr.lon - m_hdr.tz*15.0);	//[deg]
 	ms_solved_params.m_elev = m_hdr.elev;	//[m]
+    /* 
+    Leap year:
+        The year is evenly divisible by 4;
+        If the year can be evenly divided by 100, it is NOT a leap year, unless;
+        The year is also evenly divisible by 400. Then it is a leap year.
+    */
+    weather_record r;
+    m_wfile.read( &r );
+    m_wfile.rewind();
+
+    ms_solved_params.m_leapyear = (r.year % 4 == 0) && ( (r.year % 100 != 0) || (r.year % 400 == 0) );
+    
 	// ***********************************************************
 
 	m_first = true;		// True the first time call() is accessed
@@ -177,7 +189,8 @@ bool C_csp_weatherreader::read_time_step(int time_step, C_csp_solver_sim_info &p
 		p_sim_info.ms_ts.m_time = (time_step + 1.) * p_sim_info.ms_ts.m_step;
     
         m_wfile.set_counter_to( time_step );
-    
+        m_first = false;
+
         timestep_call(p_sim_info);
 
         converged();

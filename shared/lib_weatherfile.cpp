@@ -1359,11 +1359,20 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			}
 		}
 
-		if (m_columns[MINUTE].index < 0)
+		if (m_columns[MINUTE].index < 0 && (int)m_columns[HOUR].data[1] == m_columns[HOUR].data[1])
 		{
 			for (size_t i = 0; i<m_nRecords; i++)
 				m_columns[MINUTE].data[i] = (float)((m_stepSec / 2) / 60);
 		}
+        else if( m_columns[MINUTE].index < 0 )  //implies fractional hours are provided
+        {
+            for (size_t i = 0; i<m_nRecords; i++)
+            {
+                float hr = m_columns[HOUR].data[i];
+                m_columns[MINUTE].data[i] = (hr - (int)hr)*60.;
+                m_columns[HOUR].data[i] = (float)(int)hr;
+            }
+        }
 	}
 
 
