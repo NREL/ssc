@@ -2095,8 +2095,8 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
-		if (constant_dscr_mode)
-		{
+//		if (constant_dscr_mode)
+//		{
 			// cpg add equity closing cost to be consistent with DHF capital costs and AEPF model 10/7/2016
 			cost_financing =
 				cost_debt_closing +
@@ -2124,7 +2124,7 @@ public:
 				- cbi_uti_amount
 				- cbi_oth_amount;
 
-		}
+//		}
 
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
