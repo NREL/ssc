@@ -235,7 +235,7 @@ public:
 
 		// check for leap day
 		bool contains_leap_day = false;
-		if (std::fmod(nstep, 8784) == 0)
+		if (std::fmod((double)nstep, 8784) == 0)
 		{
 			contains_leap_day = true;
 			int leap_steps_per_hr = nstep / 8784; //this will be an even multiple of 8760 because of the if statement above
