@@ -315,6 +315,7 @@ void C_csp_solver::init()
 		// TES
 	mc_tes.init();
 		// TOU
+    mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
 	mc_tou.init();
 	mc_tou.init_parent();
 		// Thermal Storage
@@ -392,7 +393,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;
 
-		dispatch.params.dt = mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //hr
+		//dispatch.params.dt = mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //hr
+		dispatch.params.dt = 1./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  //hr
 		dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
 		dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
 		dispatch.params.q_pb_standby = mc_power_cycle.get_standby_energy_requirement()*1000.;
@@ -669,9 +671,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
             //time to reoptimize
             int opt_horizon = mc_tou.mc_dispatch_params.m_optimize_horizon;
 
-            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/mc_kernel.mc_sim_info.ms_ts.m_step;
+            double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/3600.;
 
-			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(mc_kernel.get_baseline_step()*mc_tou.mc_dispatch_params.m_optimize_frequency) == mc_kernel.get_baseline_step()
+            //reoptimize when the time is equal to multiples of the first time step
+			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_tou.mc_dispatch_params.m_optimize_frequency) == mc_kernel.get_baseline_step()
 				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
                 )
             {
@@ -696,11 +699,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
                 //get the new price signal
                 dispatch.price_signal.clear();
-                dispatch.price_signal.resize(opt_horizon, 1.);
+                dispatch.price_signal.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.);
 
-                for(int t=0; t<opt_horizon; t++)
+                for(int t=0; t<opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour; t++)
                 {
-					mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time + t * mc_kernel.mc_sim_info.ms_ts.m_step, mc_tou_outputs);
+					mc_tou.call(mc_kernel.mc_sim_info.ms_ts.m_time + t * 3600./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour, mc_tou_outputs);
 		            dispatch.price_signal.at(t) = mc_tou_outputs.m_price_mult;
                 }
 
@@ -727,7 +730,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
                 //predict performance for the time horizon
                 if( 
-                    dispatch.predict_performance(mc_kernel.mc_sim_info.ms_ts.m_time/ mc_kernel.mc_sim_info.ms_ts.m_step- 1, opt_horizon) 
+                    dispatch.predict_performance(
+                            mc_kernel.mc_sim_info.ms_ts.m_time/ mc_kernel.mc_sim_info.ms_ts.m_step- 1, 
+                            opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 
+                            (int)(3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour
+                            ) 
                     )
                 {
                     
@@ -766,7 +773,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 }
 
                 //read in other values
-				dispatch.m_current_read_step = (int)floor(mc_kernel.mc_sim_info.ms_ts.m_time / mc_kernel.get_baseline_step() - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;
+				//dispatch.m_current_read_step = (int)floor(mc_kernel.mc_sim_info.ms_ts.m_time / mc_kernel.get_baseline_step() - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;
+				dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600.) % mc_tou.mc_dispatch_params.m_optimize_frequency;  //always runs dispatch at hourly
 
                 is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );

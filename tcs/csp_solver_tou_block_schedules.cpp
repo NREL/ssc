@@ -83,9 +83,22 @@ void C_block_schedule::check_arrays_for_tous(int n_arrays)
 	}
 }
 
-void C_block_schedule::set_hr_tou()
+void C_block_schedule::set_hr_tou(bool is_leapyear)
 {
+    /* 
+    This method sets the TOU schedule month by hour for an entire year, so only makes sense in the context of an annual simulation.
+
+    */
+    if( m_hr_tou != 0 )
+        delete [] m_hr_tou;
+
+    int nhrann = 8760+(is_leapyear?24:0);
+
+    m_hr_tou = new double[nhrann];
+
 	int nday[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if( is_leapyear )
+        nday[1] ++;
 
 	int wday = 5, i = 0;
 	for( int m = 0; m<12; m++ )
@@ -97,7 +110,7 @@ void C_block_schedule::set_hr_tou()
 			if( wday >= 0 ) wday--;
 			else wday = 5;
 
-			for( int h = 0; h<24 && i<8760 && m * 24 + h<288; h++ )
+			for( int h = 0; h<24 && i<nhrann && m * 24 + h<288; h++ )
 			{
 				if( bWeekend )
 					m_hr_tou[i] = mc_weekends(m, h);	// weekends[m * 24 + h];
@@ -109,13 +122,13 @@ void C_block_schedule::set_hr_tou()
 	}
 }
 
-void C_block_schedule::init(int n_arrays)
+void C_block_schedule::init(int n_arrays, bool is_leapyear)
 {
 	check_dimensions();
 
 	check_arrays_for_tous(n_arrays);
 
-	set_hr_tou();
+	set_hr_tou(is_leapyear);
 }
 
 C_block_schedule_csp_ops::C_block_schedule_csp_ops()
@@ -142,7 +155,7 @@ void C_csp_tou_block_schedules::init()
 {
 	try
 	{
-		ms_params.mc_csp_ops.init(C_block_schedule_csp_ops::N_END);
+		ms_params.mc_csp_ops.init(C_block_schedule_csp_ops::N_END, mc_dispatch_params.m_isleapyear);
 	}
 	catch( C_csp_exception &csp_exception )
 	{
@@ -152,7 +165,7 @@ void C_csp_tou_block_schedules::init()
 
 	try
 	{
-		ms_params.mc_pricing.init(C_block_schedule_pricing::N_END);
+		ms_params.mc_pricing.init(C_block_schedule_pricing::N_END, mc_dispatch_params.m_isleapyear);
 	}
 	catch( C_csp_exception &csp_exception )
 	{
@@ -167,7 +180,7 @@ void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs
 {
 	int i_hour = (int)(ceil(time_s/3600.0 - 1.e-6) - 1);
 
-	if( i_hour > 8760 - 1 || i_hour<0 ) 
+	if( i_hour > 8760 - 1 + (mc_dispatch_params.m_isleapyear ? 24 : 0) || i_hour<0 ) 
 	{
 		m_error_msg = util::format("The hour input to the TOU schedule must be from 1 to 8760. The input hour was %d.", i_hour+1);
 		throw(C_csp_exception(m_error_msg, "TOU timestep call"));

@@ -254,6 +254,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",          "Allow dispatch optimization?",  /*TRUE=1*/                          "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_horizon",         "Time horizon for dispatch optimization",                            "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_frequency",       "Frequency for dispatch optimization calculations",                  "hour",         "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",  "Time steps per hour for dispatch optimization calculations",        "-",            "",            "sys_ctrl_disp_opt", "?=1",                     "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_max_iter",        "Max. no. dispatch optimization iterations",                         "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_timeout",         "Max. dispatch optimization solve duration",                         "s",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",         "Dispatch optimization solution tolerance",                          "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
@@ -859,7 +860,7 @@ public:
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );
-        for( int i=0; i<sf_haf.size(); i++)     //array should be 8760 in length
+        for( int i=0; i<sf_haf.size(); i++)     
             heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
 
 		// Set callback information
@@ -1318,6 +1319,7 @@ public:
 		if( tou.mc_dispatch_params.m_dispatch_optimize )
 		{
 			tou.mc_dispatch_params.m_optimize_frequency = as_integer("disp_frequency");
+            tou.mc_dispatch_params.m_disp_steps_per_hour = as_integer("disp_steps_per_hour");
 			tou.mc_dispatch_params.m_optimize_horizon = as_integer("disp_horizon");
 			tou.mc_dispatch_params.m_max_iterations = as_integer("disp_max_iter");
 			tou.mc_dispatch_params.m_solver_timeout = as_double("disp_timeout");
@@ -1473,14 +1475,19 @@ public:
             size_t n_dispatch_series;
             ssc_number_t *dispatch_series = as_array("dispatch_series", &n_dispatch_series);
 
-            if( n_dispatch_series != 8760*steps_per_hour)
-			    throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array must be 8760*(steps per hour) in length.");
+            if( n_dispatch_series != n_steps_fixed)
+			    throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
                 
-
-            for(int i=0; i<8760*steps_per_hour; i++)
+            //resize the m_hr_tou array
+            if( tou_params->mc_pricing.m_hr_tou != 0 )
+                delete [] tou_params->mc_pricing.m_hr_tou;
+            tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
+            //set the tou period as unique for each time step
+            for(int i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.m_hr_tou[i] = i+1;
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(8760*steps_per_hour);
-            for( int i=0; i<8760*steps_per_hour; i++)
+            //allocate reported arrays
+            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
+            for( int i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
 

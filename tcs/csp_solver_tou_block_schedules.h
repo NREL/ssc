@@ -17,14 +17,14 @@ protected:
 
 	void check_arrays_for_tous(int n_arrays);
 
-	void set_hr_tou();
+	void set_hr_tou(bool is_leapyear=false);
 
 public:
 
 	int mstatic_n_rows;
 	int mstatic_n_cols;
 
-	double m_hr_tou[8760];
+	double *m_hr_tou; // [8760];
 
 	// member string for exception messages
 	std::string m_error_msg;
@@ -33,9 +33,13 @@ public:
 	{
 		mstatic_n_rows = 12;
 		mstatic_n_cols = 24;
+        m_hr_tou = 0;   //initialize null pointer
 	};
 
-	~C_block_schedule(){};
+	~C_block_schedule(){
+        if (m_hr_tou != 0)
+            delete [] m_hr_tou;
+    };
 
 	util::matrix_t<double> mc_weekdays;
 	util::matrix_t<double> mc_weekends;
@@ -44,7 +48,7 @@ public:
 
 	std::vector<string> mv_labels;
 
-	void init(int n_arrays);
+	void init(int n_arrays, bool is_leapyear=false);
 };
 
 class C_block_schedule_csp_ops : public C_block_schedule
@@ -89,8 +93,8 @@ public:
 class C_csp_tou_block_schedules : public C_csp_tou
 {
 	
-private:
-	double m_hr_csp_op_tou[8760];
+//private:
+	//double m_hr_csp_op_tou[8760];
 
 public:
 

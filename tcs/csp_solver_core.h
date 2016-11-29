@@ -146,10 +146,12 @@ public:
 		double m_tz;			//[deg]
 		double m_shift;			//[deg]
 		double m_elev;			//[m]
+        bool m_leapyear;        //true/false
 
 		S_csp_weatherreader_solved_params()
 		{
 			m_lat = m_lon = m_tz = m_shift = m_elev = std::numeric_limits<double>::quiet_NaN();
+            m_leapyear = false;
 		}
 	};
 
@@ -215,8 +217,10 @@ public:
 
     struct S_csp_tou_params
     {
+        bool m_isleapyear;
 		bool m_dispatch_optimize;
         int m_optimize_frequency;
+        int m_disp_steps_per_hour;
         int m_optimize_horizon;
         double m_solver_timeout;
         double m_mip_gap;
@@ -246,8 +250,10 @@ public:
 
         S_csp_tou_params()
         {
+            m_isleapyear = false;
             m_dispatch_optimize = false;        //Do dispatch optimization
             m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
+            m_disp_steps_per_hour = 1;          //[-] Steps per hour for dispatch optimization
             m_optimize_horizon = 48;            //[hr] Optimization time horizon
             m_solver_timeout = 5.;
             m_mip_gap = 0.055;

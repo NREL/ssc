@@ -240,7 +240,7 @@ public:
     //bool dispatch_forecast();
 
     //Predict performance out nstep values. 
-    bool predict_performance(int step_start, int nstep);    
+    bool predict_performance(int step_start, int nhours, int steps_per_hour);    
 
     //declare dispatch function in csp_dispatch.cpp
     bool optimize();

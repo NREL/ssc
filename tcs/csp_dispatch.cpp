@@ -149,12 +149,12 @@ bool csp_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
     return m_is_weather_setup = true;
 }
 
-bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
+bool csp_dispatch_opt::predict_performance(int step_start, int nhours, int steps_per_hour)
 {
     //Step number - 1-based index for first hour of the year.
 
     //save step count
-    m_nstep_opt = nstep;
+    m_nstep_opt = nhours;
 
     //Predict performance out nstep values. 
     clear_output_arrays();
@@ -169,40 +169,60 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nstep)
 
     double Asf = params.col_rec->get_collector_area();
 
+    double ave_weight = simloc.ms_ts.m_step/3600.;
+
     for(int i=0; i<m_nstep_opt; i++)
     {
-        
-        //check to see if we're past the end of the weather file
-        if( simloc.ms_ts.m_time > 8760*3600)
-            return false;
+        //initialize hourly average values
+        double therm_eff_ave = 0.;
+        double cycle_eff_ave = 0.;
+        double q_inc_ave = 0.;
 
-        //jump to the current step
-        m_weather.read_time_step( step_start+i, simloc );
-        //m_weather.timestep_call(simloc);
+        for(int j=0; j<steps_per_hour; j++)     //take averages over hour if needed
+        {
 
-        //get DNI
-        double dni = m_weather.ms_outputs.m_beam;
+            //check to see if we're past the end of the weather file
+            if( simloc.ms_ts.m_time > 8760*3600)
+                return false;
 
-        //get optical efficiency
-        double opt_eff = params.col_rec->calculate_optical_efficiency(m_weather.ms_outputs, simloc);
+            //jump to the current step
+            m_weather.read_time_step( step_start+i*steps_per_hour+j, simloc );
+            //m_weather.timestep_call(simloc);
 
-        double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
+            //get DNI
+            double dni = m_weather.ms_outputs.m_beam;
+            if( m_weather.ms_outputs.m_solzen > 90. || dni < 0. )
+                dni = 0.;
 
-        //get thermal efficiency
-        double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(m_weather.ms_outputs, q_inc*0.001);
-        therm_eff *= params.sf_effadj;
-        outputs.eta_sf_expected.push_back(therm_eff);
+            //get optical efficiency
+            double opt_eff = params.col_rec->calculate_optical_efficiency(m_weather.ms_outputs, simloc);
 
-        //store the predicted field energy output
-        outputs.q_sfavail_expected.push_back( q_inc * therm_eff * simloc.ms_ts.m_step/3600.);
+            double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
 
-        //store the power cycle efficiency
-        double cycle_eff = params.eff_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
-        cycle_eff *= params.eta_cycle_ref;  
-        outputs.eta_pb_expected.push_back( cycle_eff );
+            //get thermal efficiency
+            double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(m_weather.ms_outputs, q_inc*0.001);
+            therm_eff *= params.sf_effadj;
+            therm_eff_ave += therm_eff * ave_weight;
 
-		simloc.ms_ts.m_time += simloc.ms_ts.m_step;
-        m_weather.converged();
+            //store the predicted field energy output
+            q_inc_ave += q_inc * therm_eff * ave_weight;
+
+            //store the power cycle efficiency
+            double cycle_eff = params.eff_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
+            cycle_eff *= params.eta_cycle_ref;  
+            cycle_eff_ave += cycle_eff * ave_weight;
+
+		    simloc.ms_ts.m_time += simloc.ms_ts.m_step;
+            m_weather.converged();
+        }
+
+        //-----report hourly averages
+        //thermal efficiency
+        outputs.eta_sf_expected.push_back(therm_eff_ave);
+        //predicted field energy output
+        outputs.q_sfavail_expected.push_back( q_inc_ave );
+        //power cycle efficiency
+        outputs.eta_pb_expected.push_back( cycle_eff_ave );
     }
 
     //reset the weather data reader
@@ -260,7 +280,7 @@ bool csp_dispatch_opt::optimize()
     try{
 
         //Calculate the number of variables
-        int nt = m_nstep_opt;
+        int nt = (int)m_nstep_opt;
         int nz = (int)params.eff_table_load.get_size();
 
         //set up the variable structure
@@ -291,7 +311,7 @@ bool csp_dispatch_opt::optimize()
         double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
         double dq_csu = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/params.dt) / params.dt;
         
-        double T = nt ;
+        //double T = nt ;
         double Eu = params.e_tes_max ;
         double Er = params.e_rec_startup ;
         double Ec = params.e_pb_startup_cold ;
@@ -302,7 +322,7 @@ bool csp_dispatch_opt::optimize()
         double Qc = dq_csu ;
         double Qb = params.q_pb_standby ;
         double Lr = params.w_rec_pump ;
-        double delta = 1;
+        double delta = params.dt;
 
         double s0 = params.e_tes_init ;
         double ursu0 = 0.;
