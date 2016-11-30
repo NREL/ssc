@@ -964,6 +964,11 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	return 0;
 }
 
+void C_sco2_recomp_csp::sweep_turbomachinery_deltaP()
+{
+	
+}
+
 int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
 {
 	S_od_par sco2_od_par;

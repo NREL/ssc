@@ -4255,22 +4255,15 @@ void C_RecompCycle::off_design_phi(S_od_phi_par & od_phi_par_in, int & error_cod
 
 int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/, double *diff_m_dot_t /*-*/)
 {
-	// Values that we will know and have to pass in through member data
-	double T_mc_in = mpc_rc_cycle->ms_od_turbo_bal_par.m_T_mc_in;		//[K]
-	double P_mc_in = mpc_rc_cycle->ms_od_turbo_bal_par.m_P_mc_in;		//[kPa]
-	double f_recomp = mpc_rc_cycle->ms_od_turbo_bal_par.m_f_recomp;		//[-]
-	double T_t_in = mpc_rc_cycle->ms_od_turbo_bal_par.m_T_t_in;			//[K]
-	double phi_mc = mpc_rc_cycle->ms_od_turbo_bal_par.m_phi_mc;			//[-]
-
 	// Calculate main compressor mass flow rate
-	double m_dot_mc = (1.0 - f_recomp)*m_dot_t_in;		//[kg/s]
+	double m_dot_mc = (1.0 - m_f_recomp)*m_dot_t_in;		//[kg/s]
 
 	// Calculate main compressor performance
 	int mc_err_code = 0;
 	double T_mc_out, P_mc_out;
 	T_mc_out = P_mc_out = std::numeric_limits<double>::quiet_NaN();
 
-	mpc_rc_cycle->m_mc.od_comp_phi(phi_mc, T_mc_in, P_mc_in, m_dot_mc, mc_err_code, T_mc_out, P_mc_out);
+	mpc_rc_cycle->m_mc.od_comp_phi(m_phi_mc, m_T_mc_in, m_P_mc_in, m_dot_mc, mc_err_code, T_mc_out, P_mc_out);
 	
 		// Check that main compressor performance solved
 	if(mc_err_code != 0)
@@ -4328,7 +4321,7 @@ int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/,
 	int t_err_code = 0;
 	double m_dot_t_calc, T_t_out;
 	m_dot_t_calc = T_t_out = std::numeric_limits<double>::quiet_NaN();
-	mpc_rc_cycle->m_t.od_turbine_at_N_des(T_t_in, P_t_in, P_t_out, t_err_code, m_dot_t_calc, T_t_out);
+	mpc_rc_cycle->m_t.od_turbine_at_N_des(m_T_t_in, P_t_in, P_t_out, t_err_code, m_dot_t_calc, T_t_out);
 		// Check that turbine performance solved
 	if(t_err_code != 0)
 	{
@@ -4428,7 +4421,12 @@ double C_RecompCycle::od_turbo_bal_csp_Wnet(const std::vector<double> &x)
 
 	// Apply 1 var solver to find the turbine mass flow rate that balances the turbomachinery,
 	//     given the Inlet Pressure and Recompression Fraction arguments
-	C_mono_eq_turbo_m_dot c_rc_cycle(this);
+	C_mono_eq_turbo_m_dot c_rc_cycle(this, ms_od_turbo_bal_csp_par.m_T_mc_in,
+											ms_od_turbo_bal_csp_par.m_P_mc_in,
+											ms_od_turbo_bal_csp_par.m_f_recomp,
+											ms_od_turbo_bal_csp_par.m_T_t_in,
+											ms_od_turbo_bal_csp_par.m_phi_mc);
+
 	C_monotonic_eq_solver c_rc_cycle_solver(c_rc_cycle);
 
 	// Set lower bound on mass flow rate
@@ -4745,14 +4743,12 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	m_pres_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_P_mc_in;
 	m_temp_od[C_RecompCycle::TURB_IN] = ms_od_phi_par.m_T_t_in;
 
-	// Set up solver to find mass flow rate that balances turbomachinery
-	ms_od_turbo_bal_par.m_P_mc_in = ms_od_phi_par.m_P_mc_in;		//[kPa]
-	ms_od_turbo_bal_par.m_f_recomp = ms_od_phi_par.m_recomp_frac;	//[-]
-	ms_od_turbo_bal_par.m_T_mc_in = ms_od_phi_par.m_T_mc_in;		//[K]
-	ms_od_turbo_bal_par.m_T_t_in = ms_od_phi_par.m_T_t_in;			//[K]
-	ms_od_turbo_bal_par.m_phi_mc = ms_od_phi_par.m_phi_mc;			//[-]
+	C_mono_eq_turbo_m_dot c_turbo_bal(this, ms_od_phi_par.m_T_mc_in,
+											ms_od_phi_par.m_P_mc_in,
+											ms_od_phi_par.m_recomp_frac,
+											ms_od_phi_par.m_T_t_in,
+											ms_od_phi_par.m_phi_mc);
 
-	C_mono_eq_turbo_m_dot c_turbo_bal(this);
 	C_monotonic_eq_solver c_turbo_bal_solver(c_turbo_bal);
 
 	// Set lower bound on mass flow rate
