@@ -265,6 +265,8 @@ public:
 		return &ms_od_solved;
 	}
 
+	void sweep_turbomachinery_deltaP();
+
 	//ofstream sco2_od_opt_file;
 };
 

@@ -617,34 +617,20 @@ public:
 		}
 	};
 
-	struct S_od_turbo_bal_par
-	{
-		double m_P_mc_in;	//[kPa] Main compressor inlet pressure
-		double m_f_recomp;	//[-] Recompression fraction
-		double m_T_mc_in;	//[K] Main compressor inlet temperature
-		double m_T_t_in;	//[K] Turbine inlet temperature
-
-		double m_phi_mc;	//[-] Main compressor flow coefficient
-	
-		S_od_turbo_bal_par()
-		{
-			m_P_mc_in = m_f_recomp = m_T_mc_in = m_T_t_in = m_phi_mc = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-
 	struct S_od_turbo_bal_csp_par
 	{
 		double m_P_mc_in;	//[kPa] Main compressor inlet pressure
 		double m_f_recomp;	//[-] Recompression fraction
 		double m_T_mc_in;	//[K] Main compressor inlet temperature
 		double m_T_t_in;	//[K] Turbine inlet temperature
+		double m_phi_mc;	//[-] Main compressor flow coefficient
 
 		double m_co2_to_htf_m_dot_ratio_des;	//[-] m_dot_co2 / m_dot_htf at design
 		double m_m_dot_htf;						//[kg/s] (off design) HTF mass flow rate 
 
 		S_od_turbo_bal_csp_par()
 		{
-			m_P_mc_in = m_f_recomp = m_T_mc_in = m_T_t_in = 
+			m_P_mc_in = m_f_recomp = m_T_mc_in = m_T_t_in = m_phi_mc =
 				m_co2_to_htf_m_dot_ratio_des = m_m_dot_htf = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -884,7 +870,7 @@ private:
 	S_opt_design_parameters ms_opt_des_par;
 	S_auto_opt_design_parameters ms_auto_opt_des_par;
 	S_design_solved ms_des_solved;
-	S_od_turbo_bal_par ms_od_turbo_bal_par;
+	//S_od_turbo_bal_par ms_od_turbo_bal_par;
 	S_od_turbo_bal_csp_par ms_od_turbo_bal_csp_par;
 	S_od_turbo_bal_csp_solved ms_od_turbo_bal_csp_solved;
 	S_od_parameters ms_od_par;
@@ -1072,10 +1058,22 @@ public:
 	private:
 		C_RecompCycle *mpc_rc_cycle;
 
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_P_mc_in;		//[kPa] Compressor inlet pressure
+		double m_f_recomp;		//[-] Recompression fraction
+		double m_T_t_in;		//[K] Turbine inlet temperature
+		double m_phi_mc;		//[-] Compressor flow coefficient
+
 	public:
-		C_mono_eq_turbo_m_dot(C_RecompCycle *pc_rc_cycle)
+		C_mono_eq_turbo_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+									double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
+			m_T_mc_in = T_mc_in;		//[K]
+			m_P_mc_in = P_mc_in;		//[kPa]
+			m_f_recomp = f_recomp;		//[-]
+			m_T_t_in = T_t_in;			//[K]
+			m_phi_mc = phi_mc;			//[-]
 		}
 	
 		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
