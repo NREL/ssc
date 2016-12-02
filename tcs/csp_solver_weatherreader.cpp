@@ -50,6 +50,9 @@ void C_csp_weatherreader::init()
     m_wfile.rewind();
 
     ms_solved_params.m_leapyear = (r.year % 4 == 0) && ( (r.year % 100 != 0) || (r.year % 400 == 0) );
+    //do a special check to see if it's a leap year but the weather file supplies 8760 values nonetheless
+    if( ms_solved_params.m_leapyear && (m_wfile.nrecords() % 8760 == 0) )
+        ms_solved_params.m_leapyear = false;
     
 	// ***********************************************************
 

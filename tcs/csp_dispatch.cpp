@@ -11,6 +11,8 @@
 //#define SOS_MANUAL
 //#define SOS_LPSOLVE
 
+//#define MOD_CYCLE_SHUTDOWN
+
 /*
 
 Careful with namespaces in this file.. importing the LPsolve library introduces new macro definitions
@@ -149,12 +151,12 @@ bool csp_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
     return m_is_weather_setup = true;
 }
 
-bool csp_dispatch_opt::predict_performance(int step_start, int nhours, int steps_per_hour)
+bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int)
 {
     //Step number - 1-based index for first hour of the year.
 
     //save step count
-    m_nstep_opt = nhours;
+    m_nstep_opt = ntimeints;
 
     //Predict performance out nstep values. 
     clear_output_arrays();
@@ -169,7 +171,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nhours, int steps
 
     double Asf = params.col_rec->get_collector_area();
 
-    double ave_weight = simloc.ms_ts.m_step/3600.;
+    double ave_weight = 1./(double)divs_per_int;
 
     for(int i=0; i<m_nstep_opt; i++)
     {
@@ -178,16 +180,12 @@ bool csp_dispatch_opt::predict_performance(int step_start, int nhours, int steps
         double cycle_eff_ave = 0.;
         double q_inc_ave = 0.;
 
-        for(int j=0; j<steps_per_hour; j++)     //take averages over hour if needed
+        for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
         {
 
-            //check to see if we're past the end of the weather file
-            if( simloc.ms_ts.m_time > 8760*3600)
-                return false;
-
             //jump to the current step
-            m_weather.read_time_step( step_start+i*steps_per_hour+j, simloc );
-            //m_weather.timestep_call(simloc);
+            if(! m_weather.read_time_step( step_start+i*divs_per_int+j, simloc ) )
+                return false;
 
             //get DNI
             double dni = m_weather.ms_outputs.m_beam;
@@ -294,35 +292,33 @@ bool csp_dispatch_opt::optimize()
         //O.add_var("yrsd", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("yrsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         //O.add_var("yrhsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        
+
         O.add_var("x", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0.);
-        O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
-        O.add_var("s", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
         O.add_var("y", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+        O.add_var("s", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
+        O.add_var("ucsu", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. );
         O.add_var("ycsu", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ycsb", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-        //O.add_var("ycsd", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+#ifdef MOD_CYCLE_SHUTDOWN
+        O.add_var("ycsd", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
+#endif
         O.add_var("ycsup", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("ychsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
-
         O.add_var("wdot", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); //0 lower bound?
         O.add_var("delta_w", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); 
         
-        double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
-        double dq_csu = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/params.dt) / params.dt;
-        
         //double T = nt ;
+        double delta = params.dt;
         double Eu = params.e_tes_max ;
         double Er = params.e_rec_startup ;
         double Ec = params.e_pb_startup_cold ;
         double Qu = params.q_pb_max ;
         double Ql = params.q_pb_min ;
-        double Qru = dq_rsu ;
+        double Qru = params.e_rec_startup / params.dt_rec_startup;
         double Qrl = params.q_rec_min ;
-        double Qc = dq_csu ;
+        double Qc = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/delta) / delta;
         double Qb = params.q_pb_standby ;
         double Lr = params.w_rec_pump ;
-        double delta = params.dt;
 
         double s0 = params.e_tes_init ;
         double ursu0 = 0.;
@@ -399,9 +395,6 @@ bool csp_dispatch_opt::optimize()
 
         lp = make_lp(0, nvar);  //build the context
 
-        set_verbose(lp, 3); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
-
-
         if(lp == NULL)
             throw C_csp_exception("Failed to create a new CSP dispatch optimization problem context.");
 
@@ -457,42 +450,53 @@ bool csp_dispatch_opt::optimize()
             int *col = new int[8*nt];
             REAL *row = new REAL[8*nt];
             double tadj = 0.999;
+            int i=0;
 
             for(int t=0; t<nt; t++)
             {
+                i=0;
+                col[ t + nt*(i  ) ] = O.column("wdot", t);
+                row[ t + nt*(i++) ] = delta * price_signal.at(t);
+                
+                col[ t + nt*(i  ) ] = O.column("xr", t);
+                row[ t + nt*(i++) ] = - delta * price_signal.at(t) * Lr;
+                
+                col[ t + nt*(i  ) ] = O.column("xrsu", t);
+                row[ t + nt*(i++) ] = row[ nt+t];
+                
+                //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
+                //xxrow[ t + nt*(i++) ] = row[ nt+t]*Qrl;
+                
+                //xxcol[ t + nt*(i   ] = O.column("yrsd", t);
+                //xxrow[ t + nt*(i++) ] = -0.5;
 
-                col[      t] = O.column("wdot", t);
-                col[ 1*nt+t] = O.column("xr", t);
-                col[ 2*nt+t] = O.column("xrsu", t);
-                //col[ 3*nt+t] = O.column("yrsb", t);
-                //col[ 4*nt+t] = O.column("yrsd", t);
-                //col[ 5*nt+t] = O.column("ycsd", t);
-                col[ 3*nt+t] = O.column("yrsup", t);
-                //col[ 5*nt+t] = O.column("yrhsp", t);
-                col[ 4*nt+t] = O.column("ycsup", t);
-                col[ 5*nt+t] = O.column("ychsp", t);
-                col[ 6*nt+t] = O.column("delta_w", t);
+                //xxcol[ t + nt*(i   ] = O.column("ycsd", t);
+                //xxrow[ t + nt*(i++) ] = -0.5;
 
-                row[      t] = price_signal.at(t) /** outputs.eta_pb_expected.at(t)*/;
-                row[ 1*nt+t] = - price_signal.at(t) * Lr;
-                row[ 2*nt+t] = row[ nt+t];
-                //row[ 3*nt+t] = row[ nt+t]*Qrl;
-                //row[ 4*nt+t] = row[ 5*nt+t] = -0.5;
-                row[ 3*nt+t] = -rsu_cost*tadj;
-                //row[ 5*nt+t] = -tadj;
-                row[ 4*nt+t] = -csu_cost*tadj;
-                row[ 5*nt+t] = row[ 4*nt+t] * 0.1;
-                row[ 6*nt+t] = -pen_delta_w*tadj;
+                col[ t + nt*(i  ) ] = O.column("yrsup", t);
+                row[ t + nt*(i++) ] = -rsu_cost*tadj;
+
+                //xxcol[ t + nt*(i   ] = O.column("yrhsp", t);
+                //xxrow[ t + nt*(i++) ] = -tadj;
+
+                col[ t + nt*(i  ) ] = O.column("ycsup", t);
+                row[ t + nt*(i++) ] = -csu_cost*tadj;
+
+                col[ t + nt*(i  ) ] = O.column("ychsp", t);
+                row[ t + nt*(i++) ] = -csu_cost*tadj * 0.1;
+
+                col[ t + nt*(i  ) ] = O.column("delta_w", t);
+                row[ t + nt*(i++) ] = -pen_delta_w*tadj;
 
                 tadj *= 0.999;
             }
 
-            set_obj_fnex(lp, 7*nt, row, col);
+            set_obj_fnex(lp, i*nt, row, col);
         
             delete [] col;
             delete [] row;
         }
-
+        
         //set the row mode
         set_add_rowmode(lp, TRUE);
 
@@ -559,21 +563,24 @@ bool csp_dispatch_opt::optimize()
 
             for(int t=0; t<nt; t++)
             {
+                int i=0;
                 //power production curve
-                row[0] = 1.;
-                col[0] = O.column("wdot", t);
+                row[i  ] = 1.;
+                col[i++] = O.column("wdot", t);
 
-                row[1] = -etap*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
-                col[1] = O.column("x", t);
+                row[i  ] = -etap*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                col[i++] = O.column("x", t);
 
-                row[2] = -(Wdotu - etap*Qu)*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
-                col[2] = O.column("y", t);
+                row[i  ] = -(Wdotu - etap*Qu)*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                col[i++] = O.column("y", t);
 
-                add_constraintex(lp, 3, row, col, LE, 0.);
+                //row[i  ] = -outputs.eta_pb_expected.at(t);
+                //col[i++] = O.column("x", t);
+
+                add_constraintex(lp, i, row, col, LE, 0.);
 
             }
         }
-
 
         //******************** Receiver constraints *******************
         {
@@ -774,7 +781,6 @@ bool csp_dispatch_opt::optimize()
 
         
         //******************** Power cycle constraints *******************
-        
         {
             REAL row[5];
             int col[5];
@@ -783,24 +789,21 @@ bool csp_dispatch_opt::optimize()
             for(int t=0; t<nt; t++)
             {
 
+                int i=0;
                 //Startup Inventory balance
-                row[0] = 1.;
-                col[0] = O.column("ucsu", t);
+                row[i  ] = 1.;
+                col[i++] = O.column("ucsu", t);
                 
-                row[1] = -delta * Qc;
-                col[1] = O.column("ycsu", t);
+                row[i  ] = -delta * Qc;
+                col[i++] = O.column("ycsu", t);
 
                 if(t>0)
                 {
-                    row[2] = -1.;
-                    col[2] = O.column("ucsu", t-1);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("ucsu", t-1);
+                }
 
-                    add_constraintex(lp, 3, row, col, LE, 0.);
-                }
-                else
-                {
-                    add_constraintex(lp, 2, row, col, LE, 0.);
-                }
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //Inventory nonzero
                 row[0] = 1.;
@@ -812,38 +815,40 @@ bool csp_dispatch_opt::optimize()
                 add_constraintex(lp, 2, row, col, LE, 0.);
 
                 //Cycle operation allowed when:
-                row[0] = 1.;
-                col[0] = O.column("y", t);
+                i=0;
+                row[i  ] = 1.;
+                col[i++] = O.column("y", t);
                 
-                row[1] = -1.0/Ec; 
-                col[1] = O.column("ucsu", t);
+                row[i  ] = -1.0/Ec; 
+                col[i++] = O.column("ucsu", t);
 
                 if(t>0)
                 {
-                    row[2] = -1.;
-                    col[2] = O.column("y", t-1);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("y", t-1);
 
-                    row[3] = -1.;
-                    col[3] = O.column("ycsb", t-1);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("ycsb", t-1);
 
-                    add_constraintex(lp, 4, row, col, LE, 0.); 
+                    add_constraintex(lp, i, row, col, LE, 0.); 
                 }
                 else
                 {
-                    add_constraintex(lp, 2, row, col, LE, (params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.) );
+                    add_constraintex(lp, i, row, col, LE, (params.is_pb_operating0 ? 1. : 0.) + (params.is_pb_standby0 ? 1. : 0.) );
                 }
 
                 //Cycle consumption limit
-                row[0] = 1.;
-                col[0] = O.column("x", t);
+                i=0;
+                row[i  ] = 1.;
+                col[i++] = O.column("x", t);
 
-                row[1] = Qc;
-                col[1] = O.column("ycsu", t);
+                row[i  ] = Qc;
+                col[i++] = O.column("ycsu", t);
                 
-                row[2] = -Qu;
-                col[2] = O.column("y", t);
+                row[i  ] = -Qu;
+                col[i++] = O.column("y", t);
 
-                add_constraintex(lp, 3, row, col, LE, 0.);
+                add_constraintex(lp, i, row, col, LE, 0.);
 
                 //cycle operation mode requirement
                 row[0] = 1.;
@@ -855,13 +860,14 @@ bool csp_dispatch_opt::optimize()
                 add_constraintex(lp, 2, row, col, LE, 0.);
 
                 //Minimum cycle energy contribution
-                row[0] = 1.;
-                col[0] = O.column("x", t);
+                i=0;
+                row[i  ] = 1.;
+                col[i++] = O.column("x", t);
 
-                row[1] = -Ql;
-                col[1] = O.column("y", t);
+                row[i  ] = -Ql;
+                col[i++] = O.column("y", t);
 
-                add_constraintex(lp, 2, row, col, GE, 0);
+                add_constraintex(lp, i, row, col, GE, 0);
 
                 //cycle startup can't be enabled after a time step where the cycle was operating
                 if(t>0)
@@ -877,23 +883,23 @@ bool csp_dispatch_opt::optimize()
 
 
                 //Standby mode entry
-                row[0] = 1.;
-                col[0] = O.column("ycsb", t);
-                
+                i=0;
+                row[i  ] = 1.;
+                col[i++] = O.column("ycsb", t);
 
                 if(t>0)
                 {
-                    row[1] = -1.;
-                    col[1] = O.column("y", t-1);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("y", t-1);
 
-                    row[2] = -1.;
-                    col[2] = O.column("ycsb", t-1);
+                    row[i  ] = -1.;
+                    col[i++] = O.column("ycsb", t-1);
 
-                    add_constraintex(lp, 3, row, col, LE, 0);
+                    add_constraintex(lp, i, row, col, LE, 0);
                 }
                 else
                 {
-                    add_constraintex(lp, 1, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
+                    add_constraintex(lp, i, row, col, LE, (params.is_pb_standby0 ? 1 : 0) + (params.is_pb_operating0 ? 1 : 0));
                 }
 
                 //some modes can't coincide
@@ -910,8 +916,6 @@ bool csp_dispatch_opt::optimize()
                 col[1] = O.column("ycsb", t);    
 
                 add_constraintex(lp, 2, row, col, LE, 1);   
-
-                // --- new constraints ---
 
                 if( t > 0 )
                 {
@@ -939,8 +943,9 @@ bool csp_dispatch_opt::optimize()
 
                     add_constraintex(lp, 3, row, col, GE, -1.);
 
+#ifdef MOD_CYCLE_SHUTDOWN
                     //cycle shutdown energy penalty
-                    /*row[0] = 1.;
+                    row[0] = 1.;
                     col[0] = O.column("ycsd", t-1);
 
                     row[1] = -1.;
@@ -955,7 +960,8 @@ bool csp_dispatch_opt::optimize()
                     row[4] = 1.;
                     col[4] = O.column("ycsb", t);
 
-                    add_constraintex(lp, 5, row, col, GE, 0.);*/
+                    add_constraintex(lp, 5, row, col, GE, 0.);
+#endif
 
                 }
             }
@@ -970,30 +976,37 @@ bool csp_dispatch_opt::optimize()
 
             for(int t=0; t<nt; t++)
             {
-                row[0] = delta;
-                row[1] = -delta*Qc;
-                row[2] = -delta*Qb; 
-                row[3] = -delta;
-                //row[4] = -delta*Qrsb;
-                row[4] = -1.;
-                row[5] = 1.;
-            
-                col[0] = O.column("xr", t);
-                col[1] = O.column("ycsu", t);
-                col[2] = O.column("ycsb", t);
-                col[3] = O.column("x", t);
-                //col[4] = O.column("yrsb", t);
-                col[4] = O.column("s", t);
+                int i=0;
 
+                row[i  ] = delta;
+                col[i++] = O.column("xr", t);
+                
+                row[i  ] = -delta*Qc;
+                col[i++] = O.column("ycsu", t);
+                
+                row[i  ] = -delta*Qb; 
+                col[i++] = O.column("ycsb", t);
+                
+                row[i  ] = -delta;
+                col[i++] = O.column("x", t);
+#ifdef MOD_REC_STANDBY                
+                row[i  ] = -delta*Qrsb;
+                col[i++] = O.column("yrsb", t);
+#endif
+                
+                row[i  ] = -1.;
+                col[i++] = O.column("s", t);
                 
                 if(t>0)
                 {
-                    col[5] = O.column("s", t-1);
-                    add_constraintex(lp, 6, row, col, EQ, 0.);
+                    row[i  ] = 1.;
+                    col[i++] = O.column("s", t-1);
+
+                    add_constraintex(lp, i, row, col, EQ, 0.);
                 }
                 else
                 {
-                    add_constraintex(lp, 5, row, col, EQ, -s0);  //initial storage state (kWh)
+                    add_constraintex(lp, i, row, col, EQ, -s0);  //initial storage state (kWh)
                 }
             }
         }
@@ -1014,31 +1027,31 @@ bool csp_dispatch_opt::optimize()
                 //min charge state in time periods where cycle operates and receiver is starting up
                 if(t < nt-1)
                 {
-                    double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - params.e_rec_startup/params.dt, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * params.q_pb_max * params.dt;
+                    double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - Er/delta, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * Qu * delta;
 
+                    int i=0;
 
+                    row[i  ] = 1./smin;
+                    col[i++] = O.column("s", t);
 
-                    row[0] = 1./smin;
-                    col[0] = O.column("s", t);
+                    row[i  ] = -1;
+                    col[i++] = O.column("y", t+1);
 
-                    row[1] = -1;
-                    col[1] = O.column("y", t+1);
+                    row[i  ] = -1;
+                    col[i++] = O.column("yrsu", t+1);
 
-                    row[2] = -1;
-                    col[2] = O.column("yrsu", t+1);
+                    row[i  ] = -1;
+                    col[i++] = O.column("y", t);
 
-                    row[3] = -1;
-                    col[3] = O.column("y", t);
+                    row[i  ] = -1;
+                    col[i++] = O.column("ycsb", t);
 
-                    row[4] = -1;
-                    col[4] = O.column("ycsb", t);
-
-                    add_constraintex(lp, 5, row, col, GE, -2);
+                    add_constraintex(lp, i, row, col, GE, -2);
                 }
 
             }
         }
-
+        
         //Set problem to maximize
         set_maxim(lp);
 
@@ -1048,9 +1061,13 @@ bool csp_dispatch_opt::optimize()
         //set the log function
         solver_params.reset();
         
-        //put_logfunc(lp, opt_logfunction, (void*)(&solver_params));
         put_msgfunc(lp, opt_iter_function, (void*)(&solver_params), MSG_ITERATION | MSG_MILPBETTER | MSG_MILPFEASIBLE);
         put_abortfunc(lp, opt_abortfunction, (void*)(&solver_params));
+        if( solver_params.disp_reporting > 0 )
+        {
+            put_logfunc(lp, opt_logfunction, (void*)(&solver_params));
+            set_verbose(lp, solver_params.disp_reporting); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
+        }
 
         /* 
         The presolve options have been tested and show that the optimal combination of options is as set below.
@@ -1176,6 +1193,12 @@ bool csp_dispatch_opt::optimize()
 
         if(return_ok)
         {
+            /*set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\OM Optimization\\cspopt\\software\\sdk\\scripts\\lpsolve\\setup.txt");
+            print_lp(lp);
+            set_outputfile(lp, "C:\\Users\\mwagner\\Documents\\NREL\\OM Optimization\\cspopt\\software\\sdk\\scripts\\lpsolve\\solution.txt");
+            print_solution(lp, 1);
+            throw;*/
+
             outputs.objective = get_objective(lp);
             outputs.objective_relaxed = get_bb_relaxed_objective(lp);
 
@@ -1248,7 +1271,7 @@ bool csp_dispatch_opt::optimize()
                 {
                     bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
                     outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
-                    outputs.q_pb_startup.at(t) = su ? dq_csu : 0.;
+                    outputs.q_pb_startup.at(t) = su ? Qc : 0.;
                 }
                 else if(strcmp(root, "y") == 0)     //Cycle operation
                 {

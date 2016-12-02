@@ -57,7 +57,7 @@ void var_map::reset()
 	amb.wf_data                      .set("ambient.0.wf_data"                , SP_DATTYPE::SP_WEATHERDATA,                   "",       "none",    false,         "",    "",    false,                                "wf_data", "Data entries in the weather file");
 	amb.atm_atten_est                .setup("ambient.0.atm_atten_est"          , SP_DATTYPE::SP_DOUBLE    ,                                "%",    false,         "",    "",    false,                    "Average attenuation", "Average solar field attenuation due to atmospheric scattering");
 	amb.sim_time_step                .setup("ambient.0.sim_time_step"          , SP_DATTYPE::SP_DOUBLE    ,                              "sec",    false,         "",    "",    false,      "Simulation weather data time step", "Simulation weather data time step");
-
+#if _CUSTOM_REC
 	crec.A_proj                      .set("custom_rec.0.A_proj"              , SP_DATTYPE::SP_DOUBLE    ,                  "0",         "m2",    false,         "",    "",    false,                "Projected absorber area", "Projected absorber area");
 	crec.A_tot                       .set("custom_rec.0.A_tot"               , SP_DATTYPE::SP_DOUBLE    ,                  "0",         "m2",    false,         "",    "",    false,            "Total absorber surface area", "Total absorber surface area");
 	crec.D_header                    .set("custom_rec.0.D_header"            , SP_DATTYPE::SP_DOUBLE    ,                "0.1",          "m",     true,         "",    "",    false,                        "Header diameter", "Header diameter");
@@ -130,7 +130,7 @@ void var_map::reset()
 	crec.w_rec                       .set("custom_rec.0.w_rec"               , SP_DATTYPE::SP_DOUBLE    ,                  "8",          "m",    false,         "",    "",    false,                   "Receiver total width", "Receiver total width");
 	crec.x_bins                      .set("custom_rec.0.x_bins"              , SP_DATTYPE::SP_INT       ,                 "15",       "none",    false,         "",    "",    false,             "Number of surface bins (X)", "Number of surface bins (X)");
 	crec.y_bins                      .set("custom_rec.0.y_bins"              , SP_DATTYPE::SP_INT       ,                 "15",       "none",    false,         "",    "",    false,             "Number of surface bins (Y)", "Number of surface bins (Y)");
-
+#endif
 	fin.class_name                   .set("financial.0.class_name"           , SP_DATTYPE::SP_STRING    ,          "Financial",       "none",    false,         "",    "",    false,                             "Class name", "Class name");
 	fin.contingency_rate             .set("financial.0.contingency_rate"     , SP_DATTYPE::SP_DOUBLE    ,                  "7",          "%",     true,         "",    "",    false,                            "Contingency", "Fraction of the direct capital costs added to account for contingency");
 	fin.fixed_cost                   .set("financial.0.fixed_cost"           , SP_DATTYPE::SP_DOUBLE    ,                  "0",          "$",    false,         "",    "",    false,                             "Fixed cost", "Cost that does not scale with any plant parameter");
@@ -326,7 +326,9 @@ void var_map::reset()
 	sf.sun_el_des                    .setup("solarfield.0.sun_el_des"          , SP_DATTYPE::SP_DOUBLE    ,                              "deg",    false,         "",    "",    false, "Calculated design-point solar elevation", "Calculated design-point solar elevation");
 
 	amb.addptrs( _varptrs );
+#if _CUSTOM_REC
 	crec.addptrs( _varptrs );
+#endif
 	fin.addptrs( _varptrs );
 	flux.addptrs( _varptrs );
 	land.addptrs( _varptrs );
@@ -334,7 +336,6 @@ void var_map::reset()
 	par.addptrs( _varptrs );
 	plt.addptrs( _varptrs );
 	sf.addptrs( _varptrs );
-
     add_heliostat(0);
     add_receiver(0);
     
@@ -495,6 +496,7 @@ void var_ambient::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["ambient.0.sim_time_step"] = &sim_time_step;
 }
 
+#if _CUSTOM_REC
 void var_custom_rec::addptrs(unordered_map<std::string, spbase*> &pmap)
 {
 	pmap["custom_rec.0.A_proj"] = &A_proj;
@@ -570,6 +572,7 @@ void var_custom_rec::addptrs(unordered_map<std::string, spbase*> &pmap)
 	pmap["custom_rec.0.x_bins"] = &x_bins;
 	pmap["custom_rec.0.y_bins"] = &y_bins;
 }
+#endif
 
 void var_financial::addptrs(unordered_map<std::string, spbase*> &pmap)
 {

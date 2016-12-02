@@ -40,6 +40,7 @@ public:
         double solution_timeout;    //[s] Max solve time for each solution
         int presolve_type;
         int bb_type;  
+        int disp_reporting;
         int scaling_type;
 
         bool is_write_ampl_dat;     //write ampl data files?
@@ -50,6 +51,7 @@ public:
         s_solver_params()
         {
             bb_type = -1;
+            disp_reporting = -1;
             presolve_type = -1;
             scaling_type = -1;
         };
@@ -240,7 +242,7 @@ public:
     //bool dispatch_forecast();
 
     //Predict performance out nstep values. 
-    bool predict_performance(int step_start, int nhours, int steps_per_hour);    
+    bool predict_performance(int step_start, int ntimeints, int divs_per_int);    
 
     //declare dispatch function in csp_dispatch.cpp
     bool optimize();

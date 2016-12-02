@@ -226,6 +226,7 @@ public:
         double m_mip_gap;
         int m_presolve_type;
         int m_bb_type;
+        int m_disp_reporting;
         int m_scaling_type;
         int m_max_iterations;
         double m_rsu_cost;
@@ -259,6 +260,7 @@ public:
             m_mip_gap = 0.055;
             m_max_iterations = 10000;
             m_bb_type = -1;
+            m_disp_reporting = -1;
             m_presolve_type = -1;
             m_scaling_type = -1;
 
