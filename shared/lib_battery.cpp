@@ -1470,16 +1470,30 @@ void dispatch_manual_t::dispatch(size_t year, size_t hour_of_year, size_t step, 
 	switch_controller();
 	I = current_controller(battery_voltage);
 
-	// Run Battery Model to update charge based on charge/discharge
-	_Battery->run(I);
+	_Battery_initial->copy(*_Battery);
+	bool iterate = _charging;
 
-	// Update how much power was actually used to/from battery
-	I = _Battery->capacity_model()->I();
-	double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
-	_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * watt_to_kilowatt;// [kW]
+	do {
+		// Run Battery Model to update charge based on charge/discharge
+		_Battery->run(I);
 
-	compute_generation(P_pv_dc);
-	compute_grid_net(P_pv_dc, P_load_dc);
+		// Update how much power was actually used to/from battery
+		I = _Battery->capacity_model()->I();
+		double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
+		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * watt_to_kilowatt;// [kW]
+
+		compute_generation(P_pv_dc);
+		compute_grid_net(P_pv_dc, P_load_dc);
+
+		if (_P_grid_to_batt > 0 && !_can_grid_charge)
+		{
+			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
+			_Battery->copy(*_Battery_initial);
+		}
+		else
+			iterate = false;
+
+	} while (iterate);
 
 	// update for next step
 	_prev_charging = _charging;
@@ -1511,7 +1525,7 @@ void dispatch_manual_t::compute_energy_load_priority(double P_pv_dc, double P_lo
 		// try to discharge full amount.  Will only use what battery can provide
 		if (_can_discharge)
 		{
-			_P_tofrom_batt = P_load_dc - P_pv_dc;
+			_P_tofrom_batt = (P_load_dc - P_pv_dc) * 1.1;
 			diff = fabs(_Battery->capacity_model()->SOC() - _SOC_min);
 			if ((diff < tolerance) || _grid_recharge)
 			{
