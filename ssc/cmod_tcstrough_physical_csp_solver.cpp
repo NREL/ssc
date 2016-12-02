@@ -771,6 +771,7 @@ public:
 			tou.mc_dispatch_params.m_mip_gap = as_double("disp_mip_gap");
 			tou.mc_dispatch_params.m_presolve_type = as_integer("disp_spec_presolve");
 			tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
+			tou.mc_dispatch_params.m_disp_reporting = as_integer("disp_reporting");
 			tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
 		}
 		tou.mc_dispatch_params.m_is_block_dispatch = !tou.mc_dispatch_params.m_dispatch_optimize;      //mw

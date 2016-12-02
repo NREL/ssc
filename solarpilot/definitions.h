@@ -70,7 +70,7 @@ struct var_ambient
     void addptrs(unordered_map<std::string, spbase*> &pmap);
 };
 
-
+#if _CUSTOM_REC
 struct var_custom_rec
 {
 	spvar< double > A_proj; 		//[m2] Projected absorber area
@@ -154,7 +154,7 @@ struct var_custom_rec
 
     void addptrs(unordered_map<std::string, spbase*> &pmap);
 };
-
+#endif
 
 struct var_financial
 {
@@ -548,8 +548,9 @@ struct var_map
     var_parametric par;
     var_plant plt;
     var_solarfield sf;
+#if _CUSTOM_REC
     var_custom_rec crec;    
-    
+#endif
     std::vector< var_heliostat > hels;
     std::vector< var_receiver > recs;
    

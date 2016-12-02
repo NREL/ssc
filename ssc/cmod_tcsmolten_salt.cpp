@@ -259,6 +259,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_timeout",         "Max. dispatch optimization solve duration",                         "s",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",         "Dispatch optimization solution tolerance",                          "-",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",         "Dispatch optimization B&B heuristic",                               "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_reporting",       "Dispatch optimization reporting level",                             "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",   "Dispatch optimization presolve heuristic",                          "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",    "Dispatch optimization scaling heuristic",                           "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",    "Write AMPL data files for dispatch run",                            "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
@@ -1326,6 +1327,7 @@ public:
 			tou.mc_dispatch_params.m_mip_gap = as_double("disp_mip_gap");
 			tou.mc_dispatch_params.m_presolve_type = as_integer("disp_spec_presolve");
 			tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
+			tou.mc_dispatch_params.m_disp_reporting = as_integer("disp_reporting");
 			tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
             tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
             tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");

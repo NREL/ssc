@@ -393,7 +393,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		dispatch.params.siminfo = &mc_kernel.mc_sim_info;
 		dispatch.params.messages = &mc_csp_messages;
 
-		//dispatch.params.dt = mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //hr
 		dispatch.params.dt = 1./(double)mc_tou.mc_dispatch_params.m_disp_steps_per_hour;  //hr
 		dispatch.params.dt_pb_startup_cold = mc_power_cycle.get_cold_startup_time();
 		dispatch.params.dt_pb_startup_hot = mc_power_cycle.get_hot_startup_time();
@@ -463,6 +462,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
     dispatch.solver_params.mip_gap = mc_tou.mc_dispatch_params.m_mip_gap;
     dispatch.solver_params.solution_timeout = mc_tou.mc_dispatch_params.m_solver_timeout;
     dispatch.solver_params.bb_type = mc_tou.mc_dispatch_params.m_bb_type;
+    dispatch.solver_params.disp_reporting = mc_tou.mc_dispatch_params.m_disp_reporting;
     dispatch.solver_params.scaling_type = mc_tou.mc_dispatch_params.m_scaling_type;
     dispatch.solver_params.presolve_type = mc_tou.mc_dispatch_params.m_presolve_type;
     dispatch.solver_params.is_write_ampl_dat = mc_tou.mc_dispatch_params.m_is_write_ampl_dat;
@@ -674,7 +674,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
             double hour_now = mc_kernel.mc_sim_info.ms_ts.m_time/3600.;
 
             //reoptimize when the time is equal to multiples of the first time step
-			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_tou.mc_dispatch_params.m_optimize_frequency) == mc_kernel.get_baseline_step()
+			if( (int)mc_kernel.mc_sim_info.ms_ts.m_time % (int)(3600.*mc_tou.mc_dispatch_params.m_optimize_frequency) == baseline_step
 				&& disp_time_last != mc_kernel.mc_sim_info.ms_ts.m_time
                 )
             {
@@ -731,7 +731,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 //predict performance for the time horizon
                 if( 
                     dispatch.predict_performance(
-                            mc_kernel.mc_sim_info.ms_ts.m_time/ mc_kernel.mc_sim_info.ms_ts.m_step- 1, 
+                            mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1, 
                             opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 
                             (int)(3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour
                             ) 
@@ -742,6 +742,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                     opt_complete = dispatch.m_last_opt_successful = 
                         dispatch.optimize();
 
+                    if(! dispatch.solver_params.log_message.empty() )
+                        mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
+                    
                     dispatch.m_current_read_step = 0;   //reset
                 }
 
@@ -773,8 +776,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 }
 
                 //read in other values
-				//dispatch.m_current_read_step = (int)floor(mc_kernel.mc_sim_info.ms_ts.m_time / mc_kernel.get_baseline_step() - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;
-				dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600.) % mc_tou.mc_dispatch_params.m_optimize_frequency;  //always runs dispatch at hourly
+                dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;  //always runs dispatch at hourly
 
                 is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
@@ -7138,7 +7140,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, dispatch.outputs.objective);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSF_EXPECT, disp_qsf_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFPROD_EXPECT, disp_qsfprod_expect);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFSU_EXPECT, disp_qsfprod_expect);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFSU_EXPECT, disp_qsfsu_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_TES_EXPECT, disp_tes_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PCEFF_EXPECT, disp_etapb_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SFEFF_EXPECT, disp_etasf_expect);
