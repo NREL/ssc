@@ -10,10 +10,96 @@
 
 extern var_info vtab_battery[];
 
+struct batt_variables
+{
+	batt_variables()
+	{
+		pcharge = pdischarge = pdischarge = pgridcharge = pdischarge_percent = pgridcharge_percent = psched = psched_weekend = 0;
+	};
+
+	bool pv_lifetime_simulation;
+	int analysis_period;
+	int batt_chem;
+	int batt_dispatch;
+	int batt_meter_position;
+	bool batt_pv_choice;
+	int batt_target_choice;
+
+	size_t ncharge;
+	size_t ndischarge;
+	size_t ndischarge_percent;
+	size_t ngridcharge_percent;
+	size_t ngridcharge;
+	size_t nsched;
+	size_t msched;
+
+	ssc_number_t *pcharge;
+	ssc_number_t *pdischarge;
+	ssc_number_t *pdischarge_percent;
+	ssc_number_t *pgridcharge_percent;
+	ssc_number_t *pgridcharge;
+	ssc_number_t *psched;
+	ssc_number_t *psched_weekend;
+
+	util::matrix_t<float> schedule;
+	util::matrix_t<double>  batt_lifetime_matrix;
+
+	std::vector<double> target_power_monthly;
+	std::vector<double> target_power;
+
+	int batt_computed_series;
+	int batt_computed_strings;
+	double batt_kw;
+	double batt_kwh;
+
+	double batt_Vnom_default;
+	double batt_Vfull;
+	double batt_Vexp;
+	double batt_Vnom;
+	double batt_Qfull;
+	double batt_Qexp;
+	double batt_Qnom;
+	double batt_C_rate;
+	double batt_resistance;
+
+	double batt_replacement_capacity;
+	util::matrix_t<double> cap_vs_temp;
+	double batt_mass;
+	double batt_length;
+	double batt_width;
+	double batt_height;
+	double batt_Cp;
+	double batt_h_to_ambient;
+	double T_room;
+
+	double LeadAcid_q20_computed;
+	double LeadAcid_tn;
+	double LeadAcid_qn_computed;
+	double LeadAcid_q10_computed;
+
+	double batt_maximum_SOC;
+	double batt_minimum_SOC;
+	double batt_current_charge_max;
+	double batt_current_discharge_max;
+	double batt_minimum_modetime;
+
+	int batt_ac_or_dc;
+	double batt_ac_dc_efficiency;
+	double batt_dc_ac_efficiency;
+	double batt_dc_dc_efficiency;
+
+	int inverter_model;
+	double inv_snl_eff_cec;
+	double inv_ds_eff;
+	double inv_pd_eff;
+	double inverter_efficiency;
+};
+
+
 struct battstor
 {
 
-	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr );
+	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
 	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0, int mode=0);
 	~battstor();
 
@@ -47,6 +133,9 @@ struct battstor
 
 	bool en;
 	int chem;
+
+	batt_variables * batt_vars;
+	bool make_vars;
 	
 	int batt_meter_position;
 	int batt_dispatch;
