@@ -425,6 +425,9 @@ public:
 
 	double timestep_hour();
 
+	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX };
+
+
 private:
 	capacity_t * _capacity;
 	lifetime_t * _lifetime;
