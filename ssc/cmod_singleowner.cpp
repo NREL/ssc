@@ -2037,8 +2037,14 @@ public:
 
 			for (i = 1; ((i <= nyears) && (i <= term_tenor)); i++)
 			{
-				if (dscr != 0) cf.at(CF_debt_payment_total, i) = cf.at(CF_cash_for_ds, i) / dscr;
 				cf.at(CF_debt_payment_interest, i) = cf.at(CF_debt_balance, i - 1) * term_int_rate;
+				if (i > loan_moratorium)
+				{
+					if (dscr != 0)
+						cf.at(CF_debt_payment_total, i) = cf.at(CF_cash_for_ds, i) / dscr;
+				}
+				else
+					cf.at(CF_debt_payment_total, i) = cf.at(CF_debt_payment_interest, i);
 				cf.at(CF_debt_payment_principal, i) = cf.at(CF_debt_payment_total, i) - cf.at(CF_debt_payment_interest, i);
 				cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 			}
