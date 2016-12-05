@@ -842,8 +842,9 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("x", t);
 
-                row[i  ] = Qc;
-                col[i++] = O.column("ycsu", t);
+                //mjw 2016.12.2 --> This constraint seems to be problematic in identifying feasible solutions for subhourly runs. Needs attention.
+                /*row[i  ] = Qc;
+                col[i++] = O.column("ycsu", t);*/
                 
                 row[i  ] = -Qu;
                 col[i++] = O.column("y", t);
