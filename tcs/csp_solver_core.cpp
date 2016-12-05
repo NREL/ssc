@@ -776,7 +776,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 }
 
                 //read in other values
-                dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - 0.99999) % mc_tou.mc_dispatch_params.m_optimize_frequency;  //always runs dispatch at hourly
+
+                //calculate the current read step, account for number of dispatch steps per hour and the simulation time step
+                dispatch.m_current_read_step = (int)(mc_kernel.mc_sim_info.ms_ts.m_time * mc_tou.mc_dispatch_params.m_disp_steps_per_hour / 3600. - .001) 
+                    % (mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour ); 
 
                 is_rec_su_allowed = dispatch.outputs.rec_operation.at( dispatch.m_current_read_step );
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
@@ -809,7 +812,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)
                 //    dispatch.m_current_read_step++;
 
-                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency)
+                if(dispatch.m_current_read_step > mc_tou.mc_dispatch_params.m_optimize_frequency * mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
                     throw C_csp_exception("Counter synchronization error in dispatch optimization routine.", "dispatch");
             }
             
