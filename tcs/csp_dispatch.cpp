@@ -1069,6 +1069,10 @@ bool csp_dispatch_opt::optimize()
             put_logfunc(lp, opt_logfunction, (void*)(&solver_params));
             set_verbose(lp, solver_params.disp_reporting); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
         }
+        else
+        {
+            set_verbose(lp, 0);
+        }
 
         /* 
         The presolve options have been tested and show that the optimal combination of options is as set below.

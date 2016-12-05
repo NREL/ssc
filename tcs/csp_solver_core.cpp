@@ -741,8 +741,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                     //call the optimize method
                     opt_complete = dispatch.m_last_opt_successful = 
                         dispatch.optimize();
-
-                    if(! dispatch.solver_params.log_message.empty() )
+                    
+                    if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
                         mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
                     
                     dispatch.m_current_read_step = 0;   //reset
