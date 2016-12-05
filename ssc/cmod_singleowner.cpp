@@ -1993,11 +1993,28 @@ public:
 			cf.at(CF_ebitda,i) = cf.at(CF_total_revenue,i) - cf.at(CF_operating_expenses,i);
 		
 
-			// term financing
-			// TODO - review to possibly include receivables.
-			if (i <= term_tenor) 
+			
+		} // end of debt precalculation.
+
+		// receivables precalculation need future energy value so outside previous loop
+		if (nyears>0)
+		{
+			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * cf.at(CF_energy_value, 1);
+			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
+			for (i = 1; i<nyears; i++)
 			{
-				cf.at(CF_cash_for_ds, i) = cf.at(CF_ebitda, i) - cf.at(CF_funding_equip1, i) - cf.at(CF_funding_equip2, i) - cf.at(CF_funding_equip3, i);
+				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * cf.at(CF_energy_value, i + 1);
+				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
+			}
+			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
+		}
+		for (i = 0; i <= nyears; i++)
+		{
+			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
+			// include receivables.
+			if (i <= term_tenor)
+			{
+				cf.at(CF_cash_for_ds, i) = cf.at(CF_ebitda, i) - cf.at(CF_funding_equip1, i) - cf.at(CF_funding_equip2, i) - cf.at(CF_funding_equip3, i) - cf.at(CF_funding_receivables, i);
 				cash_for_debt_service += cf.at(CF_cash_for_ds, i);
 				if (i == 1)
 					cf.at(CF_pv_interest_factor, i) = 1.0 / (1.0 + term_int_rate);
@@ -2011,26 +2028,17 @@ public:
 					size_of_debt += cf.at(CF_debt_size, i);
 				}
 			}
-			
-		} // end of debt precalculation.
-
-		// receivables precalculation
-		if (nyears>0)
-		{
-			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * cf.at(CF_energy_value, 1);
-			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
-			for (i = 1; i<nyears; i++)
-			{
-				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * cf.at(CF_energy_value, i + 1);
-				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
-			}
-			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
 		}
+
+		/*
+		// DSCR calculations
 		for (i = 0; i <= nyears; i++)
-			cf.at(CF_project_receivablesra, i) = -cf.at(CF_funding_receivables, i) - cf.at(CF_disbursement_receivables, i);
+		{
+		if (cf.at(CF_debt_payment_total, i) == 0.0) cf.at(CF_pretax_dscr, i) = 0; //cf.at(CF_pretax_dscr, i) = std::numeric_limits<double>::quiet_NaN();
+		else cf.at(CF_pretax_dscr, i) = cf.at(CF_cash_for_ds, i) / cf.at(CF_debt_payment_total, i);
+		}
 
-
-
+		*/
 		if (constant_dscr_mode)
 		{
 			cf.at(CF_debt_balance, 0) = size_of_debt;
