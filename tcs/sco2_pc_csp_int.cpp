@@ -964,9 +964,142 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	return 0;
 }
 
-void C_sco2_recomp_csp::sweep_turbomachinery_deltaP()
+void C_sco2_recomp_csp::sweep_turbomachinery_deltaP(double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+										double T_t_in /*K*/, double phi_mc /*-*/)
 {
+	// Set up parametric sweep of operation inputs
+	double f_recomp_start = 0.0;
+	double f_recomp_end = 1.0;
+	int n_f_recomp = 101;
+	double f_recomp_step = (f_recomp_end - f_recomp_start) / (n_f_recomp - 1);
 	
+	double f_recomp = 1.0;
+	
+
+	ofstream out_file;
+	out_file.open("C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/balance.csv");
+
+	out_file << "deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_error_code,rc_phi,rc_tip_ratio\n";
+	out_file << "kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
+
+	for( int n_run = 0; n_run < n_f_recomp; n_run++ )
+	{
+		f_recomp = f_recomp_start + f_recomp_step*n_run;
+
+		// Initialize a few variables
+		mc_rc_cycle.set_od_temp(C_RecompCycle::MC_IN, T_mc_in);
+		mc_rc_cycle.set_od_pres(C_RecompCycle::MC_IN, P_mc_in);
+		mc_rc_cycle.set_od_temp(C_RecompCycle::TURB_IN, T_t_in);
+
+		C_RecompCycle::C_mono_eq_turbo_m_dot c_turbo_bal(&mc_rc_cycle, T_mc_in, P_mc_in,
+										f_recomp, T_t_in, phi_mc, true);
+
+		C_monotonic_eq_solver c_turbo_m_dot_solver(c_turbo_bal);
+
+		// Set lower bound on mass flow rate
+		double m_dot_lower = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t*1.E-3;	//[kg/s]
+		double m_dot_upper = std::numeric_limits<double>::quiet_NaN();
+
+		// Set solver settings
+		c_turbo_m_dot_solver.settings(1.E-3, 100, m_dot_lower, m_dot_upper, false);
+
+		// Generate two guess values
+		double m_dot_guess_upper = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
+		double m_dot_guess_lower = 0.7*m_dot_guess_upper;						//[kg/s]
+
+		// Solve for the turbine mass flow rate
+		double m_dot_t_solved, tol_solved;
+		m_dot_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		int iter_solved = -1;
+
+		int m_dot_t_code = c_turbo_m_dot_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0,
+											m_dot_t_solved, tol_solved, iter_solved);
+
+		double P_mc_out = std::numeric_limits<double>::quiet_NaN();
+		double deltaP = std::numeric_limits<double>::quiet_NaN();
+		double N_mc = std::numeric_limits<double>::quiet_NaN();
+		double mc_w_tip_ratio = std::numeric_limits<double>::quiet_NaN();
+		double m_dot_mc = std::numeric_limits<double>::quiet_NaN();
+		double m_dot_rc = std::numeric_limits<double>::quiet_NaN();
+		int rc_error_code = -1;
+		double T_rc_out = std::numeric_limits<double>::quiet_NaN();
+		double rc_w_tip_ratio = std::numeric_limits<double>::quiet_NaN();
+		double rc_phi = std::numeric_limits<double>::quiet_NaN();;
+
+		if( m_dot_t_code != C_monotonic_eq_solver::CONVERGED )
+		{
+			P_mc_out = 0.0;
+			deltaP = 0.0;
+			N_mc = 0.0;
+			mc_w_tip_ratio = 0.0;
+			m_dot_mc = 0.0;
+			m_dot_rc = 0.0;
+			rc_error_code = 0;
+			T_rc_out = 0.0;
+			rc_w_tip_ratio = 0.0;
+			rc_phi = 0.0;
+			m_dot_t_solved = 0.0;
+		}
+		else
+		{
+			m_dot_mc = (1.0 - f_recomp)*m_dot_t_solved;
+			m_dot_rc = m_dot_t_solved - m_dot_mc;
+			P_mc_out = mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT];
+			deltaP = P_mc_out - P_mc_in;
+			N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
+
+			// Get compressor(s) tip ratio
+			mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
+		
+			// Recompressor tip ratio and surge
+			// But... need to solve recompressor first...
+			if(true)
+			{
+				if( ms_des_solved.ms_rc_cycle_solved.m_is_rc && m_dot_rc > 0.0 )
+				{
+					rc_error_code = 0;
+					mc_rc_cycle.off_design_recompressor(mc_rc_cycle.get_design_solved()->m_temp[C_RecompCycle::HTR_LP_OUT],
+														P_mc_in,
+														m_dot_rc,
+														P_mc_out,
+														rc_error_code,
+														T_rc_out);					
+				}
+				
+				if( rc_error_code == 0 )
+				{
+					rc_w_tip_ratio = mc_rc_cycle.get_rc_od_solved()->m_w_tip_ratio;
+
+					double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
+					double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
+					rc_phi = min(rc_phi_s1, rc_phi_s2);
+				}
+				else
+				{
+					T_rc_out = 0.0;
+					rc_w_tip_ratio = 0.0;
+					rc_phi = 0.0;
+				}
+			}
+
+			// *************************************************
+			// *************************************************			
+		}
+		
+		out_file << deltaP << "," << 
+					P_mc_out << "," <<
+					m_dot_mc << "," <<
+					m_dot_t_solved <<  "," <<
+					N_mc << "," <<
+					mc_w_tip_ratio << "," <<
+					f_recomp << "," <<
+					m_dot_rc << "," <<
+					rc_error_code << "," <<
+					rc_phi << "," <<
+					rc_w_tip_ratio << "\n";
+	}
+
+	out_file.close();
 }
 
 int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs & outputs)
