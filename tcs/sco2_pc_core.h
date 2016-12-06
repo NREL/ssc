@@ -1028,6 +1028,21 @@ public:
 
 	void opt_od_eta_for_hx(S_od_parameters & od_par_in, S_PHX_od_parameters phx_od_par_in, int & error_code);
 
+	double get_od_temp(int n_state_point);
+
+	double get_od_pres(int n_state_point);
+	
+	void set_od_temp(int n_state_point, double temp_K);
+
+	void set_od_pres(int n_state_point, double pres_kPa);
+
+	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out);
+
+	const C_recompressor::S_od_solved * get_rc_od_solved()
+	{
+		return m_rc.get_od_solved();
+	}
+
 	const S_design_solved * get_design_solved()
 	{
 		return &ms_des_solved;
@@ -1064,9 +1079,13 @@ public:
 		double m_T_t_in;		//[K] Turbine inlet temperature
 		double m_phi_mc;		//[-] Compressor flow coefficient
 
+		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
+										// that is typically updated after entire cycle off-design solution 
+
 	public:
 		C_mono_eq_turbo_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
-									double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/)
+									double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
+									bool is_update_ms_od_solved = false)
 		{
 			mpc_rc_cycle = pc_rc_cycle;
 			m_T_mc_in = T_mc_in;		//[K]
@@ -1074,6 +1093,8 @@ public:
 			m_f_recomp = f_recomp;		//[-]
 			m_T_t_in = T_t_in;			//[K]
 			m_phi_mc = phi_mc;			//[-]
+
+			m_is_update_ms_od_solved = is_update_ms_od_solved;
 		}
 	
 		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);

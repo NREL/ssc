@@ -995,7 +995,7 @@ void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_
 	{
 		int n_call_history = c_rd_od_solver.get_solver_call_history()->size();
 
-		error_code = (*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		error_code = -(*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 
 		if( error_code == 0 )
 		{
@@ -4253,6 +4253,31 @@ void C_RecompCycle::off_design_phi(S_od_phi_par & od_phi_par_in, int & error_cod
 	error_code = od_error_code;
 }
 
+double C_RecompCycle::get_od_temp(int n_state_point)
+{
+	return m_temp_od[n_state_point];
+}
+
+void C_RecompCycle::set_od_temp(int n_state_point, double temp_K)
+{
+	m_temp_od[n_state_point] = temp_K;
+}
+
+double C_RecompCycle::get_od_pres(int n_state_point)
+{
+	return m_pres_od[n_state_point];
+}
+
+void C_RecompCycle::set_od_pres(int n_state_point, double pres_kPa)
+{
+	m_pres_od[n_state_point] = pres_kPa;
+}
+
+void C_RecompCycle::off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out)
+{
+	m_rc.off_design_recompressor(T_in, P_in, m_dot, P_out, error_code, T_out);
+}
+
 int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/, double *diff_m_dot_t /*-*/)
 {
 	// Calculate main compressor mass flow rate
@@ -4333,6 +4358,25 @@ int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/,
 
 	// Calculate difference between calculated and guessed mass flow rate
 	*diff_m_dot_t = (m_dot_t_calc - m_dot_t_in) / m_dot_t_in;
+
+	if( m_is_update_ms_od_solved )
+	{
+		// Get 'od_solved' structures from component classes
+		mpc_rc_cycle->ms_od_solved.ms_mc_od_solved = *mpc_rc_cycle->m_mc.get_od_solved();
+		mpc_rc_cycle->ms_od_solved.ms_t_od_solved = *mpc_rc_cycle->m_t.get_od_solved();
+
+		// Set ms_od_solved
+		mpc_rc_cycle->ms_od_solved.m_m_dot_mc = m_dot_mc;
+		mpc_rc_cycle->ms_od_solved.m_m_dot_rc = m_dot_t_calc - m_dot_mc;
+		mpc_rc_cycle->ms_od_solved.m_m_dot_t = m_dot_t_calc;
+		mpc_rc_cycle->ms_od_solved.m_recomp_frac = m_f_recomp;
+
+		mpc_rc_cycle->ms_od_solved.m_temp = mpc_rc_cycle->m_temp_od;
+		mpc_rc_cycle->ms_od_solved.m_pres = mpc_rc_cycle->m_pres_od;
+		mpc_rc_cycle->ms_od_solved.m_enth = mpc_rc_cycle->m_enth_od;
+		mpc_rc_cycle->ms_od_solved.m_entr = mpc_rc_cycle->m_entr_od;
+		mpc_rc_cycle->ms_od_solved.m_dens = mpc_rc_cycle->m_dens_od;
+	}
 
 	return 0;
 }
