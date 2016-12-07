@@ -136,10 +136,10 @@ public:
 			batt_specific_energy_per_mass = 30;  // Wh/kg
 			batt_specific_energy_per_volume = 30; // Wh/L
 		}
-
-		batt_vars->batt_ac_dc_efficiency = 92.;
-		batt_vars->batt_dc_ac_efficiency = 92.;
-		batt_vars->batt_dc_dc_efficiency = 92.;
+		// change back to 92% when bug #55 fixed
+		batt_vars->batt_ac_dc_efficiency = 100; 
+		batt_vars->batt_dc_ac_efficiency = 100;
+		batt_vars->batt_dc_dc_efficiency = 100;
 
 		double batt_bank_voltage = batt_kw * 1000. / current_max;
 		batt_vars->batt_computed_series = std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
@@ -174,7 +174,7 @@ public:
 		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
 		batt_vars->batt_minimum_modetime = 10;
 
-		batt_vars->batt_ac_or_dc = charge_controller::AC_CONNECTED;
+		batt_vars->batt_topology = charge_controller::AC_CONNECTED;
 		batt_vars->inverter_model = as_integer("inverter_model");
 		if (batt_vars->inverter_model > 2)
 			batt_vars->inverter_efficiency = as_double("inverter_efficiency");

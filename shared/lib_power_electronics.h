@@ -171,6 +171,7 @@ public:
 	~ac_connected_battery_controller();
 
 	double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
+	double process_dispatch();
 	double gen_ac();
 	double grid_ac();
 	double update_gen_ac(double P_gen_ac)

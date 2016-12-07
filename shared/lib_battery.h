@@ -468,6 +468,7 @@ public:
 
 	enum MODES{LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
 	enum METERING{ BEHIND, FRONT };
+	enum PV_PRIORITY{ MEET_LOAD, CHARGE_BATTERY};
 
 	// Outputs
 	double cycle_efficiency();
@@ -483,6 +484,9 @@ public:
 	double power_grid_to_batt();
 	double power_pv_to_grid();
 	double power_battery_to_grid();
+
+	// control settings
+	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
 
 	message get_messages();
 
