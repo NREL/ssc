@@ -31,6 +31,7 @@ OBJECTS = \
 	cmod_windfile.o \
 	cmod_pvwattsv1_1ts.o \
 	cmod_pvwattsv1_poa.o \
+	cmod_battwatts.o \
 	cmod_wfcsv.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
