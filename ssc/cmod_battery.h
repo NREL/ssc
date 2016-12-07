@@ -83,7 +83,7 @@ struct batt_variables
 	double batt_current_discharge_max;
 	double batt_minimum_modetime;
 
-	int batt_ac_or_dc;
+	int batt_topology;
 	double batt_ac_dc_efficiency;
 	double batt_dc_ac_efficiency;
 	double batt_dc_dc_efficiency;
@@ -147,7 +147,7 @@ struct battstor
 	std::vector<double> target_power;
 	std::vector<double> target_power_monthly;
 	
-	bool ac_or_dc;
+	int topology;
 	double dc_dc, ac_dc, dc_ac;
 
 	double e_charge;

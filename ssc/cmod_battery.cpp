@@ -218,7 +218,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		batt_vars->batt_current_discharge_max = cm.as_double("batt_current_discharge_max");
 		batt_vars->batt_minimum_modetime = cm.as_double("batt_minimum_modetime");
 		
-		batt_vars->batt_ac_or_dc = cm.as_integer("batt_ac_or_dc");
+		batt_vars->batt_topology = cm.as_integer("batt_ac_or_dc");
 		batt_vars->batt_ac_dc_efficiency = cm.as_double("batt_ac_dc_efficiency");
 		batt_vars->batt_dc_ac_efficiency = cm.as_double("batt_dc_ac_efficiency");
 		batt_vars->batt_dc_dc_efficiency = cm.as_double("batt_dc_dc_efficiency");
@@ -505,7 +505,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			batt_vars->batt_maximum_SOC);
 	}
 	// for now assume Vanadium Redox responds quickly, like Lithium-ion
-	else if ( chem == 1 || chem == 2 )
+	else if ( chem == battery_t::LITHIUM_ION || chem == battery_t::VANADIUM_REDOX )
 	{
 		capacity_model = new capacity_lithium_ion_t(
 			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_maximum_SOC);
@@ -549,14 +549,14 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 
 	dc_dc = ac_dc = dc_ac = 100.;
-	ac_or_dc = batt_vars->batt_ac_or_dc;
+	topology = batt_vars->batt_topology;
 	ac_dc = batt_vars->batt_ac_dc_efficiency;
 	dc_ac = batt_vars->batt_dc_ac_efficiency;
 	dc_dc = batt_vars->batt_dc_dc_efficiency;
 
-	if (ac_or_dc == charge_controller::AC_CONNECTED)
+	if (topology == charge_controller::AC_CONNECTED)
 		charge_control = new ac_connected_battery_controller(dispatch_model, battery_metrics, ac_dc, dc_ac);
-	else if (ac_or_dc == charge_controller::DC_CONNECTED)
+	else if (topology == charge_controller::DC_CONNECTED)
 	{
 		int inverter_model = batt_vars->inverter_model;
 		double inverter_efficiency = 0.0;
