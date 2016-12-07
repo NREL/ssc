@@ -992,7 +992,7 @@ double C_csp_lf_dsg_collector_receiver::get_startup_time()
 
 	return std::numeric_limits<double>::quiet_NaN();
 }
-double C_csp_lf_dsg_collector_receiver::get_startup_energy(double m_dt /*sec*/)
+double C_csp_lf_dsg_collector_receiver::get_startup_energy()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 

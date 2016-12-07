@@ -433,7 +433,7 @@ public:
 	virtual int get_operating_state() = 0;
 
     virtual double get_startup_time() = 0;
-    virtual double get_startup_energy(double step /*sec*/) = 0; //MWh
+    virtual double get_startup_energy() = 0; //MWh
     virtual double get_pumping_parasitic_coef() = 0;  //MWe/MWt
     virtual double get_min_power_delivery() = 0;    //MWt
 

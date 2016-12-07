@@ -312,7 +312,7 @@ double C_csp_gen_collector_receiver::get_startup_time()
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_gen_collector_receiver::get_startup_energy(double step /*sec*/)
+double C_csp_gen_collector_receiver::get_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::get_startup_energy() is not complete"));
 
