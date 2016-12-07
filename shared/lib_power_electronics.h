@@ -73,6 +73,7 @@ public:
 
 	// return power loss [kW]
 	double convert_dc_to_dc(double P_dc_in, double *P_dc_out );
+	double dc_dc_efficiency(){ return _dc_dc_efficiency; };
 
 protected:
 	double _dc_dc_efficiency;
@@ -104,6 +105,7 @@ public:
 
 	// return power loss [kW]
 	virtual double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load) = 0;
+	virtual void compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac);
 	virtual double gen_ac() = 0;
 	virtual double update_gen_ac(double P_gen_ac) = 0;
 	virtual double grid_ac(double dc_ac_efficiency);
@@ -140,6 +142,7 @@ protected:
 	double _P_pv_to_grid;
 	double _P_battery_to_grid;
 	double _P_battery;
+	double _P_loss;
 
 	// ac or dc pv input
 	double _P_pv;
@@ -153,6 +156,7 @@ public:
 	~dc_connected_battery_controller();
 
 	double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
+	double process_dispatch();
 	double grid_ac();
 	double gen_ac();
 	double gen_dc();
