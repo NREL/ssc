@@ -656,17 +656,19 @@ void battstor::force_replacement()
 	battery_model->runLifetimeModel(0);
 }
 
-
 void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv_dc , double P_load_dc )
 {
 	if (P_pv_dc < 0){ P_pv_dc = 0; }
-
 	charge_control->run(year, hour_of_year, step, P_pv_dc, P_load_dc);
-	
+	outputs(cm, year, hour_of_year, step);
+}
+
+void battstor::outputs(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
+{
 	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 	if (idx == total_steps - 1)
 		process_messages(cm);
-	
+
 	// non-lifetime outputs
 	if (nyears <= 1)
 	{
@@ -684,14 +686,15 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
 		outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
-	
+
 	// Lifetime outputs
-	int annual_index;
-	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
 	outCycles[idx] = (int)(lifetime_model->cycles_elapsed());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[idx] = (ssc_number_t)(lifetime_model->cycle_range());
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
+
+	int annual_index;
+	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
 	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->replacements());
 	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
 	{
@@ -737,11 +740,13 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 		outPVChargePercent = 100;
 	else if (outPVChargePercent < 0)
 		outPVChargePercent = 0;
-
 }
-void battstor::update_post_inverted(compute_module &cm, size_t idx, double PV)
+
+
+void battstor::update_post_inverted(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double p_gen_ac)
 {
-	charge_control->update_gen_ac(PV);
+	charge_control->update_gen_ac(p_gen_ac);
+	outputs(cm, year, hour_of_year, step);
 }
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
@@ -862,7 +867,7 @@ public:
 					if (ac_or_dc == charge_controller::DC_CONNECTED)
 					{
 						double ac = batt.outGenPower[count] * inv_eff;
-						batt.update_post_inverted(*this, count, ac);
+						batt.update_post_inverted(*this, 0, hour, jj, ac);
 					}
 					count++;
 				}

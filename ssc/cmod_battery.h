@@ -104,7 +104,8 @@ struct battstor
 	~battstor();
 
 	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv, double P_load);
-	void update_post_inverted(compute_module &cm, size_t idx, double P_gen_ac);
+	void outputs(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
+	void update_post_inverted(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_gen_ac);
 	void process_messages(compute_module &cm);
 
 	// for user schedule
