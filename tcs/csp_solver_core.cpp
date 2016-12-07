@@ -401,7 +401,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		dispatch.params.e_pb_startup_hot = mc_power_cycle.get_hot_startup_energy()*1000.;
 
 		dispatch.params.dt_rec_startup = mc_collector_receiver.get_startup_time() / 3600.;
-		dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy(mc_kernel.get_baseline_step()) * 1000;
+		dispatch.params.e_rec_startup = mc_collector_receiver.get_startup_energy() * 1000;
 		dispatch.params.q_rec_min = mc_collector_receiver.get_min_power_delivery()*1000.;
 		dispatch.params.w_rec_pump = mc_collector_receiver.get_pumping_parasitic_coef();
 

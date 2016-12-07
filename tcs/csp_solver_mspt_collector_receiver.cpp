@@ -55,9 +55,9 @@ double C_csp_mspt_collector_receiver::get_startup_time()
     return mc_mspt_receiver_222.m_rec_su_delay * 3600.; //sec   
 }
 
-double C_csp_mspt_collector_receiver::get_startup_energy(double step /*sec*/) //MWh
+double C_csp_mspt_collector_receiver::get_startup_energy() //MWh
 {
-    return mc_mspt_receiver_222.m_rec_qf_delay * step/3600. * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
+    return mc_mspt_receiver_222.m_rec_qf_delay * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
 }
 
 double C_csp_mspt_collector_receiver::get_pumping_parasitic_coef()  //MWe/MWt

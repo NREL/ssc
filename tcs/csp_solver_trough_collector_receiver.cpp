@@ -676,7 +676,7 @@ double C_csp_trough_collector_receiver::get_startup_time()
 {
 	return std::numeric_limits<double>::quiet_NaN();
 }
-double C_csp_trough_collector_receiver::get_startup_energy(double step /*sec*/)
+double C_csp_trough_collector_receiver::get_startup_energy()
 {
 	return std::numeric_limits<double>::quiet_NaN();
 }

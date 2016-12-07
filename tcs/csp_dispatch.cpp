@@ -1088,15 +1088,29 @@ bool csp_dispatch_opt::optimize()
         Branch&Bound    0 32 64 128 256 1024 
         Scaling         7 16 32 64 128
 
+
+        ----- keep a record of what's been tried historically for each setting ----
+
+        >>> set_presolve
+            PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 :: original from 2015
+            PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX :: version used as of 12/5/2016
+            PRESOLVE_IMPLIEDFREE :: genetic algorithm from 2015
+
+        >> set_bb_rule
+            -- combos set for older problem formulation, appropriate as of mid-2015
+            NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING :: original
+            NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE :: original v2
+            NODE_PSEUDONONINTSELECT + NODE_GREEDYMODE + NODE_DYNAMICMODE + NODE_RCOSTFIXING :: 5m30s, 10.24c
+            NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE + NODE_RCOSTFIXING :: 5m20s, 10.17c
+            NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE :: optimal from genetic algorithm
+            NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE :: optimal from independent optimization, THIS VERSION CURRENT AS OF 12/5/2016
         */
 
         //presolve
         if(solver_params.presolve_type > 0)
             set_presolve(lp, solver_params.presolve_type, get_presolveloops(lp));
         else
-            //set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_REDUCEMIP + PRESOLVE_ELIMEQ2 /*+ PRESOLVE_SOS*/, get_presolveloops(lp) );       //original
-            set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX /*+ PRESOLVE_IMPLIEDSLK*/, get_presolveloops(lp) );   //independent optimization
-            //set_presolve(lp, PRESOLVE_IMPLIEDFREE, get_presolveloops(lp) );     //genetic algorithm
+            set_presolve(lp, PRESOLVE_ROWS + PRESOLVE_COLS + PRESOLVE_ELIMEQ2 + PRESOLVE_PROBEFIX, get_presolveloops(lp) );   //independent optimization
 
         //Debugging parameters
         set_timeout(lp, solver_params.solution_timeout);  //max solution time
@@ -1110,12 +1124,8 @@ bool csp_dispatch_opt::optimize()
         if(solver_params.bb_type > 0)
             set_bb_rule(lp, solver_params.bb_type);
         else
-            //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RCOSTFIXING);        //original
-            //set_bb_rule(lp, NODE_PSEUDORATIOSELECT + NODE_BREADTHFIRSTMODE);  //original 2
-            set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE);    //independent optimization <<
-            //set_bb_rule(lp, NODE_PSEUDONONINTSELECT + NODE_GREEDYMODE + NODE_DYNAMICMODE + NODE_RCOSTFIXING); //5m30s, 10.24c
-            //set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_RANDOMIZEMODE + NODE_RCOSTFIXING);    5m20s, 10.17c
-            //set_bb_rule(lp, NODE_GREEDYMODE + NODE_PSEUDOCOSTMODE + NODE_DEPTHFIRSTMODE + NODE_RANDOMIZEMODE + NODE_DYNAMICMODE );  //genetic algorithm
+            set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT );
+        
  
        //Problem scaling loop
         int scaling_iter = 0;

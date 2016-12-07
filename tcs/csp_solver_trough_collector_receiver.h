@@ -384,7 +384,7 @@ public:
 	virtual bool init_fieldgeom();	
 
 	virtual double get_startup_time();
-	virtual double get_startup_energy(double step /*sec*/); //MWh
+	virtual double get_startup_energy(); //MWh
 	virtual double get_pumping_parasitic_coef();  //MWe/MWt
 	virtual double get_min_power_delivery();    //MWt
 
