@@ -4715,7 +4715,12 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 	{
 		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 		int n_call_history = LTR_od_solver.get_solver_call_history()->size();
-		return (*(LTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		int error_code = (*(LTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		if(error_code == 0)
+		{
+			error_code = T_LTR_LP_out_code;
+		}
+		return error_code;
 	}
 
 	m_Q_dot_LTR = LTR_od_eq.m_Q_dot_LTR;	//[kWt]
@@ -4777,6 +4782,84 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 
 	return 0;
 }
+
+void C_RecompCycle::estimate_od_turbo_operation(double T_mc_in /*K*/, double P_mc_in /*kPa*/, double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
+	int & mc_error_code, double & mc_w_tip_ratio /*-*/, double & P_mc_out /*kPa*/,
+	int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/)
+{
+	// Initialize a few variables
+	m_temp_od[C_RecompCycle::MC_IN] = T_mc_in;	//[K]
+	m_pres_od[C_RecompCycle::MC_IN] = P_mc_in;	//[kPa]
+	m_temp_od[C_RecompCycle::TURB_IN] = T_t_in;	//[K]
+
+	C_RecompCycle::C_mono_eq_turbo_m_dot c_turbo_bal(this, T_mc_in, P_mc_in, 
+													f_recomp, T_t_in, phi_mc, false);
+
+	C_monotonic_eq_solver c_turbo_m_dot_solver(c_turbo_bal);
+
+	// Set lower bound on mass flow rate
+	double m_dot_lower = ms_des_solved.m_m_dot_t*1.E-3;					//[kg/s]
+	double m_dot_upper = std::numeric_limits<double>::quiet_NaN();
+
+	// Set solver settings
+	c_turbo_m_dot_solver.settings(1.E-2, 100, m_dot_lower, m_dot_upper, false);
+
+	// Generate two guess values
+	double m_dot_guess_upper = ms_des_solved.m_m_dot_t;
+	double m_dot_guess_lower = 0.7*m_dot_guess_upper;
+
+	// Solve for the turbine mass flow rate that balances the main compressor and turbine
+	double m_dot_t_solved, tol_solved;
+	m_dot_t_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int m_dot_t_code = c_turbo_m_dot_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0,
+										m_dot_t_solved, tol_solved, iter_solved);
+
+	if( m_dot_t_code != C_monotonic_eq_solver::CONVERGED )
+	{
+		mc_error_code = m_dot_t_code;
+		mc_w_tip_ratio = 0.0;
+		P_mc_out = 0.0;
+		rc_error_code = 0;
+		rc_w_tip_ratio = 0.0;
+		return;	
+	}
+	else
+	{
+		mc_error_code = 0;
+		double m_dot_rc = f_recomp*m_dot_t_solved;
+		P_mc_out = m_pres_od[C_RecompCycle::MC_OUT];			//[kPa]
+		mc_w_tip_ratio = m_mc.get_od_solved()->m_w_tip_ratio;	//[-]
+
+		if( ms_des_solved.m_is_rc && m_dot_rc > 0.0 )
+		{
+			rc_error_code = 0;
+			double T_rc_out = std::numeric_limits<double>::quiet_NaN();
+			off_design_recompressor(get_design_solved()->m_temp[C_RecompCycle::HTR_LP_OUT],
+									P_mc_in,
+									m_dot_rc,
+									P_mc_out,
+									rc_error_code,
+									T_rc_out);		
+		}
+
+		if( rc_error_code == 0 )
+		{
+			rc_w_tip_ratio = m_rc.get_od_solved()->m_w_tip_ratio;
+			
+			double rc_phi_s1 = m_rc.get_od_solved()->m_phi;
+			double rc_phi_s2 = m_rc.get_od_solved()->m_phi_2;
+			rc_phi = min(rc_phi_s1, rc_phi_s2);
+		}
+		else
+		{
+			rc_w_tip_ratio = rc_phi = 0.0;
+		}
+	}
+
+}
+
 
 void C_RecompCycle::off_design_phi_core(int & error_code)
 {
@@ -4891,6 +4974,10 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	{
 		int n_call_history = HTR_od_solver.get_solver_call_history()->size();
 		error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		if(error_code == 0)
+		{
+			error_code = T_HTR_LP_out_code;		
+		}
 		return;
 	}
 
