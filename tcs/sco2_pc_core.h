@@ -1038,6 +1038,10 @@ public:
 
 	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out);
 
+	void estimate_od_turbo_operation(double T_mc_in /*K*/, double P_mc_in /*kPa*/, double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
+							int & mc_error_code, double & mc_w_tip_ratio /*-*/, double & P_mc_out /*kPa*/,
+							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/);
+
 	const C_recompressor::S_od_solved * get_rc_od_solved()
 	{
 		return m_rc.get_od_solved();
