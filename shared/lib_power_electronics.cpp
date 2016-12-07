@@ -224,22 +224,21 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	double P_pv_dc = _P_pv;
 
 	double inverter_efficiency = 0;
-	if (P_gen_dc > 0)
+	if (fabs(P_gen_dc) > 0)
 		inverter_efficiency = P_gen_ac / P_gen_dc;
 	else if (P_pv_dc > 0)
 		inverter_efficiency = P_gen_ac / P_pv_dc;
 
+
 	double P_battery_ac = 0;
 	P_battery_ac = P_battery_dc * inverter_efficiency;
-
 	/*
 	if (P_battery_dc > 0)
 		P_battery_ac = P_battery_dc * inverter_efficiency;
 	else if (P_battery_dc < 0)
 		P_battery_ac = P_battery_dc / inverter_efficiency;
 	*/
-	
-	double P_pv_ac = P_pv_dc * inverter_efficiency;
+	double P_pv_ac = P_pv_dc * inverter_efficiency; 
 	double P_load_ac = _P_load;
 
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
