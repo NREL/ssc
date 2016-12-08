@@ -142,7 +142,7 @@ private:
 	S_des_solved ms_des_solved;
 
 	S_od_par ms_od_par;
-	//C_RecompCycle::S_od_parameters ms_rc_cycle_od_par;
+	S_od_operation_inputs ms_od_op_inputs;
 	C_RecompCycle::S_od_phi_par ms_rc_cycle_od_phi_par;
 	C_HX_counterflow::S_od_par ms_phx_od_par;
 	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
@@ -227,6 +227,10 @@ public:
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
+	int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+
+	bool opt_f_recomp_fix_P_mc_in_max_eta_core();
+
 	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	int off_design(C_sco2_recomp_csp::S_od_par od_par, S_od_operation_inputs od_op_inputs);
@@ -268,8 +272,10 @@ public:
 	void sweep_turbomachinery_deltaP(double T_mc_in /*K*/, double P_mc_in /*kPa*/,
 							double T_t_in /*K*/, double phi_mc /*-*/);
 
-	//ofstream sco2_od_opt_file;
+	double opt_f_recomp_max_eta(double f_recomp);
 };
+
+double fmin_f_recomp_cycle_eta(double x, void *data);
 
 // Optimization method callbacks
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);
