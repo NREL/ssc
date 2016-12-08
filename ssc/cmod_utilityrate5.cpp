@@ -2371,9 +2371,16 @@ public:
 								{
 									// monthly rollover with year end sell at reduced rate
 									if (!excess_monthly_dollars && (monthly_cumulative_excess_energy[11] > 0))
-										income[8759] += monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
+									{
+										double year_end_dollars = monthly_cumulative_excess_energy[11] * as_number("ur_nm_yearend_sell_rate")*rate_esc;
+										income[8759] += year_end_dollars;
+										monthly_cumulative_excess_dollars[11] = year_end_dollars;
+									}
 									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[11] > 0))
+									{
 										income[8759] += monthly_cumulative_excess_dollars[11];
+										// ? net metering energy?
+									}
 								}
 							}
 							revenue[c] = income[c] - payment[c];
