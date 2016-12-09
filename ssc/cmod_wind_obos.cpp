@@ -58,12 +58,22 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "interConVolt",                   "Grid Interconnect Voltage",                                "kV",                 "",                       "wobos",            "?=345",                   "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "distInterCon",                   "Distance Over Land to Grid Interconnect",                  "miles",              "",                       "wobos",            "?=3",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "scrapVal",                       "Total Scrap Value of Decommissioned Components",           "$",                  "",                       "wobos",            "?=0",                     "",                              ""},
-   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
 
 //General
    { SSC_INPUT,        SSC_NUMBER,      "projLife",                       "Project Economic Life",                                    "years",              "",                       "wobos",            "?=20",                    "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "inspectClear",                   "Inspection Clearance",                                     "m",                  "",                       "wobos",            "?=2",                     "",                              ""},
    { SSC_INPUT,        SSC_NUMBER,      "plantComm",                      "Plant Commissioning Cost Factor",                          "%",                  "",                       "wobos",            "?=0.01",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "procurement_contingency",        "Procurement Contingency",                                  "%",                  "",                       "wobos",            "?=5",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "install_contingency",            "Installation Contingency",                                 "%",                  "",                       "wobos",            "?=30",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "construction_insurance",         "Insurance During Construction (% of ICC)",                 "%",                  "",                       "wobos",            "?=1",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "capital_cost_year_0",            "Capital cost spent in year 0",                             "%",                  "",                       "wobos",            "?=20",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "capital_cost_year_1",            "Capital cost spent in year 1",                             "%",                  "",                       "wobos",            "?=60",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "capital_cost_year_2",            "Capital cost spent in year 2",                             "%",                  "",                       "wobos",            "?=10",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "capital_cost_year_3",            "Capital cost spent in year 3",                             "%",                  "",                       "wobos",            "?=10",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "capital_cost_year_4",            "Capital cost spent in year 4",                             "%",                  "",                       "wobos",            "?=0",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "capital_cost_year_5",            "Capital cost spent in year 5",                             "%",                  "",                       "wobos",            "?=0",                     "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "tax_rate",                       "Effective Tax Rate",                                       "%",                  "",                       "wobos",            "?=40",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "interest_during_construction",   "Interest During Construction",                             "%",                  "",                       "wobos",            "?=8",                  "",                              ""},
 
 //Substructure & Foundation
    { SSC_INPUT,        SSC_NUMBER,      "mpileCR",                        "Monopile Cost Rate",                                       "$/tonne",            "",                       "wobos",            "?=2250",                  "",                              ""},
@@ -88,6 +98,8 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "moorDia",                        "Mooring Line Diameter",                                    "m",                  "",                       "wobos",            "",                        "MIN=0.09",                      ""},
    { SSC_INPUT,        SSC_NUMBER,      "moorCR",                         "Mooring Line Cost Rate",                                   "$/m",                "",                       "wobos",            "",                        "MIN=399",                       ""},
    { SSC_INPUT,        SSC_NUMBER,      "scourMat",                       "Scour Protection Material Cost",                           "$/location",         "",                       "wobos",            "?=250000",                "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "number_install_seasons",         "Number of Installation Seasons",                           "",                   "",                       "wobos",            "?=1",                     "",                              ""},
+
 
 //Electrical Infrastructure
    { SSC_INPUT,        SSC_NUMBER,      "pwrFac",                         "Power Transfer Efficiency Factor",                         "%",                  "",                       "wobos",            "?=0.95",                  "",                              ""},
@@ -246,6 +258,7 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_NUMBER,      "rnaM",                           "Rotor-Nacelle Assembly Mass"                               "tonne",              "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "towerD",                         "Tower Diameter",                                           "m",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "towerM",                         "Tower Mass",                                               "tonne",              "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "construction_finance_factor",    "Construction Finance Factor",                              "",                   "",                       "wobos",            "",                        "",                              ""},
 
     //Substructure & Foundation outputs
    {SSC_OUTPUT,        SSC_NUMBER,      "mpileM",                         "Monopile Pile Mass",                                       "tonne",              "",                       "wobos",            "",                        "",                              ""},
@@ -313,7 +326,7 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_NUMBER,      "transLine",                      "Overhead Transmission Line Cost",                          "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "subCabCost",                     "Total Subsea Cable and Ancillary Cost",                    "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "offSubsCost",                    "Total Offshore Substation Cost",                           "$",                  "",                       "wobos",            "",                        "",                              ""},
-   {SSC_OUTPUT,        SSC_NUMBER,      "onShoreTransCost",               "Total Onshore Transmission System Cost",                   "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "onshoreTransCost",               "Total Onshore Transmission System Cost",                   "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "totElecCost",                    "Total Electrical Infrastructure Cost"                      "$",                  "",                       "wobos",            "",                        "",                              ""},
 
     //Assembly & Installation outputs
@@ -420,6 +433,17 @@ public:
 		obos.projLife = (double)as_number("projLife");//economic lifetime of the project (years)
 		obos.inspectClear = (double)as_number("inspectClear");//inspection clearance for substructure and turbine components (m)
         obos.plantComm = (double)as_number("plantComm");//plant commissioning cost factor
+        obos.procurement_contingency = (double)as_number("procurement_contingency") / 100; //convert from percentage to decimal
+        obos.install_contingency = (double)as_number("install_contingency") / 100; //convert from percentage to decimal
+        obos.construction_insurance = (double)as_number("construction_insurance") / 100; //convert from percentage to decimal
+        obos.capital_cost_year_0 = (double)as_number("capital_cost_year_0") /100; //convert from percentage to decimal
+		obos.capital_cost_year_1 = (double)as_number("capital_cost_year_1") / 100; //convert from percentage to decimal
+		obos.capital_cost_year_2 = (double)as_number("capital_cost_year_2") / 100; //convert from percentage to decimal
+		obos.capital_cost_year_3 = (double)as_number("capital_cost_year_3") / 100; //convert from percentage to decimal
+		obos.capital_cost_year_4 = (double)as_number("capital_cost_year_4") / 100; //convert from percentage to decimal
+		obos.capital_cost_year_5 = (double)as_number("capital_cost_year_5") / 100; //convert from percentage to decimal
+		obos.tax_rate = (double)as_number("tax_rate") / 100; //convert from percentage to decimal
+		obos.interest_during_construction = (double)as_number("interest_during_construction") / 100; //convert from percentage to decimal
 		
 		//Substructure & Foundation
 		obos.mpileCR = (double)as_number("mpileCR");//monopile pile cost rate ($/tonne)
@@ -1853,6 +1877,7 @@ public:
 		obos.run();
 		
 		//Assign outputs***************************************************************************************************************************************
+		/*
 		assign("subTotCost", var_data(obos.subTotCost));
 		assign("totElecCost", var_data(obos.totElecCost));
 		assign("totAnICost", var_data(obos.totAnICost));
@@ -1873,8 +1898,146 @@ public:
 		assign("subsInstTime", var_data(obos.subsInstTime));
 		assign("commissioning", var_data(obos.commissioning));
 
-		double totalBOScost = obos.totDevCost + obos.totEnMCost + obos.totPnSCost + obos.subTotCost + obos.totElecCost + obos.totAnICost + obos.commissioning;
-		assign("totalBOScost", var_data(totalBOScost));
+		assign("decomCost", var_data(obos.decomCost));
+		assign("construction_insurance_cost", var_data(obos.construction_insurance_cost));
+		assign("total_contingency_cost", var_data(obos.total_contingency_cost));
+		assign("construction_finance_cost", var_data(obos.construction_finance_cost));
+		assign("soft_costs", var_data(obos.soft_costs));*/
+
+		//Total OBOS output
+		assign("totalBOScost", var_data(obos.total_bos_cost));
+
+		//General outputs
+		assign("hubD", var_data(obos.hubD));
+		assign("bladeL", var_data(obos.bladeL));
+		assign("chord", var_data(obos.chord));
+		assign("nacelleW", var_data(obos.nacelleW));
+		assign("nacelleL", var_data(obos.nacelleL));
+		assign("rnaM", var_data(obos.rnaM));
+		assign("towerD", var_data(obos.towerD));
+		assign("towerM", var_data(obos.towerM));
+		assign("construction_finance_factor", var_data(obos.construction_finance_factor));
+
+		//Substructure & foundation outputs
+		assign("mpileM", var_data(obos.mpileM));
+		assign("mtransM", var_data(obos.mtransM));
+		assign("mPileCost", var_data(obos.mPileCost));
+		assign("mTransCost", var_data(obos.mTransCost));
+		assign("jlatticeM", var_data(obos.jlatticeM));
+		assign("jtransM", var_data(obos.jtransM));
+		assign("jpileM", var_data(obos.jpileM));
+		assign("jLatticeCost", var_data(obos.jLatticeCost));
+		assign("jTransCost", var_data(obos.jTransCost));
+		assign("jPileCost", var_data(obos.jPileCost));
+		assign("spStifColM", var_data(obos.spStifColM));
+		assign("spTapColM", var_data(obos.spTapColM));
+		assign("spStifColCost", var_data(obos.spStifColCost));
+		assign("spTapColCost", var_data(obos.spTapColCost));
+		assign("ballM", var_data(obos.ballM));
+		assign("ballCost", var_data(obos.ballCost));
+		assign("ssStifColM", var_data(obos.ssStifColM));
+		assign("ssTrussM", var_data(obos.ssTrussM));
+		assign("ssHeaveM", var_data(obos.ssHeaveM));
+		assign("ssStifColCost", var_data(obos.ssStifColCost));
+		assign("ssTrussCost", var_data(obos.ssTrussCost));
+		assign("ssHeaveCost", var_data(obos.ssHeaveCost));
+		assign("moorSysCost", var_data(obos.moorSysCost));
+		assign("sSteelM", var_data(obos.sSteelM));
+		assign("sSteelCost", var_data(obos.sSteelCost));
+		assign("subTotM", var_data(obos.subTotM));
+		assign("subTotCost", var_data(obos.subTotCost));
+
+		//Electrical infrastructure outputs
+		assign("systAngle", var_data(obos.systAngle));
+		assign("freeCabLeng", var_data(obos.freeCabLeng));
+		assign("fixCabLeng", var_data(obos.fixCabLeng));
+		assign("nExpCab", var_data(obos.nExpCab));
+		assign("nSubstation", var_data(obos.nSubstation));
+		assign("fullStrings", var_data(obos.fullStrings));
+		assign("nTurbPS", var_data(obos.nTurbPS));
+		assign("nTurbCab1", var_data(obos.nTurbCab1));
+		assign("nTurbCab2", var_data(obos.nTurbCab2));
+		assign("nTurbInter1", var_data(obos.nTurbInter1));
+		assign("nTurbInter2", var_data(obos.nTurbInter2));
+		assign("nSubsInter", var_data(obos.nSubsInter));
+		assign("cab1Leng", var_data(obos.cab1Leng));
+		assign("cab2Leng", var_data(obos.cab2Leng));
+		assign("expCabLeng", var_data(obos.expCabLeng));
+		assign("nMPT", var_data(obos.nMPT));
+		assign("mptRating", var_data(obos.mptRating));
+		assign("mptCost", var_data(obos.mptCost));
+		assign("subsTopM", var_data(obos.subsTopM));
+		assign("subsTopCost", var_data(obos.subsTopCost));
+		assign("arrCab1Cost", var_data(obos.arrCab1Cost));
+		assign("arrCab2Cost", var_data(obos.arrCab2Cost));
+		assign("expCabCost", var_data(obos.expCabCost));
+		assign("shuntReactors", var_data(obos.shuntReactors));
+		assign("switchGear", var_data(obos.switchGear));
+		assign("ancillarySys", var_data(obos.ancillarySys));
+		assign("subsSubM", var_data(obos.subsSubM));
+		assign("subsPileM", var_data(obos.subsPileM));
+		assign("subsLandAssembly", var_data(obos.subsLandAssembly));
+		assign("subsSubCost", var_data(obos.subsSubCost));
+		assign("switchYard", var_data(obos.switchYard));
+		assign("onShoreSubs", var_data(obos.onShoreSubs));
+		assign("onshoreMisc", var_data(obos.onshoreMisc));
+		assign("transLine", var_data(obos.transLine));
+		assign("subCabCost", var_data(obos.subCabCost));
+		assign("offSubsCost", var_data(obos.offSubsCost));
+		assign("onshoreTransCost", var_data(obos.onshoreTransCost));
+		assign("totElecCost", var_data(obos.totElecCost));
+
+		//Assembly & infrastructure outputs
+		assign("moorTime", var_data(obos.moorTime));
+		assign("turbDeckArea", var_data(obos.turbDeckArea));
+		assign("nTurbPerTrip", var_data(obos.nTurbPerTrip));
+		assign("turbInstTime", var_data(obos.turbInstTime));
+		assign("subDeckArea", var_data(obos.subDeckArea));
+		assign("nSubPerTrip", var_data(obos.nSubPerTrip));
+		assign("subInstTime", var_data(obos.subInstTime));
+		assign("cab1SecM", var_data(obos.cab1SecM));
+		assign("cab2SecM", var_data(obos.cab2SecM));
+		assign("cab1SecPerTrip", var_data(obos.cab1SecPerTrip));
+		assign("cab2SecPerTrip", var_data(obos.cab2SecPerTrip));
+		assign("arrInstTime", var_data(obos.arrInstTime));
+		assign("expCabSecM", var_data(obos.expCabSecM));
+		assign("expCabSecPerTrip", var_data(obos.expCabSecPerTrip));
+		assign("expInstTime", var_data(obos.expInstTime));
+		assign("subsInstTime", var_data(obos.subsInstTime));
+		assign("totInstTime", var_data(obos.totInstTime));
+		assign("totAnICost", var_data(obos.totAnICost));
+		//assign("turbCostsByVessel", var_data(obos.turbCostsByVessel));
+		//assign("subCostsByVessel", var_data(obos.subCostsByVessel));
+		//assign("elecCostsByVessel", var_data(obos.elecCostsByVessel));
+		//assign("mobDemobCostByVessel", var_data(obos.mobDemobCostByVessel));
+		assign("cabSurvey", var_data(obos.cabSurvey));
+
+		//Port & staging outputs
+		assign("entrExitCost", var_data(obos.entrExitCost));
+		assign("wharfCost", var_data(obos.wharfCost));
+		assign("dockCost", var_data(obos.dockCost));
+		assign("subLaydownA", var_data(obos.subLaydownA));
+		assign("subLayCost", var_data(obos.subLayCost));
+		assign("turbLaydownA", var_data(obos.turbLaydownA));
+		assign("turbLayCost", var_data(obos.turbLayCost));
+		assign("craneCost", var_data(obos.craneCost));
+		assign("totPortCost", var_data(obos.totPortCost));
+		assign("totStageCost", var_data(obos.totStageCost));
+		assign("totPnSCost", var_data(obos.totPnSCost));
+
+		//Engineering & management outputs
+		assign("totEnMCost", var_data(obos.totEnMCost));
+
+		//Development outputs
+		assign("feedCost", var_data(obos.feedCost));
+		assign("permStudyComp", var_data(obos.permStudyComp));
+		assign("metFabCost", var_data(obos.metFabCost));
+		assign("decomCost", var_data(obos.decomCost));
+		assign("totDevCost", var_data(obos.totDevCost));
+		assign("commissioning", var_data(obos.commissioning));
+
+
+
 	}
 };
 
