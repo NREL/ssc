@@ -135,7 +135,13 @@ void charge_controller::compute_to_batt_load_grid(double P_battery_ac, double P_
 		}
 	}
 	else
-		P_batt_to_load_ac = P_battery_ac;
+	{
+		if (P_battery_ac < P_load_ac)
+			P_batt_to_load_ac = P_battery_ac;
+		else
+			// probably shouldn't happen, need to iterate and reduce I from battery
+			P_batt_to_load_ac = P_load_ac;
+	}
 
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
 	P_gen_ac = P_pv_ac + P_battery_ac;
