@@ -28,6 +28,70 @@ enum  { PRIMARYVESSEL, FEEDERBARGE } ;
 //toggle cable cost optimizer on or off
 enum  { ON, OFF } ;
 
+//*******************************************************************************************
+//Offshore BOS model 'Soft Costs' Module starts here and ends at  function definition
+//*******************************************************************************************
+
+//calculate total soft costs
+void wobos::Soft_costs()
+{
+    soft_costs = construction_insurance_cost + commissioning + decomCost + total_contingency_cost+construction_finance_cost;
+}
+
+//calculate insurance cost during construction
+void wobos::Insurance_during_construction()
+{
+    construction_insurance_cost = construction_insurance*(turbCapEx+total_bos_cost);
+}
+
+//calculate construction finance factor
+void wobos::Construction_finance_factor()
+{
+    construction_finance_factor = capital_cost_year_0*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_0+0.5))-1))
+            +capital_cost_year_1*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_1+0.5))-1))
+            +capital_cost_year_2*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_2+0.5))-1))
+            +capital_cost_year_3*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_3+0.5))-1))
+            +capital_cost_year_4*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_4+0.5))-1))
+            +capital_cost_year_5*(1+(1-tax_rate)*(pow((1+interest_during_construction),(capital_cost_year_5+0.5))-1));
+}
+
+//calculate construction financing cost
+void wobos::Construction_finance()
+{
+    construction_finance_cost = (construction_finance_factor-1)*(turbCapEx+total_bos_cost+soft_costs);
+}
+
+//calculate total contingency cost
+void wobos::Total_contingency()
+{
+    total_contingency_cost = procurement_contingency*(turbCapEx+totElecCost+subTotCost+totDevCost+totEnMCost+totPnSCost)+install_contingency*(totAnICost);
+}
+
+//calculate the present value in dollars of the cost of decommissioning the wind plant
+double wobos::DecomissExpense()
+{
+        //check if floating substructure type is selected
+        if ((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
+        {
+                return (((0.2*(moorTime / totInstTime) + 0.6*(turbInstTime / totInstTime) + 0.1
+                        *(arrInstTime / totInstTime) + 0.1*(expInstTime / totInstTime) +
+                        0.4*(subsInstTime / totInstTime))*totAnICost) - scrapVal) / pow(
+                        (1 + decomDiscRate), projLife);
+        }
+        else
+        {
+                return (((0.9*(subInstTime / totInstTime) + 0.7*(turbInstTime / totInstTime)
+                        + 0.2*(arrInstTime / totInstTime) + 0.2*(expInstTime / totInstTime)
+                        + 0.8*(subsInstTime / totInstTime))*totAnICost) - scrapVal) / pow(
+                        (1 + decomDiscRate), projLife);
+        }
+}
+
+//calculate total BOS costs
+void wobos::Total_bos_cost()
+{
+    total_bos_cost = totAnICost+totDevCost+totElecCost+totEnMCost+totPnSCost+subTotCost+soft_costs;
+}
 
 //*******************************************************************************************
 //Offshore BOS model 'General' Module starts here and ends at TowerMass() function definition
@@ -1365,6 +1429,7 @@ void wobos::VesselMobDemobCost()
 		mobDemobCostByVessel[i].resize(2);
 	}
 
+        //apply number of install seasons multiplier to mobilization costs
         for (int i = 0; i < mobDemobCostByVessel.size(); i++)
         {
             mobDemobCostByVessel[i][1] = mobDemobCostByVessel[i][1]*number_install_seasons;
@@ -1651,30 +1716,10 @@ double wobos::MetTowerFabnInst()
 	return nTurb*turbR*metTowCR;
 }
 
-//calculate the present value in dollars of the cost of decommissioning the wind plant
-double wobos::DecomissExpense()
-{
-	//check if floating substructure type is selected
-	if ((substructure == SPAR) || (substructure == SEMISUBMERSIBLE))
-	{
-		return (((0.2*(moorTime / totInstTime) + 0.6*(turbInstTime / totInstTime) + 0.1
-			*(arrInstTime / totInstTime) + 0.1*(expInstTime / totInstTime) +
-			0.4*(subsInstTime / totInstTime))*totAnICost) - scrapVal) / pow(
-			(1 + decomDiscRate), projLife);
-	}
-	else
-	{
-		return (((0.9*(subInstTime / totInstTime) + 0.7*(turbInstTime / totInstTime)
-			+ 0.2*(arrInstTime / totInstTime) + 0.2*(expInstTime / totInstTime)
-			+ 0.8*(subsInstTime / totInstTime))*totAnICost) - scrapVal) / pow(
-			(1 + decomDiscRate), projLife);
-	}
-}
-
 //calculate the total development cost in dollars
 double wobos::TotalDevCost()
 {
-	return decomCost + metFabCost + permStudyComp + feedCost;
+        return metFabCost + permStudyComp + feedCost;
 }
 
 double wobos::PlantCommissioning()
@@ -2083,4 +2128,10 @@ void wobos::run()
 	decomCost = DecomissExpense();
 	totDevCost = TotalDevCost();
 	commissioning = PlantCommissioning();
+    Construction_finance_factor();
+    Insurance_during_construction();
+    Total_contingency();
+    Construction_finance();
+    Soft_costs();
+    Total_bos_cost();
 }

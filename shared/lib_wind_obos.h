@@ -40,7 +40,18 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double projLife;//economic lifetime of the project (years)
 	double inspectClear;//inspection clearance for substructure and turbine components (m)
 	double plantComm; //plant commissioning cost factor
-	
+    double procurement_contingency; //contingency factor for procurement costs
+    double install_contingency; //contingency factor for installation costs
+    double construction_insurance; //insurance during construction factor
+    double capital_cost_year_0; //capital cost spent in year 0
+    double capital_cost_year_1; //capital cost spent in year 1
+    double capital_cost_year_2; //capital cost spent in year 2
+    double capital_cost_year_3; //capital cost spent in year 3
+    double capital_cost_year_4; //capital cost spent in year 4
+    double capital_cost_year_5; //capital cost spent in year 5
+    double tax_rate; //effective tax_rate (federal & state)
+    double interest_during_construction; //interest rate during construction
+
 	//Substructure & Foundation
 	double mpileCR;//monopile pile cost rate ($/tonne)
 	double mtransCR;//monopile transition piece cost rate ($/tonne)
@@ -252,6 +263,12 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
     double rnaM;
     double towerD;
     double towerM;
+    double construction_insurance_cost;
+    double total_contingency_cost;
+    double construction_finance_cost;
+	double construction_finance_factor; //factor for construction financing
+    double soft_costs;
+
     //Substructure & Foundation outputs
     double mpileM;
     double mtransM;
@@ -361,6 +378,7 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
     double totEnMCost;
     double totDevCost;
     double commissioning;
+    double total_bos_cost;
 	
 	//SUPPORTING FUNCTIONS************************************************************************************************************
 	//General Module
@@ -371,6 +389,12 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
 	double RNAMass();
 	double TowerDiameter();
 	double TowerMass();
+    void Soft_costs();
+    void Insurance_during_construction();
+    void Construction_finance();
+    void Construction_finance_factor();
+    void Total_contingency();
+    void Total_bos_cost();
 
 	//Substructure & Foundation Module
     double MonopileLength();
