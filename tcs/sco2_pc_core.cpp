@@ -4785,7 +4785,8 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 
 void C_RecompCycle::estimate_od_turbo_operation(double T_mc_in /*K*/, double P_mc_in /*kPa*/, double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
 	int & mc_error_code, double & mc_w_tip_ratio /*-*/, double & P_mc_out /*kPa*/,
-	int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/)
+	int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
+	bool is_update_ms_od_solved)
 {
 	// Initialize a few variables
 	m_temp_od[C_RecompCycle::MC_IN] = T_mc_in;	//[K]
@@ -4793,7 +4794,7 @@ void C_RecompCycle::estimate_od_turbo_operation(double T_mc_in /*K*/, double P_m
 	m_temp_od[C_RecompCycle::TURB_IN] = T_t_in;	//[K]
 
 	C_RecompCycle::C_mono_eq_turbo_m_dot c_turbo_bal(this, T_mc_in, P_mc_in, 
-													f_recomp, T_t_in, phi_mc, false);
+													f_recomp, T_t_in, phi_mc, is_update_ms_od_solved);
 
 	C_monotonic_eq_solver c_turbo_m_dot_solver(c_turbo_bal);
 
@@ -4860,9 +4861,17 @@ void C_RecompCycle::estimate_od_turbo_operation(double T_mc_in /*K*/, double P_m
 
 }
 
+void C_RecompCycle::clear_ms_od_solved()
+{
+	S_od_solved s_od_solved_temp;
+	ms_od_solved = s_od_solved_temp;
+}
 
 void C_RecompCycle::off_design_phi_core(int & error_code)
 {
+	// Need to reset 'ms_od_solved' here
+	clear_ms_od_solved();
+
 	CO2_state co2_props;
 
 	// Initialize a few variables

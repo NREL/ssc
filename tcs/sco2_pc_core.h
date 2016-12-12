@@ -942,6 +942,8 @@ private:
 
 	void target_off_design_core(int & error_code);	
 
+	void clear_ms_od_solved();
+
 public:
 
 	C_RecompCycle()
@@ -1040,7 +1042,8 @@ public:
 
 	void estimate_od_turbo_operation(double T_mc_in /*K*/, double P_mc_in /*kPa*/, double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
 							int & mc_error_code, double & mc_w_tip_ratio /*-*/, double & P_mc_out /*kPa*/,
-							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/);
+							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
+							bool is_update_ms_od_solved = false);
 
 	const C_recompressor::S_od_solved * get_rc_od_solved()
 	{
