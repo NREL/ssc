@@ -183,6 +183,10 @@ public:
 		if (wpc.m_iNumberOfTurbinesInFarm > wpc.GetMaxTurbines())
 			throw exec_error( "windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()) );
 
+		adjustment_factors haf(this, "adjust");
+		if (!haf.setup())
+			throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
+
 		// setup the power curve data
 		wpc.m_adPowerCurveWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		wpc.m_adPowerCurveKW.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
@@ -278,8 +282,11 @@ public:
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
 
-			for (i = 0; i < nstep; i++)
+			for (i = 0; i < nstep; i++) //nstep is always 8760 for Weibull
+			{
 				farmpwr[i] = farm_kw / (ssc_number_t)nstep; // fill "gen"
+				farmpwr[i] *= haf(i); //apply adjustment factor/availability and curtailment losses
+			}
 
 			for (i=0; i<wpc.m_iLengthOfTurbinePowerCurveArray; i++)
 				turbine_output[i] = (ssc_number_t) turbine_outkW[i];
@@ -337,11 +344,6 @@ public:
 		// if the model needs arrays allocated, this command does it once - has to be done after all properties are set above
 		if (!wpc.InitializeModel() )
 			throw exec_error( "windpower", util::format("error allocating memory: %s",  wpc.GetErrorDetails().c_str() )  );
-
-
-		adjustment_factors haf(this, "adjust");
-		if (!haf.setup())
-			throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 
 		double annual = 0.0;
 		ssc_number_t *monthly = allocate( "monthly_energy", 12 );
@@ -415,7 +417,7 @@ public:
 					throw exec_error( "windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()) );
 
 
-				farmpwr[i] = (ssc_number_t) farmp*haf( hr );
+				farmpwr[i] = (ssc_number_t) farmp*haf( hr ); //adjustment factors are constrained to be hourly, not sub-hourly, so it's correct for this to be indexed on the hour
 				wspd[i] = (ssc_number_t) wind;
 				wdir[i] = (ssc_number_t) dir;
 				air_temp[i] = (ssc_number_t) temp;
