@@ -231,6 +231,8 @@ public:
 
 	bool opt_f_recomp_fix_P_mc_in_max_eta_core();
 
+	bool opt_P_mc_in_nest_f_recomp_max_eta_core();
+
 	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	int off_design(C_sco2_recomp_csp::S_od_par od_par, S_od_operation_inputs od_op_inputs);
@@ -273,9 +275,18 @@ public:
 							double T_t_in /*K*/, double phi_mc /*-*/);
 
 	double opt_f_recomp_max_eta(double f_recomp);
+
+	double opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/);
+
+	bool m_is_write_mc_out_file;
+	ofstream mc_out_file;
+	std::string mstr_base_name;
+	std::string mstr_end_name;
 };
 
 double fmin_f_recomp_cycle_eta(double x, void *data);
+
+double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data);
 
 // Optimization method callbacks
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);

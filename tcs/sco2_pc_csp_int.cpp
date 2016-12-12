@@ -22,6 +22,8 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	mf_callback = 0;		// NULL
 	m_cdata = 0;			// NULL
 
+	m_is_write_mc_out_file = false;
+
 	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
 
 	//sco2_od_opt_file << "P_mc_in_MPa,f_recomp,phi_mc,eta_ND,W_dot_MW\n";
@@ -221,24 +223,461 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
-	// Get a main compressor inlet pressure from somewhere
-	double P_mc_in_guess = mc_rc_cycle.get_design_solved()->m_pres[C_RecompCycle::MC_IN];	//[kPa]
+	m_is_write_mc_out_file = true;
 
-	ms_od_op_inputs.m_P_mc_in = P_mc_in_guess;		//[kPa]
+	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/f_recomp_";
+	mstr_end_name = "_kPa.csv";
+
 	ms_od_op_inputs.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
-	bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
 
-	double f_recomp_opt_here_now = mc_rc_cycle.get_od_solved()->m_recomp_frac;		//[-]
-	double eta_f_recomp_opt_here_now = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
+
+
+	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
+
+
+
+
+
+	// Get a main compressor inlet pressure from somewhere
+	double P_mc_in_des = mc_rc_cycle.get_design_solved()->m_pres[C_RecompCycle::MC_IN];	//[kPa]
+	
+	
+
+	double eta_opt = opt_P_mc_in_nest_f_recomp_max_eta(P_mc_in_des);
+
+	int P_mc_in_iter = 0;
+	double P_mc_in_inc = 1000.0;	//[kPa]
+
+	while(true)
+	{
+		double P_mc_in_guess = P_mc_in_des - P_mc_in_iter*P_mc_in_inc;
+
+		P_mc_in_iter++;
+
+		if(m_is_write_mc_out_file)
+		{
+			std::string case_name = to_string((int)(P_mc_in_guess));
+			std::string file_name = mstr_base_name + case_name + mstr_end_name;
+			mc_out_file.open(file_name);
+		}
+
+		ms_od_op_inputs.m_P_mc_in = P_mc_in_guess;		//[kPa]
+
+		bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
+
+		double f_recomp_opt_here_now = mc_rc_cycle.get_od_solved()->m_recomp_frac;		//[-]
+		double eta_f_recomp_opt_here_now = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
+
+		if(m_is_write_mc_out_file)
+		{
+			mc_out_file << "f_recomp_opt,eta_max\n";
+			mc_out_file << f_recomp_opt_here_now << "," << eta_f_recomp_opt_here_now << "\n";
+		}
+
+		if(m_is_write_mc_out_file)
+		{
+			mc_out_file.close();
+		}
+
+	}
 
 	return 0;
 }
 
+bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
+{
+	// Prior to calling, need to set :
+	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
+
+	// Get density at design point
+	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
+	CO2_state co2_props;
+	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
+
+	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
+	double P_mc_in_feasible = co2_props.pres;		//[kPa]
+	ms_od_op_inputs.m_P_mc_in = P_mc_in_feasible;
+
+	bool is_P_mc_in_feasible = opt_f_recomp_fix_P_mc_in_max_eta_core();
+	double eta_max_P_at_dens_des = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
+
+	double P_mc_in_lower = std::numeric_limits<double>::quiet_NaN();
+	double P_mc_in_upper = std::numeric_limits<double>::quiet_NaN();
+
+	while( !is_P_mc_in_feasible )
+	{
+		// Try to find an inlet pressure that solves
+			// First, try a lower pressure
+		double P_mc_in_guess = 0.95*P_mc_in_feasible;	//[kPa]
+		ms_od_op_inputs.m_P_mc_in = P_mc_in_guess;		//[kPa]
+		bool is_P_mc_in_guess = opt_f_recomp_fix_P_mc_in_max_eta_core();
+		if( is_P_mc_in_guess )
+		{
+			P_mc_in_feasible = P_mc_in_guess;		//[kPa]
+			break;
+		}
+		if( mc_rc_cycle.get_od_solved()->m_eta_thermal > eta_max_P_at_dens_des )
+		{
+			bool is_feasible_found = false;
+			while(true)
+			{				
+				P_mc_in_guess = 0.9*P_mc_in_guess;			//[kPa]
+				ms_od_op_inputs.m_P_mc_in = P_mc_in_guess;	//[kPa]
+				is_P_mc_in_guess = opt_f_recomp_fix_P_mc_in_max_eta_core();
+				if( is_P_mc_in_guess )
+				{
+					P_mc_in_feasible = P_mc_in_guess;		//[kPa]
+					is_feasible_found = true;
+				}
+				if( mc_rc_cycle.get_od_solved()->m_eta_thermal == 0.0 )
+				{
+					break;
+				}
+			}
+			if( is_feasible_found )
+			{
+				break;
+			}
+		}
+		
+		if( true )
+		{		// If decreasing pressure is not promising, try increasing
+			double blah = 1.23;		
+		}
+
+	}
+
+	// Should have a P_mc_in_feasible that returns a feasible solution
+	// Now find bounds for the optimization routine
+
+	P_mc_in_upper = P_mc_in_feasible;
+	int iter_P_mc_in_upper = 0;
+		
+	while(true)
+	{
+		iter_P_mc_in_upper++;
+		P_mc_in_upper = 0.95*P_mc_in_upper + 0.05*ms_des_par.m_P_high_limit;	//[kPa]
+		ms_od_op_inputs.m_P_mc_in = P_mc_in_upper;		//[kPa]
+		bool is_P_mc_in_upper = opt_f_recomp_fix_P_mc_in_max_eta_core();
+		if( !is_P_mc_in_upper )
+		{
+			break;
+		}
+		else
+		{
+			if( eta_max_P_at_dens_des - mc_rc_cycle.get_od_solved()->m_eta_thermal > 0.02 )
+			{
+				break;
+			}
+		}
+		if( iter_P_mc_in_upper > 20 )
+		{
+			P_mc_in_upper = ms_des_par.m_P_high_limit;		//[kPa]
+		}
+	}
+		
+	P_mc_in_lower = P_mc_in_feasible;
+	int iter_P_mc_in_lower = 0;
+
+	while(true)
+	{
+		iter_P_mc_in_lower++;
+		P_mc_in_lower *= 0.95;						//[kPa]
+		ms_od_op_inputs.m_P_mc_in = P_mc_in_lower;	//[kPa]
+		bool is_P_mc_in_lower = opt_f_recomp_fix_P_mc_in_max_eta_core();
+		if( !is_P_mc_in_lower )
+		{
+			break;
+		}
+		else
+		{
+			if( eta_max_P_at_dens_des - mc_rc_cycle.get_od_solved()->m_eta_thermal > 0.02 )
+			{
+				break;
+			}
+		}
+		if( iter_P_mc_in_lower > 20 )
+		{
+			P_mc_in_lower = 200;	//[kPa]
+		}
+	}
+
+	// Optimize compressor inlet pressure
+	double P_mc_in_opt = fminbr(
+		P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, 0.0001);
+
+	ms_od_op_inputs.m_P_mc_in = P_mc_in_opt;	//[kPa]
+	bool is_P_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
+
+	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
+
+	// Need to find a way to pass through f_recomp corresponding to max compressor inlet pressure
+	// ... alternatively could reoptimize f_recomp with optimized P_mc_in, but that's wasteful
+
+	// Call final time with optimized recompression fraction
+	//ms_od_op_inputs.m_recomp_frac = f_recomp_opt;
+	//
+	//int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
+	//
+	//if( sco2_od_code != 0 )
+	//	return false;
+	//
+	//ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+	//ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+	//
+	//return true;
+
+	return false;
+}
+
+//bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
+//{
+//	//Prior to calling, need to set :
+//	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set f_recomp here)
+//
+//	double P_mc_in = ms_od_op_inputs.m_P_mc_in;		//[kPa]
+//
+//	// Estimate the turbine inlet temperature for the turbomachinery balance
+//	double T_t_in_est = ms_od_par.m_T_htf_hot - ms_des_par.m_phx_dt_hot_approach;	//[K]
+//	double mc_phi_est = ms_od_op_inputs.m_phi_mc;	//[-]
+//
+//	int mc_error_code, rc_error_code;
+//	double mc_w_tip_ratio, P_mc_out, rc_w_tip_ratio, rc_phi;
+//
+//	double f_recomp_step = 0.01;
+//
+//	bool is_f_recomp_min_found = false;
+//	double f_recomp_min = std::numeric_limits<double>::quiet_NaN();
+//
+//	bool is_f_recomp_max_found = false;
+//	double f_recomp_max = std::numeric_limits<double>::quiet_NaN();
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_error_code,rc_phi,rc_tip_ratio\n";
+//		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
+//	}
+//
+//	for( double f_recomp_guess = 0.01; f_recomp_guess < 1.0; f_recomp_guess = f_recomp_guess + f_recomp_step )
+//	{
+//		mc_error_code = rc_error_code = 0;
+//		mc_w_tip_ratio = P_mc_out = rc_w_tip_ratio = rc_phi = std::numeric_limits<double>::quiet_NaN();
+//
+//		mc_rc_cycle.estimate_od_turbo_operation(ms_rc_cycle_od_phi_par.m_T_mc_in, P_mc_in, f_recomp_guess, T_t_in_est, mc_phi_est,
+//			mc_error_code, mc_w_tip_ratio, P_mc_out,
+//			rc_error_code, rc_w_tip_ratio, rc_phi,
+//			m_is_write_mc_out_file);
+//
+//		if( m_is_write_mc_out_file )
+//		{
+//			double deltaP = 0.0;
+//			double P_mc_out_of = 0.0;
+//			double m_dot_mc = 0.0;
+//			double m_dot_t = 0.0;
+//			double N_mc = 0.0;
+//			double mc_tip_ratio_of = 0.0;
+//			double f_recomp_of = 0.0;
+//			double m_dot_rc = 0.0;
+//			double rc_phi_of = 0.0;
+//			double rc_tip_ratio_of = 0.0;
+//
+//			if( mc_error_code == 0 )
+//			{
+//				deltaP = P_mc_out - P_mc_in;
+//				P_mc_out_of = P_mc_out;
+//				m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
+//				m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
+//				m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
+//				N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
+//				mc_tip_ratio_of = mc_w_tip_ratio;
+//				f_recomp_of = f_recomp_guess;
+//
+//				if( rc_error_code == 0 )
+//				{
+//					rc_phi_of = rc_phi;
+//					rc_tip_ratio_of = rc_w_tip_ratio;
+//				}
+//			}
+//
+//			mc_out_file << P_mc_in << ","
+//				<< deltaP << ","
+//				<< P_mc_out_of << ","
+//				<< m_dot_mc << ","
+//				<< m_dot_t << ","
+//				<< N_mc << ","
+//				<< mc_tip_ratio_of << ","
+//				<< f_recomp_of << ","
+//				<< m_dot_rc << ","
+//				<< rc_error_code << ","
+//				<< rc_phi_of << ","
+//				<< rc_tip_ratio_of << "\n";
+//		}
+//
+//		if( !is_f_recomp_min_found )
+//		{	// Looking for smallest recompression fraction where the turbomachinery balance succeeds
+//			if( rc_error_code == 0 && mc_error_code == 0
+//				&& mc_w_tip_ratio < 1.0 && P_mc_out < ms_des_par.m_P_high_limit
+//				&& rc_w_tip_ratio < 1.0 )
+//			{
+//				f_recomp_min = f_recomp_guess;
+//				is_f_recomp_min_found = true;
+//			}
+//			else
+//			{
+//				continue;
+//			}
+//		}
+//		else
+//		{	// Looking for the smallest recompression fraction where either:
+//			// * method fails (mc or rc error code)
+//			// * high side pressure exceeds limit
+//			// * mc tip ratio exceeds 1.05 (build in some tolerance)
+//			// (... so basically it's okay here if the RC tip speed is too fast)
+//			double P_high_mult_overshoot = 1.0;
+//			if( m_is_write_mc_out_file )
+//				P_high_mult_overshoot = 1.5;
+//
+//			if( rc_error_code == 0 && mc_error_code == 0
+//				&& mc_w_tip_ratio < 1.05 && P_mc_out < P_high_mult_overshoot*ms_des_par.m_P_high_limit )
+//			{
+//				continue;
+//			}
+//			else
+//			{
+//				f_recomp_max = f_recomp_guess;
+//				is_f_recomp_max_found = true;
+//				break;
+//			}
+//		}	// End if/then of recompresion max/min logic	
+//
+//	}	// End loop on recompression fraction
+//
+//	// Check that max and min recompression fractions found
+//	if( !is_f_recomp_min_found || !is_f_recomp_max_found )
+//	{
+//		// Can't find a solution at this compressor inlet pressure
+//		throw(C_csp_exception("Estimates of off-design turbomachinery balance can't find a workable recompression fraction",
+//			"C_sco2_recomp_csp::off_design_nested_opt"));
+//	}
+//
+//	// Get one full cycle off-design solution around minimum recompression fraction
+//	double f_recomp_min_local = f_recomp_min;
+//
+//	while( true )
+//	{
+//		ms_od_op_inputs.m_recomp_frac = f_recomp_min_local;	//[-]
+//
+//		int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
+//
+//		if( sco2_od_code == 0 )
+//		{
+//			break;
+//		}
+//
+//		if( f_recomp_max - f_recomp_min_local < 0.001 )
+//		{
+//			// Can't find a solution at this compressor inlet pressure
+//			throw(C_csp_exception("Off-design cycle model can't find a workable minimum recompression fraction",
+//				"C_sco2_recomp_csp::off_design_nested_opt"));
+//		}
+//
+//		f_recomp_min_local = 0.95*f_recomp_min_local + 0.05*f_recomp_max;
+//	}
+//
+//	// Reset minimum recompression fraction
+//	f_recomp_min = f_recomp_min_local;
+//
+//	// Test full cycle code at maximum recompression fraction
+//	ms_od_op_inputs.m_recomp_frac = f_recomp_max;
+//	int sco2_f_recomp_max_code = off_design(ms_od_par, ms_od_op_inputs);
+//
+//	// Get one full cycle off-design solution around maximum recompression fraction
+//	double f_recomp_max_local = f_recomp_max;
+//	double f_recomp_max_local_last = f_recomp_max_local;
+//
+//	if( sco2_f_recomp_max_code == 0 )
+//	{	// Increase recompression fraction until off design method returns an error code
+//		while( true )
+//		{
+//			f_recomp_max_local = 1.05*f_recomp_max_local;
+//			f_recomp_max_local_last = f_recomp_max_local;
+//
+//			ms_od_op_inputs.m_recomp_frac = f_recomp_max_local;
+//
+//			int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
+//
+//			if( sco2_od_code != 0 )
+//			{
+//				break;
+//			}
+//		}
+//	}
+//	else
+//	{	// Decrease the recompression fraction until off design method does NOT return an error code
+//		while( true )
+//		{
+//			ms_od_op_inputs.m_recomp_frac = f_recomp_max_local;
+//
+//			int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
+//
+//			if( sco2_od_code == 0 )
+//			{
+//				break;
+//			}
+//
+//			if( f_recomp_max_local - f_recomp_min < 0.001 )
+//			{
+//				// Have at least one solution from finding f_recomp_min,
+//				// ... but the solution space is small and don't need to iterate
+//				throw(C_csp_exception("Off-design cycle model can only find one feasible recompression fraction, which is kinda weird",
+//					"C_sco2_recomp_csp::off_design_nested_opt"));
+//			}
+//
+//			f_recomp_max_local_last = f_recomp_max_local;
+//
+//			f_recomp_max_local = 0.95*f_recomp_max_local + 0.05*f_recomp_min;
+//		}
+//	}
+//
+//	// Use last recomp max that failed for max value, as best efficiency often occurs very close to feasibility cut-off
+//	f_recomp_max = f_recomp_max_local_last;
+//
+//	// Here, one of the following three things should be true:
+//	// 1) Have not found a recompression fraction that results in a solution
+//	// 2) Have found a recompression fraction that works, but guesses around it fail, so don't send to optimizer
+//	// 3) Have found min and max recompression fractions, send to optimizer
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_out_file << "f_recomp_iter_min,f_recomp_iter_max\n";
+//		mc_out_file << f_recomp_min << "," << f_recomp_max << "\n";
+//		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal\n";
+//		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
+//	}
+//
+//	// Optimize recompression fraction for this inlet pressure
+//	double f_recomp_opt = fminbr(
+//		f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, 0.0001);
+//
+//	// Call final time with optimized recompression fraction
+//	ms_od_op_inputs.m_recomp_frac = f_recomp_opt;
+//
+//	int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
+//
+//	if( sco2_od_code != 0 )
+//		return false;
+//
+//	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+//	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+//
+//	return true;
+//}
+
 bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 {
 	//Prior to calling, need to set :
-	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_inputs(will set f_recomp here)
+	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set f_recomp here)
 
 	double P_mc_in = ms_od_op_inputs.m_P_mc_in;		//[kPa]
 
@@ -257,23 +696,92 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 	bool is_f_recomp_max_found = false;
 	double f_recomp_max = std::numeric_limits<double>::quiet_NaN();
 
-	for( double f_recomp_guess = 0.01; f_recomp_guess < 1.0; f_recomp_guess = f_recomp_guess + f_recomp_step )
+	if(m_is_write_mc_out_file)
+	{
+		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_error_code,rc_phi,rc_tip_ratio\n";
+		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
+	}
+
+	double f_recomp_guess = 0.0;
+
+	for( f_recomp_guess = 0.01; f_recomp_guess < 1.0; f_recomp_guess = f_recomp_guess + f_recomp_step )
 	{
 		mc_error_code = rc_error_code = 0;
 		mc_w_tip_ratio = P_mc_out = rc_w_tip_ratio = rc_phi = std::numeric_limits<double>::quiet_NaN();
 
 		mc_rc_cycle.estimate_od_turbo_operation(ms_rc_cycle_od_phi_par.m_T_mc_in, P_mc_in, f_recomp_guess, T_t_in_est, mc_phi_est,
 			mc_error_code, mc_w_tip_ratio, P_mc_out,
-			rc_error_code, rc_w_tip_ratio, rc_phi);
+			rc_error_code, rc_w_tip_ratio, rc_phi,
+			m_is_write_mc_out_file);
+
+		if(m_is_write_mc_out_file)
+		{
+			double deltaP = 0.0;
+			double P_mc_out_of = 0.0;
+			double m_dot_mc = 0.0;
+			double m_dot_t = 0.0;
+			double N_mc = 0.0;
+			double mc_tip_ratio_of = 0.0;
+			double f_recomp_of = 0.0;
+			double m_dot_rc = 0.0;
+			double rc_phi_of = 0.0;
+			double rc_tip_ratio_of = 0.0; 
+
+			if(mc_error_code == 0)
+			{
+				deltaP = P_mc_out - P_mc_in;
+				P_mc_out_of = P_mc_out;
+				m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
+				m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
+				m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
+				N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
+				mc_tip_ratio_of = mc_w_tip_ratio;
+				f_recomp_of = f_recomp_guess;
+
+				if(rc_error_code == 0)
+				{
+					rc_phi_of = rc_phi;
+					rc_tip_ratio_of = rc_w_tip_ratio;
+				}
+			}
+
+			mc_out_file << P_mc_in << ","
+						<< deltaP << ","
+						<< P_mc_out_of << ","
+						<< m_dot_mc << ","
+						<< m_dot_t << ","
+						<< N_mc << ","
+						<< mc_tip_ratio_of << ","
+						<< f_recomp_of << ","
+						<< m_dot_rc << ","
+						<< rc_error_code << ","
+						<< rc_phi_of << ","
+						<< rc_tip_ratio_of << "\n";
+		}
 
 		if( !is_f_recomp_min_found )
 		{	// Looking for smallest recompression fraction where the turbomachinery balance succeeds
-			if( rc_error_code == 0 && mc_error_code == 0
-				&& mc_w_tip_ratio < 1.0 && P_mc_out < ms_des_par.m_P_high_limit
-				&& rc_w_tip_ratio < 1.0 )
+			// Okay to be over pressure, too fast tip speed, etc.
+			if( rc_error_code == 0 && mc_error_code == 0 )
 			{
 				f_recomp_min = f_recomp_guess;
 				is_f_recomp_min_found = true;
+
+				if( mc_w_tip_ratio > 1.1 || P_mc_out > 1.1*ms_des_par.m_P_high_limit )
+				{	// At small recompression fractions, already exceeding tip speed and over pressure conditions
+					// So don't try to find f_recomp_max
+					ms_od_op_inputs.m_recomp_frac = f_recomp_guess;	//[-]
+
+					int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
+
+					ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+					ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+
+					if( sco2_od_code != 0 )
+						return false;
+					else
+						return true;
+				}
 			}
 			else
 			{
@@ -286,8 +794,12 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 			// * high side pressure exceeds limit
 			// * mc tip ratio exceeds 1.05 (build in some tolerance)
 			// (... so basically it's okay here if the RC tip speed is too fast)
+			double P_high_mult_overshoot = 1.25;
+			if(m_is_write_mc_out_file)
+				P_high_mult_overshoot = 1.5;
+
 			if( rc_error_code == 0 && mc_error_code == 0
-				&& mc_w_tip_ratio < 1.05 && P_mc_out < ms_des_par.m_P_high_limit )
+				&& mc_w_tip_ratio < 1.05 && P_mc_out < P_high_mult_overshoot*ms_des_par.m_P_high_limit )
 			{
 				continue;
 			}
@@ -309,92 +821,13 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 			"C_sco2_recomp_csp::off_design_nested_opt"));
 	}
 
-	// Get one full cycle off-design solution around minimum recompression fraction
-	double f_recomp_min_local = f_recomp_min;
-
-	while( true )
+	if(m_is_write_mc_out_file)
 	{
-		ms_od_op_inputs.m_recomp_frac = f_recomp_min_local;	//[-]
-
-		int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
-
-		if( sco2_od_code == 0 )
-		{
-			break;
-		}
-
-		if( f_recomp_max - f_recomp_min_local < 0.001 )
-		{
-			// Can't find a solution at this compressor inlet pressure
-			throw(C_csp_exception("Off-design cycle model can't find a workable minimum recompression fraction",
-				"C_sco2_recomp_csp::off_design_nested_opt"));
-		}
-
-		f_recomp_min_local = 0.95*f_recomp_min_local + 0.05*f_recomp_max;
+		mc_out_file << "f_recomp_iter_min,f_recomp_iter_max\n";
+		mc_out_file << f_recomp_min << "," << f_recomp_max << "\n";
+		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal\n";
+		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
 	}
-
-	// Reset minimum recompression fraction
-	f_recomp_min = f_recomp_min_local;
-
-	// Test full cycle code at maximum recompression fraction
-	ms_od_op_inputs.m_recomp_frac = f_recomp_max;
-	int sco2_f_recomp_max_code = off_design(ms_od_par, ms_od_op_inputs);
-
-	// Get one full cycle off-design solution around maximum recompression fraction
-	double f_recomp_max_local = f_recomp_max;
-	double f_recomp_max_local_last = f_recomp_max_local;
-
-	if( sco2_f_recomp_max_code == 0 )
-	{	// Increase recompression fraction until off design method returns an error code
-		while( true )
-		{
-			f_recomp_max_local = 1.05*f_recomp_max_local;
-			f_recomp_max_local_last = f_recomp_max_local;
-
-			ms_od_op_inputs.m_recomp_frac = f_recomp_max_local;
-
-			int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
-
-			if( sco2_od_code != 0 )
-			{
-				break;
-			}
-		}
-	}
-	else
-	{	// Decrease the recompression fraction until off design method does NOT return an error code
-		while( true )
-		{
-			ms_od_op_inputs.m_recomp_frac = f_recomp_max_local;
-
-			int sco2_od_code = off_design(ms_od_par, ms_od_op_inputs);
-
-			if( sco2_od_code == 0 )
-			{
-				break;
-			}
-
-			if( f_recomp_max_local - f_recomp_min < 0.001 )
-			{
-				// Have at least one solution from finding f_recomp_min,
-				// ... but the solution space is small and don't need to iterate
-				throw(C_csp_exception("Off-design cycle model can only find one feasible recompression fraction, which is kinda weird",
-					"C_sco2_recomp_csp::off_design_nested_opt"));
-			}
-
-			f_recomp_max_local_last = f_recomp_max_local;
-
-			f_recomp_max_local = 0.95*f_recomp_max_local + 0.05*f_recomp_min;
-		}
-	}
-
-	// Use last recomp max that failed for max value, as best efficiency often occurs very close to feasibility cut-off
-	f_recomp_max = f_recomp_max_local_last;
-
-	// Here, one of the following three things should be true:
-	// 1) Have not found a recompression fraction that results in a solution
-	// 2) Have found a recompression fraction that works, but guesses around it fail, so don't send to optimizer
-	// 3) Have found min and max recompression fractions, send to optimizer
 
 	// Optimize recompression fraction for this inlet pressure
 	double f_recomp_opt = fminbr(
@@ -716,6 +1149,11 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	{
 		eta_solved = 0.0;
 	}
+
+	// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
+	if( !(od_solve_code == 0 || od_solve_code == E_TURBINE_INLET_OVER_TEMP || od_solve_code == E_OVER_PRESSURE ||
+		od_solve_code == E_TIP_RATIO || od_solve_code == E_MC_SURGE || od_solve_code == E_RC_SURGE) )
+		return 0.0;
 
 	if( eta_solved > ms_od_opt_eta_tracking.m_eta_max )
 	{
@@ -1150,10 +1588,10 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__nl_opt_shell(const std::vector<d
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
 	int od_code = off_design_core(eta_solved);
 
-	// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
-	if( !(od_code == 0 || od_code == E_TURBINE_INLET_OVER_TEMP || od_code == E_OVER_PRESSURE || 
-			od_code == E_TIP_RATIO || od_code == E_MC_SURGE || od_code == E_RC_SURGE) )
-		return 0.0;
+	//// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
+	//if( !(od_code == 0 || od_code == E_TURBINE_INLET_OVER_TEMP || od_code == E_OVER_PRESSURE || 
+	//		od_code == E_TIP_RATIO || od_code == E_MC_SURGE || od_code == E_RC_SURGE) )
+	//	return 0.0;
 
 	return eta_solved;
 
@@ -1401,6 +1839,41 @@ int C_sco2_recomp_csp::generate_ud_pc_tables(double T_htf_low /*C*/, double T_ht
 	return ud_pc_error_code;
 }
 
+double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/)
+{
+	ms_od_op_inputs.m_P_mc_in = P_mc_in;	//[kPa]
+
+	if( m_is_write_mc_out_file )
+	{
+		std::string case_name = to_string((int)(P_mc_in));
+		std::string file_name = mstr_base_name + case_name + mstr_end_name;
+		mc_out_file.open(file_name);
+	}
+
+	bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
+
+	double f_recomp_opt = mc_rc_cycle.get_od_solved()->m_recomp_frac;		//[-]
+	double eta_max_f_recomp_opt = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
+
+	if( eta_max_f_recomp_opt != eta_max_f_recomp_opt )
+	{
+		eta_max_f_recomp_opt = 0.0;
+	}
+
+	if( m_is_write_mc_out_file )
+	{
+		mc_out_file << "f_recomp_opt,eta_max\n";
+		mc_out_file << f_recomp_opt << "," << eta_max_f_recomp_opt << "\n";
+	}
+
+	if( m_is_write_mc_out_file )
+	{
+		mc_out_file.close();
+	}
+
+	return eta_max_f_recomp_opt;
+}
+
 double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 {
 	std::vector<double> od_operation_inputs;
@@ -1419,7 +1892,53 @@ double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 
 	// Call off design method through 'nl_opt_shell'
 	// ... that method reviews the error code from 'off_design_core()'
-	return od_fix_T_mc_approach__nl_opt_shell(od_operation_inputs);
+	double eta_return = od_fix_T_mc_approach__nl_opt_shell(od_operation_inputs);
+
+	if( m_is_write_mc_out_file )
+	{
+		double P_mc_in = ms_od_op_inputs.m_P_mc_in;		//[kPa]
+		double deltaP = 0.0;
+		double P_mc_out_of = 0.0;
+		double m_dot_mc = 0.0;
+		double m_dot_t = 0.0;
+		double N_mc = 0.0;
+		double mc_tip_ratio_of = 0.0;
+		double f_recomp_of = f_recomp;					//[-]
+		double m_dot_rc = 0.0;
+		double rc_phi_of = 0.0;
+		double rc_tip_ratio_of = 0.0;
+
+		if( eta_return > 0.0 )
+		{
+			P_mc_out_of = mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT];	//[kPa]
+			deltaP = P_mc_out_of - P_mc_in;
+			m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
+			m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
+			m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
+			N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
+			mc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
+
+			rc_phi_of = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_w_tip_ratio;
+			double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
+			double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
+			rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
+		}
+
+		mc_out_file << P_mc_in << ","
+			<< deltaP << ","
+			<< P_mc_out_of << ","
+			<< m_dot_mc << ","
+			<< m_dot_t << ","
+			<< N_mc << ","
+			<< mc_tip_ratio_of << ","
+			<< f_recomp_of << ","
+			<< m_dot_rc << ","
+			<< rc_phi_of << ","
+			<< rc_tip_ratio_of << ","
+			<< eta_return << "\n";
+	}
+
+	return eta_return;
 }
 
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data)
@@ -1433,4 +1952,11 @@ double fmin_f_recomp_cycle_eta(double x, void *data)
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
 
 	return -(frame->opt_f_recomp_max_eta(x));
+}
+
+double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data)
+{
+	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+
+	return -(frame->opt_P_mc_in_nest_f_recomp_max_eta(x));
 }
