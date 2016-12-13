@@ -22,7 +22,7 @@ var_info vtab_battwatts[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                    "Inverter model specifier",                 "",      "0=cec,1=datasheet,2=partload,3=generic", "",     "",                           "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",               "Inverter Efficiency",                     "%",      "",                  "",                          "",                           "",                               "" },
 
-};						
+var_info_invalid  };
 
 class cm_battwatts : public compute_module
 {
@@ -226,7 +226,6 @@ public:
 			else 
 				batt.initialize_automated_dispatch(p_ac, p_load, batt_vars->batt_dispatch);
 			
-
 			/* *********************************************************************************************
 			Run Simulation
 			*********************************************************************************************** */
@@ -252,4 +251,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY(battwatts, "battwatts- simple battery model", 1)
+DEFINE_MODULE_ENTRY(battwatts, "simple battery model", 1)

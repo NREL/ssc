@@ -18,6 +18,7 @@ struct batt_variables
 	};
 
 	bool pv_lifetime_simulation;
+	bool en_batt;
 	int analysis_period;
 	int batt_chem;
 	int batt_dispatch;
