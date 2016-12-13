@@ -257,7 +257,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 
 		if(m_is_write_mc_out_file)
 		{
-			std::string case_name = to_string((int)(P_mc_in_guess));
+			std::string case_name = std::to_string((long long int)(P_mc_in_guess));
 			std::string file_name = mstr_base_name + case_name + mstr_end_name;
 			mc_out_file.open(file_name);
 		}
@@ -1845,7 +1845,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 	if( m_is_write_mc_out_file )
 	{
-		std::string case_name = to_string((int)(P_mc_in));
+		std::string case_name = std::to_string((long long int)(P_mc_in));
 		std::string file_name = mstr_base_name + case_name + mstr_end_name;
 		mc_out_file.open(file_name);
 	}
