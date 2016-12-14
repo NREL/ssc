@@ -695,6 +695,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss_percent", "DC tracking loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss_percent", "DC nameplate loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss_percent", "DC power optimizer loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC performance adjustment loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_lifetime_loss_percent", "Lifetime daily DC loss- year 1", "%", "", "Loss", "*", "", "" },
 	//annual_dc_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
@@ -703,6 +705,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
 
 	// annual_ac_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
@@ -1823,7 +1826,8 @@ public:
 		size_t idx = 0;
 		size_t hour = 0;
 
-		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0;
+		// variables used to calculate loss diagram
+		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0;
 
 		idx = 0;
 
@@ -2651,21 +2655,25 @@ public:
 
 						dcpwr_net += sa[nn].module.dcpwr * sa[nn].derate;
 
-						//module degradation and lifetime DC losses apply to all subarrays
-						if (pv_lifetime_simulation == 1)
-							dcpwr_net *= p_dc_degrade_factor[iyear + 1];
+					}
+					// bug fix jmf 12/13/16- losses that apply to ALL subarrays need to be applied OUTSIDE of the subarray summing loop
+					// if they're applied WITHIN the loop, as they had been, then the power from subarrays 1-3 get the SAME derate/degradation applied nn-1 times, instead of just once!!
 
-						//dc adjustment factors apply to all subarrays
-						dcpwr_net *= dc_haf(hour);
+					//module degradation and lifetime DC losses apply to all subarrays
+					if (pv_lifetime_simulation == 1)
+						dcpwr_net *= p_dc_degrade_factor[iyear + 1];
 
-						//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-						if (pv_lifetime_simulation == 1 && en_dc_lifetime_losses)
-						{
-							//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
-							int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
-							dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
-						}
+					//dc adjustment factors apply to all subarrays
+					if (iyear == 0) annual_dc_adjust_loss += dcpwr_net * (1 - dc_haf(hour)) * 0.001 * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
+					dcpwr_net *= dc_haf(hour);
 
+					//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
+					if (pv_lifetime_simulation == 1 && en_dc_lifetime_losses)
+					{
+						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
+						int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (dc_lifetime_losses[dc_loss_index] / 100) * 0.001 * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
 					}
 
 					// Battery replacement
@@ -2779,6 +2787,7 @@ public:
 					{
 						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * 0.001 * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 					}
 
@@ -3068,35 +3077,56 @@ public:
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_mismatch_loss / annual_dc_gross;
 		assign("annual_dc_mismatch_loss_percent", var_data((ssc_number_t)percent));
+
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_diode_loss / annual_dc_gross;
 		assign("annual_dc_diodes_loss_percent", var_data((ssc_number_t)percent));
+
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_wiring_loss / annual_dc_gross;
 		assign("annual_dc_wiring_loss_percent", var_data((ssc_number_t)percent));
+
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_tracking_loss / annual_dc_gross;
 		assign("annual_dc_tracking_loss_percent", var_data((ssc_number_t)percent));
+
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_nameplate_loss / annual_dc_gross;
 		assign("annual_dc_nameplate_loss_percent", var_data((ssc_number_t)percent));
+
+		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_dcopt_loss / annual_dc_gross;
 		assign("annual_dc_optimizer_loss_percent", var_data((ssc_number_t)percent));
+
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_dc_adjust_loss / annual_dc_gross;
+		assign("annual_dc_perf_adj_loss_percent", var_data((ssc_number_t)percent));
+
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * annual_dc_lifetime_loss / annual_dc_gross;
+		assign("annual_dc_lifetime_loss_percent", var_data((ssc_number_t)percent));
+
+
 		//annual_dc_net
 		percent = 0;
 		if (annual_dc_net > 0) percent = 100 *annual_inv_cliploss / annual_dc_net;
 		assign("annual_ac_inv_clip_loss_percent", var_data((ssc_number_t)percent));
+
 		percent = 0;
 		if (annual_dc_net > 0) percent = 100 * annual_inv_psoloss / annual_dc_net;
 		assign("annual_ac_inv_pso_loss_percent", var_data((ssc_number_t)percent));
+
 		percent = 0;
 		if (annual_dc_net > 0) percent = 100 * annual_inv_pntloss / annual_dc_net;
 		assign("annual_ac_inv_pnt_loss_percent", var_data((ssc_number_t)percent));
+
 		sys_output = annual_dc_net;
 		sys_output -= (annual_inv_cliploss + annual_inv_pntloss + annual_inv_psoloss);
 		percent = 0;
 		if (sys_output > 0) percent = 100 * (sys_output - annual_ac_gross) / sys_output;
 		assign("annual_ac_inv_eff_loss_percent", var_data((ssc_number_t)percent));
+
+
 		// annual_ac_gross
 		sys_output *= (1.0 - percent / 100.0);
 
@@ -3110,11 +3140,17 @@ public:
 		if (annual_ac_gross > 0) percent = 100.0 * acwiring_loss / annual_ac_gross;
 		assign("annual_ac_wiring_loss_percent", var_data((ssc_number_t)percent));
 		sys_output -= acwiring_loss;
+
 		percent = 0;
 		if (annual_ac_gross > 0) percent = 100.0 * transformer_loss / annual_ac_gross;
 		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
 		sys_output -= transformer_loss;
 		// annual_ac_pre_avail
+
+		percent = 0;
+		if (annual_ac_gross > 0) percent = 100 * annual_ac_lifetime_loss / annual_ac_gross;
+		assign("annual_ac_lifetime_loss_percent", var_data((ssc_number_t)percent));
+		sys_output -= annual_ac_lifetime_loss;
 
 #ifdef WITH_CHECKS
 		// check that ac_net = sys_output at this point
