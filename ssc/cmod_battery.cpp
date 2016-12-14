@@ -8,82 +8,85 @@
 
 
 
-var_info vtab_battery[] = {
-/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	
+var_info vtab_battery_inputs[] = {
+	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                             GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
 	// simulation inputs - required only if lifetime analysis
-	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                     "PV lifetime simulation",                                  "0/1",     "",                     "",             "?=0",                        "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
+	{ SSC_INPUT, SSC_NUMBER, "pv_lifetime_simulation", "PV lifetime simulation", "0/1", "", "", "?=0", "BOOLEAN", "" },
+	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Lifetime analysis period", "years", "", "", "pv_lifetime_simulation=1", "", "" },
 
 	// configuration inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=generic", "",     "",                           "INTEGER,MIN=0,MAX=3",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "%",       "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "%",       "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                      "",             "",                           "",                               "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_ac_efficiency",                      "Battery DC to AC efficiency",                             "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "inverter_model", "Inverter model specifier", "", "0=cec,1=datasheet,2=partload,3=generic", "", "", "INTEGER,MIN=0,MAX=3", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_snl_eff_cec", "Inverter Sandia CEC Efficiency", "%", "", "pvsamv1", "inverter_model=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_ds_eff", "Inverter Datasheet Efficiency", "%", "", "pvsamv1", "inverter_model=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_pd_eff", "Inverter Partload Efficiency", "%", "", "pvsamv1", "inverter_model=2", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inverter_efficiency", "Inverter Efficiency", "%", "", "", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_ac_or_dc", "Battery interconnection (AC or DC)", "dc=0,ac=1", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_dc_dc_efficiency", "PV DC to battery DC efficiency", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_dc_ac_efficiency", "Battery DC to AC efficiency", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_ac_dc_efficiency", "Inverter AC to battery DC efficiency", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_meter_position", "Position of battery relative to electric meter", "", "", "Battery", "", "", "" },
 
 	// generic battery inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_strings",                      "Number of strings of cells",                              "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_series",                       "Number of cells in series",                               "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_computed_bank_capacity",                "Computed bank capacity",                                  "kWh",     "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_chem",                                  "Battery chemistry",                                       "",        "0=LeadAcid,1=LiIon",   "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_minimum_SOC",		                   "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_maximum_SOC",                           "Minimum allowed state-of-charge",                         "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_charge_max",                    "Maximum charge current",                                  "A",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_current_discharge_max",                 "Maximum discharge current",                               "A",       "",                     "Battery",       "",                           "",                              "" },
-    { SSC_INPUT,        SSC_NUMBER,      "batt_minimum_modetime",                      "Minimum time at charge state",                            "min",     "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_computed_strings", "Number of strings of cells", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_computed_series", "Number of cells in series", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_computed_bank_capacity", "Computed bank capacity", "kWh", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_chem", "Battery chemistry", "", "0=LeadAcid,1=LiIon", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_minimum_SOC", "Minimum allowed state-of-charge", "V", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_maximum_SOC", "Minimum allowed state-of-charge", "V", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_current_charge_max", "Maximum charge current", "A", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_current_discharge_max", "Maximum discharge current", "A", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_minimum_modetime", "Minimum time at charge state", "min", "", "Battery", "", "", "" },
 
 	// Voltage discharge curve
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vfull",                                 "Fully charged cell voltage",                              "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vexp",                                  "Cell voltage at end of exponential zone",                 "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vnom",                                  "Cell voltage at end of nominal zone",                     "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Vnom_default",                          "Default nominal cell voltage",                            "V",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qfull",                                 "Fully charged cell capacity",                             "Ah",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qexp",                                  "Cell capacity at end of exponential zone",                "Ah",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_Qnom",                                  "Cell capacity at end of nominal zone",                    "Ah",      "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_C_rate",                                "Rate at which voltage vs. capacity curve input",          "",        "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_resistance",                            "Internal resistance",                                     "Ohm",     "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Vfull", "Fully charged cell voltage", "V", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Vexp", "Cell voltage at end of exponential zone", "V", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Vnom", "Cell voltage at end of nominal zone", "V", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Vnom_default", "Default nominal cell voltage", "V", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Qfull", "Fully charged cell capacity", "Ah", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Qexp", "Cell capacity at end of exponential zone", "Ah", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Qnom", "Cell capacity at end of nominal zone", "Ah", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_C_rate", "Rate at which voltage vs. capacity curve input", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_resistance", "Internal resistance", "Ohm", "", "Battery", "", "", "" },
 
 	// lead-acid inputs
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q20_computed",	                   "Capacity at 20-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_q10_computed",	                   "Capacity at 10-hour discharge rate",                     "Ah",       "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_qn_computed",	                       "Capacity at discharge rate for n-hour rate",             "Ah",       "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,		SSC_NUMBER,		"LeadAcid_tn",	                               "Time to discharge",                                      "h",        "",                     "Battery",       "",                           "",                             "" },
-																																																						     
+	{ SSC_INPUT, SSC_NUMBER, "LeadAcid_q20_computed", "Capacity at 20-hour discharge rate", "Ah", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "LeadAcid_q10_computed", "Capacity at 10-hour discharge rate", "Ah", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "LeadAcid_qn_computed", "Capacity at discharge rate for n-hour rate", "Ah", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "LeadAcid_tn", "Time to discharge", "h", "", "Battery", "", "", "" },
+
 	// lifetime inputs
-	{ SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT, SSC_MATRIX, "batt_lifetime_matrix", "Cycles vs capacity at different depths-of-discharge", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_replacement_capacity", "Capacity degradation at which to replace battery", "%", "", "Battery", "", "", "" },
 
 	// thermal inputs
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_length",                                 "Battery length",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_width",                                  "Battery width",                                          "m",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_height",                                 "Battery height",                                         "m",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_Cp",                                     "Battery specific heat capacity",                         "J/KgK",    "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_h_to_ambient",                           "Heat transfer between battery and environment",          "W/m2K",    "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "T_room",                                      "Temperature of storage room",                            "C",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "cap_vs_temp",                                 "Effective capacity as function of temperature",          "C,%",      "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_mass", "Battery mass", "kg", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_length", "Battery length", "m", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_width", "Battery width", "m", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_height", "Battery height", "m", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_Cp", "Battery specific heat capacity", "J/KgK", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_h_to_ambient", "Heat transfer between battery and environment", "W/m2K", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "T_room", "Temperature of storage room", "C", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "cap_vs_temp", "Effective capacity as function of temperature", "C,%", "", "Battery", "", "", "" },
 
 	// storage dispatch
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_charge",                      "Periods 1-6 charging allowed?",                          "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_discharge",                   "Periods 1-6 discharging allowed?",                       "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_gridcharge",                  "Periods 1-6 grid charging allowed?",                     "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_discharge",           "Periods 1-6 discharge percent",                          "%",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "dispatch_manual_percent_gridcharge",          "Periods 1-6 gridcharge percent",                         "%",        "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched",                       "Battery dispatch schedule for weekday",                  "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_MATRIX,     "dispatch_manual_sched_weekend",               "Battery dispatch schedule for weekend",                  "",         "",                     "Battery",       "",                           "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power",                           "Grid target power for every time step",                  "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2",    "",                     "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_NUMBER,     "batt_pv_choice",                              "Prioritize PV usage for load or battery",                "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT, SSC_ARRAY, "dispatch_manual_charge", "Periods 1-6 charging allowed?", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "dispatch_manual_discharge", "Periods 1-6 discharging allowed?", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "dispatch_manual_gridcharge", "Periods 1-6 grid charging allowed?", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "dispatch_manual_percent_discharge", "Periods 1-6 discharge percent", "%", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "dispatch_manual_percent_gridcharge", "Periods 1-6 gridcharge percent", "%", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "dispatch_manual_sched", "Battery dispatch schedule for weekday", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_MATRIX, "dispatch_manual_sched_weekend", "Battery dispatch schedule for weekend", "", "", "Battery", "", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "batt_target_power", "Grid target power for every time step", "kW", "", "Battery", "?=0", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "batt_target_power_monthly", "Grid target power on monthly basis", "kW", "", "Battery", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_target_choice", "Target power input option", "0/1", "", "Battery", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_dispatch_choice", "Battery dispatch algorithm", "0/1/2", "", "Battery", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "batt_pv_choice", "Prioritize PV usage for load or battery", "0/1", "", "Battery", "?=0", "", "" },
 
+	var_info_invalid
+};
 
+var_info vtab_battery_outputs[] = {
 	// Capacity, Voltage, Charge outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q0",                                    "Battery total charge",                                   "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_q1",                                    "Battery available charge",                               "Ah",       "",                     "Battery",       "",                           "",                              "" },
@@ -808,7 +811,8 @@ public:
 	cm_battery()
 	{
 		add_var_info(_cm_vtab_battery);
-		add_var_info( vtab_battery );
+		add_var_info( vtab_battery_inputs );
+		add_var_info(vtab_battery_outputs);
 	}
 
 	void exec() throw(general_error)
