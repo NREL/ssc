@@ -89,7 +89,7 @@ static var_info vtab_utility_rate5[] = {
 	// year 1 values for metrics
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity bill with system (year 1)",    "$/yr", "",    "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity bill without system (year 1)", "$/yr", "",    "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity net savings with system (year 1)",             "$/yr",    "", "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity bill savings with system (year 1)",             "$/yr",    "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Electricity load total (year 1)",                "kWh/yr",  "", "Financial Metrics", "*", "", "" },
 
 
@@ -143,23 +143,23 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_peak_wo_system", "Peak demand without system", "kW/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 // TODO - remove after testing
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_w_system", "Energy use with system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_wo_system", "Energy use without system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_w_system", "Electricity use with system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_use_wo_system", "Electricity use without system", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 	//	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_system_generation",    "monthly system generation",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_to_grid",    "Electricity to/from grid",           "kWh/mo", "", "Monthly",          "*",                         "LENGTH=12",                     "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_monthly_electricity_needed_from_grid",    "Electricity needed from grid",           "kWh", "", "",          "*",                         "LENGTH=12",                     "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_generation", "Net metering credit in kWh", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_dollars", "Net metering credit in $", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_generation", "Excess generation kWh credit earned", "kWh/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_cumulative_excess_dollars", "Excess generation $ credit earned", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 //	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_salespurchases", "Electricity sales/purchases with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 //	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_salespurchases_wo_sys", "Electricity sales/purchases without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_w_sys", "Utility bill with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_wo_sys", "Utility bill without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_w_sys", "Electricity bill with system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "year1_monthly_utility_bill_wo_sys", "Electricity bill without system", "$/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 
 	// convert annual outputs from Arrays to Matrices years x months
-	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_w_sys_ym", "Utility bill with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
-	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_wo_sys_ym", "Utility bill without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_w_sys_ym", "Electricity bill with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
+	{ SSC_OUTPUT, SSC_MATRIX, "utility_bill_wo_sys_ym", "Electricity bill without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_w_sys_fixed_ym", "Fixed monthly charge with system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 	{ SSC_OUTPUT, SSC_MATRIX, "charge_wo_sys_fixed_ym", "Fixed monthly charge without system", "$", "", "Charges by Month", "*", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
@@ -179,8 +179,8 @@ static var_info vtab_utility_rate5[] = {
 
 
 	// annual sums
-	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys", "Utility bill with system", "$", "", "Charges by Month", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys", "Utility bill without system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Charges by Month", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys", "Electricity bill without system", "$", "", "Charges by Month", "*", "", "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_w_sys_fixed", "Fixed monthly charge with system", "$", "", "Charges by Month", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "charge_wo_sys_fixed", "Fixed monthly charge without system", "$", "", "Charges by Month", "*", "", "" },
