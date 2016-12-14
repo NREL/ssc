@@ -31,7 +31,7 @@ public:
 	cm_battwatts()
 	{
 		add_var_info(vtab_battwatts);
-		add_var_info(vtab_battery);
+		add_var_info(vtab_battery_outputs);
 	}
 
 

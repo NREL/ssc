@@ -8,7 +8,8 @@
 #include "lib_pvinv.h"
 
 
-extern var_info vtab_battery[];
+extern var_info vtab_battery_inputs[];
+extern var_info vtab_battery_outputs[];
 
 struct batt_variables
 {

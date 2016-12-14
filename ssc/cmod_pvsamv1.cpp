@@ -853,7 +853,8 @@ public:
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_dc_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
-		add_var_info(vtab_battery);
+		add_var_info(vtab_battery_inputs);
+		add_var_info(vtab_battery_outputs);
 	}
 
 	void setup_noct_model( const std::string &prefix, noct_celltemp_t &noct_tc )
