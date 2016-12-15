@@ -106,8 +106,8 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Electricity peak from system to load", "kW",  "",                      "Time Series",             "*",                         "",                   "" },
 	
 
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with sytem",    "$", "",          "Time Series",             "*",                         "",                   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_without_system",  "Electricity sales/purchases without sytem", "$", "",          "Time Series",             "*",                         "",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_with_system",     "Electricity sales/purchases with system",    "$", "",          "Time Series",             "*",                         "",                   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_salespurchases_without_system",  "Electricity sales/purchases without system", "$", "",          "Time Series",             "*",                         "",                   "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_with_system", "Energy charge with system", "$", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_ec_without_system", "Energy charge without system", "$", "", "Time Series", "*", "", "" },
