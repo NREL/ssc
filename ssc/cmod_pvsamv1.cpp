@@ -1816,10 +1816,12 @@ public:
 		}
 		
 		// for reporting status updates
+		float percent_baseline = 0.;
+		float percent_complete = 0.;
 		size_t nreports = 50 * nyears;
 		size_t ireport = 0;
 		size_t ireplast = 0;
-		size_t insteps = look_ahead ? 2*nyears * 8760 : nyears * 8760;
+		size_t insteps = 3 * nyears * 8760;
 		size_t irepfreq = insteps/nreports;
 
 		size_t idx = 0;
@@ -1946,8 +1948,12 @@ public:
 				wdprov->rewind();
 			}
 		}
-
-		// PV DC calculation
+		/* *********************************************************************************************
+		PV DC calculation
+		*********************************************************************************************** */
+		FILE * file_percent;
+		file_percent = fopen("percent.txt", "a");
+		
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
@@ -1956,10 +1962,10 @@ public:
 				ireport++;
 				if (ireport - ireplast > irepfreq)
 				{
-					float percent = 100.0f * ((float)ireport) / ((float)insteps);
-					if (!update("", percent, (float)idx))
-						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1));
-
+					percent_complete = percent_baseline + 100.0f *(float)(hour + iyear * 8760) / (float)(insteps);
+					fprintf(file_percent, "%.2f\n", percent_complete);
+					if (!update("", percent_complete))
+						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in dc loop");
 					ireplast = ireport;
 				}
 
@@ -2711,12 +2717,24 @@ public:
 		if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED) && look_ahead)
 			batt.initialize_automated_dispatch(p_dcpwr, p_load_full, batt_dispatch);
 
-		// PV AC calculation
-		idx = 0;
+		/* *********************************************************************************************
+		PV AC calculation
+		*********************************************************************************************** */
+		idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
 			{
+				// report progress updates to the caller	
+				ireport++;
+				if (ireport - ireplast > irepfreq)
+				{
+					percent_complete = percent_baseline + 100.0f *(float)(hour + iyear * 8760) / (float)(insteps);
+					fprintf(file_percent, "%.2f\n", percent_complete);
+					if (!update("", percent_complete))
+						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in ac loop");
+					ireplast = ireport;
+				}
 
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
@@ -2834,12 +2852,24 @@ public:
 		if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED && look_ahead)
 			batt.initialize_automated_dispatch(p_gen, p_load_full, batt_dispatch);
 
-		// Post PVac loop
-		idx = 0;
+		/* *********************************************************************************************
+		Post PV AC 
+		*********************************************************************************************** */
+		idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
 			{
+				// report progress updates to the caller	
+				ireport++;
+				if (ireport - ireplast > irepfreq)
+				{
+					percent_complete = percent_baseline + 100.0f *(float)(hour + iyear * 8760) / (float)(insteps);
+					fprintf(file_percent, "%.2f\n", percent_complete);
+					if (!update("", percent_complete))
+						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in post ac loop");
+					ireplast = ireport;
+				}
 
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
@@ -2858,55 +2888,8 @@ public:
 				}
 			} 
 
-		} // over all nyears
-		/*
-		// we've now generated predictions without battery, set to run battery
-		if (look_ahead)
-		{
-			en_batt = true;
-			annual_energy = 0;
-			batt.initialize_automated_dispatch(p_gen, p_load_full, batt_dispatch);
-
-			idx = 0;
-			// lifetime analysis over nyears
-			for (size_t iyear = 0; iyear < nyears; iyear++)
-			{
-				// begin 8760 loop through each timestep
-				hour = 0;
-
-				while (hour < 8760)
-				{
-
-					// report progress updates to the caller	
-					ireport++;
-					if (ireport - ireplast > irepfreq)
-					{
-						float percent = 100.0f * ((float)ireport) / ((float)insteps);
-						if (!update("", percent, (float)idx))
-							throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1));
-
-						ireplast = ireport;
-					}
-
-					for (int jj = 0; jj < step_per_hour; jj++)
-					{
-						// Battery replacement
-						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour, jj);
-
-						// AC battery
-						batt.advance(*this, iyear, hour, jj, p_gen[idx] * ts_hour, p_load_full[idx] * ts_hour);
-						p_gen[idx] = batt.outGenPower[idx];
-
-						if (iyear == 0)
-							annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
-
-						idx++;
-					}
-					hour++;
-				}
-			}
-		}
-		*/
+		} 
+		fclose(file_percent);
 		// Check the snow models and if neccessary report a warning
 		//  *This only needs to be done for subarray1 since all of the activated subarrays should 
 		//   have the same number of bad values
