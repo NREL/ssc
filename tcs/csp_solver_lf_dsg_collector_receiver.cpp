@@ -2460,6 +2460,8 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 
 		E_sca[i] = m_C_thermal*(mc_sca_out_t_end[i].m_temp - mc_sca_out_t_end_last[i].m_temp);	//[kJ]
 
+		//double time_here = sim_info.ms_ts.m_time;
+		//
 		//double q_bal_abs = m_q_abs[i];		//[kW]
 		//double q_bal_htf = m_m_dot_loop*(mc_sca_out_t_int[i].m_enth - mc_sca_in_t_int[i].m_enth);	//[kW]
 		//double q_bal_int_energy = E_sca[i] / sim_info.ms_ts.m_step;		//[kW]
@@ -2467,6 +2469,10 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		//double q_max_abs = max( abs(q_bal_int_energy), max( abs(q_bal_abs), abs(q_bal_htf) ) );
 		//
 		//double E_bal_sca = q_bal_abs - q_bal_htf - q_bal_int_energy;
+		//
+		//double E_bal_sca_abs = fabs(E_bal_sca);
+		//
+		//double blahhh = 1.2345;
 	}
 
 	mc_sys_hot_in_t_int.m_enth = mc_sca_out_t_int[m_nModTot-1].m_enth;	//[kJ/kg]
@@ -2564,9 +2570,19 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
 	{
 		transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
 										step_subts, h_out_t_start_local, h_out_t_end_local, T_out_t_end_local);
-		
+		//
+		//
+		//
+		//double q_bal_htf = m_dot*(0.5*(h_out_t_start_local+h_out_t_end_local) - h_in);
+		//
+		//double q_bal_int_energy = C_thermal*(T_out_t_end_local - T_out_t_end_prev_local) / step_subts;
+		//
+		//double q_bal_sca = q_dot_abs - q_bal_htf - q_bal_int_energy;
+		//
+		//
 		h_out_t_int_sum += 0.5*(h_out_t_start_local + h_out_t_end_local);	//[kJ/K]
 		T_out_t_end_prev_local = T_out_t_end_local;		//[K]
+
 	}
 
 	h_out_t_int = h_out_t_int_sum / (double)n_steps;	//[kJ/K]
@@ -2590,9 +2606,39 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	}
 	double T_x0_at_P_in = wp.temp;		//[K]
 
-	if( fabs(T_out_t_end_prev - T_x0_at_P_in)/T_x0_at_P_in < 0.0001 )
+	double deltaT_tol = 0.001*T_x0_at_P_in;	//[K]
+	double deltaT = T_out_t_end_prev - T_x0_at_P_in;	//[K]
+
+	if( fabs(deltaT) < deltaT_tol )
 	{
-		h_out_t_end_prev = h_in;
+		double f_deltaT = fabs(deltaT) / deltaT_tol;	//[-]
+
+		if(T_out_t_end_prev > T_x0_at_P_in)
+		{
+			water_prop_error = water_TQ(T_out_t_end_prev, 1.0, &wp);
+			if( water_prop_error != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
+			}
+			double h_x1_at_T_prev = wp.enth;	//[kJ/kg]
+
+			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT*h_x1_at_T_prev;	//[kJ/kg]
+		}
+		else
+		{
+			water_prop_error = water_TQ(T_out_t_end_prev, 0.0, &wp);
+			if( water_prop_error != 0 )
+			{
+				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int",
+					"water_TQ T_out_t_end_prev q = 0", water_prop_error));
+			}
+			double h_x0_at_T_prev = wp.enth;	//[kJ/kg]
+
+			h_out_t_end_prev = (1.0 - f_deltaT)*h_in + f_deltaT*h_x0_at_T_prev;	//[kJ/kg]
+		}
+
+		//h_out_t_end_prev = h_in;
 	}
 	else
 	{
