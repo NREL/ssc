@@ -131,6 +131,17 @@ public:
 
 	bool get_message(std::string *msg);
 
+	void transfer_messages(C_csp_messages & c_csp_messages_downstream)
+	{
+		int out_type = -1;
+		std::string out_msg = "";
+
+		while( c_csp_messages_downstream.get_message(&out_type, &out_msg) )
+		{
+			add_message(out_type, out_msg);
+		}
+	}
+
 };
 
 class C_csp_exception : public std::exception
