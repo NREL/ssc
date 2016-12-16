@@ -5207,7 +5207,8 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 	}
 
 	//Print the results to a string
-	if (summary != NULL){
+	if (summary != NULL)
+	{
 		summary->clear();
 		char tstr[TSTRLEN];
 		//Write runner diam
@@ -5231,7 +5232,6 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 			MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, m_D_hdr[i], m_D_hdr[i] * m_mtoinch, nd);
 			summary->append(tstr);
 		}
-		//110 format(2X,I4,3X,"|",4X,F6.4,4X,"|",4X,F6.3,5X,"|",1X,I3)
 	}
 
 }
@@ -5254,7 +5254,8 @@ double C_csp_trough_collector_receiver::pipe_sched(double De) {
 	//D_inch = (/2.50, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, &
 	//           28.0, 30.0, 32.0, 34.0, 36.0, 42.0, 48.0, 54.0, 60.0, 66.0, 72.0/)
 
-	double D_m[] = { 0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
+	double D_m[] = { 0.01855, 0.02173, 0.03115, 0.0374, 0.04375, 0.0499, 0.0626,
+		0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
 		0.39055040, 0.438150, 0.488950, 0.53340, 0.58420, 0.6350, 0.679450, 0.730250, 0.781050,
 		0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
 
