@@ -1951,9 +1951,6 @@ public:
 		/* *********************************************************************************************
 		PV DC calculation
 		*********************************************************************************************** */
-		FILE * file_percent;
-		file_percent = fopen("percent.txt", "a");
-		
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
@@ -1963,7 +1960,6 @@ public:
 				if (ireport - ireplast > irepfreq)
 				{
 					percent_complete = percent_baseline + 100.0f *(float)(hour + iyear * 8760) / (float)(insteps);
-					fprintf(file_percent, "%.2f\n", percent_complete);
 					if (!update("", percent_complete))
 						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in dc loop");
 					ireplast = ireport;
@@ -2730,7 +2726,6 @@ public:
 				if (ireport - ireplast > irepfreq)
 				{
 					percent_complete = percent_baseline + 100.0f *(float)(hour + iyear * 8760) / (float)(insteps);
-					fprintf(file_percent, "%.2f\n", percent_complete);
 					if (!update("", percent_complete))
 						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in ac loop");
 					ireplast = ireport;
@@ -2865,7 +2860,6 @@ public:
 				if (ireport - ireplast > irepfreq)
 				{
 					percent_complete = percent_baseline + 100.0f *(float)(hour + iyear * 8760) / (float)(insteps);
-					fprintf(file_percent, "%.2f\n", percent_complete);
 					if (!update("", percent_complete))
 						throw exec_error("pvsamv1", "simulation canceled at hour " + util::to_string(hour + 1.0) + " in year " + util::to_string((int)iyear + 1) + "in post ac loop");
 					ireplast = ireport;
@@ -2889,7 +2883,6 @@ public:
 			} 
 
 		} 
-		fclose(file_percent);
 		// Check the snow models and if neccessary report a warning
 		//  *This only needs to be done for subarray1 since all of the activated subarrays should 
 		//   have the same number of bad values

@@ -69,14 +69,20 @@ class dc_dc_charge_controller
 {
 public:
 	
-	dc_dc_charge_controller(double dc_dc_efficiency){ _dc_dc_efficiency = 0.01*dc_dc_efficiency; }
+	dc_dc_charge_controller(double batt_dc_dc_bms_efficiency, double pv_dc_dc_mppt_efficiency)
+	{ 
+		_batt_dc_dc_bms_efficiency = 0.01*batt_dc_dc_bms_efficiency;
+		_pv_dc_dc_mppt_efficiency = 0.01*pv_dc_dc_mppt_efficiency;
 
-	// return power loss [kW]
-	double convert_dc_to_dc(double P_dc_in, double *P_dc_out );
-	double dc_dc_efficiency(){ return _dc_dc_efficiency; };
+	}
+
+	double batt_dc_dc_bms_efficiency(){ return _batt_dc_dc_bms_efficiency; };
+	double pv_dc_dc_mppt_efficiency(){ return _pv_dc_dc_mppt_efficiency; };
+
 
 protected:
-	double _dc_dc_efficiency;
+	double _batt_dc_dc_bms_efficiency;
+	double _pv_dc_dc_mppt_efficiency;
 	double _loss_dc_dc;
 };
 
@@ -152,14 +158,16 @@ protected:
 class dc_connected_battery_controller : public charge_controller
 {
 public:
-	dc_connected_battery_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double dc_dc_efficiency, double inverter_efficiency);
+	dc_connected_battery_controller(dispatch_t * dispatch,
+									battery_metrics_t * battery_metrics,
+									double batt_dc_dc_bms_efficiency,
+									double pv_dc_dc_mppt_efficiency,
+									double inverter_efficiency);
 	~dc_connected_battery_controller();
 
 	double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
 	double process_dispatch();
-	double grid_ac();
-	double gen_ac();
-	double gen_dc();
+	double gen_ac(){ return 0.; };
 	double update_gen_ac(double P_gen_ac);
 
 
