@@ -328,6 +328,9 @@ class C_csp_collector_receiver
 
 public:
 	
+	// Class to save messages for up stream classes
+	C_csp_messages mc_csp_messages;
+
 	// Maximum step for collector-receiver model
 	double m_max_step;		//[s]
 

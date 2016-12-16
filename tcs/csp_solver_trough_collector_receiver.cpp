@@ -505,6 +505,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		std::string summary;
 		header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &summary);
+		
 		//if(ErrorFound()) return
 
 		/*
@@ -622,7 +623,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		summary.append(tstr);
 
 		// Can uncomment this when other code is updated to write/display more than ~700 characters
-		mc_csp_messages.add_message(C_csp_messages::NOTICE, summary.c_str());
+		mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
 		//message(TCS_NOTICE, summary.c_str());
 
 		//if ( FILE *file = fopen( "C:/Users/mwagner/Documents/NREL/SAM/Code conversion/header_diam.out", "w") )
@@ -5143,10 +5144,8 @@ double C_csp_trough_collector_receiver::FricFactor(double m_Rough, double Reynol
 ---------------------------------------------------------------------------------			*/
 
 void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int m_nrunsec, double rho, double V_max, double V_min, double m_dot,
-	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary){
-	 
-	summary = NULL;
-
+	std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary)
+{
 	//resize the header matrices if they are incorrect
 	//real(8),intent(out):: m_D_hdr(nhsec), m_D_runner(m_nrunsec)
 	if (m_D_hdr.size() != nhsec) m_D_hdr.resize(nhsec);
@@ -5170,8 +5169,10 @@ void C_csp_trough_collector_receiver::header_design(int nhsec, int m_nfsec, int 
 	m_D_runner.at(0) = pipe_sched(sqrt(4.*m_dot_ts / (rho*V_max*CSP::pi)));
 	//other runner diameters
 	m_dot_temp = m_dot_ts*(1. - float(m_nfsec % 4) / float(m_nfsec));  //mjw 5.4.11 Fix mass flow rate for m_nfsec/2==odd 
-	if (m_nrunsec>1) {
-		for (int i = 1; i<m_nrunsec; i++){
+	if( m_nrunsec > 1 ) 
+	{
+		for( int i = 1; i < m_nrunsec; i++)
+		{
 			m_D_runner[i] = pipe_sched(sqrt(4.*m_dot_temp / (rho*V_max*CSP::pi)));
 			m_dot_temp = max(m_dot_temp - m_dot_hdr * 2, 0.0);
 		}

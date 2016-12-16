@@ -293,7 +293,10 @@ void C_csp_solver::init()
 	init_inputs.m_longitude = mc_weather.ms_solved_params.m_lon;	//[deg]
 	init_inputs.m_shift = mc_weather.ms_solved_params.m_shift;		//[deg]
 	C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
+	
 	mc_collector_receiver.init(init_inputs, cr_solved_params);
+	mc_csp_messages.transfer_messages(mc_collector_receiver.mc_csp_messages);
+	
 	m_T_htf_cold_des = cr_solved_params.m_T_htf_cold_des;		//[K]
 	m_P_cold_des = cr_solved_params.m_P_cold_des;				//[kPa]
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]

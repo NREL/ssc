@@ -45,7 +45,7 @@ public:
 
 	C_csp_reported_outputs mc_reported_outputs;
 
-	C_csp_messages mc_csp_messages;
+	//C_csp_messages mc_csp_messages;
 
 	struct S_params
 	{
