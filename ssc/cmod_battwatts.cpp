@@ -138,7 +138,8 @@ public:
 		}
 		batt_vars->batt_ac_dc_efficiency = 92; 
 		batt_vars->batt_dc_ac_efficiency = 92;
-		batt_vars->batt_dc_dc_efficiency = 92;
+		batt_vars->batt_dc_dc_bms_efficiency = 92;
+		batt_vars->pv_dc_dc_mppt_efficiency = 99;
 
 		double batt_bank_voltage = batt_kw * 1000. / current_max;
 		batt_vars->batt_computed_series = std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);

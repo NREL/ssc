@@ -88,7 +88,8 @@ struct batt_variables
 	int batt_topology;
 	double batt_ac_dc_efficiency;
 	double batt_dc_ac_efficiency;
-	double batt_dc_dc_efficiency;
+	double batt_dc_dc_bms_efficiency;
+	double pv_dc_dc_mppt_efficiency;
 
 	int inverter_model;
 	double inv_snl_eff_cec;
@@ -106,7 +107,9 @@ struct battstor
 	~battstor();
 
 	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv, double P_load);
-	void outputs(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
+	void outputs_fixed(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
+	void outputs_topology_dependent(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
+	void metrics(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
 	void update_post_inverted(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_gen_ac);
 	void process_messages(compute_module &cm);
 
