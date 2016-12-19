@@ -453,7 +453,7 @@ public:
 			   double Id_max, 
 			   double t_min, 
 			   int mode, 
-			   bool pv_dispatch);
+			   int pv_dispatch);
 	
 	virtual ~dispatch_t();
 
@@ -511,7 +511,7 @@ protected:
 
 	// configuration
 	int _mode; // 0 = look ahead, 1 = look behind, 2 = maintain target power, 3 = manual dispatch
-	bool _pv_dispatch_to_battery_first; // 0 = meet load first, 1 = meet battery first
+	int _pv_dispatch_to_battery_first; // 0 = meet load first, 1 = meet battery first
 
 	// dc power quantities
 	double _P_gen;				 // DC
