@@ -240,6 +240,10 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	if (fabs(P_gen_dc) > tolerance)
 		inverter_efficiency = P_gen_ac / P_gen_dc;
 
+	// An edge case with large implications on efficiency, investigate further 
+	if (inverter_efficiency < 0)
+		inverter_efficiency = 1.00;
+
 	double P_battery_ac = 0;	
 	if (P_battery_dc > 0)
 		P_battery_ac = P_battery_dc * inverter_efficiency;
