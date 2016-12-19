@@ -260,7 +260,8 @@ double HTFProperties::Cp( double T_K )
 		return 0.0036*T_C + 1.4801;
 	case Therminol_59:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
 		return 0.0033*T_C + 1.6132;
-		break;
+	case Pressurized_Water:
+		return 1.E-5*T_C*T_C - 0.0014*T_C + 4.2092;
 	case User_defined:
 		{
 			if ( m_userTable.nrows() < 3 ) return std::numeric_limits<double>::quiet_NaN();
@@ -338,6 +339,8 @@ double HTFProperties::dens(double T_K, double P)
 			return -0.7146*T_C + 1024.8;
 		case Therminol_59:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
 			return -0.0003*T_C*T_C - 0.6963*T_C + 988.44;
+		case Pressurized_Water:
+			return -0.0023*T_C*T_C - 0.2337*T_C + 1005.6;
 		case User_defined:
 			if ( m_userTable.nrows() < 3 )
 						return std::numeric_limits<double>::quiet_NaN();
@@ -423,6 +426,8 @@ double HTFProperties::visc(double T_K)
 		{
 			return 0.0114608807 - 0.000313431056*T_C + 0.00000416778121*pow(T_C,2) - 3.04668508E-08*pow(T_C,3) + 1.23719006E-10*pow(T_C,4) - 2.60834697E-13*pow(T_C,5) + 2.22227675E-16*pow(T_C,6);
 		}
+	case Pressurized_Water:
+		return 3.E-8*T_C*T_C - 1.E-5*T_C + 0.0011;
 	case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
@@ -497,6 +502,8 @@ double HTFProperties::cond(double T_K)
 		return -2.E-7*T_C*T_C - 3.E-5*T_C + 0.1183;
 	case Therminol_59:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
 		return -1.E-7*T_C*T_C - 6.E-5*T_C + 0.1227;
+	case Pressurized_Water:
+		return -6.E-6*T_C*T_C + 0.0016*T_C*T_C + 0.5631;
 	case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
@@ -579,6 +586,8 @@ double HTFProperties::enth(double T_K)
 		return 1000.*(0.0038*T_C*T_C + 1.4363*T_C + 1.6142);
 	case Therminol_59:	//Reference: Therminol Reference Disk by Solutia: http://www.therminol.com/pages/tools/toolscd.asp
 		return 1000.*(0.0034*T_C*T_C + 1.5977*T_C - 0.0926);
+	case Pressurized_Water:
+		return 4.2711*T_C - 4.3272;
 	case User_defined:
 		if ( m_userTable.nrows() < 3 )
 		return std::numeric_limits<double>::quiet_NaN();

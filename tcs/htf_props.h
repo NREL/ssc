@@ -41,6 +41,7 @@ public:
 		T91_Steel,
 		Therminol_66,
 		Therminol_59,
+		Pressurized_Water,
 		End_Library_Fluids,
 		User_defined = 50
 	};
