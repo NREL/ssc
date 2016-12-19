@@ -174,7 +174,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 				batt_vars->pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &batt_vars->ndischarge_percent);
 				batt_vars->pgridcharge_percent = cm.as_array("dispatch_manual_percent_gridcharge", &batt_vars->ngridcharge_percent);
 				batt_vars->pgridcharge = cm.as_array("dispatch_manual_gridcharge", &batt_vars->ngridcharge);
-				batt_vars->batt_pv_choice = cm.as_boolean("batt_pv_choice");
+				batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 				batt_vars->schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
 				batt_vars->psched = cm.as_matrix("dispatch_manual_sched", &batt_vars->msched, &batt_vars->nsched);
 				batt_vars->psched_weekend = cm.as_matrix("dispatch_manual_sched_weekend", &batt_vars->msched, &batt_vars->nsched);
@@ -354,7 +354,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	if (batt_meter_position == dispatch_t::FRONT)
 		batt_dispatch = dispatch_t::MANUAL;
 
-	bool pv_dispatch = batt_vars->batt_pv_choice;
+	int pv_dispatch = batt_vars->batt_pv_choice;
 	util::matrix_t<float> &schedule = batt_vars->schedule;
 	if (batt_dispatch != dispatch_t::MANUAL)
 	{

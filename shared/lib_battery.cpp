@@ -1167,7 +1167,7 @@ double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
 Dispatch base class
 */
 dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, 
-	double t_min, int mode, bool pv_dispatch)
+	double t_min, int mode, int pv_dispatch)
 {
 	_Battery = Battery;
 	_Battery_initial = new battery_t(*_Battery);
