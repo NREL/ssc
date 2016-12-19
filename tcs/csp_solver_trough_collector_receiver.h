@@ -87,6 +87,9 @@ private:
 
 	std::vector<double> m_D_runner;	//[m] Diameters of runner sections
 	std::vector<double> m_L_runner;	//[m] Lengths of runner sections
+	std::vector<int> m_n_runner_per_index;	//[-] Number of parallel (in flow pattern) runners at this index
+	std::vector<double> m_f_m_dot;	//[-] Design mass flow through runner as fraction of total field design mass flow rate
+
 	std::vector<double> m_D_hdr;	//[m] Diameters of header sections
 	std::vector<double> m_L_actSCA;	//[m] Lengths of each SCA
 
@@ -279,12 +282,14 @@ public:
 	int m_nColt;			//[-] Number of collector types
 	int m_nHCEVar;			//[-] Number of HCE variants per type
 	int m_nLoops;			//[-] Number of loops in the field
+	int m_FieldConfig;		//[-] Number of subfield headers
+	bool m_include_fixed_heat_sink_runner;	//[-] True: model 50[m] of runner sized for full mass flow rate
+	double m_L_heat_sink_piping;	//[m] Length of piping (full mass flow) through heat sink (if applicable)
 	double m_eta_pump;		//[-] HTF pump efficiency
 	double m_HDR_rough;		//[m] Header pipe roughness
 	double m_theta_stow;	//[deg] stow angle
 	double m_theta_dep;		//[deg] deploy angle
 	double m_Row_Distance;	//[m] Spacing between rows (centerline to centerline)
-	int m_FieldConfig;		//[-] Number of subfield headers
 	double m_T_startup;		//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
 	double m_m_dot_htfmin;	//[kg/s] Minimum loop HTF flow rate
 	double m_m_dot_htfmax;	//[kg/s] Maximum loop HTF flow rate
@@ -573,7 +578,8 @@ public:
 		double Nexp, double Ncon, double Nels, double Nelm, double Nell, double Ngav, double Nglv,
 		double Nchv, double Nlw, double Nlcv, double Nbja);
 	double FricFactor(double m_Rough, double Reynold);
-	void header_design(int nhsec, int m_nfsec, int m_nrunsec, double rho, double V_max, double V_min, double m_dot,
+	void header_design(int nhsec, int m_nfsec, int m_nrunsec, bool include_fixed_heat_sink_runner,
+						 double rho, double V_max, double V_min, double m_dot,
 		std::vector<double> &m_D_hdr, std::vector<double> &m_D_runner, std::string *summary = NULL);
 	double pipe_sched(double De);
 	double Pump_SGS(double rho, double m_dotsf, double sm);
