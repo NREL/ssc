@@ -548,7 +548,6 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 			if( n_runner < m_nrunsec )
 			{
-				double f_m_dot_subsection = 1.0 / (double) m_nfsec;
 				if( m_nfsec % 4 > 0 && m_nfsec > 4 )
 				{
 					m_n_runner_per_index[n_runner] = 2;
@@ -587,7 +586,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		double m_dot_subsection = m_m_dot_design / (float(m_nfsec));		//[kg/s] 
 
 		// Mass flow into the 2 loops attached to a single header section
-		double m_dot_2loops = m_dot_subsection / float(m_nfsec);
+		double m_dot_2loops = m_dot_subsection / float(m_nhdrsec);
 
 		// Calculate each section in the header
 		int nst = 0; int nend = 0; int nd = 0;
@@ -655,22 +654,14 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		summary.append("Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
 
 		nd = 1;
-		for( int i = 0; i< m_nhdrsec; i++ ){
+		for( int i = 0; i< m_nhdrsec; i++ )
+		{
 			if( i > 1 ) 
 			{
 				if( m_D_hdr[i] != m_D_hdr.at(i - 1) ) nd = nd + 1;
 			}
 			MySnprintf(tstr, TSTRLEN, "  %4d   |    %6.4lf    |    %6.4lf     | %3d\n", i + 1, m_D_hdr[i], m_D_hdr[i] * m_mtoinch, nd);
 			summary.append(tstr);
-		}
-		
-		if (m_nfsec / 2 % 2 == 1)
-		{
-			x1 = 2.;     //the first runners are normal
-		}
-		else
-		{
-			x1 = 1.;     //the first runners are short
 		}
 
 		double v_tofrom_sgs = 0.0;
@@ -987,13 +978,13 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_end(const C_csp_wea
 		m_Header_hl_hot = 0.0;
 		for( int i = 0; i < m_nhdrsec; i++ )
 		{
-			m_Header_hl_hot = m_nfsec * m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
+			m_Header_hl_hot += m_nfsec * m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
 		}
 
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			m_Runner_hl_hot = m_n_runner_per_index[i] * m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
+			m_Runner_hl_hot += m_n_runner_per_index[i] * m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_TCS_T_htf_out[m_nSCA - 1] - T_db);	//[W]
 		}
 
 		double m_Pipe_hl_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
@@ -1256,14 +1247,13 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		m_Header_hl_hot = 0.0;  
 		for( int i = 0; i < m_nhdrsec; i++ )
 		{
-			m_Header_hl_hot = m_nfsec * m_Header_hl_hot + m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
+			m_Header_hl_hot += m_nfsec * m_Row_Distance*m_D_hdr[i] * CSP::pi*m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
 		}
 
 		//Add the runner length
 		for( int i = 0; i < m_nrunsec; i++ )
 		{
-			double mult = min(2.0, (double)m_nfsec);
-			m_Runner_hl_hot = m_n_runner_per_index[i] * m_Runner_hl_hot + m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
+			m_Runner_hl_hot += m_n_runner_per_index[i] * m_L_runner[i] * CSP::pi*m_D_runner[i] * m_Pipe_hl_coef*(m_T_htf_out_t_int[m_nSCA - 1] - T_db);	//[W]
 		}
 		
 		q_dot_loss_HR_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
@@ -5374,10 +5364,7 @@ Data and stress calculations were obtained from Kelly & Kearney piping model, re
 
 double C_csp_trough_collector_receiver::pipe_sched(double De) {
 
-	int np = 25;
-
-	//D_inch = (/2.50, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 26.0, &
-	//           28.0, 30.0, 32.0, 34.0, 36.0, 42.0, 48.0, 54.0, 60.0, 66.0, 72.0/)
+	int np = 32;
 
 	double D_m[] = { 0.01855, 0.02173, 0.03115, 0.0374, 0.04375, 0.0499, 0.0626,
 		0.06880860, 0.08468360, 0.1082040, 0.16146780, 0.2063750, 0.260350, 0.311150, 0.33975040,
@@ -5385,8 +5372,10 @@ double C_csp_trough_collector_receiver::pipe_sched(double De) {
 		0.82864960, 0.87630, 1.02870, 1.16840, 1.32080, 1.47320, 1.62560, 1.7780 };
 
 	//Select the smallest pipe schedule above the diameter provided
-	for (int i = 0; i<np; i++){
-		if (D_m[i] >= De) return D_m[i];
+	for( int i = 0; i < np; i++ )
+	{
+		if( D_m[i] >= De )
+			return D_m[i];
 	}
 	//Nothing was found, so return an error
 
