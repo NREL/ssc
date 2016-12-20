@@ -2364,33 +2364,49 @@ public:
 			} // d loop
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess kwhs and rollover
-			monthly_bill[m] = payment[c - 1] - income[c - 1];
+//			monthly_bill[m] = payment[c - 1] - income[c - 1];
+			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
+
 			monthly_ec_charges_gross[m] = monthly_ec_charges[m];
-			// TODO - update energy charge net for $ rollover monthly_ec_charges[m] below.
-			// dollar applied and dollar earned.
+			ssc_number_t dollars_applied = 0;
 			if (enable_nm)
 			{
 				// apply previous month rollover kwhs
 				if (m > 0)
 				{
-					monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
+//					monthly_bill[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m-1];
+					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
+					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
-				if (monthly_bill[m] < 0)
+//				if (monthly_bill[m] < 0)
+				if (monthly_ec_charges[m] < 0)
 				{
 					if (excess_monthly_dollars)
-						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
-					monthly_bill[m] = 0;
+					{
+						monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
+						//						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
+						dollars_applied -= monthly_ec_charges[m];
+					}
+					//					monthly_bill[m] = 0;
 					payment[c - 1] = 0; // fixed charges applied below
+					monthly_ec_charges[m] = 0;
 				}
 				else // apply current month rollover and adjust
 				{
-					monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
-					if (monthly_bill[m] < 0)
+//					monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
+//					if (monthly_bill[m] < 0)
+					if (monthly_ec_charges[m] < 0)
 					{
 						if (excess_monthly_dollars)
-							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
-						monthly_bill[m] = 0;
+						{
+//							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
+							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
+							dollars_applied -= monthly_ec_charges[m];
+						}
+//						monthly_bill[m] = 0;
+						monthly_ec_charges[m] = 0;
 						payment[c - 1] = 0; // fixed charges applied below
 					}
 					else
@@ -2400,7 +2416,10 @@ public:
 					}
 				}
 			}
-			
+			excess_dollars_earned[m] = monthly_cumulative_excess_dollars[m];
+			excess_dollars_applied[m] = dollars_applied;
+			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
+
 		} // end of month m (m loop)
 
 
@@ -2573,6 +2592,14 @@ public:
 				}
 			}
 		}
+
+		// excess earned
+		for (m = 0; m < 12; m++)
+		{
+			if (m_month[m].energy_net > 0)
+				excess_kwhs_earned[m] = m_month[m].energy_net;
+		}
+
 
 
 
@@ -2793,6 +2820,7 @@ public:
 									energy_charge[c] = -(ssc_number_t)credit_amt;
 								}
 								m_month[m].ec_energy_surplus.at(row, tier) += (ssc_number_t)tier_energy;
+								excess_kwhs_earned[m] += tier_energy;
 							}
 							else
 							{ // calculate payment or charge
@@ -2941,16 +2969,16 @@ public:
 				/*
 				else // apply current month rollover and adjust
 				{
-					monthly_ec_charges[m] -= monthly_cumulative_excess_kwhs[m];
+					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
 					if (monthly_ec_charges[m] < 0)
 					{
-						monthly_cumulative_excess_kwhs[m] = -monthly_ec_charges[m];
+						monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
 					//	monthly_ec_charges[m] = 0;
 					//	payment[c - 1] = 0; // fixed charges applied below
 					}
 					else
 					{
-						payment[c - 1] -= monthly_cumulative_excess_kwhs[m];
+						payment[c - 1] -= monthly_cumulative_excess_dollars[m];
 						monthly_cumulative_excess_kwhs[m] = 0;
 					}
 				}
