@@ -266,7 +266,7 @@ void Heliostat::updateCalculatedParameters(var_map &Vm, int htnum)
         break;
     }
     //case Heliostat::CANT_TYPE::USER_VECTOR:
-    case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
+    case var_heliostat::CANT_METHOD::USERDEFINED_VECTOR:
     {
 		//Calculate the magnitude of the vector components
         double i = V->cant_vect_i.val * V->cant_vect_i.val;
@@ -451,7 +451,7 @@ void Heliostat::installPanels() {
 					break;
                 }
                 //case CANT_TYPE::USER_VECTOR:
-                case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
+                case var_heliostat::CANT_METHOD::USERDEFINED_VECTOR:
                 {
                     //throw spexception("The user cant vector option is not correctly implemented in the installPanels() algorithm. Contact support for help resolving this issue.");
 

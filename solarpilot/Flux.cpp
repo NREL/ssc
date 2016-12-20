@@ -1021,7 +1021,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
         break;
     }
     //case Heliostat::CANT_TYPE::USER_VECTOR:
-    case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
+    case var_heliostat::CANT_METHOD::USERDEFINED_VECTOR:
         throw spexception("User-vector cant method is not fully implemented (imagePlaneIntercept()).");
 
 
@@ -1240,7 +1240,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 			gcantb = (A12*B21 - A22*B11)*tempmult;
             break;
         //case Heliostat::CANT_TYPE::USER_VECTOR:
-        case var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR:
+        case var_heliostat::CANT_METHOD::USERDEFINED_VECTOR:
             throw spexception("User-vector cant method is not fully implemented (imagePlaneIntercept()).");
         default:
             throw spexception("Unspecified cant method is not implemented (imagePlaneIntercept()).");
