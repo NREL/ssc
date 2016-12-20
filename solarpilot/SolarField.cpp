@@ -1342,7 +1342,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 					Ambient::calcSunPosition(*V, dt, &az, &zen); 
 					
 					//calculate DNI
-					double dniclr = Ambient::calcInsolation(*V, az, zen, doy);
+					double dniclr = Ambient::calcInsolation(*V, az*D2R, zen*D2R, doy);
 					//Set to the new value
 					wdata.setStep(i, dom, hour, month, dniclr, tdb, pres, wind, step_weight);
 
@@ -3097,8 +3097,10 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
 	int nn = neibs->size();
 	for(int j=0; j<nn; j++){
 		if(helios == neibs->at(j) ) continue;	//Don't calculate blocking or shading for the same heliostat
-		if(!P.is_layout) shad_tot += -SF->calcShadowBlock(helios, neibs->at(j), 0, Sun);	//Don't calculate shadowing for layout simulations. Cascaded shadowing effects can skew the layout.
-		block_tot += -SF->calcShadowBlock(helios, neibs->at(j), 1, Sun);
+		
+        if(!P.is_layout) shad_tot += -SF->calcShadowBlock(helios, neibs->at(j), 0, Sun);	//Don't calculate shadowing for layout simulations. Cascaded shadowing effects can skew the layout.
+		
+        block_tot += -SF->calcShadowBlock(helios, neibs->at(j), 1, Sun);
 	}
 		
 	if(shad_tot < 0.) shad_tot = 0.;
