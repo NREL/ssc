@@ -13,7 +13,7 @@ void Plant::Create(var_map &V)
 void Plant::updateCalculatedParameters(var_map &V)
 {
     _power_gross = V.sf.q_des.val / V.plt.solar_mult.val * V.plt.eta_cycle.val;
-    _power_net =  V.plt.power_gross.Val() * V.plt.par_factor.val ;
+    _power_net =  _power_gross * V.plt.par_factor.val ;
 
     V.plt.power_gross.Setval( _power_gross );
     V.plt.power_net.Setval( _power_net );
