@@ -1064,7 +1064,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		else{
 			//User defined layouts - need to check for user defined canting and focusing
 			if(layout->at(i).is_user_cant) {
-				cant_method = var_heliostat::CANT_METHOD::_USERDEFINED_VECTOR; // Heliostat::CANT_TYPE::USER_VECTOR;
+				cant_method = var_heliostat::CANT_METHOD::USERDEFINED_VECTOR; // Heliostat::CANT_TYPE::USER_VECTOR;
 				hptr->IsUserCant( true );
                 Vect cant;
                 cant.Set( layout->at(i).cant.i, layout->at(i).cant.j, layout->at(i).cant.k );
