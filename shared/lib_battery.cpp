@@ -1203,8 +1203,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_t_at_mode = 1000; 
 	_prev_charging = false;
 	_charging = false;
-	_e_max_discharge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_min*0.01)*watt_to_kilowatt;
-	_e_max_charge = Battery->battery_voltage()*(Battery->battery_charge_total() - Battery->battery_charge_maximum()*SOC_max*0.01)*watt_to_kilowatt;
+	_e_max = Battery->battery_voltage()*Battery->battery_charge_maximum()*watt_to_kilowatt*0.01*(SOC_max - SOC_min);
 	_grid_recharge = false;
 }
 dispatch_t::~dispatch_t()
@@ -1231,19 +1230,12 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 	if (_P_tofrom_batt > 0)
 	{
 		_charging = false;
-		double e_max_discharge = battery_voltage *(charge_total - charge_max*_SOC_min*0.01)*watt_to_kilowatt;
 		
-		if (e_max_discharge < 0)
-			e_max_discharge = 0;
-
-		if (_P_tofrom_batt*_dt_hour > e_max_discharge)
-			_P_tofrom_batt = e_max_discharge/_dt_hour;
-
-		if (_charging != _prev_charging)
-			_e_max_discharge = e_max_discharge;
+		if (_P_tofrom_batt*_dt_hour > _e_max)
+			_P_tofrom_batt = _e_max/_dt_hour;
 
 		//  discharge percent
-		double e_percent = _e_max_discharge*_percent_discharge*0.01;
+		double e_percent = _e_max*_percent_discharge*0.01;
 
 		if (_P_tofrom_batt*_dt_hour > e_percent)
 			_P_tofrom_batt = e_percent/_dt_hour;
@@ -1252,21 +1244,15 @@ void dispatch_t::SOC_controller(double battery_voltage, double charge_total, dou
 	else if (_P_tofrom_batt < 0)
 	{
 		_charging = true;
-		double e_max_charge = battery_voltage*(charge_total - charge_max*_SOC_max*0.01)*watt_to_kilowatt;
-		if (e_max_charge > 0)
-			e_max_charge = 0;
-
-		if (_P_tofrom_batt*_dt_hour < e_max_charge)
-			_P_tofrom_batt = e_max_charge/_dt_hour;
-
-		if (_charging != _prev_charging)
-			_e_max_charge = e_max_charge;
+		
+		if (_P_tofrom_batt*_dt_hour < -_e_max)
+			_P_tofrom_batt = -_e_max/_dt_hour;
 
 		//  charge percent for automated grid charging
-		double e_percent = _e_max_charge*_percent_charge*0.01;
+		double e_percent = _e_max*_percent_charge*0.01;
 
 		if (fabs(_P_tofrom_batt) > fabs(e_percent)/_dt_hour)
-			_P_tofrom_batt = e_percent/_dt_hour;
+			_P_tofrom_batt = -e_percent/_dt_hour;
 	}
 	else
 		_charging = _prev_charging;
