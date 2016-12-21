@@ -531,8 +531,7 @@ protected:
 	double _Ic_max;
 	double _Id_max;
 	double _t_min;
-	double _e_max_discharge;
-	double _e_max_charge;
+	double _e_max;
 	double _percent_discharge;
 	double _percent_charge;
 	double _P_target;
