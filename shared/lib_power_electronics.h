@@ -184,6 +184,8 @@ public:
 
 	double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
 	double process_dispatch();
+	void compute_to_batt_load_grid(double P_battery_dc, double P_battery_ac, double P_pv_ac, double P_load_ac);
+
 	double gen_ac();
 	double grid_ac();
 	double update_gen_ac(double P_gen_ac)
