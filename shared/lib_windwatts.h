@@ -81,7 +81,8 @@ public:
 	double turbine_output_using_weibull(
 		double weibull_k, 
 		double max_cp, 
-		double resource_class, 
+		double avg_speed, 
+		double ref_height,
 		double energy_turbine[]
 	);
 

@@ -265,10 +265,10 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 }
 
 
-double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double resource_class, double energy_turbine[])
+double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double avg_speed, double ref_height, double energy_turbine[])
 {	// returns same units as 'power_curve'
 
-	double hub_ht_windspeed = pow((m_dHubHeight/50.0),m_dShearExponent) * resource_class;
+	double hub_ht_windspeed = pow((m_dHubHeight / ref_height), m_dShearExponent) * avg_speed;
 	double denom = exp(gammaln(1+(1/weibull_k))); //fixed jmf 2/18/15- weibull_k was accidentally replaced with hub_ht_windspeed previously
 
 	double lambda = hub_ht_windspeed/denom;

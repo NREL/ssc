@@ -18,8 +18,9 @@ static var_info _cm_vtab_windpower[] = {
 //	{ SSC_INPUT,        SSC_NUMBER,      "meas_ht",                                 "Height of resource measurement",      "m",      "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "elevation",                               "Elevation",                           "m",      "",      "WindPower",      "*",                                        "",		                                            "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_resource_model_choice",              "Hourly or Weibull model",		       "0/1",    "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "wind_characteristics_weibullK",           "Weibull K factor for wind resource",  "",       "",      "WindPower",      "wind_resource_model_choice=1",             "",		                                            "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "wind_characteristics_class",              "Wind Resource Class",			       "",       "",      "WindPower",      "wind_resource_model_choice=1",             "",		                                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "weibull_reference_height",                "Reference height for Weibull wind speed","m",   "",      "WindPower",      "?=50",                                     "MIN=0",		                                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "weibull_k_factor",                        "Weibull K factor for wind resource",  "",       "",      "WindPower",      "wind_resource_model_choice=1",             "",		                                            "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "weibull_wind_speed",                      "Average wind speed for Weibull model","",       "",      "WindPower",      "wind_resource_model_choice=1",             "",		                                            "" },
 																																																		                             
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_rotor_diameter",             "Rotor diameter",                      "m",      "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_windspeeds",      "Power curve wind speed array",        "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" }, 
@@ -267,9 +268,10 @@ public:
 		{
 			std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray); 
 
-			double weibull_k = as_double("wind_characteristics_weibullK");
+			double weibull_k = as_double("weibull_k_factor");
 			double max_cp = as_double("wind_turbine_max_cp");
-			double resource_class = as_double("wind_characteristics_class");
+			double avg_speed = as_double("weibull_wind_speed");
+			double ref_height = as_double("weibull_reference_height");
 			//double elevation = as_double("elevation");
 			
 			//ssc_number_t *hub_efficiency = as_array( "hub_efficiency", NULL );
@@ -277,7 +279,7 @@ public:
 			//for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
 			//	dp_hub_eff[i] = (double)hub_efficiency[i];
 
-			double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, resource_class, &turbine_outkW[0]);
+			double turbine_kw = wpc.turbine_output_using_weibull(weibull_k, max_cp, avg_speed, ref_height, &turbine_outkW[0]);
 			turbine_kw = turbine_kw * (1 - wpc.m_dLossesPercent) - wpc.m_dLossesAbsolute;
 
 			ssc_number_t farm_kw = (ssc_number_t) turbine_kw * wpc.m_iNumberOfTurbinesInFarm;
