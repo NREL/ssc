@@ -641,17 +641,17 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		{
 			for( int i = 0; i < m_nrunsec; i++ )
 			{
-				MySnprintf(tstr, TSTRLEN, "Runner %d diameter: %.4lf m (%.2lf in)\n", i + 1, m_D_runner[i], m_D_runner[i] * m_mtoinch);
+				MySnprintf(tstr, TSTRLEN, "Runner %d inner diameter: %.4lf m (%.2lf in)\n", i + 1, m_D_runner[i], m_D_runner[i] * m_mtoinch);
 				summary.append(tstr);
 			}
 		}
 		else
 		{
-			summary.append("This field design does not include runners.\n");
+			summary.append("This field design does not include runners.\n\n");
 		}
 
 		//Write header diams
-		summary.append("Loop No. | Diameter [m] | Diameter [in] | Diam. ID\n--------------------------------------------------\n");
+		summary.append("Loop No. | Inner Diameter [m] | Inner Diameter [in] | Identification\n--------------------------------------------------\n");
 
 		nd = 1;
 		for( int i = 0; i< m_nhdrsec; i++ )
