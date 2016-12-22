@@ -229,6 +229,7 @@ public:
         int m_disp_reporting;
         int m_scaling_type;
         int m_max_iterations;
+        double m_disp_time_weighting;
         double m_rsu_cost;
         double m_csu_cost;
         double m_q_rec_standby;
@@ -264,6 +265,7 @@ public:
             m_presolve_type = -1;
             m_scaling_type = -1;
 
+            m_disp_time_weighting = 0.99;
             m_rsu_cost = 952.;
             m_csu_cost = 10000.;
             m_pen_delta_w = 0.1;

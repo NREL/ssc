@@ -92,6 +92,7 @@ public:
         double sf_effadj;           //[-] 0..1 Solar field efficiency adjustment
         double info_time;           //[s] time of the year at sim start. informational only.
         double eta_cycle_ref;       //[kWe/kWt]  Design-point power cycle efficiency
+        double disp_time_weighting; //[-] Weighting factor that discounts future decisions over more imminent ones
         double rsu_cost;            //[$/start] Receiver startup cost
         double csu_cost;            //[$/start] Cycle startup cost
         double pen_delta_w;         //[$/kWe-change] Cycle production change penalty
