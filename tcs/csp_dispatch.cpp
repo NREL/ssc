@@ -96,6 +96,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.sf_effadj = 1.;
     params.info_time = 0.;
     params.eta_cycle_ref = numeric_limits<double>::quiet_NaN();
+    params.disp_time_weighting = numeric_limits<double>::quiet_NaN();
     params.rsu_cost = params.csu_cost = params.pen_delta_w = params.q_rec_standby = numeric_limits<double>::quiet_NaN();
     
     outputs.objective = 0.;
@@ -326,7 +327,10 @@ bool csp_dispatch_opt::optimize()
         double y0 = (params.is_pb_operating0 ? 1 : 0) ;
         double ycsb0 = (params.is_pb_standby0 ? 1 : 0) ;
         double q0 =  params.q_pb0 ;
-       
+        double qrecmaxobs = 1.;
+        for(int i=0; i<outputs.q_sfavail_expected.size(); i++)
+            qrecmaxobs = outputs.q_sfavail_expected.at(i) > qrecmaxobs ? outputs.q_sfavail_expected.at(i) : qrecmaxobs;
+
         double Qrsb = params.q_rec_standby; // * dq_rsu;     //.02
         double M = 1.e6;
         double W_dot_cycle = params.q_pb_des * params.eta_cycle_ref;
@@ -383,6 +387,7 @@ bool csp_dispatch_opt::optimize()
         double Wdotl = (Ql - limit1) * etap;
 
         //temporary fixed constants
+        double disp_time_weighting = params.disp_time_weighting;
         double rsu_cost = params.rsu_cost; //952.;
         double csu_cost = params.csu_cost; //10000.;
         double pen_delta_w = params.pen_delta_w; //0.1;
@@ -447,16 +452,16 @@ bool csp_dispatch_opt::optimize()
         --------------------------------------------------------------------------------
         */
         {
-            int *col = new int[8*nt];
-            REAL *row = new REAL[8*nt];
-            double tadj = 0.999;
+            int *col = new int[11*nt];
+            REAL *row = new REAL[11*nt];
+            double tadj = disp_time_weighting;
             int i=0;
 
             for(int t=0; t<nt; t++)
             {
                 i=0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = delta * price_signal.at(t);
+                row[ t + nt*(i++) ] = delta * price_signal.at(t) * tadj;
                 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
                 row[ t + nt*(i++) ] = - delta * price_signal.at(t) * Lr;
@@ -488,7 +493,19 @@ bool csp_dispatch_opt::optimize()
                 col[ t + nt*(i  ) ] = O.column("delta_w", t);
                 row[ t + nt*(i++) ] = -pen_delta_w*tadj;
 
-                tadj *= 0.999;
+                //prefer receiver operation in nearer term to longer term
+                col[ t + nt*(i  ) ] = O.column("yr", t);
+                row[ t + nt*(i++) ] = tadj;
+
+                //prefer receiver production sooner (i.e. delay dumping) 
+                col[ t + nt*(i  ) ] = O.column("xr", t);
+                row[ t + nt*(i++) ] = tadj/qrecmaxobs;
+
+                //prefer cycle operation sooner than later, all things equal  <<< MJW This doesn't seem to improve things.
+                /*col[ t + nt*(i  ) ] = O.column("y", t);
+                row[ t + nt*(i++) ] = 0.5*tadj;*/
+
+                tadj *= disp_time_weighting;
             }
 
             set_obj_fnex(lp, i*nt, row, col);
@@ -583,6 +600,27 @@ bool csp_dispatch_opt::optimize()
         }
 
         //******************** Receiver constraints *******************
+        //{ //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        //    REAL row[5];
+        //    int col[5];
+
+        //    for(int t=0; t<nt; t++)
+        //    {
+        //        int i=0; 
+        //        row[i  ] = qrecmaxobs*1.01;
+        //        col[i++] = O.column("yd", t);
+
+        //        row[i  ] = 1.;
+        //        col[i++] = O.column("xr", t);
+
+        //        row[i  ] = 1.;
+        //        col[i++] = O.column("xrsu", t);
+
+        //        add_constraintex(lp, i, row, col, GE, outputs.q_sfavail_expected.at(t)*0.999 );
+        //    }
+        //} //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
         {
             REAL row[5];
             int col[5];

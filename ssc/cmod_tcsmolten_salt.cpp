@@ -262,6 +262,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_reporting",       "Dispatch optimization reporting level",                             "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",   "Dispatch optimization presolve heuristic",                          "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",    "Dispatch optimization scaling heuristic",                           "-",            "",            "sys_ctrl_disp_opt", "?=-1",                    "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",  "Dispatch optimization future time discounting factor",              "-",            "",            "sys_ctrl_disp_opt", "?=0.99",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",    "Write AMPL data files for dispatch run",                            "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
     { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",        "AMPL data file directory",                                          "-",            "",            "sys_ctrl_disp_opt", "?=''",                    "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "is_ampl_engine",       "Run dispatch optimization with external AMPL engine",               "-",            "",            "sys_ctrl_disp_opt", "?=0",                     "",                      "" }, 
@@ -1329,6 +1330,7 @@ public:
 			tou.mc_dispatch_params.m_bb_type = as_integer("disp_spec_bb");
 			tou.mc_dispatch_params.m_disp_reporting = as_integer("disp_reporting");
 			tou.mc_dispatch_params.m_scaling_type = as_integer("disp_spec_scaling");
+			tou.mc_dispatch_params.m_disp_time_weighting = as_double("disp_time_weighting");
             tou.mc_dispatch_params.m_rsu_cost = as_double("disp_rsu_cost");
             tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
             tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
