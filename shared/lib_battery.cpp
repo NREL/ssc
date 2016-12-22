@@ -395,8 +395,12 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 	double qmax_tmp = _qmax*capacity_percent*0.01;
 	if (_q0 > qmax_tmp)
 	{
-		_I_loss += (_q0 - qmax_tmp) / _dt_hour;
-		_I += (_q0 - qmax_tmp) / _dt_hour;
+		// investigate more, do we actually need to adjust current?
+		if (fabs(_I) > 0)
+		{
+			_I_loss += (_q0 - qmax_tmp) / _dt_hour;
+			_I += (_q0 - qmax_tmp) / _dt_hour;
+		}
 		_q0 = qmax_tmp;
 	}
 	update_SOC();
