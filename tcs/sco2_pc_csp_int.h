@@ -142,7 +142,7 @@ private:
 	S_des_solved ms_des_solved;
 
 	S_od_par ms_od_par;
-	S_od_operation_inputs ms_od_op_inputs;
+	//S_od_operation_inputs ms_od_op_inputs;
 	C_RecompCycle::S_od_phi_par ms_rc_cycle_od_phi_par;
 	C_HX_counterflow::S_od_par ms_phx_od_par;
 	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
@@ -291,5 +291,6 @@ double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data);
 // Optimization method callbacks
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
+double  nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 #endif
