@@ -697,6 +697,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss_percent", "DC power optimizer loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC performance adjustment loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_lifetime_loss_percent", "Lifetime daily DC loss- year 1", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_battery_lifetime_loss_percent", "DC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
+
 	//annual_dc_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
@@ -706,7 +708,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_lifetime_loss_percent", "Lifetime daily AC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_lifetime_loss_percent", "DC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
 
 
 	// annual_ac_net
@@ -2719,6 +2721,7 @@ public:
 		PV AC calculation
 		*********************************************************************************************** */
 		idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
+		double annual_dc_power_before_battery = 0, annual_dc_power_after_battery = 0;
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
@@ -2749,9 +2752,10 @@ public:
 					bool battery_charging = false;
 					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
 					{
+						annual_dc_power_before_battery += p_dcpwr[idx];
 						batt.advance(*this, iyear, hour, jj, dcpwr_net*0.001, cur_load);
 						dcpwr_net = 1000 * batt.outGenPower[idx];
-
+						annual_dc_power_after_battery += batt.outGenPower[idx];
 						// inverter can't handle negative dcpwr
 						if (dcpwr_net < 0)
 						{
@@ -3120,6 +3124,10 @@ public:
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_dc_adjust_loss / annual_dc_gross;
 		assign("annual_dc_perf_adj_loss_percent", var_data((ssc_number_t)percent));
+
+		percent = 0;
+		if (annual_dc_gross > 0) percent = 100 * (annual_dc_power_before_battery - annual_dc_power_after_battery) / annual_dc_gross;
+		assign("annual_dc_battery_lifetime_loss_percent", var_data((ssc_number_t)percent));
 
 		percent = 0;
 		if (annual_dc_gross > 0) percent = 100 * annual_dc_lifetime_loss / annual_dc_gross;
