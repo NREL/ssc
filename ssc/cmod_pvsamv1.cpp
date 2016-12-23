@@ -706,6 +706,8 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_lifetime_loss_percent", "Lifetime daily AC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
+
 
 	// annual_ac_net
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
@@ -1828,7 +1830,7 @@ public:
 		size_t hour = 0;
 
 		// variables used to calculate loss diagram
-		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0;
+		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_lifetime_loss = 0;
 
 		// Check if a POA model is used, if so load all POA data into the poaData struct
 		if (radmode == POA_R || radmode == POA_P ){
@@ -2803,29 +2805,6 @@ public:
 					}
 
 					
-					//jmf 1-29-16 bug fix: ac_derate should subtract further power from negative nighttime values, not reduce the negative nighttime values!
-					//if (p_gen[idx] <= 0)
-					//p_gen[idx] = (ssc_number_t)(acpwr_gross * (1 + (1 - ac_derate)) * 0.001);
-					//else
-					//p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
-					//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-					p_gen[idx] = (ssc_number_t)((acpwr_gross - (fabs(acpwr_gross) * ac_loss_percent / 100)) * 0.001); //acpwr_gross is in W, p_gen is in kW
-
-					if (iyear == 0)
-						annual_ac_pre_avail += p_gen[idx] * ts_hour; //have to multiply by timestep to keep from adding too much of the same value
-
-					//apply availability and curtailment
-					p_gen[idx] *= haf(hour);
-
-					//apply lifetime daily AC losses only if they are enabled
-					if (pv_lifetime_simulation == 1 && en_ac_lifetime_losses)
-					{
-						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
-						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
-						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * 0.001 * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
-						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
-					}
-
 					// accumulate first year annual energy
 					if (iyear == 0)
 					{
@@ -2837,6 +2816,13 @@ public:
 					}
 					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
 
+					//jmf 1-29-16 bug fix: ac_derate should subtract further power from negative nighttime values, not reduce the negative nighttime values!
+					//if (p_gen[idx] <= 0)
+					//p_gen[idx] = (ssc_number_t)(acpwr_gross * (1 + (1 - ac_derate)) * 0.001);
+					//else
+					//p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
+					//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
+					p_gen[idx] = (ssc_number_t)((acpwr_gross - (fabs(acpwr_gross) * ac_loss_percent / 100)) * 0.001); //acpwr_gross is in W, p_gen is in kW
 
 					idx++;
 				}
@@ -2872,13 +2858,30 @@ public:
 					{
 						batt.advance(*this, iyear, hour, jj, p_gen[idx], p_load_full[idx]);
 						p_gen[idx] = batt.outGenPower[idx];
+						annual_ac_battery_lifetime_loss += batt.outBatteryPowerLoss[idx];
 					}
+
+					// accumulate system generation before curtailment and availability
+					if (iyear == 0)
+						annual_ac_pre_avail += p_gen[idx] * ts_hour; 
+
+					//apply availability and curtailment
+					p_gen[idx] *= haf(hour);
+
+					//apply lifetime daily AC losses only if they are enabled
+					if (pv_lifetime_simulation == 1 && en_ac_lifetime_losses)
+					{
+						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
+						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * 0.001 * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
+					}
+
 
 					if (iyear == 0)
 						annual_energy += (ssc_number_t)(p_gen[idx] * ts_hour);
 
 					idx++;
-
 				}
 			} 
 
@@ -3151,6 +3154,11 @@ public:
 		if (fabs(annual_ac_gross - sys_output)/ annual_ac_gross > 0.00001)
 			log(util::format("Internal discrepancy in calculated output ac_gross: %lg != %lg at AC1.  Please report to SAM support.", annual_ac_gross, sys_output), SSC_WARNING);
 #endif
+
+		percent = 0;
+		if (annual_ac_gross > 0) percent = 100.0 * annual_ac_battery_lifetime_loss / annual_ac_gross;
+		assign("annual_ac_battery_lifetime_loss_percent", var_data((ssc_number_t)percent));
+		sys_output -= annual_ac_battery_lifetime_loss;
 
 		percent = 0;
 		if (annual_ac_gross > 0) percent = 100.0 * acwiring_loss / annual_ac_gross;
