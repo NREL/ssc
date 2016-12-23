@@ -2423,6 +2423,8 @@ public:
 
 		} // end of month m (m loop)
 
+		// TODO: check two meter excess
+
 
 		// Assumption that fixed and minimum charges independent of rollovers kWh or $
 		// process monthly fixed charges
