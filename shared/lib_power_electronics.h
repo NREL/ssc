@@ -110,7 +110,7 @@ public:
 	void initialize(double P_pv, double P_load);
 
 	// return power loss [kW]
-	virtual double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load) = 0;
+	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load) = 0;
 	virtual void compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac);
 	virtual double gen_ac() = 0;
 	virtual double update_gen_ac(double P_gen_ac) = 0;
@@ -127,6 +127,7 @@ public:
 	double power_grid_to_batt(){ return _P_grid_to_batt; }
 	double power_pv_to_grid(){ return _P_pv_to_grid; }
 	double power_battery_to_grid(){ return _P_battery_to_grid; }
+	double power_loss(){ return _P_loss; }
 
 	enum {DC_CONNECTED, AC_CONNECTED};
 
@@ -165,8 +166,8 @@ public:
 									double inverter_efficiency);
 	~dc_connected_battery_controller();
 
-	double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
-	double process_dispatch();
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
+	void process_dispatch();
 	double gen_ac(){ return 0.; };
 	double update_gen_ac(double P_gen_ac);
 
@@ -182,8 +183,8 @@ public:
 	ac_connected_battery_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double ac_dc_efficiency, double dc_ac_efficiency);
 	~ac_connected_battery_controller();
 
-	double run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
-	double process_dispatch();
+	void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
+	void process_dispatch();
 	void compute_to_batt_load_grid(double P_battery_dc, double P_battery_ac, double P_pv_ac, double P_load_ac);
 
 	double gen_ac();

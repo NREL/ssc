@@ -118,6 +118,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Power to battery from grid",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_grid",                                 "Power to grid from PV",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Power to grid from battery",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_loss",                                  "Power lost due to battery power electronics",           "kW",      "",                       "Battery",       "",                           "",                              "" },
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -454,7 +455,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
 	outGridToBatt = cm.allocate("grid_to_batt", nrec*nyears);
-
+	outBatteryPowerLoss = cm.allocate("batt_loss", nrec*nyears);
 
 	// annual outputs
 	int annual_size = nyears+1;
@@ -716,6 +717,8 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 	outGenPower[idx] = (ssc_number_t)(charge_control->power_gen());
 	outPVToBatt[idx] = (ssc_number_t)(charge_control->power_pv_to_batt());
 	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
+	outBatteryPowerLoss[idx] = (ssc_number_t)(charge_control->power_loss());
+
 	if (batt_meter_position == dispatch_t::BEHIND)
 	{
 		outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
