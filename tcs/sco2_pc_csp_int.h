@@ -28,7 +28,9 @@ public:
 		double m_dt_mc_approach;		//[K] Temperature difference between main compressor inlet and ambient air
 		double m_elevation;				//[m] Site elevation
 		double m_W_dot_net;				//[kW] Target net cycle power
+		int m_design_method;			//[-] 1 = Specify efficiency, 2 = Specify total recup UA
 		double m_eta_thermal;			//[-] Cycle thermal efficiency
+		double m_UA_recup_tot_des;		//[kW/K] Total recuperator conductance
 
 		// Cycle design parameters
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
@@ -56,7 +58,7 @@ public:
 
 		S_des_par()
 		{
-			m_hot_fl_code = m_N_sub_hxrs = -1;
+			m_hot_fl_code = m_design_method = m_N_sub_hxrs = -1;
 
 			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
 				m_elevation = m_W_dot_net = m_eta_thermal = m_LT_eff_max = m_HT_eff_max =
