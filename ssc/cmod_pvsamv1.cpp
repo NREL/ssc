@@ -2837,6 +2837,7 @@ public:
 		Post PV AC 
 		*********************************************************************************************** */
 		idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
+		double annual_energy_pre_battery = 0.;
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
@@ -2853,12 +2854,11 @@ public:
 
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
-
+					annual_energy_pre_battery += p_gen[idx];
 					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
 					{
 						batt.advance(*this, iyear, hour, jj, p_gen[idx], p_load_full[idx]);
 						p_gen[idx] = batt.outGenPower[idx];
-						annual_ac_battery_lifetime_loss += batt.outBatteryPowerLoss[idx];
 					}
 
 					// accumulate system generation before curtailment and availability
@@ -3156,7 +3156,7 @@ public:
 #endif
 
 		percent = 0;
-		if (annual_ac_gross > 0) percent = 100.0 * annual_ac_battery_lifetime_loss / annual_ac_gross;
+		if (annual_ac_gross > 0) percent = 100.0 * (annual_energy_pre_battery - annual_energy) / annual_ac_gross;
 		assign("annual_ac_battery_lifetime_loss_percent", var_data((ssc_number_t)percent));
 		sys_output -= annual_ac_battery_lifetime_loss;
 
