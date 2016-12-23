@@ -12,7 +12,17 @@ var('T_amb_des', 30);			//[C] Ambient temperature at design
 var('dT_mc_approach', 15);		//[C] Temperature difference between main compressor CO2 inlet and ambient air
 var('site_elevation', 300);		//[m] Site elevation (used to calculate air density in air cooler design model)
 var('W_dot_net_des', 10);		//[MWe] Design cycle power output (no cooling parasitics)
-var('eta_thermal_des', 0.50);	//[-] Power cycle thermal efficiency
+
+var('design_method', 2);		//[-] 1 = Specify efficiency, 2 = Specify total recup UA
+if(var('design_method') == 1)
+{
+	var('eta_thermal_des', 0.50);	//[-] Power cycle thermal efficiency
+}
+else if(var('design_method') == 2)
+{
+	var('UA_recup_tot', 1694.91525);	//[kW/K] Total recuperator effectiveness
+}
+
 	// Cycle Design
 var('eta_isen_mc', 0.89);		//[-] Main compressor isentropic efficiency
 var('eta_isen_rc', 0.89);		//[-] Re-compressor isentropic efficiency
