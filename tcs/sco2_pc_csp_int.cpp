@@ -44,11 +44,9 @@ void C_sco2_recomp_csp::design_core()
 	error_msg[0] = NULL;
 	int auto_err_code = 0;
 
-	if(true)
+	if(ms_des_par.m_design_method == 1)
 	{
-
-
-		// Design the recompression cycle
+		// Design the recompression cycle to hit a specified efficiency
 			// Define sCO2 cycle design parameter structure
 		ms_rc_cycle_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		ms_rc_cycle_des_par.m_eta_thermal = ms_des_par.m_eta_thermal;	//[-]
@@ -77,17 +75,15 @@ void C_sco2_recomp_csp::design_core()
 		ms_rc_cycle_des_par.m_N_turbine = ms_des_par.m_N_turbine;	
 
 		mc_rc_cycle.auto_opt_design_hit_eta(ms_rc_cycle_des_par, auto_err_code, error_msg);
-
-
 	}
-	else
+	else if(ms_des_par.m_design_method == 2)
 	{
+		if(ms_des_par.m_UA_recup_tot_des < 0.0)
+		{
+			throw("sCO2 recompression cycle and CSP integration design, design method 2, conductance must be > 0");
+		}
 
-
-		// twn 10.20.16 code for testing
-
-		double UA_FIXED_TEST = 1694.92;		//[kW/K]
-
+		// Design the recompression cycle using a specified total recuperator conductance
 		C_RecompCycle::S_auto_opt_design_parameters s_rc_auto_opt_des_par;
 		s_rc_auto_opt_des_par.m_W_dot_net = ms_des_par.m_W_dot_net;		//[kWe]
 		s_rc_auto_opt_des_par.m_T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;		//[K]
@@ -96,7 +92,7 @@ void C_sco2_recomp_csp::design_core()
 		s_rc_auto_opt_des_par.m_DP_HT = ms_des_par.m_DP_HT;
 		s_rc_auto_opt_des_par.m_DP_PC = ms_des_par.m_DP_PC;
 		s_rc_auto_opt_des_par.m_DP_PHX = ms_des_par.m_DP_PHX;
-		s_rc_auto_opt_des_par.m_UA_rec_total = UA_FIXED_TEST;
+		s_rc_auto_opt_des_par.m_UA_rec_total = ms_des_par.m_UA_recup_tot_des;	//[kW/K]
 		s_rc_auto_opt_des_par.m_LT_eff_max = ms_des_par.m_LT_eff_max;
 		s_rc_auto_opt_des_par.m_HT_eff_max = ms_des_par.m_HT_eff_max;
 		s_rc_auto_opt_des_par.m_eta_mc = ms_des_par.m_eta_mc;
@@ -109,11 +105,11 @@ void C_sco2_recomp_csp::design_core()
 		s_rc_auto_opt_des_par.m_N_turbine = ms_des_par.m_N_turbine;
 	
 		mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par, auto_err_code);
-
-
 	}
-
-
+	else
+	{
+		throw("sCO2 recompression cycle and CSP integration design, design method must be either 1 or 2");
+	}
 
 	ms_des_solved.ms_rc_cycle_solved = *mc_rc_cycle.get_design_solved();
 
