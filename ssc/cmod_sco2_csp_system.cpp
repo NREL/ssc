@@ -17,7 +17,9 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_mc_approach",       "Temp diff btw ambient air and main compressor inlet",    "C",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "site_elevation",       "Site elevation",                                         "m",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "W_dot_net_des",        "Design cycle power output (no cooling parasitics)",      "MWe",        "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "design_method",        "1 = Specify efficiency, 2 = Specify total recup UA",     "",           "",    "",      "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "",      "?=-1.0","",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "UA_recup_tot_des",     "Total recuperator conductance",                          "kW/K",       "",    "",      "?=-1.0","",       "" },
 		// Cycle Design
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
@@ -204,8 +206,34 @@ public:
 		sco2_rc_des_par.m_dt_mc_approach = as_double("dT_mc_approach");				//[K/C] Temperature difference between ambient air and main compressor inlet
 		sco2_rc_des_par.m_elevation = as_double("site_elevation");					//[m] Site elevation
 		sco2_rc_des_par.m_W_dot_net = as_double("W_dot_net_des")*1000.0;			//[kWe] Convert from MWe, cycle power output w/o cooling parasitics
-		sco2_rc_des_par.m_eta_thermal = as_double("eta_thermal_des");				//[-] Cycle thermal efficiency
 			
+		sco2_rc_des_par.m_design_method = as_integer("design_method");			//[-] 1 = Specify efficiency, 2 = Specify total recup UA
+		if( sco2_rc_des_par.m_design_method == 1 )
+		{
+			sco2_rc_des_par.m_eta_thermal = as_double("eta_thermal_des");				//[-] Cycle thermal efficiency
+			if( sco2_rc_des_par.m_eta_thermal < 0.0 )
+			{
+				log("For cycle design method = 1, the input cycle thermal efficiency must be greater than 0", SSC_ERROR, -1.0);
+				return;
+			}
+			sco2_rc_des_par.m_UA_recup_tot_des = std::numeric_limits<double>::quiet_NaN();
+		}
+		else if( sco2_rc_des_par.m_design_method == 2 )
+		{
+			sco2_rc_des_par.m_UA_recup_tot_des = as_double("UA_recup_tot");		//[kW/K] Total recuperator conductance
+			if( sco2_rc_des_par.m_UA_recup_tot_des < 0.0 )
+			{
+				log("For cycle design method = 2, the input total recuperator conductance must be greater than 0", SSC_ERROR, -1.0);
+				return;
+			}
+			sco2_rc_des_par.m_eta_thermal = std::numeric_limits<double>::quiet_NaN();
+		}
+		else
+		{
+			std::string err_msg = util::format("The input cycle design method, %d, is invalid. It must be 1 or 2.", sco2_rc_des_par.m_design_method);
+			log(err_msg, SSC_ERROR, -1.0);
+		}
+
 			// Cycle design parameters: hardcode pressure drops, for now
 		// Define hardcoded sco2 design point parameters
 		std::vector<double> DP_LT(2);
@@ -354,13 +382,13 @@ public:
 		// ***************************************************************************
 
 
-		bool is_od_input_screen = false;
+		bool is_od_input_screen = true;
 		if( is_od_input_screen )
 		{
 			// Set up parametric sweep of operation inputs
-			double f_recomp_start = 0.0;
-			double f_recomp_end = 1.0;
-			int n_f_recomp = 101;
+			double f_recomp_start = 0.15;
+			double f_recomp_end = 0.26;
+			int n_f_recomp = 23;
 			double f_recomp_step = (f_recomp_end - f_recomp_start) / (n_f_recomp - 1);
 
 			std::vector<double> v_f_recomp(n_f_recomp);	//[-]
@@ -372,10 +400,18 @@ public:
 			sco2_rc_od_par.m_m_dot_htf = sco2_recomp_csp.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
 			sco2_rc_od_par.m_T_amb = sco2_recomp_csp.get_design_par()->m_T_amb_des;				//[K]
 
+			sco2_recomp_csp.off_design_nested_opt(sco2_rc_od_par, C_sco2_recomp_csp::E_MAX_ETA_FIX_PHI);
+
 			C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
 				// Keep these constant, for this analysis
 			sco2_rc_od_op_par.m_P_mc_in = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
 			sco2_rc_od_op_par.m_phi_mc = sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
+
+			double T_mc_in_sweep = sco2_rc_od_par.m_T_amb + sco2_recomp_csp.get_design_par()->m_dt_mc_approach;	//[K]
+
+			sco2_recomp_csp.sweep_turbomachinery_deltaP(T_mc_in_sweep, sco2_rc_od_op_par.m_P_mc_in,
+											sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::TURB_IN],
+											sco2_rc_od_op_par.m_phi_mc);
 
 			for(int n_run = 0; n_run < n_f_recomp; n_run++)
 			{
@@ -417,7 +453,7 @@ public:
 					// Control parameters
 				p_P_comp_in_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_pres[1 - 1] / 1000.0;	//[MPa]
 				p_mc_phi_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.ms_mc_od_solved.m_phi;	//[-]
-				p_recomp_frac_od[n_run] = sco2_recomp_csp.get_od_solved()->ms_rc_cycle_od_solved.m_recomp_frac;		//[-]
+				p_recomp_frac_od[n_run] = sco2_rc_od_op_par.m_recomp_frac;		//[-]
 					// Optimizer parameters
 				p_sim_time_od[n_run] = od_opt_duration;		//[s]
 					// System
