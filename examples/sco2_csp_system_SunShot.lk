@@ -17,8 +17,9 @@ var('eta_thermal_des', 0.50);	//[-] Power cycle thermal efficiency
 var('eta_isen_mc', 0.89);		//[-] Main compressor isentropic efficiency
 var('eta_isen_rc', 0.89);		//[-] Re-compressor isentropic efficiency
 var('eta_isen_t', 0.93);		//[-] Turbine isentropic efficiency
-var('LT_recup_eff_max', 1.0);	//[-] Maximum possible effectiveness in LT recuperator
-var('HT_recup_eff_max', 1.0);	//[-] Maximum possible effectiveness in HT recuperator
+eta_max = 1.0;
+var('LT_recup_eff_max', eta_max);	//[-] Maximum possible effectiveness in LT recuperator
+var('HT_recup_eff_max', eta_max);	//[-] Maximum possible effectiveness in HT recuperator
 var('P_high_limit',25);			//[MPa] Cycle high pressure limit
 	// PHX design
 var('dT_PHX_cold_approach', 20);	//[C] Temperature difference between cold HTF and cold CO2 PHX inlet
@@ -26,7 +27,7 @@ var('dT_PHX_cold_approach', 20);	//[C] Temperature difference between cold HTF a
 var('fan_power_frac',0.01);			//[-] Fraction of net cycle power consumed by air cooler fan
 var('deltaP_cooler_frac',0.002);	//[-] Fraction of cycle high pressure that is design point cooler CO2 pressure drop
 
-is_gen_od_polynomials = 1;
+is_gen_od_polynomials = 0;
 var('is_gen_od_polynomials', is_gen_od_polynomials);
 
 // Set Off-Design Inputs
