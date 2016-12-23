@@ -23,6 +23,7 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	m_cdata = 0;			// NULL
 
 	m_is_write_mc_out_file = false;
+	m_is_only_write_frecomp_opt_iters = false;
 
 	//sco2_od_opt_file.open("C:/Users/tneises/Documents/Projects/ssc_trunk/examples/sco2_od_opt_file.csv");
 
@@ -224,9 +225,9 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
 	m_is_write_mc_out_file = true;
+	m_is_only_write_frecomp_opt_iters = false;
 
-	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/f_recomp_";
-	mstr_end_name = "_kPa.csv";
+	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/";
 
 	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
@@ -235,16 +236,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 
 	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
 
-
-
-
-
-	// Get a main compressor inlet pressure from somewhere
-	double P_mc_in_des = mc_rc_cycle.get_design_solved()->m_pres[C_RecompCycle::MC_IN];	//[kPa]
-	
-	
-
-	double eta_opt = opt_P_mc_in_nest_f_recomp_max_eta(P_mc_in_des);
+	//double eta_opt = opt_P_mc_in_nest_f_recomp_max_eta(P_mc_in_des);
 
 	int P_mc_in_iter = 0;
 	//double P_mc_in_inc = 1000.0;	//[kPa]
@@ -444,7 +436,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 	bool is_f_recomp_max_found = false;
 	double f_recomp_max = std::numeric_limits<double>::quiet_NaN();
 
-	if(m_is_write_mc_out_file)
+	if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
 	{
 		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_error_code,rc_phi,rc_tip_ratio\n";
 		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
@@ -462,7 +454,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 			rc_error_code, rc_w_tip_ratio, rc_phi,
 			m_is_write_mc_out_file);
 
-		if(m_is_write_mc_out_file)
+		if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
 		{
 			double deltaP = 0.0;
 			double P_mc_out_of = 0.0;
@@ -544,7 +536,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 			// * mc tip ratio exceeds 1.05 (build in some tolerance)
 			// (... so basically it's okay here if the RC tip speed is too fast)
 			double P_high_mult_overshoot = 1.25;
-			if(m_is_write_mc_out_file)
+			if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
 				P_high_mult_overshoot = 1.5;
 
 			if( rc_error_code == 0 && mc_error_code == 0
@@ -570,12 +562,16 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 			"C_sco2_recomp_csp::off_design_nested_opt"));
 	}
 
-	if(m_is_write_mc_out_file)
+	if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
 	{
 		mc_out_file << "f_recomp_iter_min,f_recomp_iter_max\n";
 		mc_out_file << f_recomp_min << "," << f_recomp_max << "\n";
-		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal\n";
-		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
+		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+		mc_out_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-,-\n";
+	}
+	else if(m_is_write_mc_out_file)
+	{
+		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
 	}
 
 	// Optimize recompression fraction for this inlet pressure
@@ -1595,8 +1591,12 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 	if( m_is_write_mc_out_file )
 	{
-		std::string case_name = to_string((int)(P_mc_in));
-		std::string file_name = mstr_base_name + case_name + mstr_end_name;
+		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb-273.15) +
+								util::format("%.2f_", ms_od_par.m_m_dot_htf/ms_phx_des_par.m_m_dot_hot_des) +
+								util::format("%.2f_", ms_od_par.m_T_htf_hot-273.15) +
+								util::format("%.1f", P_mc_in);
+
+		std::string file_name = mstr_base_name + case_name + ".csv";
 		mc_out_file.open(file_name);
 	}
 
@@ -1610,7 +1610,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		eta_max_f_recomp_opt = 0.0;
 	}
 
-	if( m_is_write_mc_out_file )
+	if( m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters )
 	{
 		mc_out_file << "f_recomp_opt,eta_max\n";
 		mc_out_file << f_recomp_opt << "," << eta_max_f_recomp_opt << "\n";
@@ -1673,7 +1673,8 @@ double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 			<< m_dot_rc << ","
 			<< rc_phi_of << ","
 			<< rc_tip_ratio_of << ","
-			<< eta_return << "\n";
+			<< eta_return << ","
+			<< od_error_code << "\n";
 	}
 
 	return eta_return;

@@ -279,9 +279,10 @@ public:
 	double opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/);
 
 	bool m_is_write_mc_out_file;
+	bool m_is_only_write_frecomp_opt_iters;
+
 	ofstream mc_out_file;
 	std::string mstr_base_name;
-	std::string mstr_end_name;
 };
 
 double fmin_f_recomp_cycle_eta(double x, void *data);
