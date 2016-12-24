@@ -8,8 +8,8 @@ static var_info vtab_thirdpartyownership[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 	{ SSC_INPUT, SSC_NUMBER, "analysis_period", "Analyis period", "years", "", "Financials", "?=30", "INTEGER,MIN=0,MAX=50", "" },
-	{ SSC_INPUT, SSC_NUMBER, "real_discount_rate", "Real discount rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=0,MAX=100", "" },
+	{ SSC_INPUT, SSC_NUMBER, "real_discount_rate", "Real discount rate", "%", "", "Financials", "*", "MIN=-99", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=-99", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "lease_or_ppa", "Lease or PPA agreement", "0/1", "0=lease,1=ppa", "thirdpartyownership", "?=0", "INTEGER,MIN=0,MAX=1", "" },
 	
