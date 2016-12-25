@@ -509,7 +509,7 @@ public:
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(m_num_rec_yearly), revenue_wo_sys(m_num_rec_yearly),
 			payment(m_num_rec_yearly), income(m_num_rec_yearly), 
-			demand_charge_w_sys(m_num_rec_yearly), energy_charge_w_sys(m_num_rec_yearly), 
+			demand_charge_w_sys(m_num_rec_yearly), energy_charge_w_sys(m_num_rec_yearly), energy_charge_gross_w_sys(m_num_rec_yearly),
 			demand_charge_wo_sys(m_num_rec_yearly), energy_charge_wo_sys(m_num_rec_yearly),
 			ec_tou_sched(m_num_rec_yearly), dc_tou_sched(m_num_rec_yearly), load(m_num_rec_yearly), dc_hourly_peak(m_num_rec_yearly),
 			e_tofromgrid(m_num_rec_yearly), p_tofromgrid(m_num_rec_yearly), salespurchases(m_num_rec_yearly);
@@ -941,6 +941,7 @@ public:
 					revenue_w_sys[j] += revenue_wo_sys[j]; // watch sign
 					annual_revenue_w_sys[i + 1] += revenue_w_sys[j] - revenue_wo_sys[j];
 					energy_charge_w_sys[j] += energy_charge_wo_sys[j];
+					energy_charge_gross_w_sys[j] += energy_charge_wo_sys[j];
 					demand_charge_w_sys[j] += demand_charge_wo_sys[j];
 				}
 				// adjust monthly outputs as sum of both meters = system meter + load meter 
@@ -950,6 +951,7 @@ public:
 					monthly_dc_fixed[j] += ch_wo_sys_dc_fixed_ym[(i + 1) * 12 + j];
 					monthly_dc_tou[j] += ch_wo_sys_dc_tou_ym[(i + 1) * 12 + j];
 					monthly_ec_charges[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
+					monthly_ec_charges_gross[j] += ch_wo_sys_ec_ym[(i + 1) * 12 + j];
 					monthly_fixed_charges[j] += ch_wo_sys_fixed_ym[(i + 1) * 12 + j];
 					monthly_minimum_charges[j] += ch_wo_sys_minimum_ym[(i + 1) * 12 + j];
 					monthly_bill[j] += utility_bill_wo_sys_ym[(i + 1) * 12 + j];
