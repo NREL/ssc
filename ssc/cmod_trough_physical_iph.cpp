@@ -194,9 +194,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	
 
 		// Annual Outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy_MWt",  "Annual Net Thermal Energy Production w/ avail derate",     "MWt-hr", "",          "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_energy","Annual Gross Thermal Energy Production w/ avail derate",     "MWt-hr", "",          "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",     "MWt-hr",  "",  "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",  "Annual Net Thermal Energy Production w/ avail derate",           "kWt-hr",  "",          "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_energy","Annual Gross Thermal Energy Production w/ avail derate",     "kWt-hr",  "",          "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",     "kWt-hr",  "",  "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate", "kWe-hr", "",  "Post-process",     "*",       "",   "" },
 
 
@@ -597,18 +597,18 @@ public:
 		for(int i = 0; i < n_steps_fixed; i++)
 		{
 			size_t hour = ceil(p_time_final_hr[i]);
-			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour);		//[MWt]
-			p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
+			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour) * 1.E3;		//[kWt]
+			p_W_dot_parasitic_tot[i] *= -1.0;			//[kWe] Label is total parasitics, so change to a positive value
 			p_W_dot_par_tot_haf[i] = p_W_dot_parasitic_tot[i] * (ssc_number_t)haf(hour) * 1.E3;		//[kWe]
 		}
 
-		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[MWt-hr]
+		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
 		accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step/3600.0, steps_per_hour);	//[kWe-hr]
-		accumulate_annual_for_year("q_dot_freeze_prot", "annual_thermal_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[MWt-hr]
+		accumulate_annual_for_year("q_dot_freeze_prot", "annual_thermal_consumption", sim_setup.m_report_step/3600.0*1.E3, steps_per_hour);	//[kWt-hr]
 
-		ssc_number_t annual_field_energy = as_number("annual_field_energy");	//[MWt-hr]
-		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[MWt-hr]
-		assign("annual_energy_MWt", annual_field_energy - annual_thermal_consumption);	//[MWt-hr]
+		ssc_number_t annual_field_energy = as_number("annual_field_energy");		//[kWt-hr]
+		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[kWt-hr]
+		assign("annual_energy", annual_field_energy - annual_thermal_consumption);	//[kWt-hr]
 	}
 
 };

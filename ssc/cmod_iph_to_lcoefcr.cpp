@@ -3,15 +3,10 @@
 static var_info vtab_iph_to_lcoefcr[] = 
 {	
 /*   VARTYPE            DATATYPE         NAME                        LABEL                             UNITS     META      GROUP          REQUIRED_IF    CONSTRAINTS UI_HINTS*/
-	{ SSC_INPUT,       SSC_NUMBER,      "annual_energy_MWt",              "Annual Field Thermal Energy Production w/ avail derate",     "MWt-hr", "",   "IPH_LCOH",     "*",       "",   "" },
 	{ SSC_INPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",            "kWe-hr", "",   "IPH_LCOH",     "*",       "",   "" },
 	{ SSC_INPUT,       SSC_NUMBER,      "electricity_rate",                "Cost of electricity used to operate pumps/trackers",        "$/kWe",  "",   "IPH_LCOH",     "*",       "",   "" },
 
 	{ SSC_INOUT,       SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",    "$/kW",   "",       "Simple LCOE", "*",           "",         "" },
-
-
-	{ SSC_OUTPUT,       SSC_NUMBER,     "annual_energy",      "Annual energy production",       "kWt-hr/yr", "",       "Simple LCOE", "*",           "",         "" },
-
 
 var_info_invalid };
 
@@ -30,8 +25,6 @@ public:
 		double foc = as_double("fixed_operating_cost");		//[$]
 		
 		assign("fixed_operating_cost", foc + as_double("electricity_rate")*as_double("annual_electricity_consumption"));		
-
-		assign("annual_energy", as_double("annual_energy_MWt")*1.E3);
 	}
 	
 };
