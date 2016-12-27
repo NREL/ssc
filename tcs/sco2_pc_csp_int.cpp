@@ -406,7 +406,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		std::string file_name = mstr_base_name + case_name + ".csv";
 		mc_P_mc_vary_f_recomp_opt_file.open(file_name);
 
-		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+		mc_P_mc_vary_f_recomp_opt_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
 	}
 
 
@@ -848,7 +848,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	// double over_T_t_in = max(0.0, T_t_solved - mc_rc_cycle.get_design_solved()->m_temp[6-1]);
 
 	// 2) Don't let the upper pressure in the system exceed the specified max (typically also = design point P_high)
-	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[2 - 1] - ms_des_par.m_P_high_limit) / 1.E3);
+	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
 
 	// 3) Check compressor(s) tip ratio?
 	double mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
@@ -894,7 +894,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	//  then overwrite integer that code returns to calling program
 	if(over_T_t_in != 0.0)
 		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
-	else if(over_P_high != 0.0)
+	else if( mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT] > ms_des_par.m_P_high_limit )
 		od_solve_code = E_OVER_PRESSURE;
 	else if(over_tip_ratio != 0.0)
 		od_solve_code = E_TIP_RATIO;
@@ -1691,6 +1691,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
 			N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
 			mc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
+			f_recomp_of = mc_rc_cycle.get_od_solved()->m_recomp_frac;	//[-]
 
 			rc_phi_of = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_w_tip_ratio;
 			double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
@@ -1699,14 +1700,14 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			od_error_code = ms_od_solved.m_od_error_code;	//[-]
 		}
 
-		mc_P_mc_vary_f_recomp_opt_file << P_mc_in << ","
+		mc_P_mc_vary_f_recomp_opt_file << util::format("%.4f",P_mc_in) << ","
 			<< deltaP << ","
-			<< P_mc_out_of << ","
+			<< util::format("%.4f",P_mc_out_of) << ","
 			<< m_dot_mc << ","
 			<< m_dot_t << ","
 			<< N_mc << ","
 			<< mc_tip_ratio_of << ","
-			<< f_recomp_of << ","
+			<< util::format("%.4f",f_recomp_of) << ","
 			<< m_dot_rc << ","
 			<< rc_phi_of << ","
 			<< rc_tip_ratio_of << ","
