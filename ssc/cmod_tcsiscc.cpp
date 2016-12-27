@@ -112,6 +112,7 @@ static var_info _cm_vtab_tcsiscc[] = {
     { SSC_INPUT,        SSC_NUMBER,      "rec_htf",              "The name of the HTF used in the receiver",                          "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",       "User defined field fluid property data",                            "-",            "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Flow_type",            "A flag indicating which flow pattern is used",                      "",             "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "crossover_shift",      "No. panels shift in receiver crossover position",                   "",             "",            "receiver",       "?=0",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "epsilon",              "The emissivity of the receiver surface coating",                    "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hl_ffact",             "The heat loss factor (thermal loss fudge factor)",                  "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",        "Hot HTF outlet temperature at design conditions",                   "C",            "",            "receiver",       "*",                       "",                      "" },
@@ -149,11 +150,7 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "W_dot_solar_des",     "Solar contribution to cycle output at design"                     "MWe",         "",        "parasitics",     "*",                       "",                      "" },
 
 	// OUTPUTS
-	// weather
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "tdry",              "Ambient dry bulb temperature",                                   "C",            "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "wspd",              "Wind Speed",                                                     "m/s",          "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "beam",              "Beam normal irradiance",                                         "W/m2",         "",             "Outputs",        "*",                       "LENGTH=8760",           "" },
-
+		// weather
 	{ SSC_OUTPUT,       SSC_ARRAY,       "month",             "Resource Month",                                                  "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hour",              "Resource Hour of Day",                                            "",             "",            "weather",        "*",                       "LENGTH=8760",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "solazi",            "Resource Solar Azimuth",                                          "deg",          "",            "weather",        "*",                       "LENGTH=8760",           "" },
@@ -202,11 +199,7 @@ static var_info _cm_vtab_tcsiscc[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",           "Parasitic power heliostat drives",                                "MWe",           "",             "Outputs",        "*",                      "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot","Parasitic power generation-dependent load",                      "MWe",           "",             "Outputs",        "*",                      "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",           "Parasitic power fixed load",                                      "MWe",           "",             "Outputs",        "*",                      "",           "" },
-	//{ SSC_OUTPUT,       SSC_ARRAY,       "P_piping_tot",      "Parasitic power equiv. header pipe losses",                       "MWe",           "",             "Outputs",        "*",                      "",           "" },
-
-
-//	{ SSC_OUTPUT, SSC_ARRAY, "hourly_energy",       "Hourly Energy",      "kW", "", "Net_E_Calc", "*", "LENGTH=8760", "" },
-																	      
+																      
 	// Annual Outputs		   										                                        
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy",      "Annual Energy",      "kW", "", "Net_E_Calc", "*", "", "" },
 
@@ -249,14 +242,14 @@ public:
 		set_unit_value(weather, "azimuth", 0.0);
 
 		// Heliostat field
-		set_unit_value_ssc_double(type_hel_field, "run_type");// , 0);	//0=auto, 1=user-type_hel_field, 2=user data
-		set_unit_value_ssc_double(type_hel_field, "helio_width");//, 12.);
-		set_unit_value_ssc_double(type_hel_field, "helio_height");//, 12.);
-		set_unit_value_ssc_double(type_hel_field, "helio_optical_error");//, 0.00153);
-		set_unit_value_ssc_double(type_hel_field, "helio_active_fraction");//, 0.97);
+		set_unit_value_ssc_double(type_hel_field, "run_type");// 0=auto, 1=user-type_hel_field, 2=user data
+		set_unit_value_ssc_double(type_hel_field, "helio_width");	//[m]
+		set_unit_value_ssc_double(type_hel_field, "helio_height");	//[m]
+		set_unit_value_ssc_double(type_hel_field, "helio_optical_error");
+		set_unit_value_ssc_double(type_hel_field, "helio_active_fraction");
 		set_unit_value_ssc_double(type_hel_field, "dens_mirror");
-		set_unit_value_ssc_double(type_hel_field, "helio_reflectance");//, 0.90);
-		set_unit_value_ssc_double(type_hel_field, "rec_absorptance");//, 0.94);
+		set_unit_value_ssc_double(type_hel_field, "helio_reflectance");
+		set_unit_value_ssc_double(type_hel_field, "rec_absorptance");
 
 		bool is_optimize = as_boolean("is_optimize");
 
@@ -453,7 +446,7 @@ public:
 			set_unit_value_ssc_matrix(type_hel_field, "flux_maps");
 		}
 
-		bConnected = connect(weather, "wspd", type_hel_field, "vwind");
+		bConnected &= connect(weather, "wspd", type_hel_field, "vwind");
 		set_unit_value_ssc_double(type_hel_field, "field_control", 1.);
 		set_unit_value_ssc_double(weather, "solzen", 90.);	//initialize to be on the horizon
 		bConnected &= connect(weather, "solzen", type_hel_field, "solzen");
@@ -462,25 +455,26 @@ public:
 		if( as_integer("receiver_type") == 0 )
 		{
 			// Receiver (type 222) parameters
-			set_unit_value_ssc_double(type222_receiver, "N_panels");//, 20 );
-			set_unit_value_ssc_double(type222_receiver, "D_rec", D_rec);//, 17.67 );
-			set_unit_value_ssc_double(type222_receiver, "H_rec", H_rec);//, 20.41 );
-			set_unit_value_ssc_double(type222_receiver, "THT", THT);//, 203.33 );
-			set_unit_value_ssc_double(type222_receiver, "d_tube_out");//, 40.0 );
-			set_unit_value_ssc_double(type222_receiver, "th_tube");//, 1.25 );
-			set_unit_value_ssc_double(type222_receiver, "mat_tube");//, 2 );
-			set_unit_value_ssc_double(type222_receiver, "rec_htf");//, 17 );
-			set_unit_value_ssc_matrix(type222_receiver, "field_fl_props");//, {} );
-			set_unit_value_ssc_double(type222_receiver, "Flow_type");//, 1 );
-			set_unit_value_ssc_double(type222_receiver, "epsilon");//, 0.88 );
-			set_unit_value_ssc_double(type222_receiver, "hl_ffact");//, 1 );
-			set_unit_value_ssc_double(type222_receiver, "T_htf_hot_des");//, 574 );
-			set_unit_value_ssc_double(type222_receiver, "T_htf_cold_des");//, 290 );
-			set_unit_value_ssc_double(type222_receiver, "f_rec_min");//, 0.25 );
-			set_unit_value_ssc_double(type222_receiver, "Q_rec_des");//, 669.903 );
-			set_unit_value_ssc_double(type222_receiver, "rec_su_delay");//, 0.2 );
-			set_unit_value_ssc_double(type222_receiver, "rec_qf_delay");//, 0.25 );
-			set_unit_value_ssc_double(type222_receiver, "m_dot_htf_max");//, 6.764E6 );
+			set_unit_value_ssc_double(type222_receiver, "N_panels");
+			set_unit_value_ssc_double(type222_receiver, "D_rec", D_rec);
+			set_unit_value_ssc_double(type222_receiver, "H_rec", H_rec);
+			set_unit_value_ssc_double(type222_receiver, "THT", THT);
+			set_unit_value_ssc_double(type222_receiver, "d_tube_out");
+			set_unit_value_ssc_double(type222_receiver, "th_tube");
+			set_unit_value_ssc_double(type222_receiver, "mat_tube");
+			set_unit_value_ssc_double(type222_receiver, "rec_htf");
+			set_unit_value_ssc_matrix(type222_receiver, "field_fl_props");
+			set_unit_value_ssc_double(type222_receiver, "Flow_type");
+			set_unit_value_ssc_double(type222_receiver, "crossover_shift");
+			set_unit_value_ssc_double(type222_receiver, "epsilon");
+			set_unit_value_ssc_double(type222_receiver, "hl_ffact");
+			set_unit_value_ssc_double(type222_receiver, "T_htf_hot_des");
+			set_unit_value_ssc_double(type222_receiver, "T_htf_cold_des");
+			set_unit_value_ssc_double(type222_receiver, "f_rec_min");
+			set_unit_value_ssc_double(type222_receiver, "Q_rec_des");
+			set_unit_value_ssc_double(type222_receiver, "rec_su_delay");
+			set_unit_value_ssc_double(type222_receiver, "rec_qf_delay");
+			set_unit_value_ssc_double(type222_receiver, "m_dot_htf_max");
 			set_unit_value_ssc_double(type222_receiver, "A_sf", A_sf);
 			set_unit_value_ssc_double(type222_receiver, "n_flux_x");
 			set_unit_value_ssc_double(type222_receiver, "n_flux_y");
@@ -489,10 +483,10 @@ public:
 			set_unit_value_ssc_double(type222_receiver, "piping_length_mult", "piping_length_mult");
 
 			// Constant inputs (so ... should be parameters??)
-			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target", as_double("T_htf_hot_des")); //, 574.0 );
-			set_unit_value_ssc_double(type222_receiver, "eta_pump"); //, 0.85 );
-			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0.0); //, 0 );
-			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy"); //, 8 );
+			set_unit_value_ssc_double(type222_receiver, "T_salt_hot_target", as_double("T_htf_hot_des"));
+			set_unit_value_ssc_double(type222_receiver, "eta_pump");
+			set_unit_value_ssc_double(type222_receiver, "night_recirc", 0.0);
+			set_unit_value_ssc_double(type222_receiver, "hel_stow_deploy");
 
 
 			// Make all the connections to/from the Receiver (type 222)
@@ -523,12 +517,12 @@ public:
 		set_unit_value_ssc_double(iscc_pb, "pinch_point", as_double("pinch_point_coldside"));
 
 		// Connect NGCC Inputs
-		bConnected = connect(weather, "tdry", iscc_pb, "T_amb");
-		bConnected = connect(weather, "pres", iscc_pb, "P_amb");
-		bConnected = connect(type222_receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms_ss");
-		bConnected = connect(type222_receiver, "q_dot_ss", iscc_pb, "q_dot_rec_ss");
-		bConnected = connect(type222_receiver, "T_salt_cold", iscc_pb, "T_rec_in");
-		bConnected = connect(type222_receiver, "T_salt_hot", iscc_pb, "T_rec_out");
+		bConnected &= connect(weather, "tdry", iscc_pb, "T_amb");
+		bConnected &= connect(weather, "pres", iscc_pb, "P_amb");
+		bConnected &= connect(type222_receiver, "m_dot_salt_tot", iscc_pb, "m_dot_ms_ss");
+		bConnected &= connect(type222_receiver, "q_dot_ss", iscc_pb, "q_dot_rec_ss");
+		bConnected &= connect(type222_receiver, "T_salt_cold", iscc_pb, "T_rec_in");
+		bConnected &= connect(type222_receiver, "T_salt_hot", iscc_pb, "T_rec_out");
 
 		// Set ISCC Parasitic Parameters
 			// 8.15.15 twn: For MSPT, we're calculating piping losses in physical receiver model, so zero out tower piping parasitics here
@@ -550,14 +544,14 @@ public:
 		set_unit_value_ssc_double(iscc_parasitics, "W_dot_solar_des");
 
 		// Connect ISCC Parasitic Inputs
-		bConnected = connect(type_hel_field, "pparasi", iscc_parasitics, "W_dot_tracking");
-		bConnected = connect(type222_receiver, "W_dot_pump", iscc_parasitics, "W_dot_rec_pump");
-		bConnected = connect(type222_receiver, "m_dot_ss", iscc_parasitics, "m_dot_htf_ss");
-		bConnected = connect(iscc_pb, "W_dot_pc_hybrid", iscc_parasitics, "W_dot_pc_hybrid");
-		bConnected = connect(iscc_pb, "W_dot_pc_fossil", iscc_parasitics, "W_dot_pc_fossil");
-		bConnected = connect(type222_receiver, "f_timestep", iscc_parasitics, "f_timestep");
-		bConnected = connect(type222_receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss");
-		bConnected = connect(iscc_pb, "q_dot_fuel", iscc_parasitics, "q_dot_fuel");
+		bConnected &= connect(type_hel_field, "pparasi", iscc_parasitics, "W_dot_tracking");
+		bConnected &= connect(type222_receiver, "W_dot_pump", iscc_parasitics, "W_dot_rec_pump");
+		bConnected &= connect(type222_receiver, "m_dot_ss", iscc_parasitics, "m_dot_htf_ss");
+		bConnected &= connect(iscc_pb, "W_dot_pc_hybrid", iscc_parasitics, "W_dot_pc_hybrid");
+		bConnected &= connect(iscc_pb, "W_dot_pc_fossil", iscc_parasitics, "W_dot_pc_fossil");
+		bConnected &= connect(type222_receiver, "f_timestep", iscc_parasitics, "f_timestep");
+		bConnected &= connect(type222_receiver, "q_dot_ss", iscc_parasitics, "q_solar_ss");
+		bConnected &= connect(iscc_pb, "q_dot_fuel", iscc_parasitics, "q_dot_fuel");
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
