@@ -90,6 +90,7 @@ tcsvarinfo sam_mw_pt_type222_variables[] = {
 	{TCS_PARAM, TCS_NUMBER, P_field_fl,			"rec_htf",			"The name of the HTF used in the receiver",									"",			"", "", ""},
 	{TCS_PARAM, TCS_MATRIX, P_field_fl_props,   "field_fl_props",   "User defined field fluid property data",                                   "-",        "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows",        "",        ""},
 	{TCS_PARAM, TCS_NUMBER, P_Flow_type,		"Flow_type",		"A flag indicating which flow pattern is used",								"",			"", "", ""},
+	{TCS_PARAM, TCS_NUMBER, P_crossover_shift,  "crossover_shift",  "",                                                                         "",         "", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_epsilon,			"epsilon",			"The emissivity of the receiver surface coating",							"",			"", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_hl_ffact,			"hl_ffact",			"The heat loss factor (thermal loss fudge factor)",							"",			"", "", ""},
 	{TCS_PARAM, TCS_NUMBER, P_T_htf_hot_des,	"T_htf_hot_des",	"Hot HTF outlet temperature at design conditions",							"C",		"", "", ""},
