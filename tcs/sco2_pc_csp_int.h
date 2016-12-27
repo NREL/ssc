@@ -123,7 +123,13 @@ public:
 	struct S_od_solved
 	{
 		C_RecompCycle::S_od_solved ms_rc_cycle_od_solved;
-		C_HX_counterflow::S_od_solved ms_phx_od_solved;	
+		C_HX_counterflow::S_od_solved ms_phx_od_solved;
+		int m_od_error_code;
+		
+		S_od_solved()
+		{
+			m_od_error_code = 0;	
+		}
 	};
 
 	// Callback funtion
@@ -285,7 +291,8 @@ public:
 	bool m_is_write_mc_out_file;
 	bool m_is_only_write_frecomp_opt_iters;
 
-	ofstream mc_out_file;
+	ofstream mc_P_mc_in_fixed_f_recomp_vary_file;
+	ofstream mc_P_mc_vary_f_recomp_opt_file;
 	std::string mstr_base_name;
 };
 
