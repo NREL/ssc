@@ -229,6 +229,8 @@ public:
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
 
+	void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
+
 	int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	bool opt_f_recomp_fix_P_mc_in_max_eta_core();

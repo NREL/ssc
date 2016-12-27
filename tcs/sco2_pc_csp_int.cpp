@@ -228,6 +228,13 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
 
+	double P_mc_in_parametric = 9279.7;		//[kPa]
+	double f_recomp_start = 0.21;			//[-]
+	double f_recomp_end = 0.26;				//[-]
+	double f_recomp_inc = 1.e-4;			//[-]
+
+	off_design_fix_P_mc_in_parametric_f_recomp(P_mc_in_parametric, f_recomp_start, f_recomp_end, f_recomp_inc);	
+
 
 
 	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
@@ -1618,6 +1625,37 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 	}
 
 	return eta_max_f_recomp_opt;
+}
+
+void C_sco2_recomp_csp::off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/)
+{
+	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in;		//[kPa]
+
+	if( m_is_write_mc_out_file )
+	{
+		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
+			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
+			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15) +
+			util::format("%.1f", P_mc_in);
+
+		std::string file_name = mstr_base_name + case_name + ".csv";
+		mc_out_file.open(file_name);
+	}
+
+	if( m_is_write_mc_out_file )
+	{
+		mc_out_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+	}
+
+	for(double f_recomp = f_recomp_min; f_recomp <= f_recomp_max; f_recomp = f_recomp + f_recomp_inc)
+	{
+		opt_f_recomp_max_eta(f_recomp);
+	}
+
+	if( m_is_write_mc_out_file )
+	{
+		mc_out_file.close();
+	}
 }
 
 double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
