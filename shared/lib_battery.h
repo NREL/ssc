@@ -703,6 +703,7 @@ protected:
 	int _num_steps;
 	int _nyears; 
 	int _mode;
+	double _safety_factor;
 	
 	
 	grid_vec grid; // [P_grid, hour, step]

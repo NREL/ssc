@@ -1690,6 +1690,7 @@ automate_dispatch_t::automate_dispatch_t(
 	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
 	_P_target_month = -1e16;
 	_month = 1;
+	_safety_factor = 0.03; 
 	grid.reserve(_num_steps);
 	for (int ii = 0; ii != _num_steps; ii++)
 		grid.push_back(grid_point(0.,0,0));
@@ -1795,7 +1796,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 0 && hour_of_year != _hour_last_updated)
+	if (hour_of_year == 24 && hour_of_year != _hour_last_updated)
 	{
 		// debug = true;
 		if (debug)
@@ -1955,6 +1956,9 @@ void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, do
 			break;
 		}
 	}
+	// set safety factor in case voltage differences make it impossible to achieve target without violated minimum SOC
+	P_target *= (1 + _safety_factor);
+
 	// don't set target lower than previous high in month
 	if (P_target < _P_target_month)
 	{
