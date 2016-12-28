@@ -1795,7 +1795,7 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 	// for now, don't enable
 	debug = false;
 
-	if (hour_of_year == 4584 && hour_of_year != _hour_last_updated)
+	if (hour_of_year == 0 && hour_of_year != _hour_last_updated)
 	{
 		// debug = true;
 		if (debug)
@@ -1811,6 +1811,10 @@ void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, 
 
 void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx )
 {
+
+	if (debug)
+		fprintf(p, "Index\t P_load (kW)\t P_pv (kW)\t P_grid (kW)\n");
+
 	// compute grid net from pv and load (no battery)
 	int count = 0;
 	for (int hour = 0; hour != 24; hour++)
@@ -1818,6 +1822,10 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx )
 		for (int step = 0; step != _steps_per_hour; step++)
 		{
 			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
+
+			if (debug)
+				fprintf(p, "%d\t %.1f\t %.1f\t %.1f\n", count, _P_load_dc[idx], _P_pv_dc[idx], _P_load_dc[idx] - _P_pv_dc[idx]);
+
 			idx++;
 			count++;
 		}
@@ -1998,7 +2006,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 
 		// have set profile 0 as charge from solar only as default, start from 1
 		_sched.set_value(profile, m - 1, column); // in hourly case, column is hour-1, sched is 1-based
-		_charge_array.push_back(true);
+		_charge_array.push_back(false);
 		_discharge_array.push_back(true);
 		_gridcharge_array.push_back(false);
 		_percent_discharge_array[profile] = discharge_percent;
