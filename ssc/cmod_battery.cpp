@@ -118,7 +118,7 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_to_batt",                               "Power to battery from grid",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_grid",                                 "Power to grid from PV",                                 "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Power to grid from battery",                            "kW",      "",                       "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_loss",                                  "Power lost due to battery power electronics",           "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_conversion_loss",                       "Power lost due to battery power electronics",           "kW",      "",                       "Battery",       "",                           "",                              "" },
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -166,7 +166,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			batt_vars->batt_chem = cm.as_integer("batt_chem");
 			batt_vars->batt_dispatch = cm.as_integer("batt_dispatch_choice");
 			batt_vars->batt_meter_position = cm.as_integer("batt_meter_position");
-
+			batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 
 			if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
 			{
@@ -175,7 +175,6 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 				batt_vars->pdischarge_percent = cm.as_array("dispatch_manual_percent_discharge", &batt_vars->ndischarge_percent);
 				batt_vars->pgridcharge_percent = cm.as_array("dispatch_manual_percent_gridcharge", &batt_vars->ngridcharge_percent);
 				batt_vars->pgridcharge = cm.as_array("dispatch_manual_gridcharge", &batt_vars->ngridcharge);
-				batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 				batt_vars->schedule = cm.allocate_matrix("batt_dispatch_sched", 12, 24);
 				batt_vars->psched = cm.as_matrix("dispatch_manual_sched", &batt_vars->msched, &batt_vars->nsched);
 				batt_vars->psched_weekend = cm.as_matrix("dispatch_manual_sched_weekend", &batt_vars->msched, &batt_vars->nsched);
@@ -455,7 +454,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
 	outGridToBatt = cm.allocate("grid_to_batt", nrec*nyears);
-	outBatteryPowerLoss = cm.allocate("batt_loss", nrec*nyears);
+	outBatteryConversionPowerLoss = cm.allocate("batt_conversion_loss", nrec*nyears);
 
 	// annual outputs
 	int annual_size = nyears+1;
@@ -717,7 +716,7 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 	outGenPower[idx] = (ssc_number_t)(charge_control->power_gen());
 	outPVToBatt[idx] = (ssc_number_t)(charge_control->power_pv_to_batt());
 	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
-	outBatteryPowerLoss[idx] = (ssc_number_t)(charge_control->power_loss());
+	outBatteryConversionPowerLoss[idx] = (ssc_number_t)(charge_control->power_loss());
 
 	if (batt_meter_position == dispatch_t::BEHIND)
 	{
