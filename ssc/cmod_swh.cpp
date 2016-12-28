@@ -101,15 +101,14 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "shading_loss",          "Shading losses",                       "%",      "",                                  "Time Series",      "*",                        "",                                 "" },
 																										  
 
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                        "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                             "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                          "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                               "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                          "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                     "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_saved",               "Q saved",                              "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_transmitted",         "Q transmitted",                        "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_useful",              "Q useful",                             "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_deliv",               "Q delivered",                          "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_loss",                "Q loss",                               "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_aux",                 "Q auxiliary",                          "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_auxonly",             "Q auxiliary only",                     "kW",      "",                                  "Time Series",      "*",                        "",                                 "" },
 																									      		    					                 																		             
-	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                               "W",      "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "P_pump",                "P pump",                               "kW",      "",                                 "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_amb",                 "T ambient",						      "C",		"",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_cold",                "T cold",                               "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_deliv",               "T delivered",                          "C",      "",                                  "Time Series",      "*",                        "",                                 "" },
@@ -121,8 +120,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                       "kg/hr",  "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                       "",       "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
 																									      								                 																		            
-	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Energy saved",                         "W",     "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",		  "Energy saved",                         "kWh",    "",                                  "Time Series",      "*",                        "",                                 "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Q saved",                             "kW",     "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
 																																			             																		            
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_aux",		  "Q auxiliary",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
@@ -136,7 +134,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "solar_fraction",		  "Solar fraction",                      "",        "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",       "Capacity factor",                     "%",       "",                                  "Annual",           "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",            "First year kWh/kW",                   "kWh/kW",  "",                                  "Annual",           "*",                        "",                                 "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",        "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous",    "*",                        "",                                 "" },
 
 
 	var_info_invalid };
@@ -154,6 +152,8 @@ public:
 
 	void exec() throw(general_error)
 	{
+		const double watt_to_kw = 0.001f;
+
 		const char *file = as_string("solar_resource_file");
 
 		weatherfile wfile(file);
@@ -308,7 +308,6 @@ public:
 		ssc_number_t *out_P_pump = allocate("P_pump", nrec);
 		ssc_number_t *out_Q_aux = allocate("Q_aux", nrec);
 		ssc_number_t *out_Q_auxonly = allocate("Q_auxonly", nrec);
-		ssc_number_t *out_Q_saved = allocate("Q_saved", nrec);
 		
 		ssc_number_t *out_V_hot = allocate("V_hot", nrec);
 		ssc_number_t *out_V_cold = allocate("V_cold", nrec);
@@ -539,7 +538,7 @@ public:
 		Calculate SHW performance: Q_useful, Q_deliv, T_deliv, T_tank, Q_pump, Q_aux, Q_auxonly, energy_net (Q_saved)
 		*********************************************************************************************** */
 		int mode = 0;
-		double annual_wh = 0.0;
+		double annual_kwh = 0.0;
 		size_t hour = 0;
 		idx = 0;
 		for (hour = 0; hour < 8760; hour++)
@@ -737,16 +736,15 @@ public:
 				if (Q_useful < 0) Q_useful = 0.0;
 
 				// save output variables - convert Q values to kWh 
-				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total);
-				out_Q_useful[idx] = (ssc_number_t)(Q_useful);
-				out_Q_deliv[idx] = (ssc_number_t)(Q_deliv); //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
-				out_Q_loss[idx] = (ssc_number_t)(Q_tankloss);
+				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total) * watt_to_kw;
+				out_Q_useful[idx] = (ssc_number_t)(Q_useful)* watt_to_kw;
+				out_Q_deliv[idx] = (ssc_number_t)(Q_deliv)* watt_to_kw; //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
+				out_Q_loss[idx] = (ssc_number_t)(Q_tankloss* watt_to_kw);
 				out_T_tank[idx] = (ssc_number_t)T_tank;
 				out_T_deliv[idx] = (ssc_number_t)T_deliv;
-				out_P_pump[idx] = (ssc_number_t)(P_pump);
-				out_Q_aux[idx] = (ssc_number_t)(Q_aux);
-				out_Q_auxonly[idx] = (ssc_number_t)(Q_auxonly);
-				out_Q_saved[idx] = (ssc_number_t) (Q_saved);
+				out_P_pump[idx] = (ssc_number_t)(P_pump* watt_to_kw);
+				out_Q_aux[idx] = (ssc_number_t)(Q_aux* watt_to_kw);
+				out_Q_auxonly[idx] = (ssc_number_t)(Q_auxonly* watt_to_kw);
 				out_T_hot[idx] = (ssc_number_t)T_hot;
 				out_T_cold[idx] = (ssc_number_t)T_cold;
 				out_V_hot[idx] = (ssc_number_t)V_hot;
@@ -754,26 +752,26 @@ public:
 				out_Draw[idx] = draw[hour]; // pass to outputs for visualization
 				Mode[idx] = (ssc_number_t)mode; // save mode for debugging
 
-				out_energy[idx] =  (ssc_number_t)( Q_saved * ts_hour * haf(hour) ); // Wh energy, with adjustment factors applied
+				out_energy[idx] =  (ssc_number_t)( Q_saved * ts_hour * haf(hour) * watt_to_kw); // kWh energy, with adjustment factors applied
 
 				// accumulate hourly and annual energy
-				annual_wh += out_energy[idx];
+				annual_kwh += out_energy[idx];
 
 				// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-				out_hourly_energy[hour] += out_energy[idx] * 0.001f;
+				out_hourly_energy[hour] += out_energy[idx];
 
 				idx++;
 			}
 		}
 				
-		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", 0.001*ts_hour );
-		accumulate_monthly( "Q_aux", "monthly_Q_aux", 0.001*ts_hour );
-		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", 0.001*ts_hour );
+		accumulate_monthly( "Q_deliv", "monthly_Q_deliv", ts_hour );
+		accumulate_monthly( "Q_aux", "monthly_Q_aux", ts_hour );
+		accumulate_monthly( "Q_auxonly", "monthly_Q_auxonly", ts_hour );
 		accumulate_monthly("gen", "monthly_energy");
 
-		accumulate_annual( "Q_deliv", "annual_Q_deliv", 0.001*ts_hour );
-		accumulate_annual( "Q_aux", "annual_Q_aux", 0.001*ts_hour );
-		double auxonly = accumulate_annual( "Q_auxonly", "annual_Q_auxonly", 0.001*ts_hour );
+		accumulate_annual( "Q_deliv", "annual_Q_deliv", ts_hour );
+		accumulate_annual( "Q_aux", "annual_Q_aux", ts_hour );
+		double auxonly = accumulate_annual( "Q_auxonly", "annual_Q_auxonly", ts_hour );
 		double deliv = accumulate_annual("gen", "annual_energy");
 
 		assign("solar_fraction", var_data( (ssc_number_t)(deliv/auxonly) ));
@@ -781,7 +779,7 @@ public:
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
-		kWhperkW = annual_wh*0.001 / nameplate;
+		kWhperkW = annual_kwh / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}
