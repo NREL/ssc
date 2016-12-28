@@ -2799,10 +2799,8 @@ public:
 					{
 						if (battery_charging)
 						{
-							// zero out for pv array output, since pv+battery will be captured in "gen".
-							dcpwr_net = 0;
-
 							// change sign back now that is inverted
+							dcpwr_net *= -1;
 							acpwr_gross *= -1;
 						}
 						batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*0.001);
