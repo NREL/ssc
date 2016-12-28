@@ -168,6 +168,10 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 			batt_vars->batt_meter_position = cm.as_integer("batt_meter_position");
 			batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 
+			// Only one dispatch option for front-of-meter
+			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
+				batt_vars->batt_dispatch = dispatch_t::MANUAL;
+
 			if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
 			{
 				batt_vars->pcharge = cm.as_array("dispatch_manual_charge", &batt_vars->ncharge);
@@ -304,9 +308,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	total_steps = nyears * 8760 * step_per_hour;
 	chem = batt_vars->batt_chem;
-	batt_dispatch = batt_vars->batt_dispatch;
 
-	if (batt_dispatch == dispatch_t::MANUAL)
+	if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
 	{
 		ssc_number_t *pcharge = batt_vars->pcharge;
 		ssc_number_t *pdischarge = batt_vars->pdischarge;
@@ -348,21 +351,14 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		}
 	}
 	size_t m,n;
-	
-	// behind the meter, in front of meter
-	batt_meter_position = batt_vars->batt_meter_position;
-	if (batt_meter_position == dispatch_t::FRONT)
-		batt_dispatch = dispatch_t::MANUAL;
-
-	int pv_dispatch = batt_vars->batt_pv_choice;
 	util::matrix_t<float> &schedule = batt_vars->schedule;
-	if (batt_dispatch != dispatch_t::MANUAL)
+	if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
 	{
 		m = 12;
 		n = 24 * step_per_hour;
 		dm_dynamic_sched.resize_fill(m, n, 1);
 		dm_dynamic_sched_weekend.resize_fill(m, n, 1);
-		if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+		if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
 		{
 			int target_dispatch = batt_vars->batt_target_choice;
 			if (target_dispatch == 0)
@@ -387,7 +383,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 				throw compute_module::exec_error("battery", "invalid number of target powers, must be equal to number of records in weather file");
 		}
 	}
-	else if (batt_dispatch == dispatch_t::MANUAL)
+	else if (batt_vars->batt_dispatch == dispatch_t::MANUAL)
 	{
 		ssc_number_t *psched = batt_vars->psched;
 		if (batt_vars->msched != 12 || batt_vars->nsched != 24)
@@ -441,13 +437,13 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
 
-	if (batt_meter_position == dispatch_t::BEHIND)
+	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
 		outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
 		outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
 		outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
 	}
-	else if (batt_meter_position == dispatch_t::FRONT)
+	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		outPVToGrid = cm.allocate("pv_to_grid", nrec*nyears);
 		outBatteryToGrid = cm.allocate("batt_to_grid", nrec*nyears);
@@ -528,21 +524,21 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	battery_model->initialize( capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
-	if (batt_dispatch == dispatch_t::MANUAL && batt_meter_position == dispatch_t::BEHIND)
+	if (batt_vars->batt_dispatch == dispatch_t::MANUAL && batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
 		dispatch_model = new dispatch_manual_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_minimum_modetime,
-			batt_dispatch, pv_dispatch,
+			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 	}
-	else if (batt_meter_position == dispatch_t::FRONT)
+	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		dispatch_model = new dispatch_manual_front_of_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			batt_vars->batt_minimum_modetime,
-			batt_dispatch, pv_dispatch,
+			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
 	}
@@ -551,7 +547,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		dispatch_model = new automate_dispatch_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
 			batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
 			1, // minimum mode time allowed as 1 minute for auto dispatch
-			batt_dispatch, pv_dispatch,
+			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
 			nyears);
@@ -583,7 +579,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
 {
 	
-	if (batt_dispatch != dispatch_t::MANUAL)
+	if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
 	{
 		int nrec;
 		prediction_index = 0;
@@ -718,13 +714,13 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
 	outBatteryConversionPowerLoss[idx] = (ssc_number_t)(charge_control->power_loss());
 
-	if (batt_meter_position == dispatch_t::BEHIND)
+	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
 		outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
 		outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
 		outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
 	}
-	else if (batt_meter_position == dispatch_t::FRONT)
+	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		outPVToGrid[idx] = (ssc_number_t)(charge_control->power_pv_to_grid());
 		outBatteryToGrid[idx] = (ssc_number_t)(charge_control->power_battery_to_grid());
@@ -787,13 +783,13 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	cm.accumulate_monthly_for_year("pv_to_batt", "monthly_pv_to_batt", _dt_hour, step_per_hour);
 	cm.accumulate_monthly_for_year("grid_to_batt", "monthly_grid_to_batt", _dt_hour, step_per_hour);
 
-	if (batt_meter_position == dispatch_t::BEHIND)
+	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
 		cm.accumulate_monthly_for_year("pv_to_load", "monthly_pv_to_load", _dt_hour, step_per_hour);
 		cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
 		cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
 	}
-	else if (batt_meter_position == dispatch_t::FRONT)
+	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
 		cm.accumulate_monthly_for_year("pv_to_grid", "monthly_pv_to_grid", _dt_hour, step_per_hour);
