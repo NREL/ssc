@@ -50,30 +50,6 @@ void charge_controller::initialize(double P_pv, double P_load_ac)
 	_P_pv = P_pv;
 }
 
-double charge_controller::grid_ac(double dc_ac_efficiency)
-{
-	// dc powers
-	double P_grid_to_batt_0 = _dispatch->power_grid_to_batt();
-	double P_grid_to_load_0 = _dispatch->power_grid_to_load();
-
-	// ac grid power required to meet dc charging
-	if (_P_battery < 0)
-		_P_grid_to_batt = fabs(_P_battery + _P_pv_to_battery);
-	double P_grid_loss = (_P_grid_to_batt - P_grid_to_batt_0);
-
-	// reconcile any conversion with required load 
-	// P_grid < 0 -> using grid; _P_grid > 0 -> exporting to grid
-	_P_grid_to_load = _P_load - _P_pv_to_load - _P_battery_to_load;
-	_P_grid = -_P_grid_to_load - _P_grid_to_batt + _P_pv_to_grid;
-	
-	if (_P_grid_to_load < 0)
-		_P_grid_to_load = 0.;
-	if (_P_grid_to_batt < 0)
-		_P_grid_to_batt = 0.;
-		
-	return P_grid_loss; 
-}
-
 void charge_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac)
 {
 
@@ -295,12 +271,6 @@ void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, siz
 	// AC charging metrics
 	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
 }
-double ac_connected_battery_controller::grid_ac()
-{
-	double P_loss_grid = charge_controller::grid_ac(_bidirectional_inverter->ac_dc_efficiency());
-	return P_loss_grid;
-}
-
 void ac_connected_battery_controller::process_dispatch()
 {
 	double P_pv_ac = _P_pv;

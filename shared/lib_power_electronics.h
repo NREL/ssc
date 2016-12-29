@@ -114,7 +114,6 @@ public:
 	virtual void compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac);
 	virtual double gen_ac() = 0;
 	virtual double update_gen_ac(double P_gen_ac) = 0;
-	virtual double grid_ac(double dc_ac_efficiency);
 
 	// ac outputs
 	double power_tofrom_battery(){ return _P_battery;}
@@ -188,7 +187,6 @@ public:
 	void compute_to_batt_load_grid(double P_battery_dc, double P_battery_ac, double P_pv_ac, double P_load_ac);
 
 	double gen_ac();
-	double grid_ac();
 	double update_gen_ac(double P_gen_ac)
 	{	
 		// nothing to do
