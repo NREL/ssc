@@ -108,14 +108,14 @@ void C_sco2_recomp_csp::design_core()
 	}
 	else
 	{
-		throw("sCO2 recompression cycle and CSP integration design, design method must be either 1 or 2");
+		throw(C_csp_exception("sCO2 recompression cycle and CSP integration design, design method must be either 1 or 2\n"));
 	}
 
 	ms_des_solved.ms_rc_cycle_solved = *mc_rc_cycle.get_design_solved();
 
 	if(auto_err_code != 0)
 	{
-		throw("sCO2 recompression cycle and CSP integration design method failed: ", error_msg);
+		throw(C_csp_exception("sCO2 recompression cycle and CSP integration design method failed: ", error_msg));
 	}
 
 	if( error_msg[0] == NULL )
@@ -220,7 +220,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
-	m_is_write_mc_out_file = true;
+	m_is_write_mc_out_file = false;
 	m_is_only_write_frecomp_opt_iters = true;
 
 	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/";
@@ -412,7 +412,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 
 	// Optimize compressor inlet pressure
 	double P_mc_in_opt = fminbr(
-		P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, 0.0001);
+		P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, 1.E-7);
 
 
 	if( m_is_write_mc_out_file )
@@ -624,9 +624,57 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
 	}
 
-	// Optimize recompression fraction for this inlet pressure
-	double f_recomp_opt = fminbr(
-		f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, 0.0001);
+	// Set up recompression fraction optimization (at constant mc inlet pressure) options
+	bool use_nlopt = true;
+	double f_recomp_opt = std::numeric_limits<double>::quiet_NaN();
+
+	if( use_nlopt )
+	{
+		std::vector<double> x;
+		std::vector<double> lb;
+		std::vector<double> ub;
+		std::vector<double> scale;
+
+		x.resize(1);
+		double nlopt_f_recomp_guess = 0.75*f_recomp_max + 0.25*f_recomp_min;	//[-]
+		x[0] = nlopt_f_recomp_guess;	//[-]
+
+		lb.resize(1);
+		lb[0] = f_recomp_min;		//[-]
+
+		ub.resize(1);
+		ub[0] = f_recomp_max;		//[-]
+
+		scale.resize(1);
+		scale[0] = (0.65*f_recomp_max + 0.35*f_recomp_min) - x[0];
+
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt          f_recomp_opt_max_eta(nlopt::LN_NELDERMEAD, 1);
+		f_recomp_opt_max_eta.set_lower_bounds(lb);
+		f_recomp_opt_max_eta.set_upper_bounds(ub);
+		f_recomp_opt_max_eta.set_initial_step(scale);
+		f_recomp_opt_max_eta.set_xtol_rel(1.E-4);
+		f_recomp_opt_max_eta.set_ftol_rel(1.E-7);
+
+		// Set max objective function
+		f_recomp_opt_max_eta.set_max_objective(nlopt_max_f_recomp_cycle_eta, this);
+
+		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result       nlopt_result = f_recomp_opt_max_eta.optimize(x, nlopt_max_eta);
+
+		f_recomp_opt = x[0];
+
+		if( nlopt_max_eta != nlopt_max_eta )
+		{
+			f_recomp_opt = nlopt_f_recomp_guess;
+		}
+
+	}
+	else
+	{
+		f_recomp_opt = fminbr(
+			f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, 1.E-7);
+	}
 
 	// Call final time with optimized recompression fraction
 	ms_rc_cycle_od_phi_par.m_recomp_frac = f_recomp_opt;
@@ -1609,7 +1657,11 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 
 	int od_strategy = C_sco2_recomp_csp::E_MAX_ETA_FIX_PHI;
 
-	int off_design_code = mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
+	int off_design_code = -1;	//[-]
+
+	//off_design_code = mpc_sco2_rc->off_design_opt(sco2_od_par, od_strategy);
+
+	off_design_code = mpc_sco2_rc->off_design_nested_opt(sco2_od_par, od_strategy);
 
 	// Cycle off-design may want to operate below this value, so ND value could be < 1 everywhere
 	double W_dot_gross_design = mpc_sco2_rc->get_design_par()->m_W_dot_net;	//[kWe]
@@ -1810,6 +1862,12 @@ double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vect
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
 	if( frame != NULL ) return frame->od_fix_T_mc_approach__nl_opt_shell(x);
+}
+
+double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	if( frame != NULL ) return frame->opt_f_recomp_max_eta(x[0]);
 }
 
 double fmin_f_recomp_cycle_eta(double x, void *data)
