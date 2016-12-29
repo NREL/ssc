@@ -410,10 +410,58 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	}
 
 
-	// Optimize compressor inlet pressure
-	double P_mc_in_opt = fminbr(
-		P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, 1.E-7);
+	bool use_nlopt = true;
 
+	double P_mc_in_opt = std::numeric_limits<double>::quiet_NaN();
+
+	if( use_nlopt )
+	{
+		std::vector<double> x;
+		std::vector<double> lb;
+		std::vector<double> ub;
+		std::vector<double> scale;
+
+		x.resize(1);
+		double P_mc_in_guess = 0.38*P_mc_in_upper + 0.68*P_mc_in_lower;		//[kPa]
+		x[0] = P_mc_in_guess;		//[kPa]
+
+		lb.resize(1);
+		lb[0] = P_mc_in_lower;		//[kPa]
+
+		ub.resize(1);
+		ub[0] = P_mc_in_upper;		//[kPa]
+
+		scale.resize(1);
+		scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
+
+		// Set up instance of nlopt class and set optimization parameters
+		nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
+		nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
+		nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
+		nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
+		nlopt_P_mc_in_opt_max_of.set_xtol_rel(1.E-4);
+		nlopt_P_mc_in_opt_max_of.set_ftol_rel(1.E-7);
+
+		// Set max objective function
+		nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_max_opt_P_mc_in_nest_f_recomp, this);
+
+		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result    nlopt_result = nlopt_P_mc_in_opt_max_of.optimize(x, nlopt_max_eta);
+
+		P_mc_in_opt = x[0];
+
+		if( nlopt_max_eta != nlopt_max_eta )
+		{
+			P_mc_in_opt = P_mc_in_guess;
+		}
+	}
+	else
+	{
+		// Optimize compressor inlet pressure
+		P_mc_in_opt = fminbr(
+			P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, 1.E-7);
+	}
+	
 
 	if( m_is_write_mc_out_file )
 	{
@@ -1875,6 +1923,13 @@ double fmin_f_recomp_cycle_eta(double x, void *data)
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
 
 	return -(frame->opt_f_recomp_max_eta(x));
+}
+
+double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data)
+{
+	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
+	
+	if( frame != NULL )  return frame->opt_P_mc_in_nest_f_recomp_max_eta(x[0]);	
 }
 
 double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data)
