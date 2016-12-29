@@ -181,8 +181,8 @@ void dc_connected_battery_controller::run(size_t year, size_t hour_of_year, size
 	
 	initialize(P_pv_dc, P_load_ac);
 
-	// derate PV power being passed to battery, is squared since passes through DC/DC w/MPPT and DC/DC w/BMS
-	double P_pv_dc_converted = P_pv_dc * _dc_dc_charge_controller->batt_dc_dc_bms_efficiency() * _dc_dc_charge_controller->pv_dc_dc_mppt_efficiency();
+	// derate PV power being passed to battery by DC/DC w/BMS (already derated by DC/DC w/MPPT coming into model)
+	double P_pv_dc_converted = P_pv_dc * _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
 	
 	// compute what dc load would have to be to match load, i.e
 	double P_load_dc =  (1./_inverter_efficiency) * P_load_ac;
@@ -199,10 +199,6 @@ void dc_connected_battery_controller::run(size_t year, size_t hour_of_year, size
 }
 void dc_connected_battery_controller::process_dispatch()
 {
-	// post DC/DC w/MPPT
-	double P_pv_dc = _P_pv * _dc_dc_charge_controller->pv_dc_dc_mppt_efficiency();
-	double P_load_ac = _P_load;
-
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 	double P_battery_dc_post_bms = 0;
 	double P_battery_ac = 0;
@@ -214,7 +210,7 @@ void dc_connected_battery_controller::process_dispatch()
 		P_battery_dc_post_bms = P_battery_dc / _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
 	
 	// compute generation
-	double P_gen_dc = P_pv_dc + P_battery_dc_post_bms;
+	double P_gen_dc = _P_pv + P_battery_dc_post_bms;
 
 	// dc output quantities	
 	_P_battery = P_battery_dc_post_bms;
@@ -228,9 +224,6 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 {
 	double P_battery_dc = _P_battery;
 	double P_gen_dc = _P_gen;
-
-	// get pv power post DC/DC with MPPT
-	double P_pv_dc = _P_pv * _dc_dc_charge_controller->pv_dc_dc_mppt_efficiency();
 	
 	// if there is no "gen", then either no dispatch or all PV went to battery
 	double inverter_efficiency = 1.00;
@@ -247,7 +240,7 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	else if (P_battery_dc < 0)
 		P_battery_ac = P_battery_dc / inverter_efficiency;
 	
-	double P_pv_ac = P_pv_dc * inverter_efficiency; 
+	double P_pv_ac = _P_pv * inverter_efficiency; 
 	double P_load_ac = _P_load;
 
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
