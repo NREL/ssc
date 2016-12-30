@@ -16,10 +16,11 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
 
 	// configuration inputs
-	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=generic", "",     "",                  "INTEGER,MIN=0,MAX=3",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_eff_cec",                            "Inverter Sandia CEC Efficiency",                          "%",       "",                     "pvsamv1",      "inverter_model=0",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Inverter Datasheet Efficiency",                           "%",       "",                     "pvsamv1",      "inverter_model=1",            "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",      "inverter_model=2",            "",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=coefficientgenerator,2=datasheet,3=partload,4=generic", "",     "",                  "INTEGER,MIN=0,MAX=4",           "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_snl_eff_cec", "Inverter Sandia CEC Efficiency", "%", "", "pvsamv1", "inverter_model=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_eff_cec", "Inverter Coefficient Generator CEC Efficiency", "%", "", "pvsamv1", "inverter_model=1", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "inv_ds_eff", "Inverter Datasheet Efficiency", "%", "", "pvsamv1", "inverter_model=2", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "inv_pd_eff",                                 "Inverter Partload Efficiency",                            "%",       "",                     "pvsamv1",      "inverter_model=3",            "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_efficiency",                        "Inverter Efficiency",                                     "%",       "",                      "",             "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "Battery interconnection (AC or DC)",                      "dc=0,ac=1",  "",                  "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_dc_dc_efficiency",                      "PV DC to battery DC efficiency",                          "",        "",                     "Battery",       "",                           "",                              "" },
@@ -237,9 +238,10 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 
 			batt_vars->inverter_model = cm.as_integer("inverter_model");
 			batt_vars->inv_snl_eff_cec = cm.as_double("inv_snl_eff_cec");
+			batt_vars->inv_cec_cg_eff_cec = cm.as_double("inv_cec_cg_eff_cec");
 			batt_vars->inv_ds_eff = cm.as_double("inv_ds_eff");
 			batt_vars->inv_pd_eff = cm.as_double("inv_pd_eff");
-			if (batt_vars->inverter_model > 2)
+			if (batt_vars->inverter_model > 3)
 				batt_vars->inverter_efficiency = cm.as_double("inverter_efficiency");
 		}
 	}
@@ -566,6 +568,8 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		double inverter_efficiency = 0.0;
 		if (inverter_model == inverter::SANDIA_INVERTER)
 			inverter_efficiency = batt_vars->inv_snl_eff_cec;
+		else if (inverter_model == inverter::COEFFICIENT_GENERATOR)
+			inverter_efficiency = batt_vars->inv_ds_eff;
 		else if (inverter_model == inverter::DATASHEET_INVERTER)
 			inverter_efficiency = batt_vars->inv_ds_eff;
 		else if (inverter_model == inverter::PARTLOAD_INVERTER)
