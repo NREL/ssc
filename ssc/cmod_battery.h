@@ -93,6 +93,7 @@ struct batt_variables
 
 	int inverter_model;
 	double inv_snl_eff_cec;
+	double inv_cec_cg_eff_cec;
 	double inv_ds_eff;
 	double inv_pd_eff;
 	double inverter_efficiency;
