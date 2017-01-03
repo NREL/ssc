@@ -109,9 +109,13 @@ public:
 
 	void initialize(double P_pv, double P_load);
 
-	// return power loss [kW]
+	// function to determine appropriate pv and load to send to battery
+	virtual void preprocess_pv_load() = 0;
+
 	virtual void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load) = 0;
-	virtual void compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac);
+	virtual void compute_to_batt_load_grid(double P_battery_ac_or_dc, double P_pv_ac_or_dc, double P_load_ac, double inverter_efficiency) = 0;
+
+	// return power loss [kW]
 	virtual double gen_ac() = 0;
 	virtual double update_gen_ac(double P_gen_ac) = 0;
 
@@ -153,6 +157,12 @@ protected:
 	// ac or dc pv input
 	double _P_pv;
 
+	// inputs to battery dispatch
+	double _P_pv_dc_discharge_input;
+	double _P_pv_dc_charge_input;
+	double _P_load_dc_discharge_input;
+	double _P_load_dc_charge_input;
+
 };
 
 class dc_connected_battery_controller : public charge_controller
@@ -165,8 +175,10 @@ public:
 									double inverter_efficiency);
 	~dc_connected_battery_controller();
 
+	void preprocess_pv_load();
 	void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
 	void process_dispatch();
+	void compute_to_batt_load_grid(double P_battery_ac, double P_pv_dc, double P_load_ac, double inverter_efficiency);
 	double gen_ac(){ return 0.; };
 	double update_gen_ac(double P_gen_ac);
 
@@ -182,9 +194,10 @@ public:
 	ac_connected_battery_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double ac_dc_efficiency, double dc_ac_efficiency);
 	~ac_connected_battery_controller();
 
+	void preprocess_pv_load(){};
 	void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
 	void process_dispatch();
-	void compute_to_batt_load_grid(double P_battery_dc, double P_battery_ac, double P_pv_ac, double P_load_ac);
+	void compute_to_batt_load_grid( double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency = 0.);
 
 	double gen_ac();
 	double update_gen_ac(double P_gen_ac)

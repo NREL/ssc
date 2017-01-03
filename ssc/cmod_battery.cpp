@@ -771,7 +771,6 @@ void battstor::update_post_inverted(compute_module &cm, size_t year, size_t hour
 	charge_control->update_gen_ac(p_gen_ac);
 	outputs_topology_dependent(cm, year, hour_of_year, step);
 	metrics(cm, year, hour_of_year, step);
-
 }
 
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
