@@ -150,7 +150,6 @@ private:
 	S_des_solved ms_des_solved;
 
 	S_od_par ms_od_par;
-	//S_od_operation_inputs ms_od_op_inputs;
 	C_RecompCycle::S_od_phi_par ms_rc_cycle_od_phi_par;
 	C_HX_counterflow::S_od_par ms_phx_od_par;
 	S_od_opt_eta_tracking ms_od_opt_eta_tracking;
@@ -160,7 +159,10 @@ private:
 	// Optimization variables: could make into structure...
 	int m_od_opt_objective;		//[-]
 	bool m_is_phi_optimized;	//[-]
-	double m_od_opt_tol;		//[-] Relative tolerance for od optimization convergence
+	double m_od_opt_ftol;		//[-] Relative tolerance for od optimization: objective function convergence
+	double m_od_opt_xtol;		//[-] Relative tolerance for od optimization: independent variable convergence
+	bool m_true_nlopt_false_fmin;	//[-]
+	double m_eta_max_eta;		//[-] Maximum efficiency from previous optimization 
 	// ******************************************************
 
 	double m_T_mc_in_min;
@@ -184,7 +186,8 @@ public:
 		E_MOO_ETA_0p1Wnd,
 		E_MOO_ETA_0p1Wnd_FIX_PHI,
 		E_MOO_ETA_T_T_IN,
-		E_MOO_ETA_T_T_IN_FIX_PHI		
+		E_MOO_ETA_T_T_IN_FIX_PHI,
+		E_MAX_POWER_IN_ETA_MAX_BAND		
 	};
 
 	enum E_system_op_constraints
