@@ -24,7 +24,7 @@ struct batt_variables
 	int batt_chem;
 	int batt_dispatch;
 	int batt_meter_position;
-	bool batt_pv_choice;
+	int batt_pv_choice;
 	int batt_target_choice;
 
 	size_t ncharge;

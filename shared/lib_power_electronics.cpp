@@ -50,92 +50,6 @@ void charge_controller::initialize(double P_pv, double P_load_ac)
 	_P_pv = P_pv;
 }
 
-void charge_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac)
-{
-
-	double P_pv_to_batt_ac = 0;
-	double P_pv_to_load_ac = 0;
-	double P_pv_to_grid_ac = 0;
-	double P_grid_to_batt_ac = 0;
-	double P_batt_to_load_ac = 0;
-	double P_grid_to_load_ac = 0;
-	double P_gen_ac = 0;
-	double P_grid_ac = 0;
-
-	// compute to battery, to load, to grid
-	if (P_battery_ac <= 0)
-	{
-		// allowed to charge with PV, grid?  Check in some way
-
-		// pv priority to charging battery
-		if (_dispatch->pv_dispatch_priority() == dispatch_t::CHARGE_BATTERY)
-		{
-			P_pv_to_batt_ac = fabs(P_battery_ac);
-
-			if (P_pv_to_batt_ac > P_pv_ac)
-			{
-				P_pv_to_batt_ac = P_pv_ac;
-				P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_ac;
-			}
-
-			P_pv_to_load_ac = P_pv_ac - P_pv_to_batt_ac;
-			if (P_pv_to_load_ac > P_load_ac)
-			{
-				P_pv_to_load_ac = P_load_ac;
-				P_pv_to_grid_ac = P_pv_ac - P_pv_to_batt_ac - P_pv_to_load_ac;
-			}
-		}
-		// pv priority to meeting load
-		else
-		{
-			P_pv_to_load_ac = P_load_ac;
-
-			if (P_pv_to_load_ac > P_pv_ac)
-				P_pv_to_load_ac = P_pv_ac;
-
-			P_pv_to_batt_ac = P_pv_ac - P_pv_to_load_ac;
-
-			if (P_pv_to_batt_ac > fabs(P_battery_ac))
-			{
-				P_pv_to_batt_ac = fabs(P_battery_ac);
-				P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac - P_pv_to_batt_ac;
-			}
-			else
-				P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_to_batt_ac;
-		}
-	}
-	else
-	{
-		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
-		{
-			P_pv_to_load_ac = P_load_ac;
-			P_batt_to_load_ac = 0;
-		}
-		else if (P_battery_ac < P_load_ac - P_pv_to_load_ac)
-			P_batt_to_load_ac = P_battery_ac;
-		else
-			// probably shouldn't happen, need to iterate and reduce I from battery
-			P_batt_to_load_ac = P_load_ac - P_pv_to_load_ac;
-	}
-
-	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
-	P_gen_ac = P_pv_ac + P_battery_ac;
-	P_grid_ac = _P_load - P_gen_ac;
-
-	// assign outputs
-	_P_battery = P_battery_ac;
-	_P_pv = P_pv_ac;
-	_P_gen = P_gen_ac;
-	_P_grid = P_grid_ac;
-	_P_battery_to_load = P_batt_to_load_ac;
-	_P_pv_to_battery = P_pv_to_batt_ac;
-	_P_pv_to_load = P_pv_to_load_ac;
-	_P_pv_to_grid = P_pv_to_grid_ac;
-	_P_grid_to_load = P_grid_to_load_ac;
-	_P_grid_to_batt = P_grid_to_batt_ac;
-}
-
 dc_connected_battery_controller::dc_connected_battery_controller(dispatch_t * dispatch, 
 																 battery_metrics_t * battery_metrics, 
 																 double batt_dc_dc_bms_efficiency, 
@@ -151,23 +65,60 @@ dc_connected_battery_controller::~dc_connected_battery_controller()
 	if (_dc_dc_charge_controller)
 		delete _dc_dc_charge_controller;
 }
+void dc_connected_battery_controller::preprocess_pv_load()
+{
+
+	int pv_batt_choice = _dispatch->pv_dispatch_priority();
+
+	// assume inverter isn't operating at peak efficiency
+	double P_load_dc = _P_load / (_inverter_efficiency - 0.005);
+	double P_grid_dc = _P_pv - P_load_dc;
+
+
+	// compute effective PV and Load if battery is discharging
+	_P_pv_dc_discharge_input = _P_pv;
+	_P_load_dc_discharge_input = P_load_dc / _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
+
+	// compute effective PV and Load if battery is charging
+	_P_pv_dc_charge_input = _P_pv;
+	_P_load_dc_charge_input = P_load_dc;
+
+	double P_max_to_batt = 0.;
+	if (pv_batt_choice == dispatch_t::MEET_LOAD)
+	{
+		if (P_grid_dc > 0)
+		{
+			P_max_to_batt = P_grid_dc * _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
+			_P_pv_dc_charge_input = _P_pv - (P_grid_dc - P_max_to_batt);
+		}
+	}
+	else if (pv_batt_choice == dispatch_t::CHARGE_BATTERY)
+	{
+		double P_to_fill_dc = _dispatch->battery_power_to_fill();
+		double P_to_fill_before_bms = P_to_fill_dc / _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
+		double P_loss_bms = P_to_fill_before_bms - P_to_fill_dc;
+
+		if (_P_pv > P_to_fill_before_bms)
+			_P_pv_dc_charge_input = _P_pv - P_loss_bms;
+		else
+		{
+			double P_pv_to_batt = _P_pv * _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
+			P_loss_bms = _P_pv - P_pv_to_batt;
+			_P_pv_dc_charge_input = _P_pv - P_loss_bms;
+		}
+	}
+
+}
 
 void dc_connected_battery_controller::run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv_dc, double P_load_ac)
 {
 	
 	initialize(P_pv_dc, P_load_ac);
 
-	// derate PV power being passed to battery by DC/DC w/BMS (already derated by DC/DC w/MPPT coming into model)
-	double P_pv_dc_converted = P_pv_dc * _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
-	
-	// compute what dc load would have to be to match load, i.e
-	double P_load_dc =  (1./_inverter_efficiency) * P_load_ac;
-
-	// compute what the dc load before the dc/dc/bms converter would have to be
-	P_load_dc *= (1. / _dc_dc_charge_controller->batt_dc_dc_bms_efficiency());
+	preprocess_pv_load();
 
 	// dispatch battery, load must be in dc.  This computes dc battery power to load, dc pv power to load, dc grid power to dc load, dc grid power to battery
-	_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv_dc_converted, P_load_dc);
+	_dispatch->dispatch(year, hour_of_year, step_of_hour, _P_pv_dc_charge_input, _P_pv_dc_discharge_input, _P_load_dc_charge_input, _P_load_dc_discharge_input);
 
 	// loss is due to conversion in dc-dc bms
 	process_dispatch();
@@ -210,19 +161,10 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	if (inverter_efficiency < 0)
 		inverter_efficiency = 1.00;
 
-	double P_battery_ac = 0;	
-	if (P_battery_dc > 0)
-		P_battery_ac = P_battery_dc * inverter_efficiency;
-	else if (P_battery_dc < 0)
-		P_battery_ac = P_battery_dc / inverter_efficiency;
+	compute_to_batt_load_grid(P_battery_dc, _P_pv, _P_load, inverter_efficiency);
 	
-	double P_pv_ac = _P_pv * inverter_efficiency; 
-	double P_load_ac = _P_load;
-
-	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
-	_P_gen = P_gen_ac;
-
 	// add battery power inversion loss to total loss
+	double P_battery_ac = _P_battery;
 	_P_loss += fabs(P_battery_ac - P_battery_dc);
 
 	// AC charging metrics
@@ -230,6 +172,117 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 
 	return _P_loss;
 }
+
+void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery_dc, double P_pv_dc, double P_load_ac, double inverter_efficiency)
+{
+	double P_pv_to_batt_dc = 0;
+	double P_pv_to_load_dc = 0;
+	double P_pv_to_load_ac = 0;
+	double P_pv_to_grid_ac = 0;
+	double P_grid_to_batt_ac = 0;
+	double P_batt_to_load_ac = 0;
+	double P_grid_to_load_ac = 0;
+	double P_gen_ac = 0;
+	double P_grid_ac = 0;
+	double P_pv_ac = 0;
+
+	double P_load_dc = P_load_ac / inverter_efficiency;
+	double P_battery_ac = P_battery_dc;
+
+	if (P_battery_dc > 0)
+		P_battery_ac = P_battery_dc * inverter_efficiency;
+
+	// compute to battery, to load, to grid
+	if (P_battery_ac <= 0)
+	{
+		// allowed to charge with PV, grid?  Check in some way
+
+		// pv priority to charging battery
+		if (_dispatch->pv_dispatch_priority() == dispatch_t::CHARGE_BATTERY)
+		{
+			P_pv_to_batt_dc = fabs(P_battery_dc);
+
+			if (P_pv_to_batt_dc > P_pv_dc)
+			{
+				P_pv_to_batt_dc = P_pv_dc;
+				P_grid_to_batt_ac = (fabs(P_battery_dc) - P_pv_to_batt_dc) / inverter_efficiency;
+			}
+			
+			P_pv_to_load_dc = P_pv_dc - P_pv_to_batt_dc;
+			P_pv_to_load_ac = P_pv_to_load_dc * inverter_efficiency;
+
+			if (P_pv_to_load_ac > P_load_ac)
+			{
+				P_pv_to_load_ac = P_load_ac;
+				P_pv_to_grid_ac = (P_pv_dc - P_pv_to_batt_dc) * inverter_efficiency - P_pv_to_load_ac;
+			}
+		}
+		// pv priority to meeting load
+		else
+		{
+			P_pv_to_load_dc = P_load_dc;
+
+			if (P_pv_to_load_dc > P_pv_dc)
+				P_pv_to_load_dc = P_pv_dc;
+
+			P_pv_to_batt_dc = P_pv_dc - P_pv_to_load_dc;
+
+			if (P_pv_to_batt_dc > fabs(P_battery_dc))
+			{
+				P_pv_to_batt_dc = fabs(P_battery_dc);
+				P_pv_to_grid_ac = (P_pv_dc - P_pv_to_load_dc - P_pv_to_batt_dc) * inverter_efficiency;
+			}
+			else
+			{
+				P_grid_to_batt_ac = (fabs(P_battery_dc) - P_pv_to_batt_dc) / inverter_efficiency;
+				P_battery_ac = -(P_pv_to_batt_dc + P_grid_to_batt_ac);
+			}
+				
+			P_pv_to_load_ac = P_pv_to_load_dc * inverter_efficiency;
+		}
+		P_pv_ac = P_pv_to_load_ac + P_pv_to_grid_ac;
+		P_gen_ac = P_pv_ac - P_grid_to_batt_ac;
+	}
+	// discharge
+	else
+	{
+		P_pv_ac = P_pv_dc * inverter_efficiency;
+		P_pv_to_load_ac = P_pv_ac;
+		if (P_pv_ac > P_load_ac)
+		{
+			P_pv_to_load_ac = P_load_ac;
+			P_batt_to_load_ac = 0;
+		}
+		else if (P_battery_ac < P_load_ac - P_pv_to_load_ac)
+			P_batt_to_load_ac = P_battery_ac;
+		else
+			// probably shouldn't happen, need to iterate and reduce I from battery
+			P_batt_to_load_ac = P_load_ac - P_pv_to_load_ac;
+		
+		P_gen_ac = P_pv_ac + P_battery_ac;
+	}
+
+	
+	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
+	P_grid_ac = _P_load - P_gen_ac;
+
+	// assign outputs
+	_P_battery = P_battery_ac;
+	_P_pv = P_pv_ac;
+	_P_gen = P_gen_ac;
+	_P_grid = P_grid_ac;
+	_P_battery_to_load = P_batt_to_load_ac;
+	_P_pv_to_battery = P_pv_to_batt_dc;
+	_P_pv_to_load = P_pv_to_load_ac;
+	_P_pv_to_grid = P_pv_to_grid_ac;
+	_P_grid_to_load = P_grid_to_load_ac;
+	_P_grid_to_batt = P_grid_to_batt_ac;
+
+	if (fabs(_P_battery) < tolerance)
+		_P_battery = 0.;
+}
+
+
 
 ac_connected_battery_controller::ac_connected_battery_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double ac_dc_efficiency, double dc_ac_efficiency) :
 charge_controller(dispatch, battery_metrics, ac_dc_efficiency, dc_ac_efficiency)
@@ -263,7 +316,7 @@ void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, siz
 		P_pv_effective = 0;
 
 	// dispatch battery
-	_dispatch->dispatch(year, hour_of_year, step_of_hour, P_pv_effective, P_load_ac);
+	_dispatch->dispatch(year, hour_of_year, step_of_hour, _P_pv_dc_charge_input, _P_pv_dc_discharge_input, _P_load_dc_charge_input, _P_load_dc_discharge_input);
 
 	// Take resulting battery power and compute components
 	process_dispatch();
@@ -284,11 +337,13 @@ void ac_connected_battery_controller::process_dispatch()
 	else if (P_battery_dc < 0)
 		P_battery_ac = P_battery_dc / _bidirectional_inverter->ac_dc_efficiency();
 
-	compute_to_batt_load_grid(P_battery_dc, P_battery_ac, P_pv_ac, P_load_ac);
+	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
 }
 
-void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_dc, double P_battery_ac, double P_pv_ac, double P_load_ac)
+void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency)
 {
+	double P_battery_dc = _dispatch->power_tofrom_battery();
+
 	// pre loss
 	double P_pv_to_batt_ac = 0;
 	double P_grid_to_batt_ac = 0;

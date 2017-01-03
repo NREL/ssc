@@ -418,6 +418,8 @@ public:
 	double battery_charge_needed();
 	double battery_charge_total();
 	double battery_charge_maximum();
+	double battery_energy_to_fill();
+	double battery_power_to_fill();
 
 	// Get Voltage
 	double cell_voltage();
@@ -461,10 +463,12 @@ public:
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
 		size_t step,
-		double P_pv_dc,        // PV energy [kWh]
-		double P_load_dc)=0;   // Load energy [kWh]
+		double P_pv_dc_charging,      
+		double P_pv_dc_discharging,
+		double P_load_dc_charging,
+		double P_load_dc_discharging)=0;   
 						  
-	virtual void compute_grid_net(double P_pv_dc, double P_load_dc);
+	virtual void compute_grid_net();
 
 	enum MODES{LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL};
 	enum METERING{ BEHIND, FRONT };
@@ -487,6 +491,7 @@ public:
 
 	// control settings
 	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
+	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(); }
 
 	message get_messages();
 
@@ -499,10 +504,11 @@ protected:
 	double current_controller(double battery_voltage);
 
 	// compute totals
-	void compute_to_batt(double P_pv_dc);
-	void compute_to_load(double P_pv_dc, double P_load_dc, double P_tofrom_battery);
-	void compute_to_grid(double P_pv_dc);
-	void compute_generation(double P_pv_dc);
+	void compute_battery_state();
+	void compute_to_batt();
+	void compute_to_load();
+	void compute_to_grid();
+	void compute_generation();
 
 	battery_t * _Battery;
 	battery_t * _Battery_initial;
@@ -524,6 +530,16 @@ protected:
 	double _P_grid_to_batt;      // DC
 	double _P_pv_to_grid;		 // DC
 	double _P_battery_to_grid;   // DC
+
+	// the actual power inputs chosen based on charging/discharging
+	double _P_pv;
+	double _P_load;
+
+	// the options of what the PV and load power is that the battery sees depending on scenario
+	double _P_pv_charging;
+	double _P_pv_discharging;
+	double _P_load_charging;
+	double _P_load_discharging;
 
 	// Charge & current limits controllers
 	double _SOC_min;
@@ -569,15 +585,21 @@ public:
 					  std::map<int, double> dm_percent_discharge, 
 					  std::map<int, double> dm_percent_gridcharge);
 	virtual ~dispatch_manual_t(){};
-	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc);
+	virtual void dispatch(size_t year,
+		size_t hour_of_year,
+		size_t step,
+		double P_pv_dc_charging,
+		double P_pv_dc_discharging,
+		double P_load_dc_charging,
+		double P_load_dc_discharging);
 
 protected:
 	
-	void initialize_dispatch(size_t hour_of_year, size_t step);
+	void initialize_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
 	void reset();
-	void compute_energy_load_priority(double P_pv_dc, double P_load_dc, double energy_needed);
-	void compute_energy_battery_priority(double P_pv_dc, double P_load_dc, double energy_needed);
-	bool compute_energy_battery_priority_charging(double P_pv_dc, double P_load_dc, double energy_needed);
+	void compute_energy_load_priority(double energy_needed);
+	void compute_energy_battery_priority(double energy_needed);
+	bool compute_energy_battery_priority_charging(double energy_needed);
 
 
 	util::matrix_t < float > _sched;
@@ -590,7 +612,6 @@ protected:
 	bool  _can_charge;
 	bool  _can_discharge;
 	bool  _can_grid_charge;
-		
 };
 /* Manual dispatch for utility scale (front of meter)*/
 class dispatch_manual_front_of_meter_t : public dispatch_manual_t
@@ -614,12 +635,18 @@ public:
 		std::map<int, double> dm_percent_gridcharge);
 	~dispatch_manual_front_of_meter_t(){};
 
-	virtual void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc=0);
-	void compute_grid_net(double P_pv_dc, double P_load_dc=0);
+	virtual void dispatch(size_t year,
+		size_t hour_of_year,
+		size_t step,
+		double P_pv_dc_charging,
+		double P_pv_dc_discharging,
+		double P_load_dc_charging = 0,
+		double P_load_dc_discharging = 0);
+	void compute_grid_net();
 
 protected:
-	void compute_energy_no_load(double P_pv_dc, double energy_needed);
-	void compute_to_grid(double P_pv_dc);
+	void compute_energy_no_load(double energy_needed);
+	void compute_to_grid();
 };
 
 
@@ -674,7 +701,13 @@ public:
 		int nyears
 		);				  
 
-	void dispatch(size_t year, size_t hour_of_year, size_t step, double P_pv_dc, double P_load_dc);
+	void dispatch(size_t year,
+		size_t hour_of_year,
+		size_t step,
+		double P_pv_dc_charging,
+		double P_pv_dc_discharging,
+		double P_load_dc_charging,
+		double P_load_dc_discharging);
 	
 	void update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc);
 	void set_target_power(std::vector<double> P_target);

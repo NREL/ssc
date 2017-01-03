@@ -2859,6 +2859,7 @@ public:
 							acpwr_gross *= -1;
 						}
 						batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*0.001);
+						acpwr_gross = batt.outGenPower[idx] * 1000;
 					}
 
 					
