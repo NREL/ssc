@@ -47,6 +47,20 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",                         "Weather file in TMY2, TMY3, EPW, or SAM CSV.",         "",         "",                              "pvsamv1",              "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",                         "Weather data",                                         "",         "lat,lon,tz,elev,year,month,hour,minute,gh,dn,df,tdry,twet,tdew,rhum,pres,snow,alb,aod,wspd,wdir",    "pvsamv1",              "?",                        "",                              "" },
 	
+	// transformer model
+	{ SSC_INPUT, SSC_NUMBER, "transformer_rating", "Power transformer rating", "kVA", "", "pvsamv1", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "transformer_no_load_loss", "Power transformer no load loss", "W", "", "pvsamv1", "?=0", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "transformer_load_loss", "Power transformer load loss", "W", "", "pvsamv1", "?=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_nll_ts", "Transformer no load loss", "kW", "", "Time Series", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_ll_ts", "Transformer load loss", "kW", "", "Time Series", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_loss_ts", "Transformer total loss", "kW", "", "Time Series", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_nll_annual", "Transformer no load loss", "kWh", "", "Annual", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_ll_annual", "Transformer load loss", "kWh", "", "Annual", "", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_loss_annual", "Transformer total loss", "kWh", "", "Annual", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_nll_year1", "Transformer no load loss", "kWh", "", "Year1", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_ll_year1", "Transformer load loss", "kWh", "", "Year1", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_loss_year1", "Transformer total loss", "kWh", "", "Year1", "", "", "" },
+
 	
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                      "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
@@ -1729,6 +1743,22 @@ public:
 		ssc_number_t *p_shadedb_shade_frac[4];
 
 
+		// transformer loss outputs
+		ssc_number_t *p_xfmr_nll_ts = allocate("xfmr_nll_ts", nrec);
+		ssc_number_t *p_xfmr_ll_ts = allocate("xfmr_ll_ts", nrec);
+		ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
+		ssc_number_t *p_xfmr_nll_annual = allocate("xfmr_nll_annual", nyears);
+		ssc_number_t *p_xfmr_ll_annual = allocate("xfmr_ll_annual", nyears);
+		ssc_number_t *p_xfmr_loss_annual = allocate("xfmr_loss_annual", nyears);
+
+
+		ssc_number_t xfmr_rating = as_number("transformer_rating"); // kVA
+		ssc_number_t xfmr_ll_frac = as_number("transformer_load_loss"); // W
+		if (xfmr_rating != 0)
+			xfmr_ll_frac = xfmr_ll_frac * 0.001 / xfmr_rating; // asuming power factor 1 from inverter output to grid...
+		ssc_number_t xfmr_nll = as_number("transformer_no_load_loss"); // W
+		xfmr_nll *= 0.001 * ts_hour; // kW
+
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
 		{
@@ -1857,7 +1887,7 @@ public:
 		size_t hour = 0;
 
 		// variables used to calculate loss diagram
-		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_lifetime_loss = 0;
+		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_lifetime_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
 
 		// Check if a POA model is used, if so load all POA data into the poaData struct
 		if (radmode == POA_R || radmode == POA_P ){
@@ -2851,6 +2881,27 @@ public:
 					//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
 					p_gen[idx] = (ssc_number_t)((acpwr_gross - (fabs(acpwr_gross) * ac_loss_percent / 100)) * 0.001); //acpwr_gross is in W, p_gen is in kW
 
+					// apply transformer loss
+					// load loss
+					ssc_number_t xfmr_ll = 0.0;
+					if (xfmr_ll_frac != 0 && xfmr_rating != 0)
+						xfmr_ll = xfmr_ll_frac * p_gen[idx] * p_gen[idx] / xfmr_rating;
+					// total load loss
+					ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
+					// apply transformer loss
+					p_gen[idx] -= xfmr_loss;
+
+					// accumulate first year annual energy
+					if (iyear == 0)
+					{
+						annual_xfmr_nll += xfmr_nll;
+						annual_xfmr_ll += xfmr_ll;
+						annual_xfmr_loss += xfmr_loss;
+						p_xfmr_nll_ts[idx] = xfmr_nll;
+						p_xfmr_ll_ts[idx] = xfmr_ll;
+						p_xfmr_loss_ts[idx] = xfmr_loss;
+					}
+
 					idx++;
 				}
 			}
@@ -3037,6 +3088,10 @@ public:
 
 		assign("annual_dc_gross", var_data((ssc_number_t)annual_dc_gross));
 		assign("annual_ac_gross", var_data((ssc_number_t)annual_ac_gross));
+
+		assign("xfmr_nll_year1", annual_xfmr_nll);
+		assign("xfmr_ll_year1", annual_xfmr_ll);
+		assign("xfmr_loss_year1", annual_xfmr_loss);
 
 		assign("annual_dc_mismatch_loss", var_data((ssc_number_t)annual_mismatch_loss));
 		assign("annual_dc_diodes_loss", var_data((ssc_number_t)annual_diode_loss));
