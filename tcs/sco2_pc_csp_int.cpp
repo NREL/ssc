@@ -16,7 +16,10 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	// Set default optimization strategy
 	m_od_opt_objective = E_MAX_ETA;		//[-]
 	m_is_phi_optimized = true;			//[-]
-	m_od_opt_tol = 1.E-3;				//[-] Relative tolerance for od optimization convergence
+	m_od_opt_ftol = 1.E-7;				//[-] Relative tolerance for od optimization: objective function convergence
+	m_od_opt_xtol = 1.E-4;				//[-] Relative tolerance for od optimization: independent variable convergence
+	m_true_nlopt_false_fmin = true;		//[-]
+	m_eta_max_eta = 0.0;				//[-]
 	// **************************************
 
 	mf_callback = 0;		// NULL
@@ -187,7 +190,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	{
 		m_is_phi_optimized = true;
 	}
-	m_od_opt_tol = od_opt_tol;
+	m_od_opt_ftol = od_opt_tol;
 	// ****************************************
 
 	// Define ms_rc_cycle_od_par
@@ -223,7 +226,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	m_is_write_mc_out_file = false;
 	m_is_only_write_frecomp_opt_iters = true;
 
-	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/";
+	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/eta_max_envelope/testing_no_write";
 
 	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
@@ -235,45 +238,25 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	//
 	//off_design_fix_P_mc_in_parametric_f_recomp(P_mc_in_parametric, f_recomp_start, f_recomp_end, f_recomp_inc);	
 
-
-
+	m_eta_max_eta = 0.0;
+	m_od_opt_objective = E_MAX_ETA_FIX_PHI;
+	m_od_opt_ftol = 1.E-7;
 	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
+	if( !opt_success_2_par )
+	{
+		throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+	}
 
-	int P_mc_in_iter = 0;
-	//double P_mc_in_inc = 1000.0;	//[kPa]
+	// Set max efficiency
+	m_eta_max_eta = ms_od_solved.ms_rc_cycle_od_solved.m_eta_thermal;		//[-]
+	m_od_opt_ftol = 1.E-7;
 
-	//while(true)
-	//{
-	//	double P_mc_in_guess = P_mc_in_des - P_mc_in_iter*P_mc_in_inc;
-
-	//	P_mc_in_iter++;
-
-	//	if(m_is_write_mc_out_file)
-	//	{
-	//		std::string case_name = to_string((int)(P_mc_in_guess));
-	//		std::string file_name = mstr_base_name + case_name + mstr_end_name;
-	//		mc_out_file.open(file_name);
-	//	}
-
-	//	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;		//[kPa]
-
-	//	bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
-
-	//	double f_recomp_opt_here_now = mc_rc_cycle.get_od_solved()->m_recomp_frac;		//[-]
-	//	double eta_f_recomp_opt_here_now = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
-
-	//	if(m_is_write_mc_out_file)
-	//	{
-	//		mc_out_file << "f_recomp_opt,eta_max\n";
-	//		mc_out_file << f_recomp_opt_here_now << "," << eta_f_recomp_opt_here_now << "\n";
-	//	}
-
-	//	if(m_is_write_mc_out_file)
-	//	{
-	//		mc_out_file.close();
-	//	}
-
-	//}
+	m_od_opt_objective = E_MAX_POWER_IN_ETA_MAX_BAND;
+	opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
+	if( !opt_success_2_par )
+	{
+		throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+	}
 
 	return 0;
 }
@@ -406,11 +389,11 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		std::string file_name = mstr_base_name + case_name + ".csv";
 		mc_P_mc_vary_f_recomp_opt_file.open(file_name);
 
-		mc_P_mc_vary_f_recomp_opt_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 	}
 
 
-	bool use_nlopt = true;
+	bool use_nlopt = m_true_nlopt_false_fmin;
 
 	double P_mc_in_opt = std::numeric_limits<double>::quiet_NaN();
 
@@ -439,8 +422,8 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 		nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
 		nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
 		nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
-		nlopt_P_mc_in_opt_max_of.set_xtol_rel(1.E-4);
-		nlopt_P_mc_in_opt_max_of.set_ftol_rel(1.E-7);
+		nlopt_P_mc_in_opt_max_of.set_xtol_rel(m_od_opt_xtol);
+		nlopt_P_mc_in_opt_max_of.set_ftol_rel(m_od_opt_ftol);
 
 		// Set max objective function
 		nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_max_opt_P_mc_in_nest_f_recomp, this);
@@ -459,7 +442,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	{
 		// Optimize compressor inlet pressure
 		P_mc_in_opt = fminbr(
-			P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, 1.E-7);
+			P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
 	}
 	
 
@@ -593,7 +576,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 					// So don't try to find f_recomp_max
 					ms_rc_cycle_od_phi_par.m_recomp_frac = f_recomp_guess;	//[-]
 
-					mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+					mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 					
 					double eta_f_recomp_local = opt_f_recomp_max_eta(f_recomp_guess);
 
@@ -664,16 +647,16 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 	{
 		mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_iter_min,f_recomp_iter_max\n";
 		mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_min << "," << f_recomp_max << "\n";
-		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 		mc_P_mc_in_fixed_f_recomp_vary_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-,-\n";
 	}
 	else if(m_is_write_mc_out_file)
 	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 	}
 
 	// Set up recompression fraction optimization (at constant mc inlet pressure) options
-	bool use_nlopt = true;
+	bool use_nlopt = m_true_nlopt_false_fmin;
 	double f_recomp_opt = std::numeric_limits<double>::quiet_NaN();
 
 	if( use_nlopt )
@@ -701,8 +684,8 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 		f_recomp_opt_max_eta.set_lower_bounds(lb);
 		f_recomp_opt_max_eta.set_upper_bounds(ub);
 		f_recomp_opt_max_eta.set_initial_step(scale);
-		f_recomp_opt_max_eta.set_xtol_rel(1.E-4);
-		f_recomp_opt_max_eta.set_ftol_rel(1.E-7);
+		f_recomp_opt_max_eta.set_xtol_rel(m_od_opt_xtol);
+		f_recomp_opt_max_eta.set_ftol_rel(m_od_opt_ftol);
 
 		// Set max objective function
 		f_recomp_opt_max_eta.set_max_objective(nlopt_max_f_recomp_cycle_eta, this);
@@ -721,7 +704,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 	else
 	{
 		f_recomp_opt = fminbr(
-			f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, 1.E-7);
+			f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, m_od_opt_ftol);
 	}
 
 	// Call final time with optimized recompression fraction
@@ -772,7 +755,7 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, 
 	{
 		m_is_phi_optimized = true;
 	}
-	m_od_opt_tol = od_opt_tol;
+	m_od_opt_ftol = od_opt_tol;
 	// ****************************************
 
 	// Define ms_rc_cycle_od_par
@@ -1023,6 +1006,13 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	case E_MOO_ETA_T_T_IN_FIX_PHI:
 		eta_solved = (mc_rc_cycle.get_od_solved()->m_eta_thermal - 0.01*max(0.0, mc_rc_cycle.get_od_solved()->m_temp[C_RecompCycle::TURB_IN] - mc_rc_cycle.get_design_solved()->m_temp[C_RecompCycle::TURB_IN]))*scale_product;
 		break;
+	case E_MAX_POWER_IN_ETA_MAX_BAND:
+	{
+		double eta_thermal = mc_rc_cycle.get_od_solved()->m_eta_thermal;					//[-]
+		double under_eta_max = max(0.0, (0.99*m_eta_max_eta - eta_thermal)*1.E3);			//[-]
+		eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3*scale_product*exp(-under_eta_max);	//[MWe]
+	}
+		break;
 
 	default:
 		std::string err_msg = util::format("The off-design optimization objective code, %d, is not recognized.", m_od_opt_objective);
@@ -1190,8 +1180,8 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	opt_od_eta.set_lower_bounds(lb);
 	opt_od_eta.set_upper_bounds(ub);
 	opt_od_eta.set_initial_step(scale);
-	//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-	opt_od_eta.set_ftol_rel(m_od_opt_tol);
+	opt_od_eta.set_xtol_rel(m_od_opt_xtol);
+	opt_od_eta.set_ftol_rel(m_od_opt_ftol);
 
 	// Set max objective function
 	opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -1250,8 +1240,8 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			opt_od_eta.set_lower_bounds(lb);
 			opt_od_eta.set_upper_bounds(ub);
 			opt_od_eta.set_initial_step(scale);
-			//opt_od_eta.set_xtol_rel(ms_rc_cycle_des_par.m_tol);
-			opt_od_eta.set_ftol_rel(m_od_opt_tol);
+			opt_od_eta.set_xtol_rel(m_od_opt_xtol);
+			opt_od_eta.set_ftol_rel(m_od_opt_ftol);
 
 			// Set max objective function
 			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -1383,7 +1373,8 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			opt_od_eta.set_lower_bounds(lb);
 			opt_od_eta.set_upper_bounds(ub);
 			opt_od_eta.set_initial_step(scale);
-			opt_od_eta.set_ftol_rel(m_od_opt_tol);
+			opt_od_eta.set_xtol_rel(m_od_opt_xtol);
+			opt_od_eta.set_ftol_rel(m_od_opt_ftol);
 
 			// Set max objective function
 			opt_od_eta.set_max_objective(nlopt_cb_opt_od_eta__float_phx_dt, this);
@@ -1782,6 +1773,10 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		double rc_tip_ratio_of = 0.0;	//[-]
 		int od_error_code = -1;			//[-]
 
+		double W_dot_net_of = 0.0;		//[MWe]
+		double Q_dot_in_of = 0.0;		//[MWt]
+		double T_htf_cold_of = 0.0;		//[C]
+
 		if( eta_max_f_recomp_opt > 0.0 )
 		{
 			P_mc_out_of = mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT];	//[kPa]
@@ -1797,10 +1792,18 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
 			double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
 			rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
+
+			W_dot_net_of = mc_rc_cycle.get_od_solved()->m_W_dot_net / 1.E3;		//[MWe]
+			Q_dot_in_of = mc_rc_cycle.get_od_solved()->m_Q_dot / 1.E3;			//[MWt]
+			T_htf_cold_of = mc_phx.ms_od_solved.m_T_c_out - 273.15;				//[C]
+
 			od_error_code = ms_od_solved.m_od_error_code;	//[-]
 		}
 
-		mc_P_mc_vary_f_recomp_opt_file << util::format("%.4f",P_mc_in) << ","
+		mc_P_mc_vary_f_recomp_opt_file << ms_od_par.m_T_amb - 273.15 << ","
+			<< ms_od_par.m_m_dot_htf << ","
+			<< ms_od_par.m_T_htf_hot - 273.15 << ","
+			<< util::format("%.4f",P_mc_in) << ","
 			<< deltaP << ","
 			<< util::format("%.4f",P_mc_out_of) << ","
 			<< m_dot_mc << ","
@@ -1812,8 +1815,10 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			<< rc_phi_of << ","
 			<< rc_tip_ratio_of << ","
 			<< eta_max_f_recomp_opt << ","
+			<< W_dot_net_of << ","
+			<< Q_dot_in_of << ","
+			<< T_htf_cold_of << ","
 			<< od_error_code << "\n";
-	
 	}
 
 	return eta_max_f_recomp_opt;
@@ -1836,7 +1841,7 @@ void C_sco2_recomp_csp::off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_i
 
 	if( m_is_write_mc_out_file )
 	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,is_error_code\n";
+		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 	}
 
 	for(double f_recomp = f_recomp_min; f_recomp <= f_recomp_max; f_recomp = f_recomp + f_recomp_inc)
@@ -1872,6 +1877,10 @@ double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 		double rc_phi_of = 0.0;
 		double rc_tip_ratio_of = 0.0;
 
+		double W_dot_net_of = 0.0;		//[MWe]
+		double Q_dot_in_of = 0.0;		//[MWt]
+		double T_htf_cold_of = 0.0;		//[C]
+
 		if( eta_return > 0.0 )
 		{
 			P_mc_out_of = mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT];	//[kPa]
@@ -1886,20 +1895,29 @@ double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 			double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
 			double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
 			rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
+
+			W_dot_net_of = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3;		//[MWe]
+			Q_dot_in_of = mc_rc_cycle.get_od_solved()->m_Q_dot/1.E3;			//[MWt]
+			T_htf_cold_of = mc_phx.ms_od_solved.m_T_c_out - 273.15;				//[C]
 		}
 
-		mc_P_mc_in_fixed_f_recomp_vary_file << P_mc_in << ","
-			<< deltaP << ","
-			<< P_mc_out_of << ","
+		mc_P_mc_in_fixed_f_recomp_vary_file << ms_od_par.m_T_amb - 273.15 << ","
+			<< ms_od_par.m_m_dot_htf << ","
+			<< ms_od_par.m_T_htf_hot - 273.15 << ","
+			<< util::format("%.4f", P_mc_in) << "," << deltaP << ","
+			<< util::format("%.4f", P_mc_out_of) << ","
 			<< m_dot_mc << ","
 			<< m_dot_t << ","
 			<< N_mc << ","
 			<< mc_tip_ratio_of << ","
-			<< f_recomp_of << ","
+			<< util::format("%.4f", f_recomp_of) << ","
 			<< m_dot_rc << ","
 			<< rc_phi_of << ","
 			<< rc_tip_ratio_of << ","
 			<< eta_return << ","
+			<< W_dot_net_of << ","
+			<< Q_dot_in_of << ","
+			<< T_htf_cold_of << ","
 			<< od_error_code << "\n";
 	}
 
