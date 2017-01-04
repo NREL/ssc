@@ -2966,6 +2966,13 @@ void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_
 
 void C_RecompCycle::design_core_standard(int & error_code)
 {
+	// twn 1.4.17: put reasonable lower bound on *modeled* recompression fraction
+	if( ms_des_par.m_recomp_frac < 0.01 )
+	{
+		ms_des_par.m_recomp_frac = 0.0;
+		ms_des_par.m_UA_HT = 0.0;
+	}
+
 	CO2_state co2_props;
 
 	// Initialize Recuperators
