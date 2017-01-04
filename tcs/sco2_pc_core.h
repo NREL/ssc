@@ -248,6 +248,8 @@ public:
 	
 	void off_design_compressor(double T_in, double P_in, double m_dot, double N, int & error_code, double & T_out, double & P_out);
 	
+	void od_comp_at_N_des(double T_in, double P_in, double m_dot, int & error_code, double & T_out, double & P_out);
+
 	void od_comp_phi_opt(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
 							int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
 
@@ -937,6 +939,8 @@ private:
 	void off_design_core(int & error_code);
 
 	void off_design_phi_core(int & error_code);
+
+	void off_design_fix_shaft_speeds_core(int & error_code);
 	
 	void optimal_off_design_core(int & error_code);
 
@@ -1018,6 +1022,8 @@ public:
 
 	void off_design_phi(S_od_phi_par & od_phi_par_in, int & error_code);
 
+	void off_design_fix_shaft_speeds(S_od_phi_par & od_phi_par_in, int & error_code);
+
 	void optimal_off_design(S_opt_od_parameters & opt_od_par_in, int & error_code);
 	
 	void get_max_output_od(S_opt_target_od_parameters & opt_tar_od_par_in, int & error_code);
@@ -1074,6 +1080,67 @@ public:
 	{
 		return ms_des_limits;
 	}
+
+	class C_mono_eq_x_f_recomp_y_N_rc : public C_monotonic_equation
+	{
+	private:
+		C_RecompCycle *mpc_rc_cycle;
+
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_P_mc_in;		//[kPa] Compressor inlet pressure
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+	public:
+		
+		double m_m_dot_t;		//[kg/s]
+		double m_m_dot_rc;		//[kg/s]
+		double m_m_dot_mc;		//[kg/s]
+
+		C_mono_eq_x_f_recomp_y_N_rc(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/, double T_t_in /*K*/)
+		{
+			mpc_rc_cycle = pc_rc_cycle;
+			m_T_mc_in = T_mc_in;		//[K]
+			m_P_mc_in = P_mc_in;		//[kPa]
+			m_T_t_in = T_t_in;			//[K]
+
+			m_m_dot_t = m_m_dot_rc = m_m_dot_mc = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		virtual int operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/);
+
+		CO2_state mc_co2_props;
+	};
+
+	class C_mono_eq_turbo_N_fixed_m_dot : public C_monotonic_equation
+	{
+	private:
+		C_RecompCycle *mpc_rc_cycle;
+
+		double m_T_mc_in;		//[K] Compressor inlet temperature
+		double m_P_mc_in;		//[kPa] Compressor inlet pressure
+		double m_f_recomp;		//[-] Recompression fraction
+		double m_T_t_in;		//[K] Turbine inlet temperature
+
+		bool m_is_update_ms_od_solved;	//[-] Bool to update member structure ms_od_solved
+		// that is typically updated after entire cycle off-design solution 
+
+	public:
+		C_mono_eq_turbo_N_fixed_m_dot(C_RecompCycle *pc_rc_cycle, double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+			double f_recomp /*-*/, double T_t_in /*K*/, bool is_update_ms_od_solved = false)
+		{
+			mpc_rc_cycle = pc_rc_cycle;
+			m_T_mc_in = T_mc_in;			//[K]
+			m_P_mc_in = P_mc_in;			//[kPa]
+			m_f_recomp = f_recomp;			//[-]
+			m_T_t_in = T_t_in;				//[K]
+
+			m_is_update_ms_od_solved = is_update_ms_od_solved;
+		}
+
+		virtual int operator()(double m_dot_t /*kg/s*/, double *diff_m_dot_t /*-*/);
+
+		CO2_state mc_co2_props;	
+	};
 
 	class C_mono_eq_turbo_m_dot : public C_monotonic_equation
 	{
