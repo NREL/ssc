@@ -99,6 +99,18 @@ double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
     return mc_mspt_receiver_222.m_f_rec_min * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
 }
 
+
+double C_csp_mspt_collector_receiver::get_tracking_power()
+{
+	return mc_pt_heliostatfield.ms_params.m_p_track * mc_pt_heliostatfield.ms_params.m_helio_positions.nrows()*1.e-3;	//MWe
+}
+
+double C_csp_mspt_collector_receiver::get_col_startup_power()
+{
+	return mc_pt_heliostatfield.ms_params.m_p_start * mc_pt_heliostatfield.ms_params.m_helio_positions.nrows() *1.e-3;	//MWe-hr
+}
+
+
 void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,

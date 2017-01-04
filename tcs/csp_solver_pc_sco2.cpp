@@ -184,6 +184,11 @@ double C_pc_sco2::get_max_q_pc_startup()
 	}
 }
 
+double C_pc_sco2::get_htf_pumping_parasitic_coef()
+{
+	return ms_params.m_htf_pump_coef* (m_m_dot_htf_des / 3600.) / (m_q_dot_design*1000.0);	// kWe/kWt
+}
+
 void C_pc_sco2::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs &inputs,

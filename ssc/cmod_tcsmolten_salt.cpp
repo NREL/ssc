@@ -271,7 +271,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_csu_cost",        "Cycle startup cost",                                                "$",            "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",     "Dispatch cycle production change penalty",                          "$/kWe-change", "",            "sys_ctrl_disp_opt", "is_dispatch=1",           "",                      "" }, 
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",        "Receiver standby energy consumption",                               "kWt",          "",            "sys_ctrl_disp_opt", "?=9e99",                  "",                      "" }, 
-    
+	{ SSC_INPUT,		SSC_NUMBER,		 "q_rec_heattrace",		 "Receiver heat trace energy consumption during startup",			  "kWe-hr",		  "",			 "sys_ctrl_disp_opt", "?=0.0",					 "",					  "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_wlim_series",       "Use time-series net electricity generation limits",				  "",			  "",			 "sys_ctrl_disp_opt", "?=0",					 "",					  "" },
+	{ SSC_INPUT,		SSC_MATRIX,		 "wlim_series",			 "Time series net electicity generation limits",					  "",			  "",			 "sys_ctrl_disp_opt", "is_wlim_series=1",		 "",					  "" },
+
 
 	// Financial inputs
 	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday", "12x24 PPA pricing Weekday schedule",                              "",             "",            "tou",            "*",                       "",                      "" }, 
@@ -1335,6 +1338,19 @@ public:
             tou.mc_dispatch_params.m_csu_cost = as_double("disp_csu_cost");
             tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
             tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
+			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
+
+			if (as_boolean("is_wlim_series"))
+			{
+				util::matrix_t<double> wlim_series = as_matrix("wlim_series");
+				int n_wlim_series = wlim_series.nrows();
+				if (n_wlim_series != 8760)
+					throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have 8760 rows.");
+				for (int i = 0; i < 8760; i++)
+					tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_series.at(i,0);
+			}
+
+	
 		}
 		tou.mc_dispatch_params.m_is_block_dispatch = ! tou.mc_dispatch_params.m_dispatch_optimize;      //mw
 		tou.mc_dispatch_params.m_use_rule_1 = true;

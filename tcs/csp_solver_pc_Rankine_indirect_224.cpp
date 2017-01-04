@@ -499,6 +499,11 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
     return eta;
 }
 
+double C_pc_Rankine_indirect_224::get_htf_pumping_parasitic_coef()
+{
+	return ms_params.m_htf_pump_coef* (m_m_dot_design / 3600.) / (m_q_dot_design*1000.);	// kWe/kWt
+}
+
 
 void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weather, 
 	C_csp_solver_htf_1state &htf_state_in,

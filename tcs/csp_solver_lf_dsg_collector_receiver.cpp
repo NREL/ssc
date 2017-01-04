@@ -1014,6 +1014,18 @@ double C_csp_lf_dsg_collector_receiver::get_min_power_delivery()
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
+double C_csp_lf_dsg_collector_receiver::get_tracking_power()
+{
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_tracking_power() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //MWe
+}
+
+double C_csp_lf_dsg_collector_receiver::get_col_startup_power()
+{
+	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_col_startup_power() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
+}
+
 int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_cold_in /*K*/, double *E_loss_balance /*-*/)
 {
 	// Call energy balance with updated timestep and temperature info

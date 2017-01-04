@@ -196,6 +196,14 @@ double C_pc_gen::get_max_q_pc_startup()
 	return std::numeric_limits<double>::quiet_NaN();	//[MWt]
 }
 
+double C_pc_gen::get_htf_pumping_parasitic_coef()
+{
+	throw(C_csp_exception("C_pc_gen::get_htf_pumping_parasitic_coef() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWt]	// kWe/kWt
+}
+
+
 void C_pc_gen::call(const C_csp_weatherreader::S_outputs &weather,
 	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs &inputs,
