@@ -223,9 +223,9 @@ public:
 			battstor batt(*this, true, 0, n_ac, ts_hour, batt_vars);
 			
 			if (batt_vars->batt_dispatch == dispatch_t::LOOK_BEHIND)
-				batt.initialize_automated_dispatch(0, 0, batt_vars->batt_dispatch);
+				batt.initialize_automated_dispatch(0, 0);
 			else 
-				batt.initialize_automated_dispatch(p_ac, p_load, batt_vars->batt_dispatch);
+				batt.initialize_automated_dispatch(p_ac, p_load);
 			
 			/* *********************************************************************************************
 			Run Simulation

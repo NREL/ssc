@@ -409,8 +409,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "batt_replacement_schedule",                  "Battery bank replacements per year (user specified)",     "number/year", "", "Battery", "batt_replacement_option=2", "", "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "load",                                       "Electricity load (year 1)",                         "kW", "", "Battery", "?", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_or_dc",                              "PV with battery configuration",                                 "",      "",                     "Battery",       "?=0",                                    "",                              "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "batt_dispatch_choice",                        "Battery dispatch algorithm",                              "0/1/2",    "",                       "Battery",       "?=0",                               "",                              "" },
+	
 	// NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 	
 	// outputs
@@ -1842,20 +1841,23 @@ public:
 		
 		// setup battery model
 		bool en_batt = as_boolean("en_batt");
-		int batt_dispatch = as_integer("batt_dispatch_choice");
-		bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
-		bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
 		int batt_replacement_option = as_integer("batt_replacement_option");
-		int ac_or_dc = as_integer("batt_ac_or_dc");
 		battstor batt(*this, en_batt, batt_replacement_option, nrec, ts_hour);
 		
-		if (!en_batt)
+		int batt_dispatch = 0;
+		int ac_or_dc = 0;
+		bool look_ahead = false;
+		bool look_behind = false;
+
+		if (en_batt)
 		{
-			look_ahead = false;
-			look_behind = false;
+			ac_or_dc = batt.batt_vars->batt_topology;
+			batt_dispatch = batt.batt_vars->batt_dispatch;
+			look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
+			look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
 		}
 		if (look_behind)
-			batt.initialize_automated_dispatch(0, 0, batt_dispatch);
+			batt.initialize_automated_dispatch(0, 0);
 		
 		// user replacement schedule
 		size_t count_batt_replacement = 0;
@@ -2770,7 +2772,7 @@ public:
 
 		// Initialize DC battery predictive controller
 		if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED) && look_ahead)
-			batt.initialize_automated_dispatch(p_dcpwr, p_load_full, batt_dispatch);
+			batt.initialize_automated_dispatch(p_dcpwr, p_load_full);
 
 		/* *********************************************************************************************
 		PV AC calculation
@@ -2915,7 +2917,7 @@ public:
 
 		// Initialize AC connected battery predictive control
 		if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED && look_ahead)
-			batt.initialize_automated_dispatch(p_gen, p_load_full, batt_dispatch);
+			batt.initialize_automated_dispatch(p_gen, p_load_full);
 
 		/* *********************************************************************************************
 		Post PV AC 

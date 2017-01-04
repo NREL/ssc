@@ -459,7 +459,7 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	P_gen_ac = P_pv_ac + P_battery_ac;
 
 	// Grid charging loss accounted for in P_battery_ac 
-	P_grid_ac = _P_load - P_gen_ac;
+	P_grid_ac = P_gen_ac - _P_load;
 
 	// check tolerances
 	if (fabs(P_grid_to_load_ac) < tolerance)
