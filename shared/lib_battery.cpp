@@ -1178,7 +1178,7 @@ double battery_t::battery_charge_total(){return _capacity->q0();}
 double battery_t::battery_charge_maximum(){ return _capacity->qmax(); }
 double battery_t::cell_voltage(){ return _voltage->cell_voltage();}
 double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
-
+double battery_t::battery_soc(){ return _capacity->SOC(); }
 /*
 Dispatch base class
 */
@@ -1391,6 +1391,7 @@ void dispatch_t::compute_grid_net()
 
 	compute_to_batt();
 	compute_to_load();
+	compute_to_grid();
 }
 void dispatch_t::compute_battery_state()
 {
@@ -1490,14 +1491,21 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_energy_battery_priority(energy_needed_to_fill);
 
 	// Controllers
-	SOC_controller(battery_voltage, charge_total, charge_max );
+	SOC_controller(battery_voltage, charge_total, charge_max);
 	switch_controller();
 	I = current_controller(battery_voltage);
 
 	_Battery_initial->copy(*_Battery);
 	bool iterate = _charging;
-
+	int count = 0;
 	do {
+
+		// Recompute
+		if (!_pv_dispatch_to_battery_first)
+			compute_energy_load_priority(energy_needed_to_fill);
+		else
+			compute_energy_battery_priority(energy_needed_to_fill);
+
 		// Run Battery Model to update charge based on charge/discharge
 		_Battery->run(I);
 
@@ -1510,13 +1518,24 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
-		if (_P_grid_to_batt > 0 && !_can_grid_charge)
+		// Don't allow grid charging unless explicitly allowed
+		if (_P_grid_to_batt > tolerance && !_can_grid_charge)
 		{
 			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
 			_Battery->copy(*_Battery_initial);
 		}
+		else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max)
+		{
+			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) * I;
+			_Battery->copy(*_Battery_initial);
+		}
 		else
 			iterate = false;
+
+		if (count > 10)
+			iterate = false;
+
+		count++;
 
 	} while (iterate);
 
