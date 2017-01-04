@@ -333,6 +333,18 @@ double C_csp_gen_collector_receiver::get_min_power_delivery()
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
+double C_csp_gen_collector_receiver::get_tracking_power()
+{
+	throw(C_csp_exception("C_csp_gen_collector_receiver::get_tracking_power() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //MWe
+}
+
+double C_csp_gen_collector_receiver::get_col_startup_power()
+{
+	throw(C_csp_exception("C_csp_gen_collector_receiver::get_col_startup_power() is not complete"));
+	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
+}
+
 void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	double field_control,

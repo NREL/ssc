@@ -25,6 +25,7 @@ public:
     bool m_last_opt_successful;   //last optimization run was successful?
     int m_current_read_step;        //current step to read from optimization results
     vector<double> price_signal;    //IN [- or $/MWh] Price factor indicating market value of generated energy
+	vector<double> w_lim;			//[kWe] Limit on net electricity production
     C_csp_weatherreader m_weather;       //Local copy of weather reader object
 
     struct s_solver_params
@@ -97,6 +98,12 @@ public:
         double csu_cost;            //[$/start] Cycle startup cost
         double pen_delta_w;         //[$/kWe-change] Cycle production change penalty
         double q_rec_standby;       //[kWt] Receiver standby thermal power consumption fraction
+
+		double w_rec_ht;			//[kW-hr] Heat trace power during receiver startup
+		double w_track;				//[kWe] Heliostat tracing power
+		double w_stow;				//[kWe-hr] Heliostat stow electricity requirement
+		double w_cycle_standby;		//[kWe] Cycle HTF pumping power during standby
+		double w_cycle_pump;		//[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
 
         C_csp_solver_sim_info *siminfo;     //Pointer to existing simulation info object
         C_csp_collector_receiver *col_rec;   //Pointer to collector/receiver object

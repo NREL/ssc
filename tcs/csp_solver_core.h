@@ -234,6 +234,8 @@ public:
         double m_csu_cost;
         double m_q_rec_standby;
         double m_pen_delta_w;
+		double m_w_rec_ht;
+		std::vector<double> m_w_lim_full;
 
 		bool m_is_write_ampl_dat;
         bool m_is_ampl_engine;
@@ -270,6 +272,9 @@ public:
             m_csu_cost = 10000.;
             m_pen_delta_w = 0.1;
             m_q_rec_standby = 9.e99;
+			m_w_rec_ht = 0.0;
+			m_w_lim_full.resize(8760);
+			m_w_lim_full.assign(8760, 9.e99);
 
 			m_is_write_ampl_dat = false;        //write ampl data files?
             m_is_ampl_engine = false;           //run dispatch with external AMPL engine?
@@ -441,6 +446,8 @@ public:
     virtual double get_startup_energy() = 0; //MWh
     virtual double get_pumping_parasitic_coef() = 0;  //MWe/MWt
     virtual double get_min_power_delivery() = 0;    //MWt
+	virtual double get_tracking_power() = 0;		//MWe
+	virtual double get_col_startup_power() = 0;		//MWe-hr
 
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
@@ -588,6 +595,7 @@ public:
     virtual double get_min_thermal_power() = 0;     //MW
     virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct) = 0; //-
     virtual double get_efficiency_at_load(double load_frac) = 0;
+	virtual double get_htf_pumping_parasitic_coef() = 0;	//[kWe/kWt]
 	
 	// This can vary between timesteps for Type224, depending on remaining startup energy and time
 	virtual double get_max_q_pc_startup() = 0;		//[MWt]

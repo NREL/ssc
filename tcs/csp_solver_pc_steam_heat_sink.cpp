@@ -164,6 +164,12 @@ double C_pc_steam_heat_sink::get_min_thermal_power()
 	return 0.0;		//[MWt]
 }
 
+double C_pc_steam_heat_sink::get_htf_pumping_parasitic_coef()
+{
+	return 0.0;	// kWe/kWt
+}
+
+
 double C_pc_steam_heat_sink::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct)
 {
 	throw(C_csp_exception("C_pc_steam_heat_sink::get_efficiency_at_TPH() is not complete"));

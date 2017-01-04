@@ -424,6 +424,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		dispatch.params.csu_cost = mc_tou.mc_dispatch_params.m_csu_cost;
 		dispatch.params.pen_delta_w = mc_tou.mc_dispatch_params.m_pen_delta_w;
 		dispatch.params.q_rec_standby = mc_tou.mc_dispatch_params.m_q_rec_standby;
+		
+		dispatch.params.w_rec_ht = mc_tou.mc_dispatch_params.m_w_rec_ht;
+		dispatch.params.w_track = mc_collector_receiver.get_tracking_power()*1000.0;	//kWe
+		dispatch.params.w_stow = mc_collector_receiver.get_col_startup_power()*1000.0;	//kWe-hr
+		dispatch.params.w_cycle_pump = mc_power_cycle.get_htf_pumping_parasitic_coef();// kWe/kWt
+		dispatch.params.w_cycle_standby = dispatch.params.q_pb_standby*dispatch.params.w_cycle_pump; //kWe
 
 		//Cycle efficiency
 		dispatch.params.eff_table_load.clear();
@@ -711,6 +717,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		            dispatch.price_signal.at(t) = mc_tou_outputs.m_price_mult;
                 }
 
+				// get the new electricity generation limits
+				dispatch.w_lim.clear();
+				dispatch.w_lim.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 1.e99);
+				int hour_start = (int)(ceil (mc_kernel.mc_sim_info.ms_ts.m_time / 3600. - 1.e-6)) - 1;
+				for (int t = 0; t<opt_horizon; t++)
+				{
+					for (int d = 0; d < mc_tou.mc_dispatch_params.m_disp_steps_per_hour; d++)
+						dispatch.w_lim.at(t*mc_tou.mc_dispatch_params.m_disp_steps_per_hour+d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
+				}
+
+
                 //note the states of the power cycle and receiver
                 dispatch.params.is_pb_operating0 = mc_power_cycle.get_operating_state() == 1;
                 dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
@@ -749,6 +766,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                     if(dispatch.solver_params.disp_reporting && (! dispatch.solver_params.log_message.empty()) )
                         mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str() );
                     
+					//mc_csp_messages.add_message(C_csp_messages::NOTICE, dispatch.solver_params.log_message.c_str());
+
                     dispatch.m_current_read_step = 0;   //reset
                 }
 
@@ -790,13 +809,45 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
 
                 q_pc_target = dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) / 1000. ;
-                
+
                 //quality checks
+				/*
                 if(!is_pc_sb_allowed && (q_pc_target + 1.e-5 < q_pc_min))
                     is_pc_su_allowed = false;
                 if(is_pc_sb_allowed)
                     q_pc_target = dispatch.params.q_pb_standby*1.e-3; 
+				*/
+
+
+				if (q_pc_target + 1.e-5 < q_pc_min)
+				{
+					is_pc_su_allowed = false;
+					//is_pc_sb_allowed = false;
+					q_pc_target = 0.0;
+				}
                 
+				// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
+				double eta_diff = 1.;
+				double eta_calc = dispatch.params.eta_cycle_ref;
+				int i = 0;
+				if (dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
+					q_pc_max = 0.0;
+				else
+				{
+					while (eta_diff > 0.001 && i<20)
+					{
+						double q_pc_est = dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
+						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des);		// Calculated power cycle efficiency
+						eta_diff = fabs(eta_calc - eta_new);
+						eta_calc = eta_new;
+						i++;
+					}
+					q_pc_max = fmin(q_pc_max, dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
+					q_pc_max = fmax(q_pc_max, q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
+				}
+				if (m_q_dot_rec_on_min > q_pc_max && q_dot_tes_ch < m_q_dot_rec_on_min - q_pc_max)		// Min receiver thermal power > Max power cycle thermal power and the difference can't be sent to storage
+					is_rec_su_allowed = 0;
+
                 //q_pc_sb = dispatch.outputs.q_pb_standby.at( dispatch.m_current_read_step ) / 1000. ;
 
                 //disp_etapb_expect = dispatch.outputs.eta_pb_expected.at( dispatch.m_current_read_step ) 
@@ -1564,7 +1615,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// And assume upper bound always solves
 							// So assume that NO_SOLUTION corresponds to lower bound
 							// So if a lower bound is already known, then nowhere to go
-							if( is_lower_bound )
+							if (is_lower_bound && is_lower_error)	
 							{
 								diff_q_dot = std::numeric_limits<double>::quiet_NaN();
 								defocus_exit_mode = NO_SOLUTION;
@@ -7144,7 +7195,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_STATE, dispatch.outputs.solve_state);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_ITER, dispatch.outputs.solve_iter);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ, dispatch.outputs.objective);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, dispatch.outputs.objective);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, dispatch.outputs.objective_relaxed);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSF_EXPECT, disp_qsf_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFPROD_EXPECT, disp_qsfprod_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_QSFSU_EXPECT, disp_qsfsu_expect);
@@ -7155,7 +7206,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_WPB_EXPECT, disp_wpb_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_REV_EXPECT, disp_rev_expect);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NCONSTR, dispatch.outputs.presolve_nconstr);
-		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nconstr);
+		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nvar);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
 
 
