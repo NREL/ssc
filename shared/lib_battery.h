@@ -420,6 +420,7 @@ public:
 	double battery_charge_maximum();
 	double battery_energy_to_fill();
 	double battery_power_to_fill();
+	double battery_soc();
 
 	// Get Voltage
 	double cell_voltage();

@@ -308,13 +308,14 @@ void ac_connected_battery_controller::preprocess_pv_load()
 	_P_pv_dc_charge_input = _P_pv;
 	_P_load_dc_charge_input = _P_load;
 
-	double P_max_to_batt = 0.;
+	double P_max_to_batt_dc = 0.;
 	if (pv_batt_choice == dispatch_t::MEET_LOAD)
 	{
 		if (P_grid_ac > 0)
 		{
-			_P_pv_dc_charge_input = _P_pv * _bidirectional_inverter->ac_dc_efficiency();
-			_P_load_dc_charge_input = _P_load * _bidirectional_inverter->ac_dc_efficiency();
+			P_max_to_batt_dc = P_grid_ac * _bidirectional_inverter->ac_dc_efficiency();
+			_P_pv_dc_charge_input = _P_pv -(P_grid_ac - P_max_to_batt_dc);
+			_P_load_dc_charge_input = _P_load;
 		}
 	}
 	else if (pv_batt_choice == dispatch_t::CHARGE_BATTERY)
@@ -457,8 +458,8 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
 	P_gen_ac = P_pv_ac + P_battery_ac;
 
-	// need to purchase more grid power due to losses
-	P_grid_ac = _P_load - P_gen_ac + P_grid_to_batt_loss;
+	// Grid charging loss accounted for in P_battery_ac 
+	P_grid_ac = _P_load - P_gen_ac;
 
 	// check tolerances
 	if (fabs(P_grid_to_load_ac) < tolerance)
