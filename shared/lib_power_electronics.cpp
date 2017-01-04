@@ -294,26 +294,51 @@ ac_connected_battery_controller::~ac_connected_battery_controller()
 	if (_bidirectional_inverter)
 		delete _bidirectional_inverter;
 }
+void ac_connected_battery_controller::preprocess_pv_load()
+{
+	int pv_batt_choice = _dispatch->pv_dispatch_priority();
+	double P_grid_ac = _P_pv - _P_load;
+	double P_grid_dc = 0.;
+
+	// compute effective PV and Load if battery is discharging
+	_P_pv_dc_discharge_input = _P_pv / _bidirectional_inverter->dc_ac_efficiency();
+	_P_load_dc_discharge_input = _P_load / _bidirectional_inverter->dc_ac_efficiency();
+
+	// compute effective PV and Load if battery is charging
+	_P_pv_dc_charge_input = _P_pv;
+	_P_load_dc_charge_input = _P_load;
+
+	double P_max_to_batt = 0.;
+	if (pv_batt_choice == dispatch_t::MEET_LOAD)
+	{
+		if (P_grid_ac > 0)
+		{
+			_P_pv_dc_charge_input = _P_pv * _bidirectional_inverter->ac_dc_efficiency();
+			_P_load_dc_charge_input = _P_load * _bidirectional_inverter->ac_dc_efficiency();
+		}
+	}
+	else if (pv_batt_choice == dispatch_t::CHARGE_BATTERY)
+	{
+		double P_to_fill_dc = _dispatch->battery_power_to_fill();
+		double P_to_fill_ac = P_to_fill_dc / _bidirectional_inverter->ac_dc_efficiency();
+		double P_loss_inverter = P_to_fill_ac - P_to_fill_dc;
+
+		if (_P_pv > P_to_fill_ac)
+			_P_pv_dc_charge_input = _P_pv - P_to_fill_ac;
+		else
+		{
+			double P_pv_to_batt = _P_pv * _P_pv * _bidirectional_inverter->ac_dc_efficiency();
+			double P_loss_ac = _P_pv - P_pv_to_batt;
+			_P_pv_dc_charge_input = _P_pv - P_loss_ac;
+		}
+	}
+}
 void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv_ac, double P_load_ac)
 {
 	
 	initialize(P_pv_ac, P_load_ac);
 
-	// compute the effective PV power that the battery sees after losses
-	double P_max_battery = 0.;
-	double P_pv_effective = P_pv_ac;
-	double P_diff_ac = P_load_ac - P_pv_ac;
-
-	if (P_diff_ac < 0)
-	{
-		P_max_battery = P_diff_ac * _bidirectional_inverter->dc_ac_efficiency();
-		P_pv_effective = P_pv_ac - fabs(P_max_battery - P_diff_ac);
-	}
-	else if (P_diff_ac > 0)
-		P_max_battery = P_diff_ac * _bidirectional_inverter->ac_dc_efficiency();
-		
-	if (P_pv_effective < 0)
-		P_pv_effective = 0;
+	preprocess_pv_load();
 
 	// dispatch battery
 	_dispatch->dispatch(year, hour_of_year, step_of_hour, _P_pv_dc_charge_input, _P_pv_dc_discharge_input, _P_load_dc_charge_input, _P_load_dc_discharge_input);

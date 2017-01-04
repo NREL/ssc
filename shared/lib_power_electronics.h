@@ -194,7 +194,7 @@ public:
 	ac_connected_battery_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double ac_dc_efficiency, double dc_ac_efficiency);
 	~ac_connected_battery_controller();
 
-	void preprocess_pv_load(){};
+	void preprocess_pv_load();
 	void run(size_t year, size_t hour_of_year, size_t step_of_hour, double P_pv, double P_load);
 	void process_dispatch();
 	void compute_to_batt_load_grid( double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency = 0.);
