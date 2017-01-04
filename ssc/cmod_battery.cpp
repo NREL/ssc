@@ -580,10 +580,10 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		charge_control = new dc_connected_battery_controller(dispatch_model, battery_metrics, batt_vars->batt_dc_dc_bms_efficiency , batt_vars->pv_dc_dc_mppt_efficiency, inverter_efficiency);
 	}
 } 
-void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load, int mode)
+void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *load)
 {
-	
-	if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
+	int mode = batt_vars->batt_dispatch;
+	if (mode != dispatch_t::MANUAL)
 	{
 		int nrec;
 		prediction_index = 0;
@@ -868,9 +868,9 @@ public:
 				bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
 				bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
 				if (look_behind)
-					batt.initialize_automated_dispatch(0, 0, batt_dispatch);
+					batt.initialize_automated_dispatch(0, 0);
 				else if (look_ahead)
-					batt.initialize_automated_dispatch(power_input, power_load, batt_dispatch);
+					batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			/* *********************************************************************************************
 			Run Simulation

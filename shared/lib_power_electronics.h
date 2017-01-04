@@ -136,7 +136,6 @@ public:
 
 protected:
 
-	double _round_trip_efficiency;
 	dispatch_t * _dispatch;
 	battery_metrics_t * _battery_metrics;
 

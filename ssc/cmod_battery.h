@@ -104,7 +104,7 @@ struct battstor
 {
 
 	battstor( compute_module &cm, bool setup_model, int replacement_option, size_t nrec, double dt_hr, batt_variables *batt_vars=0);
-	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0, int mode=0);
+	void initialize_automated_dispatch(ssc_number_t *pv=0, ssc_number_t *load=0);
 	~battstor();
 
 	void advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv, double P_load);
