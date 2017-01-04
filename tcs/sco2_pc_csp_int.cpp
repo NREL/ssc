@@ -1512,6 +1512,12 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	// 2) Solve the off-design cycle model with off design parameter structure
 	int rc_od_error_code = 0;
 	
+	mpc_sco2_rc->mc_rc_cycle.off_design_fix_shaft_speeds(mpc_sco2_rc->ms_rc_cycle_od_phi_par, rc_od_error_code);
+
+	
+	double chck_here = 1.23;
+
+
 	mpc_sco2_rc->mc_rc_cycle.off_design_phi(mpc_sco2_rc->ms_rc_cycle_od_phi_par, rc_od_error_code);
 
 	// If off-design cycle model did not solve, return to solver
