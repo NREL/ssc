@@ -54,13 +54,11 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_nll_ts", "Transformer no load loss", "kW", "", "Time Series", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_ll_ts", "Transformer load loss", "kW", "", "Time Series", "", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_loss_ts", "Transformer total loss", "kW", "", "Time Series", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_nll_annual", "Transformer no load loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_ll_annual", "Transformer load loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_loss_annual", "Transformer total loss", "kWh", "", "Annual", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_nll_year1", "Transformer no load loss", "kWh", "", "Year1", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_ll_year1", "Transformer load loss", "kWh", "", "Year1", "", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_loss_year1", "Transformer total loss", "kWh", "", "Year1", "", "", "" },
-
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_xfmr_loss_percent", "Transformer loss percent", "%", "", "Loss", "", "", "" },
+	
 	
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                      "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
@@ -1746,9 +1744,6 @@ public:
 		ssc_number_t *p_xfmr_nll_ts = allocate("xfmr_nll_ts", nrec);
 		ssc_number_t *p_xfmr_ll_ts = allocate("xfmr_ll_ts", nrec);
 		ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
-		ssc_number_t *p_xfmr_nll_annual = allocate("xfmr_nll_annual", nyears);
-		ssc_number_t *p_xfmr_ll_annual = allocate("xfmr_ll_annual", nyears);
-		ssc_number_t *p_xfmr_loss_annual = allocate("xfmr_loss_annual", nyears);
 
 
 		ssc_number_t xfmr_rating = as_number("transformer_rating"); // kVA
@@ -2893,7 +2888,12 @@ public:
 					// load loss
 					ssc_number_t xfmr_ll = 0.0;
 					if (xfmr_ll_frac != 0 && xfmr_rating != 0)
-						xfmr_ll = xfmr_ll_frac * p_gen[idx] * p_gen[idx] / xfmr_rating;
+					{
+						if (p_gen[idx] < xfmr_rating)
+							xfmr_ll = xfmr_ll_frac * p_gen[idx] * p_gen[idx] / xfmr_rating;
+						else // should really have user size transformer correctly!
+							xfmr_ll = xfmr_ll_frac * p_gen[idx];
+					} 
 					// total load loss
 					ssc_number_t xfmr_loss = xfmr_ll + xfmr_nll;
 					// apply transformer loss
@@ -3272,6 +3272,12 @@ public:
 		assign("annual_ac_lifetime_loss_percent", var_data((ssc_number_t)percent));
 		sys_output -= annual_ac_lifetime_loss;
 
+		percent = 0;
+		if (annual_xfmr_loss > 0) percent = 100 * annual_xfmr_loss / annual_ac_gross;
+		assign("annual_xfmr_loss_percent", var_data((ssc_number_t)percent));
+		sys_output -= annual_ac_lifetime_loss;
+
+
 #ifdef WITH_CHECKS
 		// check that ac_net = sys_output at this point
 		if (fabs(annual_ac_pre_avail - sys_output)/ annual_ac_pre_avail > 0.00001)
@@ -3284,6 +3290,8 @@ public:
 		if (annual_ac_pre_avail > 0) percent = 100.0 * (annual_ac_pre_avail - annual_energy) / annual_ac_pre_avail;
 		assign("annual_ac_perf_adj_loss_percent", var_data((ssc_number_t)percent));
 		sys_output *= (1.0 - percent / 100.0);
+
+
 		// annual_ac_net = system_output
 
 #ifdef WITH_CHECKS
