@@ -2189,6 +2189,7 @@ battery_metrics_t::battery_metrics_t(battery_t * Battery, double dt_hour)
 	_e_discharge_annual = 0.;
 	_e_grid_import_annual = 0.;
 	_e_grid_export_annual = 0.;
+	_e_loss_annual = 0.;
 }
 double battery_metrics_t::average_efficiency(){ return _average_efficiency; }
 double battery_metrics_t::pv_charge_percent(){ return _pv_charge_percent; }
@@ -2198,6 +2199,7 @@ double battery_metrics_t::energy_charge_annual(){ return _e_charge_annual; }
 double battery_metrics_t::energy_discharge_annual(){ return _e_discharge_annual; }
 double battery_metrics_t::energy_grid_import_annual(){ return _e_grid_import_annual; }
 double battery_metrics_t::energy_grid_export_annual(){ return _e_grid_export_annual; }
+double battery_metrics_t::energy_loss_annual(){ return _e_loss_annual; }
 
 void battery_metrics_t::compute_metrics_ac(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid)
 {
@@ -2205,6 +2207,7 @@ void battery_metrics_t::compute_metrics_ac(double P_tofrom_batt, double P_pv_to_
 	accumulate_battery_charge_components(P_tofrom_batt, P_pv_to_batt, P_grid_to_batt);
 	accumulate_energy_charge(P_tofrom_batt);
 	accumulate_energy_discharge(P_tofrom_batt);
+	compute_annual_loss();
 }
 
 void battery_metrics_t::compute_metrics_dc(dispatch_t * dispatch)
@@ -2219,8 +2222,12 @@ void battery_metrics_t::compute_metrics_dc(dispatch_t * dispatch)
 	accumulate_energy_charge(P_tofrom_batt);
 	accumulate_energy_discharge(P_tofrom_batt);
 	accumulate_battery_charge_components(P_tofrom_batt, P_pv_to_batt, P_grid_to_batt);
+	compute_annual_loss();
 }
-
+void battery_metrics_t::compute_annual_loss()
+{
+	_e_loss_annual = _e_charge_annual - _e_discharge_annual;
+}
 void battery_metrics_t::accumulate_energy_charge(double P_tofrom_batt)
 {
 	if (P_tofrom_batt < 0.)
@@ -2259,6 +2266,7 @@ void battery_metrics_t::accumulate_grid_annual(double P_tofrom_grid)
 	else
 		_e_grid_import_annual += (-P_tofrom_grid)*_dt_hour;
 }
+
 void battery_metrics_t::new_year()
 {
 	_e_charge_from_pv_annual = 0.;

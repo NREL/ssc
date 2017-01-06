@@ -754,6 +754,7 @@ public:
 
 	void compute_metrics_ac(double P_tofrom_batt, double P_pv_to_batt, double P_grid_to_batt, double P_tofrom_grid);
 	void compute_metrics_dc(dispatch_t * dispatch);
+	void compute_annual_loss();
 
 	void accumulate_energy_charge(double P_tofrom_batt);
 	void accumulate_energy_discharge(double P_tofrom_batt);
@@ -790,6 +791,7 @@ protected:
 	double _e_discharge_annual;		   // [Kwh]
 	double _e_grid_import_annual;	   // [Kwh]
 	double _e_grid_export_annual;	   // [Kwh]
+	double _e_loss_annual;			   // [kWh]
 
 	battery_t * _Battery;
 	double _dt_hour;
