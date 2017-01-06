@@ -747,6 +747,7 @@ void battstor::metrics(compute_module &cm, size_t year, size_t hour_of_year, siz
 		outAnnualGridChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_charge_annual());
 		outAnnualChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_charge_annual());
 		outAnnualDischargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_discharge_annual());
+		outAnnualEnergyLoss[annual_index] = (ssc_number_t)(battery_metrics->energy_loss_annual());
 		battery_metrics->new_year();
 		year++;
 	}
