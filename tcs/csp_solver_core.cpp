@@ -206,7 +206,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-		m_q_dot_rec_on_min = m_q_dot_rec_des =
+		m_q_dot_rec_on_min = m_q_dot_rec_des = m_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
@@ -282,6 +282,11 @@ void C_csp_solver::reset_hierarchy_logic()
 	m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = true;
 } 
 
+double C_csp_solver::get_cr_aperture_area()
+{
+	return m_A_aperture;	//[m2]
+}
+
 void C_csp_solver::init()
 {
 	// First, initialize each component and update solver-level membe data as necessary
@@ -302,6 +307,7 @@ void C_csp_solver::init()
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
 	m_q_dot_rec_on_min = cr_solved_params.m_q_dot_rec_on_min;	//[MW]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
+	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
 		// Power cycle
 	C_csp_power_cycle::S_solved_params pc_solved_params;
 	mc_power_cycle.init(pc_solved_params);

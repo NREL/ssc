@@ -916,6 +916,7 @@ private:
 	double m_x_cold_des;				//[-]
 	double m_q_dot_rec_on_min;			//[MW]
 	double m_q_dot_rec_des;				//[MW]
+	double m_A_aperture;				//[m2]
 
 		// Power cycle design parameters
 	double m_cycle_W_dot_des;			//[MW]
@@ -1076,6 +1077,8 @@ public:
 					void *m_cdata);
 
 	int steps_per_hour();
+
+	double get_cr_aperture_area();
 
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
