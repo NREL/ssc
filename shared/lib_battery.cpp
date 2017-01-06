@@ -1295,19 +1295,22 @@ double dispatch_t::current_controller(double battery_voltage)
 	double P, I = 0.; // [W],[V]
 	P = kilowatt_to_watt*_P_tofrom_batt;
 	I = P / battery_voltage;
-	if (_charging)
+	restrict_current(I);
+	return I;
+}
+void dispatch_t::restrict_current(double &I)
+{
+	if (I < 0)
 	{
 		if (fabs(I) > _Ic_max)
 			I = -_Ic_max;
 	}
 	else
-	{ 
+	{
 		if (I > _Id_max)
 			I = _Id_max;
 	}
-	return I;
 }
-
 void dispatch_t::compute_to_batt()
 {
 	// Compute how much power went to battery from each component
@@ -1495,9 +1498,11 @@ void dispatch_manual_t::dispatch(size_t year,
 	switch_controller();
 	I = current_controller(battery_voltage);
 
+	// Iteration variables
 	_Battery_initial->copy(*_Battery);
 	bool iterate = true;
 	int count = 0;
+
 	do {
 
 		// Recompute
@@ -1518,39 +1523,7 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
-		// decrease the current draw if took too much
-		if (_Battery->battery_soc() < _SOC_min - tolerance)
-		{
-			double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
-			I -= dQ / _dt_hour;
-			_Battery->copy(*_Battery_initial);
-
-		}
-		// decrease the current charging if charged too much
-		else if (_Battery->battery_soc() > _SOC_max + tolerance)
-		{
-			double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
-			I += dQ / _dt_hour;
-			_Battery->copy(*_Battery_initial);
-		}
-		// Don't allow grid charging unless explicitly allowed
-		else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
-		{
-			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
-			_Battery->copy(*_Battery_initial);
-		}
-		// Don't let PV export to grid if can still charge battery
-		else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max && fabs(I) < fabs(_Ic_max) )
-		{
-			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) * I;
-			_Battery->copy(*_Battery_initial);
-		}
-		else
-			iterate = false;
-
-		if (count > 10)
-			iterate = false;
-
+		iterate = check_constraints(I, count);
 		count++;
 
 	} while (iterate);
@@ -1559,6 +1532,49 @@ void dispatch_manual_t::dispatch(size_t year,
 	_prev_charging = _charging;
 
 }
+
+bool dispatch_manual_t::check_constraints(double &I, int count)
+{
+	bool iterate = true;
+	 
+	// stop iterating after 5 tries
+	if (count > 5)
+		iterate = false;
+	// decrease the current draw if took too much
+	else if (_Battery->battery_soc() < _SOC_min - tolerance)
+	{
+		double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
+		I -= dQ / _dt_hour;
+	}
+	// decrease the current charging if charged too much
+	else if (_Battery->battery_soc() > _SOC_max + tolerance)
+	{
+		double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
+		I += dQ / _dt_hour;
+	}
+	// Don't allow grid charging unless explicitly allowed
+	else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
+	{
+		I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
+	}
+	// Don't let PV export to grid if can still charge battery
+	else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max && fabs(I) < fabs(_Ic_max))
+	{
+		I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) * I;
+	}
+	else
+		iterate = false;
+
+	// don't allow changes to violate current limits
+	restrict_current(I);
+
+	if (iterate)
+		_Battery->copy(*_Battery_initial);
+
+
+	return iterate;
+}
+
 void dispatch_manual_t::compute_energy_load_priority(double energy_needed)
 {
 	double diff = 0.; // [%]
@@ -1680,10 +1696,11 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	switch_controller();
 	I = current_controller(battery_voltage);
 
+	// Iteration variables
 	_Battery_initial->copy(*_Battery);
-
 	bool iterate = true;
 	int count = 0;
+
 	do {
 
 		// Recompute every iteration to reset 
@@ -1701,39 +1718,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
-		// decrease the current draw if took too much
-		if (_Battery->battery_soc() < _SOC_min - tolerance)
-		{
-			double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
-			I -= dQ / _dt_hour;
-			_Battery->copy(*_Battery_initial);
-
-		}
-		// decrease the current charging if charged too much
-		else if (_Battery->battery_soc() > _SOC_max + tolerance)
-		{
-			double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
-			I += dQ / _dt_hour;
-			_Battery->copy(*_Battery_initial);
-		}
-		// Don't allow grid charging unless explicitly allowed
-		else if (_P_grid_to_batt > 0 && !_can_grid_charge)
-		{
-			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
-			_Battery->copy(*_Battery_initial); 
-		}
-		// Don't let PV export to grid if can still charge battery
-		else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < (_SOC_max && fabs(I) < fabs(_Ic_max)) )
-		{
-			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) * I;
-			_Battery->copy(*_Battery_initial);
-		}
-		else
-			iterate = false;
-
-		if (count > 10)
-			break;
-
+		iterate = check_constraints(I, count);
 		count++;
 
 	} while (iterate);

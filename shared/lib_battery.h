@@ -503,6 +503,7 @@ protected:
 	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
+	void restrict_current(double &I);
 
 	// compute totals
 	void compute_battery_state();
@@ -601,6 +602,7 @@ protected:
 	void compute_energy_load_priority(double energy_needed);
 	void compute_energy_battery_priority(double energy_needed);
 	bool compute_energy_battery_priority_charging(double energy_needed);
+	bool check_constraints(double &I, int count);
 
 
 	util::matrix_t < float > _sched;
