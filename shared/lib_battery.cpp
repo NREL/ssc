@@ -1496,7 +1496,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	I = current_controller(battery_voltage);
 
 	_Battery_initial->copy(*_Battery);
-	bool iterate = _charging;
+	bool iterate = true;
 	int count = 0;
 	do {
 
@@ -1518,13 +1518,29 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
+		// decrease the current draw if took too much
+		if (_Battery->battery_soc() < _SOC_min - tolerance)
+		{
+			double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
+			I -= dQ / _dt_hour;
+			_Battery->copy(*_Battery_initial);
+
+		}
+		// decrease the current charging if charged too much
+		else if (_Battery->battery_soc() > _SOC_max + tolerance)
+		{
+			double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
+			I += dQ / _dt_hour;
+			_Battery->copy(*_Battery_initial);
+		}
 		// Don't allow grid charging unless explicitly allowed
-		if (_P_grid_to_batt > tolerance && !_can_grid_charge)
+		else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
 		{
 			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
 			_Battery->copy(*_Battery_initial);
 		}
-		else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max)
+		// Don't let PV export to grid if can still charge battery
+		else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max && fabs(I) < fabs(_Ic_max) )
 		{
 			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) * I;
 			_Battery->copy(*_Battery_initial);
@@ -1666,9 +1682,13 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 
 	_Battery_initial->copy(*_Battery);
 
-	bool iterate = _charging;
-
+	bool iterate = true;
+	int count = 0;
 	do {
+
+		// Recompute every iteration to reset 
+		compute_energy_no_load(energy_needed_to_fill);
+
 		// Run Battery Model to update charge based on charge/discharge
 		_Battery->run(I);
 
@@ -1681,14 +1701,41 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_generation();
 		compute_grid_net();
 
-		if (_P_grid_to_batt > 0 && !_can_grid_charge)
+		// decrease the current draw if took too much
+		if (_Battery->battery_soc() < _SOC_min - tolerance)
+		{
+			double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
+			I -= dQ / _dt_hour;
+			_Battery->copy(*_Battery_initial);
+
+		}
+		// decrease the current charging if charged too much
+		else if (_Battery->battery_soc() > _SOC_max + tolerance)
+		{
+			double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
+			I += dQ / _dt_hour;
+			_Battery->copy(*_Battery_initial);
+		}
+		// Don't allow grid charging unless explicitly allowed
+		else if (_P_grid_to_batt > 0 && !_can_grid_charge)
 		{
 			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
 			_Battery->copy(*_Battery_initial); 
 		}
+		// Don't let PV export to grid if can still charge battery
+		else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < (_SOC_max && fabs(I) < fabs(_Ic_max)) )
+		{
+			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) * I;
+			_Battery->copy(*_Battery_initial);
+		}
 		else
 			iterate = false;
-			
+
+		if (count > 10)
+			break;
+
+		count++;
+
 	} while (iterate);
 
 	// update for next step
