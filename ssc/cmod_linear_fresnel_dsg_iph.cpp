@@ -47,7 +47,7 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "V_wind_max",        "Maximum allowable wind velocity before safety stow",                                  "m/s",           "",            "solarfield",     "*",                       "",                      "" },
     
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.lf.sf.water_per_wash",  "Water usage per wash",                "L/m2_aper",    "",    "heliostat", "*", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "csp.lf.sf.washes_per_year", "Mirror washing frequency",            "",             "",    "heliostat", "*", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "csp.lf.sf.washes_per_year", "Mirror washing frequency",            "-/year",       "",    "heliostat", "*", "", "" },
 	
     { SSC_INPUT,        SSC_MATRIX,      "A_aperture",        "(boiler, SH) Reflective aperture area of the collector module",                       "m^2",           "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "L_col",             "(boiler, SH) Active length of the superheater section collector module",              "m",             "",            "solarfield",     "*",                       "",                      "" },
@@ -158,6 +158,7 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_field_energy",             "Annual Gross Thermal Energy Production w/ avail derate",   "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_thermal_consumption",      "Annual thermal freeze protection required",                "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",           "kWe-hr",   "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_total_water_use",          "Total Annual Water Usage",                                 "m^3",      "",   "Post-process",     "*",       "",   "" },
 
 	var_info_invalid };
 
@@ -504,6 +505,10 @@ public:
 		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[kWt-hr]
 		assign("annual_energy", annual_field_energy - annual_thermal_consumption);	//[kWt-hr]
 
+		// Calculate water use
+		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
+		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
+		assign("annual_total_water_use", V_water_mirrors);		//[m3]
 	}
 
 };

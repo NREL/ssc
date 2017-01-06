@@ -64,7 +64,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "fthrok",                    "Flag to allow partial defocusing of the collectors",                               "W/SCA",        "",               "solar_field",    "*",                       "INTEGER",               "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "fthrctrl",                  "Defocusing strategy",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "solar_field",    "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "-/year",       "",               "solar_field",    "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "accept_mode",               "Acceptance testing mode?",                                                         "0/1",          "no/yes",         "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_init",               "In acceptance testing mode - require steady-state startup",                        "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "accept_loc",                "In acceptance testing mode - temperature sensor location",                         "1/2",          "hx/loop",        "solar_field",    "*",                       "",                      "" },
@@ -194,10 +194,11 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	
 
 		// Annual Outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",  "Annual Net Thermal Energy Production w/ avail derate",           "kWt-hr",  "",          "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_energy","Annual Gross Thermal Energy Production w/ avail derate",     "kWt-hr",  "",          "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",     "kWt-hr",  "",  "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate", "kWe-hr", "",  "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual Net Thermal Energy Production w/ avail derate",       "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_field_energy",             "Annual Gross Thermal Energy Production w/ avail derate",     "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",                  "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",             "kWe-hr",  "",  "Post-process",    "*",   "",   "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",          "Total Annual Water Usage",                                   "m^3",     "",  "Post-process",    "*",   "",   "" },
 
 
 	var_info_invalid };
@@ -609,6 +610,11 @@ public:
 		ssc_number_t annual_field_energy = as_number("annual_field_energy");		//[kWt-hr]
 		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[kWt-hr]
 		assign("annual_energy", annual_field_energy - annual_thermal_consumption);	//[kWt-hr]
+
+		// Calculate water use
+		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
+		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
+		assign("annual_total_water_use", V_water_mirrors);		//[m3]
 	}
 
 };
