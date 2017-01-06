@@ -32,8 +32,6 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	// Type 261 (solar field collector) parameters
     { SSC_INPUT,        SSC_NUMBER,      "fP_hdr_c",          "Average design-point cold header pressure drop fraction",                             "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fP_sf_boil",        "Design-point pressure drop across the solar field boiler fraction",                   "none",          "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fP_boil_to_sh",     "Design-point pressure drop between the boiler and superheater frac",                  "none",          "",            "solarfield",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "fP_sf_sh",          "Design-point pressure drop across the solar field superheater frac",                  "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "fP_hdr_h",          "Average design-point hot header pressure drop fraction",                              "none",          "",            "solarfield",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nModBoil",          "Number of modules in the boiler section",                                             "none",          "",            "solarfield",     "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "nLoops",            "Number of loops",                                                                     "none",          "",            "solarfield",     "*",                       "",                      "" },
@@ -214,8 +212,8 @@ public:
 		c_lf_dsg.m_P_turb_des = as_double("P_turb_des");		//[bar]
 		c_lf_dsg.m_fP_hdr_c = as_double("fP_hdr_c");			//[-]
 		c_lf_dsg.m_fP_sf_boil = as_double("fP_sf_boil");		//[-]
-		c_lf_dsg.m_fP_boil_to_sh = as_double("fP_boil_to_sh");	//[-]
-		c_lf_dsg.m_fP_sf_sh = as_double("fP_sf_sh");			//[-]
+		c_lf_dsg.m_fP_boil_to_sh = 0.0;							//[-] Modeling only for boiling, so far
+		c_lf_dsg.m_fP_sf_sh = 0.0;								//[-] Modeling only for boiling, so far
 		c_lf_dsg.m_fP_hdr_h = as_double("fP_hdr_h");			//[-]
 		c_lf_dsg.m_q_pb_des = as_double("q_pb_des")*1000.0;		//[kWt]   Q_ref ); // = P_ref/eta_ref;
 		c_lf_dsg.m_W_pb_des = 0.0;								//[kWe]
