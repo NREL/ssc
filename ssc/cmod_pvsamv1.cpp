@@ -48,7 +48,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",                         "Weather data",                                         "",         "lat,lon,tz,elev,year,month,hour,minute,gh,dn,df,tdry,twet,tdew,rhum,pres,snow,alb,aod,wspd,wdir",    "pvsamv1",              "?",                        "",                              "" },
 	
 	// transformer model
-	{ SSC_INPUT, SSC_NUMBER, "transformer_rating", "Power transformer rating", "kVA", "", "pvsamv1", "?=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "transformer_no_load_loss", "Power transformer no load loss", "W", "", "pvsamv1", "?=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "transformer_load_loss", "Power transformer load loss", "W", "", "pvsamv1", "?=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_nll_ts", "Transformer no load loss", "kW", "", "Time Series", "", "", "" },
@@ -134,7 +133,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT, SSC_NUMBER, "dcoptimizer_loss", "DC power optimizer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 	//AC losses are also applied uniformly to all subarrays
 	{ SSC_INPUT, SSC_NUMBER, "acwiring_loss", "AC wiring loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
-	{ SSC_INPUT, SSC_NUMBER, "transformer_loss", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
+//	{ SSC_INPUT, SSC_NUMBER, "transformer_loss", "AC step-up transformer loss", "%", "", "pvsamv1", "*", "MIN=0,MAX=100", "" },
 
 
 	//
@@ -730,7 +729,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// annual_ac_gross
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_loss_percent", "AC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
 
@@ -751,7 +750,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_pntloss", "AC output after inverter night tare loss", "kWh", "", "Annual", "*", "", "" },
 	*/
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual", "*", "", "" },
 
 	/*
@@ -971,7 +970,8 @@ public:
 		int modules_per_string = as_integer("modules_per_string");
 		int strings_in_parallel = as_integer("strings_in_parallel");
 		int num_inverters = as_integer("inverter_count");
-		double ac_derate = (1 - as_double("acwiring_loss") / 100) * (1 - as_double("transformer_loss") / 100);	//calculate using ac wiring and step up transformer losses
+//		double ac_derate = (1 - as_double("acwiring_loss") / 100) * (1 - as_double("transformer_loss") / 100);	//calculate using ac wiring and step up transformer losses
+		double ac_derate = 1 - as_double("acwiring_loss") / 100;	//calculate using ac wiring 
 		double ac_loss_percent = (1 - ac_derate) * 100;
 		//assign ac loss output since we just calculated it
 		assign("ac_loss", var_data((ssc_number_t)ac_loss_percent));
@@ -1524,6 +1524,7 @@ public:
 		double V_mppt_lo_1module = as_double("mppt_low_inverter") / modules_per_string;
 		double V_mppt_hi_1module = as_double("mppt_hi_inverter") / modules_per_string;
 		bool clip_mppt_window = false;
+		double ratedACOutput = 0;
 
 		if ( V_mppt_lo_1module > 0 && V_mppt_hi_1module > V_mppt_lo_1module )
 		{
@@ -1554,7 +1555,7 @@ public:
 			snlinv.C1 = as_double("inv_snl_c1");
 			snlinv.C2 = as_double("inv_snl_c2");
 			snlinv.C3 = as_double("inv_snl_c3");
-
+			ratedACOutput = snlinv.Paco;
 		}
 		else if (inv_type == 1) // coefficient generator
 		{
@@ -1567,6 +1568,7 @@ public:
 			snlinv.C1 = as_double("inv_cec_cg_c1");
 			snlinv.C2 = as_double("inv_cec_cg_c2");
 			snlinv.C3 = as_double("inv_cec_cg_c3");
+			ratedACOutput = snlinv.Paco;
 		}
 		else if (inv_type == 2) // datasheet data
 		{
@@ -1583,6 +1585,7 @@ public:
 			snlinv.C1 = 0;
 			snlinv.C2 = 0;
 			snlinv.C3 = 0;
+			ratedACOutput = snlinv.Paco;
 		}
 		else if (inv_type == 3) // partload curve
 		{
@@ -1595,12 +1598,13 @@ public:
 
 			plinv.Partload = pl_pd;
 			plinv.Efficiency = eff_pd;
+			ratedACOutput = plinv.Paco;
 		}
 		else
 		{
 			throw exec_error("pvsamv1", "invalid inverter model type");
 		}
-
+		ratedACOutput *= num_inverters;
 
 
 
@@ -1746,12 +1750,13 @@ public:
 		ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
 
 
-		ssc_number_t xfmr_rating = as_number("transformer_rating"); // kVA
-		ssc_number_t xfmr_ll_frac = as_number("transformer_load_loss"); // W
-		if (xfmr_rating != 0)
-			xfmr_ll_frac = xfmr_ll_frac * 0.001 / xfmr_rating; // asuming power factor 1 from inverter output to grid...
-		ssc_number_t xfmr_nll = as_number("transformer_no_load_loss"); // W
-		xfmr_nll *= 0.001 * ts_hour; // kW
+		//		ssc_number_t xfmr_rating = as_number("transformer_rating"); // kVA
+		ssc_number_t xfmr_rating = ratedACOutput * 0.001; // W to kW
+		ssc_number_t xfmr_ll_frac = as_number("transformer_load_loss") *0.01; // % to frac
+		//if (xfmr_rating != 0)
+		//	xfmr_ll_frac = xfmr_ll_frac * 0.001 / xfmr_rating; // asuming power factor 1 from inverter output to grid...
+		ssc_number_t xfmr_nll = as_number("transformer_no_load_loss") *0.01; // % to frac
+		xfmr_nll *= 0.001 * ts_hour * xfmr_rating; // kW
 
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
@@ -3141,26 +3146,26 @@ public:
 		assign("annual_ac_after_inv_pntloss", var_data((ssc_number_t)sys_output));
 
 		double acwiring = as_double("acwiring_loss");
-		double transformer = as_double("transformer_loss");
-		double total_percent = acwiring + transformer;
-		double acwiring_loss = 0, transformer_loss = 0;
+//		double transformer = as_double("transformer_loss");
+		double total_percent = acwiring; // +transformer;
+		double acwiring_loss = 0; // , transformer_loss = 0;
 		sys_output = annual_ac_gross;
 		double ac_loss = sys_output*(1.0 - ac_derate);
 
 		if (total_percent != 0)
 		{
 			acwiring_loss = acwiring / total_percent * ac_loss;
-			transformer_loss = transformer / total_percent * ac_loss;
+//			transformer_loss = transformer / total_percent * ac_loss;
 		}
 
 		assign("annual_ac_wiring_loss", var_data((ssc_number_t)acwiring_loss));
-		assign("annual_ac_transformer_loss", var_data((ssc_number_t)transformer_loss));
+//		assign("annual_ac_transformer_loss", var_data((ssc_number_t)transformer_loss));
 
 		// ac losses
 		sys_output -= acwiring_loss;
 		assign("annual_ac_after_wiring_loss", var_data((ssc_number_t)sys_output));
-		sys_output -= transformer_loss;
-		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)sys_output));
+//		sys_output -= transformer_loss;
+//		assign("annual_ac_after_transformer_loss", var_data((ssc_number_t)sys_output));
 
 		double percent = 0;
 		if (annual_poa_nom > 0) percent = 100 * (annual_poa_nom - annual_poa_shaded) / annual_poa_nom;
@@ -3261,10 +3266,10 @@ public:
 		assign("annual_ac_wiring_loss_percent", var_data((ssc_number_t)percent));
 		sys_output -= acwiring_loss;
 
-		percent = 0;
-		if (annual_ac_gross > 0) percent = 100.0 * transformer_loss / annual_ac_gross;
-		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
-		sys_output -= transformer_loss;
+//		percent = 0;
+//		if (annual_ac_gross > 0) percent = 100.0 * transformer_loss / annual_ac_gross;
+//		assign("annual_ac_transformer_loss_percent", var_data((ssc_number_t)percent));
+//		sys_output -= transformer_loss;
 		// annual_ac_pre_avail
 
 		percent = 0;

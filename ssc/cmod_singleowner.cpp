@@ -2019,7 +2019,7 @@ public:
 			{
 				cf.at(CF_cash_for_ds, i) = cf.at(CF_ebitda, i) - cf.at(CF_funding_equip1, i) - cf.at(CF_funding_equip2, i) - cf.at(CF_funding_equip3, i) - cf.at(CF_funding_receivables, i);
 				cash_for_debt_service += cf.at(CF_cash_for_ds, i);
-				if (i == 1)
+				if (i <= 1)
 					cf.at(CF_pv_interest_factor, i) = 1.0 / (1.0 + term_int_rate);
 				else
 					cf.at(CF_pv_interest_factor, i) = cf.at(CF_pv_interest_factor, i - 1) / (1.0 + term_int_rate);
