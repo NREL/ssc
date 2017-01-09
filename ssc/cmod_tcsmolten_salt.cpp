@@ -1047,6 +1047,7 @@ public:
 			sco2_rc_csp_par.m_elevation = site_elevation;							//[m]
 			sco2_rc_csp_par.m_W_dot_net = as_double("P_ref")*1.E3;					//[kWe]
 			sco2_rc_csp_par.m_eta_thermal = as_double("design_eff");					//[-]
+			sco2_rc_csp_par.m_is_recomp_ok = 1;
 				// Cycle Design Parameters
 			sco2_rc_csp_par.m_LT_eff_max = as_double("recup_eff_max");		//[-]
 			sco2_rc_csp_par.m_HT_eff_max = as_double("recup_eff_max");		//[-]

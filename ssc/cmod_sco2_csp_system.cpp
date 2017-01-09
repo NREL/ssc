@@ -20,6 +20,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "design_method",        "1 = Specify efficiency, 2 = Specify total recup UA",     "",           "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "",      "?=-1.0","",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "UA_recup_tot_des",     "Total recuperator conductance",                          "kW/K",       "",    "",      "?=-1.0","",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_recomp_ok",         "1 = Yes, 0 = simple cycle only",                         "",           "",    "",      "?=1",   "",       "" },
 		// Cycle Design
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_mc",          "Design main compressor isentropic efficiency",           "-",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "eta_isen_rc",          "Design re-compressor isentropic efficiency",             "-",          "",    "",      "*",     "",       "" },
@@ -234,6 +235,8 @@ public:
 			log(err_msg, SSC_ERROR, -1.0);
 		}
 
+		sco2_rc_des_par.m_is_recomp_ok = as_integer("is_recomp_ok");
+
 			// Cycle design parameters: hardcode pressure drops, for now
 		// Define hardcoded sco2 design point parameters
 		std::vector<double> DP_LT(2);
@@ -382,7 +385,7 @@ public:
 		// ***************************************************************************
 
 
-		bool is_od_input_screen = true;
+		bool is_od_input_screen = false;
 		if( is_od_input_screen )
 		{
 			// Set up parametric sweep of operation inputs
@@ -734,7 +737,10 @@ public:
 			std::clock_t clock_start = std::clock();
 			try
 			{
-				off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy, od_opt_tol);
+					// 2D optimization
+				off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
+					// Nested optimization
+				//off_design_code = sco2_recomp_csp.off_design_nested_opt(sco2_rc_od_par, od_strategy);
 			}
 			catch( C_csp_exception &csp_exception )
 			{
