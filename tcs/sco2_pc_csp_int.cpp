@@ -232,19 +232,19 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
-	m_is_write_mc_out_file = false;
+	m_is_write_mc_out_file = true;
 	m_is_only_write_frecomp_opt_iters = true;
 
-	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/fixed_N/";
+	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/fixed_N_recomp/";
 
 	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
-	//double P_mc_in_min = 6000.0;		//[kPa]
-	//double P_mc_in_max = 11000.0;		//[kPa]
-	//double P_mc_in_inc = 25.0;			//[kPa]
-	//
-	//off_design_P_mc_in_parameteric(P_mc_in_min, P_mc_in_max, P_mc_in_inc);
-	//return -1;
+	double P_mc_in_min = 6000.0;		//[kPa]
+	double P_mc_in_max = 11000.0;		//[kPa]
+	double P_mc_in_inc = 25.0;			//[kPa]
+	
+	off_design_P_mc_in_parameteric(P_mc_in_min, P_mc_in_max, P_mc_in_inc);
+	return -1;
 
 	//double P_mc_in_parametric = 9279.7;		//[kPa]
 	//double f_recomp_start = 0.21;			//[-]
@@ -256,13 +256,13 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	//m_eta_max_eta = 0.0;
 	//m_od_opt_objective = E_MAX_ETA_FIX_PHI;
 	
-	m_od_opt_objective = E_MAX_POWER_FIX_PHI;
-	m_od_opt_ftol = 1.E-7;
-	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
-	if( !opt_success_2_par )
-	{
-		throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
-	}
+	//m_od_opt_objective = E_MAX_POWER_FIX_PHI;
+	//m_od_opt_ftol = 1.E-7;
+	//bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
+	//if( !opt_success_2_par )
+	//{
+	//	throw(C_csp_exception("2D nested optimization to maximize efficiency failed"));
+	//}
 
 	// Set max efficiency
 	/*
@@ -1989,8 +1989,8 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			<< mc_tip_ratio_of << ","
 			<< util::format("%.4f",f_recomp_of) << ","
 			<< m_dot_rc << ","
+			<< rc_tip_ratio_of << "," 
 			<< rc_phi_of << ","
-			<< rc_tip_ratio_of << ","
 			<< eta_max_f_recomp_opt << ","
 			<< W_dot_net_of << ","
 			<< Q_dot_in_of << ","
