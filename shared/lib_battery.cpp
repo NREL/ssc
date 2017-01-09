@@ -529,16 +529,15 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 }
 
 // Vanadium redox flow model
-voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R):
+voltage_vanadium_redox_t::voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50,  double R):
 voltage_t(num_cells_series, num_strings, V_ref_50)
 {
 	_I = 0;
 	_V_ref_50 = V_ref_50;
 	_R = R;
-	//mjw 11/6/16 need to initialize here, not in declaration. 
-        _R_molar = 8.314;  // Molar gas constant [J/mol/K]^M
-        _F = 26.801 * 3600;// Faraday constant [As/mol]^M
-        _C = 1.38;                 // model correction factor^M	
+    _R_molar = 8.314;  // Molar gas constant [J/mol/K]^M
+    _F = 26.801 * 3600;// Faraday constant [As/mol]^M
+    _C = 1.38;                 // model correction factor^M	
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
 void voltage_vanadium_redox_t::copy(voltage_vanadium_redox_t *& voltage)
@@ -559,7 +558,6 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 
 	double T = thermal->T_battery() + Celsius_to_Kelvin;
 
-
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
 	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, T);
@@ -571,7 +569,14 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 {
 	double SOC = q0 / qmax;
-	double V_stack_cell = (_V_ref_50 + (_R_molar * T / _F) * (std::log(std::pow(SOC, 2) / std::pow(1 - SOC, 2))*_C));
+	double SOC_use = SOC;
+	if (SOC > 1 - tolerance)
+		SOC_use = 1 - tolerance;
+
+	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
+
+	double V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C;
+
 	return V_stack_cell;
 }
 /*

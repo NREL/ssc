@@ -240,11 +240,6 @@ private:
 	double _V_ref_50;				// Reference voltage at 50% SOC
 	double _R;						// Internal resistance [Ohm]
 	double _I;						// Current level [A]
-/*	const double _R_molar = 8.314;	// Molar gas constant [J/mol/K]
-	const double _F = 26.801 * 3600;// Faraday constant [As/mol]
-	const double _C = 1.38;			// model correction factor
-mjw 11/6/16 -- can't initialize or const in declaration on gcc
-*/	
 	double _R_molar;
 	double _F;
 	double _C;
