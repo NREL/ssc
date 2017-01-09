@@ -161,6 +161,8 @@ public:
 	struct S_design_parameters
 	{
 			// Compressor inlet conditions
+		double m_T_in;			//[K]
+		double m_P_in;			//[kPa]
 		double m_D_in;			//[kg/m^3]
 		double m_h_in;			//[kJ/kg]
 		double m_s_in;			//[kJ/kg-K]
@@ -174,7 +176,7 @@ public:
 
 		S_design_parameters()
 		{
-			m_D_in = m_h_in = m_s_in =
+			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in =
 			m_T_out = m_P_out = m_h_out = m_D_out = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
@@ -530,7 +532,8 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
-	
+		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
+
 		S_auto_opt_design_hit_eta_parameters()
 		{
 			m_W_dot_net = m_T_mc_in = m_T_t_in = m_LT_eff_max = m_HT_eff_max = 
@@ -538,6 +541,8 @@ public:
 				m_tol = m_opt_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
+
+			m_is_recomp_ok = -1;
 
 			m_DP_LT.resize(2);
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
@@ -570,6 +575,7 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
 		S_auto_opt_design_parameters()
 		{
@@ -578,6 +584,8 @@ public:
 				m_tol = m_opt_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
+
+			m_is_recomp_ok = -1;
 
 			m_DP_LT.resize(2);
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
