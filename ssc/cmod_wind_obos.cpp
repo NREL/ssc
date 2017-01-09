@@ -121,6 +121,23 @@ static var_info _cm_vtab_wind_obos[] = {
    { SSC_INPUT,        SSC_NUMBER,      "mptCR",                          "Main Power Transformer Cost Rate",                         "$/MVA",              "",                       "wobos",            "?=12500",                 "",                              ""},
    //{ SSC_INPUT,        SSC_ARRAY,       "arrCables",                      "Array Cables and Specifications",                          "",                   "",                       "wobos",            "*",                       "",                              ""},
    //{ SSC_INPUT,        SSC_ARRAY,       "expCables",                      "Export Cables and Specifications",                         "",                   "",                       "wobos",            "*",                       "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "arrVoltage",                     "Array cable voltage",                                      "kV",                 "",                       "wobos",            "?=33",                    "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab1CR",                         "Array cable 1 Cost Rate",                                  "$/m",                "",                       "wobos",            "?=185.889",               "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab2CR",                         "Array cable 2 Cost Rate",                                  "$/m",                "",                       "wobos",            "?=202.788",               "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab1CurrRating",                 "Array cable 1 current rating",                             "A",                  "",                       "wobos",            "?=300",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab2CurrRating",                 "Array cable 2 current rating",                             "A",                  "",                       "wobos",            "?=340",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "arrCab1Mass",                    "Array cable 1 mass",                                       "kg/m",               "",                       "wobos",            "?=20.384",                "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "arrCab2Mass",                    "Array cable 2 mass",                                       "kg/m",               "",                       "wobos",            "?=21.854",                "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab1TurbInterCR",                "Cable 1 turbine interface cost",                           "$/interface",        "",                       "wobos",            "?=8410",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab2TurbInterCR",                "Cable 2 turbine interface cost",                           "$/interface",        "",                       "wobos",            "?=8615",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "cab2SubsInterCR",                "Cable 2 substation interface cost",                        "$/interface",        "",                       "wobos",            "?=19815",                 "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "expVoltage",                     "Export cable voltage",                                     "kV",                 "",                       "wobos",            "?=220",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "expCurrRating",                  "Export cable current rating",                              "A",                  "",                       "wobos",            "?=530",                   "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "expCabMass",                     "Export cable mass",                                        "kg/m",               "",                       "wobos",            "?=71.9",                  "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "expCabCR",                       "Export cable cost rate",                                   "$/m",                "",                       "wobos",            "?=495.411",               "",                              ""},
+   { SSC_INPUT,        SSC_NUMBER,      "expSubsInterCR",                 "Export cable substation interface cost",                   "$/interface",        "",                       "wobos",            "?=57500",                 "",                              ""},
+
+
 
 //Assembly & Installation
    { SSC_INPUT,        SSC_NUMBER,      "moorTimeFac",                    "Anchor & Mooring Water Depth Time Factor",                 "",                   "",                       "wobos",            "?=0.005",                 "",                              ""},
@@ -495,6 +512,21 @@ public:
 		obos.workSpace = (double)as_number("workSpace");//substation workshop and accommodations cost ($)
 		obos.otherAncillary = (double)as_number("otherAncillary");//substation other ancillary costs ($)
 		obos.mptCR = (double)as_number("mptCR");//main power transformer cost rate ($/MVA)
+		obos.arrVoltage = (double)as_number("arrVoltage");//main power transformer cost rate ($/MVA)
+		obos.cab1CR = (double)as_number("cab1CR");//main power transformer cost rate ($/MVA)
+		obos.cab2CR = (double)as_number("cab2CR");//main power transformer cost rate ($/MVA)
+		obos.cab1CurrRating = (double)as_number("cab1CurrRating");//main power transformer cost rate ($/MVA)
+		obos.cab2CurrRating = (double)as_number("cab2CurrRating");//main power transformer cost rate ($/MVA)
+		obos.arrCab1Mass = (double)as_number("arrCab1Mass");//main power transformer cost rate ($/MVA)
+		obos.arrCab2Mass = (double)as_number("arrCab2Mass");//main power transformer cost rate ($/MVA)
+		obos.cab1TurbInterCR = (double)as_number("cab1TurbInterCR");//main power transformer cost rate ($/MVA)
+		obos.cab2TurbInterCR = (double)as_number("cab2TurbInterCR");//main power transformer cost rate ($/MVA)
+		obos.cab2SubsInterCR = (double)as_number("cab2SubsInterCR");//main power transformer cost rate ($/MVA)
+		obos.expVoltage = (double)as_number("expVoltage");//main power transformer cost rate ($/MVA)
+		obos.expCurrRating = (double)as_number("expCurrRating");//main power transformer cost rate ($/MVA)
+		obos.expCabMass = (double)as_number("expCabMass");//main power transformer cost rate ($/MVA)
+		obos.expCabCR = (double)as_number("expCabCR");//main power transformer cost rate ($/MVA)
+		obos.expSubsInterCR = (double)as_number("expSubsInterCR");//main power transformer cost rate ($/MVA)
 
 		//Assembly & Installation
 		obos.moorTimeFac = (double)as_number("moorTimeFac");//mooring installation timing factor (hrs/m)
