@@ -315,6 +315,7 @@ public:
 		sco2_rc_des_par.m_elevation = elevation;
 		sco2_rc_des_par.m_W_dot_net = W_dot_net_des;
 		sco2_rc_des_par.m_eta_thermal = eta_thermal_des;
+		sco2_rc_des_par.m_is_recomp_ok = 1;
 			// Cycle design parameters
 		sco2_rc_des_par.m_DP_LT = DP_LT;
 		sco2_rc_des_par.m_DP_HT = DP_HT;
