@@ -433,6 +433,7 @@ public:
 		ms_rc_autodes_hit_eta_par.m_tol = m_tol;
 		ms_rc_autodes_hit_eta_par.m_opt_tol = m_opt_tol;
 		ms_rc_autodes_hit_eta_par.m_N_turbine = m_N_t_des;
+		ms_rc_autodes_hit_eta_par.m_is_recomp_ok = 1;
 
 		ms_rc_cycle.auto_opt_design_hit_eta(ms_rc_autodes_hit_eta_par, auto_err_code, error_msg);
 

@@ -47,6 +47,7 @@ public:
 		double m_tol;						//[-] Convergence tolerance
 		double m_opt_tol;					//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
+		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
 		// PHX design parameters
 			// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
@@ -59,6 +60,8 @@ public:
 		S_des_par()
 		{
 			m_hot_fl_code = m_design_method = m_N_sub_hxrs = -1;
+
+			m_is_recomp_ok = -1;
 
 			m_T_htf_hot_in = m_phx_dt_hot_approach = m_T_amb_des = m_dt_mc_approach =
 				m_elevation = m_W_dot_net = m_eta_thermal = m_LT_eff_max = m_HT_eff_max =
@@ -165,6 +168,8 @@ private:
 	double m_eta_max_eta;		//[-] Maximum efficiency from previous optimization 
 	// ******************************************************
 
+	int m_off_design_turbo_operation;	//[-] How is turbomachinery controlled off-design?
+
 	double m_T_mc_in_min;
 
 	void design_core();
@@ -199,6 +204,12 @@ public:
 		E_RC_SURGE
 	};
 	
+	enum E_off_design_turbo_operation
+	{
+		E_VFD_MC_VFD_RC_FIXED_T,
+		E_FIXED_MC_FIXED_RC_FIXED_T
+	};
+
 	C_sco2_recomp_csp();
 
 	~C_sco2_recomp_csp(){};
@@ -237,6 +248,8 @@ public:
 		util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind);
 
 	void design(C_sco2_recomp_csp::S_des_par des_par);
+
+	void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
 
 	void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
 
