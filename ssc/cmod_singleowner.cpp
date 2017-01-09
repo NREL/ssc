@@ -1166,9 +1166,6 @@ public:
 		int loan_moratorium = as_integer("loan_moratorium");
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
-		double dscr_loan_moratorium = dscr; // for loan moratorium
-		if ((term_tenor - loan_moratorium) > 0)
-			dscr_loan_moratorium *= (double)(term_tenor) / (double)(term_tenor - loan_moratorium);
 		double dscr_reserve_months = as_double("dscr_reserve_months");
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
@@ -2027,9 +2024,7 @@ public:
 				pv_cafds += cf.at(CF_pv_cash_for_ds, i);
 				if (constant_dscr_mode)
 				{
-					if (i > loan_moratorium  && dscr_loan_moratorium > 0)
-						cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr_loan_moratorium;
-//					if (dscr != 0) cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
+					if (dscr != 0) cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
 					size_of_debt += cf.at(CF_debt_size, i);
 				}
 			}
@@ -2051,13 +2046,8 @@ public:
 			for (i = 1; ((i <= nyears) && (i <= term_tenor)); i++)
 			{
 				cf.at(CF_debt_payment_interest, i) = cf.at(CF_debt_balance, i - 1) * term_int_rate;
-				if (i > loan_moratorium)
-				{
-					if (dscr_loan_moratorium != 0)
-						cf.at(CF_debt_payment_total, i) = cf.at(CF_cash_for_ds, i) / dscr_loan_moratorium;
-//					if (dscr != 0)
-//						cf.at(CF_debt_payment_total, i) = cf.at(CF_cash_for_ds, i) / dscr;
-				}
+					if (dscr != 0)
+						cf.at(CF_debt_payment_total, i) = cf.at(CF_cash_for_ds, i) / dscr;
 				else
 					cf.at(CF_debt_payment_total, i) = cf.at(CF_debt_payment_interest, i);
 				cf.at(CF_debt_payment_principal, i) = cf.at(CF_debt_payment_total, i) - cf.at(CF_debt_payment_interest, i);
