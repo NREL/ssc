@@ -475,10 +475,10 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outAnnualEnergyLoss[0] = 0;
 
 	// model initialization
-	if (chem == 0 || chem == 1)
+	if (chem == battery_t::LEAD_ACID || chem == battery_t::LITHIUM_ION)
 		voltage_model = new voltage_dynamic_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, batt_vars->batt_Vfull, batt_vars->batt_Vexp,
 		batt_vars->batt_Vnom, batt_vars->batt_Qfull, batt_vars->batt_Qexp, batt_vars->batt_Qnom, batt_vars->batt_C_rate, batt_vars->batt_resistance);
-	else if (chem == 2)
+	else if (chem == battery_t::VANADIUM_REDOX)
 		voltage_model = new voltage_vanadium_redox_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, batt_vars->batt_resistance);
 
 	lifetime_model = new  lifetime_t(batt_lifetime_matrix, replacement_option, batt_vars->batt_replacement_capacity );
