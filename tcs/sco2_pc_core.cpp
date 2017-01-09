@@ -1001,7 +1001,8 @@ void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_
 	{
 		int n_call_history = c_rd_od_solver.get_solver_call_history()->size();
 
-		error_code = -(*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		if( n_call_history > 0 )
+			error_code = -(*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 
 		if( error_code == 0 )
 		{
@@ -4741,7 +4742,7 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 	// *******************************************************************
 	// LTR Solver
 	double T_LTR_LP_out_lower = mpc_rc_cycle->m_temp_od[MC_OUT];		//[K] Coldest possible LP outlet temperature
-	double T_LTR_LP_out_upper = mpc_rc_cycle->m_temp_od[HTR_LP_OUT];	//[K] Hottest possible LP outlet temperature
+	double T_LTR_LP_out_upper = max(1.02*T_LTR_LP_out_lower, mpc_rc_cycle->m_temp_od[HTR_LP_OUT]);	//[K] Hottest possible LP outlet temperature
 
 	double T_LTR_LP_out_guess_upper = min(T_LTR_LP_out_upper, T_LTR_LP_out_lower + 15.0);				//[K] There is nothing special about using 15 here
 	double T_LTR_LP_out_guess_lower = min(T_LTR_LP_out_guess_upper*0.99, T_LTR_LP_out_lower + 2.0);		//[K] There is nothing special about using 2 here
@@ -4762,7 +4763,9 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 	{
 		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 		int n_call_history = LTR_od_solver.get_solver_call_history()->size();
-		int error_code = (*(LTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		int error_code = 0;
+		if( n_call_history > 0 )
+			error_code = (*(LTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 		if(error_code == 0)
 		{
 			error_code = T_LTR_LP_out_code;
@@ -5018,6 +5021,9 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 
 int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/, double *diff_N_rc /*-*/)
 {
+	// Set f_recomp in S_od_par here
+	mpc_rc_cycle->ms_od_phi_par.m_recomp_frac = f_recomp;
+
 	C_mono_eq_turbo_N_fixed_m_dot c_turbo_bal(mpc_rc_cycle, m_T_mc_in,
 															m_P_mc_in,
 															f_recomp,
@@ -5115,7 +5121,9 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 	if( T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
 	{
 		int n_call_history = HTR_od_solver.get_solver_call_history()->size();
-		int error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		int error_code = 0;
+		if( n_call_history > 0 )
+			error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 		if( error_code == 0 )
 		{
 			error_code = T_HTR_LP_out_code;
@@ -5173,7 +5181,103 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 
 	if(ms_des_solved.m_is_rc)
 	{
-		throw(C_csp_exception("C_RecompCycle::off_design_fix_shaft_speeds_core does not yet have ability to solve for cycles with recompression"));
+		// Define bounds on the recompression fraction
+		double f_recomp_lower = 0.0;
+		double f_recomp_upper = 1.0;
+		
+		c_turbo_bal_f_recomp_solver.settings(1.E-3, 50, f_recomp_lower, f_recomp_upper, false);
+		
+		C_monotonic_eq_solver::S_xy_pair f_recomp_pair_1st;
+		C_monotonic_eq_solver::S_xy_pair f_recomp_pair_2nd;
+
+		double f_recomp_guess = ms_des_solved.m_recomp_frac;
+		double y_f_recomp_guess = std::numeric_limits<double>::quiet_NaN();
+		int turb_bal_err_code = c_turbo_bal_f_recomp_solver.call_mono_eq(f_recomp_guess, &y_f_recomp_guess);
+
+		if( turb_bal_err_code != 0 )
+		{			
+			double delta = 0.02;
+			bool is_iter = true;
+			for(int i = 1; is_iter; i++)
+			{
+				for(int j = -1; j <= 1; j += 2)
+				{
+					f_recomp_guess = min(1.0, max(0.0, ms_des_solved.m_recomp_frac + j*i*delta));
+					turb_bal_err_code = c_turbo_bal_f_recomp_solver.call_mono_eq(f_recomp_guess, &y_f_recomp_guess);
+					if(turb_bal_err_code == 0)
+					{
+						is_iter = false;
+						break;
+					}
+					if( f_recomp_guess == 0.0 )
+					{
+						error_code = -40;
+						return;
+					}	
+				}
+			}
+		}
+
+		f_recomp_pair_1st.x = f_recomp_guess;
+		f_recomp_pair_1st.y = y_f_recomp_guess;
+
+		f_recomp_guess = 1.02*f_recomp_pair_1st.x;
+		turb_bal_err_code = c_turbo_bal_f_recomp_solver.call_mono_eq(f_recomp_guess, &y_f_recomp_guess);
+
+		if(turb_bal_err_code == 0)
+		{
+			f_recomp_pair_2nd.x = f_recomp_guess;
+			f_recomp_pair_2nd.y = y_f_recomp_guess;
+		}
+		else
+		{
+			f_recomp_guess = 0.98*f_recomp_pair_1st.x;
+			turb_bal_err_code = c_turbo_bal_f_recomp_solver.call_mono_eq(f_recomp_guess, &y_f_recomp_guess);
+
+			if(turb_bal_err_code == 0)
+			{
+				f_recomp_pair_2nd.x = f_recomp_guess;
+				f_recomp_pair_2nd.y = y_f_recomp_guess;
+			}
+			else
+			{
+				error_code = -41;
+				return;
+			}
+		}
+		
+		// Now, using the two solved guess values, solve for the recompression fraction that results in:
+		// ... balanced turbomachinery at their design shaft speed
+		double f_recomp_solved, tol_solved;
+		f_recomp_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+		int iter_solved = -1;
+
+		int f_recomp_code = 0;
+		try
+		{
+			f_recomp_code = c_turbo_bal_f_recomp_solver.solve(f_recomp_pair_1st, f_recomp_pair_2nd, 0.0, 
+																f_recomp_solved, tol_solved, iter_solved);
+		}
+		catch( C_csp_exception )
+		{
+			error_code = -42;
+			return;
+		}
+
+		if( f_recomp_code != C_monotonic_eq_solver::CONVERGED )
+		{
+			int n_call_history = c_turbo_bal_f_recomp_solver.get_solver_call_history()->size();
+
+			if( n_call_history > 0 )
+				error_code = -(*(c_turbo_bal_f_recomp_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+
+			if( error_code == 0 )
+			{
+				error_code = f_recomp_code;
+			}
+
+			return;
+		}
 	}
 	else
 	{
@@ -5348,7 +5452,8 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 	if( T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
 	{
 		int n_call_history = HTR_od_solver.get_solver_call_history()->size();
-		error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+		if( n_call_history > 0 )
+			error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 		if(error_code == 0)
 		{
 			error_code = T_HTR_LP_out_code;		
