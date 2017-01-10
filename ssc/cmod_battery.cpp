@@ -666,7 +666,6 @@ void battstor::force_replacement()
 
 void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv_dc , double P_load_dc )
 {
-	if (P_pv_dc < 0){ P_pv_dc = 0; }
 	charge_control->run(year, hour_of_year, step, P_pv_dc, P_load_dc);
 	outputs_fixed(cm, year, hour_of_year, step);
 	outputs_topology_dependent(cm, year, hour_of_year, step);

@@ -1961,7 +1961,7 @@ public:
 		size_t hour = 0;
 
 		// variables used to calculate loss diagram
-		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_lifetime_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
+		double annual_energy = 0, annual_ac_gross = 0, annual_ac_pre_avail = 0, dc_gross[4] = { 0, 0, 0, 0 }, annual_mppt_window_clipping = 0, annual_dc_adjust_loss = 0, annual_dc_lifetime_loss = 0, annual_ac_lifetime_loss = 0, annual_ac_battery_loss = 0, annual_xfmr_nll = 0, annual_xfmr_ll = 0, annual_xfmr_loss = 0;
 
 		// Check if a POA model is used, if so load all POA data into the poaData struct
 		if (radmode == POA_R || radmode == POA_P ){
@@ -2882,13 +2882,13 @@ public:
 					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
 					{
 						if (iyear == 0)
-							annual_dc_power_before_battery += p_dcpwr[idx];
+							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 						
 						batt.advance(*this, iyear, hour, jj, dcpwr_net*0.001, cur_load);
 						dcpwr_net = 1000 * batt.outGenPower[idx];
 
 						if (iyear == 0)
-							annual_dc_power_after_battery += batt.outGenPower[idx];
+							annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
 
 						// inverter can't handle negative dcpwr
 						if (dcpwr_net < 0)
@@ -3000,7 +3000,7 @@ public:
 		Post PV AC 
 		*********************************************************************************************** */
 		idx = 0; ireport = 0; ireplast = 0; percent_baseline = percent_complete;
-		double annual_energy_pre_battery = 0.;
+		double annual_energy_pre_battery = 0.; 
 		for (size_t iyear = 0; iyear < nyears; iyear++)
 		{
 			for (hour = 0; hour < 8760; hour++)
@@ -3018,7 +3018,7 @@ public:
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
 					if (iyear == 0)
-						annual_energy_pre_battery += p_gen[idx];
+						annual_energy_pre_battery += p_gen[idx] * ts_hour;
 
 					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
 					{
@@ -3028,7 +3028,8 @@ public:
 
 					// accumulate system generation before curtailment and availability
 					if (iyear == 0)
-						annual_ac_pre_avail += p_gen[idx] * ts_hour; 
+						annual_ac_pre_avail += p_gen[idx] * ts_hour;
+		
 
 					//apply availability and curtailment
 					p_gen[idx] *= haf(hour);
@@ -3329,9 +3330,10 @@ public:
 #endif
 
 		percent = 0;
-		if (annual_ac_gross > 0) percent = 100.0 * (annual_energy_pre_battery - annual_energy) / annual_ac_gross;
+		annual_ac_battery_loss = (annual_energy_pre_battery - annual_ac_pre_avail);
+		if (annual_ac_gross > 0) percent = 100.0 * annual_ac_battery_loss / annual_ac_gross;
 		assign("annual_ac_battery_loss_percent", var_data((ssc_number_t)percent));
-		sys_output -= annual_ac_battery_lifetime_loss;
+		sys_output -= annual_ac_battery_loss;
 
 		percent = 0;
 		if (annual_ac_gross > 0) percent = 100.0 * acwiring_loss / annual_ac_gross;
