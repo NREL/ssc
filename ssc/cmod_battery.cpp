@@ -438,6 +438,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outBatteryPower = cm.allocate("batt_power", nrec*nyears);
 	outGridPower = cm.allocate("grid_power", nrec*nyears); // Net grid energy required.  Positive indicates putting energy on grid.  Negative indicates pulling off grid
 	outGenPower = cm.allocate("pv_batt_gen", nrec*nyears);
+	outPVToGrid = cm.allocate("pv_to_grid", nrec*nyears);
 
 	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
@@ -447,7 +448,6 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		outPVToGrid = cm.allocate("pv_to_grid", nrec*nyears);
 		outBatteryToGrid = cm.allocate("batt_to_grid", nrec*nyears);
 	}
 	outPVToBatt = cm.allocate("pv_to_batt", nrec*nyears);
@@ -717,6 +717,7 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 	outPVToBatt[idx] = (ssc_number_t)(charge_control->power_pv_to_batt());
 	outGridToBatt[idx] = (ssc_number_t)(charge_control->power_grid_to_batt());
 	outBatteryConversionPowerLoss[idx] = (ssc_number_t)(charge_control->power_loss());
+	outPVToGrid[idx] = (ssc_number_t)(charge_control->power_pv_to_grid());
 
 	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
@@ -726,7 +727,6 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
-		outPVToGrid[idx] = (ssc_number_t)(charge_control->power_pv_to_grid());
 		outBatteryToGrid[idx] = (ssc_number_t)(charge_control->power_battery_to_grid());
 	}
 }
@@ -786,6 +786,7 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	// monthly outputs
 	cm.accumulate_monthly_for_year("pv_to_batt", "monthly_pv_to_batt", _dt_hour, step_per_hour);
 	cm.accumulate_monthly_for_year("grid_to_batt", "monthly_grid_to_batt", _dt_hour, step_per_hour);
+	cm.accumulate_monthly_for_year("pv_to_grid", "monthly_pv_to_grid", _dt_hour, step_per_hour);
 
 	if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
 	{
@@ -796,7 +797,6 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
 		cm.accumulate_monthly_for_year("batt_to_grid", "monthly_batt_to_grid", _dt_hour, step_per_hour);
-		cm.accumulate_monthly_for_year("pv_to_grid", "monthly_pv_to_grid", _dt_hour, step_per_hour);
 	}
 }
 void battstor::process_messages(compute_module &cm) 
