@@ -50,14 +50,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// transformer model percent of rated ac output
 	{ SSC_INPUT, SSC_NUMBER, "transformer_no_load_loss", "Power transformer no load loss", "%", "", "pvsamv1", "?=0", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "transformer_load_loss", "Power transformer load loss", "%", "", "pvsamv1", "?=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_nll_ts", "Transformer no load loss", "kW", "", "Time Series", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_ll_ts", "Transformer load loss", "kW", "", "Time Series", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "xfmr_loss_ts", "Transformer total loss", "kW", "", "Time Series", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_nll_year1", "Transformer no load loss", "kWh/yr", "", "Year1", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_ll_year1", "Transformer load loss", "kWh/yr", "", "Year1", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "xfmr_loss_year1", "Transformer total loss", "kWh/yr", "", "Year1", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_xfmr_loss_percent", "Transformer loss percent", "%", "", "Loss", "", "", "" },
-	
 	
 	// optional for lifetime analysis
 	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                      "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
@@ -358,7 +350,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                              "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator",        "pvsamv1",               "*",                         "INTEGER,MIN=0,MAX=3",           "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "mppt_low_inverter",                           "Minimum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "mppt_hi_inverter",                            "Maximum inverter MPPT voltage window",                    "Vdc",     "",                     "pvsamv1",       "",                    "?=0",                              "" },
-	
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c0",                                  "Curvature between AC power and DC power at ref",          "1/W",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_c1",                                  "Coefficient of Pdco variation with DC input voltage",     "1/V",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
@@ -371,7 +362,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdco",                                "DC input voltage for the rated AC power rating",          "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_snl_vdcmax",                              "Maximum DC input operating voltage",                      "Vdc",     "",                     "pvsamv1",       "inverter_model=0",                    "",                              "" },
 
-
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_c0", "Curvature between AC power and DC power at ref", "1/W", "", "pvsamv1", "inverter_model=3", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_c1", "Coefficient of Pdco variation with DC input voltage", "1/V", "", "pvsamv1", "inverter_model=3", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_c2", "Coefficient of Pso variation with DC input voltage", "1/V", "", "pvsamv1", "inverter_model=3", "", "" },
@@ -382,8 +372,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_psco", "DC power required to enable the inversion process", "Wdc", "", "pvsamv1", "inverter_model=3", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_vdco", "DC input voltage for the rated AC power rating", "Vdc", "", "pvsamv1", "inverter_model=3", "", "" },
 	{ SSC_INPUT, SSC_NUMBER, "inv_cec_cg_vdcmax", "Maximum DC input operating voltage", "Vdc", "", "pvsamv1", "inverter_model=3", "", "" },
-
-
 
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_paco",                                "AC maximum power rating",                                 "Wac",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "inv_ds_eff",                                 "Weighted or Peak or Nominal Efficiency",     "Wdc",     "",                     "pvsamv1",       "inverter_model=1",                    "",                              "" },
@@ -412,6 +400,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	// outputs
 
 /* environmental conditions */
+	// irradiance data from weather file
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh",                                         "Irradiance GHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dn",                                         "Irradiance DNI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "df",                                         "Irradiance DHI from weather file",                                     "W/m2",   "",                      "Time Series",       "*",                    "",                              "" },
@@ -421,45 +410,124 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "gh_calc",                                    "Irradiance GHI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "dn_calc",                                    "Irradiance DNI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "df_calc",                                    "Irradiance DHI calculated",                                       "W/m2",   "",                      "Time Series",       "",                     "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Wind speed from weather file",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Ambient temperature from weather file",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
+
+	// non-irradiance data from weather file
+	{ SSC_OUTPUT,        SSC_ARRAY,      "wspd",                                       "Weather file wind speed",                                                        "m/s",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "tdry",                                       "Weather file ambient temperature",                                               "C",      "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Weather file albedo",							                                 "",       "",                     "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Weather file snow depth",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
+
+	// calculated sun position data
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_zen",                                    "Sun zenith angle",                                                  "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_alt",                                    "Sun altitude angle",                                                "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sol_azi",                                    "Sun azimuth angle",                                                 "deg",    "",                      "Time Series",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "sunup",                                      "Sun up over horizon",                                               "0/1/2/3", "",                     "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "sunpos_hour",                                "Sun position calculation time",                                     "hour",   "",                      "Time Series",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "sunpos_hour",                                "Sun position time",                                     "hour",   "",                      "Time Series",       "",                     "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "airmass",                                    "Absolute air mass",                                                 "",       "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "alb",                                        "Albedo",							                                 "",       "",                     "Time Series",       "*",                    "",                              "" },
-	//SEV: snow depth output
-	{ SSC_OUTPUT,        SSC_ARRAY,      "snowdepth",                                  "Snow depth from weather file",							                            "cm",       "",                    "Time Series",       "",                    "",                              "" },
 
 	/* sub-array level outputs */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_aoi",                        "Subarray 1 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_surf_tilt",                  "Subarray 1 Surface tilt",                                           "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_surf_azi",                   "Subarray 1 Surface azimuth",                                        "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_axisrot",                    "Subarray 1 Axis rotation for 1 axis trackers",                      "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_idealrot",                   "Subarray 1 Ideal axis rotation for 1 axis trackers",                "deg",    "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_nom",                    "Subarray 1 POA total irradiance (nominal)",                           "W/m2",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded",                 "Subarray 1 POA total irradiance after shading only",                "W/m2",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after shading and soiling",         "W/m2",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_beam",               "Subarray 1 POA beam irradiance after shading and soiling",          "W/m2",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_diff",               "Subarray 1 POA diffuse irradiance after shading and soiling",       "W/m2",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_beam_shading_factor",        "Subarray 1 Beam irradiance shading factor",                         "frac",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_linear_derate",              "Subarray 1 Self-shading linear derate",                             "",       "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_derate",                  "Subarray 1 Self-shading DC derate",                                 "",       "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_diffuse_derate",          "Subarray 1 Self-shading diffuse derate",                            "",       "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_reflected_derate",        "Subarray 1 Self-shading reflected derate",                          "",       "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                      "%",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling derate",                                         "frac",   "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                       "C",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
-	//SEV: Snow loss and coverage % time series arrays for SA1
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",					 "Subarray 1 Power loss due to snow (DC)",			                  "kW",    "",                       "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",				 "Subarray 1 Snow coverage",										  "0..1",    "",                     "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 1)",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_surf_tilt",                  "Subarray 1 Surface tilt",                                              "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_surf_azi",                   "Subarray 1 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_aoi",                        "Subarray 1 Angle of incidence",                                        "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_axisrot",                    "Subarray 1 Axis rotation for 1 axis trackers",                         "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_idealrot",                   "Subarray 1 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_beam",               "Subarray 1 POA beam irradiance after shading and soiling",             "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff_diff",               "Subarray 1 POA diffuse irradiance after shading and soiling",          "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_nom",                    "Subarray 1 POA total irradiance nominal",                              "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_shaded",                 "Subarray 1 POA total irradiance after shading only",                   "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_eff",                    "Subarray 1 POA total irradiance after shading and soiling",            "W/m2",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_soiling_derate",             "Subarray 1 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_beam_shading_factor",        "Subarray 1 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_linear_derate",              "Subarray 1 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_diffuse_derate",          "Subarray 1 Self-shading non-linear sky diffuse irradiance factor",     "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_reflected_derate",        "Subarray 1 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_derate",                  "Subarray 1 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray1_shade_frac",         "Subarray 1 Partial external shading DC factor",                        "frac",   "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",              "Subarray 1 Snow cover",                                                "0..1",   "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",                  "Subarray 1 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 Short circuit current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_aoi",                        "Subarray 2 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                              "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_aoi",                        "Subarray 2 Angle of incidence",                                        "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_axisrot",                    "Subarray 2 Axis rotation for 1 axis trackers",                         "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_idealrot",                   "Subarray 2 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff_beam",               "Subarray 2 POA beam irradiance after shading and soiling",             "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff_diff",               "Subarray 2 POA diffuse irradiance after shading and soiling",          "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_nom",                    "Subarray 2 POA total irradiance nominal",                              "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_shaded",                 "Subarray 2 POA total irradiance after shading only",                   "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_eff",                    "Subarray 2 POA total irradiance after shading and soiling",            "W/m2",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_soiling_derate",             "Subarray 2 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_beam_shading_factor",        "Subarray 2 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_linear_derate",              "Subarray 2 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_ss_diffuse_derate",          "Subarray 2 Self-shading non-linear sky diffuse irradiance factor",     "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_ss_reflected_derate",        "Subarray 2 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_ss_derate",                  "Subarray 2 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray2_shade_frac",         "Subarray 2 Partial shading DC factor",                                 "frac",   "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow cover",                                                "0..1",   "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_modeff",                     "Subarray 2 Module efficiency",                                         "%",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                          "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 Operating voltage",                                         "V",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                              "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_aoi",                        "Subarray 3 Angle of incidence",                                        "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_axisrot",                    "Subarray 3 Axis rotation for 1 axis trackers",                         "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_idealrot",                   "Subarray 3 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff_beam",               "Subarray 3 POA beam irradiance after shading and soiling",             "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff_diff",               "Subarray 3 POA diffuse irradiance after shading and soiling",          "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_nom",                    "Subarray 3 POA total irradiance nominal",                              "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_shaded",                 "Subarray 3 POA total irradiance after shading only",                   "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_eff",                    "Subarray 3 POA total irradiance after shading and soiling",            "W/m2",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_soiling_derate",             "Subarray 3 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_beam_shading_factor",        "Subarray 3 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_linear_derate",              "Subarray 3 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_ss_diffuse_derate",          "Subarray 3 Self-shading non-linear sky diffuse irradiance factor",     "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_ss_reflected_derate",        "Subarray 3 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_ss_derate",                  "Subarray 3 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray3_shade_frac",         "Subarray 3 Partial external shading DC factor",                        "frac",   "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow cover",                                                "0..1",   "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Snow cover DC power loss",			                         "kW",     "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_modeff",                     "Subarray 3 Module efficiency",                                         "%",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                          "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 Operating voltage",                                         "V",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                              "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                           "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_aoi",                        "Subarray 4 Angle of incidence",                                        "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_axisrot",                    "Subarray 4 Axis rotation for 1 axis trackers",                         "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_idealrot",                   "Subarray 4 Axis rotation ideal for 1 axis trackers",                   "deg",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff_beam",               "Subarray 4 POA beam irradiance after shading and soiling",             "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff_diff",               "Subarray 4 POA diffuse irradiance after shading and soiling",          "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_nom",                    "Subarray 4 POA total irradiance nominal",                              "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_shaded",                 "Subarray 4 POA total irradiance after shading only",                   "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_eff",                    "Subarray 4 POA total irradiance after shading and soiling",            "W/m2",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_soiling_derate",             "Subarray 4 Soiling beam irradiance factor",                            "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_beam_shading_factor",        "Subarray 4 External shading and soiling beam irradiance factor",       "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_linear_derate",              "Subarray 4 Self-shading linear beam irradiance factor",                "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_ss_diffuse_derate",          "Subarray 4 Self-shading non-linear sky diffuse irradiance factor",     "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_ss_reflected_derate",        "Subarray 4 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_ss_derate",                  "Subarray 4 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray4_shade_frac",         "Subarray 4 Partial external shading DC factor",                        "frac",   "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 Snow cover",                                                "0..1",   "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_modeff",                     "Subarray 4 Module efficiency",                                         "%",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                          "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 Operating voltage",                                         "V",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+
+/*	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_aoi",                        "Subarray 2 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                           "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                        "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_axisrot",                    "Subarray 2 Axis rotation for 1 axis trackers",                      "deg",    "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -485,8 +553,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
 	
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_voltage",                 "Subarray 2 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 2)",       "",                    "",                              "" },
+*/
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_aoi",                        "Subarray 3 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
+/*	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_aoi",                        "Subarray 3 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                           "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                        "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_axisrot",                    "Subarray 3 Axis rotation for 1 axis trackers",                      "deg",    "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -512,8 +581,9 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_voltage",                 "Subarray 3 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 3)",       "",                    "",                              "" },
+*/
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_aoi",                        "Subarray 4 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
+/*	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_aoi",                        "Subarray 4 Angle of incidence",                                     "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                           "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                        "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_axisrot",                    "Subarray 4 Axis rotation for 1 axis trackers",                      "deg",    "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -538,37 +608,197 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit voltage",                                   "V",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 Short circuit current",                                  "A",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_voltage",                 "Subarray 4 DC string voltage",                                      "V",      "",                      "Time Series (Subarray 4)",       "",                    "",                              "" },
-
+*/
 
 /* aggregate array level outputs */
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "POA total radiation (nominal)",                                     "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_nom",                         "POA beam radiation (nominal)",                                      "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "POA total radiation after shading only",                            "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "POA total radiation after shading and soiling",                     "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_eff",                         "POA beam radiation after shading and soiling",                      "kW",    "",                      "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "Array POA total radiation nominal",                    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_nom",                         "Array POA beam radiation nominal",                     "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_shaded",                           "Array POA total radiation after shading only",         "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_eff",                              "Array POA total radiation after shading and soiling",  "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "poa_beam_eff",                         "Array POA beam radiation after shading and soiling",   "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter DC input voltage",                             "V",      "",                      "Time Series",       "*",                    "",                              "" },
-	
 	//SEV: total dc snow loss time series (not a required output) 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Power loss due to snow (DC)",						      "kW",    "",                       "Time Series",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array power (DC)",                                      "kW",    "",                       "Time Series",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "Array DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Array DC power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
+	
+	//inverter outputs
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inverter_dc_voltage",                  "Inverter DC input voltage",                            "V",    "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_eff",                              "Inverter efficiency",                                  "%",    "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_invmppt_loss",                      "Inverter clipping loss DC MPPT voltage limits",         "kW",  "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                         "Inverter clipping loss AC power limit",                "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+
+	// transformer model outputs
+	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_ll_ts",                           "Transformer load loss",                                 "kW", "",    "Time Series (Transformer)", "", "", "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_loss_ts",                         "Transformer total loss",                                "kW", "",    "Time Series (Transformer)", "", "", "" },
+
+	//total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ac_loss",                                     "AC wiring loss",                                "%",   "",                        "Annual (Year 1)",              "*",                        "",                   "" },
+
+	// monthly and annual outputs
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",                      "Inverter clipping loss DC MPPT voltage limits",          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                         "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                          "Inverter power consumption loss",                        "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                          "Inverter night time loss",                               "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray1_dcloss",                    "Subarray 1 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "*",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray2_dcloss",                    "Subarray 2 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray3_dcloss",                    "Subarray 3 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray4_dcloss",                    "Subarray 4 Total DC power loss",                                       "%",      "", "Annual (Year 1)",              "",                        "",                   "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "xfmr_nll_year1",                              "Transformer no load loss",                               "kWh/yr", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "xfmr_ll_year1",                               "Transformer load loss",                                  "kWh/yr", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "xfmr_loss_year1",                             "Transformer total loss",                                 "kWh/yr", "", "Annual (Year 1)", "", "", "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_nom",                             "POA irradiance total nominal",                          "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_nom",                        "POA irradiance beam nominal",                           "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA irradiance total after shading and soiling",          "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "POA irradiance beam after shading and soiling",           "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array DC energy",                                   "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "System AC energy",                                     "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                              "kWh/m2/yr", "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA irradiance total nominal",                          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA irradiance beam nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA irradiancetotal after shading only",                 "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA irradiancetotal after shading and soiling",          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "POA irradiancebeam after shading and soiling",           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "Annual DC energy nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "Annual DC energy gross",                             "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "Annual DC energy",                                   "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "Annual AC energy gross",                               "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+
 
 	//SEV: total dc snow loss monthy array and annual value (not a required output) 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Energy loss due to snow (DC)",					       "kWh",    "",                       "Monthly",       "",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Energy loss due to snow (DC)",						   "kWh",    "",                       "Annual",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_snow_loss",                    "Snow DC energy loss",					       "kWh/mo",    "",                       "Monthly",       "",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_snow_loss",                     "Snow DC energy loss",						   "kWh/yr",    "",                       "Annual (Year 1)",       "",                    "",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",           "Use lifetime output",                                    "0/1",    "",                      "Miscellaneous",       "*",                    "INTEGER",                                  "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous", "*",                       "",                          "" },
+	// loss diagram - order applied
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 gross DC energy", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_mismatch_loss", "Subarray 1 DC mismatch loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_diodes_loss", "Subarray 1 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_wiring_loss", "Subarray 1 DC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_tracking_loss", "Subarray 1 DC tracking loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_nameplate_loss", "Subarray 1 DC nameplate loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_gross", "Subarray 2 gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_mismatch_loss", "Subarray 2 DC mismatch loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_diodes_loss", "Subarray 2 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_wiring_loss", "Subarray 2 DC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_tracking_loss", "Subarray 2 DC tracking loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_nameplate_loss", "Subarray 2 DC nameplate loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_gross", "Subarray 3 gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_mismatch_loss", "Subarray 3 DC mismatch loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_diodes_loss", "Subarray 3 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_wiring_loss", "Subarray 3 DC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_tracking_loss", "Subarray 3 DC tracking loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_nameplate_loss", "Subarray 3 DC nameplate loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_gross", "Subarray 4 gross DC energy", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_mismatch_loss", "Subarray 4 DC mismatch loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_diodes_loss", "Subarray 4 DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_wiring_loss", "Subarray 4 DC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_tracking_loss", "Subarray 4 DC tracking loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_nameplate_loss", "Subarray 4 DC nameplate loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss", "DC mismatch loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss", "DC diodes and connections loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss", "DC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss", "DC tracking loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss", "DC nameplate loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+	// loss diagram energy outputs nominal poa, nominal array at STC, net dc, net ac, system output
+	// annual_poa_nom, annual_dc_nominal, annual_dc_net, annual_ac_net, annual_energy
+	// loss diagram % losses 
+	// annual_poa_nom
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA shading loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA soiling loss", "%", "", "Loss", "*", "", "" },
+	// annual_dc_nominal
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
+	// annual_dc_gross
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_snow_loss_percent", "DC snow loss", "%", "", "Loss", "*", "", "" },
+	
+	
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mppt_clip_loss_percent", "DC inverter MPPT clipping loss", "%", "", "Loss", "*", "", "" },
+
+	
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss_percent", "DC mismatch loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss_percent", "DC diodes and connections loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss_percent", "DC wiring loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss_percent", "DC tracking loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss_percent", "DC nameplate loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss_percent", "DC power optimizer loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC performance adjustment loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_lifetime_loss_percent", "Lifetime daily DC loss- year 1", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_battery_loss_percent", "DC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
+
+	//annual_dc_net
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pnt_loss_percent", "AC inverter night tare loss", "%", "", "Loss", "*", "", "" },
+	// annual_ac_gross
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_loss_percent", "AC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_xfmr_loss_percent", "Transformer loss percent", "%", "", "Loss", "", "", "" },
 
 
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_energy", "Annual energy", "kWh", "", "Annual", "*", "", "" },
+	// annual_ac_net
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
+	// annual_energy
+
+	/*
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_mismatch_loss", "DC output after mismatch loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_diodes_loss", "DC output after diodes and connections loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_wiring_loss", "DC output after wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_tracking_loss", "DC output after tracking loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_nameplate_loss", "DC output after nameplate loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_cliploss", "AC output after inverter clipping loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_psoloss", "AC output after inverter power consumption loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_pntloss", "AC output after inverter night tare loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	*/
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+//	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+
+	/*
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_transformer_loss", "AC output after step-up transformer loss", "kWh", "", "Annual (Year 1)", "*", "", "" },
+	*/
+
+	//
+
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_a",                                      "CEC 6-parameter: a",        "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Io",                                     "CEC 6-parameter: Io",       "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Il",                                     "CEC 6-parameter: Il",       "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rs",                                     "CEC 6-parameter: Rs",       "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rsh",                                    "CEC 6-parameter: Rsh",      "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter: Adj",      "",       "", "Module CEC 6-parameter model parameters",       "*",                    "",                              "" },
+																												     
+	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",         "",       "",  "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",           "%",      "",  "Annual (Year 1)", "*", "", "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh/kW",         "kWh/kW", "",	"Annual (Year 1)", "*", "", "" },
+
+	//miscellaneous outputs
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",                 "Use lifetime output",        "0/1",    "",  "Miscellaneous",       "*",                    "INTEGER",                                  "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                        "System nameplate DC rating", "kW",     "",  "Miscellaneous",       "*",                    "",                              "" },
 
 
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray1_shade_frac", "Subarray 1 DC shading factor", "frac", "", "Time Series (Subarray 1)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray2_shade_frac", "Subarray 2 DC shading factor", "frac", "", "Time Series (Subarray 2)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray3_shade_frac", "Subarray 3 DC shading factor", "frac", "", "Time Series (Subarray 3)", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "shadedb_subarray4_shade_frac", "Subarray 4 DC shading factor", "frac", "", "Time Series (Subarray 4)", "", "", "" },
 
+// test outputs
 #ifdef SHADE_DB_OUTPUTS
 	// ShadeDB validation
 
@@ -607,9 +837,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 #endif
 
-
-
-
 	// a couple debugging outputs
 	/*
 	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_dc_derate0",                      "SS1x dc derate",                                          "",    "",                      "pvsamv1",       "*",                    "",                              "" },
@@ -621,158 +848,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "p_nonlinear_gndd1xf",                         "SS1x gnddiff derate",                                          "",    "",                      "pvsamv1",       "*",                    "",                              "" },
 	*/
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_eff",                                     "Inverter efficiency",                                    "%",      "",                     "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "dc_invmppt_loss",                             "Inverter clipping loss DC MPPT voltage limits",           "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-    { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                                "Inverter clipping loss AC power limit",                  "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                                 "Inverter power consumption loss",                        "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                                 "Inverter night time loss",                               "kW",    "",                      "Time Series",       "*",                    "",                              "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",                      "Inverter clipping loss DC MPPT voltage limits",          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                         "Inverter clipping loss AC power limit",                  "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_psoloss",                          "Inverter power consumption loss",                        "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_pntloss",                          "Inverter night time loss",                               "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_nom",                             "POA total radiation (nominal)",                          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_nom",                        "POA beam radiation (nominal)",                           "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA total radiation after shading and soiling",          "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "POA beam radiation after shading and soiling",           "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array energy (DC)",                                   "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "System energy (AC)",                                     "kWh",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Irradiance- GHI- annual",                                "kWh/m2", "",                      "Annual",       "*",                    "",                              "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA total radiation (nominal)",                          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA beam radiation (nominal)",                           "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA total radiation after shading only",                 "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_eff",                              "POA total radiation after shading and soiling",          "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_eff",                         "POA beam radiation after shading and soiling",           "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_nominal",                           "PV array energy nominal (DC)",                           "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_gross",                             "PV array energy gross (DC)",                             "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_net",                               "PV array energy (DC)",                                   "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_ac_gross",                             "System energy gross (AC)",                               "kWh",    "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                         "System nameplate DC rating",                             "kW",     "",                      "Miscellaneous",       "*",                    "",                              "" },
-
-	//total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
-	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray1_dcloss",                            "Sub-array 1 Total DC power loss",                        "%",   "",                        "Annual",              "*",                        "",                   "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray2_dcloss",                            "Sub-array 2 Total DC power loss",                        "%",   "",                        "Annual",              "subarray2_enable=1",       "",                   "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray3_dcloss",                            "Sub-array 3 Total DC power loss",                        "%",   "",                        "Annual",              "subarray3_enable=1",       "",                   "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "subarray4_dcloss",                            "Sub-array 4 Total DC power loss",                        "%",   "",                        "Annual",              "subarray4_enable=1",       "",                   "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ac_loss",                                     "Interconnection AC loss",                                "%",   "",                        "Annual",              "*",                        "",                   "" },
-
-	// loss diagram - order applied
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_gross", "Subarray 1 gross DC energy", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_mismatch_loss", "Subarray 1 DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_diodes_loss", "Subarray 1 DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_wiring_loss", "Subarray 1 DC wiring loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_tracking_loss", "Subarray 1 DC tracking loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray1_dc_nameplate_loss", "Subarray 1 DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_gross", "Subarray 2 gross DC energy", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_mismatch_loss", "Subarray 2 DC mismatch loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_diodes_loss", "Subarray 2 DC diodes and connections loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_wiring_loss", "Subarray 2 DC wiring loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_tracking_loss", "Subarray 2 DC tracking loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray2_dc_nameplate_loss", "Subarray 2 DC nameplate loss", "kWh", "", "Annual", "", "", "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_gross", "Subarray 3 gross DC energy", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_mismatch_loss", "Subarray 3 DC mismatch loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_diodes_loss", "Subarray 3 DC diodes and connections loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_wiring_loss", "Subarray 3 DC wiring loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_tracking_loss", "Subarray 3 DC tracking loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray3_dc_nameplate_loss", "Subarray 3 DC nameplate loss", "kWh", "", "Annual", "", "", "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_gross", "Subarray 4 gross DC energy", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_mismatch_loss", "Subarray 4 DC mismatch loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_diodes_loss", "Subarray 4 DC diodes and connections loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_wiring_loss", "Subarray 4 DC wiring loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_tracking_loss", "Subarray 4 DC tracking loss", "kWh", "", "Annual", "", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_subarray4_dc_nameplate_loss", "Subarray 4 DC nameplate loss", "kWh", "", "Annual", "", "", "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss", "DC mismatch loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss", "DC diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss", "DC wiring loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss", "DC tracking loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss", "DC nameplate loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual", "*", "", "" },
-
-	// loss diagram energy outputs nominal poa, nominal array at STC, net dc, net ac, system output
-	// annual_poa_nom, annual_dc_nominal, annual_dc_net, annual_ac_net, annual_energy
-	// loss diagram % losses 
-	// annual_poa_nom
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_shading_loss_percent", "POA shading loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_poa_soiling_loss_percent", "POA soiling loss", "%", "", "Loss", "*", "", "" },
-	// annual_dc_nominal
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_module_loss_percent", "DC module modeled loss", "%", "", "Loss", "*", "", "" },
-	// annual_dc_gross
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_snow_loss_percent", "DC snow loss", "%", "", "Loss", "*", "", "" },
-	
-	
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mppt_clip_loss_percent", "DC inverter MPPT clipping loss", "%", "", "Loss", "*", "", "" },
-
-	
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_mismatch_loss_percent", "DC mismatch loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_diodes_loss_percent", "DC diodes and connections loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_wiring_loss_percent", "DC wiring loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss_percent", "DC tracking loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss_percent", "DC nameplate loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss_percent", "DC power optimizer loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC performance adjustment loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_lifetime_loss_percent", "Lifetime daily DC loss- year 1", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_battery_loss_percent", "DC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
-
-	//annual_dc_net
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_clip_loss_percent", "AC inverter power clipping loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pso_loss_percent", "AC inverter power consumption loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_pnt_loss_percent", "AC inverter night tare loss", "%", "", "Loss", "*", "", "" },
-	// annual_ac_gross
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "*", "", "" },
-//	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_lifetime_loss_percent", "Lifetime daily AC loss- year 1", "%", "", "Loss", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_battery_loss_percent", "AC connected battery loss- year 1", "%", "", "Loss", "*", "", "" },
-
-
-	// annual_ac_net
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "*", "", "" },
-	// annual_energy
-
-	/*
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_mismatch_loss", "DC output after mismatch loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_diodes_loss", "DC output after diodes and connections loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_wiring_loss", "DC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_tracking_loss", "DC output after tracking loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_after_nameplate_loss", "DC output after nameplate loss", "kWh", "", "Annual", "*", "", "" },
-
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_cliploss", "AC output after inverter clipping loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_psoloss", "AC output after inverter power consumption loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_inv_pntloss", "AC output after inverter night tare loss", "kWh", "", "Annual", "*", "", "" },
-	*/
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual", "*", "", "" },
-//	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss", "AC step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss", "DC power optimizer loss", "kWh", "", "Annual", "*", "", "" },
-
-	/*
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_wiring_loss", "AC output after wiring loss", "kWh", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_after_transformer_loss", "AC output after step-up transformer loss", "kWh", "", "Annual", "*", "", "" },
-	*/
-
-	//
-
-
-
-
-	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_a",                                      "CEC 6-parameter: a",                                     "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Io",                                     "CEC 6-parameter: Io",                                    "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Il",                                     "CEC 6-parameter: Il",                                    "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rs",                                     "CEC 6-parameter: Rs",                                    "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Rsh",                                    "CEC 6-parameter: Rsh",                                   "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "6par_Adj",                                    "CEC 6-parameter: Adj",                                   "",       "",                      "Miscellaneous",       "*",                    "",                              "" },
-	
-	{ SSC_OUTPUT,        SSC_NUMBER,     "performance_ratio",                           "Performance ratio",                                      "",       "",                      "Annual",       "*",                    "",                              "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "capacity_factor",                             "Capacity factor",                                        "%",       "", "", "*", "", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "kwh_per_kw",                                  "First year kWh/kW",                                      "kWh/kW",       "", "", "*", "", "" },
 
 
 var_info_invalid };
