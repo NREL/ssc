@@ -1557,7 +1557,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 		double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
 		I += dQ / _dt_hour;
 	}
-	// Don't allow grid charging unless explicitly allowed
+	// Don't allow grid charging unless explicitly allowed (reduce charging)
 	else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
 	{
 		if (fabs(_P_tofrom_batt) < tolerance)
@@ -1565,13 +1565,13 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 		else
 			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
 	}
-	// Don't let PV export to grid if can still charge battery
+	// Don't let PV export to grid if can still charge battery (increase charging)
 	else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max && fabs(I) < fabs(_Ic_max))
 	{
 		if (fabs(_P_tofrom_batt) < tolerance )
 			I += (_P_pv_to_grid * kilowatt_to_watt / _Battery->battery_voltage());
 		else
-			I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *I;
+			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) *I;
 	}
 	else
 		iterate = false;
