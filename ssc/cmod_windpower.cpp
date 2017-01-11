@@ -23,8 +23,8 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "weibull_wind_speed",                      "Average wind speed for Weibull model","",       "",      "WindPower",      "wind_resource_model_choice=1",             "",		                                            "" },
 																																																		                             
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_rotor_diameter",             "Rotor diameter",                      "m",      "",      "WindPower",      "*",                                        "",                                                 "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_windspeeds",      "Power curve wind speed array",        "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" }, 
-	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_powerout",        "Power curve turbine output array",    "kW",     "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
+	{ SSC_INOUT,        SSC_ARRAY,       "wind_turbine_powercurve_windspeeds",      "Power curve wind speed array",        "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" }, 
+	{ SSC_INOUT,        SSC_ARRAY,       "wind_turbine_powercurve_powerout",        "Power curve turbine output array",    "kW",     "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_pc_rpm",	        "Turbine RPM curve",                   "rpm",    "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_hub_efficiency",  "Array of hub efficiencies",		   "%",      "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_cutin",                      "Cut-in wind speed",                   "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" },
@@ -39,7 +39,7 @@ static var_info _cm_vtab_windpower[] = {
 																																												                            
 																																												                            
 	// OUTPUTS ----------------------------------------------------------------------------													annual_energy									                            
-	{ SSC_OUTPUT,       SSC_ARRAY,       "turbine_output_by_windspeed_bin",         "Turbine output",                      "kW",     "",      "Power Curve",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "turbine_output_by_windspeed_bin",         "Turbine output by wind speed bin",    "kW",     "",      "Power Curve",      "",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "wind_direction",                          "Wind direction",                      "deg",    "",      "Time Series",      "*",                                        "",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "wind_speed",                              "Wind speed",                          "m/s",    "",      "Time Series",      "*",                                        "",                                      "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "temp",                                    "Air temperature",                     "'C",     "",      "Time Series",      "*",                                        "",                                      "" },
@@ -256,7 +256,6 @@ public:
 			throw exec_error("windpower", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nstep));
 
 		// allocate the time step output vectors to the right length
-		ssc_number_t *turbine_output = allocate( "turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray );
 		ssc_number_t *farmpwr = allocate("gen", nstep);
 		ssc_number_t *wspd = allocate("wind_speed", nstep);
 		ssc_number_t *wdir = allocate("wind_direction", nstep);
@@ -266,6 +265,8 @@ public:
 
 		if (iModelType == 1) // doing a Weibull estimate, not an hourly or subhourly simulation
 		{
+			// allocate this output for the Weibull estimate only
+			ssc_number_t *turbine_output = allocate("turbine_output_by_windspeed_bin", wpc.m_iLengthOfTurbinePowerCurveArray);
 			std::vector<double> turbine_outkW(wpc.m_iLengthOfTurbinePowerCurveArray); 
 
 			double weibull_k = as_double("weibull_k_factor");
