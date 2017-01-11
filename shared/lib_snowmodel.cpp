@@ -51,7 +51,7 @@ bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
 
 	if(baseTilt>45 || baseTilt < 10){
 		good = true;
-		msg = "The snow cover model is for PV arrays with a tilt angle between 10 and 45 degrees. Snow loss estimates for tilt angles outside of this range may not be accurate.";
+		msg = util::format("The snow model is designed to work for PV arrays with a tilt angle between 10 and 45 degrees, but will generate results for tilt angles outside this range. The system you are modeling includes a subarray tilt angle of %f degrees.", baseTilt);
 		return false;
 	}
 
