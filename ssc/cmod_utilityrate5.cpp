@@ -431,7 +431,7 @@ public:
 			for (i=0;i<nyears;i++)
 				rate_scale[i] = (ssc_number_t)(1 + parr[i]*0.01);
 		}
-
+ 
 		/* Update all e_sys and e_load values based on new inputs
 		grid = gen -load where gen = sys + batt
 		1. scale load and system value to hourly values as necessary
@@ -1775,11 +1775,11 @@ public:
 				//= monthly_ec_flat_charges[i]
 				= monthly_dc_fixed[i] = monthly_dc_tou[i] 
 				= monthly_ec_charges[i]
-				= monthly_ec_charges_gross[12]
-				= excess_dollars_earned[12]
-				= excess_dollars_applied[12]
-				= excess_kwhs_earned[12]
-				= excess_kwhs_applied[12]
+				= monthly_ec_charges_gross[i]
+				= excess_dollars_earned[i]
+				= excess_dollars_applied[i]
+				= excess_kwhs_earned[i]
+				= excess_kwhs_applied[i]
 				= monthly_cumulative_excess_energy[i] 
 				= monthly_cumulative_excess_dollars[i] 
 				= monthly_bill[i] = 0.0;
@@ -2534,11 +2534,11 @@ public:
 				//= monthly_ec_flat_charges[i]
 				= monthly_dc_fixed[i] = monthly_dc_tou[i]
 				= monthly_ec_charges[i] 
-				= monthly_ec_charges_gross[12]
-				= excess_dollars_earned[12]
-				= excess_dollars_applied[12]
-				= excess_kwhs_earned[12]
-				= excess_kwhs_applied[12]
+				= monthly_ec_charges_gross[i]
+				= excess_dollars_earned[i]
+				= excess_dollars_applied[i]
+				= excess_kwhs_earned[i]
+				= excess_kwhs_applied[i]
 				= monthly_cumulative_excess_energy[i]
 				= monthly_cumulative_excess_dollars[i]
 				= monthly_bill[i] = 0.0;
