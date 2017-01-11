@@ -780,6 +780,24 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	*fThrustCoefficient = 0.0;
 	*fTurbineOutput = 0.0;
 
+	//bug fix jmf 1/11/17- cut in and cut out wind speeds need to be inferred from the power curve, cut in was previously an input but shouldn't be because a) some users are using library turbines, which only have power curves, 
+	//and b) it could be inconsistent with the input power curve. 
+	int i = 0;
+	while (m_adPowerCurveKW[i] == 0)
+		i++; //find the index of the first non-zero power output in the power curve
+	//the cut-in speed is defined where the turbine FIRST STARTS TO TURN, not where it first generates electricity! Therefore, assume that the cut-in speed is actually 1 speed BELOW where power is generated.
+	//this is consistent with the NREL Cost & Scaling model- if you specify a cut-in speed of 4 m/s, the power curve value at 4 m/s is 0, and it starts producing power at 4.25.
+	//HOWEVER, if you specify the cut-in speed BETWEEN the wind speed bins, then this method would improperly assume that the cut-in speed is lower than it actually is. But given the 0.25 m/s size of the bins, that type of
+	//specification would be false accuracy anyways, so we'll ignore it for now.
+	m_dCutInSpeed = m_adPowerCurveWS[i-1]; 
+
+	/*	//We will continue not to check cut-out speed because currently the model will interpolate between the last non-zero power point and zero, and we don't have a better definition of where the power cutoff should be.
+	i = m_adPowerCurveKW.size() - 1; //last index in the array
+	while (m_adPowerCurveKW[i] == 0)
+		i--; //find the index of the last non-zero power output in the power curve
+	m_dCutOutSpeed = m_adPowerCurveWS[i]; //unlike cut in speed, we want power to hard cut AFTER this wind speed value*/
+
+
 	// If the wind speed measurement height (fDataHeight) differs from the turbine hub height (Hub_Ht), use the shear to correct it. 
 	if (m_dShearExponent > 1.0) m_dShearExponent = 1.0/7.0;
 	double fWindSpeedAtHubHeight = fWindVelocityAtDataHeight * pow(m_dHubHeight/m_dMeasurementHeight, m_dShearExponent);
@@ -798,7 +816,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 		out_pwr = m_adPowerCurveKW[m_iLengthOfTurbinePowerCurveArray-1];
 
 	// Check against turbine cut-in speed
-	if ( fWindSpeedAtHubHeight < m_dCutInSpeed) out_pwr = 0.0; 
+	if ( fWindSpeedAtHubHeight < m_dCutInSpeed) out_pwr = 0.0; //this is effectively redundant, because the power at the cut-in speed is defined to be 0, above, so anything below that will also be 0, but leave in for completeness
 
 	// wind turbine output corrected for site air density
 	out_pwr *= fAirDensity/physics::AIR_DENSITY_SEA_LEVEL;
