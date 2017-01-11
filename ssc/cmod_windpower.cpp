@@ -27,7 +27,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_powerout",        "Power curve turbine output array",    "kW",     "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_pc_rpm",	        "Turbine RPM curve",                   "rpm",    "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
 //	{ SSC_INPUT,        SSC_ARRAY,       "wind_turbine_powercurve_hub_efficiency",  "Array of hub efficiencies",		   "%",      "",      "WindPower",      "*",                                        "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds",  "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_cutin",                      "Cut-in wind speed",                   "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" },
+//	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_cutin",                      "Cut-in wind speed",                   "m/s",    "",      "WindPower",      "*",                                        "",                                                 "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_hub_ht",                     "Hub height",                          "m",      "",      "WindPower",      "*",                                        "",                                                 "" },
 //	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_ctl_mode",                   "Control mode",                        "0/1/2",  "",      "WindPower",      "*",                                        "INTEGER",                                          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "wind_turbine_max_cp",                     "Max cp",						       "",       "",      "WindPower",      "wind_resource_model_choice=1",             "",		                                            "" },
@@ -166,10 +166,10 @@ public:
 		wpc.m_dHubHeight = as_double("wind_turbine_hub_ht");
 		wpc.m_dRotorDiameter = as_double("wind_turbine_rotor_diameter");
 		//double meas_ht = as_double("meas_ht");
-		wpc.m_dCutInSpeed = as_double("wind_turbine_cutin");
+		//wpc.m_dCutInSpeed = as_double("wind_turbine_cutin");
 		wpc.m_dLossesAbsolute = 0 ; // as_double("lossc");
 		wpc.m_dLossesPercent = as_double("wind_farm_losses_percent")/100.0;
-		wpc.m_dWakeDecayCoefficient = 0.07;							// necessary for Park model
+		wpc.m_dWakeDecayCoefficient = 0.07;	// necessary for Park model
 		wpc.m_iWakeModelChoice = as_integer("wind_farm_wake_model");
 		wpc.m_dTurbulenceIntensity = as_double("wind_resource_turbulence_coeff");
 
