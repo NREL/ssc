@@ -152,6 +152,7 @@ protected:
 	double _P_battery_to_grid;
 	double _P_battery;
 	double _P_loss;
+	double _P_inverter_draw;
 
 	// ac or dc pv input
 	double _P_pv;

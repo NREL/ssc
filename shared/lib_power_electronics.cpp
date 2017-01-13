@@ -45,7 +45,14 @@ void charge_controller::initialize(double P_pv, double P_load_ac)
 	_P_pv_to_grid = 0;
 	_P_battery_to_grid = 0;
 	_P_battery = 0;
+	_P_inverter_draw = 0;
 
+	if (P_pv < 0)
+	{
+		_P_inverter_draw = P_pv;
+		P_pv = 0;
+	}
+	
 	// ac for ac-connected, dc for dc-connected
 	_P_pv = P_pv;
 }
@@ -241,7 +248,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 			P_pv_to_load_ac = P_pv_to_load_dc * inverter_efficiency;
 		}
 		P_pv_ac = P_pv_to_load_ac + P_pv_to_grid_ac;
-		P_gen_ac = P_pv_ac - P_grid_to_batt_ac;
+		P_gen_ac = P_pv_ac - P_grid_to_batt_ac + _P_inverter_draw;
 	}
 	// discharge
 	else
@@ -259,10 +266,9 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 			// probably shouldn't happen, need to iterate and reduce I from battery
 			P_batt_to_load_ac = P_load_ac - P_pv_to_load_ac;
 		
-		P_gen_ac = P_pv_ac + P_battery_ac;
+		P_gen_ac = P_pv_ac + P_battery_ac + _P_inverter_draw;
 	}
 
-	
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
 	P_grid_ac = _P_load - P_gen_ac;
 
@@ -456,7 +462,7 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 		P_batt_to_load_loss = P_battery_dc - P_battery_ac;
 
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
-	P_gen_ac = P_pv_ac + P_battery_ac;
+	P_gen_ac = P_pv_ac + P_battery_ac + _P_inverter_draw;
 
 	// Grid charging loss accounted for in P_battery_ac 
 	P_grid_ac = P_gen_ac - _P_load;
