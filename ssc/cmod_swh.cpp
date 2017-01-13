@@ -119,9 +119,7 @@ static var_info _cm_vtab_swh[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "V_cold",                "V cold",                               "m3",     "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "draw",                  "Hot water draw",                       "kg/hr",  "",                                  "Time Series",      "*",                        "",                                 "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "mode",                  "Operation mode",                       "",       "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
-																									      								                 																		            
-	{ SSC_OUTPUT,       SSC_ARRAY,       "energy",                "Q saved",                             "kW",     "1,2,3,4",                           "Time Series",      "*",                        "",                                 "" },
-																																			             																		            
+																									      								                 																		            																																			             																		            
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_deliv",		  "Q delivered",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_aux",		  "Q auxiliary",                         "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_Q_auxonly",	  "Q auxiliary only",                    "kWh",     "",                                  "Monthly",          "*",                        "LENGTH=12",                        "" },
@@ -314,11 +312,9 @@ public:
 		ssc_number_t *out_T_hot = allocate("T_hot", nrec);
 		ssc_number_t *out_T_cold = allocate("T_cold", nrec);
 
-		ssc_number_t *out_energy = allocate("energy", nrec);
+		ssc_number_t *out_energy = allocate("gen", nrec);
 
 		ssc_number_t *Mode = allocate("mode", nrec);
-
-		ssc_number_t *out_hourly_energy = allocate("gen", 8760);
 
 		double temp_sum = 0.0;
 		size_t temp_count = 0;
@@ -756,10 +752,6 @@ public:
 
 				// accumulate hourly and annual energy
 				annual_kwh += out_energy[idx];
-
-				// accumulate hourly energy (kWh) (was initialized to zero when allocated)
-				out_hourly_energy[hour] += out_energy[idx];
-
 				idx++;
 			}
 		}
