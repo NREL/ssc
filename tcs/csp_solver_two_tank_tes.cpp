@@ -493,16 +493,17 @@ double C_csp_two_tank_tes::get_min_charge_energy()
 double C_csp_two_tank_tes::get_max_charge_energy() 
 {
     //MWh
-	double cp = mc_store_htfProps.Cp(ms_params.m_T_field_out_des);		//[kJ/kg-K] spec heat at average temperature during discharge from hot to cold
-    double rho = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.);
+	//double cp = mc_store_htfProps.Cp(ms_params.m_T_field_out_des);		//[kJ/kg-K] spec heat at average temperature during discharge from hot to cold
+ //   double rho = mc_store_htfProps.dens(ms_params.m_T_field_out_des, 1.);
 
-    double fadj = (1. - ms_params.m_h_tank_min / ms_params.m_h_tank);
+ //   double fadj = (1. - ms_params.m_h_tank_min / ms_params.m_h_tank);
 
-    double vol_avail = m_vol_tank * ms_params.m_tank_pairs * fadj;
+ //   double vol_avail = m_vol_tank * ms_params.m_tank_pairs * fadj;
 
-    double e_max = vol_avail * rho * cp * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des) / 3.6e6;   //MW-hr
+ //   double e_max = vol_avail * rho * cp * (ms_params.m_T_field_out_des - ms_params.m_T_field_in_des) / 3.6e6;   //MW-hr
 
-    return e_max;
+ //   return e_max;
+    return m_q_pb_design * ms_params.m_ts_hours / 1.e6;
 }
 
 double C_csp_two_tank_tes::get_degradation_rate()  

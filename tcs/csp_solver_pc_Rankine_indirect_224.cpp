@@ -399,10 +399,12 @@ double C_pc_Rankine_indirect_224::get_max_q_pc_startup()
 	}
 }
 
-double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct)
+double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
 {
     /* 
-    Get cycle efficiency, assuming full load operation
+    Get cycle efficiency, assuming full load operation. 
+
+    If w_dot_condenser var reference is not null, return the condenser power as well.
     */
     double eta = std::numeric_limits<double>::quiet_NaN();
 
@@ -420,6 +422,9 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 				2, 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax,
 				//outputs
 				P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
+
+        if( w_dot_condenser != 0 )
+            *w_dot_condenser = W_cool_par;
     }
 	else
 	{
@@ -440,12 +445,19 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 			m_dot_htf_ND);	//[MWt]
 
 		eta = P_cycle / 1.E3 / q_dot_htf;
+
+        if( w_dot_condenser != 0 )
+            *w_dot_condenser = mc_user_defined_pc.get_W_dot_cooling_ND(
+                    ms_params.m_T_htf_hot_ref, 
+                    T_degC, 
+                    m_dot_htf_ND )
+                    *ms_params.m_W_dot_cooling_des;
 	}
 
     return eta;
 }
 
-double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
+double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, double *w_dot_condenser)
 {
     /* 
     Get cycle efficiency, assuming design point temperature operation
@@ -473,7 +485,9 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
                 0., ms_params.m_P_boil, 1., m_F_wcMin, m_F_wcMax, 
 			    //outputs
 			    P_cycle, eta, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond);
-
+        
+        if( w_dot_condenser != 0 )
+            *w_dot_condenser = W_cool_par;
 	}
 	else
 	{
@@ -494,6 +508,13 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac)
 			m_dot_htf_ND);	//[MWt]
 
 		eta = P_cycle / 1.E3 / q_dot_htf;
+
+        if( w_dot_condenser != 0 )
+            *w_dot_condenser = mc_user_defined_pc.get_W_dot_cooling_ND(
+                    ms_params.m_T_htf_hot_ref, 
+                    ms_params.m_T_amb_des, 
+                    m_dot_htf_ND )
+                    *ms_params.m_W_dot_cooling_des;
 	}
     
     return eta;

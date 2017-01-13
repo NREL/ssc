@@ -129,6 +129,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.tes_charge_expected.clear();
     outputs.q_pb_startup.clear();
     outputs.q_rec_startup.clear();
+    outputs.w_condf_expected.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -180,6 +181,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         double therm_eff_ave = 0.;
         double cycle_eff_ave = 0.;
         double q_inc_ave = 0.;
+        double wcond_ave = 0.;
 
         for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
         {
@@ -211,6 +213,10 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
+            //store the condenser parasitic power fraction
+            double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
+            wcond_ave += wcond_f * ave_weight;
+
 		    simloc.ms_ts.m_time += simloc.ms_ts.m_step;
             m_weather.converged();
         }
@@ -222,6 +228,8 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         outputs.q_sfavail_expected.push_back( q_inc_ave );
         //power cycle efficiency
         outputs.eta_pb_expected.push_back( cycle_eff_ave );
+        //condenser power
+        outputs.w_condf_expected.push_back( wcond_ave );
     }
 
     //reset the weather data reader
@@ -307,7 +315,6 @@ bool csp_dispatch_opt::optimize()
         O.add_var("ychsp", optimization_vars::VAR_TYPE::BINARY_T, optimization_vars::VAR_DIM::DIM_T, nt);
         O.add_var("wdot", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); //0 lower bound?
         O.add_var("delta_w", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); 
-
         
         //double T = nt ;
         double delta = params.dt;
@@ -398,6 +405,7 @@ bool csp_dispatch_opt::optimize()
         double pen_delta_w = params.pen_delta_w; //0.1;
 
 
+
         O.construct();  //allocates memory for data array
 
         int nvar = O.get_total_var_count(); //total number of variables in the problem
@@ -455,31 +463,41 @@ bool csp_dispatch_opt::optimize()
         set up the objective function first (per lpsolve guidance)
         --------------------------------------------------------------------------------
         */
-		// Objective function without all parasitics
-		/*
-        {
-            int *col = new int[11*nt];
-            REAL *row = new REAL[11*nt];
+		{
+            int *col = new int[12 * nt];
+            REAL *row = new REAL[12 * nt];
             double tadj = disp_time_weighting;
-            int i=0;
-
+            int i = 0;
+            
             for(int t=0; t<nt; t++)
             {
-                i=0;
+                i = 0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = delta * price_signal.at(t) * tadj;
-                
+                row[ t + nt*(i++) ] = delta * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
+
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = - delta * price_signal.at(t) * Lr;
-                
+                row[ t + nt*(i++) ] = -(delta * price_signal.at(t) * Lr) + tadj/qrecmaxobs;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = row[ nt+t];
-                
+                row[ t + nt*(i++) ] = -delta * price_signal.at(t) * Lr;
+
+                col[ t + nt*(i  ) ] = O.column("yrsu", t);
+                row[ t + nt*(i++) ] = -price_signal.at(t) * (params.w_rec_ht + params.w_stow);
+
+                col[ t + nt*(i  ) ] = O.column("yr", t);
+                row[ t + nt*(i++) ] = -(delta * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+
+                col[ t + nt*(i  ) ] = O.column("x", t);
+                row[ t + nt*(i++) ] = -delta * price_signal.at(t) * params.w_cycle_pump;
+
+                col[ t + nt*(i  ) ] = O.column("ycsb", t);
+                row[ t + nt*(i++) ] = -delta * price_signal.at(t) * params.w_cycle_standby;
+
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
-                //xxrow[ t + nt*(i++) ] = row[ nt+t]*Qrl;
-                
+                //xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
+
                 //xxcol[ t + nt*(i   ] = O.column("yrsd", t);
-                //xxrow[ t + nt*(i++) ] = -0.5;
+                //xxrow[ t + nt*(i++) ] = -0.5 - (params.w_stow);
 
                 //xxcol[ t + nt*(i   ] = O.column("ycsd", t);
                 //xxrow[ t + nt*(i++) ] = -0.5;
@@ -499,90 +517,14 @@ bool csp_dispatch_opt::optimize()
                 col[ t + nt*(i  ) ] = O.column("delta_w", t);
                 row[ t + nt*(i++) ] = -pen_delta_w*tadj;
 
-                //prefer receiver operation in nearer term to longer term
-                col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = tadj;
-
-                //prefer receiver production sooner (i.e. delay dumping) 
-                col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = tadj/qrecmaxobs;
-
-                //prefer cycle operation sooner than later, all things equal  <<< MJW This doesn't seem to improve things.
-                //col[ t + nt*(i  ) ] = O.column("y", t);
-                //row[ t + nt*(i++) ] = 0.5*tadj;
-
                 tadj *= disp_time_weighting;
             }
 
             set_obj_fnex(lp, i*nt, row, col);
-        
-            delete [] col;
-            delete [] row;
-        }*/
-        
-		// Objective function with all parasitics
-		{
-			int *col = new int[12 * nt];
-			REAL *row = new REAL[12 * nt];
-			double tadj = disp_time_weighting;
-			int i = 0;
 
-			for (int t = 0; t<nt; t++)
-			{
-				i = 0;
-				col[t + nt*(i)] = O.column("wdot", t);
-				row[t + nt*(i++)] = delta * price_signal.at(t)*tadj;
-
-				col[t + nt*(i)] = O.column("xr", t);
-				row[t + nt*(i++)] = -(delta * price_signal.at(t) * Lr) + tadj/qrecmaxobs;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
-
-				col[t + nt*(i)] = O.column("xrsu", t);
-				row[t + nt*(i++)] = -delta * price_signal.at(t) * Lr;
-
-				col[t + nt*(i)] = O.column("yrsu", t);
-				row[t + nt*(i++)] = -price_signal.at(t) * (params.w_rec_ht + params.w_stow);
-
-				col[t + nt*(i)] = O.column("yr", t);
-				row[t + nt*(i++)] = -(delta * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
-
-				col[t + nt*(i)] = O.column("x", t);
-				row[t + nt*(i++)] = -delta * price_signal.at(t) * params.w_cycle_pump;
-
-				col[t + nt*(i)] = O.column("ycsb", t);
-				row[t + nt*(i++)] = -delta * price_signal.at(t) * params.w_cycle_standby;
-
-				//xxcol[ t + nt*(i   ] = O.column("yrsb", t);
-				//xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
-
-				//xxcol[ t + nt*(i   ] = O.column("yrsd", t);
-				//xxrow[ t + nt*(i++) ] = -0.5 - (params.w_stow);
-
-				//xxcol[ t + nt*(i   ] = O.column("ycsd", t);
-				//xxrow[ t + nt*(i++) ] = -0.5;
-
-				col[t + nt*(i)] = O.column("yrsup", t);
-				row[t + nt*(i++)] = -rsu_cost*tadj;
-
-				//xxcol[ t + nt*(i   ] = O.column("yrhsp", t);
-				//xxrow[ t + nt*(i++) ] = -tadj;
-
-				col[t + nt*(i)] = O.column("ycsup", t);
-				row[t + nt*(i++)] = -csu_cost*tadj;
-
-				col[t + nt*(i)] = O.column("ychsp", t);
-				row[t + nt*(i++)] = -csu_cost*tadj * 0.1;
-
-				col[t + nt*(i)] = O.column("delta_w", t);
-				row[t + nt*(i++)] = -pen_delta_w*tadj;
-
-				tadj *= disp_time_weighting;
-			}
-
-			set_obj_fnex(lp, i*nt, row, col);
-
-			delete[] col;
-			delete[] row;
-		}
+            delete[] col;
+            delete[] row;
+        }
 
         //set the row mode
         set_add_rowmode(lp, TRUE);
@@ -951,8 +893,8 @@ bool csp_dispatch_opt::optimize()
                 col[i++] = O.column("x", t);
 
                 //mjw 2016.12.2 --> This constraint seems to be problematic in identifying feasible solutions for subhourly runs. Needs attention.
-                /*row[i  ] = Qc;
-                col[i++] = O.column("ycsu", t);*/
+                row[i  ] = Qc;
+                col[i++] = O.column("ycsu", t);
                 
                 row[i  ] = -Qu;
                 col[i++] = O.column("y", t);
@@ -1136,7 +1078,7 @@ bool csp_dispatch_opt::optimize()
                 //min charge state in time periods where cycle operates and receiver is starting up
                 if(t < nt-1)
                 {
-                    double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - Er/delta, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * Qu * delta;
+                    double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - Er/delta, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * Ql * delta;
 
                     int i=0;
 
@@ -1170,15 +1112,25 @@ bool csp_dispatch_opt::optimize()
 			{
 				// Adjust wlim if specified value is too low to permit cycle operation
 				double wmin = (Ql * etap*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (Wdotu - etap*Qu)*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-				double max_parasitic = Lr * outputs.q_sfavail_expected.at(t) + (params.w_rec_ht / params.dt) + (params.w_stow / params.dt) + params.w_track + params.w_cycle_standby + params.w_cycle_pump*Qu;  // Largest possible parasitic load at time t
+				double max_parasitic = 
+                      Lr * outputs.q_sfavail_expected.at(t) 
+                    + (params.w_rec_ht / params.dt) 
+                    + (params.w_stow / params.dt) 
+                    + params.w_track 
+                    + params.w_cycle_standby 
+                    + params.w_cycle_pump*Qu
+                    + outputs.w_condf_expected.at(t)*W_dot_cycle;  // Largest possible parasitic load at time t
 				if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
+                {
 					w_lim.at(t) = 0.;
+                    params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");
+                }
 
 				if (w_lim.at(t) > 0.)	// Power cycle operation is possible
 				{
 					int i = 0;
 
-					row[i] = 1.0;
+					row[i] = 1.0-outputs.w_condf_expected.at(t);
 					col[i++] = O.column("wdot", t);
 
 					row[i] = -params.w_rec_pump;

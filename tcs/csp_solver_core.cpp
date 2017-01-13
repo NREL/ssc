@@ -459,15 +459,17 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 		//cycle efficiency vs temperature
 		dispatch.params.eff_table_Tdb.clear();
+        dispatch.params.wcondcoef_table_Tdb.clear();
 		int neffT = 40;
 
 		for(int i=0; i<neffT; i++)
 		{
 			double T = -10. + 60./(double)(neffT - 1) * i;
-
-			double eta = mc_power_cycle.get_efficiency_at_TPH(T, 1., 30.) / m_cycle_eta_des;  
+            double wcond;
+			double eta = mc_power_cycle.get_efficiency_at_TPH(T, 1., 30., &wcond) / m_cycle_eta_des;  
 
 			dispatch.params.eff_table_Tdb.add_point(T, eta);
+            dispatch.params.wcondcoef_table_Tdb.add_point(T, wcond/m_cycle_W_dot_des); //fraction of rated gross gen
 		}
 
 	}

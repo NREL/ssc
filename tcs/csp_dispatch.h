@@ -195,7 +195,7 @@ public:
                 return eff;
             }
 
-        } eff_table_load, eff_table_Tdb;        //Efficiency of the power cycle
+        } eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;        //Efficiency of the power cycle, condenser power coefs
         
     } params;
 
@@ -216,6 +216,7 @@ public:
         vector<double> q_pb_startup;    //thermal power going to startup
         vector<double> q_rec_startup;   //thermal power going to startup
         vector<double> w_pb_target;  //optimized electricity generation
+        vector<double> w_condf_expected;  //Expected condenser loss coefficient
 
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
