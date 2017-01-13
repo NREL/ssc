@@ -273,7 +273,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",        "Receiver standby energy consumption",                               "kWt",          "",            "sys_ctrl_disp_opt", "?=9e99",                  "",                      "" }, 
 	{ SSC_INPUT,		SSC_NUMBER,		 "q_rec_heattrace",		 "Receiver heat trace energy consumption during startup",			  "kWe-hr",		  "",			 "sys_ctrl_disp_opt", "?=0.0",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_wlim_series",       "Use time-series net electricity generation limits",				  "",			  "",			 "sys_ctrl_disp_opt", "?=0",					 "",					  "" },
-	{ SSC_INPUT,		SSC_MATRIX,		 "wlim_series",			 "Time series net electicity generation limits",					  "",			  "",			 "sys_ctrl_disp_opt", "is_wlim_series=1",		 "",					  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		 "wlim_series",			 "Time series net electicity generation limits",					  "kWe",		  "",			 "sys_ctrl_disp_opt", "is_wlim_series=1",		 "",					  "" },
 
 
 	// Financial inputs
@@ -302,7 +302,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                 "m^2",           "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
-    { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "?",                       "",                      "" },
+    { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "run_type=2",              "",                      "" },
 	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                         "",              "",            "heliostat",      "run_type=1",              "",                      "COL_LABEL=XY_POSITION" },
 	{ SSC_INOUT,        SSC_NUMBER,      "land_area_base",       "Base land area occupied by heliostats",                            "acre",          "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                           "acre",          "",            "system_costs",   "*",                       "",                      "" },
@@ -847,6 +847,9 @@ public:
 			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
 			heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
 			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
+            //allocate empty array of positions to indicate number of heliostats in the field
+            util::matrix_t<double> hpos( as_integer("N_hel"), 2 );
+            heliostatfield.ms_params.m_helio_positions = hpos;
 		}
 		else
 		{
@@ -1343,12 +1346,12 @@ public:
 
 			if (as_boolean("is_wlim_series"))
 			{
-				util::matrix_t<double> wlim_series = as_matrix("wlim_series");
-				int n_wlim_series = wlim_series.nrows();
+				size_t n_wlim_series = -1;
+				ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
 				if (n_wlim_series != 8760)
 					throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have 8760 rows.");
 				for (int i = 0; i < 8760; i++)
-					tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_series.at(i,0);
+					tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
 			}
 
 	

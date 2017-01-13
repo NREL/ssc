@@ -88,8 +88,8 @@ public:
 	virtual double get_hot_startup_energy();    //[MWh]
 	virtual double get_max_thermal_power();     //MW
 	virtual double get_min_thermal_power();     //MW
-	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct);
-	virtual double get_efficiency_at_load(double load_frac);
+	virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0);
+	virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0);
 	virtual double get_htf_pumping_parasitic_coef();		//[kWe/kWt]
 
 	// This can vary between timesteps for Type224, depending on remaining startup energy and time
