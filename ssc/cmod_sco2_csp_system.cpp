@@ -738,9 +738,9 @@ public:
 			try
 			{
 					// 2D optimization
-				off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
+				//off_design_code = sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 					// Nested optimization
-				//off_design_code = sco2_recomp_csp.off_design_nested_opt(sco2_rc_od_par, od_strategy);
+				off_design_code = sco2_recomp_csp.off_design_nested_opt(sco2_rc_od_par, od_strategy);
 			}
 			catch( C_csp_exception &csp_exception )
 			{
