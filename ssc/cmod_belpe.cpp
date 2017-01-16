@@ -406,7 +406,7 @@ public:
 
 		// Is it heating or cooling season ? ? This methodology taken entirely from Building America guidelines
 		double HtEn[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-		double ClEn[13] = { 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0 }; //Because Jul and Aug always have cooling on!BLDG AM
+		double ClEn[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; //Because Jul and Aug always have cooling on!BLDG AM //jmf removed these to see if this works in other hemispheres!!
 		for (int m = 0; m < 12; m++)
 		{
 			if (TambFAvg[m] <= 66)
