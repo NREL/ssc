@@ -107,7 +107,6 @@ public:
 		S_message_def()
 		{
 			m_type = -1;
-			msg[0] = NULL;
 		}
 
         S_message_def(int type, std::string msgin)
