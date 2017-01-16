@@ -541,7 +541,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 				m_f_m_dot[n_runner] = 1.0;				//[-]
 				m_D_runner[n_runner] = pipe_sched(sqrt(4.*m_m_dot_design * m_f_m_dot[n_runner] / (rho_ave*m_V_hdr_max*CSP::pi)));	//[m]
 					// Default m_L_runner for electricity generation trough is 50 m
-				m_L_runner[n_runner] = m_L_heat_sink_piping;		//[m] Length of piping (full mass flow) through heat sink (if applicable)
+				m_L_runner[n_runner] = m_L_heat_sink_piping/2.0;		//[m] Length of piping (full mass flow) through heat sink (if applicable)
 
 				n_runner++;
 			}
