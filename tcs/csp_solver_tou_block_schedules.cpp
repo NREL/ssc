@@ -6,7 +6,16 @@ void C_block_schedule::check_dimensions()
 {
 	// Check that each schedule is a 12x24 matrix
 	// If not, throw exception
-
+	
+	if (mc_weekdays.nrows() != mc_weekends.nrows()
+			|| mc_weekdays.nrows() != 12 
+	    || mc_weekdays.ncols() != mc_weekends.ncols()
+			|| mc_weekdays.ncols() != 24 ) 
+	{
+		m_error_msg = "TOU schedules must have 12 rows and 24 columns";
+		throw C_csp_exception( m_error_msg, "TOU block schedule init" );
+	}
+/*
 	if( mc_weekdays.nrows() != mstatic_n_rows )
 	{
 		m_error_msg = util::format("TOU schedules require 12 rows and 24 columns. The loaded weekday schedule has %d rows.", (int)mc_weekdays.nrows());
@@ -30,7 +39,7 @@ void C_block_schedule::check_dimensions()
 		m_error_msg = util::format("TOU schedules require 12 rows and 24 columns. The loaded weekend schedule has %d columns.", (int)mc_weekends.ncols());
 		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 	}
-
+*/
 	return;
 }
 
