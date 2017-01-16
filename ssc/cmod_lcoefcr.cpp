@@ -5,10 +5,10 @@ static var_info vtab_lcoefcr[] =
 {	
 /*   VARTYPE            DATATYPE         NAME                        LABEL                             UNITS     META      GROUP          REQUIRED_IF    CONSTRAINTS UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,      "capital_cost",             "Capital cost",                   "$",      "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",    "$/kW",   "",       "Simple LCOE", "*",           "",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",    "$",      "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "variable_operating_cost",  "Annual variable operating cost", "$/kWh",  "",       "Simple LCOE", "*",           "",         "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fixed_charge_rate",        "Fixed charge rate",              "",       "",       "Simple LCOE", "*",           "",         "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",       "kWh/yr", "",       "Simple LCOE", "*",           "",         "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",       "kWh",    "",       "Simple LCOE", "*",           "",         "" },
 	
 	{ SSC_OUTPUT,       SSC_NUMBER,       "lcoe_fcr",                "Levelized cost of energy",      "$/kWh",  "",       "Simple LCOE", "*",           "",         "" },
 
@@ -38,10 +38,9 @@ public:
 		fcr = as_double("fixed_charge_rate");       // unitless fraction
 		icc = as_double("capital_cost");            // $
 		
-		double lcoe;
-		lcoe = (fcr*icc + foc) / aep + voc; //$/kWh
-		assign("lcoe_fcr", var_data((ssc_number_t)lcoe));
+		double lcoe = (fcr*icc + foc) / aep + voc; //$/kWh
 
+		assign("lcoe_fcr", var_data((ssc_number_t)lcoe));
 	}
 
 
