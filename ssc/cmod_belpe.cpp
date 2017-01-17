@@ -211,6 +211,11 @@ public:
 			weather_record wf;
 			if (!wfile.read( &wf )) throw exec_error(" belpe", "error reading record in weather file");
 
+			//belpe doesn't work without ghi
+			double ghi = wf.gh;
+			if (std::isnan(ghi)) 
+				throw exec_error("belpe", "weather file must contain GHI data in order to use the building load calculator");
+
 			//calculate irradiances on four walls of building, needed later
 			irrad irr;
 			irr.set_location(hdr.lat, hdr.lon, hdr.tz);
