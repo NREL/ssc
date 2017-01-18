@@ -981,6 +981,12 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	{
 		iter_W_par++;		// Increase iteration counter
 
+		if( x_lower_W_par == x_lower_W_par && x_upper_W_par == x_upper_W_par &&
+			fabs(x_lower_W_par-x_upper_W_par)/x_upper_W_par < tol/10.0)
+		{
+			break;
+		}
+
 		// Guess new W_parallel!
 		if( iter_W_par > 1 )
 		{
@@ -1072,6 +1078,12 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 		while( fabs(diff_deltaP) > tol_L_tube )
 		{
 			iter_L_tube++;
+
+			if( x_lower_L_tube == x_lower_L_tube && x_upper_L_tube == x_upper_L_tube &&
+				fabs(x_lower_L_tube - x_upper_L_tube) / x_upper_L_tube < tol / 10.0 )
+			{
+				break;
+			}
 
 			if( iter_L_tube > 1 )
 			{
