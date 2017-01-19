@@ -73,6 +73,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",       "Hourly frequency in flux map lookup",                               "",             "",            "heliostat",      "?=1",                     "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash", "Water usage per wash",                                              "L/m2_aper",    "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "washing_frequency",    "Mirror washing frequency",                                          "none",         "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "check_max_flux",       "Check max flux at design point",                                    "",             "",            "heliostat",      "?=0",                     "",                     "" },
 	
     
 	{ SSC_INPUT,        SSC_NUMBER,      "q_design",             "Receiver thermal design power",                                     "MW",           "",            "heliostat",      "*",                       "",                     "" },
