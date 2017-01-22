@@ -4,6 +4,12 @@ VPATH = ../lpsolve
 #CFLAGS = -Wall -g -O3 -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 #CXXFLAGS = $(CFLAGS) -std=gnu++11
 
+CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+CFLAGS = -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER
+CXXFLAGS = $(CFLAGS) -std=c++11 
+
+
 
 OBJECTS = \
 	colamd.o \

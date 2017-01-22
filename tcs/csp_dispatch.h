@@ -2,8 +2,14 @@
 #include <string>
 #include "csp_solver_core.h"
 
-#include <unordered_map>
-using std::unordered_map;
+#ifdef _IOS_VER
+    #include <tr1/unordered_map>
+    using std::tr1::unordered_map;
+#else
+    #include <unordered_map>
+    using std::unordered_map;
+#endif
+
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 
 #include "lp_lib.h" 
