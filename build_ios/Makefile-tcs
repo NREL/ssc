@@ -4,6 +4,13 @@ VPATH = ../tcs
 #CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 #CXXFLAGS = $(CFLAGS)  -std=gnu++11
 
+CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+CFLAGS = -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -DWX_PRECOMP -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER
+CXXFLAGS = $(CFLAGS) -std=c++11 
+
+
+
 OBJECTS = tcskernel.o \
 	fmin_callbacks.o \
 	fmin.o \
@@ -43,8 +50,8 @@ OBJECTS = tcskernel.o \
     sam_mw_lf_type261_Wnet.o \
     sam_mw_lf_type262_salt.o \
     sam_mw_pt_type221.o \
-    sam_mw_pt_type222.o \
-    sam_mw_pt_type224.o \
+    sam_mw_pt_type222_csp_solver.o \
+    sam_mw_pt_type224_csp_solver.o \
     sam_mw_pt_type228.o \
     sam_mw_trough_type250.o \
 	sam_type250_input_generator.o \

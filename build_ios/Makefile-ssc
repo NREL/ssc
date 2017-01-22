@@ -6,8 +6,17 @@ VPATH=../ssc
 #CXXFLAGS = $(CFLAGS) -std=gnu++11
 # for __ARCHBITS__ in cmod_pvsamv1
 #LDFLAGS = -arch x86_64 -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
-CFLAGS += -D__64BIT__
+#CFLAGS += -D__64BIT__
 
+
+CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER -D__64BIT__
+CXXFLAGS = $(CFLAGS) -std=c++11 
+
+LDFLAGS = -v -arch arm64 -lm -lc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
+
+TARGET=ssc.so
 
 OBJECTS = \
 	cmod_ui_tes_calcs.o \

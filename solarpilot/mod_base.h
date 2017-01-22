@@ -7,8 +7,13 @@ These components can use the methods and variable declarations provided here.
 */
 #include <sstream>
 
-#include <unordered_map>
-using std::unordered_map;
+#ifdef _IOS_VER
+    #include <tr1/unordered_map>
+    using std::tr1::unordered_map;
+#else
+    #include <unordered_map>
+    using std::unordered_map;
+#endif
 
 #include <map>
 #include <vector>

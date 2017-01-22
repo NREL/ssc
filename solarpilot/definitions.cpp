@@ -17,9 +17,13 @@ var_map::var_map( var_map &vc )
 
 void var_map::copy( var_map &vc )
 {
+#ifdef _IOS_VER
+    for( unordered_map< std::string, spbase* >::iterator var=_varptrs.begin(); var!=_varptrs.end(); var++ )
+        var->second->set_from_string( vc._varptrs[ var->first ]->as_string().c_str() );
+#else
     for( unordered_map< std::string, spbase* >::iterator var=_varptrs.begin(); var!=_varptrs.end(); var++ )
         var->second->set_from_string( vc._varptrs.at( var->first )->as_string().c_str() );
-    
+#endif
     return;
 }
 

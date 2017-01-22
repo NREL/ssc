@@ -528,7 +528,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15);
 
 		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_vary_f_recomp_opt_file.open(file_name);
+		mc_P_mc_vary_f_recomp_opt_file.open(file_name.c_str());
 
 		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,phi_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 	}
@@ -668,7 +668,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 			util::format("%.1f", ms_rc_cycle_od_phi_par.m_P_mc_in);
 
 		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name);
+		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name.c_str());
 	}
 
 	// Estimate the turbine inlet temperature for the turbomachinery balance
@@ -2055,7 +2055,7 @@ void C_sco2_recomp_csp::off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*
 			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15);
 
 		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_vary_f_recomp_opt_file.open(file_name);
+		mc_P_mc_vary_f_recomp_opt_file.open(file_name.c_str());
 
 		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,phi_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
 	}
@@ -2084,7 +2084,7 @@ void C_sco2_recomp_csp::off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_i
 			util::format("%.1f", P_mc_in);
 
 		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name);
+		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name.c_str());
 	}
 
 	if( m_is_write_mc_out_file )
