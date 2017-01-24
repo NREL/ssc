@@ -2310,12 +2310,25 @@ static int mpcall(int m, int n, double *p, double *dy, double **dvec, void *vars
 }
 
 int lsqfit( double (*function)( double _x, double *par, void *user_data ), void *user_data,
-	double par[], size_t npar, double *xdata, double *ydata, size_t len )
+	double par[], size_t npar, double *xdata, double *ydata, size_t len,
+	double tol, int maxit, int maxfc )
 {
 	// use cmpfit library based on MINPACK from
 	// http://cow.physics.wisc.edu/~craigm/idl/cmpfit.html
 	struct lsq_vars_struct v;
 	mp_result result;
+
+	mp_config cfg;
+	cfg.ftol = cfg.xtol = cfg.gtol = tol;
+	cfg.epsfcn = MP_MACHEP0;
+	cfg.stepfactor = 100.0;
+	cfg.covtol = 1e-14;
+	cfg.maxiter = maxit;
+	cfg.maxfev = maxfc;
+	cfg.nprint = 0;
+	cfg.douserscale = 0;
+	cfg.nofinitecheck = 0;
+	cfg.iterproc = 0;
 
 	double *perror = new double[npar];
 
@@ -2328,7 +2341,7 @@ int lsqfit( double (*function)( double _x, double *par, void *user_data ), void 
 	v.user_data = user_data;
 
 	/* Call fitting function for 10 data points and 2 parameters */
-	int info = mpfit( mpcall, (int)len, (int)npar, par, 0, 0, (void *) &v, &result) > 0;
+	int info = mpfit( mpcall, (int)len, (int)npar, par, 0, &cfg, (void *) &v, &result) > 0;
 
 	// free memory allocated above
 	delete [] perror;

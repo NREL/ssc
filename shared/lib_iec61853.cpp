@@ -636,7 +636,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	// do a nonlinear least squares to fit the Io equation as a function of temperature
 	// free parameter is Egref. initial guess is 1.0
 	double Egref_fit[1] = { 1.0 };
-	if ( !lsqfit( Io_fit_eqn, 0, Egref_fit, 1, &temps[0], &Io_avgs[0], temps.size() ) )
+	if ( !lsqfit( Io_fit_eqn, 0, Egref_fit, 1, &temps[0], &Io_avgs[0], temps.size(), 1e-9, 200, 20000 ) )
 	{
 		OUTLN("error in nonlinear least squares fit for Io equation");
 		return false;
@@ -678,7 +678,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 
 
 	double C[3] = { 5000, 500, 0.5 }; // initial guesses for lsqfit
-	if ( !lsqfit( Rsh_fit_eqn, 0, C, 3, &irrads[0], &Rsh_avgs[0], irrads.size() ) )
+	if ( !lsqfit( Rsh_fit_eqn, 0, C, 3, &irrads[0], &Rsh_avgs[0], irrads.size(), 1.0e-9, 200, 20000 ) )
 	{
 		OUTLN("error in nonlinear least squares fit for Rsh equation");
 		return false;
@@ -706,14 +706,14 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 			}
 		}
 
-		if ( Ivec.size() < 3 )
+		if ( Ivec.size() < 2 )
 		{
 			PRINTF("must have measurements at two different irradiance levels for each unique temperature considered, only %d found at %lg C", (int) Ivec.size(), temps[i] );
 			return false;
 		}
 
 		double Dpr[2] = { 10.0, 1.0 };
-		if ( !lsqfit( Rs_fit_eqn, 0, Dpr, 2, &Ivec[0], &Rsvec[0], Ivec.size() ) )
+		if ( !lsqfit( Rs_fit_eqn, 0, Dpr, 2, &Ivec[0], &Rsvec[0], Ivec.size(), 1.0e-9, 200, 20000 ) )
 		{
 			PRINTF("error in nonlinear least squares fit for Rs equation at %lg C", temps[i] );
 			return false;

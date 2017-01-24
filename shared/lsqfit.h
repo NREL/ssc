@@ -220,7 +220,10 @@ extern int mpfit(mp_func funct, int m, int npar,
 		int info = lsqfit( Io_fit, 0, Egref, 1, &temps[0], &Io_avgs[0], temps.size() );
 */
 int lsqfit( double (*function)( double _x, double *par, void *user_data ), void *user_data,
-	double par[], size_t npar, double *xdata, double *ydata, size_t len );
+	double par[], size_t npar, double *xdata, double *ydata, size_t len,
+	double tol = 1e-9, // tolerance criterion for convergence
+	int maxit = 200, // max iterations
+	int maxfc = 0 ); // max function calls
 
 
 
