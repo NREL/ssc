@@ -615,7 +615,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	}
 
 	// find average Io value at each temp value
-	std::vector<double> Io_avgs( temps.size() );
+	std::vector<double> Io_avgs, Io_temps;
 	for( size_t i=0;i<temps.size();i++ )
 	{
 		double T = temps[i];
@@ -626,17 +626,27 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		{
 			if ( input(j,COL_TC) == T )
 			{
-				accum += par(j,IO);
-				nvals++;
+				if ( std::isfinite( par(j,IO) ) )
+				{
+					accum += par(j,IO);
+					nvals++;
+				}
 			}
 		}
-		Io_avgs[i] = ( accum / nvals / Io_stc );
+
+		if ( nvals > 0 )
+		{
+			Io_temps.push_back( T );
+			Io_avgs.push_back( accum / nvals / Io_stc );
+		}
 	}
 
 	// do a nonlinear least squares to fit the Io equation as a function of temperature
 	// free parameter is Egref. initial guess is 1.0
 	double Egref_fit[1] = { 1.0 };
-	if ( !lsqfit( Io_fit_eqn, 0, Egref_fit, 1, &temps[0], &Io_avgs[0], temps.size(), 1e-9, 200, 20000 ) )
+	if ( !lsqfit( Io_fit_eqn, 0, Egref_fit, 1, 
+		&Io_temps[0], &Io_avgs[0], Io_temps.size(), 
+		1e-9, 200, 20000 ) )
 	{
 		OUTLN("error in nonlinear least squares fit for Io equation");
 		return false;
@@ -657,7 +667,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	}
 
 	// get average Rsh from each condition with the corresponding irradiance
-	std::vector<double> Rsh_avgs( irrads.size() );
+	std::vector<double> Rsh_avgs, Rsh_irrads;
 	for( size_t i=0;i<irrads.size();i++ )
 	{
 		double Irr = irrads[i];
@@ -667,18 +677,30 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		{
 			if( input(j,COL_IRR) == Irr )
 			{
-				accum += par(j,RSH);
-				nvals++;
+				if ( std::isfinite( par(j,RSH) ) )
+				{
+					accum += par(j,RSH);
+					nvals++;
+				}
 			}
 		}
-		Rsh_avgs[i] = accum / nvals;
 
-		if( verbose ) PRINTF("Rsh_avg[@ %lg W/m2] = %lg", irrads[i], Rsh_avgs[i] );
+		if ( nvals >= 2 )
+		{
+			double Rshval =  accum / nvals;
+			Rsh_irrads.push_back( Irr );
+			Rsh_avgs.push_back( Rshval );
+			if( verbose ) PRINTF("Rsh_avg[@ %lg W/m2] = %lg", Irr, Rshval );
+		}
+
+		
 	}
 
 
-	double C[3] = { 5000, 500, 0.5 }; // initial guesses for lsqfit
-	if ( !lsqfit( Rsh_fit_eqn, 0, C, 3, &irrads[0], &Rsh_avgs[0], irrads.size(), 1.0e-9, 200, 20000 ) )
+	double C[3] = { 1000, 100, 0.25 }; // initial guesses for lsqfit
+	if ( !lsqfit( Rsh_fit_eqn, 0, C, 3, 
+			&Rsh_irrads[0], &Rsh_avgs[0], Rsh_irrads.size(), 
+			1.0e-9, 500, 50000 ) )
 	{
 		OUTLN("error in nonlinear least squares fit for Rsh equation");
 		return false;
@@ -690,7 +712,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 
 	// first, do a least square parameter fit for Rs as a function of irradiance
 	// at each temperature condition
-	std::vector<double> Dpar0( temps.size() );	
+	std::vector<double> Dpar0, DparT;	
 	D1 = D2 = D3 = 0;
 
 	for( size_t i=0;i<temps.size();i++ )
@@ -701,32 +723,42 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		{
 			if ( input(j,COL_TC) == temps[i] )
 			{
-				Ivec.push_back( input(j,COL_IRR) );
-				Rsvec.push_back( par(j, RS ) );
+				if ( std::isfinite( par(j,RS) ) )
+				{
+					Ivec.push_back( input(j,COL_IRR) );
+					Rsvec.push_back( par(j, RS ) );
+				}
 			}
 		}
 
-		if ( Ivec.size() < 2 )
+		if ( Ivec.size() >= 2 )
 		{
-			PRINTF("must have measurements at two different irradiance levels for each unique temperature considered, only %d found at %lg C", (int) Ivec.size(), temps[i] );
-			return false;
-		}
+			double Dpr[2] = { 5.0, 1.0 };
+			if ( !lsqfit( Rs_fit_eqn, 0, Dpr, 2, 
+				&Ivec[0], &Rsvec[0], Ivec.size(), 
+				1.0e-9, 400, 40000 ) )
+			{ 
+				PRINTF("error in nonlinear least squares fit for Rs equation at %lg C", temps[i] );
+				return false;
+			}
+	
+			Dpar0.push_back( Dpr[0] );
+			DparT.push_back( temps[i] );
 
-		double Dpr[2] = { 10.0, 1.0 };
-		if ( !lsqfit( Rs_fit_eqn, 0, Dpr, 2, &Ivec[0], &Rsvec[0], Ivec.size(), 1.0e-9, 200, 20000 ) )
-		{
-			PRINTF("error in nonlinear least squares fit for Rs equation at %lg C", temps[i] );
-			return false;
+			D3 += Dpr[1];
 		}
-
-		Dpar0[i] = Dpr[0];
-		D3 += Dpr[1];
 	}
 
-	D3 /= temps.size();
+	if( DparT.size() < 2 )
+	{
+		PRINTF( "insufficient valid solutions for series resistance fit equation, %d of minimum 2 ok", (int)DparT.size() );
+		return false;
+	}
+
+	D3 /= DparT.size();
 
 	// now do a linear fit on the first parameter as a function of temperature	
-	if ( !linfit( Dpar0, temps, &D2, &D1 ) )
+	if ( !linfit( Dpar0, DparT, &D2, &D1 ) || D1 <= 0 )
 	{
 		OUTLN("error in linear fit for Rs equation D1 and D2 parameters");
 		return false;
