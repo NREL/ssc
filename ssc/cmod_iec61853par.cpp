@@ -83,6 +83,12 @@ public:
 		assign( "D2", var_data(solver.D2) );
 		assign( "D3", var_data(solver.D3) );
 		assign( "Egref", var_data(solver.Egref) );
+
+		ssc_number_t *output = allocate( "output", par.nrows(), par.ncols() );
+		size_t c = 0;
+		for( size_t i=0;i<par.nrows();i++ )
+			for( size_t j=0;j<par.ncols();j++ )
+				output[c++] = par(i,j);
 	}
 };
 
