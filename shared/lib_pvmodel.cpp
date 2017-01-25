@@ -274,12 +274,16 @@ double current_5par( double V, double IMR, double A, double IL, double IO, doubl
 	
 	//C**** first guess is max.power point current
 	double INEW = IMR;
+	const int maxit = 4000;
+	int it = 0;
 	while( fabs(INEW-IOLD) > 0.0001)
 	{
 		IOLD = INEW;
 		double F = IL-IOLD-IO*(exp((V_MODULE+IOLD*RS)/A)-1.0) - (V_MODULE+IOLD*RS)/RSH;
 		double FPRIME = -1.0-IO*(RS/A)*exp((V_MODULE+IOLD*RS)/A)-(RS/RSH);
 		INEW = max(0.0,(IOLD-(F/FPRIME)));
+		if ( it++ == maxit ) 
+			return -1.0;
 	}
 	
 	return INEW;
