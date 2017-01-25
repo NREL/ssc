@@ -384,10 +384,24 @@ double Rsh_fit_eqn( double _x, double *par, void * )
 	return par[0] + par[1]*( pow(1000/_x, par[2]) - 1 );
 }
 
+double Rsh_fit_eqn_2par( double _x, double *par, void *arg )
+{
+	double *Rsh_stc = (double*)arg;
+	return *Rsh_stc + par[0]*( pow(1000/_x, par[1]) - 1 );
+}
+
+
 double Rs_fit_eqn( double _x, double *par, void * )
 {
 	return par[0] + ( 1-_x/1000) *par[1]*pow(1000/_x, 2.0);
 }
+
+double Rs_fit_eqn_1par( double _x, double *par, void *arg )
+{
+	double *Rs_stc = (double*)arg;
+	return *Rs_stc + ( 1-_x/1000) *par[0]*pow(1000/_x, 2.0);
+}
+
 
 bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, int Type, 
 	util::matrix_t<double> &par, bool verbose )
@@ -696,7 +710,16 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		
 	}
 
+	double Rsh_stc = par(idx_stc, RSH );
+	if ( verbose ) PRINTF( "Rsh @ STC = %lg", Rsh_stc );
 
+	if ( !std::isfinite( Rsh_stc ) )
+	{
+		PRINTF( "Rsh value at STC non-finite (%lg), parameter solution error.", Rsh_stc );
+		return false;
+	}
+
+#ifdef CPAR_3
 	double C[3] = { 1000, 100, 0.25 }; // initial guesses for lsqfit
 	if ( !lsqfit( Rsh_fit_eqn, 0, C, 3, 
 			&Rsh_irrads[0], &Rsh_avgs[0], Rsh_irrads.size(), 
@@ -705,6 +728,22 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 		OUTLN("error in nonlinear least squares fit for Rsh equation");
 		return false;
 	}
+#else
+	double C[3] = { 100, 0.25, 0 };
+	
+	if ( !lsqfit( Rsh_fit_eqn_2par, &Rsh_stc, C, 2, 
+			&Rsh_irrads[0], &Rsh_avgs[0], Rsh_irrads.size(), 
+			1.0e-9, 500, 50000 ) )
+	{
+		OUTLN("error in nonlinear least squares fit for Rsh equation");
+		return false;
+	}
+	
+	C[2] = C[1];
+	C[1] = C[0];
+	C[0] = Rsh_stc;
+
+#endif
 
 	if ( verbose ) PRINTF( "determined Rsh equation parameters C1=%lg C2=%lg C3=%lg", C[0], C[1], C[2] );
 	
@@ -760,9 +799,20 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	// now do a linear fit on the first parameter as a function of temperature	
 	if ( !linfit( Dpar0, DparT, &D2, &D1 ) || D1 <= 0 )
 	{
-		OUTLN("error in linear fit for Rs equation D1 and D2 parameters");
+		PRINTF("error in linear fit for Rs equation D1 and D2 parameters: D1=%lg", D1);
 		return false;
 	}
+
+	double Rs_stc = par( idx_stc, RS );
+	if ( !std::isfinite( Rs_stc ) )
+	{
+		PRINTF("Rs value at STC nonfinite (%lg), parameter solution error.", Rs_stc );
+		return false;
+	}
+
+	if( verbose ) PRINTF("best fit for D1: %lg, but using Rs_stc %lg", D1, Rs_stc );
+
+	D1 = Rs_stc;
 
 	if( verbose ) PRINTF("determined Rs equation parameters D1=%lg D2=%lg D3=%lg", D1, D2, D3 );
 
