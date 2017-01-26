@@ -36,6 +36,11 @@ Define _DEBUG if compile with debugging
 
 namespace util
 {
+	const double watt_to_kilowatt = 1. / 1000;
+	const double kilowatt_to_watt = 1000;
+	const double hour_to_min = 60.;
+	const double Celsius_to_Kelvin = 273.15;
+
 	static const int nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
 	std::vector< std::string > split( const std::string &str, const std::string &delim, bool ret_empty=false, bool ret_delim=false );
