@@ -4,6 +4,7 @@
 
 #include <wx/wx.h>
 #include <wx/imaglist.h>
+#include <wx/dynlib.h>
 
 #include <wx/config.h>
 #include <wx/scrolbar.h>
@@ -69,6 +70,15 @@ IMPLEMENT_APP(SCApp)
 
 bool SCApp::OnInit()
 {
+#ifdef __WXMSW__
+    typedef BOOL (WINAPI *SetProcessDPIAware_t)(void); 
+    wxDynamicLibrary dllUser32(wxT("user32.dll")); 
+    SetProcessDPIAware_t pfnSetProcessDPIAware = 
+        (SetProcessDPIAware_t)dllUser32.RawGetSymbol(wxT("SetProcessDPIAware")); 
+    if ( pfnSetProcessDPIAware ) 
+        pfnSetProcessDPIAware(); 
+#endif
+
 	SetAppName( "SDKtool" );
 	
 	// set the current working directory to locate .pdb on crash
