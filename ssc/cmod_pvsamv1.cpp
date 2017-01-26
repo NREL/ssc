@@ -628,6 +628,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "inv_cliploss",                         "Inverter clipping loss AC power limit",                "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_psoloss",                          "Inverter power consumption loss",                      "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "inv_pntloss",                          "Inverter night time loss",                             "kW",   "",  "Time Series (Inverter)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "ac_wiring_loss",                        "AC wiring loss",                                       "kW",   "",   "Time Series (Inverter)",              "*",                        "",                   "" },
 
 	// transformer model outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -635,7 +636,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "xfmr_loss_ts",                         "Transformer total loss",                                "kW", "",    "Time Series (Transformer)", "", "", "" },
 
 	//total losses- not part of loss diagram but now outputs instead of inputs JMF 11/25/15
-	{ SSC_OUTPUT,        SSC_NUMBER,      "ac_loss",                                     "AC wiring loss",                                "%",   "",                        "Annual (Year 1)",              "*",                        "",                   "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "ac_loss",                             "AC wiring loss",                                       "%",   "",    "Annual (Year 1)",              "*",                        "",                   "" },
 
 	// monthly and annual outputs
 
@@ -1038,7 +1039,6 @@ public:
 		// shading database if necessary
 		std::auto_ptr<ShadeDB8_mpp>  p_shade_db; // (new ShadeDB8_mpp());
 
-		// Sev 04/08
 		bool en_snow_model = (as_integer("en_snow_model") > 0); // snow model activation
 		double annual_snow_loss = 0;
 
@@ -1048,7 +1048,6 @@ public:
 //		double ac_derate = (1 - as_double("acwiring_loss") / 100) * (1 - as_double("transformer_loss") / 100);	//calculate using ac wiring and step up transformer losses
 		double ac_derate = 1 - as_double("acwiring_loss") / 100;	//calculate using ac wiring 
 		double ac_loss_percent = (1 - ac_derate) * 100;
-		//assign ac loss output since we just calculated it
 		assign("ac_loss", var_data((ssc_number_t)ac_loss_percent));
 
 		size_t alb_len = 0;
@@ -1590,7 +1589,7 @@ public:
 			sa[nn].sscalc.row_space = b / sa[nn].gcr;
 		}
 		
-		double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc/1000.0;
+		double nameplate_kw = modules_per_string * strings_in_parallel * module_watts_stc * util::watt_to_kilowatt;
 
 		::sandia_inverter_t snlinv;
 		::partload_inverter_t plinv;
@@ -1825,7 +1824,7 @@ public:
 		ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
 
 
-		ssc_number_t xfmr_rating = ratedACOutput * 0.001; // W to kW
+		ssc_number_t xfmr_rating = ratedACOutput * util::watt_to_kilowatt; // W to kW
 		ssc_number_t xfmr_ll_frac = as_number("transformer_load_loss") *0.01; // % to frac
 		ssc_number_t xfmr_nll = as_number("transformer_no_load_loss") *0.01; // % to frac
 		xfmr_nll *=  ts_hour * xfmr_rating; // kW
@@ -1895,6 +1894,7 @@ public:
 		
 		ssc_number_t *p_invpsoloss = allocate( "inv_psoloss", nrec );
 		ssc_number_t *p_invpntloss = allocate( "inv_pntloss", nrec );
+		ssc_number_t *p_ac_wiringloss = allocate("ac_wiring_loss", nrec);
 
 		// lifetime outputs
 		ssc_number_t *p_dcpwr = allocate("dc_net", nrec * nyears);
@@ -2752,10 +2752,10 @@ public:
 
 							if (iyear == 0)
 							{
-								p_snowloss[nn][idx] = (ssc_number_t)(0.001*sa[nn].module.dcpwr*smLoss);
-								p_dcsnowloss[idx] += (ssc_number_t)(0.001*sa[nn].module.dcpwr*smLoss);
+								p_snowloss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt*sa[nn].module.dcpwr*smLoss);
+								p_dcsnowloss[idx] += (ssc_number_t)(util::watt_to_kilowatt*sa[nn].module.dcpwr*smLoss);
 								p_snowcoverage[nn][idx] = (ssc_number_t)(sa[nn].sm.coverage);
-								annual_snow_loss += (ssc_number_t)(0.001*sa[nn].module.dcpwr*smLoss);
+								annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt*sa[nn].module.dcpwr*smLoss);
 							}
 
 							sa[nn].module.dcpwr *= (1 - smLoss);
@@ -2766,15 +2766,15 @@ public:
 
 						if (iyear == 0)
 						{
-							dc_gross[nn] += sa[nn].module.dcpwr*0.001*ts_hour; //power W to	energy kWh
-							annual_mppt_window_clipping += mppt_clip_window*0.001*ts_hour; //power W to	energy kWh
+							dc_gross[nn] += sa[nn].module.dcpwr*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
+							annual_mppt_window_clipping += mppt_clip_window*util::watt_to_kilowatt*ts_hour; //power W to	energy kWh
 							// save to SSC output arrays
 							p_tcell[nn][idx] = (ssc_number_t)sa[nn].module.tcell;
 							p_modeff[nn][idx] = (ssc_number_t)sa[nn].module.dceff;
 							p_dcv[nn][idx] = (ssc_number_t)sa[nn].module.dcv * modules_per_string;
 							p_voc[nn][idx] = (ssc_number_t)sa[nn].module.voc * modules_per_string;
 							p_isc[nn][idx] = (ssc_number_t)sa[nn].module.isc;
-							p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * 0.001);
+							p_dcsubarray[nn][idx] = (ssc_number_t)(sa[nn].module.dcpwr * util::watt_to_kilowatt);
 						}
 						// Sara 1/25/16 - shading database derate applied to dc only
 						// shading loss applied to beam if not from shading database
@@ -2792,7 +2792,7 @@ public:
 						dcpwr_net *= p_dc_degrade_factor[iyear + 1];
 
 					//dc adjustment factors apply to all subarrays
-					if (iyear == 0) annual_dc_adjust_loss += dcpwr_net * (1 - dc_haf(hour)) * 0.001 * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
+					if (iyear == 0) annual_dc_adjust_loss += dcpwr_net * (1 - dc_haf(hour)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
 					dcpwr_net *= dc_haf(hour);
 
 					//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
@@ -2800,7 +2800,7 @@ public:
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
 						int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
-						if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (dc_lifetime_losses[dc_loss_index] / 100) * 0.001 * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (dc_lifetime_losses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
 					}
 
@@ -2822,18 +2822,18 @@ public:
 
 						// save radiation values.  the ts_accum_* variables are units of (W), 
 						// and are sums of radiation power on each subarray for the current timestep
-						p_poanom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_nom * 0.001); // kW
-						p_poabeamnom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_nom * 0.001); // kW
-						p_poashaded_ts_total[idx] = (ssc_number_t)(ts_accum_poa_shaded * 0.001); // kW
-						p_poaeff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_eff * 0.001); // kW
-						p_poabeameff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * 0.001); // kW
+						p_poanom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_nom * util::watt_to_kilowatt); // kW
+						p_poabeamnom_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_nom * util::watt_to_kilowatt); // kW
+						p_poashaded_ts_total[idx] = (ssc_number_t)(ts_accum_poa_shaded * util::watt_to_kilowatt); // kW
+						p_poaeff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_eff * util::watt_to_kilowatt); // kW
+						p_poabeameff_ts_total[idx] = (ssc_number_t)(ts_accum_poa_beam_eff * util::watt_to_kilowatt); // kW
 
 
-						p_invmpptloss[idx] = (ssc_number_t)(mppt_clip_window * 0.001);
+						p_invmpptloss[idx] = (ssc_number_t)(mppt_clip_window * util::watt_to_kilowatt);
 
 					}
 					p_inv_dc_voltage[idx] = (ssc_number_t)dc_string_voltage;
-					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
+					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
 
 					idx++;
 				}
@@ -2869,7 +2869,7 @@ public:
 				{
 
 					cur_load = p_load_full[idx];
-					double dcpwr_net = 1000 * p_dcpwr[idx];
+					double dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
 					double dc_string_voltage = p_inv_dc_voltage[idx];
 
 					// Battery replacement
@@ -2884,8 +2884,8 @@ public:
 						if (iyear == 0)
 							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
 						
-						batt.advance(*this, iyear, hour, jj, dcpwr_net*0.001, cur_load);
-						dcpwr_net = 1000 * batt.outGenPower[idx];
+						batt.advance(*this, iyear, hour, jj, dcpwr_net*util::watt_to_kilowatt, cur_load);
+						dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
 
 						if (iyear == 0)
 							annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
@@ -2904,7 +2904,7 @@ public:
 					}
 					// inverter: runs at all hours of the day, even if no DC power.  important
 					// for capturing tare losses			
-					double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0;
+					double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
 					if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
 					{
 						double _par, _plr;
@@ -2937,29 +2937,26 @@ public:
 							dcpwr_net *= -1;
 							acpwr_gross *= -1;
 						}
-						batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*0.001);
-						acpwr_gross = batt.outGenPower[idx] * 1000;
+						batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*util::watt_to_kilowatt);
+						acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
 					}
 
-					
+					ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
+
 					// accumulate first year annual energy
 					if (iyear == 0)
 					{
-						annual_ac_gross += acpwr_gross * 0.001 * ts_hour;
+						annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
 						p_inveff[idx] = (ssc_number_t)(aceff);
-						p_invcliploss[idx] = (ssc_number_t)(cliploss * 0.001);
-						p_invpsoloss[idx] = (ssc_number_t)(psoloss * 0.001);
-						p_invpntloss[idx] = (ssc_number_t)(pntloss * 0.001);
+						p_invcliploss[idx] = (ssc_number_t)(cliploss * util::watt_to_kilowatt);
+						p_invpsoloss[idx] = (ssc_number_t)(psoloss * util::watt_to_kilowatt);
+						p_invpntloss[idx] = (ssc_number_t)(pntloss * util::watt_to_kilowatt);
+						p_ac_wiringloss[idx] = (ssc_number_t)(ac_wiringloss * util::watt_to_kilowatt);
 					}
-					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * 0.001);
-
-					//jmf 1-29-16 bug fix: ac_derate should subtract further power from negative nighttime values, not reduce the negative nighttime values!
-					//if (p_gen[idx] <= 0)
-					//p_gen[idx] = (ssc_number_t)(acpwr_gross * (1 + (1 - ac_derate)) * 0.001);
-					//else
-					//p_gen[idx] = (ssc_number_t)(acpwr_gross*ac_derate * 0.001); //acpwr_gross is in W, p_gen is in kW
+					p_dcpwr[idx] = (ssc_number_t)(dcpwr_net * util::watt_to_kilowatt);
+					
 					//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-					p_gen[idx] = (ssc_number_t)((acpwr_gross - (fabs(acpwr_gross) * ac_loss_percent / 100)) * 0.001); //acpwr_gross is in W, p_gen is in kW
+					p_gen[idx] = (ssc_number_t)((acpwr_gross - ac_wiringloss) * util::watt_to_kilowatt);
 
 					// apply transformer loss
 					// load loss
@@ -3039,7 +3036,7 @@ public:
 					{
 						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
-						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * 0.001 * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
+						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 					}
 
@@ -3577,8 +3574,8 @@ public:
 
 		if ((ratedACOutput <= 0) || (ratedDCOutput <= 0)) return;
 
-		ratedACOutput = ratedACOutput / 1000.0; // W to kW to compare to hourly output
-		ratedDCOutput = ratedDCOutput / 1000.0; // W to kW to compare to hourly output
+		ratedACOutput = ratedACOutput * util::watt_to_kilowatt; // W to kW to compare to hourly output
+		ratedDCOutput = ratedDCOutput * util::watt_to_kilowatt; // W to kW to compare to hourly output
 
 		acPower = as_array("gen", &acCount);
 		dcPower = as_array("dc_net", &dcCount);

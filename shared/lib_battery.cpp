@@ -5,6 +5,8 @@
 
 #include "lib_battery.h"
 
+
+
 /*
 Message class
 */
@@ -556,7 +558,7 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 	_I = capacity->I();
 	double q0 = capacity->q0();
 
-	double T = thermal->T_battery() + Celsius_to_Kelvin;
+	double T = thermal->T_battery() + util::Celsius_to_Kelvin;
 
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
@@ -1170,7 +1172,7 @@ double battery_t::battery_energy_to_fill()
 {
 	double battery_voltage = this->battery_voltage(); // [V] 
 	double charge_needed_to_fill = this->battery_charge_needed(); // [Ah] - qmax - q0
-	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*watt_to_kilowatt;  // [kWh]
+	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;  // [kWh]
 	return energy_needed_to_fill;
 }
 double battery_t::battery_power_to_fill()
@@ -1224,7 +1226,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_t_at_mode = 1000; 
 	_prev_charging = false;
 	_charging = false;
-	_e_max = Battery->battery_voltage()*Battery->battery_charge_maximum()*watt_to_kilowatt*0.01*(SOC_max - SOC_min);
+	_e_max = Battery->battery_voltage()*Battery->battery_charge_maximum()*util::watt_to_kilowatt*0.01*(SOC_max - SOC_min);
 	_grid_recharge = false;
 }
 dispatch_t::~dispatch_t()
@@ -1287,18 +1289,18 @@ void dispatch_t::switch_controller()
 		{
 			_P_tofrom_batt = 0.;
 			_charging = _prev_charging;
-			_t_at_mode += round(_dt_hour * hour_to_min);
+			_t_at_mode += round(_dt_hour * util::hour_to_min);
 		}
 		else
 			_t_at_mode = 0.;
 	}
-	_t_at_mode += round(_dt_hour * hour_to_min);
+	_t_at_mode += round(_dt_hour * util::hour_to_min);
 
 }
 double dispatch_t::current_controller(double battery_voltage)
 {
 	double P, I = 0.; // [W],[V]
-	P = kilowatt_to_watt*_P_tofrom_batt;
+	P = util::kilowatt_to_watt*_P_tofrom_batt;
 	I = P / battery_voltage;
 	restrict_current(I);
 	return I;
@@ -1487,7 +1489,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	// current charge state of battery from last time step.  
 	double battery_voltage = _Battery->battery_voltage();								         // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
-	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*watt_to_kilowatt;   // [kWh]
+	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;   // [kWh]
 	double charge_total = _Battery->battery_charge_total();								         // [Ah]
 	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
@@ -1522,7 +1524,7 @@ void dispatch_manual_t::dispatch(size_t year,
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
-		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * watt_to_kilowatt;// [kW]
+		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
 		compute_generation();
@@ -1561,7 +1563,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
 	{
 		if (fabs(_P_tofrom_batt) < tolerance)
-			I += (_P_grid_to_batt * kilowatt_to_watt / _Battery->battery_voltage());
+			I += (_P_grid_to_batt * util::kilowatt_to_watt / _Battery->battery_voltage());
 		else
 			I -= (_P_grid_to_batt / fabs(_P_tofrom_batt)) *I;
 	}
@@ -1569,7 +1571,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max && fabs(I) < fabs(_Ic_max))
 	{
 		if (fabs(_P_tofrom_batt) < tolerance )
-			I += (_P_pv_to_grid * kilowatt_to_watt / _Battery->battery_voltage());
+			I += (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
 		else
 			I += (_P_pv_to_grid / fabs(_P_tofrom_batt)) *I;
 	}
@@ -1694,7 +1696,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	// current charge state of battery from last time step.  
 	double battery_voltage = _Battery->battery_voltage();								         // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
-	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*watt_to_kilowatt;   // [kWh]
+	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;   // [kWh]
 	double charge_total = _Battery->battery_charge_total();								         // [Ah]
 	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
@@ -1723,7 +1725,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
-		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * watt_to_kilowatt;// [kW]
+		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
 		compute_generation();
@@ -1947,12 +1949,12 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max )
 {
 	if (capacity_kibam_t * capacity = dynamic_cast<capacity_kibam_t *>(_Battery->capacity_model()))
 	{
-		E_max = _Battery->battery_voltage() *_Battery->capacity_model()->q1()*watt_to_kilowatt;
+		E_max = _Battery->battery_voltage() *_Battery->capacity_model()->q1()*util::watt_to_kilowatt;
 		if (E_max < 0)
 			E_max = 0;
 	}
 	else
-		E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max-_SOC_min) *0.01 *watt_to_kilowatt;
+		E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max-_SOC_min) *0.01 *util::watt_to_kilowatt;
 
 	if (debug)
 	{

@@ -10,11 +10,7 @@
 #include <stdio.h>
 #include <algorithm>
 
-const double watt_to_kilowatt = 1. / 1000;
-const double kilowatt_to_watt = 1000;
-const double hour_to_min = 60.;
 const double tolerance = 0.001;
-const double Celsius_to_Kelvin = 273.15;
 
 typedef std::vector<double> double_vec;
 typedef std::vector<int> int_vec;
