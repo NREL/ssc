@@ -1,3 +1,5 @@
+# ARCH argument like arm64, armv7, armv7s, x86_64
+
 VPATH=../ssc
 
 #CC = gcc -mmacosx-version-min=10.9
@@ -8,10 +10,20 @@ VPATH=../ssc
 #LDFLAGS = -arch x86_64 -lm -lstdc++ shared.a solarpilot.a tcs.a lpsolve.a nlopt.a
 #CFLAGS += -D__64BIT__
 
+ifeq (${ARCH}, x86_64)
+	CC = gcc -mmacosx-version-min=10.9
+	CXX = g++ -mmacosx-version-min=10.9
+	CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g 	-D__MACOSX__ -fPIC -Wall -O3  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
 
-CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
-CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER -D__64BIT__
+else
+
+	CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+	CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+	CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g 	-D__MACOSX__ -arch ${ARCH} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER 
+
+endif
+
+CFLAGS += -D__64BIT__
 CXXFLAGS = $(CFLAGS) -std=c++11 
 
 
@@ -22,6 +34,7 @@ OBJECTS = \
 	cmod_thirdpartyownership.o \
 	cmod_snowmodel.o \
 	cmod_iec61853par.o \
+	cmod_singlediode.o \
 	cmod_layoutarea.o \
 	cmod_solarpilot.o \
 	cmod_dsg_flux_preprocess.o \
@@ -94,7 +107,7 @@ OBJECTS = \
 	tckernel.o 
 
 
-TARGET=ssc.a
+TARGET=ssc_${ARCH}.a
 
 $(TARGET):$(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)
