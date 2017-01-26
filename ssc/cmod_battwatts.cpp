@@ -32,6 +32,7 @@ public:
 	{
 		add_var_info(vtab_battwatts);
 		add_var_info(vtab_battery_outputs);
+		add_var_info(vtab_technology_outputs);
 	}
 
 
