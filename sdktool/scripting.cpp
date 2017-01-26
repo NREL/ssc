@@ -537,16 +537,11 @@ void EditorWindow::Exec()
 	wxLKSetPlotTarget( NULL );
 
 	
-	wxString svar;
+	wxString work_dir;
 	if( !m_fileName.IsEmpty() )
-	{
-		svar = wxPathOnly(m_fileName);
-		m_editor->SetWorkDir(wxPathOnly(m_fileName));
-	}
-	else
-	{
-		svar = wxEmptyString;
-	}
+		work_dir = wxPathOnly(m_fileName);
+
+	m_editor->SetWorkDir( work_dir );
 
 	m_editor->Execute( );
 
