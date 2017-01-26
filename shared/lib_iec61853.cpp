@@ -10,10 +10,9 @@
 #include "lsqfit.h"
 #include "lib_iec61853.h"
 
-
 const char *iec61853_module_t::module_type_names[_maxTypeNames] = { "monoSi", "multiSi", "CdTe", "CIS", "CIGS", "Amorphous" };
 const char *iec61853_module_t::col_names[COL_MAX] = { "Irr (W/m2)", "Temp (C)", "Pmp (W)", "Vmp (V)", "Voc (V)", "Isc (A)" };
-const char *iec61853_module_t::par_names[PARMAX] = { "IL", "IO", "RS", "RSH" };
+const char *iec61853_module_t::par_names[PARMAX] = { "IL", "IO", "RS", "RSH", "A" };
 
 iec61853_module_t::iec61853_module_t()
 {
@@ -572,6 +571,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 			par(i,IO) = Io;
 			par(i,RS) = Rs;
 			par(i,RSH) = Rsh;
+			par(i,A) = a;
 			nsuccess++;
 			
 			if ( verbose )

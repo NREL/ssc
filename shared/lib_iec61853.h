@@ -51,7 +51,7 @@ public:
 	#define ROW_MAX 30
 	enum { COL_IRR, COL_TC, COL_PMP, COL_VMP, COL_VOC, COL_ISC, COL_MAX };
 	static const char *col_names[COL_MAX];
-	enum { IL, IO, RS, RSH, PARMAX };
+	enum { IL, IO, RS, RSH, A, PARMAX };
 	static const char *par_names[PARMAX];
 	
 	bool calculate( util::matrix_t<double> &input, int nseries, int type, 
