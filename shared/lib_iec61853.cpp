@@ -396,11 +396,6 @@ double Rs_fit_eqn( double _x, double *par, void * )
 	return par[0] + ( 1-_x/1000) *par[1]*pow(1000/_x, 2.0);
 }
 
-double Rs_fit_eqn_1par( double _x, double *par, void *arg )
-{
-	double *Rs_stc = (double*)arg;
-	return *Rs_stc + ( 1-_x/1000) *par[0]*pow(1000/_x, 2.0);
-}
 
 
 bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, int Type, 
@@ -770,7 +765,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 			}
 		}
 
-		if ( Ivec.size() >= 2 )
+		if ( Ivec.size() >= 3 )
 		{
 			double Dpr[2] = { 5.0, 1.0 };
 			if ( !lsqfit( Rs_fit_eqn, 0, Dpr, 2, 
@@ -785,6 +780,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 			DparT.push_back( temps[i] );
 
 			D3 += Dpr[1];
+			D1 += Dpr[0];
 		}
 	}
 
@@ -795,14 +791,17 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 	}
 
 	D3 /= DparT.size();
+	D2 = 0;
+	D1 /= DparT.size();
 
 	// now do a linear fit on the first parameter as a function of temperature	
-	if ( !linfit( Dpar0, DparT, &D2, &D1 ) || D1 <= 0 )
-	{
-		PRINTF("error in linear fit for Rs equation D1 and D2 parameters: D1=%lg", D1);
-		return false;
-	}
+	//if ( !linfit( Dpar0, DparT, &D2, &D1 ) || D1 <= 0 )
+	//{
+	//	PRINTF("error in linear fit for Rs equation D1 and D2 parameters: D1=%lg", D1);
+	//	return false;
+	//}
 
+	/*
 	double Rs_stc = par( idx_stc, RS );
 	if ( !std::isfinite( Rs_stc ) )
 	{
@@ -812,7 +811,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 
 	if( verbose ) PRINTF("best fit for D1: %lg, but using Rs_stc %lg", D1, Rs_stc );
 
-	D1 = Rs_stc;
+	D1 = Rs_stc;*/
 
 	if( verbose ) PRINTF("determined Rs equation parameters D1=%lg D2=%lg D3=%lg", D1, D2, D3 );
 

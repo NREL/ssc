@@ -837,9 +837,7 @@ std::vector<bool> SCFrame::Start()
 		ssc_module_t p_mod = ::ssc_module_create( (const char*) cm.c_str() );
 			
 		if (p_mod != 0)
-		{			
-			::wxSetWorkingDirectory( wxPathOnly(m_dllPath) );
-
+		{
 			wxStopWatch sw;
 			sw.Start();			
 			if (! ::ssc_module_exec_with_handler( p_mod, p_data,
