@@ -158,6 +158,10 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 {
 	double P_battery_dc = _P_battery;
 	double P_gen_dc = _P_gen;
+
+	// capture inverter night-time losses
+	if (P_gen_dc == 0 && P_gen_ac < 0)
+		_P_inverter_draw = P_gen_ac;
 	
 	// if there is no "gen", then either no dispatch or all PV went to battery
 	double inverter_efficiency = 1.00;
@@ -188,6 +192,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	double P_pv_to_grid_ac = 0;
 	double P_grid_to_batt_ac = 0;
 	double P_batt_to_load_ac = 0;
+	double P_batt_to_grid_ac = 0;
 	double P_grid_to_load_ac = 0;
 	double P_gen_ac = 0;
 	double P_grid_ac = 0;
@@ -259,6 +264,8 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
+			P_pv_to_grid_ac = P_pv_ac - P_pv_to_load_ac;
+			P_batt_to_grid_ac = P_battery_ac - P_batt_to_load_ac;
 		}
 		else if (P_battery_ac < P_load_ac - P_pv_to_load_ac)
 			P_batt_to_load_ac = P_battery_ac;
@@ -278,6 +285,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	_P_gen = P_gen_ac;
 	_P_grid = P_grid_ac;
 	_P_battery_to_load = P_batt_to_load_ac;
+	_P_battery_to_grid = P_batt_to_grid_ac;
 	_P_pv_to_battery = P_pv_to_batt_dc;
 	_P_pv_to_load = P_pv_to_load_ac;
 	_P_pv_to_grid = P_pv_to_grid_ac;
