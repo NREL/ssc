@@ -47,9 +47,10 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                        "PVWatts",      "?",                        "",                              "" },
 	
-	
-	/* outputs */
+	/* battery */
+	{ SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",        "",                      "battwatts",     "?=0",                     "BOOLEAN",                        "" },
 
+	/* outputs */
 	{ SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Global horizontal irradiance",                "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Beam irradiance",                             "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "df",                             "Diffuse irradiance",                          "W/m2",   "",                        "Time Series",      "*",                       "",                          "" },
@@ -330,12 +331,15 @@ public:
 		add_var_info( _cm_vtab_pvwattsv5_common );
 		add_var_info( _cm_vtab_pvwattsv5_part2 );
 		add_var_info(vtab_adjustment_factors);
-		add_var_info(vtab_technology_outputs);
 	}
 
 
 	void exec( ) throw( general_error )
 	{
+		// don't add "gen" output if battery enabled, gets added later
+		if (!as_boolean("batt_simple_enable"))
+			add_var_info(vtab_technology_outputs);
+
 		std::auto_ptr<weather_data_provider> wdprov;
 
 		if ( is_assigned( "solar_resource_file" ) )
