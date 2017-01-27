@@ -1,12 +1,26 @@
-VPATH = ../lpsolve
-#CC = gcc -mmacosx-version-min=10.9
-#CXX = g++ -mmacosx-version-min=10.9
-#CFLAGS = -Wall -g -O3 -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
-#CXXFLAGS = $(CFLAGS) -std=gnu++11
+# ARCH argument like arm64, armv7, armv7s, x86_64
 
-CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
-CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER
+VPATH = ../lpsolve
+
+SIM=
+ifeq (${ARCH}, i386)
+	SIM=true
+endif
+ifeq (${ARCH}, x86_64)
+	SIM=true
+endif
+ifeq (${SIM}, true)
+	CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+	CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+	CFLAGS = -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -arch ${ARCH} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -miphoneos-version-min=8.0
+
+else
+	CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+	CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+	CFLAGS = -I../  -I../lpsolve -DNDEBUG -DCHECK_SOLUTION -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine  -DWX_PRECOMP -arch ${ARCH} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER
+
+endif
+
 CXXFLAGS = $(CFLAGS) -std=c++11 
 
 
@@ -42,7 +56,7 @@ OBJECTS = \
 	yacc_read.o
 
 
-TARGET=lpsolve.a
+TARGET=lpsolve_${ARCH}.a
 
 $(TARGET):$(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)

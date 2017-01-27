@@ -1,12 +1,30 @@
-VPATH = ../tcs
-#CC = gcc -mmacosx-version-min=10.9
-#CXX = g++ -mmacosx-version-min=10.9
-#CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
-#CXXFLAGS = $(CFLAGS)  -std=gnu++11
+# ARCH argument like arm64, armv7, armv7s, x86_64
 
+VPATH = ../tcs
+
+SIM=
+ifeq (${ARCH}, i386)
+	SIM=true
+endif
+ifeq (${ARCH}, x86_64)
+	SIM=true
+endif
+ifeq (${SIM}, true)
+#	CC = gcc -mmacosx-version-min=10.9
+#	CXX = g++ -mmacosx-version-min=10.9
+#	CFLAGS = -Wall -g -O3 -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot  -#DWX_PRECOMP -O2 -arch ${ARCH}  -fno-common
 CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
 CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -DWX_PRECOMP -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER
+CFLAGS = -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -DWX_PRECOMP -arch ${ARCH} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -miphoneos-version-min=8.0
+
+
+
+else
+CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+CFLAGS = -I../ -I../nlopt -I../shared -I../lpsolve -I../solarpilot -DWX_PRECOMP -arch ${ARCH} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -D_IOS_VER
+
+endif
 CXXFLAGS = $(CFLAGS) -std=c++11 
 
 
@@ -93,7 +111,7 @@ OBJECTS = tcskernel.o \
 	ud_power_cycle.o \
 	csp_dispatch.o
 
-TARGET=tcs.a
+TARGET=tcs_${ARCH}.a
 
 $(TARGET):$(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)
