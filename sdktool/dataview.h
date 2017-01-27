@@ -26,6 +26,8 @@ public:
 
 	void UpdateView();	
 	void UpdateGrid();
+	virtual void Freeze();
+	virtual void Thaw();
 
 
 	std::vector<int> GetColumnWidths();
@@ -49,6 +51,7 @@ private:
 	void OnGridLabelRightClick(wxGridEvent &evt);
 	void OnGridLabelDoubleClick(wxGridEvent &evt);
 
+	bool m_frozen;
 	wxExtGridCtrl *m_grid;
 	Table *m_grid_table;
 	wxCheckListBox *m_varlist;

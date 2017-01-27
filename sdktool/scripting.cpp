@@ -317,6 +317,17 @@ void fcall_tsview( lk::invoke_t &cxt )
 	}
 }
 
+void fcall_freeze( lk::invoke_t &cxt )
+{
+	LK_DOC( "freeze", "Freeze the data view for improved processing speed", "(none):none");
+	app_frame->GetDataView()->Freeze();
+}
+
+void fcall_thaw( lk::invoke_t &cxt )
+{
+	LK_DOC( "thaw", "Thaw the data view for to restore interactivity", "(none):none");
+	app_frame->GetDataView()->Thaw();
+}
 lk::fcall_t* ssc_funcs()
 {
 	static const lk::fcall_t vec[] = {
@@ -326,6 +337,8 @@ lk::fcall_t* ssc_funcs()
 		fcall_save,
 		fcall_load,
 		fcall_tsview,
+		fcall_freeze,
+		fcall_thaw,
 		0 };
 		
 	return (lk::fcall_t*)vec;
