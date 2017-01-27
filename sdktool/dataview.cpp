@@ -242,7 +242,8 @@ DataView::DataView( wxWindow *parent )
 	: wxPanel( parent ),
 	m_vt(0),
 	m_root_item(0),
-	m_grid_table(0)
+	m_grid_table(0),
+	m_frozen(false)
 {
 	wxBoxSizer *tb_sizer = new wxBoxSizer(wxHORIZONTAL);
 	tb_sizer->Add( new wxButton(this, ID_ADD_VARIABLE, "Add...", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT), 0, wxALL|wxEXPAND, 2);
@@ -351,9 +352,21 @@ static void SortByLabels(wxArrayString &names, wxArrayString &labels)
 	}
 }
 
+void DataView::Freeze()
+{
+	m_frozen = true;	
+}
+
+void DataView::Thaw()
+{
+	m_frozen = false;
+	UpdateView();
+}
 
 void DataView::UpdateView()
 {
+	if ( m_frozen ) return;
+
 	wxArrayString sel_list = m_selections;
 
 	m_names.Clear();
