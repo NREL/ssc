@@ -240,6 +240,10 @@ int linlsqfit(double *slope, double *intercept, double *xdata, double *ydata, si
 #include <float.h>
 #define mpfinite(x) _finite(x)
 
+/* iOS does not include finite() support */
+#elif defined(_IOS_VER) && _IOS_VER
+#define mpfinite(x) isfinite(x)
+
 /* Default is to assume that compiler/library has finite() function */
 #else
 #define mpfinite(x) finite(x)

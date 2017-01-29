@@ -16,14 +16,12 @@ endif
 
 CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
 CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC -fno-exceptions
+CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC -fno-exceptions -D_IOS_VER
 CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
 
 
 OBJECTS = \
 	lsqfit.o \
-
-OBJECTS = \
 	lib_snowmodel.o \
 	lib_iec61853.o \
 	lib_cec6par.o \
