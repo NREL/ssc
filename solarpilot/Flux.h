@@ -5,11 +5,7 @@
 #include <time.h>
 
 
-#ifdef _IOS_VER
-    #include <tr1/random>
-#else
 #include <random>
-#endif
 #include "Toolbox.h"
 #include "definitions.h"
 
