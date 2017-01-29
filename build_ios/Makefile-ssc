@@ -19,19 +19,19 @@ endif
 
 CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
 CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC  -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__MACOSX__ -D__64BIT__
+CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC  -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__IOS__ -D__64BIT__
 CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
 
 
 
 OBJECTS = \
-	cmod_singlediode.o \
 	cmod_ui_tes_calcs.o \
 	csp_common.o \
 	cmod_lcoefcr.o \
 	cmod_thirdpartyownership.o \
 	cmod_snowmodel.o \
 	cmod_iec61853par.o \
+	cmod_singlediode.o \
 	cmod_layoutarea.o \
 	cmod_solarpilot.o \
 	cmod_dsg_flux_preprocess.o \
@@ -46,7 +46,6 @@ OBJECTS = \
 	cmod_windfile.o \
 	cmod_pvwattsv1_1ts.o \
 	cmod_pvwattsv1_poa.o \
-	cmod_battwatts.o \
 	cmod_wfcsv.o \
 	cmod_6parsolve.o \
 	cmod_windpower.o \
@@ -54,6 +53,8 @@ OBJECTS = \
 	cmod_wind_obos.o \
 	cmod_pv6parmod.o \
 	cmod_pvsandiainv.o \
+	cmod_pv_get_shade_loss_mpp.o \
+	cmod_inv_cec_cg.o \
 	cmod_pvsamv1.o \
 	cmod_wfreader.o \
 	cmod_irradproc.o \
@@ -95,6 +96,7 @@ OBJECTS = \
 	cmod_hcpv.o \
 	cmod_tcsmslf.o \
 	cmod_battery.o \
+	cmod_battwatts.o \
 	cmod_user_htf_comparison.o \
 	cmod_cb_mspt_system_costs.o \
 	cmod_cb_construction_financing.o \
@@ -103,8 +105,6 @@ OBJECTS = \
 	cmod_sco2_design_cycle.o \
 	cmod_sco2_csp_system.o \
 	cmod_sco2_csp_ud_pc_tables.o \
-	cmod_inv_cec_cg.o \
-	cmod_pv_get_shade_loss_mpp.o \
 	tckernel.o 
 
 
@@ -116,4 +116,11 @@ $(TARGET):$(OBJECTS)
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
 
+
+
+#$(TARGET) : $(OBJECTS)
+#	$(CXX) $(LDFLAGS)   -o $@ $^
+
+#clean:
+#	rm -rf $(OBJECTS) $(TARGET) ./dltest
 
