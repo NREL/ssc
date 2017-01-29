@@ -34,6 +34,9 @@
 #ifdef __MACOSX__
 #define __PLATFORM__ "OS X"
 #endif
+#ifdef __IOS__
+#define __PLATFORM__ "iOS"
+#endif
 
 #ifdef __32BIT__
 #define __ARCH__ "32 bit"
