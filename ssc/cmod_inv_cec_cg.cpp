@@ -184,6 +184,7 @@ public:
 		std::vector<double> Pin_vec(inv_cec_cg_Vmin.nrows());
 		int info;
 		double C[3];// initial guesses for lsqfit
+		size_t data_size = 3;
 
 		// Vmin non-linear
 		for (i = 0; i < inv_cec_cg_Vmin.nrows(); i++)
@@ -194,7 +195,7 @@ public:
 		C[0] = -1e-6;
 		C[1] = 1;
 		C[2] = 1e3;
-		if (!(info=lsqfit(Quadratic_fit_eqn, 0, C, 3, &Pin_vec[0], &Pout_vec[0], inv_cec_cg_Vmin.nrows())))
+		if (!(info=lsqfit(Quadratic_fit_eqn, 0, C, data_size, &Pin_vec[0], &Pout_vec[0], inv_cec_cg_Vmin.nrows())))
 		{
 			throw exec_error("inv_cec_cg", util::format("error in nonlinear least squares fit, error %d", info));
 			return;
@@ -212,7 +213,7 @@ public:
 		C[0] = -1e-6;
 		C[1] = 1;
 		C[2] = 1e3;
-		if (!(info = lsqfit(Quadratic_fit_eqn, 0, C, 3, &Pin_vec[0], &Pout_vec[0], inv_cec_cg_Vnom.nrows())))
+		if (!(info = lsqfit(Quadratic_fit_eqn, 0, C, data_size, &Pin_vec[0], &Pout_vec[0], inv_cec_cg_Vnom.nrows())))
 		{
 			throw exec_error("inv_cec_cg", util::format("error in nonlinear least squares fit, error %d", info));
 			return;
@@ -230,7 +231,7 @@ public:
 		C[0] = -1e-6;
 		C[1] = 1;
 		C[2] = 1e3;
-		if (!(info = lsqfit(Quadratic_fit_eqn, 0, C, 3, &Pin_vec[0], &Pout_vec[0], inv_cec_cg_Vmax.nrows())))
+		if (!(info = lsqfit(Quadratic_fit_eqn, 0, C, data_size, &Pin_vec[0], &Pout_vec[0], inv_cec_cg_Vmax.nrows())))
 		{
 			throw exec_error("inv_cec_cg", util::format("error in nonlinear least squares fit, error %d", info));
 			return;
@@ -299,7 +300,7 @@ public:
 			X[i] = inv_cec_cg_Vdc_Vnom[i];
 			Y[i] = inv_cec_cg_Pdco[i];
 		}
-		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], 3)))
+		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], data_size)))
 		{
 			throw exec_error("inv_cec_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
@@ -314,7 +315,7 @@ public:
 			X[i] = inv_cec_cg_Vdc_Vnom[i];
 			Y[i] = inv_cec_cg_Psco[i];
 		}
-		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], 3)))
+		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], data_size)))
 		{
 			throw exec_error("inv_cec_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
@@ -328,7 +329,7 @@ public:
 			X[i] = inv_cec_cg_Vdc_Vnom[i];
 			Y[i] = inv_cec_cg_C0[i];
 		}
-		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], 3)))
+		if ((info = linlsqfit(&slope, &intercept, &X[0], &Y[0], data_size)))
 		{
 			throw exec_error("inv_cec_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
