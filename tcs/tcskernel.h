@@ -11,13 +11,8 @@
 #include <string>
 #include <vector>
 
-#ifdef _IOS_VER
-    #include <tr1/unordered_map>
-    using std::tr1::unordered_map;
-#else
-    #include <unordered_map>
-    using std::unordered_map;
-#endif
+#include <unordered_map>
+using std::unordered_map;
 
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 
