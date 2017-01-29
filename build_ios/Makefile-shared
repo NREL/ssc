@@ -21,7 +21,7 @@ CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
 
 
 OBJECTS = \
-	lsqfit.o
+	lsqfit.o \
 
 OBJECTS = \
 	lib_snowmodel.o \
@@ -32,6 +32,7 @@ OBJECTS = \
 	lib_irradproc.o \
 	lib_physics.o \
 	lib_powerblock.o \
+	lib_power_electronics.o \
 	lib_pvinv.o \
 	lib_pvmodel.o \
 	lib_pvshade.o \
