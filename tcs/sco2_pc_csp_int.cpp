@@ -239,11 +239,11 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 
 	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
-	double P_mc_in_min = 8000.0;		//[kPa]
-	double P_mc_in_max = 11000.0;		//[kPa]
-	double P_mc_in_inc = 25.0;			//[kPa]
-	
-	off_design_P_mc_in_parameteric(P_mc_in_min, P_mc_in_max, P_mc_in_inc);
+	//double P_mc_in_min = 8000.0;		//[kPa]
+	//double P_mc_in_max = 11000.0;		//[kPa]
+	//double P_mc_in_inc = 25.0;			//[kPa]
+	//
+	//off_design_P_mc_in_parameteric(P_mc_in_min, P_mc_in_max, P_mc_in_inc);
 	//return -1;
 
 	//double P_mc_in_parametric = 9279.7;		//[kPa]
@@ -258,7 +258,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	
 	//m_od_opt_objective = E_MAX_POWER_FIX_PHI;
 	//m_od_opt_ftol = 1.E-7;
-	m_od_opt_objective = E_MAX_POWER_FIX_PHI;
+	//m_od_opt_objective = E_MAX_POWER_FIX_PHI;
 	bool opt_success_2_par = opt_P_mc_in_nest_f_recomp_max_eta_core();
 	if( !opt_success_2_par )
 	{
