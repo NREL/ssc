@@ -10,7 +10,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	// ** Design Parameters **
 		// System Design
 	{ SSC_INPUT,  SSC_NUMBER,  "htf",                  "Integer code for HTF used in PHX",                       "",           "",    "",      "*",     "",       "" },
-    { SSC_INPUT,  SSC_MATRIX,  "htf_props",            "User defined HTF property data",                         "", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "*", "", "" },
+    { SSC_INPUT,  SSC_MATRIX,  "htf_props",            "User defined HTF property data",                         "", "7 columns (T,Cp,dens,visc,kvisc,cond,h), at least 3 rows", "", "?=[[0]]", "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "T_htf_hot_des",        "HTF design hot temperature (PHX inlet)",                 "C",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "dT_PHX_hot_approach",  "Temp diff btw hot HTF and turbine inlet",                "C",          "",    "",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "T_amb_des",            "Ambient temperature",                                    "C",          "",    "",      "*",     "",       "" },
@@ -35,7 +35,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "*","",       "" },
 	// ** Off-design Inputs **
 	{ SSC_INPUT,  SSC_MATRIX,  "od_cases",             "Columns: T_htf_C, m_dot_htf_ND, T_amb_C, od_opt_obj (1: MAX_ETA, 2: MAX_POWER), Rows: cases",   "",           "",    "",      "",      "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "*",     "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	//{ SSC_INPUT,  SSC_NUMBER,  "is_m_dot_htf_fracs",   "0 = No analysis of HTF off design mass flow rate, 1 = Yes", "",        "",    "",      "*",     "",       "" },
 	//{ SSC_INPUT,  SSC_ARRAY,   "m_dot_htf_fracs_in",   "Array of normalized mass flow rate",                     "",           "",    "",      "is_m_dot_htf_fracs=1",     "",       "" },
@@ -84,7 +84,10 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_PHX",              "PHX effectiveness",                                      "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_PHX",              "PHX NTU",                                                "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_co2_PHX_in",         "CO2 temperature at PHX inlet",                           "C",          "",    "",      "*",     "",       "" },	
-	
+		// State Points
+	{ SSC_OUTPUT, SSC_ARRAY,  "T_state_points",       "Cycle temperature state points",      "C",	   "",   "",   "*",   "",   "" },
+	{ SSC_OUTPUT, SSC_ARRAY,  "P_state_points",       "Cycle pressure state points",         "MPa",   "",   "",   "*",   "",   "" },
+
 		// Air Cooler Design
 	// ?????
 
@@ -260,7 +263,11 @@ public:
 		sco2_rc_des_par.m_DP_PC = DP_PC;
 		sco2_rc_des_par.m_DP_PHX = DP_PHX;
 		sco2_rc_des_par.m_N_sub_hxrs = 10;
-		sco2_rc_des_par.m_N_turbine = 3600.0;
+
+		// 1.30.17 twn: try 30k
+		//sco2_rc_des_par.m_N_turbine = 3600.0;
+		sco2_rc_des_par.m_N_turbine = 30000.0;
+
 		sco2_rc_des_par.m_tol = 1.E-3;
 		sco2_rc_des_par.m_opt_tol = 1.E-3;
 		
@@ -294,12 +301,19 @@ public:
 			// Report warning before exiting with error
 			while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg))
 			{
-				log(out_msg);
+				log(out_msg + "\n");
+				log("\n");
 			}
 
 			log(csp_exception.m_error_message, SSC_ERROR, -1.0);
 
 			return;
+		}
+
+		// If all calls were successful, log to SSC any messages from sco2_recomp_csp
+		while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
+		{
+			log(out_msg + "\n");
 		}
 
 		// Set SSC design outputs
@@ -349,7 +363,14 @@ public:
 		assign("eff_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 		assign("NTU_PHX",sco2_recomp_csp.get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
 		assign("T_co2_PHX_in", sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT] - 273.15);	//[C]
-
+			// State Points
+		ssc_number_t *p_T_state_points = allocate("T_state_points", C_RecompCycle::RC_OUT+1);
+		ssc_number_t *p_P_state_points = allocate("P_state_points", C_RecompCycle::RC_OUT+1);
+		for( int i = 0; i < C_RecompCycle::RC_OUT+1; i++ )
+		{
+			p_T_state_points[i] = (ssc_number_t)sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_temp[i]-273.15;	//[C]
+			p_P_state_points[i] = (ssc_number_t)sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_pres[i] / 1.E3;	//[MPa]
+		}
 
 		// Check that off-design model matches design-point with same operation inputs
 		C_sco2_recomp_csp::S_od_par sco2_rc_od_par;
@@ -835,7 +856,7 @@ public:
 		// If all calls were successful, log to SSC any messages from sco2_recomp_csp
 		while( sco2_recomp_csp.mc_messages.get_message(&out_type, &out_msg) )
 		{
-			log(out_msg);
+			log(out_msg + "\n");
 		}
 		
 	}
