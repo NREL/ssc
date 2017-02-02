@@ -8,10 +8,15 @@ var('htf_props', [[0]]);		//[-] Custom HTF props (only used if htf = 50)
 T_htf_hot_des = 720.0;			//[C]
 var('T_htf_hot_des', T_htf_hot_des);		//[C] HTF design hot temperature (PHX inlet)
 var('dT_PHX_hot_approach', 20);	//[C] Temp diff between hot HTF and turbine inlet
-var('T_amb_des', 30);			//[C] Ambient temperature at design
+T_amb_des = 30.0;				//[C] Ambient temperature at design
+var('T_amb_des', T_amb_des);			//[C] Ambient temperature at design
 var('dT_mc_approach', 15);		//[C] Temperature difference between main compressor CO2 inlet and ambient air
 var('site_elevation', 300);		//[m] Site elevation (used to calculate air density in air cooler design model)
 var('W_dot_net_des', 10);		//[MWe] Design cycle power output (no cooling parasitics)
+
+
+var('is_recomp_ok', 1);			//[-] 1 = yes, 2 = simple cycle only
+
 
 var('design_method', 2);		//[-] 1 = Specify efficiency, 2 = Specify total recup UA
 if(var('design_method') == 1)
@@ -20,7 +25,7 @@ if(var('design_method') == 1)
 }
 else if(var('design_method') == 2)
 {
-	var('UA_recup_tot', 1694.91525);	//[kW/K] Total recuperator effectiveness
+	var('UA_recup_tot', 1694.91525);	//[kW/K] Total recuperator conductance
 }
 
 	// Cycle Design
@@ -45,7 +50,49 @@ var( 'od_cases', [[0]]);
 
 if( true )
 {
-var('od_cases', [
+	if( true )
+	{
+		var('od_cases', [
+			[T_htf_hot_des, 1.0, T_amb_des, 2, 1.E-3],
+			[T_htf_hot_des, 1.0, T_amb_des, 4, 1.E-3] ] );
+	}
+	else if( true )
+	{
+		T_amb_start = 14.0;
+		T_amb_end = 46.0;
+
+		delta_T_amb = 0.5;
+		i = 0;
+		for(T_amb_local = T_amb_start; T_amb_local <= T_amb_end; T_amb_local = T_amb_local + delta_T_amb)
+		{
+			array2d[i] = [T_htf_hot_des, 1.0, T_amb_local, 2, 1.E-3];
+			i = i + 1;
+		}
+		
+		var('od_cases', array2d);
+	}
+	else if(true)
+	{
+		T_amb_low = 0.0; 		//[C]
+		T_amb_high = 55.0;		//[C]
+		m_dot_low = 0.5;		//[-]
+		m_dot_high = 1.1;		//[-]
+		T_htf_low = 690.0;		//[C]
+		T_htf_high = 735.0;		//[C]
+		
+		var('od_cases', [
+			[T_htf_low, m_dot_low, T_amb_low, 2, 1.E-3],
+			[T_htf_low, m_dot_low, T_amb_high, 2, 1.E-3],
+			[T_htf_low, m_dot_high, T_amb_low, 2, 1.E-3],
+			[T_htf_low, m_dot_high, T_amb_high, 2, 1.E-3],
+			[T_htf_high, m_dot_low, T_amb_low, 2, 1.E-3],
+			[T_htf_high, m_dot_low, T_amb_high, 2, 1.E-3],
+			[T_htf_high, m_dot_high, T_amb_low, 2, 1.E-3],
+			[T_htf_high, m_dot_high, T_amb_high, 2, 1.E-3] ]);
+	}
+	else
+	{
+			var('od_cases', [
 
 				//[574, 1, 45, 1, 1.E-3],
 				//[574, 1, 30, 1, 1.E-4],
@@ -130,6 +177,7 @@ var('od_cases', [
 				//[574, 1, 0, 7, 1.E-4],
 				//[574, 1, 0, 8, 1.E-3]]);
 				//[574, 1, 0, 8, 1.E-4]]);
+	}
 }
 				
 				
@@ -157,8 +205,8 @@ outln("The total recuperator conductance is: ", var("UA_recup_total"), " kW/K");
 outln("The low temperature recuperator conductance is: ", var("UA_LTR"), " kW/K");
 outln("The high temperature recuperator conductance is: ", var("UA_HTR"), " kW/K");
 outln("The recompression fraction is: ", var("recomp_frac"), " -");
-outln("The main compressor outlet pressure is: ", var("P_comp_in"), " MPa");
-outln("The main compressor inlet pressure is: ", var("P_comp_out"), " MPa");
+outln("The main compressor inlet pressure is: ", var("P_comp_in"), " MPa");
+outln("The main compressor outlet pressure is: ", var("P_comp_out"), " MPa");
 outln("The PHX conductance is: ", var("UA_PHX"), " kW/K");
 outln("The PHX effectiveness is: ", var("eff_PHX"), " -");
 outln("The PHX NTU is: ", var("NTU_PHX"), " -");
@@ -171,10 +219,20 @@ outln("The off-design main compressor inlet pressure is: ", var("P_comp_in_od"),
 outln("The off-design main compressor speed is: ", var("N_mc_od"), " rpm");
 outln("The off-design recompression fraction is: ", var("recomp_frac_od"), " -");
 outln("The off-design cycle thermal efficiency is: ", var("eta_thermal_od"), " -");
+outln("The off-design cycle power output is: ", var("W_dot_net_od"), " MWe");
 
 // Setup output file
 file_name = file_dir + 'test_sco2_csp_module.csv';
 file_int = open(file_name, 'w');
+file_od_int = file_int;
+
+is_od_separate = true;
+if( is_od_separate )
+{
+	file_od_name = file_dir + 'test_sco2_csp_module_od.csv';
+	file_od_int = open(file_od_name, 'w');
+}
+
 headers_des = "T_htf_hot,"+		// C
 			"T_amb,"+			// C
 			"cycle_eta,"+		// -
@@ -346,7 +404,8 @@ outln(file_name, " Design labels were successful? ", write_line(file_int,labels_
 	write(file_int,to_string(var("T_co2_PHX_in"))+"\n");
 	
 // Write off-design headers and labels
-headers_od = "m_dot_htf_frac,"+	// -
+headers_od = "T_amb_des," +		// C 
+			"m_dot_htf_frac,"+	// -
 			"T_amb,"+			// C
 			"T_htf_hot,"+		// C
 				// Cycle control parameters
@@ -385,9 +444,12 @@ headers_od = "m_dot_htf_frac,"+	// -
 			"phx_eff,"+			// -
 				// Solver Metrics
 			"od_code";			// -
-			
-outln(file_name, " Off-design heades were successful? ", write_line(file_int,headers_od));
-labels_od = "-,"+	// m_dot_htf_frac
+
+
+outln(file_name, " Off-design heades were successful? ", write_line(file_od_int,headers_od));
+	
+labels_od = "C,"+	// T_amb_des
+			"-,"+	// m_dot_htf_frac
 			"C,"+	// T_amb
 			"C,"+	// T_htf_hot
 				// Cycle control parameters
@@ -426,53 +488,57 @@ labels_od = "-,"+	// m_dot_htf_frac
 			"-,"+		// phx_eff
 				// Solver Metrics
 			"-";
-			
-outln(file_name, " Off-design labels were successful? ", write_line(file_int,labels_od));
+if( !is_od_separate )
+{			
+	outln(file_name, " Off-design labels were successful? ", write_line(file_od_int,labels_od));
+}
+
 // Write off-design results
 n_od_runs = #var("T_amb_od");
 for(i=0; i<n_od_runs; i++)
 {
 //outln(file_name, " Off-design run ", i, " was successful? ", write_line(file_int,
 			// Parameters
-		write(file_int,to_string(var("m_dot_htf_fracs")[i])+",");
-		write(file_int,to_string(var("T_amb_od")[i])+",");
-		write(file_int,to_string(var("T_htf_hot_od")[i])+",");
+		write(file_od_int,to_string(var("T_amb_des"))+",");
+		write(file_od_int,to_string(var("m_dot_htf_fracs")[i])+",");
+		write(file_od_int,to_string(var("T_amb_od")[i])+",");
+		write(file_od_int,to_string(var("T_htf_hot_od")[i])+",");
 			// Cycle control parameters
-		write(file_int,to_string(var("od_opt_obj_code")[i])+",");
-		write(file_int,to_string(var("od_opt_conv_tol")[i])+",");
-		write(file_int,to_string(var("P_comp_in_od")[i])+",");
-		write(file_int,to_string(var("mc_phi_od")[i])+",");
-		write(file_int,to_string(var("recomp_frac_od")[i])+",");
+		write(file_od_int,to_string(var("od_opt_obj_code")[i])+",");
+		write(file_od_int,to_string(var("od_opt_conv_tol")[i])+",");
+		write(file_od_int,to_string(var("P_comp_in_od")[i])+",");
+		write(file_od_int,to_string(var("mc_phi_od")[i])+",");
+		write(file_od_int,to_string(var("recomp_frac_od")[i])+",");
 			// Optimizer outputs
-		write(file_int,to_string(var("sim_time_od")[i])+",");
+		write(file_od_int,to_string(var("sim_time_od")[i])+",");
 			// System solution
-		write(file_int,to_string(var("eta_thermal_od")[i])+",");
-		write(file_int,to_string(var("P_mc_out")[i])+",");
-		write(file_int,to_string(var("T_htf_cold_od")[i])+",");
-		write(file_int,to_string(var("m_dot_co2_full_od")[i])+",");
-		write(file_int,to_string(var("W_dot_net_od")[i])+",");
-		write(file_int,to_string(var("Q_dot_od")[i])+",");
+		write(file_od_int,to_string(var("eta_thermal_od")[i])+",");
+		write(file_od_int,to_string(var("P_mc_out")[i])+",");
+		write(file_od_int,to_string(var("T_htf_cold_od")[i])+",");
+		write(file_od_int,to_string(var("m_dot_co2_full_od")[i])+",");
+		write(file_od_int,to_string(var("W_dot_net_od")[i])+",");
+		write(file_od_int,to_string(var("Q_dot_od")[i])+",");
 			// Compressor
-		write(file_int,to_string(var("N_mc_od")[i])+",");
-		write(file_int,to_string(var("mc_tip_ratio_od")[i])+",");
+		write(file_od_int,to_string(var("N_mc_od")[i])+",");
+		write(file_od_int,to_string(var("mc_tip_ratio_od")[i])+",");
 			// Recompressor
-		write(file_int,to_string(var("rc_phi_1_od")[i])+",");
-		write(file_int,to_string(var("rc_phi_2_od")[i])+",");
-		write(file_int,to_string(var("rc_N_od")[i])+",");
-		write(file_int,to_string(var("rc_tip_ratio_od")[i])+",");
+		write(file_od_int,to_string(var("rc_phi_1_od")[i])+",");
+		write(file_od_int,to_string(var("rc_phi_2_od")[i])+",");
+		write(file_od_int,to_string(var("rc_N_od")[i])+",");
+		write(file_od_int,to_string(var("rc_tip_ratio_od")[i])+",");
 			// Turbine
-		write(file_int,to_string(var("t_nu_od")[i])+",");
-		write(file_int,to_string(var("t_N_od")[i])+",");
-		write(file_int,to_string(var("t_tip_ratio_od")[i])+",");
+		write(file_od_int,to_string(var("t_nu_od")[i])+",");
+		write(file_od_int,to_string(var("t_N_od")[i])+",");
+		write(file_od_int,to_string(var("t_tip_ratio_od")[i])+",");
 			// Recuperators
-		write(file_int,to_string(var("eff_LTR_od")[i])+",");
-		write(file_int,to_string(var("eff_HTR_od")[i])+",");
+		write(file_od_int,to_string(var("eff_LTR_od")[i])+",");
+		write(file_od_int,to_string(var("eff_HTR_od")[i])+",");
 			// PHX
-		write(file_int,to_string(var("T_co2_PHX_in_od")[i])+",");
-		write(file_int,to_string(var("T_co2_PHX_out_od")[i])+",");
-		write(file_int,to_string(var("phx_eff_od")[i])+",");
+		write(file_od_int,to_string(var("T_co2_PHX_in_od")[i])+",");
+		write(file_od_int,to_string(var("T_co2_PHX_out_od")[i])+",");
+		write(file_od_int,to_string(var("phx_eff_od")[i])+",");
 			// Solver Metrics
-		write(file_int,to_string(var("od_code")[i])+"\n");
+		write(file_od_int,to_string(var("od_code")[i])+"\n");
 }
 outln("Off design runs complete!");
 
