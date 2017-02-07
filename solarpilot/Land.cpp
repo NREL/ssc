@@ -35,12 +35,10 @@ bool Land::InBounds(var_land &V, Point &P, double tht)
 {
     //offset the point by tower x,y offset
     Point Po(P);
-    Po.x += -V.tower_offset_x.val;
-    Po.y += -V.tower_offset_y.val;
-
+    
 	//figure out whether the given point is inside the land area described by _boundary
 	bool test = true;
-	double prad = sqrt( pow(Po.x, 2) + pow(Po.y, 2) ); //radial position of the point
+	double prad = sqrt( pow(Po.x, 2) + pow(Po.y, 2) ); //radial position of the point relative to the tower
 		
 	if(V.is_bounds_scaled.val){	//Does the point lie within the limits scaling with tower height?
 		test = (prad >= (tht*V.min_scaled_rad.val) && prad <= (tht*V.max_scaled_rad.val) );
@@ -50,11 +48,27 @@ bool Land::InBounds(var_land &V, Point &P, double tht)
 		test = test && (prad >= V.min_fixed_rad.val && prad <= V.max_fixed_rad.val);
 		if(! test) return false;
 	}
-	if(V.is_bounds_array.val){
+	if(V.is_bounds_array.val)
+    {
+        if(! V.is_exclusions_relative.val )     //if the exclusions are relative, wait to shift the point until after exclusion tests
+        {
+            //since we can't offset the inclusions/exclusions polygons, just test with a shifted point
+            Po.x += V.tower_offset_x.val;
+            Po.y += V.tower_offset_y.val;
+        }
+
 		//Test all of the exclusions polygons first
-		for(unsigned int i=0; i<V.exclusions.val.size(); i++){ 
+		for(unsigned int i=0; i<V.exclusions.val.size(); i++)
+        { 
 			if( Toolbox::pointInPolygon(V.exclusions.val.at(i), Po) ) return false;	//if the point is in any exclusion, stop
 		}
+
+        if(V.is_exclusions_relative.val )   //if the point hasn't been shifted yet, do so now
+        {
+            Po.x += V.tower_offset_x.val;
+            Po.y += V.tower_offset_y.val;
+        }
+
 		//Test all of the inclusions polygons. The point must lie in one or more inclusion.
 		bool intest = V.inclusions.val.size() == 0;  //If there aren't any inclusions, all points are included. Otherwise initialize as false
 
