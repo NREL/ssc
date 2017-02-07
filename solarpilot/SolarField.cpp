@@ -795,6 +795,11 @@ bool SolarField::FieldLayout(){
 
 		ProcessLayoutResults(&results, sim_last - sim_first);
 	}
+    else
+    {
+        //update the layout data
+		ProcessLayoutResultsNoSim();
+    }
 
     return true;
 
@@ -1461,6 +1466,11 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
     return true;
 }		
 
+void SolarField::ProcessLayoutResultsNoSim()
+{
+    ProcessLayoutResults(0,0);
+}
+
 void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	/*
 	The sort metrics are mapped from the GUI in the following order:
@@ -1475,50 +1485,56 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
 	Default is 7.
 	*/
-
-	_sim_info.ResetValues();
-    if(! _sim_info.addSimulationNotice("Ranking and filtering heliostats") ) {
-        CancelSimulation();
-        return;
-    }
+    bool needs_processing = results != 0 && nsim_total > 0;
 
 	int Npos = _heliostats.size();
-	//Update each heliostat with the ranking metric and sort the heliostats by the value 
-	vector<double> hsort(Npos);
-	double rmet; //, nsimd=(float)nsim_total;
+    int nresults = 0; //initialize
+
+    if( needs_processing )
+    {
+	    _sim_info.ResetValues();
+        if(! _sim_info.addSimulationNotice("Ranking and filtering heliostats") ) {
+            CancelSimulation();
+            return;
+        }
+
+	    //Update each heliostat with the ranking metric and sort the heliostats by the value 
+	    vector<double> hsort(Npos);
+	    double rmet; //, nsimd=(float)nsim_total;
 	
-	//Save the heliostats in an array by ID#
-	_helio_by_id.clear();
-	for(int i=0; i<Npos; i++){
-		_helio_by_id[ _heliostats.at(i)->getId() ] = _heliostats.at(i);
-	}
+	    //Save the heliostats in an array by ID#
+	    _helio_by_id.clear();
+	    for(int i=0; i<Npos; i++){
+		    _helio_by_id[ _heliostats.at(i)->getId() ] = _heliostats.at(i);
+	    }
 
-	//Of all of the results provided, calculate the average of the ranking metric
-	int rid = _var_map->sf.hsort_method.mapval();
+	    //Of all of the results provided, calculate the average of the ranking metric
+	    int rid = _var_map->sf.hsort_method.mapval();
 	
-	int nresults = (int)results->size();
+	    nresults = (int)results->size();
 
-    //compile the results from each simulation by heliostat
-    for(int i=0; i<Npos; i++){
-		int hid = _heliostats.at(i)->getId();	//use the heliostat ID from the first result to collect all of the other results
-		rmet = 0.;      //ranking metric
-		for(int j=0; j<nresults; j++)
-            rmet += results->at(j).data_by_helio[ hid ].getDataByIndex( rid );      //accumulate ranking metric as specified in rid
+        //compile the results from each simulation by heliostat
+        for(int i=0; i<Npos; i++){
+		    int hid = _heliostats.at(i)->getId();	//use the heliostat ID from the first result to collect all of the other results
+		    rmet = 0.;      //ranking metric
+		    for(int j=0; j<nresults; j++)
+                rmet += results->at(j).data_by_helio[ hid ].getDataByIndex( rid );      //accumulate ranking metric as specified in rid
 
-        //normalize for available heliostat power if applicable
-        double afact = 1.;
-        if( rid == helio_perf_data::PERF_VALUES::POWER_TO_REC || rid == helio_perf_data::PERF_VALUES::POWER_VALUE )
-            afact = _heliostats.at(i)->getArea();
+            //normalize for available heliostat power if applicable
+            double afact = 1.;
+            if( rid == helio_perf_data::PERF_VALUES::POWER_TO_REC || rid == helio_perf_data::PERF_VALUES::POWER_VALUE )
+                afact = _heliostats.at(i)->getArea();
         
-        double rank_val = rmet / (afact*(float)nresults);       //Calculate the normalized ranking metric. Divide by heliostat area if needed
+            double rank_val = rmet / (afact*(float)nresults);       //Calculate the normalized ranking metric. Divide by heliostat area if needed
 		
-        _helio_by_id[hid]->setRankingMetricValue( rank_val );   //store the value
-		hsort.at(i) = rank_val;                                 //also store in the sort array
+            _helio_by_id[hid]->setRankingMetricValue( rank_val );   //store the value
+		    hsort.at(i) = rank_val;                                 //also store in the sort array
 		
-	}
+	    }
 
-    //quicksort by ranking metric value. Correlate _heliostats vector
-	quicksort(hsort, _heliostats, 0, Npos-1);
+        //quicksort by ranking metric value. Correlate _heliostats vector
+	    quicksort(hsort, _heliostats, 0, Npos-1);
+    }
 
     //Simulate the default design point to ensure equal comparison
 	double az_des, zen_des;
@@ -1563,7 +1579,8 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
 	//Check that the total power available is at least as much as the design point requirement. If not, notify
 	//the user that their specified design power is too high for the layout parameters.
-	if(_q_to_rec < q_inc_des*1.e6){
+	if(_q_to_rec < q_inc_des*1.e6 && needs_processing)
+    {
 		string units;
 		double 
 			xexp = log10(_q_to_rec),
@@ -1591,63 +1608,67 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 		//return;
 	}
 
-	double filter_frac = _var_map->sf.is_prox_filter.val ? _var_map->sf.prox_filter_frac.val : 0.;
+    if( needs_processing )
+    {
+	    double filter_frac = _var_map->sf.is_prox_filter.val ? _var_map->sf.prox_filter_frac.val : 0.;
 	
-	//Determine the heliostats that will be used for the plant
-	double q_cutoff=_q_to_rec;	//[W] countdown variable to decide which heliostats to include
-	int isave;
-	int nfilter=0;
-	double q_replace=0.;
-	for(isave=0; isave<Npos; isave++){
-		//
-		double q = _heliostats.at(isave)->getPowerToReceiver();
-		q_cutoff += -q;
-		if(q_cutoff < q_inc_des*1.e6) {
-			nfilter++;
-			q_replace += q;
-		}
-		if(q_cutoff < q_inc_des*1.e6*(1.-filter_frac)){break;}
-	}
-	//The value of isave is 1 entry more than satisfied the criteria.
+	    //Determine the heliostats that will be used for the plant
+	    double q_cutoff=_q_to_rec;	//[W] countdown variable to decide which heliostats to include
+	    int isave;
+	    int nfilter=0;
+	    double q_replace=0.;
+	    for(isave=0; isave<Npos; isave++){
+		    //
+		    double q = _heliostats.at(isave)->getPowerToReceiver();
+		    q_cutoff += -q;
+		    if(q_cutoff < q_inc_des*1.e6) {
+			    nfilter++;
+			    q_replace += q;
+		    }
+		    if(q_cutoff < q_inc_des*1.e6*(1.-filter_frac)){break;}
+	    }
+	    //The value of isave is 1 entry more than satisfied the criteria.
 
-	if(_var_map->sf.is_prox_filter.val){
-		//sort the last nfilter*2 heliostats by proximity to the reciever and use the closest ones. 
-		Hvector hfilter;
-		vector<double> prox;
-		for(int i=max(isave-2*(nfilter-1), 0); i<isave; i++){
-			hfilter.push_back( _heliostats.at(i) );
-			prox.push_back( hfilter.back()->getRadialPos() );
-		}
-		quicksort(prox, hfilter, 0, (int)prox.size()-1);
-		//swap out the heliostats in the main vector with the closer ones.
-		double q_replace_new=0.;
-		int ireplace = isave-1;
-		int nhf = (int)hfilter.size();
-		int irct=0;
-		while(q_replace_new < q_replace && irct < nhf){
-			_heliostats.at(ireplace) = hfilter.at(irct);
-			q_replace_new += _heliostats.at(ireplace)->getPowerToReceiver();
-			ireplace--;
-			irct++;
-		}
-		//update the isave value
-		isave = ireplace+1;
-	}
+	    if(_var_map->sf.is_prox_filter.val){
+		    //sort the last nfilter*2 heliostats by proximity to the reciever and use the closest ones. 
+		    Hvector hfilter;
+		    vector<double> prox;
+		    for(int i=max(isave-2*(nfilter-1), 0); i<isave; i++){
+			    hfilter.push_back( _heliostats.at(i) );
+			    prox.push_back( hfilter.back()->getRadialPos() );
+		    }
+		    quicksort(prox, hfilter, 0, (int)prox.size()-1);
+		    //swap out the heliostats in the main vector with the closer ones.
+		    double q_replace_new=0.;
+		    int ireplace = isave-1;
+		    int nhf = (int)hfilter.size();
+		    int irct=0;
+		    while(q_replace_new < q_replace && irct < nhf){
+			    _heliostats.at(ireplace) = hfilter.at(irct);
+			    q_replace_new += _heliostats.at(ireplace)->getPowerToReceiver();
+			    ireplace--;
+			    irct++;
+		    }
+		    //update the isave value
+		    isave = ireplace+1;
+	    }
 
-	//Delete all of the entries up to isave-1.
-	_heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
+	    //Delete all of the entries up to isave-1.
+	    _heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
 
-    //Remove any heliostat in the layout that does not deliver any power to the receiver
-    isave = 0;
-    for(size_t i=0; i<_heliostats.size(); i++){
-        if(_heliostats.at(i)->getPowerToReceiver() > 0.) {
-            isave = i;
-            break;
+        //Remove any heliostat in the layout that does not deliver any power to the receiver
+        isave = 0;
+        for(size_t i=0; i<_heliostats.size(); i++){
+            if(_heliostats.at(i)->getPowerToReceiver() > 0.) {
+                isave = i;
+                break;
+            }
         }
-    }
-    if(isave > 0)
-        _heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
-	Npos = _heliostats.size();
+        if(isave > 0)
+            _heliostats.erase(_heliostats.begin(), _heliostats.begin()+isave);
+	    Npos = _heliostats.size();
+    }       //end needs_processing
+
 
 	//Save the heliostats in an array by ID#
 	_helio_by_id.clear();
@@ -1680,12 +1701,19 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	//Create an estimate of the annual energy output based on the filtered heliostat list
 	_estimated_annual_power = 0.;
 
-	for(int i=0; i<Npos; i++){
-        int hid = _heliostats.at(i)->getId();
-	    for(int j=0; j<nresults; j++){
-			_estimated_annual_power += results->at(j).data_by_helio[ hid ].getDataByIndex( helio_perf_data::PERF_VALUES::POWER_VALUE );  //this include receiver efficiency penalty
-		}
-	}
+    if(needs_processing)
+    {
+	    for(int i=0; i<Npos; i++){
+            int hid = _heliostats.at(i)->getId();
+	        for(int j=0; j<nresults; j++){
+			    _estimated_annual_power += results->at(j).data_by_helio[ hid ].getDataByIndex( helio_perf_data::PERF_VALUES::POWER_VALUE );  //this include receiver efficiency penalty
+		    }
+	    }
+    }
+    else
+    {
+        _estimated_annual_power = _q_to_rec;
+    }
 
 	//update the layout positions in the land area calculation
 	vector<Point> lpos(_heliostats.size());
