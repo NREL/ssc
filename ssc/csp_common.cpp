@@ -139,7 +139,6 @@ bool solarpilot_invoke::run()
     land.is_bounds_scaled.val = true;
     land.is_bounds_fixed.val = false;
     land.is_bounds_array.val = false;
-    land.is_land_max_opt.val = false;   
 	land.max_scaled_rad.val = m_cmod->as_double("land_max");
 	land.min_scaled_rad.val = m_cmod->as_double("land_min");
 	sf.tht.val = m_cmod->as_double("h_tower");

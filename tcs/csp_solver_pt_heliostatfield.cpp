@@ -346,7 +346,6 @@ void C_pt_heliostatfield::init()
 			V.sf.dni_des.val = dni_des;
 			V.land.max_scaled_rad.val = land_max;
 			V.land.min_scaled_rad.val = land_min;
-            V.land.is_land_max_opt.val = false;
 			V.sf.tht.val = h_tower;
 
 			//set up the weather data for simulation
