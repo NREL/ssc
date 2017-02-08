@@ -124,8 +124,8 @@ void get_CO2_info( CO2_info * __restrict info )
     {
     info->molar_mass = wmm;
     info->T_critical = T_crit;
-    info->D_critical = P_crit;
-    info->P_critical = D_crit;
+    info->D_critical = D_crit;
+    info->P_critical = P_crit;
     info->temp_lower_limit = T_lower_limit;
     info->temp_upper_limit = T_upper_limit;
     info->pres_lower_limit = P_lower_limit;
