@@ -23,7 +23,7 @@ CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembe
 CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
 #testing dylib in iOS
 #LDFLAGS = -arch ${ARCH} -lm -lstdc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
-LDFLAGS = -L${ISYSROOT}/usr/lib -L${ISYSROOT}/usr/lib/system  -miphoneos-version-min=10.0 -arch ${ARCH} -lc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
+#LDFLAGS = -L${ISYSROOT}/usr/lib -L${ISYSROOT}/usr/lib/system  -miphoneos-version-min=10.0 -arch ${ARCH} -lc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
 
 #TARGET=ssc_${ARCH}.dylib
 TARGET=ssc_${ARCH}.a
@@ -115,11 +115,11 @@ OBJECTS = \
 
 
 # testing dylib in iOS
-$(TARGET):$(OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^
-#	$(CXX) $(LDFLAGS) -dynamiclib  -o $@ $^
 #$(TARGET):$(OBJECTS)
-#	ar rs $(TARGET) $(OBJECTS)
+#	$(CXX) $(LDFLAGS) -o $@ $^
+#	$(CXX) $(LDFLAGS) -dynamiclib  -o $@ $^
+$(TARGET):$(OBJECTS)
+	ar rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
