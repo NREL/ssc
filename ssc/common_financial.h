@@ -35,6 +35,7 @@ public:
 	util::matrix_t<double>& dispatch_output();
 	double tod_energy(int period, int year);
 	double tod_energy_value(int period, int year);
+	double tod_energy_value(int year);
 };
 
 

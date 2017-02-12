@@ -984,6 +984,16 @@ double dispatch_calculations::tod_energy(int period, int year)
 	}
 	return energy;
 }
+//  convenience function for tod periods 1 through 9
+double dispatch_calculations::tod_energy_value(int year)
+{
+	double energy_value = 0;
+	for (int i = 1; i < 10; i++)
+	{
+		energy_value += tod_energy_value(i, year);
+	}
+	return energy_value;
+}
 
 double dispatch_calculations::tod_energy_value(int period, int year)
 {
