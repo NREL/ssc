@@ -20,15 +20,6 @@ void save_cf(compute_module *cm, util::matrix_t<double>& mat, int cf_line, int m
 
 enum {
 	// Dispatch
-	CF_TOD1Energy,
-	CF_TOD2Energy,
-	CF_TOD3Energy,
-	CF_TOD4Energy,
-	CF_TOD5Energy,
-	CF_TOD6Energy,
-	CF_TOD7Energy,
-	CF_TOD8Energy,
-	CF_TOD9Energy,
 
 	CF_TODJanEnergy,
 	CF_TODFebEnergy,
@@ -42,6 +33,32 @@ enum {
 	CF_TODOctEnergy,
 	CF_TODNovEnergy,
 	CF_TODDecEnergy,
+
+	CF_TODJanRevenue,
+	CF_TODFebRevenue,
+	CF_TODMarRevenue,
+	CF_TODAprRevenue,
+	CF_TODMayRevenue,
+	CF_TODJunRevenue,
+	CF_TODJulRevenue,
+	CF_TODAugRevenue,
+	CF_TODSepRevenue,
+	CF_TODOctRevenue,
+	CF_TODNovRevenue,
+	CF_TODDecRevenue,
+
+	CF_max_timestep,
+
+
+	CF_TOD1Energy,
+	CF_TOD2Energy,
+	CF_TOD3Energy,
+	CF_TOD4Energy,
+	CF_TOD5Energy,
+	CF_TOD6Energy,
+	CF_TOD7Energy,
+	CF_TOD8Energy,
+	CF_TOD9Energy,
 
 	CF_TOD1JanEnergy,
 	CF_TOD1FebEnergy,
@@ -170,19 +187,6 @@ enum {
 	CF_TOD8Revenue,
 	CF_TOD9Revenue,
 
-	CF_TODJanRevenue,
-	CF_TODFebRevenue,
-	CF_TODMarRevenue,
-	CF_TODAprRevenue,
-	CF_TODMayRevenue,
-	CF_TODJunRevenue,
-	CF_TODJulRevenue,
-	CF_TODAugRevenue,
-	CF_TODSepRevenue,
-	CF_TODOctRevenue,
-	CF_TODNovRevenue,
-	CF_TODDecRevenue,
-
 	CF_revenue_monthly_firstyear_TOD1,
 	CF_energy_net_monthly_firstyear_TOD1,
 	CF_revenue_monthly_firstyear_TOD2,
@@ -237,25 +241,95 @@ bool dispatch_calculations::init(compute_module *cm, std::vector<double>& degrad
 	m_cm = cm;
 	m_degradation = degradation;
 	m_hourly_energy = hourly_energy;
+	m_timestep = (m_cm->as_integer("ppa_multiplier_model")==1);
 
 	m_nyears = m_cm->as_integer("analysis_period");
 	if (m_degradation.size() != (size_t)m_nyears + 1) return false;
 
-	setup();
-	if (m_cm->as_integer("system_use_lifetime_output"))
-		compute_lifetime_dispatch_output();
+	if (m_timestep)
+	{
+		setup_ts();
+		if (m_cm->as_integer("system_use_lifetime_output"))
+			compute_lifetime_dispatch_output_ts(); // TODO - finish and test this!!
+		else
+			compute_dispatch_output_ts();
+	}
 	else
-		compute_dispatch_output();
+	{
+		setup();
+		if (m_cm->as_integer("system_use_lifetime_output"))
+			compute_lifetime_dispatch_output();
+		else
+			compute_dispatch_output();
+	}
+	return true;
+}
+
+bool dispatch_calculations::compute_outputs_ts(std::vector<double>& ppa)
+{
+
+	if (ppa.size() != (size_t)m_nyears + 1) return false;
+
+	// outputs
+	// dispatch energy
+	save_cf(m_cm, m_cf, CF_TODJanEnergy, m_nyears, "cf_energy_net_jan");
+	save_cf(m_cm, m_cf, CF_TODFebEnergy, m_nyears, "cf_energy_net_feb");
+	save_cf(m_cm, m_cf, CF_TODMarEnergy, m_nyears, "cf_energy_net_mar");
+	save_cf(m_cm, m_cf, CF_TODAprEnergy, m_nyears, "cf_energy_net_apr");
+	save_cf(m_cm, m_cf, CF_TODMayEnergy, m_nyears, "cf_energy_net_may");
+	save_cf(m_cm, m_cf, CF_TODJunEnergy, m_nyears, "cf_energy_net_jun");
+	save_cf(m_cm, m_cf, CF_TODJulEnergy, m_nyears, "cf_energy_net_jul");
+	save_cf(m_cm, m_cf, CF_TODAugEnergy, m_nyears, "cf_energy_net_aug");
+	save_cf(m_cm, m_cf, CF_TODSepEnergy, m_nyears, "cf_energy_net_sep");
+	save_cf(m_cm, m_cf, CF_TODOctEnergy, m_nyears, "cf_energy_net_oct");
+	save_cf(m_cm, m_cf, CF_TODNovEnergy, m_nyears, "cf_energy_net_nov");
+	save_cf(m_cm, m_cf, CF_TODDecEnergy, m_nyears, "cf_energy_net_dec");
+
+	for (int y = 0; y <= m_nyears; y++)
+	{
+		// compute energy value
+		m_cf.at(CF_TODJanRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODFebRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODMarRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODAprRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODMayRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODJunRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODJulRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODAugRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODSepRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODOctRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODNovRevenue, y) *= (ppa[y] / 100.0);
+		m_cf.at(CF_TODDecRevenue, y) *= (ppa[y] / 100.0);
+	}
+
+	// dispatch revenue
+	save_cf(m_cm, m_cf, CF_TODJanRevenue, m_nyears, "cf_revenue_jan");
+	save_cf(m_cm, m_cf, CF_TODFebRevenue, m_nyears, "cf_revenue_feb");
+	save_cf(m_cm, m_cf, CF_TODMarRevenue, m_nyears, "cf_revenue_mar");
+	save_cf(m_cm, m_cf, CF_TODAprRevenue, m_nyears, "cf_revenue_apr");
+	save_cf(m_cm, m_cf, CF_TODMayRevenue, m_nyears, "cf_revenue_may");
+	save_cf(m_cm, m_cf, CF_TODJunRevenue, m_nyears, "cf_revenue_jun");
+	save_cf(m_cm, m_cf, CF_TODJulRevenue, m_nyears, "cf_revenue_jul");
+	save_cf(m_cm, m_cf, CF_TODAugRevenue, m_nyears, "cf_revenue_aug");
+	save_cf(m_cm, m_cf, CF_TODSepRevenue, m_nyears, "cf_revenue_sep");
+	save_cf(m_cm, m_cf, CF_TODOctRevenue, m_nyears, "cf_revenue_oct");
+	save_cf(m_cm, m_cf, CF_TODNovRevenue, m_nyears, "cf_revenue_nov");
+	save_cf(m_cm, m_cf, CF_TODDecRevenue, m_nyears, "cf_revenue_dec");
 
 	return true;
 }
 
+
 bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 {
-	size_t i;
-
 	if (ppa.size() != (size_t)m_nyears+1) return false;
 
+	if (m_timestep)
+	{
+		return compute_outputs_ts(ppa);
+	}
+
+	size_t i;
 	double dispatch_factor1 = m_cm->as_double("dispatch_factor1");
 	double dispatch_factor2 = m_cm->as_double("dispatch_factor2");
 	double dispatch_factor3 = m_cm->as_double("dispatch_factor3");
@@ -988,9 +1062,25 @@ double dispatch_calculations::tod_energy(int period, int year)
 double dispatch_calculations::tod_energy_value(int year)
 {
 	double energy_value = 0;
-	for (int i = 1; i < 10; i++)
+	if (m_timestep)
 	{
-		energy_value += tod_energy_value(i, year);
+		energy_value += m_cf.at(CF_TODJanRevenue, year);
+		energy_value += m_cf.at(CF_TODFebRevenue, year);
+		energy_value += m_cf.at(CF_TODMarRevenue, year);
+		energy_value += m_cf.at(CF_TODAprRevenue, year);
+		energy_value += m_cf.at(CF_TODMayRevenue, year);
+		energy_value += m_cf.at(CF_TODJunRevenue, year);
+		energy_value += m_cf.at(CF_TODJulRevenue, year);
+		energy_value += m_cf.at(CF_TODAugRevenue, year);
+		energy_value += m_cf.at(CF_TODSepRevenue, year);
+		energy_value += m_cf.at(CF_TODOctRevenue, year);
+		energy_value += m_cf.at(CF_TODNovRevenue, year);
+		energy_value += m_cf.at(CF_TODDecRevenue, year);
+	}
+	else  // diurnal
+	{
+		for (int i = 1; i < 10; i++)
+			energy_value += tod_energy_value(i, year);
 	}
 	return energy_value;
 }
@@ -1077,44 +1167,73 @@ bool dispatch_calculations::setup()
 	}
 
 	m_periods.resize(8760, 1);
+	ssc_number_t *ppa_multipliers = m_cm->allocate("ppa_multipliers", 8760);
+	
 	for (int i = 0; i < 8760; i++)
+	{
 		m_periods[i] = tod[i];
-//	{
-		//switch (tod[i])
-		//{
-		//case 1:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor1");
-		//	break;
-		//case 2:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor2");
-		//	break;
-		//case 3:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor3");
-		//	break;
-		//case 4:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor4");
-		//	break;
-		//case 5:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor5");
-		//	break;
-		//case 6:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor6");
-		//	break;
-		//case 7:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor7");
-		//	break;
-		//case 8:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor8");
-		//	break;
-		//case 9:
-		//	m_factors[i] = m_cm->as_number("dispatch_factor9");
-		//	break;
-		//}
-//	}
-
+	
+		switch (tod[i])
+		{
+		case 1:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor1");
+			break;
+		case 2:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor2");
+			break;
+		case 3:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor3");
+			break;
+		case 4:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor4");
+			break;
+		case 5:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor5");
+			break;
+		case 6:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor6");
+			break;
+		case 7:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor7");
+			break;
+		case 8:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor8");
+			break;
+		case 9:
+			ppa_multipliers[i] = m_cm->as_number("dispatch_factor9");
+			break;
+		}
+	}
 
 	return m_error.length() == 0;
 }
+
+bool dispatch_calculations::setup_ts()
+{
+	// initialize cashflow matrix
+	if ((m_nyears + 1) > 12)
+		m_cf.resize_fill(CF_max_timestep, m_nyears + 1, 0.0);
+	else // must be able to handle TOD periods and months hard crash in releases 2016.3.14-r1 and before
+		m_cf.resize_fill(CF_max_timestep, 12, 0.0);
+
+	m_multipliers = m_cm->as_array("dispatch_factors_ts", &m_nmultipliers);
+	m_gen = m_cm->as_array("gen", &m_ngen);
+
+	// TODO - handle differences in ngen and nmultipliers
+	if (m_ngen != m_nmultipliers)
+	{
+		m_error = "issue with timestep dispatch multipliers";
+		throw compute_module::general_error(m_error);
+	}
+
+	ssc_number_t *ppa_multipliers = m_cm->allocate("ppa_multipliers", m_nmultipliers);
+
+	for (size_t i = 0; i < m_nmultipliers; i++)
+		ppa_multipliers[i] = m_multipliers[i];
+
+	return m_error.length() == 0;
+}
+
 
 int dispatch_calculations::operator()(size_t time)
 {
@@ -2047,6 +2166,354 @@ bool dispatch_calculations::process_dispatch_output()
 		m_cf.at(CF_TOD9OctEnergy, y) = year1_TOD9OctEnergy * m_degradation[y];
 		m_cf.at(CF_TOD9NovEnergy, y) = year1_TOD9NovEnergy * m_degradation[y];
 		m_cf.at(CF_TOD9DecEnergy, y) = year1_TOD9DecEnergy * m_degradation[y];
+	}
+	return true;
+}
+
+
+bool dispatch_calculations::compute_dispatch_output_ts()
+{
+	//Calculate energy dispatched in each month
+
+	size_t nrec_gen_per_year = m_ngen;
+//	if (m_cm->as_integer("system_use_lifetime_output") == 1)
+//		nrec_gen_per_year = m_ngen / m_nyears;
+	size_t step_per_hour_gen = nrec_gen_per_year / 8760;
+	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
+	{
+		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
+		throw compute_module::exec_error("dispatch_calculations", m_error);
+		return false;
+	}
+	if (m_nmultipliers != nrec_gen_per_year)
+	{
+		m_error = util::format("invalid number of gen records per year (%d) must be equal to number of ppa multiplier records (%d)", (int)nrec_gen_per_year, (int)m_nmultipliers);
+		throw compute_module::exec_error("dispatch_calculations", m_error);
+		return false;
+	}
+	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
+
+
+	m_cf.at(CF_TODJanEnergy, 1) = 0;
+	m_cf.at(CF_TODFebEnergy, 1) = 0;
+	m_cf.at(CF_TODMarEnergy, 1) = 0;
+	m_cf.at(CF_TODAprEnergy, 1) = 0;
+	m_cf.at(CF_TODMayEnergy, 1) = 0;
+	m_cf.at(CF_TODJunEnergy, 1) = 0;
+	m_cf.at(CF_TODJulEnergy, 1) = 0;
+	m_cf.at(CF_TODAugEnergy, 1) = 0;
+	m_cf.at(CF_TODSepEnergy, 1) = 0;
+	m_cf.at(CF_TODOctEnergy, 1) = 0;
+	m_cf.at(CF_TODNovEnergy, 1) = 0;
+	m_cf.at(CF_TODDecEnergy, 1) = 0;
+
+	m_cf.at(CF_TODJanRevenue, 1) = 0;
+	m_cf.at(CF_TODFebRevenue, 1) = 0;
+	m_cf.at(CF_TODMarRevenue, 1) = 0;
+	m_cf.at(CF_TODAprRevenue, 1) = 0;
+	m_cf.at(CF_TODMayRevenue, 1) = 0;
+	m_cf.at(CF_TODJunRevenue, 1) = 0;
+	m_cf.at(CF_TODJulRevenue, 1) = 0;
+	m_cf.at(CF_TODAugRevenue, 1) = 0;
+	m_cf.at(CF_TODSepRevenue, 1) = 0;
+	m_cf.at(CF_TODOctRevenue, 1) = 0;
+	m_cf.at(CF_TODNovRevenue, 1) = 0;
+	m_cf.at(CF_TODDecRevenue, 1) = 0;
+
+	int i = 0;
+	for (int m = 0; m<12; m++)
+	{
+		for (int d = 0; d<util::nday[m]; d++)
+		{
+			for (int h = 0; h<24 && i<nrec_gen_per_year; h++)
+			{
+				for (int k = 0; k < step_per_hour_gen; k++)
+				{
+					switch (m)
+					{
+					case 0:
+						m_cf.at(CF_TODJanEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODJanRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 1:
+						m_cf.at(CF_TODFebEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODFebRevenue, 1) += m_gen[i] * ts_hour_gen* m_multipliers[i];
+						break;
+					case 2:
+						m_cf.at(CF_TODMarEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODMarRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 3:
+						m_cf.at(CF_TODAprEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODAprRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 4:
+						m_cf.at(CF_TODMayEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODMayRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 5:
+						m_cf.at(CF_TODJunEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODJunRevenue, 1) += m_gen[i] * ts_hour_gen* m_multipliers[i];
+						break;
+					case 6:
+						m_cf.at(CF_TODJulEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODJulRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 7:
+						m_cf.at(CF_TODAugEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODAugRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 8:
+						m_cf.at(CF_TODSepEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODSepRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 9:
+						m_cf.at(CF_TODOctEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODOctRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 10:
+						m_cf.at(CF_TODNovEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODNovRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					case 11:
+						m_cf.at(CF_TODDecEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODDecRevenue, 1) += m_gen[i] * ts_hour_gen * m_multipliers[i];
+						break;
+					}
+					i++;
+				}
+			}
+		}
+	}
+
+	double year1_TODJanEnergy = m_cf.at(CF_TODJanEnergy, 1);
+	double year1_TODFebEnergy = m_cf.at(CF_TODFebEnergy, 1);
+	double year1_TODMarEnergy = m_cf.at(CF_TODMarEnergy, 1);
+	double year1_TODAprEnergy = m_cf.at(CF_TODAprEnergy, 1);
+	double year1_TODMayEnergy = m_cf.at(CF_TODMayEnergy, 1);
+	double year1_TODJunEnergy = m_cf.at(CF_TODJunEnergy, 1);
+	double year1_TODJulEnergy = m_cf.at(CF_TODJulEnergy, 1);
+	double year1_TODAugEnergy = m_cf.at(CF_TODAugEnergy, 1);
+	double year1_TODSepEnergy = m_cf.at(CF_TODSepEnergy, 1);
+	double year1_TODOctEnergy = m_cf.at(CF_TODOctEnergy, 1);
+	double year1_TODNovEnergy = m_cf.at(CF_TODNovEnergy, 1);
+	double year1_TODDecEnergy = m_cf.at(CF_TODDecEnergy, 1);
+
+	double year1_TODJanRevenue = m_cf.at(CF_TODJanRevenue, 1);
+	double year1_TODFebRevenue = m_cf.at(CF_TODFebRevenue, 1);
+	double year1_TODMarRevenue = m_cf.at(CF_TODMarRevenue, 1);
+	double year1_TODAprRevenue = m_cf.at(CF_TODAprRevenue, 1);
+	double year1_TODMayRevenue = m_cf.at(CF_TODMayRevenue, 1);
+	double year1_TODJunRevenue = m_cf.at(CF_TODJunRevenue, 1);
+	double year1_TODJulRevenue = m_cf.at(CF_TODJulRevenue, 1);
+	double year1_TODAugRevenue = m_cf.at(CF_TODAugRevenue, 1);
+	double year1_TODSepRevenue = m_cf.at(CF_TODSepRevenue, 1);
+	double year1_TODOctRevenue = m_cf.at(CF_TODOctRevenue, 1);
+	double year1_TODNovRevenue = m_cf.at(CF_TODNovRevenue, 1);
+	double year1_TODDecRevenue = m_cf.at(CF_TODDecRevenue, 1);
+
+	for (int y = 0; y <= m_nyears; y++)
+	{
+		// compute energy dispatched
+		m_cf.at(CF_TODJanEnergy, y) = year1_TODJanEnergy * m_degradation[y];
+		m_cf.at(CF_TODFebEnergy, y) = year1_TODFebEnergy * m_degradation[y];
+		m_cf.at(CF_TODMarEnergy, y) = year1_TODMarEnergy * m_degradation[y];
+		m_cf.at(CF_TODAprEnergy, y) = year1_TODAprEnergy * m_degradation[y];
+		m_cf.at(CF_TODMayEnergy, y) = year1_TODMayEnergy * m_degradation[y];
+		m_cf.at(CF_TODJunEnergy, y) = year1_TODJunEnergy * m_degradation[y];
+		m_cf.at(CF_TODJulEnergy, y) = year1_TODJulEnergy * m_degradation[y];
+		m_cf.at(CF_TODAugEnergy, y) = year1_TODAugEnergy * m_degradation[y];
+		m_cf.at(CF_TODSepEnergy, y) = year1_TODSepEnergy * m_degradation[y];
+		m_cf.at(CF_TODOctEnergy, y) = year1_TODOctEnergy * m_degradation[y];
+		m_cf.at(CF_TODNovEnergy, y) = year1_TODNovEnergy * m_degradation[y];
+		m_cf.at(CF_TODDecEnergy, y) = year1_TODDecEnergy * m_degradation[y];
+		// compute energy value
+		m_cf.at(CF_TODJanRevenue, y) = year1_TODJanRevenue * m_degradation[y];
+		m_cf.at(CF_TODFebRevenue, y) = year1_TODFebRevenue * m_degradation[y];
+		m_cf.at(CF_TODMarRevenue, y) = year1_TODMarRevenue * m_degradation[y];
+		m_cf.at(CF_TODAprRevenue, y) = year1_TODAprRevenue * m_degradation[y];
+		m_cf.at(CF_TODMayRevenue, y) = year1_TODMayRevenue * m_degradation[y];
+		m_cf.at(CF_TODJunRevenue, y) = year1_TODJunRevenue * m_degradation[y];
+		m_cf.at(CF_TODJulRevenue, y) = year1_TODJulRevenue * m_degradation[y];
+		m_cf.at(CF_TODAugRevenue, y) = year1_TODAugRevenue * m_degradation[y];
+		m_cf.at(CF_TODSepRevenue, y) = year1_TODSepRevenue * m_degradation[y];
+		m_cf.at(CF_TODOctRevenue, y) = year1_TODOctRevenue * m_degradation[y];
+		m_cf.at(CF_TODNovRevenue, y) = year1_TODNovRevenue * m_degradation[y];
+		m_cf.at(CF_TODDecRevenue, y) = year1_TODDecRevenue * m_degradation[y];
+	}
+	return true;
+}
+
+bool dispatch_calculations::compute_lifetime_dispatch_output_ts()
+{
+	//Calculate energy dispatched in each month
+	// TODO finish this....
+
+	size_t nrec_gen_per_year = m_ngen;
+	//	if (m_cm->as_integer("system_use_lifetime_output") == 1)
+	//		nrec_gen_per_year = m_ngen / m_nyears;
+	size_t step_per_hour_gen = nrec_gen_per_year / 8760;
+	if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
+	{
+		m_error = util::format("invalid number of gen records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year);
+		throw compute_module::exec_error("dispatch_calculations", m_error);
+		return false;
+	}
+	if (m_nmultipliers != nrec_gen_per_year)
+	{
+		m_error = util::format("invalid number of gen records per year (%d) must be equal to number of ppa multiplier records (%d)", (int)nrec_gen_per_year, (int)m_nmultipliers);
+		throw compute_module::exec_error("dispatch_calculations", m_error);
+		return false;
+	}
+	ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
+
+
+	m_cf.at(CF_TODJanEnergy, 1) = 0;
+	m_cf.at(CF_TODFebEnergy, 1) = 0;
+	m_cf.at(CF_TODMarEnergy, 1) = 0;
+	m_cf.at(CF_TODAprEnergy, 1) = 0;
+	m_cf.at(CF_TODMayEnergy, 1) = 0;
+	m_cf.at(CF_TODJunEnergy, 1) = 0;
+	m_cf.at(CF_TODJulEnergy, 1) = 0;
+	m_cf.at(CF_TODAugEnergy, 1) = 0;
+	m_cf.at(CF_TODSepEnergy, 1) = 0;
+	m_cf.at(CF_TODOctEnergy, 1) = 0;
+	m_cf.at(CF_TODNovEnergy, 1) = 0;
+	m_cf.at(CF_TODDecEnergy, 1) = 0;
+
+	m_cf.at(CF_TODJanRevenue, 1) = 0;
+	m_cf.at(CF_TODFebRevenue, 1) = 0;
+	m_cf.at(CF_TODMarRevenue, 1) = 0;
+	m_cf.at(CF_TODAprRevenue, 1) = 0;
+	m_cf.at(CF_TODMayRevenue, 1) = 0;
+	m_cf.at(CF_TODJunRevenue, 1) = 0;
+	m_cf.at(CF_TODJulRevenue, 1) = 0;
+	m_cf.at(CF_TODAugRevenue, 1) = 0;
+	m_cf.at(CF_TODSepRevenue, 1) = 0;
+	m_cf.at(CF_TODOctRevenue, 1) = 0;
+	m_cf.at(CF_TODNovRevenue, 1) = 0;
+	m_cf.at(CF_TODDecRevenue, 1) = 0;
+
+	int i = 0;
+	for (int m = 0; m<12; m++)
+	{
+		for (int d = 0; d<util::nday[m]; d++)
+		{
+			for (int h = 0; h<24 && i<nrec_gen_per_year; h++)
+			{
+				for (int k = 0; k < step_per_hour_gen; k++)
+				{
+					switch (m)
+					{
+					case 0:
+						m_cf.at(CF_TODJanEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODJanRevenue, 1) += m_cf.at(CF_TODJanEnergy, 1) * m_multipliers[i];
+						break;
+					case 1:
+						m_cf.at(CF_TODFebEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODFebRevenue, 1) += m_cf.at(CF_TODFebEnergy, 1) * m_multipliers[i];
+						break;
+					case 2:
+						m_cf.at(CF_TODMarEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODMarRevenue, 1) += m_cf.at(CF_TODMarEnergy, 1) * m_multipliers[i];
+						break;
+					case 3:
+						m_cf.at(CF_TODAprEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODAprRevenue, 1) += m_cf.at(CF_TODAprEnergy, 1) * m_multipliers[i];
+						break;
+					case 4:
+						m_cf.at(CF_TODMayEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODMayRevenue, 1) += m_cf.at(CF_TODMayEnergy, 1) * m_multipliers[i];
+						break;
+					case 5:
+						m_cf.at(CF_TODJunEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODJunRevenue, 1) += m_cf.at(CF_TODJunEnergy, 1) * m_multipliers[i];
+						break;
+					case 6:
+						m_cf.at(CF_TODJulEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODJulRevenue, 1) += m_cf.at(CF_TODJulEnergy, 1) * m_multipliers[i];
+						break;
+					case 7:
+						m_cf.at(CF_TODAugEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODAugRevenue, 1) += m_cf.at(CF_TODAugEnergy, 1) * m_multipliers[i];
+						break;
+					case 8:
+						m_cf.at(CF_TODSepEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODSepRevenue, 1) += m_cf.at(CF_TODSepEnergy, 1) * m_multipliers[i];
+						break;
+					case 9:
+						m_cf.at(CF_TODOctEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODOctRevenue, 1) += m_cf.at(CF_TODOctEnergy, 1) * m_multipliers[i];
+						break;
+					case 10:
+						m_cf.at(CF_TODNovEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODNovRevenue, 1) += m_cf.at(CF_TODNovEnergy, 1) * m_multipliers[i];
+						break;
+					case 11:
+						m_cf.at(CF_TODDecEnergy, 1) += m_gen[i] * ts_hour_gen;
+						m_cf.at(CF_TODDecRevenue, 1) += m_cf.at(CF_TODDecEnergy, 1) * m_multipliers[i];
+						break;
+					}
+					i++;
+				}
+			}
+		}
+	}
+
+	double year1_TODJanEnergy = m_cf.at(CF_TODJanEnergy, 1);
+	double year1_TODFebEnergy = m_cf.at(CF_TODFebEnergy, 1);
+	double year1_TODMarEnergy = m_cf.at(CF_TODMarEnergy, 1);
+	double year1_TODAprEnergy = m_cf.at(CF_TODAprEnergy, 1);
+	double year1_TODMayEnergy = m_cf.at(CF_TODMayEnergy, 1);
+	double year1_TODJunEnergy = m_cf.at(CF_TODJunEnergy, 1);
+	double year1_TODJulEnergy = m_cf.at(CF_TODJulEnergy, 1);
+	double year1_TODAugEnergy = m_cf.at(CF_TODAugEnergy, 1);
+	double year1_TODSepEnergy = m_cf.at(CF_TODSepEnergy, 1);
+	double year1_TODOctEnergy = m_cf.at(CF_TODOctEnergy, 1);
+	double year1_TODNovEnergy = m_cf.at(CF_TODNovEnergy, 1);
+	double year1_TODDecEnergy = m_cf.at(CF_TODDecEnergy, 1);
+
+	double year1_TODJanRevenue = m_cf.at(CF_TODJanRevenue, 1);
+	double year1_TODFebRevenue = m_cf.at(CF_TODFebRevenue, 1);
+	double year1_TODMarRevenue = m_cf.at(CF_TODMarRevenue, 1);
+	double year1_TODAprRevenue = m_cf.at(CF_TODAprRevenue, 1);
+	double year1_TODMayRevenue = m_cf.at(CF_TODMayRevenue, 1);
+	double year1_TODJunRevenue = m_cf.at(CF_TODJunRevenue, 1);
+	double year1_TODJulRevenue = m_cf.at(CF_TODJulRevenue, 1);
+	double year1_TODAugRevenue = m_cf.at(CF_TODAugRevenue, 1);
+	double year1_TODSepRevenue = m_cf.at(CF_TODSepRevenue, 1);
+	double year1_TODOctRevenue = m_cf.at(CF_TODOctRevenue, 1);
+	double year1_TODNovRevenue = m_cf.at(CF_TODNovRevenue, 1);
+	double year1_TODDecRevenue = m_cf.at(CF_TODDecRevenue, 1);
+
+	for (int y = 0; y <= m_nyears; y++)
+	{
+		// compute energy dispatched
+		m_cf.at(CF_TODJanEnergy, y) = year1_TODJanEnergy * m_degradation[y];
+		m_cf.at(CF_TODFebEnergy, y) = year1_TODFebEnergy * m_degradation[y];
+		m_cf.at(CF_TODMarEnergy, y) = year1_TODMarEnergy * m_degradation[y];
+		m_cf.at(CF_TODAprEnergy, y) = year1_TODAprEnergy * m_degradation[y];
+		m_cf.at(CF_TODMayEnergy, y) = year1_TODMayEnergy * m_degradation[y];
+		m_cf.at(CF_TODJunEnergy, y) = year1_TODJunEnergy * m_degradation[y];
+		m_cf.at(CF_TODJulEnergy, y) = year1_TODJulEnergy * m_degradation[y];
+		m_cf.at(CF_TODAugEnergy, y) = year1_TODAugEnergy * m_degradation[y];
+		m_cf.at(CF_TODSepEnergy, y) = year1_TODSepEnergy * m_degradation[y];
+		m_cf.at(CF_TODOctEnergy, y) = year1_TODOctEnergy * m_degradation[y];
+		m_cf.at(CF_TODNovEnergy, y) = year1_TODNovEnergy * m_degradation[y];
+		m_cf.at(CF_TODDecEnergy, y) = year1_TODDecEnergy * m_degradation[y];
+		// compute energy value
+		m_cf.at(CF_TODJanRevenue, y) = year1_TODJanRevenue * m_degradation[y];
+		m_cf.at(CF_TODFebRevenue, y) = year1_TODFebRevenue * m_degradation[y];
+		m_cf.at(CF_TODMarRevenue, y) = year1_TODMarRevenue * m_degradation[y];
+		m_cf.at(CF_TODAprRevenue, y) = year1_TODAprRevenue * m_degradation[y];
+		m_cf.at(CF_TODMayRevenue, y) = year1_TODMayRevenue * m_degradation[y];
+		m_cf.at(CF_TODJunRevenue, y) = year1_TODJunRevenue * m_degradation[y];
+		m_cf.at(CF_TODJulRevenue, y) = year1_TODJulRevenue * m_degradation[y];
+		m_cf.at(CF_TODAugRevenue, y) = year1_TODAugRevenue * m_degradation[y];
+		m_cf.at(CF_TODSepRevenue, y) = year1_TODSepRevenue * m_degradation[y];
+		m_cf.at(CF_TODOctRevenue, y) = year1_TODOctRevenue * m_degradation[y];
+		m_cf.at(CF_TODNovRevenue, y) = year1_TODNovRevenue * m_degradation[y];
+		m_cf.at(CF_TODDecRevenue, y) = year1_TODDecRevenue * m_degradation[y];
 	}
 	return true;
 }
