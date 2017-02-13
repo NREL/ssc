@@ -929,7 +929,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	//Set the optimization objective value
 	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
 	obj_metric = tot_cost/power 
-		* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
+		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
 
 	return true;

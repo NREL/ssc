@@ -82,10 +82,9 @@ struct par_variable
 
 class multivar
 {
-private:
+protected:
 	ArrayString weather_files;
 	bool wf_are_set;  //disabled in base class
-protected:
     vector<par_variable> variables;
 	ArrayString current_varpaths;
 public:
@@ -104,8 +103,8 @@ class parametric : public multivar
 {
 	//vector<par_variable> variables;
 	//ArrayString current_varpaths;
-	ArrayString weather_files;
-	bool wf_are_set;
+	//ArrayString weather_files;
+	//bool wf_are_set;
 	//wxArrayStr _weather_files;
 public:
 	parametric();
