@@ -688,28 +688,10 @@ bool interop::PerformanceSimulationPrep(SolarField &SF, Hvector &helios, int sim
     V->flux.flux_solar_el.Setval( 90. - zen );
 
     sim_params P;
-    P.dni = V->sf.dni_des.val;
+    P.dni = V->flux.flux_dni.val; 
 	P.Tamb = 25.; 
 	P.Patm = 1.;
 
-	///* 
-	//If the performance simulation requires detailed flux information, do an initial calculation with simple aimpoints.
-	//This allows for accurate (optimistic) power delivery values from each heliostat.
-	//*/
-	//if( V->flux.aim_method.val == FluxSimData::AIM_STRATEGY::IMAGE_SIZE ){
-	//	//update aim points to simple position
-	//	//SF.calcAllAimPoints(0,(double*)NULL);
-	//	//Simulate with simple aimpoints to update heliostat efficiency
-	//	SF.Simulate(az, zen, P);
-	//}
-
-	////if we're using a SolTrace simulation, the options are simple aim points or to use 
-	////the previously calculated values using Delsol
-	//if(! (sim_method==FluxSimData::FLUX_MODEL::SOLTRACE && SF.getAimpointStatus()) ){
-	//	//calculate aim points according to specified options
-	//	AimpointUpdateHandler(SF);
-	//}
-	////After updating the aim points, run a performance simulation to determine actual heliostat efficiencies
 	SF.Simulate(az*D2R, zen*D2R, P);
 
 	return !SF.ErrCheck();
