@@ -3792,7 +3792,7 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 	*/
 
 	//DNI
-	double dni = _var_map->sf.dni_des.val*0.001;	 //kW/m2
+	double dni = _var_map->flux.flux_dni.val*0.001; // _var_map->sf.dni_des.val*0.001;	 //kW/m2
 
 	//Determine the total power delivered from the heliostats. This serves as a normalizing basis.
 	double q_to_rec=0.;
