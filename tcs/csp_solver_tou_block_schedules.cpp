@@ -158,6 +158,8 @@ C_block_schedule_pricing::C_block_schedule_pricing()
 	mv_labels.resize(N_END);
 
 	mv_labels[0] = "Price Multiplier";
+
+	mv_is_diurnal = true;
 }
 
 void C_csp_tou_block_schedules::init()
@@ -172,16 +174,20 @@ void C_csp_tou_block_schedules::init()
 		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
 	}
 
-	try
+	// time step initialization of actual price multipliers done in calling compute modules.
+	// mv_is_diurnal is set to true in constructor 
+	if (ms_params.mc_pricing.mv_is_diurnal)
 	{
-		ms_params.mc_pricing.init(C_block_schedule_pricing::N_END, mc_dispatch_params.m_isleapyear);
+		try
+		{
+			ms_params.mc_pricing.init(C_block_schedule_pricing::N_END, mc_dispatch_params.m_isleapyear);
+		}
+		catch (C_csp_exception &csp_exception)
+		{
+			m_error_msg = "The CSP pricing " + csp_exception.m_error_message;
+			throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
+		}
 	}
-	catch( C_csp_exception &csp_exception )
-	{
-		m_error_msg = "The CSP pricing " + csp_exception.m_error_message;
-		throw(C_csp_exception(m_error_msg, "TOU block schedule initialization"));
-	}
-
 	return;
 }
 
@@ -196,14 +202,36 @@ void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs
 	}
 
 	size_t csp_op_tou = (size_t)ms_params.mc_csp_ops.m_hr_tou[i_hour];
-	size_t pricing_tou = (size_t)ms_params.mc_pricing.m_hr_tou[i_hour];
 
 	tou_outputs.m_csp_op_tou = csp_op_tou;
-	tou_outputs.m_pricing_tou = pricing_tou;
 	
 	tou_outputs.m_f_turbine = ms_params.mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][csp_op_tou-1];
 	
-	tou_outputs.m_price_mult = ms_params.mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][pricing_tou-1];
+	if (ms_params.mc_pricing.mv_is_diurnal)
+	{
+		size_t pricing_tou = (size_t)ms_params.mc_pricing.m_hr_tou[i_hour];
+		tou_outputs.m_pricing_tou = pricing_tou;
+		tou_outputs.m_price_mult = ms_params.mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][pricing_tou - 1];
+	}
+	else // note limited to hour but can be extended to timestep using size 
+	{
+		// these can be set in initialize and we may want to include time series inputs for other multipliers and fractions
+		size_t nrecs = ms_params.mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].size();
+		if (nrecs <= 0)
+		{
+			m_error_msg = util::format("The timestep price multiplier array was empty.");
+			throw(C_csp_exception(m_error_msg, "TOU timestep call"));
+		}
+		size_t nrecs_per_hour = nrecs / 8760;
+		int ndx = (int)((ceil(time_s / 3600.0 - 1.e-6) - 1) * nrecs_per_hour);
+
+		if (ndx > nrecs - 1 + (mc_dispatch_params.m_isleapyear ? 24 : 0) || ndx<0)
+		{
+			m_error_msg = util::format("The index input to the TOU schedule must be from 1 to %d. The input timestep index was %d.", (int)nrecs, ndx + 1);
+			throw(C_csp_exception(m_error_msg, "TOU timestep call"));
+		}
+		tou_outputs.m_price_mult = ms_params.mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ndx];
+	}
 }
 
 void C_csp_tou_block_schedules::setup_block_uniform_tod()
