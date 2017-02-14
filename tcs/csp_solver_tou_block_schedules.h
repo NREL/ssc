@@ -80,6 +80,8 @@ public:
 
 	~C_block_schedule_pricing(){};
 
+	bool mv_is_diurnal;
+
 	enum
 	{
 		MULT_PRICE,
