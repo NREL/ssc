@@ -870,7 +870,8 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-        if (!sf_haf.setup(n_steps_fixed))
+		int n_steps_full = steps_per_hour * 8760;
+		if (!sf_haf.setup(n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize( sf_haf.size() );

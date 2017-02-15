@@ -620,8 +620,11 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 	double step = sim_info.ms_ts.m_step;
 
     double sf_adjust = 1.;
-    if( ms_params.m_sf_adjust.ncells() == 8760 )
-        sf_adjust = ms_params.m_sf_adjust.at( (int)(time / 3600.) - 1 );
+	if (ms_params.m_sf_adjust.ncells() >= 8760)
+	{
+		double full_step = 8760.*3600. / (double)ms_params.m_sf_adjust.ncells();	// full time step size (s)
+		sf_adjust = ms_params.m_sf_adjust.at((int)(time / full_step) - 1);
+	}
 
 	double v_wind = weather.m_wspd;
 	m_v_wind_current = v_wind;
