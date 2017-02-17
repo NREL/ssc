@@ -862,13 +862,6 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 
     var_map *V = _SF->getVarMap();
 
-    //if optimizing receiver aspect, make sure diameter is set appropriately
-	//if(V->recs.front().is_height_opt.val || V->recs.front().is_aspect_opt.val ) 
- //   {
- //       double *dim_which = V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL ? &V->recs.front().rec_diameter.val : &V->recs.front().rec_width.val;
- //       *dim_which = V->recs.front().rec_height.val / V->recs.front().rec_aspect.Val();
- //   }
-
 	//create the solar field object
 	if(! _cancel_simulation)
     {
