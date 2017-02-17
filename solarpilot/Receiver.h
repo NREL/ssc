@@ -128,64 +128,19 @@ class Receiver : public mod_base
  {
 
 	double
-	//	_span_min,	//Minimum (CCW) bound of the arc defining the receiver surface
-	//	_span_max,	//Maximum (CW) bound of the arc defining the receiver surface
-	//	_panel_rotation,	//Azimuth angle between the normal std::vector to the primary "north" panel and North
-	//	_aspect_opt_max,	//Maximum receiver aspect ratio during optimization
-	//	_aspect_opt_min,	//Minimum receiver aspect ratio during optimization
-	//	_height_opt_max,	//Maximum receiver height during optimization
-	//	_height_opt_min,	//Minimum receiver height during optimization
-	//	_h,				//Height of the absorbing component
-	//	_rec_aspect,	//Ratio of receiver height to width
-	//	_d,				//Receiver diameter for cylindrical receivers
-	//	_w,				//Receiver width for cavity or flat receivers
-	//	_rec_az,	//Receiver azimuth orientation: 0 deg is north, positive clockwise
-	//	_rec_elevation,	//Receiver elevation orientation: 0 deg to the horizon, negative rotating downward
-	//	_rec_cav_rad,	//Radius of the receiver cavity absorbing surface
-	//	_rec_cav_cdepth,	//Offset of centroid of cavity absorber surface from the aperture plane. (Positive->Increased depth)
 		_absorber_area,	//Effective area of the receiver absorber panels
-	//	_opt_height,	//Calculated height of the centerline of the receiver above the plane of the heliostats
-	//	_rec_offset_x,	//Offset of receiver center in the East(+)/West(-) direction from the tower
-	//	_rec_offset_y,	//Offset of receiver center in the North(+)/South(-) direction from the tower
-	//	_rec_offset_z,	//Offset of the receiver center in the vertical direction, positive upwards
-	//	_peak_flux,	//Maximum allowable flux intensity on any portion of the receiver surface
-	//	_absorptance,	//Energy absorbed by the receiver surface before accounting for radiation/convection losses
-	//	_therm_loss_base,	//Thermal loss from the receiver at design-point conditions
 		_therm_loss,	//Receiver thermal loss at design
-	//	_piping_loss_coef,	//Loss per meter of tower height
-	//	_piping_loss_const,	//Constant thermal loss due to piping - doesn't scale with tower height
 		_piping_loss;	//Thermal loss from non-absorber receiver piping
-	//	_accept_ang_x,		//Acceptance angle of the receiver in the horizontal direction (in aperture coordinates)
-	//	_accept_ang_y;		//Acceptance angle of the receiver in the vertical direction (in aperture coordinates)
 
-	//	
 	bool
-	//	_is_aspect_opt, 		//Optimize aspect ratio (h/w)
-	//	_is_aspect_restrict, 		//Restrict aperture aspect ratio range
-	//	_is_height_opt, 		//Optimize receiver height
-	//	_is_height_restrict,		//Restrict receiver height range
 		_is_enabled;		//Is template enabled?
-	//	_is_open_geom,		//If true, the receiver is represented by an arc rather than a closed circle/polygon
-	//	_is_polygon;		//Receiver geometry is represented as discrete polygon of N panels rather than continuous arc
 
 	double _thermal_eff;	//An estimate of the thermal efficiency
-
-	//string 
-	//	_rec_name;		//Receiver template name
 
 	PointVect
 		_normal; //Unit std::vector of the normal to the reciever
 	int
-	//	_rec_type, //General receiver type, 0=External cylinder, 1=Cavity, 2=Flat plate
 		_rec_geom; //Specific receiver geometry, defined in DefineReceiverGeometry
-	//	_id,	//Template ID
-	//	_n_panels,		//Number of receiver panels (polygon facets) for a polygonal receiver geometry
-	//	_aperture_type,		//The shape of the receiver aperture. 0=Rectangular, 1=Elliptical
-	//	_accept_ang_type;		//Receiver angular acceptance window defines angles about the aperture normal, can be rectangular or elliptical shape
-
-	//matrix_t<double>
-	//	_therm_loss_load,		//Load-based thermal loss adjustment	Temperature-dependant thermal loss
-	//	_therm_loss_wind;		//Wind speed-dependant thermal loss
 
 	FluxSurfaces 
 		_surfaces; //A std::vector containing sub-vectors that define the geometry of receiver surfaces
@@ -193,8 +148,6 @@ class Receiver : public mod_base
     var_receiver *_var_receiver;    //pointer to applicable parameter map
 
 public:	
-	//Receiver (){}; // Constructor 
-	//~Receiver(){};
 	
 	void Create(var_receiver &V, double tht);	//create from variable map
     void updateCalculatedParameters(var_receiver &V, double tht);
@@ -204,10 +157,6 @@ public:
 		enum A { CYLINDRICAL_CLOSED, CYLINDRICAL_OPEN, CYLINDRICAL_CAV, PLANE_RECT, 
 			PLANE_ELLIPSE, POLYGON_CLOSED, POLYGON_OPEN, POLYGON_CAV}; 
 	};
-	//define an enumeration for receiver base types
-	//struct REC_TYPE {
-	//	enum A {CYLINDRICAL, CAVITY, FLAT_PLATE};
-	//};
 
 	//Declare "GET" access functions
 	static double getReceiverWidth(var_receiver &V); //[m] Returns either receiver width or diameter, depending on configuration
