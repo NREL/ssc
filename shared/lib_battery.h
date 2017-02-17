@@ -178,6 +178,8 @@ public:
 
 	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
 	virtual double battery_voltage(); // voltage of one battery
+
+	double battery_voltage_nominal(); // nominal voltage of battery
 	double cell_voltage(); // voltage of one cell
 	double R(); // computed resistance
 
@@ -185,6 +187,7 @@ protected:
 	int _num_cells_series;    // number of cells in series
 	int _num_strings;  // addition number in parallel
 	double _cell_voltage; // closed circuit voltage per cell [V]
+	double _cell_voltage_nominal; // nominal cell voltage [V]
 	double _R;
 
 };
@@ -415,7 +418,8 @@ public:
 
 	// Get Voltage
 	double cell_voltage();
-	double battery_voltage();
+	double battery_voltage(); // the actual battery voltage
+	double battery_voltage_nominal(); // the nominal battery voltage
 
 	double timestep_hour();
 
@@ -490,7 +494,7 @@ public:
 protected:
 
 	// Controllers
-	void SOC_controller(double battery_voltage, double charge_total, double charge_max);
+	void SOC_controller();
 	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
