@@ -434,6 +434,7 @@ voltage_t::voltage_t(int num_cells_series, int num_strings, double voltage)
 	_num_cells_series = num_cells_series;
 	_num_strings = num_strings;
 	_cell_voltage = voltage;
+	_cell_voltage_nominal = voltage;
 	_R = 0.004; // just a default, will get recalculated upon construction
 }
 void voltage_t::copy(voltage_t *& voltage)
@@ -443,8 +444,8 @@ void voltage_t::copy(voltage_t *& voltage)
 	voltage->_cell_voltage = _cell_voltage;
 	voltage->_R = _R;
 }
-
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
+double voltage_t::battery_voltage_nominal(){ return _num_cells_series * _cell_voltage_nominal; }
 double voltage_t::cell_voltage(){ return _cell_voltage; }
 double voltage_t::R(){ return _R; }
 
@@ -558,7 +559,8 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 	_I = capacity->I();
 	double q0 = capacity->q0();
 
-	double T = thermal->T_battery() + util::Celsius_to_Kelvin;
+	// Kelvin
+	double T = thermal->T_battery(); 
 
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
@@ -577,7 +579,9 @@ double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
-	double V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C;
+	double V_stack_cell = 0.;
+	if (isfinite(A))
+		V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C;
 
 	return V_stack_cell;
 }
@@ -1185,6 +1189,7 @@ double battery_t::battery_charge_total(){return _capacity->q0();}
 double battery_t::battery_charge_maximum(){ return _capacity->qmax(); }
 double battery_t::cell_voltage(){ return _voltage->cell_voltage();}
 double battery_t::battery_voltage(){ return _voltage->battery_voltage();}
+double battery_t::battery_voltage_nominal(){ return _voltage->battery_voltage_nominal(); }
 double battery_t::battery_soc(){ return _capacity->SOC(); }
 /*
 Dispatch base class
@@ -1247,7 +1252,7 @@ double dispatch_t::power_battery_to_grid(){ return _P_battery_to_grid; }
 
 message dispatch_t::get_messages(){ return _message; };
 
-void dispatch_t::SOC_controller(double battery_voltage, double charge_total, double charge_max)
+void dispatch_t::SOC_controller()
 {
 	// Implement minimum SOC cut-off
 	if (_P_tofrom_batt > 0)
@@ -1487,7 +1492,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	initialize_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
 	// current charge state of battery from last time step.  
-	double battery_voltage = _Battery->battery_voltage();								         // [V] 
+	double battery_voltage = _Battery->battery_voltage_nominal();								 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;   // [kWh]
 	double charge_total = _Battery->battery_charge_total();								         // [Ah]
@@ -1501,7 +1506,7 @@ void dispatch_manual_t::dispatch(size_t year,
 		compute_energy_battery_priority(energy_needed_to_fill);
 
 	// Controllers
-	SOC_controller(battery_voltage, charge_total, charge_max);
+	SOC_controller();
 	switch_controller();
 	I = current_controller(battery_voltage);
 
@@ -1694,7 +1699,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	initialize_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
 	// current charge state of battery from last time step.  
-	double battery_voltage = _Battery->battery_voltage();								         // [V] 
+	double battery_voltage = _Battery->battery_voltage_nominal();								 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;   // [kWh]
 	double charge_total = _Battery->battery_charge_total();								         // [Ah]
@@ -1705,7 +1710,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	compute_energy_no_load(energy_needed_to_fill);
 
 	// Controllers
-	SOC_controller(battery_voltage, charge_total, charge_max);
+	SOC_controller();
 	switch_controller();
 	I = current_controller(battery_voltage);
 
