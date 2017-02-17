@@ -52,12 +52,12 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_INPUT, SSC_NUMBER, "transformer_load_loss", "Power transformer load loss", "%", "", "pvsamv1", "?=0", "", "" },
 	
 	// optional for lifetime analysis
-	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                      "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                              "Annual module degradation",                            "%/year",   "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
-//	{ SSC_INPUT,        SSC_ARRAY,       "ac_degradation",                              "Annual AC degradation",                                "%/year",   "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_degrade_factor",                           "Annual module degrade factor",                         "",         "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
-//	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_degrade_factor",                           "Annual AC degrade factor",                             "",         "",                              "pvsamv1",             "pv_lifetime_simulation=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "PV lifetime simulation",                               "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "dc_degradation",                              "Annual module degradation",                            "%/year",   "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
+//	{ SSC_INPUT,        SSC_ARRAY,       "ac_degradation",                              "Annual AC degradation",                                "%/year",   "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "dc_degrade_factor",                           "Annual module degrade factor",                         "",         "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
+//	{ SSC_OUTPUT,       SSC_ARRAY,       "ac_degrade_factor",                           "Annual AC degrade factor",                             "",         "",                              "pvsamv1",             "system_use_lifetime_output=1",   "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "en_dc_lifetime_losses",                       "Enable lifetime daily DC losses",                      "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dc_lifetime_losses",                          "Lifetime daily DC losses",                             "%",        "",                              "pvsamv1",             "en_dc_lifetime_losses=1",    "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "en_ac_lifetime_losses",                       "Enable lifetime daily AC losses",                      "0/1",      "",                              "pvsamv1",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
@@ -794,7 +794,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 	//miscellaneous outputs
 	{ SSC_OUTPUT,        SSC_NUMBER,      "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "*",                       "",                          "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "system_use_lifetime_output",                 "Use lifetime output",        "0/1",    "",  "Miscellaneous",       "*",                    "INTEGER",                                  "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                        "System nameplate DC rating", "kW",     "",  "Miscellaneous",       "*",                    "",                              "" },
 
 
@@ -1683,12 +1682,12 @@ public:
 
 
 		// lifetime control variables - used to set array sizes
-		int pv_lifetime_simulation = as_integer("pv_lifetime_simulation");
+		int system_use_lifetime_output = as_integer("system_use_lifetime_output");
 		size_t nyears = 1;
-		if (pv_lifetime_simulation == 1)
+		if (system_use_lifetime_output == 1)
 			nyears = as_integer("analysis_period");
 
-		if ( __ARCHBITS__ == 32 && pv_lifetime_simulation )
+		if ( __ARCHBITS__ == 32 && system_use_lifetime_output )
 			throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
 
 		ssc_number_t *p_dc_degrade_factor = 0;
@@ -1698,7 +1697,7 @@ public:
 		bool en_ac_lifetime_losses = as_boolean("en_ac_lifetime_losses");
 		ssc_number_t *ac_lifetime_losses = 0; //daily losses over the lifetime of the system, optional
 
-		if (pv_lifetime_simulation == 1)
+		if (system_use_lifetime_output == 1)
 		{
 			size_t count_dc_degrad = 0;
 			ssc_number_t *dc_degrad = 0;
@@ -2788,7 +2787,7 @@ public:
 					// if they're applied WITHIN the loop, as they had been, then the power from subarrays 1-3 get the SAME derate/degradation applied nn-1 times, instead of just once!!
 
 					//module degradation and lifetime DC losses apply to all subarrays
-					if (pv_lifetime_simulation == 1)
+					if (system_use_lifetime_output == 1)
 						dcpwr_net *= p_dc_degrade_factor[iyear + 1];
 
 					//dc adjustment factors apply to all subarrays
@@ -2796,7 +2795,7 @@ public:
 					dcpwr_net *= dc_haf(hour);
 
 					//lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
-					if (pv_lifetime_simulation == 1 && en_dc_lifetime_losses)
+					if (system_use_lifetime_output == 1 && en_dc_lifetime_losses)
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
 						int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
@@ -3032,7 +3031,7 @@ public:
 					p_gen[idx] *= haf(hour);
 
 					//apply lifetime daily AC losses only if they are enabled
-					if (pv_lifetime_simulation == 1 && en_ac_lifetime_losses)
+					if (system_use_lifetime_output == 1 && en_ac_lifetime_losses)
 					{
 						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
 						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
@@ -3120,7 +3119,6 @@ public:
 		inverter_vdcmax_check();
 		inverter_size_check();
 
-		assign("system_use_lifetime_output", var_data((ssc_number_t) pv_lifetime_simulation));
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 
 
