@@ -2469,11 +2469,13 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
             double dr_min = 2. * sqrt( 4 * r_coll * r_coll - pow(_var_map->sf.az_spacing.val*W2, 2) );
 
 			//from pointing angle, calculate other needed info
-			double z_0u = cos(phi_0)*H2;	//height of the upper heliostat edge
-			double r_0u = r_0 + sin(phi_0)*H2;	//Radial position of the upper heliostat edge
+            {
+			    double z_0u = cos(phi_0)*H2;	//height of the upper heliostat edge
+			    double r_0u = r_0 + sin(phi_0)*H2;	//Radial position of the upper heliostat edge
 
-            //Calculate the next row position based on similar triangles between tower and upper/lower corners of adjacent heliostats.
-            r_c = r_0u * (_var_map->sf.tht.val + z_0u) / (_var_map->sf.tht.val - z_0u) + sin(phi_0)*H2;
+                //Calculate the next row position based on similar triangles between tower and upper/lower corners of adjacent heliostats.
+                r_c = r_0u * (_var_map->sf.tht.val + z_0u) / (_var_map->sf.tht.val - z_0u) + sin(phi_0)*H2;
+            }
 
             //Is this row in the inner compact region?
             bool row_compact = r_c - r_0 < 2.* r_coll *_var_map->sf.trans_limit_fact.val;
@@ -2567,16 +2569,24 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
             {
                
 				if(! row_compact_switch){
-                    nr++; 
+                    if( !_var_map->sf.is_sliprow_skipped.val )
+                    {
+                        nr++; 
                     
-                    //make sure the next 2 rows are at least the collision radius away
-                    r_c = max(r_0 + 4.*r_coll, r_c);
+                        //make sure the next 2 rows are at least the collision radius away
+                        r_c = max(r_0 + 4.*r_coll, r_c);
 
-				    //Make the row as close as possible and remove shadowed/blocked heliostats. 
-				    //Multiply by the _slip_offset factor specified by the user
-				    rowpos.push_back((r_c+r_0)/2.);
-				    slips.push_back(true);
-                    is_compact.push_back(false);
+				        //Make the row as close as possible and remove shadowed/blocked heliostats. 
+				        //Multiply by the _slip_offset factor specified by the user
+				        rowpos.push_back((r_c+r_0)/2.);
+				        slips.push_back(true);
+                        is_compact.push_back(false);
+                    }
+                    else
+                    {
+                        r_c = r_0 + (r_c - r_0)*(1.-_var_map->sf.slip_plane_blocking.val/2.);
+                        r_c = max(r_0 + 2.*r_coll, r_c);
+                    }
                 }
                 else
                 {
@@ -2585,7 +2595,7 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
 
 				nr++;
                 rowpos.push_back(r_c);
-				slips.push_back(false || row_compact_switch);
+				slips.push_back(false || row_compact_switch || _var_map->sf.is_sliprow_skipped.val );
                 is_compact.push_back(false);
 				r_reset = r_c;
 			}
@@ -2599,8 +2609,23 @@ void SolarField::radialStaggerPositions(vector<Point> &HelPos)
                 //determine whether current row is a slip plane
 				if( r_c/r_reset > _var_map->sf.spacing_reset.val){	//Does the next inline row incurs a slip plane?
 					nr++;
-					//Put this row as close as possible to the intermediate row. include _slip_offset factor
-                    r_c = max(rowpos.back() + 2.*r_coll, r_c );
+                    if( ! _var_map->sf.is_sliprow_skipped.val )
+                    {
+					    //Put this row as close as possible to the intermediate row. include _slip_offset factor
+                        r_c = max(rowpos.back() + 2.*r_coll, r_c );
+                    }
+                    else
+                    {
+                        //from pointing angle, calculate other needed info
+			            phi_0 = atan(_var_map->sf.tht.val/rowpos.back());
+			            double z_0u = cos(phi_0)*H2*(1.-_var_map->sf.slip_plane_blocking.val);	//height of the upper heliostat edge
+			            double r_0u = rowpos.back() + sin(phi_0)*H2;	//Radial position of the upper heliostat edge
+
+                        //Calculate the next row position based on similar triangles between tower and upper/lower corners of adjacent heliostats.
+                        r_c = r_0u * (_var_map->sf.tht.val + z_0u) / (_var_map->sf.tht.val - z_0u) + sin(phi_0)*H2;
+                        r_c = max(rowpos.back() + 2.*r_coll, r_c);
+                    }
+
                     rowpos.push_back( r_c );
 					slips.push_back(true);
 					r_reset = r_c;
