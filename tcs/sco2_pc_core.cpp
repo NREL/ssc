@@ -5192,8 +5192,10 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 
 		double f_recomp_guess = ms_des_solved.m_recomp_frac;
 		double y_f_recomp_guess = std::numeric_limits<double>::quiet_NaN();
+		// Send a guess recompression fraction to method; see if it returns a calculated N_rc or fails
 		int turb_bal_err_code = c_turbo_bal_f_recomp_solver.call_mono_eq(f_recomp_guess, &y_f_recomp_guess);
 
+		// If guessed recompression fraction fails, then try to find a recompression fraction that works
 		if( turb_bal_err_code != 0 )
 		{			
 			double delta = 0.02;
@@ -5211,6 +5213,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 					}
 					if( f_recomp_guess == 0.0 )
 					{
+						// Have tried a fairly fine grid of recompression fraction values; have not found one that works
 						error_code = -40;
 						return;
 					}	
@@ -5241,6 +5244,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 			}
 			else
 			{
+				// Found one recompression fraction that works, but can't find another nearby value that also works
 				error_code = -41;
 				return;
 			}
