@@ -170,11 +170,15 @@ private:
 
 	int m_off_design_turbo_operation;	//[-] How is turbomachinery controlled off-design?
 
-	double m_T_mc_in_min;
+	double m_T_mc_in_min;		//[K]
+	double m_T_co2_crit;		//[K]
+	double m_P_co2_crit;		//[kPa]
 
 	void design_core();
 
 	void reset_S_od_opt_eta_tracking();
+
+	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 
 	int od_fix_T_mc__nl_opt_shell__opt_eta();
 
@@ -192,7 +196,8 @@ public:
 		E_MOO_ETA_0p1Wnd_FIX_PHI,
 		E_MOO_ETA_T_T_IN,
 		E_MOO_ETA_T_T_IN_FIX_PHI,
-		E_MAX_POWER_IN_ETA_MAX_BAND		
+		E_MAX_POWER_IN_ETA_MAX_BAND,
+		E_TARGET_POWER_ETA_MAX
 	};
 
 	enum E_system_op_constraints
@@ -258,6 +263,8 @@ public:
 	bool opt_f_recomp_fix_P_mc_in_max_eta_core();
 
 	bool opt_P_mc_in_nest_f_recomp_max_eta_core();
+
+	bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
 
 	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 

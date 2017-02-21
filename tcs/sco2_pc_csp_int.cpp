@@ -11,6 +11,12 @@
 
 C_sco2_recomp_csp::C_sco2_recomp_csp()
 {
+	// Get CO2 critical temperature
+	CO2_info co2_fluid_info;
+	get_CO2_info(&co2_fluid_info);
+	m_T_co2_crit = co2_fluid_info.T_critical;		//[K]
+	m_P_co2_crit = co2_fluid_info.P_critical;		//[kPa]
+
 	m_T_mc_in_min = mc_rc_cycle.get_design_limits().m_T_mc_in_min;		//[K]
 
 	// Set default optimization strategy
@@ -26,7 +32,7 @@ C_sco2_recomp_csp::C_sco2_recomp_csp()
 	//	Can choose main compressor shaft speed
 	//	Can choose recompressor shaft speed
 	//	Turbine is fixed
-	m_off_design_turbo_operation = E_VFD_MC_VFD_RC_FIXED_T;
+	//m_off_design_turbo_operation = E_VFD_MC_VFD_RC_FIXED_T;
 	m_off_design_turbo_operation = E_FIXED_MC_FIXED_RC_FIXED_T;
 
 	mf_callback = 0;		// NULL
@@ -202,6 +208,17 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	m_od_opt_ftol = od_opt_tol;
 	// ****************************************
 
+
+
+	//if (m_od_opt_objective == E_MAX_POWER_FIX_PHI ||
+	//	m_od_opt_objective == E_MAX_POWER)
+	//{
+	//	m_od_opt_objective = E_TARGET_POWER_ETA_MAX;
+	//}
+
+
+
+
 	// Define ms_rc_cycle_od_par
 	// Defined now
 	ms_rc_cycle_od_phi_par.m_T_mc_in = ms_od_par.m_T_amb + ms_des_par.m_dt_mc_approach;		//[K]
@@ -239,8 +256,8 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 
 	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
 
-	//double P_mc_in_min = 8000.0;		//[kPa]
-	//double P_mc_in_max = 11000.0;		//[kPa]
+	//double P_mc_in_min = 5000.0;		//[kPa]
+	//double P_mc_in_max = 8000.0;		//[kPa]
 	//double P_mc_in_inc = 25.0;			//[kPa]
 	//
 	//off_design_P_mc_in_parameteric(P_mc_in_min, P_mc_in_max, P_mc_in_inc);
@@ -282,6 +299,199 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 }
 
 bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
+{
+	// Prior to calling, need to set :
+	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
+	
+	// Get density at design point
+	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
+	CO2_state co2_props;
+	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
+	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
+	double mc_pres_dens_des_od = co2_props.pres;	//[kPa]
+	ms_rc_cycle_od_phi_par.m_P_mc_in = mc_pres_dens_des_od;	//[kPa]
+
+	double P_mc_in_guess = -1.23;
+	double P_mc_in_upper = -1.23;
+	double P_mc_in_lower = -1.23;
+
+	int od_core_error_code_dens = 0;
+	if (m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T)
+	{
+		double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+		od_core_error_code_dens = off_design_core(eta_od_core);
+		if (od_core_error_code_dens == 0)
+		{	// Have found one feasible compressor inlet pressure
+			P_mc_in_guess = ms_rc_cycle_od_phi_par.m_P_mc_in;	//[kPa]
+
+			P_mc_in_upper = P_mc_in_guess;
+			// Increase compressor inlet temperature until off design returns error code
+			int iter_P_mc_in_upper = 0;
+			while (true)
+			{
+				iter_P_mc_in_upper++;
+				P_mc_in_upper = 0.95*P_mc_in_upper + 0.05*ms_des_par.m_P_high_limit;	//[kPa]
+				ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_upper;	//[kPa]
+
+				int od_core_error_code = off_design_core(eta_od_core);
+
+				if (od_core_error_code == 0)
+				{
+					if (iter_P_mc_in_upper > 20 || (ms_des_par.m_P_high_limit - P_mc_in_upper) / ms_des_par.m_P_high_limit < 0.01)
+					{
+						P_mc_in_upper = ms_des_par.m_P_high_limit;	//[kPa]
+					}
+				}
+				else
+				{
+					break;
+				}				
+			}
+
+			// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
+			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
+			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
+		}
+		else if (od_core_error_code_dens == -14)
+		{	// Compressor outlet pressure is too high; decrease compressor inlet pressure
+
+			while (true)
+			{
+				P_mc_in_upper = ms_rc_cycle_od_phi_par.m_P_mc_in;	//[kPa]
+				P_mc_in_guess = 0.98*P_mc_in_upper;					//[kPa]
+
+				ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;	//[kPa]
+
+				int od_core_error_code = off_design_core(eta_od_core);
+
+				if (od_core_error_code == 0)
+				{
+					break;
+				}
+				else if (od_core_error_code != -14)
+				{	// So we've gone from error = -14 to error = something else, and this is a problem
+					// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
+					throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
+				}
+			}
+			
+			// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
+			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
+			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
+		}
+		else if (od_core_error_code_dens == 4 || od_core_error_code_dens == 5)
+		{	// Inlet state is too dense, resulting in a small recompression fraction, and the recompressor can't reach target pressure
+
+			while (true)
+			{
+				P_mc_in_upper = ms_rc_cycle_od_phi_par.m_P_mc_in;	//[kPa]
+				P_mc_in_guess = 0.98*P_mc_in_upper;					//[kPa]
+
+				ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;	//[kPa]
+
+				int od_core_error_code = off_design_core(eta_od_core);
+
+				if (od_core_error_code == 0)
+				{
+					break;
+				}
+				else if (od_core_error_code != 4 && od_core_error_code != 5)
+				{	// So we've gone from error = -14 to error = something else, and this is a problem
+					// Could try bisecting P_mc_in_upper and P_mc_in_guess, but there's not much room there, given the step size...
+					throw(C_csp_exception("Failed to find a feasible guess value for compressor inlet pressure"));
+				}
+			}
+
+			// Calculate P_mc_in_lower such that first guess in fmin is P_mc_in_guess
+			double r = (3.0 - sqrt(5.0)) / 2.0;		// Gold section ratio
+			P_mc_in_lower = (P_mc_in_guess - (r*P_mc_in_upper)) / (1.0 - r);
+		}
+		else
+		{
+			std::string err_msg = util::format("Off design error code %d current not accounted for", od_core_error_code_dens);
+			throw(C_csp_exception(err_msg,""));
+		}
+
+	}
+	else if ( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+	{
+		throw(C_csp_exception("Off design operation mode E_VFD_MC_VFD_RC_FIXED_T not supported here"));
+	}
+	else
+	{
+		throw(C_csp_exception("Off design operation mode not recognized"));
+	}
+
+	// At this point, should have calculated above in this method:
+	// * P_mc_in_lower
+	// * P_mc_in_guess
+	// * P_mc_in_upper
+
+	bool is_P_opt_success = false;
+	int opt_iter = 0;
+	while (true)
+	{
+		opt_iter++;
+
+		// Optimize compressor inlet pressure using fmin
+		double P_mc_in_opt = fminbr(
+			P_mc_in_lower, P_mc_in_upper,
+			&fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
+
+		// Now, call off-design with the optimized compressor inlet pressure		
+		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
+		double eta_od_core_1st = std::numeric_limits<double>::quiet_NaN();
+		int od_core_error_code = off_design_core(eta_od_core_1st);
+		if (od_core_error_code == 0)
+		{
+			is_P_opt_success = true;
+			if ( (P_mc_in_opt - P_mc_in_lower)/P_mc_in_lower < 0.05 )
+			{
+				// Need to check for an optimum pressure that is less than P_mc_in_lower...
+				double r = (3. - sqrt(5.0)) / 2;       /* Gold section ratio           */
+
+				P_mc_in_guess = P_mc_in_opt;
+				P_mc_in_lower = 0.8*P_mc_in_opt;
+				P_mc_in_upper = (P_mc_in_guess - (1.0 - r)*P_mc_in_lower) / r;
+
+				continue;
+
+				//throw(C_csp_exception("Don't have code to handle optimal pressure equaling miminum pressure"));
+			}
+			else if (P_mc_in_opt == P_mc_in_upper && P_mc_in_opt < ms_des_par.m_P_high_limit)
+			{
+				throw(C_csp_exception("Don't have code to handle optimal pressure equaling maximum pressure"));
+			}
+			else
+			{
+				break;
+			}
+		}
+		else
+		{
+			throw(C_csp_exception("Calculated optimal pressure returned an error"));
+		}
+	}
+
+	if (m_is_write_mc_out_file)
+	{
+		mc_P_mc_vary_f_recomp_opt_file.close();
+	}
+
+	if (!is_P_opt_success)
+	{
+		throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+	}
+
+	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
+	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+
+	return true;
+}
+
+bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
 {
 	// Prior to calling, need to set :
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
@@ -927,13 +1137,8 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, 
 {
 	ms_od_par = od_par;
 
-
 	// Optimization variables:
 	m_od_opt_objective = off_design_strategy;
-
-
-	m_od_opt_objective = E_MAX_POWER_FIX_PHI;
-	
 
 	if( m_od_opt_objective == E_MAX_ETA_FIX_PHI || 
 		m_od_opt_objective == E_MAX_POWER_FIX_PHI || 
@@ -1060,8 +1265,58 @@ void C_sco2_recomp_csp::reset_S_od_opt_eta_tracking()
 		ms_od_opt_eta_tracking.m_over_P_high_at_eta_max = std::numeric_limits<double>::quiet_NaN();
 }
 
+double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/)
+{	
+	double P_mc_in_restricted = std::numeric_limits<double>::quiet_NaN();	//[kPa]
+	CO2_state co2_props;
+	// Is T_co2 < the critical temperature
+	if (T_co2 < m_T_co2_crit)
+	{
+		CO2_TQ(T_co2, 0.0, &co2_props);
+		P_mc_in_restricted = co2_props.pres;	//[kPa]
+	}
+	else if (T_co2 < 1.001*m_T_co2_crit)
+	{	// Else, T_co2 > the critical temperature
+		P_mc_in_restricted = m_P_co2_crit;		//[kPa]
+	}
+	else
+	{
+		return P_mc_in;	//[kPa]
+	}
+	
+	if (P_mc_in >= P_mc_in_restricted)
+	{
+		double P_upper = 1.01*P_mc_in_restricted;
+		if (P_mc_in < P_upper)
+		{
+			double P_mid = 1.005*P_mc_in_restricted;
+			return P_upper - (P_upper - P_mc_in)/(P_upper - P_mc_in_restricted)*(P_upper-P_mid);
+		}
+		else
+		{
+			return P_mc_in;		//[kPa]
+		}
+	}
+	else
+	{
+		double P_lower = 0.99*P_mc_in_restricted;
+		double P_mid = 0.995*P_mc_in_restricted;
+		if (P_mc_in > P_lower)
+		{
+			return P_lower + (P_mc_in - P_lower)/(P_mc_in_restricted - P_lower)*(P_mc_in-P_lower);
+		}
+		else
+		{
+			return P_mc_in;		//[kPa]
+		}
+	}
+
+}
+
 int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 {
+	ms_rc_cycle_od_phi_par.m_P_mc_in = adjust_P_mc_in_away_2phase(ms_rc_cycle_od_phi_par.m_T_mc_in, ms_rc_cycle_od_phi_par.m_P_mc_in);
+
 	// Apply 1 var solver to find the turbine inlet temperature that results in a "converged" PHX
 	C_mono_eq_T_t_in c_phx_cycle(this);
 	C_monotonic_eq_solver c_phx_cycle_solver(c_phx_cycle);
@@ -1130,7 +1385,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		rc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_w_tip_ratio;
 	}
 	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
-	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 1.0));
+	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 0.999));
 
 	// 4) Check for compressor(s) surge?
 	// Main compressor
@@ -1167,7 +1422,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		od_solve_code = E_TURBINE_INLET_OVER_TEMP;
 	else if( mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT] > ms_des_par.m_P_high_limit )
 		od_solve_code = E_OVER_PRESSURE;
-	else if(over_tip_ratio != 0.0)
+	else if (over_tip_ratio >= 1.0)
 		od_solve_code = E_TIP_RATIO;
 	else if(over_surge_mc != 0.0)
 		od_solve_code = E_MC_SURGE;
@@ -1203,6 +1458,20 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 		double eta_thermal = mc_rc_cycle.get_od_solved()->m_eta_thermal;					//[-]
 		double under_eta_max = max(0.0, (0.99*m_eta_max_eta - eta_thermal)*1.E3);			//[-]
 		eta_solved = mc_rc_cycle.get_od_solved()->m_W_dot_net/1.E3*scale_product*exp(-under_eta_max);	//[MWe]
+	}
+	case E_TARGET_POWER_ETA_MAX:
+	{
+		double W_dot_target = (ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) * ms_des_par.m_W_dot_net;	//[kWe]
+		double W_dot_nd = min(1.0, fabs((mc_rc_cycle.get_od_solved()->m_W_dot_net - W_dot_target) / W_dot_target));	//[-]
+		if (W_dot_nd > 0.001)
+		{
+			eta_solved = (1.0 - W_dot_nd)*scale_product;
+		}
+		else
+		{
+			eta_solved = (1.0 - W_dot_nd + exp(-W_dot_nd)*mc_rc_cycle.get_od_solved()->m_eta_thermal*1.E-3)*scale_product;
+		}
+		eta_solved = eta_solved*1.E3;
 	}
 		break;
 
