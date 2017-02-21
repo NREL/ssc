@@ -358,6 +358,10 @@ void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*k
 	double T_h_prev = 0.0;
 	double h_c_prev = 0.0;
 	double T_c_prev = 0.0;
+	double T_c_in = std::numeric_limits<double>::quiet_NaN();	//[K]
+	double T_c_out = std::numeric_limits<double>::quiet_NaN();	//[K]
+	double T_h_in = std::numeric_limits<double>::quiet_NaN();	//[K]
+	double T_h_out = std::numeric_limits<double>::quiet_NaN();	//[K]
 	// Loop through the sub-heat exchangers
 	int prop_error_code = 0;
 	for (int i = 0; i < N_nodes; i++)
@@ -402,6 +406,17 @@ void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*k
 		else
 		{
 			T_c = mc_cold_fl.temp_lookup(h_c);	//[K]
+		}
+
+		if (i == 0)
+		{
+			T_h_in = T_h;
+			T_c_out = T_c;
+		}
+		if (i == N_nodes - 1)
+		{
+			T_h_out = T_h;
+			T_c_in = T_c;
 		}
 
 		// ****************************************************
@@ -484,6 +499,53 @@ void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*k
 
 	// **************************************************************
 	// Calculate the HX effectiveness
+	double q_dot_max = calc_max_q_dot_enth(h_h_in, P_h_in, P_h_out, m_dot_h,
+		h_c_in, P_c_in, P_c_out, m_dot_c);
+
+	eff = q_dot / q_dot_max;
+
+	bool is_h_2phase = false;
+	if (fabs(T_h_in - T_h_out) < 0.001)
+	{
+		is_h_2phase = true;
+	}
+	bool is_c_2phase = false;
+	if (fabs(T_c_out - T_c_in) < 0.001)
+	{
+		is_c_2phase = true;
+	}
+
+	double C_dot_min, C_R;
+	C_dot_min = C_R = std::numeric_limits<double>::quiet_NaN();
+
+	if (is_h_2phase && !is_c_2phase)
+	{
+		C_dot_min = m_dot_c*(h_c_out - h_c_in) / (T_c_out - T_c_in);			// [kW/K] cold stream capacitance rate
+		C_R = 0.0;
+	}
+	else if (!is_c_2phase && is_h_2phase)
+	{
+		C_dot_min = m_dot_h*(h_h_in - h_h_out) / (T_h_in - T_h_out);			// [kW/K] hot stream capacitance rate
+		C_R = 0.0;
+	}
+	else if (is_c_2phase && is_h_2phase)
+	{
+		C_dot_min = q_dot / (double)ms_init_par.m_N_sub_hx * 1.E10 * (T_h_in - T_c_in);
+		C_R = 1.0;
+	}
+	else
+	{
+		double C_dot_h = m_dot_h*(h_h_in - h_h_out) / (T_h_in - T_h_out);			// [kW/K] hot stream capacitance rate
+		double C_dot_c = m_dot_c*(h_c_out - h_c_in) / (T_c_out - T_c_in);			// [kW/K] cold stream capacitance rate
+		C_dot_min = fmin(C_dot_h, C_dot_c);						// [kW/K] Minimum capacitance stream
+		double C_dot_max = fmax(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
+		C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
+	}
+
+	if (C_R != 1.0)
+		NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
+	else
+		NTU = eff / (1.0 - eff);
 
 	return;
 }
