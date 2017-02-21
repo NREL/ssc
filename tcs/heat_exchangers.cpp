@@ -296,8 +296,11 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 
 	// **************************************************************
 	// Calculate the HX effectiveness
-	double q_dot_max = calc_max_q_dot(T_h_in, P_h_in, P_h_out, m_dot_h,
-			T_c_in, P_c_in, P_c_out, m_dot_c);
+	//double q_dot_max = calc_max_q_dot(T_h_in, P_h_in, P_h_out, m_dot_h,
+	//		T_c_in, P_c_in, P_c_out, m_dot_c);
+
+	double q_dot_max = calc_max_q_dot_enth(h_h_in, P_h_in, P_h_out, m_dot_h,
+			h_c_in, P_c_in, P_c_out, m_dot_c);
 
 	eff = q_dot / q_dot_max;
 
@@ -313,6 +316,175 @@ void C_HX_counterflow::calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/
 	else
 		NTU = eff / (1.0 - eff);
 		
+	return;
+}
+
+void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
+	double h_c_in /*kJ/kg*/, double h_h_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
+	double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & h_h_out /*K*/, double & h_c_out /*K*/, double & q_dot_calc /*kWt*/)
+{
+	// Check inputs
+	if (q_dot < 0.0)
+	{
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"Input heat transfer rate is less than 0.0. It must be >= 0.0", 4));
+	}
+	if (m_dot_c < 1.E-14)
+	{
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"The cold mass flow rate must be a positive value"));
+	}
+	if (m_dot_h < 1.E-14)
+	{
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"The hot mass flow rate must be a positive value"));
+	}
+	if (P_h_in < P_h_out)
+	{
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"Hot side outlet pressure is greater than hot side inlet pressure", 6));
+	}
+	if (P_c_in < P_c_out)
+	{
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"Cold side outlet pressure is greater than cold side inlet pressure", 7));
+	}
+
+	h_h_out = h_h_in - q_dot / m_dot_h;		//[kJ/kg]
+	h_c_out = h_c_in + q_dot / m_dot_c;		//[kJ/kg]
+
+	int N_nodes = ms_init_par.m_N_sub_hx + 1;
+	double h_h_prev = 0.0;
+	double T_h_prev = 0.0;
+	double h_c_prev = 0.0;
+	double T_c_prev = 0.0;
+	// Loop through the sub-heat exchangers
+	int prop_error_code = 0;
+	for (int i = 0; i < N_nodes; i++)
+	{
+		// Assume pressure varies linearly through heat exchanger
+		double P_c = P_c_out + i*(P_c_in - P_c_out) / (N_nodes - 1);
+		double P_h = P_h_in - i*(P_h_in - P_h_out) / (N_nodes - 1);
+
+		// Calculate the entahlpy at the node
+		double h_c = h_c_out + i*(h_c_in - h_c_out) / (N_nodes - 1);
+		double h_h = h_h_in - i*(h_h_in - h_h_out) / (N_nodes - 1);
+
+		// ****************************************************
+		// Calculate the hot and cold temperatures at the node
+		double T_h = std::numeric_limits<double>::quiet_NaN();
+		if (ms_init_par.m_hot_fl == CO2)
+		{
+			prop_error_code = CO2_PH(P_h, h_h, &mc_co2_props);
+			if (prop_error_code != 0)
+			{
+				throw(C_csp_exception("C_HX_counterflow::design",
+					"Cold side inlet enthalpy calculations failed", 12));
+			}
+			T_h = mc_co2_props.temp;		//[K]
+		}
+		else
+		{
+			T_h = mc_hot_fl.temp_lookup(h_h);	//[K]
+		}
+
+		double T_c = std::numeric_limits<double>::quiet_NaN();
+		if (ms_init_par.m_cold_fl == CO2)
+		{
+			prop_error_code = CO2_PH(P_c, h_c, &mc_co2_props);
+			if (prop_error_code != 0)
+			{
+				throw(C_csp_exception("C_HX_counterflow::design",
+					"Cold side inlet enthalpy calculations failed", 13));
+			}
+			T_c = mc_co2_props.temp;		//[K]
+		}
+		else
+		{
+			T_c = mc_cold_fl.temp_lookup(h_c);	//[K]
+		}
+
+		// ****************************************************
+		// ****************************************************
+		// ****************************************************
+
+		// Check that 2nd law is not violated
+		if (T_c >= T_h)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Cold temperature is hotter than hot temperature.", 11));
+		}
+
+		// Track the minimum temperature difference in the heat exchanger
+		min_DT = fmin(min_DT, T_h - T_c);
+
+		// Perform effectiveness-NTU and UA calculations 
+		if (i > 0)
+		{
+			bool is_h_2phase = false;
+			if (fabs(T_h_prev - T_h) < 0.001)
+			{
+				is_h_2phase = true;
+			}
+			bool is_c_2phase = false;
+			if (fabs(T_c_prev - T_c) < 0.001)
+			{
+				is_c_2phase = true;
+			}
+
+			double C_dot_min, C_R;
+			C_dot_min = C_R = std::numeric_limits<double>::quiet_NaN();
+
+			if (is_h_2phase && !is_c_2phase)
+			{
+				C_dot_min = m_dot_c*(h_c_prev - h_c) / (T_c_prev - T_c);			// [kW/K] cold stream capacitance rate
+				C_R = 0.0;
+			}
+			else if (!is_c_2phase && is_h_2phase)
+			{
+				C_dot_min = m_dot_h*(h_h_prev - h_h) / (T_h_prev - T_h);			// [kW/K] hot stream capacitance rate
+				C_R = 0.0;
+			}
+			else if (is_c_2phase && is_h_2phase)
+			{
+				C_dot_min = q_dot / (double)ms_init_par.m_N_sub_hx * 1.E10 * (T_h_prev - T_c);
+				C_R = 1.0;
+			}
+			else
+			{
+				double C_dot_h = m_dot_h*(h_h_prev - h_h) / (T_h_prev - T_h);			// [kW/K] hot stream capacitance rate
+				double C_dot_c = m_dot_c*(h_c_prev - h_c) / (T_c_prev - T_c);			// [kW/K] cold stream capacitance rate
+				C_dot_min = fmin(C_dot_h, C_dot_c);						// [kW/K] Minimum capacitance stream
+				double C_dot_max = fmax(C_dot_h, C_dot_c);				// [kW/K] Maximum capacitance stream
+				C_R = C_dot_min / C_dot_max;						// [-] Capacitance ratio of sub-heat exchanger
+			}
+
+			double eff = min(0.99999, (q_dot / (double)ms_init_par.m_N_sub_hx) / (C_dot_min*(T_h_prev - T_c)));	// [-] Effectiveness of each sub-heat exchanger
+			double NTU = 0.0;
+			if (C_R != 1.0)
+				NTU = log((1.0 - eff*C_R) / (1.0 - eff)) / (1.0 - C_R);		// [-] NTU if C_R does not equal 1
+			else
+				NTU = eff / (1.0 - eff);
+			UA += NTU*C_dot_min;								//[kW/K] Sum UAs for each hx section
+		}
+		h_h_prev = h_h;
+		T_h_prev = T_h;
+		h_c_prev = h_c;
+		T_c_prev = T_c;
+	}
+
+	// Check for NaNs in UA
+	if (UA != UA)
+	{
+		throw(C_csp_exception("C_HX_counterflow::design",
+			"NaN found for total heat exchanger UA", 14));
+	}
+
+	q_dot_calc = q_dot;
+
+	// **************************************************************
+	// Calculate the HX effectiveness
+
 	return;
 }
 
@@ -373,6 +545,95 @@ double C_HX_counterflow::calc_max_q_dot(double T_h_in, double P_h_in, double P_h
 	}
 
 	return std::min(Q_dot_hot_max, Q_dot_cold_max);
+}
+
+double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
+	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/)
+{
+	int prop_error_code = 0;
+
+	// Calculate the hot and cold temperatures at the node
+	double T_h_in = std::numeric_limits<double>::quiet_NaN();
+	if (ms_init_par.m_hot_fl == CO2)
+	{
+		prop_error_code = CO2_PH(P_h_in, h_h_in, &mc_co2_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Cold side inlet enthalpy calculations failed", 12));
+		}
+		T_h_in = mc_co2_props.temp;		//[K]
+	}
+	else
+	{
+		T_h_in = mc_hot_fl.temp_lookup(h_h_in);	//[K]
+	}
+
+	double T_c_in = std::numeric_limits<double>::quiet_NaN();
+	if (ms_init_par.m_cold_fl == CO2)
+	{
+		prop_error_code = CO2_PH(P_c_in, h_c_in, &mc_co2_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Cold side inlet enthalpy calculations failed", 13));
+		}
+		T_c_in = mc_co2_props.temp;		//[K]
+	}
+	else
+	{
+		T_c_in = mc_cold_fl.temp_lookup(h_c_in);	//[K]
+	}
+
+	// **********************************************************************************
+	// **********************************************************************************
+	double Q_dot_cold_max = std::numeric_limits<double>::quiet_NaN();
+	if (ms_init_par.m_cold_fl == CO2)
+	{
+		prop_error_code = CO2_TP(T_h_in, P_c_out, &mc_co2_props);
+		if (prop_error_code == 205)
+		{
+			prop_error_code = CO2_TQ(T_h_in, 0.0, &mc_co2_props);
+		}
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
+				"Cold side inlet enthalpy calculations at effectiveness calc failed", 12));
+		}
+		double h_c_out_max = max(mc_co2_props.enth, h_c_in);	//[kJ/kg]
+		Q_dot_cold_max = m_dot_c*(mc_co2_props.enth - h_c_in);	//[kWt]
+	}
+	else
+	{
+		double h_c_in = mc_cold_fl.enth_lookup(T_c_in);
+		double h_c_out_max = mc_cold_fl.enth_lookup(T_h_in);		//[kJ/kg]
+		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);	//[kWt]
+	}
+
+	double Q_dot_hot_max = std::numeric_limits<double>::quiet_NaN();
+	if (ms_init_par.m_hot_fl == CO2)
+	{
+		prop_error_code = CO2_TP(T_c_in, P_h_out, &mc_co2_props);
+		if (prop_error_code == 205)
+		{
+			prop_error_code = CO2_TQ(T_c_in, 1.0, &mc_co2_props);
+		}
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
+				"Hot side inlet enthalpy calculations at effectiveness calc failed", 12));
+		}
+		double h_h_out_min = min(h_h_in, mc_co2_props.enth);	//[kJ/kg]
+		Q_dot_hot_max = m_dot_h*(h_h_in - mc_co2_props.enth);	//[kWt]
+	}
+	else
+	{
+		double h_h_in = mc_hot_fl.enth_lookup(T_h_in);		//[kJ/kg]
+		double h_h_out_min = mc_hot_fl.enth_lookup(T_c_in);	//[kJ/kg]
+		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);		//[kWt]
+	}
+
+	return min(Q_dot_hot_max, Q_dot_cold_max);
 }
 
 //void C_HX_counterflow::design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
