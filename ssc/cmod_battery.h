@@ -18,7 +18,7 @@ struct batt_variables
 		pcharge = pdischarge = pdischarge = pgridcharge = pdischarge_percent = pgridcharge_percent = psched = psched_weekend = 0;
 	};
 
-	bool pv_lifetime_simulation;
+	bool system_use_lifetime_output;
 	bool en_batt;
 	int analysis_period;
 	int batt_chem;

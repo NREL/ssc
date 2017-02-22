@@ -12,8 +12,8 @@ var_info vtab_battery_inputs[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                   GROUP           REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 	// simulation inputs - required only if lifetime analysis
-	{ SSC_INPUT,        SSC_NUMBER,      "pv_lifetime_simulation",                     "PV lifetime simulation",                                  "0/1",     "",                     "",             "?=0",                        "BOOLEAN",                        "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "pv_lifetime_simulation=1",   "",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "PV lifetime simulation",                                  "0/1",     "",                     "",             "?=0",                        "BOOLEAN",                        "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",   "",                     "",             "system_use_lifetime_output=1",   "",                               "" },
 
 	// configuration inputs
 	{ SSC_INPUT,        SSC_NUMBER,      "inverter_model",                             "Inverter model specifier",                                "",        "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic","","", "INTEGER,MIN=0,MAX=4",           "" },
@@ -162,7 +162,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		batt_vars->en_batt = cm.as_boolean("en_batt");
 		if (batt_vars->en_batt)
 		{
-			batt_vars->pv_lifetime_simulation = cm.as_boolean("pv_lifetime_simulation");
+			batt_vars->system_use_lifetime_output = cm.as_boolean("system_use_lifetime_output");
 			batt_vars->analysis_period = cm.as_integer("analysis_period");
 			batt_vars->batt_chem = cm.as_integer("batt_chem");
 			batt_vars->batt_dispatch = cm.as_integer("batt_dispatch_choice");
@@ -301,7 +301,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	nyears = 1;
 	_dt_hour = dt_hr;
 	step_per_hour = nrec / 8760;
-	if (batt_vars->pv_lifetime_simulation)
+	if (batt_vars->system_use_lifetime_output)
 		nyears = batt_vars->analysis_period;
 	else
 	{

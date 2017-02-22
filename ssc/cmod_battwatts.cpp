@@ -40,7 +40,7 @@ public:
 	batt_variables * setup_variables()
 	{
 		batt_variables * batt_vars = new batt_variables();
-		batt_vars->pv_lifetime_simulation = false;
+		batt_vars->system_use_lifetime_output = false;
 		batt_vars->analysis_period = 25;
 		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
 
