@@ -36,7 +36,8 @@ public:
 
 	enum
 	{
-		CO2 = 200
+		CO2 = 200,
+		WATER = 201
 	};
 
 	struct S_init_par
