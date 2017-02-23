@@ -93,6 +93,15 @@ public:
 		double tol = 1.E-3;
 		double opt_tol = 1.E-3;
 
+		// Test C_HX_counterflow model as a sCO2-water heat exchanger
+		C_HX_counterflow mc_sco2_water_hx;
+		C_HX_counterflow::S_init_par ms_hx_init;
+		ms_hx_init.m_N_sub_hx = 20;
+		ms_hx_init.m_hot_fl = C_HX_counterflow::WATER;
+		ms_hx_init.m_cold_fl = C_HX_counterflow::WATER;
+			// Initialize
+		mc_sco2_water_hx.initialize(ms_hx_init);
+
 
 		// Test C_HX_counterflow model as a sCO2 recuperator
 		C_HX_counterflow mc_sco2_recup;
@@ -114,13 +123,13 @@ public:
 		recup_par.m_P_h_in = 9694.0;
 		recup_par.m_P_h_out = 9694.0;
 		C_HX_counterflow::S_des_solved recup_des_solved;
-		mc_sco2_recup.design(recup_par, recup_des_solved);
+		mc_sco2_recup.design_calc_UA(recup_par, recup_des_solved);
 
 		C_HX_co2_to_co2 c_co2_to_co2;
 		c_co2_to_co2.initialize(10);
 
 		C_HX_counterflow::S_des_solved co2_to_co2_des_solved;
-		c_co2_to_co2.design(recup_par, co2_to_co2_des_solved);
+		c_co2_to_co2.design_calc_UA(recup_par, co2_to_co2_des_solved);
 
 		//*************************************************************
 		//*************************************************************
@@ -183,7 +192,7 @@ public:
 
 		C_HX_counterflow::S_des_solved phx_des_solved;
 		
-		mc_phx.design(ms_phx_des_par, phx_des_solved);
+		mc_phx.design_calc_UA(ms_phx_des_par, phx_des_solved);
 
 		double q_dot_od, T_c_out_od, T_h_out_od;
 		q_dot_od = T_c_out_od = T_h_out_od = std::numeric_limits<double>::quiet_NaN();
