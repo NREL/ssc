@@ -2,15 +2,10 @@
 #define __HEAT_EXCHANGERS_
 
 #include "CO2_properties.h"
+#include "water_properties.h"
 #include "htf_props.h"
 #include "lib_util.h"
 #include "numeric_solvers.h"
-
-//namespace N_energy_balance_solvers
-//{
-//	void calculate_cold_outlet_state(double T_in /*K*/, double m_dot /*kg/s*/, double Q_dot /*kWt*/, double T_cold_limit /*K*/,
-//				double &T_out /*K*/, double &h_out /*kJ/kg*/);
-//};
 
 class C_HX_counterflow
 {
@@ -197,12 +192,9 @@ public:
 	HTFProperties mc_hot_fl;
 	HTFProperties mc_cold_fl;
 	CO2_state mc_co2_props;
+	water_state ms_water_props;
 
 	C_HX_counterflow();
-
-	//void design(double Q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
-	//	double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
-	//	double & UA /*kW/K*/, double & min_DT /*C*/);
 
 	void design(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved);
 
@@ -214,7 +206,8 @@ public:
 		double h_c_in /*kJ/kg*/, double h_h_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & h_h_out /*K*/, double & h_c_out /*K*/, double & q_dot_calc /*kWt*/);
 
-	void design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+	void design_solution(double UA_target /*kW/K*/, double eff_target /*-*/,
+		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
 
