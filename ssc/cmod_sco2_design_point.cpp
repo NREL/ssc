@@ -103,110 +103,110 @@ public:
 		mc_sco2_water_hx.initialize(ms_hx_init);
 
 
-		// Test C_HX_counterflow model as a sCO2 recuperator
-		C_HX_counterflow mc_sco2_recup;
-		C_HX_counterflow::S_init_par ms_recup_init;
-		ms_recup_init.m_N_sub_hx = 10;
-		ms_recup_init.m_hot_fl = C_HX_counterflow::CO2;
-		ms_recup_init.m_cold_fl = C_HX_counterflow::CO2;
-
-		// Initialize recuperator
-		mc_sco2_recup.initialize(ms_recup_init);
-		C_HX_counterflow::S_des_par recup_par;
-		recup_par.m_Q_dot_design = 53131.3;
-		recup_par.m_m_dot_cold_des = 213.59;
-		recup_par.m_m_dot_hot_des = 305.13;
-		recup_par.m_T_c_in = 331.78;
-		recup_par.m_T_h_in = 633.65;
-		recup_par.m_P_c_in = 12639.0;
-		recup_par.m_P_c_out = 12639.0;
-		recup_par.m_P_h_in = 9694.0;
-		recup_par.m_P_h_out = 9694.0;
-		C_HX_counterflow::S_des_solved recup_des_solved;
-		mc_sco2_recup.design_calc_UA(recup_par, recup_des_solved);
-
-		C_HX_co2_to_co2 c_co2_to_co2;
-		c_co2_to_co2.initialize(10);
-
-		C_HX_counterflow::S_des_solved co2_to_co2_des_solved;
-		c_co2_to_co2.design_calc_UA(recup_par, co2_to_co2_des_solved);
-
-		//*************************************************************
-		//*************************************************************
-		// Set up PHX model from Type 424
-		//*************************************************************
-		// First, need to know something about fluids
-		HTFProperties mc_htf;
-		mc_htf.SetFluid(HTFProperties::Salt_60_NaNO3_40_KNO3,true);
-		CO2_state mc_co2_props;
-
-		double T_t_in_des = T_htf_hot - delta_T_t;	//[K]
-		// For now, estimate T_PHX_co2_in - will get from design point cycle optimization in future
-		double T_PHX_co2_in = T_t_in_des - 200.0;	//[K]
-		double T_htf_cold = T_PHX_co2_in + delta_T_t;	//[K]
-
-		// Receiver/hot side
-		double h_htf_hot = mc_htf.enth_lookup(T_htf_hot);	//[kJ/kg]
-		double h_htf_cold = mc_htf.enth_lookup(T_htf_cold);	//[kJ/kg]
-		double eta_thermal = 0.5;		//[-] target power cycle efficiency
-		double q_dot_htf = (W_dot_net_des / eta_thermal);	//[kWt] target thermal power to power cycle
-		double m_dot_htf_des = q_dot_htf / (h_htf_hot - h_htf_cold);
-
-		// Because C_dot_c = C_dot_h, q_dot_max = 
-		double h_htf_cold_min = mc_htf.enth_lookup(T_PHX_co2_in);
-		double q_dot_htf_max = m_dot_htf_des*(h_htf_hot - h_htf_cold_min);		//[kWt]
-
-		// Effectiveness & NTU
-		double eff_des = q_dot_htf / q_dot_htf_max;
-		double NTU = eff_des / (1.0 - eff_des);
-
-		// UA estimate with bulk calculation
-		double UA_PHX_des = NTU*m_dot_htf_des*(h_htf_hot-h_htf_cold)/(T_htf_hot-T_htf_cold);
-
-		// Calculate CO2 mass flow rate for HX model
-		double P_CO2 = 20000.0;										//[kPa]
-		int co2_error = CO2_TP(T_t_in_des, P_CO2, &mc_co2_props);
-		double h_out = mc_co2_props.enth;
-		co2_error = CO2_TP(T_PHX_co2_in, P_CO2, &mc_co2_props);
-		double h_in = mc_co2_props.enth;
-		double m_dot_CO2 = (W_dot_net_des / eta_thermal) / (h_out - h_in);	//[kg/s]
-
-		C_HX_co2_to_htf mc_phx;
-		mc_phx.initialize(HTFProperties::Salt_60_NaNO3_40_KNO3);
-		double UA_PHX_calc = std::numeric_limits<double>::quiet_NaN();
-		double min_DT_calc = std::numeric_limits<double>::quiet_NaN();
-
-		// ****************************************************************************
-		// ****************************************************************************
-		// ****************************************************************************
-		C_HX_counterflow::S_des_par ms_phx_des_par;
-		ms_phx_des_par.m_Q_dot_design = q_dot_htf;
-		ms_phx_des_par.m_T_h_in = T_htf_hot;
-		ms_phx_des_par.m_P_h_in = 1.0;
-		ms_phx_des_par.m_P_h_out = 1.0;
-		ms_phx_des_par.m_m_dot_hot_des = m_dot_htf_des;
-		ms_phx_des_par.m_T_c_in = T_PHX_co2_in;
-		ms_phx_des_par.m_P_c_in = P_CO2;
-		ms_phx_des_par.m_P_c_out = P_CO2;
-		ms_phx_des_par.m_m_dot_cold_des = m_dot_CO2;
-
-		C_HX_counterflow::S_des_solved phx_des_solved;
-		
-		mc_phx.design_calc_UA(ms_phx_des_par, phx_des_solved);
-
-		double q_dot_od, T_c_out_od, T_h_out_od;
-		q_dot_od = T_c_out_od = T_h_out_od = std::numeric_limits<double>::quiet_NaN();
-
-		// Need to check what is happening when one mass flow rate decreases
-		// Solver *should* return a notice...
-
-/*		mc_phx.od_performance(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2,
-			T_htf_hot, 1.0, m_dot_htf_des,
-			q_dot_od, T_c_out_od, T_h_out_od);
-*/
-		mc_phx.off_design_solution(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2, P_CO2,
-			T_htf_hot, 1.0, m_dot_htf_des, 1.0,
-			q_dot_od, T_c_out_od, T_h_out_od);
+//		// Test C_HX_counterflow model as a sCO2 recuperator
+//		C_HX_counterflow mc_sco2_recup;
+//		C_HX_counterflow::S_init_par ms_recup_init;
+//		ms_recup_init.m_N_sub_hx = 10;
+//		ms_recup_init.m_hot_fl = C_HX_counterflow::CO2;
+//		ms_recup_init.m_cold_fl = C_HX_counterflow::CO2;
+//
+//		// Initialize recuperator
+//		mc_sco2_recup.initialize(ms_recup_init);
+//		C_HX_counterflow::S_des_par recup_par;
+//		recup_par.m_Q_dot_design = 53131.3;
+//		recup_par.m_m_dot_cold_des = 213.59;
+//		recup_par.m_m_dot_hot_des = 305.13;
+//		recup_par.m_T_c_in = 331.78;
+//		recup_par.m_T_h_in = 633.65;
+//		recup_par.m_P_c_in = 12639.0;
+//		recup_par.m_P_c_out = 12639.0;
+//		recup_par.m_P_h_in = 9694.0;
+//		recup_par.m_P_h_out = 9694.0;
+//		C_HX_counterflow::S_des_solved recup_des_solved;
+//		mc_sco2_recup.design_calc_UA(recup_par, recup_des_solved);
+//
+//		C_HX_co2_to_co2 c_co2_to_co2;
+//		c_co2_to_co2.initialize(10);
+//
+//		C_HX_counterflow::S_des_solved co2_to_co2_des_solved;
+//		c_co2_to_co2.design_calc_UA(recup_par, co2_to_co2_des_solved);
+//
+//		//*************************************************************
+//		//*************************************************************
+//		// Set up PHX model from Type 424
+//		//*************************************************************
+//		// First, need to know something about fluids
+//		HTFProperties mc_htf;
+//		mc_htf.SetFluid(HTFProperties::Salt_60_NaNO3_40_KNO3,true);
+//		CO2_state mc_co2_props;
+//
+//		double T_t_in_des = T_htf_hot - delta_T_t;	//[K]
+//		// For now, estimate T_PHX_co2_in - will get from design point cycle optimization in future
+//		double T_PHX_co2_in = T_t_in_des - 200.0;	//[K]
+//		double T_htf_cold = T_PHX_co2_in + delta_T_t;	//[K]
+//
+//		// Receiver/hot side
+//		double h_htf_hot = mc_htf.enth_lookup(T_htf_hot);	//[kJ/kg]
+//		double h_htf_cold = mc_htf.enth_lookup(T_htf_cold);	//[kJ/kg]
+//		double eta_thermal = 0.5;		//[-] target power cycle efficiency
+//		double q_dot_htf = (W_dot_net_des / eta_thermal);	//[kWt] target thermal power to power cycle
+//		double m_dot_htf_des = q_dot_htf / (h_htf_hot - h_htf_cold);
+//
+//		// Because C_dot_c = C_dot_h, q_dot_max = 
+//		double h_htf_cold_min = mc_htf.enth_lookup(T_PHX_co2_in);
+//		double q_dot_htf_max = m_dot_htf_des*(h_htf_hot - h_htf_cold_min);		//[kWt]
+//
+//		// Effectiveness & NTU
+//		double eff_des = q_dot_htf / q_dot_htf_max;
+//		double NTU = eff_des / (1.0 - eff_des);
+//
+//		// UA estimate with bulk calculation
+//		double UA_PHX_des = NTU*m_dot_htf_des*(h_htf_hot-h_htf_cold)/(T_htf_hot-T_htf_cold);
+//
+//		// Calculate CO2 mass flow rate for HX model
+//		double P_CO2 = 20000.0;										//[kPa]
+//		int co2_error = CO2_TP(T_t_in_des, P_CO2, &mc_co2_props);
+//		double h_out = mc_co2_props.enth;
+//		co2_error = CO2_TP(T_PHX_co2_in, P_CO2, &mc_co2_props);
+//		double h_in = mc_co2_props.enth;
+//		double m_dot_CO2 = (W_dot_net_des / eta_thermal) / (h_out - h_in);	//[kg/s]
+//
+//		C_HX_co2_to_htf mc_phx;
+//		mc_phx.initialize(HTFProperties::Salt_60_NaNO3_40_KNO3);
+//		double UA_PHX_calc = std::numeric_limits<double>::quiet_NaN();
+//		double min_DT_calc = std::numeric_limits<double>::quiet_NaN();
+//
+//		// ****************************************************************************
+//		// ****************************************************************************
+//		// ****************************************************************************
+//		C_HX_counterflow::S_des_par ms_phx_des_par;
+//		ms_phx_des_par.m_Q_dot_design = q_dot_htf;
+//		ms_phx_des_par.m_T_h_in = T_htf_hot;
+//		ms_phx_des_par.m_P_h_in = 1.0;
+//		ms_phx_des_par.m_P_h_out = 1.0;
+//		ms_phx_des_par.m_m_dot_hot_des = m_dot_htf_des;
+//		ms_phx_des_par.m_T_c_in = T_PHX_co2_in;
+//		ms_phx_des_par.m_P_c_in = P_CO2;
+//		ms_phx_des_par.m_P_c_out = P_CO2;
+//		ms_phx_des_par.m_m_dot_cold_des = m_dot_CO2;
+//
+//		C_HX_counterflow::S_des_solved phx_des_solved;
+//		
+//		mc_phx.design_calc_UA(ms_phx_des_par, phx_des_solved);
+//
+//		double q_dot_od, T_c_out_od, T_h_out_od;
+//		q_dot_od = T_c_out_od = T_h_out_od = std::numeric_limits<double>::quiet_NaN();
+//
+//		// Need to check what is happening when one mass flow rate decreases
+//		// Solver *should* return a notice...
+//
+///*		mc_phx.od_performance(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2,
+//			T_htf_hot, 1.0, m_dot_htf_des,
+//			q_dot_od, T_c_out_od, T_h_out_od);
+//*/
+//		mc_phx.off_design_solution(T_PHX_co2_in, P_CO2, 0.5*m_dot_CO2, P_CO2,
+//			T_htf_hot, 1.0, m_dot_htf_des, 1.0,
+//			q_dot_od, T_c_out_od, T_h_out_od);
 
 		//od_performance(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
 		//	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
@@ -372,7 +372,7 @@ public:
 		double recomp_frac = rc_cycle.get_design_solved()->m_recomp_frac;
 		double P_comp_in = rc_cycle.get_design_solved()->m_pres[0] / 1.E3;
 		double P_comp_out = rc_cycle.get_design_solved()->m_pres[1] / 1.E3;
-		T_htf_cold = rc_cycle.get_design_solved()->m_temp[5 - 1] + delta_T_t - 273.15;	//[C]
+		double T_htf_cold = rc_cycle.get_design_solved()->m_temp[5 - 1] + delta_T_t - 273.15;	//[C]
 
 		// Assign SSC outputs
 		assign("eta_thermal_calc", eta_thermal_calc);
