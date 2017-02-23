@@ -724,7 +724,8 @@ double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h
 	return min(Q_dot_hot_max, Q_dot_cold_max);
 }
 
-void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par, C_HX_counterflow::S_des_solved &des_solved)
+void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par,
+	double q_dot_design /*kWt*/, C_HX_counterflow::S_des_solved &des_solved)
 {
 	/*Designs heat exchanger given its mass flow rates, inlet temperatures, and a heat transfer rate.
 	Note: the heat transfer rate must be positive.*/
@@ -745,7 +746,7 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 	double UA_calc, min_DT_calc, eff_calc, NTU_calc, T_h_out_calc, T_c_out_calc, q_dot_calc;
 	UA_calc = min_DT_calc = eff_calc = NTU_calc = T_h_out_calc = T_c_out_calc = q_dot_calc = std::numeric_limits<double>::quiet_NaN();
 	
-	calc_req_UA(ms_des_calc_UA_par.m_Q_dot_design, ms_des_calc_UA_par.m_m_dot_cold_des, ms_des_calc_UA_par.m_m_dot_hot_des,
+	calc_req_UA(q_dot_design, ms_des_calc_UA_par.m_m_dot_cold_des, ms_des_calc_UA_par.m_m_dot_hot_des,
 		ms_des_calc_UA_par.m_T_c_in, ms_des_calc_UA_par.m_T_h_in, ms_des_calc_UA_par.m_P_c_in, ms_des_calc_UA_par.m_P_c_out, ms_des_calc_UA_par.m_P_h_in, ms_des_calc_UA_par.m_P_h_out,
 		UA_calc, min_DT_calc, eff_calc, NTU_calc, T_h_out_calc, T_c_out_calc, q_dot_calc);
 
@@ -773,16 +774,17 @@ void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_pa
 	return;
 }
 
-void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_par &des_par, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved)
+void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_par &des_par, 
+			double q_dot_design /*kWt*/, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved)
 {
 	double T_htf_cold = des_par.m_T_c_in + dt_cold_approach;	//[C]
 
 	double h_h_in = mc_hot_fl.enth_lookup(des_par.m_T_h_in);	//[kJ/kg]
 	double h_c_in = mc_hot_fl.enth_lookup(T_htf_cold);			//[kJ/kg]
 
-	des_par.m_m_dot_hot_des = des_par.m_Q_dot_design/(h_h_in - h_c_in);
+	des_par.m_m_dot_hot_des = q_dot_design/(h_h_in - h_c_in);
 
-	design_calc_UA(des_par, des_solved);
+	design_calc_UA(des_par, q_dot_design, des_solved);
 }
 
 
@@ -833,7 +835,7 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 
 	hx_solution(T_c_in, P_c_in, m_dot_c, P_c_out, T_h_in, P_h_in, m_dot_h, P_h_out, UA_target, eff_target, q_dot, T_c_out, T_h_out);
 
-	ms_des_calc_UA_par.m_Q_dot_design = q_dot;		//[kW]
+	//ms_des_calc_UA_par.m_Q_dot_design = q_dot;		//[kW]
 	ms_des_calc_UA_par.m_T_h_in = T_h_in;			//[K]
 	ms_des_calc_UA_par.m_P_h_in = P_h_in;			//[kPa]
 	ms_des_calc_UA_par.m_P_h_out = P_h_out;			//[kPa]
@@ -846,6 +848,7 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	//ms_des_par.m_UA_target = UA_target;		//[kW/K]
 	ms_des_calc_UA_par.m_eff_max = eff_target;		//[-]
 
+	ms_des_solved.m_Q_dot_design = q_dot;		//[kWt]
 	ms_des_solved.m_UA_design_total = ms_hx_sol_solved.m_UA_total;		//[kW/K]
 	ms_des_solved.m_min_DT_design = ms_hx_sol_solved.m_min_DT;			//[K]
 	ms_des_solved.m_eff_design = ms_hx_sol_solved.m_eff;				//[-]

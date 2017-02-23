@@ -53,7 +53,6 @@ public:
 
 	struct S_des_calc_UA_par
 	{
-		double m_Q_dot_design;		//[kWt] Design-point heat transfer
 		double m_T_h_in;			//[K] Design-point hot inlet temperature
 		double m_P_h_in;			//[kPa] Hot fluid inlet pressure
 		double m_P_h_out;			//[kPa] Hot fluid outlet pressure
@@ -67,7 +66,7 @@ public:
 
 		S_des_calc_UA_par()
 		{
-			m_Q_dot_design = m_T_h_in = m_P_h_in = m_P_h_out = m_m_dot_hot_des = 
+			m_T_h_in = m_P_h_in = m_P_h_out = m_m_dot_hot_des = 
 				m_T_c_in = m_P_c_in = m_P_c_out = m_m_dot_cold_des = 
 				
 				m_eff_max = std::numeric_limits<double>::quiet_NaN();
@@ -76,6 +75,7 @@ public:
 
 	struct S_des_solved
 	{
+		double m_Q_dot_design;		//[kWt] Design-point heat transfer
 		double m_UA_design_total;		//[kW/K] Design-point conductance
 		double m_min_DT_design;			//[K] Minimum temperature difference in heat exchanger
 		double m_eff_design;			//[-] Effectiveness at design
@@ -87,7 +87,7 @@ public:
 
 		S_des_solved()
 		{
-			m_UA_design_total = m_min_DT_design = m_eff_design = m_NTU_design =
+			m_Q_dot_design = m_UA_design_total = m_min_DT_design = m_eff_design = m_NTU_design =
 				m_T_h_out = m_T_c_out =
 				m_DP_cold_des = m_DP_hot_des = std::numeric_limits<double>::quiet_NaN();
 		}
@@ -195,7 +195,8 @@ public:
 
 	C_HX_counterflow();
 
-	void design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par, C_HX_counterflow::S_des_solved &des_solved);
+	void design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par, 
+		double q_dot_design /*kWt*/, C_HX_counterflow::S_des_solved &des_solved);
 
 	void calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
 		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
@@ -247,7 +248,8 @@ public:
 	//void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
 
 	// This method calculates the required HTF mass flow rate (m_m_dot_hot_des) given a cold side approach temperature (assuming hot HTF temp is a design parameter)
-	void design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_par &des_par, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved);
+	void design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_par &des_par, 
+		double q_dot_design /*kWt*/, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved);
 
 	virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props);
 
