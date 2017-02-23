@@ -2291,7 +2291,7 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 		}
 
 		mc_P_mc_vary_f_recomp_opt_file << ms_od_par.m_T_amb - 273.15 << ","
-			<< ms_od_par.m_m_dot_htf / mc_phx.ms_des_par.m_m_dot_hot_des << ","
+			<< ms_od_par.m_m_dot_htf / mc_phx.ms_des_calc_UA_par.m_m_dot_hot_des << ","
 			<< ms_od_par.m_T_htf_hot - 273.15 << ","
 			<< util::format("%.4f",P_mc_in) << ","
 			<< deltaP << ","
