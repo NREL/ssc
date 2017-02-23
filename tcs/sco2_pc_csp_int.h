@@ -148,7 +148,7 @@ private:
 	C_RecompCycle::S_auto_opt_design_hit_eta_parameters ms_rc_cycle_des_par;
 	C_CO2_to_air_cooler::S_des_par_ind ms_air_cooler_des_par_ind;
 	C_CO2_to_air_cooler::S_des_par_cycle_dep ms_air_cooler_des_par_dep;
-	C_HX_counterflow::S_des_par ms_phx_des_par;
+	C_HX_counterflow::S_des_calc_UA_par ms_phx_des_par;
 		
 	S_des_solved ms_des_solved;
 
@@ -294,7 +294,7 @@ public:
 		return &ms_des_solved;
 	}
 
-	const C_HX_counterflow::S_des_par * get_phx_des_par()
+	const C_HX_counterflow::S_des_calc_UA_par * get_phx_des_par()
 	{
 		return &ms_phx_des_par;
 	}

@@ -51,7 +51,7 @@ public:
 		}
 	};
 
-	struct S_des_par
+	struct S_des_calc_UA_par
 	{
 		double m_Q_dot_design;		//[kWt] Design-point heat transfer
 		double m_T_h_in;			//[K] Design-point hot inlet temperature
@@ -63,15 +63,14 @@ public:
 		double m_P_c_out;			//[kPa] Cold fluid outlet temperature
 		double m_m_dot_cold_des;	//[kg/s] cold fluid design mass flow rate
 
-		double m_UA_target;			//[kW/K] Target design conductance
-		double m_eff_max;			//[-] Maximum allowable effectiveness
+		double m_eff_max;			//[-] Max allowable effectiveness
 
-		S_des_par()
+		S_des_calc_UA_par()
 		{
 			m_Q_dot_design = m_T_h_in = m_P_h_in = m_P_h_out = m_m_dot_hot_des = 
 				m_T_c_in = m_P_c_in = m_P_c_out = m_m_dot_cold_des = 
 				
-				m_UA_target = m_eff_max = std::numeric_limits<double>::quiet_NaN();
+				m_eff_max = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -182,7 +181,7 @@ public:
 	};
 
 	S_init_par ms_init_par;
-	S_des_par ms_des_par;
+	S_des_calc_UA_par ms_des_calc_UA_par;
 	S_des_solved ms_des_solved;
 	S_hx_sol_par ms_hx_sol_par;
 	S_hx_sol_solved ms_hx_sol_solved;
@@ -196,7 +195,7 @@ public:
 
 	C_HX_counterflow();
 
-	void design_calc_UA(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved);
+	void design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par, C_HX_counterflow::S_des_solved &des_solved);
 
 	void calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
 		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
@@ -206,7 +205,7 @@ public:
 		double h_c_in /*kJ/kg*/, double h_h_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & h_h_out /*K*/, double & h_c_out /*K*/, double & q_dot_calc /*kWt*/);
 
-	void design_solution(double UA_target /*kW/K*/, double eff_target /*-*/,
+	void design_fix_UA_calc_outlet(double UA_target /*kW/K*/, double eff_target /*-*/,
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
@@ -248,7 +247,7 @@ public:
 	//void design_with_m_dot(C_HX_counterflow::S_des_par &des_par, double T_htf_cold, C_HX_counterflow::S_des_solved &des_solved);
 
 	// This method calculates the required HTF mass flow rate (m_m_dot_hot_des) given a cold side approach temperature (assuming hot HTF temp is a design parameter)
-	void design_and_calc_m_dot_htf(C_HX_counterflow::S_des_par &des_par, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved);
+	void design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_par &des_par, double dt_cold_approach /*C/K*/, C_HX_counterflow::S_des_solved &des_solved);
 
 	virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props);
 
