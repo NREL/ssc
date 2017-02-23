@@ -161,7 +161,8 @@ void C_sco2_recomp_csp::design_core()
 	mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props);
 
 	// Design the PHX
-	ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
+	double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
+	//ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
 	ms_phx_des_par.m_T_h_in = ms_des_par.m_T_htf_hot_in;	//[K] HTF hot inlet temperature 
 		// Okay, but CO2-HTF HX is assumed here. How does "structure inheritance" work?
 	ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
@@ -176,7 +177,7 @@ void C_sco2_recomp_csp::design_core()
 		// Set maximum effectiveness
 	ms_phx_des_par.m_eff_max = 1.0;
 	
-	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
+	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
 
 	// Design the air cooler
 		// Define Independent Air Cooler Design Parameters
