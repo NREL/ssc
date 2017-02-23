@@ -196,7 +196,7 @@ public:
 
 	C_HX_counterflow();
 
-	void design(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved);
+	void design_calc_UA(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved);
 
 	void calc_req_UA(double q_dot /*kWt*/, double m_dot_c /*kg/s*/, double m_dot_h /*kg/s*/,
 		double T_c_in /*K*/, double T_h_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/,

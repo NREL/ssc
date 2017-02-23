@@ -724,7 +724,7 @@ double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h
 	return min(Q_dot_hot_max, Q_dot_cold_max);
 }
 
-void C_HX_counterflow::design(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved)
+void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_par des_par, C_HX_counterflow::S_des_solved &des_solved)
 {
 	/*Designs heat exchanger given its mass flow rates, inlet temperatures, and a heat transfer rate.
 	Note: the heat transfer rate must be positive.*/
@@ -782,7 +782,7 @@ void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_par &des
 
 	des_par.m_m_dot_hot_des = des_par.m_Q_dot_design/(h_h_in - h_c_in);
 
-	design(des_par, des_solved);
+	design_calc_UA(des_par, des_solved);
 }
 
 
