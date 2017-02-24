@@ -944,6 +944,15 @@ void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*k
 		UA, min_DT, eff, NTU, q_dot_calc);
 }
 
+double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
+	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/)
+{
+	return NS_HX_counterflow_eqs::calc_max_q_dot_enth(ms_init_par.m_hot_fl, mc_hot_fl,
+			ms_init_par.m_cold_fl, mc_cold_fl,
+			h_h_in, P_h_in, P_h_out, m_dot_h,
+			h_c_in, P_c_in, P_c_out, m_dot_c);
+}
+
 void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par,
 	double q_dot_design /*kWt*/, C_HX_counterflow::S_des_solved &des_solved)
 {
