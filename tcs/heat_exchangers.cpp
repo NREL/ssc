@@ -844,7 +844,7 @@ void C_HX_counterflow::initialize(const S_init_par & init_par_in)
 	ms_init_par = init_par_in;
 
 	// Set up HTFProperties for the hot fluid
-	if( ms_init_par.m_hot_fl != CO2 && ms_init_par.m_hot_fl != WATER )
+	if( ms_init_par.m_hot_fl != NS_HX_counterflow_eqs::CO2 && ms_init_par.m_hot_fl != NS_HX_counterflow_eqs::WATER )
 	{
 		if( ms_init_par.m_hot_fl != HTFProperties::User_defined && ms_init_par.m_hot_fl < HTFProperties::End_Library_Fluids )
 		{
@@ -878,7 +878,7 @@ void C_HX_counterflow::initialize(const S_init_par & init_par_in)
 	}
 
 	// Set up HTFProperties for the cold fluid
-	if (ms_init_par.m_cold_fl != CO2 && ms_init_par.m_hot_fl != WATER)
+	if (ms_init_par.m_cold_fl != NS_HX_counterflow_eqs::CO2 && ms_init_par.m_hot_fl != NS_HX_counterflow_eqs::WATER)
 	{
 		if( ms_init_par.m_cold_fl != HTFProperties::User_defined && ms_init_par.m_cold_fl < HTFProperties::End_Library_Fluids )
 		{
@@ -1139,8 +1139,8 @@ void C_HX_co2_to_co2::initialize(int N_sub_hx)
 {
 	// Set design parameters member structure
 	ms_init_par.m_N_sub_hx = N_sub_hx;
-	ms_init_par.m_cold_fl = CO2;
-	ms_init_par.m_hot_fl = CO2;
+	ms_init_par.m_cold_fl = NS_HX_counterflow_eqs::CO2;
+	ms_init_par.m_hot_fl = NS_HX_counterflow_eqs::CO2;
 	m_is_HX_initialized = true;
 }
 
@@ -1148,7 +1148,7 @@ void C_HX_co2_to_htf::initialize(int hot_fl, util::matrix_t<double> hot_fl_props
 {
 	// Hard-code some of the design parameters
 	ms_init_par.m_N_sub_hx = 5;
-	ms_init_par.m_cold_fl = CO2;
+	ms_init_par.m_cold_fl = NS_HX_counterflow_eqs::CO2;
 
 	// Read-in hot side HTF props
 	ms_init_par.m_hot_fl = hot_fl;

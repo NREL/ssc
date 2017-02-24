@@ -134,12 +134,6 @@ protected:
 
 public:
 
-	enum
-	{
-		CO2 = 200,
-		WATER = 201
-	};
-
 	struct S_init_par
 	{
 		int m_N_sub_hx;				//[-] Number of sub-heat exchangers used in the model
