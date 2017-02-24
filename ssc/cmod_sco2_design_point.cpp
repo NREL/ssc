@@ -97,8 +97,8 @@ public:
 		C_HX_counterflow mc_sco2_water_hx;
 		C_HX_counterflow::S_init_par ms_hx_init;
 		ms_hx_init.m_N_sub_hx = 20;
-		ms_hx_init.m_hot_fl = C_HX_counterflow::WATER;
-		ms_hx_init.m_cold_fl = C_HX_counterflow::WATER;
+		ms_hx_init.m_hot_fl = NS_HX_counterflow_eqs::WATER;
+		ms_hx_init.m_cold_fl = NS_HX_counterflow_eqs::WATER;
 			// Initialize
 		mc_sco2_water_hx.initialize(ms_hx_init);
 
