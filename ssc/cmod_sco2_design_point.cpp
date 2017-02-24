@@ -66,28 +66,28 @@ public:
 		double delta_T_t = as_double("deltaT_PHX");
 
 		double delta_T_acc = as_double("deltaT_ACC");
-		double T_amb_cycle_des = as_double("T_amb_des")+273.15;
+		double T_amb_cycle_des = as_double("T_amb_des") + 273.15;
 
-		double T_htf_hot = as_double("T_htf_hot_des")+273.15;
+		double T_htf_hot = as_double("T_htf_hot_des") + 273.15;
 		double eta_thermal_des = as_double("eta_des");
 
 		// Define hardcoded sco2 design point parameters
 		std::vector<double> DP_LT(2);
- 		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-                DP_LT[0] = 0;
-                DP_LT[1] = 0;
+		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
+		DP_LT[0] = 0;
+		DP_LT[1] = 0;
 		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
 		std::vector<double> DP_HT(2);
-                DP_HT[0] = 0;  
-                DP_HT[1] = 0;  
+		DP_HT[0] = 0;
+		DP_HT[1] = 0;
 		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
-		std::vector<double> DP_PC(2);  
-                DP_PC[0] = 0;  
-                DP_PC[1] = 0;  
+		std::vector<double> DP_PC(2);
+		DP_PC[0] = 0;
+		DP_PC[1] = 0;
 		/*(cold, hot) positive values are absolute [kPa], negative values are relative (-)*/
 		std::vector<double> DP_PHX(2);
-                DP_PHX[0] = 0;  
-                DP_PHX[1] = 0;  
+		DP_PHX[0] = 0;
+		DP_PHX[1] = 0;
 		int N_sub_hxrs = 10;
 		double N_t_des = 3600.0;
 		double tol = 1.E-3;
@@ -97,11 +97,102 @@ public:
 		C_HX_counterflow mc_sco2_water_hx;
 		C_HX_counterflow::S_init_par ms_hx_init;
 		ms_hx_init.m_N_sub_hx = 20;
-		ms_hx_init.m_hot_fl = NS_HX_counterflow_eqs::WATER;
+		ms_hx_init.m_hot_fl = NS_HX_counterflow_eqs::CO2;
 		ms_hx_init.m_cold_fl = NS_HX_counterflow_eqs::WATER;
-			// Initialize
+		// Initialize
 		mc_sco2_water_hx.initialize(ms_hx_init);
 
+		std::vector<double> v_P_water_in;		//[kPa]
+		std::vector<double> v_T_sco2_cold;		//[C]
+
+		double T_water_amb = 20.0 + 273.15;		//[C]
+
+		double P_water_in = 50.0;				//[kPa]
+		int iter_P_water_in = 0;
+
+		while (P_water_in < 110.0)
+		{
+			P_water_in = 10.0 + 50.0*iter_P_water_in;
+
+			double delta_T_pc = 5.0;				//[C]
+			int iter_deltaT_pc = 0;
+
+			while (true)
+			{
+				delta_T_pc = 5.0 + 1.0*iter_deltaT_pc;
+
+				// For now, pick outlet conditions
+				// CO2
+				// in
+				double P_co2_in = 9.4E3;		//[kPa]
+				double T_co2_in = 128.1 + 273.15;	//[K]
+				CO2_state co2_props;
+				int prop_err_code = CO2_TP(T_co2_in, P_co2_in, &co2_props);
+				if (prop_err_code != 0)
+				{
+					log("CO2 props failed at inlet", SSC_ERROR, -1.0);
+
+					return;
+				}
+				double h_co2_in = co2_props.enth;	//[kJ/kg]
+				// out
+				double P_co2_out = P_co2_in;		//[MPa]
+				double T_co2_out = T_water_amb + delta_T_pc;	//[K]
+				prop_err_code = CO2_TP(T_co2_out, P_co2_out, &co2_props);
+				if (prop_err_code != 0)
+				{
+					log("CO2 props failed at outlet", SSC_ERROR, -1.0);
+
+					return;
+				}
+				double h_co2_out = co2_props.enth;	//[kJ/kg]
+				double q_dot_hx = 10.E3;		//[kWt]
+				double m_dot_co2 = q_dot_hx / (h_co2_in - h_co2_out);
+				// Water
+				// in
+				double T_water_in = T_water_amb;	//[K]
+				water_state water_props;
+				prop_err_code = water_TP(T_water_in, P_water_in, &water_props);
+				if (prop_err_code != 0)
+				{
+					log("Water props failed at inlet", SSC_ERROR, -1.0);
+
+					return;
+				}
+				double h_water_in = water_props.enth;	//[kJ/kg]
+				// out
+				double P_water_out = P_water_in;		//[kPa]
+				double x_water_out = 1.0;				//[-]
+				prop_err_code = water_PQ(P_water_out, x_water_out, &water_props);
+				if (prop_err_code != 0)
+				{
+					log("Water props failed at outlet", SSC_ERROR, -1.0);
+
+					return;
+				}
+				double h_water_out = water_props.enth;	//[kJ/kg]
+				double m_dot_water = q_dot_hx / (h_water_out - h_water_in);
+
+				double UA_calc, min_DT_calc, eff_calc, NTU_calc, T_co2_out_calc, T_water_out_calc, q_dot_calc;
+				UA_calc = min_DT_calc = eff_calc = NTU_calc = T_co2_out_calc = T_water_out_calc = q_dot_calc = std::numeric_limits<double>::quiet_NaN();
+				try
+				{
+					mc_sco2_water_hx.calc_req_UA(q_dot_hx, m_dot_water, m_dot_co2,
+						T_water_in, T_co2_in, P_water_in, P_water_out, P_co2_in, P_co2_out,
+						UA_calc, min_DT_calc, eff_calc, NTU_calc, T_co2_out_calc, T_water_out_calc, q_dot_calc);
+				}
+				catch (C_csp_exception csp_except)
+				{
+					iter_deltaT_pc++;
+					continue;
+				}
+
+				break;
+			}
+			iter_P_water_in++;
+
+		}
+		double blajalahfla = 1.23;
 
 //		// Test C_HX_counterflow model as a sCO2 recuperator
 //		C_HX_counterflow mc_sco2_recup;
