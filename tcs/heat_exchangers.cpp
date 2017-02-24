@@ -610,19 +610,19 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
 	return;
 }
 
-int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/)
+int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q_enth::operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/)
 {
 	double q_dot_calc = std::numeric_limits<double>::quiet_NaN();
 
 	try
 	{
-		NS_HX_counterflow_eqs::calc_req_UA(m_hot_fl_code, mc_hot_htf_class,
+		NS_HX_counterflow_eqs::calc_req_UA_enth(m_hot_fl_code, mc_hot_htf_class,
 			m_cold_fl_code, mc_cold_htf_class,
 			m_N_sub_hx,
-			q_dot, m_m_dot_c, m_m_dot_h, m_T_c_in, m_T_h_in,
-			m_P_c_in, m_P_c_out, m_P_h_in, m_P_h_out, m_UA_calc,
-			m_min_DT, m_eff, m_NTU,
-			m_T_h_out, m_T_c_out, q_dot_calc);
+			q_dot, m_m_dot_c, m_m_dot_h, 
+			m_h_c_in, m_h_h_in, m_P_c_in, m_P_c_out, m_P_h_in, m_P_h_out, 
+			m_h_h_out, m_T_h_out, m_h_c_out, m_T_c_out,
+			m_UA_calc, m_min_DT, m_eff, m_NTU, q_dot_calc);
 	}
 	catch (C_csp_exception &csp_except)
 	{
@@ -642,14 +642,15 @@ int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q::operator()(double q_dot /*kWt*/, do
 	return 0;
 }
 
-void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
 	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
 	int N_sub_hx /*-*/,
-	double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
-	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+	double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+	double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 	double UA_target /*kW/K*/, double eff_limit /*-*/, double eff_guess /*-*/,
-	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
-	double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
+	double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+	double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+	double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
 {
 	if (UA_target < 1.E-10)
 	{
@@ -659,12 +660,13 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFP
 
 		try
 		{
-			NS_HX_counterflow_eqs::calc_req_UA(hot_fl_code, hot_htf_class,
+			NS_HX_counterflow_eqs::calc_req_UA_enth(hot_fl_code, hot_htf_class,
 				cold_fl_code, cold_htf_class,
 				N_sub_hx,
-				q_dot, m_dot_c, m_dot_h, T_c_in, T_h_in, P_c_in, P_c_out, P_h_in, P_h_out,
-				UA_calc, min_DT, eff_calc, NTU, T_h_out,
-				T_c_out, q_dot_calc);
+				q_dot, m_dot_c, m_dot_h,
+				h_c_in, h_h_in, P_c_in, P_c_out, P_h_in, P_h_out,
+				h_h_out, T_h_out, h_c_out, T_c_out,
+				UA_calc, min_DT, eff_calc, NTU, q_dot_calc);
 		}
 		catch (C_csp_exception &csp_except)
 		{
@@ -676,10 +678,10 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFP
 		return;
 	}
 
-	double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot(hot_fl_code, hot_htf_class,
+	double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(hot_fl_code, hot_htf_class,
 		cold_fl_code, cold_htf_class,
-		T_h_in, P_h_in, P_h_out, m_dot_h,
-		T_c_in, P_c_in, P_c_out, m_dot_c);
+		h_h_in, P_h_in, P_h_out, m_dot_h,
+		h_c_in, P_c_in, P_c_out, m_dot_c);
 
 	double q_dot_upper = eff_limit*q_dot_max;
 
@@ -697,12 +699,12 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFP
 	double tol = 0.001;
 	double q_dot_lower = 1.E-10;		//[kWt]
 
-	NS_HX_counterflow_eqs::C_mono_eq_UA_v_q od_hx_eq(hot_fl_code, hot_htf_class,
+	NS_HX_counterflow_eqs::C_mono_eq_UA_v_q_enth od_hx_eq(hot_fl_code, hot_htf_class,
 		cold_fl_code, cold_htf_class,
 		N_sub_hx,
 		P_c_out, P_h_out,
-		T_c_in, P_c_in, m_dot_c,
-		T_h_in, P_h_in, m_dot_h);
+		h_c_in, P_c_in, m_dot_c,
+		h_h_in, P_h_in, m_dot_h);
 	C_monotonic_eq_solver od_hx_solver(od_hx_eq);
 
 	// First, test at q_dot_upper
@@ -735,13 +737,97 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFP
 		double hit_max_eff = 1.23;
 	}
 
-	q_dot = q_dot_solved;
 	T_c_out = od_hx_eq.m_T_c_out;	//[K]
+	h_c_out = od_hx_eq.m_h_c_out;	//[kJ/kg]
 	T_h_out = od_hx_eq.m_T_h_out;	//[K]
+	h_h_out = od_hx_eq.m_h_h_out;	//[kJ/kg]
+
+	q_dot = q_dot_solved;
 	eff_calc = od_hx_eq.m_eff;		//[-]
 	min_DT = od_hx_eq.m_min_DT;		//[K]
 	NTU = od_hx_eq.m_NTU;			//[-]
 	UA_calc = od_hx_eq.m_UA_calc;
+}
+
+void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+	int N_sub_hx /*-*/,
+	double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+	double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+	double UA_target /*kW/K*/, double eff_limit /*-*/, double eff_guess /*-*/,
+	double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
+	double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc)
+{
+	// Calculate inlet enthalpies from known state points
+	double h_c_in = std::numeric_limits<double>::quiet_NaN();
+	double h_h_in = std::numeric_limits<double>::quiet_NaN();
+	int prop_error_code = 0;
+
+	if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
+	{
+		CO2_state ms_co2_props;
+		prop_error_code = CO2_TP(T_c_in, P_c_in, &ms_co2_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Cold side inlet enthalpy calculations failed", 8));
+		}
+		h_c_in = ms_co2_props.enth;		//[kJ/kg]
+	}
+	else if (cold_fl_code == NS_HX_counterflow_eqs::WATER)
+	{
+		water_state ms_water_props;
+		prop_error_code = water_TP(T_c_in, P_c_in, &ms_water_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Cold side water inlet enthalpy calculations failed", 8));
+		}
+		h_c_in = ms_water_props.enth;	//[kJ/kg]
+	}
+	else
+	{
+		h_c_in = cold_htf_class.enth_lookup(T_c_in);	//[kJ/kg]
+	}
+
+	if (hot_fl_code == NS_HX_counterflow_eqs::CO2)
+	{
+		CO2_state ms_co2_props;
+		prop_error_code = CO2_TP(T_h_in, P_h_in, &ms_co2_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Hot side inlet enthalpy calculations failed", 9));
+		}
+		h_h_in = ms_co2_props.enth;			//[kJ/kg]
+	}
+	else if (hot_fl_code == NS_HX_counterflow_eqs::WATER)
+	{
+		water_state ms_water_props;
+		prop_error_code = water_TP(T_h_in, P_h_in, &ms_water_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Hot side water/steam inlet enthalpy calculations failed", 9));
+		}
+		h_h_in = ms_water_props.enth;		//[kJ/kg]
+	}
+	else
+	{
+		h_h_in = hot_htf_class.enth_lookup(T_h_in); //[kJ/kg]
+	}	
+
+	double h_c_out = std::numeric_limits<double>::quiet_NaN();
+	double h_h_out = std::numeric_limits<double>::quiet_NaN();
+	NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(hot_fl_code, hot_htf_class,
+		cold_fl_code, cold_htf_class,
+		N_sub_hx,
+		h_c_in, P_c_in, m_dot_c, P_c_out,
+		h_h_in, P_h_in, m_dot_h, P_h_out,
+		UA_target, eff_limit, eff_guess,
+		T_c_out, h_c_out,
+		T_h_out, h_h_out,
+		q_dot, eff_calc, min_DT, NTU, UA_calc);
 
 	return;
 }
@@ -922,24 +1008,6 @@ void C_HX_co2_to_htf::design_and_calc_m_dot_htf(C_HX_counterflow::S_des_calc_UA_
 	des_par.m_m_dot_hot_des = q_dot_design/(h_h_in - h_c_in);
 
 	design_calc_UA(des_par, q_dot_design, des_solved);
-}
-
-void C_HX_counterflow::design_fix_UA_calc_outlet_enth(double UA_target /*kW/K*/, double eff_limit /*-*/,
-	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
-	double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-	double & q_dot /*kWt*/, double & h_c_out /*kJ/kg*/, double & h_h_out /*kJ/kg*/)
-{
-	//if (UA_target < 1.E-10)
-	//{
-	//	q_dot = 0.0;
-	//
-	//	try
-	//	{
-	//		calc_req_UA_enth(q_dot, m_dot_c, m_dot_h, h_c_in, h_h_in, P_c_in, P_c_out,
-	//			P_h_in, P_h_out, )
-	//	}
-	//}
-
 }
 
 void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, double eff_target /*-*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,

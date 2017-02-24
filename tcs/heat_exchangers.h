@@ -49,7 +49,17 @@ namespace NS_HX_counterflow_eqs
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
 		double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
 
-	class C_mono_eq_UA_v_q : public C_monotonic_equation
+	void solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+		int N_sub_hx /*-*/,
+		double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+		double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+		double UA_target /*kW/K*/, double eff_limit /*-*/, double eff_guess /*-*/,
+		double & T_c_out  /*K*/, double & h_c_out /*kJ/kg*/,
+		double & T_h_out /*K*/, double & h_h_out /*kJ/kg*/,
+		double & q_dot /*kWt*/, double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
+
+	class C_mono_eq_UA_v_q_enth : public C_monotonic_equation
 	{
 	private:
 
@@ -64,20 +74,20 @@ namespace NS_HX_counterflow_eqs
 		double m_P_c_out;		//[kPa]
 		double m_P_h_out;		//[kPa]
 
-		double m_T_c_in;		//[K]
+		double m_h_c_in;		//[K]
 		double m_P_c_in;		//[kPa]
 		double m_m_dot_c;		//[kg/s]
-		double m_T_h_in;		//[K]
+		double m_h_h_in;		//[K]
 		double m_P_h_in;		//[kPa]
 		double m_m_dot_h;		//[kg/s]
 
 	public:
-		C_mono_eq_UA_v_q(int hot_fl_code /*-*/, HTFProperties hot_htf_class,
+		C_mono_eq_UA_v_q_enth(int hot_fl_code /*-*/, HTFProperties hot_htf_class,
 			int cold_fl_code /*-*/, HTFProperties cold_htf_class,
 			int N_sub_hx /*-*/,
 			double P_c_out /*kPa*/, double P_h_out /*kPa*/,
-			double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
-			double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/)
+			double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
+			double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/)
 		{
 			m_hot_fl_code = hot_fl_code;
 			mc_hot_htf_class = hot_htf_class;
@@ -90,18 +100,20 @@ namespace NS_HX_counterflow_eqs
 			m_P_c_out = P_c_out;	//[kPa]
 			m_P_h_out = P_h_out;	//[kPa]
 
-			m_T_c_in = T_c_in;		//[K]
+			m_h_c_in = h_c_in;		//[kJ/kg]
 			m_P_c_in = P_c_in;		//[kPa]
 			m_m_dot_c = m_dot_c;	//[kg/s]
 
-			m_T_h_in = T_h_in;		//[K]
+			m_h_h_in = h_h_in;		//[kJ/kg]
 			m_P_h_in = P_h_in;		//[kPa]
 			m_m_dot_h = m_dot_h;	//[kg/s]
 
-			m_T_c_out = m_T_h_out = m_eff =
+			m_h_c_out = m_h_h_out = m_T_c_out = m_T_h_out = m_eff =
 				m_min_DT = m_NTU = m_UA_calc = std::numeric_limits<double>::quiet_NaN();
 		}
 
+		double m_h_c_out;		//[kJ/kg]
+		double m_h_h_out;		//[kJ/kg]
 		double m_T_c_out;		//[K]
 		double m_T_h_out;		//[K]
 		double m_eff;			//[-]
@@ -111,7 +123,6 @@ namespace NS_HX_counterflow_eqs
 
 		virtual int operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/);
 	};
-
 }
 
 class C_HX_counterflow
@@ -251,11 +262,6 @@ public:
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
-
-	void design_fix_UA_calc_outlet_enth(double UA_target /*kW/K*/, double eff_limit /*-*/,
-		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
-		double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-		double & q_dot /*kWt*/, double & h_c_out /*kJ/kg*/, double & h_h_out /*kJ/kg*/);
 
 	void off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
