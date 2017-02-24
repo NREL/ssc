@@ -7,6 +7,21 @@
 #include "lib_util.h"
 #include "numeric_solvers.h"
 
+namespace NS_HX_counterflow_eqs
+{
+	enum
+	{
+		CO2 = 200,
+		WATER = 201
+	};
+
+	double calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+		double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
+		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/);
+
+}
+
 class C_HX_counterflow
 {
 
@@ -14,9 +29,6 @@ private:
 
 	double calc_max_q_dot(double T_h_in, double P_h_in, double P_h_out, double m_dot_h,
 		double T_c_in, double P_c_in, double P_c_out, double m_dot_c);
-
-	double calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
-		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/);
 
 	void hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
