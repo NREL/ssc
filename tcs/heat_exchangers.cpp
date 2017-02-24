@@ -4,6 +4,155 @@
 #include <algorithm>
 #include "numeric_solvers.h"
 
+double NS_HX_counterflow_eqs::calc_max_q_dot_enth(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+	int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+	double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
+	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/)
+{
+	int prop_error_code = 0;
+
+	// Calculate the hot and cold temperatures at the node
+	double T_h_in = std::numeric_limits<double>::quiet_NaN();
+	if (hot_fl_code == NS_HX_counterflow_eqs::CO2)
+	{
+		CO2_state ms_co2_props;
+		prop_error_code = CO2_PH(P_h_in, h_h_in, &ms_co2_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Hot side CO2 inlet enthalpy calculations failed", 12));
+		}
+		T_h_in = ms_co2_props.temp;		//[K]
+	}
+	else if (hot_fl_code == NS_HX_counterflow_eqs::WATER)
+	{
+		water_state ms_water_props;
+		prop_error_code = water_PH(P_h_in, h_h_in, &ms_water_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
+				"Hot side water/steam inlet enthalpy calculations failed", 12));
+		}
+		T_h_in = ms_water_props.temp;	//[K]
+	}
+	else
+	{
+		T_h_in = hot_htf_class.temp_lookup(h_h_in); //[K]
+	}
+
+	double T_c_in = std::numeric_limits<double>::quiet_NaN();
+	if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
+	{
+		CO2_state ms_co2_props;
+		prop_error_code = CO2_PH(P_c_in, h_c_in, &ms_co2_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::design",
+				"Cold side inlet enthalpy calculations failed", 13));
+		}
+		T_c_in = ms_co2_props.temp;		//[K]
+	}
+	else if (cold_fl_code == NS_HX_counterflow_eqs::WATER)
+	{
+		water_state ms_water_props;
+		prop_error_code = water_PH(P_c_in, h_c_in, &ms_water_props);
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
+				"Cold side water/steam inlet enthalpy calculations failed", 12));
+		}
+		T_c_in = ms_water_props.temp;	//[K]
+	}
+	else
+	{
+		T_c_in = cold_htf_class.temp_lookup(h_c_in);	//[K]
+	}
+
+	// **********************************************************************************
+	// **********************************************************************************
+	double Q_dot_cold_max = std::numeric_limits<double>::quiet_NaN();
+	if (cold_fl_code == NS_HX_counterflow_eqs::CO2)
+	{
+		CO2_state ms_co2_props;
+		prop_error_code = CO2_TP(T_h_in, P_c_out, &ms_co2_props);
+		if (prop_error_code == 205)
+		{
+			prop_error_code = CO2_TQ(T_h_in, 0.0, &ms_co2_props);
+		}
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
+				"Cold side inlet enthalpy calculations at effectiveness calc failed", 12));
+		}
+		double h_c_out_max = max(ms_co2_props.enth, h_c_in);	//[kJ/kg]
+		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);	//[kWt]
+	}
+	else if (cold_fl_code == NS_HX_counterflow_eqs::WATER)
+	{
+		water_state ms_water_props;
+		prop_error_code = water_TP(T_h_in, P_c_out, &ms_water_props);
+		if (prop_error_code == 205)
+		{
+			prop_error_code = water_TQ(T_h_in, 0.0, &ms_water_props);
+		}
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
+				"Cold side water/steam enthalpy calcs at max eff failed", 12));
+		}
+		double h_c_out_max = max(ms_water_props.enth, h_c_in);	//[kJ/kg]
+		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);
+	}
+	else
+	{
+		double h_c_in = cold_htf_class.enth_lookup(T_c_in);		//[kJ/kg]
+		double h_c_out_max = cold_htf_class.enth_lookup(T_h_in);//[kJ/kg]
+		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);	//[kWt]
+	}
+
+	double Q_dot_hot_max = std::numeric_limits<double>::quiet_NaN();
+	if (hot_fl_code == NS_HX_counterflow_eqs::CO2)
+	{
+		CO2_state ms_co2_props;
+		prop_error_code = CO2_TP(T_c_in, P_h_out, &ms_co2_props);
+		if (prop_error_code == 205)
+		{
+			prop_error_code = CO2_TQ(T_c_in, 1.0, &ms_co2_props);
+		}
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
+				"Hot side inlet enthalpy calculations at effectiveness calc failed", 12));
+		}
+		double h_h_out_min = min(h_h_in, ms_co2_props.enth);	//[kJ/kg]
+		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);	//[kWt]
+	}
+	else if (hot_fl_code == NS_HX_counterflow_eqs::WATER)
+	{
+		water_state ms_water_props;
+		prop_error_code = water_TP(T_c_in, P_h_out, &ms_water_props);
+		if (prop_error_code == 205)
+		{
+			prop_error_code = water_TQ(T_c_in, 1.0, &ms_water_props);
+		}
+		if (prop_error_code != 0)
+		{
+			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
+				"Hot side water/stream inlet enthalpy calcs at max eff failed", 12));
+		}
+		double h_h_out_min = min(h_h_in, ms_water_props.enth);	//[kJ/kg]
+		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);		//[kWt]
+	}
+	else
+	{
+		double h_h_in = hot_htf_class.enth_lookup(T_h_in);		//[kJ/kg]
+		double h_h_out_min = hot_htf_class.enth_lookup(T_c_in);	//[kJ/kg]
+		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);		//[kWt]
+	}
+
+	return min(Q_dot_hot_max, Q_dot_cold_max);
+}
+
 C_HX_counterflow::C_HX_counterflow()
 {
 	m_is_HX_initialized = false;
@@ -440,8 +589,14 @@ void C_HX_counterflow::calc_req_UA_enth(double q_dot /*kWt*/, double m_dot_c /*k
 
 	// **************************************************************
 	// Calculate the HX effectiveness
-	double q_dot_max = calc_max_q_dot_enth(h_h_in, P_h_in, P_h_out, m_dot_h,
+	
+	double q_dot_max = NS_HX_counterflow_eqs::calc_max_q_dot_enth(ms_init_par.m_hot_fl, mc_hot_fl,
+		ms_init_par.m_cold_fl, mc_cold_fl,
+		h_h_in, P_h_in, P_h_out, m_dot_h,
 		h_c_in, P_c_in, P_c_out, m_dot_c);
+
+	//double q_dot_max = calc_max_q_dot_enth(h_h_in, P_h_in, P_h_out, m_dot_h,
+	//	h_c_in, P_c_in, P_c_out, m_dot_c);
 
 	eff = q_dot / q_dot_max;
 
@@ -585,145 +740,6 @@ double C_HX_counterflow::calc_max_q_dot(double T_h_in, double P_h_in, double P_h
 	return std::min(Q_dot_hot_max, Q_dot_cold_max);
 }
 
-double C_HX_counterflow::calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
-	double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/)
-{
-	int prop_error_code = 0;
-
-	// Calculate the hot and cold temperatures at the node
-	double T_h_in = std::numeric_limits<double>::quiet_NaN();
-	if (ms_init_par.m_hot_fl == CO2)
-	{
-		prop_error_code = CO2_PH(P_h_in, h_h_in, &mc_co2_props);
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::design",
-				"Hot side CO2 inlet enthalpy calculations failed", 12));
-		}
-		T_h_in = mc_co2_props.temp;		//[K]
-	}
-	else if (ms_init_par.m_hot_fl == WATER)
-	{
-		prop_error_code = water_PH(P_h_in, h_h_in, &ms_water_props);
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
-				"Hot side water/steam inlet enthalpy calculations failed", 12));
-		}
-		T_h_in = ms_water_props.temp;	//[K]
-	}
-	else
-	{
-		T_h_in = mc_hot_fl.temp_lookup(h_h_in);	//[K]
-	}
-
-	double T_c_in = std::numeric_limits<double>::quiet_NaN();
-	if (ms_init_par.m_cold_fl == CO2)
-	{
-		prop_error_code = CO2_PH(P_c_in, h_c_in, &mc_co2_props);
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::design",
-				"Cold side inlet enthalpy calculations failed", 13));
-		}
-		T_c_in = mc_co2_props.temp;		//[K]
-	}
-	else if (ms_init_par.m_cold_fl == WATER)
-	{
-		prop_error_code = water_PH(P_c_in, h_c_in, &ms_water_props);
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
-				"Cold side water/steam inlet enthalpy calculations failed", 12));
-		}
-		T_c_in = ms_water_props.temp;	//[K]
-	}
-	else
-	{
-		T_c_in = mc_cold_fl.temp_lookup(h_c_in);	//[K]
-	}
-
-	// **********************************************************************************
-	// **********************************************************************************
-	double Q_dot_cold_max = std::numeric_limits<double>::quiet_NaN();
-	if (ms_init_par.m_cold_fl == CO2)
-	{
-		prop_error_code = CO2_TP(T_h_in, P_c_out, &mc_co2_props);
-		if (prop_error_code == 205)
-		{
-			prop_error_code = CO2_TQ(T_h_in, 0.0, &mc_co2_props);
-		}
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
-				"Cold side inlet enthalpy calculations at effectiveness calc failed", 12));
-		}
-		double h_c_out_max = max(mc_co2_props.enth, h_c_in);	//[kJ/kg]
-		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);	//[kWt]
-	}
-	else if (ms_init_par.m_cold_fl == WATER)
-	{
-		prop_error_code = water_TP(T_h_in, P_c_out, &ms_water_props);
-		if (prop_error_code == 205)
-		{
-			prop_error_code = water_TQ(T_h_in, 0.0, &ms_water_props);
-		}
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
-				"Cold side water/steam enthalpy calcs at max eff failed", 12));
-		}
-		double h_c_out_max = max(ms_water_props.enth, h_c_in);	//[kJ/kg]
-		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);
-	}
-	else
-	{
-		double h_c_in = mc_cold_fl.enth_lookup(T_c_in);
-		double h_c_out_max = mc_cold_fl.enth_lookup(T_h_in);		//[kJ/kg]
-		Q_dot_cold_max = m_dot_c*(h_c_out_max - h_c_in);	//[kWt]
-	}
-
-	double Q_dot_hot_max = std::numeric_limits<double>::quiet_NaN();
-	if (ms_init_par.m_hot_fl == CO2)
-	{
-		prop_error_code = CO2_TP(T_c_in, P_h_out, &mc_co2_props);
-		if (prop_error_code == 205)
-		{
-			prop_error_code = CO2_TQ(T_c_in, 1.0, &mc_co2_props);
-		}
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot",
-				"Hot side inlet enthalpy calculations at effectiveness calc failed", 12));
-		}
-		double h_h_out_min = min(h_h_in, mc_co2_props.enth);	//[kJ/kg]
-		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);	//[kWt]
-	}
-	else if (ms_init_par.m_hot_fl == WATER)
-	{
-		prop_error_code = water_TP(T_c_in, P_h_out, &ms_water_props);
-		if (prop_error_code == 205)
-		{
-			prop_error_code = water_TQ(T_c_in, 1.0, &ms_water_props);
-		}
-		if (prop_error_code != 0)
-		{
-			throw(C_csp_exception("C_HX_counterflow::calc_max_q_dot_enth",
-				"Hot side water/stream inlet enthalpy calcs at max eff failed", 12));
-		}
-		double h_h_out_min = min(h_h_in, ms_water_props.enth);	//[kJ/kg]
-		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);		//[kWt]
-	}
-	else
-	{	
-		double h_h_in = mc_hot_fl.enth_lookup(T_h_in);		//[kJ/kg]
-		double h_h_out_min = mc_hot_fl.enth_lookup(T_c_in);	//[kJ/kg]
-		Q_dot_hot_max = m_dot_h*(h_h_in - h_h_out_min);		//[kWt]
-	}
-
-	return min(Q_dot_hot_max, Q_dot_cold_max);
-}
-
 void C_HX_counterflow::design_calc_UA(C_HX_counterflow::S_des_calc_UA_par des_par,
 	double q_dot_design /*kWt*/, C_HX_counterflow::S_des_solved &des_solved)
 {
@@ -855,7 +871,6 @@ void C_HX_counterflow::design_fix_UA_calc_outlet(double UA_target /*kW/K*/, doub
 	ms_des_calc_UA_par.m_P_c_in = P_c_in;			//[kPa]
 	ms_des_calc_UA_par.m_P_c_out = P_c_out;			//[kPa]
 	ms_des_calc_UA_par.m_m_dot_cold_des = m_dot_c;	//[kg/s]
-
 	ms_des_calc_UA_par.m_eff_max = eff_target;		//[-]
 
 	ms_des_solved.m_Q_dot_design = q_dot;			//[kWt]
