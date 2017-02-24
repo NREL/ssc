@@ -149,12 +149,12 @@ void C_sco2_recomp_csp::design_core()
 	//*************************************************************************************
 
 	// Set air cooler design parameters that are dependent on the cycle design solution
-	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[9-1];
-	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[9-1];
+	ms_air_cooler_des_par_dep.m_T_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::LTR_LP_OUT];
+	ms_air_cooler_des_par_dep.m_P_hot_in_des = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::LTR_LP_OUT];
 	ms_air_cooler_des_par_dep.m_m_dot_total = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;
 		// This pressure drop is currently uncoupled from the cycle design
-	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[2-1];
-	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[1-1];
+	ms_air_cooler_des_par_dep.m_delta_P_des = ms_des_par.m_deltaP_cooler_frac*ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_OUT];
+	ms_air_cooler_des_par_dep.m_T_hot_out_des = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::MC_IN];
 	ms_air_cooler_des_par_dep.m_W_dot_fan_des = ms_des_par.m_frac_fan_power*ms_des_par.m_W_dot_net/1000.0;		//[MWe]
 
 	// Initialize the PHX
@@ -168,9 +168,9 @@ void C_sco2_recomp_csp::design_core()
 	ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
 	ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
 		// .................................................................................
-	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[5 - 1];		//[K]
-	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[5 - 1];		//[K]
-	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[6 - 1];		//[K]
+	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_RecompCycle::HTR_HP_OUT];		//[K]
+	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::HTR_HP_OUT];		//[K]
+	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_RecompCycle::TURB_IN];		//[K]
 	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
 		// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
 	ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
