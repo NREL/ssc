@@ -40,18 +40,82 @@ namespace NS_HX_counterflow_eqs
 		double & h_h_out /*kJ/kg*/, double & T_h_out /*K*/, double & h_c_out /*kJ/kg*/, double & T_c_out /*K*/,
 		double & UA /*kW/K*/, double & min_DT /*C*/, double & eff /*-*/, double & NTU /*-*/, double & q_dot_calc /*kWt*/);
 	
+	void solve_q_dot_for_fixed_UA(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+		int N_sub_hx /*-*/,
+		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+		double UA_target /*kW/K*/, double eff_limit /*-*/, double eff_guess /*-*/,
+		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
+		double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
+
+	class C_mono_eq_UA_v_q : public C_monotonic_equation
+	{
+	private:
+
+		int m_hot_fl_code;		//[-]
+		HTFProperties mc_hot_htf_class;
+
+		int m_cold_fl_code;		//[-]
+		HTFProperties mc_cold_htf_class;
+
+		int m_N_sub_hx;			//[-]
+
+		double m_P_c_out;		//[kPa]
+		double m_P_h_out;		//[kPa]
+
+		double m_T_c_in;		//[K]
+		double m_P_c_in;		//[kPa]
+		double m_m_dot_c;		//[kg/s]
+		double m_T_h_in;		//[K]
+		double m_P_h_in;		//[kPa]
+		double m_m_dot_h;		//[kg/s]
+
+	public:
+		C_mono_eq_UA_v_q(int hot_fl_code /*-*/, HTFProperties hot_htf_class,
+			int cold_fl_code /*-*/, HTFProperties cold_htf_class,
+			int N_sub_hx /*-*/,
+			double P_c_out /*kPa*/, double P_h_out /*kPa*/,
+			double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
+			double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/)
+		{
+			m_hot_fl_code = hot_fl_code;
+			mc_hot_htf_class = hot_htf_class;
+
+			m_cold_fl_code = cold_fl_code;
+			mc_cold_htf_class = cold_htf_class;
+
+			m_N_sub_hx = N_sub_hx;
+
+			m_P_c_out = P_c_out;	//[kPa]
+			m_P_h_out = P_h_out;	//[kPa]
+
+			m_T_c_in = T_c_in;		//[K]
+			m_P_c_in = P_c_in;		//[kPa]
+			m_m_dot_c = m_dot_c;	//[kg/s]
+
+			m_T_h_in = T_h_in;		//[K]
+			m_P_h_in = P_h_in;		//[kPa]
+			m_m_dot_h = m_dot_h;	//[kg/s]
+
+			m_T_c_out = m_T_h_out = m_eff =
+				m_min_DT = m_NTU = m_UA_calc = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_T_c_out;		//[K]
+		double m_T_h_out;		//[K]
+		double m_eff;			//[-]
+		double m_min_DT;		//[K]
+		double m_NTU;			//[-]
+		double m_UA_calc;		//[kW/K]
+
+		virtual int operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/);
+	};
+
 }
 
 class C_HX_counterflow
 {
-
-private:
-
-	void hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
-		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
-		double UA_target /*kW/K*/, double eff_limit /*-*/,
-		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
-		double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
 
 protected:
 	bool m_is_HX_initialized;		//[-] True = yes!
@@ -157,53 +221,6 @@ public:
 				m_T_c_out = m_P_c_out = m_T_h_out = m_P_h_out =
 				m_UA_total = m_min_DT = m_eff = m_NTU = std::numeric_limits<double>::quiet_NaN();
 		}
-	};
-
-	class C_mono_eq_UA_v_q : public C_monotonic_equation
-	{
-	private:
-		C_HX_counterflow *mp_c_hx;
-		
-		double m_P_c_out;		//[kPa]
-		double m_P_h_out;		//[kPa]
-
-		double m_T_c_in;		//[K]
-		double m_P_c_in;		//[kPa]
-		double m_m_dot_c;		//[kg/s]
-		double m_T_h_in;		//[K]
-		double m_P_h_in;		//[kPa]
-		double m_m_dot_h;		//[kg/s]
-
-	public:
-		C_mono_eq_UA_v_q(C_HX_counterflow *p_c_hx, double P_c_out /*kPa*/, double P_h_out /*kPa*/,
-					double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
-					double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/)
-		{
-			mp_c_hx = p_c_hx;
-
-			m_P_c_out = P_c_out;	//[kPa]
-			m_P_h_out = P_h_out;	//[kPa]
-
-			m_T_c_in = T_c_in;		//[K]
-			m_P_c_in = P_c_in;		//[kPa]
-			m_m_dot_c = m_dot_c;	//[kg/s]
-
-			m_T_h_in = T_h_in;		//[K]
-			m_P_h_in = P_h_in;		//[kPa]
-			m_m_dot_h = m_dot_h;	//[kg/s]
-
-			m_T_c_out = m_T_h_out = m_eff =
-				m_min_DT = m_NTU = m_UA_calc = std::numeric_limits<double>::quiet_NaN();
-		}
-
-		double m_T_c_out;		//[K]
-		double m_T_h_out;		//[K]
-		double m_eff;			//[-]
-		double m_min_DT;		//[K]
-		double m_NTU;			//[-]
-		double m_UA_calc;		//[kW/K]
-
-		virtual int operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/);
 	};
 
 	S_init_par ms_init_par;
