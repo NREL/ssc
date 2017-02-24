@@ -20,15 +20,17 @@ namespace NS_HX_counterflow_eqs
 		double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
 		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/);
 
+	double calc_max_q_dot(int hot_fl_code /*-*/, HTFProperties & hot_htf_class,
+		int cold_fl_code /*-*/, HTFProperties & cold_htf_class,
+		double T_h_in, double P_h_in, double P_h_out, double m_dot_h,
+		double T_c_in, double P_c_in, double P_c_out, double m_dot_c);
+
 }
 
 class C_HX_counterflow
 {
 
 private:
-
-	double calc_max_q_dot(double T_h_in, double P_h_in, double P_h_out, double m_dot_h,
-		double T_c_in, double P_c_in, double P_c_out, double m_dot_c);
 
 	void hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
