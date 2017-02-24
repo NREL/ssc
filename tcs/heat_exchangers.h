@@ -21,7 +21,8 @@ private:
 	void hx_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 		double UA_target /*kW/K*/, double eff_limit /*-*/,
-		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
+		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/,
+		double & eff_calc /*-*/, double & min_DT /*K*/, double & NTU /*-*/, double & UA_calc);
 
 protected:
 	bool m_is_HX_initialized;		//[-] True = yes!
@@ -109,22 +110,6 @@ public:
 		}
 	};
 
-	struct S_hx_sol_par
-	{
-		double m_T_c_in;		//[K] Cold fluid inlet temperature
-		double m_P_c_in;		//[kPa] Cold fluid inlet pressure
-		double m_m_dot_c;		//[kg/s] Cold fluid design mass flow rate
-		double m_T_h_in;		//[K] Hot fluid inlet temperature
-		double m_P_h_in;		//[kPa] Hot fluid inlet pressure
-		double m_m_dot_h;		//[kg/s] Hot fluid design mass flow rate
-
-		S_hx_sol_par()
-		{
-			m_T_c_in = m_P_c_in = m_m_dot_c = 
-				m_T_h_in = m_P_h_in = m_m_dot_h = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-
 	struct S_od_solved
 	{
 		double m_q_dot;		//[kWt] Thermal power to cold fluid
@@ -144,38 +129,50 @@ public:
 				m_UA_total = m_min_DT = m_eff = m_NTU = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
-	
-	struct S_hx_sol_solved
-	{
-		double m_P_c_out;	//[kPa] Cold fluid outlet pressure
-		double m_P_h_out;	//[kPa] Hot fluid outlet temperature
-		
-		double m_q_dot;		//[kWt] Thermal power to cold fluid
-		double m_T_c_out;	//[K] Cold fluid outlet temperature
-		double m_T_h_out;	//[K] Hot fluid outlet temperature
-		double m_UA_total;	//[kW/K] Conductance
-		double m_min_DT;	//[K] Min temp difference
-		double m_eff;		//[-]
-		double m_NTU;		//[-]
-
-		S_hx_sol_solved()
-		{
-			m_q_dot =
-				m_T_c_out = m_P_c_out = m_T_h_out = m_P_h_out =
-				m_UA_total = m_min_DT = m_eff = m_NTU = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
 
 	class C_mono_eq_UA_v_q : public C_monotonic_equation
 	{
 	private:
 		C_HX_counterflow *mp_c_hx;
-	
+		
+		double m_P_c_out;		//[kPa]
+		double m_P_h_out;		//[kPa]
+
+		double m_T_c_in;		//[K]
+		double m_P_c_in;		//[kPa]
+		double m_m_dot_c;		//[kg/s]
+		double m_T_h_in;		//[K]
+		double m_P_h_in;		//[kPa]
+		double m_m_dot_h;		//[kg/s]
+
 	public:
-		C_mono_eq_UA_v_q(C_HX_counterflow *p_c_hx)
+		C_mono_eq_UA_v_q(C_HX_counterflow *p_c_hx, double P_c_out /*kPa*/, double P_h_out /*kPa*/,
+					double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/,
+					double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/)
 		{
 			mp_c_hx = p_c_hx;
+
+			m_P_c_out = P_c_out;	//[kPa]
+			m_P_h_out = P_h_out;	//[kPa]
+
+			m_T_c_in = T_c_in;		//[K]
+			m_P_c_in = P_c_in;		//[kPa]
+			m_m_dot_c = m_dot_c;	//[kg/s]
+
+			m_T_h_in = T_h_in;		//[K]
+			m_P_h_in = P_h_in;		//[kPa]
+			m_m_dot_h = m_dot_h;	//[kg/s]
+
+			m_T_c_out = m_T_h_out = m_eff =
+				m_min_DT = m_NTU = m_UA_calc = std::numeric_limits<double>::quiet_NaN();
 		}
+
+		double m_T_c_out;		//[K]
+		double m_T_h_out;		//[K]
+		double m_eff;			//[-]
+		double m_min_DT;		//[K]
+		double m_NTU;			//[-]
+		double m_UA_calc;		//[kW/K]
 
 		virtual int operator()(double q_dot /*kWt*/, double *UA_calc /*kW/K*/);
 	};
@@ -183,8 +180,6 @@ public:
 	S_init_par ms_init_par;
 	S_des_calc_UA_par ms_des_calc_UA_par;
 	S_des_solved ms_des_solved;
-	S_hx_sol_par ms_hx_sol_par;
-	S_hx_sol_solved ms_hx_sol_solved;
 	S_od_par ms_od_par;
 	S_od_solved ms_od_solved;
 
@@ -210,6 +205,11 @@ public:
 		double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
 		double & q_dot /*kWt*/, double & T_c_out /*K*/, double & T_h_out /*K*/);
+
+	void design_fix_UA_calc_outlet_enth(double UA_target /*kW/K*/, double eff_limit /*-*/,
+		double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+		double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+		double & q_dot /*kWt*/, double & h_c_out /*kJ/kg*/, double & h_h_out /*kJ/kg*/);
 
 	void off_design_solution(double T_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
 		double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
