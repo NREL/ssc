@@ -88,8 +88,10 @@ static var_info _cm_vtab_pvwattsv5_part2[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "tz",                             "Time zone",                                   "hr",  "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "elev",                           "Site elevation",                              "m",   "",                        "Location",      "*",                       "",                          "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_model",                 "Inverter model specifier",                     "",                               "0=cec,1=datasheet,2=partload,3=coefficientgenerator,4=generic", "", "", "INTEGER,MIN=0,MAX=4", "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,     "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                   "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                      "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "inverter_efficiency",            "Inverter efficiency at rated power",          "%",         "",                   "PVWatts",      "?=96",                        "MIN=90,MAX=99.5",                              "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs",  "hours", "",                 "Miscellaneous", "*",                       "",                          "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",     "Use lifetime output",                         "0/1", "",                         "Miscellaneous", "*",                       "",                          "" },
+
 
 	var_info_invalid };
 
@@ -334,6 +336,9 @@ public:
 
 	void exec( ) throw( general_error )
 	{
+		// no lifetime simulation
+		assign("system_use_lifetime_output", 0);
+
 		// don't add "gen" output if battery enabled, gets added later
 		if (!as_boolean("batt_simple_enable"))
 			add_var_info(vtab_technology_outputs);
