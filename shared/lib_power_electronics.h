@@ -1,7 +1,7 @@
 #ifndef _power_electronics_h_
 #define _power_electronics_h_
 
-#include "lib_battery_dispatch.h"
+#include "lib_battery.h"
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
 

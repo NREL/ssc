@@ -2,6 +2,7 @@
 #define _CMOD_BATTERY_COMMON_ 1
 
 #include "core.h"
+#include "lib_battery.h"
 #include "lib_power_electronics.h"
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
