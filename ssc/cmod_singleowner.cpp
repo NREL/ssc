@@ -22,6 +22,13 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity", "Return on equity", "$/kWh", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity_input", "Return on equity input", "%", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_return_on_equity_dollars", "Return on equity dollars", "$", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_lcog_costs", "Total LCOG costs", "$", "", "Return on Equity", "*", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcog_om", "LCOG O and M", "cents/kWh", "", "Return on Equity", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcog_depr", "LCOG depreciation", "cents/kWh", "", "Return on Equity", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcog_loan_int", "LCOG loan interest", "cents/kWh", "", "Return on Equity", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcog_wc_int", "LCOG working capital interest", "cents/kWh", "", "Return on Equity", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcog_roe", "LCOG return on equity", "cents/kWh", "", "Return on Equity", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "lcog", "LCOG Levelized cost of generation", "cents/kWh", "", "Return on Equity", "*", "", "" },
 
 	/*loan moratorium from Sara for India Documentation\India\Loan Moratorum
 	assumptions:
@@ -955,6 +962,7 @@ enum {
 	CF_return_on_equity_input,
 	CF_return_on_equity_dollars,
 	CF_return_on_equity,
+	CF_lcog_costs,
 
 	CF_Annual_Costs,
 	CF_pretax_dscr,
@@ -2995,6 +3003,43 @@ public:
 		save_cf(CF_return_on_equity_input, nyears, "cf_return_on_equity_input");
 		save_cf(CF_return_on_equity_dollars, nyears, "cf_return_on_equity_dollars");
 		save_cf(CF_return_on_equity, nyears, "cf_return_on_equity");
+
+
+		for (i = 0; i <= nyears; i++)
+		{
+			cf.at(CF_lcog_costs, i) = cf.at(CF_om_fixed_expense, i) 
+				+ cf.at(CF_feddepr_total, i) 
+				+ cf.at(CF_debt_payment_interest, i)
+				+ cf.at(CF_reserve_interest, i)
+				+ cf.at(CF_return_on_equity_dollars, i);
+		}
+		save_cf(CF_lcog_costs, nyears, "cf_lcog_costs");
+
+		double lcog_om = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
+		if (npv_energy_nom != 0) lcog_om = lcog_om * 100.0 / npv_energy_nom;
+		assign("lcog_om", var_data((ssc_number_t)lcog_om));
+
+		double lcog_depr = npv(CF_feddepr_total, nyears, nom_discount_rate);
+		if (npv_energy_nom != 0) lcog_depr = lcog_depr * 100.0 / npv_energy_nom;
+		assign("lcog_depr", var_data((ssc_number_t)lcog_depr));
+
+		double lcog_loan_int = npv(CF_debt_payment_interest, nyears, nom_discount_rate);
+		if (npv_energy_nom != 0) lcog_loan_int = lcog_loan_int * 100.0 / npv_energy_nom;
+		assign("lcog_loan_int", var_data((ssc_number_t)lcog_loan_int));
+
+		double lcog_wc_int = npv(CF_reserve_interest, nyears, nom_discount_rate);
+		if (npv_energy_nom != 0) lcog_wc_int = lcog_wc_int * 100.0 / npv_energy_nom;
+		assign("lcog_wc_int", var_data((ssc_number_t)lcog_wc_int));
+
+		double lcog_roe = npv(CF_return_on_equity_dollars, nyears, nom_discount_rate);
+		if (npv_energy_nom != 0) lcog_roe = lcog_roe * 100.0 / npv_energy_nom;
+		assign("lcog_roe", var_data((ssc_number_t)lcog_roe));
+
+		double lcog_nom = npv(CF_lcog_costs, nyears, nom_discount_rate);
+		if (npv_energy_nom != 0) lcog_nom = lcog_nom * 100.0 / npv_energy_nom;
+		assign("lcog", var_data((ssc_number_t)lcog_nom));
+
+
 
 
 		// dispatch
