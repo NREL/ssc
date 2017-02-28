@@ -793,6 +793,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		double time_required_su_energy = m_startup_energy_remain_prev / q_dot_to_pc_max;		//[hr]
 		double time_required_su_ramping = m_startup_time_remain_prev;		//[hr]
 
+		double q_dot_to_pc = std::numeric_limits<double>::quiet_NaN();
+
 		if( time_required_su_energy > time_required_su_ramping )	// Meeting energy requirements (at design thermal input) will require more time than time requirements
 		{
 			// Can the power cycle startup within the timestep?
@@ -807,6 +809,8 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				time_required_su = time_required_su_energy;	//[hr]
 				m_standby_control_calc = ON;				//[-] Power cycle has started up, next time step it will be ON
 			}		
+			// If the thermal energy requirement is the limiting factor, then send max q_dot to power cycle
+			q_dot_to_pc = q_dot_to_pc_max;		//[kWt]
 		}
 		else		// Meeting time requirements will require more time than energy requirements (at design thermal input)
 		{
@@ -821,8 +825,11 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				time_required_su = time_required_su_ramping;	//[hr]
 				m_standby_control_calc = ON;					//[-] Power cycle has started up, next time step it will be ON
 			}
+
+			// 2.27.17 twn: now need to recalculate q_dot_to_pc based on having more time to deliver energy requirement
+			q_dot_to_pc = m_startup_energy_remain_prev / time_required_su_energy;		//[kWt]
 		}
-		q_startup = q_dot_to_pc_max*time_required_su;	//[kWt-hr]
+		q_startup = q_dot_to_pc*time_required_su;	//[kWt-hr]
 
 		//double time_required_max = fmax(time_required_su_energy, time_required_su_ramping);		//[hr]
 		//
