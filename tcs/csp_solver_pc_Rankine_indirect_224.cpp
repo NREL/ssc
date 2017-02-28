@@ -827,7 +827,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			}
 
 			// 2.27.17 twn: now need to recalculate q_dot_to_pc based on having more time to deliver energy requirement
-			q_dot_to_pc = m_startup_energy_remain_prev / time_required_su_energy;		//[kWt]
+			q_dot_to_pc = m_startup_energy_remain_prev / time_required_su;		//[kWt]
 		}
 		q_startup = q_dot_to_pc*time_required_su;	//[kWt-hr]
 
