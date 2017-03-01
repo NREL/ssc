@@ -816,7 +816,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
                 is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
 
-                q_pc_target = dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) / 1000. ;
+                q_pc_target = (dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) 
+                    + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
+                    / 1000. ;
 
                 //quality checks
 				/*

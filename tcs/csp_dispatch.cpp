@@ -1078,7 +1078,9 @@ bool csp_dispatch_opt::optimize()
                 //min charge state in time periods where cycle operates and receiver is starting up
                 if(t < nt-1)
                 {
-                    double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - Er/delta, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * Ql * delta;
+                    //double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - Er/delta, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * Ql * delta;
+                    double delta_rec_startup = min(1., max(params.e_rec_startup/max(outputs.q_sfavail_expected.at(t+1),1.), params.dt_rec_startup) );
+                    double smin = params.q_pb_des*delta_rec_startup + max(params.q_pb_des * (1. - delta_rec_startup) - params.e_rec_startup, 0.);
 
                     int i=0;
 
@@ -1586,7 +1588,6 @@ std::string csp_dispatch_opt::write_ampl()
         fout << "param day_of_year := " << day << ";\n";
         fout << "param T := " << nt << ";\n";
         fout << "param Eu := " << params.e_tes_max << ";\n";
-        //fout << "param El := " << params.e_tes_min << ";\n";
         fout << "param Er := " << params.e_rec_startup << ";\n";
         fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
         fout << "param Qu := " << params.q_pb_max << ";\n";
