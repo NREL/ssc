@@ -2867,84 +2867,90 @@ public:
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
 
-					cur_load = p_load_full[idx];
-					double dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
-					double dc_string_voltage = p_inv_dc_voltage[idx];
+
 
 					// Battery replacement
 					if (en_batt)
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour, jj);
 
+					// Iterative loop over DC battery
+					size_t dc_count = 0;
+					double dcpwr_net = 0, acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
+					do {
 
-					// DC Connected Battery
-					bool battery_charging = false;
-					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
-					{
-						if (iyear == 0)
-							annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
-						
-						batt.advance(*this, iyear, hour, jj, dcpwr_net*util::watt_to_kilowatt, cur_load);
-						dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
+						cur_load = p_load_full[idx];
+						dcpwr_net = util::kilowatt_to_watt * p_dcpwr[idx];
+						double dc_string_voltage = p_inv_dc_voltage[idx];
 
-						if (iyear == 0)
-							annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
-
-						// inverter can't handle negative dcpwr
-						if (dcpwr_net < 0)
+						// DC Connected Battery
+						bool battery_charging = false;
+						if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
 						{
-							if (batt.outBatteryPower[idx] < 0)
+							if (iyear == 0 && dc_count == 0)
+								annual_dc_power_before_battery += p_dcpwr[idx] * ts_hour;
+
+							batt.advance(*this, iyear, hour, jj, dcpwr_net*util::watt_to_kilowatt, cur_load);
+							dcpwr_net = util::kilowatt_to_watt * batt.outGenPower[idx];
+
+							// inverter can't handle negative dcpwr
+							if (dcpwr_net < 0)
 							{
-								battery_charging = true;
-								dcpwr_net = fabs(dcpwr_net);
+								if (batt.outBatteryPower[idx] < 0)
+								{
+									battery_charging = true;
+									dcpwr_net = fabs(dcpwr_net);
+								}
+								else
+									dcpwr_net = 0;
 							}
-							else
-								dcpwr_net = 0;
 						}
-					}
-					// inverter: runs at all hours of the day, even if no DC power.  important
-					// for capturing tare losses			
-					double acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
-					if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
-					{
-						double _par, _plr;
-						snlinv.acpower(dcpwr_net / num_inverters, dc_string_voltage,
-							&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
-
-						acpwr_gross *= num_inverters;
-						cliploss *= num_inverters;
-						psoloss *= num_inverters;
-						pntloss *= num_inverters;
-						aceff *= 100;
-					}
-					else if (inv_type == 2) // partload
-					{
-						double _par, _plr;
-						plinv.acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
-						acpwr_gross *= num_inverters;
-						cliploss *= num_inverters;
-						psoloss *= num_inverters;
-						pntloss *= num_inverters;
-						aceff *= 100;
-					}
-
-					// if dc connected battery, update post-inverted quantities
-					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
-					{
-						if (battery_charging)
+						// inverter: runs at all hours of the day, even if no DC power.  important
+						// for capturing tare losses			
+						acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
+						if ((inv_type == 0) || (inv_type == 1) || (inv_type == 3))
 						{
-							// change sign back now that is inverted
-							dcpwr_net *= -1;
-							acpwr_gross *= -1;
+							double _par, _plr;
+							snlinv.acpower(dcpwr_net / num_inverters, dc_string_voltage,
+								&acpwr_gross, &_par, &_plr, &aceff, &cliploss, &psoloss, &pntloss);
+
+							acpwr_gross *= num_inverters;
+							cliploss *= num_inverters;
+							psoloss *= num_inverters;
+							pntloss *= num_inverters;
+							aceff *= 100;
 						}
-						batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*util::watt_to_kilowatt);
-						acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
-					}
+						else if (inv_type == 2) // partload
+						{
+							double _par, _plr;
+							plinv.acpower(dcpwr_net / num_inverters, &acpwr_gross, &_par, &_plr, &aceff, &cliploss, &pntloss);
+							acpwr_gross *= num_inverters;
+							cliploss *= num_inverters;
+							psoloss *= num_inverters;
+							pntloss *= num_inverters;
+							aceff *= 100;
+						}
+
+						// if dc connected battery, update post-inverted quantities
+						if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+						{
+							if (battery_charging)
+							{
+								// change sign back now that is inverted
+								dcpwr_net *= -1;
+								acpwr_gross *= -1;
+							}
+							batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*util::watt_to_kilowatt);
+							acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
+						}
+						dc_count++;
+					} while (batt.check_iterate(dc_count));
 
 					ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 
 					// accumulate first year annual energy
 					if (iyear == 0)
 					{
+						annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
 						annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
 						p_inveff[idx] = (ssc_number_t)(aceff);
 						p_invcliploss[idx] = (ssc_number_t)(cliploss * util::watt_to_kilowatt);

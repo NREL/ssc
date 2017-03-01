@@ -773,6 +773,18 @@ void battstor::update_post_inverted(compute_module &cm, size_t year, size_t hour
 	metrics(cm, year, hour_of_year, step);
 }
 
+bool battstor::check_iterate(size_t count)
+{
+	bool iterate = false;
+	if (count < 10)
+		iterate = charge_control->check_iterate();
+
+	if (!iterate)
+		charge_control->finalize();
+
+	return iterate;
+}
+
 void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 {
 	int step_per_hour = (int)( 1.0 / _dt_hour );

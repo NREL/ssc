@@ -114,8 +114,8 @@ void capacity_t::update_SOC()
 		_SOC = 0.;
 
 	// due to dynamics, it's possible SOC could be slightly above 1 or below 0
-	if (_SOC > _SOC_max)
-		_SOC = _SOC_max;
+	if (_SOC > 100.0)
+		_SOC = 100.0;
 	else if (_SOC < 0.)
 		_SOC = 0.;
 
@@ -156,24 +156,25 @@ capacity_t(q20, SOC_max)
 	replace_battery();
 }
 capacity_kibam_t * capacity_kibam_t::clone(){ return new capacity_kibam_t(*this); }
-void capacity_kibam_t::copy(capacity_kibam_t *& capacity)
+void capacity_kibam_t::copy(capacity_t *& capacity)
 {
-	capacity_t * tmp = dynamic_cast<capacity_t*>(capacity);
-	capacity_t::copy(tmp);
-	capacity = dynamic_cast<capacity_kibam_t*>(tmp);
+	capacity_t::copy(capacity);
+	capacity_kibam_t * tmp = dynamic_cast<capacity_kibam_t*>(capacity);
 	
-	capacity->_t1 = _t1;
-	capacity->_t2 = _t2;
-	capacity->_q1 = _q1;
-	capacity->_q2 = _q2;
-	capacity->_F1 = _F1;
-	capacity->_c = _c;
-	capacity->_k = _k;
-	capacity->_q1_0 = _q1_0;
-	capacity->_q2_0 = _q2_0;
-	capacity->_q10 = _q10;
-	capacity->_q20 = _q20;
-	capacity->_I20 = _I20;
+	tmp->_t1 = _t1;
+	tmp->_t2 = _t2;
+	tmp->_q1 = _q1;
+	tmp->_q2 = _q2;
+	tmp->_F1 = _F1;
+	tmp->_c = _c;
+	tmp->_k = _k;
+	tmp->_q1_0 = _q1_0;
+	tmp->_q2_0 = _q2_0;
+	tmp->_q10 = _q10;
+	tmp->_q20 = _q20;
+	tmp->_I20 = _I20;
+
+	capacity = dynamic_cast<capacity_t*>(tmp);
 }
 
 void capacity_kibam_t::replace_battery()
