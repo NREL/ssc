@@ -148,7 +148,7 @@ public:
 	capacity_lithium_ion_t(double q, double SOC_max);
 	~capacity_lithium_ion_t(){};
 	capacity_lithium_ion_t * clone();
-	void copy(capacity_lithium_ion_t *&);
+	void copy(capacity_t *&);
 
 	// override public api
 	void updateCapacity(double I, double dt);
@@ -198,7 +198,7 @@ class voltage_dynamic_t : public voltage_t
 public:
 	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R);
 	voltage_dynamic_t * clone();
-	void copy(voltage_dynamic_t *&);
+	void copy(voltage_t *&);
 
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
@@ -227,7 +227,7 @@ class voltage_vanadium_redox_t : public voltage_t
 public:
 	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R);
 	voltage_vanadium_redox_t * clone();
-	void copy(voltage_vanadium_redox_t *&);
+	void copy(voltage_t *&);
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 	//double battery_voltage();

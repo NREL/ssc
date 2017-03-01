@@ -23,7 +23,7 @@ public:
 	dispatch_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	void copy(const dispatch_t & dispatch);
+	virtual void copy(const dispatch_t & dispatch);
 	void delete_clone();
 
 	virtual ~dispatch_t();
@@ -65,6 +65,17 @@ public:
 	message get_messages();
 
 protected:
+
+	// Initialization help
+	void init(battery_t * Battery,
+		double dt_hour,
+		double SOC_min,
+		double SOC_max,
+		double Ic_max,
+		double Id_max,
+		double t_min,
+		int mode,
+		int pv_dispatch);
 
 	// Controllers
 	void SOC_controller();
@@ -154,6 +165,13 @@ public:
 		bool * dm_gridcharge,
 		std::map<int, double> dm_percent_discharge,
 		std::map<int, double> dm_percent_gridcharge);
+
+	// deep copy constructor (new memory), from dispatch to this
+	dispatch_manual_t(const dispatch_t& dispatch);
+
+	// copy members from dispatch to this
+	virtual void copy(const dispatch_t & dispatch);
+
 	virtual ~dispatch_manual_t(){};
 	virtual void dispatch(size_t year,
 		size_t hour_of_year,
@@ -164,6 +182,24 @@ public:
 		double P_load_dc_discharging);
 
 protected:
+
+	// Initialization help
+	void init(util::matrix_t<float> dm_dynamic_sched,
+		util::matrix_t<float> dm_dynamic_sched_weekend,
+		bool * dm_charge,
+		bool *dm_discharge,
+		bool * dm_gridcharge,
+		std::map<int, double> dm_percent_discharge,
+		std::map<int, double> dm_percent_gridcharge);
+
+	void init_with_vects(
+		util::matrix_t<float> dm_dynamic_sched,
+		util::matrix_t<float> dm_dynamic_sched_weekend,
+		std::vector<bool>,
+		std::vector<bool>,
+		std::vector<bool>,
+		std::map<int, double> dm_percent_discharge,
+		std::map<int, double> dm_percent_gridcharge);
 
 	void initialize_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging);
 	void reset();
