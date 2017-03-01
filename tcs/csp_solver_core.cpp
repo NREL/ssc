@@ -898,7 +898,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		// Check if CR startup should be solved before entering hierarchy
 		double q_dot_tes_dc_t_CR_su = 0.0;
 		if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
-			q_dot_cr_startup &&
+			q_dot_cr_startup > 0.0 &&
 			is_rec_su_allowed && 
 			m_is_tes )
 		{
