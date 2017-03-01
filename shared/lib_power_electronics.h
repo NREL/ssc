@@ -105,7 +105,7 @@ class charge_controller
 {
 public:
 	charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiency_1, double efficiency_2);
-	virtual ~charge_controller(){/* do nothing */ };
+	virtual ~charge_controller();
 
 	void initialize(double P_pv, double P_load);
 
@@ -118,6 +118,12 @@ public:
 	// return power loss [kW]
 	virtual double gen_ac() = 0;
 	virtual double update_gen_ac(double P_gen_ac) = 0;
+
+	void finalize();
+
+	// iterative solution required
+	bool check_iterate();
+	void check_constraints();
 
 	// ac outputs
 	double power_tofrom_battery(){ return _P_battery;}
@@ -137,6 +143,8 @@ public:
 protected:
 
 	dispatch_t * _dispatch;
+	dispatch_t * _dispatch_initial;
+
 	battery_metrics_t * _battery_metrics;
 
 	// ac powers to report
@@ -162,6 +170,9 @@ protected:
 	double _P_pv_dc_charge_input;
 	double _P_load_dc_discharge_input;
 	double _P_load_dc_charge_input;
+
+	// does battery need to iterate
+	bool _iterate;
 
 };
 
