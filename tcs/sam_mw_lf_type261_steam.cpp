@@ -2819,6 +2819,7 @@ public:
 					}
 					water_PH( P_turb_in*100.0, h_to_pb, &wp );
 					q_to_pb = m_dot_to_pb * (h_to_pb - h_pb_out);
+					T_pb_in = wp.temp - 273.15;
 					break;
 				case 2:			// supplemental parallel
 					if( m_is_sh )
@@ -2847,6 +2848,7 @@ public:
 					}
 					water_PH( P_turb_in*100.0, h_to_pb, &wp );
 					q_to_pb = m_dot_to_pb * (h_to_pb - h_b_in);
+					T_pb_in = wp.temp - 273.15;
 					break;
 				case 3:		// Supplemental parallel
 					// The auxiliary heater is used to bring the steam from the solar field up to the design-point temperature
@@ -2882,6 +2884,8 @@ public:
 				T_pb_in = m_T_field_out;
 				q_to_pb = q_field_delivered;
 			}
+			// 3.2.17 twn: recalculated field outlet temperature so need to reset here
+			m_T_field_out = T_pb_in;
 			standby_control = 1;	// We're operating the power block normally	
 			m_is_pb_on = true;
 		}
