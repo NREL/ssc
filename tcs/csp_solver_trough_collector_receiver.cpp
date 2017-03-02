@@ -374,7 +374,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
-	solved_params.m_q_dot_rec_on_min = 0.0;				//[W/m^2] Not sure that this is super important for the trough
 	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
