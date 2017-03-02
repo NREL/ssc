@@ -377,14 +377,13 @@ public:
 		double m_T_htf_cold_des;		//[K]
 		double m_P_cold_des;			//[kPa]
 		double m_x_cold_des;			//[-]
-		double m_q_dot_rec_on_min;		//[MW]
 		double m_q_dot_rec_des;			//[MW]
 		double m_A_aper_total;			//[m^2] Total solar field aperture area
 
 		S_csp_cr_solved_params()
 		{
 			m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-				m_q_dot_rec_on_min = m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
+				m_q_dot_rec_des = m_A_aper_total = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -914,7 +913,6 @@ private:
 	double m_T_htf_cold_des;			//[K]
 	double m_P_cold_des;				//[kPa]
 	double m_x_cold_des;				//[-]
-	double m_q_dot_rec_on_min;			//[MW]
 	double m_q_dot_rec_des;				//[MW]
 	double m_A_aperture;				//[m2]
 

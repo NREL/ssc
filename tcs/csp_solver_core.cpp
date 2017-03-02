@@ -206,7 +206,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-		m_q_dot_rec_on_min = m_q_dot_rec_des = m_A_aperture =
+		m_q_dot_rec_des = m_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
@@ -305,7 +305,6 @@ void C_csp_solver::init()
 	m_T_htf_cold_des = cr_solved_params.m_T_htf_cold_des;		//[K]
 	m_P_cold_des = cr_solved_params.m_P_cold_des;				//[kPa]
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
-	m_q_dot_rec_on_min = cr_solved_params.m_q_dot_rec_on_min;	//[MW]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
 	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
 		// Power cycle
@@ -627,10 +626,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info);
 		double q_dot_cr_startup = est_out.m_q_startup_avail;
 		double q_dot_cr_on = est_out.m_q_dot_avail;
-		if( q_dot_cr_on <= m_q_dot_rec_on_min*1.01 )
-		{
-			q_dot_cr_on = 0.0;
-		}
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
@@ -855,8 +850,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					q_pc_max = fmin(q_pc_max, dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
 					q_pc_max = fmax(q_pc_max, q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
 				}
-				if (m_q_dot_rec_on_min > q_pc_max && q_dot_tes_ch < m_q_dot_rec_on_min - q_pc_max)		// Min receiver thermal power > Max power cycle thermal power and the difference can't be sent to storage
-					is_rec_su_allowed = 0;
 
                 //q_pc_sb = dispatch.outputs.q_pb_standby.at( dispatch.m_current_read_step ) / 1000. ;
 
