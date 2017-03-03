@@ -1055,6 +1055,58 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element->InteractionType = 2;
 			element->OpticName = (rv->rec_name.val).c_str();
 			element->Optics = copt;
+            
+            //----------------------
+            //close the bottom of the receiver with a circle to prevent internal absorption
+		    OpticsList.push_back( new ST_OpticalPropertySet() );
+		    copt = OpticsList.back();
+            //Add optics stage
+			copt->Name = (rv->rec_name.val + " spill").c_str();
+			
+			//set the optical properties. This should be a diffuse surface, make it a pillbox distribution w/ equal angular reflection probability.
+			copt->Front.DistributionType = 'g';
+			copt->Front.OpticSurfNumber = 0;
+			copt->Front.ApertureStopOrGratingType = 0;
+			copt->Front.Reflectivity = 0.;
+			copt->Front.RMSSlopeError = 100.;
+			copt->Front.RMSSpecError = 100.;
+			//back
+			copt->Back.DistributionType = 'g';
+			copt->Back.OpticSurfNumber = 0;
+			copt->Back.ApertureStopOrGratingType = 0;
+			copt->Back.Reflectivity = 0.;
+			copt->Back.RMSSlopeError = 100.;
+			copt->Back.RMSSpecError = 100.;
+            //the circle element
+            r_stage->ElementList.push_back( new ST_Element() );
+            element = r_stage->ElementList.back();
+			element->Enabled = true;
+			pos.x = rv->rec_offset_x.val; 
+			pos.y = rv->rec_offset_y.val;
+			pos.z = rv->optical_height.Val() - rv->rec_height.val/2.;    //optical height includes z offset
+			element->Origin[0] = pos.x;
+			element->Origin[1] = pos.y;
+			element->Origin[2] = pos.z;
+            
+            az = rv->rec_azimuth.val;
+			el = rv->rec_elevation.val;
+            aim.i = sin(el)*cos(az);
+            aim.j = sin(el)*sin(az);
+            aim.k = cos(el);
+
+			element->AimPoint[0] = pos.x + aim.i*1000.;
+			element->AimPoint[1] = pos.y + aim.j*1000.;
+			element->AimPoint[2] = pos.z + aim.k*1000.;
+			
+			element->ZRot = 0.;
+			element->Ap_A = rv->rec_diameter.val;
+			
+			element->ShapeIndex = 'c';		//single axis curvature section
+			element->SurfaceIndex = 'f';
+			element->InteractionType = 2;
+			element->OpticName = (rv->rec_name.val + " spill").c_str();
+			element->Optics = copt;
+
 			break;
 		}
 		case Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN:
