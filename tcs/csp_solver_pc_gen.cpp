@@ -7,7 +7,7 @@
 
 static C_csp_reported_outputs::S_output_info S_output_info[] = 
 {
-	{C_pc_gen::E_ETA_THERMAL},
+	{C_pc_gen::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };

@@ -5,14 +5,14 @@
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_pc_sco2::E_ETA_THERMAL, true},
-	{C_pc_sco2::E_Q_DOT_HTF, true},
-	{C_pc_sco2::E_M_DOT_HTF, true},
-	{C_pc_sco2::E_Q_DOT_STARTUP, true},
-	{C_pc_sco2::E_W_DOT, true},
-	{C_pc_sco2::E_T_HTF_IN, true},
-	{C_pc_sco2::E_T_HTF_OUT, true},
-	{C_pc_sco2::E_M_DOT_WATER, true},
+	{C_pc_sco2::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_Q_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_W_DOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_sco2::E_M_DOT_WATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };

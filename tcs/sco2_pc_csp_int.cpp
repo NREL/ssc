@@ -2167,7 +2167,7 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	sco2_od_par.m_m_dot_htf = mpc_sco2_rc->get_phx_des_par()->m_m_dot_hot_des*inputs.m_m_dot_htf_ND;	//[kg/s] scale from [-]
 	sco2_od_par.m_T_amb = inputs.m_T_amb + 273.15;			//[K] convert from C
 
-	int od_strategy = C_sco2_recomp_csp::E_MAX_POWER_FIX_PHI;
+	int od_strategy = C_sco2_recomp_csp::E_TARGET_POWER_ETA_MAX;
 
 	int off_design_code = -1;	//[-]
 
