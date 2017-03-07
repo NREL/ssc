@@ -81,6 +81,8 @@ void C_pc_sco2::init(C_csp_power_cycle::S_solved_params &solved_params)
 	solved_params.m_sb_frac = ms_params.m_q_sby_frac;						//[-]
 	solved_params.m_T_htf_hot_ref = ms_params.ms_mc_sco2_recomp_params.m_T_htf_hot_in - 273.15;	//[C]
 	solved_params.m_m_dot_design = mc_sco2_recomp.get_phx_des_par()->m_m_dot_hot_des*3600.0;	//[kg/hr]
+	solved_params.m_m_dot_min = solved_params.m_m_dot_design*solved_params.m_cutoff_frac;	//[kg/hr]
+	solved_params.m_m_dot_max = solved_params.m_m_dot_design*solved_params.m_max_frac;		//[kg/hr]
 	m_m_dot_htf_des = solved_params.m_m_dot_design;		//[kg/hr]
 
 	// Calculate the standby thermal power requirement
