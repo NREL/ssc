@@ -209,7 +209,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_q_dot_rec_des = m_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
-		m_cycle_P_hot_des = m_cycle_x_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
+		m_cycle_P_hot_des = m_cycle_x_hot_des = 
+		m_m_dot_pc_des = m_m_dot_pc_min = m_m_dot_pc_max = std::numeric_limits<double>::quiet_NaN();
 
 	// Reporting and Output Tracking
 	mc_reported_outputs.construct(S_solver_output_info);
@@ -318,6 +319,8 @@ void C_csp_solver::init()
 	m_cycle_sb_frac_des = pc_solved_params.m_sb_frac;					//[-]
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
+	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;						//[kg/hr]
+	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;						//[kg/hr]
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
 		// TES
@@ -626,6 +629,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info);
 		double q_dot_cr_startup = est_out.m_q_startup_avail;
 		double q_dot_cr_on = est_out.m_q_dot_avail;
+		double m_dot_cr_on = est_out.m_m_dot_avail;		//[kg/hr]
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
