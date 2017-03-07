@@ -26,6 +26,7 @@
     <ClCompile Include="..\tcs\csp_solver_core.cpp" />
     <ClCompile Include="..\tcs\csp_solver_gen_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_lf_dsg_collector_receiver.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_mono_eq_methods.cpp" />
     <ClCompile Include="..\tcs\csp_solver_mspt_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_mspt_receiver_222.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pc_gen.cpp" />
