@@ -305,6 +305,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	ms_params.m_P_ref *= 1000.0;		//[kW] convert from MW
 	m_q_dot_design = ms_params.m_P_ref / 1000.0 / ms_params.m_eta_ref;	//[MWt]
 	m_m_dot_design = m_q_dot_design*1000.0 / (m_cp_htf_design*((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref)))*3600.0;		//[kg/hr]
+	m_m_dot_min = ms_params.m_cycle_cutoff_frac*m_m_dot_design;		//[kg/hr]
+	m_m_dot_max = ms_params.m_cycle_max_frac*m_m_dot_design;		//[kg/hr]
 
 	// 8.30.2010 :: Calculate the startup energy needed
 	m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
@@ -330,6 +332,8 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
 	// double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((ms_params.m_T_htf_hot_ref + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
 	// m_m_dot_design = solved_params.m_q_dot_des*1000.0/(c_htf*((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref)))*3600.0;	//[kg/hr]
 	solved_params.m_m_dot_design = m_m_dot_design;		//[kg/hr]
+	solved_params.m_m_dot_min = m_m_dot_min;			//[kg/hr]
+	solved_params.m_m_dot_max = m_m_dot_max;			//[kg/hr]
 }
 
 double C_pc_Rankine_indirect_224::get_cold_startup_time()

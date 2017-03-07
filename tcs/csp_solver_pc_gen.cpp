@@ -113,7 +113,8 @@ void C_pc_gen::init(C_csp_power_cycle::S_solved_params &solved_params)
 	solved_params.m_sb_frac = 0.0;						//[-]
 	solved_params.m_T_htf_hot_ref = m_T_htf_hot_fixed-273.15;	//[C]
 	solved_params.m_m_dot_design = m_q_des*1.E3/(m_cp_htf_fixed*(m_T_htf_hot_fixed - m_T_htf_cold_fixed))*3600.0;	//[kg/hr]
-
+	solved_params.m_m_dot_min = solved_params.m_m_dot_design*solved_params.m_cutoff_frac;	//[kg/hr]
+	solved_params.m_m_dot_max = solved_params.m_m_dot_design*solved_params.m_max_frac;		//[kg/hr]
 }
 
 int C_pc_gen::get_operating_state()

@@ -21,6 +21,8 @@ private:
 	double m_eta_adj;
 
 	double m_m_dot_design;				//[kg/hr]
+	double m_m_dot_max;					//[kg/hr]
+	double m_m_dot_min;					//[kg/hr]
 	double m_q_dot_design;				//[MWt]
 	double m_cp_htf_design;				//[kJ/kg-K]
 

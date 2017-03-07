@@ -471,6 +471,7 @@ public:
 	{
 		double m_q_startup_avail;	//[MWt] Estimate startup thermal power. Only > 0 if solar avail AND cr is OFF or Starting Up
 		double m_q_dot_avail;		//[MWt] Estimated output if cr is ON and producing useful thermal power
+		double m_m_dot_avail;		//[kg/hr] Estimated output mass flow rate if cr is ON and producing useful thermal power
 
 		S_csp_cr_est_out()
 		{
@@ -543,6 +544,8 @@ public:
 		double m_sb_frac;			//[-]
 		double m_T_htf_hot_ref;		//[C]
 		double m_m_dot_design;		//[kg/hr]
+		double m_m_dot_max;			//[kg/hr]
+		double m_m_dot_min;			//[kg/hr]
 
 		// The following may not be set for sensible HTF systems
 		double m_P_hot_des;			//[kPa]
@@ -551,7 +554,8 @@ public:
 		S_solved_params()
 		{
 			m_W_dot_des = m_eta_des = m_q_dot_des = m_q_startup = m_max_frac = m_cutoff_frac = 
-				m_sb_frac = m_T_htf_hot_ref = m_m_dot_design = std::numeric_limits<double>::quiet_NaN();
+				m_sb_frac = m_T_htf_hot_ref = 
+				m_m_dot_design = m_m_dot_max = m_m_dot_min = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -927,6 +931,8 @@ private:
 	double m_cycle_P_hot_des;			//[kPa]
 	double m_cycle_x_hot_des;			//[-]
 	double m_m_dot_pc_des;				//[kg/hr]
+	double m_m_dot_pc_min;				//[kg/hr]
+	double m_m_dot_pc_max;				//[kg/hr]
 
 		// Storage logic
 	bool m_is_tes;			//[-] True: plant has storage

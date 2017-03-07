@@ -263,7 +263,6 @@ void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outpu
 	inputs.m_field_control = 1.0;
 
 	C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
-	//C_csp_collector_receiver::S_csp_cr_out_report cr_out_report;
 
 	call(weather, htf_state_in, inputs, cr_out_solver, sim_info);
 
@@ -272,12 +271,14 @@ void C_csp_mspt_collector_receiver::estimates(const C_csp_weatherreader::S_outpu
 	if( mode == C_csp_collector_receiver::ON )
 	{
 		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;
+		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;
 		est_out.m_q_startup_avail = 0.0;
 	}
 	else
 	{
 		est_out.m_q_startup_avail = cr_out_solver.m_q_thermal;
 		est_out.m_q_dot_avail = 0.0;
+		est_out.m_m_dot_avail = 0.0;
 	}
 }
 
