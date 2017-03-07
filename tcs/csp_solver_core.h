@@ -7,6 +7,8 @@
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
+#include "numeric_solvers.h"
+
 class C_csp_solver_steam_state
 {
 public:
@@ -1087,6 +1089,23 @@ public:
 	// Output vectors
 	// Need to be sure these are always up-to-date as multiple operating modes are tested during one timestep
 	std::vector< std::vector< double > > mvv_outputs_temp;
+
+	// *****************************
+	// *****************************
+	// Solvers
+	class C_mono_eq_T_cr_in_from_pc : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+
+	public:
+		C_mono_eq_T_cr_in_from_pc(C_csp_solver *pc_csp_solver)
+		{
+			mpc_csp_solver = pc_csp_solver;
+		}
+
+		virtual int operator()(double T_cr_in /*K*/, double *diff_T_cr_in /*-*/);
+	};
 
 };
 
