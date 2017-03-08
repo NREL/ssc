@@ -9467,258 +9467,36 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 	// Ouputs:
 	// int exit_mode: E_solver_outcomes 
 	
-	// Solution procedure
-	// 1) Guess the receiver inlet temperature
-	// Use design temperature for now, but this is an area where "smart" guesses could be applied
-	double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-	double T_rec_in_guess = T_rec_in_guess_ini;
-	// Set lower and upper bounds, or find through iteration?
-	// Lower bound could be freeze protection temperature...
-	double T_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
-	double T_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
-	double y_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
-	double y_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
-	// Booleans for bounds and convergence error
-	bool is_upper_bound = false;
-	bool is_lower_bound = false;
-	bool is_upper_error = false;
-	bool is_lower_error = false;
+	C_mono_eq_cr_to_pc_to_cr c_eq(this, m_P_cold_des, -1, field_control_in);
+	C_monotonic_eq_solver c_solver(c_eq);
 
-	// Assume for now that we don't need to iterate between power cycle and solar field pressures and qualities
-	double P_field_out = m_P_cold_des;		//[kPa]
-	double x_field_in = -1;					//[-]
+	c_solver.settings(tol, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-	double diff_T_in = 999.9*tol;		// (Calc - Guess)/Guess: (+) Guess was too low, (-) Guess was too high
+	double T_htf_cold_guess_colder = m_T_htf_cold_des - 273.15;			//[C], convert from [K]
+	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]
 
-	int iter_T_in = 0;
+	double T_htf_cold_solved, tol_solved;
+	T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
 
-	// Start iteration loop
-	while( fabs(diff_T_in) > tol || diff_T_in != diff_T_in )
+	int solver_code = 0;
+	try
 	{
-		iter_T_in++;			// First iteration = 1
+		solver_code = c_solver.solve(T_htf_cold_guess_colder, T_htf_cold_guess_warmer, 0.0, T_htf_cold_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception("solver_cr_to_pc_to_cr received exception from mono equation solver"));
+	}
 
-		// Check if distance between bounds is "too small"
-		double diff_T_bounds = T_rec_in_upper - T_rec_in_lower;
-		if( diff_T_bounds / T_rec_in_upper < tol / 2.0 )
-		{
-			if( diff_T_in != diff_T_in )
-			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
-				
-				exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-				exit_tolerance = diff_T_in;
-				return;
-			}
-			else
-			{	// Models are producing power, but convergence errors are not within Tolerance
-
-				exit_mode = POOR_CONVERGENCE;
-				exit_tolerance = diff_T_in;
-				return;
-			}
-		}
-
-
-		// Subsequent iterations need to re-calculate T_in
-		if( iter_T_in > 1 )
-		{
-			if( diff_T_in != diff_T_in )
-			{	// Models did not solve such that a convergence error could be generated
-				// However, we know that upper and lower bounds are set, so we can calculate a new guess via bisection method
-				// but check that bounds exist, to be careful
-				if( !is_lower_bound || !is_upper_bound )
-				{
-					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					exit_tolerance = diff_T_in;
-					return;
-				}
-				T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
-			}
-			else if( diff_T_in > 0.0 )		// Guess receiver inlet temperature was too low
-			{
-				is_lower_bound = true;
-				is_lower_error = true;
-				T_rec_in_lower = T_rec_in_guess;		// Set lower bound
-				y_rec_in_lower = diff_T_in;				// Set lower convergence error
-
-				if( is_upper_bound && is_upper_error )		// False-position method
-				{
-					T_rec_in_guess = y_rec_in_upper / (y_rec_in_upper - y_rec_in_lower)*(T_rec_in_lower - T_rec_in_upper) + T_rec_in_upper;	//[C]
-				}
-				else if( is_upper_bound )						// Bisection method
-				{
-					T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
-				}
-				else				// Constant adjustment
-				{
-					T_rec_in_guess += 2.5;			//[C]
-				}
-			}
-			else							// Guess receiver inlet temperature was too high
-			{
-				is_upper_bound = true;
-				is_upper_error = true;
-				T_rec_in_upper = T_rec_in_guess;		// Set upper bound
-				y_rec_in_upper = diff_T_in;				// Set upper convergence error
-
-				if( is_lower_bound && is_lower_error )		// False-position method
-				{
-					T_rec_in_guess = y_rec_in_upper / (y_rec_in_upper - y_rec_in_lower)*(T_rec_in_lower - T_rec_in_upper) + T_rec_in_upper;	//[C]
-				}
-				else if( is_lower_bound )
-				{
-					T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
-				}
-				else
-				{
-					T_rec_in_guess -= 2.5;			//[C] 
-				}
-			}
-		}
-
-		// 2) Solve the receiver model
-
-		// CR: ON
-		mc_cr_htf_state_in.m_temp = T_rec_in_guess;			//[C], convert from [K]
-		mc_cr_htf_state_in.m_pres = P_field_out;			//[kPa]
-		mc_cr_htf_state_in.m_qual = x_field_in;				//[-]
-
-		mc_collector_receiver.on(mc_weather.ms_outputs,
-			mc_cr_htf_state_in,
-			field_control_in,
-			mc_cr_out_solver,
-			mc_kernel.mc_sim_info);
-
-		// Check if receiver is OFF or model didn't solve
-		if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
-		{
-			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
-			if( iter_T_in == 1 )
-			{	
-				exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-				exit_tolerance = diff_T_in;
-				return;
-			}
-			else
-			{	// Set this T_rec_in_guess as either upper or lower bound, depending on which end of DESIGN temp it falls
-				// Assumption here is that receiver solved at first guess temperature
-				// and that the failure wouldn't occur between established bounds
-				if( T_rec_in_guess < T_rec_in_guess_ini )
-				{
-					if( is_lower_bound || !is_upper_bound )
-					{
-						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-						exit_tolerance = diff_T_in;
-						return;
-					}
-					T_rec_in_lower = T_rec_in_guess;
-					is_lower_bound = true;
-					is_lower_error = false;
-					// At this point, both and upper and lower bound should exist, so can generate new guess
-					// And communicate this to Guess-Generator by setting diff_T_in to NaN
-					diff_T_in = std::numeric_limits<double>::quiet_NaN();
-					continue;
-				}
-				else
-				{
-					if( is_upper_bound || !is_lower_bound )
-					{
-						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-						exit_tolerance = diff_T_in;
-						return;
-					}
-					T_rec_in_upper = T_rec_in_guess;
-					is_upper_bound = true;
-					is_upper_error = false;
-					// At this point, both and upper and lower bound should exist, so can generate new guess
-					// And communicate this to Guess-Generator by setting diff_T_in to NaN
-					diff_T_in = std::numeric_limits<double>::quiet_NaN();
-					continue;
-				}
-			}
-		}	// End Collector/Receiver OFF decisions
-
-		// 3) Solve the power cycle model using receiver outputs
-		// Power Cycle: ON
-			// Inlet State
-		mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
-		mc_pc_htf_state_in.m_pres = mc_cr_out_solver.m_P_htf_hot;		//[kPa]
-		mc_pc_htf_state_in.m_qual = mc_cr_out_solver.m_xb_htf_hot;		//[-]
-
-		// For now, check the CR return pressure against the assumed constant system interface pressure
-		if( fabs((mc_cr_out_solver.m_P_htf_hot - P_field_out)/P_field_out) > 0.001 && !mc_collector_receiver.m_is_sensible_htf )
-		{
-			std::string msg = util::format("C_csp_solver::solver_cr_to_pc_to_cr(...) The pressure returned from the CR model, %lg [bar],"
-												" is different than the assumed constant pressure, %lg [bar]",
-												mc_cr_out_solver.m_P_htf_hot/100.0, P_field_out/100.0);
-			mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
-		}
-
-			// Inputs
-		mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr] no mass flow rate to power cycle		
-		mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
-		// Performance Call
-		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state_in,
-			mc_pc_inputs,
-			mc_pc_out_solver,
-			mc_kernel.mc_sim_info);
-
-		// Check that power cycle is producing power or model didn't solve
-		if( !mc_pc_out_solver.m_was_method_successful )
-		{
-			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
-			// Go to Receiver OFF power cycle OFF
-			if( iter_T_in == 1 )
-			{
-				exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-				exit_tolerance = diff_T_in;
-				return;
-			}
-			else
-			{	// Set this T_rec_in_guess as either upper or lower bound, depending on which end of DESIGN temp it falls
-				// Assumption here is that receiver solved at first guess temperature
-				// and that the failure wouldn't occur between established bounds
-				if( T_rec_in_guess < T_rec_in_guess_ini )
-				{
-					if( is_lower_bound || !is_upper_bound )
-					{
-						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-						exit_tolerance = diff_T_in;
-						return;
-					}
-					T_rec_in_lower = T_rec_in_guess;
-					is_lower_bound = true;
-					is_lower_error = false;
-					// At this point, both and upper and lower bound should exist, so can generate new guess
-					// And communicate this to Guess-Generator by setting diff_T_in to NaN
-					diff_T_in = std::numeric_limits<double>::quiet_NaN();
-				}
-				else
-				{
-					if( is_upper_bound || !is_lower_bound )
-					{
-						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-						exit_tolerance = diff_T_in;
-						return;
-					}
-					T_rec_in_upper = T_rec_in_guess;
-					is_upper_bound = true;
-					is_upper_error = false;
-					// At this point, both and upper and lower bound should exist, so can generate new guess
-					// And communicate this to Guess-Generator by setting diff_T_in to NaN
-					diff_T_in = std::numeric_limits<double>::quiet_NaN();
-				}
-			}
-		}	// end Power Cycle OFF decisions
-		else
-		{
-			diff_T_in = (mc_pc_out_solver.m_T_htf_cold - T_rec_in_guess) / T_rec_in_guess;
-		}
-
-	}	// end iteration on T_rec_in
+	if (solver_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		exit_mode = C_csp_solver::CSP_NO_SOLUTION;
+		return;
+	}
 
 	exit_mode = C_csp_solver::CSP_CONVERGED;
-	exit_tolerance = diff_T_in;
+	exit_tolerance = tol_solved;
 
 	return;
 }

@@ -1128,6 +1128,27 @@ public:
 		virtual int operator()(double defocus /*-*/, double *y_constrain);
 	};
 
+	class C_mono_eq_cr_to_pc_to_cr : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_P_field_in;			//[kPa]
+		double m_x_field_in;			//[-]
+		double m_field_control_in;		//[-]
+
+	public:
+		C_mono_eq_cr_to_pc_to_cr(C_csp_solver *pc_csp_solver, 
+			double P_field_in /*kPa*/, double x_field_in /*-*/, double field_control_in /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_P_field_in = P_field_in;
+			m_x_field_in = x_field_in;
+			m_field_control_in = field_control_in;
+		}
+		
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
+
 };
 
 
