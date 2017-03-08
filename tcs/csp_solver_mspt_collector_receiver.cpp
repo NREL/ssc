@@ -146,7 +146,7 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
 	
-	cr_out_solver.m_component_defocus = 
+	cr_out_solver.m_component_defocus = mc_mspt_receiver_222.ms_outputs.m_component_defocus;	//[-]
 	
 	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
