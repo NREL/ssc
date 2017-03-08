@@ -1872,6 +1872,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		// 7.12.16: Return timestep-end or timestep-integrated-average?
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
+	cr_out_solver.m_component_defocus = 1.0;
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
@@ -2040,6 +2041,8 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// 7.12.16: Return timestep-end or timestep-integrated-average?
 		// If multiple recirculation steps, then need to calculate average of timestep-integrated-average
 	cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int_fullts - 273.15;		//[C]
+
+	cr_out_solver.m_component_defocus = 1.0;	//[-]
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
@@ -2295,8 +2298,10 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot / 3600.0)*c_htf_ave*(m_T_sys_h_t_int - T_cold_in) / 1.E3;	//[MWt]
 		// Finally, the controller need the HTF outlet temperature from the field
 		cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int - 273.15;		//[C]
-			// ***********************************************************
-			// ***********************************************************
+			
+		cr_out_solver.m_component_defocus = m_component_defocus;	//[-]
+		// ***********************************************************
+		// ***********************************************************
 
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
@@ -2322,6 +2327,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
 		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
+		cr_out_solver.m_component_defocus = 1.0;	//[-]
 		cr_out_solver.m_E_fp_total = 0.0;
 		cr_out_solver.m_W_dot_col_tracking = 0.0;
 		cr_out_solver.m_W_dot_htf_pump = 0.0;

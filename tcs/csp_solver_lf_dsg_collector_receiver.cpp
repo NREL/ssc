@@ -1300,6 +1300,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	cr_out_solver.m_m_dot_salt_tot = m_dot_loop*3600.0*(double)m_nLoops;	//[kg/hr] SYSTEM mass flow rate
 	cr_out_solver.m_q_thermal = 0.0;								//[MWt] No available receiver thermal output
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;	//[C] Average timestep field outlet temperature
+	cr_out_solver.m_component_defocus = 1.0;		//[-]
 
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
 	cr_out_solver.m_W_dot_col_tracking = m_W_dot_sca_tracking;	//[MWe]
@@ -1498,6 +1499,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		// No thermal output if receiver is in startup
 	cr_out_solver.m_q_thermal = 0.0;
 	cr_out_solver.m_T_salt_hot = T_sys_hot_out_t_int_ts_ave - 273.15;		//[C]
+	cr_out_solver.m_component_defocus = 1.0;
 
 		// Shouldn't need freeze protection if in startup, but may want a check on this
 	cr_out_solver.m_E_fp_total = m_q_dot_freeze_protection;		//[MWt]
@@ -1819,6 +1821,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_q_thermal = m_dot_loop*(double)m_nLoops*(mc_sys_hot_out_t_int.m_enth - mc_sys_cold_in_t_int.m_enth) / 1.E3;	//[MWt]
 			// Outlet temperature (set quality below)
 		cr_out_solver.m_T_salt_hot = mc_sys_hot_out_t_int.m_temp - 273.15;
+		cr_out_solver.m_component_defocus = m_component_defocus;
 
 		// For now, set parasitic outputs to 0
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
@@ -1850,7 +1853,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		cr_out_solver.m_m_dot_salt_tot = 0.0;		//[kg/hr]
 		cr_out_solver.m_q_thermal = 0.0;			//[MWt]
 		cr_out_solver.m_T_salt_hot = 0.0;			//[C]
-		
+		cr_out_solver.m_component_defocus = 1.0;	//[-]
+
 		cr_out_solver.m_E_fp_total = 0.0;			//[MW]
 		cr_out_solver.m_W_dot_col_tracking = 0.0;	//[MWe]
 		cr_out_solver.m_W_dot_htf_pump = 0.0;		//[MWe]
