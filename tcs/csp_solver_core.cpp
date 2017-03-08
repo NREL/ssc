@@ -1514,7 +1514,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int cr_pc_exit_mode = -1;
 
 				// Will be reset in while() loop under other outcomes
-				int defocus_exit_mode = CONVERGED;		// Need this because have to use 'break' to exit the while() iteration loop
+				int defocus_exit_mode = C_csp_solver::CSP_CONVERGED;		// Need this because have to use 'break' to exit the while() iteration loop
 
 				int iter_defocus = 0;
 
@@ -1531,7 +1531,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						{	// CR-PC aren't converging, so need to shut them down
 
 							diff_q_dot = std::numeric_limits<double>::quiet_NaN();
-							defocus_exit_mode = NO_SOLUTION;
+							defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							break;		// Get out of while()					
 						}
 						else
@@ -1553,7 +1553,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 
 								diff_q_dot = std::numeric_limits<double>::quiet_NaN();
-								defocus_exit_mode = NO_SOLUTION;
+								defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;		// Get out of while()	
 							}
 							defocus_guess = 0.5*(defocus_lower + defocus_upper);
@@ -1606,7 +1606,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					solver_cr_to_pc_to_cr(defocus_guess, tol_cr_pc, cr_pc_exit_mode, cr_pc_exit_tol);
 
 					// Process results from CR-PC iteration:
-					if( cr_pc_exit_mode == NO_SOLUTION )
+					if( cr_pc_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 					{	// CR and PC did not produce power or did not solve
 
 						if( iter_defocus == 1 )
@@ -1620,12 +1620,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						else
 						{	// CR_PC has solved successfully at least once
 							// And assume upper bound always solves
-							// So assume that NO_SOLUTION corresponds to lower bound
+							// So assume that C_csp_solver::CSP_NO_SOLUTION corresponds to lower bound
 							// So if a lower bound is already known, then nowhere to go
 							if (is_lower_bound && is_lower_error)	
 							{
 								diff_q_dot = std::numeric_limits<double>::quiet_NaN();
-								defocus_exit_mode = NO_SOLUTION;
+								defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;		// Get out of while()	
 							}
 							else
@@ -1659,7 +1659,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						cr_pc_exit_mode = NO_SOLUTION;
+						cr_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -1670,7 +1670,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 						// update 'exit_mode' for following logic branches
-						cr_pc_exit_mode = CONVERGED;
+						cr_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 				if( defocus_exit_mode == POOR_CONVERGENCE )
@@ -1679,7 +1679,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Defocus did not converge within Relaxed Tolerance, shut off CR & PC
 
 						// update defocus Exit Mode
-						defocus_exit_mode = NO_SOLUTION;
+						defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -1690,11 +1690,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 						// update Exit Mode
-						defocus_exit_mode = CONVERGED;
+						defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( defocus_exit_mode == NO_SOLUTION || cr_pc_exit_mode == NO_SOLUTION )
+				if( defocus_exit_mode == C_csp_solver::CSP_NO_SOLUTION || cr_pc_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 				{
 					error_msg = util::format("At time = %lg the controller chose Defocus operating mode, but the solver failed to reach convergence "
 						"Controller will shut-down CR and PC",
@@ -1709,7 +1709,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					break;
 				}
-				else if( defocus_exit_mode == CONVERGED && cr_pc_exit_mode == CONVERGED )
+				else if( defocus_exit_mode == C_csp_solver::CSP_CONVERGED && cr_pc_exit_mode == C_csp_solver::CSP_CONVERGED )
 				{
 					// If defocus solution has converged, then q_pc = q_pc_max, and shouldn't need to double-check anything...
 
@@ -1775,7 +1775,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC						
 
 						// update 'exit_mode'
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -1786,11 +1786,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 						// update 'exit_mode' for following logic branches
-						exit_mode = CONVERGED;
+						exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( exit_mode == NO_SOLUTION )
+				if( exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 				{	// Either CR & PC did not solve/produce power, or did not solve within Relaxed Tolerance: shut off CR and PC
 
 					if( operating_mode == CR_ON__PC_RM_LO__TES_OFF__AUX_OFF )
@@ -1814,7 +1814,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					break;		// exits switch(operating mode)
 				}
 
-				else if( exit_mode == CONVERGED )
+				else if( exit_mode == C_csp_solver::CSP_CONVERGED )
 				{
 					// If the CR and PC models converged, check whether the power cycle thermal input is within bounds
 
@@ -2182,7 +2182,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double step_tol = step_tolerance;		//[s]
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
-				int exit_mode = CONVERGED;
+				int exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				solver_pc_su_controlled__tes_dc(step_tol, 
@@ -2190,7 +2190,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					exit_mode, T_pc_in_exit_tolerance);
 
 				// Check exit mode
-				if(exit_mode != CONVERGED)
+				if(exit_mode != C_csp_solver::CSP_CONVERGED)
 				{
 					are_models_converged = false;
 					m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail = false;
@@ -2267,7 +2267,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				int iter_T_rec_in = 0;
 
-				int exit_mode = CONVERGED;
+				int exit_mode = C_csp_solver::CSP_CONVERGED;
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration loop
@@ -2284,7 +2284,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( diff_T_rec_in != diff_T_rec_in )
 						{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 				
-							exit_mode = NO_SOLUTION;
+							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							exit_tolerance = diff_T_rec_in;
 							return;
 						}
@@ -2308,7 +2308,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// but check that bounds exist, to be careful
 							if( !is_lower_bound || !is_upper_bound )
 							{
-								exit_mode = NO_SOLUTION;
+								exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								exit_tolerance = diff_T_rec_in;
 								return;
 							}
@@ -2375,7 +2375,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 						if( iter_T_rec_in == 1 )
 						{	
-							exit_mode = NO_SOLUTION;
+							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							exit_tolerance = diff_T_rec_in;
 							break;
 						}
@@ -2387,7 +2387,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 								if( is_lower_bound || !is_upper_bound )
 								{
-									exit_mode = NO_SOLUTION;
+									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									exit_tolerance = diff_T_rec_in;
 									break;
 								}
@@ -2403,7 +2403,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 								if( is_upper_bound || !is_lower_bound )
 								{
-									exit_mode = NO_SOLUTION;
+									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									exit_tolerance = diff_T_rec_in;
 									break;
 								}
@@ -2463,7 +2463,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -2474,11 +2474,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 						// update 'exit_mode' for following logic branches
-						exit_mode = CONVERGED;
+						exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 			
-				if( exit_mode == NO_SOLUTION )
+				if( exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 				{	// This mode did not solve, and did not provide enough information to try other operating mode. Shut plant off
 		
 					m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = false;
@@ -2487,7 +2487,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					break;								
 				}
 			
-				if( exit_mode != CONVERGED )
+				if( exit_mode != C_csp_solver::CSP_CONVERGED )
 				{	// All other options should be exhausted, so if not CONVERGED, something is wrong. Shut down plant
 
 					m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = false;
@@ -2567,7 +2567,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -2584,7 +2584,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -2595,7 +2595,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 				}
 				
-				if(q_pc_exit_mode == UNDER_TARGET_PC || q_pc_exit_mode == NO_SOLUTION || T_rec_in_exit_mode == NO_SOLUTION )
+				if(q_pc_exit_mode == UNDER_TARGET_PC || q_pc_exit_mode == C_csp_solver::CSP_NO_SOLUTION || T_rec_in_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 				{
 					m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE = false;
 					are_models_converged = false;
@@ -2660,7 +2660,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -2669,7 +2669,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 						
-						q_pc_exit_mode = CONVERGED;
+						q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}					
 				}
 
@@ -2679,7 +2679,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -2688,7 +2688,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_rec_in_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -2699,10 +2699,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0);
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-					q_pc_exit_mode = CONVERGED;
+					q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 				}
 
-				if( q_pc_exit_mode != CONVERGED || T_rec_in_exit_mode != CONVERGED )
+				if( q_pc_exit_mode != C_csp_solver::CSP_CONVERGED || T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -2756,7 +2756,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				int iter_T_rec_in = 0;
 
-				int exit_mode = CONVERGED;
+				int exit_mode = C_csp_solver::CSP_CONVERGED;
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration loop
@@ -2771,7 +2771,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( diff_T_rec_in != diff_T_rec_in )
 						{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-							exit_mode = NO_SOLUTION;
+							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;
 						}
@@ -2793,7 +2793,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// But, check that bounds exist
 							if( !is_lower_bound || !is_upper_bound )
 							{
-								exit_mode = NO_SOLUTION;
+								exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;
 							}
@@ -2857,7 +2857,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 						if( iter_T_rec_in == 1 )
 						{
-							exit_mode = NO_SOLUTION;
+							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;	// exit while() on diff_T_rec_in
 						}
@@ -2871,7 +2871,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// If lower bound is already set OR upper bound is not set, can't generate a new guess value
 								if( is_lower_bound || !is_upper_bound )
 								{
-									exit_mode = NO_SOLUTION;
+									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;	// exit while() on diff_T_rec_in
 								}
@@ -2891,7 +2891,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// If upper bound is already set OR lower bound is not set, can't generate a new guess value
 								if( is_upper_bound || !is_lower_bound )
 								{
-									exit_mode = NO_SOLUTION;
+									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;	// exit while() on diff_T_rec_in
 								}
@@ -2952,7 +2952,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Go to Receiver OFF power cycle OFF
 						if( iter_T_rec_in == 1 )
 						{
-							exit_mode = NO_SOLUTION;
+							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;
 						}
@@ -2966,7 +2966,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 								if( is_lower_bound || !is_upper_bound )
 								{
-									exit_mode = NO_SOLUTION;
+									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;
 								}
@@ -2981,7 +2981,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 								if( is_upper_bound || !is_lower_bound )
 								{
-									exit_mode = NO_SOLUTION;
+									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;
 								}
@@ -3006,7 +3006,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// *********************************
 				if(mc_pc_out_solver.m_q_dot_htf < q_pc_min)
 				{
-					exit_mode = NO_SOLUTION;
+					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				}
 
 				if(mc_pc_out_solver.m_q_dot_htf > q_pc_target)
@@ -3024,7 +3024,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance
 					
 						// update 'exit_mode'
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -3033,11 +3033,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						exit_mode = CONVERGED;
+						exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 				
-				if(exit_mode != CONVERGED)
+				if(exit_mode != C_csp_solver::CSP_CONVERGED)
 				{
 					m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -3132,13 +3132,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Defocus: 1 = full power, 0 = no power
 				double diff_m_dot = 999.9*tol;			// (m_dot_rec - m_dot_tes)/m_dot_tes: (+) q_dot too large, decrease defocus, (-) q_dot too small, increase defocus fraction
 
-				int defocus_exit_mode = CONVERGED;
+				int defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				int iter_defocus = 0;
 
 				// Exit information for outer loop on T_rec_in (needs to be accessible in this scope)
-				int T_rec_in_exit_mode = CONVERGED;
+				int T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Iterate on defocus to fully charge storage
@@ -3154,7 +3154,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						{	// CR-PC aren't converging, so need to shut them down
 
 							defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							defocus_exit_mode = NO_SOLUTION;
+							defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							break;		// Get out of while()					
 						}
 						else
@@ -3177,7 +3177,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 
 								defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-								defocus_exit_mode = NO_SOLUTION;
+								defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;		// Get out of while()	
 							}
 							defocus_guess = 0.5*(defocus_lower + defocus_upper);
@@ -3251,7 +3251,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					int iter_T_rec_in = 0;
 
 					// Exit information for outer loop on T_rec_in
-					T_rec_in_exit_mode = CONVERGED;
+					T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_rec_in
@@ -3266,7 +3266,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( diff_T_rec_in != diff_T_rec_in )
 							{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-								T_rec_in_exit_mode = NO_SOLUTION;
+								T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;	// exit while() on diff_T_rec_in and enter while() on defocus
 							}
@@ -3287,7 +3287,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// But, check that bounds exist
 								if( !is_T_rec_lower_bound || !is_T_rec_upper_bound )
 								{
-									T_rec_in_exit_mode = NO_SOLUTION;
+									T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;	// exit while() on diff_T_rec_in and enter while() on defocus
 								}
@@ -3429,7 +3429,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}	// end while() on T_rec_in
 
 					// Check receiver exit codes...
-					if( T_rec_in_exit_mode == NO_SOLUTION )
+					if( T_rec_in_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 					{
 						break;
 					}
@@ -3458,7 +3458,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -3468,7 +3468,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -3477,7 +3477,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
-						defocus_exit_mode = NO_SOLUTION;
+						defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -3487,11 +3487,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						defocus_exit_mode = CONVERGED;
+						defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}				
 				}
 
-				if( defocus_exit_mode != CONVERGED || T_rec_in_exit_mode != CONVERGED )
+				if( defocus_exit_mode != C_csp_solver::CSP_CONVERGED || T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					are_models_converged = false;
 
@@ -3633,7 +3633,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				double m_dot_dc_guess = m_dot_htf_max*(q_pc_sb/q_dot_dc_max);	//[kg/s]
 
-				int q_dot_exit_mode = CONVERGED;
+				int q_dot_exit_mode = C_csp_solver::CSP_CONVERGED;
 				int iter_q_dot = 0;
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
@@ -3650,7 +3650,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						{	// Unable to solve TES model...
 
 							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							q_dot_exit_mode = NO_SOLUTION;
+							q_dot_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							break;		// get out of while()
 						}
 						else
@@ -3672,7 +3672,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( !is_lower_bound || !is_upper_bound )
 							{
 								exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-								q_dot_exit_mode = NO_SOLUTION;
+								q_dot_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;	// get out of while()
 							}
 							m_dot_dc_guess = 0.5*(m_dot_lower + m_dot_upper);
@@ -3728,7 +3728,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						// No explanation why TES failed, so get out of while() loop
 						exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-						q_dot_exit_mode = NO_SOLUTION;
+						q_dot_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						break;	// get out of while()
 					}
 					
@@ -3755,7 +3755,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance
 
 						// update 'exit_mode'
-						q_dot_exit_mode = NO_SOLUTION;
+						q_dot_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -3775,11 +3775,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						q_dot_exit_mode = CONVERGED;
+						q_dot_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( q_dot_exit_mode != CONVERGED )
+				if( q_dot_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					if( operating_mode == CR_OFF__PC_SB__TES_DC__AUX_OFF )
 					{
@@ -3858,7 +3858,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 						
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -3867,7 +3867,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						q_pc_exit_mode = CONVERGED;
+						q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 				
@@ -3876,7 +3876,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
-						T_tes_in_exit_mode = NO_SOLUTION;
+						T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -3885,11 +3885,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_tes_in_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_tes_in_exit_mode = CONVERGED;
+						T_tes_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( T_tes_in_exit_mode != CONVERGED || q_pc_exit_mode != CONVERGED )
+				if( T_tes_in_exit_mode != C_csp_solver::CSP_CONVERGED || q_pc_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4008,7 +4008,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				int iter_T_tes_cold = 0;
 
-				int exit_mode = CONVERGED;
+				int exit_mode = C_csp_solver::CSP_CONVERGED;
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration loop
@@ -4023,7 +4023,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( diff_T_tes_cold != diff_T_tes_cold )
 						{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_tes_cold
 
-							exit_mode = NO_SOLUTION;
+							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;
 						}
@@ -4047,7 +4047,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( !is_lower_bound || !is_upper_bound )
 							{
 
-								exit_mode = NO_SOLUTION;
+								exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;
 							}
@@ -4134,7 +4134,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// *********************************
 				if( mc_pc_out_solver.m_q_dot_htf < q_pc_min )
 				{
-					exit_mode = NO_SOLUTION;
+					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				}
 
 				if( exit_mode == POOR_CONVERGENCE )
@@ -4142,7 +4142,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4161,11 +4161,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						}
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						exit_mode = CONVERGED;
+						exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( exit_mode != CONVERGED )
+				if( exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					if( operating_mode == CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF )
 						m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
@@ -4231,7 +4231,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 					
 						// update T_rec_in_exit_mode
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4240,7 +4240,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						q_pc_exit_mode = CONVERGED;
+						q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -4250,7 +4250,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 					
 						// update T_rec_in_exit_mode
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4259,12 +4259,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_rec_in_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				
 				}
 
-				if( T_rec_in_exit_mode != CONVERGED || q_pc_exit_mode != CONVERGED )
+				if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED || q_pc_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_SB__TES_CH__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4344,7 +4344,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4353,7 +4353,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						q_pc_exit_mode = CONVERGED;
+						q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -4362,7 +4362,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						T_tes_in_exit_mode = NO_SOLUTION;
+						T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4371,11 +4371,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_tes_in_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_tes_in_exit_mode = CONVERGED;
+						T_tes_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( T_tes_in_exit_mode != CONVERGED || q_pc_exit_mode != CONVERGED )
+				if( T_tes_in_exit_mode != C_csp_solver::CSP_CONVERGED || q_pc_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4453,7 +4453,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 							{	// Did not converge within Relaxed Tolerance
 
-								q_pc_exit_mode = NO_SOLUTION;
+								q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							}
 							else
 							{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4462,7 +4462,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
 								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-								q_pc_exit_mode = CONVERGED;
+								q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 							}
 						}
 
@@ -4471,7 +4471,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
 							{	// Did not converge within Relaxed Tolerance
 
-								T_tes_in_exit_mode = NO_SOLUTION;
+								T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							}
 							else
 							{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4480,11 +4480,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_tes_in_exit_tolerance);
 								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-								T_tes_in_exit_mode = CONVERGED;
+								T_tes_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 							}
 						}
 
-						if( T_tes_in_exit_mode != CONVERGED || q_pc_exit_mode != CONVERGED )
+						if( T_tes_in_exit_mode != C_csp_solver::CSP_CONVERGED || q_pc_exit_mode != C_csp_solver::CSP_CONVERGED )
 						{
 							m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 							are_models_converged = false;
@@ -4566,7 +4566,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4575,7 +4575,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_pc_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						q_pc_exit_mode = CONVERGED;
+						q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -4585,7 +4585,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
 
 						// update 'exit_mode'
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4594,11 +4594,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, T_rec_in_exit_tolerance);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( q_pc_exit_mode != CONVERGED || T_rec_in_exit_mode != CONVERGED )
+				if( q_pc_exit_mode != C_csp_solver::CSP_CONVERGED || T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_SB__TES_DC__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4699,7 +4699,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4718,7 +4718,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						}
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						q_pc_exit_mode = CONVERGED;
+						q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -4727,7 +4727,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_cold_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						T_cold_exit_mode = NO_SOLUTION;
+						T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4746,11 +4746,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						}
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_cold_exit_mode = CONVERGED;
+						T_cold_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( T_cold_exit_mode != CONVERGED || q_pc_exit_mode != CONVERGED )
+				if( T_cold_exit_mode != C_csp_solver::CSP_CONVERGED || q_pc_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					if( operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF )
 						m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail = false;
@@ -4803,7 +4803,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( mc_pc_out_solver.m_q_dot_htf > q_pc_max )
 				{
-					T_rec_in_exit_mode = NO_SOLUTION;
+					T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				}
 
 				if( mc_pc_out_solver.m_q_dot_htf < q_pc_target )
@@ -4821,7 +4821,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -4831,11 +4831,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, T_rec_in_exit_tolerance);
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}				
 				}
 
-				if( T_rec_in_exit_mode != CONVERGED )
+				if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4893,10 +4893,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				int iter_q_dot = 0;
 
-				int q_pc_exit_mode = CONVERGED;
+				int q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
-				int T_cold_exit_mode = CONVERGED;
+				int T_cold_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Set new local timestep
@@ -4914,7 +4914,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( diff_q_dot != diff_q_dot )
 						{	// Models aren't solving !?!?!
 
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;		// exits while() on diff_q_dot
 						}
@@ -4949,7 +4949,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( !is_time_lower_bound || !is_time_upper_bound )
 							{
 
-								q_pc_exit_mode = NO_SOLUTION;
+								q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;		// exits while() on diff_q_dot
 							}
@@ -5023,7 +5023,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					int iter_T_cold = 0;
 
-					T_cold_exit_mode = CONVERGED;
+					T_cold_exit_mode = C_csp_solver::CSP_CONVERGED;
 					T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_cold
@@ -5038,7 +5038,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( diff_T_cold != diff_T_cold )
 							{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-								T_cold_exit_mode = NO_SOLUTION;
+								T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;	// exit to outer iteration on timestep duration
 							}
@@ -5060,7 +5060,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// But, check that bounds exist
 								if( !is_lower_bound || !is_upper_bound )
 								{
-									T_cold_exit_mode = NO_SOLUTION;
+									T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;	// exit to outer iteration on timestep duration
 								}
@@ -5124,7 +5124,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_cold == 1 )
 							{
-								T_cold_exit_mode = NO_SOLUTION;
+								T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;	// exit to outer iteration on timestep duration
 							}
@@ -5138,7 +5138,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									// If lower bound is already set OR upper bound is not set, can't generate a new guess value
 									if( is_lower_bound || !is_upper_bound )
 									{
-										T_cold_exit_mode = NO_SOLUTION;
+										T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;	// exit to outer iteration on timestep duration
 									}
@@ -5158,7 +5158,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									// If upper bound is already set OR lower bound is not set, can't generate a new guess value
 									if( is_upper_bound || !is_lower_bound )
 									{
-										T_cold_exit_mode = NO_SOLUTION;
+										T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;	// exit to outer iteration on timestep duration
 									}
@@ -5218,7 +5218,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// Go to Receiver OFF power cycle OFF
 							if( iter_T_cold == 1 )
 							{
-								T_cold_exit_mode = NO_SOLUTION;
+								T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;	// exit to outer iteration on timestep duration
 							}
@@ -5232,7 +5232,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								{
 									if( is_lower_bound || !is_upper_bound )
 									{
-										T_cold_exit_mode = NO_SOLUTION;
+										T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;
 									}
@@ -5247,7 +5247,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								{
 									if( is_upper_bound || !is_lower_bound )
 									{
-										T_cold_exit_mode = NO_SOLUTION;
+										T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;
 									}
@@ -5269,7 +5269,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}	// end while() on T_rec_in
 
 					// Handle exit modes on T_cold iteration
-					if( T_cold_exit_mode != CONVERGED && T_cold_exit_mode != POOR_CONVERGENCE )
+					if( T_cold_exit_mode != C_csp_solver::CSP_CONVERGED && T_cold_exit_mode != POOR_CONVERGENCE )
 					{
 						break;
 					}
@@ -5285,7 +5285,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-					q_pc_exit_mode == CONVERGED;
+					q_pc_exit_mode == C_csp_solver::CSP_CONVERGED;
 				}
 
 				if( T_cold_exit_mode == POOR_CONVERGENCE )
@@ -5293,7 +5293,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_cold_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
-						T_cold_exit_mode = NO_SOLUTION;
+						T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Converge within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -5304,11 +5304,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_cold_exit_mode = CONVERGED;
+						T_cold_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( T_cold_exit_mode != CONVERGED || q_pc_exit_mode != CONVERGED )
+				if( T_cold_exit_mode != C_csp_solver::CSP_CONVERGED || q_pc_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -5370,13 +5370,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Defocus: 1 = full power, 0 = no power
 				double diff_q_dot = 999.9*tol;
 
-				int defocus_exit_mode = CONVERGED;
+				int defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				int iter_defocus = 0;
 
 				// Exit information for outer loop on T_rec_in (needs to be accessible in this scope)
-				int T_rec_in_exit_mode = CONVERGED;
+				int T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				// Iterate on defocus to fully charge storage
@@ -5392,7 +5392,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						{	// System models not converging, so need to shut them down
 
 							defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							defocus_exit_mode = NO_SOLUTION;
+							defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							break;		// Get out of while()					
 						}
 						else if( 1.0 - defocus_lower < tol / 2.0)
@@ -5428,7 +5428,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 
 								defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-								defocus_exit_mode = NO_SOLUTION;
+								defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;		// Get out of while()	
 							}
 							defocus_guess = 0.5*(defocus_lower + defocus_upper);
@@ -5477,7 +5477,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					// Exit information for outer loop on T_rec_in
-					T_rec_in_exit_mode = CONVERGED;
+					T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					int power_cycle_mode = C_csp_power_cycle::ON;
@@ -5488,7 +5488,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						T_rec_in_exit_mode, T_rec_in_exit_tolerance);
 
 					// Check T_rec_in_exit_mode
-					if( T_rec_in_exit_mode != CONVERGED && T_rec_in_exit_mode != POOR_CONVERGENCE )
+					if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED && T_rec_in_exit_mode != POOR_CONVERGENCE )
 					{
 						// Assume this means we've hit the lower bound on defocus
 						is_defocus_lower_bound = true;
@@ -5514,7 +5514,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-					defocus_exit_mode = CONVERGED;
+					defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 				}
 
 				// Handle exit modes
@@ -5523,7 +5523,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -5533,7 +5533,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -5542,7 +5542,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						defocus_exit_mode = NO_SOLUTION;
+						defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -5552,11 +5552,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						defocus_exit_mode = CONVERGED;
+						defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( defocus_exit_mode != CONVERGED || T_rec_in_exit_mode != CONVERGED )
+				if( defocus_exit_mode != C_csp_solver::CSP_CONVERGED || T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					are_models_converged = false;
 					m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
@@ -5606,7 +5606,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if( mc_pc_out_solver.m_q_dot_htf < q_pc_sb )
 				{
-					T_rec_in_exit_mode = NO_SOLUTION;
+					T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				}
 
 				// Check if solver converged or a new operating mode is required
@@ -5615,7 +5615,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -5625,11 +5625,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, T_rec_in_exit_tolerance);
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( T_rec_in_exit_mode != CONVERGED )
+				if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_SB__TES_FULL__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -5685,7 +5685,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				double step_tol = step_tolerance;		//[s]
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
-				int exit_mode = CONVERGED;
+				int exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				solver_pc_su_controlled__tes_dc(step_tol,
@@ -5693,7 +5693,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					exit_mode, T_pc_in_exit_tolerance);
 
 				// Check exit mode
-				if( exit_mode != CONVERGED )
+				if( exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					are_models_converged = false;
 					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
@@ -5748,7 +5748,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						step_tol = step_tolerance;		//[s]
 						step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
-						exit_mode = CONVERGED;
+						exit_mode = C_csp_solver::CSP_CONVERGED;
 						T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 						solver_pc_su_controlled__tes_dc(step_tol,
@@ -5756,7 +5756,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							exit_mode, T_pc_in_exit_tolerance);
 
 						// Check exit mode
-						if( exit_mode != CONVERGED )
+						if( exit_mode != C_csp_solver::CSP_CONVERGED )
 						{
 							are_models_converged = false;
 							m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
@@ -5832,7 +5832,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int iter_T_rec_in = 0;
 
 				// Exit information for loop on T_rec_in
-				int T_rec_in_exit_mode = CONVERGED;
+				int T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
@@ -5849,7 +5849,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( diff_T_rec_in != diff_T_rec_in )
 						{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-							T_rec_in_exit_mode = NO_SOLUTION;
+							T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;
 						}
@@ -5870,7 +5870,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// But, check that bounds exist
 							if( !is_lower_bound || !is_upper_bound )
 							{
-								T_rec_in_exit_mode = NO_SOLUTION;
+								T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;
 							}
@@ -5935,7 +5935,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 						if( iter_T_rec_in == 1 )
 						{
-							T_rec_in_exit_mode = NO_SOLUTION;
+							T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;  // exit while() on diff_T_rec_in
 						}
@@ -5949,7 +5949,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// If lower bound is already set OR upper bound is not set, can't generate new guess
 								if( is_lower_bound || !is_upper_bound )
 								{
-									T_rec_in_exit_mode = NO_SOLUTION;
+									T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;	// exit while() on diff_T_rec_in
 								}
@@ -5968,7 +5968,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// If upper bound is already set OR lower bound is not set, can't generate new guess
 								if( is_upper_bound || !is_lower_bound )
 								{
-									T_rec_in_exit_mode = NO_SOLUTION;
+									T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									return;	// exit while() on diff_T_rec_in
 								}
@@ -6016,7 +6016,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// First check if upper bound exists
 						if( is_upper_bound )
 						{
-							T_rec_in_exit_mode = NO_SOLUTION;
+							T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;	// exits while() on T_rec_in
 						}
@@ -6044,7 +6044,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// First, check if low bound exists
 						if( is_lower_bound )
 						{
-							T_rec_in_exit_mode = NO_SOLUTION;
+							T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;	// exits while() on T_rec_in
 						}
@@ -6082,7 +6082,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 					
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
@@ -6092,14 +6092,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, T_rec_in_exit_tolerance);
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}				
 				}
 
 				// But if the loop above crashes because storage is over-charged, breaking 'false' here will move to mode that doesn't charge storage at all
 				//  which essentially means the power cycle is dumping extra energy it doesn't need for startup...
 
-				if( T_rec_in_exit_mode != CONVERGED )
+				if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -6165,13 +6165,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Defocus: 1 = full power, 0 = no power
 				double diff_m_dot = 999.9*tol;
 
-				int defocus_exit_mode = CONVERGED;
+				int defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				int iter_defocus = 0;
 
 				// Exit information for outer loop on T_rec_in (needs to be accessible in this scope)
-				int T_rec_in_exit_mode = CONVERGED;
+				int T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
@@ -6192,7 +6192,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						{	// System models not converging, so need to shut them down
 
 							defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							defocus_exit_mode = NO_SOLUTION;
+							defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							break;		// Get out of while()					
 						}
 						else if( 1.0 - defocus_lower < tol / 2.0 )
@@ -6228,7 +6228,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 
 								defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-								defocus_exit_mode = NO_SOLUTION;
+								defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;		// Get out of while()	
 							}
 							defocus_guess = 0.5*(defocus_lower + defocus_upper);
@@ -6297,7 +6297,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					int iter_T_rec_in = 0;
 
 					// Exit information for outer loop on T_rec_in
-					T_rec_in_exit_mode = CONVERGED;
+					T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_rec_in
@@ -6312,7 +6312,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( diff_T_rec_in != diff_T_rec_in )
 							{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-								T_rec_in_exit_mode = NO_SOLUTION;
+								T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;
 							}
@@ -6333,7 +6333,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// But, check that bounds exist
 								if( !is_lower_bound || !is_upper_bound )
 								{
-									T_rec_in_exit_mode = NO_SOLUTION;
+									T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;
 								}
@@ -6399,7 +6399,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_rec_in == 1 )
 							{
-								T_rec_in_exit_mode = NO_SOLUTION;
+								T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;  // exit while() on diff_T_rec_in
 							}
@@ -6413,7 +6413,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									// If lower bound is already set OR upper bound is not set, can't generate new guess
 									if( is_lower_bound || !is_upper_bound )
 									{
-										T_rec_in_exit_mode = NO_SOLUTION;
+										T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;	// exit while() on diff_T_rec_in
 									}
@@ -6432,7 +6432,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									// If upper bound is already set OR lower bound is not set, can't generate new guess
 									if( is_upper_bound || !is_lower_bound )
 									{
-										T_rec_in_exit_mode = NO_SOLUTION;
+										T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;	// exit while() on diff_T_rec_in
 									}
@@ -6510,7 +6510,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}	// end while() on T_rec_in
 
 					// Check T_rec_in_exit_mode
-					if( T_rec_in_exit_mode != CONVERGED && T_rec_in_exit_mode != POOR_CONVERGENCE )
+					if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED && T_rec_in_exit_mode != POOR_CONVERGENCE )
 					{
 						// Assume this means we've hit the lower bound on defocus
 						is_defocus_lower_bound = true;
@@ -6538,7 +6538,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
-					defocus_exit_mode = CONVERGED;
+					defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 				}
 
 				// Handle exit modes
@@ -6547,7 +6547,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -6557,7 +6557,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -6566,7 +6566,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						defocus_exit_mode = NO_SOLUTION;
+						defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -6576,11 +6576,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						defocus_exit_mode = CONVERGED;
+						defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( defocus_exit_mode != CONVERGED || T_rec_in_exit_mode != CONVERGED )
+				if( defocus_exit_mode != C_csp_solver::CSP_CONVERGED || T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					are_models_converged = false;
 					m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
@@ -6666,13 +6666,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Defocus: 1 = full power, 0 = no_power
 				double diff_m_dot = 999.9*tol;
 
-				int defocus_exit_mode = CONVERGED;
+				int defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				int iter_defocus = 0;
 
 				// Exit information for outer loop on T_rec_in (needs to be accessible in this scope)
-				int T_rec_in_exit_mode = CONVERGED;
+				int T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
@@ -6690,7 +6690,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						{	// System models not converging, so need to shut them down
 
 							defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							defocus_exit_mode = NO_SOLUTION;
+							defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							break;		// Get out of while()					
 						}
 						else if( 1.0 - defocus_lower < tol / 2.0 )
@@ -6726,7 +6726,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 
 								defocus_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-								defocus_exit_mode = NO_SOLUTION;
+								defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								break;		// Get out of while()	
 							}
 							defocus_guess = 0.5*(defocus_lower + defocus_upper);
@@ -6794,7 +6794,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					int iter_T_rec_in = 0;
 
 					// Exit information for outer loop on T_rec_in
-					T_rec_in_exit_mode = CONVERGED;
+					T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 					// Start iteration on T_rec_in
@@ -6809,7 +6809,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( diff_T_rec_in != diff_T_rec_in )
 							{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-								T_rec_in_exit_mode = NO_SOLUTION;
+								T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;
 							}
@@ -6830,7 +6830,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								// But, check that bounds exist
 								if( !is_lower_bound || !is_upper_bound )
 								{
-									T_rec_in_exit_mode = NO_SOLUTION;
+									T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 									T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 									break;
 								}
@@ -6895,7 +6895,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 							if( iter_T_rec_in == 1 )
 							{
-								T_rec_in_exit_mode = NO_SOLUTION;
+								T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 								T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 								break;  // exit while() on diff_T_rec_in
 							}
@@ -6909,7 +6909,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									// If lower bound is already set OR upper bound is not set, can't generate new guess
 									if( is_lower_bound || !is_upper_bound )
 									{
-										T_rec_in_exit_mode = NO_SOLUTION;
+										T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;	// exit while() on diff_T_rec_in
 									}
@@ -6928,7 +6928,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 									// If upper bound is already set OR lower bound is not set, can't generate new guess
 									if( is_upper_bound || !is_lower_bound )
 									{
-										T_rec_in_exit_mode = NO_SOLUTION;
+										T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 										T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 										break;	// exit while() on diff_T_rec_in
 									}
@@ -6979,7 +6979,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}	// end while() on T_rec_in
 
 					// Check T_rec_in_exit_mode
-					if( T_rec_in_exit_mode != CONVERGED && T_rec_in_exit_mode != POOR_CONVERGENCE )
+					if( T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED && T_rec_in_exit_mode != POOR_CONVERGENCE )
 					{
 						// Assume this means we've hit the lower bound on defocus
 						is_defocus_lower_bound = true;
@@ -7004,7 +7004,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -7014,7 +7014,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						T_rec_in_exit_mode = CONVERGED;
+						T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
@@ -7023,7 +7023,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( fabs(defocus_exit_tolerance) > relaxed_tol )
 					{	// Did not converge within Relaxed Tolerance
 
-						defocus_exit_mode = NO_SOLUTION;
+						defocus_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					}
 					else
 					{
@@ -7033,11 +7033,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						defocus_exit_mode = CONVERGED;
+						defocus_exit_mode = C_csp_solver::CSP_CONVERGED;
 					}
 				}
 
-				if( defocus_exit_mode != CONVERGED || T_rec_in_exit_mode != CONVERGED )
+				if( defocus_exit_mode != C_csp_solver::CSP_CONVERGED || T_rec_in_exit_mode != C_csp_solver::CSP_CONVERGED )
 				{
 					are_models_converged = false;
 					m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
@@ -7406,7 +7406,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 
 	int iter_T_pc_in = 0;
 
-	exit_mode = NO_SOLUTION;
+	exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 	T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	double T_pc_in_calc = std::numeric_limits<double>::quiet_NaN();
@@ -7419,7 +7419,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		double diff_T_bounds = T_pc_in_upper - T_pc_in_lower;
 		if( diff_T_bounds / m_cycle_T_htf_hot_des < tol / 2.0 )
 		{
-			exit_mode = NO_SOLUTION;
+			exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 			T_pc_in_exit_tolerance = diff_T_pc_in;
 			break;
 		}
@@ -7435,7 +7435,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 				// ... but, we can still attempt to begin PC startup during this timestep
 				if( !is_upper_bound )
 				{
-					exit_mode = NO_SOLUTION;
+					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_pc_in_exit_tolerance = diff_T_pc_in;
 					break;
 				}
@@ -7467,7 +7467,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 					// Assume that the storage won't get hotter throughout the timestep,
 					// ... so if results from 1st guess suggests that a higher temperature is required, get out
 
-					exit_mode = NO_SOLUTION;
+					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_pc_in_exit_tolerance = diff_T_pc_in;
 					break;
 				}
@@ -7541,10 +7541,10 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 			continue;
 		}
 
-		exit_mode = CONVERGED;
+		exit_mode = C_csp_solver::CSP_CONVERGED;
 	}
 
-	if( exit_mode == NO_SOLUTION )
+	if( exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 	{	// Try fully discharging TES and beginning PC startup
 		// Check that power cycle hasn't completely started up, as that suggests an error above (in this mode)
 
@@ -7586,13 +7586,13 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		time_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
 		if( time_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tol )
 		{
-			exit_mode = NO_SOLUTION;
+			exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 
 			T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 		}
 		else
 		{
-			exit_mode = CONVERGED;
+			exit_mode = C_csp_solver::CSP_CONVERGED;
 
 			time_pc_su = mc_kernel.mc_sim_info.ms_ts.m_step;
 			T_pc_in_exit_tolerance = 0.0;
@@ -7631,7 +7631,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	int iter_T_rec_in = 0;
 
 	// Exit information for outer loop on T_rec_in
-	T_rec_in_exit_mode = CONVERGED;
+	T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 	T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration on T_rec_in
@@ -7646,7 +7646,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 			if( diff_T_rec_in != diff_T_rec_in )
 			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;
 			}
@@ -7667,7 +7667,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 				// But, check that bounds exist
 				if( !is_lower_bound || !is_upper_bound )
 				{
-					T_rec_in_exit_mode = NO_SOLUTION;
+					T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					return;
 				}
@@ -7732,7 +7732,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
 			{
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;  // exit while() on diff_T_rec_in
 			}
@@ -7746,7 +7746,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 					// If lower bound is already set OR upper bound is not set, can't generate new guess
 					if( is_lower_bound || !is_upper_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						return;	// exit while() on diff_T_rec_in
 					}
@@ -7765,7 +7765,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 					// If upper bound is already set OR lower bound is not set, can't generate new guess
 					if( is_upper_bound || !is_lower_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						return;	// exit while() on diff_T_rec_in
 					}
@@ -7839,7 +7839,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 			// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
 			{
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 			}
@@ -7854,7 +7854,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 					// If lower bound is already set OR upper bound is not set, can't generate new guess
 					if( is_lower_bound || !is_upper_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 					}
@@ -7873,7 +7873,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 					// If upper bound is already set OR lower bound is not set, can't generate new guess
 					if( is_upper_bound || !is_lower_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 					}
@@ -7927,10 +7927,10 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 
 	int iter_T_cold = 0;
 
-	T_cold_exit_mode = CONVERGED;
+	T_cold_exit_mode = C_csp_solver::CSP_CONVERGED;
 	T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
-	q_pc_exit_mode = CONVERGED;
+	q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration loop
@@ -7945,7 +7945,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 			if( diff_T_cold != diff_T_cold )
 			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-				T_cold_exit_mode = NO_SOLUTION;
+				T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;
 			}
@@ -7967,7 +7967,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 				// But, check that bounds exist
 				if( !is_lower_bound || !is_upper_bound )
 				{
-					T_cold_exit_mode = NO_SOLUTION;
+					T_cold_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_cold_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					return;
 				}
@@ -8055,7 +8055,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 		double diff_q_pc = 999.9*tol;	//[-] (Calc - Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
 		int iter_q_pc = 0;				//[-]
 
-		q_pc_exit_mode = CONVERGED;
+		q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Start loop to iteration on mass flow rate to PC that results in target q_dot to PC
@@ -8071,7 +8071,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 				if( diff_q_pc != diff_q_pc )
 				{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for m_dot_pc
 
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 				}
@@ -8109,7 +8109,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 					if( !is_m_dot_lower_bound || !is_m_dot_upper_bound )
 					{
 
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 					}
@@ -8208,7 +8208,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 				if( iter_q_pc == 1 )
 				{
 
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 				}
@@ -8224,7 +8224,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 						if( is_m_dot_lower_bound || !is_m_dot_upper_bound )
 						{
 
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 						}
@@ -8243,7 +8243,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 						if( is_m_dot_upper_bound || !is_m_dot_lower_bound )
 						{
 
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 						}
@@ -8265,7 +8265,7 @@ void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int po
 
 
 		// Check exit mode from diff_q_pc loop
-		if( q_pc_exit_mode != CONVERGED && q_pc_exit_mode != POOR_CONVERGENCE )
+		if( q_pc_exit_mode != C_csp_solver::CSP_CONVERGED && q_pc_exit_mode != POOR_CONVERGENCE )
 		{
 			return;
 		}
@@ -8309,10 +8309,10 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 
 	int iter_T_tes_cold = 0;
 
-	T_tes_in_exit_mode = CONVERGED;
+	T_tes_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 	T_tes_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
-	q_pc_exit_mode = CONVERGED;
+	q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration on cold PC return temperature to TES
@@ -8327,7 +8327,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 			if( diff_T_tes_cold != diff_T_tes_cold )
 			{	// Models aren't producing power or are return errors, and it appears we've tried the solution space for T_tes_cold
 			
-				T_tes_in_exit_mode = NO_SOLUTION;
+				T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_tes_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;
 			}
@@ -8350,7 +8350,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 				if( !is_lower_bound || !is_upper_bound )
 				{
 
-					T_tes_in_exit_mode = NO_SOLUTION;
+					T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_tes_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					return;
 				}
@@ -8426,7 +8426,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 
 		int iter_q_dot = 0;
 
-		q_pc_exit_mode = CONVERGED;
+		q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Need access to these variables in this scope, but they're defined in following inner nest
@@ -8444,7 +8444,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 				if( diff_q_dot != diff_q_dot )
 				{	// Models aren't solving !?!?!
 
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;		// exits while() on diff_q_dot and sends control to while() on diff_T_tes_cold
 				}
@@ -8467,7 +8467,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 					if( !is_time_lower_bound || !is_time_upper_bound )
 					{
 
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						break;		// exits while() on diff_q_dot and sends control to while() on diff_T_tes_cold
 					}
@@ -8538,7 +8538,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		}	// end while() loop on diff_q_dot to find time required to empty storage while meeting power cycle requirements
 
 		// Check q_dot_exit_mode
-		if( q_pc_exit_mode != CONVERGED && q_pc_exit_mode != POOR_CONVERGENCE )
+		if( q_pc_exit_mode != C_csp_solver::CSP_CONVERGED && q_pc_exit_mode != POOR_CONVERGENCE )
 		{
 			return;		// exits while() on diff_T_rec_in
 		}
@@ -8597,10 +8597,10 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 
 	int iter_T_rec_in = 0;
 
-	T_rec_in_exit_mode = CONVERGED;
+	T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 	T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
-	q_pc_exit_mode = CONVERGED;
+	q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration loop
@@ -8615,7 +8615,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 			if( diff_T_rec_in != diff_T_rec_in )
 			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;
 			}
@@ -8638,7 +8638,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 				// But, check that bounds exist
 				if( !is_lower_bound || !is_upper_bound )
 				{
-					T_rec_in_exit_mode = NO_SOLUTION;
+					T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					return;
 				}
@@ -8702,7 +8702,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
 			{
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;	// exit while() on diff_T_rec_in
 			}
@@ -8716,7 +8716,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 					// If lower bound is already set OR upper bound is not set, can't generate a new guess value
 					if( is_lower_bound || !is_upper_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						return;	// exit while() on diff_T_rec_in
 					}
@@ -8736,7 +8736,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 					// If upper bound is already set OR lower bound is not set, can't generate a new guess value
 					if( is_upper_bound || !is_lower_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						return;	// exit while() on diff_T_rec_in
 					}
@@ -8791,7 +8791,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 		double diff_q_pc = 999.9*tol;	//[-] (Calc - Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
 		int iter_q_pc = 0;				//[-]
 
-		q_pc_exit_mode = CONVERGED;
+		q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Start loop to iteration on mass flow rate to PC that results in target q_dot to PC
@@ -8807,7 +8807,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 				if( diff_q_pc != diff_q_pc )
 				{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for m_dot_pc
 
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 				}
@@ -8845,7 +8845,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 					if( !is_m_dot_lower_bound || !is_m_dot_upper_bound )
 					{
 
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 					}
@@ -8943,7 +8943,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 				if( iter_q_pc == 1 )
 				{
 
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 				}
@@ -8959,7 +8959,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 						if( is_m_dot_lower_bound || !is_m_dot_upper_bound )
 						{
 
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 						}
@@ -8978,7 +8978,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 						if( is_m_dot_upper_bound || !is_m_dot_lower_bound )
 						{
 
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 						}
@@ -8999,7 +8999,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/,
 		}	// end while() loop on the mass flow rate to the power cycle to hit the thermal input requirements
 
 		// Check exit mode from diff_q_pc loop
-		if( q_pc_exit_mode == NO_SOLUTION )
+		if( q_pc_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
 		{
 			return;		
 		}
@@ -9044,11 +9044,11 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 	int iter_T_rec_in = 0;
 
 	// Exit information for outer loop on T_rec_in
-	T_rec_in_exit_mode = CONVERGED;
+	T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 	T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Exit information for inner loop on q_dot_pc
-	q_pc_exit_mode = CONVERGED;
+	q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 	q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 	// Start iteration on T_rec_in
@@ -9063,7 +9063,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 			if( diff_T_rec_in != diff_T_rec_in )
 			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;
 			}
@@ -9084,7 +9084,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 				// But, check that bounds exist
 				if( !is_lower_bound || !is_upper_bound )
 				{
-					T_rec_in_exit_mode = NO_SOLUTION;
+					T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					return;
 				}
@@ -9149,7 +9149,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_rec_in == 1 )
 			{
-				T_rec_in_exit_mode = NO_SOLUTION;
+				T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				return;  // exit while() on diff_T_rec_in
 			}
@@ -9163,7 +9163,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 					// If lower bound is already set OR upper bound is not set, can't generate new guess
 					if( is_lower_bound || !is_upper_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						return;	// exit while() on diff_T_rec_in
 					}
@@ -9182,7 +9182,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 					// If upper bound is already set OR lower bound is not set, can't generate new guess
 					if( is_upper_bound || !is_lower_bound )
 					{
-						T_rec_in_exit_mode = NO_SOLUTION;
+						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						return;	// exit while() on diff_T_rec_in
 					}
@@ -9239,7 +9239,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		double diff_q_pc = 999.9*tol;	//[-] (Calc - Target)/Target: (+) Mass flow rate guess too high, (-) Mass flow rate guess too low
 		int iter_q_pc = 0;				//[-]
 
-		q_pc_exit_mode = CONVERGED;
+		q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
 		q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
 		// Start iteration loop
@@ -9254,7 +9254,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 				if( diff_q_pc != diff_q_pc )
 				{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for m_dot_pc
 
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in 
 				}
@@ -9290,7 +9290,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 					// First, need to check that bounds exist
 					if( !is_m_dot_lower_bound || !is_m_dot_upper_bound )
 					{
-						q_pc_exit_mode = NO_SOLUTION;
+						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 						break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 					}
@@ -9361,7 +9361,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 				// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
 				if( iter_q_pc == 1 )
 				{
-					q_pc_exit_mode = NO_SOLUTION;
+					q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 					break;		// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 				}
@@ -9376,7 +9376,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 						// If lower bound is already set OR upper bound is not set, can't generate new guess
 						if( is_m_dot_lower_bound || !is_m_dot_upper_bound )
 						{
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 						}
@@ -9395,7 +9395,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 						// If upper bound is already set OR lower bound is not set, can't generate new guess
 						if( is_m_dot_upper_bound || !is_m_dot_lower_bound )
 						{
-							q_pc_exit_mode = NO_SOLUTION;
+							q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 							q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 							break;	// exits while() on diff_q_pc and sends control to while() on diff_T_rec_in
 						}
@@ -9418,7 +9418,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		}	// end while() diff_q_pc
 
 		// Check exit modes
-		if( q_pc_exit_mode != CONVERGED && q_pc_exit_mode != POOR_CONVERGENCE )
+		if( q_pc_exit_mode != C_csp_solver::CSP_CONVERGED && q_pc_exit_mode != POOR_CONVERGENCE )
 		{
 			return;		// exits while() on diff_T_rec_in
 		}
@@ -9504,7 +9504,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 			if( diff_T_in != diff_T_in )
 			{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
 				
-				exit_mode = NO_SOLUTION;
+				exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				exit_tolerance = diff_T_in;
 				return;
 			}
@@ -9527,7 +9527,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 				// but check that bounds exist, to be careful
 				if( !is_lower_bound || !is_upper_bound )
 				{
-					exit_mode = NO_SOLUTION;
+					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 					exit_tolerance = diff_T_in;
 					return;
 				}
@@ -9594,7 +9594,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 			// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
 			if( iter_T_in == 1 )
 			{	
-				exit_mode = NO_SOLUTION;
+				exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				exit_tolerance = diff_T_in;
 				return;
 			}
@@ -9606,7 +9606,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 				{
 					if( is_lower_bound || !is_upper_bound )
 					{
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						exit_tolerance = diff_T_in;
 						return;
 					}
@@ -9622,7 +9622,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 				{
 					if( is_upper_bound || !is_lower_bound )
 					{
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						exit_tolerance = diff_T_in;
 						return;
 					}
@@ -9670,7 +9670,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 			// Go to Receiver OFF power cycle OFF
 			if( iter_T_in == 1 )
 			{
-				exit_mode = NO_SOLUTION;
+				exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 				exit_tolerance = diff_T_in;
 				return;
 			}
@@ -9682,7 +9682,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 				{
 					if( is_lower_bound || !is_upper_bound )
 					{
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						exit_tolerance = diff_T_in;
 						return;
 					}
@@ -9697,7 +9697,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 				{
 					if( is_upper_bound || !is_lower_bound )
 					{
-						exit_mode = NO_SOLUTION;
+						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 						exit_tolerance = diff_T_in;
 						return;
 					}
@@ -9717,7 +9717,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 
 	}	// end iteration on T_rec_in
 
-	exit_mode = CONVERGED;
+	exit_mode = C_csp_solver::CSP_CONVERGED;
 	exit_tolerance = diff_T_in;
 
 	return;
