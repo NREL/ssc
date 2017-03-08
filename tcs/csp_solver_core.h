@@ -985,9 +985,9 @@ private:
 
 	enum E_solver_outcomes
 	{
-		NO_SOLUTION,		// Models did not provide enough information with which to iterate on T_rec_in
+		CSP_NO_SOLUTION,	// Models did not provide enough information with which to iterate on T_rec_in
 		POOR_CONVERGENCE,	// Models solved, but convergence on T_rec_in was not within specified tolerance
-		CONVERGED,			// Models solved; convergence within specified tolerance
+		CSP_CONVERGED,		// Models solved; convergence within specified tolerance
 		KNOW_NEXT_MODE,		// Models did not solve, but failure mode allowed next mode to be determined
 		UNDER_TARGET_PC,	// Models solved, but could not converge because the operating mode did not allow enough thermal power to go to power cycle
 		OVER_TARGET_PC,		// Models solved, but could not converge because the operating mode could not reduce the mass flow rate enough to the power cycle
@@ -1107,6 +1107,25 @@ public:
 		}
 
 		virtual int operator()(double T_cr_in /*K*/, double *diff_T_cr_in /*-*/);
+	};
+
+	class C_mono_eq_cr_df__pc_max__tes_off : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_q_dot_max;				//[MWt]
+
+	public:
+		C_mono_eq_cr_df__pc_max__tes_off(C_csp_solver *pc_csp_solver, double q_dot_max /*MWt*/, bool is_df_q_dot)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_q_dot_max = q_dot_max;			
+			m_is_df_q_dot = is_df_q_dot;
+		}
+
+		bool m_is_df_q_dot;				// True: y is q_dot / q_dot_max   False: y is m_dot / m_dot_max
+		
+		virtual int operator()(double defocus /*-*/, double *y_constrain);
 	};
 
 };
