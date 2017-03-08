@@ -145,6 +145,9 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	//cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss;	//[MWt]
 	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		//[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				//[C]
+	
+	cr_out_solver.m_component_defocus = 
+	
 	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			//[MWe]
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
 
@@ -193,6 +196,7 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	//cr_out_report.m_q_dot_piping_loss = mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss; //[MWt]
 	cr_out_solver.m_m_dot_salt_tot = mc_mspt_receiver_222.ms_outputs.m_m_dot_salt_tot;		 //[kg/hr]
 	cr_out_solver.m_T_salt_hot = mc_mspt_receiver_222.ms_outputs.m_T_salt_hot;				 //[C]
+	cr_out_solver.m_component_defocus = 1.0;	//[-]
 	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			 //[MWe]
 		// Not sure that we want 'startup time required' calculated in 'off' call
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	 //[s]
@@ -218,7 +222,6 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 void C_csp_mspt_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// For now, define startup(...) shell that calls call() with operation mode defined.

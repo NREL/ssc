@@ -415,6 +415,7 @@ public:
 		double m_m_dot_salt_tot;		//[kg/hr] Molten salt mass flow rate
 		double m_q_thermal;				//[MWt] 'Available' receiver thermal output
 		double m_T_salt_hot;			//[C] Hot HTF from receiver
+		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
 			
 		// These are used for the parasitic class call(), so could be zero...
 		double m_E_fp_total;			//[MW] Solar field freeze protection power
@@ -433,6 +434,8 @@ public:
 			m_q_thermal = m_q_startup = m_m_dot_salt_tot = m_T_salt_hot = m_W_dot_htf_pump =
 				m_W_dot_col_tracking = m_time_required_su = m_E_fp_total =
 				m_dP_sf_sh = m_h_htf_hot = m_xb_htf_hot = m_P_htf_hot = std::numeric_limits<double>::quiet_NaN();
+
+			m_component_defocus = 1.0;
 
 			m_standby_control = -1;
 		}
@@ -453,20 +456,17 @@ public:
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void startup(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	virtual void on(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		double field_control,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
-		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info) = 0;
 
 	struct S_csp_cr_est_out

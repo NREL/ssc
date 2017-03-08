@@ -50,6 +50,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 
 	m_itermode = -1;
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
+	m_eta_field_iter_prev = std::numeric_limits<double>::quiet_NaN();
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
 	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
@@ -165,6 +166,7 @@ void C_mspt_receiver_222::init()
 	m_mode_prev = m_mode;
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
 	m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
+	m_eta_field_iter_prev = 1.0;				//[-] Set to largest possible value
 
 	m_T_salt_hot_target += 273.15;			//[K] convert from C
 	
@@ -364,6 +366,11 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double err_od = 999.0;	// Reset error before iteration
 
 	// 15 continue -> TRNSYS command - replace
+	if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
+	{	// Suggests controller applied defocus, so reset *controller* defocus
+		m_od_control = fmin(m_od_control + (1.0 - field_eff / m_eta_field_iter_prev), 1.0);
+	}
+
 	do
 	{
 		if( rec_is_off )
@@ -907,6 +914,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_Q_thermal = q_thermal / 1.E6;					//[MW] convert from W
 	ms_outputs.m_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] convert from K
 	ms_outputs.m_field_eff_adj = field_eff_adj;					//[-]
+	ms_outputs.m_component_defocus = m_od_control;				//[-]
 	ms_outputs.m_q_dot_rec_inc = q_dot_inc_sum / 1.E3;			//[MW] convert from kW
 	ms_outputs.m_q_startup = q_startup/1.E6;					//[MW-hr] convert from W-hr
 	ms_outputs.m_dP_receiver = DELTAP*m_n_panels / m_n_lines / 1.E5;	//[bar] receiver pressure drop, convert from Pa
@@ -922,6 +930,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	else
 		ms_outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
 
+	m_eta_field_iter_prev = field_eff;	//[-]
 }
 
 void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
@@ -940,6 +949,7 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_Q_thermal = 0.0;			//[MW] convert from W
 	ms_outputs.m_T_salt_hot = 0.0;			//[C] convert from K
 	ms_outputs.m_field_eff_adj = 0.0;		//[-]
+	ms_outputs.m_component_defocus = 1.0;	//[-]
 	ms_outputs.m_q_dot_rec_inc = 0.0;		//[MW] convert from kW
 	ms_outputs.m_q_startup = 0.0;			//[MW-hr] convert from W-hr
 	ms_outputs.m_dP_receiver = 0.0;			//[bar] receiver pressure drop, convert from Pa
@@ -980,6 +990,7 @@ void C_mspt_receiver_222::converged()
 
 	m_itermode = 1;
 	m_od_control = 1.0;
+	m_eta_field_iter_prev = 1.0;		//[-]
 
 	m_ncall = -1;
 }
@@ -999,6 +1010,7 @@ void C_mspt_receiver_222::clear_outputs()
 		ms_outputs.m_Q_thermal =
 		ms_outputs.m_T_salt_hot = 
 		ms_outputs.m_field_eff_adj = 
+		ms_outputs.m_component_defocus =
 		ms_outputs.m_q_dot_rec_inc = 
 		ms_outputs.m_q_startup = 
 		ms_outputs.m_dP_receiver = 

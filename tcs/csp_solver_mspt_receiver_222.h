@@ -26,9 +26,9 @@ private:
 
 	int m_itermode;
 	double m_od_control;
+	double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
 	double m_tol_od;
 	double m_m_dot_htf_des;
-	//double m_q_rec_min;		// twn: moved to public so upstream code can retrieve
 
 	/* declare storage variables here */
 	int m_mode;
@@ -153,7 +153,8 @@ public:
 		double m_q_rad_sum;				//[MW] 
 		double m_Q_thermal;				//[MW] Thermal power delivered to TES/PC: subtracts piping losses (q_dot_rec - q_dot_piping_losses)
 		double m_T_salt_hot;			//[C]
-		double m_field_eff_adj;			//[-]
+		double m_field_eff_adj;			//[-] Heliostat field efficiency including component defocus
+		double m_component_defocus;		//[-] Defocus applied by component model to stay within mass flow or other constraints
 		double m_q_dot_rec_inc;			//[MWt] Receiver incident thermal power (after reflection losses)
 		double m_q_startup;				//[MWt-hr]
 		double m_dP_receiver;			//[bar] receiver pressure drop
@@ -169,7 +170,7 @@ public:
 		S_outputs()
 		{
 			m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
-				m_T_salt_hot = m_field_eff_adj = m_q_dot_rec_inc = m_q_startup = m_dP_receiver = m_dP_total =
+				m_T_salt_hot = m_field_eff_adj = m_component_defocus = m_q_dot_rec_inc = m_q_startup = m_dP_receiver = m_dP_total =
 				m_vel_htf = m_T_salt_cold = m_m_dot_ss = m_q_dot_ss = m_f_timestep = 
 				m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 		}
