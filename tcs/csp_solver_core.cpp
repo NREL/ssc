@@ -1603,7 +1603,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					// Use defocus_guess and call method to solve CR-PC iteration
 					cr_pc_exit_tol = std::numeric_limits<double>::quiet_NaN();
-					solver_cr_to_pc_to_cr(defocus_guess, tol_cr_pc, cr_pc_exit_mode, cr_pc_exit_tol);
+					solver_cr_to_pc_to_cr(C_csp_power_cycle::ON, defocus_guess, tol_cr_pc, cr_pc_exit_mode, cr_pc_exit_tol);
 
 					// Process results from CR-PC iteration:
 					if( cr_pc_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
@@ -1765,7 +1765,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int exit_mode = -1;
 				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 				double field_control = 1.0;
-				solver_cr_to_pc_to_cr(field_control, tol, exit_mode, exit_tolerance);
+				solver_cr_to_pc_to_cr(C_csp_power_cycle::ON, field_control, tol, exit_mode, exit_tolerance);
 
 				// If CR and PC models solved and produced power, but did not converge within tolerance,
 				// check whether achieved convergence is "good enough" to report and continue
@@ -9459,7 +9459,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 	return;
 }
 
-void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, int &exit_mode, double &exit_tolerance)
+void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, double tol, int &exit_mode, double &exit_tolerance)
 {
 	// Method to solve scenario where the CR is on (under some fixed operating conditions, i.e. defocus)
 	// and the PC is on. No TES or AUX, so the output of the CR connects directly to the PC
@@ -9467,7 +9467,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(double field_control_in, double tol, in
 	// Ouputs:
 	// int exit_mode: E_solver_outcomes 
 	
-	C_mono_eq_cr_to_pc_to_cr c_eq(this, m_P_cold_des, -1, field_control_in);
+	C_mono_eq_cr_to_pc_to_cr c_eq(this, pc_mode, m_P_cold_des, -1, field_control_in);
 	C_monotonic_eq_solver c_solver(c_eq);
 
 	c_solver.settings(tol, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
