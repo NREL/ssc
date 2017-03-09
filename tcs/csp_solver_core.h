@@ -949,7 +949,7 @@ private:
 		// Reset hierarchy logic
 	void reset_hierarchy_logic();
 
-	void solver_cr_to_pc_to_cr(double field_control_in, double tol, int &exit_mode, double &exit_tolerance);
+	void solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, double tol, int &exit_mode, double &exit_tolerance);
 	 
 	void solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		double &time_pc_su /*s*/, 
@@ -1097,12 +1097,14 @@ public:
 	{
 	private:
 		C_csp_solver *mpc_csp_solver;
-		double m_q_dot_max;				//[MWt]
+		int m_pc_mode;				//[-]
+		double m_q_dot_max;			//[MWt]
 
 	public:
-		C_mono_eq_cr_df__pc_max__tes_off(C_csp_solver *pc_csp_solver, double q_dot_max /*MWt*/, bool is_df_q_dot)
+		C_mono_eq_cr_df__pc_max__tes_off(C_csp_solver *pc_csp_solver, int pc_mode /*-*/, double q_dot_max /*MWt*/, bool is_df_q_dot)
 		{
 			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
 			m_q_dot_max = q_dot_max;			
 			m_is_df_q_dot = is_df_q_dot;
 		}
@@ -1116,15 +1118,17 @@ public:
 	{
 	private:
 		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;					//[-]
 		double m_P_field_in;			//[kPa]
 		double m_x_field_in;			//[-]
 		double m_field_control_in;		//[-]
 
 	public:
-		C_mono_eq_cr_to_pc_to_cr(C_csp_solver *pc_csp_solver, 
+		C_mono_eq_cr_to_pc_to_cr(C_csp_solver *pc_csp_solver, int pc_mode /*-*/,
 			double P_field_in /*kPa*/, double x_field_in /*-*/, double field_control_in /*-*/)
 		{
 			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
 			m_P_field_in = P_field_in;
 			m_x_field_in = x_field_in;
 			m_field_control_in = field_control_in;
@@ -1132,7 +1136,6 @@ public:
 		
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
-
 };
 
 

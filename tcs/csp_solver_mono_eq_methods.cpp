@@ -8,7 +8,7 @@ int C_csp_solver::C_mono_eq_cr_df__pc_max__tes_off::operator()(double defocus /*
 	// Use defocus_guess and call method to solve CR-PC iteration
 	double cr_pc_exit_tol = std::numeric_limits<double>::quiet_NaN();
 	int cr_pc_exit_mode = -1;
-	mpc_csp_solver->solver_cr_to_pc_to_cr(defocus, 1.E-3, cr_pc_exit_mode, cr_pc_exit_tol);
+	mpc_csp_solver->solver_cr_to_pc_to_cr(m_pc_mode, defocus, 1.E-3, cr_pc_exit_mode, cr_pc_exit_tol);
 
 	if (cr_pc_exit_mode != C_csp_solver::CSP_CONVERGED)
 	{
@@ -62,7 +62,7 @@ int C_csp_solver::C_mono_eq_cr_to_pc_to_cr::operator()(double T_htf_cold /*C*/, 
 	}
 
 	mpc_csp_solver->mc_pc_inputs.m_m_dot = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
-	mpc_csp_solver->mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = m_pc_mode;		//[-]
 
 	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
 						mpc_csp_solver->mc_pc_htf_state_in,
