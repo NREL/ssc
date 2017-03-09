@@ -1093,22 +1093,6 @@ public:
 	// *****************************
 	// *****************************
 	// Solvers
-	class C_mono_eq_T_cr_in__pc_su_controlled : public C_monotonic_equation
-	{
-	private:
-		C_csp_solver *mpc_csp_solver;
-		double m_defocus;
-
-	public:
-		C_mono_eq_T_cr_in__pc_su_controlled(C_csp_solver *pc_csp_solver, double defocus)
-		{
-			mpc_csp_solver = pc_csp_solver;
-			m_defocus = defocus;
-		}
-
-		virtual int operator()(double T_cr_in /*K*/, double *diff_T_cr_in /*-*/);
-	};
-
 	class C_mono_eq_cr_df__pc_max__tes_off : public C_monotonic_equation
 	{
 	private:
