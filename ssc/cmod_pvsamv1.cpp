@@ -2943,7 +2943,7 @@ public:
 							iterate_dc = batt.check_iterate(dc_count);
 							acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
 						}
-						dc_count++;
+						dc_count++; 
 					} while (iterate_dc);
 
 					ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
