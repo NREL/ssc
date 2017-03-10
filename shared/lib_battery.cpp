@@ -583,7 +583,7 @@ double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
 	double V_stack_cell = 0.;
-	if (isfinite(A))
+	if (std::isfinite(A))
 		V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C;
 
 	return V_stack_cell;

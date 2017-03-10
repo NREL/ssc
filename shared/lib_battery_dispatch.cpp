@@ -376,9 +376,10 @@ void dispatch_manual_t::dispatch(size_t year,
 	initialize_dispatch(hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 
 	// current charge state of battery from last time step.  
-	double battery_voltage = _Battery->battery_voltage_nominal();								 // [V] 
+	double battery_voltage_nominal = _Battery->battery_voltage_nominal();						 // [V] 
+	double battery_voltage = _Battery->battery_voltage();										 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
-	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage)*util::watt_to_kilowatt;   // [kWh]
+	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
 	double charge_total = _Battery->battery_charge_total();								         // [Ah]
 	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
@@ -392,7 +393,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	// Controllers
 	SOC_controller();
 	switch_controller();
-	I = current_controller(battery_voltage);
+	I = current_controller(battery_voltage_nominal);
 
 	// Iteration variables
 	_Battery_initial->copy(*_Battery);
@@ -412,7 +413,7 @@ void dispatch_manual_t::dispatch(size_t year,
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
-		double battery_voltage_new = _Battery->voltage_model()->battery_voltage();
+		double battery_voltage_new = _Battery->battery_voltage();
 		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
@@ -450,7 +451,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 		double dQ = 0.01 * (_Battery->battery_soc() - _SOC_max) * _Battery->battery_charge_maximum();
 		I += dQ / _dt_hour;
 	}
-	// Don't allow grid charging unless explicitly allowed (reduce charging)
+	// Don't allow grid charging unless explicitly allowed (reduce charging) 
 	else if (_P_grid_to_batt > tolerance && !_can_grid_charge)
 	{
 		if (fabs(_P_tofrom_batt) < tolerance)
