@@ -31,6 +31,7 @@ OBJECTS = \
 	lib_wind_obos.o \
 	lib_windwatts.o \
 	lib_battery.o \
+	lib_battery_dispatch.o \
 	lib_miniz.o \
 	lib_pv_shade_loss_mpp.o
 
