@@ -97,7 +97,7 @@ public:
 	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max);
 	~capacity_kibam_t(){}
 	capacity_kibam_t * clone();
-	void copy(capacity_kibam_t *&);
+	void copy(capacity_t *&);
 
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);

@@ -111,6 +111,7 @@ struct battstor
 	void outputs_topology_dependent(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
 	void metrics(compute_module &cm, size_t year, size_t hour_of_year, size_t step);
 	void update_post_inverted(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_gen_ac);
+	bool check_iterate(size_t count);
 	void process_messages(compute_module &cm);
 
 	// for user schedule

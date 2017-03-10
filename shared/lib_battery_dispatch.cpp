@@ -43,8 +43,29 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 	_e_max = Battery->battery_voltage()*Battery->battery_charge_maximum()*util::watt_to_kilowatt*0.01*(SOC_max - SOC_min);
 	_grid_recharge = false;
 }
+
+// deep copy
+dispatch_t::dispatch_t(const dispatch_t& dispatch)
+{
+	_Battery = new battery_t(*dispatch._Battery);
+	_Battery_initial = new battery_t(*dispatch._Battery_initial);
+}
+
+// shallow copy
+void dispatch_t::copy(const dispatch_t & dispatch)
+{
+	_Battery->copy(*dispatch._Battery);
+	_Battery_initial->copy(*dispatch._Battery_initial);
+}
+void dispatch_t::delete_clone()
+{
+	// need to delete both, since allocated memory for both in deep copy 
+	if (_Battery) delete _Battery;
+	if (_Battery_initial) delete _Battery_initial;
+}
 dispatch_t::~dispatch_t()
 {
+	// original _Battery doesn't need deleted, since was a pointer passed in
 	_Battery_initial->delete_clone();
 	delete _Battery_initial;
 }
@@ -358,6 +379,8 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 {
 	bool iterate = true;
 
+	double I_initial = I;
+
 	// stop iterating after 5 tries
 	if (count > 5)
 		iterate = false;
@@ -382,7 +405,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 			I += (_P_grid_to_batt / fabs(_P_tofrom_batt)) *fabs(I);
 	}
 	// Don't let PV export to grid if can still charge battery (increase charging)
-	else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max && fabs(I) < fabs(_Ic_max))
+	else if (_P_pv_to_grid > tolerance && _can_charge && _Battery->battery_soc() < _SOC_max - tolerance && fabs(I) < fabs(_Ic_max))
 	{
 		if (fabs(_P_tofrom_batt) < tolerance)
 			I -= (_P_pv_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
@@ -395,6 +418,10 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	// don't allow changes to violate current limits
 	restrict_current(I);
 
+	// don't allow battery to flip from charging to discharging or vice versa
+	if ((I_initial / I) < 0)
+		I = 0;
+	
 	if (iterate)
 		_Battery->copy(*_Battery_initial);
 

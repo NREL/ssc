@@ -19,6 +19,13 @@ public:
 		int mode,
 		int pv_dispatch);
 
+	// deep copy constructor (new memory), from dispatch to this
+	dispatch_t(const dispatch_t& dispatch);
+
+	// copy members from dispatch to this
+	void copy(const dispatch_t & dispatch);
+	void delete_clone();
+
 	virtual ~dispatch_t();
 
 	// Public APIs

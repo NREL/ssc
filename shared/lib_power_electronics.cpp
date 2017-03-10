@@ -29,8 +29,17 @@ double rectifier::convert_to_dc(double P_ac, double * P_dc)
 charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiency_1, double efficiency_2)
 {	
 	_dispatch = dispatch;
+
+	if (dispatch_manual_t * dispatch_man = dynamic_cast<dispatch_manual_t*>(_dispatch))
+		_dispatch_initial = new dispatch_manual_t(*dispatch_man);
+
 	_battery_metrics = battery_metrics;
+	_iterate = false;
 	initialize(0,0);
+}
+charge_controller::~charge_controller()
+{
+	_dispatch_initial->delete_clone();
 }
 void charge_controller::initialize(double P_pv, double P_load_ac)
 {
@@ -55,6 +64,16 @@ void charge_controller::initialize(double P_pv, double P_load_ac)
 	
 	// ac for ac-connected, dc for dc-connected
 	_P_pv = P_pv;
+
+	// if this is an iteration loop, reset the dispatch
+	if (_iterate)
+		_dispatch->copy(*_dispatch_initial);
+}
+bool charge_controller::check_iterate(){ return _iterate; }
+void charge_controller::finalize()
+{
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_dispatch_initial->copy(*_dispatch);
 }
 
 dc_connected_battery_controller::dc_connected_battery_controller(dispatch_t * dispatch, 
@@ -78,7 +97,7 @@ void dc_connected_battery_controller::preprocess_pv_load()
 	int pv_batt_choice = _dispatch->pv_dispatch_priority();
 
 	// assume inverter isn't operating at peak efficiency
-	double P_load_dc = _P_load / (_inverter_efficiency - 0.005);
+	double P_load_dc = _P_load / _inverter_efficiency;
 	double P_grid_dc = _P_pv - P_load_dc;
 
 
@@ -167,6 +186,9 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	double inverter_efficiency = 1.00;
 	if (fabs(P_gen_dc) > tolerance)
 		inverter_efficiency = P_gen_ac / P_gen_dc;
+	// if all of the PV went to the battery, then no need to worry about inverter
+	else if (fabs(P_gen_dc) < tolerance)
+		inverter_efficiency = _inverter_efficiency;
 
 	// An edge case with large implications on efficiency, investigate further 
 	if (inverter_efficiency < 0)
@@ -178,8 +200,13 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	double P_battery_ac = _P_battery;
 	_P_loss += fabs(P_battery_ac - P_battery_dc);
 
-	// AC charging metrics
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	// check assumption on inverter efficiency
+	_iterate = false;
+	if (fabs(inverter_efficiency - _inverter_efficiency) > tolerance && _P_load > tolerance)
+	{
+		_inverter_efficiency = 0.5 *(inverter_efficiency + _inverter_efficiency);
+		_iterate = true;
+	}
 
 	return _P_loss;
 }
