@@ -2874,7 +2874,7 @@ public:
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour, jj);
 
 					// Iterative loop over DC battery
-					size_t dc_count = 0;
+					size_t dc_count = 0; bool iterate_dc = false;
 					double dcpwr_net = 0, acpwr_gross = 0, aceff = 0, pntloss = 0, psoloss = 0, cliploss = 0, ac_wiringloss = 0;
 					do {
 
@@ -2940,17 +2940,20 @@ public:
 								acpwr_gross *= -1;
 							}
 							batt.update_post_inverted(*this, iyear, hour, jj, acpwr_gross*util::watt_to_kilowatt);
+							iterate_dc = batt.check_iterate(dc_count);
 							acpwr_gross = batt.outGenPower[idx] * util::kilowatt_to_watt;
 						}
 						dc_count++;
-					} while (batt.check_iterate(dc_count));
+					} while (iterate_dc);
 
 					ac_wiringloss = fabs(acpwr_gross) * ac_loss_percent * 0.01;
 
 					// accumulate first year annual energy
 					if (iyear == 0)
 					{
-						annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
+						if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+								annual_dc_power_after_battery += batt.outGenPower[idx] * ts_hour;
+
 						annual_ac_gross += acpwr_gross * util::watt_to_kilowatt * ts_hour;
 						p_inveff[idx] = (ssc_number_t)(aceff);
 						p_invcliploss[idx] = (ssc_number_t)(cliploss * util::watt_to_kilowatt);
