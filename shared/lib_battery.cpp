@@ -352,11 +352,9 @@ Define Lithium Ion capacity model
 */
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max) :capacity_t(q, SOC_max){};
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
-void capacity_lithium_ion_t::copy(capacity_lithium_ion_t *& capacity)
+void capacity_lithium_ion_t::copy(capacity_t *& capacity)
 {
-	capacity_t * tmp = dynamic_cast<capacity_t*>(capacity);
-	capacity_t::copy(tmp);
-	capacity = dynamic_cast<capacity_lithium_ion_t*>(tmp);
+	capacity_t::copy(capacity);
 }
 
 void capacity_lithium_ion_t::replace_battery()
@@ -470,22 +468,25 @@ voltage_t(num_cells_series, num_strings, voltage)
 	parameter_compute();
 };
 voltage_dynamic_t * voltage_dynamic_t::clone(){ return new voltage_dynamic_t(*this); }
-void voltage_dynamic_t::copy(voltage_dynamic_t *& voltage)
+void voltage_dynamic_t::copy(voltage_t *& voltage)
 {
-	voltage_t * tmp = dynamic_cast<voltage_t*>(voltage);
-	voltage_t::copy(tmp);
-	voltage = dynamic_cast<voltage_dynamic_t*>(tmp);
+	
+	voltage_t::copy(voltage);
+	voltage_dynamic_t * tmp = dynamic_cast<voltage_dynamic_t*>(voltage);
 
-	voltage->_Vfull = _Vfull;
-	voltage->_Vexp = _Vexp;
-	voltage->_Qfull = _Qfull;
-	voltage->_Qexp = _Qexp;
-	voltage->_Qnom = _Qnom;
-	voltage->_C_rate = _C_rate;
-	voltage->_A = _A;
-	voltage->_B = _B;
-	voltage->_E0 = _E0;
-	voltage->_K = _K;
+	tmp->_Vfull = _Vfull;
+	tmp->_Vexp = _Vexp;
+	tmp->_Qfull = _Qfull;
+	tmp->_Qexp = _Qexp;
+	tmp->_Qnom = _Qnom;
+	tmp->_C_rate = _C_rate;
+	tmp->_A = _A;
+	tmp->_B = _B;
+	tmp->_E0 = _E0;
+	tmp->_K = _K;
+
+	voltage = dynamic_cast<voltage_t*>(tmp);
+
 }
 void voltage_dynamic_t::parameter_compute()
 {
@@ -544,14 +545,15 @@ voltage_t(num_cells_series, num_strings, V_ref_50)
     _C = 1.38;                 // model correction factor^M	
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
-void voltage_vanadium_redox_t::copy(voltage_vanadium_redox_t *& voltage)
+void voltage_vanadium_redox_t::copy(voltage_t *& voltage)
 {
-	voltage_t * tmp = dynamic_cast<voltage_vanadium_redox_t*>(voltage);
-	voltage_t::copy(tmp);
-	voltage = dynamic_cast<voltage_vanadium_redox_t*>(tmp);
+	voltage_t::copy(voltage);
+	voltage_vanadium_redox_t * tmp = dynamic_cast<voltage_vanadium_redox_t*>(voltage);
 
-	voltage->_V_ref_50 = _V_ref_50;
-	voltage->_R = _R;
+	tmp->_V_ref_50 = _V_ref_50;
+	tmp->_R = _R;
+
+	voltage = dynamic_cast<voltage_t*>(tmp);
 }
 void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
 {

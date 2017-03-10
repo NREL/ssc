@@ -8,6 +8,11 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 {
 	_Battery = Battery;
 	_Battery_initial = new battery_t(*_Battery);
+	init(_Battery, dt_hour, SOC_min, SOC_max, Ic_max, Id_max, t_min, mode, pv_dispatch);
+}
+
+void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double t_min, int mode, int pv_dispatch)
+{
 	_dt_hour = dt_hour;
 	_SOC_min = SOC_min;
 	_SOC_max = SOC_max;
@@ -49,13 +54,15 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 {
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
+	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._Ic_max, dispatch._Id_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
 }
 
-// shallow copy
+// shallow copy from dispatch to this
 void dispatch_t::copy(const dispatch_t & dispatch)
 {
 	_Battery->copy(*dispatch._Battery);
 	_Battery_initial->copy(*dispatch._Battery_initial);
+	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._Ic_max, dispatch._Id_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
 }
 void dispatch_t::delete_clone()
 {
@@ -261,6 +268,18 @@ dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max,
 	t_min, mode, pv_dispatch)
 {
+	init(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
+}
+
+void dispatch_manual_t::init(
+	util::matrix_t<float> dm_dynamic_sched,
+	util::matrix_t<float> dm_dynamic_sched_weekend,
+	bool * dm_charge,
+	bool *dm_discharge,
+	bool * dm_gridcharge,
+	std::map<int, double> dm_percent_discharge,
+	std::map<int, double> dm_percent_gridcharge)
+{
 	_sched = dm_dynamic_sched;
 	_sched_weekend = dm_dynamic_sched_weekend;
 	for (int i = 0; i != 6; i++)
@@ -272,6 +291,41 @@ dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_
 	_percent_discharge_array = dm_percent_discharge;
 	_percent_charge_array = dm_percent_gridcharge;
 }
+
+void dispatch_manual_t::init_with_vects(
+	util::matrix_t<float> dm_dynamic_sched,
+	util::matrix_t<float> dm_dynamic_sched_weekend,
+	std::vector<bool> dm_charge,
+	std::vector<bool> dm_discharge,
+	std::vector<bool> dm_gridcharge,
+	std::map<int, double> dm_percent_discharge,
+	std::map<int, double> dm_percent_gridcharge)
+{
+	_sched = dm_dynamic_sched;
+	_sched_weekend = dm_dynamic_sched_weekend;
+	_charge_array = dm_charge;
+	_discharge_array = dm_discharge;
+	_gridcharge_array = dm_gridcharge;
+	_percent_discharge_array = dm_percent_discharge;
+	_percent_charge_array = dm_percent_gridcharge;
+}
+
+// deep copy from dispatch to this
+dispatch_manual_t::dispatch_manual_t(const dispatch_t & dispatch) : 
+dispatch_t(dispatch)
+{
+	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
+	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
+}
+
+// shallow copy from dispatch to this
+void dispatch_manual_t::copy(const dispatch_t & dispatch)
+{
+	dispatch_t::copy(dispatch);
+	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
+	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
+}
+
 void dispatch_manual_t::initialize_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging)
 {
 	int m, h, column;
