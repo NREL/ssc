@@ -1,5 +1,5 @@
 #include "lib_battery_dispatch.h"
-
+#include <cmath>
 /*
 Dispatch base class
 */
