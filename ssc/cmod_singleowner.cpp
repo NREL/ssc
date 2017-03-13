@@ -54,7 +54,7 @@ static var_info _cm_vtab_singleowner[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "PPA price multipliers (SO)", "", "", "Time of Delivery", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "PPA price multipliers", "", "", "Time of Delivery", "*", "", "" },
 
 
 
