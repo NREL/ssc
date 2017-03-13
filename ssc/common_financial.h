@@ -19,22 +19,32 @@ private:
 	std::vector<double> m_degradation;
 	std::vector<double> m_hourly_energy;
 	int m_nyears;
+	bool m_timestep;
+	ssc_number_t *m_gen;
+	ssc_number_t *m_multipliers;
+	size_t m_ngen;
+	size_t m_nmultipliers;
 
 public:
 	dispatch_calculations() {};
 	dispatch_calculations(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy);
 	bool init(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy);
 	bool setup();
+	bool setup_ts();
 	bool compute_outputs(std::vector<double>& ppa);
+	bool compute_outputs_ts(std::vector<double>& ppa);
 	int operator()(size_t time);
 	std::string error() { return m_error; }
 	bool process_dispatch_output();
 	bool compute_dispatch_output();
 	bool process_lifetime_dispatch_output();
 	bool compute_lifetime_dispatch_output();
+	bool compute_dispatch_output_ts();
+	bool compute_lifetime_dispatch_output_ts();
 	util::matrix_t<double>& dispatch_output();
 	double tod_energy(int period, int year);
 	double tod_energy_value(int period, int year);
+	double tod_energy_value(int year);
 };
 
 

@@ -347,9 +347,11 @@ bool sf_adjustment_factors::setup(int nsteps)
 		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
 		if (p != 0 && n == nsteps)
 		{
-			for (size_t i = 0; i<nsteps; i++)
+			for (size_t i = 0; i < nsteps; i++)
 				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
 		}
+		if (n!=nsteps)
+			m_error = util::format("array length must match number of yearly simulation time steps (%d).", nsteps);
 	}
 
 	if (m_cm->is_assigned("sf_adjust:periods"))
