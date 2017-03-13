@@ -13,13 +13,13 @@ static const double az_scale = 6.283125908;
 
 static C_csp_reported_outputs::S_output_info S_output_info[] = 
 {
-	{C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, true},
-	{C_csp_gen_collector_receiver::E_ETA_FIELD, true},
-	{C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, true},
-	{C_csp_gen_collector_receiver::E_ETA_THERMAL, true},
-	{C_csp_gen_collector_receiver::E_F_SFHL_QDNI, true},
-	{C_csp_gen_collector_receiver::E_F_SFHL_QWSPD, true},
-	{C_csp_gen_collector_receiver::E_F_SFHL_QTDRY, true},
+	{ C_csp_gen_collector_receiver::E_Q_DOT_FIELD_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_gen_collector_receiver::E_ETA_FIELD, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_gen_collector_receiver::E_Q_DOT_REC_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_gen_collector_receiver::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_gen_collector_receiver::E_F_SFHL_QDNI, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_gen_collector_receiver::E_F_SFHL_QWSPD, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_gen_collector_receiver::E_F_SFHL_QTDRY, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
     csp_info_invalid
 };

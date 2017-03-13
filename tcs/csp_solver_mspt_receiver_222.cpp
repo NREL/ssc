@@ -52,7 +52,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
 	m_tol_od = std::numeric_limits<double>::quiet_NaN();
 	m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
-	m_q_rec_min = std::numeric_limits<double>::quiet_NaN();
+	m_q_dot_inc_min = std::numeric_limits<double>::quiet_NaN();
 
 	m_mode = -1;
 	m_mode_prev = -1;
@@ -159,7 +159,8 @@ void C_mspt_receiver_222::init()
 
 	double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0)*1000.0;		//[J/kg-K] Specific heat at design conditions
 	m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
-	m_q_rec_min = m_q_rec_des * m_f_rec_min;	//[W] Minimum receiver thermal power
+	double eta_therm_des = 0.9;
+	m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / eta_therm_des;	//[W] Minimum receiver thermal power
 
 	m_mode_prev = m_mode;
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
@@ -477,6 +478,12 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		for( int i = 0; i < m_n_panels; i++ )
 			q_dot_inc_sum += m_q_dot_inc.at(i);		//[kW] Total power absorbed by receiver
 
+		// Check that total incident power is greater than min fraction * design
+		//if (q_dot_inc_sum*1.E3 < m_q_dot_inc_min)
+		//	m_mode = C_csp_collector_receiver::OFF;  // Set the startup mode
+		//	rec_is_off = true;
+		//	break;
+		
 		// Set guess values
 		if( m_night_recirc == 1 )
 		{
@@ -827,7 +834,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 
 				q_thermal = m_dot_salt_tot*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
 
-				if( q_thermal < m_q_rec_min )
+				//if( q_thermal < m_q_rec_min )
+				if(q_dot_inc_sum*1.E3 < m_q_dot_inc_min)
 				{
 					// If output here is less than specified allowed minimum, then need to shut off receiver
 					m_mode = C_csp_collector_receiver::OFF;
@@ -856,12 +864,12 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		q_thermal_ss = m_dot_salt_tot_ss*c_p_coolant*(T_salt_hot_guess - T_salt_cold_in);
 
 		// After convergence, determine whether the mass flow rate falls below the lower limit
-		if( q_thermal < m_q_rec_min )
+		if(q_dot_inc_sum*1.E3 < m_q_dot_inc_min)
 		{
 			// GOTO 900
 			// Steady State always reports q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
 			// Should be a way to communicate to controller that q_thermal is less than q_min without losing this functionality
-			if(m_mode != C_csp_collector_receiver::STEADY_STATE)
+			if(m_mode != C_csp_collector_receiver::STEADY_STATE || m_mode_prev == C_csp_collector_receiver::ON)
 				rec_is_off = true;
 		}
 	}

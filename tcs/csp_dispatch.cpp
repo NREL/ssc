@@ -468,6 +468,13 @@ bool csp_dispatch_opt::optimize()
             REAL *row = new REAL[12 * nt];
             double tadj = disp_time_weighting;
             int i = 0;
+
+            //calculate the mean price to appropriately weight the receiver production timing derate
+            double pmean =0;
+            for(int t=0; t<price_signal.size(); t++)
+                pmean += price_signal.at(t);
+            pmean /= (double)price_signal.size();
+            //--
             
             for(int t=0; t<nt; t++)
             {
@@ -476,7 +483,7 @@ bool csp_dispatch_opt::optimize()
                 row[ t + nt*(i++) ] = delta * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(delta * price_signal.at(t) * Lr) + tadj/qrecmaxobs;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(delta * price_signal.at(t) * Lr)+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
                 row[ t + nt*(i++) ] = -delta * price_signal.at(t) * Lr;
@@ -1078,12 +1085,13 @@ bool csp_dispatch_opt::optimize()
                 //min charge state in time periods where cycle operates and receiver is starting up
                 if(t < nt-1)
                 {
-                    double smin = ( 1. - max(outputs.q_sfavail_expected.at(t+1) - Er/delta, 0.) / max(outputs.q_sfavail_expected.at(t+1), 1.e-6) ) * Ql * delta;
+                    double delta_rec_startup = min(1., max(params.e_rec_startup/max(outputs.q_sfavail_expected.at(t+1)*delta,1.), params.dt_rec_startup/delta) );
+                    double smin = max(0.01, outputs.q_sfavail_expected.at(t+1)*delta - params.e_rec_startup - (1.-delta_rec_startup)*params.q_pb_des );
 
                     int i=0;
 
                     row[i  ] = 1./smin;
-                    col[i++] = O.column("s", t);
+                    col[i++] = O.column("s", t+1);
 
                     row[i  ] = -1;
                     col[i++] = O.column("y", t+1);
@@ -1586,7 +1594,6 @@ std::string csp_dispatch_opt::write_ampl()
         fout << "param day_of_year := " << day << ";\n";
         fout << "param T := " << nt << ";\n";
         fout << "param Eu := " << params.e_tes_max << ";\n";
-        //fout << "param El := " << params.e_tes_min << ";\n";
         fout << "param Er := " << params.e_rec_startup << ";\n";
         fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
         fout << "param Qu := " << params.q_pb_max << ";\n";

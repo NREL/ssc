@@ -6,35 +6,35 @@ using namespace std;
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_csp_trough_collector_receiver::E_THETA_AVE, true},
-	{C_csp_trough_collector_receiver::E_COSTH_AVE, true},
-	{C_csp_trough_collector_receiver::E_IAM_AVE, true},
-	{C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, true},
-	{C_csp_trough_collector_receiver::E_ENDLOSS_AVE, true},
-	{C_csp_trough_collector_receiver::E_DNI_COSTH, true},
-	{C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, true},
-	{C_csp_trough_collector_receiver::E_DEFOCUS, true},
+	{C_csp_trough_collector_receiver::E_THETA_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_COSTH_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_IAM_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_ENDLOSS_AVE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_DNI_COSTH, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, true},
-	{C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, true},
-	{C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, true},
+	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, true},
-	{C_csp_trough_collector_receiver::E_M_DOT_FIELD, true},
-	{C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, true},
-	{C_csp_trough_collector_receiver::E_T_REC_COLD_IN, true},
-	{C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, true},
-	{C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, true},
-	{C_csp_trough_collector_receiver::E_PRESSURE_DROP, true},
+	{C_csp_trough_collector_receiver::E_M_DOT_LOOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_M_DOT_FIELD, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_T_REC_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_PRESSURE_DROP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, true},
-	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, true},
+	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -374,7 +374,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
-	solved_params.m_q_dot_rec_on_min = 0.0;				//[W/m^2] Not sure that this is super important for the trough
 	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 

@@ -107,7 +107,8 @@ public:
 	int m_n_flux_y;
 
 	// Calculate in init()
-	double m_q_rec_min;				//[W]
+	double m_q_dot_inc_min;			//[Wt]
+	// double m_q_rec_min;				//[W]
 
 		// 4.17.15 twn: former TCS inputs, moved to member data because are constant throughout simulation
 	double m_T_salt_hot_target;			//[C], convert to K in init() call

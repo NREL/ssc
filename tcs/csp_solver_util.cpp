@@ -1,13 +1,15 @@
 #include "csp_solver_util.h"
 #include <math.h>
 
-const C_csp_reported_outputs::S_output_info csp_info_invalid = {-1, true};
+const C_csp_reported_outputs::S_output_info csp_info_invalid = {-1, -1};
 
 C_csp_reported_outputs::C_output::C_output()
 {
 	mp_reporting_ts_array = 0;		// Initialize pointer to NULL
 
 	m_is_allocated = false;
+
+	m_subts_weight_type = -1;
 
 	m_counter_reporting_ts_array = 0;
 
@@ -24,9 +26,16 @@ void C_csp_reported_outputs::C_output::assign(float *p_reporting_ts_array, int n
 	m_n_reporting_ts_array = n_reporting_ts_array;
 }
 
-void C_csp_reported_outputs::C_output::set_m_is_ts_weighted(bool is_ts_weighted)
+void C_csp_reported_outputs::C_output::set_m_is_ts_weighted(int subts_weight_type)
 {
-	m_is_ts_weighted = is_ts_weighted;
+	m_subts_weight_type = subts_weight_type;
+
+	if( !(m_subts_weight_type == TS_WEIGHTED_AVE ||
+		  m_subts_weight_type == TS_1ST ||
+		  m_subts_weight_type == TS_LAST) )
+	{
+		throw(C_csp_exception("C_csp_reported_outputs::C_output::send_to_reporting_ts_array did not recognize subtimestep weighting type"));
+	}
 }
 
 int C_csp_reported_outputs::C_output::get_vector_size()
@@ -59,7 +68,7 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
 	
 		double m_report_step = report_time_end - report_time_start;
 
-		if( m_is_ts_weighted )
+		if( m_subts_weight_type == TS_WEIGHTED_AVE )
 		{	// ***********************************************************
 			//      Set outputs that are reported as weighted averages if 
 			//       multiple csp-timesteps for one reporting timestep
@@ -74,12 +83,23 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
 			}
 			mp_reporting_ts_array[m_counter_reporting_ts_array] /= m_report_step;
 		}
-		else
+		else if (m_subts_weight_type == TS_1ST)
 		{	// ************************************************************
 			// Set instantaneous outputs that are reported as the first value
 			//   if multiple csp-timesteps for one reporting timestep
 			// ************************************************************
 			mp_reporting_ts_array[m_counter_reporting_ts_array] = mv_temp_outputs[0];
+		}
+		else if (m_subts_weight_type == TS_LAST)
+		{	// ************************************************************
+			// Set instantaneous outputs that are reported as the first value
+			//   if multiple csp-timesteps for one reporting timestep
+			// ************************************************************
+			mp_reporting_ts_array[m_counter_reporting_ts_array] = mv_temp_outputs[n_report - 1];
+		}
+		else
+		{
+			throw(C_csp_exception("C_csp_reported_outputs::C_output::send_to_reporting_ts_array did not recognize subtimestep weighting type"));
 		}
 
 		if( is_save_last_step )
@@ -149,7 +169,7 @@ void C_csp_reported_outputs::construct(const S_output_info *output_info)
 	// Loop through the output info and set m_is_ts_weighted for each output
 	for( int i = 0; i < n_outputs; i++ )
 	{
-		mvc_outputs[i].set_m_is_ts_weighted(output_info[i].m_is_ts_weighted);
+		mvc_outputs[i].set_m_is_ts_weighted(output_info[i].m_subts_weight_type);
 	}
 
 	m_n_reporting_ts_array = -1;

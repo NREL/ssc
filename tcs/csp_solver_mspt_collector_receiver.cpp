@@ -3,19 +3,19 @@
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, true},
-	{C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, true},
-	{C_csp_mspt_collector_receiver::E_FIELD_ADJUST, true},
+	{C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_FIELD_ADJUST, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
-	{C_csp_mspt_collector_receiver::E_Q_DOT_INC, true},
-	{C_csp_mspt_collector_receiver::E_ETA_THERMAL, true},
-	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, true},
-	{C_csp_mspt_collector_receiver::E_M_DOT_HTF, true},
-	{C_csp_mspt_collector_receiver::E_Q_DOT_STARTUP, true},
-	{C_csp_mspt_collector_receiver::E_T_HTF_IN, true},
-	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, true},
-	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, true},
-	{C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, true},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_ETA_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	
 	csp_info_invalid	
 };
@@ -38,7 +38,6 @@ void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_c
 	mc_mspt_receiver_222.init();
 
 	solved_params.m_T_htf_cold_des = mc_mspt_receiver_222.m_T_htf_cold_des;			//[K]
-	solved_params.m_q_dot_rec_on_min = mc_mspt_receiver_222.m_q_rec_min / 1.E6;		//[MW]
 	solved_params.m_q_dot_rec_des = mc_mspt_receiver_222.m_q_rec_des / 1.E6;		//[MW]
 	solved_params.m_A_aper_total = mc_pt_heliostatfield.ms_params.m_A_sf;			//[m^2]
 

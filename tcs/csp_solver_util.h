@@ -11,6 +11,13 @@ class C_csp_reported_outputs
 
 public:
 	
+	enum E_subts_weight_type
+	{
+		TS_WEIGHTED_AVE,
+		TS_1ST,
+		TS_LAST
+	};
+
 	class C_output
 	{
 	private:
@@ -19,7 +26,9 @@ public:
 		std::vector<double> mv_temp_outputs;
 
 		bool m_is_allocated;		// True = memory allocated for array. False = no memory allocated, won't write outputs
-		bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs
+		
+		int m_subts_weight_type;	// 0: timestep-weighted average, 1: Take first piont in mv_temp_outputs, 2: Take final point in mv_temp_outupts
+		//bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs
 		
 		int m_counter_reporting_ts_array;	//[-] Tracking current location of reporting array
 
@@ -28,7 +37,7 @@ public:
 
 		int get_vector_size();
 
-		void set_m_is_ts_weighted(bool is_ts_weighted);
+		void set_m_is_ts_weighted(int subts_weight_type);
 
 		void assign(float *p_reporting_ts_array, int n_reporting_ts_array);
 
@@ -48,7 +57,9 @@ public:
 	{
 		// Finally name must be = OUTPUT_END, so that we know how many outputs are in the table
 		int m_name;					//[-] Integer key for variable
-		bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs	
+		int m_subts_weight_type;	// 0: timestep-weighted average, 1: Take first piont in mv_temp_outputs, 2: Take final point in mv_temp_outupts
+
+		//bool m_is_ts_weighted;		// True = timestep-weighted average of mv_temp_outputs, False = take first point in mv_temp_outputs	
 	};
 
 private:

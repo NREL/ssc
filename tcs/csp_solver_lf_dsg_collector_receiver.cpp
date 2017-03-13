@@ -6,32 +6,32 @@ using namespace std;
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-	{C_csp_lf_dsg_collector_receiver::E_THETA_TRAVERSE, true},
-	{C_csp_lf_dsg_collector_receiver::E_THETA_LONGITUDINAL, true},
-	{C_csp_lf_dsg_collector_receiver::E_ETA_OPTICAL, true},
-	{C_csp_lf_dsg_collector_receiver::E_DEFOCUS, true},
+	{C_csp_lf_dsg_collector_receiver::E_THETA_TRAVERSE, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_lf_dsg_collector_receiver::E_THETA_LONGITUDINAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_lf_dsg_collector_receiver::E_ETA_OPTICAL, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_csp_lf_dsg_collector_receiver::E_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_INC_SF_TOT, true},		//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_INC, true},			//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, true},	//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_ABS, true},			//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_PIPING_LOSS, true},		//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_E_DOT_INTERNAL_ENERGY, true},	//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_OUT, true},				//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_FREEZE_PROT, true},		//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_INC_SF_TOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_REC_ABS, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_PIPING_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_E_DOT_INTERNAL_ENERGY, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},				//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_Q_DOT_FREEZE_PROT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt]
 
-	{C_csp_lf_dsg_collector_receiver::E_M_DOT_LOOP, true},			//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_M_DOT_FIELD, true},			//[MWt]
-	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_COLD_IN, true},	    //[C]
-	{C_csp_lf_dsg_collector_receiver::E_T_REC_COLD_IN, true},	    //[C]
-	{C_csp_lf_dsg_collector_receiver::E_T_REC_HOT_OUT, true},	    //[C]
-	{C_csp_lf_dsg_collector_receiver::E_X_REC_HOT_OUT, true},		//[-]
-	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_HOT_OUT, true},     //[C]
-	{C_csp_lf_dsg_collector_receiver::E_X_FIELD_HOT_OUT, true},		//[-]
-	{C_csp_lf_dsg_collector_receiver::E_PRESSURE_DROP, true},		//[bar]
+	{C_csp_lf_dsg_collector_receiver::E_M_DOT_LOOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_M_DOT_FIELD, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[MWt]
+	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},	    //[C]
+	{C_csp_lf_dsg_collector_receiver::E_T_REC_COLD_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},	    //[C]
+	{C_csp_lf_dsg_collector_receiver::E_T_REC_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},	    //[C]
+	{C_csp_lf_dsg_collector_receiver::E_X_REC_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[-]
+	{C_csp_lf_dsg_collector_receiver::E_T_FIELD_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},     //[C]
+	{C_csp_lf_dsg_collector_receiver::E_X_FIELD_HOT_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[-]
+	{C_csp_lf_dsg_collector_receiver::E_PRESSURE_DROP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[bar]
 
-	{C_csp_lf_dsg_collector_receiver::E_W_DOT_SCA_TRACK, true},		//[MWe]
-	{C_csp_lf_dsg_collector_receiver::E_W_DOT_PUMP, true},			//[MWe]
+	{C_csp_lf_dsg_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWe]
+	{C_csp_lf_dsg_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[MWe]
 
 	csp_info_invalid
 };
@@ -968,7 +968,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	solved_params.m_T_htf_cold_des = m_T_field_in_des;	//[K] Design point inlet temperature
 	solved_params.m_P_cold_des = m_P_turb_des*100.0;	//[kPa] Design point *field outlet* pressure
 	solved_params.m_x_cold_des = -1;					//[-] Design point inlet quality
-	solved_params.m_q_dot_rec_on_min = 0.0;				//[W/m^2] Not sure that this is super important for LF
 	solved_params.m_q_dot_rec_des = m_q_dot_abs_tot_des / 1.E3;	//[MWt] Absorbed thermal power delivered to HTF at design
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m2]
 

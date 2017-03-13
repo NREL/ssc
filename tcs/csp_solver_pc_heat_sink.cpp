@@ -5,8 +5,8 @@
 
 static C_csp_reported_outputs::S_output_info S_output_info[]=
 {
-	{C_pc_heat_sink::E_Q_DOT_HEAT_SINK, true},
-	{C_pc_heat_sink::E_W_DOT_PUMPING, true},
+	{C_pc_heat_sink::E_Q_DOT_HEAT_SINK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_heat_sink::E_W_DOT_PUMPING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };

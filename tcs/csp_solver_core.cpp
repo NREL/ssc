@@ -107,82 +107,82 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 {
 	// Ouputs that are NOT reported as weighted averages
 		// Simulation
-	{C_csp_solver::C_solver_outputs::TIME_FINAL, false},	//[hr]
+	{C_csp_solver::C_solver_outputs::TIME_FINAL, C_csp_reported_outputs::TS_LAST},	//[hr]
 		// Weather Reader
-	{C_csp_solver::C_solver_outputs::MONTH, false},			//[-] Month of year
-	{C_csp_solver::C_solver_outputs::HOUR_DAY, false},		//[hr] hour of day
+	{ C_csp_solver::C_solver_outputs::MONTH, C_csp_reported_outputs::TS_1ST},		//[-] Month of year
+	{ C_csp_solver::C_solver_outputs::HOUR_DAY, C_csp_reported_outputs::TS_1ST},		//[hr] hour of day
 		// Controller, TES, & Dispatch
-	{C_csp_solver::C_solver_outputs::ERR_M_DOT, false},		//[-] Relative mass conservation error
-	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, false},		//[-] Relative energy conservation error
-	{C_csp_solver::C_solver_outputs::N_OP_MODES, false},	//[-] Number of subtimesteps in reporting timestep
-	{C_csp_solver::C_solver_outputs::OP_MODE_1, false},     //[-] Operating mode in first subtimestep
-	{C_csp_solver::C_solver_outputs::OP_MODE_2, false},		//[-] Operating mode in second subtimestep
-	{C_csp_solver::C_solver_outputs::OP_MODE_3, false},		//[-] Operating mode in third subtimestep
-	{C_csp_solver::C_solver_outputs::TOU_PERIOD, false},                  //[-] CSP operating TOU period
-	{C_csp_solver::C_solver_outputs::PRICING_MULT, false},				  //[-] PPA price multiplier
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, false},				  //[MWt] PC required standby thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, false},				  //[MWt] PC required min thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, false},			  //[MWt] PC target thermal power
-	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, false},				  //[MWt] PC allowable max thermal power
-	{C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, false},			  //[-] Control decision: is receiver startup allowed?
-	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, false},				  //[-] Control decision: is power cycle startup allowed?
-	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, false},				  //[-] Control decision: is power cycle standby allowed?
-	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, false},			  //[MWt] Estimate receiver startup thermal power
-	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, false},			  //[MWt] Estimate receiver thermal power to HTF
-	{C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, false},				  //[MWt] Estimate max TES dc thermal power
-	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CH, false},				  //[MWt] Estimate max TES ch thermal power
-	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, false},		  //[-] First 3 operating modes tried
-	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, false},		  //[-] Next 3 operating modes tried
-	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, false},		  //[-] Final 3 operating modes tried
-	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, false},		  //[-] The status of the dispatch optimization solver
-	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, false},		  //[-] Number of iterations before completing dispatch optimization
-	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, false},		  //[?] Objective function value achieved by the dispatch optimization solver
-	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, false},	  //[?] Objective function value for the relaxed continuous problem 
-	{C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, false},		  //[MWt] Expected total solar field energy generation in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, false},	  //[MWt] Expected useful solar field energy generation in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, false},		  //[MWt] Solar field startup energy in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, false},		  //[MWht] Thermal energy storage charge state in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, false},		  //[-] Expected power cycle efficiency adjustment in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, false},		  //[-] Expected solar field thermal efficiency adjustment in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, false},		  //[MWt] Power cycle startup energy consumption in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, false},		  //[MWe] Power cycle electricity production in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, false},		  //[MWe*fact] Power cycle electricity production times revenue factor in dispatch model
-	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, false},		  //[-] Number of constraint relationships in dispatch model formulation
-	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, false},		  //[-] Number of variables in dispatch model formulation
-	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, false},		  //[sec]   Time required to solve the dispatch model at each instance
+	{C_csp_solver::C_solver_outputs::ERR_M_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative mass conservation error
+	{C_csp_solver::C_solver_outputs::ERR_Q_DOT, C_csp_reported_outputs::TS_1ST},		//[-] Relative energy conservation error
+	{C_csp_solver::C_solver_outputs::N_OP_MODES, C_csp_reported_outputs::TS_1ST},	//[-] Number of subtimesteps in reporting timestep
+	{C_csp_solver::C_solver_outputs::OP_MODE_1, C_csp_reported_outputs::TS_1ST},     //[-] Operating mode in first subtimestep
+	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in second subtimestep
+	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		//[-] Operating mode in third subtimestep
+	{C_csp_solver::C_solver_outputs::TOU_PERIOD, C_csp_reported_outputs::TS_1ST},                  //[-] CSP operating TOU period
+	{C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required standby thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required min thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_1ST},			  //[MWt] PC target thermal power
+	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC allowable max thermal power
+	{C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, C_csp_reported_outputs::TS_1ST},			  //[-] Control decision: is receiver startup allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle startup allowed?
+	{C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, C_csp_reported_outputs::TS_1ST},				  //[-] Control decision: is power cycle standby allowed?
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, C_csp_reported_outputs::TS_1ST},			  //[MWt] Estimate receiver startup thermal power
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, C_csp_reported_outputs::TS_1ST},			  //[MWt] Estimate receiver thermal power to HTF
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, C_csp_reported_outputs::TS_1ST},				  //[MWt] Estimate max TES dc thermal power
+	{C_csp_solver::C_solver_outputs::EST_Q_DOT_CH, C_csp_reported_outputs::TS_1ST},				  //[MWt] Estimate max TES ch thermal power
+	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, C_csp_reported_outputs::TS_1ST},		  //[-] First 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, C_csp_reported_outputs::TS_1ST},		  //[-] Next 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, C_csp_reported_outputs::TS_1ST},		  //[-] Final 3 operating modes tried
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, C_csp_reported_outputs::TS_1ST},		  //[-] The status of the dispatch optimization solver
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, C_csp_reported_outputs::TS_1ST},		  //[-] Number of iterations before completing dispatch optimization
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, C_csp_reported_outputs::TS_1ST},		  //[?] Objective function value achieved by the dispatch optimization solver
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, C_csp_reported_outputs::TS_1ST},	  //[?] Objective function value for the relaxed continuous problem 
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWt] Expected total solar field energy generation in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, C_csp_reported_outputs::TS_1ST},	  //[MWt] Expected useful solar field energy generation in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWt] Solar field startup energy in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWht] Thermal energy storage charge state in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[-] Expected power cycle efficiency adjustment in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[-] Expected solar field thermal efficiency adjustment in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWt] Power cycle startup energy consumption in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWe] Power cycle electricity production in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, C_csp_reported_outputs::TS_1ST},		  //[MWe*fact] Power cycle electricity production times revenue factor in dispatch model
+	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of constraint relationships in dispatch model formulation
+	{C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, C_csp_reported_outputs::TS_1ST},		  //[-] Number of variables in dispatch model formulation
+	{C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, C_csp_reported_outputs::TS_1ST},		  //[sec]   Time required to solve the dispatch model at each instance
 
 	// **************************************************************
 	//      Outputs that are reported as weighted averages if 
 	//       multiple csp-timesteps for one reporting timestep
 	// **************************************************************
 
-	{C_csp_solver::C_solver_outputs::SOLZEN, true},			//[deg] Solar zenith angle
-	{C_csp_solver::C_solver_outputs::SOLAZ, true},			//[deg] Solar azimuth angle
-	{C_csp_solver::C_solver_outputs::BEAM, true},			//[W/m^2] Resource beam normal irradiance
-	{C_csp_solver::C_solver_outputs::TDRY, true},			//[C] Dry bulb temperature
-	{C_csp_solver::C_solver_outputs::TWET, true},			//[C] Wet bulb temperature
-	{C_csp_solver::C_solver_outputs::RH, true},				//[-] Relative humidity
-	{C_csp_solver::C_solver_outputs::WSPD, true},           //[m/s] Wind speed
-	{C_csp_solver::C_solver_outputs::PRES, true}, 			//[mbar] Atmospheric pressure
+	{C_csp_solver::C_solver_outputs::SOLZEN, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[deg] Solar zenith angle
+	{C_csp_solver::C_solver_outputs::SOLAZ, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[deg] Solar azimuth angle
+	{C_csp_solver::C_solver_outputs::BEAM, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[W/m^2] Resource beam normal irradiance
+	{C_csp_solver::C_solver_outputs::TDRY, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[C] Dry bulb temperature
+	{C_csp_solver::C_solver_outputs::TWET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			//[C] Wet bulb temperature
+	{C_csp_solver::C_solver_outputs::RH, C_csp_reported_outputs::TS_WEIGHTED_AVE},				//[-] Relative humidity
+	{C_csp_solver::C_solver_outputs::WSPD, C_csp_reported_outputs::TS_WEIGHTED_AVE},           //[m/s] Wind speed
+	{C_csp_solver::C_solver_outputs::PRES, C_csp_reported_outputs::TS_WEIGHTED_AVE}, 			//[mbar] Atmospheric pressure
 		
 		// Controller and TES
-	{C_csp_solver::C_solver_outputs::CR_DEFOCUS, true},		//[-] Field optical focus fraction
-	{C_csp_solver::C_solver_outputs::TES_Q_DOT_LOSS, true},       //[MWt] TES thermal losses
-	{C_csp_solver::C_solver_outputs::TES_W_DOT_HEATER, true},	  //[MWe] TES freeze protection power
-	{C_csp_solver::C_solver_outputs::TES_T_HOT, true},			  //[C] TES final hot tank temperature
-	{C_csp_solver::C_solver_outputs::TES_T_COLD, true},			  //[C] TES final cold tank temperature
-	{C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, true},		  //[MWt] TES discharge thermal power
-	{C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, true},		  //[MWt] TES charge thermal power
-	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, true},		  //[MWht] TES charge state at the end of the time step
-	{C_csp_solver::C_solver_outputs::TES_M_DOT_DC, true},		  //[MWt] TES discharge mass flow rate
-	{C_csp_solver::C_solver_outputs::TES_M_DOT_CH, true},		  //[MWt] TES charge mass flow rate
-	{C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, true},	  //[MWe] Parasitic collector tracking, startup, stow power consumption
-	{C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, true},		  //[MWe] Parasitic tower HTF pump power
-	{C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, true},		  //[MWe] Parasitic PC and TES HTF pump power
-	{C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, true},	  //[MWe] Parasitic condenser operation power
-	{C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, true},	  //[MWe] Parasitic fixed power consumption
-	{C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, true},		  //[MWe] Parasitic BOP power consumption
-	{C_csp_solver::C_solver_outputs::W_DOT_NET, true},			  //[MWe] System total electric power to grid
+	{C_csp_solver::C_solver_outputs::CR_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[-] Field optical focus fraction
+	{C_csp_solver::C_solver_outputs::TES_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},       //[MWt] TES thermal losses
+	{C_csp_solver::C_solver_outputs::TES_W_DOT_HEATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] TES freeze protection power
+	{C_csp_solver::C_solver_outputs::TES_T_HOT, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[C] TES final hot tank temperature
+	{C_csp_solver::C_solver_outputs::TES_T_COLD, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[C] TES final cold tank temperature
+	{C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES discharge thermal power
+	{C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES charge thermal power
+	{C_csp_solver::C_solver_outputs::TES_E_CH_STATE, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWht] TES charge state at the end of the time step
+	{C_csp_solver::C_solver_outputs::TES_M_DOT_DC, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES discharge mass flow rate
+	{C_csp_solver::C_solver_outputs::TES_M_DOT_CH, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWt] TES charge mass flow rate
+	{C_csp_solver::C_solver_outputs::COL_W_DOT_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic collector tracking, startup, stow power consumption
+	{C_csp_solver::C_solver_outputs::CR_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic tower HTF pump power
+	{C_csp_solver::C_solver_outputs::SYS_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic PC and TES HTF pump power
+	{C_csp_solver::C_solver_outputs::PC_W_DOT_COOLING, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic condenser operation power
+	{C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWe] Parasitic fixed power consumption
+	{C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},		  //[MWe] Parasitic BOP power consumption
+	{C_csp_solver::C_solver_outputs::W_DOT_NET, C_csp_reported_outputs::TS_WEIGHTED_AVE},			  //[MWe] System total electric power to grid
 
 	csp_info_invalid
 };
@@ -206,7 +206,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 
 	// Inititalize non-reference member data
 	m_T_htf_cold_des = m_P_cold_des = m_x_cold_des =
-		m_q_dot_rec_on_min = m_q_dot_rec_des = m_A_aperture =
+		m_q_dot_rec_des = m_A_aperture =
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = m_m_dot_pc_des = std::numeric_limits<double>::quiet_NaN();
@@ -305,7 +305,6 @@ void C_csp_solver::init()
 	m_T_htf_cold_des = cr_solved_params.m_T_htf_cold_des;		//[K]
 	m_P_cold_des = cr_solved_params.m_P_cold_des;				//[kPa]
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
-	m_q_dot_rec_on_min = cr_solved_params.m_q_dot_rec_on_min;	//[MW]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
 	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
 		// Power cycle
@@ -627,10 +626,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info);
 		double q_dot_cr_startup = est_out.m_q_startup_avail;
 		double q_dot_cr_on = est_out.m_q_dot_avail;
-		if( q_dot_cr_on <= m_q_dot_rec_on_min*1.01 )
-		{
-			q_dot_cr_on = 0.0;
-		}
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
@@ -816,7 +811,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
                 is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
 
-                q_pc_target = dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) / 1000. ;
+                q_pc_target = (dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) 
+                    + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
+                    / 1000. ;
 
                 //quality checks
 				/*
@@ -853,8 +850,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					q_pc_max = fmin(q_pc_max, dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc); // Restrict max pc thermal input to *approximate* current allowable value (doesn't yet account for parasitics)
 					q_pc_max = fmax(q_pc_max, q_pc_target);													// calculated q_pc_target accounts for parasitics --> can be higher than approximate limit 
 				}
-				if (m_q_dot_rec_on_min > q_pc_max && q_dot_tes_ch < m_q_dot_rec_on_min - q_pc_max)		// Min receiver thermal power > Max power cycle thermal power and the difference can't be sent to storage
-					is_rec_su_allowed = 0;
 
                 //q_pc_sb = dispatch.outputs.q_pb_standby.at( dispatch.m_current_read_step ) / 1000. ;
 
@@ -896,7 +891,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		// Check if CR startup should be solved before entering hierarchy
 		double q_dot_tes_dc_t_CR_su = 0.0;
 		if( (cr_operating_state == C_csp_collector_receiver::OFF || cr_operating_state == C_csp_collector_receiver::STARTUP) &&
-			q_dot_cr_startup &&
+			q_dot_cr_startup > 0.0 &&
 			is_rec_su_allowed && 
 			m_is_tes )
 		{
