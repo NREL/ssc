@@ -552,9 +552,16 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 				double y_err_pos_prev = std::numeric_limits<double>::quiet_NaN();
 				if( m_is_pos_error )
 				{
-					m_is_pos_error_prev = true;
-					x_pos_err_prev = m_x_pos_err;
-					y_err_pos_prev = m_y_err_pos;
+					if (m_y_err > m_y_err_pos)
+					{	// Equation not behaving monotonically, so disregard previous smaller error and use current larger
+						m_is_pos_error_prev = false;
+					}
+					else
+					{
+						m_is_pos_error_prev = true;
+						x_pos_err_prev = m_x_pos_err;
+						y_err_pos_prev = m_y_err_pos;
+					}					
 				}
 				else
 				{
@@ -596,9 +603,16 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 				double y_err_neg_prev = std::numeric_limits<double>::quiet_NaN();
 				if( m_is_neg_error )
 				{
-					m_is_neg_error_prev = true;
-					x_neg_err_prev = m_x_neg_err;
-					y_err_neg_prev = m_y_err_neg;
+					if (m_y_err < m_y_err_neg)
+					{	// Equation not behaving monotonically, so disregard previous smaller error and use current larger
+						m_is_neg_error_prev = false;
+					}
+					else
+					{
+						m_is_neg_error_prev = true;
+						x_neg_err_prev = m_x_neg_err;
+						y_err_neg_prev = m_y_err_neg;
+					}					
 				}
 				else
 				{
