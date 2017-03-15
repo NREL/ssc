@@ -120,6 +120,8 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "pv_to_grid",                                 "Electricity to grid from PV",                           "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_to_grid",                               "Electricity to grid from battery",                      "kW",      "",                       "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_conversion_loss",                       "Electricity lost due to battery power electronics",     "kW",      "",                       "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "grid_power_target",                          "Electricity grid power target for automated battery dispatch","kW","",                       "Battery",       "",                           "",                              "" },
+
 
 	// monthly outputs
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_pv_to_load",                         "Energy to load from PV",                                "kWh",      "",                      "Battery",       "",                          "LENGTH=12",                     "" },
@@ -280,6 +282,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 	outPVToLoad = 0;
 	outBatteryToLoad = 0;
 	outGridToLoad = 0;
+	outGridPowerTarget = 0;
 	outPVToBatt = 0;
 	outGridToBatt = 0;
 	outPVToGrid = 0;
@@ -445,6 +448,9 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		outPVToLoad = cm.allocate("pv_to_load", nrec*nyears);
 		outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
 		outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
+
+		if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+			outGridPowerTarget = cm.allocate("grid_power_target", nrec*nyears);
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{
@@ -723,6 +729,10 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 		outPVToLoad[idx] = (ssc_number_t)(charge_control->power_pv_to_load());
 		outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
 		outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
+
+		if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+			outGridPowerTarget[idx] = (ssc_number_t)(dispatch_model->power_grid_target());
+
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
 	{

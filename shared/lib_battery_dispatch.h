@@ -57,6 +57,9 @@ public:
 	double power_grid_to_batt();
 	double power_pv_to_grid();
 	double power_battery_to_grid();
+	virtual double power_grid_target(){
+		return 0;
+	};
 
 	// control settings
 	int pv_dispatch_priority(){ return _pv_dispatch_to_battery_first; }
@@ -285,6 +288,9 @@ struct byGrid
 	}
 };
 typedef std::vector<grid_point> grid_vec;
+
+/* Automated dispatch*/
+
 class automate_dispatch_t : public dispatch_manual_t
 {
 public:
@@ -318,6 +324,7 @@ public:
 
 	void update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc);
 	void set_target_power(std::vector<double> P_target);
+	double power_grid_target(){ return _P_target_current; };
 
 protected:
 	void update_dispatch(int hour_of_year, int step, int idx);
@@ -326,17 +333,22 @@ protected:
 	void check_debug(FILE *&p, bool & debug, int hour_of_year, int idx);
 	void sort_grid(FILE *p, bool debug, int idx);
 	void compute_energy(FILE *p, bool debug, double & E_max);
-	void target_power(FILE*p, bool debug, double & P_target, double E_max, int idx);
+	void target_power(FILE*p, bool debug, double E_max, int idx);
 	void set_charge(int profile);
-	int set_discharge(FILE *p, bool debug, int hour_of_year, double P_target, double E_max);
-	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max);
+	int set_discharge(FILE *p, bool debug, int hour_of_year, double E_max);
+	void set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double E_max);
 	void check_new_month(int hour_of_year, int step);
 
-	std::vector<double> _P_pv_dc;	 // [kW]
-	std::vector<double> _P_load_dc;  // [kW]
-	std::vector<double> _P_target;   // [kW]
-	double _P_target_month;	    	 // [kW]
-	int _month;						 // [0-11]
+	double_vec _P_pv_dc;		// Full time-series of pv [kW]
+	double_vec _P_load_dc;      // Full time-series of loads [kW]
+	double_vec _P_target_input; // Full time-series of target power [kW]
+
+	double_vec _P_target_use;   // 24 hours * steps_per_hour of target powers [kW]
+	double _P_target_month;	    // The target grid power for the month [kW]
+	double _P_target_current;	// The current grid power target [kW]
+
+	int _day_index;				// The index of the current day (hour * steps_per_hour + step)
+	int _month;					// [0-11]
 	int _hour_last_updated;
 	double _dt_hour;
 	int _steps_per_hour;
@@ -344,8 +356,7 @@ protected:
 	int _nyears;
 	int _mode;
 	double _safety_factor;
-
-
+	
 	grid_vec grid; // [P_grid, hour, step]
 };
 
