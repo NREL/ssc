@@ -449,7 +449,7 @@ battstor::battstor( compute_module &cm, bool setup_model, int replacement_option
 		outBatteryToLoad = cm.allocate("batt_to_load", nrec*nyears);
 		outGridToLoad = cm.allocate("grid_to_load", nrec*nyears);
 
-		if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+		if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
 			outGridPowerTarget = cm.allocate("grid_power_target", nrec*nyears);
 	}
 	else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -730,7 +730,7 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 		outBatteryToLoad[idx] = (ssc_number_t)(charge_control->power_battery_to_load());
 		outGridToLoad[idx] = (ssc_number_t)(charge_control->power_grid_to_load());
 
-		if (batt_vars->batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+		if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
 			outGridPowerTarget[idx] = (ssc_number_t)(dispatch_model->power_grid_target());
 
 	}
