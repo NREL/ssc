@@ -15,8 +15,11 @@ static var_info vtab_utility_rate5[] = {
 	// load and gen expected to be > 0
 	// grid positive if system generation > load, negative otherwise
 	{ SSC_INPUT, SSC_ARRAY, "gen", "System power generated", "kW", "", "Time Series", "*", "", "" },
-	// input from user as kW and output as kWh
-	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kWh", "", "Time Series", "*", "", "" },
+
+	// input from user as kW and output as kW
+	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Time Series", "*", "", "" },
+	//  output as kWh - same as load (kW) for hourly simulations
+	{ SSC_OUTPUT, SSC_ARRAY, "bill_load", "Bill load (year 1)", "kWh", "", "Time Series", "*", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Financials", "*", "MIN=-99", "" },
 
@@ -1080,7 +1083,7 @@ public:
 
 				assign("year1_hourly_e_tofromgrid", var_data(&e_tofromgrid[0], (int)m_num_rec_yearly));
 				assign("year1_hourly_p_tofromgrid", var_data(&p_tofromgrid[0], (int)m_num_rec_yearly));
-				assign("load", var_data(&load[0], (int)m_num_rec_yearly));
+				assign("bill_load", var_data(&load[0], (int)m_num_rec_yearly));
 				assign("year1_hourly_salespurchases_with_system", var_data(&salespurchases[0], (int)m_num_rec_yearly));
 				assign("year1_monthly_load", var_data(&monthly_load[0], 12));
 				assign("year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12));
