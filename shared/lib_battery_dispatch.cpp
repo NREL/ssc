@@ -684,6 +684,7 @@ automate_dispatch_t::automate_dispatch_t(
 	) : dispatch_manual_t(Battery, dt_hour, SOC_min, SOC_max, Ic_max, Id_max, t_min, mode, pv_dispatch,
 	dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge)
 {
+	_day_index = 0;
 	_hour_last_updated = -999;
 	_dt_hour = dt_hour;
 	_steps_per_hour = 1. / dt_hour;
@@ -691,6 +692,8 @@ automate_dispatch_t::automate_dispatch_t(
 	_mode = mode;
 	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
 	_P_target_month = -1e16;
+	_P_target_current = -1e16;
+	_P_target_use.reserve(_num_steps);
 	_month = 1;
 	_safety_factor = 0.03;
 	grid.reserve(_num_steps);
@@ -736,18 +739,19 @@ void automate_dispatch_t::update_pv_load_data(std::vector<double> P_pv_dc, std::
 	_P_load_dc = P_load_dc;
 }
 int automate_dispatch_t::get_mode(){ return _mode; }
-void automate_dispatch_t::set_target_power(std::vector<double> P_target){ _P_target = P_target; }
+void automate_dispatch_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
 void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 {
 	bool debug = false;
 	FILE *p;
 	check_debug(p, debug, hour_of_year, idx);
+	int hour_of_day = util::hour_of_day(hour_of_year);
+	_day_index = (hour_of_day * _steps_per_hour + step);
 
-	if ((hour_of_year) % 24 == 0 && hour_of_year != _hour_last_updated)
+	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
 	{
 		double E_useful;  // [kWh] - the cyclable energy available in the battery
 		double E_max;     // [kWh] - the maximum energy that can be cycled
-		double P_target;  // [kW] - the target power
 
 		check_new_month(hour_of_year, step);
 
@@ -763,12 +767,16 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 
 		// Peak shaving scheme
 		compute_energy(p, debug, E_max);
-		target_power(p, debug, P_target, E_max, idx);
+		target_power(p, debug, E_max, idx);
 
 		// Set discharge, gridcharge profiles
-		profile = set_discharge(p, debug, hour_of_year, P_target, E_max);
-		set_gridcharge(p, debug, hour_of_year, profile, P_target, E_max);
+		profile = set_discharge(p, debug, hour_of_year, E_max);
+		set_gridcharge(p, debug, hour_of_year, profile, E_max);
+
+
 	}
+	// save for extraction
+	_P_target_current = _P_target_use[_day_index];
 
 	if (debug)
 		fclose(p);
@@ -779,6 +787,7 @@ void automate_dispatch_t::initialize(int hour_of_year)
 	_charge_array.clear();
 	_discharge_array.clear();
 	_gridcharge_array.clear();
+	_P_target_use.clear();
 
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
@@ -802,9 +811,9 @@ void automate_dispatch_t::check_new_month(int hour_of_year, int step)
 void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
 {
 	// for now, don't enable
-	debug = false;
+	// debug = true;
 
-	if (hour_of_year == 24 && hour_of_year != _hour_last_updated)
+	if (hour_of_year == 0 && hour_of_year != _hour_last_updated)
 	{
 		// debug = true;
 		if (debug)
@@ -860,122 +869,133 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 	}
 }
 
-void automate_dispatch_t::target_power(FILE*p, bool debug, double & P_target, double E_useful, int idx)
+void automate_dispatch_t::target_power(FILE*p, bool debug, double E_useful, int idx)
 {
 	// if target power set, use that
-	if (_P_target.size() > idx && _P_target[idx] > 0)
+	if (_P_target_input.size() > idx && _P_target_input[idx] > 0)
 	{
-		P_target = _P_target[idx];
+		double_vec::const_iterator first = _P_target_input.begin() + idx;
+		double_vec::const_iterator last = _P_target_input.begin() + idx + _num_steps;
+		double_vec tmp(first, last);
+		_P_target_use = tmp;
 		return;
 	}
-
 	// don't calculate if peak grid demand is less than a previous target in the month
-	if (grid[0].Grid() < _P_target_month)
+	else if (grid[0].Grid() < _P_target_month)
 	{
-		P_target = _P_target_month;
+		for (int i = 0; i != _num_steps; i++)
+			_P_target_use[i] = _P_target_month;
 		return;
 	}
-
-	// First compute target power which will allow battery to charge up to E_useful over 24 hour period
-	if (debug)
-		fprintf(p, "Index\tRecharge_target\t charge_energy\n");
-
-	double P_target_min = 1e16;
-	double E_charge = 0.;
-	int index = _num_steps - 1;
-	std::vector<double> E_charge_vec;
-	for (int jj = _num_steps - 1; jj >= 0; jj--)
-	{
-		E_charge = 0.;
-		P_target_min = grid[index].Grid();
-		for (int ii = _num_steps - 1; ii >= 0; ii--)
-		{
-			if (grid[ii].Grid() > P_target_min)
-				break;
-
-			E_charge += (P_target_min - grid[ii].Grid())*_dt_hour;
-		}
-		E_charge_vec.push_back(E_charge);
-		if (debug)
-			fprintf(p, "%d: index\t%.3f\t %.3f\n", index, P_target_min, E_charge);
-		index--;
-
-		if (index < 0)
-			break;
-	}
-	std::reverse(E_charge_vec.begin(), E_charge_vec.end());
-
-	// Calculate target power 
-	std::vector<double> sorted_grid_diff;
-	sorted_grid_diff.reserve(_num_steps - 1);
-
-	for (int ii = 0; ii != _num_steps - 1; ii++)
-		sorted_grid_diff.push_back(grid[ii].Grid() - grid[ii + 1].Grid());
-
-	P_target = grid[0].Grid(); // target power to shave to [kW]
-	double sum = 0;			   // energy [kWh];
-	if (debug)
-		fprintf(p, "Step\tTarget_Power\tEnergy_Sum\tEnergy_charged\n");
-
-	for (int ii = 0; ii != _num_steps - 1; ii++)
-	{
-		// don't look at negative grid power
-		if (grid[ii + 1].Grid() < 0)
-			break;
-		// Update power target
-		else
-			P_target = grid[ii + 1].Grid();
-
-		if (debug)
-			fprintf(p, "%d\t %.3f\t", ii, P_target);
-
-		// implies a repeated power
-		if (sorted_grid_diff[ii] == 0)
-		{
-			if (debug)
-				fprintf(p, "\n");
-			continue;
-		}
-		// add to energy we are trimming
-		else
-			sum += sorted_grid_diff[ii] * (ii + 1)*_dt_hour;
-
-		if (debug)
-			fprintf(p, "%.3f\t%.3f\n", sum, E_charge_vec[ii + 1]);
-
-		if (sum < E_charge_vec[ii + 1] && sum < E_useful)
-			continue;
-		// we have limited power, we'll shave what more we can
-		else if (sum > E_charge_vec[ii + 1])
-		{
-			P_target += (sum - E_charge_vec[ii]) / ((ii + 1)*_dt_hour);
-			sum = E_charge_vec[ii];
-			if (debug)
-				fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
-			break;
-		}
-		// only allow one cycle per day
-		else if (sum > E_useful)
-		{
-			P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
-			sum = E_useful;
-			if (debug)
-				fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
-			break;
-		}
-	}
-	// set safety factor in case voltage differences make it impossible to achieve target without violated minimum SOC
-	P_target *= (1 + _safety_factor);
-
-	// don't set target lower than previous high in month
-	if (P_target < _P_target_month)
-	{
-		P_target = _P_target_month;
-		if (debug)
-			fprintf(p, "P_target exceeds monthly target, move to  %.3f\n", P_target);
-	}
+	// otherwise, compute one target for the next 24 hours.
 	else
-		_P_target_month = P_target;
+	{
+		// First compute target power which will allow battery to charge up to E_useful over 24 hour period
+		if (debug)
+			fprintf(p, "Index\tRecharge_target\t charge_energy\n");
+
+		double P_target = grid[0].Grid();
+		double P_target_min = 1e16;
+		double E_charge = 0.;
+		int index = _num_steps - 1;
+		std::vector<double> E_charge_vec;
+		for (int jj = _num_steps - 1; jj >= 0; jj--)
+		{
+			E_charge = 0.;
+			P_target_min = grid[index].Grid();
+			for (int ii = _num_steps - 1; ii >= 0; ii--)
+			{
+				if (grid[ii].Grid() > P_target_min)
+					break;
+
+				E_charge += (P_target_min - grid[ii].Grid())*_dt_hour;
+			}
+			E_charge_vec.push_back(E_charge);
+			if (debug)
+				fprintf(p, "%d: index\t%.3f\t %.3f\n", index, P_target_min, E_charge);
+			index--;
+
+			if (index < 0)
+				break;
+		}
+		std::reverse(E_charge_vec.begin(), E_charge_vec.end());
+
+		// Calculate target power 
+		std::vector<double> sorted_grid_diff;
+		sorted_grid_diff.reserve(_num_steps - 1);
+
+		for (int ii = 0; ii != _num_steps - 1; ii++)
+			sorted_grid_diff.push_back(grid[ii].Grid() - grid[ii + 1].Grid());
+
+		P_target = grid[0].Grid(); // target power to shave to [kW]
+		double sum = 0;			   // energy [kWh];
+		if (debug)
+			fprintf(p, "Step\tTarget_Power\tEnergy_Sum\tEnergy_charged\n");
+
+		for (int ii = 0; ii != _num_steps - 1; ii++)
+		{
+			// don't look at negative grid power
+			if (grid[ii + 1].Grid() < 0)
+				break;
+			// Update power target
+			else
+				P_target = grid[ii + 1].Grid();
+
+			if (debug)
+				fprintf(p, "%d\t %.3f\t", ii, P_target);
+
+			// implies a repeated power
+			if (sorted_grid_diff[ii] == 0)
+			{
+				if (debug)
+					fprintf(p, "\n");
+				continue;
+			}
+			// add to energy we are trimming
+			else
+				sum += sorted_grid_diff[ii] * (ii + 1)*_dt_hour;
+
+			if (debug)
+				fprintf(p, "%.3f\t%.3f\n", sum, E_charge_vec[ii + 1]);
+
+			if (sum < E_charge_vec[ii + 1] && sum < E_useful)
+				continue;
+			// we have limited power, we'll shave what more we can
+			else if (sum > E_charge_vec[ii + 1])
+			{
+				P_target += (sum - E_charge_vec[ii]) / ((ii + 1)*_dt_hour);
+				sum = E_charge_vec[ii];
+				if (debug)
+					fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+				break;
+			}
+			// only allow one cycle per day
+			else if (sum > E_useful)
+			{
+				P_target += (sum - E_useful) / ((ii + 1)*_dt_hour);
+				sum = E_useful;
+				if (debug)
+					fprintf(p, "%d\t %.3f\t%.3f\t%.3f\n", ii, P_target, sum, E_charge_vec[ii]);
+				break;
+			}
+		}
+		// set safety factor in case voltage differences make it impossible to achieve target without violated minimum SOC
+		P_target *= (1 + _safety_factor);
+
+		// don't set target lower than previous high in month
+		if (P_target < _P_target_month)
+		{
+			P_target = _P_target_month;
+			if (debug)
+				fprintf(p, "P_target exceeds monthly target, move to  %.3f\n", P_target);
+		}
+		else
+			_P_target_month = P_target;
+
+		// write vector of targets
+		for (int i = 0; i != _num_steps; i++)
+			_P_target_use[i] = P_target;
+	}
 }
 void automate_dispatch_t::set_charge(int profile)
 {
@@ -985,7 +1005,7 @@ void automate_dispatch_t::set_charge(int profile)
 	_gridcharge_array.push_back(false);
 	_sched.fill(profile);
 }
-int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, double P_target, double E_max)
+int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, double E_max)
 {
 	// Assign profiles within dispatch controller
 	int profile = 1;
@@ -997,7 +1017,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 	for (int ii = 0; ii != _num_steps; ii++)
 	{
 		double discharge_percent = 0;
-		double energy_required = (grid[ii].Grid() - P_target)*_dt_hour;
+		double energy_required = (grid[ii].Grid() - _P_target_use[ii])*_dt_hour;
 		if (energy_required > 0)
 		{
 			discharge_percent = 100 * (energy_required / E_max);
@@ -1026,7 +1046,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 	}
 	return profile;
 }
-void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double P_target, double E_max)
+void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, int profile, double E_max)
 {
 	// grid charging scheme
 	profile++;
@@ -1051,13 +1071,13 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 
 		for (int ii = _num_steps - 1; ii >= 0; ii--)
 		{
-			if (grid[ii].Grid() > P_target)
+			if (grid[ii].Grid() > _P_target_use[ii])
 				break;
 
 			int hour = grid[ii].Hour();
 			int step = grid[ii].Step();
-			charge_percent = 100 * ((P_target - grid[ii].Grid())*_dt_hour) / E_max;
-			charge_energy += (P_target - grid[ii].Grid())*_dt_hour;
+			charge_percent = 100 * ((_P_target_use[ii] - grid[ii].Grid())*_dt_hour) / E_max;
+			charge_energy += (_P_target_use[ii] - grid[ii].Grid())*_dt_hour;
 
 			if (debug)
 				fprintf(p, "%d\t %d\t %.3f\t %.3f\t %.3f\n", hour, step, grid[ii].Grid(), charge_percent, charge_energy);

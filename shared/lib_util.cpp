@@ -829,6 +829,12 @@ void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
 	out_month = month;
 	out_hour = hour;
 }
+
+int util::hour_of_day(int hour_of_year)
+{
+	return (hour_of_year) % 24;
+}
+
 bool util::weekday(int hour_of_year)
 {
 	int day_of_year = floor((float)(hour_of_year) / 24);
