@@ -772,8 +772,6 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 		// Set discharge, gridcharge profiles
 		profile = set_discharge(p, debug, hour_of_year, E_max);
 		set_gridcharge(p, debug, hour_of_year, profile, E_max);
-
-
 	}
 	// save for extraction
 	_P_target_current = _P_target_use[_day_index];
