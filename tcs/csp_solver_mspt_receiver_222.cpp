@@ -904,6 +904,9 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		// q_startup = 0.0;
 		// ISCC outputs
 		m_dot_salt_tot_ss = 0.0; f_rec_timestep = 0.0; q_thermal_ss = 0.0;
+
+		// Reset m_od_control
+		m_od_control = 1.0;		//[-]
 	}
 
 	ms_outputs.m_m_dot_salt_tot = m_dot_salt_tot*3600.0;		//[kg/hr] convert from kg/s
