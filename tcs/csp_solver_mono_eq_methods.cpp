@@ -22,7 +22,14 @@ int C_csp_solver::C_mono_eq_cr_df__pc_max__tes_off::operator()(double defocus /*
 	}
 	else
 	{
-		*y_constrain = (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - mpc_csp_solver->m_m_dot_pc_max) / mpc_csp_solver->m_m_dot_pc_max;
+		if (m_pc_mode == C_csp_power_cycle::ON)
+		{
+			*y_constrain = (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - mpc_csp_solver->m_m_dot_pc_max) / mpc_csp_solver->m_m_dot_pc_max;
+		}
+		else if (m_pc_mode == C_csp_power_cycle::STARTUP_CONTROLLED)
+		{
+			*y_constrain = (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;
+		}
 	}
 	return 0;
 }
