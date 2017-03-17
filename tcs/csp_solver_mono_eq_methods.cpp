@@ -1,5 +1,6 @@
 #include "csp_solver_core.h"
 #include "numeric_solvers.h"
+#include <math.h>
 
 #include "lib_util.h"
 
