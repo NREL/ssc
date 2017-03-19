@@ -199,6 +199,11 @@ void ST_Sun::Write(FILE *fdat)
 		for (int i=0;i<np;i++)
 			fprintf(fdat, "%lg\t%lg\n", SunShapeAngle.at(i), SunShapeIntensity.at(i) );
 	}
+    else
+    {
+		fprintf(fdat, "USER SHAPE DATA\t%d\n", 0);
+
+    }
 }
 
 ST_RayData::ST_RayData()
@@ -718,7 +723,18 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
             errnorm = sqrt( errang[0]*errang[0] + errang[1]*errang[1]  
                     + errsurf[0]*errsurf[0] + errsurf[1]*errsurf[1] )*1000.;          //mrad  normal vector error
         double errsurface = sqrt( errrefl[0]*errrefl[0] + errrefl[1]*errrefl[1] ) * 1000.;      //mrad - reflected vector error (specularity)
-				
+		
+        /* 
+        The Hermite model definitions treat x and y components as conical error, such that the following definition holds:
+
+        sigma_tot^2 = ( sigma_x^2 + sigma_y^2 )/2
+
+        This definition is unconventional, but a conversion factor of 1/sqrt(2) is required when expressing x and y component
+        errors from the Hermite model in total error for SolTrace.
+        */
+        /*errnorm *= 1./sqrt(2);
+        errsurface *= 1./sqrt(2);*/
+
 		/* 
 		st_optic(st_context_t pcxt, 
 					st_uint_t idx, 
@@ -1162,8 +1178,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			
 			//Calculate the receiver aperture aim point
 			double 
-				az = rv->rec_azimuth.val,
-				el = rv->rec_elevation.val;
+				az = rv->rec_azimuth.val*D2R,
+				el = rv->rec_elevation.val*D2R;
 			aim.Set(cos(el)*sin(az), cos(el)*cos(az), sin(el));
 			element->AimPoint[0] = pos.x + aim.i*1000.;
 			element->AimPoint[1] = pos.y + aim.j*1000.;
