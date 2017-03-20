@@ -1031,6 +1031,9 @@ double wobos::TurbineInstall()
 double wobos::SubstructureInstTime()
 {
 	double fac1 = 0;
+        if(nSubPerTrip <= 0) //ensure that no NaNs appear from division
+            nSubPerTrip = 1;
+
 	//check installation vessel strategy
 	if (installStrategy == PRIMARYVESSEL)
 	{
