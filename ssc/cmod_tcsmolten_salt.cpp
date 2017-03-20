@@ -403,7 +403,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta_therm",            "Rec. thermal efficiency",                                      "",             "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "Q_thermal",            "Rec. thermal power to HTF less piping loss",                   "MWt",          "",            "CR",             "*",                       "",           "" },
 			
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Rec. mass flow rate",                                          "kg/hr",        "",            "CR",             "*",                       "",           "" },	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_rec",            "Rec. mass flow rate",                                          "kg/s",         "",            "CR",             "*",                       "",           "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_startup",            "Rec. startup thermal energy consumed",                         "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_in",             "Rec. HTF inlet temperature",                                   "C",            "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_rec_out",            "Rec. HTF outlet temperature",                                  "C",            "",            "CR",             "*",                       "",           "" },
@@ -413,13 +413,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 		// Power cycle outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "PC efficiency: gross",                                         "",             "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		         "PC input energy",                                              "MWt",          "",            "PC",             "*",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",             "PC HTF mass flow rate",                                        "kg/hr",        "",            "PC",             "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_pc",             "PC HTF mass flow rate",                                        "kg/s",         "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pc_startup",         "PC startup thermal energy",                                    "MWht",         "",            "PC",             "*",                       "",           "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_startup",     "PC startup thermal power",                                     "MWt",          "",            "PC",             "*",                       "",           "" },	
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cycle",              "PC electrical power output: gross",                            "MWe",          "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_in",              "PC HTF inlet temperature",                                     "C",            "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "T_pc_out",             "PC HTF outlet temperature",                                    "C",            "",            "PC",             "*",                       "",           "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",       "PC water consumption: makeup + cooling",                       "kg/hr",        "",            "PC",             "*",                       "",           "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_water_pc",       "PC water consumption: makeup + cooling",                       "kg/s",         "",            "PC",             "*",                       "",           "" },
 	
 
 		// Thermal energy storage outputs
@@ -430,8 +430,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_dc_tes",             "TES discharge thermal power",                                  "MWt",          "",            "TES",            "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_ch_tes",             "TES charge thermal power",                                     "MWt",          "",            "TES",            "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "e_ch_tes",             "TES charge state",                                             "MWht",         "",            "TES",            "*",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",         "TES discharge mass flow rate",                                 "kg/hr",        "",            "TES",            "*",                       "",           "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_ch",         "TES charge mass flow rate",                                    "kg/hr",        "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",         "TES discharge mass flow rate",                                 "kg/s",         "",            "TES",            "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_ch",         "TES charge mass flow rate",                                    "kg/s",         "",            "TES",            "*",                       "",           "" },
 	
 		// Parasitics outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "pparasi",              "Parasitic power heliostat drives",                             "MWe",          "",            "CR",             "*",                       "",           "" },
@@ -1571,6 +1571,29 @@ public:
 			p_q_pc_startup[i] = p_q_dot_pc_startup[i] * (sim_setup.m_report_step/3600.0);	//[MWh]
 		}
 
+		// Convert mass flow rates from [kg/hr] to [kg/s]
+		size_t count_m_dot_pc, count_m_dot_rec, count_m_dot_water_pc, count_m_dot_tes_dc, count_m_dot_tes_ch;
+		count_m_dot_pc = count_m_dot_rec = count_m_dot_water_pc = count_m_dot_tes_dc = count_m_dot_tes_ch = 0;
+		ssc_number_t *p_m_dot_rec = as_array("m_dot_rec", &count_m_dot_rec);
+		ssc_number_t *p_m_dot_pc = as_array("m_dot_pc", &count_m_dot_pc);
+		ssc_number_t *p_m_dot_water_pc = as_array("m_dot_water_pc", &count_m_dot_water_pc);
+		ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count_m_dot_tes_dc);
+		ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count_m_dot_tes_ch);
+		if (count_m_dot_rec != n_steps_fixed || count_m_dot_pc != n_steps_fixed || count_m_dot_water_pc != n_steps_fixed
+			|| count_m_dot_tes_dc != n_steps_fixed || count_m_dot_tes_ch != n_steps_fixed)
+		{
+			log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
+			return;
+		}
+		for (int i = 0; i < n_steps_fixed; i++)
+		{
+			p_m_dot_rec[i] = p_m_dot_rec[i] / 3600.0;	//[kg/s] convert from kg/hr
+			p_m_dot_pc[i] = p_m_dot_pc[i] / 3600.0;		//[kg/s] convert from kg/hr
+			p_m_dot_water_pc[i] = p_m_dot_water_pc[i] / 3600.0;	//[kg/s] convert from kg/hr
+			p_m_dot_tes_dc[i] = p_m_dot_tes_dc[i] / 3600.0;		//[kg/s] convert from kg/hr
+			p_m_dot_tes_ch[i] = p_m_dot_tes_ch[i] / 3600.0;		//[kg/s] convert from kg/hr
+		}
+
 
 		// If no exception, then report messages
 		while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
@@ -1635,7 +1658,7 @@ public:
 
 		// Calculated Outputs
 			// First, sum power cycle water consumption timeseries outputs
-		accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 3600.0 / 1000.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour); //[m^3], convert from kg
+		accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 1000.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour); //[m^3], convert from kg
 			// Then, add water usage from mirror cleaning
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
