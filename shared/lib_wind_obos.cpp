@@ -1257,6 +1257,11 @@ void wobos::TurbInstCost()
 				* turbInstTime;
 		}
 	}
+	turbine_install_cost = 0;
+    for(int i = 0; i<turbCostsByVessel.size(); i++)
+    {
+        turbine_install_cost += turbCostsByVessel[i][1];
+    }
 }
 
 
@@ -1325,6 +1330,10 @@ void wobos::SubInstCost()
 			subCostsByVessel[i][1] = subSupportVessels[i - 2][16] * subSupportVessels[i - 2][14] * subInstTime;
 		}
 	}
+        for(int i = 0; i<subCostsByVessel.size(); i++)
+        {
+            substructure_install_cost += subCostsByVessel[i][1];
+        }
 }
 
 
@@ -1357,6 +1366,11 @@ void wobos::ElectricalInstCost()
 		elecCostsByVessel[i][1] = elecSupportVessels[i - 5][14] * elecSupportVessels[i - 5][16]
 			* (arrInstTime + expInstTime + subsInstTime);
 	}
+	electrical_install_cost = 0;
+    for(int i = 0; i<elecCostsByVessel.size(); i++)
+    {
+        electrical_install_cost += elecCostsByVessel[i][1];
+    }
 }
 
 
@@ -1429,11 +1443,16 @@ void wobos::VesselMobDemobCost()
 		mobDemobCostByVessel[i].resize(2);
 	}
 
-        //apply number of install seasons multiplier to mobilization costs
-        for (int i = 0; i < mobDemobCostByVessel.size(); i++)
-        {
-            mobDemobCostByVessel[i][1] = mobDemobCostByVessel[i][1]*number_install_seasons;
-        }
+    //apply number of install seasons multiplier to mobilization costs
+    for (int i = 0; i < mobDemobCostByVessel.size(); i++)
+    {
+        mobDemobCostByVessel[i][1] = mobDemobCostByVessel[i][1]*number_install_seasons;
+    }
+	mob_demob_cost = 0;
+    for(int i = 0; i<mobDemobCostByVessel.size(); i++)
+    {
+        mob_demob_cost += mobDemobCostByVessel[i][1];
+    }
 
 }
 
