@@ -354,6 +354,10 @@ struct wobos //WIND OFFSHORE BOS STRUCTURE TO HOLD ALL INPUTS AND OUTPUTS AND AL
     double subsInstTime;
     double totInstTime;
 	double cabSurvey;
+	double turbine_install_cost;
+	double substructure_install_cost;
+	double electrical_install_cost;
+	double mob_demob_cost;
     //Port & Staging outputs
 	double entrExitCost;
 	double wharfCost;
