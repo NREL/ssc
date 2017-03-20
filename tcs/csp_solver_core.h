@@ -780,9 +780,9 @@ public:
 
 	struct S_sim_setup
 	{
-		double m_sim_time_start;
-		double m_sim_time_end;
-		double m_report_step;
+		double m_sim_time_start;	//[s]
+		double m_sim_time_end;		//[s]
+		double m_report_step;		//[s]
 
 		S_sim_setup()
 		{
