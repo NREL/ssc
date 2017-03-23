@@ -1136,6 +1136,23 @@ public:
 		
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
+
+	class C_mono_eq_pc_su_cont_tes_dc : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+
+	public:
+		C_mono_eq_pc_su_cont_tes_dc(C_csp_solver *pc_csp_solver)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_time_pc_su = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_time_pc_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+
+		virtual int operator()(double T_htf_hot /*C*/, double *diff_T_htf_hot /*-*/);
+	};
 };
 
 
