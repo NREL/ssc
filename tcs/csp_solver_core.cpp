@@ -7386,165 +7386,60 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 	double &time_pc_su /*s*/, 
 	int &exit_mode, double &T_pc_in_exit_tolerance)
 {
-	double T_pc_in_guess = mc_tes.get_hot_temp();
+	// Method to solve scenario where the CR is not interacting with PC +/- TES
+	// and the PC is starting up using thermal power from TES
 
-	double T_pc_in_upper = std::numeric_limits<double>::quiet_NaN();	//[K]
-	double T_pc_in_lower = std::numeric_limits<double>::quiet_NaN();	//[K]
+	// Outputs:
+	// time_pc_su  [s] time required for power cycle startup
+	// exit_mode   [-] E_solver_outcomes
+	// T_pc_in_exit_tolerance [-] relative converged tolerance
+	
+	C_mono_eq_pc_su_cont_tes_dc c_eq(this);
+	C_monotonic_eq_solver c_solver(c_eq);
 
-	double y_T_pc_in_upper = std::numeric_limits<double>::quiet_NaN();	//[-]
-	double y_T_pc_in_lower = std::numeric_limits<double>::quiet_NaN();	//[-]
+	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-	bool is_upper_bound = false;
-	bool is_lower_bound = false;
-	bool is_upper_error = false;
-	bool is_lower_error = false;
+	double T_htf_hot_guess_hotter = mc_tes.get_hot_temp() - 273.15;	//[C]
+	double T_htf_hot_guess_colder = T_htf_hot_guess_colder - 10.0;	//[C]
 
-	double tol_C = 1.0;								//[K]
-	double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
+	double T_htf_hot_solved, tol_solved;
+	T_htf_hot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
 
-	double diff_T_pc_in = 999.9*tol;
-
-	int iter_T_pc_in = 0;
-
-	exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-	T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-
-	double T_pc_in_calc = std::numeric_limits<double>::quiet_NaN();
-
-	while( fabs(diff_T_pc_in) > tol || diff_T_pc_in != diff_T_pc_in )
+	int solver_code = 0;
+	try
 	{
-		iter_T_pc_in++;			// First iteration = 1
+		solver_code = c_solver.solve(T_htf_hot_guess_colder, T_htf_hot_guess_hotter,
+								0.0, T_htf_hot_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception("solver_pc_su_controlled__tes_dc received an exception from the monotonic equation solver"));
+	}
 
-		// Check if distance between bounds is "too small"
-		double diff_T_bounds = T_pc_in_upper - T_pc_in_lower;
-		if( diff_T_bounds / m_cycle_T_htf_hot_des < tol / 2.0 )
+	time_pc_su = c_eq.m_time_pc_su;			//[s]
+	T_pc_in_exit_tolerance = tol_solved;	//[-]
+
+	if (solver_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (solver_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) <= 0.1)
 		{
-			exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-			T_pc_in_exit_tolerance = diff_T_pc_in;
-			break;
-		}
-
-		// Subsequent iterations need to re-calculate T_pc_in_guess
-		if( iter_T_pc_in > 1 )
-		{
-			if( diff_T_pc_in != diff_T_pc_in )
-			{	// Models did not solve such that a convergence error could be generated
-				// If upper bound exists, then assume this is lower bound and try iterating
-				// If upper bound does not exist, then we don't have information to move forward
-				// ... if can't move forward, then assume not enough storage to meet *optimal* PC startup requirements
-				// ... but, we can still attempt to begin PC startup during this timestep
-				if( !is_upper_bound )
-				{
-					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					T_pc_in_exit_tolerance = diff_T_pc_in;
-					break;
-				}
-				else
-				{
-					is_lower_bound = true;
-					is_lower_error = false;
-					T_pc_in_lower = T_pc_in_guess;
-					T_pc_in_guess = 0.5*(T_pc_in_lower + T_pc_in_upper);
-				}
-			}
-			else if( diff_T_pc_in > 0.0 )	// T_pc_in_guess was too low
-			{
-				is_lower_bound = true;
-				is_lower_error = true;
-				T_pc_in_lower = T_pc_in_guess;		// Set lower bound
-				y_T_pc_in_lower = diff_T_pc_in;		// Set lower convergence error
-
-				if( is_upper_bound && is_upper_error )
-				{
-					T_pc_in_guess = y_T_pc_in_upper / (y_T_pc_in_upper - y_T_pc_in_lower)*(T_pc_in_lower - T_pc_in_upper) + T_pc_in_upper;
-				}
-				else if( is_upper_bound )
-				{
-					T_pc_in_guess = 0.5*(T_pc_in_lower + T_pc_in_upper);
-				}
-				else
-				{	// Initial guess is the hot side temperature at the beginning of the timestep
-					// Assume that the storage won't get hotter throughout the timestep,
-					// ... so if results from 1st guess suggests that a higher temperature is required, get out
-
-					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					T_pc_in_exit_tolerance = diff_T_pc_in;
-					break;
-				}
-			}
-			else							// T_pc_in_guess was too high
-			{
-				is_upper_bound = true;
-				is_upper_error = true;
-				T_pc_in_upper = T_pc_in_guess;		// Set upper bound
-				y_T_pc_in_upper = diff_T_pc_in;		// Set upper convergence error
-
-				if( is_lower_bound && is_lower_error )
-				{
-					T_pc_in_guess = y_T_pc_in_upper / (y_T_pc_in_upper - y_T_pc_in_lower)*(T_pc_in_lower - T_pc_in_upper) + T_pc_in_upper;
-				}
-				else if( is_lower_bound )
-				{
-					T_pc_in_guess = 0.5*(T_pc_in_lower + T_pc_in_upper);
-				}
-				else
-				{
-					T_pc_in_guess = T_pc_in_calc - 5.0;
-				}
-
-			}
-		}
-
-
-		// Call the power cycle in STARTUP_CONTROLLED mode
-		mc_pc_inputs.m_m_dot = 0.0;
-		mc_pc_htf_state_in.m_temp = T_pc_in_guess - 273.15;		//[C] convert from K
-		mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
-
-		mc_power_cycle.call(mc_weather.ms_outputs,
-			mc_pc_htf_state_in,
-			mc_pc_inputs,
-			mc_pc_out_solver,
-			//mc_pc_out_report,
-			mc_kernel.mc_sim_info);
-
-		// Check for new timestep, probably will find one here
-		time_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
-
-		// Use 'm_m_dot_demand' as an input to TES model
-		// 'm_m_dot_htf' and 'm_m_dot_htf_ref' will be NaN, but that should be ok...
-
-		double m_dot_pc = mc_pc_out_solver.m_m_dot_htf / 3600.0;		//[kg/s]
-
-		// Reset mass flow rate in 'mc_pc_htf_state'
-		mc_pc_inputs.m_m_dot = mc_pc_out_solver.m_m_dot_htf;			//[kg/hr]
-
-		bool dc_solved = mc_tes.discharge(time_pc_su, mc_weather.ms_outputs.m_tdry + 273.15, m_dot_pc, m_T_htf_cold_des, T_pc_in_calc, mc_tes_outputs);
-
-		// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
-		mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
-		mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
-		mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
-
-		// Set discharge htf state
-		mc_tes_dc_htf_state.m_m_dot = m_dot_pc*3600.0;							//[kg/hr]
-		mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;				//[C] convert from K
-		mc_tes_dc_htf_state.m_temp_out = T_pc_in_calc - 273.15;					//[C] convert from K
-
-		if( dc_solved )
-		{
-			diff_T_pc_in = (T_pc_in_calc - T_pc_in_guess) / T_pc_in_guess;
+			error_msg = util::format("At time = %lg the iteration to find the hot HTF temperature connecting the power cycle startup and tes discharge only reached a convergence "
+				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+			mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 		}
 		else
 		{
-			diff_T_pc_in = std::numeric_limits<double>::quiet_NaN();	// Provided discharge mass flow rate is too large for amount of storage remaining
-			continue;
+			exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 		}
-
+	}
+	else
+	{
 		exit_mode = C_csp_solver::CSP_CONVERGED;
 	}
 
-	if( exit_mode == C_csp_solver::CSP_NO_SOLUTION )
+	if (exit_mode == C_csp_solver::CSP_NO_SOLUTION)
 	{	// Try fully discharging TES and beginning PC startup
 		// Check that power cycle hasn't completely started up, as that suggests an error above (in this mode)
 
@@ -7552,6 +7447,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 
 		// Get mass flow rate and temperature at a full discharge
 		double m_dot_pc = std::numeric_limits<double>::quiet_NaN();
+		double T_pc_in_calc = std::numeric_limits<double>::quiet_NaN();
 		mc_tes.discharge_full(mc_kernel.mc_sim_info.ms_ts.m_step, mc_weather.ms_outputs.m_tdry + 273.15, m_T_htf_cold_des, T_pc_in_calc, m_dot_pc, mc_tes_outputs);
 
 		// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
@@ -7564,28 +7460,23 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold_des - 273.15;				//[C] convert from K
 		mc_tes_dc_htf_state.m_temp_out = T_pc_in_calc - 273.15;					//[C] convert from K
 
-		// If receiver IS producing energy, try starting up power cycle
 		// Power Cycle: STARTUP
-		mc_pc_htf_state_in.m_temp = T_pc_in_calc - 273.15;				//[C]
+		mc_pc_htf_state_in.m_temp = T_pc_in_calc - 273.15;			//[C]
 		mc_pc_inputs.m_m_dot = m_dot_pc*3600.0;						//[kg/hr] no mass flow rate to power cycle
-		// Inputs
+			// Inputs
 		mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP;
-		//mc_pc_inputs.m_tou = tou_timestep;
-		// Performance Call
+			// Performance Call
 		mc_power_cycle.call(mc_weather.ms_outputs,
 			mc_pc_htf_state_in,
 			mc_pc_inputs,
 			mc_pc_out_solver,
-			//mc_pc_out_report,
 			mc_kernel.mc_sim_info);
 
 		// Would be nice to have some check to know whether startup solved appropriately...
-
-
 		// Check for new timestep
 		time_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
-		if( time_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tol )
-		{
+		if (time_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tol)
+		{	// We fully discharged the TES, so need full timestep here
 			exit_mode = C_csp_solver::CSP_NO_SOLUTION;
 
 			T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
@@ -7599,6 +7490,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		}
 	}
 
+	return;
 }
 
 
