@@ -88,3 +88,60 @@ int C_csp_solver::C_mono_eq_cr_to_pc_to_cr::operator()(double T_htf_cold /*C*/, 
 
 	return 0;
 }
+
+int C_csp_solver::C_mono_eq_pc_su_cont_tes_dc::operator()(double T_htf_hot /*C*/, double *diff_T_htf_hot /*-*/)
+{
+	// Call the power cycle in STARTUP_CONTROLLED mode
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = 0.0;		//[kg/hr]
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_htf_hot;		//[C] convert from K
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
+
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+							mpc_csp_solver->mc_pc_htf_state_in,
+							mpc_csp_solver->mc_pc_inputs,
+							mpc_csp_solver->mc_pc_out_solver,
+							mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check for new timestep, probably will find one here
+	m_time_pc_su = mpc_csp_solver->mc_pc_out_solver.m_time_required_su;	//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+
+	// Get the required mass flow rate from the power cycle outputs
+	double m_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf / 3600.0;	//[kg/s]
+
+	// Reset mass flow rate in 'mc_pc_htf_state'
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;	//[kg/hr]
+
+	// Solve TES discharge
+	double T_htf_hot_calc = std::numeric_limits<double>::quiet_NaN();
+	double T_htf_cold = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold;		//[C]
+	bool is_dc_solved = mpc_csp_solver->mc_tes.discharge(m_time_pc_su, 
+											mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15, 
+											m_dot_pc,
+											T_htf_cold + 273.15,
+											T_htf_hot_calc,
+											mpc_csp_solver->mc_tes_outputs);
+
+	T_htf_hot_calc = T_htf_hot_calc - 273.15;		//[C] convert from K
+
+	// If not actually charging (i.e. mass flow rate = 0.0), set charging inlet/outlet temps to hot/cold ave temps, respectively
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = 0.0;															//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;		//[C]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;		//[C]
+
+	// Set discharge HTF state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = m_dot_pc*3600.0;		//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = T_htf_cold;			//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = T_htf_hot_calc;	//[C]
+
+	if (is_dc_solved)
+	{
+		*diff_T_htf_hot = (T_htf_hot_calc - T_htf_hot) / T_htf_hot;
+	}
+	else
+	{
+		*diff_T_htf_hot = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+	
+	return 0;
+}
