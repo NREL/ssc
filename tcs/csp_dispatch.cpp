@@ -1,6 +1,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
+#include <algorithm>
 #include "csp_dispatch.h"
 #include "lp_lib.h" 
 #include "lib_util.h"
@@ -238,6 +239,98 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
     return true;
 }
 
+static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::string, double> &pars, int nt)
+{
+    /* 
+    A central location for making sure the parameters from the model are accurately calculated for use in
+    the dispatch optimization model. 
+    */
+
+    //double T = nt ;
+        pars["delta"] = optinst->params.dt;
+        pars["Eu"] = optinst->params.e_tes_max ;
+        pars["Er"] = optinst->params.e_rec_startup ;
+        pars["Ec"] = optinst->params.e_pb_startup_cold ;
+        pars["Qu"] = optinst->params.q_pb_max ;
+        pars["Ql"] = optinst->params.q_pb_min ;
+        pars["Qru"] = optinst->params.e_rec_startup / optinst->params.dt_rec_startup;
+        pars["Qrl"] = optinst->params.q_rec_min ;
+        pars["Qc"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold/pars["delta"]) / pars["delta"];
+        pars["Qb"] = optinst->params.q_pb_standby ;
+        pars["Lr"] = optinst->params.w_rec_pump ;
+
+        pars["s0"] = optinst->params.e_tes_init ;
+        pars["ursu0"] = 0.;
+        pars["ucsu0"] = 0.;
+        pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
+        pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
+        pars["q0"] =  optinst->params.q_pb0 ;
+        pars["qrecmaxobs"] = 1.;
+        for(int i=0; i<optinst->outputs.q_sfavail_expected.size(); i++)
+            pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i) : pars["qrecmaxobs"];
+
+        pars["Qrsb"] = optinst->params.q_rec_standby; // * dq_rsu;     //.02
+        pars["M"] = 1.e6;
+        pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
+		
+		pars["wlim_min"] = 9.e99;
+		for (int t = 0; t < nt; t++)
+			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));
+
+        //calculate Z parameters
+        pars["Z_1"] = 0.;
+        pars["Z_2"] = 0.;
+        {
+            double fi = 0.;
+            double fhfi2 = 0.;
+            double fhfi = 0.;
+            double fhfi_2 = 0.;
+            vector<double> fiv;
+            int m = optinst->params.eff_table_load.get_size();
+            for(int i=0; i<m; i++)
+            {
+                if( i==0 ) continue; // first data point is zero, so skip
+
+                double q, eta, f, fh;
+                optinst->params.eff_table_load.get_point(i, q, eta);
+                fh = optinst->params.eta_cycle_ref / eta;
+                f = q / optinst->params.q_pb_des;
+                fiv.push_back(f);
+
+                fi += f;
+                fhfi += fh*f;
+                fhfi2 += fh*f*f;
+                fhfi_2 += fh*fh*f*f;
+            }
+            m += -1;
+
+            double fi_fhfi = 0.;
+            for(int i=0; i<m; i++)
+                fi_fhfi += fiv[i]*fhfi;
+
+            pars["Z_1"] = (fhfi2 - 1./(double)m*fi_fhfi)/(fhfi_2 - 1./(double)m *fhfi * fhfi);
+
+            pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
+        }
+
+        double rate1 = 0;
+        pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
+
+        double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
+
+        pars["Wdot0"] = 0.;
+        if( pars["q0"] >= pars["Ql"] )
+            pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0);
+
+        pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
+        pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
+
+        //temporary fixed constants
+        pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
+        pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
+        pars["csu_cost"] = optinst->params.csu_cost; //10000.;
+        pars["pen_delta_w"] = optinst->params.pen_delta_w; //0.1;
+};
 
 bool csp_dispatch_opt::optimize()
 {
@@ -316,95 +409,8 @@ bool csp_dispatch_opt::optimize()
         O.add_var("wdot", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); //0 lower bound?
         O.add_var("delta_w", optimization_vars::VAR_TYPE::REAL_T, optimization_vars::VAR_DIM::DIM_T, nt, 0. ); 
         
-        //double T = nt ;
-        double delta = params.dt;
-        double Eu = params.e_tes_max ;
-        double Er = params.e_rec_startup ;
-        double Ec = params.e_pb_startup_cold ;
-        double Qu = params.q_pb_max ;
-        double Ql = params.q_pb_min ;
-        double Qru = params.e_rec_startup / params.dt_rec_startup;
-        double Qrl = params.q_rec_min ;
-        double Qc = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/delta) / delta;
-        double Qb = params.q_pb_standby ;
-        double Lr = params.w_rec_pump ;
-
-        double s0 = params.e_tes_init ;
-        double ursu0 = 0.;
-        double ucsu0 = 0.;
-        double y0 = (params.is_pb_operating0 ? 1 : 0) ;
-        double ycsb0 = (params.is_pb_standby0 ? 1 : 0) ;
-        double q0 =  params.q_pb0 ;
-        double qrecmaxobs = 1.;
-        for(int i=0; i<outputs.q_sfavail_expected.size(); i++)
-            qrecmaxobs = outputs.q_sfavail_expected.at(i) > qrecmaxobs ? outputs.q_sfavail_expected.at(i) : qrecmaxobs;
-
-        double Qrsb = params.q_rec_standby; // * dq_rsu;     //.02
-        double M = 1.e6;
-        double W_dot_cycle = params.q_pb_des * params.eta_cycle_ref;
-		
-		double wlim_min = 9.e99;
-		for (int t = 0; t < nt; t++)
-			wlim_min = fmin(wlim_min, w_lim.at(t));
-
-        //calculate Z parameters
-        double Z_1 = 0.;
-        double Z_2 = 0.;
-        {
-            double fi = 0.;
-            double fhfi2 = 0.;
-            double fhfi = 0.;
-            double fhfi_2 = 0.;
-            vector<double> fiv;
-            int m = params.eff_table_load.get_size();
-            for(int i=0; i<m; i++)
-            {
-                if( i==0 ) continue; // first data point is zero, so skip
-
-                double q, eta, f, fh;
-                params.eff_table_load.get_point(i, q, eta);
-                fh = params.eta_cycle_ref / eta;
-                f = q / params.q_pb_des;
-                fiv.push_back(f);
-
-                fi += f;
-                fhfi += fh*f;
-                fhfi2 += fh*f*f;
-                fhfi_2 += fh*fh*f*f;
-            }
-            m += -1;
-
-            double fi_fhfi = 0.;
-            for(int i=0; i<m; i++)
-                fi_fhfi += fiv[i]*fhfi;
-
-            Z_1 = (fhfi2 - 1./(double)m*fi_fhfi)/(fhfi_2 - 1./(double)m *fhfi * fhfi);
-
-            Z_2 = 1./(double)m * ( fi - Z_1 * fhfi );
-        }
-
-        //double Z_1 = 1.041015237927;
-        //double Z_2 = -0.0421548482813;
-
-        double rate1 = 0;
-        double etap = Z_1*params.eta_cycle_ref; //rate2
-
-        double limit1 = (-Z_2*W_dot_cycle)/(Z_1*params.eta_cycle_ref);  //q at point where power curve crosses x-axis
-
-        double Wdot0 = 0.;
-        if( q0 >= Ql )
-            Wdot0 = etap*q0*outputs.eta_pb_expected.at(0);
-
-        double Wdotu = (Qu - limit1) * etap;
-        double Wdotl = (Ql - limit1) * etap;
-
-        //temporary fixed constants
-        double disp_time_weighting = params.disp_time_weighting;
-        double rsu_cost = params.rsu_cost; //952.;
-        double csu_cost = params.csu_cost; //10000.;
-        double pen_delta_w = params.pen_delta_w; //0.1;
-
-
+        unordered_map<std::string, double> P;
+        calculate_parameters(this, P, nt);
 
         O.construct();  //allocates memory for data array
 
@@ -466,7 +472,7 @@ bool csp_dispatch_opt::optimize()
 		{
             int *col = new int[12 * nt];
             REAL *row = new REAL[12 * nt];
-            double tadj = disp_time_weighting;
+            double tadj = P["disp_time_weighting"];
             int i = 0;
 
             //calculate the mean price to appropriately weight the receiver production timing derate
@@ -480,25 +486,25 @@ bool csp_dispatch_opt::optimize()
             {
                 i = 0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = delta * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
+                row[ t + nt*(i++) ] = P["delta"] * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(delta * price_signal.at(t) * Lr)+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * P["Lr"])+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -delta * price_signal.at(t) * Lr;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * P["Lr"];
 
                 col[ t + nt*(i  ) ] = O.column("yrsu", t);
                 row[ t + nt*(i++) ] = -price_signal.at(t) * (params.w_rec_ht + params.w_stow);
 
                 col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(delta * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
 
                 col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -delta * price_signal.at(t) * params.w_cycle_pump;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_pump;
 
                 col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -delta * price_signal.at(t) * params.w_cycle_standby;
+                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_standby;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
                 //xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
@@ -510,21 +516,21 @@ bool csp_dispatch_opt::optimize()
                 //xxrow[ t + nt*(i++) ] = -0.5;
 
                 col[ t + nt*(i  ) ] = O.column("yrsup", t);
-                row[ t + nt*(i++) ] = -rsu_cost*tadj;
+                row[ t + nt*(i++) ] = -P["rsu_cost"]*tadj;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrhsp", t);
                 //xxrow[ t + nt*(i++) ] = -tadj;
 
                 col[ t + nt*(i  ) ] = O.column("ycsup", t);
-                row[ t + nt*(i++) ] = -csu_cost*tadj;
+                row[ t + nt*(i++) ] = -P["csu_cost"]*tadj;
 
                 col[ t + nt*(i  ) ] = O.column("ychsp", t);
-                row[ t + nt*(i++) ] = -csu_cost*tadj * 0.1;
+                row[ t + nt*(i++) ] = -P["csu_cost"]*tadj * 0.1;
 
                 col[ t + nt*(i  ) ] = O.column("delta_w", t);
-                row[ t + nt*(i++) ] = -pen_delta_w*tadj;
+                row[ t + nt*(i++) ] = -P["pen_delta_w"]*tadj;
 
-                tadj *= disp_time_weighting;
+                tadj *= P["disp_time_weighting"];
             }
 
             set_obj_fnex(lp, i*nt, row, col);
@@ -585,7 +591,7 @@ bool csp_dispatch_opt::optimize()
                 }
                 else
                 {
-                    add_constraintex(lp, 2, row, col, GE, -Wdot0);
+                    add_constraintex(lp, 2, row, col, GE, -P["Wdot0"]);
                 }
             }
         }
@@ -604,10 +610,10 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("wdot", t);
 
-                row[i  ] = -etap*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                row[i  ] = -P["etap"]*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
                 col[i++] = O.column("x", t);
 
-                row[i  ] = -(Wdotu - etap*Qu)*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
                 col[i++] = O.column("y", t);
 
                 //row[i  ] = -outputs.eta_pb_expected.at(t);
@@ -651,7 +657,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("ursu", t);
 
-                row[1] = -delta;
+                row[1] = -P["delta"];
                 col[1] = O.column("xrsu", t);
 
                 if(t>0)
@@ -672,7 +678,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("ursu", t);
 
-                row[1] = -Er;
+                row[1] = -P["Er"];
                 col[1] = O.column("yrsu", t);
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
@@ -681,7 +687,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yr", t);
                 
-                row[1] = -1.0/Er; 
+                row[1] = -1.0/P["Er"]; 
                 col[1] = O.column("ursu", t);
 
                 if(t>0)
@@ -712,7 +718,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("xrsu", t);
 
-                row[1] = -Qru;
+                row[1] = -P["Qru"];
                 col[1] = O.column("yrsu", t);
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
@@ -721,7 +727,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yrsu", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(M*outputs.q_sfavail_expected.at(t), 1.0) );
+                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t), 1.0) );
 
                 //Receiver consumption limit
                 row[0] = 1.;
@@ -745,7 +751,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("xr", t);
 
-                row[1] = -Qrl;
+                row[1] = -P["Qrl"];
                 col[1] = O.column("yr", t);
 
                 add_constraintex(lp, 2, row, col, GE, 0.);
@@ -754,7 +760,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yr", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(M*outputs.q_sfavail_expected.at(t), 1.0) );  //if any measurable energy, y^r can be 1
+                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t), 1.0) );  //if any measurable energy, y^r can be 1
 
                 // --- new constraints ---
 
@@ -851,7 +857,7 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("ucsu", t);
                 
-                row[i  ] = -delta * Qc;
+                row[i  ] = -P["delta"] * P["Qc"];
                 col[i++] = O.column("ycsu", t);
 
                 if(t>0)
@@ -866,7 +872,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("ucsu", t);
 
-                row[1] = -M;
+                row[1] = -P["M"];
                 col[1] = O.column("ycsu", t);
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
@@ -876,7 +882,7 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("y", t);
                 
-                row[i  ] = -1.0/Ec; 
+                row[i  ] = -1.0/P["Ec"]; 
                 col[i++] = O.column("ucsu", t);
 
                 if(t>0)
@@ -900,10 +906,10 @@ bool csp_dispatch_opt::optimize()
                 col[i++] = O.column("x", t);
 
                 //mjw 2016.12.2 --> This constraint seems to be problematic in identifying feasible solutions for subhourly runs. Needs attention.
-                row[i  ] = Qc;
+                row[i  ] = P["Qc"];
                 col[i++] = O.column("ycsu", t);
                 
-                row[i  ] = -Qu;
+                row[i  ] = -P["Qu"];
                 col[i++] = O.column("y", t);
 
                 add_constraintex(lp, i, row, col, LE, 0.);
@@ -912,7 +918,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("x", t);
 
-                row[1] = -Qu;
+                row[1] = -P["Qu"];
                 col[1] = O.column("y", t);
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
@@ -922,7 +928,7 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("x", t);
 
-                row[i  ] = -Ql;
+                row[i  ] = -P["Ql"];
                 col[i++] = O.column("y", t);
 
                 add_constraintex(lp, i, row, col, GE, 0);
@@ -1036,16 +1042,16 @@ bool csp_dispatch_opt::optimize()
             {
                 int i=0;
 
-                row[i  ] = delta;
+                row[i  ] = P["delta"];
                 col[i++] = O.column("xr", t);
                 
-                row[i  ] = -delta*Qc;
+                row[i  ] = -P["delta"]*P["Qc"];
                 col[i++] = O.column("ycsu", t);
                 
-                row[i  ] = -delta*Qb; 
+                row[i  ] = -P["delta"]*P["Qb"]; 
                 col[i++] = O.column("ycsb", t);
                 
-                row[i  ] = -delta;
+                row[i  ] = -P["delta"];
                 col[i++] = O.column("x", t);
 #ifdef MOD_REC_STANDBY                
                 row[i  ] = -delta*Qrsb;
@@ -1064,7 +1070,7 @@ bool csp_dispatch_opt::optimize()
                 }
                 else
                 {
-                    add_constraintex(lp, i, row, col, EQ, -s0);  //initial storage state (kWh)
+                    add_constraintex(lp, i, row, col, EQ, -P["s0"]);  //initial storage state (kWh)
                 }
             }
         }
@@ -1080,13 +1086,13 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("s", t);
 
-                add_constraintex(lp, 1, row, col, LE, Eu);
+                add_constraintex(lp, 1, row, col, LE, P["Eu"]);
 
                 //min charge state in time periods where cycle operates and receiver is starting up
                 if(t < nt-1)
                 {
-                    double delta_rec_startup = min(1., max(params.e_rec_startup/max(outputs.q_sfavail_expected.at(t+1)*delta,1.), params.dt_rec_startup/delta) );
-                    double smin = max(0.01, outputs.q_sfavail_expected.at(t+1)*delta - params.e_rec_startup - (1.-delta_rec_startup)*params.q_pb_des );
+                    double delta_rec_startup = min(1., max(params.e_rec_startup/max(outputs.q_sfavail_expected.at(t+1)*P["delta"],1.), params.dt_rec_startup/P["delta"]) );
+                    double smin = max(0.01, outputs.q_sfavail_expected.at(t+1)*P["delta"] - params.e_rec_startup - (1.-delta_rec_startup)*params.q_pb_des );
 
                     int i=0;
 
@@ -1119,15 +1125,15 @@ bool csp_dispatch_opt::optimize()
 			for (int t = 0; t<nt; t++)
 			{
 				// Adjust wlim if specified value is too low to permit cycle operation
-				double wmin = (Ql * etap*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (Wdotu - etap*Qu)*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
+				double wmin = (P["Ql"] * P["etap"]*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
 				double max_parasitic = 
-                      Lr * outputs.q_sfavail_expected.at(t) 
+                      P["Lr"] * outputs.q_sfavail_expected.at(t) 
                     + (params.w_rec_ht / params.dt) 
                     + (params.w_stow / params.dt) 
                     + params.w_track 
                     + params.w_cycle_standby 
-                    + params.w_cycle_pump*Qu
-                    + outputs.w_condf_expected.at(t)*W_dot_cycle;  // Largest possible parasitic load at time t
+                    + params.w_cycle_pump*P["Qu"]
+                    + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
 				if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
                 {
 					w_lim.at(t) = 0.;
@@ -1249,7 +1255,7 @@ bool csp_dispatch_opt::optimize()
 		else
 		{
 			set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
-			if (wlim_min < 1.e99)
+			if (P["wlim_min"] < 1.e99)
 				set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
 		}
         
@@ -1413,7 +1419,7 @@ bool csp_dispatch_opt::optimize()
                 {
                     bool su = (fabs(1 - vars[ c-1 ]) < 0.001);
                     outputs.pb_operation.at(t) = outputs.pb_operation.at(t) || su;
-                    outputs.q_pb_startup.at(t) = su ? Qc : 0.;
+                    outputs.q_pb_startup.at(t) = su ? P["Qc"] : 0.;
                 }
                 else if(strcmp(root, "y") == 0)     //Cycle operation
                 {
@@ -1559,6 +1565,10 @@ bool csp_dispatch_opt::optimize()
     return false;
 }
 
+bool strcompare(std::string &a, std::string &b)
+{
+    return util::lower_case(a) < util::lower_case(b);
+};
 
 std::string csp_dispatch_opt::write_ampl()
 {
@@ -1586,32 +1596,27 @@ std::string csp_dispatch_opt::write_ampl()
         ofstream fout(outname.str().c_str());
 
         int nt = m_nstep_opt;
-        double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
-        double dq_csu = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/params.dt) / params.dt;
+
+        unordered_map<std::string, double> pars;
+        calculate_parameters(this, pars, nt);
+
+
+        //double dq_rsu = params.e_rec_startup / params.dt_rec_startup;
+        //double dq_csu = params.e_pb_startup_cold / ceil(params.dt_pb_startup_cold/params.dt) / params.dt;
 
         fout << "#data file\n\n";
         fout << "# --- scalar parameters ----\n";
         fout << "param day_of_year := " << day << ";\n";
-        fout << "param T := " << nt << ";\n";
-        fout << "param Eu := " << params.e_tes_max << ";\n";
-        fout << "param Er := " << params.e_rec_startup << ";\n";
-        fout << "param Ec := " << params.e_pb_startup_cold << ";\n";
-        fout << "param Qu := " << params.q_pb_max << ";\n";
-        fout << "param Ql := " << params.q_pb_min << ";\n";
-        fout << "param Qru := " << dq_rsu << ";\n";
-        fout << "param Qrl := " << params.q_rec_min << ";\n";
-        fout << "param Qc := " << dq_csu << ";\n";
-        fout << "param Qb := " << params.q_pb_standby << ";\n";
-        fout << "param Lr := " << params.w_rec_pump << ";\n";
-        fout << "param delta := 1;\n";
 
-        fout << "# --- variale initialization parameters ---\n";
-        fout << "param s0 := " << params.e_tes_init << ";\n";
-        fout << "param ursu0 := 0.;\n";
-        fout << "param ucsu0 := 0.;\n";
-        fout << "param y0 := " << (params.is_pb_operating0 ? 1 : 0) << ";\n";
-        fout << "param ycsb0 := " << (params.is_pb_standby0 ? 1 : 0) << ";\n";
-        fout << "param q0 := " <<  params.q_pb0 << ";\n";
+        std::vector<std::string> keys;
+
+        for( unordered_map<std::string, double>::iterator parval = pars.begin(); parval != pars.end(); parval++)
+            keys.push_back( parval->first );
+        
+        std::sort( keys.begin(), keys.end(), strcompare );
+
+        for(int k=0; k<keys.size(); k++)
+            fout << "param " << keys.at(k) << " := " << pars[keys.at(k)] << ";\n";
 
         fout << "# --- indexed parameters ---\n";
         fout << "param Qin := \n";
@@ -1628,6 +1633,16 @@ std::string csp_dispatch_opt::write_ampl()
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
         fout << ";";
+
+        //net power limit
+        fout << "param Wdotnet := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << w_lim.at(t) << "\n";
+        
+        //condenser parasitic loss coefficient
+        fout << "param etac := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.w_condf_expected.at(t) << "\n";
 
         fout.close();
     }

@@ -732,8 +732,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
         This definition is unconventional, but a conversion factor of 1/sqrt(2) is required when expressing x and y component
         errors from the Hermite model in total error for SolTrace.
         */
-        /*errnorm *= 1./sqrt(2);
-        errsurface *= 1./sqrt(2);*/
+        errnorm *= 1./sqrt(2);
+        errsurface *= 1./sqrt(2);
 
 		/* 
 		st_optic(st_context_t pcxt, 
