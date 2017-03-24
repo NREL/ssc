@@ -28,7 +28,7 @@ OBJECTS = \
 	mod_base.o \
 	optimize.o \
 	solpos.o \
-	string_util.o
+	string_util.o 
 
 
 
