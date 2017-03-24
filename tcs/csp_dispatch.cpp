@@ -1565,7 +1565,7 @@ bool csp_dispatch_opt::optimize()
     return false;
 }
 
-bool strcompare(std::string &a, std::string &b)
+bool strcompare(std::string a, std::string b)
 {
     return util::lower_case(a) < util::lower_case(b);
 };
