@@ -148,6 +148,51 @@ int C_csp_solver::C_mono_eq_pc_su_cont_tes_dc::operator()(double T_htf_hot /*C*/
 
 int C_csp_solver::C_mono_eq_pc_target_tes_dc::operator()(double m_dot_htf /*kg/hr*/, double *q_dot_pc /*MWt*/)
 {
-	
-	return -1;
+	double T_htf_hot = std::numeric_limits<double>::quiet_NaN();
+	bool is_tes_success = mpc_csp_solver->mc_tes.discharge(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+												mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+												m_dot_htf / 3600.0,
+												m_T_htf_cold + 273.15,
+												T_htf_hot,
+												mpc_csp_solver->mc_tes_outputs);
+
+	if (!is_tes_success)
+	{
+		*q_dot_pc = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	T_htf_hot -= 273.15;		//[C] convert from K
+
+	// HTF discharging state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = m_dot_htf;		//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold;	//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = T_htf_hot;		//[C]
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = 0.0;				//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C], convert from K
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C], convert from K
+
+	// Solve power cycle model
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_htf_hot;		//[C]
+		// Inputs
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_htf;			//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_standby_control;				//[-]
+		// Performance
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+									mpc_csp_solver->mc_pc_htf_state_in,
+									mpc_csp_solver->mc_pc_inputs,
+									mpc_csp_solver->mc_pc_out_solver,
+									mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check that power cycle is producing power and solving without errors
+	if (!mpc_csp_solver->mc_pc_out_solver.m_was_method_successful && mpc_csp_solver->mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON)
+	{
+		*q_dot_pc = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	*q_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+	return 0;
 }

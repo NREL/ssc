@@ -1158,11 +1158,13 @@ public:
 	{
 	private:
 		C_csp_solver *mpc_csp_solver;
+		double m_T_htf_cold;		//[C]
 
 	public:
-		C_mono_eq_pc_target_tes_dc(C_csp_solver *pc_csp_solver)
+		C_mono_eq_pc_target_tes_dc(C_csp_solver *pc_csp_solver, double T_htf_cold /*C*/)
 		{
 			mpc_csp_solver = pc_csp_solver;
+			m_T_htf_cold = T_htf_cold;
 		}
 
 		virtual int operator()(double m_dot_htf /*kg/hr*/, double *q_dot_pc /*MWt*/);
