@@ -1271,6 +1271,7 @@ void wobos::TurbInstCost()
 void wobos::SubInstCost()
 //looks like some entries don't get filled?
 {
+        substructure_install_cost = 0;
 	//check installStrategy
 	if ((installStrategy == FEEDERBARGE) || (substructure == SPAR))
 	{
@@ -1357,6 +1358,10 @@ void wobos::ElectricalInstCost()
     elecCostsByVessel[4][0] = elecTugs[1][0];
 	elecCostsByVessel[0][1] = arrCabInstVessel[14] * arrCabInstVessel[16] * arrInstTime;
 	elecCostsByVessel[1][1] = expCabInstVessel[14] * expCabInstVessel[16] * expInstTime;
+
+    array_cable_install_cost = elecCostsByVessel[0][1];
+    export_cable_install_cost = elecCostsByVessel[1][1];
+
 	if(substructure == MONOPILE || substructure == JACKET)
     {
 	elecCostsByVessel[2][1] = substaInstVessel[14] * substaInstVessel[16] * subsInstTime;
@@ -1370,6 +1375,7 @@ void wobos::ElectricalInstCost()
 			* (arrInstTime + expInstTime + subsInstTime);
 	}
 	electrical_install_cost = 0;
+	substation_install_cost = elecCostsByVessel[2][1]+elecCostsByVessel[3][1]+elecCostsByVessel[4][1];
     for(int i = 0; i<elecCostsByVessel.size(); i++)
     {
         electrical_install_cost += elecCostsByVessel[i][1];
