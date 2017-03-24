@@ -145,3 +145,9 @@ int C_csp_solver::C_mono_eq_pc_su_cont_tes_dc::operator()(double T_htf_hot /*C*/
 	
 	return 0;
 }
+
+int C_csp_solver::C_mono_eq_pc_target_tes_dc::operator()(double m_dot_htf /*kg/hr*/, double *q_dot_pc /*MWt*/)
+{
+	
+	return -1;
+}
