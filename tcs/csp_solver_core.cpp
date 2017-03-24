@@ -7422,7 +7422,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 
 	if (solver_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		if (solver_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) <= 0.1)
+		if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
 		{
 			error_msg = util::format("At time = %lg the iteration to find the hot HTF temperature connecting the power cycle startup and tes discharge only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
