@@ -1182,6 +1182,7 @@ public:
 		C_mono_eq_pc_target_tes_dc__T_cold(C_csp_solver *pc_csp_solver, double q_dot_target /*MWt*/)
 		{
 			mpc_csp_solver = pc_csp_solver;
+			m_q_dot_target = q_dot_target;		//[MWt]
 			m_q_dot_calc = std::numeric_limits<double>::quiet_NaN();	//[MWt]
 			m_m_dot_calc = std::numeric_limits<double>::quiet_NaN();	//[kg/hr]
 		}
