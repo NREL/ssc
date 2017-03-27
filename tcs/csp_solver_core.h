@@ -474,10 +474,12 @@ public:
 		double m_q_startup_avail;	//[MWt] Estimate startup thermal power. Only > 0 if solar avail AND cr is OFF or Starting Up
 		double m_q_dot_avail;		//[MWt] Estimated output if cr is ON and producing useful thermal power
 		double m_m_dot_avail;		//[kg/hr] Estimated output mass flow rate if cr is ON and producing useful thermal power
+		double m_T_htf_hot;			//[C] Estimated timestep-average outlet temperature
 
 		S_csp_cr_est_out()
 		{
-			m_q_startup_avail = m_q_dot_avail = std::numeric_limits<double>::quiet_NaN();
+			m_q_startup_avail = m_q_dot_avail =
+				m_m_dot_avail = m_T_htf_hot = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
