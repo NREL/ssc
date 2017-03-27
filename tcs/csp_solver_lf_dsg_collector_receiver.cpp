@@ -1882,8 +1882,9 @@ void C_csp_lf_dsg_collector_receiver::estimates(const C_csp_weatherreader::S_out
 
 		on(weather, htf_state_in, 1.0, cr_out_solver, sim_info);
 
-		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;	//[MWt]
+		est_out.m_q_dot_avail = cr_out_solver.m_q_thermal;		//[MWt]
 		est_out.m_m_dot_avail = cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+		est_out.m_T_htf_hot = cr_out_solver.m_T_salt_hot;		//[C]
 		est_out.m_q_startup_avail = 0.0;		//[MWt]
 	}
 	else
@@ -1898,6 +1899,7 @@ void C_csp_lf_dsg_collector_receiver::estimates(const C_csp_weatherreader::S_out
 		}
 		est_out.m_q_dot_avail = 0.0;
 		est_out.m_m_dot_avail = 0.0;
+		est_out.m_T_htf_hot = 0.0;
 	}
 
 	return;
