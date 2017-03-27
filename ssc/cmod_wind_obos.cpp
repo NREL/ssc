@@ -370,6 +370,14 @@ static var_info _cm_vtab_wind_obos[] = {
    {SSC_OUTPUT,        SSC_ARRAY,       "elecCostsByVessel",              "Electrical Infrastructure Installation Vessel Costs",      "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_ARRAY,       "mobDemobCostByVessel",           "Vessel Mobilization and Demobilization Cost",              "$",                  "",                       "wobos",            "",                        "",                              ""},
    {SSC_OUTPUT,        SSC_NUMBER,      "cabSurvey",                      "Cable Route Survey Cost",                                  "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "turbine_install_cost",           "Turbine Install Cost",                                     "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "substructure_install_cost",      "Substructure Install Cost",                                "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "electrical_install_cost",        "Electrical Install Cost",                                  "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "mob_demob_cost",                 "Mobilization/Demobilization Cost",                         "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "array_cable_install_cost",       "Array Cable Installation Cost",                            "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "export_cable_install_cost",      "Export Cable Installation Cost",                           "$",                  "",                       "wobos",            "",                        "",                              ""},
+   {SSC_OUTPUT,        SSC_NUMBER,      "substation_install_cost",        "Substation Installation Cost",                             "$",                  "",                       "wobos",            "",                        "",                              ""},
+
 
     //Port & Staging outputs
    {SSC_OUTPUT,        SSC_NUMBER,      "entrExitCost",                   "Port Entrance and Exit Cost",                              "$",                  "",                       "wobos",            "",                        "",                              ""},
@@ -2043,6 +2051,13 @@ public:
 		//assign("elecCostsByVessel", var_data(obos.elecCostsByVessel));
 		//assign("mobDemobCostByVessel", var_data(obos.mobDemobCostByVessel));
 		assign("cabSurvey", var_data(obos.cabSurvey));
+        assign("turbine_install_cost", var_data(obos.turbine_install_cost));
+        assign("substructure_install_cost", var_data(obos.substructure_install_cost));
+        assign("electrical_install_cost", var_data(obos.electrical_install_cost));
+        assign("mob_demob_cost", var_data(obos.mob_demob_cost));
+		assign("array_cable_install_cost", var_data(obos.array_cable_install_cost));
+		assign("export_cable_install_cost", var_data(obos.export_cable_install_cost));
+		assign("substation_install_cost", var_data(obos.substation_install_cost));
 
 		//Port & staging outputs
 		assign("entrExitCost", var_data(obos.entrExitCost));
