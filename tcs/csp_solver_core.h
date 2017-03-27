@@ -1154,20 +1154,38 @@ public:
 		virtual int operator()(double T_htf_hot /*C*/, double *diff_T_htf_hot /*-*/);
 	};
 
-	class C_mono_eq_pc_target_tes_dc : public C_monotonic_equation
+	class C_mono_eq_pc_target_tes_dc__m_dot : public C_monotonic_equation
 	{
 	private:
 		C_csp_solver *mpc_csp_solver;
 		double m_T_htf_cold;		//[C]
 
 	public:
-		C_mono_eq_pc_target_tes_dc(C_csp_solver *pc_csp_solver, double T_htf_cold /*C*/)
+		C_mono_eq_pc_target_tes_dc__m_dot(C_csp_solver *pc_csp_solver, double T_htf_cold /*C*/)
 		{
 			mpc_csp_solver = pc_csp_solver;
 			m_T_htf_cold = T_htf_cold;
 		}
 
 		virtual int operator()(double m_dot_htf /*kg/hr*/, double *q_dot_pc /*MWt*/);
+	};
+
+	class C_mono_eq_pc_target_tes_dc__T_cold : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_q_dot_target;		//[MWt]
+
+	public:
+		C_mono_eq_pc_target_tes_dc__T_cold(C_csp_solver *pc_csp_solver, double q_dot_target /*MWt*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_q_dot_calc = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+		}
+
+		double m_q_dot_calc;		//[MWt]
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
 };
 
