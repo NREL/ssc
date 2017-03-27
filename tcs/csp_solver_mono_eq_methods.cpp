@@ -323,3 +323,45 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;	//[-]
 	return 0;
 }
+
+int C_csp_solver::C_mono_eq_pc_match_tes_empty::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// First, get the maximum possible mass flow rate from a full TES discharge
+	double T_htf_tes_hot, m_dot_tes_dc;
+	T_htf_tes_hot = m_dot_tes_dc = std::numeric_limits<double>::quiet_NaN();
+	mpc_csp_solver->mc_tes.discharge_full(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+							mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+							T_htf_cold + 273.15,
+							T_htf_tes_hot, 
+							m_dot_tes_dc, 
+							mpc_csp_solver->mc_tes_outputs);
+
+	// Set TES HTF states (this needs to be less bulky...)
+	// HTF discharging state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = m_dot_tes_dc*3600.0;	//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = T_htf_cold;			//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = T_htf_tes_hot - 273.15;	//[C]
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = 0.0;									//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;//[C] convert from K
+
+	// Solve PC model
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_htf_tes_hot - 273.15;		//[C]
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_tes_dc*3600.0;			//[kg/hr]
+
+	// Inputs
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
+
+	// Performance Call
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_pc_htf_state_in,
+		mpc_csp_solver->mc_pc_inputs,
+		mpc_csp_solver->mc_pc_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;
+
+	return 0;
+}
