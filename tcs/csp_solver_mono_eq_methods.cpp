@@ -247,7 +247,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 	m_dot_guess = fmax(mpc_csp_solver->m_m_dot_pc_min, m_dot_guess);	//[kg/hr]
 
 	// And calculate a second power cycle thermal power input
-	int m_dot_code = c_solver.test_member_function(m_dot_guess, &m_q_dot_calc);
+	m_dot_code = c_solver.test_member_function(m_dot_guess, &m_q_dot_calc);
 	if (m_dot_code != 0)
 	{
 		// Should be able to pass this mass flow rate estimate to the power cycle
