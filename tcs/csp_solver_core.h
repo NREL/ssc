@@ -1194,6 +1194,20 @@ public:
 
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
+
+	class C_mono_eq_pc_match_tes_empty : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+
+	public:
+		C_mono_eq_pc_match_tes_empty(C_csp_solver *pc_csp_solver)
+		{
+			mpc_csp_solver = pc_csp_solver;
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
 };
 
 
