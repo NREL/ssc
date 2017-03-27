@@ -619,34 +619,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				" values are from %d to %d\n", mc_kernel.mc_sim_info.ms_ts.m_step/ 3600.0, cr_operating_state, C_csp_collector_receiver::OFF, C_csp_collector_receiver::ON);
 			throw(C_csp_exception(msg,"CSP Solver Core"));
 		}
-		pc_operating_state = mc_power_cycle.get_operating_state();
-
-		// Get TES operating state info at end of last time step
-		double q_dot_tes_dc, q_dot_tes_ch;
-		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
-		if( m_is_tes )
-		{
-            //predict estimated amount of charge/discharge available
-			double m_dot_field_dc_est, T_hot_field_dc_est;	//[kg/s, K]
-			m_dot_field_dc_est = T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
-			mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est);
-
-			double m_dot_field_ch_est, T_cold_field_ch_est;	//[kg/s, K]
-			m_dot_field_ch_est = T_cold_field_ch_est = std::numeric_limits<double>::quiet_NaN();
-			mc_tes.charge_avail_est(m_cycle_T_htf_hot_des, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est);
-		}
-		else
-		{
-			q_dot_tes_dc = q_dot_tes_ch = 0.0;
-		}
+		pc_operating_state = mc_power_cycle.get_operating_state();		
 
 		// Calculate maximum thermal power to power cycle for startup. This will be zero if power cycle is on.
 		double q_dot_pc_su_max = mc_power_cycle.get_max_q_pc_startup();		//[MWt]
-		
-		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
-		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
-        
-
 
 		// Get weather at this timestep. Should only be called once per timestep. (Except converged() function)
 		mc_weather.timestep_call(mc_kernel.mc_sim_info);
@@ -682,6 +658,30 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		double q_dot_cr_startup = est_out.m_q_startup_avail;
 		double q_dot_cr_on = est_out.m_q_dot_avail;
 		double m_dot_cr_on = est_out.m_m_dot_avail;		//[kg/hr]
+
+
+		// Get TES operating state info at end of last time step
+		double q_dot_tes_dc, q_dot_tes_ch;
+		q_dot_tes_dc = q_dot_tes_ch = std::numeric_limits<double>::quiet_NaN();
+		if (m_is_tes)
+		{
+			//predict estimated amount of charge/discharge available
+			double m_dot_field_dc_est, T_hot_field_dc_est;	//[kg/s, K]
+			m_dot_field_dc_est = T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
+			mc_tes.discharge_avail_est(m_T_htf_cold_des, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_dc, m_dot_field_dc_est, T_hot_field_dc_est);
+
+			double m_dot_field_ch_est, T_cold_field_ch_est;	//[kg/s, K]
+			m_dot_field_ch_est = T_cold_field_ch_est = std::numeric_limits<double>::quiet_NaN();
+			mc_tes.charge_avail_est(m_cycle_T_htf_hot_des, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_ch, m_dot_field_ch_est, T_cold_field_ch_est);
+		}
+		else
+		{
+			q_dot_tes_dc = q_dot_tes_ch = 0.0;
+		}
+
+		// Can add the following code to simulate with no storage charge/discharge, but IDLE calcs
+		//q_dot_tes_dc = q_dot_tes_ch = 0.0;
+
 
 		// Optional rules for TOD Block Plant Control
 		if( mc_tou.mc_dispatch_params.m_is_block_dispatch )
