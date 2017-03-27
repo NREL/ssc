@@ -226,13 +226,15 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 		// Should be able to pass the maximum mass flow rate to the power cycle
 		// So not expecting failure here
 		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		m_m_dot_calc = m_dot_max;	//[kg/hr]
 		return -1;
 	}
 
-	if ( (m_q_dot_calc - m_q_dot_target) / m_q_dot_target < -1.E3 )
+	if ( (m_q_dot_calc - m_q_dot_target) / m_q_dot_target < -1.E-3 )
 	{	// Can't achieve target thermal power without exceeding either TES or system mass flow rate constraints
 		// So calculate T_htf_cold diff and return
 		*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;	//[-]
+		m_m_dot_calc = m_dot_max;	//[kg/hr]
 		return 0;
 	}
 
@@ -240,11 +242,32 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 	xy_pair_1.x = m_dot_max;		//[kg/hr]
 	xy_pair_1.y = m_q_dot_calc;		//[MWt]
 
-	// Guess another mass flow rate
-	double m_dot_guess = m_q_dot_target / m_q_dot_calc * m_dot_max;	//[kg/hr]
-
 	// Check against minimum mass flow rate
-	m_dot_guess = fmax(mpc_csp_solver->m_m_dot_pc_min, m_dot_guess);	//[kg/hr]
+		// What if this is 0?
+	double m_dot_min = mpc_csp_solver->m_m_dot_pc_min;	//[kg/hr]
+	if (m_dot_min > 0.0)
+	{
+		m_dot_code = c_solver.test_member_function(m_dot_min, &m_q_dot_calc);
+	}
+	else
+	{
+		m_dot_code = -1;
+	}
+	
+	// If heat sink solved at m_dot_min, then check solved thermal power
+	if (m_dot_code == 0)
+	{
+		if ((m_q_dot_calc - m_q_dot_target) / m_q_dot_target > 1.E-3)
+		{	// At minimum mass flow rate the thermal power is still greater than target
+			// So calculate T_htf_cold diff and return
+			*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;	//[-]
+			m_m_dot_calc = m_dot_min;	//[kg/hr]
+			return 0;
+		}
+	}
+
+	// Guess another realistic mass flow rate
+	double m_dot_guess = m_q_dot_target / m_q_dot_calc * m_dot_max;	//[kg/hr]
 
 	// And calculate a second power cycle thermal power input
 	m_dot_code = c_solver.test_member_function(m_dot_guess, &m_q_dot_calc);
@@ -253,15 +276,8 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 		// Should be able to pass this mass flow rate estimate to the power cycle
 		// So not expecting failure here
 		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		m_m_dot_calc = m_dot_guess;	//[kg/hr]
 		return -1;
-	}
-
-	if ( (m_q_dot_calc - m_q_dot_target) / m_q_dot_target > 1.E3 )
-	{
-		// At minimum PC mass flow rate, still exceeding target power output
-		// So calculate T_htf_cold diff and return
-		*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;	//[-]
-		return 0;
 	}
 
 	C_monotonic_eq_solver::S_xy_pair xy_pair_2;
@@ -302,6 +318,8 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 		}
 	}
 
+	m_m_dot_calc = m_dot_solved;		//[kg/hr]
+	m_q_dot_calc = m_q_dot_target;		//[MWt]
 	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;	//[-]
 	return 0;
 }

@@ -948,6 +948,7 @@ private:
 
 		// Reset hierarchy logic
 	void reset_hierarchy_logic();
+	void turn_off_plant();
 
 	void solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, double tol, int &exit_mode, double &exit_tolerance);
 	 
@@ -973,10 +974,11 @@ private:
 		int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
 		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
 
-	void solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
+	void solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
 		double tol,
 		int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
+		int &q_pc_exit_mode, double &q_pc_exit_tolerance,
+		double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/);
 
 	void solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 		double field_control_in,
@@ -1181,9 +1183,11 @@ public:
 		{
 			mpc_csp_solver = pc_csp_solver;
 			m_q_dot_calc = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+			m_m_dot_calc = std::numeric_limits<double>::quiet_NaN();	//[kg/hr]
 		}
 
 		double m_q_dot_calc;		//[MWt]
+		double m_m_dot_calc;		//[kg/hr]
 
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
