@@ -283,6 +283,58 @@ void C_csp_solver::reset_hierarchy_logic()
 	m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = true;
 } 
 
+void C_csp_solver::turn_off_plant()
+{
+	m_is_CR_SU__PC_OFF__TES_OFF__AUX_OFF_avail = false;
+	m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = false;
+	m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail = false;
+	m_is_CR_ON__PC_OFF__TES_CH__AUX_OFF_avail = false;
+	m_is_CR_OFF__PC_SU__TES_DC__AUX_OFF_avail = false;
+	m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+
+	m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_HI_SIDE = false;
+	m_is_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF_avail_LO_SIDE = false;
+
+	m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail = false;
+
+	m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE = false;
+	m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE = false;
+
+	m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail = false;
+	m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
+
+	m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail = false;
+
+	m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail = false;
+	m_is_CR_OFF__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+	m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
+
+	m_is_CR_ON__PC_SB__TES_CH__AUX_OFF_avail = false;
+	m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+	m_is_CR_SU__PC_SB__TES_DC__AUX_OFF_avail = false;
+	m_is_CR_ON__PC_SB__TES_DC__AUX_OFF_avail = false;
+
+	m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail = false;
+	m_is_CR_SU__PC_TARGET__TES_DC__AUX_OFF_avail = false;
+	m_is_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF_avail = false;
+
+	m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+
+	m_is_CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
+
+	m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+
+	m_is_CR_ON__PC_SB__TES_FULL__AUX_OFF_avail = false;
+
+	m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+
+	m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail = false;
+
+	m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+
+	m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+}
+
 double C_csp_solver::get_cr_aperture_area()
 {
 	return m_A_aperture;	//[m2]
@@ -4386,10 +4438,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						// Rerun PC MIN and TES DC
 						int pc_mode = C_csp_power_cycle::ON;
 					
-						solver_pc_fixed__tes_dc(q_dot_pc_fixed, pc_mode,
+						double q_dot_return, m_dot_return;
+						solver_pc_on_fixed__tes_dc(q_dot_pc_fixed, pc_mode,
 							tol,
 							T_tes_in_exit_mode, T_tes_in_exit_tolerance,
-							q_pc_exit_mode, q_pc_exit_tolerance);
+							q_pc_exit_mode, q_pc_exit_tolerance,
+							q_dot_return, m_dot_return);
 
 						// Handle exit modes from outer and inner loops
 						if( q_pc_exit_mode == POOR_CONVERGENCE )
@@ -4628,10 +4682,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int T_cold_exit_mode, q_pc_exit_mode;
 				T_cold_exit_mode = q_pc_exit_mode = -1;
 
-				solver_pc_fixed__tes_dc(q_dot_pc_fixed, power_cycle_mode,
+				double q_dot_return, m_dot_return;
+				solver_pc_on_fixed__tes_dc(q_dot_pc_fixed, power_cycle_mode,
 				tol,
 				T_cold_exit_mode, T_cold_exit_tolerance,
-				q_pc_exit_mode, q_pc_exit_tolerance);
+				q_pc_exit_mode, q_pc_exit_tolerance,
+				q_dot_return, m_dot_return);
 
 				double relaxed_tol_mult = 5.0;				//[-]
 				double relaxed_tol = relaxed_tol_mult*tol;	//[-]
@@ -7280,10 +7336,11 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	}	// end while() on the receiver HTF inlet temperature
 }
 
-void C_csp_solver::solver_pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
+void C_csp_solver::solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
 	double tol,
 	int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
+	int &q_pc_exit_mode, double &q_pc_exit_tolerance,
+	double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/)
 {
 	// Power cycle requires fixed thermal input
 	// TES supplies the entire thermal input to the PC
