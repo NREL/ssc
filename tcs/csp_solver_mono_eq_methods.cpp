@@ -365,3 +365,84 @@ int C_csp_solver::C_mono_eq_pc_match_tes_empty::operator()(double T_htf_cold /*C
 
 	return 0;
 }
+
+int C_csp_solver::C_mono_eq_cr_on_pc_su_tes_ch::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// Solve the receiver model
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+										mpc_csp_solver->mc_cr_htf_state_in,
+										mpc_csp_solver->m_defocus,
+										mpc_csp_solver->mc_cr_out_solver,
+										mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is OFF or didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Call the power cycle in STARTUP_CONTROLLED mode
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = 0.0;
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = C_csp_power_cycle::STARTUP_CONTROLLED;
+
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+								mpc_csp_solver->mc_pc_htf_state_in,
+								mpc_csp_solver->mc_pc_inputs,
+								mpc_csp_solver->mc_pc_out_solver,
+								mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check for new PC startup timestep here
+	m_step_pc_su = mpc_csp_solver->mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+
+	// Get mass flow rate PC requires for Controlled Startup
+	double m_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
+
+	// Reset mass flow rate in 'mc_pc_htf_state'
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;	//[kg/hr]
+
+	// Calculate CR mass flow remaining to charge storage
+	double m_dot_tes_ch = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - mpc_csp_solver->mc_pc_inputs.m_m_dot;	//[kg/hr]
+
+	// Check that m_dot_tes_ch is > 0.0
+	if (m_dot_tes_ch < 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	double T_htf_tes_cold = std::numeric_limits<double>::quiet_NaN();
+	bool ch_solved = mpc_csp_solver->mc_tes.charge(m_step_pc_su, 
+									mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+									m_dot_tes_ch / 3600.0,
+									mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15,
+									T_htf_tes_cold,
+									mpc_csp_solver->mc_tes_outputs);
+	T_htf_tes_cold -= 273.15;	//[C] convert back from K
+
+	// Check if TES.charge method solved
+	if (!ch_solved)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// HTF Charging State
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = m_dot_tes_ch;		//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = T_htf_tes_cold;	//[C]
+
+	// HTF DC State (Idle, here)
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = 0.0;				//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+
+	// Enthalpy balance to calculate T_htf_cold to CR
+	double T_htf_cold_calc = (m_dot_tes_ch*T_htf_tes_cold + m_dot_pc*mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold) / mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[C]
+
+	*diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;		//[-]
+	return 0;
+}
