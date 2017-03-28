@@ -3456,6 +3456,7 @@ public:
 		}
 	}
 
+
 	void depreciation_sched_custom(int cf_line, int nyears, const std::string &custom)
 	{
 		// computes custom percentage schedule 100%
@@ -3464,21 +3465,21 @@ public:
 		int i;
 		size_t count = 0;
 		ssc_number_t *parr = as_array(custom, &count);
-		for (i = 1; i<nyears; i++)
+		for (i = 1; i <= nyears; i++)
 		{
-			cf.at(cf_line,i) = 0;
+			cf.at(cf_line, i) = 0;
 		}
 
-		if (count ==1) // single value
+		if (count == 1) // single value
 		{
-			cf.at(cf_line,1) = parr[0]/100.0;
+			cf.at(cf_line, 1) = parr[0] / 100.0;
 		}
 		else // annual schedule
 		{// note schedules begin at year 1 (index 0)
-			int scheduleDuration = ((int)count > nyears)? nyears : (int)count;
-			for (i = 1; i<scheduleDuration; i++)
+			int scheduleDuration = ((int)count > nyears) ? nyears : (int)count;
+			for (i = 1; i <= scheduleDuration; i++)
 			{
-				cf.at(cf_line,i) = parr[i-1] / 100.0; // percentage to factor
+				cf.at(cf_line, i) = parr[i - 1] / 100.0; // percentage to factor
 			}
 		}
 	}
