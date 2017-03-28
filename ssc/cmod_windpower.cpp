@@ -190,12 +190,14 @@ public:
 
 		// setup the power curve data
 		wpc.m_adPowerCurveWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
+		wpc.m_adDensityCorrectedWS.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		wpc.m_adPowerCurveKW.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		wpc.m_adPowerCurveRPM.resize(wpc.m_iLengthOfTurbinePowerCurveArray);
 		size_t i;
 		for (i=0;i<wpc.m_iLengthOfTurbinePowerCurveArray;i++)
 		{
 			wpc.m_adPowerCurveWS[i] = (double)pc_w[i];
+			wpc.m_adDensityCorrectedWS[i] = (double)pc_w[i]; //for starters, corrected by air density at each time step
 			wpc.m_adPowerCurveKW[i] = (double)pc_p[i];
 			wpc.m_adPowerCurveRPM[i] = 0.0;//(double)pc_rpm[i];
 		}

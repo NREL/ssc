@@ -52,7 +52,7 @@ public:
 	double m_dLossesPercent;		// loss as percent
 	double m_dWakeDecayCoefficient; // wake decay coefficient (k)
 
-	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords;
+	std::vector<double> m_adPowerCurveWS, m_adPowerCurveKW, m_adPowerCurveRPM, m_adXCoords, m_adYCoords, m_adDensityCorrectedWS;
 
 	size_t GetMaxTurbines() {return MAX_WIND_TURBINES;}
 	bool InitializeModel(); // if necessary, allocate memory in util::matrix arrays
