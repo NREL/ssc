@@ -664,9 +664,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info);
 		
 		
-		double T_htf_cold_guess = mc_pc_out_solver.m_T_htf_cold;	//[C]
+		double T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
-		mc_cr_htf_state_in.m_temp = T_htf_cold_guess;	//[C]
+		mc_cr_htf_state_in.m_temp = T_htf_pc_cold_est;	//[C]
 		C_csp_collector_receiver::S_csp_cr_est_out est_out;
 		mc_collector_receiver.estimates(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
@@ -688,7 +688,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			//predict estimated amount of charge/discharge available
 			double T_hot_field_dc_est;	//[K]
 			T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
-			mc_tes.discharge_avail_est(T_htf_cold_guess + 273.15, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_dc, m_dot_tes_dc_est, T_hot_field_dc_est);
+			mc_tes.discharge_avail_est(T_htf_pc_cold_est + 273.15, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_dc, m_dot_tes_dc_est, T_hot_field_dc_est);
 			m_dot_tes_dc_est *= 3600.0;	//[kg/hr] convert from kg/s
 
 			double T_cold_field_ch_est;	//[K]
@@ -1061,7 +1061,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					{
 						if( q_dot_tes_ch > 0.0 )
 						{
-							if( (q_dot_cr_on - q_dot_tes_ch)*(1.0+tol_mode_switching) > q_dot_pc_su_max &&
+							if( ( (q_dot_cr_on - q_dot_tes_ch)*(1.0+tol_mode_switching) > q_dot_pc_su_max 
+								|| (m_dot_cr_on - m_dot_tes_ch_est)*(1.0+tol_mode_switching) > m_m_dot_pc_max ) && 
 								m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail )
 							{
 								operating_mode = CR_DF__PC_SU__TES_FULL__AUX_OFF;								
@@ -4069,7 +4070,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-				double T_htf_cold_guess_hotter = T_htf_cold_guess;		//[C]
+				double T_htf_cold_guess_hotter = T_htf_pc_cold_est;		//[C]
 				double T_htf_cold_guess_colder = T_htf_cold_guess_hotter - 10.0;	//[C]
 
 				double T_htf_cold_solved, tol_solved;
@@ -5819,8 +5820,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			case CR_ON__PC_SU__TES_CH__AUX_OFF:
 			{
-				throw(C_csp_exception("CR_ON__PC_SU__TES_CH__AUX_OFF mode not updated for mass flow constraints"));
-
 				// CR in on
 				// PC is starting up with its maximum thermal power for startup
 				//      and is returning the startup time required
@@ -5834,6 +5833,87 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
+				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
+
+				C_mono_eq_cr_on_pc_su_tes_ch c_eq(this);
+				C_monotonic_eq_solver c_solver(c_eq);
+
+				// Get first htf cold temp guess
+				double T_htf_cold_guess = T_htf_pc_cold_est;	//[C]
+
+				// Use this to test code calculating new htf cold temperature
+				// Specifically checking that there's enough mass flow to startup PC AND send > 0 to TES
+				double diff_T_htf_cold_temp = std::numeric_limits<double>::quiet_NaN();
+				int T_htf_cold_code = c_solver.test_member_function(T_htf_cold_guess, &diff_T_htf_cold_temp);
+				if (T_htf_cold_code != 0)
+				{	// If failed, go to next mode (CR_ON__PC_SU__TES_OFF)
+					m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
+
+				C_monotonic_eq_solver::S_xy_pair xy_pair_1;
+				xy_pair_1.x = T_htf_cold_guess;		//[C]
+				xy_pair_1.y = diff_T_htf_cold_temp;	//[-]
+
+				// Now guess another HTF temperature
+				T_htf_cold_guess += 10.0;			//[C]
+				T_htf_cold_code = c_solver.test_member_function(T_htf_cold_guess, &diff_T_htf_cold_temp);
+				if (T_htf_cold_code != 0)
+				{	// If failed, go to next mode (CR_ON__PC_SU__TES_OFF)
+					m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
+
+				C_monotonic_eq_solver::S_xy_pair xy_pair_2;
+				xy_pair_2.x = T_htf_cold_guess;		//[C]
+				xy_pair_2.y = diff_T_htf_cold_temp;	//[-]
+
+				c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+				// Solve for T_htf_cold
+				double T_htf_cold_solved, tol_solved;
+				T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+				int iter_solved = -1;
+
+				T_htf_cold_code = 0;
+				try
+				{
+					T_htf_cold_code = c_solver.solve(xy_pair_1, xy_pair_2, 0.0, T_htf_cold_solved, tol_solved, iter_solved);
+				}
+				catch (C_csp_exception)
+				{
+					throw(C_csp_exception("CR_ON__PC_SU__TES_CH__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+				}
+
+				if (T_htf_cold_code != C_monotonic_eq_solver::CONVERGED)
+				{
+					if (T_htf_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+					{
+						error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the receiver, power cycle startup, and tes charge only reached a convergence "
+							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					}
+					else
+					{
+						m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail = false;
+						are_models_converged = false;
+						break;
+					}
+				}
+
+				// Check reported timestep against initial timesteps
+				step_pc_su = c_eq.m_step_pc_su;		//[s]
+				if (step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
+				{
+					mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
+				}
+
+				are_models_converged = true;
+				break;
 
 				// Guess and iterate for the collector-receiver inlet temperature
 				double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from K
@@ -5863,7 +5943,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int T_rec_in_exit_mode = CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
-				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
+				//double step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
 				// Start iteration on T_rec_in
 				while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
