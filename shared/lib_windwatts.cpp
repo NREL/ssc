@@ -780,6 +780,12 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	*fThrustCoefficient = 0.0;
 	*fTurbineOutput = 0.0;
 
+	//first, correct wind speeds in power curve for site air density. Using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
+	//then, make sure to use corrected wind speeds when calculating power
+	std::vector <double> temp_ws;
+	for (int i = 0; i < m_adDensityCorrectedWS.size(); i++)
+		m_adDensityCorrectedWS[i] = m_adPowerCurveWS[i] * pow((fAirDensity / physics::AIR_DENSITY_SEA_LEVEL), (1.0 / 3.0));
+
 	//bug fix jmf 1/11/17- cut in and cut out wind speeds need to be inferred from the power curve, cut in was previously an input but shouldn't be because a) some users are using library turbines, which only have power curves, 
 	//and b) it could be inconsistent with the input power curve. 
 	int i = 0;
@@ -789,7 +795,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	//this is consistent with the NREL Cost & Scaling model- if you specify a cut-in speed of 4 m/s, the power curve value at 4 m/s is 0, and it starts producing power at 4.25.
 	//HOWEVER, if you specify the cut-in speed BETWEEN the wind speed bins, then this method would improperly assume that the cut-in speed is lower than it actually is. But given the 0.25 m/s size of the bins, that type of
 	//specification would be false accuracy anyways, so we'll ignore it for now.
-	m_dCutInSpeed = m_adPowerCurveWS[i-1]; 
+	m_dCutInSpeed = m_adDensityCorrectedWS[i - 1];
 
 	/*	//We will continue not to check cut-out speed because currently the model will interpolate between the last non-zero power point and zero, and we don't have a better definition of where the power cutoff should be.
 	i = m_adPowerCurveKW.size() - 1; //last index in the array
@@ -804,25 +810,27 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	
 	// Find power from turbine power curve
 	double out_pwr=0.0;
-	if ( (fWindSpeedAtHubHeight > m_adPowerCurveWS[0]) && (fWindSpeedAtHubHeight < m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) ) 
+	if ((fWindSpeedAtHubHeight > m_adDensityCorrectedWS[0]) && (fWindSpeedAtHubHeight < m_adDensityCorrectedWS[m_iLengthOfTurbinePowerCurveArray - 1]))
 	{
 		int j = 1;
-		while ( m_adPowerCurveWS[j] <= fWindSpeedAtHubHeight )
+		while (m_adDensityCorrectedWS[j] <= fWindSpeedAtHubHeight)
 			j++; // find first m_adPowerCurveWS > fWindSpeedAtHubHeight
 
-		out_pwr = util::interpolate(m_adPowerCurveWS[j-1], m_adPowerCurveKW[j-1], m_adPowerCurveWS[j], m_adPowerCurveKW[j], fWindSpeedAtHubHeight);
+		out_pwr = util::interpolate(m_adDensityCorrectedWS[j - 1], m_adPowerCurveKW[j - 1], m_adDensityCorrectedWS[j], m_adPowerCurveKW[j], fWindSpeedAtHubHeight);
 	}
-	else if (fWindSpeedAtHubHeight == m_adPowerCurveWS[m_iLengthOfTurbinePowerCurveArray-1]) 
+	else if (fWindSpeedAtHubHeight == m_adDensityCorrectedWS[m_iLengthOfTurbinePowerCurveArray - 1])
 		out_pwr = m_adPowerCurveKW[m_iLengthOfTurbinePowerCurveArray-1];
 
 	// Check against turbine cut-in speed
 	if ( fWindSpeedAtHubHeight < m_dCutInSpeed) out_pwr = 0.0; //this is effectively redundant, because the power at the cut-in speed is defined to be 0, above, so anything below that will also be 0, but leave in for completeness
 
 	// wind turbine output corrected for site air density
-	out_pwr *= fAirDensity/physics::AIR_DENSITY_SEA_LEVEL;
+	//removed 3.28.17 jmf. this was originally coded in ~2005, before the IEC standard was written. this correction is largely correct for stall regulated turbines, but the majority of modern turbines are now pitch-regulated.
+	//out_pwr *= fAirDensity/physics::AIR_DENSITY_SEA_LEVEL; 
 
 	// stall control (Ctl_Mode == 2) defaults to simple density ratio
-	if ( (m_iControlMode == 1)/*pitch control*/ || (m_iControlMode == 0)/*var speed control*/ )
+	/*
+	if ( (m_iControlMode == 1) || (m_iControlMode == 0) ) //1 = pitch control, 0= variable speed control
 	{
 		double NewVRat = m_dRatedSpeed * pow(fAirDensity/physics::AIR_DENSITY_SEA_LEVEL, 1.0/3.0);
 		if (out_pwr > m_dRatedPower)
@@ -830,6 +838,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 		else if (fWindSpeedAtHubHeight > NewVRat)
 			out_pwr = m_dRatedPower;
 	}
+	*/
 
 	//if (out_pwr > (m_dRatedPower * 0.001)) // if calculated power is > 0.1% of rating, set outputs
 	if (out_pwr > 0 )
