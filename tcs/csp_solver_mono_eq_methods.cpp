@@ -499,7 +499,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_
 	// Get the maximum possible mass mass flow rate to power cycle
 	bool is_cr_max = true;
 	double m_dot_pc_max = m_dot_cr;				//[kg/hr]
-	if (mpc_csp_solver->m_m_dot_pc_max)
+	if (m_dot_pc_max > mpc_csp_solver->m_m_dot_pc_max)
 	{
 		is_cr_max = false;
 		m_dot_pc_max = mpc_csp_solver->m_m_dot_pc_max;	//[kg/hr]
@@ -576,8 +576,28 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_
 	// Get power cycle HTF return temperature
 	double T_pc_out = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15;	//[K]
 
+	// Get maximum charging mass flow rate
+	// Knowing the receiver outlet temperature, can calculate the maximum mass flow rate available for charging
+	double q_dot_tes_ch_max, m_dot_tes_ch_max, T_tes_cold_ch_max;
+	q_dot_tes_ch_max = m_dot_tes_ch_max = T_tes_cold_ch_max = std::numeric_limits<double>::quiet_NaN();
+	mpc_csp_solver->mc_tes.charge_avail_est(mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15, 
+										mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, 
+										q_dot_tes_ch_max, 
+										m_dot_tes_ch_max, 
+										T_tes_cold_ch_max);
+
+	m_dot_tes_ch_max *= 3600.0;		//[kg/hr] convert from kg/s
+
 	// Charge storage
 	double m_dot_tes = m_dot_cr - m_dot_pc_solved;		//[kg/hr]
+
+	// If amount we want to send to storage is greater than max amount, return
+	if (m_dot_tes > m_dot_tes_ch_max)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -4;
+	}
+
 	double T_tes_cold_out = std::numeric_limits<double>::quiet_NaN();	//[K]
 	bool is_tes_success = mpc_csp_solver->mc_tes.charge(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
 												mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
@@ -589,7 +609,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_
 	if (!is_tes_success)
 	{
 		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
-		return -4;
+		return -5;
 	}
 
 	// HTF charging state
