@@ -1297,14 +1297,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( q_dot_tes_dc > 0.0 )
 							{	// Storage dispatch is available
 
-								if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_target && is_pc_su_allowed &&
+								if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_target 
+									&& is_pc_su_allowed 
+									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min &&
 									m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail )
 								{	// Storage can provide enough dispatch to reach power cycle target
 									// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
 
 									operating_mode = CR_ON__PC_TARGET__TES_DC__AUX_OFF;									
 								}
-								else if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_min && is_pc_su_allowed &&
+								else if( (q_dot_cr_on + q_dot_tes_dc)*(1.0 + tol_mode_switching) > q_pc_min 
+									&& is_pc_su_allowed 
+									&& (m_dot_cr_on + m_dot_tes_dc_est)*(1.0 + tol_mode_switching) > m_m_dot_pc_min &&
 									m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail )
 								{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
 									// Run at highest possible PC fraction by dispatch all remaining storage
@@ -2651,70 +2655,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				are_models_converged = true;
-				break;
-
-
-
-
-				// Define relaxed tolerance
-				double relaxed_tol_mult = 5.0;
-				double relaxed_tol = relaxed_tol_mult*tol;
-
-				// Process solver results
-
-				// Handle exit modes from outer and inner loops
-					// If inner nest (power cycle thermal power iteration) causes exit, then we know CR solved with *some* inputs
-				if( q_pc_exit_mode == POOR_CONVERGENCE )
-				{
-					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
-					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
-
-						// update 'exit_mode'
-						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					}
-					else
-					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-						error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_CH__AUX_OFF method only reached a convergence"
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-					}
-				}
-
-				if( T_rec_in_exit_mode == POOR_CONVERGENCE )
-				{
-					if( fabs(T_rec_in_exit_tolerance) > relaxed_tol )
-					{	// Did not converge within Relaxed Tolerance, shut off CR and PC
-
-						// update 'exit_mode'
-						T_rec_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					}
-					else
-					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-						error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_CH__AUX_OFF method only reached a convergence"
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_rec_in_exit_tolerance);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-					}
-				}
-				
-				if(q_pc_exit_mode == UNDER_TARGET_PC || q_pc_exit_mode == C_csp_solver::CSP_NO_SOLUTION || T_rec_in_exit_mode == C_csp_solver::CSP_NO_SOLUTION )
-				{
-					m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE = false;
-					are_models_converged = false;
-					break;
-				}
-				else if( q_pc_exit_mode == OVER_TARGET_PC || T_rec_in_exit_mode == OVER_TARGET_PC )
-				{
-					m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE = false;
-					are_models_converged = false;
-					break;
-				}
-								
-				// If convergence was successful, finalize this timestep and get out
-					// Have solved CR, TES, and PC in this operating mode, so only need to set flag to get out of Mode Iteration
-				are_models_converged = true;
-			
 			}
 				break;
 
@@ -2824,8 +2764,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			case CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF:
 			{
-				throw(C_csp_exception("CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF mode not updated for mass flow constraints"));
-
 				// The collector receiver is on and return hot HTF to the Pc
 				// TES is discharging hot HTF that is then mixed with the CR HTF
 				// The power cycle operates between its minimum operation fraction and target operation
@@ -2839,324 +2777,107 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
-				double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from K
-				double T_rec_in_guess = T_rec_in_guess_ini;					//[C]
+				C_mono_eq_cr_on_pc_match_tes_empty c_eq(this, m_defocus);
+				C_monotonic_eq_solver c_solver(c_eq);
 
-				// Lower bound could be freeze protection temperature...
-				double T_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
-				double T_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
-				double y_rec_in_lower = std::numeric_limits<double>::quiet_NaN();
-				double y_rec_in_upper = std::numeric_limits<double>::quiet_NaN();
-				// Booleans for bounds and convergence error
-				bool is_upper_bound = false;
-				bool is_lower_bound = false;
-				bool is_upper_error = false;
-				bool is_lower_error = false;
+				c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-				double tol_C = 1.0;								//[K]
-				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
+				double T_htf_cold_guess_colder = m_T_htf_pc_cold_est;				//[C]
+				double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]
 
-				double relaxed_tol_mult = 5.0;
-				double relaxed_tol = relaxed_tol_mult*tol;
+				double T_htf_cold_solved, tol_solved;
+				T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+				int iter_solved = -1;
 
-				double diff_T_rec_in = 999.9*tol;			// (T_rec_in_calc - T_rec_in_guess)/T_rec_in_guess
-
-				int iter_T_rec_in = 0;
-
-				int exit_mode = CSP_CONVERGED;
-				double exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-
-				// Start iteration loop
-				while( fabs(diff_T_rec_in) > tol || diff_T_rec_in != diff_T_rec_in )
+				int solver_code = 0;
+				try
 				{
-					iter_T_rec_in++;		// First iteration = 1
+					solver_code = c_solver.solve(T_htf_cold_guess_colder, T_htf_cold_guess_warmer, 0.0, T_htf_cold_solved, tol_solved, iter_solved);
+				}
+				catch (C_csp_exception)
+				{
+					throw(C_csp_exception("CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF received exception from mono equation solver"));
+				}
 
-					// Check if distance between bounds is "too small"
-					double diff_T_bounds = T_rec_in_upper - T_rec_in_lower;
-					if( diff_T_bounds / T_rec_in_upper < tol / 2.0 )
+				if (solver_code != C_monotonic_eq_solver::CONVERGED)
+				{
+					if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
 					{
-						if( diff_T_rec_in != diff_T_rec_in )
-						{	// Models aren't producing power or are returning errors, and it appears we've tried the solution space for T_rec_in
-
-							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							break;
-						}
-						else
-						{
-							exit_mode = POOR_CONVERGENCE;
-							exit_tolerance = diff_T_rec_in;
-							break;
-						}
+						error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the power cycle and receiver only reached a convergence "
+							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 					}
-
-					// Subsequent iterations need to re-calculate T_in
-					if( iter_T_rec_in > 1 )
-					{	// diff_T_rec_in = (T_rec_in_calc - T_rec_in_guess)/T_rec_in_guess
-
-						if( diff_T_rec_in != diff_T_rec_in )
-						{	// Models did not solve such that a convergence error could be calculated
-							// However, we can check whether upper and lower bounds are set, and may be able to calculate a new guess via bisection method
-							// But, check that bounds exist
-							if( !is_lower_bound || !is_upper_bound )
-							{
-								exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-								exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-								break;
-							}
-							T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]						
-						}
-						else if( diff_T_rec_in > 0.0 )		// Guess receiver inlet temperature was too low
-						{
-							is_lower_bound = true;
-							is_lower_error = true;
-							T_rec_in_lower = T_rec_in_guess;		//[C]
-							y_rec_in_lower = diff_T_rec_in;			//[-]
-
-							if( is_upper_bound && is_upper_error )
-							{
-								T_rec_in_guess = y_rec_in_upper / (y_rec_in_upper - y_rec_in_lower)*(T_rec_in_lower - T_rec_in_upper) + T_rec_in_upper;		//[C]
-							}
-							else if( is_upper_bound )
-							{
-								T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]	
-							}
-							else
-							{
-								T_rec_in_guess += 2.5;			//[C]
-							}
-						}
-						else
-						{
-							is_upper_bound = true;
-							is_upper_error = true;
-							T_rec_in_upper = T_rec_in_guess;		//[C] Set upper bound
-							y_rec_in_upper = diff_T_rec_in;			//[-]
-
-							if( is_lower_bound && is_upper_bound )
-							{
-								T_rec_in_guess = y_rec_in_upper / (y_rec_in_upper - y_rec_in_lower)*(T_rec_in_lower - T_rec_in_upper) + T_rec_in_upper;		//[C]
-							}
-							else if( is_lower_bound )
-							{
-								T_rec_in_guess = 0.5*(T_rec_in_lower + T_rec_in_upper);		//[C]
-							}
-							else
-							{
-								T_rec_in_guess -= 2.5;		//[C]
-							}
-						}
-					} // end logic to determine new T_rec_in
-
-					// Solve the collector-receiver model
-					mc_cr_htf_state_in.m_temp = T_rec_in_guess;		//[C]
-
-					mc_collector_receiver.on(mc_weather.ms_outputs,
-						mc_cr_htf_state_in,
-						m_defocus,
-						mc_cr_out_solver,
-						//mc_cr_out_report,
-						mc_kernel.mc_sim_info);
-
-					// Check if receiver is OFF or model didn't solve
-					if( mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mc_cr_out_solver.m_q_thermal == 0.0 )
+					else
 					{
-						// If first iteration, don't know enough about why collector/receiver is not producing power to advance iteration
-						if( iter_T_rec_in == 1 )
-						{
-							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							break;	// exit while() on diff_T_rec_in
-						}
-						else
-						{	// If collector-receiver model has solved with results previously in this loop, then try to find another guess value
-							// Assumption here is that the receiver solved at the first guess temperature: 'T_rec_in_guess_ini'
-							// Also, assume that if both upper and lower bounds exist, then can't generate a new guess because don't know which way to move
-							if( T_rec_in_guess < T_rec_in_guess_ini )
-							{	// If current guess value is less than the initial guess value, then:
+						m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
+						are_models_converged = false;
+						break;
+					}
+				}
 
-								// If lower bound is already set OR upper bound is not set, can't generate a new guess value
-								if( is_lower_bound || !is_upper_bound )
-								{
-									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-									break;	// exit while() on diff_T_rec_in
-								}
-
-								// Else, set lower bound and flags and 'continue' to start of while()
-								T_rec_in_lower = T_rec_in_guess;
-								is_lower_bound = true;
-								is_lower_error = false;
-
-								// Set diff_T_rec_in to NaN to indicate to Guess Generator that bisection method should be used
-								diff_T_rec_in = std::numeric_limits<double>::quiet_NaN();
-								continue;
-							}
-							else
-							{	// If current guess value is greater than initial value, then:
-
-								// If upper bound is already set OR lower bound is not set, can't generate a new guess value
-								if( is_upper_bound || !is_lower_bound )
-								{
-									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-									break;	// exit while() on diff_T_rec_in
-								}
-
-								// Else, set upper bound and flags and 'continue' to start of while()
-								T_rec_in_upper = T_rec_in_guess;
-								is_upper_bound = true;
-								is_upper_error = false;
-
-								// Set diff_T_rec_in to NaN to indicate to Guess Generator that bisection method should be used
-								diff_T_rec_in = std::numeric_limits<double>::quiet_NaN();
-								continue;
-							}
-
-						}	// end else on if(iter_T_rec_in == 1)
-
-					}	// end logic to determine path if receiver is off or did not solve
 				
-					// Now solve TES full discharge
-					double T_tes_htf_hot, m_dot_tes_dc;
-					mc_tes.discharge_full(mc_kernel.mc_sim_info.ms_ts.m_step, mc_weather.ms_outputs.m_tdry + 273.15, T_rec_in_guess + 273.15, T_tes_htf_hot, m_dot_tes_dc, mc_tes_outputs);
-					T_tes_htf_hot -= 273.15;	//[C] convert from K
-					m_dot_tes_dc *= 3600.0;		//[kg/hr] convert from kg/s
+				// *********************************
+				// Check if solved thermal power is greater than target
 
-					// HTF discharging state
-					mc_tes_dc_htf_state.m_m_dot = m_dot_tes_dc;			//[kg/hr]
-					mc_tes_dc_htf_state.m_temp_in = T_rec_in_guess;		//[C]
-					mc_tes_dc_htf_state.m_temp_out = T_tes_htf_hot;		//[C]
-
-					// HTF charging state
-					mc_tes_ch_htf_state.m_m_dot = 0.0;									//[kg/hr]
-					mc_tes_ch_htf_state.m_temp_in = mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
-					mc_tes_ch_htf_state.m_temp_out = mc_tes_outputs.m_T_cold_ave - 273.15;//[C] convert from K
-
-					double m_dot_pc = mc_cr_out_solver.m_m_dot_salt_tot + m_dot_tes_dc;		//[kg/hr]
-
-					double T_pc_htf_in = (m_dot_tes_dc*T_tes_htf_hot + mc_cr_out_solver.m_m_dot_salt_tot*mc_cr_out_solver.m_T_salt_hot) / (m_dot_pc);	//[C]
-
-					// Solve power cycle model
-					mc_pc_htf_state_in.m_temp = T_pc_htf_in;		//[C]
-					mc_pc_inputs.m_m_dot = m_dot_pc;				//[kg/hr]
-
-					// Inputs
-					mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
-
-					// Performance Call
-					mc_power_cycle.call(mc_weather.ms_outputs,
-						mc_pc_htf_state_in,
-						mc_pc_inputs,
-						mc_pc_out_solver,
-						//mc_pc_out_report,
-						mc_kernel.mc_sim_info);
-
-					// Check that power cycle is producing power or model didn't solve
-					if( !mc_pc_out_solver.m_was_method_successful )
+				if (mc_pc_out_solver.m_q_dot_htf > q_pc_target)
+				{
+					if (mc_pc_out_solver.m_q_dot_htf > q_pc_max)
 					{
-						// If first iteration, don't know enough about why power cycle is not producing power to advance iteration
-						// Go to Receiver OFF power cycle OFF
-						if( iter_T_rec_in == 1 )
-						{
-							exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-							exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-							break;
-						}
-						else
-						{
-							// Set T_rec_in_guess as either upper or lower bound, depending on which end of DESIGN temp it falls
-							// Assumption here is that receiver solved at first guess temperature
-							// But if both upper and lower bounds are established, then don't have a direction to try
-							// So this reguess is only good for 1 PC failure on the 2nd iteration...
-							if( T_rec_in_guess < T_rec_in_guess_ini )
-							{
-								if( is_lower_bound || !is_upper_bound )
-								{
-									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-									break;
-								}
-								T_rec_in_lower = T_rec_in_guess;
-								is_lower_bound = true;
-								is_lower_error = false;
-								// At this point, both and upper and lower bound should exist, so can generate new guess
-								// And communicate this to Guess-Generator by setting diff_T_in to NaN
-								diff_T_rec_in = std::numeric_limits<double>::quiet_NaN();
-							}
-							else
-							{
-								if( is_upper_bound || !is_lower_bound )
-								{
-									exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-									exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-									break;
-								}
-								T_rec_in_upper = T_rec_in_guess;
-								is_upper_bound = true;
-								is_upper_error = false;
-								// At this point, both and upper and lower bound should exist, so can generate new guess
-								// And communicate this to Guess-Generator by setting diff_T_in to NaN
-								diff_T_rec_in = std::numeric_limits<double>::quiet_NaN();
-							}
-						}
-					}	// End logic for PC off or not producing power
+						error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF converged to a PC thermal power %lg [MWt]"
+							" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
-					// Get HTF temperature out from the power cycle and compare to guess value (T_rec_in)
-					double T_rec_in_calc = mc_pc_out_solver.m_T_htf_cold;	//[C]
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-					diff_T_rec_in = (T_rec_in_calc - T_rec_in_guess) / T_rec_in_guess;		//[-]
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF converged to a PC thermal power %lg [MWt]"
+							" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_target, q_pc_max);
+						
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					}
+				}
+
+				if (mc_pc_out_solver.m_m_dot_htf > m_m_dot_pc_max)
+				{
+					error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
+						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					turn_off_plant();
+					are_models_converged = false;
+					break;
 				}
 
 				// *********************************
 				// Check PC q_dot is >= MIN!!!!!!!!
-				// *********************************
-				if(mc_pc_out_solver.m_q_dot_htf < q_pc_min)
-				{
-					exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-				}
 
-				if(mc_pc_out_solver.m_q_dot_htf > q_pc_target)
-				{
-					error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF method converged to a power cycle"
-						" thermal input greater than the target.",
-						mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
-				}
-
-				// Handle exit modes
-				if( exit_mode == POOR_CONVERGENCE )
-				{
-					if( fabs(exit_tolerance) > relaxed_tol )
-					{	// Did not converge within Relaxed Tolerance
-					
-						// update 'exit_mode'
-						exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					}
-					else
-					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-						error_msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF method only reached a convergence"
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, exit_tolerance);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-
-						exit_mode = CSP_CONVERGED;
-					}
-				}
-				
-				if(exit_mode != CSP_CONVERGED)
+				if (mc_pc_out_solver.m_q_dot_htf < q_pc_min)
 				{
 					m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
 					break;
 				}
-
+				if (mc_pc_out_solver.m_m_dot_htf < m_m_dot_pc_min)
+				{
+					m_is_CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
+				
 				// If convergence was successful, finalize this timestep and get out
 				// Have solved CR, TES, and PC in this operating mode, so only need to set flag to get out of Mode Iteration
 				are_models_converged = true;
 
 			}
-
 				break;	// break case CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF
 			
 
@@ -6744,7 +6465,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				m_defocus = defocus_guess;
 
 				are_models_converged = true;
-
+				
 			}
 				break;
 
