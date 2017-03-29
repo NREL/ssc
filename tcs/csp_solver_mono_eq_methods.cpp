@@ -630,3 +630,75 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_
 
 	return 0;
 }
+
+int C_csp_solver::C_mono_eq_cr_on_pc_match_tes_empty::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// Solve the CR model
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+										mpc_csp_solver->mc_cr_htf_state_in,
+										m_defocus,
+										mpc_csp_solver->mc_cr_out_solver,
+										mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is OFF or model didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Now solve TES full discharge
+	double T_htf_tes_dc, m_dot_tes_dc;
+	mpc_csp_solver->mc_tes.discharge_full(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+							mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+							T_htf_cold + 273.15,
+							T_htf_tes_dc,
+							m_dot_tes_dc,
+							mpc_csp_solver->mc_tes_outputs);
+
+	T_htf_tes_dc -= 273.15;		//[C] convert from K
+	m_dot_tes_dc *= 3600.0;		//[kg/hr] convert from kg/s
+
+	// HTF discharging state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = m_dot_tes_dc;		//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = T_htf_cold;		//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = T_htf_tes_dc;	//[C]
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = 0.0;									//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+	double m_dot_pc = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot + m_dot_tes_dc;	//[kg/hr]
+
+	double T_htf_pc_in = (m_dot_tes_dc*T_htf_tes_dc +
+		mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot*mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot) / m_dot_pc;	//[C]
+
+	// Solve power cycle model
+		// HTF State
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_htf_pc_in;	//[C]
+		// Inputs
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_pc;		//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
+		// Performance
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+									mpc_csp_solver->mc_pc_htf_state_in,
+									mpc_csp_solver->mc_pc_inputs,
+									mpc_csp_solver->mc_pc_out_solver,
+									mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check that power cycle is producing power or model didn't solve
+	if (!mpc_csp_solver->mc_pc_out_solver.m_was_method_successful)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -2;
+	}
+
+	double T_htf_cold_calc = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold;	//[C]
+
+	*diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;		//[-]
+
+	return 0;
+}
