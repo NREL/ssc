@@ -210,7 +210,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_cycle_W_dot_des = m_cycle_eta_des = m_cycle_q_dot_des = m_cycle_max_frac = m_cycle_cutoff_frac =
 		m_cycle_sb_frac_des = m_cycle_T_htf_hot_des =
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
-		m_m_dot_pc_des = m_m_dot_pc_min = m_m_dot_pc_max = std::numeric_limits<double>::quiet_NaN();
+		m_m_dot_pc_des = m_m_dot_pc_min = m_m_dot_pc_max = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
 
 	// Reporting and Output Tracking
 	mc_reported_outputs.construct(S_solver_output_info);
@@ -664,9 +664,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			mc_kernel.mc_sim_info);
 		
 		
-		double T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
+		m_T_htf_pc_cold_est = mc_pc_out_solver.m_T_htf_cold;	//[C]
 		// Solve collector/receiver at steady state with design inputs and weather to estimate output
-		mc_cr_htf_state_in.m_temp = T_htf_pc_cold_est;	//[C]
+		mc_cr_htf_state_in.m_temp = m_T_htf_pc_cold_est;	//[C]
 		C_csp_collector_receiver::S_csp_cr_est_out est_out;
 		mc_collector_receiver.estimates(mc_weather.ms_outputs,
 			mc_cr_htf_state_in,
@@ -688,7 +688,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			//predict estimated amount of charge/discharge available
 			double T_hot_field_dc_est;	//[K]
 			T_hot_field_dc_est = std::numeric_limits<double>::quiet_NaN();
-			mc_tes.discharge_avail_est(T_htf_pc_cold_est + 273.15, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_dc, m_dot_tes_dc_est, T_hot_field_dc_est);
+			mc_tes.discharge_avail_est(m_T_htf_pc_cold_est + 273.15, mc_kernel.mc_sim_info.ms_ts.m_step, q_dot_tes_dc, m_dot_tes_dc_est, T_hot_field_dc_est);
 			m_dot_tes_dc_est *= 3600.0;	//[kg/hr] convert from kg/s
 
 			double T_cold_field_ch_est;	//[K]
@@ -1240,7 +1240,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							if( q_dot_tes_ch > 0.0 )
 							{
 								// 1) Try to fill storage while hitting power cycle target
-								if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target &&
+								if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_target 
+									&& (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 - tol_mode_switching) < m_m_dot_pc_max &&
 									m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE )
 								{	// Storage can accept the remaining receiver output
 									// Tolerance is applied so that if CR + TES is *close* to reaching PC target, the controller tries that mode
@@ -2578,8 +2579,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			case CR_ON__PC_TARGET__TES_CH__AUX_OFF:
 			{
-				throw(C_csp_exception("CR_ON__PC_TARGET__TES_CH__AUX_OFF mode not updated for mass flow constraints"));
-
 				// CR is on (no defocus)
 				// PC is on and hitting specified target
 				// TES is charging
@@ -2612,6 +2611,50 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					tol,
 					T_rec_in_exit_mode, T_rec_in_exit_tolerance,
 					q_pc_exit_mode, q_pc_exit_tolerance);
+
+				double q_dot_pc_solved = mc_pc_out_solver.m_q_dot_htf;		//[MWt]
+				double m_dot_pc_solved = mc_pc_out_solver.m_m_dot_htf;		//[kg/hr]
+
+				// Check bounds on solved thermal power
+				if (q_pc_exit_mode != C_csp_solver::CSP_CONVERGED)
+				{	// Solution required sending too much mass flow rate to TES
+					m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_HI_SIDE = false;
+					are_models_converged = false;
+					break;
+				}
+				else if (fabs(q_dot_pc_solved - q_dot_pc_fixed) / q_dot_pc_fixed < 1.E-3)
+				{	// If successfully solved for target thermal power, check that mass flow is above minimum
+					if (m_dot_pc_solved < m_m_dot_pc_min)
+					{
+						error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_CH__AUX_OFF solved with a PC HTF mass flow rate %lg [kg/s]"
+							" smaller than the minimum %lg [kg/s]. Controller shut off plant",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, m_dot_pc_solved/3600.0, m_m_dot_pc_min/3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+				}
+				else if (q_dot_pc_solved < q_dot_pc_fixed)
+				{
+					if (m_dot_pc_solved < m_m_dot_pc_max)
+					{	// Can send more mass flow to PC from TES
+						m_is_CR_ON__PC_TARGET__TES_CH__AUX_OFF_avail_LO_SIDE = false;
+						are_models_converged = false;
+						break;
+					}
+					//else
+					//{	// Mass flow rate to cycle is maxed out, so end here
+					//
+					//}
+				}
+
+				are_models_converged = true;
+				break;
+
+
+
 
 				// Define relaxed tolerance
 				double relaxed_tol_mult = 5.0;
@@ -4070,7 +4113,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-				double T_htf_cold_guess_hotter = T_htf_pc_cold_est;		//[C]
+				double T_htf_cold_guess_hotter = m_T_htf_pc_cold_est;		//[C]
 				double T_htf_cold_guess_colder = T_htf_cold_guess_hotter - 10.0;	//[C]
 
 				double T_htf_cold_solved, tol_solved;
@@ -5839,7 +5882,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				C_monotonic_eq_solver c_solver(c_eq);
 
 				// Get first htf cold temp guess
-				double T_htf_cold_guess = T_htf_pc_cold_est;	//[C]
+				double T_htf_cold_guess = m_T_htf_pc_cold_est;	//[C]
 
 				// Use this to test code calculating new htf cold temperature
 				// Specifically checking that there's enough mass flow to startup PC AND send > 0 to TES
@@ -8245,6 +8288,55 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 	// PC is controlled for a fixed q_dot_in
 	// excess CR output is charging TES
 
+	C_mono_eq_cr_on_pc_target_tes_ch__T_cold c_eq(this, power_cycle_mode, q_dot_pc_fixed, field_control_in);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	// Set up solver
+	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+	// Solve for cold HTF temperature
+	double T_cold_guess_low = m_T_htf_pc_cold_est; 			//[C]
+	double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
+
+	double T_cold_solved, tol_solved;
+	T_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int T_cold_code = 0;
+	try
+	{
+		T_cold_code = c_solver.solve(T_cold_guess_low, T_cold_guess_high, 0.0, T_cold_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception(util::format("At time = %lg, C_csp_solver:::solver_pc_fixed__tes_dc failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+	}
+
+	if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+		{
+			std::string msg = util::format("At time = %lg C_csp_solver:::solver_cr_on__pc_fixed__tes_ch iteration "
+				"to find the cold HTF temperature to balance energy between the CR, TES, and PC only reached a convergence "
+				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+			mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
+		}
+		else
+		{
+			q_pc_exit_mode = C_csp_solver::OVER_TARGET_PC;
+		}
+	}
+	else
+	{
+		q_pc_exit_mode = C_csp_solver::CSP_CONVERGED;
+	}
+
+	return;
+
+
+
 	// Guess and iterate for the collector-receiver inlet temperature
 	double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from K
 	double T_rec_in_guess = T_rec_in_guess_ini;					//[C]
@@ -8422,7 +8514,7 @@ void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/,
 		// Now need to iterate on receiver mass flow rate output to send to PC
 		double m_dot_receiver = mc_cr_out_solver.m_m_dot_salt_tot;		//[kg/hr]
 
-
+		
 		// Set up iteration variables
 		// Calculate the max and min possible mass flow rates to the power cycle
 		// If there is no solution space between them, then need to guess new receiver inlet temperature or get out of iteration

@@ -946,7 +946,9 @@ private:
 	double m_report_time_start;			//[s]
 	double m_report_time_end;			//[s]
 	double m_report_step;				//[s]
-	 
+
+		// Estimates to use
+	double m_T_htf_pc_cold_est;			//[C]
 
 		// Reset hierarchy logic
 	void reset_hierarchy_logic();
