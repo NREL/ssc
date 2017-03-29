@@ -591,24 +591,38 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 	int mode = batt_vars->batt_dispatch;
 	if (mode != dispatch_t::MANUAL)
 	{
-		int nrec;
 		prediction_index = 0;
 		bool look_ahead = ((mode == dispatch_t::LOOK_AHEAD || mode == dispatch_t::MAINTAIN_TARGET));
 		bool look_behind = ((mode == dispatch_t::LOOK_BEHIND));
 		automate_dispatch_t * automated_dispatch = dynamic_cast<automate_dispatch_t*>(dispatch_model);
 
-		// automatic look ahead
-		if (look_ahead)
-			nrec = nyears * 8760 * step_per_hour;
-		// look behind
-		else if (look_behind)
-			nrec = 24 * step_per_hour;
-
-		if (pv != 0) {
-			for (int idx = 0; idx != nrec; idx++)
+		// automatic look ahead or behind
+		int nrec = nyears * 8760 * step_per_hour;
+		
+		if (pv != 0) 
+		{
+			// look ahead
+			if (look_ahead)
 			{
-				pv_prediction.push_back(pv[idx]);
-				load_prediction.push_back(load[idx]);
+				for (int idx = 0; idx != nrec; idx++)
+				{
+					pv_prediction.push_back(pv[idx]);
+					load_prediction.push_back(load[idx]);
+				}
+			}
+			else if (look_behind)
+			{
+				// day one is zeros
+				for (int idx = 0; idx != 24 * step_per_hour; idx++)
+				{
+					pv_prediction.push_back(0);
+					load_prediction.push_back(0);
+				}
+				for (int idx = 0;  idx != nrec - 24 * step_per_hour; idx++)
+				{
+					pv_prediction.push_back(pv[idx]);
+					load_prediction.push_back(load[idx]);
+				}
 			}
 		}
 		else
@@ -620,6 +634,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 			}
 		}		
 		automated_dispatch->update_pv_load_data(pv_prediction, load_prediction);
+
 		if (mode == dispatch_t::MAINTAIN_TARGET)
 			automated_dispatch->set_target_power(target_power);
 	}
@@ -887,12 +902,7 @@ public:
 			if (batt_meter_position == dispatch_t::BEHIND)
 			{
 				int batt_dispatch = as_integer("batt_dispatch_choice");
-				bool look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
-				bool look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
-				if (look_behind)
-					batt.initialize_automated_dispatch(0, 0);
-				else if (look_ahead)
-					batt.initialize_automated_dispatch(power_input, power_load);
+				batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			/* *********************************************************************************************
 			Run Simulation
