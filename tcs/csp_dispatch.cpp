@@ -131,6 +131,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.q_pb_startup.clear();
     outputs.q_rec_startup.clear();
     outputs.w_condf_expected.clear();
+	outputs.w_pb_target.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -1077,8 +1078,8 @@ bool csp_dispatch_opt::optimize()
         
         //Energy in storage must be within limits
         {
-            REAL row[5];
-            int col[5];
+            REAL row[8];
+            int col[8];
 
             for(int t=0; t<nt; t++)
             {
@@ -1088,31 +1089,37 @@ bool csp_dispatch_opt::optimize()
 
                 add_constraintex(lp, 1, row, col, LE, P["Eu"]);
 
-                //min charge state in time periods where cycle operates and receiver is starting up
-                if(t < nt-1)
-                {
-                    double delta_rec_startup = min(1., max(params.e_rec_startup/max(outputs.q_sfavail_expected.at(t+1)*P["delta"],1.), params.dt_rec_startup/P["delta"]) );
-                    double smin = max(0.01, outputs.q_sfavail_expected.at(t+1)*P["delta"] - params.e_rec_startup - (1.-delta_rec_startup)*params.q_pb_des );
+				//max cycle thermal input in time periods where cycle operates and receiver is starting up
+				if (t < nt - 1)
+				{
+					double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
+					double t_rec_startup = delta_rec_startup * P["delta"];
+					double large = 5.0*params.q_pb_max;
+					int i = 0;
 
-                    int i=0;
+					row[i] = 1.;
+					col[i++] = O.column("x", t + 1);
 
-                    row[i  ] = 1./smin;
-                    col[i++] = O.column("s", t+1);
+					row[i] = params.q_pb_standby + large;
+					col[i++] = O.column("ycsb", t + 1);
 
-                    row[i  ] = -1;
-                    col[i++] = O.column("y", t+1);
+					row[i] = -1. / t_rec_startup;
+					col[i++] = O.column("s", t);
 
-                    row[i  ] = -1;
-                    col[i++] = O.column("yrsu", t+1);
+					row[i] = large;
+					col[i++] = O.column("yrsu", t + 1);
 
-                    row[i  ] = -1;
-                    col[i++] = O.column("y", t);
+					row[i] = large;
+					col[i++] = O.column("y", t + 1);
 
-                    row[i  ] = -1;
-                    col[i++] = O.column("ycsb", t);
+					row[i] = large;
+					col[i++] = O.column("y", t);
 
-                    add_constraintex(lp, i, row, col, GE, -2);
-                }
+					row[i] = large;
+					col[i++] = O.column("ycsb", t);
+
+					add_constraintex(lp, i, row, col, LE, 3.0*large);
+				}
 
             }
         }
@@ -1255,7 +1262,7 @@ bool csp_dispatch_opt::optimize()
 		else
 		{
 			set_bb_rule(lp, NODE_RCOSTFIXING + NODE_DYNAMICMODE + NODE_GREEDYMODE + NODE_PSEUDONONINTSELECT);
-			if (P["wlim_min"] < 1.e99)
+			if (P["wlim_min"] < 1.e20)
 				set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
 		}
         
