@@ -1225,6 +1225,22 @@ public:
 
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
+
+	class C_mono_eq_pc_target__m_dot : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;		//[-]
+
+	public:
+		C_mono_eq_pc_target__m_dot(C_csp_solver *pc_csp_solver, int pc_mode)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+		}
+
+		virtual int operator()(double m_dot_htf_pc /*kg/hr*/, double *q_dot_pc /*MWt*/);
+	};
 };
 
 
