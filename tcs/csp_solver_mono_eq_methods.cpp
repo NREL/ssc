@@ -446,3 +446,31 @@ int C_csp_solver::C_mono_eq_cr_on_pc_su_tes_ch::operator()(double T_htf_cold /*C
 	*diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;		//[-]
 	return 0;
 }
+
+int C_csp_solver::C_mono_eq_pc_target__m_dot::operator()(double m_dot_htf_pc /*kg/hr*/, double *q_dot_pc /*MWt*/)
+{
+	// Set power cycle HTF inlet state
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+
+	// Set power cycle inputs
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_htf_pc;		//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = m_pc_mode;	//[-]
+
+	// Power cycle performance call
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+								mpc_csp_solver->mc_pc_htf_state_in,
+								mpc_csp_solver->mc_pc_inputs,
+								mpc_csp_solver->mc_pc_out_solver,
+								mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check that power cycle is producing power or model didn't solve
+	// Assumes that standby mode always solves
+	if (!mpc_csp_solver->mc_pc_out_solver.m_was_method_successful && mpc_csp_solver->mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON)
+	{
+		*q_dot_pc = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	*q_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+	return 0;
+}
