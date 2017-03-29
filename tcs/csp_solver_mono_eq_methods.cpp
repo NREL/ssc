@@ -450,7 +450,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_su_tes_ch::operator()(double T_htf_cold /*C
 int C_csp_solver::C_mono_eq_pc_target__m_dot::operator()(double m_dot_htf_pc /*kg/hr*/, double *q_dot_pc /*MWt*/)
 {
 	// Set power cycle HTF inlet state
-	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = m_T_htf_hot;	//[C]
 
 	// Set power cycle inputs
 	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_htf_pc;		//[kg/hr]
@@ -472,5 +472,141 @@ int C_csp_solver::C_mono_eq_pc_target__m_dot::operator()(double m_dot_htf_pc /*k
 	}
 
 	*q_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+	return 0;
+}
+
+int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// Solve the CR
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+										mpc_csp_solver->mc_cr_htf_state_in,
+										m_defocus,
+										mpc_csp_solver->mc_cr_out_solver,
+										mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is off or didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Get the calculated receiver mass flow rate
+	double m_dot_cr = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+
+	// Get the maximum possible mass mass flow rate to power cycle
+	bool is_cr_max = true;
+	double m_dot_pc_max = m_dot_cr;				//[kg/hr]
+	if (mpc_csp_solver->m_m_dot_pc_max)
+	{
+		is_cr_max = false;
+		m_dot_pc_max = mpc_csp_solver->m_m_dot_pc_max;	//[kg/hr]
+	}
+
+	// Try max sending max mass flow rate to power cycle and check calculated thermal power
+	C_mono_eq_pc_target__m_dot c_eq(mpc_csp_solver, m_pc_mode, mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	double q_dot_pc_calc = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+	int q_dot_pc_code = c_solver.test_member_function(m_dot_pc_max, &q_dot_pc_calc);
+	if (q_dot_pc_code != 0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -2;
+	}
+
+	double m_dot_pc_solved = m_dot_pc_max;		//[kg/hr]
+
+	if ( (mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf - m_q_dot_target) > 1.E-3 )
+	{	// With maximum possible mass flow rate, the power cycle is over target
+		// So iterate on mass flow rate to hit the target
+		C_monotonic_eq_solver::S_xy_pair xy_pair_1;
+		xy_pair_1.x = m_dot_pc_max;		//[kg/hr]
+		xy_pair_1.y = q_dot_pc_calc;	//[MWt]
+
+		// Guess another mass flow rate based on target and first results
+		double m_dot_pc_guess = m_q_dot_target / q_dot_pc_calc * m_dot_pc_max;	//[kg/hr]
+		q_dot_pc_code = c_solver.test_member_function(m_dot_pc_guess, &q_dot_pc_calc);
+		if (q_dot_pc_code != 0)
+		{
+			*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+			return -3;
+		}
+
+		C_monotonic_eq_solver::S_xy_pair xy_pair_2;
+		xy_pair_2.x = m_dot_pc_guess;	//[kg/hr]
+		xy_pair_2.y = q_dot_pc_calc;	//[MWt]
+
+		c_solver.settings(1.E-3, 50, 0.0, m_dot_pc_max, true);
+
+		// Solve for m_dot_pc
+		m_dot_pc_solved = std::numeric_limits<double>::quiet_NaN();
+		double tol_solved = std::numeric_limits<double>::quiet_NaN();
+		int iter_solved = -1;
+
+		q_dot_pc_code = 0;
+		try
+		{
+			q_dot_pc_code = c_solver.solve(xy_pair_1, xy_pair_2, m_q_dot_target, m_dot_pc_solved, tol_solved, iter_solved);
+		}
+		catch (C_csp_exception)
+		{
+			throw(C_csp_exception("C_mono_eq_cr_on_pc_target_tes_ch__T_cold method to calculate the power cycle mass flow rate returned an unexpected exemption"));
+		}
+		
+		if (q_dot_pc_code != C_monotonic_eq_solver::CONVERGED)
+		{
+			if (q_dot_pc_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+			{
+				mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the power cycle HTF mass flow rate resulting in the target thermal power only reached a convergence "
+					"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+					mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+				mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			}
+			else
+			{
+				*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+				return -4;
+			}
+		}
+	}
+
+	// Get power cycle HTF return temperature
+	double T_pc_out = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold + 273.15;	//[K]
+
+	// Charge storage
+	double m_dot_tes = m_dot_cr - m_dot_pc_solved;		//[kg/hr]
+	double T_tes_cold_out = std::numeric_limits<double>::quiet_NaN();	//[K]
+	bool is_tes_success = mpc_csp_solver->mc_tes.charge(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+												mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+												m_dot_tes / 3600.0,
+												mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15,
+												T_tes_cold_out,
+												mpc_csp_solver->mc_tes_outputs);
+
+	if (!is_tes_success)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -4;
+	}
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = m_dot_tes;										//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = T_tes_cold_out - 273.15;						//[C] convert from K
+
+	// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = 0.0;														//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+
+	// Enthalpy balancer (mixer)
+	double T_htf_cold_calc = (m_dot_tes*T_tes_cold_out + m_dot_pc_solved*T_pc_out) / m_dot_cr - 273.15;		//[C]
+
+	// Calculate diff_T_rec_in
+	*diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;		//[-]
+
 	return 0;
 }
