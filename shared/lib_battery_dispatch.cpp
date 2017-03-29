@@ -712,25 +712,9 @@ void automate_dispatch_t::dispatch(size_t year,
 	int step_per_hour = 1 / _dt_hour;
 	int idx = 0;
 
-	// look ahead
-	if (_mode == LOOK_AHEAD || _mode == MAINTAIN_TARGET)
+	if (_mode == LOOK_AHEAD ||_mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
 		idx = (year * 8760 + hour_of_year)*step_per_hour + step;
-	// look behind
-	else if (_mode == LOOK_BEHIND)
-	{
-		// start on day 2 
-		bool first_day = (year == 0 && hour_of_year == 0);
-		if ((hour_of_year) % 24 == 0 && (!first_day))
-		{
-			_P_pv_dc.clear();
-			_P_load_dc.clear();
-		}
-		else
-		{
-			_P_pv_dc.push_back(P_pv_dc_discharging);
-			_P_load_dc.push_back(P_load_dc_discharging);
-		}
-	}
+
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_manual_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 }
@@ -790,7 +774,10 @@ void automate_dispatch_t::initialize(int hour_of_year)
 
 	// clean up vectors
 	for (int ii = 0; ii != _num_steps; ii++)
+	{
 		grid[ii] = grid_point(0., 0, 0);
+		_P_target_use.push_back(0.);
+	}
 }
 void automate_dispatch_t::check_new_month(int hour_of_year, int step)
 {

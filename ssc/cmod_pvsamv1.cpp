@@ -1927,8 +1927,6 @@ public:
 			look_ahead = (batt_dispatch == dispatch_t::LOOK_AHEAD || batt_dispatch == dispatch_t::MAINTAIN_TARGET);
 			look_behind = batt_dispatch == dispatch_t::LOOK_BEHIND;
 		}
-		if (look_behind)
-			batt.initialize_automated_dispatch(0, 0);
 		
 		// user replacement schedule
 		size_t count_batt_replacement = 0;
@@ -2842,7 +2840,7 @@ public:
 		}
 
 		// Initialize DC battery predictive controller
-		if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED) && look_ahead)
+		if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED) && (look_ahead || look_behind))
 			batt.initialize_automated_dispatch(p_dcpwr, p_load_full);
 
 		/* *********************************************************************************************
@@ -2998,7 +2996,7 @@ public:
 		}
 
 		// Initialize AC connected battery predictive control
-		if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED && look_ahead)
+		if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED && (look_ahead || look_behind))
 			batt.initialize_automated_dispatch(p_gen, p_load_full);
 
 		/* *********************************************************************************************
