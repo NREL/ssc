@@ -18,6 +18,17 @@ static var_info _cm_vtab_levpartflip[] = {
 	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			"System nameplate capacity",		"kW",    "",                      "System Output",             "*",						   "MIN=1e-3",                         "" },
 
+	/*loan moratorium from Sara for India Documentation\India\Loan Moratorum
+	assumptions:
+	1) moratorium period begins at beginning of loan term
+	2) moratorium affects principal payment and not interest
+	3) loan term remains the same
+	4) payments increase after moratorium period
+	*/
+	{ SSC_INPUT, SSC_NUMBER, "loan_moratorium", "Loan moratorium period", "years", "", "Moratorium", "?=0", "INTEGER,MIN=0", "" },
+
+
+
 /* Recapitalization */
 	{ SSC_INOUT, SSC_NUMBER,			"system_use_recapitalization",			"Recapitalization expenses",						"0/1",	"0=None,1=Recapitalize",	"Recapitalization", "?=0",	"INTEGER,MIN=0",			"" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_recapitalization_cost",			"Recapitalization cost",							"$",	"",							"Recapitalization", "?=0",	"",							"" },
@@ -1237,7 +1248,8 @@ public:
 		int equip3_reserve_freq = as_integer("equip3_reserve_freq");
 
 		//  calculate debt
-		int term_tenor = as_integer("term_tenor"); 
+		int loan_moratorium = as_integer("loan_moratorium");
+		int term_tenor = as_integer("term_tenor");
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
 		double dscr_reserve_months = as_double("dscr_reserve_months");
@@ -1866,24 +1878,33 @@ public:
 			int i_repeat = 0;
 			double old_ds_reserve = 0, new_ds_reserve = 0;
 
+			// first year principal payment based on loan moratorium
+			ssc_number_t first_principal_payment = 0;
+
 			do
 			{
 				// first iteration - calculate debt reserve account based on initial installed cost
 				old_ds_reserve = new_ds_reserve;
 				// debt service reserve
-				if (constant_principal)
+				if (loan_moratorium < 1)
 				{
-					if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+					if (constant_principal)
+					{
+						if ((term_tenor - loan_moratorium) > 0)
+							first_principal_payment = (ssc_number_t)loan_amount / (ssc_number_t)(term_tenor - loan_moratorium);
+					}
+					else
+					{
+						first_principal_payment = (ssc_number_t)-ppmt(term_int_rate,       // Rate
+							1,           // Period
+							(term_tenor - loan_moratorium),   // Number periods
+							loan_amount, // Present Value
+							0,           // future Value
+							0);         // cash flow at end of period
+					}
 				}
 				else
-				{
-					cf.at(CF_debt_payment_principal, 1) = -ppmt(term_int_rate,       // Rate
-						1,           // Period
-						term_tenor,   // Number periods
-						loan_amount, // Present Value
-						0,           // future Value
-						0);         // cash flow at end of period
-				}
+					first_principal_payment = 0;
 
 				cf.at(CF_debt_payment_interest, 1) = loan_amount * term_int_rate;
 				cf.at(CF_reserve_debtservice, 0) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, 1) + cf.at(CF_debt_payment_interest, 1));
@@ -1922,21 +1943,27 @@ public:
 			{
 				if (i == 1)
 				{
+					first_principal_payment = 0;
 					cf.at(CF_debt_balance, i - 1) = loan_amount;
 					cf.at(CF_debt_payment_interest, i) = loan_amount * term_int_rate;
-					if (constant_principal)
+					if (i > loan_moratorium)
 					{
-						if (term_tenor > 0) cf.at(CF_debt_payment_principal, 1) = loan_amount / term_tenor;
+						if (constant_principal)
+						{
+							if ((term_tenor - loan_moratorium) > 0)
+								first_principal_payment = (ssc_number_t)loan_amount / (ssc_number_t)(term_tenor - loan_moratorium);
+						}
+						else
+						{
+							first_principal_payment = (ssc_number_t)-ppmt(term_int_rate,       // Rate
+								i,           // Period
+								(term_tenor - loan_moratorium),   // Number periods
+								loan_amount, // Present Value
+								0,           // future Value
+								0);         // cash flow at end of period
+						}
 					}
-					else
-					{
-						cf.at(CF_debt_payment_principal, i) = -ppmt(term_int_rate,       // Rate
-							i,           // Period
-							term_tenor,   // Number periods
-							loan_amount, // Present Value
-							0,           // future Value
-							0);         // cash flow at end of period
-					}
+					cf.at(CF_debt_payment_principal, 1) = first_principal_payment;
 					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 
 					// update reserve account
@@ -1944,35 +1971,41 @@ public:
 					cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 * (cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
 					cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
 				}
-				else
+				else // i > 1
 				{
 					if (i <= term_tenor)
 					{
 						cf.at(CF_debt_payment_interest, i) = term_int_rate * cf.at(CF_debt_balance, i - 1);
-						if (constant_principal)
+						if (i > loan_moratorium)
 						{
-							if (term_tenor > 0) cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor;
-						}
-						else
-						{
-							if (term_int_rate != 0.0)
+							if (constant_principal)
 							{
-								cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -term_tenor))
-									- cf.at(CF_debt_payment_interest, i);
+								if ((term_tenor - loan_moratorium) > 0)
+									cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor - loan_moratorium);
 							}
 							else
 							{
-								cf.at(CF_debt_payment_principal, i) = loan_amount / term_tenor - cf.at(CF_debt_payment_interest, i);
+								if (term_int_rate != 0.0)
+								{
+									cf.at(CF_debt_payment_principal, i) = term_int_rate * loan_amount / (1 - pow((1 + term_int_rate), -(term_tenor - loan_moratorium)))
+										- cf.at(CF_debt_payment_interest, i);
+								}
+								else
+								{
+									cf.at(CF_debt_payment_principal, i) = loan_amount / (term_tenor - loan_moratorium) - cf.at(CF_debt_payment_interest, i);
+								}
 							}
 						}
-						cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
-
-						// debt service reserve
-						cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
-						cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
-						cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i - 2);
-						if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at(CF_reserve_debtservice, i - 1);
+						else
+							cf.at(CF_debt_payment_principal, i) = 0;
 					}
+					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
+
+					// debt service reserve
+					cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
+					cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
+					cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i - 2);
+					if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at(CF_reserve_debtservice, i - 1);
 				}
 
 				cf.at(CF_debt_payment_total, i) = cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i);
@@ -3665,6 +3698,7 @@ public:
 		}
 	}
 
+
 	void depreciation_sched_custom(int cf_line, int nyears, const std::string &custom)
 	{
 		// computes custom percentage schedule 100%
@@ -3673,24 +3707,25 @@ public:
 		int i;
 		size_t count = 0;
 		ssc_number_t *parr = as_array(custom, &count);
-		for (i = 1; i<nyears; i++)
+		for (i = 1; i <= nyears; i++)
 		{
-			cf.at(cf_line,i) = 0;
+			cf.at(cf_line, i) = 0;
 		}
 
-		if (count ==1) // single value
+		if (count == 1) // single value
 		{
-			cf.at(cf_line,1) = parr[0]/100.0;
+			cf.at(cf_line, 1) = parr[0] / 100.0;
 		}
 		else // annual schedule
 		{// note schedules begin at year 1 (index 0)
-			int scheduleDuration = ((int)count > nyears)? nyears : (int)count;
-			for (i = 1; i<scheduleDuration; i++)
+			int scheduleDuration = ((int)count > nyears) ? nyears : (int)count;
+			for (i = 1; i <= scheduleDuration; i++)
 			{
-				cf.at(cf_line,i) = parr[i-1] / 100.0; // percentage to factor
+				cf.at(cf_line, i) = parr[i - 1] / 100.0; // percentage to factor
 			}
 		}
 	}
+
 
 
 

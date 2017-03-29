@@ -1835,11 +1835,11 @@ public:
 					if (constant_principal)
 					{
 						if ((term_tenor - loan_moratorium) > 0)
-							first_principal_payment = loan_amount / (term_tenor - loan_moratorium);
+							first_principal_payment = (ssc_number_t)loan_amount / (ssc_number_t)(term_tenor - loan_moratorium);
 					}
 					else
 					{
-						first_principal_payment = -ppmt(term_int_rate,       // Rate
+						first_principal_payment = (ssc_number_t)-ppmt(term_int_rate,       // Rate
 							1,           // Period
 							(term_tenor - loan_moratorium),   // Number periods
 							loan_amount, // Present Value
@@ -1895,11 +1895,11 @@ public:
 						if (constant_principal)
 						{
 							if ((term_tenor - loan_moratorium) > 0)	
-								first_principal_payment = loan_amount / (term_tenor - loan_moratorium);
+								first_principal_payment = (ssc_number_t)loan_amount / (ssc_number_t)(term_tenor - loan_moratorium);
 						}
 						else
 						{
-							first_principal_payment = -ppmt(term_int_rate,       // Rate
+							first_principal_payment = (ssc_number_t)-ppmt(term_int_rate,       // Rate
 								i,           // Period
 								(term_tenor - loan_moratorium),   // Number periods
 								loan_amount, // Present Value
@@ -1945,7 +1945,7 @@ public:
 					cf.at(CF_debt_balance, i) = cf.at(CF_debt_balance, i - 1) - cf.at(CF_debt_payment_principal, i);
 
 					// debt service reserve
-					cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at						(CF_debt_payment_interest, i));
+					cf.at(CF_reserve_debtservice, i - 1) = dscr_reserve_months / 12.0 *		(cf.at(CF_debt_payment_principal, i) + cf.at(CF_debt_payment_interest, i));
 					cf.at(CF_funding_debtservice, i - 1) = cf.at(CF_reserve_debtservice, i - 1);
 					cf.at(CF_funding_debtservice, i - 1) -= cf.at(CF_reserve_debtservice, i	 - 2);
 					if (i == term_tenor) cf.at(CF_disbursement_debtservice, i) = 0 - cf.at		(CF_reserve_debtservice, i - 1);
@@ -2362,7 +2362,8 @@ public:
 
 		for (i=0; i<=nyears; i++)
 		{
-			cf.at(CF_return_on_equity_dollars, i) = issuance_of_equity * cf.at(CF_return_on_equity_input, i);
+//			cf.at(CF_return_on_equity_dollars, i) = issuance_of_equity * cf.at(CF_return_on_equity_input, i);
+			cf.at(CF_return_on_equity_dollars, i) = (issuance_of_equity - cf.at(CF_reserve_receivables,0)) * cf.at(CF_return_on_equity_input, i);
 			if (cf.at(CF_energy_net, i) != 0)
 				cf.at(CF_return_on_equity, i) = cf.at(CF_return_on_equity_dollars, i) / cf.at(CF_energy_net, i);
 			//			cf.at(CF_project_operating_activities,i) = cf.at(CF_ebitda,i) + cf.at(CF_pbi_total,i) + cf.at(CF_reserve_interest,i) - cf.at(CF_debt_payment_interest,i);
@@ -3648,7 +3649,7 @@ public:
 		int i;
 		size_t count = 0;
 		ssc_number_t *parr = as_array(custom, &count);
-		for (i = 1; i<nyears; i++)
+		for (i = 1; i<=nyears; i++)
 		{
 			cf.at(cf_line,i) = 0;
 		}
@@ -3660,7 +3661,7 @@ public:
 		else // annual schedule
 		{// note schedules begin at year 1 (index 0)
 			int scheduleDuration = ((int)count > nyears)? nyears : (int)count;
-			for (i = 1; i<scheduleDuration; i++)
+			for (i = 1; i<=scheduleDuration; i++)
 			{
 				cf.at(cf_line,i) = parr[i-1] / 100.0; // percentage to factor
 			}

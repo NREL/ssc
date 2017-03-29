@@ -1,8 +1,26 @@
+# ARCH argument like arm64, armv7, armv7s, x86_64
+
 VPATH = ../solarpilot
-#CC = gcc -mmacosx-version-min=10.9
-#CXX = g++ -mmacosx-version-min=10.9
-#CFLAGS = -fPIC -Wall -g -O3 -I../ -I../nlopt  -DWX_PRECOMP -O2 -arch x86_64  -fno-common
-#CXXFLAGS = $(CFLAGS) -std=gnu++11
+
+SIM=
+ifeq (${ARCH}, i386)
+	SIM=true
+endif
+ifeq (${ARCH}, x86_64)
+	SIM=true
+endif
+
+
+ifeq (${SIM}, true)
+	ISYSROOT = /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk
+else
+	ISYSROOT = /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk  
+endif
+
+CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
+CFLAGS = -I../ -I../nlopt  -DWX_PRECOMP  -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC 
+CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
 
 
 OBJECTS = \
@@ -33,7 +51,7 @@ OBJECTS = \
 
 
 
-TARGET=solarpilot.a
+TARGET=solarpilot_${ARCH}.a
 
 $(TARGET):$(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)
