@@ -1283,6 +1283,50 @@ public:
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
 
+	class C_mono_eq_cr_on_pc_target_tes_dc : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;			//[-]
+		double m_defocus;		//[-]
+		double m_q_dot_target;	//[MWt]
+
+	public:
+		C_mono_eq_cr_on_pc_target_tes_dc(C_csp_solver *pc_csp_solver,
+			int pc_mode, double q_dot_target /*MWt*/, double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;				//[-]
+			m_defocus = defocus;				//[-]
+			m_q_dot_target = q_dot_target;		//[MWt]
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
+
+	class C_mono_eq_pc_target__m_dot_fixed_plus_tes_dc : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;			//[-]
+		double m_T_htf_cold;	//[C]
+		double m_T_htf_fixed_hot;	//[C]
+		double m_m_dot_htf_fixed;	//[kg/hr]
+
+	public:
+		C_mono_eq_pc_target__m_dot_fixed_plus_tes_dc(C_csp_solver *pc_csp_solver,
+						int pc_mode, double T_htf_cold /*C*/,
+						double T_htf_fixed_hot /*C*/, double m_dot_htf_fixed /*kg/hr*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+			m_T_htf_cold = T_htf_cold;				//[C]
+			m_T_htf_fixed_hot = T_htf_fixed_hot;	//[C]
+			m_m_dot_htf_fixed = m_dot_htf_fixed;	//[kg/hr]
+		}
+
+		virtual int operator()(double m_dot_tes_dc /*kg/hr*/, double *q_dot_pc);
+	};
 };
 
 
