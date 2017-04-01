@@ -625,7 +625,7 @@ bool csp_dispatch_opt::optimize()
             }
         }
 
-        //******************** Receiver constraints *******************
+        // ******************** Receiver constraints *******************
         //{ //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         //    REAL row[5];
         //    int col[5];
@@ -844,7 +844,7 @@ bool csp_dispatch_opt::optimize()
         }
 
         
-        //******************** Power cycle constraints *******************
+        // ******************** Power cycle constraints *******************
         {
             REAL row[5];
             int col[5];
@@ -1033,7 +1033,7 @@ bool csp_dispatch_opt::optimize()
         }
 
 
-        //******************** Balance constraints *******************
+        // ******************** Balance constraints *******************
         //Energy in, out, and stored in the TES system must balance.
         {
             REAL row[7];
@@ -1141,10 +1141,12 @@ bool csp_dispatch_opt::optimize()
                     + params.w_cycle_standby 
                     + params.w_cycle_pump*P["Qu"]
                     + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
-				if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
+                if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
                 {
-					w_lim.at(t) = 0.;
-                    params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");
+                    if(w_lim.at(t) > 0)
+                        params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
+                    w_lim.at(t) = 0.;
+                    
                 }
 
 				if (w_lim.at(t) > 0.)	// Power cycle operation is possible
