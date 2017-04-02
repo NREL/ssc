@@ -1635,6 +1635,7 @@ public:
 			{
 				int num_periods = 0;
 				int num_tiers = 0;
+				num_periods = (int)m_month[m].dc_periods.size();
 				for (i = 0; i < m_month[m].dc_periods.size(); i++)
 				{
 					// find all periods and check that number of tiers the same for all for the month, if not through error
@@ -1647,23 +1648,17 @@ public:
 					}
 					period = (*per_num);
 					int ndx = (int)(per_num - m_dc_tou_periods.begin());
-					if (i == 0)
-					{
-						// redimension dc_ field of ur_month class
-						num_periods = (int)m_month[m].dc_periods.size();
+					if ((int)m_dc_tou_periods_tiers[ndx].size() > num_tiers)
 						num_tiers = (int)m_dc_tou_periods_tiers[ndx].size();
-						m_month[m].dc_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e38);
-						m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
-					}
-					else
-					{
-						if ((int)m_dc_tou_periods_tiers[ndx].size() != num_tiers)
-						{
-							std::ostringstream ss;
-							ss << "The number of tiers in the demand rate table, " << m_dc_tou_periods_tiers[ndx].size() << ", is incorrect for Month " << m << " and Period " << m_month[m].dc_periods[i] << ". The correct number of tiers for that month and period is " << num_tiers << ".";
-							throw exec_error("utilityrate5", ss.str());
-						}
-					}
+				}
+				m_month[m].dc_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e38);
+				m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
+				for (i = 0; i < m_month[m].dc_periods.size(); i++)
+				{
+					// find all periods and check that number of tiers the same for all for the month, if not through error
+					std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
+					period = (*per_num);
+					int ndx = (int)(per_num - m_dc_tou_periods.begin());
 					for (j = 0; j < m_dc_tou_periods_tiers[ndx].size(); j++)
 					{
 						tier = m_dc_tou_periods_tiers[ndx][j];
@@ -1675,75 +1670,74 @@ public:
 								&& (tier == (int)dc_tou_mat.at(r, 1)))
 							{
 								m_month[m].dc_tou_ub.at(i, j) = dc_tou_mat.at(r, 2);
-								m_month[m].dc_tou_ch.at(i, j) = dc_tou_mat.at(r, 3);//rate_esc;
+								m_month[m].dc_tou_ch.at(i, j) = dc_tou_mat.at(r, 3);//demand charge;
 								found = true;
 							}
 						}
-
 					}
 				}
 			}
-				// flat demand charge
-				// 4 columns month, tier, max usage, charge
-				ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
-				if (ncols != 4)
+			// flat demand charge
+			// 4 columns month, tier, max usage, charge
+			ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
+			if (ncols != 4)
+			{
+				std::ostringstream ss;
+				ss << "The demand rate table by month must have 4 columns. Instead it has " << ncols << " columns";
+				throw exec_error("utilityrate5", ss.str());
+			}
+			util::matrix_t<float> dc_flat_mat(nrows, ncols);
+			dc_flat_mat.assign(dc_flat_in, nrows, ncols);
+
+			for (r = 0; r < m_month.size(); r++)
+			{
+				m_dc_flat_tiers.push_back(std::vector<int>());
+			}
+
+			for (r = 0; r < nrows; r++)
+			{
+				month = (int)dc_flat_mat.at(r, 0);
+				tier = (int)dc_flat_mat.at(r, 1);
+				if ((month < 0) || (month >= (int)m_month.size()))
 				{
 					std::ostringstream ss;
-					ss << "The demand rate table by month must have 4 columns. Instead it has " << ncols << " columns";
+					ss << "Demand for Month " << month << " not found.";
 					throw exec_error("utilityrate5", ss.str());
 				}
-				util::matrix_t<float> dc_flat_mat(nrows, ncols);
-				dc_flat_mat.assign(dc_flat_in, nrows, ncols);
+				m_dc_flat_tiers[month].push_back(tier);
+			}
+			// sort tier values for each period
+			for (r = 0; r < m_dc_flat_tiers.size(); r++)
+				std::sort(m_dc_flat_tiers[r].begin(), m_dc_flat_tiers[r].end());
 
-				for (r = 0; r < m_month.size(); r++)
-				{
-					m_dc_flat_tiers.push_back(std::vector<int>());
-				}
 
-				for (r = 0; r < nrows; r++)
+			// months are rows and tiers are columns - note that columns can change based on rows
+			// Initialize each month variables that are constant over the simulation
+
+
+
+			for (m = 0; m < m_month.size(); m++)
+			{
+				m_month[m].dc_flat_ub.clear();
+				m_month[m].dc_flat_ch.clear();
+				for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
 				{
-					month = (int)dc_flat_mat.at(r, 0);
-					tier = (int)dc_flat_mat.at(r, 1);
-					if ((month < 0) || (month >= (int)m_month.size()))
+					tier = m_dc_flat_tiers[m][j];
+					// initialize for each period and tier
+					bool found = false;
+					for (r = 0; (r < nrows) && !found; r++)
 					{
-						std::ostringstream ss;
-						ss << "Demand for Month " << month << " not found.";
-						throw exec_error("utilityrate5", ss.str());
-					}
-					m_dc_flat_tiers[month].push_back(tier);
-				}
-				// sort tier values for each period
-				for (r = 0; r < m_dc_flat_tiers.size(); r++)
-					std::sort(m_dc_flat_tiers[r].begin(), m_dc_flat_tiers[r].end());
-
-
-				// months are rows and tiers are columns - note that columns can change based on rows
-				// Initialize each month variables that are constant over the simulation
-
-
-
-				for (m = 0; m < m_month.size(); m++)
-				{
-					m_month[m].dc_flat_ub.clear();
-					m_month[m].dc_flat_ch.clear();
-					for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
-					{
-						tier = m_dc_flat_tiers[m][j];
-						// initialize for each period and tier
-						bool found = false;
-						for (r = 0; (r < nrows) && !found; r++)
+						if ((m == dc_flat_mat.at(r, 0))
+							&& (tier == (int)dc_flat_mat.at(r, 1)))
 						{
-							if ((m == dc_flat_mat.at(r, 0))
-								&& (tier == (int)dc_flat_mat.at(r, 1)))
-							{
-								m_month[m].dc_flat_ub.push_back(dc_flat_mat.at(r, 2));
-								m_month[m].dc_flat_ch.push_back(dc_flat_mat.at(r, 3));//rate_esc;
-								found = true;
-							}
+							m_month[m].dc_flat_ub.push_back(dc_flat_mat.at(r, 2));
+							m_month[m].dc_flat_ch.push_back(dc_flat_mat.at(r, 3));//rate_esc;
+							found = true;
 						}
-
 					}
+
 				}
+			}
 
 		}
 
