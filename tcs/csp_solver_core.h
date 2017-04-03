@@ -1333,8 +1333,6 @@ public:
 	private:
 		C_csp_solver *mpc_csp_solver;
 		double m_T_htf_cold;			//[C]
-		double m_q_dot_pc_target;		//[MWt]
-		bool m_is_target_q;				// True = target is q_dot, False = target is m_dot_min
 
 	public:
 		C_mono_eq_pc_target_tes_empty__calc_step(C_csp_solver *pc_csp_solver,
@@ -1342,11 +1340,9 @@ public:
 		{
 			mpc_csp_solver = pc_csp_solver;
 			m_T_htf_cold = T_htf_cold;				//[C]
-			m_q_dot_pc_target = q_dot_pc_target;	//[MWt]
-			m_is_target_q = is_target_q;			//[-]
 		}
 
-		virtual int operator()(double step /*s*/, double *diff_min_target /*-*/);
+		virtual int operator()(double step /*s*/, double *q_dot_pc /*MWt*/);
 	};
 };
 
