@@ -757,6 +757,42 @@ int C_csp_solver::C_mono_eq_pc_target__m_dot_fixed_plus_tes_dc::operator()(doubl
 	return 0;
 }
 
+int C_csp_solver::C_mono_eq_pc_target_tes_empty__calc_step::operator()(double step /*s*/, double *diff_min_target /*-*/)
+{
+	double T_htf_tes_hot, m_dot_tes_dc = std::numeric_limits<double>::quiet_NaN();
+	mpc_csp_solver->mc_tes.discharge_full(step,
+						mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+						m_T_htf_cold + 273.15,
+						T_htf_tes_hot,
+						m_dot_tes_dc,
+						mpc_csp_solver->mc_tes_outputs);
+
+	m_dot_tes_dc *= 3600.0;		//[kg/hr] convert from [kg/s]
+
+	// Set TES HTF states (this needs to be less bulky...)
+	// HTF discharging state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = m_dot_tes_dc;				//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold;			//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = T_htf_tes_hot - 273.15;	//[C]
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = 0.0;									//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+	// Calculate difference from target
+	if (m_is_target_q)
+	{	// Are we trying to hit the minimum thermal power
+		*diff_min_target = (mpc_csp_solver->mc_tes_outputs.m_q_dot_dc_to_htf - m_q_dot_pc_target) / m_q_dot_pc_target;
+	}
+	else
+	{	// Or are we trying to hit the minimum PC HTF mass flow rate
+		*diff_min_target = (m_dot_tes_dc - mpc_csp_solver->m_m_dot_pc_min) / mpc_csp_solver->m_m_dot_pc_min;
+	}
+
+	return 0;
+}
+
 int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_dc::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
 {
 	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]

@@ -1327,6 +1327,27 @@ public:
 
 		virtual int operator()(double m_dot_tes_dc /*kg/hr*/, double *q_dot_pc);
 	};
+
+	class C_mono_eq_pc_target_tes_empty__calc_step : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_T_htf_cold;			//[C]
+		double m_q_dot_pc_target;		//[MWt]
+		bool m_is_target_q;				// True = target is q_dot, False = target is m_dot_min
+
+	public:
+		C_mono_eq_pc_target_tes_empty__calc_step(C_csp_solver *pc_csp_solver,
+									double T_htf_cold /*C*/, double q_dot_pc_target /*MWt*/, bool is_target_q)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_T_htf_cold = T_htf_cold;				//[C]
+			m_q_dot_pc_target = q_dot_pc_target;	//[MWt]
+			m_is_target_q = is_target_q;			//[-]
+		}
+
+		virtual int operator()(double step /*s*/, double *diff_min_target /*-*/);
+	};
 };
 
 
