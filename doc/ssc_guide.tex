@@ -61,7 +61,7 @@
 \newcommand{\notebox}[1]{ \begin{center}\framebox[5.5in]{\begin{minipage}[t]{5.0in}\textbf{Note: }#1\end{minipage}}\end{center}}
 
 \title{SSC Reference Manual
-\subtitle{SDK 2017-1-17, Version 170}}
+\subtitle{SDK 2017.1.17 Revision 2, SSC 172}}
 \author{Aron Dobos and Paul Gilman}
 
 \begin{document}
@@ -760,7 +760,7 @@ ssc_bool_t (*handler)( ssc_module_t module,
 \end{verbatimtab}
 
 
-\notebox{This module invocation method is only supported in the native C language API for SSC.  The other programming language interfaces provided with SSC (MATLAB, Python, C\#, Java) do not support callback functions via the foreign-function-interface (FFI) wrappers.  However, log messages (notices, warnings, errors) can still be retrieved after a simulation is completed using the \texttt{ssc\_module\_log()} function (see \S\ref{sec_messages}), although real-time progress updates cannot be issued.}
+\notebox{This module invocation method is only supported in the native C language API for SSC.  The other programming language interfaces provided with SSC (C\#, Java, MATLAB, PHP, Python) do not support callback functions via the foreign-function-interface (FFI) wrappers.  However, log messages (notices, warnings, errors) can still be retrieved after a simulation is completed using the \texttt{ssc\_module\_log()} function (see \S\ref{sec_messages}), although real-time progress updates cannot be issued.}
 
 Supposing that such a function named \texttt{my\_ssc\_handler\_function()} has been defined, used the \texttt{ssc\_module\_exec\_with\_handler()} function to run the module.  You may pass an a generic data pointer to the function also, so that within the context of the handler the messages or progress updates can be routed accordingly.
 
@@ -1318,6 +1318,23 @@ The SSC software development kit (SDK) includes interfaces (or wrappers) for usi
 
 Each language interface comes with a set of readme and example files that you should refer to in addition to the descriptions below to set up your system to run SSC with a language interface.
 
+\subsection{Generating Code from the SAM User Interface}
+
+The desktop version of the System Advisor Model (SAM) can automatically export input data from each case in the project file to ready-to-run code in the following languages:
+
+\begin{itemize}
+\item LK for SDKtool will run from the SDKtool script editor.
+\item C
+\item MATLAB
+\item Python 2 or 3
+\item Java
+\item PHP 5 or 7
+\item C\#
+\item VBA
+\end{itemize}
+
+For instructions on how to export code from SAM, see the \emph{Software Development Kit} topic in SAM's Help system. 
+
 \subsection{Python}
 
 The Python language interface has been tested on Windows with the ActivePython distribution, and on the Linux and OSX native Python packages.
@@ -1574,9 +1591,9 @@ The SDK package includes source code for a basic PVWatts Version 5 calculator we
 \item Copy \texttt{pvwatts.php}, \texttt{down-arrow.png}, and \texttt{jquery.searchabledropdown-1.0.8.min.js} to your HTML folder, typically \texttt{\textasciitilde/public\_html}.
 \item Create a subfolder folder \texttt{ \textasciitilde/public\_html/weather}, and copy several SAM CSV formatted weather data files to this folder.  
 \notebox{You can download the default SAM solar resource dataset, including all US TMY2/TMY3 files, and 360 international TMYs, by downloading and installing SAM (http://sam.nrel.gov).  The CSV solar resource files are located in 
-\texttt{c:\textbackslash SAM\textbackslash <version>\textbackslash solar\_resource}}
+\texttt{c:\textbackslash SAM\textbackslash <version>\textbackslash solar\_resource}.}
 
-\item Point your web browser to \texttt{http://localhost/\textasciitilde<username>/pvwatts.php}
+\item Point your web browser to \texttt{http://localhost/\textasciitilde<username>/pvwatts.php}.
 \end{enumerate}
 
 
