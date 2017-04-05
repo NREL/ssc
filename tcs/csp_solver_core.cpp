@@ -6646,6 +6646,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Set member defocus
 				m_defocus = defocus_guess;
 
+				// Check reported timestep against initial timestep
+				if (step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
+				{
+					mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
+				}
+
 				are_models_converged = true;
 
 			}
