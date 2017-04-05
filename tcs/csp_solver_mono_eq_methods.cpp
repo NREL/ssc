@@ -412,7 +412,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_su_tes_ch::operator()(double T_htf_cold /*C
 	if (m_dot_tes_ch < 0.0)
 	{
 		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
-		return -1;
+		return -2;
 	}
 
 	double T_htf_tes_cold = std::numeric_limits<double>::quiet_NaN();
@@ -428,7 +428,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_su_tes_ch::operator()(double T_htf_cold /*C
 	if (!ch_solved)
 	{
 		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
-		return -1;
+		return -3;
 	}
 
 	// HTF Charging State
