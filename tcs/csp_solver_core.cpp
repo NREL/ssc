@@ -6179,12 +6179,109 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The PC is operating at the maximum startup thermal power
 				// TES is fully charged at the end of the timestep
 				// The CR is still delivering too much mass flow rate and needs to be defocused
-
+				
 				if( !mc_collector_receiver.m_is_sensible_htf )
 				{
 					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
+
+				// Because the controller logic to get into this operating mode is based on *power* comparisons
+				//   it does a poor job of checking *energy* requirements for the power cycle startup. In some cases,
+				//   the power cycle may only require the target thermal power for a small fraction of the timestep.
+				//   In thoses cases, the excess receiver output won't actually completely fill storage,
+				//   and we don't need to defocus
+
+				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
+				bool is_defocus_required = true;
+
+				while (true)
+				{
+					m_defocus = 1.0;
+
+					C_mono_eq_cr_on_pc_su_tes_ch c_eq(this);
+					C_monotonic_eq_solver c_solver(c_eq);
+
+					// Get first htf cold temp guess
+					double T_htf_cold_guess = m_T_htf_pc_cold_est;	//[C]
+
+					// Use this to test code calculating new htf cold temperature
+					// Specifically checking that there's enough mass flow to startup PC AND send > 0 to TES
+					double diff_T_htf_cold_temp = std::numeric_limits<double>::quiet_NaN();
+					int T_htf_cold_code = c_solver.test_member_function(T_htf_cold_guess, &diff_T_htf_cold_temp);
+					if (T_htf_cold_code != 0)
+					{	// If failed, try defocusing
+						break;
+					}
+
+					C_monotonic_eq_solver::S_xy_pair xy_pair_1;
+					xy_pair_1.x = T_htf_cold_guess;		//[C]
+					xy_pair_1.y = diff_T_htf_cold_temp;	//[-]
+
+					// Now guess another HTF temperature
+					T_htf_cold_guess += 10.0;			//[C]
+					T_htf_cold_code = c_solver.test_member_function(T_htf_cold_guess, &diff_T_htf_cold_temp);
+					if (T_htf_cold_code != 0)
+					{	// If failed, try defocusing
+						break;
+					}
+
+					C_monotonic_eq_solver::S_xy_pair xy_pair_2;
+					xy_pair_2.x = T_htf_cold_guess;		//[C]
+					xy_pair_2.y = diff_T_htf_cold_temp;	//[-]
+
+					c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+					// Solve for T_htf_cold
+					double T_htf_cold_solved, tol_solved;
+					T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+					int iter_solved = -1;
+
+					T_htf_cold_code = 0;
+					try
+					{
+						T_htf_cold_code = c_solver.solve(xy_pair_1, xy_pair_2, 0.0, T_htf_cold_solved, tol_solved, iter_solved);
+					}
+					catch (C_csp_exception)
+					{
+						throw(C_csp_exception("CR_DF__PC_SU__TES_CH__AUX_OFF solver (no defocus guess) to converge the HTF cold temperature returned an unexpected exemption"));
+					}
+
+					if (T_htf_cold_code != C_monotonic_eq_solver::CONVERGED)
+					{
+						if (T_htf_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+						{
+							error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the receiver, power cycle startup, and tes charge only reached a convergence "
+								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						}
+						else
+						{
+							// solver failed, try defocusing
+							break;
+						}
+					}
+					
+					is_defocus_required = false;
+				}
+
+				if (!is_defocus_required)
+				{
+					// Check reported timestep against initial timestep
+					if (step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
+					{
+						mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
+					}
+
+					are_models_converged = true;
+
+					// Don't need defocus, so get out
+					break;
+				}
+
+				step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
 				// Set up iteration to find defocus that results in completely filled storage
 				// Upper bound, error, and booleans
@@ -6230,7 +6327,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				int T_rec_in_exit_mode = C_csp_solver::CSP_CONVERGED;
 				double T_rec_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
 
-				double step_pc_su = std::numeric_limits<double>::quiet_NaN();
 
 				double m_dot_htf_tes_out = std::numeric_limits<double>::quiet_NaN();
 				double m_dot_tes_ch_balance = std::numeric_limits<double>::quiet_NaN();
