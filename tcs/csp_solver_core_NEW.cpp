@@ -1760,12 +1760,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							}
 						}
 					}
-
+					
 					m_defocus = defocus_solved;
 				}
 				else
 				{
 					m_defocus = 1.0;	//[-]
+				}
+
+				if (pc_mode == C_csp_power_cycle::STARTUP_CONTROLLED)
+				{
+					double step_pc_su = mc_pc_out_solver.m_time_required_su;		//[s] power cycle model returns MIN(time required to completely startup, full timestep duration)
+
+					// Check reported timestep against initial timestep
+					if (step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
+					{
+						mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_su;
+						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_su;
+					}
 				}
 
 				// Solve for idle storage
