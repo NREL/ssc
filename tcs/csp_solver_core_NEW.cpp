@@ -1252,7 +1252,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 								// 2) Try operating power cycle at maximum capacity
 								// Assume we want to completely fill storage, so the power cycle operation should float to meet that condition
-								else if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_max &&
+								else if( (q_dot_cr_on - q_dot_tes_ch)*(1.0 - tol_mode_switching) < q_pc_max 
+									&& (m_dot_cr_on - m_dot_tes_ch_est)*(1.0 - tol_mode_switching) < m_m_dot_pc_max &&
 									m_is_CR_ON__PC_RM_HI__TES_FULL__AUX_OFF_avail )
 								{	// Storage and the power cycle operating between target and max can accept the remaining receiver output
 									// Tolerance is applied so that if CR + TES is *close* to reaching PC  max, the controller tries that mode
@@ -5099,7 +5100,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// The PC is operating at its maximum operating fraction
 				// TES is fully charged at the end of the timestep
 				// The CR is still delivering too much mass flow rate and needs to be defocused
-
+				
 				if( !mc_collector_receiver.m_is_sensible_htf )
 				{
 					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
@@ -6995,6 +6996,10 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 	return;
 }
 
+int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_in)
+{
+	return 0;
+}
 
 void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	double field_control_in,
@@ -7004,6 +7009,8 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	// The collector-receiver is on and delivering hot HTF to the PC and TES
 	// The PC accepts floating input
 	// The TES is fully charging over the timestep
+
+	throw(C_csp_exception("Retiring solver_cr_on__pc_float__tes_full for mass flow constraint updates..", ""));
 
 	// Guess and iterate for the collector-receiver inlet temperature
 	double T_rec_in_guess_ini = m_T_htf_cold_des - 273.15;		//[C], convert from K
