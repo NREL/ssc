@@ -7148,6 +7148,10 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 	return;
 }
 
+int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_in)
+{
+	return 0;
+}
 
 void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	double field_control_in,
