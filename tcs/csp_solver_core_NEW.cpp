@@ -1067,8 +1067,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{
 								operating_mode = CR_DF__PC_SU__TES_FULL__AUX_OFF;								
 							}
-							else if( q_dot_cr_on*(1.0+tol_mode_switching) > q_dot_pc_su_max &&
-										m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail )
+							else if( ( q_dot_cr_on*(1.0+tol_mode_switching) > q_dot_pc_su_max 
+								|| m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max ) &&
+								m_is_CR_ON__PC_SU__TES_CH__AUX_OFF_avail )
 							{
 								operating_mode = CR_ON__PC_SU__TES_CH__AUX_OFF;								
 							}
