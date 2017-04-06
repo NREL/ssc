@@ -989,6 +989,8 @@ private:
 		double tol,
 		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance);
 
+	int solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_in);
+
 	enum E_solver_outcomes
 	{
 		CSP_NO_SOLUTION,	// Models did not provide enough information with which to iterate on T_rec_in
@@ -1365,6 +1367,25 @@ public:
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 
 		void solve_pc(double step /*s*/);
+	};
+
+	class C_mono_eq_cr_on__pc_match__tes_full : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;					//[-]
+		double m_defocus;				//[-]
+
+	public:
+		C_mono_eq_cr_on__pc_match__tes_full(C_csp_solver *pc_csp_solver,
+										int pc_mode, double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+			m_defocus = defocus;
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
 };
 
