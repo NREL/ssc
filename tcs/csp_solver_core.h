@@ -1387,6 +1387,61 @@ public:
 
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
+
+	class C_mono_eq_cr_on__pc_max_m_dot__tes_full : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;					//[-]
+		double m_defocus;				//[-]
+
+	public:
+		C_mono_eq_cr_on__pc_max_m_dot__tes_full(C_csp_solver *pc_csp_solver,
+									int pc_mode, double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+			m_defocus = defocus;
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
+
+	class C_mono_eq_cr_on__pc_target__tes_full__defocus : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;			//[-]
+		double m_q_dot_max;		//[MWt]
+
+	public:
+		C_mono_eq_cr_on__pc_target__tes_full__defocus(C_csp_solver *pc_csp_solver,
+			int pc_mode, double q_dot_max /*MWt*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+			m_q_dot_max = q_dot_max;		//[MWt]
+		}
+
+		virtual int operator()(double defocus /*-*/, double *q_dot_pc /*MWt*/);
+	};
+
+	class C_mono_eq_cr_on__pc_m_dot_max__tes_full_defocus : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;		//[-]
+
+	public:
+		C_mono_eq_cr_on__pc_m_dot_max__tes_full_defocus(C_csp_solver *pc_csp_solver,
+			int pc_mode)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+		}
+
+		virtual int operator()(double defocus /*-*/, double *m_dot_bal /*-*/);
+	};
 };
 
 
