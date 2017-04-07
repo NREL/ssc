@@ -132,6 +132,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.q_rec_startup.clear();
     outputs.w_condf_expected.clear();
 	outputs.w_pb_target.clear();
+    outputs.wnet_lim_min.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -1141,7 +1142,12 @@ bool csp_dispatch_opt::optimize()
                     + params.w_cycle_standby 
                     + params.w_cycle_pump*P["Qu"]
                     + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
-                if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
+
+                //save for writing to ampl
+                outputs.wnet_lim_min.push_back( wmin - max_parasitic );
+                
+                //check if cycle should be able to operate
+				if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
                 {
                     if(w_lim.at(t) > 0)
                         params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
@@ -1652,6 +1658,11 @@ std::string csp_dispatch_opt::write_ampl()
         fout << "param etac := \n";
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << outputs.w_condf_expected.at(t) << "\n";
+
+        //cycle net production lower limit
+        fout << "param wnet_lim_min := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.wnet_lim_min.at(t) << "\n";
 
         fout.close();
     }

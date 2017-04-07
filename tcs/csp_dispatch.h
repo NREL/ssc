@@ -218,6 +218,7 @@ public:
         vector<double> q_rec_startup;   //thermal power going to startup
         vector<double> w_pb_target;  //optimized electricity generation
         vector<double> w_condf_expected;  //Expected condenser loss coefficient
+        vector<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
 
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
