@@ -56,6 +56,7 @@ public:
 
 	struct S_params
 	{
+        bool m_eta_map_aod_format;
 		int m_run_type;
 		double m_helio_width;				//[m]
 		double m_helio_height;				//[m]

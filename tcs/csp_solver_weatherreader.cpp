@@ -136,6 +136,7 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	ms_outputs.m_pres = m_rec.pres;
 	ms_outputs.m_snow = m_rec.snow;
 	ms_outputs.m_albedo = m_rec.alb;
+    ms_outputs.m_aod = m_rec.aod;
 
 	ms_outputs.m_poa = poa[0] + poa[1] + poa[2];
 	ms_outputs.m_solazi = sunn[0] * 180 / CSP::pi;

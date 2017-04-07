@@ -178,6 +178,7 @@ public:
 		double m_pres;			//[mbar]
 		double m_snow;			//[cm]
 		double m_albedo;		//[-] (0..1)
+		double m_aod;		    //[m]
 
 		double m_poa;			//[W/m2]
 		double m_solazi;		//[deg]
@@ -198,7 +199,7 @@ public:
 			m_global = m_beam = m_hor_beam = m_diffuse = m_tdry = m_twet = m_tdew = m_wspd = 
 				m_wdir = m_rhum = m_pres = m_snow = m_albedo =
 				m_poa = m_solazi = m_solzen = m_lat = m_lon = m_tz = m_shift = m_elev =
-				m_time_rise = m_time_set = std::numeric_limits<double>::quiet_NaN();
+				m_time_rise = m_time_set = m_aod = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 

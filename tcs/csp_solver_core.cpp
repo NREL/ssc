@@ -590,6 +590,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 	mf_callback(m_cdata, 0.0, 0, 0.0);
 
+    mc_csp_messages.add_message(C_csp_messages::WARNING, util::format("End time: %f", mc_kernel.get_sim_setup()->m_sim_time_end) );
+
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
 		// Report simulation progress
@@ -7566,7 +7568,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
 	double T_htf_hot_guess_hotter = mc_tes.get_hot_temp() - 273.15;	//[C]
-	double T_htf_hot_guess_colder = T_htf_hot_guess_colder - 10.0;	//[C]
+	double T_htf_hot_guess_colder = T_htf_hot_guess_hotter - 10.0;	//[C]
 
 	double T_htf_hot_solved, tol_solved;
 	T_htf_hot_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();

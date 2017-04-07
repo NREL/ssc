@@ -278,6 +278,7 @@ void C_pt_heliostatfield::init()
 
 	MatDoub sunpos;
 	vector<double> effs;
+	vector<double> vis;
 
 	//do initial runs of SolarPILOT and/or set up tables
 	switch (run_type)
@@ -530,26 +531,60 @@ void C_pt_heliostatfield::init()
 		case RUN_TYPE::USER_DATA:
 		{
 
-			int nrows = ms_params.m_eta_map.nrows();
-			int ncols = ms_params.m_eta_map.ncols();
-		
-			if(ncols != 3)
-			{
-				error_msg = util::format("The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
-					" (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
+            if(! ms_params.m_eta_map_aod_format )
+            {
 
-				throw(C_csp_exception(error_msg, "heliostat field initialization"));
-			}
+			    int nrows = ms_params.m_eta_map.nrows();
+			    int ncols = ms_params.m_eta_map.ncols();
 		
-			//read the data from the array into the local storage arrays
-			sunpos.resize(nrows, VectDoub(2));
-			effs.resize(nrows);
-			for(int i=0; i<nrows; i++)
-			{
-				sunpos.at(i).at(0) = eta_map(i, 0) / az_scale * CSP::pi / 180.0;
-				sunpos.at(i).at(1) = eta_map(i, 1) / zen_scale * CSP::pi / 180.0;
-				effs.at(i) = eta_map(i, 2) / eff_scale;
-			}
+			    if(ncols != 3)
+			    {
+				    error_msg = util::format("The heliostat field efficiency file is not formatted correctly. Type expects 3 columns"
+					    " (zenith angle, azimuth angle, efficiency value) and instead has %d cols.", ncols);
+
+				    throw(C_csp_exception(error_msg, "heliostat field initialization"));
+			    }
+		
+			    //read the data from the array into the local storage arrays
+			    sunpos.resize(nrows, VectDoub(2));
+			    effs.resize(nrows);
+			    for(int i=0; i<nrows; i++)
+			    {
+				    sunpos.at(i).at(0) = eta_map(i, 0) / az_scale * CSP::pi / 180.0;
+				    sunpos.at(i).at(1) = eta_map(i, 1) / zen_scale * CSP::pi / 180.0;
+				    effs.at(i) = eta_map(i, 2) / eff_scale;
+			    }
+            }
+            else
+            {
+                int nrows = ms_params.m_eta_map.nrows()-1;
+			    int ncols = ms_params.m_eta_map.ncols();
+                int nvis = ncols-2;
+                
+			    //read the data from the array into the local storage arrays
+			    sunpos.resize(nrows*nvis, VectDoub(3));
+			    effs.resize(nrows*nvis);
+		        
+                for(int j=0; j<nvis; j++)
+                {
+                    double vis = eta_map(0, j+2);
+
+			        for(int i=0; i<nrows; i++)
+			        {
+				        sunpos.at(i+nrows*j).at(0) = eta_map(i+1, 0) / az_scale * CSP::pi / 180.0;
+				        sunpos.at(i+nrows*j).at(1) = eta_map(i+1, 1) / zen_scale * CSP::pi / 180.0;
+				        sunpos.at(i+nrows*j).at(2) = vis;
+				        effs.at(i+nrows*j) = eta_map(i+1, j+2) / eff_scale;
+			        }
+                }
+
+                //after processing, pop the first row 
+                util::matrix_t<double> eta_temp(nrows, ncols);
+                ms_params.m_eta_map.resize(nrows, ncols);
+                for(int i=0; i<nrows; i++)
+                    for(int j=0; j<ncols; j++)
+                        ms_params.m_eta_map.at(i,j) = eta_map(i+1, j);
+            }
 
             break;
 		}
@@ -670,6 +705,13 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 		vector<double> sunpos;
 		sunpos.push_back(solaz / az_scale);
 		sunpos.push_back(solzen / zen_scale);
+        if( ms_params.m_eta_map_aod_format )
+        {
+            if( weather.m_aod != weather.m_aod )
+                sunpos.push_back( 0. );
+            else
+                sunpos.push_back( weather.m_aod );
+        }
 
 		eta_field = field_efficiency_table->interp(sunpos) * eff_scale;
 		eta_field = fmin(fmax(eta_field, 0.0), 1.0) * field_control * sf_adjust;		// Ensure physical behavior 

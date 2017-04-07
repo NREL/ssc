@@ -64,6 +64,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "n_flux_y",             "Flux map Y resolution",                                             "-",            "",            "heliostat",      "?=1",                     "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "helio_aim_points",     "Heliostat aim point table",                                         "m",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency array",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "eta_map_aod_format",   "Use 3D AOD format field efficiency array"                           "-",            "",            "heliostat",      "?=0",                     "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_positions",       "Flux map sun positions",                                            "deg",          "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_maps",            "Flux map intensities",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_0",              "Attenuation coefficient 0",                                         "",             "",            "heliostat",      "?=0.006789",              "",                     "" },
@@ -851,6 +852,7 @@ public:
 		else if( run_type == 2 )
 		{
 			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
+            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
 			heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
 			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
             //allocate empty array of positions to indicate number of heliostats in the field
@@ -870,7 +872,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-		int n_steps_full = steps_per_hour * 8760;
+		int n_steps_full = weather_reader.get_n_records(); //steps_per_hour * 8760;
 		if (!sf_haf.setup(n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
