@@ -4387,15 +4387,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			case CR_OFF__PC_TARGET__TES_DC__AUX_OFF:
 			case CR_SU__PC_TARGET__TES_DC__AUX_OFF:
 			{
-				if (operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF)
-				{
-
-				}
-				else if (operating_mode == CR_SU__PC_TARGET__TES_DC__AUX_OFF)
-				{
-					throw(C_csp_exception("CR_SU__PC_TARGET__TES_DC__AUX_OFF mode not updated for mass flow constraints"));
-				}
-
 				// The collector receiver is off
 				// The power cycle run at the target thermal input level
 				// The TES supplies the thermal power to the power cycle
@@ -5588,8 +5579,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			case CR_SU__PC_SU__TES_DC__AUX_OFF:
 			{
-				throw(C_csp_exception("CR_SU__PC_SU__TES_DC__AUX_OFF mode not updated for mass flow constraints"));
-
 				// Collector-receiver is starting up
 				// Power cycle is starting up, with thermal power from TES
 				// Code calculates the shortest timestep of: (CR SU, PC SU, initial timestep)
@@ -5604,28 +5593,30 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
-
 				// First, startup the collector-receiver and get the time required
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 
 				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check that startup happened
 				if( mc_cr_out_solver.m_q_startup == 0.0 )
 				{	// Collector/receiver can't produce useful energy
-
 					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
 
 					are_models_converged = false;
 					break;
 				}
 
-				// Get startup time
-				double step_cr = fmin(mc_kernel.mc_sim_info.ms_ts.m_step, mc_cr_out_solver.m_time_required_su);	//[s]
+				// Reset timestep based on receiver startup
+				if (mc_cr_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
+				{
+					// Reset sim_info values
+					mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_cr_out_solver.m_time_required_su;		//[s]
+				}
 
 				// *****************************************************************
 				// Next, calculate the required power cycle startup time
@@ -5649,7 +5640,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				// ******************************************************************
 				// Compare the CR and PC startup times
-				if( step_cr > step_pc_su )
+				if (step_pc_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
 				{	// If the time required for CR startup is longer than the time to startup the PC
 					//       then rerun CR_SU with the PC startup timestep (and CR_SU will continue in the next timestep)
 
@@ -5666,7 +5657,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						mc_collector_receiver.startup(mc_weather.ms_outputs,
 							mc_cr_htf_state_in,
 							mc_cr_out_solver,
-							//mc_cr_out_report,
 							mc_kernel.mc_sim_info);
 
 						// Check that startup happened
@@ -5679,57 +5669,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							break;
 						}		
 					}		
-				}
-				else if( step_pc_su > step_cr )
-				{	// If the time required to discharge TES at PC MIN is longer than CR startup
-					//      the rerun PC startup with the CR startup timestep (and PC_SU will continue in the next timestep)
-				
-					// Check if shortest timestep is close to end of initial timestep
-					if(step_cr < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
-					{
-						// Update simulation time info
-						mc_kernel.mc_sim_info.ms_ts.m_step = step_cr;						//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_cr;		//[s]
-
-						// Rerun PC_SU
-						step_tol = step_tolerance;		//[s]
-						step_pc_su = std::numeric_limits<double>::quiet_NaN();
-
-						exit_mode = CSP_CONVERGED;
-						T_pc_in_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-
-						solver_pc_su_controlled__tes_dc(step_tol,
-							step_pc_su,
-							exit_mode, T_pc_in_exit_tolerance);
-
-						// Check exit mode
-						if( exit_mode != CSP_CONVERGED )
-						{
-							are_models_converged = false;
-							m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
-							break;
-						}
-					}
-				}
-				else if( step_pc_su == step_cr )
-				{
-					// Check whether, improbably, both CR_SU and PC_SU are equal but less than the initial simulation
-
-					if( step_cr < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance )
-					{
-						mc_kernel.mc_sim_info.ms_ts.m_step = step_cr;
-						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_cr;
-					}
-				}
-				else
-				{	// Catch if 'step_pc_su' or 'step_cr' return NaN
-
-					error_msg = util::format("At time = %lg CR_SU__PC_SU__TES_DC__AUX_OFF method calculated a NaN timestep",
-						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-
-					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
-					are_models_converged = false;
-					break;
 				}
 
 				are_models_converged = true;
