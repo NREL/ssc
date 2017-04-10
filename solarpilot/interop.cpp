@@ -769,22 +769,22 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 		//Take special care for user-specified values vs. program calculated values.
 		char tchar1[300];
 		if(H->getVarMap()->focus_method.mapval() == var_heliostat::FOCUS_METHOD::USERDEFINED )
-            std::sprintf(tchar1, "%f,%f", H->getFocalX(), H->getFocalY()); 
+            sprintf(tchar1, "%f,%f", H->getFocalX(), H->getFocalY());
         else 
-            std::sprintf(tchar1, "NULL,NULL"); 
+            sprintf(tchar1, "NULL,NULL");
 		//sdat2 = string(tchar1);
 
 		char tchar2[300];
-		if(H->IsUserCant()){ std::sprintf(tchar2, "%f,%f,%f", cant->i, cant->j, cant->k); }
-		else{ std::sprintf(tchar2, "NULL,NULL,NULL"); }
+		if(H->IsUserCant()){ sprintf(tchar2, "%f,%f,%f", cant->i, cant->j, cant->k); }
+		else{ sprintf(tchar2, "NULL,NULL,NULL"); }
 		//sdat3 = string(tchar2);
 
 		char tchar3[300];
-		std::sprintf(tchar3, "%f,%f,%f", aim->x, aim->y, aim->z); 
+		sprintf(tchar3, "%f,%f,%f", aim->x, aim->y, aim->z);
 		//sdat4 = string(tchar3);
 
 		char tchar4[300];
-		std::sprintf(tchar4, "%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
+		sprintf(tchar4, "%d,%f,%f,%f,%s,%s,%s\n",H->getVarMap()->type.val, loc->x, loc->y, loc->z, tchar1, tchar2, tchar3);
 		sdat = string(tchar4);
 		var->append(sdat);
 

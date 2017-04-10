@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <cmath>
+#include <stdlib.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323
@@ -349,127 +351,127 @@ public:
 			}
 		}
 		if (m_ndx_year > -1)
-			value( O_YEAR, std::atof(m_trnsys_values[m_ndx_year].c_str()) );
+            value( O_YEAR, atof(m_trnsys_values[m_ndx_year].c_str()) );
 		else
 			value( O_YEAR, 0.0 );
 
 		if (m_ndx_month > -1)
-			value( O_MONTH, std::atof(m_trnsys_values[m_ndx_month].c_str()) );
+			value( O_MONTH, atof(m_trnsys_values[m_ndx_month].c_str()) );
 		else
 			value( O_MONTH, 0.0 );
 
 		if (m_ndx_day > -1)
-			value( O_DAY, std::atof(m_trnsys_values[m_ndx_day].c_str()) );
+			value( O_DAY, atof(m_trnsys_values[m_ndx_day].c_str()) );
 		else
 			value( O_DAY, 0.0 );
 
 		if (m_ndx_hour > -1)
-			value( O_HOUR, std::atof(m_trnsys_values[m_ndx_hour].c_str()) );
+			value( O_HOUR, atof(m_trnsys_values[m_ndx_hour].c_str()) );
 		else
 			value( O_HOUR, 0.0 );
 
 		if (m_ndx_minute > -1)
-			value( O_MINUTE, std::atof(m_trnsys_values[m_ndx_minute].c_str()) );
+			value( O_MINUTE, atof(m_trnsys_values[m_ndx_minute].c_str()) );
 		else
 			value( O_MINUTE, 0.0 );
 
 		if (m_ndx_global > -1)
-			value( O_GLOBAL, std::atof(m_trnsys_values[m_ndx_global].c_str())/3.6 );
+			value( O_GLOBAL, atof(m_trnsys_values[m_ndx_global].c_str())/3.6 );
 		else
 			value( O_GLOBAL, 0.0 );
 
 		if (m_ndx_beam > -1)
 			// conversion to TCS units W/m2
-			value( O_BEAM, std::atof(m_trnsys_values[m_ndx_beam].c_str())/3.6 );
+			value( O_BEAM, atof(m_trnsys_values[m_ndx_beam].c_str())/3.6 );
 			//value( O_BEAM, std::atof(m_trnsys_values[m_ndx_beam].c_str()) );
 		else
 			value( O_BEAM, 0.0 );
 
 		if (m_ndx_diff > -1)
-			value( O_DIFFUSE, std::atof(m_trnsys_values[m_ndx_diff].c_str())/3.6 );
+			value( O_DIFFUSE, atof(m_trnsys_values[m_ndx_diff].c_str())/3.6 );
 		else
 			value( O_DIFFUSE, 0.0 );
 
 		if (m_ndx_tdry > -1)
-			value( O_TDRY, std::atof(m_trnsys_values[m_ndx_tdry].c_str()) );
+			value( O_TDRY, atof(m_trnsys_values[m_ndx_tdry].c_str()) );
 		else
 			value( O_TDRY, 0.0 );
 
 		if (m_ndx_twet > -1)
-			value( O_TWET, std::atof(m_trnsys_values[m_ndx_twet].c_str()) );
+			value( O_TWET, atof(m_trnsys_values[m_ndx_twet].c_str()) );
 		else
 			value( O_TWET, 0.0 );
 
 		if (m_ndx_tdew > -1)
-			value( O_TDEW, std::atof(m_trnsys_values[m_ndx_tdew].c_str()) );
+			value( O_TDEW, atof(m_trnsys_values[m_ndx_tdew].c_str()) );
 		else
 			value( O_TDEW, 0.0 );
 
 		if (m_ndx_wspd > -1)
-			value( O_WSPD, std::atof(m_trnsys_values[m_ndx_wspd].c_str()) );
+			value( O_WSPD, atof(m_trnsys_values[m_ndx_wspd].c_str()) );
 		else
 			value( O_WSPD, 0.0 );
 
 		if (m_ndx_wdir > -1)
-			value( O_WDIR, std::atof(m_trnsys_values[m_ndx_wdir].c_str()) );
+			value( O_WDIR, atof(m_trnsys_values[m_ndx_wdir].c_str()) );
 		else
 			value( O_WDIR, 0.0 );
 
 		if (m_ndx_rhum > -1)
-			value( O_RHUM, std::atof(m_trnsys_values[m_ndx_rhum].c_str()) );
+			value( O_RHUM, atof(m_trnsys_values[m_ndx_rhum].c_str()) );
 		else
 			value( O_RHUM, 0.0 );
 
 		// Convert from ATM to mbar
 		if (m_ndx_pres > -1)
-			value( O_PRES, std::atof(m_trnsys_values[m_ndx_pres].c_str())*1013.25 );
+			value( O_PRES, atof(m_trnsys_values[m_ndx_pres].c_str())*1013.25 );
 		else
 			value( O_PRES, 0.0 );
 
 		if (m_ndx_snow > -1)
-			value( O_SNOW, std::atof(m_trnsys_values[m_ndx_snow].c_str()) );
+			value( O_SNOW, atof(m_trnsys_values[m_ndx_snow].c_str()) );
 		else
 			value( O_SNOW, 0.0 );
 
 		if (m_ndx_albedo > -1)
-			value( O_ALBEDO, std::atof(m_trnsys_values[m_ndx_albedo].c_str()) );
+			value( O_ALBEDO, atof(m_trnsys_values[m_ndx_albedo].c_str()) );
 		else
 			value( O_ALBEDO, 0.0 );
 
 		if (m_ndx_poa > -1)
-			value( O_POA, std::atof(m_trnsys_values[m_ndx_poa].c_str())/3.6 );
+			value( O_POA, atof(m_trnsys_values[m_ndx_poa].c_str())/3.6 );
 		else
 			value( O_POA, 0.0 );
 
 		if (m_ndx_solazi > -1)
 			// convert to TCS convention
-			value( O_SOLAZI, std::atof(m_trnsys_values[m_ndx_solazi].c_str()) + 180 );
+			value( O_SOLAZI, atof(m_trnsys_values[m_ndx_solazi].c_str()) + 180 );
 			//value( O_SOLAZI, std::atof(m_trnsys_values[m_ndx_solazi].c_str()) );
 		else
 			value( O_SOLAZI, 0.0 );
 
 		if (m_ndx_solzen > -1)
-			value( O_SOLZEN, std::atof(m_trnsys_values[m_ndx_solzen].c_str()) );
+			value( O_SOLZEN, atof(m_trnsys_values[m_ndx_solzen].c_str()) );
 		else
 			value( O_SOLZEN, 0.0 );
 
 		if (m_ndx_lat > -1)
-			value( O_LAT, std::atof(m_trnsys_values[m_ndx_lat].c_str()) );
+			value( O_LAT, atof(m_trnsys_values[m_ndx_lat].c_str()) );
 		else
 			value( O_LAT, 0.0 );
 
 		if (m_ndx_lon > -1)
-			value( O_LON, std::atof(m_trnsys_values[m_ndx_lon].c_str()) );
+			value( O_LON, atof(m_trnsys_values[m_ndx_lon].c_str()) );
 		else
 			value( O_LON, 0.0 );
 
 		if (m_ndx_tz > -1)
-			value( O_TZ, std::atof(m_trnsys_values[m_ndx_tz].c_str()) );
+			value( O_TZ, atof(m_trnsys_values[m_ndx_tz].c_str()) );
 		else
 			value( O_TZ, 0.0 );
 
 		if (m_ndx_shift > -1)
-			value( O_SHIFT, std::atof(m_trnsys_values[m_ndx_shift].c_str()) );
+			value( O_SHIFT, atof(m_trnsys_values[m_ndx_shift].c_str()) );
 		else
 			value( O_SHIFT, 0.0 );
 
