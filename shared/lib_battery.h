@@ -215,7 +215,7 @@ private:
 	double _Qnom;
 	double _C_rate;
 	double _A;
-	double _B;
+	double _B0;
 	double _E0;
 	double _K;
 
@@ -241,7 +241,7 @@ private:
 	double _I;						// Current level [A]
 	double _R_molar;
 	double _F;
-	double _C;
+	double _C0;
 };
 
 /*
