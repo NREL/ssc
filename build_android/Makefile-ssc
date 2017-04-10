@@ -2,30 +2,27 @@
 
 VPATH=../ssc
 
-SIM=
-ifeq (${ARCH}, i386)
-	SIM=true
-endif
-ifeq (${ARCH}, x86_64)
-	SIM=true
-endif
+# OS building
+MYARCH=darwin-x86_64
 
+# Default NDK installation location for Android Studio 2.3
+NDK = /Users/imacuser/Library/Android/sdk/ndk-bundle
 
-ifeq (${SIM}, true)
-	ISYSROOT = /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk
-else
-	ISYSROOT = /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk
-endif
+# based on Android-23 for Samsung Galaxy 5
+PLATFORMVER=android-23
+GCCPREFIX=arm-linux-androideabi
+GCCVER=4.9
+#ARCH=armeabi-v7a
 
-CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
-CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC  -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__IOS__ -D__64BIT__
-CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
-#testing dylib in iOS
-#LDFLAGS = -arch ${ARCH} -lm -lstdc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
-#LDFLAGS = -L${ISYSROOT}/usr/lib -L${ISYSROOT}/usr/lib/system  -miphoneos-version-min=10.0 -arch ${ARCH} -lc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
+CC=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-gcc
+CXX=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-g++
+RANLIB=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ranlib
+AR=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ar
 
-#TARGET=ssc_${ARCH}.dylib
+CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__ANDROID__ -D__64BIT__  -isystem${NDK}/platforms/${PLATFORMVER}/arch-arm/usr/include -isystem${NDK}/sources/cxx-stl/gnu-libstdc++/${GCCVER}/include -isystem${NDK}/sources/cxx-stl/gnu-libstdc++/${GCCVER}/libs/${ARCH}/include
+
+CXXFLAGS = $(CFLAGS) -std=c++11 
+
 TARGET=ssc_${ARCH}.a
 
 
@@ -119,7 +116,7 @@ OBJECTS = \
 #	$(CXX) $(LDFLAGS) -o $@ $^
 #	$(CXX) $(LDFLAGS) -dynamiclib  -o $@ $^
 $(TARGET):$(OBJECTS)
-	ar rs $(TARGET) $(OBJECTS)
+	$(AR) rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)

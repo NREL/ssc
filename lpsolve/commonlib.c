@@ -1,7 +1,7 @@
 
 #include <sys/types.h>
 
-#if defined INTEGERTIME || defined CLOCKTIME || defined PosixTime
+#if defined INTEGERTIME || defined CLOCKTIME || defined PosixTime 
 # include <time.h>
 #elif defined EnhTime
 # include <windows.h>

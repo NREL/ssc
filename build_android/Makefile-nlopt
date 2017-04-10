@@ -2,25 +2,27 @@
 
 VPATH = ../nlopt ../nlopt/direct ../nlopt/cdirect ../nlopt/praxis ../nlopt/luksan ../nlopt/crs
 
-SIM=
-ifeq (${ARCH}, i386)
-	SIM=true
-endif
-ifeq (${ARCH}, x86_64)
-	SIM=true
-endif
+# OS building
+MYARCH=darwin-x86_64
 
-ifeq (${SIM}, true)
-	ISYSROOT = /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk
-else
-	ISYSROOT = /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk  
-endif
+# Default NDK installation location for Android Studio 2.3
+NDK = /Users/imacuser/Library/Android/sdk/ndk-bundle
 
-CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
-CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
-CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC -fno-exceptions -I../  -I../nlopt/api -I../nlopt/util -I../nlopt  -DWX_PRECOMP 
-CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
+# based on Android-23 for Samsung Galaxy 5
+PLATFORMVER=android-23
+GCCPREFIX=arm-linux-androideabi
+GCCVER=4.9
+#ARCH=armeabi-v7a
 
+CC=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-gcc
+CXX=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-g++
+RANLIB=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ranlib
+AR=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ar
+
+
+CFLAGS = -I../  -I../nlopt/api -I../nlopt/util -I../nlopt  -DWX_PRECOMP -isystem${NDK}/platforms/${PLATFORMVER}/arch-arm/usr/include -isystem${NDK}/sources/cxx-stl/gnu-libstdc++/${GCCVER}/include -isystem${NDK}/sources/cxx-stl/gnu-libstdc++/${GCCVER}/libs/${ARCH}/include
+
+CXXFLAGS = $(CFLAGS) -std=c++11 
 
 
 OBJECTS = \
@@ -65,7 +67,7 @@ OBJECTS = \
 TARGET=nlopt_${ARCH}.a
 
 $(TARGET):$(OBJECTS)
-	ar rs $(TARGET) $(OBJECTS)
+	$(AR) rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
