@@ -308,7 +308,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	}
 
 	P_grid_to_load_ac = P_load_ac - P_pv_to_load_ac - P_batt_to_load_ac;
-	P_grid_ac = _P_load - P_gen_ac;
+	P_grid_ac = P_gen_ac - _P_load;
 
 	// assign outputs
 	_P_battery = P_battery_ac;
