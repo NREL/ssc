@@ -23,7 +23,7 @@ CFLAGS = -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -
 
 CXXFLAGS = $(CFLAGS) -std=c++11 
 
-TARGET=ssc_${ARCH}.a
+TARGET=ssc_${ARCH}.so
 
 
 OBJECTS = \

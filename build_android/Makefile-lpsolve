@@ -56,7 +56,7 @@ OBJECTS = \
 	yacc_read.o
 
 
-TARGET=lpsolve_${ARCH}.a
+TARGET=lpsolve_${ARCH}.so
 
 $(TARGET):$(OBJECTS)
 	$(AR) rs $(TARGET) $(OBJECTS)

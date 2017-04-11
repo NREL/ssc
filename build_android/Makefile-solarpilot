@@ -51,7 +51,7 @@ OBJECTS = \
 
 
 
-TARGET=solarpilot_${ARCH}.a
+TARGET=solarpilot_${ARCH}.so
 
 $(TARGET):$(OBJECTS)
 	$(AR) rs $(TARGET) $(OBJECTS)
