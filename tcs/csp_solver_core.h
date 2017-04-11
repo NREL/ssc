@@ -1443,6 +1443,25 @@ public:
 
 		virtual int operator()(double defocus /*-*/, double *m_dot_bal /*-*/);
 	};
+
+	class C_mono_eq_cr_on__pc_match_m_dot_ceil__tes_full : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;					//[-]
+		double m_defocus;				//[-]
+
+	public:
+		C_mono_eq_cr_on__pc_match_m_dot_ceil__tes_full(C_csp_solver *pc_csp_solver,
+			int pc_mode, double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+			m_defocus = defocus;
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
 };
 
 
