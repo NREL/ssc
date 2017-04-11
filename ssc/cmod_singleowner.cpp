@@ -3016,7 +3016,7 @@ public:
 		}
 		save_cf(CF_lcog_costs, nyears, "cf_lcog_costs");
 
-		double lcog_om = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
+		double lcog_om = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
 		if (npv_energy_nom != 0) lcog_om = lcog_om * 100.0 / npv_energy_nom;
 		assign("lcog_om", var_data((ssc_number_t)lcog_om));
 
