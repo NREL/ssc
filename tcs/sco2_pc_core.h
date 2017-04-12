@@ -534,15 +534,21 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
+		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+
 		S_auto_opt_design_hit_eta_parameters()
 		{
 			m_W_dot_net = m_T_mc_in = m_T_t_in = m_LT_eff_max = m_HT_eff_max = 
 				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = 
-				m_tol = m_opt_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+				m_tol = m_opt_tol = m_N_turbine = 
+				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
 			m_is_recomp_ok = -1;
+
+			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
 
 			m_DP_LT.resize(2);
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());
@@ -577,15 +583,21 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
+		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+
 		S_auto_opt_design_parameters()
 		{
 			m_W_dot_net = m_T_mc_in = m_T_t_in = m_UA_rec_total = m_LT_eff_max = m_HT_eff_max =
 				m_eta_mc = m_eta_rc = m_eta_t = m_P_high_limit = 
-				m_tol = m_opt_tol = m_N_turbine = std::numeric_limits<double>::quiet_NaN();
+				m_tol = m_opt_tol = m_N_turbine =
+				m_PR_mc_guess = std::numeric_limits<double>::quiet_NaN();
 
 			m_N_sub_hxrs = -1;
 
 			m_is_recomp_ok = -1;
+
+			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
 
 			m_DP_LT.resize(2);
 			std::fill(m_DP_LT.begin(), m_DP_LT.end(), std::numeric_limits<double>::quiet_NaN());

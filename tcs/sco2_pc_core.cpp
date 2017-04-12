@@ -3734,8 +3734,19 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 		// Complete 'ms_opt_des_par' for recompression cycle
 		ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
 		ms_opt_des_par.m_fixed_P_mc_out = true;
-		ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-		ms_opt_des_par.m_fixed_PR_mc = false;
+		
+		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+		//ms_opt_des_par.m_fixed_PR_mc = false;
+		ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
+		if (ms_opt_des_par.m_fixed_PR_mc)
+		{
+			ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+		}
+		else
+		{
+			ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+		}
+
 		ms_opt_des_par.m_recomp_frac_guess = 0.3;
 		ms_opt_des_par.m_fixed_recomp_frac = false;
 		ms_opt_des_par.m_LT_frac_guess = 0.5;
@@ -3755,8 +3766,19 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	// Complete 'ms_opt_des_par' for simple cycle
 	ms_opt_des_par.m_P_mc_out_guess = ms_auto_opt_des_par.m_P_high_limit;
 	ms_opt_des_par.m_fixed_P_mc_out = true;
-	ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-	ms_opt_des_par.m_fixed_PR_mc = false;
+	
+	//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+	//ms_opt_des_par.m_fixed_PR_mc = false;
+	ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
+	if (ms_opt_des_par.m_fixed_PR_mc)
+	{
+		ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+	}
+	else
+	{
+		ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+	}
+
 	ms_opt_des_par.m_recomp_frac_guess = 0.0;
 	ms_opt_des_par.m_fixed_recomp_frac = true;
 	ms_opt_des_par.m_LT_frac_guess = 1.0;
@@ -3809,6 +3831,9 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 	ms_auto_opt_des_par.m_opt_tol = auto_opt_des_hit_eta_in.m_opt_tol;					//[-] Optimization tolerance
 	ms_auto_opt_des_par.m_N_turbine = auto_opt_des_hit_eta_in.m_N_turbine;				//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 	ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
+
+	ms_auto_opt_des_par.m_PR_mc_guess = auto_opt_des_hit_eta_in.m_PR_mc_guess;			//[-] Initial guess for ratio of P_mc_out to P_mc_in
+	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess		
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
 
@@ -4110,8 +4135,19 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 		// Complete 'ms_opt_des_par' for recompression cycle
 		ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
 		ms_opt_des_par.m_fixed_P_mc_out = true;
-		ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-		ms_opt_des_par.m_fixed_PR_mc = false;
+		
+		//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+		//ms_opt_des_par.m_fixed_PR_mc = false;
+		ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
+		if (ms_opt_des_par.m_fixed_PR_mc)
+		{
+			ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+		}
+		else
+		{
+			ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+		}
+
 		ms_opt_des_par.m_recomp_frac_guess = 0.3;
 		ms_opt_des_par.m_fixed_recomp_frac = false;
 		ms_opt_des_par.m_LT_frac_guess = 0.5;
@@ -4133,8 +4169,19 @@ double C_RecompCycle::opt_eta(double P_high_opt)
 	// Complete 'ms_opt_des_par' for simple cycle
 	ms_opt_des_par.m_P_mc_out_guess = P_high_opt;
 	ms_opt_des_par.m_fixed_P_mc_out = true;
-	ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
-	ms_opt_des_par.m_fixed_PR_mc = false;
+	
+	//ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;
+	//ms_opt_des_par.m_fixed_PR_mc = false;
+	ms_opt_des_par.m_fixed_PR_mc = ms_auto_opt_des_par.m_fixed_PR_mc;	//[-]
+	if (ms_opt_des_par.m_fixed_PR_mc)
+	{
+		ms_opt_des_par.m_PR_mc_guess = ms_auto_opt_des_par.m_PR_mc_guess;	//[-]
+	}
+	else
+	{
+		ms_opt_des_par.m_PR_mc_guess = PR_mc_guess;		//[-]
+	}
+
 	ms_opt_des_par.m_recomp_frac_guess = 0.0;
 	ms_opt_des_par.m_fixed_recomp_frac = true;
 	ms_opt_des_par.m_LT_frac_guess = 1.0;
