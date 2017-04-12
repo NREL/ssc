@@ -188,7 +188,20 @@ void C_sco2_recomp_csp::design_core()
 	ms_air_cooler_des_par_ind.m_T_amb_des = ms_des_par.m_T_amb_des;		//[K]
 	ms_air_cooler_des_par_ind.m_elev = ms_des_par.m_elevation;			//[m]
 		// Add checks from Type 424 to the air cooler design code?
-	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
+	
+	
+	
+	
+	
+	
+	
+	// 4.12.2017 twn: comment this out for now
+	//mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
+
+
+
+
+
 
 	return;
 }
