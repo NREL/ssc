@@ -3616,17 +3616,29 @@ double C_RecompCycle::design_point_eta(const std::vector<double> &x)
 
 	// Main compressor pressure ratio
 	double PR_mc_local = -999.9;
+	double P_mc_in = -999.9;
 	if( !ms_opt_des_par.m_fixed_PR_mc )
 	{
 		PR_mc_local = x[index];
 		if( PR_mc_local > 50.0 )
 			return 0.0;
 		index++;
+		P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;
 	}
 	else
-		PR_mc_local = ms_opt_des_par.m_PR_mc_guess;
+	{
+		if (ms_opt_des_par.m_PR_mc_guess >= 0.0)
+		{
+			PR_mc_local = ms_opt_des_par.m_PR_mc_guess;
+			P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;		//[kPa]
+		}
+		else
+		{
+			P_mc_in = fabs(ms_opt_des_par.m_PR_mc_guess);		//[kPa]
+		}
+	}
 	
-	double P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;
+
 	if( P_mc_in >= ms_des_par.m_P_mc_out )
 		return 0.0;
 	if( P_mc_in <= 100.0 )
