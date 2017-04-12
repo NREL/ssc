@@ -247,10 +247,17 @@ public:
 		sco2_rc_des_par.m_is_recomp_ok = as_integer("is_recomp_ok");
 
 		double mc_PR_in = as_double("is_PR_fixed");		//[-]
-		if (mc_PR_in > 0.0)
+		if (mc_PR_in != 0.0)
 		{
-			sco2_rc_des_par.m_PR_mc_guess = mc_PR_in;
-			sco2_rc_des_par.m_fixed_PR_mc = true;
+			if (mc_PR_in < 0.0)
+			{
+				sco2_rc_des_par.m_PR_mc_guess = mc_PR_in*1.E3;		//[kPa] convert from MPa
+			}
+			else
+			{
+				sco2_rc_des_par.m_PR_mc_guess = mc_PR_in;			//[-] Pressure Ratio!
+			}
+				sco2_rc_des_par.m_fixed_PR_mc = true;
 		}
 		else
 		{
