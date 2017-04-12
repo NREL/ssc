@@ -49,6 +49,9 @@ public:
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		int m_is_recomp_ok;					//[-] 1 = yes, 0 = no, other = invalid
 
+		double m_PR_mc_guess;				//[-] Initial guess for ratio of P_mc_out to P_mc_in
+		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
+
 		// PHX design parameters
 			// This is a PHX rather than system parameter because we don't know T_CO2_in until cycle model is solved
 		double m_phx_dt_cold_approach;	//[K/C] Temperature difference between cold HTF and PHX CO2 inlet
@@ -69,8 +72,12 @@ public:
 				m_eta_mc = m_eta_rc = m_eta_t =
 				m_P_high_limit = m_tol = m_opt_tol = m_N_turbine =
 
+				m_PR_mc_guess =
+
 				m_phx_dt_cold_approach = m_frac_fan_power = m_deltaP_cooler_frac = 
 				std::numeric_limits<double>::quiet_NaN();
+
+			m_fixed_PR_mc = false;		//[-] If false, then should default to optimizing this parameter
 		}
 	};
 

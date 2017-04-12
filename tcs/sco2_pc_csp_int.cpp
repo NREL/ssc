@@ -120,6 +120,10 @@ void C_sco2_recomp_csp::design_core()
 		s_rc_auto_opt_des_par.m_tol = ms_des_par.m_tol;
 		s_rc_auto_opt_des_par.m_opt_tol = ms_des_par.m_opt_tol;
 		s_rc_auto_opt_des_par.m_N_turbine = ms_des_par.m_N_turbine;
+
+		s_rc_auto_opt_des_par.m_PR_mc_guess = ms_des_par.m_PR_mc_guess;		//[-]
+		s_rc_auto_opt_des_par.m_fixed_PR_mc = ms_des_par.m_fixed_PR_mc;		//[-]
+
 		s_rc_auto_opt_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
 	
 		mc_rc_cycle.auto_opt_design(s_rc_auto_opt_des_par, auto_err_code);
