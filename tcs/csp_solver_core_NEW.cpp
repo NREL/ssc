@@ -1520,15 +1520,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			switch( operating_mode )
 			{
 			case CR_DF__PC_SU__TES_OFF__AUX_OFF:
-			{
-				throw(C_csp_exception("CR_DF__PC_SU__TES_OFF__AUX_OFF mode not updated for mass flow constraints"));
-
-
-				break;
-			}
 			case CR_DF__PC_MAX__TES_OFF__AUX_OFF:
 			{
-
 				// The PC is operating at its maximum operating thermal power or HTF mass flow rate
 				// TES cannot be charged
 				// Defocus CR to hit PC constraints
@@ -1539,24 +1532,44 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
+				std::string op_mode_str = "";
+				int pc_mode = -1;
+				if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+				{
+					op_mode_str = "CR_DF__PC_SU__TES_OFF__AUX_OFF";
+					pc_mode = C_csp_power_cycle::STARTUP_CONTROLLED;
+				}
+				else
+				{
+					op_mode_str = "CR_DF__PC_MAX__TES_OFF__AUX_OFF";
+					pc_mode = C_csp_power_cycle::ON;
+				}
+
 				// First, check if at defocus = 1 whether the PC mass flow rate is less than maximum
-				//    when storage is fully charged
-				int pc_mode = C_csp_power_cycle::ON;
+				//    when storage is fully charged				
 				C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus c_df_m_dot(this, pc_mode);
 				C_monotonic_eq_solver c_df_m_dot_solver(c_df_m_dot);
 
 				double defocus_guess = 1.0;
 				double m_dot_bal = std::numeric_limits<double>::quiet_NaN();
 				int m_dot_df_code = c_df_m_dot_solver.test_member_function(defocus_guess, &m_dot_bal);
-				if (m_dot_df_code)
+				if (m_dot_df_code != 0)
 				{
-					error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_OFF operating mode, but the collector/receiver "
+					error_msg = util::format("At time = %lg the controller chose %s operating mode, but the collector/receiver "
 						"and power cycle did not converge on a cold HTF temp at defocus = 1. Controller will shut-down CR and PC",
-						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						op_mode_str.c_str(), mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-					// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-					m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+					if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+					{
+						m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+					}
+					else
+					{
+						// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+						m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+					}
+					
 					are_models_converged = false;
 					break;
 				}
@@ -1576,13 +1589,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					m_dot_df_code = c_df_m_dot_solver.test_member_function(xy2.x, &m_dot_bal);
 					if (m_dot_df_code != 0)
 					{
-						error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_OFF operating mode, but the collector/receiver "
+						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the collector/receiver "
 							"and power cycle did not converge on a cold HTF temp at defocus guess = %lg. Controller will shut-down CR and PC",
-							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, xy2.x);
+							op_mode_str.c_str(), mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, xy2.x);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
-						m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+						if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+						{
+							m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+						}
+						else
+						{
+							// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+							m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+						}
 						are_models_converged = false;
 						break;
 					}
@@ -1604,29 +1624,37 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, CR_DF__PC_MAX__TES_OFF__AUX_OFF failed to find a solution"
-							" to achieve a PC HTF mass flow less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0), ""));
+						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+							" to achieve a PC HTF mass flow less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
 					}
 
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
 					{
 						if (defocus_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
 						{
-							std::string msg = util::format("At time = %lg CR_DF__PC_MAX__TES_OFF__AUX_OFF "
+							std::string msg = util::format("At time = %lg %s "
 								"iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
 						}
 						else
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_OFF__AUX_OFF operating mode, but the code"
+							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
 								"failed to find a solution to achieve a PC HTF mass flow rate less than maximum. Controller will shut-down CR and PC",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-							m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+							if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+							{
+								m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+							}
+							else
+							{
+								// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+								m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+							}
 
 							are_models_converged = false;
 
@@ -1643,6 +1671,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 				if ((q_dot_pc_defocus - q_pc_max) / q_pc_max > 1.E-3)
 				{
+					if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+					{
+						throw(C_csp_exception("CR_DF__PC_SU__TES_OFF__AUX_OFF mode requires power cycle model to return inlet flow rate for startup." 
+							" The value the model returned resulted in a thermal power greater than the PC maximum. This is a problem."));
+					}
+				
 					C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus c_eq(this, pc_mode, q_pc_max);
 					C_monotonic_eq_solver c_solver(c_eq);
 
