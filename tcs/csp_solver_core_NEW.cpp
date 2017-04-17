@@ -4254,8 +4254,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			case CR_SU__PC_MIN__TES_EMPTY__AUX_OFF:
 			{
-				throw(C_csp_exception("CR_SU__PC_MIN__TES_EMPTY__AUX_OFF mode not updated for mass flow constraints"));
-
 				// The collector-receiver is in startup
 				// The power cycle runs at its minimum fraction until storage is depleted
 				// A new, shorter timestep is calculated here
@@ -4269,14 +4267,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
-
 				// First, startup the collector-receiver and get the time required
 				mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
 
 				mc_collector_receiver.startup(mc_weather.ms_outputs,
 					mc_cr_htf_state_in,
 					mc_cr_out_solver,
-					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				// Check that startup happened
@@ -4289,213 +4285,149 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					break;
 				}
 
-				// Get startup time
-				double step_cr = fmin(mc_kernel.mc_sim_info.ms_ts.m_step, mc_cr_out_solver.m_time_required_su);	//[s]
-
-
-				// Now, run PC at MIN until storage is discharged
-				// Get the time required and compare to same value for CR
-				// Need to setup parameters for 'solver_pc_fixed__tes_empty' method
-				double tol_C = 1.0;								//[C]
-				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
-
-				double relaxed_tol_mult = 5.0;				//[-]
-				double relaxed_tol = relaxed_tol_mult*tol;	//[-]
-
-				double q_dot_pc_fixed = q_pc_min;			//[MWt]
-
-				double time_tes_dc, T_tes_in_exit_tolerance, q_pc_exit_tolerance;
-				time_tes_dc = T_tes_in_exit_tolerance = q_pc_exit_tolerance = std::numeric_limits<double>::quiet_NaN();
-
-				int T_tes_in_exit_mode, q_pc_exit_mode;
-
-				solver_pc_fixed__tes_empty(q_dot_pc_fixed,
-					tol,
-					time_tes_dc,
-					T_tes_in_exit_mode, T_tes_in_exit_tolerance,
-					q_pc_exit_mode, q_pc_exit_tolerance);
-
-				// Handle exit modes from outer and inner loops
-				if( q_pc_exit_mode == POOR_CONVERGENCE )
+				// Reset timestep based on receiver startup
+				if (mc_cr_out_solver.m_time_required_su < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
 				{
-					if( fabs(q_pc_exit_tolerance) > relaxed_tol )
-					{	// Did not converge within Relaxed Tolerance
+					// Reset sim_info values
+					mc_kernel.mc_sim_info.ms_ts.m_step = mc_cr_out_solver.m_time_required_su;						//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + mc_cr_out_solver.m_time_required_su;		//[s]
+				}
 
-						q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
+
+				// Next, calculate the required TES empty time
+				C_mono_eq_pc_target_tes_empty__T_cold c_eq(this, q_pc_min);
+				C_monotonic_eq_solver c_solver(c_eq);
+
+				// Set up solver
+				c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+				// Solve for cold HTF temperature
+				double T_cold_guess_low = m_T_htf_pc_cold_est;			//[C]
+				double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
+
+				double T_cold_solved, tol_solved;
+				T_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+				int iter_solved = -1;
+
+				int T_cold_code = 0;
+				try
+				{
+					T_cold_code = c_solver.solve(T_cold_guess_low, T_cold_guess_high, 0.0, T_cold_solved, tol_solved, iter_solved);
+				}
+				catch (C_csp_exception)
+				{
+					throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_SU__PC_MIN__TES_EMPTY failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+				}
+
+				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
+				{
+					if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+					{
+						std::string msg = util::format("At time = %lg C_csp_solver::CR_SU__PC_MIN__TES_EMPTY iteration "
+							"to find the cold HTF temperature to balance energy between TES and PC target only reached a convergence "
+							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
 					}
 					else
-					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-						error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF method only reached a convergence"
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-
-						q_pc_exit_mode = CSP_CONVERGED;
+					{
+						std::string msg = util::format("At time = %lg C_csp_solver::CR_SU__PC_MIN__TES_EMPTY iteration "
+							"to find the cold HTF temperature to balance energy between the CR, TES, and PC failed",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						
+						m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+						are_models_converged = false;
+						break;
 					}
 				}
 
-				if( T_tes_in_exit_mode == POOR_CONVERGENCE )
-				{
-					if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
-					{	// Did not converge within Relaxed Tolerance
+				double step_pc_empty = c_eq.m_step;		//[s]
 
-						T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-					}
-					else
-					{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-						error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF method only reached a convergence"
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_tes_in_exit_tolerance);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+				// ******************************************************************
+				// Compare the CR and PC startup times
+				if (step_pc_empty < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
+				{	// If the time required for CR startup is longer than the time to empty the PC
+					//       then rerun CR_SU with the PC empty timestep (and CR_SU will continue in the next timestep)
 
-						T_tes_in_exit_mode = CSP_CONVERGED;
+					// Update simulation time info
+					mc_kernel.mc_sim_info.ms_ts.m_step = step_pc_empty;							//[s]
+					mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_pc_empty;			//[s]
+
+					// Rerun CR_SU
+					mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
+
+					mc_collector_receiver.startup(mc_weather.ms_outputs,
+						mc_cr_htf_state_in,
+						mc_cr_out_solver,
+						mc_kernel.mc_sim_info);
+
+					// Check that startup happened
+					if (mc_cr_out_solver.m_q_startup == 0.0)
+					{	// Collector/receiver can't produce useful energy
+
+						m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+
+						are_models_converged = false;
+						break;
 					}
 				}
 
-				if( T_tes_in_exit_mode != CSP_CONVERGED || q_pc_exit_mode != CSP_CONVERGED )
+				// Check if solved thermal power is greater than target
+				if ( (mc_pc_out_solver.m_q_dot_htf - q_pc_max) > 1.E-3 )
 				{
-					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a PC thermal power %lg [MWt]"
+						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					turn_off_plant();
 					are_models_converged = false;
 					break;
 				}
 
-				if( time_tes_dc > mc_kernel.mc_sim_info.ms_ts.m_step )
+				if (mc_pc_out_solver.m_m_dot_htf > m_m_dot_pc_max)
 				{
-					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF method calculated a timestep"
-						"that was longer than the baseline timestep. Controller moved to the next timestep in the"
-						"controller hierarchy",
-						mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0);
+					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
+						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
 
-					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					turn_off_plant();
 					are_models_converged = false;
 					break;
 				}
 
-
-				// Now compare calculated CR_SU timestep w/ TES_DC timestep
-				if(step_cr > time_tes_dc)
-				{	// If the time required for CR startup is longer than time to discharge thermal storage at PC MIN
-					//     then rerun CR_SU with new timestep (and CR_SU will continue in the next timestep w/ PC OFF...)
-
-					// Check if shortest timestep is close to end of initial timestep
-					if(time_tes_dc < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
-					{
-						// Update simulation time info
-						mc_kernel.mc_sim_info.ms_ts.m_step = time_tes_dc;					//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + time_tes_dc;	//[s]
-				
-						// Rerun CR_SU
-						// First, startup the collector-receiver and get the time required
-						mc_cr_htf_state_in.m_temp = m_T_htf_cold_des - 273.15;		//[C], convert from [K]
-
-						mc_collector_receiver.startup(mc_weather.ms_outputs,
-							mc_cr_htf_state_in,
-							mc_cr_out_solver,
-							//mc_cr_out_report,
-							mc_kernel.mc_sim_info);
-
-						// Check that startup happened
-						if( mc_cr_out_solver.m_q_startup == 0.0 )
-						{	// Collector/receiver can't produce useful energy
-
-							m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
-
-							are_models_converged = false;
-							break;
-						}
-					}
-				}
-				else if(time_tes_dc > step_cr)
-				{	// If the time required to discharge TES at PC MIN is longer than CR startup
-					//     then rerun PC MIN but don't fully discharge storage
-
-					// Check if shortest timestep is close to end of initial timestep
-					if(step_cr < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
-					{
-						// Update simulation time info
-						mc_kernel.mc_sim_info.ms_ts.m_step = step_cr;					//[s]
-						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + step_cr;	//[s]
-
-						// Rerun PC MIN and TES DC
-						int pc_mode = C_csp_power_cycle::ON;
-					
-						double q_dot_returned, m_dot_returned;
-						solver_pc_on_fixed__tes_dc(q_dot_pc_fixed, pc_mode,
-							tol,
-							T_tes_in_exit_mode, T_tes_in_exit_tolerance,
-							q_pc_exit_mode, q_pc_exit_tolerance,
-							q_dot_returned, m_dot_returned);
-
-						// Handle exit modes from outer and inner loops
-						if( q_pc_exit_mode == POOR_CONVERGENCE )
-						{
-							if( fabs(q_pc_exit_tolerance) > relaxed_tol )
-							{	// Did not converge within Relaxed Tolerance
-
-								q_pc_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-							}
-							else
-							{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-								error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF method only reached a convergence"
-									"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-									mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, q_pc_exit_tolerance);
-								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-
-								q_pc_exit_mode = CSP_CONVERGED;
-							}
-						}
-
-						if( T_tes_in_exit_mode == POOR_CONVERGENCE )
-						{
-							if( fabs(T_tes_in_exit_tolerance) > relaxed_tol )
-							{	// Did not converge within Relaxed Tolerance
-
-								T_tes_in_exit_mode = C_csp_solver::CSP_NO_SOLUTION;
-							}
-							else
-							{	// Convergence within Relaxed Tolerance, *Report message* but assume timestep solved in this mode
-								error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF method only reached a convergence"
-									"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-									mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, T_tes_in_exit_tolerance);
-								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
-
-								T_tes_in_exit_mode = CSP_CONVERGED;
-							}
-						}
-
-						if( T_tes_in_exit_mode != CSP_CONVERGED || q_pc_exit_mode != CSP_CONVERGED )
-						{
-							m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
-							are_models_converged = false;
-							break;
-						}
-					}
-				}
-				else if(time_tes_dc == step_cr)		// Guess both times could be equal
+				// Check if solved thermal power is less than target
+				if ( (mc_pc_out_solver.m_q_dot_htf-q_pc_min) / q_pc_min < -1.E-3 )
 				{
-					// Check whether, improbably, both CR_SU and TES_DC are equal but less than the initial simulation time
+					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a PC thermal power %lg [MWt]"
+						" less than the minimum PC thermal power %lg [MWt].",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_min);
 
-					if(time_tes_dc < mc_kernel.mc_sim_info.ms_ts.m_step - step_tolerance)
-					{
-						mc_kernel.mc_sim_info.ms_ts.m_step = time_tes_dc;
-						mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.mc_sim_info.ms_ts.m_time_start + time_tes_dc;
-					}
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-				}
-				else
-				{	// Catch if time_tes_dc or step_cr return NaN
-
-					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF method calculated a NaN timestep",
-						mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0);
-
-					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
 					are_models_converged = false;
 					break;
 				}
-				
-				
+
+				if (mc_pc_out_solver.m_m_dot_htf < m_m_dot_pc_min)
+				{
+					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
+						" less than the minimum PC HTF mass flow rate %lg [kg/s].",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_min / 3600.0);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
+
 				are_models_converged = true;
-				
+
 			}
 				break;
 
