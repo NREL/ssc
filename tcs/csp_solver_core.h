@@ -1102,7 +1102,7 @@ public:
 	// *****************************
 	// *****************************
 	// Solvers
-	class C_mono_eq_cr_df__pc_max__tes_off : public C_monotonic_equation
+	class C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus : public C_monotonic_equation
 	{
 	private:
 		C_csp_solver *mpc_csp_solver;
@@ -1110,17 +1110,14 @@ public:
 		double m_q_dot_max;			//[MWt]
 
 	public:
-		C_mono_eq_cr_df__pc_max__tes_off(C_csp_solver *pc_csp_solver, int pc_mode /*-*/, double q_dot_max /*MWt*/, bool is_df_q_dot)
+		C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus(C_csp_solver *pc_csp_solver, int pc_mode /*-*/, double q_dot_max /*MWt*/)
 		{
 			mpc_csp_solver = pc_csp_solver;
 			m_pc_mode = pc_mode;
 			m_q_dot_max = q_dot_max;			
-			m_is_df_q_dot = is_df_q_dot;
 		}
 
-		bool m_is_df_q_dot;				// True: y is q_dot / q_dot_max   False: y is m_dot / m_dot_max
-		
-		virtual int operator()(double defocus /*-*/, double *y_constrain);
+		virtual int operator()(double defocus /*-*/, double *q_dot_pc /*MWt*/);
 	};
 
 	class C_mono_eq_cr_to_pc_to_cr : public C_monotonic_equation
@@ -1453,6 +1450,42 @@ public:
 
 	public:
 		C_mono_eq_cr_on__pc_match_m_dot_ceil__tes_full(C_csp_solver *pc_csp_solver,
+			int pc_mode, double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+			m_defocus = defocus;
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
+
+	class C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;		//[-]
+
+	public:
+		C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus(C_csp_solver *pc_csp_solver,
+			int pc_mode)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_pc_mode = pc_mode;
+		}
+
+		virtual int operator()(double defocus /*-*/, double *m_dot_bal /*-*/);
+	};
+
+	class C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		int m_pc_mode;					//[-]
+		double m_defocus;				//[-]
+
+	public:
+		C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold(C_csp_solver *pc_csp_solver,
 			int pc_mode, double defocus /*-*/)
 		{
 			mpc_csp_solver = pc_csp_solver;

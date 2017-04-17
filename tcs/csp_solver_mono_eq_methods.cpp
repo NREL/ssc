@@ -5,34 +5,47 @@
 
 #include "lib_util.h"
 
-int C_csp_solver::C_mono_eq_cr_df__pc_max__tes_off::operator()(double defocus /*-*/, double *y_constrain)
+int C_csp_solver::C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus::operator()(double defocus /*-*/, double *q_dot_pc /*MWt*/)
 {
-	// Use defocus_guess and call method to solve CR-PC iteration
-	double cr_pc_exit_tol = std::numeric_limits<double>::quiet_NaN();
-	int cr_pc_exit_mode = -1;
-	mpc_csp_solver->solver_cr_to_pc_to_cr(m_pc_mode, defocus, 1.E-3, cr_pc_exit_mode, cr_pc_exit_tol);
+	C_mono_eq_cr_to_pc_to_cr c_eq(mpc_csp_solver, m_pc_mode, mpc_csp_solver->m_P_cold_des, -1, defocus);
+	C_monotonic_eq_solver c_solver(c_eq);
 
-	if (cr_pc_exit_mode != C_csp_solver::CSP_CONVERGED)
+	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+	double T_htf_cold_guess_colder = mpc_csp_solver->m_T_htf_pc_cold_est - 273.15;		//[C], convert from [K]
+	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]
+
+	double T_htf_cold_solved, tol_solved;
+	T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int solver_code = 0;
+	try
 	{
-		*y_constrain = std::numeric_limits<double>::quiet_NaN();
-		return -1;
+		solver_code = c_solver.solve(T_htf_cold_guess_colder, T_htf_cold_guess_warmer, 0.0, T_htf_cold_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception("C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr received exception from mono equation solver"));
 	}
 
-	if (m_is_df_q_dot)
+	if (solver_code != C_monotonic_eq_solver::CONVERGED)
 	{
-		*y_constrain = (mpc_csp_solver->mc_cr_out_solver.m_q_thermal - m_q_dot_max) / m_q_dot_max;
-	}
-	else
-	{
-		if (m_pc_mode == C_csp_power_cycle::ON)
+		if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
 		{
-			*y_constrain = (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - mpc_csp_solver->m_m_dot_pc_max) / mpc_csp_solver->m_m_dot_pc_max;
+			mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr iteration to find the cold HTF temperature connecting the power cycle and receiver only reached a convergence "
+				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
 		}
-		else if (m_pc_mode == C_csp_power_cycle::STARTUP_CONTROLLED)
+		else
 		{
-			*y_constrain = (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot - mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf) / mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;
+			throw(C_csp_exception("C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr received exception from mono equation solver"));
 		}
 	}
+
+	*q_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+
 	return 0;
 }
 
@@ -1357,6 +1370,111 @@ int C_csp_solver::C_mono_eq_cr_on__pc_match_m_dot_ceil__tes_full::operator()(dou
 
 	//Calculate diff_T_htf_cold
 	*diff_T_htf_cold = (T_htf_cold_calc - T_htf_cold) / T_htf_cold;		//[-]
+
+	return 0;
+}
+
+int C_csp_solver::C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus::operator()(double defocus /*-*/, double *m_dot_bal /*-*/)
+{
+	C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold c_eq(mpc_csp_solver, m_pc_mode, defocus);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	// Set up solver
+	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+	// Solve for cold temperature
+	double T_cold_guess_low = mpc_csp_solver->m_T_htf_pc_cold_est;	//[C]
+	double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
+
+	double T_cold_solved, tol_solved;
+	T_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int T_cold_code = 0;
+	try
+	{
+		T_cold_code = c_solver.solve(T_cold_guess_low, T_cold_guess_high, 0.0, T_cold_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::cr_on__pc_m_dot_max__tes_off__defocus failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+	}
+
+	if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+		{
+			std::string msg = util::format("At time = %lg C_csp_solver::cr_on__pc_m_dot_max__tes_off__defocus "
+				"iteration to find the cold HTF temperature to balance energy between the CR and PC only reached a convergence "
+				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+		}
+		else
+		{
+			*m_dot_bal = std::numeric_limits<double>::quiet_NaN();
+			return -1;
+		}
+	}
+
+	// Calculate and report mass flow rate balance
+	double m_dot_rec = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double m_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;			//[kg/hr]
+
+	*m_dot_bal = (m_dot_rec - m_dot_pc) / m_dot_rec;			//[-]
+
+	return 0;
+}
+
+int C_csp_solver::C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// Solve the receiver model with T_htf_cold
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_cr_htf_state_in,
+		m_defocus,
+		mpc_csp_solver->mc_cr_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is OFF or didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Get receiver HTF outputs
+	double m_dot_receiver = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
+
+	// Solve the PC performance at MAX PC HTF FLOW RATE
+	// Need to do this to get back PC T_htf_cold
+	// HTF State
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+	// Inputs
+	double m_dot_pc = mpc_csp_solver->m_m_dot_pc_max;				//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_pc;				//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = m_pc_mode;		//[-]
+	// Performance Call
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_pc_htf_state_in,
+		mpc_csp_solver->mc_pc_inputs,
+		mpc_csp_solver->mc_pc_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check that power cycle is producing power and solving without errors
+	if (!mpc_csp_solver->mc_pc_out_solver.m_was_method_successful && mpc_csp_solver->mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -2;
+	}
+
+	// Get power cycle HTF return temperature...
+	double T_htf_pc_cold = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold;		//[C]
+
+	//Calculate diff_T_htf_cold
+	*diff_T_htf_cold = (T_htf_pc_cold - T_htf_cold) / T_htf_cold;		//[-]
 
 	return 0;
 }
