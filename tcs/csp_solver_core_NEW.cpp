@@ -2965,7 +2965,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					break;
 				}
 
-				if ((q_dot_pc_solved - q_dot_pc_fixed) / q_dot_pc_fixed < -1.E-3)
+				if ( (q_dot_pc_solved - q_dot_pc_fixed) / q_dot_pc_fixed < -1.E-3
+					&& (m_dot_pc_solved - m_m_dot_pc_max) / m_m_dot_pc_max < -1.E-3 )
 				{
 					m_is_CR_ON__PC_TARGET__TES_DC__AUX_OFF_avail = false;
 					are_models_converged = false;
