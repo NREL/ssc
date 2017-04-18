@@ -3008,7 +3008,7 @@ public:
 
 		for (i = 0; i <= nyears; i++)
 		{
-			cf.at(CF_lcog_costs, i) = cf.at(CF_om_fixed_expense, i) 
+			cf.at(CF_lcog_costs, i) = cf.at(CF_om_capacity_expense, i)
 				+ cf.at(CF_feddepr_total, i) 
 				+ cf.at(CF_debt_payment_interest, i)
 				+ cf.at(CF_reserve_interest, i)
