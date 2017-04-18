@@ -826,36 +826,34 @@ int C_csp_solver::C_mono_eq_pc_target_tes_empty__T_cold::operator()(double T_htf
 
 	// Check whether the mass flow rate at the full timestep is less than the minimum PC mass flow rate
 	if (m_dot_htf_full_ts*3600.0 < mpc_csp_solver->m_m_dot_pc_min)
-	{	
+	{
 		// If it is, then calculate the time required to deplete storage at the minimum mass flow rate
-		time_max = mass_tes_max / (mpc_csp_solver->m_m_dot_pc_min/3600.0);	//[s]
-
-		// Now use this timestep to calculate the thermal power to the power cycle
-		double q_dot_pc_m_dot_min = std::numeric_limits<double>::quiet_NaN();
-		int eq_code = c_solver.test_member_function(time_max, &q_dot_pc_m_dot_min);
-		if (eq_code != 0)
-		{
-			*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
-			return -1;
-		}
-
-		solve_pc(time_max);
-
-		*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;
-
-		// Compare solved q_dot_pc to target value
-		// If it is greater, than exit because we can't decrease the mass flow rate
-		if ((q_dot_pc_m_dot_min - m_q_dot_pc_target) / m_q_dot_pc_target > -1.E-3)
-		{
-			m_step = time_max;
-			return 0;
-		}
-
-		// If thermal power to power cycle is less than target, then need to increase mass flow rate
+		time_max = mass_tes_max / (mpc_csp_solver->m_m_dot_pc_min / 3600.0);	//[s]
 	}
-		// ELSE:
-		// At full timestep the discharge mass flow is greater than minimum,
-		//    so iterate on thermal power
+	// ELSE:
+	// At full timestep the discharge mass flow is greater than minimum,
+	//    so iterate on thermal power
+
+	// Now use this timestep to calculate the thermal power to the power cycle  
+	double q_dot_pc_m_dot_min = std::numeric_limits<double>::quiet_NaN();
+	int eq_code = c_solver.test_member_function(time_max, &q_dot_pc_m_dot_min);
+	if (eq_code != 0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	solve_pc(time_max);
+
+	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;
+
+	// Compare solved q_dot_pc to target value
+	// If it is greater, than exit because we can't decrease the mass flow rate
+	if ((q_dot_pc_m_dot_min - m_q_dot_pc_target) / m_q_dot_pc_target > -1.E-3)
+	{
+		m_step = time_max;
+		return 0;
+	}
 
 	// Calculate the time required to deplete storage at the minimum mass flow rate
 	double time_min = std::max(mass_tes_max / (mpc_csp_solver->m_m_dot_pc_max / 3600.0), 0.001);	//[s]
@@ -1477,4 +1475,271 @@ int C_csp_solver::C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold::operator()(dou
 	*diff_T_htf_cold = (T_htf_pc_cold - T_htf_cold) / T_htf_cold;		//[-]
 
 	return 0;
+}
+
+int C_csp_solver::C_MEQ_cr_on__pc_off__tes_ch__T_htf_cold::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// Solve the collector-receiver
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_cr_htf_state_in,
+		m_defocus,
+		mpc_csp_solver->mc_cr_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is OFF or didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Now, solved TES charge with CR outputs
+	double T_htf_tes_cold_out = std::numeric_limits<double>::quiet_NaN();
+	bool tes_charge_success = mpc_csp_solver->mc_tes.charge(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step, 
+								mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15, 
+								mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot / 3600.0, 
+								mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot + 273.15,
+								T_htf_tes_cold_out, 
+								mpc_csp_solver->mc_tes_outputs);
+	T_htf_tes_cold_out -= 273.15;		//[C] convert back from K
+
+	// Set charge htf state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = T_htf_tes_cold_out;			//[C]
+
+	// Set discharge htf state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+
+	if (!tes_charge_success)
+	{	// If receiver output overcharges storage during iteration, then assume we need some defocus and break loop
+		// Receiver thermal output is *roughly* constant for varying receiver inlet temperatures,
+		// ... and we don't want to try to throttle thermal power output by controlling this value
+		return -2;
+	}
+
+	*diff_T_htf_cold = (T_htf_tes_cold_out - T_htf_cold) / T_htf_cold;
+
+	return 0;
+}
+
+int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	// Clear public member data  
+	m_step = std::numeric_limits<double>::quiet_NaN();
+
+	// Solve CR at full timestep
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_cr_htf_state_in,
+		m_defocus,
+		mpc_csp_solver->mc_cr_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is OFF or model didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Get the receiver mass flow rate
+	double m_dot_rec_full_ts = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+
+	// Get the maximum possible mass flow rate from TES discharge
+	// ... using the guess value for the TES cold inlet temperature
+	double T_htf_tes_hot, m_dot_htf_full_ts;
+	T_htf_tes_hot = m_dot_htf_full_ts = std::numeric_limits<double>::quiet_NaN();
+	mpc_csp_solver->mc_tes.discharge_full(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+		mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+		T_htf_cold + 273.15,
+		T_htf_tes_hot,
+		m_dot_htf_full_ts,
+		mpc_csp_solver->mc_tes_outputs);
+
+	// Know the mass flow rate for full discharge and the duration of the full timestep
+	// so can calculate max TES discharge MASS
+	double mass_tes_max = m_dot_htf_full_ts*mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step;		//[kg]
+
+	C_MEQ_cr_on__pc_target__tes_empty__step c_eq(mpc_csp_solver, m_defocus, T_htf_cold);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	double time_max = mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step;		//[s]
+
+	// Check whether the mass flow rate at the full timestep is less than the minimum PC mass flow rate
+	if (m_dot_htf_full_ts*3600.0 + m_dot_rec_full_ts < mpc_csp_solver->m_m_dot_pc_min)
+	{
+		// If it is, then calculate the time required to deplete storage at the minimum mass flow rate
+		time_max = mass_tes_max / ((mpc_csp_solver->m_m_dot_pc_min - m_dot_rec_full_ts) / 3600.0);	//[s]
+	}
+	// ELSE:
+	// At full timestep the discharge mass flow is greater than minimum,
+	//    so iterate on thermal power
+
+	// Now use this timestep to calculate the thermal power to the power cycle
+	double q_dot_pc_m_dot_min = std::numeric_limits<double>::quiet_NaN();
+	int eq_code = c_solver.test_member_function(time_max, &q_dot_pc_m_dot_min);
+	if (eq_code != 0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Solve PC model with calculated inlet and timestep values
+	solve_pc(time_max, c_eq.m_T_htf_pc_hot, c_eq.m_m_dot_pc);
+
+	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;
+
+	// Compare solved q_dot_pc to target value
+	// If it is greater, than exit because we can't decrease the mass flow rate
+	if ((q_dot_pc_m_dot_min - m_q_dot_pc_target) / m_q_dot_pc_target > -1.E-3)
+	{
+		m_step = time_max;
+		return 0;
+	}
+
+	// Calculate the time required to deplete storage at the maximum PC HTF mass flow rate
+	double time_min = std::max(mass_tes_max / ( (mpc_csp_solver->m_m_dot_pc_max - m_dot_rec_full_ts) / 3600.0), 0.001);	//[s]
+
+	// Set up solver to iterate on timestep to achieve q_dot_pc_target
+	c_solver.settings(1.E-3, 50, 0.001, time_max, true);
+
+	// Guess time required to deplete storage while delivering thermal power requirements to PC
+
+	double time_guess_q_dot_high = mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step*
+		(mpc_csp_solver->mc_tes_outputs.m_q_dot_dc_to_htf / (m_q_dot_pc_target - mpc_csp_solver->mc_cr_out_solver.m_q_thermal));	//[s]	
+
+	time_guess_q_dot_high = std::max(std::min(20.0,0.98*time_max), std::min(time_guess_q_dot_high, 0.98*time_max));		//[s]
+	double time_guess_q_dot_low = std::max(std::min(10.0, 0.98*time_max), 0.85*time_guess_q_dot_high);		//[s]
+
+	double time_solved, tol_solved;
+	time_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();	//[s]
+	int iter_solved = -1;
+
+	int solver_code = 0;
+
+	try
+	{
+		solver_code = c_solver.solve(time_guess_q_dot_high, time_guess_q_dot_low, m_q_dot_pc_target, time_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception("C_mono_eq_cr_on__pc_target__tes_empty__step method to calculate the time step required to empty TES at the target thermal power returned an exemption"));
+	}
+
+	if (solver_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) <= 0.1)
+		{
+			mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the time step resulting in emptying TES at the target thermal power only reached a convergence "
+				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+		}
+		else
+		{
+			*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+			return -2;
+		}
+	}
+
+	// Solve PC model with calculated inlet and timestep values
+	solve_pc(time_max, c_eq.m_T_htf_pc_hot, c_eq.m_m_dot_pc);
+
+	*diff_T_htf_cold = (mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold - T_htf_cold) / T_htf_cold;
+	m_step = time_solved;	//[s]
+
+	return 0;
+}
+
+int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__step::operator()(double step /*s*/, double *q_dot_pc /*MWt*/)
+{
+	m_m_dot_pc = std::numeric_limits<double>::quiet_NaN();		//[kg/hr]
+	m_T_htf_pc_hot = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+
+	// Set new local timestep
+	C_csp_solver_sim_info temp_sim_info = mpc_csp_solver->mc_kernel.mc_sim_info;
+	temp_sim_info.ms_ts.m_step = step;	//[s]
+	temp_sim_info.ms_ts.m_time = mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time -
+		mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step +
+		step;	//[s]
+
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = m_T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_cr_htf_state_in,
+		m_defocus,
+		mpc_csp_solver->mc_cr_out_solver,
+		temp_sim_info);
+
+	// Check if receiver is OFF or model didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*q_dot_pc = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Get the receiver mass flow rate
+	double m_dot_rec = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+	double q_dot_rec = mpc_csp_solver->mc_cr_out_solver.m_q_thermal;		//[MWt]
+
+	double T_htf_tes_hot, m_dot_tes_dc = std::numeric_limits<double>::quiet_NaN();
+	mpc_csp_solver->mc_tes.discharge_full(step,
+		mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+		m_T_htf_cold + 273.15,
+		T_htf_tes_hot,
+		m_dot_tes_dc,
+		mpc_csp_solver->mc_tes_outputs);
+
+	m_dot_tes_dc *= 3600.0;		//[kg/hr] convert from [kg/s]
+	T_htf_tes_hot -= 273.15;	//[C] convert from [K]
+	double q_dot_tes = mpc_csp_solver->mc_tes_outputs.m_q_dot_dc_to_htf;	//[MWt]
+
+	// Set TES HTF states (this needs to be less bulky...)
+	// HTF discharging state
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = m_dot_tes_dc;			//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = m_T_htf_cold;		//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = T_htf_tes_hot;		//[C]
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = 0.0;									//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+
+	// Enthalpy balance on HTF mix from CR and TES
+	m_m_dot_pc = m_dot_rec + m_dot_tes_dc;		//[kg/hr]
+	m_T_htf_pc_hot = (T_htf_rec_hot*m_dot_rec + T_htf_tes_hot*m_dot_tes_dc) / m_m_dot_pc;	//[C]
+	*q_dot_pc = q_dot_rec + q_dot_tes;		//[MWt]
+
+	return 0;
+}
+
+void C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::solve_pc(double step /*s*/, double T_htf_pc_hot /*C*/, double m_dot_htf_pc /*kg/hr*/)
+{
+	// Solve PC model
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_htf_pc_hot;	//[C]
+
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_htf_pc;		//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = C_csp_power_cycle::ON;
+
+	// Set new local timestep
+	C_csp_solver_sim_info temp_sim_info = mpc_csp_solver->mc_kernel.mc_sim_info;
+	temp_sim_info.ms_ts.m_step = step;	//[s]
+	temp_sim_info.ms_ts.m_time = mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time -
+		mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step +
+		step;	//[s]
+
+	// Performance Call
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_pc_htf_state_in,
+		mpc_csp_solver->mc_pc_inputs,
+		mpc_csp_solver->mc_pc_out_solver,
+		temp_sim_info);
 }
