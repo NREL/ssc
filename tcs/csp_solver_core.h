@@ -1495,6 +1495,71 @@ public:
 
 		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
 	};
+
+	class C_MEQ_cr_on__pc_off__tes_ch__T_htf_cold : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_defocus;
+
+	public:
+		C_MEQ_cr_on__pc_off__tes_ch__T_htf_cold(C_csp_solver *pc_csp_solver,
+							double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_defocus = defocus;				//[-]
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
+
+	class C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_defocus;
+		double m_q_dot_pc_target;	//[MWt]
+
+	public:
+		C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold(C_csp_solver *pc_csp_solver,
+			double defocus /*-*/, double q_dot_pc_target /*MWt*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_defocus = defocus;
+			m_q_dot_pc_target = q_dot_pc_target;
+			m_step = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_step;	//[s]
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+
+		void solve_pc(double step /*s*/, double T_htf_pc_hot /*C*/, double m_dot_htf_pc /*kg/hr*/);
+	};
+
+	class C_MEQ_cr_on__pc_target__tes_empty__step : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_defocus;				//[-]
+		double m_T_htf_cold;			//[C]
+
+	public:
+		C_MEQ_cr_on__pc_target__tes_empty__step(C_csp_solver *pc_csp_solver,
+			double defocus /*-*/, double T_htf_cold /*C*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_defocus = defocus;
+			m_T_htf_cold = T_htf_cold;				//[C]
+			m_m_dot_pc = std::numeric_limits<double>::quiet_NaN();		//[kg/hr]
+			m_T_htf_pc_hot = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+		}
+
+		double m_m_dot_pc;			//[kg/hr]
+		double m_T_htf_pc_hot;		//[C]
+
+		virtual int operator()(double step /*s*/, double *q_dot_pc /*MWt*/);
+	};
 };
 
 
