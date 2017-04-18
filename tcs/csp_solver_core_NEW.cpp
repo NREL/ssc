@@ -371,8 +371,10 @@ void C_csp_solver::init()
 	m_cycle_sb_frac_des = pc_solved_params.m_sb_frac;					//[-]
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
+				
 	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;						//[kg/hr]
-	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;						//[kg/hr]
+	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;						//[kg/hr]				
+	
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
 		// TES
@@ -1151,7 +1153,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 							operating_mode = CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF;
 						}
-						else if( is_pc_sb_allowed && q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_sb &&
+						else if( q_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > q_pc_sb 
+							&& m_dot_tes_dc_t_CR_su*(1.0 + tol_mode_switching) > m_m_dot_pc_min
+							&& is_pc_sb_allowed &&
 							m_is_CR_SU__PC_SB__TES_DC__AUX_OFF_avail )
 						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
 
@@ -1205,7 +1209,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 							operating_mode = CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;						
 						}
-						else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb &&
+						else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb
+								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
+								&& is_pc_sb_allowed && 
 								m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail )
 						{	// Tolerance is applied so that if TES is *close* to reaching min fraction, the controller tries that mode
 
@@ -1488,7 +1494,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 								operating_mode = CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF;
 							}
-							else if( is_pc_sb_allowed && q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb &&
+							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_sb 
+									&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
+									&& is_pc_sb_allowed &&
 									m_is_CR_OFF__PC_SB__TES_DC__AUX_OFF_avail )
 							{	// Tolerance is applied so that if CR + TES is *close* to reaching standby, the controller tries that mode
 								
