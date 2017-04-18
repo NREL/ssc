@@ -1607,16 +1607,35 @@ int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::operator()(doub
 	// Calculate the time required to deplete storage at the maximum PC HTF mass flow rate
 	double time_min = std::max(mass_tes_max / ( (mpc_csp_solver->m_m_dot_pc_max - m_dot_rec_full_ts) / 3600.0), 0.001);	//[s]
 
+	//// Now use this timestep to calculate the thermal power to the power cycle
+	//double q_dot_pc_m_dot_max = std::numeric_limits<double>::quiet_NaN();
+	//eq_code = c_solver.test_member_function(time_min, &q_dot_pc_m_dot_max);
+	//if (eq_code != 0)
+	//{
+	//	*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+	//	return -2;
+	//}
+	//
+	//// Compare solved q_dot_pc to target value
+	//// If it is less than target, than exit because we can't increase the mass flow rate
+	//if ((q_dot_pc_m_dot_max - m_q_dot_pc_target) / m_q_dot_pc_target < -1.E-3)
+	//{
+	//	*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+	//	return -3;
+	//}
+
+	time_min = 0.001;
+
 	// Set up solver to iterate on timestep to achieve q_dot_pc_target
-	c_solver.settings(1.E-3, 50, 0.001, time_max, true);
+	c_solver.settings(1.E-3, 50, time_min, time_max, true);
 
 	// Guess time required to deplete storage while delivering thermal power requirements to PC
 
 	double time_guess_q_dot_high = mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step*
 		(mpc_csp_solver->mc_tes_outputs.m_q_dot_dc_to_htf / (m_q_dot_pc_target - mpc_csp_solver->mc_cr_out_solver.m_q_thermal));	//[s]	
 
-	time_guess_q_dot_high = std::max(std::min(20.0,0.98*time_max), std::min(time_guess_q_dot_high, 0.98*time_max));		//[s]
-	double time_guess_q_dot_low = std::max(std::min(10.0, 0.98*time_max), 0.85*time_guess_q_dot_high);		//[s]
+	time_guess_q_dot_high = std::max(1.02*time_min, std::min(time_guess_q_dot_high, 0.98*time_max));		//[s]
+	double time_guess_q_dot_low = std::max(1.01*time_min, 0.85*time_guess_q_dot_high);		//[s]
 
 	double time_solved, tol_solved;
 	time_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();	//[s]

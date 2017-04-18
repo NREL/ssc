@@ -1189,8 +1189,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if( is_pc_su_allowed || is_pc_sb_allowed )
 					{
 					
-						if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target 
-							&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max
+						if( ( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target 
+							|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
 							&& is_pc_su_allowed &&
 							m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail )
 						{	// Tolerance is applied so that if TES is *close* to matching target, the controller tries that mode
@@ -1469,14 +1469,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( q_dot_tes_dc > 0.0 )
 						{	// Storage dispatch is available
 
-							if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target && is_pc_su_allowed &&
+							if( ( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
+								|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
+								&& is_pc_su_allowed &&
 								m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail )
 							{	// Storage can provide enough dispatch to reach power cycle target
 								// Tolerance is applied so that if TES is *close* to reaching PC target, the controller tries that mode
 
 								operating_mode = CR_OFF__PC_TARGET__TES_DC__AUX_OFF;
 							}
-							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min && is_pc_su_allowed &&
+							else if( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_min 
+									&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min
+									&& is_pc_su_allowed &&
 									m_is_CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF_avail )
 							{	// Storage can provide enough dispatch to at least meet power cycle minimum operation fraction
 								// Run at highest possible PC fraction by dispatching all remaining storage
@@ -4678,7 +4682,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					break;
 				}
 
-				if (mc_pc_out_solver.m_m_dot_htf < m_m_dot_pc_min)
+				if ( (mc_pc_out_solver.m_m_dot_htf - m_m_dot_pc_min) / m_m_dot_pc_min < -1.E-4 )
 				{
 					error_msg = util::format("At time = %lg CR_ON__PC_MIN__TES_EMPTY__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
 						" less than the minimum PC HTF mass flow rate %lg [kg/s]. Controller moved to next operating mode.",
