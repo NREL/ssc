@@ -4,6 +4,8 @@
 #include "lib_util.h"
 #include "csp_dispatch.h"
 
+#include <algorithm>
+
 #include <sstream>
 
 void C_timestep_fixed::init(double time_start /*s*/, double step /*s*/)
@@ -372,8 +374,8 @@ void C_csp_solver::init()
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
 				
-	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;						//[kg/hr]
-	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;						//[kg/hr]				
+	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;				//[kg/hr]
+	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;				//[kg/hr]				
 	
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
@@ -1683,18 +1685,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					defocus_guess = defocus_solved;
 				}
 
-				// Now get the thermal power to the cycle and compare to maximum
+				// Now get the thermal power from the CR
+				// Note that power cycle solved with max mass flow rate regardless of what CR sent, so can't use that q_dot
 				// If it's greater, then we know upper limit on defocus and need to iterate AGAIN
-				double q_dot_pc_defocus = mc_pc_out_solver.m_q_dot_htf;		//[MWt]
+				double q_dot_pc_defocus = mc_cr_out_solver.m_q_thermal;		//[MWt]
 
 				if ((q_dot_pc_defocus - q_pc_max) / q_pc_max > 1.E-3)
 				{
-					if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
-					{
-						throw(C_csp_exception("CR_DF__PC_SU__TES_OFF__AUX_OFF mode requires power cycle model to return inlet flow rate for startup." 
-							" The value the model returned resulted in a thermal power greater than the PC maximum. This is a problem."));
-					}
-				
 					C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus c_eq(this, pc_mode, q_pc_max);
 					C_monotonic_eq_solver c_solver(c_eq);
 
@@ -1702,7 +1699,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					c_solver.settings(1.E-3, 50, 0.0, defocus_guess, true);
 
 					// Solve for defocus
-					double defocus_guess_high = defocus_guess * (q_pc_max / q_dot_pc_defocus);
+					double defocus_guess_high = (std::min)(0.99*defocus_guess, defocus_guess * (q_pc_max / q_dot_pc_defocus));
 					double defocus_guess_low = defocus_guess_high * 0.9;
 
 					double defocus_solved, tol_solved;
@@ -1716,26 +1713,26 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, CR_DF__PC_MAX__TES_OFF__AUX_OFF failed to find a solution"
-							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+							" to achieve a PC thermal power less than the maximum", op_mode_str.c_str(), mc_kernel.mc_sim_info.ms_ts.m_time), ""));
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
 					{
 						if (solver_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
 						{
-							std::string msg = util::format("At time = %lg CR_DF__PC_MAX__TES_OFF__AUX_OFF "
+							std::string msg = util::format("At time = %lg %s "
 								"iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
 						}
 						else
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_OFF__AUX_OFF operating mode, but the code"
+							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
 								"failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
@@ -1747,9 +1744,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 
 					defocus_guess = defocus_solved;
-
-					throw(C_csp_exception("CR_DF__PC_MAX__TES_OFF__AUX_OFF mode not tested for thermal power constraints"));
-
 				}
 
 				// Solve for idle storage
@@ -4825,9 +4819,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					defocus_guess = defocus_solved;
 				}
 
-				// Now get the thermal power to the cycle and compare to maximum
+				// Now get the thermal power from the CR and TES
+				// Note that power cycle solved with max mass flow rate regardless of what CR sent, so can't use that q_dot
 				// If it's greater, then we know upper limit on defocus and need to iterate AGAIN
-				double q_dot_pc_defocus = mc_pc_out_solver.m_q_dot_htf;		//[MWt]
+				double q_dot_pc_defocus = mc_cr_out_solver.m_q_thermal - mc_tes_outputs.m_q_dot_ch_from_htf;		//[MWt]
 
 				if ((q_dot_pc_defocus - q_pc_max) / q_pc_max > 1.E-3)
 				{
@@ -4838,7 +4833,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					c_solver.settings(1.E-3, 50, 0.0, defocus_guess, true);
 
 					// Solve for defocus
-					double defocus_guess_high = defocus_guess * (q_pc_max / q_dot_pc_defocus);
+					double defocus_guess_high = (std::min)(0.99*defocus_guess, defocus_guess * (q_pc_max / q_dot_pc_defocus));
 					double defocus_guess_low = defocus_guess_high * 0.9;
 
 					double defocus_solved, tol_solved;
