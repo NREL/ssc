@@ -374,8 +374,8 @@ void C_csp_solver::init()
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
 				
-	m_m_dot_pc_min = 0.25*pc_solved_params.m_m_dot_min;		//[kg/hr]
-	m_m_dot_pc_max = 1.5*pc_solved_params.m_m_dot_max;		//[kg/hr]				
+	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;		//[kg/hr]
+	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;		//[kg/hr]				
 	
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
