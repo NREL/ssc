@@ -745,7 +745,7 @@ int C_csp_solver::C_mono_eq_pc_target__m_dot_fixed_plus_tes_dc::operator()(doubl
 
 	// Enthalpy balance with 'fixed' (e.g. receiver) hot HTF
 	double m_dot_htf_pc = m_dot_tes_dc + m_m_dot_htf_fixed;		//[kg/hr]
-	double T_htf_pc_hot = (m_dot_tes_dc*T_htf_tes_hot + m_m_dot_htf_fixed*m_T_htf_fixed_hot) / m_dot_htf_pc;	//[kg/hr]
+	double T_htf_pc_hot = (m_dot_tes_dc*T_htf_tes_hot + m_m_dot_htf_fixed*m_T_htf_fixed_hot) / m_dot_htf_pc;	//[C]
 
 	// Solve power cycle model
 	mpc_csp_solver->mc_pc_htf_state_in.m_temp = T_htf_pc_hot;	//[C]
@@ -953,7 +953,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_dc::operator()(double T_htf_cold
 	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
 
 	C_mono_eq_pc_target__m_dot_fixed_plus_tes_dc c_eq(mpc_csp_solver, 
-										m_pc_mode, T_htf_rec_hot,
+										m_pc_mode, T_htf_cold,
 										T_htf_rec_hot, m_dot_rec);
 	C_monotonic_eq_solver c_solver(c_eq);
 
