@@ -1735,7 +1735,15 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+							if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+							{
+								m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+							}
+							else
+							{
+								// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+								m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+							}
 
 							are_models_converged = false;
 
@@ -4879,6 +4887,51 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					defocus_guess = defocus_solved;
 				}
+				else if (defocus_guess == 1.0)
+				{
+					// Haven't actually converged solution yet, so need to basically call CR_ON__PC_RM_HI__TES_FULL
+					C_mono_eq_cr_on__pc_match_m_dot_ceil__tes_full c_eq(this, pc_mode, defocus_guess);
+					C_monotonic_eq_solver c_solver(c_eq);
+
+					// Set up solver
+					c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+					// Solve for cold temperature
+					double T_cold_guess_low = m_T_htf_pc_cold_est;	//[C]
+					double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
+
+					double T_cold_solved, tol_solved;
+					T_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+					int iter_solved = -1;
+
+					int solver_code = 0;
+					try
+					{
+						solver_code = c_solver.solve(T_cold_guess_low, T_cold_guess_high, 0.0, T_cold_solved, tol_solved, iter_solved);
+					}
+					catch (C_csp_exception)
+					{
+						throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_DF_1__PC_RM_HI__TES_FULL failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					}
+
+					if (solver_code != C_monotonic_eq_solver::CONVERGED)
+					{
+						if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+						{
+							std::string msg = util::format("At time = %lg C_csp_solver::CR_DF_1__PC_RM_HI__TES_FULL failed "
+								"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
+								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						}
+						else
+						{
+							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
+							are_models_converged = false;
+							break;
+						}
+					}
+				}
 
 				// Set member defocus
 				m_defocus = defocus_guess;
@@ -6162,7 +6215,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							mc_pc_out_solver.m_q_dot_htf -
 							mc_tes_outputs.m_q_dot_ch_from_htf) / m_cycle_q_dot_des;	//[-]
 
-
 		mc_reported_outputs.value(C_solver_outputs::ERR_M_DOT, m_dot_bal);
 		mc_reported_outputs.value(C_solver_outputs::ERR_Q_DOT, q_dot_bal);
 
@@ -6499,7 +6551,7 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
 	// Solve for cold temperature
-	double T_cold_guess_low = m_T_htf_cold_des - 273.15;	//[C]
+	double T_cold_guess_low = m_T_htf_pc_cold_est - 273.15;	//[C]
 	double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
 
 	double T_cold_solved, tol_solved;
