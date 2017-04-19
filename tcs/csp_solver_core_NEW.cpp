@@ -368,14 +368,14 @@ void C_csp_solver::init()
 	m_cycle_W_dot_des = pc_solved_params.m_W_dot_des;					//[MW]
 	m_cycle_eta_des = pc_solved_params.m_eta_des;						//[-]
 	m_cycle_q_dot_des = pc_solved_params.m_q_dot_des;					//[MW]
-	m_cycle_max_frac = pc_solved_params.m_max_frac;					//[-]
+	m_cycle_max_frac = pc_solved_params.m_max_frac;						//[-]
 	m_cycle_cutoff_frac = pc_solved_params.m_cutoff_frac;				//[-]
 	m_cycle_sb_frac_des = pc_solved_params.m_sb_frac;					//[-]
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
 				
-	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;				//[kg/hr]
-	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;				//[kg/hr]				
+	m_m_dot_pc_min = 0.25*pc_solved_params.m_m_dot_min;		//[kg/hr]
+	m_m_dot_pc_max = 1.5*pc_solved_params.m_m_dot_max;		//[kg/hr]				
 	
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
@@ -4153,7 +4153,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							"to find the cold HTF temperature to balance energy between the CR, TES, and PC failed",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 						
-						m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+						m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 						are_models_converged = false;
 						break;
 					}
@@ -4183,7 +4183,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					if (mc_cr_out_solver.m_q_startup == 0.0)
 					{	// Collector/receiver can't produce useful energy
 
-						m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+						m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 
 						are_models_converged = false;
 						break;
@@ -4226,7 +4226,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
 					break;
 				}
@@ -4239,7 +4239,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-					m_is_CR_SU__PC_SU__TES_DC__AUX_OFF_avail = false;
+					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
 					break;
 				}
@@ -6939,7 +6939,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		}
 		else
 		{
-			std::string msg = util::format("At time = %lg C_csp_solver::solver_cr_on__pc_fixed__tes_dc iteration "
+			std::string msg = util::format("At time = %lg C_csp_solver::solver_cr_on__pc_fixed__tes_empty iteration "
 				"to find the cold HTF temperature to balance energy between the CR, TES, and PC failed",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 			throw(C_csp_exception(msg, ""));
