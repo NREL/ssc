@@ -1,3 +1,22 @@
+# OS building
+MYARCH=darwin-x86_64
+
+# Default NDK installation location for Android Studio 2.3
+NDK = /Users/imacuser/Library/Android/sdk/ndk-bundle
+
+# based on Android-23 for Samsung Galaxy 5
+PLATFORMVER=android-13
+GCCPREFIX=arm-linux-androideabi
+GCCVER=4.9
+#ARCH=armeabi-v7a
+
+CC=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-gcc
+CXX=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-g++
+RANLIB=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ranlib
+AR=${NDK}/toolchains/${GCCPREFIX}-${GCCVER}/prebuilt/${MYARCH}/bin/${GCCPREFIX}-ar
+ARCH=armeabi-v7a
+
+
 # mixing architectures so remove object files before archiving
 all:
 #	make -f Makefile-shared -j8 ARCH=x86_64
@@ -50,8 +69,14 @@ libraries:
 #	lipo -create ssc_armv7s.dylib ssc_x86_64.dylib ssc_arm64.dylib -output ssc_ios.dylib
 
 
-	libtool -o libssc.a shared_armeabi-v7a.a nlopt_armeabi-v7a.a lpsolve_armeabi-v7a.a solarpilot_armeabi-v7a.a tcs_armeabi-v7a.a ssc_armeabi-v7a.a
-	
+	$(AR) -xv shared_$(ARCH).so
+	$(AR) -xv nlopt_$(ARCH).so
+	$(AR) -xv lpsolve_$(ARCH).so
+	$(AR) -xv solarpilot_$(ARCH).so
+	$(AR) -xv tcs_$(ARCH).so
+	$(AR) -xv ssc_$(ARCH).so
+	$(AR) -rc libssc.so *.o	
+	rm *.o
 #	lipo -create shared_armeabi-v7a.a shared_x86_64.a shared_armeabi.a -output shared.a	
 #	lipo -create nlopt_armeabi-v7a.a nlopt_x86_64.a nlopt_armeabi.a -output nlopt.a
 #	lipo -create lpsolve_armeabi-v7a.a lpsolve_x86_64.a lpsolve_armeabi.a -output lpsolve.a
