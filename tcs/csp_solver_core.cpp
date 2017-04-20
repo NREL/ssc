@@ -7384,12 +7384,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_PRES_NVAR, dispatch.outputs.presolve_nvar);
 		mc_reported_outputs.value(C_solver_outputs::DISPATCH_SOLVE_TIME, dispatch.outputs.solve_time);
 
-
-		mc_reported_outputs.set_timestep_outputs();
-
-
-
-
 		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
 		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
 		int n_op_modes = m_op_mode_tracking.size();
@@ -7446,6 +7440,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 		mc_reported_outputs.value(C_solver_outputs::CTRL_OP_MODE_SEQ_C, op_mode_key);
 		//mvv_outputs_temp[CTRL_OP_MODE_SEQ_C].push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
 		//mv_operating_modes_c.push_back(op_mode_key);				// Track the list of operating modes tried at each timestep
+
+
+		mc_reported_outputs.set_timestep_outputs();
+
+
+
 
 		// ****************************************************
 		//          End saving timestep outputs
