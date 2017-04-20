@@ -1560,6 +1560,38 @@ public:
 
 		virtual int operator()(double step /*s*/, double *q_dot_pc /*MWt*/);
 	};
+
+	class C_MEQ_cr_df__pc_off__tes_full__T_cold : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+		double m_defocus;		//[-]
+
+	public:
+		C_MEQ_cr_df__pc_off__tes_full__T_cold(C_csp_solver *pc_csp_solver,
+			double defocus /*-*/)
+		{
+			mpc_csp_solver = pc_csp_solver;
+			m_defocus = defocus;
+		}
+
+		virtual int operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/);
+	};
+
+	class C_MEQ_cr_df__pc_off__tes_full__defocus : public C_monotonic_equation
+	{
+	private:
+		C_csp_solver *mpc_csp_solver;
+
+	public:
+		C_MEQ_cr_df__pc_off__tes_full__defocus(C_csp_solver *pc_csp_solver)
+		{
+			mpc_csp_solver = pc_csp_solver;
+		}
+
+		virtual int operator()(double defocus /*-*/, double *diff_m_dot /*-*/);
+	};
+
 };
 
 

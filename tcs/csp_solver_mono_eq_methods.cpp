@@ -1764,3 +1764,103 @@ void C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::solve_pc(doubl
 		mpc_csp_solver->mc_pc_out_solver,
 		temp_sim_info);
 }
+
+int C_csp_solver::C_MEQ_cr_df__pc_off__tes_full__T_cold::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
+{
+	mpc_csp_solver->mc_cr_htf_state_in.m_temp = T_htf_cold;		//[C]
+
+	mpc_csp_solver->mc_collector_receiver.on(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_cr_htf_state_in,
+		m_defocus,
+		mpc_csp_solver->mc_cr_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check if receiver is OFF or model didn't solve
+	if (mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot == 0.0 || mpc_csp_solver->mc_cr_out_solver.m_q_thermal == 0.0)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -1;
+	}
+
+	// Get receiver HTF outlet temperature
+	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
+
+	// Solve TES for *full* charge
+	double T_htf_tes_cold, m_dot_tes;
+	T_htf_tes_cold = m_dot_tes = std::numeric_limits<double>::quiet_NaN();
+	mpc_csp_solver->mc_tes.charge_full(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+		mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
+		T_htf_rec_hot + 273.15,
+		T_htf_tes_cold,
+		m_dot_tes,
+		mpc_csp_solver->mc_tes_outputs);
+
+	T_htf_tes_cold -= 273.15;	//[C] convert from K
+	m_dot_tes *= 3600.0;		//[kg/hr] convert from kg/s
+
+	// HTF charging state
+	mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot = m_dot_tes;				//[kg/hr]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_in = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
+	mpc_csp_solver->mc_tes_ch_htf_state.m_temp_out = T_htf_tes_cold;		//[C]
+
+	// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
+	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	//[C] convert from K
+
+	*diff_T_htf_cold = (T_htf_tes_cold - T_htf_cold) / T_htf_cold;	//[-]
+	
+	return 0;
+}
+
+int C_csp_solver::C_MEQ_cr_df__pc_off__tes_full__defocus::operator()(double defocus /*-*/, double *diff_m_dot /*-*/)
+{
+	C_MEQ_cr_df__pc_off__tes_full__T_cold c_eq(mpc_csp_solver, defocus);
+	C_monotonic_eq_solver c_solver(c_eq);
+
+	// Set up solver
+	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
+
+	// Solve for cold temperature
+	double T_cold_guess_low = mpc_csp_solver->m_T_htf_pc_cold_est - 10.0;	//[C]
+	double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
+
+	double T_cold_solved, tol_solved;
+	T_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int T_cold_code = 0;
+	try
+	{
+		T_cold_code = c_solver.solve(T_cold_guess_low, T_cold_guess_high, 0.0, T_cold_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::C_MEQ_cr_df__pc_off__tes_full__defocus failed", mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+	}
+
+	if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+		{
+			std::string msg = util::format("At time = %lg C_csp_solver::C_MEQ_cr_df__pc_off__tes_full__defocus "
+				"iteration to find the cold HTF temperature to balance energy between the CR and PC only reached a convergence "
+				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+		}
+		else
+		{
+			*diff_m_dot = std::numeric_limits<double>::quiet_NaN();
+			return -1;
+		}
+	}
+
+	// Calculate and report mass flow rate balance
+	double m_dot_rec = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double m_dot_tes = mpc_csp_solver->mc_tes_ch_htf_state.m_m_dot;			//[kg/hr]
+
+	*diff_m_dot = (m_dot_rec - m_dot_tes) / m_dot_rec;
+
+	return 0;
+}
