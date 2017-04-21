@@ -1168,10 +1168,53 @@ int C_csp_solver::C_mono_eq_cr_on__pc_max_m_dot__tes_full::operator()(double T_h
 	double m_dot_receiver = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
 	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
 
+	// First, call power cycle, because if it's in startup mode, we need the new timestep
+	// Solve the PC performance at MAX PC HTF FLOW RATE
+	// Need to do this to get back PC T_htf_cold
+	// HTF State
+	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
+	// Inputs
+	if (m_pc_mode == C_csp_power_cycle::ON)
+	{
+		mpc_csp_solver->mc_pc_inputs.m_m_dot = mpc_csp_solver->m_m_dot_pc_max;		//[kg/hr]
+	}
+	else
+	{
+		mpc_csp_solver->mc_pc_inputs.m_m_dot = 0.0;				//[kg/hr]
+	}
+	mpc_csp_solver->mc_pc_inputs.m_standby_control = m_pc_mode;		//[-]
+	// Performance Call
+	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
+		mpc_csp_solver->mc_pc_htf_state_in,
+		mpc_csp_solver->mc_pc_inputs,
+		mpc_csp_solver->mc_pc_out_solver,
+		mpc_csp_solver->mc_kernel.mc_sim_info);
+
+	// Check that power cycle is producing power and solving without errors
+	if (!mpc_csp_solver->mc_pc_out_solver.m_was_method_successful && mpc_csp_solver->mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON)
+	{
+		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
+		return -2;
+	}
+
+	// Get power cycle HTF return temperature...
+	double T_htf_pc_cold = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold;		//[C]
+	double m_dot_pc = mpc_csp_solver->mc_pc_out_solver.m_m_dot_htf;				//[kg/hr]
+
+	// Check for new timestep
+	double step_calc = mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step;		//[s]
+	if (m_pc_mode == C_csp_power_cycle::STARTUP_CONTROLLED)
+	{
+		if (mpc_csp_solver->mc_pc_out_solver.m_time_required_su < step_calc)
+		{
+			step_calc = mpc_csp_solver->mc_pc_out_solver.m_time_required_su;
+		}
+	}
+
 	// Solve TES for *full* charge
 	double T_htf_tes_cold, m_dot_tes;
 	T_htf_tes_cold = m_dot_tes = std::numeric_limits<double>::quiet_NaN();
-	mpc_csp_solver->mc_tes.charge_full(mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step,
+	mpc_csp_solver->mc_tes.charge_full(step_calc,
 		mpc_csp_solver->mc_weather.ms_outputs.m_tdry + 273.15,
 		T_htf_rec_hot + 273.15,
 		T_htf_tes_cold,
@@ -1189,32 +1232,7 @@ int C_csp_solver::C_mono_eq_cr_on__pc_max_m_dot__tes_full::operator()(double T_h
 	// If not actually discharging (i.e. mass flow rate = 0.0), what should the temperatures be?
 	mpc_csp_solver->mc_tes_dc_htf_state.m_m_dot = 0.0;										//[kg/hr]
 	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_in = mpc_csp_solver->mc_tes_outputs.m_T_cold_ave - 273.15;	//[C] convert from K
-	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;
-
-	// Solve the PC performance at MAX PC HTF FLOW RATE
-	// Need to do this to get back PC T_htf_cold
-	// HTF State
-	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
-	// Inputs
-	double m_dot_pc = mpc_csp_solver->m_m_dot_pc_max;				//[kg/hr]
-	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_pc;				//[kg/hr]
-	mpc_csp_solver->mc_pc_inputs.m_standby_control = m_pc_mode;		//[-]
-	// Performance Call
-	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
-		mpc_csp_solver->mc_pc_htf_state_in,
-		mpc_csp_solver->mc_pc_inputs,
-		mpc_csp_solver->mc_pc_out_solver,
-		mpc_csp_solver->mc_kernel.mc_sim_info);
-
-	// Check that power cycle is producing power and solving without errors
-	if (!mpc_csp_solver->mc_pc_out_solver.m_was_method_successful && mpc_csp_solver->mc_pc_inputs.m_standby_control == C_csp_power_cycle::ON)
-	{
-		*diff_T_htf_cold = std::numeric_limits<double>::quiet_NaN();
-		return -4;
-	}
-
-	// Get power cycle HTF return temperature...
-	double T_htf_pc_cold = mpc_csp_solver->mc_pc_out_solver.m_T_htf_cold;		//[C]
+	mpc_csp_solver->mc_tes_dc_htf_state.m_temp_out = mpc_csp_solver->mc_tes_outputs.m_T_hot_ave - 273.15;	
 
 	// Enthalpy balance to get T_htf_cold_calc
 		// So mass flow rate is probably *not* balanced here, because we're fixing both TES and PC
