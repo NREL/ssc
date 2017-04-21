@@ -691,9 +691,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 			// Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
 				//double standby_time_buffer = 2.0;
-			if( mc_tou.mc_dispatch_params.m_use_rule_1 &&
-				(mc_kernel.mc_sim_info.ms_ts.m_time + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
-				mc_kernel.mc_sim_info.ms_ts.m_time + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set) )
+			if (mc_tou.mc_dispatch_params.m_use_rule_1 &&
+				(mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
+				mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
 			{
 				is_pc_sb_allowed = false;
 			}
