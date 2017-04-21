@@ -1635,6 +1635,7 @@ public:
 			{
 				int num_periods = 0;
 				int num_tiers = 0;
+				num_periods = (int)m_month[m].dc_periods.size();
 				for (i = 0; i < m_month[m].dc_periods.size(); i++)
 				{
 					// find all periods and check that number of tiers the same for all for the month, if not through error
@@ -1647,23 +1648,17 @@ public:
 					}
 					period = (*per_num);
 					int ndx = (int)(per_num - m_dc_tou_periods.begin());
-					if (i == 0)
-					{
 						// redimension dc_ field of ur_month class
-						num_periods = (int)m_month[m].dc_periods.size();
+					if ((int)m_dc_tou_periods_tiers[ndx].size() > num_tiers)
 						num_tiers = (int)m_dc_tou_periods_tiers[ndx].size();
+				}
 						m_month[m].dc_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e38);
 						m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
-					}
-					else
+				for (i = 0; i < m_month[m].dc_periods.size(); i++)
 					{
-						if ((int)m_dc_tou_periods_tiers[ndx].size() != num_tiers)
-						{
-							std::ostringstream ss;
-							ss << "The number of tiers in the demand rate table, " << m_dc_tou_periods_tiers[ndx].size() << ", is incorrect for Month " << m << " and Period " << m_month[m].dc_periods[i] << ". The correct number of tiers for that month and period is " << num_tiers << ".";
-							throw exec_error("utilityrate5", ss.str());
-						}
-					}
+					std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
+					period = (*per_num);
+					int ndx = (int)(per_num - m_dc_tou_periods.begin());
 					for (j = 0; j < m_dc_tou_periods_tiers[ndx].size(); j++)
 					{
 						tier = m_dc_tou_periods_tiers[ndx][j];
