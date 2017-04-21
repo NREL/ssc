@@ -1776,7 +1776,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if (mc_cr_out_solver.m_q_thermal == 0.0)
 						{	// Collector/receiver can't produce useful energy
 
-							m_is_CR_ON__PC_SU__TES_OFF__AUX_OFF_avail = false;
+							m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
 
 							are_models_converged = false;
 							break;
