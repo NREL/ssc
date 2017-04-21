@@ -1382,7 +1382,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus::operator()(double
 	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
 	// Solve for cold temperature
-	double T_cold_guess_low = mpc_csp_solver->m_T_htf_pc_cold_est;	//[C]
+	double T_cold_guess_low = mpc_csp_solver->m_T_htf_pc_cold_est - 10.0;	//[C]
 	double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
 
 	double T_cold_solved, tol_solved;
@@ -1452,8 +1452,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold::operator()(dou
 	// HTF State
 	mpc_csp_solver->mc_pc_htf_state_in.m_temp = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
 	// Inputs
-	double m_dot_pc = mpc_csp_solver->m_m_dot_pc_max;				//[kg/hr]
-	mpc_csp_solver->mc_pc_inputs.m_m_dot = m_dot_pc;				//[kg/hr]
+	mpc_csp_solver->mc_pc_inputs.m_m_dot = mpc_csp_solver->m_m_dot_pc_max;				//[kg/hr]
 	mpc_csp_solver->mc_pc_inputs.m_standby_control = m_pc_mode;		//[-]
 	// Performance Call
 	mpc_csp_solver->mc_power_cycle.call(mpc_csp_solver->mc_weather.ms_outputs,
