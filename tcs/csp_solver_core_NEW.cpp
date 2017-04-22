@@ -374,7 +374,7 @@ void C_csp_solver::init()
 	m_cycle_T_htf_hot_des = pc_solved_params.m_T_htf_hot_ref + 273.15;	//[K] convert from C
 	m_m_dot_pc_des = pc_solved_params.m_m_dot_design;					//[kg/hr]
 				
-	m_m_dot_pc_min = pc_solved_params.m_m_dot_min;		//[kg/hr]
+	m_m_dot_pc_min = 0.0 * pc_solved_params.m_m_dot_min;		//[kg/hr]
 	m_m_dot_pc_max = pc_solved_params.m_m_dot_max;		//[kg/hr]				
 	
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
@@ -720,8 +720,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			// Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
 				//double standby_time_buffer = 2.0;
 			if( mc_tou.mc_dispatch_params.m_use_rule_1 &&
-				(mc_kernel.mc_sim_info.ms_ts.m_time + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
-				mc_kernel.mc_sim_info.ms_ts.m_time + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set) )
+				(mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
+				mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
 			{
 				is_pc_sb_allowed = false;
 			}
@@ -1383,8 +1383,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 							{	// Storage dispatch is not available
 
 								// Can the power cycle operate at or above the minimum operation fraction?
-								if( q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_min 
-									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min
+								if( ( (q_dot_cr_on*(1.0 + tol_mode_switching) > q_pc_min 
+									&& m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
+									|| m_dot_cr_on*(1.0 + tol_mode_switching) > m_m_dot_pc_max)
 									&& is_pc_su_allowed &&
 									m_is_CR_ON__PC_RM_LO__TES_OFF__AUX_OFF_avail )
 								{	// Tolerance is applied so that if CR is *close* to reaching PC min, the controller tries that mode
@@ -2024,8 +2025,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 
 			case CR_ON__PC_SB__TES_OFF__AUX_OFF:
-				
-				throw(C_csp_exception("CR_ON__PC_SB__TES_OFF__AUX_OFF mode not updated for mass flow constraints"));
 
 				// Collector/receiver is ON
 				// Power cycle is running in standby
@@ -2049,7 +2048,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_cr_htf_state_in,
 					m_defocus,
 					mc_cr_out_solver,
-					//mc_cr_out_report,
 					mc_kernel.mc_sim_info);
 
 				if( mc_cr_out_solver.m_q_thermal < q_pc_sb )
@@ -2062,24 +2060,75 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// If receiver is indeed producing power, then try power cycle at standby
-				// Power cycle: STANDBY
+					// Power cycle: STANDBY
 				mc_pc_htf_state_in.m_temp = mc_cr_out_solver.m_T_salt_hot;		//[C]
 				mc_pc_inputs.m_m_dot = mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr] no mass flow rate to power cycle
-				// Inputs
+					// Inputs
 				mc_pc_inputs.m_standby_control = C_csp_power_cycle::STANDBY;
-				//mc_pc_inputs.m_tou = tou_timestep;
-				// Performance Call
+					// Performance Call
 				mc_power_cycle.call(mc_weather.ms_outputs,
 					mc_pc_htf_state_in,
 					mc_pc_inputs,
 					mc_pc_out_solver,
-					//mc_pc_out_report,
 					mc_kernel.mc_sim_info);
+
+				// Check if solved thermal power is greater than target
+				if ((mc_pc_out_solver.m_q_dot_htf - q_pc_max) > 1.E-3)
+				{
+					error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_OFF__AUX_OFF converged to a PC thermal power %lg [MWt]"
+						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					turn_off_plant();
+					are_models_converged = false;
+					break;
+				}
+
+				if (mc_pc_out_solver.m_m_dot_htf > m_m_dot_pc_max)
+				{
+					error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_OFF__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
+						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					turn_off_plant();
+					are_models_converged = false;
+					break;
+				}
+
+				// Check if solved thermal power is less than target
+				if ((mc_pc_out_solver.m_q_dot_htf - q_pc_min) / q_pc_min < -1.E-3)
+				{
+					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a PC thermal power %lg [MWt]"
+						" less than the minimum PC thermal power %lg [MWt].",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_min);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
+
+				if (mc_pc_out_solver.m_m_dot_htf < m_m_dot_pc_min)
+				{
+					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
+						" less than the minimum PC HTF mass flow rate %lg [kg/s].",
+						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_min / 3600.0);
+
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					are_models_converged = false;
+					break;
+				}
 
 				if( m_is_tes )
 				{
 					mc_tes.idle(mc_kernel.mc_sim_info.ms_ts.m_step, mc_weather.ms_outputs.m_tdry + 273.15, mc_tes_outputs);
-
 
 					// If not actually charging (i.e. mass flow rate = 0.0), what should the temperatures be?
 					mc_tes_ch_htf_state.m_m_dot = 0.0;										//[kg/hr]
