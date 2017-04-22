@@ -2100,28 +2100,28 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				}
 
 				// Check if solved thermal power is less than target
-				if ((mc_pc_out_solver.m_q_dot_htf - q_pc_min) / q_pc_min < -1.E-3)
+				if ((mc_pc_out_solver.m_q_dot_htf - q_pc_sb) / q_pc_sb < -1.E-3)
 				{
-					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a PC thermal power %lg [MWt]"
+					error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_OFF__AUX_OFF converged to a PC thermal power %lg [MWt]"
 						" less than the minimum PC thermal power %lg [MWt].",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_min);
 
 					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = false;
 					are_models_converged = false;
 					break;
 				}
 
 				if (mc_pc_out_solver.m_m_dot_htf < m_m_dot_pc_min)
 				{
-					error_msg = util::format("At time = %lg CR_SU__PC_MIN__TES_EMPTY__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
+					error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_OFF__AUX_OFF converged to a HTF mass flow rate %lg [kg/s]"
 						" less than the minimum PC HTF mass flow rate %lg [kg/s].",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_min / 3600.0);
 
 					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
+					m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = false;
 					are_models_converged = false;
 					break;
 				}
