@@ -3904,6 +3904,16 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					throw(C_csp_exception(err_msg, "CSP Solver"));
 				}
 
+				std::string op_mode_str = "";
+				if (operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF)
+				{
+					op_mode_str = "CR_OFF__PC_TARGET__TES_DC__AUX_OFF";
+				}
+				else
+				{
+					op_mode_str = "CR_SU__PC_TARGET__TES_DC__AUX_OFF";
+				}
+
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
 				m_defocus = 1.0;
 
@@ -3947,41 +3957,66 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 				}
 
-				double q_dot_pc_fixed = q_pc_target;	//[MWt]
 				int power_cycle_mode = C_csp_power_cycle::ON;
-				double tol_C = 1.0;								//[C]
-				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
+				double q_dot_pc_fixed = q_pc_target;	//[MWt]
+				
+				C_mono_eq_pc_target_tes_dc__T_cold c_eq(this, power_cycle_mode, q_dot_pc_fixed);
+				C_monotonic_eq_solver c_solver(c_eq);
 
+				// Set up solver
+				c_solver.settings(1.E-3, 50, 0, std::numeric_limits<double>::quiet_NaN(), false);
 
-				double T_cold_exit_tolerance, q_pc_exit_tolerance, q_dot_solved, m_dot_solved;
-				T_cold_exit_tolerance = q_pc_exit_tolerance = q_dot_solved = m_dot_solved = std::numeric_limits<double>::quiet_NaN();
+				// Solve for cold temperature
+				double T_cold_guess_low = m_T_htf_cold_des - 273.15;	//[C]
+				double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
 
-				int T_cold_exit_mode, q_pc_exit_mode;
-				T_cold_exit_mode = q_pc_exit_mode = -1;
+				double T_cold_solved, tol_solved;
+				T_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+				int iter_solved = -1;
 
-				solver_pc_on_fixed__tes_dc(q_dot_pc_fixed, power_cycle_mode,
-				tol,
-				T_cold_exit_mode, T_cold_exit_tolerance,
-				q_pc_exit_mode, q_pc_exit_tolerance,
-				q_dot_solved, m_dot_solved);
+				int T_cold_code = 0;
+				try
+				{
+					T_cold_code = c_solver.solve(T_cold_guess_low, T_cold_guess_high, 0.0, T_cold_solved, tol_solved, iter_solved);
+				}
+				catch (C_csp_exception)
+				{
+					throw(C_csp_exception(util::format("At time = %lg, %s failed", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+				}
+
+				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
+				{
+					if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
+					{
+						std::string msg = util::format("At time = %lg %s"
+							"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
+							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+					}
+					else
+					{
+						if (operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF)
+							m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail = false;
+						else if (operating_mode == CR_SU__PC_TARGET__TES_DC__AUX_OFF)
+							m_is_CR_SU__PC_TARGET__TES_DC__AUX_OFF_avail = false;
+
+						are_models_converged = false;
+						break;
+					}
+				}
+
+				double q_dot_solved = c_eq.m_q_dot_calc;	//[MWt]
+				double m_dot_solved = c_eq.m_m_dot_calc;	//[kg/hr]
 				
 				// Check if solved thermal power is greater than target
 				if ((q_dot_solved - q_dot_pc_fixed) / q_dot_pc_fixed > 1.E-3)
 				{
 					if ((q_dot_solved - q_pc_max) / q_pc_max > 1.E-3)
 					{
-						if (operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF)
-						{
-							error_msg = util::format("At time = %lg CR_OFF__PC_TARGET__TES_DC__AUX_OFF converged to a PC thermal power %lg [MWt]"
-								" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_solved, q_pc_max);
-						}
-						else if (operating_mode == CR_SU__PC_TARGET__TES_DC__AUX_OFF)
-						{
-							error_msg = util::format("At time = %lg CR_SU__PC_TARGET__TES_DC__AUX_OFF converged to a PC thermal power %lg [MWt]"
-								" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_solved, q_pc_max);
-						}
+						error_msg = util::format("At time = %lg %s converged to a PC thermal power %lg [MWt]"
+							" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), q_dot_solved, q_pc_max);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
 						turn_off_plant();
@@ -3990,18 +4025,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					}
 					else
 					{
-						if (operating_mode == CR_OFF__PC_TARGET__TES_DC__AUX_OFF)
-						{
-							error_msg = util::format("At time = %lg CR_OFF__PC_TARGET__TES_DC__AUX_OFF converged to a PC thermal power %lg [MWt]"
-								" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_solved, q_dot_pc_fixed, q_pc_max);
-						}
-						else if (operating_mode == CR_SU__PC_TARGET__TES_DC__AUX_OFF)
-						{
-							error_msg = util::format("At time = %lg CR_SU__PC_TARGET__TES_DC__AUX_OFF converged to a PC thermal power %lg [MWt]"
-								" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
-								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_solved, q_dot_pc_fixed, q_pc_max);
-						}
+						error_msg = util::format("At time = %lg %s converged to a PC thermal power %lg [MWt]"
+							" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), q_dot_solved, q_dot_pc_fixed, q_pc_max);
+
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 					}
 				}
@@ -6539,7 +6566,7 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 
 		// Enthalpy balance to get T_rec_in_calc
 		double T_rec_in_calc = (m_dot_htf_tes_out*T_htf_tes_out + m_dot_pc*T_pc_out) / m_dot_receiver;	//[C]
-
+		
 		// Calculate diff_T_rec_in
 		diff_T_rec_in = (T_rec_in_calc - T_rec_in_guess) / T_rec_in_guess;
 
@@ -6552,6 +6579,8 @@ void C_csp_solver::solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int
 	int &q_pc_exit_mode, double &q_pc_exit_tolerance,
 	double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/)
 {
+	throw(C_csp_exception("Retiring solver__pc_on_fixed__tes_dc for mass flow constraint updates..", ""));
+	
 	// Power cycle requires fixed target thermal input
 	// TES supplies the entire thermal input to the PC
 	
