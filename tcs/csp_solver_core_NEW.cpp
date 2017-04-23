@@ -2938,8 +2938,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 			case CR_OFF__PC_SB__TES_DC__AUX_OFF:
 			case CR_SU__PC_SB__TES_DC__AUX_OFF:
 			{
-				throw(C_csp_exception("CR_OFF__PC_SB__TES_DC__AUX_OFF / CR_SU__PC_SB__TES_DC__AUX_OFF mode not updated for mass flow constraints"));
-
 				// Collector-receiver is OFF
 				// Power cycle is running in standby with thermal power input from TES discharge
 
@@ -2950,6 +2948,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 				{
 					std::string err_msg = util::format("Operating mode, %d, is not configured for DSG mode", operating_mode);
 					throw(C_csp_exception(err_msg, "CSP Solver"));
+				}
+
+				std::string op_mode_str = "";
+				if (operating_mode == CR_OFF__PC_SB__TES_DC__AUX_OFF)
+				{
+					op_mode_str = "CR_OFF__PC_SB__TES_DC__AUX_OFF";
+					throw(C_csp_exception("CR_OFF__PC_SB__TES_DC__AUX_OFF mode not updated for mass flow constraints"));
+				}
+				else
+				{
+					op_mode_str = "CR_SU__PC_SB__TES_DC__AUX_OFF";
+					throw(C_csp_exception("CR_SU__PC_SB__TES_DC__AUX_OFF mode not updated for mass flow constraints"));
 				}
 
 				// Set Solved Controller Variables Here (that won't be reset in this operating mode)
@@ -2965,7 +2975,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.off(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 				}
@@ -2977,7 +2986,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					mc_collector_receiver.startup(mc_weather.ms_outputs,
 						mc_cr_htf_state_in,
 						mc_cr_out_solver,
-						//mc_cr_out_report,
 						mc_kernel.mc_sim_info);
 
 					// Check that startup happened
@@ -6547,7 +6555,7 @@ void C_csp_solver::solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int
 	// Power cycle requires fixed target thermal input
 	// TES supplies the entire thermal input to the PC
 	
-	C_mono_eq_pc_target_tes_dc__T_cold c_eq(this, q_dot_pc_fixed);
+	C_mono_eq_pc_target_tes_dc__T_cold c_eq(this, power_cycle_mode, q_dot_pc_fixed);
 	C_monotonic_eq_solver c_solver(c_eq);
 
 	// Set up solver
