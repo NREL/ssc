@@ -214,7 +214,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__m_dot::operator()(double m_dot_htf
 int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_cold /*C*/, double *diff_T_htf_cold /*-*/)
 {
 	// Expect mc_pc_out_solver to be set in inner mono eq loop that converges m_dot_htf
-	C_mono_eq_pc_target_tes_dc__m_dot c_eq(mpc_csp_solver, T_htf_cold);
+	C_mono_eq_pc_target_tes_dc__m_dot c_eq(mpc_csp_solver, m_pc_mode, T_htf_cold);
 	C_monotonic_eq_solver c_solver(c_eq);
 
 	// Calculate the maximum mass flow rate available for discharge
