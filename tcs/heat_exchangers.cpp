@@ -1357,11 +1357,11 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	m_final_outlet_index = ((m_N_loops + 2) % 2)*m_N_nodes + 1;
 
 	// Assume air props don't change significantly in air cooler
-	double mu_air = mc_air.visc(ms_des_par_ind.m_T_amb_des);
-	double v_air = 1.0 / mc_air.dens(ms_des_par_ind.m_T_amb_des, m_P_amb_des);
-	double cp_air = mc_air.Cp(ms_des_par_ind.m_T_amb_des)*1000.0;
-	double k_air = mc_air.cond(ms_des_par_ind.m_T_amb_des);
-	double Pr_air = (cp_air*mu_air / k_air);
+	double mu_air = mc_air.visc(ms_des_par_ind.m_T_amb_des);		//[kg/m-s] dynamic viscosity
+	double v_air = 1.0 / mc_air.dens(ms_des_par_ind.m_T_amb_des, m_P_amb_des);	//[1/m3] specific volume
+	double cp_air = mc_air.Cp(ms_des_par_ind.m_T_amb_des)*1000.0;	//[J/kg-K] specific heat convert from kJ/kg-K
+	double k_air = mc_air.cond(ms_des_par_ind.m_T_amb_des);			//[W/m-K] conductivity
+	double Pr_air = (cp_air*mu_air / k_air);						//[-] Prandtl number
 
 	// Calculate the required heat rejection
 	CO2_state co2_props;
@@ -1572,94 +1572,138 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 			double V_node = L_node*m_s_v*m_s_h;		//[m^3] Volume of one node
 			V_total = L_tube*m_Depth*W_par;	//[m^3] Total HX volume
 
-			// 2.5) Iterative loop to find air mass flow rate resulting in target fan power
-			//double m_dot_air_total = 3668.0;
-			// Try reasonably overestimating air mass flow rate by energy balance assuming small increase in air temp
-			// Q_dot_des = m_dot_air_total*cp_air*deltaT
-			// *** After 1st iteration can do something smarter here ****
-			m_dot_air_total = Q_dot_des / (5.0*cp_air);		// Assume 5K temp difference
-			//**********************************************************************************
-			// Overwrite here to test against EES code
-			// m_dot_air_total = 6165;
-			// ***************************************
-			//**********************************************************************************
+			// Iterate to find air mass flow rate resulting in target fan power
+			C_MEQ_target_W_dot_fan__m_dot_air c_m_dot_air_eq(this,
+										L_tube, W_par, V_total,
+										mu_air, v_air, cp_air, Pr_air);
+			C_monotonic_eq_solver c_m_dot_air_solver(c_m_dot_air_eq);
 
-			bool is_lowbound_m_dot = false;
-			double x_lower_m_dot = numeric_limits<double>::quiet_NaN();
-			double y_lower_m_dot = numeric_limits<double>::quiet_NaN();
-
-			bool is_upbound_m_dot = false;
-			double x_upper_m_dot = numeric_limits<double>::quiet_NaN();
-			double y_upper_m_dot = numeric_limits<double>::quiet_NaN();
-
-			// Another loop in, so tighten convergence
 			double tol_m_dot = tol_L_tube / 2.0;					//[-] Relative tolerance for convergence
-			double diff_W_dot_fan = 2.0*tol_m_dot;			//[-] Set diff > tol
-			int iter_m_dot = 0;
+			c_m_dot_air_solver.settings(tol_m_dot, 50, 1.E-10, std::numeric_limits<double>::quiet_NaN(), true);
+			
+			double m_dot_air_guess = Q_dot_des / (5.0*cp_air);	//[kg/s] Guess assuming 5k temp rise
+			double m_dot_air_guess2 = 1.05*m_dot_air_guess;		//[kg/s] Another guess...
 
-			// Variable solved in additional nests that are required at this level
-			h_conv_air = numeric_limits<double>::quiet_NaN();
+			double m_dot_air_solved, m_dot_air_tol_solved;
+			m_dot_air_solved = m_dot_air_tol_solved = std::numeric_limits<double>::quiet_NaN();
+			int m_dot_air_iter_solved = -1;
 
-			while( fabs(diff_W_dot_fan) > tol_m_dot )
+			int m_dot_air_solver_code = 0;
+			try
 			{
-				iter_m_dot++;
-
-				if( iter_m_dot > 1 )
+				m_dot_air_solver_code = c_m_dot_air_solver.solve(m_dot_air_guess, m_dot_air_guess2, 
+					ms_des_par_cycle_dep.m_W_dot_fan_des, m_dot_air_solved, m_dot_air_tol_solved, m_dot_air_iter_solved);
+			}
+			catch (C_csp_exception)
+			{
+				throw(C_csp_exception("Air cooler iteration on air mass flow rate received exception from mono equation solver"));
+			}
+			if (m_dot_air_solver_code != C_monotonic_eq_solver::CONVERGED)
+			{
+				if (m_dot_air_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(m_dot_air_tol_solved) <= 0.1)
 				{
-					if( diff_W_dot_fan > 0.0 )	// Calculated fan power too high - decrease m_dot
-					{
-						is_upbound_m_dot = true;
-						x_upper_m_dot = m_dot_air_total;
-						y_upper_m_dot = diff_W_dot_fan;
-						if( is_lowbound_m_dot )
-						{
-							if( fmax(y_upper_m_dot, y_lower_m_dot) < 0.75 )
-								m_dot_air_total = -y_upper_m_dot*(x_lower_m_dot - x_upper_m_dot) / (y_lower_m_dot - y_upper_m_dot) + x_upper_m_dot;
-							else
-								m_dot_air_total = 0.5*(x_lower_m_dot + x_upper_m_dot);
-							//-y_upper    *(x_lower       - x_upper     )/(y_lower      -     y_upper) +x_upper;
-						}
-						else
-						{
-							m_dot_air_total *= 0.1;
-						}
-					}
-					else						// Calculated fan power too low - increase m_dot
-					{
-						is_lowbound_m_dot = true;
-						x_lower_m_dot = m_dot_air_total;
-						y_lower_m_dot = diff_W_dot_fan;
-						if( is_upbound_m_dot )
-						{
-							if( fmax(y_upper_m_dot, y_lower_m_dot) < 0.75 )
-								m_dot_air_total = -y_upper_m_dot*(x_lower_m_dot - x_upper_m_dot) / (y_lower_m_dot - y_upper_m_dot) + x_upper_m_dot;
-							else
-								m_dot_air_total = 0.5*(x_lower_m_dot + x_upper_m_dot);
-						}
-						else
-						{
-							m_dot_air_total *= 10.0;
-						}
-					}
+					std::string error_msg = util::format("Air cooler iteration on air mass flow rate only reached a convergence "
+						"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+						m_dot_air_tol_solved);
+					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 				}
+				else
+				{
+					throw(C_csp_exception("C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr received exception from mono equation solver"));
+				}
+			}
 
-				double G_air = m_dot_air_total / (m_sigma*L_tube*W_par);
-				double Re_air = G_air*m_D_h / mu_air;
-				double f_air, j_H_air;
-				f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+			m_dot_air_total = m_dot_air_solved;		//[kg/s]
+			h_conv_air = c_m_dot_air_eq.m_h_conv_air;	//[W/m2-K]
 
-				if( !N_compact_hx::get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
-					return false;
-
-				double deltaP_air = pow(G_air, 2.0)*v_air*0.5*f_air*m_alpha*V_total / (m_sigma*L_tube*W_par);
-				h_conv_air = j_H_air*G_air*cp_air / pow(Pr_air, (2.0 / 3.0));	//[W/m^2-K]
-
-				double V_dot_air_total = m_dot_air_total*v_air;
-				double W_dot_fan = deltaP_air*V_dot_air_total / m_eta_fan / 1.E6;
-
-				diff_W_dot_fan = (W_dot_fan - ms_des_par_cycle_dep.m_W_dot_fan_des) / ms_des_par_cycle_dep.m_W_dot_fan_des;
-
-			}	// Iteration on air mass flow rate
+			//// 2.5) Iterative loop to find air mass flow rate resulting in target fan power
+			////double m_dot_air_total = 3668.0;
+			//// Try reasonably overestimating air mass flow rate by energy balance assuming small increase in air temp
+			//// Q_dot_des = m_dot_air_total*cp_air*deltaT
+			//// *** After 1st iteration can do something smarter here ****
+			//m_dot_air_total = Q_dot_des / (5.0*cp_air);		// Assume 5K temp difference
+			////**********************************************************************************
+			//// Overwrite here to test against EES code
+			//// m_dot_air_total = 6165;
+			//// ***************************************
+			////**********************************************************************************
+			//
+			//bool is_lowbound_m_dot = false;
+			//double x_lower_m_dot = numeric_limits<double>::quiet_NaN();
+			//double y_lower_m_dot = numeric_limits<double>::quiet_NaN();
+			//
+			//bool is_upbound_m_dot = false;
+			//double x_upper_m_dot = numeric_limits<double>::quiet_NaN();
+			//double y_upper_m_dot = numeric_limits<double>::quiet_NaN();
+			//
+			//// Another loop in, so tighten convergence
+			//double tol_m_dot = tol_L_tube / 2.0;					//[-] Relative tolerance for convergence
+			//double diff_W_dot_fan = 2.0*tol_m_dot;			//[-] Set diff > tol
+			//int iter_m_dot = 0;
+			//
+			//// Variable solved in additional nests that are required at this level
+			//h_conv_air = numeric_limits<double>::quiet_NaN();
+			//
+			//while( fabs(diff_W_dot_fan) > tol_m_dot )
+			//{
+			//	iter_m_dot++;
+			//
+			//	if( iter_m_dot > 1 )
+			//	{
+			//		if( diff_W_dot_fan > 0.0 )	// Calculated fan power too high - decrease m_dot
+			//		{
+			//			is_upbound_m_dot = true;
+			//			x_upper_m_dot = m_dot_air_total;
+			//			y_upper_m_dot = diff_W_dot_fan;
+			//			if( is_lowbound_m_dot )
+			//			{
+			//				if( fmax(y_upper_m_dot, y_lower_m_dot) < 0.75 )
+			//					m_dot_air_total = -y_upper_m_dot*(x_lower_m_dot - x_upper_m_dot) / (y_lower_m_dot - y_upper_m_dot) + x_upper_m_dot;
+			//				else
+			//					m_dot_air_total = 0.5*(x_lower_m_dot + x_upper_m_dot);
+			//				//-y_upper    *(x_lower       - x_upper     )/(y_lower      -     y_upper) +x_upper;
+			//			}
+			//			else
+			//			{
+			//				m_dot_air_total *= 0.1;
+			//			}
+			//		}
+			//		else						// Calculated fan power too low - increase m_dot
+			//		{
+			//			is_lowbound_m_dot = true;
+			//			x_lower_m_dot = m_dot_air_total;
+			//			y_lower_m_dot = diff_W_dot_fan;
+			//			if( is_upbound_m_dot )
+			//			{
+			//				if( fmax(y_upper_m_dot, y_lower_m_dot) < 0.75 )
+			//					m_dot_air_total = -y_upper_m_dot*(x_lower_m_dot - x_upper_m_dot) / (y_lower_m_dot - y_upper_m_dot) + x_upper_m_dot;
+			//				else
+			//					m_dot_air_total = 0.5*(x_lower_m_dot + x_upper_m_dot);
+			//			}
+			//			else
+			//			{
+			//				m_dot_air_total *= 10.0;
+			//			}
+			//		}
+			//	}
+			//
+			//	double G_air = m_dot_air_total / (m_sigma*L_tube*W_par);
+			//	double Re_air = G_air*m_D_h / mu_air;
+			//	double f_air, j_H_air;
+			//	f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+			//
+			//	if( !N_compact_hx::get_compact_hx_f_j(m_enum_compact_hx_config, Re_air, f_air, j_H_air) )
+			//		return false;
+			//
+			//	double deltaP_air = pow(G_air, 2.0)*v_air*0.5*f_air*m_alpha*V_total / (m_sigma*L_tube*W_par);
+			//	h_conv_air = j_H_air*G_air*cp_air / pow(Pr_air, (2.0 / 3.0));	//[W/m^2-K]
+			//
+			//	double V_dot_air_total = m_dot_air_total*v_air;
+			//	double W_dot_fan = deltaP_air*V_dot_air_total / m_eta_fan / 1.E6;
+			//
+			//	diff_W_dot_fan = (W_dot_fan - ms_des_par_cycle_dep.m_W_dot_fan_des) / ms_des_par_cycle_dep.m_W_dot_fan_des;
+			//
+			//}	// Iteration on air mass flow rate
 
 			A_surf_node = V_node*m_alpha;		//[-] Air-side surface area of node
 			double UA_node = A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
@@ -1865,6 +1909,28 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 
 	return true;
 };
+
+int C_CO2_to_air_cooler::C_MEQ_target_W_dot_fan__m_dot_air::operator()(double m_dot_air /*kg/s*/, double *W_dot_fan /*MWe*/)
+{
+	m_h_conv_air = std::numeric_limits<double>::quiet_NaN();
+
+	double G_air = m_dot_air / (mpc_ac->m_sigma*m_L_tube*m_W_par);
+	double Re_air = G_air*mpc_ac->m_D_h / m_mu_air;
+	
+	double f_air, j_H_air;
+	f_air, j_H_air = numeric_limits<double>::quiet_NaN();
+
+	if (!N_compact_hx::get_compact_hx_f_j(mpc_ac->m_enum_compact_hx_config, Re_air, f_air, j_H_air))
+		return -1;
+
+	double deltaP_air = pow(G_air, 2.0)*m_v_air*0.5*f_air*mpc_ac->m_alpha*m_V_total / (mpc_ac->m_sigma*m_L_tube*m_W_par);
+	m_h_conv_air = j_H_air*G_air*m_cp_air / pow(m_Pr_air, (2.0 / 3.0));	//[W/m^2-K]
+
+	double V_dot_air_total = m_dot_air*m_v_air;
+	*W_dot_fan = deltaP_air*V_dot_air_total / mpc_ac->m_eta_fan / 1.E6;
+
+	return 0;
+}
 
 void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
 	double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code)
