@@ -7,6 +7,8 @@
 #include "lib_util.h"
 #include "numeric_solvers.h"
 
+#include "csp_solver_util.h"
+
 namespace NS_HX_counterflow_eqs
 {
 	enum
@@ -339,6 +341,9 @@ class C_CO2_to_air_cooler
 
 public:
 	
+	// Class to save messages for up stream classes
+	C_csp_messages mc_csp_messages;
+
 	// Design parameters that are independent of the cycle-side inputs
 	struct S_des_par_ind
 	{
@@ -407,18 +412,9 @@ private:
 	double m_A_surf_node;	//[m^2]
 
 	// Design Ambient Conditions
-	//double m_T_amb_des;		//[K]
 	double m_P_amb_des;		//[Pa]
 
-	// Hot-side Inlet Conditions
-	//double m_T_hot_in_des;		//[K]
-	//double m_P_hot_in_des;		//[kPa]
-	//double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
-
 	// Design Performance Targets
-	//double m_W_dot_fan_des;		//[MW]
-	//double m_delta_P_des;		//[kPa]
-	//double m_T_hot_out_des;		//[K]
 	double m_m_dot_air_des;		//[kg/s]
 	double m_Q_dot_des;			//[W]
 
@@ -426,9 +422,9 @@ private:
 	double m_P_hot_out_des;		//[kPa]
 
 	// HX geometry
-	// Input
+		// Input
 	int m_enum_compact_hx_config;
-	// Defined from Config
+		// Defined from Config
 	double m_d_out;		//[m]
 	double m_fin_pitch;	//[1/m]
 	double m_D_h;		//[m]
@@ -448,13 +444,10 @@ private:
 	S_hx_design_solved m_hx_design_solved;
 
 public:
-
+		
 	C_CO2_to_air_cooler();
 
 	~C_CO2_to_air_cooler(){};
-
-	//bool design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
-	//	double m_dot_hot_kg_s, double W_dot_fan_MW, double deltaP_kPa, double T_hot_out_K);
 
 	bool design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_dep des_par_cycle_dep);
 
@@ -467,6 +460,44 @@ public:
 
 		return &m_hx_design_solved;
 	}
+
+	class C_MEQ_target_W_dot_fan__m_dot_air : public C_monotonic_equation
+	{
+	private:
+		C_CO2_to_air_cooler *mpc_ac;
+		double m_L_tube;	//[m] Length of tube in one pass (flow direction)
+		double m_W_par;		//[m] Dimension of parallel paths
+		double m_V_total;	//[m3] Total HX "footprint" volume
+
+		double m_mu_air;	//[kg/m-s] dynamic viscosity
+		double m_v_air;		//[1/m3] specific volume
+		double m_cp_air;	//[J/kg-K] specific heat convert from kJ/kg-K
+		double m_Pr_air;	//[-] Prandtl number
+
+	public:
+		C_MEQ_target_W_dot_fan__m_dot_air(C_CO2_to_air_cooler *pc_ac,
+					double L_tube /*m*/, double W_par /*m*/, double V_total /*m3*/,
+					double mu_air /*kg/m-s*/, double v_air /*1/m3*/, 
+					double cp_air /*J/kg-K*/, double Pr_air /*-*/)
+		{
+			mpc_ac = pc_ac;
+
+			m_L_tube = L_tube;
+			m_W_par = W_par;
+			m_V_total = V_total;
+
+			m_mu_air = mu_air;
+			m_v_air = v_air;
+			m_cp_air = cp_air;
+			m_Pr_air = Pr_air;
+
+			m_h_conv_air = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_h_conv_air;	//[W/m2-K] Convective coefficient
+
+		virtual int operator()(double m_dot_air /*kg/s*/, double *W_dot_fan /*MWe*/);
+	};
 
 };
 
