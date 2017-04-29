@@ -444,7 +444,13 @@ private:
 	S_hx_design_solved m_hx_design_solved;
 
 public:
-		
+
+	util::matrix_t<double> mm_T_co2;	//[K]
+	util::matrix_t<double> mm_P_co2;	//[K]
+	util::matrix_t<double> mm_T_air;	//[K]
+
+	CO2_state mc_co2_props;
+
 	C_CO2_to_air_cooler();
 
 	~C_CO2_to_air_cooler(){};
@@ -499,6 +505,135 @@ public:
 		virtual int operator()(double m_dot_air /*kg/s*/, double *W_dot_fan /*MWe*/);
 	};
 
+	class C_MEQ_node_energy_balance__T_co2_out : public C_monotonic_equation
+	{
+	private:
+		C_CO2_to_air_cooler *mpc_ac;
+		double m_T_co2_cold_out;	//[K] CO2 inlet temperature
+		double m_P_co2_ave;			//[kPa] Average CO2 pressure
+
+		double m_m_dot_co2_tube;	//[kg/s] CO2 mass flow rate through tube
+		
+		double m_T_air_cold_in;		//[K] Air cold temperature
+		double m_C_dot_air;		//[W/K] CO2 flow capacitance
+
+		double m_UA_node;		//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+
+	public:
+		C_MEQ_node_energy_balance__T_co2_out(C_CO2_to_air_cooler *pc_ac,
+					double T_co2_cold_out /*K*/, double P_co2_ave /*kPa*/, 
+					double m_dot_co2_tube /*kg/s*/, 
+					double T_air_cold_in /*K*/, double C_dot_air /*W/K*/,
+					double UA_node /*W/K*/)
+		{
+			mpc_ac = pc_ac;
+
+			m_T_co2_cold_out = T_co2_cold_out;	//[K]
+			m_P_co2_ave = P_co2_ave;	//[kPa]
+
+			m_m_dot_co2_tube = m_dot_co2_tube;	//[kg/s]
+			
+			m_T_air_cold_in = T_air_cold_in;	//[K]
+			m_C_dot_air = C_dot_air;	//[W/K]
+
+			m_UA_node = UA_node;		//[W/K]
+
+			m_Q_dot_node = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_Q_dot_node;	//[W]
+
+		virtual int operator()(double T_co2_hot_in /*K*/, double *diff_T_co2_cold /*-*/);
+	};
+
+	class C_MEQ_target_CO2_dP__L_tube_pass : public C_monotonic_equation
+	{
+	private:
+		C_CO2_to_air_cooler *mpc_ac;
+		double m_W_par;		//[m] Dimension of parallel paths
+		double m_N_par;		//[-] Number of tubes in parallel
+
+		double m_P_hot_ave;	//[kPa] Global average hot fluid temperature
+		double m_m_dot_tube;//[kg/s] Mass flow rate through one tube
+
+		double m_mu_air;	//[kg/m-s] dynamic viscosity
+		double m_v_air;		//[1/m3] specific volume
+		double m_cp_air;	//[J/kg-K] specific heat convert from kJ/kg-K
+		double m_Pr_air;	//[-] Prandtl number
+
+		double m_tol_upper;	//[-] Tolerance from upper level loop
+		
+	public:
+		C_MEQ_target_CO2_dP__L_tube_pass(C_CO2_to_air_cooler *pc_ac,
+			double W_par /*m*/, double N_par /*-*/,
+			double P_hot_ave /*kPa*/, double m_dot_tube /*kg/s*/,
+			double mu_air /*kg/m-s*/, double v_air /*1/m3*/,
+			double cp_air /*J/kg-K*/, double Pr_air /*-*/,
+			double tol_upper /*-*/)
+		{
+			mpc_ac = pc_ac;
+			m_W_par = W_par;	//[m]
+			m_N_par = N_par;	//[-]
+
+			m_P_hot_ave = P_hot_ave;
+			m_m_dot_tube = m_dot_tube;
+
+			m_mu_air = mu_air;
+			m_v_air = v_air;
+			m_cp_air = cp_air;
+			m_Pr_air = Pr_air;
+
+			m_tol_upper = tol_upper;	//[-]
+
+			m_V_total = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_V_total;	//[m3]
+
+		virtual int operator()(double L_tube /*m*/, double *delta_P_co2 /*kPa*/);
+	};
+
+	class C_MEQ_target_T_hot__width_parallel : public C_monotonic_equation
+	{
+	private:
+		C_CO2_to_air_cooler *mpc_ac;
+
+		double m_mu_air;	//[kg/m-s] dynamic viscosity
+		double m_v_air;		//[1/m3] specific volume
+		double m_cp_air;	//[J/kg-K] specific heat convert from kJ/kg-K
+		double m_Pr_air;	//[-] Prandtl number
+
+		double m_T_co2_deltaP_eval;	//[K] Representative temperature for property evaluation
+		double m_P_hot_ave;			//[kPa]
+
+		double m_tol;		//[-] Convergence tolerance
+
+	public:
+		C_MEQ_target_T_hot__width_parallel(C_CO2_to_air_cooler *pc_ac,
+			double mu_air /*kg/m-s*/, double v_air /*1/m3*/,
+			double cp_air /*J/kg-K*/, double Pr_air /*-*/,
+			double T_co2_deltaP_eval /*K*/, double P_hot_ave /*kPa*/,
+			double tol /*-*/)
+		{
+			mpc_ac = pc_ac;
+
+			m_mu_air = mu_air;
+			m_v_air = v_air;
+			m_cp_air = cp_air;
+			m_Pr_air = Pr_air;
+
+			m_T_co2_deltaP_eval = T_co2_deltaP_eval;
+			m_P_hot_ave = P_hot_ave;
+
+			m_tol = tol;
+
+			m_L_tube = std::numeric_limits<double>::quiet_NaN();
+		}
+
+		double m_L_tube;	//[m]
+
+		virtual int operator()(double W_par /*m*/, double *T_co2_hot /*K*/);
+	};
 };
 
 
