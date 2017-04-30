@@ -586,9 +586,15 @@ public:
 			m_tol_upper = tol_upper;	//[-]
 
 			m_V_total = std::numeric_limits<double>::quiet_NaN();
+			m_h_conv_air = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_air_total = std::numeric_limits<double>::quiet_NaN();
+			m_A_surf_node = std::numeric_limits<double>::quiet_NaN();
 		}
 
-		double m_V_total;	//[m3]
+		double m_V_total;		//[m^3] Total HX "footprint" Volume
+		double m_h_conv_air;	//[W/m2-K] Convective coefficient
+		double m_m_dot_air_total;		//[kg/s] Total air mass flow rate
+		double m_A_surf_node;	//[m2] Air-side surface area of node
 
 		virtual int operator()(double L_tube /*m*/, double *delta_P_co2 /*kPa*/);
 	};
@@ -628,9 +634,21 @@ public:
 			m_tol = tol;
 
 			m_L_tube = std::numeric_limits<double>::quiet_NaN();
+			m_N_par = std::numeric_limits<double>::quiet_NaN();
+			m_N_tubes = std::numeric_limits<double>::quiet_NaN();
+			m_V_total = std::numeric_limits<double>::quiet_NaN();
+			m_h_conv_air = std::numeric_limits<double>::quiet_NaN();
+			m_m_dot_air_total = std::numeric_limits<double>::quiet_NaN();
+			m_A_surf_node = std::numeric_limits<double>::quiet_NaN();
 		}
 
 		double m_L_tube;	//[m]
+		double m_N_par;		//[-]
+		double m_N_tubes;	//[-]
+		double m_V_total;	//[m^3] Total HX "footprint" Volume
+		double m_h_conv_air;	//[W/m2-K] Convective coefficient
+		double m_m_dot_air_total;		//[kg/s] Total air mass flow rate
+		double m_A_surf_node;	//[m2] Air-side surface area of node
 
 		virtual int operator()(double W_par /*m*/, double *T_co2_hot /*K*/);
 	};
