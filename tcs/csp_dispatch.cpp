@@ -133,6 +133,7 @@ void csp_dispatch_opt::clear_output_arrays()
     outputs.w_condf_expected.clear();
 	outputs.w_pb_target.clear();
     outputs.wnet_lim_min.clear();
+    outputs.delta_rs.clear();
 }
 
 bool csp_dispatch_opt::check_setup(int nstep)
@@ -260,6 +261,11 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Qc"] = optinst->params.e_pb_startup_cold / ceil(optinst->params.dt_pb_startup_cold/pars["delta"]) / pars["delta"];
         pars["Qb"] = optinst->params.q_pb_standby ;
         pars["Lr"] = optinst->params.w_rec_pump ;
+        pars["Lc"] = optinst->params.w_cycle_pump;
+        pars["Wh"] = optinst->params.w_track;
+        pars["Wb"] = optinst->params.w_cycle_standby;
+        pars["Ehs"] = optinst->params.w_stow;
+        pars["Wrsb"] = optinst->params.w_rec_ht;
 
         pars["s0"] = optinst->params.e_tes_init ;
         pars["ursu0"] = 0.;
@@ -1091,9 +1097,11 @@ bool csp_dispatch_opt::optimize()
                 add_constraintex(lp, 1, row, col, LE, P["Eu"]);
 
 				//max cycle thermal input in time periods where cycle operates and receiver is starting up
+                outputs.delta_rs.resize(nt);
 				if (t < nt - 1)
 				{
 					double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
+                    outputs.delta_rs.at(t) = delta_rec_startup;
 					double t_rec_startup = delta_rec_startup * P["delta"];
 					double large = 5.0*params.q_pb_max;
 					int i = 0;
@@ -1647,22 +1655,31 @@ std::string csp_dispatch_opt::write_ampl()
         fout << "param etaamb := \n";   //power block ambient adjustment
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
-        fout << ";";
+        fout << ";\n\n";
 
         //net power limit
         fout << "param Wdotnet := \n";
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << w_lim.at(t) << "\n";
+        fout << ";\n\n";
         
         //condenser parasitic loss coefficient
         fout << "param etac := \n";
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << outputs.w_condf_expected.at(t) << "\n";
+        fout << ";\n\n";
 
         //cycle net production lower limit
         fout << "param wnet_lim_min := \n";
         for(int t=0; t<nt; t++)
             fout << t+1 << "\t" << outputs.wnet_lim_min.at(t) << "\n";
+        fout << ";\n\n";
+
+        //cycle net production lower limit
+        fout << "param delta_rs := \n";
+        for(int t=0; t<nt; t++)
+            fout << t+1 << "\t" << outputs.delta_rs.at(t) << "\n";
+        fout << ";\n\n";
 
         fout.close();
     }
