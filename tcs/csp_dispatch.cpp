@@ -249,7 +249,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
     the dispatch optimization model. 
     */
 
-    //double T = nt ;
+        pars["T"] = nt ;
         pars["delta"] = optinst->params.dt;
         pars["Eu"] = optinst->params.e_tes_max ;
         pars["Er"] = optinst->params.e_rec_startup ;
@@ -266,6 +266,9 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wb"] = optinst->params.w_cycle_standby;
         pars["Ehs"] = optinst->params.w_stow;
         pars["Wrsb"] = optinst->params.w_rec_ht;
+        pars["eta_cycle"] = optinst->params.eta_cycle_ref;
+        pars["Qrsd"] = 0.;      //<< not yet modeled, passing temporarily as zero
+
 
         pars["s0"] = optinst->params.e_tes_init ;
         pars["ursu0"] = 0.;
@@ -281,9 +284,9 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["M"] = 1.e6;
         pars["W_dot_cycle"] = optinst->params.q_pb_des * optinst->params.eta_cycle_ref;
 		
-		pars["wlim_min"] = 9.e99;
+		/*pars["wlim_min"] = 9.e99;
 		for (int t = 0; t < nt; t++)
-			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));
+			pars["wlim_min"] = fmin(pars["wlim_min"], optinst->w_lim.at(t));*/
 
         //calculate Z parameters
         pars["Z_1"] = 0.;
