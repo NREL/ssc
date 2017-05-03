@@ -373,7 +373,7 @@ void ac_connected_battery_controller::preprocess_pv_load()
 			_P_pv_dc_charge_input = _P_pv - P_to_fill_ac;
 		else
 		{
-			double P_pv_to_batt = _P_pv * _P_pv * _bidirectional_inverter->ac_dc_efficiency();
+			double P_pv_to_batt = _P_pv * _bidirectional_inverter->ac_dc_efficiency();
 			double P_loss_ac = _P_pv - P_pv_to_batt;
 			_P_pv_dc_charge_input = _P_pv - P_loss_ac;
 		}
