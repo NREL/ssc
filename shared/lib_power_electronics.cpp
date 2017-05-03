@@ -447,10 +447,11 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 		{
 			P_pv_to_batt_ac = fabs(P_battery_ac);
 
-			if (P_pv_to_batt_ac > P_pv_ac * _bidirectional_inverter->ac_dc_efficiency())
+			// don't include any conversion efficiencies, want to compare AC to AC
+			if (P_pv_to_batt_ac > P_pv_ac)
 			{
-				P_pv_to_batt_ac = P_pv_ac * _bidirectional_inverter->ac_dc_efficiency();
-				P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_ac * _bidirectional_inverter->ac_dc_efficiency();
+				P_pv_to_batt_ac = P_pv_ac;
+				P_grid_to_batt_ac = fabs(P_battery_ac) - P_pv_to_batt_ac;
 			}
 
 			P_pv_to_load_ac = P_pv_ac - P_pv_to_batt_ac;
