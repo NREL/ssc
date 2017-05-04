@@ -342,7 +342,7 @@ class C_CO2_to_air_cooler
 public:
 	
 	// Class to save messages for up stream classes
-	C_csp_messages mc_csp_messages;
+	C_csp_messages mc_messages;
 
 	// Design parameters that are independent of the cycle-side inputs
 	struct S_des_par_ind
@@ -359,27 +359,50 @@ public:
 	// Design parameters that are dependent on the cycle-side performance
 	struct S_des_par_cycle_dep
 	{
+		// Either specify mass flow rate or heat rejection rate
+			// If mass flow rate is > 0.0, will use that
+		double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
+		double m_Q_dot_des;			//[MWt] Heat rejected over specified temperatures
+
 		double m_T_hot_in_des;		//[K] sCO2 hot side (inlet) temperature
 		double m_P_hot_in_des;		//[kPa] sCO2 hot side (inlet) pressure
-		double m_m_dot_total;		//[kg/s] Total sCO2 mass flow into air-cooler
 		double m_delta_P_des;		//[kPa] sCO2 pressure drop
 		double m_T_hot_out_des;		//[K] sCO2 cold outlet temperature
-		double m_W_dot_fan_des;		//[MW] Design point fan power
+		double m_W_dot_fan_des;		//[MWe] Design point fan power
 
 		S_des_par_cycle_dep()
 		{
-			m_T_hot_in_des = m_P_hot_in_des = m_m_dot_total =
+			// One of these needs to be > 0.
+				// Will check mass flow rate first
+			m_m_dot_total = m_Q_dot_des = -1;
+
+			// All of these must be set
+			m_T_hot_in_des = m_P_hot_in_des = 
 				m_delta_P_des = m_T_hot_out_des = m_W_dot_fan_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
 	struct S_hx_design_solved
 	{
-		double m_material_V;	//[m^3]		Total Material volume - no headers
+		int m_N_passes;		//[-] Number of serial passes in flow direction
+		
+		double m_d_out;		//[m] CO2 tube outer diameter
+		double m_d_in;		//[m] CO2 tube inner diameter
+		double m_Depth;		//[m] Dimension in loop/air flow direction
+		double m_W_par;		//[m] Dimension of parallel flow paths
+		double m_N_par;		//[-] Number of parallel flow paths
+		double m_N_tubes;	//[-] Number of tubes
+		double m_L_tube;	//[m] Tube length
+		double m_UA_total;	//[W/K] Total air-side conductance at design
+		double m_V_material_total;	//[m^3] Total Material volume - no headers
+
 
 		S_hx_design_solved()
 		{
-			m_material_V = std::numeric_limits<double>::quiet_NaN();
+			m_N_passes = -1;
+
+			m_d_out = m_d_in = m_Depth = m_W_par = m_N_par =
+				m_N_tubes = m_L_tube = m_UA_total = m_V_material_total = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -390,26 +413,19 @@ private:
 
 	// Remaining Air-Cooler Specs
 	// Inputs
-	int m_N_loops;
-	int m_N_nodes;
+	int m_N_nodes;			//[-]
 	double m_th;			//[m]
 	double m_eta_fan;		//[-]
 	double m_roughness;		//[m]
 	// Calculated
-	double m_d_in;			//[m]
 	double m_A_cs;			//[m^2]
 	double m_relRough;		//[-]
-	double m_Depth;			//[m]		Dimension in loop/air flow direction
-	double m_W_par;			//[m]		Dimension of parallel flow paths
-	double m_N_par;			//[-]		Number of parallel flow paths
-	double m_N_tubes;		//[-]		Number of tubes
-	double m_L_tube;		//[m]		Tube length
 	double m_L_path;		//[m]		Total flow path length
 	double m_A_surf_total;	//[m^2]		Total air-side surface area
-	double m_UA_total;		//[W/K]		Total air-side conductance at design
-	double m_V_total;		//[m^3]		Total HX volume
-	double m_material_V;	//[m^3]		Total Material volume - no headers
+	double m_V_footprint;	//[m^3]		Total HX footprint
 	double m_A_surf_node;	//[m^2]
+	double m_V_material_tubes;	//[m^3] Total material required for tubing
+	double m_V_material_fins;	//[m^3] Total material required for fins
 
 	// Design Ambient Conditions
 	double m_P_amb_des;		//[Pa]
@@ -425,7 +441,6 @@ private:
 		// Input
 	int m_enum_compact_hx_config;
 		// Defined from Config
-	double m_d_out;		//[m]
 	double m_fin_pitch;	//[1/m]
 	double m_D_h;		//[m]
 	double m_fin_thk;	//[m]
@@ -439,9 +454,11 @@ private:
 	int m_final_outlet_index;
 
 	// Structures
+		// In
 	S_des_par_ind ms_des_par_ind;
 	S_des_par_cycle_dep ms_des_par_cycle_dep;
-	S_hx_design_solved m_hx_design_solved;
+		// Out
+	S_hx_design_solved ms_hx_des_sol;
 
 public:
 
@@ -460,11 +477,14 @@ public:
 	void off_design_hx(double T_amb_K, double P_amb_Pa, double T_hot_in_K, double P_hot_in_kPa,
 		double m_dot_hot_kg_s, double T_hot_out_K, double & W_dot_fan_MW, int & error_code);
 
-	const S_hx_design_solved * get_hx_design_solved()
+	double get_total_hx_volume()
 	{
-		m_hx_design_solved.m_material_V = m_material_V;
+		return ms_hx_des_sol.m_V_material_total;
+	}
 
-		return &m_hx_design_solved;
+	const C_CO2_to_air_cooler::S_hx_design_solved * get_design_solved()
+	{
+		return &ms_hx_des_sol;
 	}
 
 	class C_MEQ_target_W_dot_fan__m_dot_air : public C_monotonic_equation
