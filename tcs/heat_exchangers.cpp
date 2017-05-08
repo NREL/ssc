@@ -1420,6 +1420,10 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 		}
 	}
 
+	// Probably have a non-integer number of parallel paths, so round up and recalculate geometry
+	// C++ (int) rounds down
+	int N_par = (int)c_eq.m_N_par + 1;
+
 	// Final reporting metrics
 	ms_hx_des_sol.m_W_par = W_par_solved;			//[m] Dimension perpendicular to loop/air flow direction
 	ms_hx_des_sol.m_N_par = c_eq.m_N_par;			//[-] Number of parallel flow paths
