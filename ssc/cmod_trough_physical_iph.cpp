@@ -168,21 +168,23 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "q_dot_htf_sf_out",  "Field thermal power leaving in HTF",        "MWt",    "",          "trough_field",        "*",        "",     "" },  
 	{ SSC_OUTPUT,   SSC_ARRAY,   "q_dot_freeze_prot", "Field freeze protection required",          "MWt",    "",          "trough_field",        "*",        "",     "" },
 
-	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_loop",   "Receiver mass flow rate",                   "kg/s",    "",              "trough_field",        "*",        "",     "" },  
-	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_field",  "Field total mass flow rate",                "kg/s",    "",              "trough_field",        "*",        "",     "" },  
+	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_loop",      "Receiver mass flow rate",                    "kg/s",    "",          "trough_field",        "*",        "",     "" },  
+	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_field_recirc",  "Field total mass flow recirculated",     "kg/s",    "",          "trough_field",        "*",        "",     "" },  
+	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_field_delivered","Field total mass flow delivered",       "kg/s",    "",          "trough_field",        "*",        "",     "" },  
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_cold_in", "Field timestep-averaged inlet temperature",  "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_cold_in",   "Loop timestep-averaged inlet temperature",   "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_rec_hot_out",   "Loop timestep-averaged outlet temperature",  "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "T_field_hot_out", "Field timestep-averaged outlet temperature", "C",       "",          "trough_field",        "*",        "",     "" },
 	{ SSC_OUTPUT,   SSC_ARRAY,   "deltaP_field",    "Field pressure drop",                    "bar",         "",          "trough_field",        "*",        "",     "" },
 
-	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",          "trough_field",        "*",        "",     "" },
-	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",          "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_sca_track", "Field collector tracking power",         "MWe",     "",  "trough_field",        "*",        "",     "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "W_dot_field_pump","Field htf pumping power",                "MWe",     "",  "trough_field",        "*",        "",     "" },
 	
 		// Heat Sink
-    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_to_heat_sink", "Heat sink thermal power",     "MWt",    "",          "Heat_Sink",      "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_pc_pump",      "Heat sink pumping power",     "MWe",    "",          "Heat_Sink",      "*",                       "",                      "" },
-	
+    { SSC_OUTPUT,   SSC_ARRAY,   "q_dot_to_heat_sink", "Heat sink thermal power",             "MWt",     "",  "Heat_Sink",      "*",  "",  "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "W_dot_pc_pump",      "Heat sink pumping power",             "MWe",     "",  "Heat_Sink",      "*",  "",  "" },
+	{ SSC_OUTPUT,   SSC_ARRAY,   "m_dot_htf_heat_sink","Heat sink HTF mass flow",             "kg/s",    "",  "Heat_Sink",      "*",  "",  "" },
+
 		// SYSTEM
     { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_parasitic_tot", "System total electrical parasitic", "MWe",    "",          "Heat_Sink",      "*",                       "",                      "" },
 
@@ -191,7 +193,9 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_1",            "1st operating mode",                                           "",             "",            "Solver",        "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_2",            "2nd op. mode, if applicable",                                  "",             "",            "Solver",        "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "op_mode_3",            "3rd op. mode, if applicable",                                  "",             "",            "Solver",        "*",                       "",           "" },
-	
+	{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_balance",        "Relative mass flow balance error",                             "",             "",            "Controller",     "*",                       "",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "q_balance",            "Relative energy balance error",                                "",             "",            "Controller",     "*",                       "",           "" },
+
 
 		// Annual Outputs
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual Net Thermal Energy Production w/ avail derate",       "kWt-hr",  "",  "Post-process",    "*",   "",   "" },
@@ -447,7 +451,8 @@ public:
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, allocate("q_dot_freeze_prot", n_steps_fixed), n_steps_fixed);
 
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);
-		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD, allocate("m_dot_field", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, allocate("m_dot_field_recirc", n_steps_fixed), n_steps_fixed);
+		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, allocate("m_dot_field_delivered", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
 		c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
@@ -477,6 +482,7 @@ public:
 		// Allocate heat sink outputs
 		c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
 		c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+		c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
 
 		// ********************************
 		// ********************************
@@ -527,6 +533,8 @@ public:
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
 		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
+		csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_Q_DOT, allocate("q_balance", n_steps_fixed), n_steps_fixed);
 
 
 		int out_type = -1;
