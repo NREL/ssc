@@ -7,6 +7,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[]=
 {
 	{C_pc_heat_sink::E_Q_DOT_HEAT_SINK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_pc_heat_sink::E_W_DOT_PUMPING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{C_pc_heat_sink::E_M_DOT_HTF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -207,6 +208,7 @@ void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
 
 	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
 	mc_reported_outputs.value(E_W_DOT_PUMPING, out_solver.m_W_dot_htf_pump);	//[MWe]
+	mc_reported_outputs.value(E_M_DOT_HTF, m_dot_htf);			//[kg/s]
 
 	return;
 }
