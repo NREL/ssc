@@ -5998,7 +5998,7 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
 	// Solve for cold temperature
-	double T_cold_guess_low = m_T_htf_pc_cold_est - 273.15;	//[C]
+	double T_cold_guess_low = m_T_htf_pc_cold_est;	//[C]
 	double T_cold_guess_high = T_cold_guess_low + 10.0;		//[C]
 
 	double T_cold_solved, tol_solved;
