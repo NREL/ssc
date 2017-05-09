@@ -1408,8 +1408,8 @@ void C_csp_trough_collector_receiver::loop_optical_eta_off()
 	m_dni_costh = 0.0;
 	m_W_dot_sca_tracking = 0.0;		//[MWe]
 
-	m_control_defocus = 0.0;
-	m_component_defocus = 0.0;
+	m_control_defocus = 1.0;
+	m_component_defocus = 1.0;
 
 	m_q_dot_inc_sf_tot = 0.0;		//[MWt]
 
