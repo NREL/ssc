@@ -22,38 +22,38 @@ all:
 #	make -f Makefile-shared -j8 ARCH=x86_64
 #	rm *.o
 	make -f Makefile-shared -j8 ARCH=armeabi-v7a
-#	rm *.o
-#	make -f Makefile-shared -j8 ARCH=armeabi
-#	rm *.o
+	rm *.o
+	make -f Makefile-shared -j8 ARCH=armeabi
+	rm *.o
 #	make -f Makefile-nlopt -j8 ARCH=x86_64
-	rm *.o
+#	rm *.o
 	make -f Makefile-nlopt -j8 ARCH=armeabi-v7a
-#	rm *.o
-#	make -f Makefile-nlopt -j8 ARCH=armeabi
-#	rm *.o
+	rm *.o
+	make -f Makefile-nlopt -j8 ARCH=armeabi
+	rm *.o
 #	make -f Makefile-lpsolve -j8 ARCH=x86_64
-	rm *.o
+#	rm *.o
 	make -f Makefile-lpsolve -j8 ARCH=armeabi-v7a
-#	rm *.o
-#	make -f Makefile-lpsolve -j8 ARCH=armeabi
-#	rm *.o
+	rm *.o
+	make -f Makefile-lpsolve -j8 ARCH=armeabi
+	rm *.o
 #	make -f Makefile-solarpilot -j8 ARCH=x86_64
-	rm *.o
+#	rm *.o
 	make -f Makefile-solarpilot -j8 ARCH=armeabi-v7a
-#	rm *.o
-#	make -f Makefile-solarpilot -j8 ARCH=armeabi
-#	rm *.o
+	rm *.o
+	make -f Makefile-solarpilot -j8 ARCH=armeabi
+	rm *.o
 #	make -f Makefile-tcs -j8 ARCH=x86_64
-	rm *.o
+#	rm *.o
 	make -f Makefile-tcs -j8 ARCH=armeabi-v7a
-#	rm *.o
-#	make -f Makefile-tcs -j8 ARCH=armeabi
-#	rm *.o
-#	make -f Makefile-ssc -j8 ARCH=x86_64
 	rm *.o
-	make -f Makefile-ssc -j8 ARCH=armeabi-v7a
+	make -f Makefile-tcs -j8 ARCH=armeabi
+	rm *.o
+#	make -f Makefile-ssc -j8 ARCH=x86_64
 #	rm *.o
-#	make -f Makefile-ssc -j8 ARCH=armeabi
+	make -f Makefile-ssc -j8 ARCH=armeabi-v7a
+	rm *.o
+	make -f Makefile-ssc -j8 ARCH=armeabi
 	rm *.o
 
 clean:
@@ -69,13 +69,13 @@ libraries:
 #	lipo -create ssc_armv7s.dylib ssc_x86_64.dylib ssc_arm64.dylib -output ssc_ios.dylib
 
 
-	$(AR) -xv shared_$(ARCH).so
-	$(AR) -xv nlopt_$(ARCH).so
-	$(AR) -xv lpsolve_$(ARCH).so
-	$(AR) -xv solarpilot_$(ARCH).so
-	$(AR) -xv tcs_$(ARCH).so
-	$(AR) -xv ssc_$(ARCH).so
-	$(AR) -rc libssc.so *.o	
+	$(AR) -xv shared_$(ARCH).a
+	$(AR) -xv nlopt_$(ARCH).a
+	$(AR) -xv lpsolve_$(ARCH).a
+	$(AR) -xv solarpilot_$(ARCH).a
+	$(AR) -xv tcs_$(ARCH).a
+	$(AR) -xv ssc_$(ARCH).a
+	$(AR) -rc ssc$(ARCH).a *.o	
 	rm *.o
 #	lipo -create shared_armeabi-v7a.a shared_x86_64.a shared_armeabi.a -output shared.a	
 #	lipo -create nlopt_armeabi-v7a.a nlopt_x86_64.a nlopt_armeabi.a -output nlopt.a
