@@ -281,7 +281,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 	}
 
 	// Guess another realistic mass flow rate
-	double m_dot_guess = m_q_dot_target / xy_pair_1.y * xy_pair_1.x;	//[kg/hr]
+	double m_dot_guess = std::min( 0.97*xy_pair_1.x, m_q_dot_target / xy_pair_1.y * xy_pair_1.x );	//[kg/hr]
 
 	// And calculate a second power cycle thermal power input
 	m_dot_code = c_solver.test_member_function(m_dot_guess, &m_q_dot_calc);
