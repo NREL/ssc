@@ -1482,7 +1482,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 						if( q_dot_tes_dc > 0.0 )
 						{	// Storage dispatch is available
 
-							if( ( q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
+							if( ( (q_dot_tes_dc*(1.0 + tol_mode_switching) > q_pc_target
+								&& m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_min)
 								|| m_dot_tes_dc_est*(1.0 + tol_mode_switching) > m_m_dot_pc_max )
 								&& is_pc_su_allowed &&
 								m_is_CR_OFF__PC_TARGET__TES_DC__AUX_OFF_avail )
