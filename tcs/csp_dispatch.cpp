@@ -336,6 +336,31 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
+        // Adjust wlim if specified value is too low to permit cycle operation
+        optinst->outputs.wnet_lim_min.resize(nt);
+        optinst->outputs.delta_rs.resize(nt);
+        for(int t=0; t<nt; t++)
+        {
+		    double wmin = (pars["Ql"] * pars["etap"]*optinst->outputs.eta_pb_expected.at(t) / optinst->params.eta_cycle_ref) + 
+                            (pars["Wdotu"] - pars["etap"]*pars["Qu"])*optinst->outputs.eta_pb_expected.at(t) / optinst->params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
+		    double max_parasitic = 
+                    pars["Lr"] * optinst->outputs.q_sfavail_expected.at(t) 
+                + (optinst->params.w_rec_ht / optinst->params.dt) 
+                + (optinst->params.w_stow / optinst->params.dt) 
+                + optinst->params.w_track 
+                + optinst->params.w_cycle_standby 
+                + optinst->params.w_cycle_pump*pars["Qu"]
+                + optinst->outputs.w_condf_expected.at(t)*pars["W_dot_cycle"];  // Largest possible parasitic load at time t
+
+            //save for writing to ampl
+            optinst->outputs.wnet_lim_min.at(t) =  wmin - max_parasitic;
+            if( t < nt-1 )
+            {
+                double delta_rec_startup = min(1., max(optinst->params.e_rec_startup / max(optinst->outputs.q_sfavail_expected.at(t + 1)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
+                optinst->outputs.delta_rs.at(t) = delta_rec_startup;
+            }
+        }
+
         //temporary fixed constants
         pars["disp_time_weighting"] = optinst->params.disp_time_weighting;
         pars["rsu_cost"] = optinst->params.rsu_cost; //952.;
@@ -1100,12 +1125,12 @@ bool csp_dispatch_opt::optimize()
                 add_constraintex(lp, 1, row, col, LE, P["Eu"]);
 
 				//max cycle thermal input in time periods where cycle operates and receiver is starting up
-                outputs.delta_rs.resize(nt);
+                //outputs.delta_rs.resize(nt);
 				if (t < nt - 1)
 				{
-					double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
-                    outputs.delta_rs.at(t) = delta_rec_startup;
-					double t_rec_startup = delta_rec_startup * P["delta"];
+					/*double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
+                    outputs.delta_rs.at(t) = delta_rec_startup;*/
+					double t_rec_startup = outputs.delta_rs.at(t) * P["delta"];
 					double large = 5.0*params.q_pb_max;
 					int i = 0;
 
@@ -1143,22 +1168,23 @@ bool csp_dispatch_opt::optimize()
 
 			for (int t = 0; t<nt; t++)
 			{
-				// Adjust wlim if specified value is too low to permit cycle operation
-				double wmin = (P["Ql"] * P["etap"]*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-				double max_parasitic = 
-                      P["Lr"] * outputs.q_sfavail_expected.at(t) 
-                    + (params.w_rec_ht / params.dt) 
-                    + (params.w_stow / params.dt) 
-                    + params.w_track 
-                    + params.w_cycle_standby 
-                    + params.w_cycle_pump*P["Qu"]
-                    + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
+				//// Adjust wlim if specified value is too low to permit cycle operation
+				//double wmin = (P["Ql"] * P["etap"]*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref) + (P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t) / params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
+				//double max_parasitic = 
+    //                  P["Lr"] * outputs.q_sfavail_expected.at(t) 
+    //                + (params.w_rec_ht / params.dt) 
+    //                + (params.w_stow / params.dt) 
+    //                + params.w_track 
+    //                + params.w_cycle_standby 
+    //                + params.w_cycle_pump*P["Qu"]
+    //                + outputs.w_condf_expected.at(t)*P["W_dot_cycle"];  // Largest possible parasitic load at time t
 
-                //save for writing to ampl
-                outputs.wnet_lim_min.push_back( wmin - max_parasitic );
+    //            //save for writing to ampl
+    //            outputs.wnet_lim_min.push_back( wmin - max_parasitic );
                 
                 //check if cycle should be able to operate
-				if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
+				//if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
+                if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )
                 {
                     if(w_lim.at(t) > 0)
                         params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
