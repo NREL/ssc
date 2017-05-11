@@ -1658,7 +1658,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 					
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
 					{
-						if (defocus_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
+						if (defocus_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 						{
 							std::string msg = util::format("At time = %lg %s "
 								"iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
@@ -1727,7 +1727,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
 					{
-						if (solver_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
+						if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 						{
 							std::string msg = util::format("At time = %lg %s "
 								"iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
@@ -2925,7 +2925,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
 					{
-						if (defocus_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
+						if (defocus_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 						{
 							std::string msg = util::format("At time = %lg CR_DF__PC_OFF__TES_FULL__AUX_OFF "
 								"iteration to find a defocus resulting in fully charged TES only reached a convergence "
@@ -4142,7 +4142,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
 					{
-						if (defocus_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
+						if (defocus_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 						{
 							std::string msg = util::format("At time = %lg %s "
 								"iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
@@ -4216,7 +4216,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup,
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
 					{
-						if (solver_code > C_monotonic_eq_solver::CONVERGED && abs(tol_solved) < 0.1)
+						if (solver_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 						{
 							std::string msg = util::format("At time = %lg CR_DF__PC_MAX__TES_FULL__AUX_OFF "
 								"iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
