@@ -1311,13 +1311,16 @@ bool csp_dispatch_opt::optimize()
 				set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
 		}
         
- 
+		lprec *lp_original;
+		lp_original = copy_lp(lp);
+
        //Problem scaling loop
         int scaling_iter = 0;
         bool return_ok = false;
         while(scaling_iter < 5)
         {
-
+			delete_lp(lp);
+			lp = copy_lp(lp_original);
             if( solver_params.scaling_type < 0 && scaling_iter == 0)
             {
                 scaling_iter ++;
@@ -1348,7 +1351,6 @@ bool csp_dispatch_opt::optimize()
                 break;
             }
 
-
             ret = solve(lp);
 
             //Collect the dispatch profile and startup flags
@@ -1378,6 +1380,8 @@ bool csp_dispatch_opt::optimize()
 
             scaling_iter ++;
         }
+
+		delete_lp(lp_original);
 
         //keep track of problem efficiency
         outputs.presolve_nconstr = get_Nrows(lp);
