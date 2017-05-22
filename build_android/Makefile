@@ -19,38 +19,38 @@ ARCH=armeabi-v7a
 
 # mixing architectures so remove object files before archiving
 all:
-#	make -f Makefile-shared -j8 ARCH=x86_64
-#	rm *.o
+	make -f Makefile-shared -j8 ARCH=x86
+	rm *.o
 	make -f Makefile-shared -j8 ARCH=armeabi-v7a
 	rm *.o
 	make -f Makefile-shared -j8 ARCH=armeabi
 	rm *.o
-#	make -f Makefile-nlopt -j8 ARCH=x86_64
-#	rm *.o
+	make -f Makefile-nlopt -j8 ARCH=x86
+	rm *.o
 	make -f Makefile-nlopt -j8 ARCH=armeabi-v7a
 	rm *.o
 	make -f Makefile-nlopt -j8 ARCH=armeabi
 	rm *.o
-#	make -f Makefile-lpsolve -j8 ARCH=x86_64
-#	rm *.o
+	make -f Makefile-lpsolve -j8 ARCH=x86
+	rm *.o
 	make -f Makefile-lpsolve -j8 ARCH=armeabi-v7a
 	rm *.o
 	make -f Makefile-lpsolve -j8 ARCH=armeabi
 	rm *.o
-#	make -f Makefile-solarpilot -j8 ARCH=x86_64
-#	rm *.o
+	make -f Makefile-solarpilot -j8 ARCH=x86
+	rm *.o
 	make -f Makefile-solarpilot -j8 ARCH=armeabi-v7a
 	rm *.o
 	make -f Makefile-solarpilot -j8 ARCH=armeabi
 	rm *.o
-#	make -f Makefile-tcs -j8 ARCH=x86_64
-#	rm *.o
+	make -f Makefile-tcs -j8 ARCH=x86
+	rm *.o
 	make -f Makefile-tcs -j8 ARCH=armeabi-v7a
 	rm *.o
 	make -f Makefile-tcs -j8 ARCH=armeabi
 	rm *.o
-#	make -f Makefile-ssc -j8 ARCH=x86_64
-#	rm *.o
+	make -f Makefile-ssc -j8 ARCH=x86
+	rm *.o
 	make -f Makefile-ssc -j8 ARCH=armeabi-v7a
 	rm *.o
 	make -f Makefile-ssc -j8 ARCH=armeabi
