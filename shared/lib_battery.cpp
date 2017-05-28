@@ -481,7 +481,7 @@ void voltage_dynamic_t::copy(voltage_t *& voltage)
 	tmp->_Qnom = _Qnom;
 	tmp->_C_rate = _C_rate;
 	tmp->_A = _A;
-	tmp->_B = _B;
+	tmp->_B0 = _B0;
 	tmp->_E0 = _E0;
 	tmp->_K = _K;
 
@@ -496,8 +496,8 @@ void voltage_dynamic_t::parameter_compute()
 	double I = _Qfull*_C_rate; // [A]
 	//_R = _Vnom*(1. - eta) / (_C_rate*_Qnom); // [Ohm]
 	_A = _Vfull - _Vexp; // [V]
-	_B = 3. / _Qexp;     // [1/Ah]
-	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom); // [V] - polarization voltage
+	_B0 = 3. / _Qexp;     // [1/Ah]
+	_K = ((_Vfull - _Vnom + _A*(std::exp(-_B0*_Qnom) - 1))*(_Qfull - _Qnom)) / (_Qnom); // [V] - polarization voltage
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
@@ -522,7 +522,7 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q, double I, doub
 	// everything in here is on a per-cell basis
 	// Tremblay Dynamic Model
 	double it = Q - q0;
-	double E = _E0 - _K*(Q / (Q - it)) + _A*exp(-_B*it);
+	double E = _E0 - _K*(Q / (Q - it)) + _A*exp(-_B0*it);
 	double V = E - _R*I;
 
 	// Discharged lower than model can handle ( < 1% SOC)
@@ -542,7 +542,7 @@ voltage_t(num_cells_series, num_strings, V_ref_50)
 	_R = R;
     _R_molar = 8.314;  // Molar gas constant [J/mol/K]^M
     _F = 26.801 * 3600;// Faraday constant [As/mol]^M
-    _C = 1.38;                 // model correction factor^M	
+    _C0 = 1.38;                 // model correction factor^M	
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
 void voltage_vanadium_redox_t::copy(voltage_t *& voltage)
@@ -584,7 +584,7 @@ double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 
 	double V_stack_cell = 0.;
 	if (std::isfinite(A))
-		V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C;
+		V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
 
 	return V_stack_cell;
 }
