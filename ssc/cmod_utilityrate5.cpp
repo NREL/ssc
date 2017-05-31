@@ -2387,7 +2387,6 @@ public:
 					{
 						monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 						//						monthly_cumulative_excess_dollars[m] -= monthly_bill[m];
-						dollars_applied -= monthly_ec_charges[m];
 					}
 					//					monthly_bill[m] = 0;
 					payment[c - 1] = 0; // fixed charges applied below
@@ -2397,7 +2396,6 @@ public:
 				{
 //					monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
-					dollars_applied += monthly_cumulative_excess_dollars[m];
 					//					if (monthly_bill[m] < 0)
 					if (monthly_ec_charges[m] < 0)
 					{
@@ -2405,7 +2403,6 @@ public:
 						{
 //							monthly_cumulative_excess_dollars[m] = -monthly_bill[m];
 							monthly_cumulative_excess_dollars[m] = -monthly_ec_charges[m];
-							dollars_applied -= monthly_ec_charges[m];
 						}
 //						monthly_bill[m] = 0;
 						monthly_ec_charges[m] = 0;
@@ -2418,6 +2415,7 @@ public:
 					}
 				}
 			}
+			if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
 			excess_dollars_applied[m] = dollars_applied;
 			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 
@@ -2967,7 +2965,6 @@ public:
 				
 				if (monthly_ec_charges[m] < 0)
 				{
-					dollars_applied += monthly_ec_charges[m];
 					monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
 					monthly_ec_charges[m] = 0;
 					payment[c - 1] = 0; // fixed charges applied below
@@ -2990,6 +2987,7 @@ public:
 				}
 				*/
 			}
+			if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
 			excess_dollars_applied[m] = dollars_applied;
 			monthly_bill[m] = monthly_ec_charges[m] + monthly_dc_fixed[m] + monthly_dc_tou[m];
 		} // end of month m (m loop)
