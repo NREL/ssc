@@ -1,5 +1,5 @@
 # mixing architectures so remove object files before archiving
-all: makes libraries
+all: makes libraries tarball
 
 makes:
 	make -f Makefile-shared -j8 ARCH=x86_64
@@ -46,8 +46,15 @@ libraries:
 	lipo -create solarpilot_armv7s.a solarpilot_x86_64.a solarpilot_arm64.a -output solarpilot.a
 	lipo -create tcs_armv7s.a tcs_x86_64.a tcs_arm64.a -output tcs.a
 	lipo -create ssc_armv7s.a  ssc_x86_64.a ssc_arm64.a -output ssc.a
-	libtool -o libssc.a shared.a nlopt.a lpsolve.a solarpilot.a tcs.a ssc.a
+	libtool -o libssc.so shared.a nlopt.a lpsolve.a solarpilot.a tcs.a ssc.a
+	rm *.a
+	mv libssc.so libssc.a
 	
+tarball:
+	mkdir lib
+	mv libssc.a lib
+	tar -zcvf libssc.tar.gz lib
+		
 clean:
 	make -f Makefile-shared clean
 	make -f Makefile-nlopt clean
@@ -55,5 +62,6 @@ clean:
 	make -f Makefile-solarpilot clean
 	make -f Makefile-tcs clean
 	make -f Makefile-ssc clean
-	rm *.a
+	rm -rf lib
+	rm libssc.tar.gz
 
