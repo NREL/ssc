@@ -1,5 +1,5 @@
 # mixing architectures so remove object files before archiving
-all: makes libraries tarball
+all: makes libraries zip
 
 makes:
 	make -f Makefile-shared -j8 ARCH=x86_64
@@ -49,11 +49,11 @@ libraries:
 	libtool -o libssc.so shared.a nlopt.a lpsolve.a solarpilot.a tcs.a ssc.a
 	rm *.a
 	mv libssc.so libssc.a
-	
-tarball:
 	mkdir lib
 	mv libssc.a lib
-	tar -zcvf libssc.tar.gz lib
+	
+zip:
+	zip -r libssc.zip lib
 		
 clean:
 	make -f Makefile-shared clean
@@ -63,5 +63,4 @@ clean:
 	make -f Makefile-tcs clean
 	make -f Makefile-ssc clean
 	rm -rf lib
-	rm libssc.tar.gz
-
+	rm libssc.zip

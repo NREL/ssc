@@ -1,6 +1,6 @@
 # explicit for all architectures
 # mixing architectures so remove object files before archiving
-all: makes libraries tarball
+all: makes libraries zip
 
 makes:
 	make -f Makefile-shared -j8 ARCH=x86
@@ -69,8 +69,8 @@ libraries:
 	cp ssc_armeabi-v7a.a lib/armeabi-v7a/ssc.a
 	rm *.a
 
-tarball:
-	tar -zcvf libssc.tar.gz lib
+zip:
+	zip -r libssc.zip lib
 
 clean:
 	make -f Makefile-shared clean
@@ -80,5 +80,5 @@ clean:
 	make -f Makefile-tcs clean
 	make -f Makefile-ssc clean
 	rm -rf lib
-	rm libssc.tar.gz
+	rm libssc.zip
 
