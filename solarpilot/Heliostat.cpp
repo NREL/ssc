@@ -63,6 +63,7 @@ var_heliostat* Heliostat::getVarMap(){return _var_helio;}
 bool Heliostat::IsUserCant(){return _is_user_canted;} //Fetch
 void Heliostat::IsUserCant(bool setting){_is_user_canted = setting;} //Set
 bool Heliostat::IsEnabled(){return _is_enabled;}
+void Heliostat::IsEnabled(bool enable){_is_enabled = enable;}
 
 void Heliostat::setId(int id){_id = id;}
 void Heliostat::setGroupId(int row, int col){_group[0] = row; _group[1] = col;}
@@ -519,26 +520,44 @@ void Heliostat::updateTrackVector(Vect &sunvect) {
 	s_hat = sunvect;
 
 	//Create a vector between the heliostat and the aim point
-	t_hat.Set(_aim_point.x - _location.x, _aim_point.y - _location.y, _aim_point.z - _location.z);
-	Toolbox::unitvect(t_hat);
+    if( _is_enabled )
+    {
+        t_hat.Set(_aim_point.x - _location.x, _aim_point.y - _location.y, _aim_point.z - _location.z);
+	    
+        Toolbox::unitvect(t_hat);
+        
+        //Use the approximate tower vector t_hat to determine the tracking vector
+	    Vect ts;
+		
+	    ts.i = t_hat.i + s_hat.i;
+	    ts.j = t_hat.j + s_hat.j;
+	    ts.k = t_hat.k + s_hat.k; //break down to save on calculation
+	    double ts_mag = sqrt( pow(ts.i, 2) + pow(ts.j, 2) + pow(ts.k, 2) );
+	    n_hat.i = ts.i/ts_mag;
+	    n_hat.j = ts.j/ts_mag;
+	    n_hat.k = ts.k/ts_mag;    
+
+	    //Set the tracking angles
+	    setTrackAngles(atan2(n_hat.i,n_hat.j), acos(n_hat.k));
+    }
+    else
+    {
+        //aimpoint vector is reflection of sun vector
+        t_hat.Set( -sunvect.i, -sunvect.j, sunvect.k );
+                
+        //normal vector is zenith
+        n_hat.Set(0., 0., 1.);
+
+	    //make tracking angles so that heliostat "faces" tower position when in stow
+	    setTrackAngles(atan2(_location.x,_location.y), 0.);
+    }
 			
-	//Use the approximate tower vector t_hat to determine the tracking vector
-	Vect ts;
-		
-	ts.i = t_hat.i + s_hat.i;
-	ts.j = t_hat.j + s_hat.j;
-	ts.k = t_hat.k + s_hat.k; //break down to save on calculation
-	double ts_mag = sqrt( pow(ts.i, 2) + pow(ts.j, 2) + pow(ts.k, 2) );
-	n_hat.i = ts.i/ts_mag;
-	n_hat.j = ts.j/ts_mag;
-	n_hat.k = ts.k/ts_mag;
-		
+	
 	//Set the Heliostat object tracking vector
 	setTrackVector(n_hat);
 	//Set the heliostat to tower vector
 	setTowerVector(t_hat);
-	//Set the tracking angles
-	setTrackAngles(atan2(n_hat.i,n_hat.j), acos(n_hat.k));
+
 	
 	/*Calculate the location in global coordinates of the top two heliostat corners. Note that 
 	by the azimuth convention where North is 0deg, the upper edges of the heliostat will begin on
@@ -674,8 +693,8 @@ Reflector *Heliostat::getPanelById(int id){
     size_t ncantx, ncanty;
     _panels.size(ncantx, ncanty);  //is this the right order?
 
-	for (int j=0; j<ncantx; j++) {
-		for (int i=0; i<ncanty; i++) {
+	for (int j=0; j<(int)ncantx; j++) {
+		for (int i=0; i<(int)ncanty; i++) {
 			if (_panels[j,i].getId() == id){
 				return &_panels[j,i];
 			}
