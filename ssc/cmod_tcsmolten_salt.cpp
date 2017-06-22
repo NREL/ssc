@@ -95,7 +95,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",        "Solar field fixed cost",                                            "$",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fossil_spec_cost",     "Fossil system specific cost",                                       "$/kWe",        "",            "heliostat",      "*",                       "",                     "" },
 																																																									      
-    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization",                                        "",             "",            "heliostat",       "?=0",                    "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization of solar field geometry",                "",             "",            "heliostat",       "?=0",                    "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "flux_max",             "Maximum allowable flux",                                            "",             "",            "heliostat",       "?=1000",                 "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                  "",                     "" },
@@ -527,15 +527,6 @@ public:
 
 	void exec() throw(general_error)
 	{
-		//util::matrix_t<float> &p_udpc_T_htf_hot = allocate_matrix("ud_T_htf_ind_od_out", 1, 3);
-		//for (int j = 0; j < 1; j++)
-		//{
-		//	for (int i = 0; i < 3; i++)
-		//	{
-		//		p_udpc_T_htf_hot(j,i) = i;
-		//	}
-		//}
-
 		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )
 		{
@@ -573,65 +564,102 @@ public:
         //heliostat field class
 		C_pt_heliostatfield heliostatfield;
 
-		heliostatfield.ms_params.m_run_type = (int) as_double("run_type");
-		heliostatfield.ms_params.m_helio_width = as_double("helio_width");
-		heliostatfield.ms_params.m_helio_height = as_double("helio_height");
-		heliostatfield.ms_params.m_helio_optical_error = as_double("helio_optical_error");
-		heliostatfield.ms_params.m_helio_active_fraction = as_double("helio_active_fraction");
-		heliostatfield.ms_params.m_dens_mirror = as_double("dens_mirror");
-		heliostatfield.ms_params.m_helio_reflectance = as_double("helio_reflectance");
-		heliostatfield.ms_params.m_rec_absorptance = as_double("rec_absorptance");
-
-		bool is_optimize = as_boolean("is_optimize");
-
-		/*
-		Any parameter that's dependent on the size of the solar field must be recalculated here
-		if the optimization is happening within the cmod
-		*/
-		double H_rec, D_rec, rec_aspect, THT, A_sf;
-
-		if( is_optimize || heliostatfield.ms_params.m_run_type == 0 )
+		bool is_optimize = as_boolean("is_optimize");		// True = optimize tower/receiver geometry
+		if (is_optimize)
 		{
-			//Run solarpilot right away to update values as needed
-			solarpilot_invoke spi(this);
-			spi.run();
+			// If 'is_optimize' is true. Then run_type must be 0. Currently not the case in UI
+			assign("run_type", 0);
+		}
 
-            if(is_optimize)
-            {
-			    //Optimization iteration history
-			    vector<vector<double> > steps;
-			    vector<double> obj, flux;
-			    spi.getOptimizationSimulationHistory(steps, obj, flux);
-			    int nr = steps.size();
-                if(nr > 0)
-                {
-			        int nc = steps.front().size() + 2;
-			        ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-			        for( size_t i = 0; i<nr; i++ ){
-
-				        for( size_t j = 0; j<steps.front().size(); j++ )
-					        ssc_hist[i*nc + j] = steps.at(i).at(j);
-				        ssc_hist[i*nc + nc - 2] = obj.at(i);
-				        ssc_hist[i*nc + nc - 1] = flux.at(i);
-                    }
-			    }
-            }
+		int run_type = as_integer("run_type");
 		
-			//receiver calculations
-			H_rec = spi.recs.front().rec_height.val;
-			rec_aspect = spi.recs.front().rec_aspect.Val();
-			THT = spi.sf.tht.val;
-			//update heliostat position table
+		if (run_type == 0)		// Auto-design. Generate a new field layout
+		{
+			// lays out new field design
+				// 'helio_positions_in' should NOT be assigned
+				// 'calc_fluxmaps' should be true
+			assign("calc_fluxmaps", 1);
+			// is_optimize could be true or false here
+
+
+			assign("is_optimize", 0);
+
+
+
+
+		}
+		else if (run_type == 1)		// User-field. Calculate flux and efficiency maps
+		{
+			// only calculates a flux map, so need to "assign" 'helio_positions_in'
+			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
+			int n_h_rows = helio_pos_temp.nrows();
+			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
+			for (int i = 0; i < n_h_rows; i++)
+			{
+				p_helio_positions_in[i * 2] = helio_pos_temp(i, 0);
+				p_helio_positions_in[i * 2 + 1] = helio_pos_temp(i, 1);
+			}
+			assign("N_hel", n_h_rows);
+				// 'calc_fluxmaps' should be true
+			assign("calc_fluxmaps", 1);
+			// is_optimize should be false
+			assign("is_optimize", 0);
+		}
+		else if (run_type == 2)
+		{
+			// 'helio_positions' needs to be assigned
+			// 'calc_fluxmaps' should be false
+			assign("calc_fluxmaps", 0);
+			// 'is_optimize' should be false
+			assign("is_optimize", 0);
+		}
+		else
+		{
+			string msg = util::format("SSC INPUT 'run_type' must be set to either 0, 1 or 2. Its input value is %d", run_type);
+
+			throw exec_error("MSPT CSP Solver", msg);
+		}
+
+		util::matrix_t<double> mt_eta_map;
+		util::matrix_t<double> mt_solar_pos;
+		util::matrix_t<double> mt_flux_maps;
+
+		//Run solarpilot right away to update values as needed
+		solarpilot_invoke spi(this);
+		spi.run();
+
+		if (run_type == 0)		// Auto-design. Generate a new field layout
+		{
+			if (is_optimize)
+			{
+				//Optimization iteration history
+				vector<vector<double> > steps;
+				vector<double> obj, flux;
+				spi.getOptimizationSimulationHistory(steps, obj, flux);
+				int nr = steps.size();
+				if (nr > 0)
+				{
+					int nc = steps.front().size() + 2;
+					ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
+					for (size_t i = 0; i<nr; i++){
+
+						for (size_t j = 0; j<steps.front().size(); j++)
+							ssc_hist[i*nc + j] = steps.at(i).at(j);
+						ssc_hist[i*nc + nc - 2] = obj.at(i);
+						ssc_hist[i*nc + nc - 1] = flux.at(i);
+					}
+				}
+			}
+
+			// receiver calculations
+			double H_rec = spi.recs.front().rec_height.val;
+			double rec_aspect = spi.recs.front().rec_aspect.Val();
+			double THT = spi.sf.tht.val;
 
 			int nr = (int)spi.layout.heliostat_positions.size();
 			assign("N_hel", nr);
-			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
-			for( int i = 0; i<nr; i++ ){
-				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
-				ssc_hl[i * 2 + 1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
-			}
 
-			A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
+			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
 			//update piping length for parasitic calculation
 			double piping_length = THT * as_double("piping_length_mult") + as_double("piping_length_const");
@@ -645,215 +673,195 @@ public:
 			assign("h_tower", var_data((ssc_number_t)THT));
 			assign("A_sf", var_data((ssc_number_t)A_sf));
 			assign("piping_length", var_data((ssc_number_t)piping_length));
-		
-			//Update the total installed cost
-			double total_direct_cost = 0.;
-			double A_rec;
-			switch( spi.recs.front().rec_type.mapval() )
-			{
-            case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
-			{
-                double h = spi.recs.front().rec_height.val;
-                double d = h / spi.recs.front().rec_aspect.Val();
-                A_rec = h*d*3.1415926;
-                break;
-			}
-            case var_receiver::REC_TYPE::FLAT_PLATE:
-            //case Receiver::REC_TYPE::CAVITY:
-				double h = spi.recs.front().rec_height.val;
-				double w = h / spi.recs.front().rec_aspect.Val();
-				A_rec = h*w;
-				break;
-			}
-			
-			
-			// ******* Re-calculate system costs here ************
-			C_mspt_system_costs sys_costs;
-			
-			sys_costs.ms_par.A_sf_refl = A_sf;
-			sys_costs.ms_par.site_improv_spec_cost = as_double("site_spec_cost");
-			sys_costs.ms_par.heliostat_spec_cost = as_double("heliostat_spec_cost");
-			sys_costs.ms_par.heliostat_fixed_cost = as_double("cost_sf_fixed");
 
-			sys_costs.ms_par.h_tower = THT;
-			sys_costs.ms_par.h_rec = H_rec;
-			sys_costs.ms_par.h_helio = as_double("helio_height");
-			sys_costs.ms_par.tower_fixed_cost = as_double("tower_fixed_cost");
-			sys_costs.ms_par.tower_cost_scaling_exp = as_double("tower_exp");
-
-			sys_costs.ms_par.A_rec = A_rec;
-			sys_costs.ms_par.rec_ref_cost = as_double("rec_ref_cost");
-			sys_costs.ms_par.A_rec_ref = as_double("rec_ref_area");
-			sys_costs.ms_par.rec_cost_scaling_exp = as_double("rec_cost_exp");
-
-			sys_costs.ms_par.Q_storage = as_double("P_ref") / as_double("design_eff")*as_double("tshours");
-			sys_costs.ms_par.tes_spec_cost = as_double("tes_spec_cost");
-
-			sys_costs.ms_par.W_dot_design = as_double("P_ref");
-			sys_costs.ms_par.power_cycle_spec_cost = as_double("plant_spec_cost");
-
-			sys_costs.ms_par.bop_spec_cost = as_double("bop_spec_cost");
-
-			sys_costs.ms_par.fossil_backup_spec_cost = as_double("fossil_spec_cost");
-
-			sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
-
-			//land area
 			double land_area_base = spi.land.land_area.Val();		//[acres] Land area occupied by heliostats
-			sys_costs.ms_par.total_land_area = spi.land.land_area.Val() * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
 			assign("land_area_base", land_area_base);
-			assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
-			
 
-			sys_costs.ms_par.plant_net_capacity = as_double("system_capacity")/1000.0;			//[MWe], convert from kWe
-			sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
-			sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
-			sys_costs.ms_par.EPC_land_per_power_cost = as_double("csp.pt.cost.epc.per_watt");
-			sys_costs.ms_par.EPC_land_fixed_cost = as_double("csp.pt.cost.epc.fixed");
-			sys_costs.ms_par.total_land_spec_cost = as_double("csp.pt.cost.plm.per_acre");
-			sys_costs.ms_par.total_land_perc_direct_cost = as_double("csp.pt.cost.plm.percent");
-			sys_costs.ms_par.total_land_per_power_cost = as_double("csp.pt.cost.plm.per_watt");
-			sys_costs.ms_par.total_land_fixed_cost = as_double("csp.pt.cost.plm.fixed");
-			sys_costs.ms_par.sales_tax_basis = as_double("sales_tax_frac");
-			sys_costs.ms_par.sales_tax_rate = as_double("sales_tax_rate");
-
-			try
+			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
+			for (int i = 0; i<nr; i++)
 			{
-				sys_costs.calculate_costs();
-			}
-			catch( C_csp_exception &csp_exception )
-			{
-				throw exec_error("MSPT system costs", util::format("System cost calculations failed. Check that all inputs are properly defined"));
+				ssc_hl[i * 2] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
+				ssc_hl[i * 2 + 1] = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
 			}
 
-			// 1.5.2016 twn: financial model needs an updated total_installed_cost, remaining are for reporting only
-			assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
-			
-			assign("csp.pt.cost.site_improvements", sys_costs.ms_out.site_improvement_cost);
-			assign("csp.pt.cost.heliostats", sys_costs.ms_out.heliostat_cost);
-			assign("csp.pt.cost.tower", sys_costs.ms_out.tower_cost);
-			assign("csp.pt.cost.receiver", sys_costs.ms_out.receiver_cost);
-			assign("csp.pt.cost.storage", sys_costs.ms_out.tes_cost);
-			assign("csp.pt.cost.power_block", sys_costs.ms_out.power_cycle_cost);
-			assign("csp.pt.cost.bop", sys_costs.ms_out.bop_cost);
-			assign("csp.pt.cost.fossil", sys_costs.ms_out.fossil_backup_cost);
-			assign("ui_direct_subtotal", sys_costs.ms_out.direct_capital_precontingency_cost);
-			assign("csp.pt.cost.contingency", sys_costs.ms_out.contingency_cost);
-			assign("total_direct_cost", sys_costs.ms_out.total_direct_cost);
-			assign("csp.pt.cost.epc.total", sys_costs.ms_out.epc_and_owner_cost);
-			assign("csp.pt.cost.plm.total", sys_costs.ms_out.total_land_cost);
-			assign("csp.pt.cost.sales_tax.total", sys_costs.ms_out.sales_tax_cost);
-			assign("total_indirect_cost", sys_costs.ms_out.total_indirect_cost);
-			assign("csp.pt.cost.installed_per_capacity", sys_costs.ms_out.estimated_installed_cost_per_cap);
+			//collect the optical efficiency data and sun positions
+			if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
+				&& spi.fluxtab.efficiency.size() > 0)
+			{
+				size_t nvals = spi.fluxtab.efficiency.size();
+				mt_eta_map.resize(nvals, 3);
+				mt_solar_pos.resize(nvals, 2);
+				//ssc_number_t *opteff = allocate("opteff_table", nvals, 3);
+				for (size_t i = 0; i<nvals; i++)
+				{
+					mt_solar_pos(i, 0) = spi.fluxtab.azimuths[i];      //Convention is usually S=0, E<0, W>0  
+					mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
+					mt_solar_pos(i, 1) = spi.fluxtab.zeniths[i];     //Provide zenith angle
+					mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
+					mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
+				}
+			}
+			else
+				throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
 
-			// Update construction financing costs, specifically, update: "construction_financing_cost"
-			double const_per_interest_rate1 = as_double("const_per_interest_rate1");
-			double const_per_interest_rate2 = as_double("const_per_interest_rate2");
-			double const_per_interest_rate3 = as_double("const_per_interest_rate3");
-			double const_per_interest_rate4 = as_double("const_per_interest_rate4");
-			double const_per_interest_rate5 = as_double("const_per_interest_rate5");
-			double const_per_months1 = as_double("const_per_months1");
-			double const_per_months2 = as_double("const_per_months2");
-			double const_per_months3 = as_double("const_per_months3");
-			double const_per_months4 = as_double("const_per_months4");
-			double const_per_months5 = as_double("const_per_months5");
-			double const_per_percent1 = as_double("const_per_percent1");
-			double const_per_percent2 = as_double("const_per_percent2");
-			double const_per_percent3 = as_double("const_per_percent3");
-			double const_per_percent4 = as_double("const_per_percent4");
-			double const_per_percent5 = as_double("const_per_percent5");
-			double const_per_upfront_rate1 = as_double("const_per_upfront_rate1");
-			double const_per_upfront_rate2 = as_double("const_per_upfront_rate2");
-			double const_per_upfront_rate3 = as_double("const_per_upfront_rate3");
-			double const_per_upfront_rate4 = as_double("const_per_upfront_rate4");
-			double const_per_upfront_rate5 = as_double("const_per_upfront_rate5");
+			//collect the flux map data
+			block_t<double> *flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
+			if (flux_data->ncols() > 0 && flux_data->nlayers() > 0)
+			{
 
-			double const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5;
-			double const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5;
-			double const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5;
-			double const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost;
+				int nflux_y = (int)flux_data->nrows();
+				int nflux_x = (int)flux_data->ncols();
 
-			const_per_principal1 = const_per_principal2 = const_per_principal3 = const_per_principal4 = const_per_principal5 =
-				const_per_interest1 = const_per_interest2 = const_per_interest3 = const_per_interest4 = const_per_interest5 =
-				const_per_total1 = const_per_total2 = const_per_total3 = const_per_total4 = const_per_total5 =
-				const_per_percent_total = const_per_principal_total = const_per_interest_total = construction_financing_cost =
-				std::numeric_limits<double>::quiet_NaN();
+				mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+				ssc_number_t *fluxdata = allocate("flux_table", nflux_y * flux_data->nlayers(), nflux_x);
 
-			N_financial_parameters::construction_financing_total_cost(sys_costs.ms_out.total_installed_cost,
-				const_per_interest_rate1, const_per_interest_rate2, const_per_interest_rate3, const_per_interest_rate4, const_per_interest_rate5,
-				const_per_months1, const_per_months2, const_per_months3, const_per_months4, const_per_months5,
-				const_per_percent1, const_per_percent2, const_per_percent3, const_per_percent4, const_per_percent5,
-				const_per_upfront_rate1, const_per_upfront_rate2, const_per_upfront_rate3, const_per_upfront_rate4, const_per_upfront_rate5,
-				const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5,
-				const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5,
-				const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
-				const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
+				int cur_row = 0;
 
-			assign("const_per_principal1", const_per_principal1);
-			assign("const_per_principal2", const_per_principal2);
-			assign("const_per_principal3", const_per_principal3);
-			assign("const_per_principal4", const_per_principal4);
-			assign("const_per_principal5", const_per_principal5);
-			assign("const_per_interest1", const_per_interest1);
-			assign("const_per_interest2", const_per_interest2);
-			assign("const_per_interest3", const_per_interest3);
-			assign("const_per_interest4", const_per_interest4);
-			assign("const_per_interest5", const_per_interest5);
-			assign("const_per_total1", const_per_total1);
-			assign("const_per_total2", const_per_total2);
-			assign("const_per_total3", const_per_total3);
-			assign("const_per_total4", const_per_total4);
-			assign("const_per_total5", const_per_total5);
-			assign("const_per_percent_total", const_per_percent_total);
-			assign("const_per_principal_total", const_per_principal_total);
-			assign("const_per_interest_total", const_per_interest_total);
-			assign("construction_financing_cost", construction_financing_cost);
+				for (size_t i = 0; i<flux_data->nlayers(); i++)
+				{
+					for (int j = 0; j<nflux_y; j++)
+					{
+						for (int k = 0; k<nflux_x; k++)
+						{
+							mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
+							//fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+						}
+						cur_row++;
+					}
+				}
+			}
+			else
+				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
 		}
-		else
+		else if (run_type == 1)		// User-field. Calculate flux and efficiency maps
 		{
-			H_rec = as_double("H_rec");
-			rec_aspect = as_double("rec_aspect");
-			THT = as_double("THT");
-			A_sf = as_double("A_sf");
+			//collect the optical efficiency data and sun positions
+			if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
+				&& spi.fluxtab.efficiency.size() > 0)
+			{
+				size_t nvals = spi.fluxtab.efficiency.size();
+				mt_eta_map.resize(nvals, 3);
+				mt_solar_pos.resize(nvals, 2);
+				//ssc_number_t *opteff = allocate("opteff_table", nvals, 3);
+				for (size_t i = 0; i<nvals; i++)
+				{
+					mt_solar_pos(i, 0) = spi.fluxtab.azimuths[i];      //Convention is usually S=0, E<0, W>0  
+					mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
+					mt_solar_pos(i, 1) = spi.fluxtab.zeniths[i];     //Provide zenith angle
+					mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
+					mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
+				}
+			}
+			else
+				throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+
+			//collect the flux map data
+			block_t<double> *flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
+			if (flux_data->ncols() > 0 && flux_data->nlayers() > 0)
+			{
+
+				int nflux_y = (int)flux_data->nrows();
+				int nflux_x = (int)flux_data->ncols();
+
+				mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+				ssc_number_t *fluxdata = allocate("flux_table", nflux_y * flux_data->nlayers(), nflux_x);
+
+				int cur_row = 0;
+
+				for (size_t i = 0; i<flux_data->nlayers(); i++)
+				{
+					for (int j = 0; j<nflux_y; j++)
+					{
+						for (int k = 0; k<nflux_x; k++)
+						{
+							mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
+							//fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+						}
+						cur_row++;
+					}
+				}
+			}
+			else
+				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+
+		}
+		else if (run_type == 2)		// User flux and efficiency maps
+		{
+
+		}								
+
+		double H_rec = as_double("H_rec");
+		double rec_aspect = as_double("rec_aspect");
+
+		double D_rec = H_rec / rec_aspect;
+		
+		double A_rec = std::numeric_limits<double>::quiet_NaN();
+		int rec_type = as_integer("receiver_type");
+
+		switch (rec_type)
+		{
+		case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+		{
+			A_rec = H_rec * D_rec * 3.1415926;
+			break;
+		}
+		case var_receiver::REC_TYPE::FLAT_PLATE:
+			A_rec = H_rec * D_rec;
+			break;
 		}
 
-		D_rec = H_rec / rec_aspect;
-		
-		heliostatfield.ms_params.m_rec_height = as_double("rec_height");
-		heliostatfield.ms_params.m_rec_aspect = as_double("rec_aspect");
-		heliostatfield.ms_params.m_h_tower = as_double("h_tower");
-		heliostatfield.ms_params.m_rec_hl_perm2 = as_double("rec_hl_perm2");
-		heliostatfield.ms_params.m_q_design = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
-		heliostatfield.ms_params.m_dni_des = as_double("dni_des");
-		heliostatfield.ms_params.m_weather_file = as_string("solar_resource_file");
+		heliostatfield.ms_params.m_run_type = run_type;
+		heliostatfield.ms_params.m_helio_width = as_double("helio_width");		// sp match
+		heliostatfield.ms_params.m_helio_height = as_double("helio_height");	// sp match
+		heliostatfield.ms_params.m_helio_optical_error = as_double("helio_optical_error");	// sp match
+		heliostatfield.ms_params.m_helio_active_fraction = as_double("helio_active_fraction");	// sp match
+		heliostatfield.ms_params.m_dens_mirror = as_double("dens_mirror");		// sp match
+		heliostatfield.ms_params.m_helio_reflectance = as_double("helio_reflectance");	// sp match
+		heliostatfield.ms_params.m_rec_absorptance = as_double("rec_absorptance");	// sp match
+		heliostatfield.ms_params.m_rec_height = as_double("rec_height");		// sp match
+		heliostatfield.ms_params.m_rec_aspect = as_double("rec_aspect");		// sp match
+		heliostatfield.ms_params.m_h_tower = as_double("h_tower");				// sp match
+		heliostatfield.ms_params.m_rec_hl_perm2 = as_double("rec_hl_perm2");	// sp match
+		heliostatfield.ms_params.m_q_design = as_double("q_design"); // (ssc_number_t)(as_double("P_ref") / as_double("design_eff")*as_double("solarm"));
+		heliostatfield.ms_params.m_dni_des = as_double("dni_des");				// sp match
+		heliostatfield.ms_params.m_weather_file = as_string("solar_resource_file");	// sp match
 		heliostatfield.ms_params.m_land_bound_type = (int) as_double("land_bound_type");
-		heliostatfield.ms_params.m_land_max = as_double("land_max");
-		heliostatfield.ms_params.m_land_min = as_double("land_min");
-		heliostatfield.ms_params.m_p_start = as_double("p_start");
-		heliostatfield.ms_params.m_p_track = as_double("p_track");
-		heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");
-		heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");
-		heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");
-		heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");
-		heliostatfield.ms_params.m_c_atm_0 = as_double("c_atm_0");
-		heliostatfield.ms_params.m_c_atm_1 = as_double("c_atm_1");
-		heliostatfield.ms_params.m_c_atm_2 = as_double("c_atm_2");
-		heliostatfield.ms_params.m_c_atm_3 = as_double("c_atm_3");
-		heliostatfield.ms_params.m_n_facet_x = (int) as_double("n_facet_x");
-		heliostatfield.ms_params.m_n_facet_y = (int) as_double("n_facet_y");
-		heliostatfield.ms_params.m_focus_type = (int) as_double("focus_type");
-		heliostatfield.ms_params.m_cant_type = (int) as_double("cant_type");
-		heliostatfield.ms_params.m_n_flux_days = (int) as_double("n_flux_days");
-		heliostatfield.ms_params.m_delta_flux_hrs = (int) as_double("delta_flux_hrs");
-
-		int run_type = heliostatfield.ms_params.m_run_type;
+		heliostatfield.ms_params.m_land_max = as_double("land_max");			// sp match
+		heliostatfield.ms_params.m_land_min = as_double("land_min");			// sp match
+		heliostatfield.ms_params.m_p_start = as_double("p_start");		//[kWe-hr] Heliostat startup energy
+		heliostatfield.ms_params.m_p_track = as_double("p_track");		//[kWe] Heliostat tracking power
+		heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");	// N/A
+		heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");			// N/A
+		heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");		// sp match
+		heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");		// sp match
+		heliostatfield.ms_params.m_c_atm_0 = as_double("c_atm_0");		// sp match
+		heliostatfield.ms_params.m_c_atm_1 = as_double("c_atm_1");		// sp match
+		heliostatfield.ms_params.m_c_atm_2 = as_double("c_atm_2");		// sp match
+		heliostatfield.ms_params.m_c_atm_3 = as_double("c_atm_3");		// sp match
+		heliostatfield.ms_params.m_n_facet_x = (int) as_double("n_facet_x");	// sp match
+		heliostatfield.ms_params.m_n_facet_y = (int) as_double("n_facet_y");	// sp match
+		heliostatfield.ms_params.m_focus_type = (int) as_double("focus_type");	// sp match
+		heliostatfield.ms_params.m_cant_type = (int) as_double("cant_type");	// sp match
+		heliostatfield.ms_params.m_n_flux_days = (int) as_double("n_flux_days");		// sp match
+		heliostatfield.ms_params.m_delta_flux_hrs = (int) as_double("delta_flux_hrs");	// sp match
 
 		if( run_type == 1 || run_type == 0 )
 		{
 			heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
+			double x0 = heliostatfield.ms_params.m_helio_positions(0, 0);
+			double y0 = heliostatfield.ms_params.m_helio_positions(0, 1);
             //if run_type==0, then a layout has already been generated. Set to 1 to avoid regenerating in csp_solver_pt_heliostatfield::init()
             heliostatfield.ms_params.m_run_type = run_type = 1;
+			//heliostatfield.ms_params.m_eta_map = mt_eta_map;
+			//heliostatfield.ms_params.m_eta_map_aod_format = false;
+			//heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
+			//heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
+			////allocate empty array of positions to indicate number of heliostats in the field
+			//util::matrix_t<double> hpos(as_integer("N_hel"), 2);
+			//heliostatfield.ms_params.m_helio_positions = hpos;
+			//run_type = 2;
+			//heliostatfield.ms_params.m_run_type = run_type;
 		}
 		else if( run_type == 2 )
 		{
@@ -906,7 +914,7 @@ public:
 		receiver.m_n_panels = as_double("N_panels");
 		receiver.m_d_rec = D_rec;
 		receiver.m_h_rec = H_rec;
-		receiver.m_h_tower = THT;
+		receiver.m_h_tower = as_double("THT");
 		receiver.m_od_tube = as_double("d_tube_out");
 		receiver.m_th_tube = as_double("th_tube");
 		receiver.m_mat_tube = as_double("mat_tube");
@@ -923,7 +931,7 @@ public:
 		receiver.m_rec_su_delay = as_double("rec_su_delay");
 		receiver.m_rec_qf_delay = as_double("rec_qf_delay");
 		receiver.m_m_dot_htf_max = as_double("m_dot_htf_max");
-		receiver.m_A_sf = A_sf;
+		receiver.m_A_sf = as_double("A_sf");
 
 		// 8.10.2015 twn: add tower piping thermal losses to receiver performance
 		receiver.m_pipe_loss_per_m = as_double("piping_loss");						//[Wt/m]
@@ -1592,6 +1600,145 @@ public:
 			log(out_msg, out_type);
 		}
 
+		// ******* Re-calculate system costs here ************
+		C_mspt_system_costs sys_costs;
+
+		sys_costs.ms_par.A_sf_refl = as_double("A_sf");
+		sys_costs.ms_par.site_improv_spec_cost = as_double("site_spec_cost");
+		sys_costs.ms_par.heliostat_spec_cost = as_double("heliostat_spec_cost");
+		sys_costs.ms_par.heliostat_fixed_cost = as_double("cost_sf_fixed");
+
+		sys_costs.ms_par.h_tower = as_double("THT");
+		sys_costs.ms_par.h_rec = H_rec;
+		sys_costs.ms_par.h_helio = as_double("helio_height");
+		sys_costs.ms_par.tower_fixed_cost = as_double("tower_fixed_cost");
+		sys_costs.ms_par.tower_cost_scaling_exp = as_double("tower_exp");
+
+		sys_costs.ms_par.A_rec = A_rec;
+		sys_costs.ms_par.rec_ref_cost = as_double("rec_ref_cost");
+		sys_costs.ms_par.A_rec_ref = as_double("rec_ref_area");
+		sys_costs.ms_par.rec_cost_scaling_exp = as_double("rec_cost_exp");
+
+		sys_costs.ms_par.Q_storage = as_double("P_ref") / as_double("design_eff")*as_double("tshours");
+		sys_costs.ms_par.tes_spec_cost = as_double("tes_spec_cost");
+
+		sys_costs.ms_par.W_dot_design = as_double("P_ref");
+		sys_costs.ms_par.power_cycle_spec_cost = as_double("plant_spec_cost");
+
+		sys_costs.ms_par.bop_spec_cost = as_double("bop_spec_cost");
+
+		sys_costs.ms_par.fossil_backup_spec_cost = as_double("fossil_spec_cost");
+
+		sys_costs.ms_par.contingency_rate = as_double("contingency_rate");
+
+		//land area
+		sys_costs.ms_par.total_land_area = as_double("land_area_base") * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
+		assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
+
+		sys_costs.ms_par.plant_net_capacity = as_double("system_capacity") / 1000.0;			//[MWe], convert from kWe
+		sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
+		sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
+		sys_costs.ms_par.EPC_land_per_power_cost = as_double("csp.pt.cost.epc.per_watt");
+		sys_costs.ms_par.EPC_land_fixed_cost = as_double("csp.pt.cost.epc.fixed");
+		sys_costs.ms_par.total_land_spec_cost = as_double("csp.pt.cost.plm.per_acre");
+		sys_costs.ms_par.total_land_perc_direct_cost = as_double("csp.pt.cost.plm.percent");
+		sys_costs.ms_par.total_land_per_power_cost = as_double("csp.pt.cost.plm.per_watt");
+		sys_costs.ms_par.total_land_fixed_cost = as_double("csp.pt.cost.plm.fixed");
+		sys_costs.ms_par.sales_tax_basis = as_double("sales_tax_frac");
+		sys_costs.ms_par.sales_tax_rate = as_double("sales_tax_rate");
+
+		try
+		{
+			sys_costs.calculate_costs();
+		}
+		catch (C_csp_exception &csp_exception)
+		{
+			throw exec_error("MSPT system costs", util::format("System cost calculations failed. Check that all inputs are properly defined"));
+		}
+
+		// 1.5.2016 twn: financial model needs an updated total_installed_cost, remaining are for reporting only
+		assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
+
+		assign("csp.pt.cost.site_improvements", sys_costs.ms_out.site_improvement_cost);
+		assign("csp.pt.cost.heliostats", sys_costs.ms_out.heliostat_cost);
+		assign("csp.pt.cost.tower", sys_costs.ms_out.tower_cost);
+		assign("csp.pt.cost.receiver", sys_costs.ms_out.receiver_cost);
+		assign("csp.pt.cost.storage", sys_costs.ms_out.tes_cost);
+		assign("csp.pt.cost.power_block", sys_costs.ms_out.power_cycle_cost);
+		assign("csp.pt.cost.bop", sys_costs.ms_out.bop_cost);
+		assign("csp.pt.cost.fossil", sys_costs.ms_out.fossil_backup_cost);
+		assign("ui_direct_subtotal", sys_costs.ms_out.direct_capital_precontingency_cost);
+		assign("csp.pt.cost.contingency", sys_costs.ms_out.contingency_cost);
+		assign("total_direct_cost", sys_costs.ms_out.total_direct_cost);
+		assign("csp.pt.cost.epc.total", sys_costs.ms_out.epc_and_owner_cost);
+		assign("csp.pt.cost.plm.total", sys_costs.ms_out.total_land_cost);
+		assign("csp.pt.cost.sales_tax.total", sys_costs.ms_out.sales_tax_cost);
+		assign("total_indirect_cost", sys_costs.ms_out.total_indirect_cost);
+		assign("csp.pt.cost.installed_per_capacity", sys_costs.ms_out.estimated_installed_cost_per_cap);
+
+		// Update construction financing costs, specifically, update: "construction_financing_cost"
+		double const_per_interest_rate1 = as_double("const_per_interest_rate1");
+		double const_per_interest_rate2 = as_double("const_per_interest_rate2");
+		double const_per_interest_rate3 = as_double("const_per_interest_rate3");
+		double const_per_interest_rate4 = as_double("const_per_interest_rate4");
+		double const_per_interest_rate5 = as_double("const_per_interest_rate5");
+		double const_per_months1 = as_double("const_per_months1");
+		double const_per_months2 = as_double("const_per_months2");
+		double const_per_months3 = as_double("const_per_months3");
+		double const_per_months4 = as_double("const_per_months4");
+		double const_per_months5 = as_double("const_per_months5");
+		double const_per_percent1 = as_double("const_per_percent1");
+		double const_per_percent2 = as_double("const_per_percent2");
+		double const_per_percent3 = as_double("const_per_percent3");
+		double const_per_percent4 = as_double("const_per_percent4");
+		double const_per_percent5 = as_double("const_per_percent5");
+		double const_per_upfront_rate1 = as_double("const_per_upfront_rate1");
+		double const_per_upfront_rate2 = as_double("const_per_upfront_rate2");
+		double const_per_upfront_rate3 = as_double("const_per_upfront_rate3");
+		double const_per_upfront_rate4 = as_double("const_per_upfront_rate4");
+		double const_per_upfront_rate5 = as_double("const_per_upfront_rate5");
+
+		double const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5;
+		double const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5;
+		double const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5;
+		double const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost;
+
+		const_per_principal1 = const_per_principal2 = const_per_principal3 = const_per_principal4 = const_per_principal5 =
+			const_per_interest1 = const_per_interest2 = const_per_interest3 = const_per_interest4 = const_per_interest5 =
+			const_per_total1 = const_per_total2 = const_per_total3 = const_per_total4 = const_per_total5 =
+			const_per_percent_total = const_per_principal_total = const_per_interest_total = construction_financing_cost =
+			std::numeric_limits<double>::quiet_NaN();
+
+		N_financial_parameters::construction_financing_total_cost(sys_costs.ms_out.total_installed_cost,
+			const_per_interest_rate1, const_per_interest_rate2, const_per_interest_rate3, const_per_interest_rate4, const_per_interest_rate5,
+			const_per_months1, const_per_months2, const_per_months3, const_per_months4, const_per_months5,
+			const_per_percent1, const_per_percent2, const_per_percent3, const_per_percent4, const_per_percent5,
+			const_per_upfront_rate1, const_per_upfront_rate2, const_per_upfront_rate3, const_per_upfront_rate4, const_per_upfront_rate5,
+			const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5,
+			const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5,
+			const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
+			const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
+
+		assign("const_per_principal1", const_per_principal1);
+		assign("const_per_principal2", const_per_principal2);
+		assign("const_per_principal3", const_per_principal3);
+		assign("const_per_principal4", const_per_principal4);
+		assign("const_per_principal5", const_per_principal5);
+		assign("const_per_interest1", const_per_interest1);
+		assign("const_per_interest2", const_per_interest2);
+		assign("const_per_interest3", const_per_interest3);
+		assign("const_per_interest4", const_per_interest4);
+		assign("const_per_interest5", const_per_interest5);
+		assign("const_per_total1", const_per_total1);
+		assign("const_per_total2", const_per_total2);
+		assign("const_per_total3", const_per_total3);
+		assign("const_per_total4", const_per_total4);
+		assign("const_per_total5", const_per_total5);
+		assign("const_per_percent_total", const_per_percent_total);
+		assign("const_per_principal_total", const_per_principal_total);
+		assign("const_per_interest_total", const_per_interest_total);
+		assign("construction_financing_cost", construction_financing_cost);
+
 		// Do unit post-processing here
 		float *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
 		size_t count_pc_su = 0;
@@ -1689,7 +1836,7 @@ public:
 		accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 1000.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour); //[m^3], convert from kg
 			// Then, add water usage from mirror cleaning
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
-		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
+		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*as_double("A_sf")*as_double("washing_frequency");
 		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
 
 		ssc_number_t ae = as_number("annual_energy");
