@@ -254,7 +254,7 @@ public:
     //bool dispatch_forecast();
 
     //Predict performance out nstep values. 
-    bool predict_performance(int step_start, int ntimeints, int divs_per_int);    
+    bool predict_performance(int step_start, int ntimeints, int divs_per_int, std::vector< double > *alt_dni=0);    
 
     //declare dispatch function in csp_dispatch.cpp
     bool optimize();

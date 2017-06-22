@@ -157,7 +157,7 @@ bool csp_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
     return m_is_weather_setup = true;
 }
 
-bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int)
+bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int, std::vector< double > *alt_dni)
 {
     //Step number - 1-based index for first hour of the year.
 
@@ -195,7 +195,15 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
                 return false;
 
             //get DNI
-            double dni = m_weather.ms_outputs.m_beam;
+            double dni;
+            if( alt_dni )
+            {
+                dni = alt_dni->at(j);
+            }
+            else
+            {
+                dni = m_weather.ms_outputs.m_beam;
+            }
             if( m_weather.ms_outputs.m_solzen > 90. || dni < 0. )
                 dni = 0.;
 

@@ -274,6 +274,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "q_rec_heattrace",		 "Receiver heat trace energy consumption during startup",			  "kWe-hr",		  "",			 "sys_ctrl_disp_opt", "?=0.0",					 "",					  "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_wlim_series",       "Use time-series net electricity generation limits",				  "",			  "",			 "sys_ctrl_disp_opt", "?=0",					 "",					  "" },
 	{ SSC_INPUT,		SSC_ARRAY,		 "wlim_series",			 "Time series net electicity generation limits",					  "kWe",		  "",			 "sys_ctrl_disp_opt", "is_wlim_series=1",		 "",					  "" },
+	
+    { SSC_INPUT,		SSC_NUMBER,		 "is_stochastic_dispatch","Use stochastic dispatch optimization (1/true)",					  "-",		      "",			 "sys_ctrl_disp_opt", "?=0",		             "",					  "" },
+    { SSC_INPUT,		SSC_MATRIX,		 "fc_dni_scenarios",	 "Forecast DNI scenarios",					                          "W/m2",		  "",			 "sys_ctrl_disp_opt", "is_stochastic_disp=1",		 "",					  "" },
+    { SSC_INPUT,		SSC_MATRIX,		 "fc_price_scenarios",	 "Forecast price scenarios",					                      "-",		      "",			 "sys_ctrl_disp_opt", "is_stochastic_disp=1",		 "",					  "" },
+    { SSC_INPUT,		SSC_MATRIX,		 "fc_tdry_scenarios",	 "Forecast dry bulb temperature scenarios",                           "C",		      "",			 "sys_ctrl_disp_opt", "is_stochastic_disp=1",		 "",					  "" },
+    { SSC_INPUT,		SSC_NUMBER,		 "fc_steps",	         "Number of time steps per forecast block",                           "-",		      "",			 "sys_ctrl_disp_opt", "is_stochastic_disp=1",		 "",					  "" },
 
 
 	// Financial inputs
@@ -1372,6 +1378,7 @@ public:
             tou.mc_dispatch_params.m_pen_delta_w = as_double("disp_pen_delta_w");
             tou.mc_dispatch_params.m_q_rec_standby = as_double("q_rec_standby");
 			tou.mc_dispatch_params.m_w_rec_ht = as_double("q_rec_heattrace");
+            tou.mc_dispatch_params.m_is_stochastic_dispatch = as_boolean("is_stochastic_dispatch");
 
 			if (as_boolean("is_wlim_series"))
 			{
@@ -1382,6 +1389,18 @@ public:
 				for (int i = 0; i < n_steps_full; i++)
 					tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
 			}
+
+            if( tou.mc_dispatch_params.m_is_stochastic_dispatch )
+            {
+                if(! tou.mc_dispatch_params.m_is_ampl_engine )
+                    throw exec_error("tcsmolten_salt", "Stochastic dispatch is only available using the AMPL engine linkage. Ensure AMPL settings are correct.");
+
+                //construct the stochastic forecast data tables
+                tou.mc_dispatch_params.m_fc_dni_scenarios = as_matrix("fc_dni_scenarios");
+                tou.mc_dispatch_params.m_fc_price_scenarios = as_matrix("fc_price_scenarios");
+                tou.mc_dispatch_params.m_fc_tdry_scenarios = as_matrix("fc_tdry_scenarios");
+                tou.mc_dispatch_params.m_fc_steps = as_integer("fc_steps");
+            }
 
 	
 		}
