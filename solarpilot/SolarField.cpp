@@ -284,7 +284,9 @@ void SolarField::Create(var_map &V){
 	_land.Create(V);
 
 	//Parse the layout string into a layout object
-	if(! V.sf.layout_data.val.empty() ){
+	if(! V.sf.layout_data.val.empty() )
+    {
+        V.sf.layout_method.combo_select_by_mapval( var_solarfield::LAYOUT_METHOD::USERDEFINED );
 		//Convert the string contents to a layout_shell object
 		SolarField::parseHeliostatXYZFile( V.sf.layout_data.val, _layout );
         vector<Point> lpt;
@@ -874,13 +876,14 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 
 	layout_shell *layout = SF.getLayoutShellObject();
 
-	if(!refresh_only && layout_method == 1){		//Radial stagger
+	if(!refresh_only && layout_method == var_solarfield::LAYOUT_METHOD::RADIAL_STAGGER)
+    {		//Radial stagger
 		SF.radialStaggerPositions(HelPos);
 	}
-	else if(!refresh_only && layout_method == 2){	//Cornfield rows (eSolar type)
+	else if(!refresh_only && layout_method == var_solarfield::LAYOUT_METHOD::CORNFIELD){	//Cornfield rows (eSolar type)
 		SF.cornfieldPositions(HelPos);
 	}
-	else if(layout_method == 3 || refresh_only){	//User-defined field
+	else if(layout_method == var_solarfield::LAYOUT_METHOD::USERDEFINED || refresh_only){	//User-defined field
 		/*
 		Take a previously defined layout and build up the heliostat objects
 		*/
@@ -1029,7 +1032,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 
     //--------------------
 
-	if(layout_method == 3 || refresh_only)
+	if(layout_method == var_solarfield::LAYOUT_METHOD::USERDEFINED || refresh_only)
 		//update the layout positions in the land object here since the post-process call isn't made after this
 		//SF.getLandObject()->setLayoutPositions(HelPos);
         SF.getLandObject()->calcLandArea( V->land, HelPos );
@@ -1067,7 +1070,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		hpz = HelPos.at(i).z;
 		//P.y = sqrt(pow(hpx, 2) + pow(hpy, 2));	//Determine the radial position. Set to y.
         Heliostat *htemp;
-        if( layout_method == 3 )
+        if( layout_method == var_solarfield::LAYOUT_METHOD::USERDEFINED )
         {
             try
             {
@@ -1127,7 +1130,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool ref
 		if(hpy > ymax){ymax = hpy;}		//Track the min/max field extents
 
 		//Quickly determine the aim point for initial calculations
-		if(layout_method == 3 || refresh_only){
+		if(layout_method == var_solarfield::LAYOUT_METHOD::USERDEFINED || refresh_only){
 			//For user defined layouts...
 			if(layout->at(i).is_user_aim){	//Check to see if the aim point is also supplied.
 				SF.getFluxObject()->simpleAimPoint(*hptr, SF); //Calculate simple aim point first to associate heliostat with receiver.
