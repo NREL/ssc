@@ -1127,20 +1127,26 @@ void Toolbox::convex_hull(std::vector<Point> &points, std::vector<Point> &hull)
 	*/
 	int n = points.size(), k = 0;
 	vector<Point> H(2*n);
+
+    //copy points
+    vector<Point> pointscpy;
+    pointscpy.reserve( points.size() );
+    for(size_t i=0; i<points.size(); i++)
+        pointscpy.push_back( points.at(i) );
  
 	// Sort points lexicographically
-	sort(points.begin(), points.end());
+	sort(pointscpy.begin(), pointscpy.end());
  
 	// Build lower hull
 	for (int i = 0; i < n; ++i) {
-		while (k >= 2 && crossprod(H.at(k-2), H.at(k-1), points.at(i)) <= 0) k--;
-		H.at(k++) = points[i];
+		while (k >= 2 && crossprod(H.at(k-2), H.at(k-1), pointscpy.at(i)) <= 0) k--;
+		H.at(k++) = pointscpy[i];
 	}
  
 	// Build upper hull
 	for (int i = n-2, t = k+1; i >= 0; i--) {
-		while (k >= t && crossprod(H.at(k-2), H.at(k-1), points.at(i)) <= 0) k--;
-		H.at(k++) = points[i];
+		while (k >= t && crossprod(H.at(k-2), H.at(k-1), pointscpy.at(i)) <= 0) k--;
+		H.at(k++) = pointscpy[i];
 	}
  
 	
