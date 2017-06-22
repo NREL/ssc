@@ -16,21 +16,21 @@ private:
 	// Class Instances
 	GaussMarkov *field_efficiency_table;
 	MatDoub m_flux_positions;
-	sp_flux_table fluxtab;
+	//sp_flux_table fluxtab;
 	
-	double m_p_start;
-	double m_p_track;
-	double m_hel_stow_deploy;
-	double m_v_wind_max;
+	double m_p_start;				//[kWe-hr] Heliostat startup energy
+	double m_p_track;				//[kWe] Heliostat tracking power
+	double m_hel_stow_deploy;		//[rad] converted from [deg] in ms_params
+	double m_v_wind_max;			//[m/s]
 
-	int m_n_flux_x;
-	int m_n_flux_y;
-	int m_N_hel;
+	int m_n_flux_x;		//[-]
+	int m_n_flux_y;		//[-]
+	int m_N_hel;		//[-]
 
 	//Stored Variables
-	double m_eta_prev;
-	double m_v_wind_prev;
-	double m_v_wind_current;
+	double m_eta_prev;			//[-]
+	double m_v_wind_prev;		//[m/s]
+	double m_v_wind_current;	//[m/s]
 
 	// member string for exception messages
 	std::string error_msg;
@@ -84,10 +84,10 @@ public:
 		//int m_nrows_land_bound_list;
 		util::matrix_t<double> m_land_bound_list;
 
-		double m_p_start;
-		double m_p_track;
-		double m_hel_stow_deploy;
-		double m_v_wind_max;
+		double m_p_start;			//[kWe-hr] Heliostat startup energy
+		double m_p_track;			//[kWe] Heliostat tracking power
+		double m_hel_stow_deploy;	//[deg] convert to [rad] in init()
+		double m_v_wind_max;		//[m/s] max wind speed
 		double m_interp_nug;
 		double m_interp_beta;
 
