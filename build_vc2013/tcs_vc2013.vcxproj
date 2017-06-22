@@ -73,7 +73,6 @@
     <ClCompile Include="..\tcs\sam_mw_lf_type261_steam.cpp" />
     <ClCompile Include="..\tcs\sam_mw_lf_type261_Wnet.cpp" />
     <ClCompile Include="..\tcs\sam_mw_lf_type262_salt.cpp" />
-    <ClCompile Include="..\tcs\sam_mw_pt_type221.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type228.cpp" />
     <ClCompile Include="..\tcs\sam_mw_trough_type251.cpp" />
     <ClCompile Include="..\tcs\sam_mw_type234.cpp" />
