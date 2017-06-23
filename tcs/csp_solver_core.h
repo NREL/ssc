@@ -4,6 +4,7 @@
 #include <numeric>
 #include <limits>
 
+#include "lib_util.h"
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
 
