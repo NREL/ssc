@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "csp_dispatch.h"
+#include "csp_solver_core.h"
 #include "lp_lib.h" 
 #include "lib_util.h"
 
@@ -26,7 +27,7 @@ void __WINAPI opt_logfunction(lprec *lp, void *userhandle, char *buf)
 
     /* do something with buf (the message) */
     csp_dispatch_opt::s_solver_params* par = static_cast<csp_dispatch_opt::s_solver_params*>(userhandle);
-    string line = buf;
+    std::string line = buf;
     par->log_message.append( line );
 }
 
@@ -59,6 +60,69 @@ void __WINAPI opt_iter_function(lprec *lp, void *userhandle, int msg)
 }
 
 
+class optimization_vars
+{
+    int current_mem_pos;
+    int alloc_mem_size; 
+
+    REAL *data;
+public:
+    struct opt_var
+    {
+        std::string name;
+        int var_type;
+        int var_dim;
+        int var_dim_size;
+        int var_dim_size2;
+        int ind_start;
+        int ind_end;
+        REAL upper_bound;
+        REAL lower_bound;
+    };
+private: 
+    std::vector<opt_var> var_objects;
+
+    unordered_map<std::string, opt_var*> var_by_name;
+
+public:
+    struct VAR_TYPE { enum A {REAL_T, INT_T, BINARY_T}; };
+    struct VAR_DIM { enum A {DIM_T, DIM_NT, DIM_T2, DIM_2T_TRI}; };
+
+    optimization_vars();
+    //~optimization_vars();
+
+    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
+    void add_var(char *vname, int var_type /* VAR_TYPE enum */, int var_dim /* VAR_DIM enum */, int var_dim_size, int var_dim_size2, REAL lowbo=-DEF_INFINITE, REAL upbo=DEF_INFINITE);
+
+    bool construct();
+
+    int get_num_varobjs();
+    int get_total_var_count();
+
+    REAL &operator()(char *varname, int ind);    //Access for 1D var
+    REAL &operator()(char *varname, int ind1, int ind2);     //Access for 2D var
+    REAL &operator()(int varindex, int ind);    
+    REAL &operator()(int varindex, int ind1, int ind2);
+
+    int column(char *varname, int ind);
+    int column(char *varname, int ind1, int ind2);
+    int column(int varindex, int ind);
+    int column(int varindex, int ind1, int ind2);
+
+    REAL *get_variable_array(); 
+
+    opt_var *get_var(char *varname);
+    opt_var *get_var(int varindex);
+};
+
+
+csp_dispatch_opt::~csp_dispatch_opt()
+{
+    if( m_weather )
+        delete m_weather;
+}
+
+
 csp_dispatch_opt::csp_dispatch_opt()
 {
 
@@ -69,36 +133,37 @@ csp_dispatch_opt::csp_dispatch_opt()
     price_signal.clear();
     clear_output_arrays();
     m_is_weather_setup = false;
+    m_weather = 0;
 
     //parameters
     params.is_pb_operating0 = false;
     params.is_pb_standby0 = false;
     params.is_rec_operating0 = false;
-    params.q_pb0 = numeric_limits<double>::quiet_NaN();
-    params.dt = numeric_limits<double>::quiet_NaN();
-    params.e_tes_init = numeric_limits<double>::quiet_NaN();          
-    params.e_tes_min = numeric_limits<double>::quiet_NaN();           
-    params.e_tes_max = numeric_limits<double>::quiet_NaN();           
-    params.q_pb_standby = numeric_limits<double>::quiet_NaN();        
-    params.e_pb_startup_cold = numeric_limits<double>::quiet_NaN();   
-    params.e_pb_startup_hot = numeric_limits<double>::quiet_NaN();    
-    params.e_rec_startup = numeric_limits<double>::quiet_NaN();       
-    params.dt_pb_startup_cold = numeric_limits<double>::quiet_NaN();  
-    params.dt_pb_startup_hot = numeric_limits<double>::quiet_NaN();   
-    params.dt_rec_startup = numeric_limits<double>::quiet_NaN();      
-    params.tes_degrade_rate = numeric_limits<double>::quiet_NaN();    
-    params.q_pb_max = numeric_limits<double>::quiet_NaN();
-    params.q_pb_min = numeric_limits<double>::quiet_NaN();
-    params.q_rec_min = numeric_limits<double>::quiet_NaN();
-    params.w_rec_pump = numeric_limits<double>::quiet_NaN();
-    params.q_pb_des = numeric_limits<double>::quiet_NaN();
+    params.q_pb0 = std::numeric_limits<double>::quiet_NaN();
+    params.dt = std::numeric_limits<double>::quiet_NaN();
+    params.e_tes_init = std::numeric_limits<double>::quiet_NaN();          
+    params.e_tes_min = std::numeric_limits<double>::quiet_NaN();           
+    params.e_tes_max = std::numeric_limits<double>::quiet_NaN();           
+    params.q_pb_standby = std::numeric_limits<double>::quiet_NaN();        
+    params.e_pb_startup_cold = std::numeric_limits<double>::quiet_NaN();   
+    params.e_pb_startup_hot = std::numeric_limits<double>::quiet_NaN();    
+    params.e_rec_startup = std::numeric_limits<double>::quiet_NaN();       
+    params.dt_pb_startup_cold = std::numeric_limits<double>::quiet_NaN();  
+    params.dt_pb_startup_hot = std::numeric_limits<double>::quiet_NaN();   
+    params.dt_rec_startup = std::numeric_limits<double>::quiet_NaN();      
+    params.tes_degrade_rate = std::numeric_limits<double>::quiet_NaN();    
+    params.q_pb_max = std::numeric_limits<double>::quiet_NaN();
+    params.q_pb_min = std::numeric_limits<double>::quiet_NaN();
+    params.q_rec_min = std::numeric_limits<double>::quiet_NaN();
+    params.w_rec_pump = std::numeric_limits<double>::quiet_NaN();
+    params.q_pb_des = std::numeric_limits<double>::quiet_NaN();
     params.siminfo = 0;   
     params.col_rec = 0;
     params.sf_effadj = 1.;
     params.info_time = 0.;
-    params.eta_cycle_ref = numeric_limits<double>::quiet_NaN();
-    params.disp_time_weighting = numeric_limits<double>::quiet_NaN();
-    params.rsu_cost = params.csu_cost = params.pen_delta_w = params.q_rec_standby = numeric_limits<double>::quiet_NaN();
+    params.eta_cycle_ref = std::numeric_limits<double>::quiet_NaN();
+    params.disp_time_weighting = std::numeric_limits<double>::quiet_NaN();
+    params.rsu_cost = params.csu_cost = params.pen_delta_w = params.q_rec_standby = std::numeric_limits<double>::quiet_NaN();
     
     outputs.objective = 0.;
     outputs.objective_relaxed = 0.;
@@ -116,8 +181,8 @@ void csp_dispatch_opt::clear_output_arrays()
     m_current_read_step = 0;
     m_last_opt_successful = false;
 
-    outputs.objective = numeric_limits<double>::quiet_NaN();
-    outputs.objective_relaxed = numeric_limits<double>::quiet_NaN();
+    outputs.objective = std::numeric_limits<double>::quiet_NaN();
+    outputs.objective_relaxed = std::numeric_limits<double>::quiet_NaN();
     outputs.pb_standby.clear();
     outputs.pb_operation.clear();
     outputs.q_pb_standby.clear();
@@ -152,7 +217,7 @@ bool csp_dispatch_opt::check_setup(int nstep)
 bool csp_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
 {
     //Copy the weather data
-    m_weather = weather_source;
+    m_weather = new C_csp_weatherreader( weather_source );
 
     return m_is_weather_setup = true;
 }
@@ -191,7 +256,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
         {
 
             //jump to the current step
-            if(! m_weather.read_time_step( step_start+i*divs_per_int+j, simloc ) )
+            if(! m_weather->read_time_step( step_start+i*divs_per_int+j, simloc ) )
                 return false;
 
             //get DNI
@@ -202,18 +267,18 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             }
             else
             {
-                dni = m_weather.ms_outputs.m_beam;
+                dni = m_weather->ms_outputs.m_beam;
             }
-            if( m_weather.ms_outputs.m_solzen > 90. || dni < 0. )
+            if( m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
                 dni = 0.;
 
             //get optical efficiency
-            double opt_eff = params.col_rec->calculate_optical_efficiency(m_weather.ms_outputs, simloc);
+            double opt_eff = params.col_rec->calculate_optical_efficiency(m_weather->ms_outputs, simloc);
 
             double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
 
             //get thermal efficiency
-            double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(m_weather.ms_outputs, q_inc*0.001);
+            double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(m_weather->ms_outputs, q_inc*0.001);
             therm_eff *= params.sf_effadj;
             therm_eff_ave += therm_eff * ave_weight;
 
@@ -221,16 +286,16 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             q_inc_ave += q_inc * therm_eff * ave_weight;
 
             //store the power cycle efficiency
-            double cycle_eff = params.eff_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
+            double cycle_eff = params.eff_table_Tdb.interpolate( m_weather->ms_outputs.m_tdry );
             cycle_eff *= params.eta_cycle_ref;  
             cycle_eff_ave += cycle_eff * ave_weight;
 
             //store the condenser parasitic power fraction
-            double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather.ms_outputs.m_tdry );
+            double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather->ms_outputs.m_tdry );
             wcond_ave += wcond_f * ave_weight;
 
 		    simloc.ms_ts.m_time += simloc.ms_ts.m_step;
-            m_weather.converged();
+            m_weather->converged();
         }
 
         //-----report hourly averages
@@ -245,7 +310,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
     }
 
     //reset the weather data reader
-    //m_weather.jump_to_timestep(step_start, simloc);
+    //m_weather->jump_to_timestep(step_start, simloc);
     
     return true;
 }
@@ -304,7 +369,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             double fhfi2 = 0.;
             double fhfi = 0.;
             double fhfi_2 = 0.;
-            vector<double> fiv;
+            std::vector<double> fiv;
             int m = optinst->params.eff_table_load.get_size();
             for(int i=0; i<m; i++)
             {
@@ -470,7 +535,7 @@ bool csp_dispatch_opt::optimize()
         {
             optimization_vars::opt_var *v = O.get_var(i);
 
-            string name_base = v->name;
+            std::string name_base = v->name;
 
             if( v->var_dim == optimization_vars::VAR_DIM::DIM_T )
             {
@@ -1366,7 +1431,7 @@ bool csp_dispatch_opt::optimize()
                 break;      //break the scaling loop
 
             //If the problem was reported as unbounded, this probably has to do with poor scaling. Try again with no scaling.
-            string fail_type;
+            std::string fail_type;
             switch(ret)
             {
             case UNBOUNDED:
@@ -1534,7 +1599,7 @@ bool csp_dispatch_opt::optimize()
         delete_lp(lp);
         lp = NULL;
 
-        stringstream s;
+        std::stringstream s;
         int time_start = (int)(params.info_time / 3600.);
         s << "Time " << time_start << " - " << time_start + nt << ": ";
 
@@ -1604,7 +1669,7 @@ bool csp_dispatch_opt::optimize()
         return return_ok;
 
     }
-    catch(exception &e)
+    catch(std::exception &e)
     {
         //clean up memory and pass on the exception
         if( lp != NULL )
@@ -1647,13 +1712,13 @@ std::string csp_dispatch_opt::write_ampl()
         //char outname[200];
         //sprintf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
 
-        stringstream outname;
+        std::stringstream outname;
         //outname << solver_params.ampl_data_dir << "data_" << day << ".dat";        
         outname << solver_params.ampl_data_dir << "sdk_data.dat";
         
         sname = outname.str();    //save string
 
-        ofstream fout(outname.str().c_str());
+        std::ofstream fout(outname.str().c_str());
 
         int nt = m_nstep_opt;
 
@@ -1742,7 +1807,7 @@ bool csp_dispatch_opt::optimize_ampl()
         throw C_csp_exception("The specified AMPL data directory is invalid.");
 
     
-    stringstream tstring;
+    std::stringstream tstring;
 
     std::string datfile = write_ampl();
     if( datfile.empty() )
@@ -1763,7 +1828,7 @@ bool csp_dispatch_opt::optimize_ampl()
     tstring.str(std::string()); //clear
 
     tstring << solver_params.ampl_data_dir << "sdk_solution.txt";
-    ifstream infile(tstring.str().c_str());
+    std::ifstream infile(tstring.str().c_str());
 
     if(! infile.is_open() )
         return false;
@@ -1885,7 +1950,7 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
 {
     var_objects.push_back( optimization_vars::opt_var() );
     optimization_vars::opt_var *v = &var_objects.back();
-    v->name = (string)vname;
+    v->name = (std::string)vname;
     v->ind_start = current_mem_pos;
     v->var_type = var_type;
     v->var_dim = var_dim;
@@ -1973,7 +2038,7 @@ int optimization_vars::column(char *varname, int ind)
 
 int optimization_vars::column(char *varname, int ind1, int ind2)
 {
-    opt_var *v = var_by_name[ string(varname) ];
+    opt_var *v = var_by_name[ std::string(varname) ];
     switch (v->var_dim)
     {
     case VAR_DIM::DIM_T:

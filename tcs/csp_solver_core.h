@@ -7,6 +7,7 @@
 #include "lib_util.h"
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
+#include "csp_dispatch.h"
 
 #include "numeric_solvers.h"
 

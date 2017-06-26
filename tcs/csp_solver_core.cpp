@@ -471,7 +471,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 	// Check the collector-receiver model for a maximum step
 	if(mc_collector_receiver.m_max_step > 0.0)
 	{
-		baseline_step = max(step_tolerance, min(baseline_step, mc_collector_receiver.m_max_step));
+		baseline_step = std::max(step_tolerance, std::min(baseline_step, mc_collector_receiver.m_max_step));
 	}
 	
 	mc_kernel.init(sim_setup, wf_step, baseline_step, mc_csp_messages);
@@ -805,10 +805,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
 				
                 if( hour_now >= (8760 - opt_horizon) )
-                    opt_horizon = min((double)opt_horizon, (double)(8761-hour_now));
+                    opt_horizon = std::min((double)opt_horizon, (double)(8761-hour_now));
 
                 //message
-                stringstream ss;
+                std::stringstream ss;
                 ss << "Optimizing thermal energy dispatch profile for time window " 
 					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) << " - "
 					<< (int)(mc_kernel.mc_sim_info.ms_ts.m_time / 3600.) + mc_tou.mc_dispatch_params.m_optimize_frequency;
@@ -907,7 +907,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                     //double wfact = disp_effadj_weight / (double)disp_effadj_count;
                     
-                    disp_qsf_effadj =+ (1. - etanew)/(min(disp_effadj_weight/disp_qsf_last, 5.));
+                    disp_qsf_effadj =+ (1. - etanew)/(std::min(disp_effadj_weight/disp_qsf_last, 5.));
                 }
 
                 //read in other values
@@ -973,7 +973,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //disp_wpb_expect = dispatch.outputs.q_pb_target.at(dispatch.m_current_read_step ) * disp_etapb_expect *1.e-3;  
                 disp_wpb_expect = dispatch.outputs.w_pb_target.at( dispatch.m_current_read_step )*1.e-3;
                 disp_rev_expect = disp_wpb_expect * dispatch.price_signal.at( dispatch.m_current_read_step );
-                disp_etapb_expect = disp_wpb_expect / max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
+                disp_etapb_expect = disp_wpb_expect / std::max(1.e-6, dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ))* 1.e3 
                                         * ( dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) ? 1. : 0. );
 
                 //if( is_sim_timestep_complete ) // disp_time_last != mc_kernel.mc_sim_info.ms_ts.ms_ts.m_time)
