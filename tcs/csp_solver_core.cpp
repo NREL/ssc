@@ -573,7 +573,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     dispatch.solver_params.is_ampl_engine = mc_tou.mc_dispatch_params.m_is_ampl_engine;
     dispatch.solver_params.ampl_data_dir = mc_tou.mc_dispatch_params.m_ampl_data_dir;
     dispatch.solver_params.ampl_exec_call = mc_tou.mc_dispatch_params.m_ampl_exec_call;
+    
+    dispatch.forecast_params.is_stochastic = false;
     //-------------------------------
+
 
         
 	int cr_operating_state = C_csp_collector_receiver::OFF;

@@ -229,13 +229,27 @@ public:
     
     struct s_forecast_params
     {
-        double coef;
+        int n_scenarios;            //number of forecast scenarios
+        int n_steps;                //number of time steps in the forecast
+        double step;                //[sec] step duration
+        bool is_stochastic;         //apply stochastic dispatch
 
+        s_forecast_params()
+        {
+            n_scenarios = -1;   
+            n_steps = -1;
+            step = std::numeric_limits<double>::quiet_NaN();
+            is_stochastic = false;
 
+        };
+    
     } forecast_params;
 
     struct s_forecast_outputs
-    {
+    {    
+        util::matrix_t<double> dni_scenarios;
+        util::matrix_t<double> price_scenarios;
+        util::matrix_t<double> tdry_scenarios;
 
     } forecast_outputs;
 
