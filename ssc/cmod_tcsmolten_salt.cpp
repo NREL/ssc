@@ -30,12 +30,13 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
 
+    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization of solar field geometry",                "",             "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "is_override_layout",   "Run SolarPILOT field layout but keep tower/receiver geometry",      "-",            "",            "heliostat",      "*",                       "",                     "" },
+    
 	
-	
-	{ SSC_INPUT,        SSC_NUMBER,      "run_type",             "Run type",                                                          "-",            "",            "heliostat",      "*",                       "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "helio_width",          "Heliostat width",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "helio_width",          "Heliostat width",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_height",         "Heliostat height",                                                  "m",            "",            "heliostat",      "*",                       "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "helio_optical_error",  "Heliostat optical error",                                           "rad",          "",            "heliostat",      "*",                       "",                     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "helio_optical_error_mrad",  "Heliostat optical error",                                      "mrad",          "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_active_fraction","Heliostat active frac.",                                            "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "dens_mirror",          "Ratio of Reflective Area to Profile",                               "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",    "Heliostat reflectance",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
@@ -95,7 +96,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",        "Solar field fixed cost",                                            "$",            "",            "heliostat",      "*",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "fossil_spec_cost",     "Fossil system specific cost",                                       "$/kWe",        "",            "heliostat",      "*",                       "",                     "" },
 																																																									      
-    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization of solar field geometry",                "",             "",            "heliostat",       "?=0",                    "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "flux_max",             "Maximum allowable flux",                                            "",             "",            "heliostat",       "?=1000",                 "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",        "Optimization initial step size",                                    "",             "",            "heliostat",       "?=0.05",                 "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",         "Max. number iteration steps",                                       "",             "",            "heliostat",       "?=200",                  "",                     "" },
@@ -108,7 +108,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.percent",        "EPC cost percent of direct",                              "%",            "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.per_watt",       "EPC cost per watt",                                       "$/W",          "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.epc.fixed",          "EPC fixed",                                               "$",            "",            "heliostat",       "*",                      "",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_acre",       "PLM cost per acre",                                       "$/acre",       "",            "heliostat",       "*",                      "",                     "" },
+	//{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_acre",       "PLM cost per acre",                                       "$/acre",       "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.percent",        "PLM cost percent of direct",                              "%",            "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.per_watt",       "PLM cost per watt",                                       "$/W",          "",            "heliostat",       "*",                      "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.cost.plm.fixed",          "PLM fixed",                                               "$",            "",            "heliostat",       "*",                      "",                     "" },
@@ -302,8 +302,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                 "m^2",           "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
-    { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "run_type=2",              "",                      "" },
-	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                         "",              "",            "heliostat",      "run_type=1",              "",                      "COL_LABEL=XY_POSITION" },
+    { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "",              "",                      "" },
+	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                         "",              "",            "heliostat",      "*",              "",                      "COL_LABEL=XY_POSITION" },
 	{ SSC_INOUT,        SSC_NUMBER,      "land_area_base",       "Base land area occupied by heliostats",                            "acre",          "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "csp.pt.cost.total_land_area", "Total land area",                                           "acre",          "",            "system_costs",   "*",                       "",                      "" },
 
@@ -527,6 +527,11 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// Set up "cmod_solarpilot.cpp" conversions as necessary
+		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);
+		
+		assign("run_type", as_boolean("is_override_layout"));
+
 		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )
 		{
@@ -580,13 +585,6 @@ public:
 				// 'calc_fluxmaps' should be true
 			assign("calc_fluxmaps", 1);
 			// is_optimize could be true or false here
-
-
-			assign("is_optimize", 0);
-
-
-
-
 		}
 		else if (run_type == 1)		// User-field. Calculate flux and efficiency maps
 		{
@@ -814,7 +812,7 @@ public:
 		heliostatfield.ms_params.m_run_type = run_type;
 		heliostatfield.ms_params.m_helio_width = as_double("helio_width");		// sp match
 		heliostatfield.ms_params.m_helio_height = as_double("helio_height");	// sp match
-		heliostatfield.ms_params.m_helio_optical_error = as_double("helio_optical_error");	// sp match
+		heliostatfield.ms_params.m_helio_optical_error = as_double("helio_optical_error_mrad")*1.E-3;	//[rad], convert from SSC input in [mrad]
 		heliostatfield.ms_params.m_helio_active_fraction = as_double("helio_active_fraction");	// sp match
 		heliostatfield.ms_params.m_dens_mirror = as_double("dens_mirror");		// sp match
 		heliostatfield.ms_params.m_helio_reflectance = as_double("helio_reflectance");	// sp match
@@ -848,20 +846,21 @@ public:
 
 		if( run_type == 1 || run_type == 0 )
 		{
-			heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
-			double x0 = heliostatfield.ms_params.m_helio_positions(0, 0);
-			double y0 = heliostatfield.ms_params.m_helio_positions(0, 1);
-            //if run_type==0, then a layout has already been generated. Set to 1 to avoid regenerating in csp_solver_pt_heliostatfield::init()
-            heliostatfield.ms_params.m_run_type = run_type = 1;
-			//heliostatfield.ms_params.m_eta_map = mt_eta_map;
-			//heliostatfield.ms_params.m_eta_map_aod_format = false;
-			//heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
-			//heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
-			////allocate empty array of positions to indicate number of heliostats in the field
-			//util::matrix_t<double> hpos(as_integer("N_hel"), 2);
-			//heliostatfield.ms_params.m_helio_positions = hpos;
-			//run_type = 2;
-			//heliostatfield.ms_params.m_run_type = run_type;
+			//heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
+			//double x0 = heliostatfield.ms_params.m_helio_positions(0, 0);
+			//double y0 = heliostatfield.ms_params.m_helio_positions(0, 1);
+            ////if run_type==0, then a layout has already been generated. Set to 1 to avoid regenerating in csp_solver_pt_heliostatfield::init()
+            //heliostatfield.ms_params.m_run_type = run_type = 1;
+
+			heliostatfield.ms_params.m_eta_map = mt_eta_map;
+			heliostatfield.ms_params.m_eta_map_aod_format = false;
+			heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
+			heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
+			//allocate empty array of positions to indicate number of heliostats in the field
+			util::matrix_t<double> hpos(as_integer("N_hel"), 2);
+			heliostatfield.ms_params.m_helio_positions = hpos;
+			run_type = 2;
+			heliostatfield.ms_params.m_run_type = run_type;
 		}
 		else if( run_type == 2 )
 		{
@@ -1640,7 +1639,7 @@ public:
 		sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
 		sys_costs.ms_par.EPC_land_per_power_cost = as_double("csp.pt.cost.epc.per_watt");
 		sys_costs.ms_par.EPC_land_fixed_cost = as_double("csp.pt.cost.epc.fixed");
-		sys_costs.ms_par.total_land_spec_cost = as_double("csp.pt.cost.plm.per_acre");
+		sys_costs.ms_par.total_land_spec_cost = as_double("land_spec_cost");
 		sys_costs.ms_par.total_land_perc_direct_cost = as_double("csp.pt.cost.plm.percent");
 		sys_costs.ms_par.total_land_per_power_cost = as_double("csp.pt.cost.plm.per_watt");
 		sys_costs.ms_par.total_land_fixed_cost = as_double("csp.pt.cost.plm.fixed");
