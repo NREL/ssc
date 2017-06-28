@@ -283,16 +283,40 @@ private:
 	double _C0;
 };
 
+class lifetime_t
+{
+public:
+	lifetime_t(const int replacement_option, const double replacement_capacity);
+	virtual ~lifetime_t(){};
+
+	lifetime_t * clone();
+	void copy(lifetime_t *&);
+
+	virtual bool check_replaced();
+	virtual void reset_replacements();
+	virtual int replacements();
+	void force_replacement();
+
+protected:
+	// battery replacement
+	int _replacement_option;
+	double _replacement_capacity;
+	int _replacements;
+	bool _replacement_scheduled;
+	double _q;
+};
+
+
 /*
-Lifetime class.  Currently only one lifetime cycling model anticipated
+Lifetime cycling class.  
 */
 
-class lifetime_cycle_t
+class lifetime_cycle_t: protected lifetime_t
 {
 
 public:
 	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD, const int replacement_option, const double replacement_capacity);
-	~lifetime_cycle_t();
+	virtual ~lifetime_cycle_t();
 	lifetime_cycle_t * clone();
 	void copy(lifetime_cycle_t *&);
 
@@ -306,9 +330,6 @@ public:
 	int forty_percent_cycles();
 	int hundred_percent_cycles();
 	double cycle_range();
-
-	// for user replacement schedule
-	void force_replacement();
 
 protected:
 	void rainflow_ranges();
@@ -333,12 +354,6 @@ protected:
 	double _Range;
 	double _average_range;
 
-	// battery replacement
-	int _replacement_option;
-	double _replacement_capacity;
-	int _replacements;
-	bool _replacement_scheduled;
-
 	enum RETURN_CODES
 	{
 		LT_SUCCESS,
@@ -349,11 +364,47 @@ protected:
 /*
 Lifetime calendar model
 */
-class lifetime_calendar_t
+class lifetime_calendar_t : protected lifetime_t
 {
 public:
-	lifetime_calendar_t();
-	virtual ~lifetime_calendar_t();
+	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, const int replacement_option, const double replacement_capacity);
+	virtual ~lifetime_calendar_t(){/* Nothing to do */};
+
+	lifetime_calendar_t * clone();
+	void copy(lifetime_calendar_t *&);
+
+	double runLifetimeCalendarModel(int hour, double T, double SOC);
+
+	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
+
+protected:
+	bool computeDayOfSimulation(int hour_of_day);
+	void computeAverages(double T, double SOC);
+	double runLithiumIonModel();
+	double runTableModel();
+	void replaceBattery();
+
+private:
+	int _calendar_choice;
+	util::matrix_t<double> _calendar_matrix;
+	
+	int _hour_of_day;
+	int _day_age_of_battery;
+
+	double _T_avg;
+	double _SOC_avg;
+	int _n_steps_elapsed_in_day;
+
+	// relative capacity (0 - 1)
+	double _q;
+	double _dq_old;
+	double _dq_new;
+
+	// K. Smith: Life Prediction model coeffiecients
+	float _q0; // unitless
+	float _a;  // 1/sqrt(day)
+	float _b;  // K
+	float _c;  // K
 };
 /*
 Thermal classes
@@ -441,21 +492,23 @@ public:
 	~battery_t(){};
 	void delete_clone();
 
-	void initialize(capacity_t *, voltage_t *, lifetime_cycle_t *, thermal_t *, losses_t *);
+	void initialize(capacity_t *, voltage_t *, lifetime_cycle_t *, lifetime_calendar_t *, thermal_t *, losses_t *);
 
 	// Run all
-	void run(double P);
+	void run(int hour_of_day, double I);
 
 	// Run a component level model
 	void runCapacityModel(double I);
 	void runVoltageModel();
 	void runThermalModel(double I);
-	void runLifetimeModel(double DOD);
+	void runCycleLifetimeModel(double DOD);
+	void runCalendarLifetimeModel(int hour_of_day);
 	void runLossesModel();
 
 	capacity_t * capacity_model() const;
 	voltage_t * voltage_model() const;
 	lifetime_cycle_t * lifetime_cycle_model() const;
+	lifetime_calendar_t* lifetime_calendar_model() const;
 	thermal_t * thermal_model() const;
 	losses_t * losses_model() const;
 
@@ -480,6 +533,7 @@ public:
 private:
 	capacity_t * _capacity;
 	lifetime_cycle_t * _lifetime_cycle;
+	lifetime_calendar_t * _lifetime_calendar;
 	voltage_t * _voltage;
 	thermal_t * _thermal;
 	losses_t * _losses;

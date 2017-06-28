@@ -27,6 +27,7 @@ struct batt_variables
 	int batt_pv_choice;
 	int batt_target_choice;
 	int batt_loss_choice;
+	int batt_calendar_choice;
 
 	size_t ncharge;
 	size_t ndischarge;
@@ -46,6 +47,7 @@ struct batt_variables
 
 	util::matrix_t<float> schedule;
 	util::matrix_t<double>  batt_lifetime_matrix;
+	util::matrix_t<double> batt_calendar_lifetime_matrix;
 	util::matrix_t<double> batt_voltage_matrix;
 
 	std::vector<double> target_power_monthly;
@@ -136,6 +138,7 @@ struct battstor
 	// member data
 	voltage_t *voltage_model;
 	lifetime_cycle_t *lifetime_cycle_model;
+	lifetime_calendar_t *lifetime_calendar_model;
 	thermal_t *thermal_model;
 	capacity_t *capacity_model;
 	battery_t *battery_model;

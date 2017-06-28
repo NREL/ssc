@@ -36,8 +36,6 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-
-	
 	batt_variables * setup_variables()
 	{
 		batt_variables * batt_vars = new batt_variables();
@@ -46,6 +44,8 @@ public:
 		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
 		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
 		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
+		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
+		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
 
 		int dispatch = as_integer("batt_simple_dispatch");
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);

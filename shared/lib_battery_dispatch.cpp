@@ -14,7 +14,7 @@ dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, doub
 
 void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double t_min, int mode, int pv_dispatch)
 {
-	_dt_hour = dt_hour;
+	_dt_hour = dt_hour; 
 	_SOC_min = SOC_min;
 	_SOC_max = SOC_max;
 	_Ic_max = Ic_max;

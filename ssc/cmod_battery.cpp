@@ -66,6 +66,9 @@ var_info vtab_battery_inputs[] = {
 	// lifetime inputs
 	{ SSC_INPUT,		SSC_MATRIX,     "batt_lifetime_matrix",                        "Cycles vs capacity at different depths-of-discharge",    "",         "",                     "Battery",       "",                           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_replacement_capacity",                   "Capacity degradation at which to replace battery",       "%",        "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "batt_calendar_choice",                        "Calendar life degradation input option",                 "0/1/2",    "",                     "Battery",       "",                           "",                             "" },
+	{ SSC_INPUT,        SSC_MATRIX,     "batt_calendar_lifetime_matrix",               "Days vs capacity",                                       "",         "",                     "Battery",       "",                           "",                             "" },
+
 
 	// thermal inputs
 	{ SSC_INPUT,        SSC_NUMBER,     "batt_mass",                                   "Battery mass",                                           "kg",       "",                     "Battery",       "",                           "",                             "" },
@@ -179,6 +182,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_meter_position = cm.as_integer("batt_meter_position");
 			batt_vars->batt_pv_choice = cm.as_integer("batt_pv_choice");
 			batt_vars->batt_loss_choice = cm.as_integer("batt_loss_choice");
+			batt_vars->batt_calendar_choice = cm.as_integer("batt_calendar_choice");
 
 			// Only one dispatch option for front-of-meter
 			if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -202,6 +206,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 				batt_vars->target_power = cm.as_doublevec("batt_target_power");
 			}
 			batt_vars->batt_lifetime_matrix = cm.as_matrix("batt_lifetime_matrix");
+			batt_vars->batt_calendar_lifetime_matrix = cm.as_matrix("batt_calendar_lifetime_matrix");
 			batt_vars->batt_voltage_matrix = cm.as_matrix("batt_voltage_matrix");
 
 			batt_vars->batt_computed_series = cm.as_integer("batt_computed_series");
@@ -436,6 +441,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	if (batt_lifetime_matrix.nrows() < 3 || batt_lifetime_matrix.ncols() != 3)
 		throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
 
+	util::matrix_t<double>  batt_calendar_lifetime_matrix = batt_vars->batt_calendar_lifetime_matrix;
+	if (batt_vars->batt_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && (batt_lifetime_matrix.nrows() < 2 || batt_lifetime_matrix.ncols() != 2))
+		throw compute_module::exec_error("battery", "Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
 
 	/* **********************************************************************
 	Initialize outputs
@@ -517,6 +525,8 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, batt_vars->batt_voltage_matrix);
 
 	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix, replacement_option, batt_vars->batt_replacement_capacity);
+	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix);
+
 	util::matrix_t<double> cap_vs_temp = batt_vars->cap_vs_temp;
 	if (cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2)
 		throw compute_module::exec_error("battery", "capacity vs temperature matrix must have two columns and at least two rows");
