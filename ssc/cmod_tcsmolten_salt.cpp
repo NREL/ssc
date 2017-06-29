@@ -235,7 +235,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	// System Control	
     { SSC_INPUT,        SSC_NUMBER,      "time_start",           "Simulation start time",                                             "s",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "time_stop",            "Simulation stop time",                                              "s",            "",            "sys_ctrl",          "?=31536000",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "time_steps_per_hour",  "Number of simulation time steps per hour",                          "-",            "",            "sys_ctrl",          "?=1",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "time_steps_per_hour",  "Number of simulation time steps per hour",                          "-",            "",            "sys_ctrl",          "?=-1",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "vacuum_arrays",        "Allocate arrays for only the required number of steps",             "-",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "pb_fixed_par",         "Fixed parasitic load - runs at all times",                          "MWe/MWcap",    "",            "sys_ctrl",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "aux_par",              "Aux heater, boiler parasitic",                                      "MWe/MWcap",    "",            "sys_ctrl",          "*",                       "",                      "" },
@@ -549,8 +549,18 @@ public:
 		C_csp_solver::S_sim_setup sim_setup;
 		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
 		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
+        
+        int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
 
-		int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
+        //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
+        if( steps_per_hour < 0 )
+        {
+            double sph_d = 3600. / weather_reader.get_step_seconds();
+            steps_per_hour = (int)( sph_d + 1.e-5 );
+            if( (double)steps_per_hour != sph_d )
+                throw spexception("The time step duration must be evenly divisible within an hour.");
+        }
+
         int n_steps_fixed = steps_per_hour * 8760;	//[-]
         if( as_boolean("vacuum_arrays") )
         {
