@@ -688,7 +688,7 @@ lifetime_t::lifetime_t(const int replacement_option, const double replacement_ca
 	_replacement_scheduled = false;
 
 	// relative capacity
-	_q = 1;
+	_q = 100;
 }
 lifetime_t * lifetime_t::clone(){ return new lifetime_t(*this); }
 void lifetime_t::copy(lifetime_t *& lifetime)
@@ -705,7 +705,7 @@ bool lifetime_t::check_replaced()
 	if ((_replacement_option == 1 && (_q - tolerance) <= _replacement_capacity) || _replacement_scheduled)
 	{
 		_replacements++;
-		_q = 1.;
+		_q = 100.;
 		replaced = true;
 		_replacement_scheduled = false;
 	}
@@ -729,7 +729,7 @@ lifetime_t(replacement_option, replacement_capacity)
 	// initialize other member variables
 	_nCycles = 0;
 	_Dlt = 0;
-	_Clt = bilinear(0.,0);
+	_q = bilinear(0.,0);
 	_jlt = 0;
 	_Xlt = 0;
 	_Ylt = 0;
@@ -743,7 +743,6 @@ void lifetime_cycle_t::copy(lifetime_cycle_t *& lifetime_cycle)
 {
 	lifetime_cycle->_nCycles = _nCycles;
 	lifetime_cycle->_Dlt = _Dlt;
-	lifetime_cycle->_Clt = _Clt;
 	lifetime_cycle->_jlt = _jlt;
 	lifetime_cycle->_Xlt = _Xlt;
 	lifetime_cycle->_Ylt = _Ylt;
@@ -828,11 +827,11 @@ int lifetime_cycle_t::rainflow_compareRanges()
 		_nCycles++;
 
 		// the capacity percent cannot increase
-		if (bilinear(_average_range, _nCycles) <= _Clt)
-			_Clt = bilinear(_average_range, _nCycles);
+		if (bilinear(_average_range, _nCycles) <= _q)
+			_q = bilinear(_average_range, _nCycles);
 
-		if (_Clt < 0)
-			_Clt = 0.;
+		if (_q < 0)
+			_q = 0.;
 		
 		// discard peak & valley of Y
 		double save = _Peaks[_jlt]; 
@@ -850,10 +849,10 @@ int lifetime_cycle_t::rainflow_compareRanges()
 bool lifetime_cycle_t::check_replaced()
 {
 	bool replaced = false;
-	if ( (_replacement_option == 1 && (_Clt - tolerance) <= _replacement_capacity) || _replacement_scheduled)
+	if ( (_replacement_option == 1 && (_q - tolerance) <= _replacement_capacity) || _replacement_scheduled)
 	{
 		_replacements++;
-		_Clt = bilinear(0.,0);
+		_q = bilinear(0.,0);
 		_Dlt = 0.;
 		_nCycles = 0;
 		_jlt = 0;
@@ -868,7 +867,7 @@ bool lifetime_cycle_t::check_replaced()
 }
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
-double lifetime_cycle_t::capacity_percent(){ return _Clt; }
+double lifetime_cycle_t::capacity_percent(){ return _q; }
 double lifetime_cycle_t::cycle_range(){ return _Range; }
 
 
@@ -1017,15 +1016,18 @@ lifetime_t(replacement_option, replacement_capacity)
 	_calendar_choice = calendar_choice;
 	_calendar_matrix = calendar_matrix;
 	
+	// coefficients based on fractional capacity (0 - 1)
 	_dq_old = 0;
 	_dq_new = 0;
+
 
 	_q0 = 1.02;
 	_a = 2.66e-3;
 	_b = 7280;
 	_c = 930;
 
-	_q = _q0;
+	// output based on percentage capacity (0 - 100%)
+	_q = _q0 * 100;
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
 void lifetime_calendar_t::copy(lifetime_calendar_t *& lifetime_calendar)
@@ -1047,13 +1049,14 @@ double lifetime_calendar_t::runLifetimeCalendarModel(int hour_of_day, double T=2
 }
 void lifetime_calendar_t::runLithiumIonModel()
 {
+	double dt = 1; // currently always integrating over a 1 day period
 	double k_cal = _a * exp(_b * (1. / _T_avg - 1. / 296))*exp(_c*(_SOC_avg / _T_avg - 1. / 296));
 	if (_dq_old == 0)
-		_dq_new = k_cal * sqrt(_day_age_of_battery);
+		_dq_new = k_cal * sqrt(dt);
 	else
-		_dq_new = sqrt(pow(_dq_old, 2) + pow(k_cal, 2) * _day_age_of_battery);
+		_dq_new = (0.5 * pow(k_cal, 2) / _dq_old) * dt + _dq_old;
 	_dq_old = _dq_new;
-	_q -= _dq_new;
+	_q -= (_dq_new) * 100;
 	
 }
 void lifetime_calendar_t::runTableModel()
@@ -1078,7 +1081,7 @@ void lifetime_calendar_t::runTableModel()
 			capacity_hi = capacity;
 		}
 	}
-	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery) * 0.01;
+	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery);
 }
 bool lifetime_calendar_t::computeDayOfSimulation(int hour_of_day)
 {
@@ -1110,7 +1113,7 @@ void lifetime_calendar_t::replaceBattery()
 {
 	_day_age_of_battery = 0;
 	_n_steps_elapsed_in_day = 0;
-	_q = _q0;
+	_q = _q0 * 100;
 }
 
 /*

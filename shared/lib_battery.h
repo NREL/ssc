@@ -304,7 +304,8 @@ protected:
 	double _replacement_capacity;
 	int _replacements;
 	bool _replacement_scheduled;
-	double _q;
+
+	double _q;  // battery relative capacity (0 - 100%)
 };
 
 
@@ -345,7 +346,6 @@ protected:
 
 	int _nCycles;
 	double _Dlt;			// % damage according to rainflow
-	double _Clt;			// % capacity 
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
 	double _Xlt;
 	double _Ylt;
