@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include "lib_util.h"
 
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
 
@@ -23,7 +24,6 @@ class csp_dispatch_opt
 public:
     bool m_last_opt_successful;   //last optimization run was successful?
     int m_current_read_step;        //current step to read from optimization results
-    std::vector<double> price_signal;    //IN [- or $/MWh] Price factor indicating market value of generated energy
 	std::vector<double> w_lim;			//[kWe] Limit on net electricity production
     C_csp_weatherreader *m_weather;       //Local copy of weather reader object
 
@@ -208,18 +208,20 @@ public:
         std::vector<bool> pb_standby;    //power block standby ok?
         std::vector<double> q_pb_target;       //optimized energy generation (less startup loss)
         std::vector<double> q_pb_standby;      //standby energy allowed
-        std::vector<double> q_sfavail_expected;       //Expected available solar field energy
         std::vector<double> q_sf_expected;           //Expected solar field energy generation
-        std::vector<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
-        std::vector<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
         std::vector<double> tes_charge_expected;     //Expected thermal energy storage charge state
         std::vector<double> q_pb_startup;    //thermal power going to startup
         std::vector<double> q_rec_startup;   //thermal power going to startup
         std::vector<double> w_pb_target;  //optimized electricity generation
-        std::vector<double> w_condf_expected;  //Expected condenser loss coefficient
-        std::vector<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
-        std::vector<double> delta_rs;    //expected proportion of time step used for receiver start up
-
+        
+        util::matrix_t<double> wnet_lim_min; //minimum expected net power at time t before cycle gross falls before limit
+        util::matrix_t<double> delta_rs;    //expected proportion of time step used for receiver start up
+        
+        util::matrix_t<double> q_sfavail_expected;       //Expected available solar field energy
+        util::matrix_t<double> eta_sf_expected;     //Expected solar field thermal efficiency (normalized)
+        util::matrix_t<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
+        util::matrix_t<double> w_condf_expected;  //Expected condenser loss coefficient
+        
         int solve_iter;             //Number of iterations required to solve
         int solve_state;
         double solve_time;
@@ -233,6 +235,9 @@ public:
         int n_steps;                //number of time steps in the forecast
         double step;                //[sec] step duration
         bool is_stochastic;         //apply stochastic dispatch
+        bool is_dni_scenarios;
+        bool is_price_scenarios;
+        bool is_tdry_scenarios; 
 
         s_forecast_params()
         {
@@ -240,6 +245,9 @@ public:
             n_steps = -1;
             step = std::numeric_limits<double>::quiet_NaN();
             is_stochastic = false;
+            is_dni_scenarios = false;
+            is_price_scenarios = false;
+            is_tdry_scenarios = false;
 
         };
     
@@ -268,7 +276,7 @@ public:
     //bool dispatch_forecast();
 
     //Predict performance out nstep values. 
-    bool predict_performance(int step_start, int ntimeints, int divs_per_int, std::vector< double > *alt_dni=0);    
+    bool predict_performance(int step_start, int ntimeints, int divs_per_int);    
 
     //declare dispatch function in csp_dispatch.cpp
     bool optimize();

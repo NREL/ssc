@@ -225,6 +225,9 @@ public:
         bool m_isleapyear;
 		bool m_dispatch_optimize;
         bool m_is_stochastic_dispatch;
+        bool m_is_dni_scenarios;
+        bool m_is_price_scenarios;
+        bool m_is_tdry_scenarios;
         int m_optimize_frequency;
         int m_disp_steps_per_hour;
         int m_optimize_horizon;
@@ -267,6 +270,9 @@ public:
             m_isleapyear = false;
             m_dispatch_optimize = false;        //Do dispatch optimization
             m_is_stochastic_dispatch = false;
+            m_is_dni_scenarios = false;
+            m_is_price_scenarios = false;
+            m_is_tdry_scenarios = false;
             m_optimize_frequency = 24;          //[hr] Optimization occurs every X hours
             m_disp_steps_per_hour = 1;          //[-] Steps per hour for dispatch optimization
             m_optimize_horizon = 48;            //[hr] Optimization time horizon

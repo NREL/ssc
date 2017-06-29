@@ -1396,9 +1396,18 @@ public:
                     throw exec_error("tcsmolten_salt", "Stochastic dispatch is only available using the AMPL engine linkage. Ensure AMPL settings are correct.");
 
                 //construct the stochastic forecast data tables
-                tou.mc_dispatch_params.m_fc_dni_scenarios = as_matrix("fc_dni_scenarios");
-                tou.mc_dispatch_params.m_fc_price_scenarios = as_matrix("fc_price_scenarios");
-                tou.mc_dispatch_params.m_fc_tdry_scenarios = as_matrix("fc_tdry_scenarios");
+                if(! ( is_assigned( "fc_dni_scenarios" ) || is_assigned( "fc_price_scenarios" ) || is_assigned( "fc_tdry_scenarios" ) ) )
+                    throw exec_error("tcsmolten_salt", "If stochastic dispatch is enabled, at least one scenario matrix must be provided among 'fc_dni_scenarios', 'fc_price_scenarios', 'fc_tdry_scenarios'.");
+
+                if( tou.mc_dispatch_params.m_is_dni_scenarios = is_assigned( "fc_dni_scenarios" ) )
+                    tou.mc_dispatch_params.m_fc_dni_scenarios = as_matrix("fc_dni_scenarios");
+
+                if( tou.mc_dispatch_params.m_is_price_scenarios = is_assigned( "fc_price_scenarios" ) )
+                    tou.mc_dispatch_params.m_fc_price_scenarios = as_matrix("fc_price_scenarios");
+
+                if( tou.mc_dispatch_params.m_is_tdry_scenarios = is_assigned( "fc_tdry_scenarios" ) )
+                    tou.mc_dispatch_params.m_fc_tdry_scenarios = as_matrix("fc_tdry_scenarios");
+
                 tou.mc_dispatch_params.m_fc_steps = as_integer("fc_steps");
             }
 

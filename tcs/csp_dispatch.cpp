@@ -130,7 +130,6 @@ csp_dispatch_opt::csp_dispatch_opt()
     m_nstep_opt = 0;
     m_current_read_step = 0;
     m_last_opt_successful = false;
-    price_signal.clear();
     clear_output_arrays();
     m_is_weather_setup = false;
     m_weather = 0;
@@ -206,8 +205,6 @@ bool csp_dispatch_opt::check_setup(int nstep)
     //check parameters and inputs to make sure everything has been set up correctly
     bool ok = true;
 
-    if( price_signal.size() < nstep )   return false;
-
     if( !m_is_weather_setup ) return false;
     if( params.siminfo == 0 ) return false;
     
@@ -222,7 +219,7 @@ bool csp_dispatch_opt::copy_weather_data(C_csp_weatherreader &weather_source)
     return m_is_weather_setup = true;
 }
 
-bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int, std::vector< double > *alt_dni)
+bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int divs_per_int)
 {
     //Step number - 1-based index for first hour of the year.
 
@@ -244,74 +241,111 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
 
     double ave_weight = 1./(double)divs_per_int;
 
-    for(int i=0; i<m_nstep_opt; i++)
+    //resize the arrays
+    int ns = forecast_params.is_stochastic ? forecast_params.n_scenarios : 1;
+    outputs.eta_sf_expected.resize(m_nstep_opt, ns );
+    outputs.q_sfavail_expected.resize(m_nstep_opt, ns );
+    outputs.eta_pb_expected.resize(m_nstep_opt, ns );
+    outputs.w_condf_expected.resize(m_nstep_opt, ns );
+
+    C_csp_weatherreader::S_outputs *weatherstep;
+    if( forecast_params.is_stochastic )
+        weatherstep = new C_csp_weatherreader::S_outputs();
+
+    for(int w=0; w<ns; w++)
     {
-        //initialize hourly average values
-        double therm_eff_ave = 0.;
-        double cycle_eff_ave = 0.;
-        double q_inc_ave = 0.;
-        double wcond_ave = 0.;
-
-        for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
+        for(int t=0; t<m_nstep_opt; t++)
         {
+            //initialize hourly average values
+            double therm_eff_ave = 0.;
+            double cycle_eff_ave = 0.;
+            double q_inc_ave = 0.;
+            double wcond_ave = 0.;
 
-            //jump to the current step
-            if(! m_weather->read_time_step( step_start+i*divs_per_int+j, simloc ) )
-                return false;
-
-            //get DNI
-            double dni;
-            if( alt_dni )
+            for(int j=0; j<divs_per_int; j++)     //take averages over hour if needed
             {
-                dni = alt_dni->at(j);
+
+                //jump to the current step
+                if(! m_weather->read_time_step( step_start+t*divs_per_int+j, simloc ) )
+                    return false;
+
+                //if stochastic is used, adjust conditions for the scenario 's'
+                if( forecast_params.is_stochastic )
+                {
+                    *weatherstep = m_weather->ms_outputs;    //copy
+
+                    if( forecast_params.is_dni_scenarios )
+                        //if DNI is stochastic, assign the current DNI (beam) to be the value provided in the scenarios table
+                        weatherstep->m_beam = forecast_outputs.dni_scenarios.at(t, w);
+                    else
+                        //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
+                        forecast_outputs.dni_scenarios.at(t, w) = weatherstep->m_beam;  
+
+                    if( forecast_params.is_dni_scenarios )
+                        //if tdry is stochastic, assign the current tdry to be the value provided in the scenarios table
+                        weatherstep->m_tdry = forecast_outputs.tdry_scenarios.at(t, w);
+                    else
+                        //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
+                        forecast_outputs.tdry_scenarios.at(t, w) = weatherstep->m_tdry;  
+
+                }
+                else
+                {
+                    weatherstep = &m_weather->ms_outputs;   //point to
+                }
+
+
+                //get DNI
+                double dni = m_weather->ms_outputs.m_beam;
+
+                if( m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
+                    dni = 0.;
+
+                //get optical efficiency
+                double opt_eff = params.col_rec->calculate_optical_efficiency(*weatherstep, simloc);
+
+                double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
+
+                //get thermal efficiency
+                double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(*weatherstep, q_inc*0.001);
+                therm_eff *= params.sf_effadj;
+                therm_eff_ave += therm_eff * ave_weight;
+
+                //store the predicted field energy output
+                q_inc_ave += q_inc * therm_eff * ave_weight;
+
+                //store the power cycle efficiency
+                double cycle_eff = params.eff_table_Tdb.interpolate( weatherstep->m_tdry );
+                cycle_eff *= params.eta_cycle_ref;  
+                cycle_eff_ave += cycle_eff * ave_weight;
+
+                //store the condenser parasitic power fraction
+                double wcond_f = params.wcondcoef_table_Tdb.interpolate( weatherstep->m_tdry );
+                wcond_ave += wcond_f * ave_weight;
+
+		        simloc.ms_ts.m_time += simloc.ms_ts.m_step;
+                m_weather->converged();
             }
-            else
-            {
-                dni = m_weather->ms_outputs.m_beam;
-            }
-            if( m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
-                dni = 0.;
 
-            //get optical efficiency
-            double opt_eff = params.col_rec->calculate_optical_efficiency(m_weather->ms_outputs, simloc);
-
-            double q_inc = Asf * opt_eff * dni * 1.e-3; //kW
-
-            //get thermal efficiency
-            double therm_eff = params.col_rec->calculate_thermal_efficiency_approx(m_weather->ms_outputs, q_inc*0.001);
-            therm_eff *= params.sf_effadj;
-            therm_eff_ave += therm_eff * ave_weight;
-
-            //store the predicted field energy output
-            q_inc_ave += q_inc * therm_eff * ave_weight;
-
-            //store the power cycle efficiency
-            double cycle_eff = params.eff_table_Tdb.interpolate( m_weather->ms_outputs.m_tdry );
-            cycle_eff *= params.eta_cycle_ref;  
-            cycle_eff_ave += cycle_eff * ave_weight;
-
-            //store the condenser parasitic power fraction
-            double wcond_f = params.wcondcoef_table_Tdb.interpolate( m_weather->ms_outputs.m_tdry );
-            wcond_ave += wcond_f * ave_weight;
-
-		    simloc.ms_ts.m_time += simloc.ms_ts.m_step;
-            m_weather->converged();
+            //-----report hourly averages
+            //thermal efficiency
+            outputs.eta_sf_expected.at(t,w) = therm_eff_ave;
+            //predicted field energy output
+            outputs.q_sfavail_expected.at(t,w) = q_inc_ave;
+            //power cycle efficiency
+            outputs.eta_pb_expected.at(t,w) = cycle_eff_ave;
+            //condenser power
+            outputs.w_condf_expected.at(t,w) = wcond_ave;
         }
 
-        //-----report hourly averages
-        //thermal efficiency
-        outputs.eta_sf_expected.push_back(therm_eff_ave);
-        //predicted field energy output
-        outputs.q_sfavail_expected.push_back( q_inc_ave );
-        //power cycle efficiency
-        outputs.eta_pb_expected.push_back( cycle_eff_ave );
-        //condenser power
-        outputs.w_condf_expected.push_back( wcond_ave );
     }
 
     //reset the weather data reader
     //m_weather->jump_to_timestep(step_start, simloc);
     
+    if( forecast_params.is_stochastic )
+        delete weatherstep;
+
     return true;
 }
 
@@ -350,8 +384,8 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
         pars["q0"] =  optinst->params.q_pb0 ;
         pars["qrecmaxobs"] = 1.;
-        for(int i=0; i<optinst->outputs.q_sfavail_expected.size(); i++)
-            pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i) : pars["qrecmaxobs"];
+        for(int i=0; i<optinst->outputs.q_sfavail_expected.nrows(); i++)
+            pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i,0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i,0) : pars["qrecmaxobs"];
 
         pars["Qrsb"] = optinst->params.q_rec_standby; // * dq_rsu;     //.02
         pars["M"] = 1.e6;
@@ -404,33 +438,37 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 
         pars["Wdot0"] = 0.;
         if( pars["q0"] >= pars["Ql"] )
-            pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0);
+            pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0,0);
 
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];
 
         // Adjust wlim if specified value is too low to permit cycle operation
-        optinst->outputs.wnet_lim_min.resize(nt);
-        optinst->outputs.delta_rs.resize(nt);
-        for(int t=0; t<nt; t++)
+        int ns = optinst->forecast_params.n_scenarios;
+        optinst->outputs.wnet_lim_min.resize(nt, ns);
+        optinst->outputs.delta_rs.resize(nt, ns);
+        for(int s=0; s<ns; s++)
         {
-		    double wmin = (pars["Ql"] * pars["etap"]*optinst->outputs.eta_pb_expected.at(t) / optinst->params.eta_cycle_ref) + 
-                            (pars["Wdotu"] - pars["etap"]*pars["Qu"])*optinst->outputs.eta_pb_expected.at(t) / optinst->params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
-		    double max_parasitic = 
-                    pars["Lr"] * optinst->outputs.q_sfavail_expected.at(t) 
-                + (optinst->params.w_rec_ht / optinst->params.dt) 
-                + (optinst->params.w_stow / optinst->params.dt) 
-                + optinst->params.w_track 
-                + optinst->params.w_cycle_standby 
-                + optinst->params.w_cycle_pump*pars["Qu"]
-                + optinst->outputs.w_condf_expected.at(t)*pars["W_dot_cycle"];  // Largest possible parasitic load at time t
-
-            //save for writing to ampl
-            optinst->outputs.wnet_lim_min.at(t) =  wmin - max_parasitic;
-            if( t < nt-1 )
+            for(int t=0; t<nt; t++)
             {
-                double delta_rec_startup = min(1., max(optinst->params.e_rec_startup / max(optinst->outputs.q_sfavail_expected.at(t + 1)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
-                optinst->outputs.delta_rs.at(t) = delta_rec_startup;
+		        double wmin = (pars["Ql"] * pars["etap"]*optinst->outputs.eta_pb_expected.at(t,s) / optinst->params.eta_cycle_ref) + 
+                                (pars["Wdotu"] - pars["etap"]*pars["Qu"])*optinst->outputs.eta_pb_expected.at(t,s) / optinst->params.eta_cycle_ref; // Electricity generation at minimum pb thermal input
+		        double max_parasitic = 
+                        pars["Lr"] * optinst->outputs.q_sfavail_expected.at(t,s) 
+                    + (optinst->params.w_rec_ht / optinst->params.dt) 
+                    + (optinst->params.w_stow / optinst->params.dt) 
+                    + optinst->params.w_track 
+                    + optinst->params.w_cycle_standby 
+                    + optinst->params.w_cycle_pump*pars["Qu"]
+                    + optinst->outputs.w_condf_expected.at(t,s)*pars["W_dot_cycle"];  // Largest possible parasitic load at time t
+
+                //save for writing to ampl
+                optinst->outputs.wnet_lim_min.at(t, s) =  wmin - max_parasitic;
+                if( t < nt-1 )
+                {
+                    double delta_rec_startup = min(1., max(optinst->params.e_rec_startup / max(optinst->outputs.q_sfavail_expected.at(t + 1, s)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
+                    optinst->outputs.delta_rs.at(t, s) = delta_rec_startup;
+                }
             }
         }
 
@@ -586,37 +624,37 @@ bool csp_dispatch_opt::optimize()
 
             //calculate the mean price to appropriately weight the receiver production timing derate
             double pmean =0;
-            for(int t=0; t<price_signal.size(); t++)
-                pmean += price_signal.at(t);
-            pmean /= (double)price_signal.size();
+            for(int t=0; t<forecast_outputs.price_scenarios.nrows(); t++)
+                pmean += forecast_outputs.price_scenarios.at(t,0);
+            pmean /= (double)forecast_outputs.price_scenarios.nrows();
             //--
             
             for(int t=0; t<nt; t++)
             {
                 i = 0;
                 col[ t + nt*(i  ) ] = O.column("wdot", t);
-                row[ t + nt*(i++) ] = P["delta"] * price_signal.at(t)*tadj*(1.-outputs.w_condf_expected.at(t));
+                row[ t + nt*(i++) ] = P["delta"] * forecast_outputs.price_scenarios.at(t,0)*tadj*(1.-outputs.w_condf_expected.at(t,0));
 
                 col[ t + nt*(i  ) ] = O.column("xr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * P["Lr"])+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
+                row[ t + nt*(i++) ] = -(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"])+tadj*pmean;  // tadj added to prefer receiver production sooner (i.e. delay dumping)
 
                 col[ t + nt*(i  ) ] = O.column("xrsu", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * P["Lr"];
+                row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * P["Lr"];
 
                 col[ t + nt*(i  ) ] = O.column("yrsu", t);
-                row[ t + nt*(i++) ] = -price_signal.at(t) * (params.w_rec_ht + params.w_stow);
+                row[ t + nt*(i++) ] = -forecast_outputs.price_scenarios.at(t,0) * (params.w_rec_ht + params.w_stow);
 
                 col[ t + nt*(i  ) ] = O.column("yr", t);
-                row[ t + nt*(i++) ] = -(P["delta"] * price_signal.at(t) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
+                row[ t + nt*(i++) ] = -(P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_track) + tadj;	// tadj added to prefer receiver operation in nearer term to longer term
 
                 col[ t + nt*(i  ) ] = O.column("x", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_pump;
+                row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_cycle_pump;
 
                 col[ t + nt*(i  ) ] = O.column("ycsb", t);
-                row[ t + nt*(i++) ] = -P["delta"] * price_signal.at(t) * params.w_cycle_standby;
+                row[ t + nt*(i++) ] = -P["delta"] * forecast_outputs.price_scenarios.at(t,0) * params.w_cycle_standby;
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsb", t);
-                //xxrow[ t + nt*(i++) ] = -delta * price_signal.at(t) * (Lr * Qrl + (params.w_stow / delta));
+                //xxrow[ t + nt*(i++) ] = -delta * forecast_outputs.price_scenarios.at(t,0) * (Lr * Qrl + (params.w_stow / delta));
 
                 //xxcol[ t + nt*(i   ] = O.column("yrsd", t);
                 //xxrow[ t + nt*(i++) ] = -0.5 - (params.w_stow);
@@ -719,10 +757,10 @@ bool csp_dispatch_opt::optimize()
                 row[i  ] = 1.;
                 col[i++] = O.column("wdot", t);
 
-                row[i  ] = -P["etap"]*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                row[i  ] = -P["etap"]*outputs.eta_pb_expected.at(t,0)/params.eta_cycle_ref;
                 col[i++] = O.column("x", t);
 
-                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t)/params.eta_cycle_ref;
+                row[i  ] = -(P["Wdotu"] - P["etap"]*P["Qu"])*outputs.eta_pb_expected.at(t,0)/params.eta_cycle_ref;
                 col[i++] = O.column("y", t);
 
                 //row[i  ] = -outputs.eta_pb_expected.at(t);
@@ -750,7 +788,7 @@ bool csp_dispatch_opt::optimize()
         //        row[i  ] = 1.;
         //        col[i++] = O.column("xrsu", t);
 
-        //        add_constraintex(lp, i, row, col, GE, outputs.q_sfavail_expected.at(t)*0.999 );
+        //        add_constraintex(lp, i, row, col, GE, outputs.q_sfavail_expected.at(t, 0)*0.999 );
         //    }
         //} //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -836,7 +874,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yrsu", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t), 1.0) );
+                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );
 
                 //Receiver consumption limit
                 row[0] = 1.;
@@ -845,13 +883,13 @@ bool csp_dispatch_opt::optimize()
                 row[1] = 1.;
                 col[1] = O.column("xrsu", t);
                 
-                add_constraintex(lp, 2, row, col, LE, outputs.q_sfavail_expected.at(t));
+                add_constraintex(lp, 2, row, col, LE, outputs.q_sfavail_expected.at(t,0));
 
                 //Receiver operation mode requirement
                 row[0] = 1.;
                 col[0] = O.column("xr", t);
 
-                row[1] = -outputs.q_sfavail_expected.at(t);
+                row[1] = -outputs.q_sfavail_expected.at(t,0);
                 col[1] = O.column("yr", t);
 
                 add_constraintex(lp, 2, row, col, LE, 0.);
@@ -869,7 +907,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yr", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t), 1.0) );  //if any measurable energy, y^r can be 1
+                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );  //if any measurable energy, y^r can be 1
 
                 // --- new constraints ---
 
@@ -1201,9 +1239,9 @@ bool csp_dispatch_opt::optimize()
                 //outputs.delta_rs.resize(nt);
 				if (t < nt - 1)
 				{
-					/*double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
+					/*double delta_rec_startup = min(1., max(params.e_rec_startup / max(outputs.q_sfavail_expected.at(t + 1, 0)*P["delta"], 1.), params.dt_rec_startup / P["delta"]));
                     outputs.delta_rs.at(t) = delta_rec_startup;*/
-					double t_rec_startup = outputs.delta_rs.at(t) * P["delta"];
+					double t_rec_startup = outputs.delta_rs.at(t, 0) * P["delta"];
 					double large = 5.0*params.q_pb_max;
 					int i = 0;
 
@@ -1257,7 +1295,7 @@ bool csp_dispatch_opt::optimize()
                 
                 //check if cycle should be able to operate
 				//if (wmin - max_parasitic > w_lim.at(t))		// power cycle operation is impossible at t
-                if( outputs.wnet_lim_min.at(t) > w_lim.at(t) )
+                if( outputs.wnet_lim_min.at(t, 0) > w_lim.at(t) )
                 {
                     if(w_lim.at(t) > 0)
                         params.messages->add_message(C_csp_messages::NOTICE, "Power cycle operation not possible at time "+ util::to_string(t+1) + ": power limit below minimum operation");                    
@@ -1269,7 +1307,7 @@ bool csp_dispatch_opt::optimize()
 				{
 					int i = 0;
 
-					row[i] = 1.0-outputs.w_condf_expected.at(t);
+					row[i] = 1.0-outputs.w_condf_expected.at(t,0);
 					col[i++] = O.column("wdot", t);
 
 					row[i] = -params.w_rec_pump;
@@ -1695,6 +1733,43 @@ bool strcompare(std::string a, std::string b)
     return util::lower_case(a) < util::lower_case(b);
 };
 
+void write_ampl_variable_matrix( std::ofstream &fs, util::matrix_t<double> &data, std::string name )
+{
+    fs << "param " << name << ": ";
+    for(int r=0; r<data.ncols(); r++)
+        fs << r+1 << "\t";
+
+    fs << " := \n";
+
+    for(int t=0; t<data.nrows(); t++)
+    {
+        fs << t+1;
+        for( int s=0; s<data.ncols(); s++)
+            fs << "\t" << data.at(t,s);
+
+        fs << "\n";
+    }
+    fs << ";\n\n";
+
+}
+
+void write_ampl_variable_array( std::ofstream &fs, std::vector<double> &data, std::string name )
+{
+    fs << "param " << name << " := \n";
+    for(int t=0; t<data.size(); t++)
+        fs << t+1 << "\t" << data.at(t) << "\n";
+    fs << ";\n\n";
+}
+
+void write_ampl_variable_array( std::ofstream &fs, util::matrix_t<double> &data, std::string name )
+{
+    fs << "param " << name << " := \n";
+    for(int t=0; t<data.nrows(); t++)
+        fs << t+1 << "\t" << data.at(t,0) << "\n";
+    fs << ";\n\n";
+}
+
+
 std::string csp_dispatch_opt::write_ampl()
 {
     /* 
@@ -1744,44 +1819,27 @@ std::string csp_dispatch_opt::write_ampl()
             fout << "param " << keys.at(k) << " := " << pars[keys.at(k)] << ";\n";
 
         fout << "# --- indexed parameters ---\n";
-        fout << "param Qin := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.q_sfavail_expected.at(t) << "\n";
-        fout << ";\n\n";
-
-        fout << "param P := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << price_signal.at(t) << "\n";
-        fout << ";\n\n";
-
-        fout << "param etaamb := \n";   //power block ambient adjustment
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.eta_pb_expected.at(t) << "\n";
-        fout << ";\n\n";
-
-        //net power limit
-        fout << "param Wdotnet := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << w_lim.at(t) << "\n";
-        fout << ";\n\n";
         
-        //condenser parasitic loss coefficient
-        fout << "param etac := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.w_condf_expected.at(t) << "\n";
-        fout << ";\n\n";
+        write_ampl_variable_array( fout, w_lim, "Wdotnet" ); //net power limit
 
-        //cycle net production lower limit
-        fout << "param wnet_lim_min := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.wnet_lim_min.at(t) << "\n";
-        fout << ";\n\n";
-
-        //cycle net production lower limit
-        fout << "param delta_rs := \n";
-        for(int t=0; t<nt; t++)
-            fout << t+1 << "\t" << outputs.delta_rs.at(t) << "\n";
-        fout << ";\n\n";
+        if( forecast_params.is_stochastic )
+        {
+            write_ampl_variable_matrix( fout, outputs.q_sfavail_expected, "Qin" );  //solar field avail energy 
+            write_ampl_variable_matrix( fout, forecast_outputs.price_scenarios, "P" ); //price multiplier
+            write_ampl_variable_matrix( fout, outputs.q_sfavail_expected, "etaamb" ); //power block ambient adjustment
+            write_ampl_variable_matrix( fout, outputs.w_condf_expected, "etac" ); //condenser parasitic loss coefficient
+            write_ampl_variable_matrix( fout, outputs.wnet_lim_min, "wnet_lim_min" ); //cycle net production lower limit
+            write_ampl_variable_matrix( fout, outputs.delta_rs, "delta_rs" ); //receiver expected startup timestep fraction
+        }
+        else
+        {
+            write_ampl_variable_array( fout, outputs.q_sfavail_expected, "Qin" );  //solar field avail energy 
+            write_ampl_variable_array( fout, forecast_outputs.price_scenarios, "P" ); //price multiplier
+            write_ampl_variable_array( fout, outputs.q_sfavail_expected, "etaamb" ); //power block ambient adjustment
+            write_ampl_variable_array( fout, outputs.w_condf_expected, "etac" ); //condenser parasitic loss coefficient
+            write_ampl_variable_array( fout, outputs.wnet_lim_min, "wnet_lim_min" ); //cycle net production lower limit
+            write_ampl_variable_array( fout, outputs.delta_rs, "delta_rs" ); //receiver expected startup timestep fraction
+        }
 
         fout.close();
     }
