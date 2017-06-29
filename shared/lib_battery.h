@@ -283,21 +283,29 @@ private:
 	double _C0;
 };
 
+/*
+Class to encapsulate multiple lifetime models, and linearly combined the associated degradation and handle replacements
+*/
 class lifetime_t
 {
 public:
-	lifetime_t(const int replacement_option, const double replacement_capacity);
-	virtual ~lifetime_t(){};
-
+	lifetime_t(lifetime_cycle_t *, lifetime_calendar_t *, const int replacement_option, const double replacement_capacity);
+	virtual ~lifetime_t(){ /* sub lifetime models deleted elsewhere */};
 	lifetime_t * clone();
 	void copy(lifetime_t *&);
 
-	virtual bool check_replaced();
-	virtual void reset_replacements();
-	virtual int replacements();
+	void runLifetimeModels(double DOD, int hour_of_day);
+
+	// replacement methods
+	bool check_replaced();
+	void reset_replacements();
+	int replacements();
 	void force_replacement();
 
 protected:
+
+	lifetime_cycle_t * _lifetime_cycle;
+	lifetime_calendar_t * _lifetime_calendar;
 
 	// battery replacement
 	int _replacement_option;
@@ -313,17 +321,16 @@ protected:
 Lifetime cycling class.  
 */
 
-class lifetime_cycle_t: public lifetime_t
+class lifetime_cycle_t
 {
 
 public:
-	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD, const int replacement_option, const double replacement_capacity);
+	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD);
 	virtual ~lifetime_cycle_t();
 	lifetime_cycle_t * clone();
 	void copy(lifetime_cycle_t *&);
 
 	void rainflow(double DOD);
-	bool check_replaced();
 
 	int cycles_elapsed();
 	double capacity_percent();
@@ -336,6 +343,8 @@ protected:
 	void rainflow_ranges_circular(int index);
 	int rainflow_compareRanges();
 	double bilinear(double DOD, int cycle_number);
+	void replaceBattery();
+
 
 	util::matrix_t<double> _cycles_vs_DOD;
 	util::matrix_t<double> _batt_lifetime_matrix;
@@ -345,6 +354,7 @@ protected:
 
 
 	int _nCycles;
+	double _q;				// relative capacity %
 	double _Dlt;			// % damage according to rainflow
 	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
 	double _Xlt;
@@ -363,16 +373,18 @@ protected:
 /*
 Lifetime calendar model
 */
-class lifetime_calendar_t : public lifetime_t
+class lifetime_calendar_t 
 {
 public:
-	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, const int replacement_option, const double replacement_capacity);
+	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
 	lifetime_calendar_t * clone();
 	void copy(lifetime_calendar_t *&);
 
 	double runLifetimeCalendarModel(int hour, double T, double SOC);
+
+	void force_replacement();
 
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
@@ -491,7 +503,7 @@ public:
 	~battery_t(){};
 	void delete_clone();
 
-	void initialize(capacity_t *, voltage_t *, lifetime_cycle_t *, lifetime_calendar_t *, thermal_t *, losses_t *);
+	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all
 	void run(int hour_of_day, double I);
@@ -500,14 +512,12 @@ public:
 	void runCapacityModel(double I);
 	void runVoltageModel();
 	void runThermalModel(double I);
-	void runCycleLifetimeModel(double DOD);
-	void runCalendarLifetimeModel(int hour_of_day);
+	void runLifetimeModel(double DOD, int hour_of_day);
 	void runLossesModel();
 
 	capacity_t * capacity_model() const;
 	voltage_t * voltage_model() const;
-	lifetime_cycle_t * lifetime_cycle_model() const;
-	lifetime_calendar_t* lifetime_calendar_model() const;
+	lifetime_t * lifetime_model() const;
 	thermal_t * thermal_model() const;
 	losses_t * losses_model() const;
 
@@ -531,8 +541,7 @@ public:
 
 private:
 	capacity_t * _capacity;
-	lifetime_cycle_t * _lifetime_cycle;
-	lifetime_calendar_t * _lifetime_calendar;
+	lifetime_t * _lifetime;
 	voltage_t * _voltage;
 	thermal_t * _thermal;
 	losses_t * _losses;

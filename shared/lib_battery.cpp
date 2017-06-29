@@ -677,8 +677,11 @@ double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 /*
 Define Lifetime Model
 */
-lifetime_t::lifetime_t(const int replacement_option, const double replacement_capacity)
+lifetime_t::lifetime_t(lifetime_cycle_t * lifetime_cycle, lifetime_calendar_t * lifetime_calendar, const int replacement_option, const double replacement_capacity)
 {
+	_lifetime_cycle = lifetime_cycle;
+	_lifetime_calendar = lifetime_calendar;
+
 	_replacement_option = replacement_option;
 	_replacement_capacity = replacement_capacity;
 
@@ -693,6 +696,8 @@ lifetime_t::lifetime_t(const int replacement_option, const double replacement_ca
 lifetime_t * lifetime_t::clone(){ return new lifetime_t(*this); }
 void lifetime_t::copy(lifetime_t *& lifetime)
 {
+	lifetime->_lifetime_cycle = _lifetime_cycle;
+	lifetime->_lifetime_calendar = _lifetime_calendar;
 	lifetime->_replacement_option = _replacement_option;
 	lifetime->_replacement_capacity = _replacement_capacity;
 	lifetime->_replacements = _replacements;
@@ -715,8 +720,7 @@ void lifetime_t::reset_replacements(){ _replacements = 0; }
 int lifetime_t::replacements(){ return _replacements; }
 void lifetime_t::force_replacement(){_replacement_scheduled = true;}
 
-lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix, const int replacement_option, const double replacement_capacity):
-lifetime_t(replacement_option, replacement_capacity)
+lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_matrix)
 {
 
 	_batt_lifetime_matrix = batt_lifetime_matrix;
@@ -846,24 +850,16 @@ int lifetime_cycle_t::rainflow_compareRanges()
 
 	return retCode;
 }
-bool lifetime_cycle_t::check_replaced()
+void lifetime_cycle_t::replaceBattery()
 {
-	bool replaced = false;
-	if ( (_replacement_option == 1 && (_q - tolerance) <= _replacement_capacity) || _replacement_scheduled)
-	{
-		_replacements++;
-		_q = bilinear(0.,0);
-		_Dlt = 0.;
-		_nCycles = 0;
-		_jlt = 0;
-		_Xlt = 0;
-		_Ylt = 0;
-		_Range = 0;
-		_Peaks.clear();
-		replaced = true;
-		_replacement_scheduled = false;
-	}
-	return replaced;
+	_q = bilinear(0.,0);
+	_Dlt = 0.;
+	_nCycles = 0;
+	_jlt = 0;
+	_Xlt = 0;
+	_Ylt = 0;
+	_Range = 0;
+	_Peaks.clear();
 }
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
@@ -1010,8 +1006,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 /*
 Lifetime Calendar Model
 */
-lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, const int replacement_option, const double replacement_capacity) :
-lifetime_t(replacement_option, replacement_capacity)
+lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix) 
 {
 	_calendar_choice = calendar_choice;
 	_calendar_matrix = calendar_matrix;
@@ -1284,8 +1279,7 @@ battery_t::battery_t(const battery_t& battery)
 	_capacity = battery.capacity_model()->clone();
 	_voltage = battery.voltage_model()->clone();
 	_thermal = battery.thermal_model()->clone();
-	_lifetime_cycle = battery.lifetime_cycle_model()->clone();
-	_lifetime_calendar = battery.lifetime_calendar_model()->clone();
+	_lifetime = battery.lifetime_model()->clone();
 	_losses = battery.losses_model()->clone();
 	_battery_chemistry = battery._battery_chemistry;
 	_dt_hour = battery._dt_hour;
@@ -1297,8 +1291,7 @@ void battery_t::copy(const battery_t& battery)
 	battery.capacity_model()->copy(_capacity);
 	battery.voltage_model()->copy(_voltage);
 	battery.thermal_model()->copy(_thermal);
-	battery.lifetime_cycle_model()->copy(_lifetime_cycle);
-	battery.lifetime_calendar_model()->copy(_lifetime_calendar);
+	battery.lifetime_model()->copy(_lifetime);
 	battery.losses_model()->copy(_losses);
 	_battery_chemistry = battery._battery_chemistry;
 	_dt_hour = battery._dt_hour;
@@ -1306,21 +1299,18 @@ void battery_t::copy(const battery_t& battery)
 	_firstStep = battery._firstStep;
 }
 
-//void battery_t::operator=(const battery_t& battery){}
 void battery_t::delete_clone()
 {
 	if (_capacity) delete _capacity;
 	if (_voltage) delete _voltage;
 	if (_thermal) delete _thermal;
-	if (_lifetime_cycle) delete _lifetime_cycle;
-	if (_lifetime_calendar) delete _lifetime_calendar;
+	if (_lifetime) delete _lifetime;
 	if (_losses) delete _losses;
 }
-void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_cycle_t * lifetime_cycle, lifetime_calendar_t * lifetime_calendar, thermal_t * thermal, losses_t * losses)
+void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)
 {
 	_capacity = capacity;
-	_lifetime_cycle = lifetime_cycle;
-	_lifetime_calendar = lifetime_calendar;
+	_lifetime = lifetime;
 	_voltage = voltage;
 	_thermal = thermal;
 	_losses = losses;
