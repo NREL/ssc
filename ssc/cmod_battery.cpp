@@ -525,7 +525,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, batt_vars->batt_voltage_matrix);
 
 	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix, replacement_option, batt_vars->batt_replacement_capacity);
-	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix);
+	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix, replacement_option, batt_vars->batt_replacement_capacity);
 
 	util::matrix_t<double> cap_vs_temp = batt_vars->cap_vs_temp;
 	if (cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2)
@@ -592,7 +592,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		capacity_model,
 		batt_system_losses);
 
-	battery_model->initialize(capacity_model, voltage_model, lifetime_cycle_model, thermal_model, losses_model);
+	battery_model->initialize(capacity_model, voltage_model, lifetime_cycle_model, lifetime_calendar_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
 	if (batt_vars->batt_dispatch == dispatch_t::MANUAL && batt_vars->batt_meter_position == dispatch_t::BEHIND)
@@ -707,6 +707,7 @@ battstor::~battstor()
 {
 	if( voltage_model ) delete voltage_model;
 	if( lifetime_cycle_model ) delete lifetime_cycle_model;
+	if (lifetime_calendar_model) delete lifetime_calendar_model;
 	if( thermal_model ) delete thermal_model;
 	if( battery_model ) delete battery_model;
 	if (battery_metrics) delete battery_metrics;
@@ -715,7 +716,6 @@ battstor::~battstor()
 	if( dispatch_model ) delete dispatch_model;
 	if (charge_control) delete charge_control;
 	if (make_vars) delete batt_vars;
-
 }
 
 void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step)
@@ -746,7 +746,7 @@ void battstor::check_replacement_schedule(int batt_replacement_option, size_t co
 void battstor::force_replacement()
 {
 	lifetime_cycle_model->force_replacement();
-	battery_model->runLifetimeModel(0);
+	battery_model->runCycleLifetimeModel(0);
 }
 
 void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv_dc , double P_load_dc )

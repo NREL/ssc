@@ -411,7 +411,7 @@ void dispatch_manual_t::dispatch(size_t year,
 			compute_energy_battery_priority(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(I);
+		_Battery->run(util::hour_of_day(hour_of_year), I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
@@ -619,7 +619,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_energy_no_load(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(I);
+		_Battery->run(util::hour_of_day(hour_of_year), I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();

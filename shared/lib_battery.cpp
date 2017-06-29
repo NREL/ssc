@@ -1039,15 +1039,13 @@ double lifetime_calendar_t::runLifetimeCalendarModel(int hour_of_day, double T=2
 	bool new_day = computeDayOfSimulation(hour_of_day);
 	computeAverages(T, SOC);
 
-	double capacity_percent = _q;
 	if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL && new_day)
-		capacity_percent = runLithiumIonModel();
+		runLithiumIonModel();
 	else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && new_day)
-		capacity_percent = runTableModel();
-	_q = capacity_percent;
+		runTableModel();
 	return _q;
 }
-double lifetime_calendar_t::runLithiumIonModel()
+void lifetime_calendar_t::runLithiumIonModel()
 {
 	double k_cal = _a * exp(_b * (1. / _T_avg - 1. / 296))*exp(_c*(_SOC_avg / _T_avg - 1. / 296));
 	if (_dq_old == 0)
@@ -1056,15 +1054,16 @@ double lifetime_calendar_t::runLithiumIonModel()
 		_dq_new = sqrt(pow(_dq_old, 2) + pow(k_cal, 2) * _day_age_of_battery);
 	_dq_old = _dq_new;
 	_q -= _dq_new;
+	
 }
-double lifetime_calendar_t::runTableModel()
+void lifetime_calendar_t::runTableModel()
 {
 	int day_lo = 0;
 	int day_hi = 0;
 	double capacity_lo = 0;
 	double capacity_hi = 0;
 
-	for (size_t i = 0; i != _calendar_matrix.nrows; i++)
+	for (int i = 0; i != _calendar_matrix.nrows(); i++)
 	{
 		int day = _calendar_matrix.at(i, 0);
 		double capacity = _calendar_matrix.at(i, 1);
@@ -1370,7 +1369,7 @@ void battery_t::runCycleLifetimeModel(double DOD)
 }
 void battery_t::runCalendarLifetimeModel(int hour_of_day)
 {
-	_lifetime_calendar->runLifetimeCalendarModel(hour_of_day, thermal_model()->T_battery, capacity_model()->SOC);
+	_lifetime_calendar->runLifetimeCalendarModel(hour_of_day, thermal_model()->T_battery(), capacity_model()->SOC());
 }
 void battery_t::runLossesModel()
 {

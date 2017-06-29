@@ -298,6 +298,7 @@ public:
 	void force_replacement();
 
 protected:
+
 	// battery replacement
 	int _replacement_option;
 	double _replacement_capacity;
@@ -311,7 +312,7 @@ protected:
 Lifetime cycling class.  
 */
 
-class lifetime_cycle_t: protected lifetime_t
+class lifetime_cycle_t: public lifetime_t
 {
 
 public:
@@ -322,9 +323,7 @@ public:
 
 	void rainflow(double DOD);
 	bool check_replaced();
-	void reset_replacements();
 
-	int replacements();
 	int cycles_elapsed();
 	double capacity_percent();
 	int forty_percent_cycles();
@@ -364,7 +363,7 @@ protected:
 /*
 Lifetime calendar model
 */
-class lifetime_calendar_t : protected lifetime_t
+class lifetime_calendar_t : public lifetime_t
 {
 public:
 	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, const int replacement_option, const double replacement_capacity);
@@ -380,8 +379,8 @@ public:
 protected:
 	bool computeDayOfSimulation(int hour_of_day);
 	void computeAverages(double T, double SOC);
-	double runLithiumIonModel();
-	double runTableModel();
+	void runLithiumIonModel();
+	void runTableModel();
 	void replaceBattery();
 
 private:
