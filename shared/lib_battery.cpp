@@ -1050,7 +1050,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 
 	_q0 = 1.02;
 	_a = 2.66e-3;
-	_b = 7280;
+	_b = -7280;
 	_c = 930;
 
 	// output based on percentage capacity (0 - 100%)
