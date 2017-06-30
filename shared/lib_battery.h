@@ -346,34 +346,33 @@ Lifetime calendar model
 class lifetime_calendar_t 
 {
 public:
-	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix);
+	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
 	lifetime_calendar_t * clone();
 	void copy(lifetime_calendar_t *&);
 
-	double runLifetimeCalendarModel(int hour, double T, double SOC);
+	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
 	void replaceBattery();
 
 	enum CALENDAR_LOSS_OPTIONS {NONE, LITHIUM_ION_CALENDAR_MODEL, CALENDAR_LOSS_TABLE};
 
 protected:
-	bool computeDayOfSimulation(int hour_of_day);
 	void computeAverages(double T, double SOC);
-	void runLithiumIonModel();
+	void runLithiumIonModel(double T, double SOC);
 	void runTableModel();
 
 private:
 	int _calendar_choice;
 	util::matrix_t<double> _calendar_matrix;
 	
-	int _hour_of_day;
 	int _day_age_of_battery;
+	double _dt_day; // timestep in terms of days 
 
-	double _T_avg;
-	double _SOC_avg;
-	int _n_steps_elapsed_in_day;
+
+	// the last index of the simulation
+	size_t _last_idx; 
 
 	// relative capacity (0 - 1)
 	double _q;
@@ -398,7 +397,7 @@ public:
 	lifetime_t * clone();
 	void copy(lifetime_t *&);
 
-	void runLifetimeModels(capacity_t *, double T_battery, int hour_of_day, bool & firstStep);
+	void runLifetimeModels(size_t idx, capacity_t *, double T_battery, bool & firstStep);
 
 	double capacity_percent();
 
@@ -419,7 +418,7 @@ protected:
 	int _replacements;
 	bool _replacement_scheduled;
 
-	double _q;  // battery relative capacity (0 - 100%)
+	double _q;      // battery relative capacity (0 - 100%)
 };
 
 
@@ -512,14 +511,14 @@ public:
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
 
 	// Run all
-	void run(int hour_of_day, double I);
+	void run(size_t idx, double I);
 
 	// Run a component level model
 	void runCapacityModel(double I);
 	void runVoltageModel();
 	void runThermalModel(double I);
-	void runLifetimeModel(int hour_of_day);
-	void runLossesModel();
+	void runLifetimeModel(size_t idx);
+	void runLossesModel(size_t idx);
 
 	capacity_t * capacity_model() const;
 	voltage_t * voltage_model() const;
@@ -555,6 +554,7 @@ private:
 	double _dt_hour;			// [hr] - timestep
 	double _dt_min;				// [min] - timestep
 	bool _firstStep;
+	size_t _last_idx;
 };
 
 #endif

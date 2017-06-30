@@ -401,6 +401,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	_Battery_initial->copy(*_Battery);
 	bool iterate = true;
 	int count = 0;
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, 1 / _dt_hour);
 
 	do {
 
@@ -411,7 +412,7 @@ void dispatch_manual_t::dispatch(size_t year,
 			compute_energy_battery_priority(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(util::hour_of_day(hour_of_year), I);
+		_Battery->run(idx, I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
@@ -612,6 +613,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	_Battery_initial->copy(*_Battery);
 	bool iterate = true;
 	int count = 0;
+	size_t idx = util::index_year_hour_step(year, hour_of_year, step, 1 / _dt_hour);
 
 	do {
 
@@ -619,7 +621,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		compute_energy_no_load(energy_needed_to_fill);
 
 		// Run Battery Model to update charge based on charge/discharge
-		_Battery->run(util::hour_of_day(hour_of_year), I);
+		_Battery->run(idx, I);
 
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
@@ -713,8 +715,8 @@ void automate_dispatch_t::dispatch(size_t year,
 	int step_per_hour = 1 / _dt_hour;
 	int idx = 0;
 
-	if (_mode == LOOK_AHEAD ||_mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = (year * 8760 + hour_of_year)*step_per_hour + step;
+	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
+		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
 
 	update_dispatch(hour_of_year, step, idx);
 	dispatch_manual_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);

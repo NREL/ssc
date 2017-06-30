@@ -35,6 +35,8 @@ namespace util
 	const double kilowatt_to_watt = 1000;
 	const double hour_to_min = 60.;
 	const double Celsius_to_Kelvin = 273.15;
+	const int hours_per_day = 24;
+	const int hours_per_year = 8760;
 
 	static const int nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 
@@ -65,6 +67,7 @@ namespace util
 	int days_in_month(int month); /*month: 0-11, return 0-30, depending on the month*/
 	void month_hour(int hour_of_year, int & out_month, int & out_hour); /*given the hour of year, return the month, and hour of day*/
 	bool weekday(int hour_of_year); /* return true if is a weekday, assuming first hour of year is Monday at 12 am*/
+	size_t index_year_hour_step(int year, int hour_of_year, int step_of_hour, int steps_per_hour);
 
 	int schedule_char_to_int( char c );
 	std::string schedule_int_to_month( int m );

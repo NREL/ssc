@@ -704,22 +704,27 @@ void lifetime_t::copy(lifetime_t *& lifetime)
 	lifetime->_replacement_scheduled = _replacement_scheduled;
 }
 double lifetime_t::capacity_percent(){ return _q; }
-void lifetime_t::runLifetimeModels(capacity_t * capacity, double T_battery, int hour_of_day, bool & firstStep)
+void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery, bool & firstStep)
 {
 	double dq_cycle = 0;
 
-	if (capacity->chargeChanged())
-		dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
-	else if (firstStep)
+	if (_q > 0)
 	{
-		dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
-		firstStep = false;
-	}
-	
-	double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(hour_of_day, T_battery, capacity->SOC());
+		if (capacity->chargeChanged())
+			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
+		else if (firstStep)
+		{
+			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
+			firstStep = false;
+		}
 
-	// total capacity is linear combination of cycle and calendar degradation effects
-	_q = 100. - dq_cycle - dq_calendar;
+		double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
+
+		// total capacity is linear combination of cycle and calendar degradation effects
+		_q = 100. - dq_cycle - dq_calendar;
+	}
+	if (_q < 0)
+		_q = 0;
 }
 
 bool lifetime_t::check_replaced()
@@ -1031,11 +1036,14 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 /*
 Lifetime Calendar Model
 */
-lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix) 
+lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour) 
 {
 	_calendar_choice = calendar_choice;
 	_calendar_matrix = calendar_matrix;
 	
+	_day_age_of_battery = 0;
+	_last_idx = 0;
+
 	// coefficients based on fractional capacity (0 - 1)
 	_dq_old = 0;
 	_dq_new = 0;
@@ -1047,6 +1055,9 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 
 	// output based on percentage capacity (0 - 100%)
 	_q = _q0 * 100;
+
+	// timestep in days
+	_dt_day = dt_hour / util::hours_per_day;
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
 void lifetime_calendar_t::copy(lifetime_calendar_t *& lifetime_calendar)
@@ -1055,25 +1066,32 @@ void lifetime_calendar_t::copy(lifetime_calendar_t *& lifetime_calendar)
 	lifetime_calendar->_dq_old = _dq_old;
 	lifetime_calendar->_dq_new = _dq_new;
 }
-double lifetime_calendar_t::runLifetimeCalendarModel(int hour_of_day, double T=293, double SOC=1)
+double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
-	bool new_day = computeDayOfSimulation(hour_of_day);
-	computeAverages(T, SOC);
+	// only run once per iteration (need to make the last iteration)
+	if (idx > _last_idx)
+	{
+		if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
+			runLithiumIonModel(T, SOC);
+		else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
+			runTableModel();
 
-	if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL && new_day)
-		runLithiumIonModel();
-	else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && new_day)
-		runTableModel();
-	return 100 - _q;
+		_last_idx = idx;
+	}
+	
+	// initial fit is 102%
+	double dq = 100 - _q;
+	if (dq < 0)
+		dq = 0;
+	return dq;
 }
-void lifetime_calendar_t::runLithiumIonModel()
+void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 {
-	double dt = 1; // currently always integrating over a 1 day period
-	double k_cal = _a * exp(_b * (1. / _T_avg - 1. / 296))*exp(_c*(_SOC_avg / _T_avg - 1. / 296));
+	double k_cal = _a * exp(_b * (1. / T - 1. / 296))*exp(_c*(SOC / T - 1. / 296));
 	if (_dq_old == 0)
-		_dq_new = k_cal * sqrt(dt);
+		_dq_new = k_cal * sqrt(_dt_day);
 	else
-		_dq_new = (0.5 * pow(k_cal, 2) / _dq_old) * dt + _dq_old;
+		_dq_new = (0.5 * pow(k_cal, 2) / _dq_old) * _dt_day + _dq_old;
 	_dq_old = _dq_new;
 	_q -= (_dq_new) * 100;
 	
@@ -1102,36 +1120,10 @@ void lifetime_calendar_t::runTableModel()
 	}
 	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery);
 }
-bool lifetime_calendar_t::computeDayOfSimulation(int hour_of_day)
-{
-	bool new_day = false;
-	if (hour_of_day != _hour_of_day)
-	{
-		_hour_of_day = hour_of_day;
-		if (_hour_of_day == 0)
-		{
-			_day_age_of_battery++;
-			_n_steps_elapsed_in_day = 0;
-			new_day = true;
-		}
-		else
-			_n_steps_elapsed_in_day++;
-	}
-	else
-		_n_steps_elapsed_in_day++;
 
-	return new_day;
-	
-}
-void lifetime_calendar_t::computeAverages(double T, double SOC)
-{
-	double _T_avg = ((_n_steps_elapsed_in_day * _T_avg) + T) / (_n_steps_elapsed_in_day + 1);
-	double _SOC_avg = ((_n_steps_elapsed_in_day * _SOC_avg) + SOC) / (_n_steps_elapsed_in_day + 1);
-}
 void lifetime_calendar_t::replaceBattery()
 {
 	_day_age_of_battery = 0;
-	_n_steps_elapsed_in_day = 0;
 	_q = _q0 * 100;
 }
 
@@ -1331,14 +1323,14 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_firstStep = true;
 }
 
-void battery_t::run(int hour_of_day, double I)
+void battery_t::run(size_t idx, double I)
 {	
 	// Compute temperature at end of timestep
 	runThermalModel(I);
 	runCapacityModel(I);
 	runVoltageModel();
-	runLifetimeModel(hour_of_day);
-	runLossesModel();
+	runLifetimeModel(idx);
+	runLossesModel(idx);
 }
 void battery_t::runThermalModel(double I)
 {
@@ -1355,9 +1347,9 @@ void battery_t::runVoltageModel()
 	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
 }
 
-void battery_t::runLifetimeModel(int hour_of_day)
+void battery_t::runLifetimeModel(size_t idx)
 {
-	_lifetime->runLifetimeModels(capacity_model(), thermal_model()->T_battery(), hour_of_day, _firstStep);
+	_lifetime->runLifetimeModels(idx, capacity_model(), thermal_model()->T_battery(), _firstStep);
 	if (_lifetime->check_replaced())
 	{
 		_capacity->replace_battery();
@@ -1365,9 +1357,13 @@ void battery_t::runLifetimeModel(int hour_of_day)
 		_losses->replace_battery();
 	}
 }
-void battery_t::runLossesModel()
+void battery_t::runLossesModel(size_t idx)
 {
-	_losses->run_losses(_dt_hour);
+	if (idx > _last_idx)
+	{
+		_losses->run_losses(_dt_hour);
+		_last_idx = idx;
+	}
 }
 capacity_t * battery_t::capacity_model() const { return _capacity; }
 voltage_t * battery_t::voltage_model() const { return _voltage; }
