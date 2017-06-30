@@ -703,6 +703,24 @@ void lifetime_t::copy(lifetime_t *& lifetime)
 	lifetime->_replacements = _replacements;
 	lifetime->_replacement_scheduled = _replacement_scheduled;
 }
+double lifetime_t::capacity_percent(){ return _q; }
+void lifetime_t::runLifetimeModels(capacity_t * capacity, double T_battery, int hour_of_day, bool & firstStep)
+{
+	double dq_cycle = 0;
+
+	if (capacity->chargeChanged())
+		dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
+	else if (firstStep)
+	{
+		dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
+		firstStep = false;
+	}
+	
+	double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(hour_of_day, T_battery, capacity->SOC());
+
+	// total capacity is linear combination of cycle and calendar degradation effects
+	_q = 100. - dq_cycle - dq_calendar;
+}
 
 bool lifetime_t::check_replaced()
 {
@@ -713,6 +731,9 @@ bool lifetime_t::check_replaced()
 		_q = 100.;
 		replaced = true;
 		_replacement_scheduled = false;
+
+		_lifetime_cycle->replaceBattery();
+		_lifetime_calendar->replaceBattery();
 	}
 	return replaced;
 }
@@ -755,6 +776,11 @@ void lifetime_cycle_t::copy(lifetime_cycle_t *& lifetime_cycle)
 	lifetime_cycle->_average_range = _average_range;
 }
 
+double lifetime_cycle_t::runCycleLifetime(double DOD)
+{
+	rainflow(DOD);
+	return 100. - _q;
+}
 
 void lifetime_cycle_t::rainflow(double DOD)
 {
@@ -863,7 +889,6 @@ void lifetime_cycle_t::replaceBattery()
 }
 
 int lifetime_cycle_t::cycles_elapsed(){ return _nCycles; }
-double lifetime_cycle_t::capacity_percent(){ return _q; }
 double lifetime_cycle_t::cycle_range(){ return _Range; }
 
 
@@ -1015,7 +1040,6 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_dq_old = 0;
 	_dq_new = 0;
 
-
 	_q0 = 1.02;
 	_a = 2.66e-3;
 	_b = 7280;
@@ -1040,7 +1064,7 @@ double lifetime_calendar_t::runLifetimeCalendarModel(int hour_of_day, double T=2
 		runLithiumIonModel();
 	else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && new_day)
 		runTableModel();
-	return _q;
+	return 100 - _q;
 }
 void lifetime_calendar_t::runLithiumIonModel()
 {
@@ -1230,9 +1254,9 @@ double thermal_t::capacity_percent()
 /*
 Define Losses
 */
-losses_t::losses_t(lifetime_cycle_t * lifetime_cycle, thermal_t * thermal, capacity_t* capacity, double_vec batt_system_losses)
+losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, double_vec batt_system_losses)
 {
-	_lifetime_cycle = lifetime_cycle;
+	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
 	_system_losses = batt_system_losses;
@@ -1241,26 +1265,16 @@ losses_t::losses_t(lifetime_cycle_t * lifetime_cycle, thermal_t * thermal, capac
 losses_t * losses_t::clone(){ return new losses_t(*this); }
 void losses_t::copy(losses_t *& losses)
 {
-	losses->_lifetime_cycle = _lifetime_cycle;
+	losses->_lifetime = _lifetime;
 	losses->_thermal = _thermal;
 	losses->_capacity = _capacity;
-	losses->_nCycle = _nCycle;
 	losses->_system_losses = _system_losses;
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
 void losses_t::run_losses(double dt_hour)
-{
-	bool update_max_capacity = false;
-	
-	// if cycle number has changed, update max capacity
-	if (_lifetime_cycle->cycles_elapsed() > _nCycle)
-	{
-		_nCycle++;
-		_capacity->updateCapacityForLifetime(_lifetime_cycle->capacity_percent());
-	}
-	
-	// modify max capacity based on temperature
+{	
+	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 }
 /* 
@@ -1323,16 +1337,7 @@ void battery_t::run(int hour_of_day, double I)
 	runThermalModel(I);
 	runCapacityModel(I);
 	runVoltageModel();
-	runCalendarLifetimeModel(hour_of_day);
-
-	if (_capacity->chargeChanged())
-		runCycleLifetimeModel(_capacity->prev_DOD());
-	else if (_firstStep)
-	{
-		runCycleLifetimeModel(_capacity->DOD());
-		_firstStep = false;
-	}
-
+	runLifetimeModel(hour_of_day);
 	runLossesModel();
 }
 void battery_t::runThermalModel(double I)
@@ -1350,19 +1355,15 @@ void battery_t::runVoltageModel()
 	_voltage->updateVoltage(_capacity, _thermal, _dt_hour);
 }
 
-void battery_t::runCycleLifetimeModel(double DOD)
+void battery_t::runLifetimeModel(int hour_of_day)
 {
-	_lifetime_cycle->rainflow(DOD);
-	if (_lifetime_cycle->check_replaced())
+	_lifetime->runLifetimeModels(capacity_model(), thermal_model()->T_battery(), hour_of_day, _firstStep);
+	if (_lifetime->check_replaced())
 	{
 		_capacity->replace_battery();
 		_thermal->replace_battery();
 		_losses->replace_battery();
 	}
-}
-void battery_t::runCalendarLifetimeModel(int hour_of_day)
-{
-	_lifetime_calendar->runLifetimeCalendarModel(hour_of_day, thermal_model()->T_battery(), capacity_model()->SOC());
 }
 void battery_t::runLossesModel()
 {
@@ -1370,8 +1371,7 @@ void battery_t::runLossesModel()
 }
 capacity_t * battery_t::capacity_model() const { return _capacity; }
 voltage_t * battery_t::voltage_model() const { return _voltage; }
-lifetime_cycle_t * battery_t::lifetime_cycle_model() const { return _lifetime_cycle; }
-lifetime_calendar_t * battery_t::lifetime_calendar_model() const { return _lifetime_calendar; }
+lifetime_t * battery_t::lifetime_model() const { return _lifetime; }
 thermal_t * battery_t::thermal_model() const { return _thermal; }
 losses_t * battery_t::losses_model() const { return _losses; }
 

@@ -270,7 +270,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 	// component models
 	voltage_model = 0;
+	lifetime_model = 0;
 	lifetime_cycle_model = 0;
+	lifetime_calendar_model = 0;
 	thermal_model = 0;
 	battery_model = 0;
 	capacity_model = 0;
@@ -524,8 +526,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	else
 		voltage_model = new voltage_table_t(batt_vars->batt_computed_series, batt_vars->batt_computed_strings, batt_vars->batt_Vnom_default, batt_vars->batt_voltage_matrix);
 
-	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix, replacement_option, batt_vars->batt_replacement_capacity);
-	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix, replacement_option, batt_vars->batt_replacement_capacity);
+	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix);
+	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix);
+	lifetime_model = new lifetime_t(lifetime_cycle_model, lifetime_calendar_model, replacement_option, batt_vars->batt_replacement_capacity);
 
 	util::matrix_t<double> cap_vs_temp = batt_vars->cap_vs_temp;
 	if (cap_vs_temp.nrows() < 2 || cap_vs_temp.ncols() != 2)
@@ -587,12 +590,12 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	}
 
 	losses_model = new losses_t(
-		lifetime_cycle_model,
+		lifetime_model,
 		thermal_model,
 		capacity_model,
 		batt_system_losses);
 
-	battery_model->initialize(capacity_model, voltage_model, lifetime_cycle_model, lifetime_calendar_model, thermal_model, losses_model);
+	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);
 	battery_metrics = new battery_metrics_t(battery_model, dt_hr);
 
 	if (batt_vars->batt_dispatch == dispatch_t::MANUAL && batt_vars->batt_meter_position == dispatch_t::BEHIND)
@@ -745,8 +748,8 @@ void battstor::check_replacement_schedule(int batt_replacement_option, size_t co
 }
 void battstor::force_replacement()
 {
-	lifetime_cycle_model->force_replacement();
-	battery_model->runCycleLifetimeModel(0);
+	lifetime_model->force_replacement();
+	battery_model->runLifetimeModel(0);
 }
 
 void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, size_t step, double P_pv_dc , double P_load_dc )
@@ -788,7 +791,7 @@ void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_yea
 	outCycles[idx] = (int)(lifetime_cycle_model->cycles_elapsed());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[idx] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
-	outCapacityPercent[idx] = (ssc_number_t)(lifetime_cycle_model->capacity_percent());
+	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
 }
 
 void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
@@ -825,12 +828,12 @@ void battstor::metrics(compute_module &cm, size_t year, size_t hour_of_year, siz
 {
 	int annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
-	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_cycle_model->replacements());
+	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->replacements());
 
 	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
 	{
-		int replacements = lifetime_cycle_model->replacements();
-		lifetime_cycle_model->reset_replacements();
+		int replacements = lifetime_model->replacements();
+		lifetime_model->reset_replacements();
 		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_import_annual());
 		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_export_annual());
 		outAnnualPVChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_pv_charge_annual());
