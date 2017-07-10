@@ -708,7 +708,7 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 {
 	double dq_cycle = 0;
 
-	if (_q > 0)
+	if (_q > 0) 
 	{
 		if (capacity->chargeChanged())
 			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
@@ -1056,7 +1056,8 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	// output based on percentage capacity (0 - 100%)
 	_q = _q0 * 100;
 
-	// timestep in days
+	// timestep
+	_dt_hour = dt_hour;
 	_dt_day = dt_hour / util::hours_per_day;
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
@@ -1071,18 +1072,27 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
 	// only run once per iteration (need to make the last iteration)
 	if (idx > _last_idx)
 	{
+
+		if (idx % util::hours_per_day / _dt_hour == 0)
+			_day_age_of_battery++;
+
+
 		if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
 			runLithiumIonModel(T, SOC);
 		else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
 			runTableModel();
 
 		_last_idx = idx;
+
+		
+
 	}
 	
 	// initial fit is 102%
 	double dq = 100 - _q;
 	if (dq < 0)
 		dq = 0;
+
 	return dq;
 }
 void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
@@ -1093,7 +1103,7 @@ void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 	else
 		_dq_new = (0.5 * pow(k_cal, 2) / _dq_old) * _dt_day + _dq_old;
 	_dq_old = _dq_new;
-	_q -= (_dq_new) * 100;
+	_q = (_q0 - (_dq_new)) * 100;
 	
 }
 void lifetime_calendar_t::runTableModel()
@@ -1107,7 +1117,7 @@ void lifetime_calendar_t::runTableModel()
 	{
 		int day = _calendar_matrix.at(i, 0);
 		double capacity = _calendar_matrix.at(i, 1);
-		if (day < _day_age_of_battery)
+		if (day <= _day_age_of_battery)
 		{
 			day_lo = day;
 			capacity_lo = capacity;
@@ -1116,6 +1126,7 @@ void lifetime_calendar_t::runTableModel()
 		{
 			day_hi = day;
 			capacity_hi = capacity;
+			break;
 		}
 	}
 	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery);

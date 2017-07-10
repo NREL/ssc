@@ -368,6 +368,8 @@ private:
 	util::matrix_t<double> _calendar_matrix;
 	
 	int _day_age_of_battery;
+
+	double _dt_hour; // timestep in hours
 	double _dt_day; // timestep in terms of days 
 
 

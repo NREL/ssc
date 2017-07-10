@@ -444,7 +444,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		throw compute_module::exec_error("battery", "Battery lifetime matrix must have three columns and at least three rows");
 
 	util::matrix_t<double>  batt_calendar_lifetime_matrix = batt_vars->batt_calendar_lifetime_matrix;
-	if (batt_vars->batt_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && (batt_lifetime_matrix.nrows() < 2 || batt_lifetime_matrix.ncols() != 2))
+	if (batt_vars->batt_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE && (batt_calendar_lifetime_matrix.nrows() < 2 || batt_calendar_lifetime_matrix.ncols() != 2))
 		throw compute_module::exec_error("battery", "Battery calendar lifetime matrix must have 2 columns and at least 2 rows");
 
 	/* **********************************************************************
