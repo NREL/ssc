@@ -1036,7 +1036,8 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 /*
 Lifetime Calendar Model
 */
-lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour) 
+lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour,
+	double q0, double a, double b, double c) 
 {
 	_calendar_choice = calendar_choice;
 	_calendar_matrix = calendar_matrix;
@@ -1048,10 +1049,10 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_dq_old = 0;
 	_dq_new = 0;
 
-	_q0 = 1.02;
-	_a = 2.66e-3;
-	_b = -7280;
-	_c = 930;
+	_q0 = q0;
+	_a = a;
+	_b = b;
+	_c = c;
 
 	// output based on percentage capacity (0 - 100%)
 	_q = _q0 * 100;
@@ -1083,9 +1084,6 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
 			runTableModel();
 
 		_last_idx = idx;
-
-		
-
 	}
 	
 	// initial fit is 102%

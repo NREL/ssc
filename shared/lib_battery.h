@@ -346,7 +346,8 @@ Lifetime calendar model
 class lifetime_calendar_t 
 {
 public:
-	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour);
+	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour, 
+		double q0=1.02, double a=2.66e-3, double b=7280, double c=930);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
 	lifetime_calendar_t * clone();

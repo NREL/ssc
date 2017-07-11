@@ -58,6 +58,7 @@ struct batt_variables
 
 	int batt_computed_series;
 	int batt_computed_strings;
+
 	double batt_kw;
 	double batt_kwh;
 
@@ -104,6 +105,11 @@ struct batt_variables
 	double inv_ds_eff;
 	double inv_pd_eff;
 	double inverter_efficiency;
+
+	double batt_calendar_q0;
+	double batt_calendar_a;
+	double batt_calendar_b;
+	double batt_calendar_c;
 };
 
 

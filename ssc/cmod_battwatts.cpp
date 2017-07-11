@@ -77,6 +77,11 @@ public:
 			util::matrix_t<double> batt_lifetime_matrix(6, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
 
+			batt_vars->batt_calendar_q0 = 1.02;
+			batt_vars->batt_calendar_a = 2.66e-3;
+			batt_vars->batt_calendar_b = -7280;
+			batt_vars->batt_calendar_c = 930;
+
 			batt_vars->batt_Vnom_default = 3.6;
 			batt_vars->batt_Vfull = 4.1;
 			batt_vars->batt_Vexp = 4.05;
