@@ -21,7 +21,7 @@ C_pt_sf_perf_interp::C_pt_sf_perf_interp()
 	m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max =
 		m_eta_prev = m_v_wind_prev = m_v_wind_current = std::numeric_limits<double>::quiet_NaN();
 
-	m_n_flux_x = m_n_flux_y = m_N_hel = -1;
+	m_n_flux_x = m_n_flux_y = -1;
 
 	field_efficiency_table = 0;
 
@@ -43,26 +43,15 @@ void C_pt_sf_perf_interp::init()
 	int nrows5, ncols5;
 	int nfluxpos, nfposdim;
 	int nfluxmap, nfluxcol;
-	
-	// Define parameters for efficiency and flux map routines
-	double interp_nug = std::numeric_limits<double>::quiet_NaN();
-	double interp_beta = std::numeric_limits<double>::quiet_NaN();
 
-	util::matrix_t<double> helio_positions;	
 	util::matrix_t<double> eta_map;
 	util::matrix_t<double> flux_maps;
 	util::matrix_t<double> flux_positions;
 	
-	int pos_dim = 0;
-		
 	m_p_start = ms_params.m_p_start;
 	m_p_track = ms_params.m_p_track;
 	m_hel_stow_deploy = ms_params.m_hel_stow_deploy*CSP::pi / 180.0;
 	m_v_wind_max = ms_params.m_v_wind_max;
-
-	helio_positions = ms_params.m_helio_positions;
-	m_N_hel = helio_positions.nrows();
-	pos_dim = helio_positions.ncols();
 
 	eta_map = ms_params.m_eta_map;
 	nrows5 = eta_map.nrows();
@@ -171,8 +160,8 @@ void C_pt_sf_perf_interp::init()
 	------------------------------------------------------------------------------
 	*/
 
-	interp_nug = 0.0;
-	interp_beta = 1.99;
+	double interp_nug = 0.0;
+	double interp_beta = 1.99;
 
 	//Create the field efficiency table
 	Powvargram vgram(sunpos, effs, interp_beta, interp_nug);
@@ -244,11 +233,11 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
 		(field_control < 1.e-4 && m_eta_prev >= 1.e-4) ||			// OR Shutdown by setting of control paramter (Field_control 1->0 )
 		(field_control > 1.e-4 && v_wind >= m_v_wind_max) ||		// OR Shutdown by high wind speed
 		(m_eta_prev > 1.e-4 && m_v_wind_prev >= m_v_wind_max && v_wind < m_v_wind_max) )	// OR Startup after high wind speed
-		pparasi = m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
+		pparasi = ms_params.m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
 
 	// Parasitics for tracking      
 	if( v_wind < m_v_wind_max && m_v_wind_prev < m_v_wind_max )
-		pparasi += m_N_hel * m_p_track * field_control;				// [kWe]
+		pparasi += ms_params.m_N_hel * m_p_track * field_control;				// [kWe]
 
 	double eta_field = 0.;
 
@@ -337,7 +326,7 @@ void C_pt_sf_perf_interp::off(const C_csp_solver_sim_info &sim_info)
 		// Is field shutting down?
 	if( m_eta_prev >= 1.e-4 )
 	{
-		pparasi = m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
+		pparasi = ms_params.m_N_hel * m_p_start / (step / 3600.0);			// [kWe-hr]/[hr] = kWe 
 	}
 
 	ms_outputs.m_pparasi = pparasi / 1.E3;		//[MW], convert from kJ/hr: Parasitic power for tracking

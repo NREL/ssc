@@ -857,9 +857,8 @@ public:
 			heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
 			heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
 			//allocate empty array of positions to indicate number of heliostats in the field
-			util::matrix_t<double> hpos(as_integer("N_hel"), 2);
+			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
 			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
-			heliostatfield.ms_params.m_helio_positions = hpos;
 			run_type = 2;
 		}
 		else if( run_type == 2 )
@@ -869,9 +868,8 @@ public:
 			heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
 			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
             //allocate empty array of positions to indicate number of heliostats in the field
-            util::matrix_t<double> hpos( as_integer("N_hel"), 2 );
+			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
 			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
-            heliostatfield.ms_params.m_helio_positions = hpos;
 		}
 		else
 		{

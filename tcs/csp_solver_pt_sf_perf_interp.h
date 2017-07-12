@@ -25,7 +25,6 @@ private:
 
 	int m_n_flux_x;		//[-]
 	int m_n_flux_y;		//[-]
-	int m_N_hel;		//[-]
 
 	//Stored Variables
 	double m_eta_prev;			//[-]
@@ -63,10 +62,10 @@ public:
 		double m_hel_stow_deploy;	//[deg] convert to [rad] in init()
 		double m_v_wind_max;		//[m/s] max wind speed
 
+		int m_N_hel;		//[-]
+
 		int m_n_flux_x;
 		int m_n_flux_y;
-
-		util::matrix_t<double> m_helio_positions;
 
 		//double *m_eta_map;
 		//int m_nrows_eta_map;
@@ -92,7 +91,7 @@ public:
 		S_params()
 		{
 			// Integers
-			m_n_flux_x = m_n_flux_y = -1;
+			m_n_flux_x = m_n_flux_y = m_N_hel = -1;
 
 			// Doubles
 			m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = 
