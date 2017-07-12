@@ -101,12 +101,12 @@ double C_csp_mspt_collector_receiver::get_min_power_delivery()    //MWt
 
 double C_csp_mspt_collector_receiver::get_tracking_power()
 {
-	return mc_pt_heliostatfield.ms_params.m_p_track * mc_pt_heliostatfield.ms_params.m_helio_positions.nrows()*1.e-3;	//MWe
+	return mc_pt_heliostatfield.ms_params.m_p_track * mc_pt_heliostatfield.ms_params.m_N_hel*1.e-3;	//MWe
 }
 
 double C_csp_mspt_collector_receiver::get_col_startup_power()
 {
-	return mc_pt_heliostatfield.ms_params.m_p_start * mc_pt_heliostatfield.ms_params.m_helio_positions.nrows() *1.e-3;	//MWe-hr
+	return mc_pt_heliostatfield.ms_params.m_p_start * mc_pt_heliostatfield.ms_params.m_N_hel *1.e-3;	//MWe-hr
 }
 
 
