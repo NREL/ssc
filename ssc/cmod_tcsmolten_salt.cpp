@@ -529,53 +529,6 @@ public:
 		// Set up "cmod_solarpilot.cpp" conversions as necessary
 		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);				
 
-		int tes_type = as_integer("tes_type");
-		if( tes_type != 1 )
-		{
-			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
-		}
-
-		// Weather reader
-		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("solar_resource_file");
-		weather_reader.m_trackmode = 0;
-		weather_reader.m_tilt = 0.0;
-		weather_reader.m_azimuth = 0.0;
-			// Initialize to get weather file info
-		weather_reader.init();
-
-		// Get info from the weather reader initialization
-		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
-        
-        // Set steps per hour
-		C_csp_solver::S_sim_setup sim_setup;
-		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
-		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
-        
-        int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
-
-        //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
-        if( steps_per_hour < 0 )
-        {
-            double sph_d = 3600. / weather_reader.get_step_seconds();
-            steps_per_hour = (int)( sph_d + 1.e-5 );
-            if( (double)steps_per_hour != sph_d )
-                throw spexception("The time step duration must be evenly divisible within an hour.");
-        }
-
-        int n_steps_fixed = steps_per_hour * 8760;	//[-]
-        if( as_boolean("vacuum_arrays") )
-        {
-            n_steps_fixed = steps_per_hour * (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
-        }
-        //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
-		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
-
-
-
-        //heliostat field class
-		C_pt_sf_perf_interp heliostatfield;
-
 		bool is_optimize = as_boolean("is_optimize");		// True = optimize tower/receiver geometry
 		bool is_override_layout = as_boolean("is_override_layout");
 		//assign("run_type", as_boolean("is_override_layout")); 
@@ -589,13 +542,15 @@ public:
 			assign("run_type", 1);
 		}
 
+
 		int run_type = as_integer("run_type");
-		
+
+
 		if (run_type == 0)		// Auto-design. Generate a new field layout
 		{
 			// lays out new field design
-				// 'helio_positions_in' should NOT be assigned
-				// 'calc_fluxmaps' should be true
+			// 'helio_positions_in' should NOT be assigned
+			// 'calc_fluxmaps' should be true
 			assign("calc_fluxmaps", 1);
 			// is_optimize could be true or false here
 		}
@@ -611,7 +566,7 @@ public:
 				p_helio_positions_in[i * 2 + 1] = helio_pos_temp(i, 1);
 			}
 			assign("N_hel", n_h_rows);
-				// 'calc_fluxmaps' should be true
+			// 'calc_fluxmaps' should be true
 			assign("calc_fluxmaps", 1);
 			// is_optimize should be false
 			assign("is_optimize", 0);
@@ -796,11 +751,74 @@ public:
 			else
 				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 
+			int nr = as_integer("N_hel");
+			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
+
 		}
 		else if (run_type == 2)		// User flux and efficiency maps
 		{
 
-		}								
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+		int tes_type = as_integer("tes_type");
+		if( tes_type != 1 )
+		{
+			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
+		}
+
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		weather_reader.m_filename = as_string("solar_resource_file");
+		weather_reader.m_trackmode = 0;
+		weather_reader.m_tilt = 0.0;
+		weather_reader.m_azimuth = 0.0;
+			// Initialize to get weather file info
+		weather_reader.init();
+
+		// Get info from the weather reader initialization
+		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
+        
+        // Set steps per hour
+		C_csp_solver::S_sim_setup sim_setup;
+		sim_setup.m_sim_time_start = as_double("time_start");		//[s] time at beginning of first time step
+		sim_setup.m_sim_time_end = as_double("time_stop");          //[s] time at end of last time step
+        
+        int steps_per_hour = (int)as_double("time_steps_per_hour");		//[-]
+
+        //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
+        if( steps_per_hour < 0 )
+        {
+            double sph_d = 3600. / weather_reader.get_step_seconds();
+            steps_per_hour = (int)( sph_d + 1.e-5 );
+            if( (double)steps_per_hour != sph_d )
+                throw spexception("The time step duration must be evenly divisible within an hour.");
+        }
+
+        int n_steps_fixed = steps_per_hour * 8760;	//[-]
+        if( as_boolean("vacuum_arrays") )
+        {
+            n_steps_fixed = steps_per_hour * (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
+        }
+        //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
+		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
+
+
+
+        
+
+									
 
 		double H_rec = as_double("H_rec");
 		double rec_aspect = as_double("rec_aspect");
@@ -822,10 +840,9 @@ public:
 			break;
 		}
 
-		heliostatfield.ms_params.m_run_type = run_type;
-		heliostatfield.ms_params.m_helio_width = as_double("helio_width");		// sp match
-		heliostatfield.ms_params.m_helio_height = as_double("helio_height");	// sp match
-		heliostatfield.ms_params.m_dens_mirror = as_double("dens_mirror");		// sp match
+		//heliostat field class
+		C_pt_sf_perf_interp heliostatfield;
+
 		heliostatfield.ms_params.m_p_start = as_double("p_start");		//[kWe-hr] Heliostat startup energy
 		heliostatfield.ms_params.m_p_track = as_double("p_track");		//[kWe] Heliostat tracking power
 		heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");	// N/A
@@ -841,9 +858,9 @@ public:
 			heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
 			//allocate empty array of positions to indicate number of heliostats in the field
 			util::matrix_t<double> hpos(as_integer("N_hel"), 2);
+			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
 			heliostatfield.ms_params.m_helio_positions = hpos;
 			run_type = 2;
-			heliostatfield.ms_params.m_run_type = run_type;
 		}
 		else if( run_type == 2 )
 		{
@@ -853,6 +870,7 @@ public:
 			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
             //allocate empty array of positions to indicate number of heliostats in the field
             util::matrix_t<double> hpos( as_integer("N_hel"), 2 );
+			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
             heliostatfield.ms_params.m_helio_positions = hpos;
 		}
 		else
@@ -862,9 +880,6 @@ public:
 			throw exec_error("MSPT CSP Solver", msg);
 		}
 
-		// Set parameters that were set with TCS defaults
-		heliostatfield.ms_params.m_interp_nug = 0.0;
-		heliostatfield.ms_params.m_interp_beta = 1.99;
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
