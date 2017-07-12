@@ -4,6 +4,3 @@ mkdir sdk-release/android/x86
 cp -v -R build_android/armeabi/* sdk-release/android/armeabi
 cp -v -R build_android/armeabi-v7a/* sdk-release/android/armeabi-v7a
 cp -v -R build_android/x86/* sdk-release/android/x86
-strip sdk-release/android/armeabi/*
-strip sdk-release/android/armeabi-v7a/*
-strip sdk-release/android/x86/*

@@ -1,0 +1,4 @@
+doc/* linguist-documentation=true
+lpsolve/* linguist-vendored
+nlopt/* linguist-vendored
+build_*/* linguist_generated
