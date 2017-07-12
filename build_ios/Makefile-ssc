@@ -21,11 +21,6 @@ CC = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolch
 CXX = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++
 CFLAGS = -arch ${ARCH} -isysroot ${ISYSROOT}  -miphoneos-version-min=10.0 -fembed-bitcode -DNDEBUG -Os -pipe -fPIC  -I../shared -I../nlopt -I../lpsolve -I../solarpilot -I../tcs -I../ssc -g -D__IOS__ -D__64BIT__
 CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
-#testing dylib in iOS
-#LDFLAGS = -arch ${ARCH} -lm -lstdc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
-#LDFLAGS = -L${ISYSROOT}/usr/lib -L${ISYSROOT}/usr/lib/system  -miphoneos-version-min=10.0 -arch ${ARCH} -lc++ shared_${ARCH}.a solarpilot_${ARCH}.a tcs_${ARCH}.a lpsolve_${ARCH}.a nlopt_${ARCH}.a
-
-#TARGET=ssc_${ARCH}.dylib
 TARGET=ssc_${ARCH}.a
 
 
@@ -109,27 +104,13 @@ OBJECTS = \
 	cmod_sco2_design_cycle.o \
 	cmod_sco2_csp_system.o \
 	cmod_sco2_csp_ud_pc_tables.o \
-	cmod_sco2_air_cooler.o \
 	cmod_inv_cec_cg.o \
 	cmod_pv_get_shade_loss_mpp.o \
 	tckernel.o 
 
 
-# testing dylib in iOS
-#$(TARGET):$(OBJECTS)
-#	$(CXX) $(LDFLAGS) -o $@ $^
-#	$(CXX) $(LDFLAGS) -dynamiclib  -o $@ $^
 $(TARGET):$(OBJECTS)
 	ar rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
-
-
-
-#$(TARGET) : $(OBJECTS)
-#	$(CXX) $(LDFLAGS)   -o $@ $^
-
-#clean:
-#	rm -rf $(OBJECTS) $(TARGET) ./dltest
-
