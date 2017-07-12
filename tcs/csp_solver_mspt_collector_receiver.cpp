@@ -20,7 +20,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	csp_info_invalid	
 };
 
-C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield,
+C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_sf_perf_interp & pt_heliostatfield,
 	C_mspt_receiver_222 & mspt_receiver_222):
 	mc_pt_heliostatfield(pt_heliostatfield),
 	mc_mspt_receiver_222(mspt_receiver_222)

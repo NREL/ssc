@@ -12,7 +12,7 @@
 // Can probably delete these headers later...
 #include "csp_solver_util.h"
 #include "csp_solver_core.h"
-#include "csp_solver_pt_heliostatfield.h"
+#include "csp_solver_pt_sf_perf_interp.h"
 #include "csp_solver_mspt_receiver_222.h"
 #include "csp_solver_mspt_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
@@ -42,7 +42,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "helio_reflectance",    "Heliostat reflectance",                                             "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_absorptance",      "Receiver absorptance",                                              "-",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_hl_perm2",         "Receiver design heatloss",                                          "kW/m2",        "",            "heliostat",      "*",                       "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "land_bound_type",      "Land boundary type",                                                "-",            "",            "heliostat",      "?=0",                     "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "land_max",             "Land max boundary",                                                 "-ORm",         "",            "heliostat",      "?=7.5",                   "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "land_min",             "Land min boundary",                                                 "-ORm",         "",            "heliostat",      "?=0.75",                  "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "land_bound_table",     "Land boundary table",                                               "m",            "",            "heliostat",      "?",                       "",                     "" },
@@ -528,9 +527,7 @@ public:
 	void exec() throw(general_error)
 	{
 		// Set up "cmod_solarpilot.cpp" conversions as necessary
-		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);
-		
-		assign("run_type", as_boolean("is_override_layout"));
+		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);				
 
 		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )
@@ -567,13 +564,19 @@ public:
 
 
         //heliostat field class
-		C_pt_heliostatfield heliostatfield;
+		C_pt_sf_perf_interp heliostatfield;
 
 		bool is_optimize = as_boolean("is_optimize");		// True = optimize tower/receiver geometry
-		if (is_optimize)
+		bool is_override_layout = as_boolean("is_override_layout");
+		//assign("run_type", as_boolean("is_override_layout")); 
+		if (is_optimize || is_override_layout)
 		{
 			// If 'is_optimize' is true. Then run_type must be 0. Currently not the case in UI
 			assign("run_type", 0);
+		}
+		else
+		{
+			assign("run_type", 1);
 		}
 
 		int run_type = as_integer("run_type");
@@ -812,46 +815,16 @@ public:
 		heliostatfield.ms_params.m_run_type = run_type;
 		heliostatfield.ms_params.m_helio_width = as_double("helio_width");		// sp match
 		heliostatfield.ms_params.m_helio_height = as_double("helio_height");	// sp match
-		heliostatfield.ms_params.m_helio_optical_error = as_double("helio_optical_error_mrad")*1.E-3;	//[rad], convert from SSC input in [mrad]
-		heliostatfield.ms_params.m_helio_active_fraction = as_double("helio_active_fraction");	// sp match
 		heliostatfield.ms_params.m_dens_mirror = as_double("dens_mirror");		// sp match
-		heliostatfield.ms_params.m_helio_reflectance = as_double("helio_reflectance");	// sp match
-		heliostatfield.ms_params.m_rec_absorptance = as_double("rec_absorptance");	// sp match
-		heliostatfield.ms_params.m_rec_height = as_double("rec_height");		// sp match
-		heliostatfield.ms_params.m_rec_aspect = as_double("rec_aspect");		// sp match
-		heliostatfield.ms_params.m_h_tower = as_double("h_tower");				// sp match
-		heliostatfield.ms_params.m_rec_hl_perm2 = as_double("rec_hl_perm2");	// sp match
-		heliostatfield.ms_params.m_q_design = as_double("q_design"); // (ssc_number_t)(as_double("P_ref") / as_double("design_eff")*as_double("solarm"));
-		heliostatfield.ms_params.m_dni_des = as_double("dni_des");				// sp match
-		heliostatfield.ms_params.m_weather_file = as_string("solar_resource_file");	// sp match
-		heliostatfield.ms_params.m_land_bound_type = (int) as_double("land_bound_type");
-		heliostatfield.ms_params.m_land_max = as_double("land_max");			// sp match
-		heliostatfield.ms_params.m_land_min = as_double("land_min");			// sp match
 		heliostatfield.ms_params.m_p_start = as_double("p_start");		//[kWe-hr] Heliostat startup energy
 		heliostatfield.ms_params.m_p_track = as_double("p_track");		//[kWe] Heliostat tracking power
 		heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");	// N/A
 		heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");			// N/A
 		heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");		// sp match
 		heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");		// sp match
-		heliostatfield.ms_params.m_c_atm_0 = as_double("c_atm_0");		// sp match
-		heliostatfield.ms_params.m_c_atm_1 = as_double("c_atm_1");		// sp match
-		heliostatfield.ms_params.m_c_atm_2 = as_double("c_atm_2");		// sp match
-		heliostatfield.ms_params.m_c_atm_3 = as_double("c_atm_3");		// sp match
-		heliostatfield.ms_params.m_n_facet_x = (int) as_double("n_facet_x");	// sp match
-		heliostatfield.ms_params.m_n_facet_y = (int) as_double("n_facet_y");	// sp match
-		heliostatfield.ms_params.m_focus_type = (int) as_double("focus_type");	// sp match
-		heliostatfield.ms_params.m_cant_type = (int) as_double("cant_type");	// sp match
-		heliostatfield.ms_params.m_n_flux_days = (int) as_double("n_flux_days");		// sp match
-		heliostatfield.ms_params.m_delta_flux_hrs = (int) as_double("delta_flux_hrs");	// sp match
 
 		if( run_type == 1 || run_type == 0 )
 		{
-			//heliostatfield.ms_params.m_helio_positions = as_matrix("helio_positions");
-			//double x0 = heliostatfield.ms_params.m_helio_positions(0, 0);
-			//double y0 = heliostatfield.ms_params.m_helio_positions(0, 1);
-            ////if run_type==0, then a layout has already been generated. Set to 1 to avoid regenerating in csp_solver_pt_heliostatfield::init()
-            //heliostatfield.ms_params.m_run_type = run_type = 1;
-
 			heliostatfield.ms_params.m_eta_map = mt_eta_map;
 			heliostatfield.ms_params.m_eta_map_aod_format = false;
 			heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
@@ -1787,9 +1760,9 @@ public:
 			log("The number of rows in the field efficiency and receiver flux map matrices are not equal. This is unexpected, and the flux maps may be inaccurate.");
 		}
 
-		double flux_scaling_mult = heliostatfield.ms_params.m_dni_des*heliostatfield.ms_params.m_A_sf / 1000.0 /
-			(CSP::pi*heliostatfield.ms_params.m_rec_height*
-			heliostatfield.ms_params.m_rec_height / heliostatfield.ms_params.m_rec_aspect /
+		double flux_scaling_mult = as_double("dni_des")*heliostatfield.ms_params.m_A_sf / 1000.0 /
+			(CSP::pi*H_rec*
+			H_rec / rec_aspect /
 			double(heliostatfield.ms_params.m_n_flux_x));
 
 		for( int i = 0; i < n_rows_eta_map; i++ )
