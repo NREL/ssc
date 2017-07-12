@@ -240,6 +240,7 @@ bool solarpilot_invoke::run()
                     return false;
             }
 
+			m_sapi->Setup(*this);
             m_sapi->SetSummaryCallbackStatus(false);
             m_sapi->PreSimCallbackUpdate();
             
