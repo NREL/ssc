@@ -56,18 +56,12 @@ public:
 
 	struct S_params
 	{
-        bool m_eta_map_aod_format;
-		int m_run_type;
-		double m_helio_width;				//[m]
-		double m_helio_height;				//[m]
-		double m_dens_mirror;
+        bool m_eta_map_aod_format;			//[-]
 
 		double m_p_start;			//[kWe-hr] Heliostat startup energy
 		double m_p_track;			//[kWe] Heliostat tracking power
 		double m_hel_stow_deploy;	//[deg] convert to [rad] in init()
 		double m_v_wind_max;		//[m/s] max wind speed
-		double m_interp_nug;
-		double m_interp_beta;
 
 		int m_n_flux_x;
 		int m_n_flux_y;
@@ -98,12 +92,11 @@ public:
 		S_params()
 		{
 			// Integers
-			m_run_type = m_n_flux_x = m_n_flux_y = -1;
+			m_n_flux_x = m_n_flux_y = -1;
 
 			// Doubles
-			m_helio_width = m_helio_height = m_dens_mirror = 
-				m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = m_interp_nug =
-				m_interp_beta = m_land_area = m_A_sf = std::numeric_limits<double>::quiet_NaN();
+			m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = 
+				m_land_area = m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
 		}		
 	};

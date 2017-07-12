@@ -43,11 +43,6 @@ void C_pt_sf_perf_interp::init()
 	int nrows5, ncols5;
 	int nfluxpos, nfposdim;
 	int nfluxmap, nfluxcol;
-
-	// Required for total solar field area
-	double helio_width = std::numeric_limits<double>::quiet_NaN();
-	double helio_height = std::numeric_limits<double>::quiet_NaN();
-	double dens_mirror = std::numeric_limits<double>::quiet_NaN();
 	
 	// Define parameters for efficiency and flux map routines
 	double interp_nug = std::numeric_limits<double>::quiet_NaN();
@@ -59,15 +54,11 @@ void C_pt_sf_perf_interp::init()
 	util::matrix_t<double> flux_positions;
 	
 	int pos_dim = 0;
-
-	int run_type = ms_params.m_run_type;
 		
 	m_p_start = ms_params.m_p_start;
 	m_p_track = ms_params.m_p_track;
 	m_hel_stow_deploy = ms_params.m_hel_stow_deploy*CSP::pi / 180.0;
 	m_v_wind_max = ms_params.m_v_wind_max;
-	interp_nug = ms_params.m_interp_nug;
-	interp_beta = ms_params.m_interp_beta;
 
 	helio_positions = ms_params.m_helio_positions;
 	m_N_hel = helio_positions.nrows();
@@ -106,9 +97,6 @@ void C_pt_sf_perf_interp::init()
 	MatDoub sunpos;
 	vector<double> effs;
 	vector<double> vis;
-
-	//do initial runs of SolarPILOT and/or set up tables
-	//case RUN_TYPE::USER_DATA:
 
 	if(! ms_params.m_eta_map_aod_format )
 	{
@@ -183,9 +171,8 @@ void C_pt_sf_perf_interp::init()
 	------------------------------------------------------------------------------
 	*/
 
-	//collect nug and beta
-	interp_nug = ms_params.m_interp_nug;
-	interp_beta = ms_params.m_interp_beta;
+	interp_nug = 0.0;
+	interp_beta = 1.99;
 
 	//Create the field efficiency table
 	Powvargram vgram(sunpos, effs, interp_beta, interp_nug);
@@ -206,10 +193,7 @@ void C_pt_sf_perf_interp::init()
 		error_msg = util::format("The heliostat field interpolation function fit is poor! (err_fit=%f RMS)", err_fit);
 		mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 	}
-		
-	// Calculate the total solar field reflective area
-	ms_params.m_A_sf = ms_params.m_helio_height*ms_params.m_helio_width*ms_params.m_dens_mirror*m_N_hel;		//[m^2]
-		
+
 	// Initialize stored variables
 	m_eta_prev = 0.0;
 	m_v_wind_prev = 0.0;
