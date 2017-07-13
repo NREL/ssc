@@ -30,9 +30,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "is_optimize",          "Do SolarPILOT optimization of solar field geometry",                "",             "",            "heliostat",      "*",                       "",                     "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "is_override_layout",   "Run SolarPILOT field layout but keep tower/receiver geometry",      "-",            "",            "heliostat",      "*",                       "",                     "" },
-    
+	{ SSC_INPUT,        SSC_NUMBER,      "field_model_type",     "0=design field and tower/receiver geometry 1=design field 2=user field, calculate performance 3=user performance maps vs solar position", "", "", "heliostat", "*", "", "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_width",          "Heliostat width",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_height",         "Heliostat height",                                                  "m",            "",            "heliostat",      "*",                       "",                     "" },
@@ -534,18 +532,29 @@ public:
 		int n_rec_panels = as_integer("N_panels");
 		assign("n_flux_x", max(12, n_rec_panels));
 
-		bool is_optimize = as_boolean("is_optimize");		// True = optimize tower/receiver geometry
-		bool is_override_layout = as_boolean("is_override_layout");
-		bool is_user_sf_maps = false;
-		bool is_user_field = true;
-		
+		// 'sf_model_type'
+		// 0 = design field and tower/receiver geometry
+		// 1 = design field
+		// 2 = user field, calculate performance
+		// 3 = user performance maps vs solar position
+		int field_model_type = as_integer("field_model_type");
+
 		// Run solarpilot right away to update values as needed
 		solarpilot_invoke spi(this);
 		util::matrix_t<double> mt_eta_map;
 		util::matrix_t<double> mt_flux_maps;
 
-		if (is_optimize || is_override_layout)	// Auto-design. Generate a new system (is_optimize = true) or field layout
+		assign("is_optimize", 0);
+		bool is_optimize = false;
+
+		if (field_model_type == 0 || field_model_type == 1)	// Auto-design. Generate a new system (is_optimize = true) or field layout
 		{
+			if (field_model_type == 0)
+			{
+				assign("is_optimize", 1);
+				is_optimize = true;
+			}
+
 			assign("calc_fluxmaps", 1);
 
 			spi.run();
@@ -650,7 +659,7 @@ public:
 			else
 				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
 		}
-		else if (is_user_field)
+		else if (field_model_type == 2)
 		{
 			// only calculates a flux map, so need to "assign" 'helio_positions_in'
 			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
@@ -717,7 +726,7 @@ public:
 			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 			assign("A_sf", A_sf);
 		}
-		else if (is_user_sf_maps)
+		else if (field_model_type == 3)
 		{
 			assign("calc_fluxmaps", 0);
 
@@ -784,7 +793,7 @@ public:
 		heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");		// sp match
 		heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");		// sp match
 
-		if (!is_user_sf_maps)
+		if (field_model_type != 3)
 		{
 			heliostatfield.ms_params.m_eta_map = mt_eta_map;
 			heliostatfield.ms_params.m_eta_map_aod_format = false;
