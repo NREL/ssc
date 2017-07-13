@@ -287,6 +287,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",   "Use time-series dispatch factors",                                  "",             "",            "tou",            "?=0",						  "",                      "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_series",      "Time series dispatch factors",                                      "",             "",            "tou",            "",						  "",                      "" },
 
+	// Inputs required for user defined SF performance
+	{ SSC_INPUT,        SSC_NUMBER,      "A_sf_in",              "Solar Field Area",                                                 "m^2",           "",            "receiver",       "",                        "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                 "m^2",           "",            "receiver",       "*",                       "",                      "" },
+
 
 
 	// optimized outputs updated depending on run type 
@@ -296,7 +300,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                       "m",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "THT",                  "The height of the tower (hel. pivot to rec equator)",              "m",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "A_sf",                 "Solar Field Area",                                                 "m^2",           "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
     { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "",              "",                      "" },
 	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                         "",              "",            "heliostat",      "*",              "",                      "COL_LABEL=XY_POSITION" },
@@ -712,11 +715,14 @@ public:
 
 			int nr = as_integer("N_hel");
 			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
-
+			assign("A_sf", A_sf);
 		}
 		else if (is_user_sf_maps)
 		{
 			assign("calc_fluxmaps", 0);
+
+			// The following optional inputs must be set here:
+			assign("A_sf", as_double("A_sf_in"));
 		}
 		else
 		{
