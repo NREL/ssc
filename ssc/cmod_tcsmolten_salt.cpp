@@ -278,7 +278,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 	// optimized outputs updated depending on run type 
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                  "m",             "",            "heliostat",      "*",                       "",                      "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                            "-",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                       "m",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
@@ -507,6 +506,19 @@ public:
 
 	void exec() throw(general_error)
 	{
+		int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
+		switch (rec_type)
+		{
+			case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+			{
+				assign("rec_aspect", as_double("rec_height") / as_double("D_rec"));
+				break;
+			}
+			case var_receiver::REC_TYPE::FLAT_PLATE:
+				assign("rec_aspect", as_double("rec_height") / as_double("D_rec"));
+				break;
+		}
+
 		// Set up "cmod_solarpilot.cpp" conversions as necessary
 		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);				
 
@@ -829,7 +841,6 @@ public:
 
 		double A_rec = std::numeric_limits<double>::quiet_NaN();
 
-		int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
 		switch (rec_type)
 		{
 		case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
