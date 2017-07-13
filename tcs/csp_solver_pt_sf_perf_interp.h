@@ -15,8 +15,7 @@ class C_pt_sf_perf_interp
 private:
 	// Class Instances
 	GaussMarkov *field_efficiency_table;
-	MatDoub m_flux_positions;
-	//sp_flux_table fluxtab;
+	MatDoub m_map_sol_pos;
 	
 	double m_p_start;				//[kWe-hr] Heliostat startup energy
 	double m_p_track;				//[kWe] Heliostat tracking power
@@ -67,19 +66,8 @@ public:
 		int m_n_flux_x;
 		int m_n_flux_y;
 
-		//double *m_eta_map;
-		//int m_nrows_eta_map;
-		//int m_ncols_eta_map;
 		util::matrix_t<double> m_eta_map;
 
-		//double *m_flux_positions;
-		//int m_nfluxpos;
-		//int m_nfposdim;
-		util::matrix_t<double> m_flux_positions;
-
-		//double *m_flux_maps;
-		//int m_nfluxmap;
-		//int m_nfluxcol;
 		util::matrix_t<double> m_flux_maps;
 
         util::matrix_t<double> m_sf_adjust; // array of length equal to number of time steps
@@ -119,7 +107,6 @@ public:
 
 	S_outputs ms_outputs;
 
-	//void init(bool(*callback)(simulation_info* siminfo, void *data), void *cdata);
 	void init();
 
 	void call(const C_csp_weatherreader::S_outputs &weather, 

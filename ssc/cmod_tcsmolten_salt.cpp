@@ -587,7 +587,6 @@ public:
 		}
 
 		util::matrix_t<double> mt_eta_map;
-		util::matrix_t<double> mt_solar_pos;
 		util::matrix_t<double> mt_flux_maps;
 
 		//Run solarpilot right away to update values as needed
@@ -656,13 +655,10 @@ public:
 			{
 				size_t nvals = spi.fluxtab.efficiency.size();
 				mt_eta_map.resize(nvals, 3);
-				mt_solar_pos.resize(nvals, 2);
-				//ssc_number_t *opteff = allocate("opteff_table", nvals, 3);
+
 				for (size_t i = 0; i<nvals; i++)
 				{
-					mt_solar_pos(i, 0) = spi.fluxtab.azimuths[i];      //Convention is usually S=0, E<0, W>0  
 					mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
-					mt_solar_pos(i, 1) = spi.fluxtab.zeniths[i];     //Provide zenith angle
 					mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
 					mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
 				}
@@ -708,13 +704,10 @@ public:
 			{
 				size_t nvals = spi.fluxtab.efficiency.size();
 				mt_eta_map.resize(nvals, 3);
-				mt_solar_pos.resize(nvals, 2);
-				//ssc_number_t *opteff = allocate("opteff_table", nvals, 3);
+
 				for (size_t i = 0; i<nvals; i++)
 				{
-					mt_solar_pos(i, 0) = spi.fluxtab.azimuths[i];      //Convention is usually S=0, E<0, W>0  
-					mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
-					mt_solar_pos(i, 1) = spi.fluxtab.zeniths[i];     //Provide zenith angle
+					mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;	//Convention is usually S=0, E<0, W>0 
 					mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
 					mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
 				}
@@ -854,7 +847,7 @@ public:
 		{
 			heliostatfield.ms_params.m_eta_map = mt_eta_map;
 			heliostatfield.ms_params.m_eta_map_aod_format = false;
-			heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
+			//heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
 			heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
 			//allocate empty array of positions to indicate number of heliostats in the field
 			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
@@ -865,7 +858,7 @@ public:
 		{
 			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
             heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
-			heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
+			//heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
 			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
             //allocate empty array of positions to indicate number of heliostats in the field
 			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
