@@ -40,9 +40,6 @@ C_pt_sf_perf_interp::~C_pt_sf_perf_interp()
 void C_pt_sf_perf_interp::init()
 {
 	//Read in parameters
-	int nfluxpos, nfposdim;
-	int nfluxmap, nfluxcol;
-
 	util::matrix_t<double> eta_map;
 	util::matrix_t<double> flux_maps;
 	
@@ -56,12 +53,12 @@ void C_pt_sf_perf_interp::init()
 	m_n_flux_x = ms_params.m_n_flux_x;
 	m_n_flux_y = ms_params.m_n_flux_y;
 		
-	nfluxpos = eta_map.nrows();
-	nfposdim = 2;
+	int nfluxpos = eta_map.nrows();
+	int nfposdim = 2;
 
 	flux_maps = ms_params.m_flux_maps;
-	nfluxmap = flux_maps.nrows();
-	nfluxcol = flux_maps.ncols();
+	int nfluxmap = flux_maps.nrows();
+	int nfluxcol = flux_maps.ncols();
 
 	//check that flux maps match dimensions
 	if( nfluxmap % nfluxpos != 0 )

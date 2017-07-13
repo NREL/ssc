@@ -58,7 +58,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_MATRIX,      "helio_aim_points",     "Heliostat aim point table",                                         "m",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency array",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_map_aod_format",   "Use 3D AOD format field efficiency array"                           "-",            "",            "heliostat",      "?=0",                     "",                     "" },
-    { SSC_INPUT,        SSC_MATRIX,      "flux_positions",       "Flux map sun positions",                                            "deg",          "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "flux_maps",            "Flux map intensities",                                              "-",            "",            "heliostat",      "?",                       "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_0",              "Attenuation coefficient 0",                                         "",             "",            "heliostat",      "?=0.006789",              "",                     "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "c_atm_1",              "Attenuation coefficient 1",                                         "",             "",            "heliostat",      "?=0.1046",                "",                     "" },
@@ -531,70 +530,20 @@ public:
 
 		bool is_optimize = as_boolean("is_optimize");		// True = optimize tower/receiver geometry
 		bool is_override_layout = as_boolean("is_override_layout");
-		//assign("run_type", as_boolean("is_override_layout")); 
-		if (is_optimize || is_override_layout)
-		{
-			// If 'is_optimize' is true. Then run_type must be 0. Currently not the case in UI
-			assign("run_type", 0);
-		}
-		else
-		{
-			assign("run_type", 1);
-		}
-
-
-		int run_type = as_integer("run_type");
-
-
-		if (run_type == 0)		// Auto-design. Generate a new field layout
-		{
-			// lays out new field design
-			// 'helio_positions_in' should NOT be assigned
-			// 'calc_fluxmaps' should be true
-			assign("calc_fluxmaps", 1);
-			// is_optimize could be true or false here
-		}
-		else if (run_type == 1)		// User-field. Calculate flux and efficiency maps
-		{
-			// only calculates a flux map, so need to "assign" 'helio_positions_in'
-			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
-			int n_h_rows = helio_pos_temp.nrows();
-			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
-			for (int i = 0; i < n_h_rows; i++)
-			{
-				p_helio_positions_in[i * 2] = helio_pos_temp(i, 0);
-				p_helio_positions_in[i * 2 + 1] = helio_pos_temp(i, 1);
-			}
-			assign("N_hel", n_h_rows);
-			// 'calc_fluxmaps' should be true
-			assign("calc_fluxmaps", 1);
-			// is_optimize should be false
-			assign("is_optimize", 0);
-		}
-		else if (run_type == 2)
-		{
-			// 'helio_positions' needs to be assigned
-			// 'calc_fluxmaps' should be false
-			assign("calc_fluxmaps", 0);
-			// 'is_optimize' should be false
-			assign("is_optimize", 0);
-		}
-		else
-		{
-			string msg = util::format("SSC INPUT 'run_type' must be set to either 0, 1 or 2. Its input value is %d", run_type);
-
-			throw exec_error("MSPT CSP Solver", msg);
-		}
-
+		bool is_user_sf_maps = false;
+		bool is_user_field = true;
+		
+		// Run solarpilot right away to update values as needed
+		solarpilot_invoke spi(this);
 		util::matrix_t<double> mt_eta_map;
 		util::matrix_t<double> mt_flux_maps;
 
-		//Run solarpilot right away to update values as needed
-		solarpilot_invoke spi(this);
-		spi.run();
-
-		if (run_type == 0)		// Auto-design. Generate a new field layout
+		if (is_optimize || is_override_layout)	// Auto-design. Generate a new system (is_optimize = true) or field layout
 		{
+			assign("calc_fluxmaps", 1);
+
+			spi.run();
+
 			if (is_optimize)
 			{
 				//Optimization iteration history
@@ -694,10 +643,24 @@ public:
 			}
 			else
 				throw exec_error("solarpilot", "failed to calculate a correct flux map table");
-
 		}
-		else if (run_type == 1)		// User-field. Calculate flux and efficiency maps
+		else if (is_user_field)
 		{
+			// only calculates a flux map, so need to "assign" 'helio_positions_in'
+			util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
+			int n_h_rows = helio_pos_temp.nrows();
+			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
+			for (int i = 0; i < n_h_rows; i++)
+			{
+				p_helio_positions_in[i * 2] = helio_pos_temp(i, 0);
+				p_helio_positions_in[i * 2 + 1] = helio_pos_temp(i, 1);
+			}
+			assign("N_hel", n_h_rows);
+			// 'calc_fluxmaps' should be true
+			assign("calc_fluxmaps", 1);
+
+			spi.run();
+
 			//collect the optical efficiency data and sun positions
 			if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
 				&& spi.fluxtab.efficiency.size() > 0)
@@ -748,21 +711,16 @@ public:
 			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
 		}
-		else if (run_type == 2)		// User flux and efficiency maps
+		else if (is_user_sf_maps)
 		{
-
+			assign("calc_fluxmaps", 0);
 		}
+		else
+		{
+			string msg = util::format("One field performance modeling option must be set to True");
 
-
-
-
-
-
-
-
-
-
-
+			throw exec_error("MSPT CSP Solver", msg);
+		}
 
 
 		int tes_type = as_integer("tes_type");
@@ -843,33 +801,23 @@ public:
 		heliostatfield.ms_params.m_n_flux_x = (int) as_double("n_flux_x");		// sp match
 		heliostatfield.ms_params.m_n_flux_y = (int) as_double("n_flux_y");		// sp match
 
-		if( run_type == 1 || run_type == 0 )
+		if (!is_user_sf_maps)
 		{
 			heliostatfield.ms_params.m_eta_map = mt_eta_map;
 			heliostatfield.ms_params.m_eta_map_aod_format = false;
-			//heliostatfield.ms_params.m_flux_positions = mt_solar_pos;
 			heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
-			//allocate empty array of positions to indicate number of heliostats in the field
-			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
-			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
-			run_type = 2;
-		}
-		else if( run_type == 2 )
-		{
-			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
-            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
-			//heliostatfield.ms_params.m_flux_positions = as_matrix("flux_positions");
-			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
-            //allocate empty array of positions to indicate number of heliostats in the field
 			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
 			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
 		}
 		else
 		{
-			string msg = util::format("SSC INPUT 'run_type' must be set to either 0, 1 or 2. Its input value is %d", run_type);
-
-			throw exec_error("MSPT CSP Solver", msg);
+			heliostatfield.ms_params.m_eta_map = as_matrix("eta_map");
+            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
+			heliostatfield.ms_params.m_flux_maps = as_matrix("flux_maps");
+			heliostatfield.ms_params.m_N_hel = as_integer("N_hel");
+			heliostatfield.ms_params.m_A_sf = as_double("A_sf");		//[m2]
 		}
+
 
 
         //Load the solar field adjustment factors
