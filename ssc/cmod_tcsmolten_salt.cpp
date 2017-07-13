@@ -149,17 +149,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",               "Loss coefficient from the tank",                                    "W/m2-K",       "",            "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",           "Number of equivalent tank pairs",                                   "-",            "",            "TES",            "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "cold_tank_Thtr",       "Minimum allowable cold tank HTF temp",                              "C",            "",            "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_type",             "1=2-tank, 2=thermocline",                                           "-",            "",            "TES",            "*",                       "",                      "" },
 		// TES parameters - 2 tank
-	{ SSC_INPUT,        SSC_NUMBER,      "h_tank_min",           "Minimum allowable HTF height in storage tank",                      "m",            "",            "TES_2tank",      "tes_type=1",              "",                      "" },	
-	{ SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                               "C",            "",            "TES_2tank",      "tes_type=1",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",                        "MW",           "",            "TES_2tank",      "tes_type=1",              "",                      "" },
-		// TES parameters - thermocline
-    { SSC_INPUT,        SSC_NUMBER,      "tc_fill",              "Thermocline fill material",                                         "-",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "tc_void",              "Thermocline void fraction",                                         "-",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "t_dis_out_min",        "Min allowable hot side outlet temp during discharge",               "C",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "t_ch_out_max",         "Max allowable cold side outlet temp during charge",                 "C",            "",            "TES_TC",         "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "nodes",                "Nodes modeled in the flow path",                                    "-",            "",            "TES_TC",         "tes_type=2",              "INTEGER",               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "h_tank_min",           "Minimum allowable HTF height in storage tank",                      "m",            "",            "TES",      "*",              "",                      "" },	
+	{ SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",        "Minimum allowable hot tank HTF temp",                               "C",            "",            "TES",      "*",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",    "Rated heater capacity for hot tank heating",                        "MW",           "",            "TES",      "*",              "",                      "" },
 					     																	         
     					     																	  
     // Power Cycle Inputs
@@ -280,7 +273,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                  "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                       "m",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
     { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "",              "",                      "" },
 	{ SSC_INOUT,        SSC_MATRIX,      "helio_positions",      "Heliostat position table",                                         "",              "",            "heliostat",      "*",              "",                      "COL_LABEL=XY_POSITION" },
 	{ SSC_INOUT,        SSC_NUMBER,      "land_area_base",       "Base land area occupied by heliostats",                            "acre",          "",            "heliostat",      "*",                       "",                      "" },
@@ -506,6 +498,8 @@ public:
 
 	void exec() throw(general_error)
 	{
+		int tes_type = 1;
+
 		int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
 		switch (rec_type)
 		{
@@ -588,16 +582,12 @@ public:
 
 			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
-			//update piping length for parasitic calculation
-			double piping_length = THT * as_double("piping_length_mult") + as_double("piping_length_const");
-
 			//update assignments for cost model
 			assign("rec_height", var_data((ssc_number_t)H_rec));
 			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
 			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
 			assign("h_tower", var_data((ssc_number_t)THT));
 			assign("A_sf", var_data((ssc_number_t)A_sf));
-			assign("piping_length", var_data((ssc_number_t)piping_length));
 
 			double land_area_base = spi.land.land_area.Val();		//[acres] Land area occupied by heliostats
 			assign("land_area_base", land_area_base);
@@ -736,8 +726,6 @@ public:
 			throw exec_error("MSPT CSP Solver", msg);
 		}
 
-
-		int tes_type = as_integer("tes_type");
 		if( tes_type != 1 )
 		{
 			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
