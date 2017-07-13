@@ -2,7 +2,7 @@
 #define __csp_solver_mspt_collector_receiver_
 
 #include "csp_solver_core.h"
-#include "csp_solver_pt_heliostatfield.h"
+#include "csp_solver_pt_sf_perf_interp.h"
 #include "csp_solver_mspt_receiver_222.h"
 
 
@@ -11,7 +11,7 @@ class C_csp_mspt_collector_receiver : public C_csp_collector_receiver
 {
 
 private:
-	C_pt_heliostatfield &mc_pt_heliostatfield;
+	C_pt_sf_perf_interp &mc_pt_heliostatfield;
 	C_mspt_receiver_222 &mc_mspt_receiver_222;
 
 public:
@@ -35,7 +35,7 @@ public:
 	
 	C_csp_reported_outputs mc_reported_outputs;
 	
-	C_csp_mspt_collector_receiver(C_pt_heliostatfield & pt_heliostatfield, 
+	C_csp_mspt_collector_receiver(C_pt_sf_perf_interp & pt_heliostatfield,
 		C_mspt_receiver_222 & mspt_receiver_222);
 
 	~C_csp_mspt_collector_receiver();
