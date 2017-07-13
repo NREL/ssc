@@ -20,9 +20,9 @@ extern wxConfig *app_config;
 void applog(const wxString &s);
 void applog(const char *fmt, ...);
 
-extern int SC_major_ver;
-extern int SC_minor_ver;
-extern int SC_micro_ver;
+//extern int SC_major_ver;
+//extern int SC_minor_ver;
+//extern int SC_micro_ver;
 
 class SCApp : public wxApp
 {

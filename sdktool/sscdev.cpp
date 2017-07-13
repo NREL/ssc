@@ -50,9 +50,9 @@
 
 /* exported application global variables */
 
-int SC_major_ver = 2017;
-int SC_minor_ver = 2;
-int SC_micro_ver = 28;
+//int SC_major_ver = 2017;
+//int SC_minor_ver = 2;
+//int SC_micro_ver = 28;
 
 SCFrame *app_frame = NULL;
 wxConfig *app_config = NULL;
@@ -105,11 +105,11 @@ bool SCApp::OnInit()
 	}
 
 	bool first_load = true;
-	wxString fl_key = wxString::Format("FirstLoad_%d",
-		SC_major_ver*10000
-		+SC_minor_ver*100
-		+SC_micro_ver );
-
+//	wxString fl_key = wxString::Format("FirstLoad_%d",
+//		SC_major_ver*10000
+//		+SC_minor_ver*100
+//		+SC_micro_ver );
+	wxString fl_key ="first_load";
 	app_config->Read(fl_key, &first_load, true);
 	if (first_load)
 	{
@@ -170,7 +170,7 @@ BEGIN_EVENT_TABLE(SCFrame, wxFrame)
 END_EVENT_TABLE()
 
 SCFrame::SCFrame()
-   : wxFrame(NULL, wxID_ANY, wxString::Format("SSC SDKtool (v.%d.%d.%d, %d bit)", SC_major_ver, SC_minor_ver, SC_micro_ver, PLAT_BITS ), wxDefaultPosition, wxSize(800,600))
+   : wxFrame(NULL, wxID_ANY, wxString::Format("SSC SDKtool (%d bit)",  PLAT_BITS ), wxDefaultPosition, wxSize(800,600))
 {
 	m_varTable = new var_table;
 	
