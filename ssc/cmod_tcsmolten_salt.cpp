@@ -144,18 +144,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "piping_length_mult",   "Piping length multiplier",                                          "",             "",            "tower",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "piping_length_const",  "Piping constant length",                                            "m",            "",            "tower",          "*",                       "",                      "" },
 													     																	  
-    // Cavity Receiver (type 232) specific parameters		     																	  
-    { SSC_INPUT,        SSC_NUMBER,      "rec_d_spec",           "Receiver aperture width",                                           "m",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_rec_panel",          "Height of a receiver panel",                                        "m",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_lip",                "Height of upper lip of cavity",                                     "m",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "rec_angle",            "Section of the cavity circle covered in panels",                    "deg",          "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "conv_model",           "Type of convection model (1=Clausing, 2=Siebers/Kraabel)",          "-",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "eps_wavelength",       "Matrix containing wavelengths, active & passive surface eps",       "-",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "conv_coupled",         "1=coupled, 2=uncoupled",                                            "-",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "conv_forced",          "1=forced (use wind), 0=natural",                                    "-",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_wind_meas",          "Height at which wind measurements are given",                       "m",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "conv_wind_dir",        "Wind direction dependent forced convection 1=on 0=off",             "-",            "",            "cavity_receiver","receiver_type=1",                       "",                      "" },
-															     																	  
 	
 	// TES parameters - general
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.tes.init_hot_htf_percent", "Initial fraction of avail. vol that is hot",             "%",            "",            "TES",            "*",                       "",                      "" },
@@ -296,7 +284,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                  "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                            "-",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                       "m",             "",            "receiver",       "*",                       "",                      "" },
-	{ SSC_INOUT,        SSC_NUMBER,      "THT",                  "The height of the tower (hel. pivot to rec equator)",              "m",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "h_tower",              "Tower height",                                                     "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "piping_length",        "Total length of exposed piping",                                   "m",             "",            "tower",          "*",                       "",                      "" },
     { SSC_INOUT,        SSC_NUMBER,      "N_hel",                "Number of heliostats",                                             "-",             "",            "heliostat",      "",              "",                      "" },
@@ -598,7 +585,6 @@ public:
 			assign("rec_height", var_data((ssc_number_t)H_rec));
 			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
 			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
-			assign("THT", var_data((ssc_number_t)THT));
 			assign("h_tower", var_data((ssc_number_t)THT));
 			assign("A_sf", var_data((ssc_number_t)A_sf));
 			assign("piping_length", var_data((ssc_number_t)piping_length));
@@ -862,7 +848,7 @@ public:
 		receiver.m_n_panels = as_double("N_panels");
 		receiver.m_d_rec = D_rec;
 		receiver.m_h_rec = H_rec;
-		receiver.m_h_tower = as_double("THT");
+		receiver.m_h_tower = as_double("h_tower");
 		receiver.m_od_tube = as_double("d_tube_out");
 		receiver.m_th_tube = as_double("th_tube");
 		receiver.m_mat_tube = as_double("mat_tube");
@@ -1556,7 +1542,7 @@ public:
 		sys_costs.ms_par.heliostat_spec_cost = as_double("heliostat_spec_cost");
 		sys_costs.ms_par.heliostat_fixed_cost = as_double("cost_sf_fixed");
 
-		sys_costs.ms_par.h_tower = as_double("THT");
+		sys_costs.ms_par.h_tower = as_double("h_tower");
 		sys_costs.ms_par.h_rec = H_rec;
 		sys_costs.ms_par.h_helio = as_double("helio_height");
 		sys_costs.ms_par.tower_fixed_cost = as_double("tower_fixed_cost");
