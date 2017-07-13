@@ -277,7 +277,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
 	// optimized outputs updated depending on run type 
-	{ SSC_INOUT,        SSC_NUMBER,      "H_rec",                "The height of the receiver",                                       "m",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_height",           "Receiver height",                                                  "m",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "rec_aspect",           "Receiver aspect ratio",                                            "-",             "",            "heliostat",      "*",                       "",                      "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "D_rec",                "The overall outer diameter of the receiver",                       "m",             "",            "receiver",       "*",                       "",                      "" },
@@ -581,7 +580,6 @@ public:
 			double piping_length = THT * as_double("piping_length_mult") + as_double("piping_length_const");
 
 			//update assignments for cost model
-			assign("H_rec", var_data((ssc_number_t)H_rec));
 			assign("rec_height", var_data((ssc_number_t)H_rec));
 			assign("rec_aspect", var_data((ssc_number_t)rec_aspect));
 			assign("D_rec", var_data((ssc_number_t)(H_rec / rec_aspect)));
@@ -824,7 +822,7 @@ public:
 		//// *********************************************************
 		//// *********************************************************
 		//// *********************************************************
-		double H_rec = as_double("H_rec");
+		double H_rec = as_double("rec_height");
 		double rec_aspect = as_double("rec_aspect");
 
 		double D_rec = H_rec / rec_aspect;
