@@ -120,10 +120,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "design_eff",           "Power cycle efficiency at design",                                  "none",         "",            "system_design",  "*",                       "",                      "" },    		
 	{ SSC_INPUT,        SSC_NUMBER,      "tshours",              "Equivalent full-load thermal storage hours",                        "hr",           "",            "system_design",  "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solarm",               "Solar Multiple",                                                    "-",            "",            "system_design",  "*",                       "",                      "" },
-
-	// Which type of receiver model to use in the simulation     																	  
-    { SSC_INPUT,        SSC_NUMBER,      "receiver_type",        "External=0, Cavity=1",                                              "",             "",            "receiver",       "*",                       "INTEGER",               "" },
-															     																	  
+														     																	  
 	// Receiver (type 222) parameters						     																	  
     { SSC_INPUT,        SSC_NUMBER,      "N_panels",             "Number of individual panels on the receiver",                       "",             "",            "receiver",       "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_tube_out",           "The outer diameter of an individual receiver tube",                 "mm",           "",            "receiver",       "*",                       "",                      "" },
@@ -833,8 +830,8 @@ public:
 		double D_rec = H_rec / rec_aspect;
 
 		double A_rec = std::numeric_limits<double>::quiet_NaN();
-		int rec_type = as_integer("receiver_type");
 
+		int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
 		switch (rec_type)
 		{
 		case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
