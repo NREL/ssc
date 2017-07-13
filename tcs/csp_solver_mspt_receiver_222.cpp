@@ -18,7 +18,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_q_rec_des = std::numeric_limits<double>::quiet_NaN();
 	m_rec_su_delay = std::numeric_limits<double>::quiet_NaN();
 	m_rec_qf_delay = std::numeric_limits<double>::quiet_NaN();
-	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_htf_max_frac = std::numeric_limits<double>::quiet_NaN();
 	m_A_sf = std::numeric_limits<double>::quiet_NaN();
 
 	m_pipe_loss_per_m = std::numeric_limits<double>::quiet_NaN();
@@ -47,6 +47,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_A_node = std::numeric_limits<double>::quiet_NaN();
 
 	m_Q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
+	m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
 	m_itermode = -1;
 	m_od_control = std::numeric_limits<double>::quiet_NaN();
@@ -143,7 +144,6 @@ void C_mspt_receiver_222::init()
 	m_T_htf_hot_des += 273.15;	//[K] Convert from input in [C]
 	m_T_htf_cold_des += 273.15;	//[K] Convert from input in [C]
 	m_q_rec_des *= 1.E6;		//[W] Convert from input in [MW]
-	m_m_dot_htf_max /= 3600.0;	//[kg/s] Convert from input in [kg/hr]
 
 	m_id_tube = m_od_tube - 2 * m_th_tube;			//[m] Inner diameter of receiver tube
 	m_A_tube = CSP::pi*m_od_tube / 2.0*m_h_rec;	//[m^2] Outer surface area of each tube
@@ -162,6 +162,17 @@ void C_mspt_receiver_222::init()
 	m_m_dot_htf_des = m_q_rec_des / (c_htf_des*(m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
 	double eta_therm_des = 0.9;
 	m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / eta_therm_des;	//[W] Minimum receiver thermal power
+
+	if (m_m_dot_htf_max_frac != m_m_dot_htf_max_frac)
+	{
+		// if max frac not set, then max mass flow (absolute) needs to be defined
+		if (m_m_dot_htf_max != m_m_dot_htf_max)
+		{
+			throw(C_csp_exception("maximum rec htf mass flow rate not defined", "MSPT receiver"));
+		}
+		m_m_dot_htf_max /= 3600.0;	//[kg/s] Convert from input in [kg/hr]
+	}
+	m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
 
 	m_mode_prev = m_mode;
 	m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy

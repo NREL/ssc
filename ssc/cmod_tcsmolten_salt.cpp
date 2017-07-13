@@ -135,7 +135,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "f_rec_min",            "Minimum receiver mass flow rate turn down fraction",                "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_su_delay",         "Fixed startup delay time for the receiver",                         "hr",           "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",         "Energy-based rcvr startup delay (fraction of rated thermal power)", "",             "",            "receiver",       "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htf_max",        "Maximum receiver mass flow rate",                                   "kg/hr",        "",            "receiver",       "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "csp.pt.rec.max_oper_frac",  "Maximum receiver mass flow rate fraction",                     "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",             "Receiver HTF pump efficiency",                                      "",             "",            "receiver",       "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "piping_loss",          "Thermal loss per meter of piping",                                  "Wt/m",         "",            "tower",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "piping_length_mult",   "Piping length multiplier",                                          "",             "",            "tower",          "*",                       "",                      "" },
@@ -861,7 +861,7 @@ public:
 		receiver.m_q_rec_des = as_double("P_ref")/as_double("design_eff")*as_double("solarm");
 		receiver.m_rec_su_delay = as_double("rec_su_delay");
 		receiver.m_rec_qf_delay = as_double("rec_qf_delay");
-		receiver.m_m_dot_htf_max = as_double("m_dot_htf_max");
+		receiver.m_m_dot_htf_max_frac = as_double("csp.pt.rec.max_oper_frac");
 		receiver.m_A_sf = as_double("A_sf");
 
 		// 8.10.2015 twn: add tower piping thermal losses to receiver performance
