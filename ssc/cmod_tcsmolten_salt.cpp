@@ -765,32 +765,6 @@ public:
         //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
-
-
-        
-
-									
-
-		double H_rec = as_double("H_rec");
-		double rec_aspect = as_double("rec_aspect");
-
-		double D_rec = H_rec / rec_aspect;
-		
-		double A_rec = std::numeric_limits<double>::quiet_NaN();
-		int rec_type = as_integer("receiver_type");
-
-		switch (rec_type)
-		{
-		case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
-		{
-			A_rec = H_rec * D_rec * 3.1415926;
-			break;
-		}
-		case var_receiver::REC_TYPE::FLAT_PLATE:
-			A_rec = H_rec * D_rec;
-			break;
-		}
-
 		//heliostat field class
 		C_pt_sf_perf_interp heliostatfield;
 
@@ -846,6 +820,26 @@ public:
 		//// *********************************************************
 		//// *********************************************************
 		//// *********************************************************
+		double H_rec = as_double("H_rec");
+		double rec_aspect = as_double("rec_aspect");
+
+		double D_rec = H_rec / rec_aspect;
+
+		double A_rec = std::numeric_limits<double>::quiet_NaN();
+		int rec_type = as_integer("receiver_type");
+
+		switch (rec_type)
+		{
+		case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+		{
+			A_rec = H_rec * D_rec * 3.1415926;
+			break;
+		}
+		case var_receiver::REC_TYPE::FLAT_PLATE:
+			A_rec = H_rec * D_rec;
+			break;
+		}
+
 		C_mspt_receiver_222 receiver;
 		receiver.m_n_panels = as_double("N_panels");
 		receiver.m_d_rec = D_rec;
