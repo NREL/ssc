@@ -426,11 +426,11 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 				theta = (double)i*25./(double)npt;
 				temp_sun.at(i, 0) = theta;
 				if(theta > 4.65){
-					temp_sun.at(i,1) = exp(kappa)*pow(theta, gamma);
+					temp_sun.at(i,1) = exp(kappa)*pow(theta, gamma)*.1;
 				}
 				else
 				{
-					temp_sun.at(i,1) = cos(0.326 * theta)/cos(0.308 * theta);
+					temp_sun.at(i,1) = cos(0.326 * theta)/cos(0.308 * theta)*.1;
 				}
 			}
 			user_sun = &temp_sun;
@@ -440,8 +440,10 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 			user_sun = &V.amb.user_sun.val; //A.getUserSun();
 		}
 		
-		double azmin[8];
-		for(int i=0; i<8; i++) azmin[i] = 0.0;;			//Set up an array
+		std::vector<double> azmin;
+        azmin.resize(12,0.);
+
+		//for(int i=0; i<8; i++) azmin[i] = 0.0;;			//Set up an array
 
         int nn = (int)user_sun->nrows()-1;		
         for (int n=1; n<nn+1; n+=1) {		//DELSOL goes 1..nn
@@ -464,20 +466,24 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
                 int L = m+1;
                 double temp1 = (pow(disc_angle_next,L) - pow(disc_angle,L))/fm;
                 double temp2 = (pow(disc_angle_next,m+2) - pow(disc_angle,m+2))/(fm+1.);
-                azmin[m-1] += intens*(temp1*(1.+r_steps) - temp2*rel_step)+intens_next*(-temp1*r_steps + temp2*rel_step);
+                azmin.at(m-1) += intens*(temp1*(1.+r_steps) - temp2*rel_step)+intens_next*(-temp1*r_steps + temp2*rel_step);
 			}
 		}
 
         double xnorm = 1.;      //Initialize the normalizing variable.. it will be reset once the new value is calculated below
         //Also initialize an array that's needed for this calculation - see DELSOL3 lines 6238-6244
-		double RSPA[7][7] = {{2.,0.,1.,0.,.75,0.,.625},{0.,0.,0.,0.,0.,0.,0.},{1.,0.,.25,0.,.125,0.,0.},
-							 {0.,0.,0.,0.,0.,0.,0.},{.75,0.,.125,0.,0.,0.,0.},{0.,0.,0.,0.,0.,0.,0.},
+		double RSPA[7][7] = {{2.,0.,1.,0.,.75,0.,.625},
+                             {0.,0.,0.,0.,0.,0.,0.},
+                             {1.,0.,.25,0.,.125,0.,0.},
+							 {0.,0.,0.,0.,0.,0.,0.},
+                             {.75,0.,.125,0.,0.,0.,0.},
+                             {0.,0.,0.,0.,0.,0.,0.},
 							 {.625,0.,0.,0.,0.,0.,0.}};
         for(int i=1; i<_n_terms+1; i+=2){
 		    int jmax = _n_terms - i+1; 
             for (int j=1; j<jmax+1; j+=2) {
                 int ij = i+j;
-                mSun.at(i-1,j-1) = azmin[ij-2]*RSPA[i-1][j-1]/xnorm*pi; 
+                mSun.at(i-1,j-1) = azmin.at(ij-2)*RSPA[i-1][j-1]/xnorm*pi; 
                 xnorm = mSun.at(0,0); 
 			}
 		}
