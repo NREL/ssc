@@ -22,7 +22,7 @@ class PySSC:
 		elif sys.platform == 'darwin':
 			self.pdll = CDLL("ssc.dylib") 
 		elif sys.platform == 'linux2':
-			self.pdll = CDLL('ssc.so')   # instead of relative path, require user to have on LD_LIBRARY_PATH
+			self.pdll = CDLL('./ssc.so')   # instead of relative path, require user to have on LD_LIBRARY_PATH
 		else:
 			print "Platform not supported ", sys.platform
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
 	
 	def run_test1():
-		wf = 'C:/Users/adobos/Projects/SAMnt/deploy/wind_resource/WY Southern-Flat Lands.srw';
+		wf = './WY Southern-Flat Lands.srw';
 		print wf
 		
 		ssc = PySSC()
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 
 	def run_test2():
 		#wf = 'c:/Users/adobos/Projects/SAMnt/tests/Weather Files/user-germany-potsdam-2011-1-min-samcsv.csv' ;
-		wf = 'C:/Users/adobos/Projects/SAMnt/deploy/solar_resource/USA NC Greensboro (TMY2).csv';
+		wf = './USA NC Greensboro (TMY2).csv';
 
 		print wf
 		
