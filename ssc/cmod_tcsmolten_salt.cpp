@@ -25,13 +25,13 @@
 static var_info _cm_vtab_tcsmolten_salt[] = {
 	/*   VARTYPE           DATATYPE         NAME                           LABEL                                                     UNITS            META           GROUP            REQUIRED_IF                 CONSTRAINTS         UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",           "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",      "Nameplate capacity",                                                "kWe",          "",            "molten salt tower", "*",                    "",   "" },    
 
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "field_model_type",     "0=design field and tower/receiver geometry 1=design field 2=user field, calculate performance 3=user performance maps vs solar position", "", "", "heliostat", "*", "", "" },
-	
+	{ SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                   "",             "",            "system_design",  "*",                       "",                     "" },
+
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_width",          "Heliostat width",                                                   "m",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_height",         "Heliostat height",                                                  "m",            "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "helio_optical_error_mrad",  "Heliostat optical error",                                      "mrad",          "",            "heliostat",      "*",                       "",                     "" },
@@ -518,6 +518,9 @@ public:
 		assign("n_flux_y", 1);
 		int n_rec_panels = as_integer("N_panels");
 		assign("n_flux_x", max(12, n_rec_panels));
+
+		// Calculate system capacity instead of pass in
+		double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor");		//[MWe]
 
 		// 'sf_model_type'
 		// 0 = design field and tower/receiver geometry
@@ -1569,7 +1572,7 @@ public:
 		sys_costs.ms_par.total_land_area = as_double("land_area_base") * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
 		assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
 
-		sys_costs.ms_par.plant_net_capacity = as_double("system_capacity") / 1000.0;			//[MWe], convert from kWe
+		sys_costs.ms_par.plant_net_capacity = system_capacity / 1000.0;			//[MWe], convert from kWe
 		sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
 		sys_costs.ms_par.EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
 		sys_costs.ms_par.EPC_land_per_power_cost = as_double("csp.pt.cost.epc.per_watt");
@@ -1779,7 +1782,7 @@ public:
 		assign("conversion_factor", convfactor);
 
 		double kWh_per_kW = 0.0;
-		double nameplate = as_double("system_capacity");
+		double nameplate = system_capacity;
 		if(nameplate > 0.0)
 			kWh_per_kW = ae / nameplate;
 
