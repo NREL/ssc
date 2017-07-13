@@ -40,13 +40,11 @@ C_pt_sf_perf_interp::~C_pt_sf_perf_interp()
 void C_pt_sf_perf_interp::init()
 {
 	//Read in parameters
-	int nrows5, ncols5;
 	int nfluxpos, nfposdim;
 	int nfluxmap, nfluxcol;
 
 	util::matrix_t<double> eta_map;
 	util::matrix_t<double> flux_maps;
-	util::matrix_t<double> flux_positions;
 	
 	m_p_start = ms_params.m_p_start;
 	m_p_track = ms_params.m_p_track;
@@ -54,15 +52,12 @@ void C_pt_sf_perf_interp::init()
 	m_v_wind_max = ms_params.m_v_wind_max;
 
 	eta_map = ms_params.m_eta_map;
-	nrows5 = eta_map.nrows();
-	ncols5 = eta_map.ncols();
 
 	m_n_flux_x = ms_params.m_n_flux_x;
 	m_n_flux_y = ms_params.m_n_flux_y;
 		
-	flux_positions = ms_params.m_flux_positions;
-	nfluxpos = flux_positions.nrows();
-	nfposdim = flux_positions.ncols();
+	nfluxpos = eta_map.nrows();
+	nfposdim = 2;
 
 	flux_maps = ms_params.m_flux_maps;
 	nfluxmap = flux_maps.nrows();
@@ -77,11 +72,10 @@ void C_pt_sf_perf_interp::init()
 		throw(C_csp_exception(error_msg, "heliostat field initialization"));
 	}
 	//copy the flux positions over to the local member
-	m_flux_positions.resize(nfluxpos, VectDoub(nfposdim));
-	for( int i = 0; i<nfluxpos; i++ )
-	for( int j = 0; j<nfposdim; j++ )
-		m_flux_positions.at(i).at(j) = flux_positions.at(i, j); 
-
+	m_map_sol_pos.resize(nfluxpos, VectDoub(nfposdim));
+	for (int i = 0; i < nfluxpos; i++)
+		for (int j = 0; j < nfposdim; j++)
+			m_map_sol_pos.at(i).at(j) = eta_map(i, j) * CSP::pi / 180.0;
 
 	MatDoub sunpos;
 	vector<double> effs;
@@ -143,16 +137,6 @@ void C_pt_sf_perf_interp::init()
 	}
 
 	ms_outputs.m_flux_map_out.resize_fill(m_n_flux_y, m_n_flux_x, 0.0);
-
-	//report back the flux positions used
-	int nflux = (int)m_flux_positions.size();
-	ms_params.m_flux_positions.resize_fill(nflux, 2, 0.0);
-		
-	for( int i = 0; i<nflux; i++ )
-	{
-		ms_params.m_flux_positions(i,0) = m_flux_positions.at(i).at(0);
-		ms_params.m_flux_positions(i,1) = m_flux_positions.at(i).at(1);
-	}
 
 	/*
 	------------------------------------------------------------------------------
@@ -268,8 +252,8 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
         //find the nearest neighbors to the current point
 		vector<double> distances;
 		vector<int> indices;
-		for( int i = 0; i<(int)m_flux_positions.size(); i++ ){
-			distances.push_back(rdist(&pos_now, &m_flux_positions.at(i)));
+		for (int i = 0; i<(int)m_map_sol_pos.size(); i++){
+			distances.push_back(rdist(&pos_now, &m_map_sol_pos.at(i)));
 			indices.push_back(i);
 		}
 		quicksort<double, int>(distances, indices);
