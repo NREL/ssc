@@ -53,8 +53,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "v_wind_max",           "Max. wind velocity",                                                "m/s",          "",            "heliostat",      "*",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "interp_nug",           "Interpolation nugget",                                              "-",            "",            "heliostat",      "?=0",                     "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "interp_beta",          "Interpolation beta coef.",                                          "-",            "",            "heliostat",      "?=1.99",                  "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_flux_x",             "Flux map X resolution",                                             "-",            "",            "heliostat",      "?=12",                    "",                     "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_flux_y",             "Flux map Y resolution",                                             "-",            "",            "heliostat",      "?=1",                     "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "helio_aim_points",     "Heliostat aim point table",                                         "m",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_MATRIX,      "eta_map",              "Field efficiency array",                                            "-",            "",            "heliostat",      "?",                       "",                     "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_map_aod_format",   "Use 3D AOD format field efficiency array"                           "-",            "",            "heliostat",      "?=0",                     "",                     "" },
@@ -527,6 +525,11 @@ public:
 	{
 		// Set up "cmod_solarpilot.cpp" conversions as necessary
 		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);				
+
+		// Set 'n_flux_x' and 'n_flux_y' here, for now
+		assign("n_flux_y", 1);
+		int n_rec_panels = as_integer("N_panels");
+		assign("n_flux_x", max(12, n_rec_panels));
 
 		bool is_optimize = as_boolean("is_optimize");		// True = optimize tower/receiver geometry
 		bool is_override_layout = as_boolean("is_override_layout");
