@@ -169,7 +169,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",            "Reference condenser cooling water inlet/outlet T diff",             "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",            "Reference ambient temperature at design point",                     "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",               "Boiler operating pressure",                                         "bar",          "",            "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "CT",                   "Flag for using dry cooling or wet cooling system",                  "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "CT",                   "cooling tech type: 1=evaporative, 2=air, 3=hybrid",                 "-",            "",            "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_approach",           "Cooling tower approach temperature",                                "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",            "ITD at design for dry system",                                      "C",            "",            "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",         "Condenser pressure ratio",                                          "none",         "",            "powerblock",     "pc_config=0",             "",                      "" },
@@ -943,7 +943,7 @@ public:
 				pc->m_dT_cw_ref = as_double("dT_cw_ref");
 				pc->m_T_amb_des = as_double("T_amb_des");					
 				pc->m_P_boil = as_double("P_boil");
-				pc->m_CT = as_integer("CT");		
+				pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	
 				pc->m_tech_type = as_double("tech_type");									// compute module is for MSPT, so hardcode tech type
 				pc->m_T_approach = as_double("T_approach");
 				pc->m_T_ITD_des = as_double("T_ITD_des");
