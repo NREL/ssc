@@ -822,6 +822,14 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 ss.flush();
 
+                //how many scenarios?
+                dispatch.forecast_params.n_scenarios = std::max( mc_tou.mc_dispatch_params.m_fc_dni_scenarios.ncols(),
+                                                            std::max(
+                                                            mc_tou.mc_dispatch_params.m_fc_tdry_scenarios.ncols(),
+                                                            mc_tou.mc_dispatch_params.m_fc_price_scenarios.ncols() )
+                                                            );
+
+
                 //get the new price signal
                 dispatch.forecast_outputs.price_scenarios.clear();
                 dispatch.forecast_outputs.price_scenarios.resize(opt_horizon*mc_tou.mc_dispatch_params.m_disp_steps_per_hour, dispatch.forecast_params.n_scenarios);
@@ -879,6 +887,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                         //resize arrays. note price_scenarios is sized above.
                         dispatch.forecast_outputs.dni_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
                         dispatch.forecast_outputs.tdry_scenarios.resize( nstepopt, dispatch.forecast_params.n_scenarios );
+
 
                         //assign the data
                         for( int tt=0; tt<nstepopt; tt++)
