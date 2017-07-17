@@ -756,7 +756,17 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		*/
 		
 		//Add the front
-		OpticsList.at(ii)->Front.DistributionType = 'g';
+        switch ( Hv->st_err_type.mapval() )
+        {
+        default:
+        case var_heliostat::ST_ERR_TYPE::GAUSSIAN:
+            OpticsList.at(ii)->Front.DistributionType = 'g';
+            break;
+        case var_heliostat::ST_ERR_TYPE::PILLBOX:
+            OpticsList.at(ii)->Front.DistributionType = 'p';
+            break;
+        }
+
 		OpticsList.at(ii)->Front.OpticSurfNumber = 0;
 		OpticsList.at(ii)->Front.ApertureStopOrGratingType = 0;
 		OpticsList.at(ii)->Front.DiffractionOrder = 0;
