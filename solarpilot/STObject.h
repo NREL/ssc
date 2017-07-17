@@ -122,7 +122,6 @@ struct ST_Sun
 	
 	char ShapeIndex;	
 	double Sigma;
-	bool PointSource;
 
 	std::vector<double> SunShapeAngle;
 	std::vector<double> SunShapeIntensity;

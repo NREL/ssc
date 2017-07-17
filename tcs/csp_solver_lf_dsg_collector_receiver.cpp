@@ -1055,7 +1055,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_h_loop_out_target::operator()(dou
 {
 	// Need to recalculate pressure, and therefore target enthalpy
 		// Calculate the field outlet pressure as a function of mass flow rate [bar]
-	m_P_field_out = mpc_dsg_lf->od_pressure(m_dot_loop);
+	m_P_field_out = mpc_dsg_lf->od_pressure(m_dot_loop);	//[bar]
 	// Calculate the target outlet enthalpy
 	int wp_code = 0;
 	m_h_sca_out_target = std::numeric_limits<double>::quiet_NaN();
@@ -1767,7 +1767,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				}
 				else
 				{
-					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
+					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration did not"
+						"within a relative tolerance of 0.1."));
 				}				
 				//on_success = false;
 			}
@@ -2587,18 +2588,44 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
 	double T_out_t_end_local = 0.0;
 	for(int i = 0; i < n_steps; i++)
 	{
-		transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
-										step_subts, h_out_t_start_local, h_out_t_end_local, T_out_t_end_local);
-		//
-		//
-		//
-		//double q_bal_htf = m_dot*(0.5*(h_out_t_start_local+h_out_t_end_local) - h_in);
-		//
-		//double q_bal_int_energy = C_thermal*(T_out_t_end_local - T_out_t_end_prev_local) / step_subts;
-		//
-		//double q_bal_sca = q_dot_abs - q_bal_htf - q_bal_int_energy;
-		//
-		//
+		try
+		{
+			transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
+				step_subts, h_out_t_start_local, h_out_t_end_local, T_out_t_end_local);
+		}
+		catch (C_csp_exception &csp_except)
+		{
+			int error_code = csp_except.m_error_code;
+
+			if (error_code != 5)
+			{
+				throw(C_csp_exception(csp_except));
+			}
+
+			int n_steps_lx = 20;
+			double steps_subts_local = step_subts / (double)n_steps;
+
+			double h_out_t_int_sum_lx = 0.0;
+			double h_out_t_end_lx = 0.0;
+			double h_out_t_start_lx = 0.0;
+			double T_out_t_end_lx = 0.0;
+
+			for (int j = 0; j < n_steps_lx; j++)
+			{
+
+				transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
+					steps_subts_local, h_out_t_start_lx, h_out_t_end_lx, T_out_t_end_lx);
+
+				h_out_t_int_sum_lx += 0.5*(h_out_t_start_lx + h_out_t_end_lx);
+				T_out_t_end_prev_local = T_out_t_end_lx;
+			}
+			
+			h_out_t_end_local = h_out_t_end_lx;
+			double h_out_t_int_lx = h_out_t_int_sum_lx / (double)n_steps;
+			h_out_t_start_local = 2.0*h_out_t_int_lx - h_out_t_end_local;
+			T_out_t_end_local = T_out_t_end_lx;
+		}
+
 		h_out_t_int_sum += 0.5*(h_out_t_start_local + h_out_t_end_local);	//[kJ/K]
 		T_out_t_end_prev_local = T_out_t_end_local;		//[K]
 
@@ -2737,7 +2764,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 		}
 		else
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence"));
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}		
 	}
 

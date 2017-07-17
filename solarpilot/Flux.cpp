@@ -426,11 +426,11 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 				theta = (double)i*25./(double)npt;
 				temp_sun.at(i, 0) = theta;
 				if(theta > 4.65){
-					temp_sun.at(i,1) = exp(kappa)*pow(theta, gamma);
+					temp_sun.at(i,1) = exp(kappa)*pow(theta, gamma)*.1;
 				}
 				else
 				{
-					temp_sun.at(i,1) = cos(0.326 * theta)/cos(0.308 * theta);
+					temp_sun.at(i,1) = cos(0.326 * theta)/cos(0.308 * theta)*.1;
 				}
 			}
 			user_sun = &temp_sun;
@@ -440,8 +440,10 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 			user_sun = &V.amb.user_sun.val; //A.getUserSun();
 		}
 		
-		double azmin[8];
-		for(int i=0; i<8; i++) azmin[i] = 0.0;;			//Set up an array
+		std::vector<double> azmin;
+        azmin.resize(12,0.);
+
+		//for(int i=0; i<8; i++) azmin[i] = 0.0;;			//Set up an array
 
         int nn = (int)user_sun->nrows()-1;		
         for (int n=1; n<nn+1; n+=1) {		//DELSOL goes 1..nn
@@ -464,20 +466,24 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
                 int L = m+1;
                 double temp1 = (pow(disc_angle_next,L) - pow(disc_angle,L))/fm;
                 double temp2 = (pow(disc_angle_next,m+2) - pow(disc_angle,m+2))/(fm+1.);
-                azmin[m-1] += intens*(temp1*(1.+r_steps) - temp2*rel_step)+intens_next*(-temp1*r_steps + temp2*rel_step);
+                azmin.at(m-1) += intens*(temp1*(1.+r_steps) - temp2*rel_step)+intens_next*(-temp1*r_steps + temp2*rel_step);
 			}
 		}
 
         double xnorm = 1.;      //Initialize the normalizing variable.. it will be reset once the new value is calculated below
         //Also initialize an array that's needed for this calculation - see DELSOL3 lines 6238-6244
-		double RSPA[7][7] = {{2.,0.,1.,0.,.75,0.,.625},{0.,0.,0.,0.,0.,0.,0.},{1.,0.,.25,0.,.125,0.,0.},
-							 {0.,0.,0.,0.,0.,0.,0.},{.75,0.,.125,0.,0.,0.,0.},{0.,0.,0.,0.,0.,0.,0.},
+		double RSPA[7][7] = {{2.,0.,1.,0.,.75,0.,.625},
+                             {0.,0.,0.,0.,0.,0.,0.},
+                             {1.,0.,.25,0.,.125,0.,0.},
+							 {0.,0.,0.,0.,0.,0.,0.},
+                             {.75,0.,.125,0.,0.,0.,0.},
+                             {0.,0.,0.,0.,0.,0.,0.},
 							 {.625,0.,0.,0.,0.,0.,0.}};
         for(int i=1; i<_n_terms+1; i+=2){
 		    int jmax = _n_terms - i+1; 
             for (int j=1; j<jmax+1; j+=2) {
                 int ij = i+j;
-                mSun.at(i-1,j-1) = azmin[ij-2]*RSPA[i-1][j-1]/xnorm*pi; 
+                mSun.at(i-1,j-1) = azmin.at(ij-2)*RSPA[i-1][j-1]/xnorm*pi; 
                 xnorm = mSun.at(0,0); 
 			}
 		}
@@ -860,25 +866,43 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	double cos_s_az = s_hat.j/sin_s_zen; //cos(theta_s_az),				//Cosine of the solar azimuth angle (CSA)
 	double sin_s_az = s_hat.i/sin_s_zen; //sin(theta_s_az);				//Sine of the solar azimuth angle (SSA)
 	
-	//double theta_n_zen= acos(n_hat.k);	//zenith angle of the tracking vector
+	////double theta_n_zen= acos(n_hat.k);	//zenith angle of the tracking vector
+	//double cos_n_zen = n_hat.k;				//cos of the zenith angle of tracking vector (CNP)
+	//double sin_n_zen = sqrt(1.-n_hat.k*n_hat.k); //sin(theta_n_zen);				//sine of the zenith angle of the tracking vector (SNP)
+ //   sin_n_zen = sin_n_zen == 0. ? 1.e-6 : sin_n_zen;
+
+	////theta_n_az = atan2(n_hat.i;n_hat.j);			//Azimuth angle of the tracking vector (0..360)
+	//double sin_n_az = n_hat.i/sin_n_zen; //sin(theta_n_az);
+	//double cos_n_az = n_hat.j/sin_n_zen; //cos(theta_n_az);
+
+	////double theta_t_zen = acos(dotprod(t_hat, z_hat)); 
+	//double cos_t_zen = dotprod(t_hat, z_hat); //cos of zenith of helio-tower vector
+	//double sin_t_zen = sqrt(1.-cos_t_zen*cos_t_zen); //sin(theta_t_zen);
+ //   sin_t_zen = sin_t_zen == 0. ? 1.e-6 : sin_t_zen;
+	////double theta_t_az = atan2(t_hat.i,t_hat.j); //azimuth angle of the heliostat-to-receiver vector
+	//double sin_t_az = t_hat.i/sin_t_zen; //(theta_t_az);
+	//double cos_t_az = t_hat.j/sin_t_zen; //cos(theta_t_az);
+
+    //-----------------------------------------------------------------------------
+
+    double theta_n_zen= acos(n_hat.k);	//zenith angle of the tracking vector
 	double cos_n_zen = n_hat.k;				//cos of the zenith angle of tracking vector (CNP)
-	double sin_n_zen = sqrt(1.-n_hat.k*n_hat.k); //sin(theta_n_zen);				//sine of the zenith angle of the tracking vector (SNP)
+	double sin_n_zen = sin(theta_n_zen);				//sine of the zenith angle of the tracking vector (SNP)
     sin_n_zen = sin_n_zen == 0. ? 1.e-6 : sin_n_zen;
 
-	//theta_n_az = atan2(n_hat.i;n_hat.j);			//Azimuth angle of the tracking vector (0..360)
-	double sin_n_az = n_hat.i/sin_n_zen; //sin(theta_n_az);
-	double cos_n_az = n_hat.j/sin_n_zen; //cos(theta_n_az);
+	double theta_n_az = atan2(n_hat.i,n_hat.j);			//Azimuth angle of the tracking vector (0..360)
+	double sin_n_az = sin(theta_n_az);
+	double cos_n_az = cos(theta_n_az);
 
-	//double theta_t_zen = acos(dotprod(t_hat, z_hat)); 
+	double theta_t_zen = acos(dotprod(t_hat, z_hat)); 
 	double cos_t_zen = dotprod(t_hat, z_hat); //cos of zenith of helio-tower vector
-	double sin_t_zen = sqrt(1.-cos_t_zen*cos_t_zen); //sin(theta_t_zen);
+	double sin_t_zen = sin(theta_t_zen);
     sin_t_zen = sin_t_zen == 0. ? 1.e-6 : sin_t_zen;
-	//double theta_t_az = atan2(t_hat.i,t_hat.j); //azimuth angle of the heliostat-to-receiver vector
-	double sin_t_az = t_hat.i/sin_t_zen; //(theta_t_az);
-	double cos_t_az = t_hat.j/sin_t_zen; //cos(theta_t_az);
-
+	double theta_t_az = atan2(t_hat.i,t_hat.j); //azimuth angle of the heliostat-to-receiver vector
+	double sin_t_az = sin(theta_t_az);
+	double cos_t_az = cos(theta_t_az);
 	
-		
+	//---------------------------------------------------	
 	//Calculate the heliostat cosine loss
 	double              // sqrt(2)/2
 		eta_cosine = 0.7071067811865*sqrt(1.+cos_s_zen*cos_t_zen+sin_s_zen*sin_t_zen*(cos_t_az*cos_s_az + sin_t_az*sin_s_az));

@@ -286,7 +286,7 @@ void SolarField::Create(var_map &V){
 	//Parse the layout string into a layout object
 	if(! V.sf.layout_data.val.empty() )
     {
-        V.sf.layout_method.combo_select_by_mapval( var_solarfield::LAYOUT_METHOD::USERDEFINED );
+        //V.sf.layout_method.combo_select_by_mapval( var_solarfield::LAYOUT_METHOD::USERDEFINED );
 		//Convert the string contents to a layout_shell object
 		SolarField::parseHeliostatXYZFile( V.sf.layout_data.val, _layout );
         vector<Point> lpt;
@@ -661,8 +661,8 @@ bool SolarField::UpdateLayoutGroups(double lims[4]){
 	mesh_data.extents_az[0] = Sv->accept_min.val;
 	mesh_data.extents_az[1] = Sv->accept_max.val;
 	mesh_data.tht = Sv->tht.val;
-	mesh_data.alpha = Rv->rec_azimuth.val;
-	mesh_data.theta = Rv->rec_elevation.val;
+	mesh_data.alpha = Rv->rec_azimuth.val*D2R;
+	mesh_data.theta = Rv->rec_elevation.val*D2R;
 	//double width;
 	Receiver *rec = _receivers.front();
 	mesh_data.w_rec = Rv->rec_width.val; //sqrt(powf(_receivers.front()->getReceiverWidth(),2) + powf(_receivers.front()->getReceiverHeight(),2));
@@ -3016,7 +3016,7 @@ bool SolarField::SimulateTime(int hour, int day_of_month, int month, sim_params 
 	Ambient::calcSunPosition(*_var_map, DT, &az, &zen);
 
     //If the sun is not above the horizon plus a very small amount (to avoid infinite shadows), don't continue
-	if( zen > PI*0.5 )
+	if( zen > 88 )
 			return false;
 	
 	//Simulate field performance
