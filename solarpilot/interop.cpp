@@ -786,6 +786,9 @@ void sim_result::initialize(){
 	power_net = 0.;
 	num_heliostats_used = 0;
 	num_heliostats_avail = 0;
+    num_ray_traced = 0;
+    num_ray_heliostat = 0;
+    num_ray_receiver = 0;
 	_q_coe = 0.;
 
 	eff_total_heliostat.initialize();
@@ -1109,6 +1112,10 @@ void sim_result::process_raytrace_simulation(SolarField &SF, int nsim_type, doub
 
 		int nsunrays = (int)boxinfo[4];
 		double Abox = (boxinfo[0] - boxinfo[1])*(boxinfo[2] - boxinfo[3]);
+
+        num_ray_traced = nsunrays;
+        num_ray_heliostat = nhin;
+        num_ray_receiver = nrin;
 
 		power_on_field = total_heliostat_area *dni;	//[kW]
 		power_absorbed = qray * nrabs;
