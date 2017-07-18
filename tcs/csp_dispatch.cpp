@@ -466,7 +466,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
                 optinst->outputs.wnet_lim_min.at(t, s) =  wmin - max_parasitic;
                 if( t < nt-1 )
                 {
-                    double delta_rec_startup = min(1., max(optinst->params.e_rec_startup / max(optinst->outputs.q_sfavail_expected.at(t + 1, s)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
+                    double delta_rec_startup = std::min(1., std::max(optinst->params.e_rec_startup / std::max(optinst->outputs.q_sfavail_expected.at(t + 1, s)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
                     optinst->outputs.delta_rs.at(t, s) = delta_rec_startup;
                 }
             }
@@ -874,7 +874,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yrsu", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );
+                add_constraintex(lp, 1, row, col, LE, std::min(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );
 
                 //Receiver consumption limit
                 row[0] = 1.;
@@ -907,7 +907,7 @@ bool csp_dispatch_opt::optimize()
                 row[0] = 1.;
                 col[0] = O.column("yr", t);
 
-                add_constraintex(lp, 1, row, col, LE, min(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );  //if any measurable energy, y^r can be 1
+                add_constraintex(lp, 1, row, col, LE, std::min(P["M"]*outputs.q_sfavail_expected.at(t,0), 1.0) );  //if any measurable energy, y^r can be 1
 
                 // --- new constraints ---
 
@@ -1871,15 +1871,15 @@ bool csp_dispatch_opt::optimize_ampl()
     if( datfile.empty() )
         throw C_csp_exception("An error occured when writing the AMPL input file.");
     
-    ////call ampl
+    //call ampl
     //tstring << "ampl \"" << solver_params.ampl_data_dir << "sdk_dispatch.run\"";
 
-    if( system(NULL) ) puts ("Ok");
-    else exit(EXIT_FAILURE);
+    if( ! system(NULL) ) //puts ("System Ok");
+        exit(EXIT_FAILURE);
 
-    //int sysret = system(tstring.str().c_str());
-    int sysret = system( solver_params.ampl_exec_call.c_str() );
-    
+	std::string sday = "Optimizing day " + util::to_string( (int)(params.siminfo->ms_ts.m_time / 3600 / 24) );
+	puts( sday.c_str() );
+    int sysret = system("ampl sdk_solution.run >> log.txt;"); //tstring.str().c_str());
 
 
     //read back ampl solution
@@ -1893,14 +1893,9 @@ bool csp_dispatch_opt::optimize_ampl()
     
     std::vector< std::string > F;
 
-    char line[1000];
-    while( true )
+    std::string line;
+    while( std::getline(infile, line ) )
     {
-        infile.getline( line, 1000 );
-
-        if( infile.eof() )
-            break;
-
         F.push_back( line );
     }
 
