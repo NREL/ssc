@@ -566,13 +566,14 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->LeadAcid_tn,
 			batt_vars->LeadAcid_qn_computed,
 			batt_vars->LeadAcid_q10_computed,
-			batt_vars->batt_maximum_SOC);
+			batt_vars->batt_maximum_SOC,
+			batt_vars->batt_minimum_SOC);
 	}
 	// for now assume Vanadium Redox responds quickly, like Lithium-ion
 	else if (chem == battery_t::LITHIUM_ION || chem == battery_t::VANADIUM_REDOX || chem == battery_t::IRON_FLOW)
 	{
 		capacity_model = new capacity_lithium_ion_t(
-			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_maximum_SOC);
+			batt_vars->batt_Qfull*batt_vars->batt_computed_strings, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC);
 	}
 
 	// accumulate monthly losses

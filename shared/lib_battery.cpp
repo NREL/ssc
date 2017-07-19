@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cfloat>
 #include <sstream>
+#include <algorithm>
 
 #include "lib_battery.h"
 
@@ -52,7 +53,7 @@ std::string message::construct_log_count_string(int index)
 Define Capacity Model 
 */
 
-capacity_t::capacity_t(double q, double SOC_max)
+capacity_t::capacity_t(double q, double SOC_max, double SOC_min)
 {
 	_q0 = 0.01*SOC_max*q;
 	_qmax = q;
@@ -64,6 +65,7 @@ capacity_t::capacity_t(double q, double SOC_max)
 	// Initialize SOC, DOD
 	_SOC = SOC_max;
 	_SOC_max = SOC_max;
+	_SOC_min = SOC_min;
 	_DOD = 0;
 	_DOD_prev = 0;
 
@@ -104,6 +106,29 @@ void capacity_t::check_charge_change()
 		_prev_charge = charging;
 	}
 }
+bool capacity_t::check_SOC(double q0_old)
+{
+	bool SOC_violated = true;
+
+	// check if overcharged
+	if (_q0 > _qmax * _SOC_max * 0.01)
+		_q0 = _qmax * _SOC_max * 0.01;
+	// check if undercharged 
+	else if (_q0 < _qmax * _SOC_min * 0.01)
+		_q0 = _qmax * _SOC_min * 0.01;
+	else
+		SOC_violated = false;
+
+	_I = -(_q0 - q0_old) / _dt_hour;
+	if (fabs(_I) < tolerance)
+	{
+		_I = 0;
+		_q0 = q0_old;
+	}
+
+	return SOC_violated;
+}
+
 void capacity_t::update_SOC()
 { 
 	if (_qmax > 0)
@@ -131,8 +156,8 @@ double capacity_t::I_loss() { return _I_loss; }
 /*
 Define KiBam Capacity Model
 */
-capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max) :
-capacity_t(q20, SOC_max)
+capacity_kibam_t::capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max, double SOC_min) :
+capacity_t(q20, SOC_max, SOC_min)
 {
 	_q10 = q10;
 	_q20 = q20;
@@ -275,7 +300,7 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 		Id = fmin(_I, Idmax);
 		_I = Id;
 	}
-	else if (_I < 0 )
+	else if (_I < 0)
 	{
 		Icmax = Icmax_compute(_q1_0, _q0, dt_hour);
 		Ic = -fmin(fabs(_I), fabs(Icmax));
@@ -348,7 +373,7 @@ double capacity_kibam_t::q20(){return _q20;}
 /*
 Define Lithium Ion capacity model
 */
-capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max) :capacity_t(q, SOC_max){};
+capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max, double SOC_min) :capacity_t(q, SOC_max, SOC_min){};
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
 void capacity_lithium_ion_t::copy(capacity_t *& capacity)
 {
@@ -368,22 +393,11 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 	double q0_old = _q0;
 	_I = I;
 
-	// update charge ( I > 0 discharging, I < 0 charging)
+	// compute charge change ( I > 0 discharging, I < 0 charging)
 	_q0 -= _I*dt;
 
-	// check if overcharged
-	if (_q0 > _qmax)
-	{
-		_I = -(_qmax - q0_old) / dt;
-		_q0 = _qmax;
-	}
-
-	// check if undercharged 
-	if (_q0 < 0)
-	{
-		_I = (q0_old) / dt;
-		_q0 = 0;
-	}
+	// check if SOC constraints violated, update q0, I if so
+	check_SOC(q0_old);
 
 	// update SOC, DOD
 	update_SOC();
@@ -706,7 +720,8 @@ void lifetime_t::copy(lifetime_t *& lifetime)
 double lifetime_t::capacity_percent(){ return _q; }
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery, bool & firstStep)
 {
-	double dq_cycle = 0;
+	double dq_cycle = _lifetime_cycle->totalCapacityDegraded();
+	double q_last = _q;
 
 	if (_q > 0) 
 	{
@@ -725,6 +740,11 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 	}
 	if (_q < 0)
 		_q = 0;
+
+	// capacity cannot increase
+	if (_q > q_last)
+		_q = q_last;
+
 }
 
 bool lifetime_t::check_replaced()
@@ -780,11 +800,14 @@ void lifetime_cycle_t::copy(lifetime_cycle_t *& lifetime_cycle)
 	lifetime_cycle->_Range = _Range;
 	lifetime_cycle->_average_range = _average_range;
 }
-
+double lifetime_cycle_t::totalCapacityDegraded()
+{
+	return 100. - _q;
+}
 double lifetime_cycle_t::runCycleLifetime(double DOD)
 {
 	rainflow(DOD);
-	return 100. - _q;
+	return totalCapacityDegraded();
 }
 
 void lifetime_cycle_t::rainflow(double DOD)
@@ -1040,7 +1063,6 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	double q0, double a, double b, double c) 
 {
 	_calendar_choice = calendar_choice;
-	_calendar_matrix = calendar_matrix;
 	
 	_day_age_of_battery = 0;
 	_last_idx = 0;
@@ -1060,6 +1082,13 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	// timestep
 	_dt_hour = dt_hour;
 	_dt_day = dt_hour / util::hours_per_day;
+
+	// extract and sort calendar life info from table
+	for (int i = 0; i != calendar_matrix.nrows(); i++)
+	{
+		_calendar_days.push_back(calendar_matrix.at(i, 0));
+		_calendar_capacity.push_back(calendar_matrix.at(i, 1));
+	}
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
 void lifetime_calendar_t::copy(lifetime_calendar_t *& lifetime_calendar)
@@ -1077,12 +1106,11 @@ double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, doubl
 		if (idx % util::hours_per_day / _dt_hour == 0)
 			_day_age_of_battery++;
 
-
 		if (_calendar_choice == lifetime_calendar_t::LITHIUM_ION_CALENDAR_MODEL)
 			runLithiumIonModel(T, SOC);
 		else if (_calendar_choice == lifetime_calendar_t::CALENDAR_LOSS_TABLE)
 			runTableModel();
-
+		
 		_last_idx = idx;
 	}
 	
@@ -1106,15 +1134,17 @@ void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 }
 void lifetime_calendar_t::runTableModel()
 {
+	int n = _calendar_days.size() - 1;
 	int day_lo = 0;
-	int day_hi = 0;
-	double capacity_lo = 0;
+	int day_hi = _calendar_days[n];
+	double capacity_lo = 100;
 	double capacity_hi = 0;
 
-	for (int i = 0; i != _calendar_matrix.nrows(); i++)
+	// interpolation mode
+	for (int i = 0; i != _calendar_days.size(); i++)
 	{
-		int day = _calendar_matrix.at(i, 0);
-		double capacity = _calendar_matrix.at(i, 1);
+		int day = _calendar_days[i];
+		double capacity = _calendar_capacity[i];
 		if (day <= _day_age_of_battery)
 		{
 			day_lo = day;
@@ -1127,6 +1157,14 @@ void lifetime_calendar_t::runTableModel()
 			break;
 		}
 	}
+	if (day_lo == day_hi)
+	{
+		day_lo = _calendar_days[n - 1];
+		day_hi = _calendar_days[n];
+		capacity_lo = _calendar_capacity[n - 1];
+		capacity_hi = _calendar_capacity[n];
+	}
+
 	_q = util::interpolate(day_lo, capacity_lo, day_hi, capacity_hi, _day_age_of_battery);
 }
 

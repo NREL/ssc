@@ -42,7 +42,7 @@ class voltage_t;
 class capacity_t
 {
 public:
-	capacity_t(double q, double SOC_max);
+	capacity_t(double q, double SOC_max, double SOC_min);
 	virtual capacity_t * clone() = 0;
 	virtual void copy(capacity_t *&);
 	virtual ~capacity_t(){};
@@ -57,6 +57,7 @@ public:
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 	void check_charge_change(); 
+	bool check_SOC(double q0_old);
 	void update_SOC();
 
 	// common outputs
@@ -77,6 +78,7 @@ protected:
 	double _I_loss; // [A] - Lifetime and thermal losses
 	double _SOC; // [%] - State of Charge
 	double _SOC_max; // [%] - Maximum SOC
+	double _SOC_min; // [%] - Minimum SOC
 	double _DOD; // [%] - Depth of Discharge
 	double _DOD_prev; // [%] - Depth of Discharge of previous step
 	double _dt_hour; // [hr] - Timestep in hours
@@ -94,7 +96,7 @@ class capacity_kibam_t : public capacity_t
 public:
 
 	// Public APIs 
-	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max);
+	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max, double SOC_min);
 	~capacity_kibam_t(){}
 	capacity_kibam_t * clone();
 	void copy(capacity_t *&);
@@ -145,7 +147,7 @@ Lithium Ion specific capacity model
 class capacity_lithium_ion_t : public capacity_t
 {
 public:
-	capacity_lithium_ion_t(double q, double SOC_max);
+	capacity_lithium_ion_t(double q, double SOC_max, double SOC_min);
 	~capacity_lithium_ion_t(){};
 	capacity_lithium_ion_t * clone();
 	void copy(capacity_t *&);
@@ -300,10 +302,11 @@ public:
 	// return dq, the accumulated percent damage
 	double runCycleLifetime(double DOD);
 
+	// return dq, the accumulated percent damage
+	double totalCapacityDegraded();
+
 	void rainflow(double DOD);
-
 	void replaceBattery();
-
 	int cycles_elapsed();
 	int forty_percent_cycles();
 	int hundred_percent_cycles();
@@ -366,7 +369,8 @@ protected:
 
 private:
 	int _calendar_choice;
-	util::matrix_t<double> _calendar_matrix;
+	std::vector<int> _calendar_days;
+	std::vector<double> _calendar_capacity;
 	
 	int _day_age_of_battery;
 
