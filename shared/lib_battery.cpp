@@ -73,20 +73,20 @@ capacity_t::capacity_t(double q, double SOC_max, double SOC_min)
 	_prev_charge = DISCHARGE;
 	_chargeChange = false;
 }
-void capacity_t::copy(capacity_t *& capacity)
+void capacity_t::copy(capacity_t * capacity)
 {
-	capacity->_q0 = _q0;
-	capacity->_qmax = _qmax;
-	capacity->_qmax0 = _qmax0;
-	capacity->_I = _I;
-	capacity->_I_loss = _I_loss;
-	capacity->_dt_hour = _dt_hour;
-	capacity->_SOC = _SOC;
-	capacity->_SOC_max = _SOC_max;
-	capacity->_DOD = _DOD;
-	capacity->_DOD_prev = _DOD_prev;
-	capacity->_prev_charge = _prev_charge;
-	capacity->_chargeChange = _chargeChange;
+	_q0 = capacity->_q0;
+	_qmax = capacity->_qmax;
+	_qmax0 = capacity->_qmax0;
+	_I = capacity->_I;
+	_I_loss = capacity->_I_loss;
+	_dt_hour = capacity->_dt_hour;
+	_SOC = capacity->_SOC;
+	_SOC_max = capacity->_SOC_max;
+	_DOD = capacity->_DOD;
+	_DOD_prev = capacity->_DOD_prev;
+	_prev_charge = capacity->_prev_charge;
+	_chargeChange = capacity->_chargeChange;
 }
 void capacity_t::check_charge_change()
 {
@@ -179,25 +179,23 @@ capacity_t(q20, SOC_max, SOC_min)
 	replace_battery();
 }
 capacity_kibam_t * capacity_kibam_t::clone(){ return new capacity_kibam_t(*this); }
-void capacity_kibam_t::copy(capacity_t *& capacity)
+void capacity_kibam_t::copy(capacity_t * capacity)
 {
 	capacity_t::copy(capacity);
 	capacity_kibam_t * tmp = dynamic_cast<capacity_kibam_t*>(capacity);
 	
-	tmp->_t1 = _t1;
-	tmp->_t2 = _t2;
-	tmp->_q1 = _q1;
-	tmp->_q2 = _q2;
-	tmp->_F1 = _F1;
-	tmp->_c = _c;
-	tmp->_k = _k;
-	tmp->_q1_0 = _q1_0;
-	tmp->_q2_0 = _q2_0;
-	tmp->_q10 = _q10;
-	tmp->_q20 = _q20;
-	tmp->_I20 = _I20;
-
-	capacity = dynamic_cast<capacity_t*>(tmp);
+	_t1 = tmp->_t1;
+	_t2 = tmp->_t2;
+	_q1 = tmp->_q1;
+	_q2 = tmp->_q2;
+	_F1 = tmp->_F1;
+	_c = tmp->_c;
+	_k = tmp->_k;
+	_q1_0 = tmp->_q1_0;
+	_q2_0 = tmp->_q2_0;
+	_q10 = tmp->_q10;
+	_q20 = tmp->_q20;
+	_I20 = tmp->_I20;
 }
 
 void capacity_kibam_t::replace_battery()
@@ -375,10 +373,7 @@ Define Lithium Ion capacity model
 */
 capacity_lithium_ion_t::capacity_lithium_ion_t(double q, double SOC_max, double SOC_min) :capacity_t(q, SOC_max, SOC_min){};
 capacity_lithium_ion_t * capacity_lithium_ion_t::clone(){ return new capacity_lithium_ion_t(*this); }
-void capacity_lithium_ion_t::copy(capacity_t *& capacity)
-{
-	capacity_t::copy(capacity);
-}
+void capacity_lithium_ion_t::copy(capacity_t * capacity){ capacity_t::copy(capacity);}
 
 void capacity_lithium_ion_t::replace_battery()
 {
@@ -450,14 +445,14 @@ voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double vol
 	_R = 0.004; // just a default, will get recalculated upon construction
 	_batt_voltage_matrix = voltage_matrix;
 }
-void voltage_t::copy(voltage_t *& voltage)
+void voltage_t::copy(voltage_t * voltage)
 {
-	voltage->_mode = _mode;
-	voltage->_num_cells_series = _num_cells_series;
-	voltage->_num_strings = _num_strings;
-	voltage->_cell_voltage = _cell_voltage;
-	voltage->_R = _R;
-	voltage->_batt_voltage_matrix = _batt_voltage_matrix;
+	_mode = voltage->_mode;
+	_num_cells_series = voltage->_num_cells_series;
+	_num_strings = voltage->_num_strings;
+	_cell_voltage = voltage->_cell_voltage;
+	_R = voltage->_R;
+	_batt_voltage_matrix = voltage->_batt_voltage_matrix;
 }
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::battery_voltage_nominal(){ return _num_cells_series * _cell_voltage_nominal; }
@@ -475,14 +470,12 @@ voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, volt
 }
 
 voltage_table_t * voltage_table_t::clone(){ return new voltage_table_t(*this); }
-void voltage_table_t::copy(voltage_t *& voltage)
+void voltage_table_t::copy(voltage_t * voltage)
 {
 	voltage_t::copy(voltage);
 	voltage_table_t * tmp = dynamic_cast<voltage_table_t*>(voltage);
 
-	tmp->_voltage_table = _voltage_table;
-
-	voltage = dynamic_cast<voltage_t*>(tmp);
+	_voltage_table = tmp->_voltage_table;
 }
 
 
@@ -567,25 +560,22 @@ voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, util
 	parameter_compute();
 };
 voltage_dynamic_t * voltage_dynamic_t::clone(){ return new voltage_dynamic_t(*this); }
-void voltage_dynamic_t::copy(voltage_t *& voltage)
+void voltage_dynamic_t::copy(voltage_t * voltage)
 {
 	
 	voltage_t::copy(voltage);
 	voltage_dynamic_t * tmp = dynamic_cast<voltage_dynamic_t*>(voltage);
 
-	tmp->_Vfull = _Vfull;
-	tmp->_Vexp = _Vexp;
-	tmp->_Qfull = _Qfull;
-	tmp->_Qexp = _Qexp;
-	tmp->_Qnom = _Qnom;
-	tmp->_C_rate = _C_rate;
-	tmp->_A = _A;
-	tmp->_B0 = _B0;
-	tmp->_E0 = _E0;
-	tmp->_K = _K;
-
-	voltage = dynamic_cast<voltage_t*>(tmp);
-
+	_Vfull = tmp->_Vfull;
+	_Vexp = tmp->_Vexp;
+	_Qfull = tmp->_Qfull;
+	_Qexp = tmp->_Qexp;
+	_Qnom = tmp->_Qnom;
+	_C_rate = tmp->_C_rate;
+	_A = tmp->_A;
+	_B0 = tmp->_B0;
+	_E0 = tmp->_E0;
+	_K = tmp->_K;
 }
 void voltage_dynamic_t::parameter_compute()
 {
@@ -644,15 +634,13 @@ voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, V_ref_50, uti
     _C0 = 1.38;                 // model correction factor^M	
 }
 voltage_vanadium_redox_t * voltage_vanadium_redox_t::clone(){ return new voltage_vanadium_redox_t(*this); }
-void voltage_vanadium_redox_t::copy(voltage_t *& voltage)
+void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 {
 	voltage_t::copy(voltage);
 	voltage_vanadium_redox_t * tmp = dynamic_cast<voltage_vanadium_redox_t*>(voltage);
 
-	tmp->_V_ref_50 = _V_ref_50;
-	tmp->_R = _R;
-
-	voltage = dynamic_cast<voltage_t*>(tmp);
+	_V_ref_50 = tmp->_V_ref_50;
+	_R = tmp->_R;
 }
 void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
 {
@@ -719,14 +707,14 @@ void lifetime_t::delete_clone()
 	if (_lifetime_calendar) delete _lifetime_calendar;
 	if (_lifetime_cycle) delete _lifetime_cycle;
 }
-void lifetime_t::copy(lifetime_t *& lifetime)
+void lifetime_t::copy(lifetime_t * lifetime)
 {
-	lifetime->_lifetime_cycle->copy(_lifetime_cycle);
-	lifetime->_lifetime_calendar->copy(_lifetime_calendar);
-	lifetime->_replacement_option = _replacement_option;
-	lifetime->_replacement_capacity = _replacement_capacity;
-	lifetime->_replacements = _replacements;
-	lifetime->_replacement_scheduled = _replacement_scheduled;
+	_lifetime_cycle->copy(lifetime->_lifetime_cycle);
+	_lifetime_calendar->copy(lifetime->_lifetime_calendar);
+	_replacement_option = lifetime->_replacement_option;
+	_replacement_capacity = lifetime->_replacement_capacity;
+	_replacements = lifetime->_replacements;
+	_replacement_scheduled = lifetime->_replacement_scheduled;
 }
 double lifetime_t::capacity_percent(){ return _q; }
 void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery, bool & firstStep)
@@ -799,16 +787,16 @@ lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_m
 
 lifetime_cycle_t::~lifetime_cycle_t(){}
 lifetime_cycle_t * lifetime_cycle_t::clone(){ return new lifetime_cycle_t(*this); }
-void lifetime_cycle_t::copy(lifetime_cycle_t *& lifetime_cycle)
+void lifetime_cycle_t::copy(lifetime_cycle_t * lifetime_cycle)
 {
-	lifetime_cycle->_nCycles = _nCycles;
-	lifetime_cycle->_Dlt = _Dlt;
-	lifetime_cycle->_jlt = _jlt;
-	lifetime_cycle->_Xlt = _Xlt;
-	lifetime_cycle->_Ylt = _Ylt;
-	lifetime_cycle->_Peaks = _Peaks;
-	lifetime_cycle->_Range = _Range;
-	lifetime_cycle->_average_range = _average_range;
+	_nCycles = lifetime_cycle->_nCycles;
+	_Dlt = lifetime_cycle->_Dlt;
+	_jlt = lifetime_cycle->_jlt;
+	_Xlt = lifetime_cycle->_Xlt;
+	_Ylt = lifetime_cycle->_Ylt;
+	_Peaks = lifetime_cycle->_Peaks;
+	_Range = lifetime_cycle->_Range;
+	_average_range = lifetime_cycle->_average_range;
 }
 double lifetime_cycle_t::totalCapacityDegraded()
 {
@@ -1101,11 +1089,11 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	}
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
-void lifetime_calendar_t::copy(lifetime_calendar_t *& lifetime_calendar)
+void lifetime_calendar_t::copy(lifetime_calendar_t * lifetime_calendar)
 {
-	lifetime_calendar->_q = _q;
-	lifetime_calendar->_dq_old = _dq_old;
-	lifetime_calendar->_dq_new = _dq_new;
+	_q = lifetime_calendar->_q;
+	_dq_old = lifetime_calendar->_dq_old;
+	_dq_new = lifetime_calendar->_dq_new;
 }
 double lifetime_calendar_t::runLifetimeCalendarModel(size_t idx, double T, double SOC)
 {
@@ -1219,21 +1207,20 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	}
 }
 thermal_t * thermal_t::clone(){ return new thermal_t(*this); }
-void thermal_t::copy(thermal_t *& thermal)
+void thermal_t::copy(thermal_t * thermal)
 {
-	thermal->_mass = _mass;
-	thermal->_length = _length;
-	thermal->_width = _width;
-	thermal->_height = _height;
-	thermal->_Cp = _Cp;
-	thermal->_h = _h;
-	thermal->_T_room = _T_room;
-	thermal->_R = _R;
-	thermal->_A = _A;
-	thermal->_T_battery = _T_battery;
-	thermal->_capacity_percent = _capacity_percent;
-	thermal->_T_max = _T_max;
-
+	_mass = thermal->_mass;
+	_length = thermal->_length;
+	_width = thermal->_width;
+	_height = thermal->_height;
+	_Cp = thermal->_Cp;
+	_h = thermal->_h;
+	_T_room = thermal->_T_room;
+	_R = thermal->_R;
+	_A = thermal->_A;
+	_T_battery = thermal->_T_battery;
+	_capacity_percent = thermal->_capacity_percent;
+	_T_max = thermal->_T_max;
 }
 void thermal_t::replace_battery()
 { 
@@ -1312,12 +1299,12 @@ losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capac
 	_nCycle = 0;
 }
 losses_t * losses_t::clone(){ return new losses_t(*this); }
-void losses_t::copy(losses_t *& losses)
+void losses_t::copy(losses_t * losses)
 {
-	losses->_lifetime = _lifetime;
-	losses->_thermal = _thermal;
-	losses->_capacity = _capacity;
-	losses->_system_losses = _system_losses;
+	_lifetime = losses->_lifetime;
+	_thermal = losses->_thermal;
+	_capacity = losses->_capacity;
+	_system_losses = losses->_system_losses;
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
@@ -1349,17 +1336,19 @@ battery_t::battery_t(const battery_t& battery)
 	_dt_min = battery._dt_min;
 	_firstStep = battery._firstStep;
 }
-void battery_t::copy(const battery_t& battery)
+// copy from battery to this
+void battery_t::copy(const battery_t * battery)
 {
-	battery.capacity_model()->copy(_capacity);
-	battery.voltage_model()->copy(_voltage);
-	battery.thermal_model()->copy(_thermal);
-	battery.lifetime_model()->copy(_lifetime);
-	battery.losses_model()->copy(_losses);
-	_battery_chemistry = battery._battery_chemistry;
-	_dt_hour = battery._dt_hour;
-	_dt_min = battery._dt_min;
-	_firstStep = battery._firstStep;
+	_capacity->copy(battery->capacity_model());
+	_voltage->copy(battery->voltage_model());
+	_thermal->copy(battery->thermal_model());
+	_lifetime->copy(battery->lifetime_model());
+	_losses->copy(battery->losses_model());
+
+	_battery_chemistry = battery->_battery_chemistry;
+	_dt_hour = battery->_dt_hour;
+	_dt_min = battery->_dt_min;
+	_firstStep = battery->_firstStep;
 }
 
 void battery_t::delete_clone()

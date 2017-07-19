@@ -43,8 +43,14 @@ class capacity_t
 {
 public:
 	capacity_t(double q, double SOC_max, double SOC_min);
+
+	// deep copy
 	virtual capacity_t * clone() = 0;
-	virtual void copy(capacity_t *&);
+
+	// shallow copy from capacity to this
+	virtual void copy(capacity_t *);
+
+	// virtual destructor
 	virtual ~capacity_t(){};
 	
 	// pure virtual functions (abstract) which need to be defined in derived classes
@@ -98,8 +104,12 @@ public:
 	// Public APIs 
 	capacity_kibam_t(double q20, double t1, double q1, double q10, double SOC_max, double SOC_min);
 	~capacity_kibam_t(){}
+
+	// deep copy 
 	capacity_kibam_t * clone();
-	void copy(capacity_t *&);
+
+	// copy from capacity to this
+	void copy(capacity_t *);
 
 	void updateCapacity(double I, double dt);
 	void updateCapacityForThermal(double capacity_percent);
@@ -149,8 +159,12 @@ class capacity_lithium_ion_t : public capacity_t
 public:
 	capacity_lithium_ion_t(double q, double SOC_max, double SOC_min);
 	~capacity_lithium_ion_t(){};
+
+	// deep copy
 	capacity_lithium_ion_t * clone();
-	void copy(capacity_t *&);
+
+	// copy from capacity to this
+	void copy(capacity_t *);
 
 	// override public api
 	void updateCapacity(double I, double dt);
@@ -174,8 +188,14 @@ class voltage_t
 {
 public:
 	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table);
+
+	// deep copy
 	virtual voltage_t * clone()=0;
-	virtual void copy(voltage_t *&);
+
+	// copy from voltage to this
+	virtual void copy(voltage_t *);
+
+
 	virtual ~voltage_t(){};
 
 	virtual void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)=0;
@@ -221,8 +241,13 @@ class voltage_table_t : public voltage_t
 {
 public:
 	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table);
+
+	// deep copy
 	voltage_table_t * clone();
-	void copy(voltage_t *&);
+
+	// copy from voltage to this
+	void copy(voltage_t *);
+
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
 protected:
@@ -239,8 +264,12 @@ class voltage_dynamic_t : public voltage_t
 {
 public:
 	voltage_dynamic_t(int num_cells_series, int num_strings, double voltage, double Vfull, double Vexp, double Vnom, double Qfull, double Qexp, double Qnom, double C_rate, double R);
+
+	// deep copy
 	voltage_dynamic_t * clone();
-	void copy(voltage_t *&);
+
+	// copy from voltage to this
+	void copy(voltage_t *);
 
 	void parameter_compute();
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
@@ -268,8 +297,12 @@ class voltage_vanadium_redox_t : public voltage_t
 {
 public:
 	voltage_vanadium_redox_t(int num_cells_series, int num_strings, double V_ref_50, double R);
+
+	// deep copy
 	voltage_vanadium_redox_t * clone();
-	void copy(voltage_t *&);
+
+	// copy from voltage to this
+	void copy(voltage_t *);
 
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
@@ -296,8 +329,12 @@ class lifetime_cycle_t
 public:
 	lifetime_cycle_t(const util::matrix_t<double> &cyles_vs_DOD);
 	virtual ~lifetime_cycle_t();
+
+	// deep copy
 	lifetime_cycle_t * clone();
-	void copy(lifetime_cycle_t *&);
+
+	// copy from lifetime_cycle to this
+	void copy(lifetime_cycle_t *);
 
 	// return dq, the accumulated percent damage
 	double runCycleLifetime(double DOD);
@@ -353,8 +390,11 @@ public:
 		double q0=1.02, double a=2.66e-3, double b=7280, double c=930);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
+	// deep copy
 	lifetime_calendar_t * clone();
-	void copy(lifetime_calendar_t *&);
+
+	// copy from lifetime_calendar to this
+	void copy(lifetime_calendar_t *);
 
 	double runLifetimeCalendarModel(size_t idx, double T, double SOC);
 
@@ -401,9 +441,15 @@ class lifetime_t
 public:
 	lifetime_t(lifetime_cycle_t *, lifetime_calendar_t *, const int replacement_option, const double replacement_capacity);
 	virtual ~lifetime_t(){};
+
+	// deep copy
 	lifetime_t * clone();
+
+	// delete deep copy
 	void delete_clone();
-	void copy(lifetime_t *&);
+
+	// copy lifetime to this
+	void copy(lifetime_t *);
 
 	void runLifetimeModels(size_t idx, capacity_t *, double T_battery, bool & firstStep);
 
@@ -439,8 +485,12 @@ public:
 	thermal_t(double mass, double length, double width, double height,
 		double Cp, double h, double T_room,
 		const util::matrix_t<double> &cap_vs_temp);
+
+	// deep copy
 	thermal_t * clone();
-	void copy(thermal_t *&);
+
+	// copy thermal to this
+	void copy(thermal_t *);
 
 	void updateTemperature(double I, double R, double dt);
 	void replace_battery();
@@ -481,8 +531,12 @@ class losses_t
 {
 public:
 	losses_t(lifetime_t *, thermal_t *, capacity_t*, double_vec batt_system_losses);
+
+	// deep copy
 	losses_t * clone();
-	void copy(losses_t *&);
+
+	// copy losses to this
+	void copy(losses_t *);
 
 	void run_losses(double dt_hour);
 	void replace_battery();
@@ -512,8 +566,12 @@ public:
 	battery_t(const battery_t& battery);
 
 	// copy members from battery to this
-	void copy(const battery_t& battery);
+	void copy(const battery_t * battery);
+
+	// virtual destructor, does nothing as no memory allocated in constructor
 	virtual ~battery_t(){};
+
+	// delete the new submodels that have been allocated
 	void delete_clone();
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);

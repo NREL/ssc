@@ -59,11 +59,11 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 }
 
 // shallow copy from dispatch to this
-void dispatch_t::copy(const dispatch_t & dispatch)
+void dispatch_t::copy(const dispatch_t * dispatch)
 {
-	_Battery->copy(*dispatch._Battery);
-	_Battery_initial->copy(*dispatch._Battery_initial);
-	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._Ic_max, dispatch._Id_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
+	_Battery->copy(dispatch->_Battery);
+	_Battery_initial->copy(dispatch->_Battery_initial);
+	init(_Battery, dispatch->_dt_hour, dispatch->_SOC_min, dispatch->_SOC_max, dispatch->_Ic_max, dispatch->_Id_max, dispatch->_t_min, dispatch->_mode, dispatch->_pv_dispatch_to_battery_first);
 }
 void dispatch_t::delete_clone()
 {
@@ -321,10 +321,10 @@ dispatch_t(dispatch)
 }
 
 // shallow copy from dispatch to this
-void dispatch_manual_t::copy(const dispatch_t & dispatch)
+void dispatch_manual_t::copy(const dispatch_t * dispatch)
 {
 	dispatch_t::copy(dispatch);
-	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(&dispatch);
+	const dispatch_manual_t * tmp = dynamic_cast<const dispatch_manual_t *>(dispatch);
 	init_with_vects(tmp->_sched, tmp->_sched_weekend, tmp->_charge_array, tmp->_discharge_array, tmp->_gridcharge_array, tmp->_percent_discharge_array, tmp->_percent_charge_array);
 }
 
@@ -398,7 +398,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	I = current_controller(battery_voltage_nominal);
 
 	// Iteration variables
-	_Battery_initial->copy(*_Battery);
+	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, 1 / _dt_hour);
@@ -481,7 +481,7 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 		I = 0;
 	
 	if (iterate)
-		_Battery->copy(*_Battery_initial);
+		_Battery->copy(_Battery_initial);
 
 
 	return iterate;
@@ -610,7 +610,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	I = current_controller(battery_voltage_nominal);
 
 	// Iteration variables
-	_Battery_initial->copy(*_Battery);
+	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
 	size_t idx = util::index_year_hour_step(year, hour_of_year, step, 1 / _dt_hour);

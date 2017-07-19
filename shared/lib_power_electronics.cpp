@@ -72,13 +72,13 @@ void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
 
 	// if this is an iteration loop, reset the dispatch
 	if (_iterate)
-		_dispatch->copy(*_dispatch_initial);
+		_dispatch->copy(_dispatch_initial);
 }
 bool charge_controller::check_iterate(){ return _iterate; }
 void charge_controller::finalize()
 {
 	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
-	_dispatch_initial->copy(*_dispatch);
+	_dispatch_initial->copy(_dispatch);
 }
 
 dc_connected_battery_controller::dc_connected_battery_controller(dispatch_t * dispatch, 

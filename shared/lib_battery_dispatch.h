@@ -23,7 +23,8 @@ public:
 	dispatch_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t & dispatch);
+	virtual void copy(const dispatch_t * dispatch);
+
 	void delete_clone();
 
 	virtual ~dispatch_t();
@@ -175,7 +176,7 @@ public:
 	dispatch_manual_t(const dispatch_t& dispatch);
 
 	// copy members from dispatch to this
-	virtual void copy(const dispatch_t & dispatch);
+	virtual void copy(const dispatch_t * dispatch);
 
 	virtual ~dispatch_manual_t(){};
 	virtual void dispatch(size_t year,
