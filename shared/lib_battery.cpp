@@ -707,11 +707,22 @@ lifetime_t::lifetime_t(lifetime_cycle_t * lifetime_cycle, lifetime_calendar_t * 
 	// relative capacity
 	_q = 100;
 }
-lifetime_t * lifetime_t::clone(){ return new lifetime_t(*this); }
+lifetime_t * lifetime_t::clone()
+{ 
+	lifetime_t * tmp = new lifetime_t(*this); 
+	tmp->_lifetime_calendar = _lifetime_calendar->clone();
+	tmp->_lifetime_cycle = _lifetime_cycle->clone();
+	return tmp;
+}
+void lifetime_t::delete_clone()
+{
+	if (_lifetime_calendar) delete _lifetime_calendar;
+	if (_lifetime_cycle) delete _lifetime_cycle;
+}
 void lifetime_t::copy(lifetime_t *& lifetime)
 {
-	lifetime->_lifetime_cycle = _lifetime_cycle;
-	lifetime->_lifetime_calendar = _lifetime_calendar;
+	lifetime->_lifetime_cycle->copy(_lifetime_cycle);
+	lifetime->_lifetime_calendar->copy(_lifetime_calendar);
 	lifetime->_replacement_option = _replacement_option;
 	lifetime->_replacement_capacity = _replacement_capacity;
 	lifetime->_replacements = _replacements;
@@ -728,11 +739,8 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 		if (capacity->chargeChanged())
 			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
 		else if (firstStep)
-		{
 			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
-			firstStep = false;
-		}
-
+		
 		double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
 
 		// total capacity is linear combination of cycle and calendar degradation effects
@@ -745,6 +753,8 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 	if (_q > q_last)
 		_q = q_last;
 
+	// first step happens exactly once (even if iterative)
+	firstStep = false;
 }
 
 bool lifetime_t::check_replaced()
@@ -1357,7 +1367,11 @@ void battery_t::delete_clone()
 	if (_capacity) delete _capacity;
 	if (_voltage) delete _voltage;
 	if (_thermal) delete _thermal;
-	if (_lifetime) delete _lifetime;
+	if (_lifetime)
+	{
+		_lifetime->delete_clone();
+		delete _lifetime;
+	}
 	if (_losses) delete _losses;
 }
 void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t * lifetime, thermal_t * thermal, losses_t * losses)

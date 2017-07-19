@@ -400,8 +400,9 @@ class lifetime_t
 {
 public:
 	lifetime_t(lifetime_cycle_t *, lifetime_calendar_t *, const int replacement_option, const double replacement_capacity);
-	virtual ~lifetime_t(){ /* sub lifetime models deleted elsewhere */ };
+	virtual ~lifetime_t(){};
 	lifetime_t * clone();
+	void delete_clone();
 	void copy(lifetime_t *&);
 
 	void runLifetimeModels(size_t idx, capacity_t *, double T_battery, bool & firstStep);
@@ -512,7 +513,7 @@ public:
 
 	// copy members from battery to this
 	void copy(const battery_t& battery);
-	~battery_t(){};
+	virtual ~battery_t(){};
 	void delete_clone();
 
 	void initialize(capacity_t *, voltage_t *, lifetime_t *, thermal_t *, losses_t *);
