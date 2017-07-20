@@ -24,17 +24,13 @@ using std::unordered_map;
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4290)  // ignore warning: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
-struct Point;
-struct var_map;
-
-
 #pragma warning(disable:4503)	//warning for name length - VS2010 compiler
 #pragma warning(disable:4505)	//warning for removing unused method
 #endif
  
 
 //The land boundary arrays should be described with sets of polygons for inclusions and exclusions
-//typedef std::vector<std::vector<Point> > bounds_array;
+//typedef std::vector<std::vector<sp_point> > bounds_array;
 
 template<typename T> static std::string my_to_string(const T &value) {
 	ostringstream x;
@@ -190,9 +186,9 @@ public:
         return true;
     };
 
-    static bool _setv(std::string &SV, std::vector< Point > &Vp)
+    static bool _setv(std::string &SV, std::vector< sp_point > &Vp)
     {
-        //splits a set of 3d points into a vector<Point>
+        //splits a set of 3d points into a vector<sp_point>
 	    //should be [P]x1,y1,z1[P]x2,y2,z2...
         try
         {
@@ -282,7 +278,7 @@ public:
         return true;
     };
 
-    static bool _setv(std::string &SV, std::vector< std::vector< Point > > &Vp )
+    static bool _setv(std::string &SV, std::vector< std::vector< sp_point > > &Vp )
     {
         
         /* 
@@ -303,7 +299,7 @@ public:
         {
             std::vector< std::string > pts = split(polys.at(i), "[P]");
 
-            Vp.at(i).resize( pts.size(), Point() );
+            Vp.at(i).resize( pts.size(), sp_point() );
 
             for( size_t j=0; j<pts.size(); j++ )
             {
@@ -365,7 +361,7 @@ protected:
         }
     };
 
-    void _as_str(std::string &vout, std::vector< Point > &v)
+    void _as_str(std::string &vout, std::vector< sp_point > &v)
     {
         vout.clear();
 
@@ -420,7 +416,7 @@ protected:
         vout = S.str();
     };
 
-    void _as_str(std::string &vout, vector< vector< Point > > &v)
+    void _as_str(std::string &vout, vector< vector< sp_point > > &v)
     {
         /* 
         [POLY] separates entries

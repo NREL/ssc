@@ -756,7 +756,17 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		*/
 		
 		//Add the front
-		OpticsList.at(ii)->Front.DistributionType = 'g';
+        switch ( Hv->st_err_type.mapval() )
+        {
+        default:
+        case var_heliostat::ST_ERR_TYPE::GAUSSIAN:
+            OpticsList.at(ii)->Front.DistributionType = 'g';
+            break;
+        case var_heliostat::ST_ERR_TYPE::PILLBOX:
+            OpticsList.at(ii)->Front.DistributionType = 'p';
+            break;
+        }
+
 		OpticsList.at(ii)->Front.OpticSurfNumber = 0;
 		OpticsList.at(ii)->Front.ApertureStopOrGratingType = 0;
 		OpticsList.at(ii)->Front.DiffractionOrder = 0;
@@ -874,7 +884,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		//Get values that apply to the whole heliostat
 		bool enabled = H->getInLayout();
 		
-		Point *P; 
+		sp_point *P; 
 		Vect *V;
 		P = H->getLocation();
 		V = H->getTrackVector();
@@ -897,7 +907,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				if(isdetail){
 					//Calculate unique positions and aim vectors for each facet
 					PointVect *F = panels->at(k, j).getOrientation();
-					Point Floc = *F->point();
+					sp_point Floc = *F->point();
 					Vect Faim = *F->vect();
 					Toolbox::unitvect(Faim);
 
@@ -1035,7 +1045,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			//displace by radius, inside is front, x1 and x2 = 0 for closed cylinder ONLY
 			//Add a closed cylindrical receiver to the stage 
 			double diam = rv->rec_diameter.val;
-			Point pos;
+			sp_point pos;
 			Vect aim;
 
 			ST_Element *element = r_stage->ElementList.at(i);
@@ -1164,7 +1174,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			copt->Back.RMSSpecError = PI/4.;
 			
 			//Add a flat aperture to the stage
-			Point pos;
+			sp_point pos;
 			Vect aim;
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;

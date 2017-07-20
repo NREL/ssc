@@ -31,10 +31,10 @@ double Land::getLandBoundArea()
     return _bound_area;
 }
 
-bool Land::InBounds(var_land &V, Point &P, double tht)
+bool Land::InBounds(var_land &V, sp_point &P, double tht)
 {
     //offset the point by tower x,y offset
-    Point Po(P);
+    sp_point Po(P);
     
 	//figure out whether the given point is inside the land area described by _boundary
 	bool test = true;
@@ -138,7 +138,7 @@ void Land::getExtents(var_map &V, double rval[])
 		//Find the minimum radius depending on the exclusions vector
 		//values for finding the minimum radius
 		double trmin = 9.e9; 
-		Point T, pt1, N;
+		sp_point T, pt1, N;
 		T.Set(V.land.tower_offset_x.val, V.land.tower_offset_y.val, 0.);	//Tower location
 		for(unsigned int i=0; i<V.land.inclusions.val.size(); i++){	//For each polygon in the inclusions
 			//first check whether the tower lies within the polygon, in which case the minimum radius is zero
@@ -166,7 +166,7 @@ void Land::getExtents(var_map &V, double rval[])
 		}
 		
 		//Adjust the minimum radius depending on the exclusions 
-		Point ex1;
+		sp_point ex1;
 		double excheck = 9.e9;
 		for(unsigned int i=0; i<V.land.exclusions.val.size(); i++){	//For each polygon in the exclusions
 			
@@ -238,7 +238,7 @@ void Land::getExtents(var_map &V, double rval[])
 //
 //		//values for finding the minimum radius
 //		double trmin = 9.e9; 
-//		Point T, pt1, N;
+//		sp_point T, pt1, N;
 //		T.Set(0.,0.,0.);	//Tower location
 //		for(unsigned int i=0; i<V.land.inclusions.val.size(); i++){	//For each polygon in the inclusions
 //			//first check whether the tower lies within the polygon, in which case the minimum radius is zero
@@ -266,7 +266,7 @@ void Land::getExtents(var_map &V, double rval[])
 //		}
 //		
 //		//Adjust the minimum radius depending on the exclusions 
-//		Point ex1;
+//		sp_point ex1;
 //		double excheck = 9.e9;
 //		for(unsigned int i=0; i<V.land.exclusions.val.size(); i++){	//For each polygon in the exclusions
 //			
@@ -334,7 +334,7 @@ double Land::calcPolyLandArea(var_land &V){
 		int np = (int)V.inclusions.val.at(i).size();
 		int j=np-1;
 		for(int k=0; k<np; k++){
-			Point 
+			sp_point 
 				*pj = &V.inclusions.val.at(i).at(j), 
 				*pk = &V.inclusions.val.at(i).at(k);
 			area += (pj->x + pk->x)*(pj->y - pk->y)/2.;
@@ -349,7 +349,7 @@ double Land::calcPolyLandArea(var_land &V){
 		int np = (int)V.exclusions.val.at(i).size();
 		int j=np-1;
 		for(int k=0; k<np; k++){
-			Point 
+			sp_point 
 				*pj = &V.exclusions.val.at(i).at(j), 
 				*pk = &V.exclusions.val.at(i).at(k);
 			excs += (pj->x + pk->x)*(pj->y - pk->y)/2.;
@@ -363,7 +363,7 @@ double Land::calcPolyLandArea(var_land &V){
 }
 
 
-void Land::calcLandArea(var_land &V, vector<Point> &layout)
+void Land::calcLandArea(var_land &V, vector<sp_point> &layout)
 {
 	/* 
 	
@@ -375,7 +375,7 @@ void Land::calcLandArea(var_land &V, vector<Point> &layout)
 	}
 	else{
 		//Calculate the convex hull surrounding the heliostat positions
-		std::vector<Point> hull;
+		std::vector<sp_point> hull;
 		Toolbox::convex_hull(layout, hull);
 
 		//Calculate the area of the convex hull
