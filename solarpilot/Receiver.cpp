@@ -14,7 +14,7 @@ void FluxPoint::Setup(double xloc, double yloc, double zloc, Vect &norm, double 
 	over_flux = false;
 	area_factor = Area_factor;
 };
-void FluxPoint::Setup(Point &loc, Vect &norm, double flux_max, double Area_factor){
+void FluxPoint::Setup(sp_point &loc, Vect &norm, double flux_max, double Area_factor){
 	location.x = loc.x; location.y = loc.y; location.z = loc.z;
 	normal.i = norm.i; normal.j = norm.j; normal.k = norm.k;
 	maxflux = flux_max;
@@ -29,7 +29,7 @@ int FluxSurface::getId() {return _id;};
 FluxGrid *FluxSurface::getFluxMap(){return &_flux_grid;}
 int FluxSurface::getFluxNX(){return _nflux_x;}
 int FluxSurface::getFluxNY(){return _nflux_y;}
-Point *FluxSurface::getSurfaceOffset(){return &_offset;}
+sp_point *FluxSurface::getSurfaceOffset(){return &_offset;}
 double FluxSurface::getSurfaceWidth(){return _width;}
 double FluxSurface::getSurfaceHeight(){return _height;}
 double FluxSurface::getSurfaceRadius(){return _radius;}
@@ -42,7 +42,7 @@ void FluxSurface::setMaxFlux(double maxflux){_max_flux = maxflux;}
 void FluxSurface::setNormalVector(Vect &vect){
 	_normal = vect;
 }
-void FluxSurface::setSurfaceOffset(Point &loc){_offset = loc;}
+void FluxSurface::setSurfaceOffset(sp_point &loc){_offset = loc;}
 void FluxSurface::setSurfaceSpanAngle(double span_min, double span_max){_span_ccw = span_min; _span_cw = span_max;}
 void FluxSurface::setSurfaceGeometry(double height, double width, double radius){
 	_width = width;
@@ -90,7 +90,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double daz = (_span_cw - _span_ccw)/double(_nflux_x);	
 
 		double faz;
-		Point floc;
+		sp_point floc;
 		Vect fnorm;
 		double dz = _height/double(_nflux_y);	//height of each flux node
 		for(int i=0; i<_nflux_x; i++){
@@ -143,7 +143,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double rec_dh = _height/double(_nflux_y);
 
 		double faz, fzen;
-		Point floc;
+		sp_point floc;
 		Vect fnorm;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
@@ -188,7 +188,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double rec_dh = _height/double(_nflux_y);
 		double rec_dw = _width/double(_nflux_x);
 
-		Point floc;
+		sp_point floc;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 			for(int j=0; j<_nflux_y; j++){
@@ -223,7 +223,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double rec_dh = _height/double(_nflux_y);
 		double rec_dw = _width/double(_nflux_x);
 		
-		Point floc;
+		sp_point floc;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 			for(int j=0; j<_nflux_y; j++){
@@ -308,7 +308,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 			double h = panel_radii.at(i)/cos( panel_azimuths.at(i) - faz ); //hypotenuse 
 
 			//x-y location of flux point
-			Point floc;
+			sp_point floc;
 			floc.x = h * sin(faz - rec_az);
 			floc.y = h * cos(faz - rec_az);
 
@@ -572,12 +572,12 @@ void Receiver::isReceiverEnabled(bool enable)
 
 void Receiver::CalculateNormalVector(PointVect &NV){
 	//If no normal vector is supplied, provide the default
-	Point Vn;
+	sp_point Vn;
 	Vn.Set(0., 0., 0.);
 	Receiver::CalculateNormalVector(Vn, NV);
 }
 
-void Receiver::CalculateNormalVector(Point &Hloc, PointVect &NV){
+void Receiver::CalculateNormalVector(sp_point &Hloc, PointVect &NV){
 	/* 
 	This subroutine should be used to calculate the normal vector to the receiver for a given heliostat location.
 	Ultimately, the optical calculations should not use this method to calculate the normal vector. Instead, use
@@ -676,7 +676,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 		S->setParent(this);
 
 		//Do setup
-		Point loc;
+		sp_point loc;
         loc.Set(_var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val);
 		S->setSurfaceGeometry( _var_receiver->rec_height.val, 0., _var_receiver->rec_diameter.val/2. );
 		S->setSurfaceOffset( loc );
@@ -760,7 +760,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 		//	S->setNormalVector(nv);
 
 		//	//Calculate the centroid of the panel in global XYZ coords
-		//	Point pc;
+		//	sp_point pc;
 		//	pc.x = nv.i * _var_receiver->rec_diameter.val/2.;
 		//	pc.y = nv.j * _var_receiver->rec_diameter.val/2.;
 		//	pc.z = nv.k * _var_receiver->rec_diameter.val/2.;
@@ -787,7 +787,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 
 	//		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 
-	//		Point loc;
+	//		sp_point loc;
  //           loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
 	//		S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, _var_receiver->rec_diameter.val/2. );
 	//		S->setSurfaceOffset( loc );
@@ -855,7 +855,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 	//			S->setNormalVector(nv);
 
 	//			//Calculate the centroid of the panel in global XYZ coords
-	//			Point pc;
+	//			sp_point pc;
 	//			pc.x = nv.i * _var_receiver->rec_diameter.val/2.;
 	//			pc.y = nv.j * _var_receiver->rec_diameter.val/2.;
 	//			pc.z = nv.k * _var_receiver->rec_diameter.val/2.;
@@ -886,7 +886,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 
 		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 
-		Point loc;
+		sp_point loc;
         loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
 		S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, 0. );
 		S->setSurfaceOffset( loc );
@@ -1007,7 +1007,7 @@ void Receiver::CalculateThermalEfficiency(double dni, double dni_des, double v_w
 
 }
 
-double Receiver::CalculateApparentDiameter(Point &Hloc)
+double Receiver::CalculateApparentDiameter(sp_point &Hloc)
 { 
 	/* 
 	[m] Return the apparent receiver diameter given the polygonal structure

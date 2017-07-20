@@ -61,7 +61,7 @@ struct layout_obj
 	*/
 
 	int helio_type;
-	Point 
+	sp_point 
 		location,
 		aim;
 	double
@@ -145,12 +145,12 @@ protected:
 	class clouds : public mod_base
 	{ 
 		//members
-		std::vector<Point> _all_locs;
+		std::vector<sp_point> _all_locs;
 
 	public:
 		//methods
 		void Create(var_map &V, double extents[2]);
-		double ShadowLoss(var_map &V, Point &hloc);
+		double ShadowLoss(var_map &V, sp_point &hloc);
 	} _clouds;
 
 public:
@@ -220,7 +220,7 @@ public:
 	bool CheckCancelStatus();
 	
 	bool FieldLayout();	//Master layout method for DELSOL solar field geometries
-	static bool PrepareFieldLayout(SolarField &SF, WeatherData &wdata, bool refresh_only=false);	//Field layout preparation call for multithreaded apps
+	static bool PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool refresh_only=false);	//Field layout preparation call for multithreaded apps
 	static bool DoLayout( SolarField *SF, sim_results *results, WeatherData *wdata, int sim_first=-1, int sim_last=-1);
 	void ProcessLayoutResults(sim_results *results, int nsim_total);	//Call after simulation for multithreaded apps
 	void ProcessLayoutResultsNoSim();	//Call after layout with no simulations to process
@@ -229,9 +229,9 @@ public:
 	bool UpdateNeighborList(double lims[4], double zen);
 	bool UpdateLayoutGroups(double lims[4]);
 
-	void radialStaggerPositions(std::vector<Point> &HelPos); //Vector of the possible heliostat locations
-	void cornfieldPositions(std::vector<Point> &HelPos);
-	Heliostat *whichTemplate(int method, Point &pos);		//Function returning a pointer to the template to use
+	void radialStaggerPositions(std::vector<sp_point> &HelPos); //Vector of the possible heliostat locations
+	void cornfieldPositions(std::vector<sp_point> &HelPos);
+	Heliostat *whichTemplate(int method, sp_point &pos);		//Function returning a pointer to the template to use
 	void TemplateRange(int pos_order, int method, double *rrange, double *azrange);
 	void RefactorHeliostatImages(Vect &Sun);
 	

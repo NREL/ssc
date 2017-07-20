@@ -18,7 +18,7 @@ class SolarField;
 
 /*Define a structure that contains information on each mesh point for the receiver surface*/
 struct FluxPoint {
-	Point location;
+	sp_point location;
 	Vect normal;
 	double 
 		/*x, //[m] Node x-position (-East, +West) in global coordinates
@@ -35,7 +35,7 @@ struct FluxPoint {
 	FluxPoint();
 	
 	void Setup(double xloc, double yloc, double zloc, Vect &norm, double flux_max, double Area_factor = 1.);
-	void Setup(Point &loc, Vect &norm, double flux_max, double Area_factor = 1.);
+	void Setup(sp_point &loc, Vect &norm, double flux_max, double Area_factor = 1.);
 
 };
 
@@ -82,7 +82,7 @@ class FluxSurface : public mod_base
 
 	Vect
 		_normal;
-	Point
+	sp_point
 		_offset;
 
 	FluxGrid _flux_grid; // std::vector containing grid
@@ -96,7 +96,7 @@ public:
 	FluxGrid *getFluxMap();
 	int getFluxNX();
 	int getFluxNY();
-	Point *getSurfaceOffset();
+	sp_point *getSurfaceOffset();
 	double getSurfaceWidth();
 	double getSurfaceHeight();
 	double getSurfaceRadius();
@@ -108,7 +108,7 @@ public:
 	void setFluxPrecision(int nx, int ny);
 	void setMaxFlux(double maxflux);
 	void setNormalVector(Vect &vect);
-	void setSurfaceOffset(Point &loc);
+	void setSurfaceOffset(sp_point &loc);
 	void setSurfaceSpanAngle(double span_min, double span_max);
 	void setSurfaceGeometry(double height, double width, double radius = 0.);
 	void setMaxObservedFlux(double fmax);
@@ -167,7 +167,7 @@ public:
     int getGeometryType();
     var_receiver* getVarMap();
 	void CalculateNormalVector(PointVect &NV);	//Returns the normal std::vector and receiver centroid that represents the optimal optical incidence
-	void CalculateNormalVector(Point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal std::vector given a viewpoint std::vector
+	void CalculateNormalVector(sp_point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal std::vector given a viewpoint std::vector
 	FluxSurfaces *getFluxSurfaces();
 
     bool isReceiverEnabled();
@@ -178,7 +178,7 @@ public:
 	void CalculateAbsorberArea();
 	void CalculateThermalLoss(double load, double v_wind);
 	void CalculateThermalEfficiency(double dni, double dni_des, double v_wind, double q_des);
-	double CalculateApparentDiameter(Point &Hloc); //[m] Return the apparent receiver diameter given the polygonal structure
+	double CalculateApparentDiameter(sp_point &Hloc); //[m] Return the apparent receiver diameter given the polygonal structure
 
  } ;
 

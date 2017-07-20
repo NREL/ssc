@@ -1631,7 +1631,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
 						Rec->getGeometryType() == Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE;	//0=Rectangular, 1=elliptical
 		
 		//Set up for cavity model | 2362
-        Point *hloc = H.getLocation();
+        sp_point *hloc = H.getLocation();
 		double hloc_az = atan2(hloc->x, hloc->y);	//Azimuth angle of the heliostat location, receiver is abscissa
 		double rxn = Rv->rec_width.val/tht/2.;		//Normalized half-width of the aperture
 		double ryn = Rv->rec_height.val/tht/2.;		//Normalized half-height of the aperture
@@ -1658,7 +1658,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
                                                                                                                                                             //            |/
 		double r22 = sin_t_zen * rec_zen_j + cos_t_zen * rec_zen_k * cos_view_az;   //apparent vertical height of the receiver at the centerline
 		
-		Point *aim = H.getAimPointFluxPlane();		//In X and Y coordinates, Y being vertical
+		sp_point *aim = H.getAimPointFluxPlane();		//In X and Y coordinates, Y being vertical
 
 
 		if(is_elliptical){
@@ -2184,7 +2184,7 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
     }
 
 	//Get the flux surface offset
-	Point *offset = flux_surface.getSurfaceOffset();
+	sp_point *offset = flux_surface.getSurfaceOffset();
 	
 	int nh = (int)helios.size();
 	if(show_progress){
@@ -2207,7 +2207,7 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 		helios.at(i)->getImageSize(sigx, sigy);	//Image size is normalized by the tower height
 		
 		//Get the heliostat aim point
-		Point *aim = helios.at(i)->getAimPoint();
+		sp_point *aim = helios.at(i)->getAimPoint();
 		//Get the height of the receiver that the heliostat is aiming at
 		double tht = helios.at(i)->getWhichReceiver()->getVarMap()->optical_height.Val();
 
@@ -2235,12 +2235,12 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 					continue;
 				}
 				//Translate the flux point location into global coordinates
-				Point pt_g;
+				sp_point pt_g;
 				pt_g.Set(pt->location.x + offset->x, pt->location.y + offset->y, pt->location.z + tht); //tht include z offset
 
 				//Project the current flux point into the image plane as defined by the 
 				//aim point and the heliostat-to-receiver vector.
-				Point pt_ip;
+				sp_point pt_ip;
 				Toolbox::plane_intersect(*aim, tvr, pt_g, tvr, pt_ip); 
 				
 				//Now the point pt_ip indicates in global coordinates the projection of the flux point onto the image plane.
@@ -2344,7 +2344,7 @@ void Flux::simpleAimPoint(Heliostat &H, SolarField &SF){
 	simpleAimPoint(H.getAimPoint(), H.getAimPointFluxPlane(), H, SF);
 }
 
-void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
+void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarField &SF)
 {
 	/*
 	This script takes a pointer to the result "Aim" point, the heliostat doing the aiming, and the SolarField that has information 
@@ -2363,7 +2363,7 @@ void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
 
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();
+	sp_point *hpos = H.getLocation();
 	
 	double tht = SF.getVarMap()->sf.tht.val;
 	
@@ -2430,8 +2430,8 @@ void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
 
 void Flux::zenithAimPoint(Heliostat &H, Vect &Sun)
 {
-    Point *Aim = H.getAimPoint();
-    Point *AimF = H.getAimPointFluxPlane();
+    sp_point *Aim = H.getAimPoint();
+    sp_point *AimF = H.getAimPointFluxPlane();
 
     //the aimpoint bisects the sun and zenith
     Aim->x = Sun.i / 2. * 1000.;
@@ -2456,8 +2456,8 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 	
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();
-	Point *Aim = H.getAimPoint();
+	sp_point *hpos = H.getLocation();
+	sp_point *Aim = H.getAimPoint();
 
 	double tht = SF.getVarMap()->sf.tht.val;
 
@@ -2480,11 +2480,11 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 	double view_az, w2, h2;
 
 	//Get the simple aim point
-	Point saim, saimf;
+	sp_point saim, saimf;
 	simpleAimPoint(&saim, &saimf, H, SF);
 	
 	double sigx,sigy;
-	Point aimpos;
+	sp_point aimpos;
 
 	switch (recgeom)
 	{
@@ -2577,8 +2577,8 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 	
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();
-	Point *Aim = H.getAimPoint();
+	sp_point *hpos = H.getLocation();
+	sp_point *Aim = H.getAimPoint();
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	
@@ -2603,7 +2603,7 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
     double view_az, w2, h2;
 
 	//Get the simple aim point
-	Point saim, saimf;
+	sp_point saim, saimf;
 	simpleAimPoint(&saim, &saimf, H, SF);
 
 	double window2, rand, sigx, sigy;
@@ -2639,7 +2639,7 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 
 		//-- now calculate the aim point position in the flux plane
 		//vector from simple aim point to mod aim point
-		Point aimpos;
+		sp_point aimpos;
 		aimpos.Set(Aim->x - saim.x, Aim->y - saim.y, Aim->z - saim.z);
 		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 		break;
@@ -2682,8 +2682,8 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();	//heliostat position for reference
-	Point *Aim = H.getAimPoint();	//Point to object, this will be set below
+	sp_point *hpos = H.getLocation();	//heliostat position for reference
+	sp_point *Aim = H.getAimPoint();	//Point to object, this will be set below
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	int isave;
@@ -2709,7 +2709,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
     double w2, h2;
 
 	//Get the simple aim point
-	Point saim, saimf;
+	sp_point saim, saimf;
 	simpleAimPoint(&saim, &saimf, H, SF);
 
 	//----declare varibles that are used in the switch statement
@@ -2717,7 +2717,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	FluxGrid *FG;
 	FluxPoint *Fp;
 	Vect f_to_h, *fnorm, vtemp;
-    Point *fpos, fint, Fpp, aimpos;
+    sp_point *fpos, fint, Fpp, aimpos;
 	Hvector HV;
 	double dpsave, dprod, sigx, sigy, dx, dy, fsave, imsizex, imsizey, theta_img, rnaz, rnel, stretch_factor, ftmp;
 	double e_bound_box[4];
@@ -2972,7 +2972,7 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     //which receiver is the heliostat currently associated with?
     Receiver *Rec = H.getWhichReceiver(); 
 
-    Point *hpos = H.getLocation();
+    sp_point *hpos = H.getLocation();
     //the current tracking vector
     Vect *track = H.getTrackVector();
     Vect sun;
@@ -2997,11 +2997,11 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     
     //Get the receiver normal vector
     PointVect norm;
-    Point hloc;
+    sp_point hloc;
     hloc.Set( *H.getLocation() );
     Rec->CalculateNormalVector(hloc, norm);
 
-    Point aim_ip;
+    sp_point aim_ip;
     Toolbox::plane_intersect(*norm.point(), *norm.vect(), hloc, R, aim_ip);
 
     switch (recgeom)
@@ -3011,7 +3011,7 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     {
         
         //Set the heliostat aim point in tower coordinates
-        Point aim_adj( aim_ip );
+        sp_point aim_adj( aim_ip );
         aim_adj.Add( -Rv->rec_offset_x.val, -Rv->rec_offset_y.val, -Rv->rec_offset_z.val - tht );
         H.setAimPoint( aim_adj );
 
@@ -3064,8 +3064,8 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
     {
         //get the aimpoint, the heliostat location and vector to the aimpoint, and then calculate
         //the relative position of the intersection on the image plain
-        Point *aim = H.getAimPoint();       //global coordinates
-        Point *hloc = H.getLocation();
+        sp_point *aim = H.getAimPoint();       //global coordinates
+        sp_point *hloc = H.getLocation();
 
         int hid = H.getId();
 
@@ -3077,19 +3077,19 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
         Receiver *rec = H.getWhichReceiver();
         PointVect NV;
         rec->CalculateNormalVector(*hloc, NV);
-        /*Point fluxplanept = *NV.point();
+        /*sp_point fluxplanept = *NV.point();
         Vect fluxplanevect = *NV.vect();*/
         
         //calculate the intersection point
-        Point int_pt;
+        sp_point int_pt;
         Toolbox::plane_intersect(*NV.point() /* global coordinates */, *NV.vect(), *aim, h_to_r, int_pt);
 
         //Get the simple aim point
-	    Point saim, saimf;
+	    sp_point saim, saimf;
 	    simpleAimPoint(&saim, &saimf, H, SF);
 
         //Move into receiver coordinates
-        Point aim_rec(int_pt);
+        sp_point aim_rec(int_pt);
         aim_rec.Subtract(saim);
 
         //Rotate the intersection point into receiver coordinates
@@ -3114,10 +3114,10 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
 
 
     
-    //Point *fs = rec->getFluxSurfaces()->front().getSurfaceOffset();
-    //Point *hp = h->getAimPoint();
+    //sp_point *fs = rec->getFluxSurfaces()->front().getSurfaceOffset();
+    //sp_point *hp = h->getAimPoint();
 
-    //Point aim;        //The current aim point in receiver coordinates
+    //sp_point aim;        //The current aim point in receiver coordinates
     //aim.Set(*hp);
     //aim.z = -aim.z +_tht;
     //aim.Add(*fs);
@@ -3127,7 +3127,7 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
     ////Get receiver normal vector
     //PointVect NV;
     //rec->CalculateNormalVector(*h->getLocation(), NV);
-    //Point pint;
+    //sp_point pint;
     //Toolbox::plane_intersect(aim, *NV.vect(), Fpp, *NV.vect(), pint);
 
     //Heliostat::calcAndSetAimPointFluxPlane(pint, *h->getWhichReceiver(), *h);
@@ -3149,7 +3149,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 
 	Nrec = (int)Recs->size();	//The number of receivers to choose from
 	double slant;
-	Point *hpos = H->getLocation();
+	sp_point *hpos = H->getLocation();
 
 	//If we only have 1 receiver, don't bother
 	if(Nrec==1){
