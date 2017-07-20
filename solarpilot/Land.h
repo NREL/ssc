@@ -23,13 +23,13 @@ public:
 	static void getRadialExtents(var_map &V, double rval[2], double tht=1.);
 	//static bounds_array *getInclusions();
 	//static bounds_array *getExclusions();
-	static std::vector<Point> *getLayoutPositions();
+	static std::vector<sp_point> *getLayoutPositions();
 	static double calcPolyLandArea(var_land &V);
 	
-	void calcLandArea(var_land &V, vector<Point> &layout);
+	void calcLandArea(var_land &V, vector<sp_point> &layout);
 
 	//methods for containment testing
-	static bool InBounds(var_land &V, Point &H, double tht=1.0);
+	static bool InBounds(var_land &V, sp_point &H, double tht=1.0);
 
  } ;
 

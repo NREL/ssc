@@ -25,9 +25,9 @@ matrix_t<Reflector> *Heliostat::getPanels(){return &_panels;}
 Vect *Heliostat::getTrackVector(){return &_track;}	//return the tracking vector
 Vect *Heliostat::getTowerVector(){return &_tower_vect;} // return the helio-tower unit vector
 Vect *Heliostat::getCantVector(){return &_cant_vect;}	//Return the canting vector (not normalized)
-Point *Heliostat::getLocation(){return &_location;} //Get location vector
-Point *Heliostat::getAimPoint(){return &_aim_point;}	//Get the heliostat aim point on the receiver
-Point *Heliostat::getAimPointFluxPlane(){return &_aim_fluxplane;}	//aim point in the flux plane coordinates 
+sp_point *Heliostat::getLocation(){return &_location;} //Get location vector
+sp_point *Heliostat::getAimPoint(){return &_aim_point;}	//Get the heliostat aim point on the receiver
+sp_point *Heliostat::getAimPointFluxPlane(){return &_aim_fluxplane;}	//aim point in the flux plane coordinates 
 helio_perf_data *Heliostat::getEfficiencyObject(){return &eff_data;}
 double Heliostat::getTotalReflectivity(){return eff_data.reflectivity * eff_data.soiling;}
 double Heliostat::getEfficiencyTotal(){return eff_data.eta_tot;}
@@ -45,8 +45,8 @@ double Heliostat::getZenithTrack(){return _zenith;}
 double Heliostat::getCollisionRadius(){return _r_collision;}
 double Heliostat::getArea(){return _area;}
 vector<Heliostat*> *Heliostat::getNeighborList(){return _neighbors;}
-vector<Point> *Heliostat::getCornerCoords(){return &_corners;}
-vector<Point> *Heliostat::getShadowCoords(){return &_shadow;}
+vector<sp_point> *Heliostat::getCornerCoords(){return &_corners;}
+vector<sp_point> *Heliostat::getShadowCoords(){return &_shadow;}
 matrix_t<double> *Heliostat::getMirrorShapeNormCoefObject(){return &_mu_MN;}
 matrix_t<double> *Heliostat::getMirrorShapeCoefObject(){return &_mu_M;}
 matrix_t<double> *Heliostat::getSunShapeCoefObject(){return &_mu_S;}
@@ -77,7 +77,7 @@ void Heliostat::setEfficiencyShading(double eta_shadow){eff_data.eta_shadow = et
 void Heliostat::setEfficiencyCloudiness(double eta_cloud){eff_data.eta_cloud = eta_cloud;}
 void Heliostat::setEfficiencyTotal(double eta_tot){eff_data.eta_tot = eta_tot;}
 void Heliostat::setRankingMetricValue(double rval){eff_data.rank_metric = rval;}
-void Heliostat::setAimPointFluxPlane(Point &Aim){_aim_fluxplane.Set( Aim.x, Aim.y, Aim.z );}
+void Heliostat::setAimPointFluxPlane(sp_point &Aim){_aim_fluxplane.Set( Aim.x, Aim.y, Aim.z );}
 void Heliostat::setAimPointFluxPlane(double x, double y, double z){ _aim_fluxplane.Set(x, y, z); }
 void Heliostat::setTrackVector(Vect &tr){ _track = tr; }	//Set the tracking vector
 void Heliostat::setTowerVector(Vect &tow){ _tower_vect = tow; } //Set the helio-tower vector
@@ -311,7 +311,7 @@ void Heliostat::setAimPoint(double x, double y, double z){
 	_aim_point.z = z;
 }
 
-void Heliostat::setAimPoint(Point &Aim){
+void Heliostat::setAimPoint(sp_point &Aim){
 	setAimPoint(Aim.x, Aim.y, Aim.z);
 }
 
@@ -376,7 +376,7 @@ void Heliostat::installPanels() {
 		_panels.resize(V->n_cant_y.val, V->n_cant_x.val);
         
 		//back-calculate the aim point
-        Point paim;     //heliostat aimpoint
+        sp_point paim;     //heliostat aimpoint
 		paim.x = _location.x + _slant*_tower_vect.i;
 		paim.y = _location.y + _slant*_tower_vect.j;
 		paim.z = _location.z + _slant*_tower_vect.k;
@@ -427,7 +427,7 @@ void Heliostat::installPanels() {
 					//Calculate the panel's actual x-y-z location w/r/t the global coordinates
 					double prad = sqrt(pow(x,2)+pow(y*sin(track_zen),2));	//the radius of the panel from the heliostat centroid
 					double theta_rot = atan2(x,y);	//angle of rotation of the centroid of the point w/r/t the heliostat coordinates
-                    Point pg;
+                    sp_point pg;
 					pg.x = _location.x + prad*sin(track_az+theta_rot);
 					pg.y = _location.y + prad*cos(track_az+theta_rot);
 					pg.z = _location.z + y*sin(track_zen);
@@ -593,7 +593,7 @@ void Heliostat::updateTrackVector(Vect &sunvect) {
 
 }
 
-void Heliostat::calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, Heliostat &H)
+void Heliostat::calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec, Heliostat &H)
 {
     /* 
     Given a particular aim point in space, translate the position to an aimpoint on the actual
@@ -601,7 +601,7 @@ void Heliostat::calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, He
     receiver, but the final aim point will be.
     */    
     
-    Point aimpos(aimpos_abs);    
+    sp_point aimpos(aimpos_abs);    
     PointVect NV;
 	Rec.CalculateNormalVector(*H.getLocation(), NV);	//Get the receiver normal vector
 

@@ -10,54 +10,54 @@
 using namespace std;
 
 // ----------- points and vectors -----------------------
-Point::Point(){};
+sp_point::sp_point(){};
 
-Point::Point( const Point &P )
+sp_point::sp_point( const sp_point &P )
     : x(P.x), y(P.y), z(P.z)
 {
 }
 
-Point::Point(double X, double Y, double Z)
+sp_point::sp_point(double X, double Y, double Z)
     : x(X), y(Y), z(Z)
 {
 }
 
-void Point::Set(double _x, double _y, double _z)
+void sp_point::Set(double _x, double _y, double _z)
 {
 	this->x = _x; 
 	this->y = _y; 
 	this->z = _z;
 }
 
-void Point::Set( Point &P )
+void sp_point::Set( sp_point &P )
 {
 	this->x = P.x; 
 	this->y = P.y;
 	this->z = P.z;
 }
 
-void Point::Add( Point &P )
+void sp_point::Add( sp_point &P )
 {
 	this->x+=P.x; 
 	this->y+=P.y; 
 	this->z+=P.z;
 }
 
-void Point::Add(double _x, double _y, double _z)
+void sp_point::Add(double _x, double _y, double _z)
 {
 	this->x += _x; 
 	this->y += _y; 
 	this->z += _z;
 }
 
-void Point::Subtract( Point &P )
+void sp_point::Subtract( sp_point &P )
 {
 	this->x += -P.x; 
 	this->y += -P.y; 
 	this->z += -P.z;
 }
 
-double& Point::operator [](const int &index){
+double& sp_point::operator [](const int &index){
 
     switch (index)
     {
@@ -71,12 +71,12 @@ double& Point::operator [](const int &index){
         return z;
         break;
     default:
-        throw spexception("Index out of range in Point()");
+        throw spexception("Index out of range in sp_point()");
         break;
     }
 };
 
-bool Point::operator <(const Point &p) const {
+bool sp_point::operator <(const sp_point &p) const {
 	return this->x < p.x || (this->x == p.x && this->y < p.y);
 };
 
@@ -157,7 +157,7 @@ PointVect::PointVect(double px, double py, double pz, double vi, double vj, doub
 	x=px; y=py; z=pz; i=vi; j=vj; k=vk;
 }
 
-Point *PointVect::point()
+sp_point *PointVect::point()
 {
 	p.Set(x, y, z); 
 	return &p;
@@ -693,7 +693,7 @@ double Toolbox::factorial_d(int x) {
 	return double(factorial(x));
 }
 
-bool Toolbox::pointInPolygon( const vector< Point > &poly, const Point &pt) {
+bool Toolbox::pointInPolygon( const vector< sp_point > &poly, const sp_point &pt) {
 	/* This subroutine takes a polynomial array containing L_poly vertices (X,Y,Z) and a 
 	single point (X,Y,Z) and determines whether the point lies within the polygon. If so, 
 	the algorithm returns TRUE (otherwise FALSE) */
@@ -704,7 +704,7 @@ bool Toolbox::pointInPolygon( const vector< Point > &poly, const Point &pt) {
 	else {return false;}
 }
 
-vector<Point> Toolbox::projectPolygon(vector<Point> &poly, PointVect &plane) {
+vector<sp_point> Toolbox::projectPolygon(vector<sp_point> &poly, PointVect &plane) {
 	/* Take a polygon with points in three dimensions (X,Y,Z) and project all points onto a plane defined 
 	by the point-vector {x,y,z,i,j,k}. The subroutine returns a new polygon with the adjusted points all
 	lying on the plane. The points are also assigned vector values corresponding to the normal vector
@@ -712,11 +712,11 @@ vector<Point> Toolbox::projectPolygon(vector<Point> &poly, PointVect &plane) {
 
 	//Declare variables
 	double dist, A, B, C, D;
-	Point pt; 
+	sp_point pt; 
 
 	//Declare a new polygon of type vector
 	int Lpoly = (int)poly.size(); 
-	vector< Point > FPoly(Lpoly);
+	vector< sp_point > FPoly(Lpoly);
 	
 
 	//Determine the coefficients for the equation of the plane {A,B,C,D}
@@ -737,7 +737,7 @@ vector<Point> Toolbox::projectPolygon(vector<Point> &poly, PointVect &plane) {
 	return FPoly;
 }
 
-int Toolbox::polywind( const vector<Point> &vt, const Point &pt) {
+int Toolbox::polywind( const vector<sp_point> &vt, const sp_point &pt) {
 	/*
 	Determine the winding number of a polygon with respect to a point. This helps
 	calculate the inclusion/exclusion of the point inside the polygon. If the point is
@@ -817,7 +817,7 @@ Vect Toolbox::crossprod(const Vect &A, const Vect &B) {
 	return res;
 };
 
-double Toolbox::crossprod(const Point &O, const Point &A, const Point &B)
+double Toolbox::crossprod(const sp_point &O, const sp_point &A, const sp_point &B)
 {
 	//2D cross-product of vectors OA and OB. 
 	return (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x);
@@ -837,7 +837,7 @@ double Toolbox::dotprod(const Vect &A, const Vect &B)
 	return (A.i * B.i + A.j * B.j + A.k * B.k); 
 }
 
-double Toolbox::dotprod(const Vect &A, const Point &B)
+double Toolbox::dotprod(const Vect &A, const sp_point &B)
 {
 	return (A.i * B.x + A.j * B.y + A.k * B.z);
 }
@@ -847,7 +847,7 @@ double Toolbox::vectmag(const Vect &A)
 	return sqrt(pow(A.i,2) + pow(A.j,2) + pow(A.k,2));
 }
 
-double Toolbox::vectmag(const Point &P){
+double Toolbox::vectmag(const sp_point &P){
 	return sqrt( pow(P.x,2) + pow(P.y,2) + pow(P.z,3) );
 }
 
@@ -862,13 +862,13 @@ double Toolbox::vectangle(const Vect &A, const Vect&B)
 }
 
 void Toolbox::rotation(double theta, int axis, Vect &V){
-	Point p;
+	sp_point p;
 	p.Set(V.i, V.j, V.k);
 	Toolbox::rotation(theta, axis, p);
 	V.Set(p.x, p.y, p.z);
 }
 
-void Toolbox::rotation(double theta, int axis, Point &P){
+void Toolbox::rotation(double theta, int axis, sp_point &P){
 	/*
 	This method takes a point, a rotation angle, and the axis of rotation and 
 	rotates the point about the origin in the specified direction. 
@@ -947,11 +947,11 @@ void Toolbox::rotation(double theta, int axis, Point &P){
 
 }
 
-bool Toolbox::plane_intersect(Point &P, Vect &N, Point &C, Vect &L, Point &Int){
+bool Toolbox::plane_intersect(sp_point &P, Vect &N, sp_point &C, Vect &L, sp_point &Int){
 	/*
 	Determine the intersection point of a line and a plane. The plane is 
 	defined by:
-	P	| Point on the plane
+	P	| sp_point on the plane
 	N	| Normal unit vector to the plane
 	The line/vector is defined by:
 	C	| (x,y,z) coordinate of the beginning of the line
@@ -993,7 +993,7 @@ bool Toolbox::plane_intersect(Point &P, Vect &N, Point &C, Vect &L, Point &Int){
 
 }
 
-bool Toolbox::line_norm_intersect(Point &line_p0, Point &line_p1, Point &P, Point &I, double &rad){
+bool Toolbox::line_norm_intersect(sp_point &line_p0, sp_point &line_p1, sp_point &P, sp_point &I, double &rad){
 	/* 
 	Note: 2D implementation (no Z component)
 
@@ -1116,7 +1116,7 @@ void Toolbox::ellipse_bounding_box(double &A, double &B, double &phi, double sid
 
 }
 
-void Toolbox::convex_hull(std::vector<Point> &points, std::vector<Point> &hull)
+void Toolbox::convex_hull(std::vector<sp_point> &points, std::vector<sp_point> &hull)
 {
 	/* 
 	Returns a list of points on the convex hull in counter-clockwise order.
@@ -1126,10 +1126,10 @@ void Toolbox::convex_hull(std::vector<Point> &points, std::vector<Point> &hull)
 
 	*/
 	int n = points.size(), k = 0;
-	vector<Point> H(2*n);
+	vector<sp_point> H(2*n);
 
     //copy points
-    vector<Point> pointscpy;
+    vector<sp_point> pointscpy;
     pointscpy.reserve( points.size() );
     for(size_t i=0; i<points.size(); i++)
         pointscpy.push_back( points.at(i) );
@@ -1155,10 +1155,10 @@ void Toolbox::convex_hull(std::vector<Point> &points, std::vector<Point> &hull)
 	hull = H;
 }
 
-double Toolbox::area_polygon(std::vector<Point> &points){
+double Toolbox::area_polygon(std::vector<sp_point> &points){
 	/* 
 
-	INPUT: vector<Point> a list of 'Point' objects.
+	INPUT: vector<sp_point> a list of 'sp_point' objects.
 	OUTPUT: Return the total area
 
 	ASSUME: we care about the area projected into the Z plane, therefore only x,y coordinates are considered.
@@ -1192,7 +1192,7 @@ double Toolbox::area_polygon(std::vector<Point> &points){
 
 }
 
-typedef vector<Point> Poly;  //Local definitino of polygon, used only in polyclip
+typedef vector<sp_point> Poly;  //Local definitino of polygon, used only in polyclip
 class polyclip  
 {
     /*
@@ -1247,47 +1247,47 @@ public:
     }
 
 private:
-    Point cp1, cp2;
+    sp_point cp1, cp2;
     Poly outputList, inputList;
-    Point s, e;
+    sp_point s, e;
 
-    bool inside(Point *P){
+    bool inside(sp_point *P){
         return (cp2.x - cp1.x)*(P->y - cp1.y) > (cp2.y - cp1.y)*(P->x - cp1.x);
     };
 
-    Point computeIntersection()
+    sp_point computeIntersection()
     {
-        Point dc = cp1;
+        sp_point dc = cp1;
         dc.Subtract(cp2);
 
-        Point dp = s;
+        sp_point dp = s;
         dp.Subtract(e);
 
         double n1 = cp1.x * cp2.y - cp1.y * cp2.x;
         double n2 = s.x * e.y - s.y * e.x;
         double n3 = 1./ (dc.x * dp.y - dc.y * dp.x);
 
-        Point ret;
+        sp_point ret;
         ret.Set((n1*dp.x - n2*dc.x) * n3, (n1*dp.y - n2*dc.y)*n3, 0.);
 
         return ret;
     }
  };
 
-vector<Point> Toolbox::clipPolygon(std::vector<Point> &A, std::vector<Point> &B)     
+vector<sp_point> Toolbox::clipPolygon(std::vector<sp_point> &A, std::vector<sp_point> &B)     
 {
     /* 
     Compute the polygon that forms the intersection of two polygons subjectPolygon 
     and clipPolygon. (clipPolygon clips subjectPolygon).
 
-    This only considers 2D polygons -- vertices X and Y in "Point" structure!
+    This only considers 2D polygons -- vertices X and Y in "sp_point" structure!
     */
     polyclip P;
 
     return P.clip(A,B);
 }
 
-void Toolbox::BezierQ(Point &start, Point &control, Point &end, double t, Point &result)
+void Toolbox::BezierQ(sp_point &start, sp_point &control, sp_point &end, double t, sp_point &result)
 {
     /* 
     Locate a point 'result' along a quadratic Bezier curve.
@@ -1300,7 +1300,7 @@ void Toolbox::BezierQ(Point &start, Point &control, Point &end, double t, Point 
 
 }
 
-void Toolbox::BezierC(Point &start, Point &control1, Point &control2, Point &end, double t, Point &result)
+void Toolbox::BezierC(sp_point &start, sp_point &control1, sp_point &control2, sp_point &end, double t, sp_point &result)
 {
     /* 
     Locate a point 'result' along a cubic Bezier curve.
@@ -1314,7 +1314,7 @@ void Toolbox::BezierC(Point &start, Point &control1, Point &control2, Point &end
 
 }
 
-void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, bool clear_poly)     //construct a polygon from an SVG path
+void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, bool clear_poly)     //construct a polygon from an SVG path
 {
     /* 
     The following commands are available for path data:
@@ -1387,7 +1387,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 //pick up and move cursor (reset last position)
                 x0 += points.front().at(0);
                 y0 += points.front().at(1);
-                polygon.push_back( Point(x0, -y0, 0.) );
+                polygon.push_back( sp_point(x0, -y0, 0.) );
 
                 if( npt > 1 )  //any subsequent points are assumed to be 'l'
                 {
@@ -1395,7 +1395,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                     {
                         x0 += points.at(j).at(0);
                         y0 += points.at(j).at(1);
-                        polygon.push_back( Point(x0, -y0, 0.) );
+                        polygon.push_back( sp_point(x0, -y0, 0.) );
                     }
                 }
 
@@ -1405,7 +1405,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 //pick up and move cursor (reset last position)
                 x0 = points.front().at(0);
                 y0 = points.front().at(1);
-                polygon.push_back( Point(x0, -y0, 0.) );
+                polygon.push_back( sp_point(x0, -y0, 0.) );
 
                 if( npt > 1 )  //any subsequent points are assumed to be 'l'
                 {
@@ -1413,7 +1413,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                     {
                         x0 += points.at(j).at(0);
                         y0 += points.at(j).at(1);
-                        polygon.push_back( Point(x0, -y0, 0.) );
+                        polygon.push_back( sp_point(x0, -y0, 0.) );
                     }
                 }
 
@@ -1425,7 +1425,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 {
                     x0 += points.at(j).at(0);
                     y0 += points.at(j).at(1);
-                    polygon.push_back( Point(x0, -y0, 0.) );
+                    polygon.push_back( sp_point(x0, -y0, 0.) );
                 }
                 break;
 
@@ -1436,7 +1436,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 {
                     x0 = points.at(j).at(0);
                     y0 = points.at(j).at(1);
-                    polygon.push_back( Point(x0, -y0, 0.) );
+                    polygon.push_back( sp_point(x0, -y0, 0.) );
                 }
                 break;
 
@@ -1446,7 +1446,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 for(size_t j=0; j<npt; j++)
                 {
                     x0 += points.at(j).front();
-                    polygon.push_back( Point(x0, -y0, 0.) );
+                    polygon.push_back( sp_point(x0, -y0, 0.) );
                 }
                 break;
 
@@ -1456,7 +1456,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 for(size_t j=0; j<npt; j++)
                 {
                     x0 = points.at(j).front();
-                    polygon.push_back( Point(x0, -y0, 0.) );
+                    polygon.push_back( sp_point(x0, -y0, 0.) );
                 }
                 break;
 
@@ -1466,7 +1466,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 for(size_t j=0; j<npt; j++)
                 {
                     y0 += points.at(j).front();
-                    polygon.push_back( Point(x0, -y0, 0.) );
+                    polygon.push_back( sp_point(x0, -y0, 0.) );
                 }
                 break;
 
@@ -1476,7 +1476,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                 for(size_t j=0; j<npt; j++)
                 {
                     y0 = points.at(j).front();
-                    polygon.push_back( Point(x0, -y0, 0.) );
+                    polygon.push_back( sp_point(x0, -y0, 0.) );
                 }
                 break;
 
@@ -1495,7 +1495,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
 
                 for(size_t j=0; j<npt; j+=2)  //jump through in pairs
                 {
-                    Point start(x0, y0, 0.);
+                    sp_point start(x0, y0, 0.);
 
                     if( move == 'q' ) //if relative, set the relative adder to the start point location
                     {
@@ -1503,13 +1503,13 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
                         ycond = start.y;
                     }
 
-                    Point control( points.at(j).at(0) + xcond, points.at(j).at(1) + ycond, 0. );
-                    Point end( points.at(j+1).at(0) + xcond, points.at(j+1).at(1) + ycond, 0. );
+                    sp_point control( points.at(j).at(0) + xcond, points.at(j).at(1) + ycond, 0. );
+                    sp_point end( points.at(j+1).at(0) + xcond, points.at(j+1).at(1) + ycond, 0. );
 
                     for(int k=0; k<nbz; k++)
                     {
                         double t = (k+1)/(double)(nbz+1);
-                        Point result;
+                        sp_point result;
                         Toolbox::BezierQ(start, control, end, t, result);
                         result.y = -result.y;
                         polygon.push_back( result );
@@ -1542,21 +1542,21 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
 
                 for(size_t j=0; j<npt; j+=3)  //jump through in pairs
                 {
-                    Point start = polygon.back();
+                    sp_point start = polygon.back();
                     if( move == 'C' ) //if relative, set the relative adder to the start point location
                     {
                         xcond = start.x;
                         ycond = start.y;
                     }
 
-                    Point control1( points.at(j).at(0) + xcond, points.at(j).at(1) + ycond, 0. );
-                    Point control2( points.at(j+1).at(0) + xcond, points.at(j+1).at(1) + ycond, 0. );
-                    Point end( points.at(j+2).at(0) + xcond, points.at(j+2).at(1) + ycond, 0. );
+                    sp_point control1( points.at(j).at(0) + xcond, points.at(j).at(1) + ycond, 0. );
+                    sp_point control2( points.at(j+1).at(0) + xcond, points.at(j+1).at(1) + ycond, 0. );
+                    sp_point end( points.at(j+2).at(0) + xcond, points.at(j+2).at(1) + ycond, 0. );
 
                     for(int k=0; k<nbz; k++)
                     {
                         double t = (k+1)/(double)(nbz+2);
-                        Point result;
+                        sp_point result;
                         Toolbox::BezierC(start, control1, control2, end, t, result);
 
                         polygon.push_back( result );
@@ -1589,13 +1589,13 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< Point > &polygon, boo
 }
 
 
-Point Toolbox::rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point &pt){
+sp_point Toolbox::rotation_arbitrary(double theta, Vect &axis, sp_point &axloc, sp_point &pt){
 	/* 
 	Rotation of a point 'pt' about an arbitrary axis with direction 'axis' centered at point 'axloc'. 
 	The point is rotated through 'theta' radians.
 	http://inside.mines.edu/~gmurray/ArbitraryAxisRotation/
 	
-	Returns the rotated Point location
+	Returns the rotated sp_point location
 	*/
 
 	double
@@ -1608,7 +1608,7 @@ Point Toolbox::rotation_arbitrary(double theta, Vect &axis, Point &axloc, Point 
 		u = axis.i,		//Direction of the axis that we're rotating about
 		v = axis.j,
 		w = axis.k;
-	Point fin;
+	sp_point fin;
 
 	double 
 		sinth = sin(theta),
@@ -1653,13 +1653,13 @@ double Toolbox::ZRotationTransform(Vect &normal_vect){
 	modax.Set( cos(alpha), 0., -sin(alpha) );
 
 	//Rotation references - axis point
-	Point axpos;
+	sp_point axpos;
 	axpos.Set(0.,0.,0.);	//Set as origin
-	//Point to rotate
-	Point pbase;
+	//sp_point to rotate
+	sp_point pbase;
 	pbase.Set(0., -1., 0.);	//lower edge of heliostat
 	//Rotated point
-	Point prot = Toolbox::rotation_arbitrary(beta, modax, axpos, pbase);
+	sp_point prot = Toolbox::rotation_arbitrary(beta, modax, axpos, pbase);
 
 	//Azimuth/elevation reference vector (vector normal to where the base of the heliostat should be)
 	Vect azelref;
