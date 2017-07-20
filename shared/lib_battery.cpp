@@ -280,6 +280,9 @@ void capacity_kibam_t::parameter_compute()
 
 void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 {
+	if (fabs(I) < tolerance)
+		I = 0;
+
 	_DOD_prev = _DOD;							 
 	_I_loss = 0.;
 	_I = I;
@@ -717,7 +720,7 @@ void lifetime_t::copy(lifetime_t * lifetime)
 	_replacement_scheduled = lifetime->_replacement_scheduled;
 }
 double lifetime_t::capacity_percent(){ return _q; }
-void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery, bool & firstStep)
+void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_battery)
 {
 	double dq_cycle = _lifetime_cycle->totalCapacityDegraded();
 	double q_last = _q;
@@ -726,7 +729,7 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 	{
 		if (capacity->chargeChanged())
 			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->prev_DOD()));
-		else if (firstStep)
+		else if (idx==0)
 			dq_cycle = _lifetime_cycle->runCycleLifetime((capacity->DOD()));
 		
 		double dq_calendar = _lifetime_calendar->runLifetimeCalendarModel(idx, T_battery, capacity->SOC()*0.01);
@@ -740,9 +743,6 @@ void lifetime_t::runLifetimeModels(size_t idx, capacity_t * capacity, double T_b
 	// capacity cannot increase
 	if (_q > q_last)
 		_q = q_last;
-
-	// first step happens exactly once (even if iterative)
-	firstStep = false;
 }
 
 bool lifetime_t::check_replaced()
@@ -1334,7 +1334,6 @@ battery_t::battery_t(const battery_t& battery)
 	_battery_chemistry = battery._battery_chemistry;
 	_dt_hour = battery._dt_hour;
 	_dt_min = battery._dt_min;
-	_firstStep = battery._firstStep;
 }
 // copy from battery to this
 void battery_t::copy(const battery_t * battery)
@@ -1348,7 +1347,6 @@ void battery_t::copy(const battery_t * battery)
 	_battery_chemistry = battery->_battery_chemistry;
 	_dt_hour = battery->_dt_hour;
 	_dt_min = battery->_dt_min;
-	_firstStep = battery->_firstStep;
 }
 
 void battery_t::delete_clone()
@@ -1370,7 +1368,6 @@ void battery_t::initialize(capacity_t *capacity, voltage_t * voltage, lifetime_t
 	_voltage = voltage;
 	_thermal = thermal;
 	_losses = losses;
-	_firstStep = true;
 }
 
 void battery_t::run(size_t idx, double I)
@@ -1399,7 +1396,7 @@ void battery_t::runVoltageModel()
 
 void battery_t::runLifetimeModel(size_t idx)
 {
-	_lifetime->runLifetimeModels(idx, capacity_model(), thermal_model()->T_battery(), _firstStep);
+	_lifetime->runLifetimeModels(idx, capacity_model(), thermal_model()->T_battery());
 	if (_lifetime->check_replaced())
 	{
 		_capacity->replace_battery();

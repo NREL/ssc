@@ -451,7 +451,7 @@ public:
 	// copy lifetime to this
 	void copy(lifetime_t *);
 
-	void runLifetimeModels(size_t idx, capacity_t *, double T_battery, bool & firstStep);
+	void runLifetimeModels(size_t idx, capacity_t *, double T_battery);
 
 	double capacity_percent();
 
@@ -619,7 +619,6 @@ private:
 	int _battery_chemistry;
 	double _dt_hour;			// [hr] - timestep
 	double _dt_min;				// [min] - timestep
-	bool _firstStep;
 	size_t _last_idx;
 };
 
