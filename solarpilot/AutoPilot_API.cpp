@@ -583,8 +583,7 @@ bool AutoPilot::Setup(var_map &V, bool for_optimize)
 	//if a layout is provided in the sp_layout structure, go ahead and create the geometry here.
     if( ! V.sf.layout_data.val.empty() )
     {
-		WeatherData empty;
-		_SF->PrepareFieldLayout(*_SF, empty, true);	//Run the layout method in refresh_only mode
+		_SF->PrepareFieldLayout(*_SF, 0, true);	//Run the layout method in refresh_only mode
         Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
 		_SF->calcHeliostatShadows(sun);
         double area = V.land.land_area.Val();  //acre
@@ -2249,7 +2248,7 @@ bool AutoPilot_MT::CreateLayout(sp_layout &layout, bool do_post_process)
 
 			//Prepare the master solar field object for layout simulation
 			WeatherData wdata;
-			bool full_sim = _SF->PrepareFieldLayout(*_SF, wdata);
+			bool full_sim = _SF->PrepareFieldLayout(*_SF, &wdata);
 		
 			//If full simulation is required...
 			if(full_sim){

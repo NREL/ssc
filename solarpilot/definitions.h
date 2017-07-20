@@ -336,11 +336,11 @@ struct var_heliostat
 struct var_land
 {
 	spvar< std::string > class_name; 		//[none] Class name
-	spvar< std::vector<std::vector<Point> > > exclusions; 		//[] Vector of arrays that specify the regions of land to exclude in the heliostat layout
+	spvar< std::vector<std::vector<sp_point> > > exclusions; 		//[] Vector of arrays that specify the regions of land to exclude in the heliostat layout
 	spvar< double > import_tower_lat; 		//[deg] Imported land boundary tower latitude
 	spvar< double > import_tower_lon; 		//[deg] Imported land boundary tower longitude
 	spvar< bool > import_tower_set; 		//[none] Has the tower location been set for imported land geometries?
-	spvar< std::vector<std::vector<Point> > > inclusions; 		//[] Vector of arrays that specify the regions of land to include in the heliostat layout
+	spvar< std::vector<std::vector<sp_point> > > inclusions; 		//[] Vector of arrays that specify the regions of land to include in the heliostat layout
 	spvar< bool > is_bounds_array; 		//[none] Land boundary is specified by points array
 	spvar< bool > is_bounds_fixed; 		//[none] Land boundary has fixed limits (not more than | not less than)
 	spvar< bool > is_bounds_scaled; 		//[none] Land boundary scales with tower hight value

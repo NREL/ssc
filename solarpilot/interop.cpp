@@ -693,9 +693,9 @@ void interop::UpdateMapLayoutData(var_map &V, Hvector *heliostats){
 		H = heliostats->at(i);	//shorthand the pointer
 		if(! H->getInLayout()) continue;
 
-		Point *loc = H->getLocation();
+		sp_point *loc = H->getLocation();
 		Vect *cant = H->getCantVector();
-		Point *aim = H->getAimPoint();
+		sp_point *aim = H->getAimPoint();
 
 		//Save the layout to the variable maps
 		//Take special care for user-specified values vs. program calculated values.
