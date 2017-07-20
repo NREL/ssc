@@ -1826,7 +1826,7 @@ std::string csp_dispatch_opt::write_ampl()
         {
             write_ampl_variable_matrix( fout, outputs.q_sfavail_expected, "Qin" );  //solar field avail energy 
             write_ampl_variable_matrix( fout, forecast_outputs.price_scenarios, "P" ); //price multiplier
-            write_ampl_variable_matrix( fout, outputs.q_sfavail_expected, "etaamb" ); //power block ambient adjustment
+            write_ampl_variable_matrix( fout, outputs.eta_pb_expected, "etaamb" ); //power block ambient adjustment
             write_ampl_variable_matrix( fout, outputs.w_condf_expected, "etac" ); //condenser parasitic loss coefficient
             write_ampl_variable_matrix( fout, outputs.wnet_lim_min, "wnet_lim_min" ); //cycle net production lower limit
             write_ampl_variable_matrix( fout, outputs.delta_rs, "delta_rs" ); //receiver expected startup timestep fraction
@@ -1835,7 +1835,7 @@ std::string csp_dispatch_opt::write_ampl()
         {
             write_ampl_variable_array( fout, outputs.q_sfavail_expected, "Qin" );  //solar field avail energy 
             write_ampl_variable_array( fout, forecast_outputs.price_scenarios, "P" ); //price multiplier
-            write_ampl_variable_array( fout, outputs.q_sfavail_expected, "etaamb" ); //power block ambient adjustment
+            write_ampl_variable_array( fout, outputs.eta_pb_expected, "etaamb" ); //power block ambient adjustment
             write_ampl_variable_array( fout, outputs.w_condf_expected, "etac" ); //condenser parasitic loss coefficient
             write_ampl_variable_array( fout, outputs.wnet_lim_min, "wnet_lim_min" ); //cycle net production lower limit
             write_ampl_variable_array( fout, outputs.delta_rs, "delta_rs" ); //receiver expected startup timestep fraction
