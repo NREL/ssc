@@ -94,7 +94,7 @@ public:
 		// cycle_key == 1: NREL's NGCC model
 		// cycle_key == 2: GE's NGCC model
 
-		if( cycle_key > 2 || cycle_key < 1 )		// Check that cycle key is valid
+		if( cycle_key != E_nrel_hp_evap )		// Check that cycle key is valid
 			return false;
 
 		m_cycle_key = cycle_key;
@@ -135,13 +135,6 @@ public:
 			return get_performance_results( &m_solar_injection_t );
 		case E_solar_extraction_t:
 			return get_performance_results( &m_solar_extraction_t );
-		
-		// 2.10.15 twn: Not using enthalpy currently in performance calcs - GE injection enthalpy is representing saturated, not superheater, steam and must be fixed if used in future
-		// case E_solar_extraction_h:
-		// 	return get_performance_results( &m_solar_extraction_h );
-		// case E_solar_injection_h:
-		// 	return get_performance_results( &m_solar_injection_h );
-		
 		case E_plant_power_net:
 			return get_performance_results( &m_plant_power_net );
 		case E_plant_fuel_mass:
@@ -170,7 +163,7 @@ public:
 	enum iscc_cycle_config
 	{
 		E_nrel_hp_evap = 1,
-		E_ge	
+		//E_ge	
 	};
 
 };
