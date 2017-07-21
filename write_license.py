@@ -40,7 +40,8 @@ for folder in folders:
                 print("File: " + f + " failed!")
                 time.sleep(2)
                 outfile.close()
-                os.remove(tmpfile)
+                if os.path.exists(tmpfile):
+                    os.remove(tmpfile)
     os.chdir(top_dir)
 
 
