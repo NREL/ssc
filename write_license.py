@@ -1,6 +1,7 @@
 import os
 import shutil
 import codecs
+import time
 
 license_file = "LICENSE.txt"
 folders = ['sdktool', 'shared', 'solarpilot', 'ssc', 'tcs', 'tcsconsole']
@@ -26,21 +27,20 @@ for folder in folders:
                     for f in [license_path, file]:
                         if f == file:
                             print("Writing: " + file)
-
-                            with codecs.open(f, 'r', encoding='utf-8') as infile:
-                                for line in infile:
-                                    if f == license_path:
-                                        outfile.write(line.rstrip('\n'))
-                                    else:
-                                        outfile.write(line)
-                                outfile.write('\n')
+                        with codecs.open(f, 'r', encoding='utf-8') as infile:
+                            for line in infile:
+                                if f == license_path:
+                                    outfile.write(line.rstrip('\n'))
+                                else:
+                                    outfile.write(line)
+                            outfile.write('\n')
                 shutil.copyfile(tmpfile, file)
                 os.remove(tmpfile)
             except (UnicodeDecodeError, PermissionError):
                 print("File: " + f + " failed!")
+                time.sleep(2)
+                tmpfile.close()
                 os.remove(tmpfile)
-
-
     os.chdir(top_dir)
 
 
