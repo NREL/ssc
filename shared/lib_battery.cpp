@@ -71,6 +71,7 @@ capacity_t::capacity_t(double q, double SOC_max, double SOC_min)
 
 	// Initialize charging states
 	_prev_charge = DISCHARGE;
+	_charge = DISCHARGE;
 	_chargeChange = false;
 }
 void capacity_t::copy(capacity_t * capacity)
@@ -90,22 +91,23 @@ void capacity_t::copy(capacity_t * capacity)
 }
 void capacity_t::check_charge_change()
 {
-	int charging = NO_CHARGE;
+	_charge = NO_CHARGE;
 
 	// charge state 
 	if (_I < 0)
-		charging = CHARGE;
+		_charge = CHARGE;
 	else if (_I > 0)
-		charging = DISCHARGE;
+		_charge = DISCHARGE;
 
 	// Check if charge changed 
 	_chargeChange = false;
-	if ((charging != _prev_charge) && (charging != NO_CHARGE) && (_prev_charge != NO_CHARGE)  )
+	if ((_charge != _prev_charge) && (_charge != NO_CHARGE) && (_prev_charge != NO_CHARGE))
 	{
 		_chargeChange = true;
-		_prev_charge = charging;
+		_prev_charge = _charge;
 	}
 }
+int capacity_t::charge_operation(){ return _charge; }
 bool capacity_t::check_SOC(double q0_old)
 {
 	bool SOC_violated = true;
@@ -120,7 +122,7 @@ bool capacity_t::check_SOC(double q0_old)
 		SOC_violated = false;
 
 	_I = -(_q0 - q0_old) / _dt_hour;
-	if (fabs(_I) < tolerance)
+	if (fabs(_I) < low_tolerance)
 	{
 		_I = 0;
 		_q0 = q0_old;
@@ -280,7 +282,7 @@ void capacity_kibam_t::parameter_compute()
 
 void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 {
-	if (fabs(I) < tolerance)
+	if (fabs(I) < low_tolerance)
 		I = 0;
 
 	_DOD_prev = _DOD;							 
@@ -1290,12 +1292,16 @@ double thermal_t::capacity_percent()
 /*
 Define Losses
 */
-losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, double_vec batt_system_losses)
+losses_t::losses_t(lifetime_t * lifetime, thermal_t * thermal, capacity_t* capacity, int loss_choice, double_vec charge_loss, double_vec discharge_loss, double_vec idle_loss, double_vec losses)
 {
 	_lifetime = lifetime;
 	_thermal = thermal;
 	_capacity = capacity;
-	_system_losses = batt_system_losses;
+	_charge_loss = charge_loss;
+	_discharge_loss = discharge_loss;
+	_idle_loss = idle_loss;
+	_full_loss = losses;
+	_loss_mode = loss_choice;
 	_nCycle = 0;
 }
 losses_t * losses_t::clone(){ return new losses_t(*this); }
@@ -1304,14 +1310,30 @@ void losses_t::copy(losses_t * losses)
 	_lifetime = losses->_lifetime;
 	_thermal = losses->_thermal;
 	_capacity = losses->_capacity;
-	_system_losses = losses->_system_losses;
+	_charge_loss = losses->_charge_loss;
+	_discharge_loss = losses->_discharge_loss;
+	_idle_loss = losses->_idle_loss;
+	_full_loss = losses->_full_loss;
+	_loss_mode = losses->_loss_mode;
+	_nCycle = losses->_nCycle;
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
-void losses_t::run_losses(double dt_hour)
+void losses_t::run_losses(double dt_hour, int idx)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
+
+	// update system losses depending on user input
+	if (_loss_mode == losses_t::MONTHLY)
+	{
+		if (_capacity->charge_operation() == capacity_t::CHARGE)
+			_full_loss[idx] = _charge_loss[idx];
+		if (_capacity->charge_operation() == capacity_t::DISCHARGE)
+			_full_loss[idx] = _discharge_loss[idx];
+		if (_capacity->charge_operation() == capacity_t::NO_CHARGE)
+			_full_loss[idx] = _idle_loss[idx];
+	}
 }
 /* 
 Define Battery 
@@ -1322,6 +1344,7 @@ battery_t::battery_t(double dt_hour, int battery_chemistry)
 	_dt_hour = dt_hour;
 	_dt_min = dt_hour * 60;
 	_battery_chemistry = battery_chemistry;
+	_last_idx = 0;
 }
 
 battery_t::battery_t(const battery_t& battery)
@@ -1334,6 +1357,7 @@ battery_t::battery_t(const battery_t& battery)
 	_battery_chemistry = battery._battery_chemistry;
 	_dt_hour = battery._dt_hour;
 	_dt_min = battery._dt_min;
+	_last_idx = battery._last_idx;
 }
 // copy from battery to this
 void battery_t::copy(const battery_t * battery)
@@ -1347,6 +1371,7 @@ void battery_t::copy(const battery_t * battery)
 	_battery_chemistry = battery->_battery_chemistry;
 	_dt_hour = battery->_dt_hour;
 	_dt_min = battery->_dt_min;
+	_last_idx = battery->_last_idx;
 }
 
 void battery_t::delete_clone()
@@ -1406,9 +1431,9 @@ void battery_t::runLifetimeModel(size_t idx)
 }
 void battery_t::runLossesModel(size_t idx)
 {
-	if (idx > _last_idx)
+	if (idx > _last_idx || idx == 0)
 	{
-		_losses->run_losses(_dt_hour);
+		_losses->run_losses(_dt_hour, idx);
 		_last_idx = idx;
 	}
 }

@@ -202,7 +202,10 @@ public:
 
 		batt_vars->batt_loss_choice = losses_t::MONTHLY;
 		batt_vars->batt_losses = batt_losses;
-		batt_vars->batt_losses_monthly = batt_losses_monthly;
+		batt_vars->batt_losses_charging = batt_losses_monthly;
+		batt_vars->batt_losses_discharging = batt_losses_monthly;
+		batt_vars->batt_losses_idle = batt_losses_monthly;
+
 
 		// replacement
 		batt_vars->batt_replacement_capacity = 0.;

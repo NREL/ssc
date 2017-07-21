@@ -29,7 +29,9 @@ var_info vtab_battery_inputs[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_ac_dc_efficiency",                      "Inverter AC to battery DC efficiency",                    "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "batt_losses",                                "Battery system losses at each timestep",                  "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "batt_losses_monthly",                        "Battery system losses for each timestep in month",        "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "batt_losses_charging",                       "Battery system losses when charging",                     "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "batt_losses_discharging",                    "Battery system losses when discharging",                  "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "batt_losses_idle",                           "Battery system losses when idle",                         "kW",       "",                     "Battery",       "?=0",                        "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "batt_loss_choice",                           "Loss power input option",                                 "0/1",      "",                     "Battery",       "?=0",                        "",                             "" },
 
 
@@ -261,7 +263,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_dc_dc_bms_efficiency = cm.as_double("batt_dc_dc_efficiency");
 			batt_vars->pv_dc_dc_mppt_efficiency = 100. - cm.as_double("dcoptimizer_loss");
 
-			batt_vars->batt_losses_monthly = cm.as_doublevec("batt_losses_monthly");
+			batt_vars->batt_losses_charging = cm.as_doublevec("batt_losses_charging");
+			batt_vars->batt_losses_discharging = cm.as_doublevec("batt_losses_discharging");
+			batt_vars->batt_losses_idle = cm.as_doublevec("batt_losses_idle");
 			batt_vars->batt_losses = cm.as_doublevec("batt_losses");
 
 			batt_vars->inverter_model = cm.as_integer("inverter_model");
@@ -577,23 +581,41 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	}
 
 	// accumulate monthly losses
+	double_vec batt_charging_losses;
+	double_vec batt_discharging_losses;
+	double_vec batt_idle_losses;
 	double_vec batt_system_losses;
+
 	if (batt_vars->batt_loss_choice == losses_t::MONTHLY)
 	{
-		double_vec monthly_loss = batt_vars->batt_losses_monthly;
-		double loss = monthly_loss[0];
+		double_vec charging_loss = batt_vars->batt_losses_charging;
+		double_vec discharging_loss = batt_vars->batt_losses_discharging;
+		double_vec idling_loss = batt_vars->batt_losses_idle;
+
+		double charge_loss = charging_loss[0];
+		double discharge_loss = discharging_loss[0];
+		double idle_loss = idling_loss[0];
+
 		for (size_t m = 0; m != 12; m++)
 		{
-
-			if (monthly_loss.size() > 1)
-				loss = monthly_loss[m];
+			if (charging_loss.size() > 1)
+				charge_loss = charging_loss[m];
+			if (discharging_loss.size() > 1)
+				discharge_loss = discharging_loss[m];
+			if (idling_loss.size() > 1)
+				idle_loss = idling_loss[m];
 
 			for (size_t d = 0; d != util::days_in_month(m); d++)
 			{
 				for (size_t h = 0; h != 24; h++)
 				{
 					for (size_t s = 0; s != step_per_hour; s++)
-						batt_system_losses.push_back(loss);
+					{
+						batt_charging_losses.push_back(charge_loss);
+						batt_discharging_losses.push_back(discharge_loss);
+						batt_idle_losses.push_back(idle_loss);
+						batt_system_losses.push_back(0.);
+					}
 				}
 			}
 		}
@@ -603,6 +625,10 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		lifetime_model,
 		thermal_model,
 		capacity_model,
+		batt_vars->batt_loss_choice,
+		batt_charging_losses,
+		batt_discharging_losses,
+		batt_idle_losses,
 		batt_system_losses);
 
 	battery_model->initialize(capacity_model, voltage_model, lifetime_model, thermal_model, losses_model);

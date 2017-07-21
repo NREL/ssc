@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <algorithm>
 
+const double low_tolerance = 0.01;
 const double tolerance = 0.001;
 
 typedef std::vector<double> double_vec;
@@ -75,6 +76,9 @@ public:
 	double I();
 	bool chargeChanged();
 	double I_loss();
+	int charge_operation();
+
+	enum { CHARGE, NO_CHARGE, DISCHARGE };
 
 protected:
 	double _q0;  // [Ah] - Total capacity at timestep 
@@ -90,8 +94,7 @@ protected:
 	double _dt_hour; // [hr] - Timestep in hours
 	bool _chargeChange; // [true/false] - indicates if charging state has changed since last step
 	int _prev_charge; // {CHARGE, NO_CHARGE, DISCHARGE}
-
-	enum {CHARGE, NO_CHARGE, DISCHARGE};
+	int _charge; // {CHARGE, NO_CHARGE, DISCHARGE}
 };
 
 /*
@@ -530,7 +533,7 @@ Losses Base class
 class losses_t
 {
 public:
-	losses_t(lifetime_t *, thermal_t *, capacity_t*, double_vec batt_system_losses);
+	losses_t(lifetime_t *, thermal_t *, capacity_t*, int loss_mode, double_vec batt_loss_charge, double_vec batt_loss_discharge, double_vec batt_loss_idle, double_vec batt_loss);
 
 	// deep copy
 	losses_t * clone();
@@ -538,9 +541,10 @@ public:
 	// copy losses to this
 	void copy(losses_t *);
 
-	void run_losses(double dt_hour);
+	// main APIs
+	void run_losses(double dt_hour, int index);
 	void replace_battery();
-	double battery_system_loss(int i){ return _system_losses[i]; }
+	double battery_system_loss(int index){ return _full_loss[index]; }
 
 	enum { MONTHLY, TIMESERIES};
 
@@ -548,7 +552,11 @@ protected:
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
 	capacity_t * _capacity;
-	double_vec _system_losses;
+	double_vec _charge_loss;
+	double_vec _discharge_loss;
+	double_vec _idle_loss;
+	double_vec _full_loss;
+	int _loss_mode;
 	int _nCycle;
 };
 
