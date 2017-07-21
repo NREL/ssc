@@ -57,13 +57,14 @@ bool solarpilot_invoke::run()
     if(isopt)
     {
 		//opt.flux_max = m_cmod->as_double("flux_max");
-        recs.front().peak_flux.val = m_cmod->as_double("flux_max");
         opt.max_step.val = m_cmod->as_double("opt_init_step");
         opt.max_iter.val = m_cmod->as_integer("opt_max_iter");
         opt.converge_tol.val = m_cmod->as_double("opt_conv_tol");
         opt.algorithm.combo_select_by_mapval( m_cmod->as_integer("opt_algorithm") ); //map correctly?
         opt.flux_penalty.val = m_cmod->as_double("opt_flux_penalty");
     }
+
+	recs.front().peak_flux.val = m_cmod->as_double("flux_max");
 
     var_heliostat *hf = &hels.front();
     //need to set up the template combo
@@ -239,6 +240,7 @@ bool solarpilot_invoke::run()
                     return false;
             }
 
+			m_sapi->Setup(*this);
             m_sapi->SetSummaryCallbackStatus(false);
             m_sapi->PreSimCallbackUpdate();
             
@@ -289,7 +291,9 @@ bool solarpilot_invoke::run()
         string aim_method_save = flux.aim_method.val;
         flux.aim_method.combo_select( "Simple aim points" );
 
-		int nflux_x = 12, nflux_y = 1;
+		int nflux_x = m_cmod->as_integer("n_flux_x");
+		int nflux_y = m_cmod->as_integer("n_flux_y");
+		//int nflux_x = 12, nflux_y = 1;
 		if(! m_sapi->CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
         {
             flux.aim_method.combo_select( aim_method_save );

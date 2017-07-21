@@ -249,7 +249,10 @@ public:
 		sim_type,	/* 0 = layout, 1 = optimization, 2 = flux simulation, 3 = parametric */
 		sim_id,
 		num_heliostats_used,
-		num_heliostats_avail;
+		num_heliostats_avail,
+        num_ray_traced,
+        num_ray_heliostat,
+        num_ray_receiver;
 	bool is_soltrace;
 
 	struct SIM_TYPE { enum A { LAYOUT, OPTIMIZATION, FLUX_SIMULATION, PARAMETRIC }; };

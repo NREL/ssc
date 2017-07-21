@@ -35,6 +35,7 @@
     <ClCompile Include="..\tcs\csp_solver_pc_sco2.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pc_steam_heat_sink.cpp" />
     <ClCompile Include="..\tcs\csp_solver_pt_heliostatfield.cpp" />
+    <ClCompile Include="..\tcs\csp_solver_pt_sf_perf_interp.cpp" />
     <ClCompile Include="..\tcs\csp_solver_tou_block_schedules.cpp" />
     <ClCompile Include="..\tcs\csp_solver_trough_collector_receiver.cpp" />
     <ClCompile Include="..\tcs\csp_solver_two_tank_tes.cpp" />
@@ -73,7 +74,6 @@
     <ClCompile Include="..\tcs\sam_mw_lf_type261_steam.cpp" />
     <ClCompile Include="..\tcs\sam_mw_lf_type261_Wnet.cpp" />
     <ClCompile Include="..\tcs\sam_mw_lf_type262_salt.cpp" />
-    <ClCompile Include="..\tcs\sam_mw_pt_type221.cpp" />
     <ClCompile Include="..\tcs\sam_mw_pt_type228.cpp" />
     <ClCompile Include="..\tcs\sam_mw_trough_type251.cpp" />
     <ClCompile Include="..\tcs\sam_mw_type234.cpp" />
@@ -113,6 +113,7 @@
     <ClInclude Include="..\tcs\csp_solver_pc_sco2.h" />
     <ClInclude Include="..\tcs\csp_solver_pc_steam_heat_sink.h" />
     <ClInclude Include="..\tcs\csp_solver_pt_heliostatfield.h" />
+    <ClInclude Include="..\tcs\csp_solver_pt_sf_perf_interp.h" />
     <ClInclude Include="..\tcs\csp_solver_tou_block_schedules.h" />
     <ClInclude Include="..\tcs\csp_solver_trough_collector_receiver.h" />
     <ClInclude Include="..\tcs\csp_solver_two_tank_tes.h" />

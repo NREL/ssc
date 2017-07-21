@@ -24,6 +24,7 @@ private:
 	
 	double m_Q_dot_piping_loss;		//[Wt] = Constant thermal losses from piping to env. = (THT*length_mult + length_add) * piping_loss_coef
 
+
 	int m_itermode;
 	double m_od_control;
 	double m_eta_field_iter_prev;	//[-] Efficiency from heliostat on last iteration. Maybe change if CR gets defocus signal from controller
@@ -95,13 +96,17 @@ public:
 	double m_q_rec_des;				//[MW], convert to [W] in init()
 	double m_rec_su_delay;			//[-]
 	double m_rec_qf_delay;			//[-]
-	double m_m_dot_htf_max;			//[kg/hr], convert to [kg/s] in init()
+	double m_m_dot_htf_max_frac;	//[-]
 	double m_A_sf;					//[m2]
 
 	// 8.10.2015 twn: add tower piping thermal losses to receiver performance
 	double m_pipe_loss_per_m;		//[Wt/m]
 	double m_pipe_length_add;		//[m]
 	double m_pipe_length_mult;		//[-]
+
+	// 7.13.17 twn: keep this public for now so iscc can calculate
+	double m_m_dot_htf_max;			//[kg/s]
+
 
 	int m_n_flux_x;
 	int m_n_flux_y;

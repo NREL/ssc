@@ -191,7 +191,7 @@ void ST_Sun::Reset()
 void ST_Sun::Write(FILE *fdat)
 {
 	if(! fdat) return;
-	fprintf(fdat, "SUN\tPTSRC\t%d\tSHAPE\t%c\tSIGMA\t%lg\tHALFWIDTH\t%lg\n", PointSource?1:0, ShapeIndex, Sigma, Sigma);
+	fprintf(fdat, "SUN\tPTSRC\t%d\tSHAPE\t%c\tSIGMA\t%lg\tHALFWIDTH\t%lg\n", 0, ShapeIndex, Sigma, Sigma);
 	fprintf(fdat, "XYZ\t%lg\t%lg\t%lg\tUSELDH\t%d\tLDH\t%lg\t%lg\t%lg\n", Origin[0], Origin[1], Origin[2], 0, 0., 0., 0.);
 	if( ShapeIndex == 'd' ){
 		int np = SunShapeAngle.size();
@@ -558,8 +558,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	int sun_type = V->amb.sun_type.mapval(); 
 	double sigma = V->amb.sun_rad_limit.val; 
 	char shape = 'i';	//invalid
-	Sun.PointSource = sun_type == 0;
 	if(sun_type == 2){ shape = 'p'; }	//Pillbox sun
+	else if(sun_type == 0){ shape = 'g'; }	 //Point sun -- doesn't matter just use something here. it is disabled later.
 	else if(sun_type == 4){	shape = 'g'; }		//Gaussian sun
 	else if(sun_type == 1){	//Limb-darkened sun
 		/* Create a table based on the limb-darkened profile and set as a user sun */
@@ -625,7 +625,6 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		delete [] intens;
 
 	}
-	else if(sun_type == 0){}	//Point sun
 	else if(sun_type == 3){	//User sun
 		shape = 'd';
 		int np = V->amb.user_sun.val.nrows();
@@ -757,7 +756,17 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		*/
 		
 		//Add the front
-		OpticsList.at(ii)->Front.DistributionType = 'g';
+        switch ( Hv->st_err_type.mapval() )
+        {
+        default:
+        case var_heliostat::ST_ERR_TYPE::GAUSSIAN:
+            OpticsList.at(ii)->Front.DistributionType = 'g';
+            break;
+        case var_heliostat::ST_ERR_TYPE::PILLBOX:
+            OpticsList.at(ii)->Front.DistributionType = 'p';
+            break;
+        }
+
 		OpticsList.at(ii)->Front.OpticSurfNumber = 0;
 		OpticsList.at(ii)->Front.ApertureStopOrGratingType = 0;
 		OpticsList.at(ii)->Front.DiffractionOrder = 0;
@@ -875,7 +884,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 		//Get values that apply to the whole heliostat
 		bool enabled = H->getInLayout();
 		
-		Point *P; 
+		sp_point *P; 
 		Vect *V;
 		P = H->getLocation();
 		V = H->getTrackVector();
@@ -898,7 +907,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				if(isdetail){
 					//Calculate unique positions and aim vectors for each facet
 					PointVect *F = panels->at(k, j).getOrientation();
-					Point Floc = *F->point();
+					sp_point Floc = *F->point();
 					Vect Faim = *F->vect();
 					Toolbox::unitvect(Faim);
 
@@ -1036,7 +1045,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			//displace by radius, inside is front, x1 and x2 = 0 for closed cylinder ONLY
 			//Add a closed cylindrical receiver to the stage 
 			double diam = rv->rec_diameter.val;
-			Point pos;
+			sp_point pos;
 			Vect aim;
 
 			ST_Element *element = r_stage->ElementList.at(i);
@@ -1052,8 +1061,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			//position. The aim vector defines the Z axis with respect to the SolTrace receiver coordinates, and
 			//in SolTrace, the cylindrical cross section lies in the X-Z plane.
 			double 
-				az = rv->rec_azimuth.val,
-				el = rv->rec_elevation.val;
+				az = rv->rec_azimuth.val*D2R,
+				el = rv->rec_elevation.val*D2R;
 			aim.i = cos(el)*sin(az);
 			aim.j = cos(el)*cos(az);
 			aim.k = sin(el);
@@ -1104,8 +1113,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element->Origin[1] = pos.y;
 			element->Origin[2] = pos.z;
             
-            az = rv->rec_azimuth.val;
-			el = rv->rec_elevation.val;
+            az = rv->rec_azimuth.val*D2R;
+			el = rv->rec_elevation.val*D2R;
             aim.i = sin(el)*cos(az);
             aim.j = sin(el)*sin(az);
             aim.k = cos(el);
@@ -1165,7 +1174,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			copt->Back.RMSSpecError = PI/4.;
 			
 			//Add a flat aperture to the stage
-			Point pos;
+			sp_point pos;
 			Vect aim;
 			ST_Element *element = r_stage->ElementList.at(i);
 			element->Enabled = true;
@@ -1213,7 +1222,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	int minrays = V->flux.min_rays.val; 
     int maxrays = V->flux.max_rays.val;
     int seed = V->flux.seed.val;
-    sim_errors_sunshape = V->flux.is_sunshape_err.val;
+    sim_errors_sunshape = V->flux.is_sunshape_err.val && ( V->amb.sun_type.mapval() != var_ambient::SUN_TYPE::POINT_SUN );
 	sim_errors_optical = V->flux.is_optical_err.val; 
 	
 	sim_raycount = minrays;
@@ -1229,7 +1238,7 @@ void ST_System::LoadIntoContext(ST_System *System, st_context_t spcxt){
 	*/
 
 	//sun shape
-	st_sun(spcxt, System->Sun.PointSource ? 1 : 0, System->Sun.ShapeIndex, System->Sun.Sigma);
+	st_sun(spcxt, 0, System->Sun.ShapeIndex, System->Sun.Sigma);
 	if(System->Sun.ShapeIndex == 'd'){
 		//Add user defined angles
 		int np = System->Sun.SunShapeAngle.size();

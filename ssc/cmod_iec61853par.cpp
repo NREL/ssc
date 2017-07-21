@@ -134,7 +134,7 @@ public:
 	{
 		MatDoub tempirr;
 		std::vector<double> parvals;
-		std::vector<Point> pts, hull;
+		std::vector<sp_point> pts, hull;
 
 		double maxz = -1e99;
 		double tmin = 1e99;
@@ -172,11 +172,11 @@ public:
 
 			if ( z > maxz ) maxz = z;
 
-			pts.push_back( Point( temp, irr, z ) );
+			pts.push_back( sp_point( temp, irr, z ) );
 		}
 
 		Toolbox::convex_hull( pts, hull );
-		if ( Toolbox::pointInPolygon( hull, Point(T, I, 0.0) ) )
+		if ( Toolbox::pointInPolygon( hull, sp_point(T, I, 0.0) ) )
 		{
 			// scale values based on max - helps GM interp routine
 			for( size_t i=0;i<parvals.size();i++)

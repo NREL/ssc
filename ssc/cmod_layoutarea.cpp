@@ -45,18 +45,18 @@ public:
 		//get the matrix of points
 		get_matrix("positions", positions);
 		//put into an array of points
-		std::vector<Point> pos_pts;
+		std::vector<sp_point> pos_pts;
 		pos_pts.reserve( positions.nrows() );
 
 		for(int i=0; i<(int)positions.nrows(); i++){
-			pos_pts.push_back( Point () );
+			pos_pts.push_back( sp_point () );
 			pos_pts.back().x = positions.at(i, 0);
 			pos_pts.back().y = positions.at(i, 1);
 		}
 
 
 		//Calculate the convex hull surrounding the heliostat positions
-		std::vector<Point> hull;
+		std::vector<sp_point> hull;
 		Toolbox::convex_hull(pos_pts, hull);
 
 		//Calculate the area of the convex hull

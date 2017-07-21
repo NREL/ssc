@@ -20,7 +20,7 @@ class Ambient;
 class Heliostat : public mod_base
  {
 
-	Point
+	sp_point
 		_location, //Location of heliostat in the field (0,0,Zt) is the location of the tower base
 		_aim_point,	//constant aim point for the heliostat
 		_aim_fluxplane;	//Aim point with respect to the flux plane
@@ -32,7 +32,7 @@ class Heliostat : public mod_base
 		*_neighbors; //pointer to a vector of neighboring heliostats
 	matrix_t<Reflector>
 		_panels; //Array of cant panels
-	vector<Point>
+	vector<sp_point>
 		_corners,	//Position in global coordinates of the heliostat corners (used for blocking and shadowing)
 		_shadow;	//Position in global coordinates of the heliostat shadow
 	Heliostat* _master_template;	//Pointer to the template used to create this heliostat
@@ -88,7 +88,7 @@ public:
 	void installPanels();	//Define the cant panel locations, pointing vectors, and shape
 	void updateTrackVector(Vect &sunvect);	//Update the tracking vector for the heliostat
 	double calcTotalEfficiency();
-    static void calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, Heliostat &H);
+    static void calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec, Heliostat &H);
 	void resetMetrics();
 	void CopyImageData(const Heliostat *Hsrc);
 
@@ -108,9 +108,9 @@ public:
 	Vect *getTrackVector();	//return the tracking vector
 	Vect *getTowerVector(); // return the helio-tower unit vector
 	Vect *getCantVector();	//Return the canting vector (not normalized)
-	Point *getLocation(); //Get location vector
-	Point *getAimPoint();	//Get the heliostat aim point on the receiver
-	Point *getAimPointFluxPlane();	//aim point in the flux plane coordinates 
+	sp_point *getLocation(); //Get location vector
+	sp_point *getAimPoint();	//Get the heliostat aim point on the receiver
+	sp_point *getAimPointFluxPlane();	//aim point in the flux plane coordinates 
 	helio_perf_data *getEfficiencyObject();
 	double getTotalReflectivity();
 	double getEfficiencyTotal();
@@ -128,8 +128,8 @@ public:
     double getArea();
     double getCollisionRadius();
 	vector<Heliostat*> *getNeighborList();
-	vector<Point> *getCornerCoords();
-	vector<Point> *getShadowCoords();
+	vector<sp_point> *getCornerCoords();
+	vector<sp_point> *getShadowCoords();
 	matrix_t<double> *getMirrorShapeNormCoefObject();
 	matrix_t<double> *getMirrorShapeCoefObject();
 	matrix_t<double> *getSunShapeCoefObject();
@@ -163,8 +163,8 @@ public:
 	void setRankingMetricValue(double rval);
 	void setLocation(double x, double y, double z);
 	void setAimPoint(double x, double y, double z);
-	void setAimPoint(Point &Aim);
-	void setAimPointFluxPlane(Point &Aim);
+	void setAimPoint(sp_point &Aim);
+	void setAimPointFluxPlane(sp_point &Aim);
 	void setAimPointFluxPlane(double x, double y, double z);
 	void setTrackVector(Vect &tr);	//Set the tracking vector
 	void setTowerVector(Vect &tow); //Set the helio-tower vector
