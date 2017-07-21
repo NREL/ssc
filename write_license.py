@@ -39,7 +39,7 @@ for folder in folders:
             except (UnicodeDecodeError, PermissionError):
                 print("File: " + f + " failed!")
                 time.sleep(2)
-                tmpfile.close()
+                outfile.close()
                 os.remove(tmpfile)
     os.chdir(top_dir)
 
