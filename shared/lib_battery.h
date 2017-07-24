@@ -206,7 +206,7 @@ public:
 
 	double battery_voltage_nominal(); // nominal voltage of battery
 	double cell_voltage(); // voltage of one cell
-	double R(); // computed resistance
+	double R_battery(); // computed battery resistance
 
 	enum VOLTAGE_CHOICE{VOLTAGE_MODEL, VOLTAGE_TABLE};
 
@@ -216,7 +216,9 @@ protected:
 	int _num_strings;             // addition number in parallel
 	double _cell_voltage;         // closed circuit voltage per cell [V]
 	double _cell_voltage_nominal; // nominal cell voltage [V]
-	double _R;                    // internal resistance (Ohm)
+	double _R;                    // internal cell resistance (Ohm)
+	double _R_battery;            // internal battery resistance (Ohm)
+
 	util::matrix_t<double> _batt_voltage_matrix;  // voltage vs depth-of-discharge
 };
 

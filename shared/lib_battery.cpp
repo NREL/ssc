@@ -448,6 +448,7 @@ voltage_t::voltage_t(int mode, int num_cells_series, int num_strings, double vol
 	_cell_voltage = voltage;
 	_cell_voltage_nominal = voltage;
 	_R = 0.004; // just a default, will get recalculated upon construction
+	_R_battery = _R * num_cells_series / num_strings;
 	_batt_voltage_matrix = voltage_matrix;
 }
 void voltage_t::copy(voltage_t * voltage)
@@ -457,12 +458,13 @@ void voltage_t::copy(voltage_t * voltage)
 	_num_strings = voltage->_num_strings;
 	_cell_voltage = voltage->_cell_voltage;
 	_R = voltage->_R;
+	_R_battery = voltage->_R_battery;
 	_batt_voltage_matrix = voltage->_batt_voltage_matrix;
 }
 double voltage_t::battery_voltage(){ return _num_cells_series*_cell_voltage; }
 double voltage_t::battery_voltage_nominal(){ return _num_cells_series * _cell_voltage_nominal; }
 double voltage_t::cell_voltage(){ return _cell_voltage; }
-double voltage_t::R(){ return _R; }
+double voltage_t::R_battery(){ return _R_battery; }
 
 // Voltage Table 
 voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table) :
@@ -558,6 +560,7 @@ voltage_t(voltage_t::VOLTAGE_MODEL, num_cells_series, num_strings, voltage, util
 	_Qnom = Qnom;
 	_C_rate = C_rate;
 	_R = R;
+	_R_battery = _R * num_cells_series / num_strings;
 
 	// assume fully charged, not the nominal value
 	_cell_voltage = _Vfull;
@@ -1406,7 +1409,7 @@ void battery_t::run(size_t idx, double I)
 }
 void battery_t::runThermalModel(double I)
 {
-	_thermal->updateTemperature(I, _voltage->R(), _dt_hour);
+	_thermal->updateTemperature(I, _voltage->R_battery(), _dt_hour);
 }
 
 void battery_t::runCapacityModel(double I)
