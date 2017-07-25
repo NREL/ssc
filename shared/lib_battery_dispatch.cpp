@@ -151,51 +151,62 @@ double dispatch_t::current_controller(double battery_voltage)
 	restrict_current(I);
 	return I;
 }
-void dispatch_t::restrict_current(double &I)
+bool dispatch_t::restrict_current(double &I)
 {
+	bool iterate = false;
 	if (_current_choice == RESTRICT_CURRENT || _current_choice == RESTRICT_BOTH)
 	{
 		if (I < 0)
 		{
 			if (fabs(I) > _Ic_max)
+			{
 				I = -_Ic_max;
+				iterate = true;
+			}
 		}
 		else
 		{
 			if (I > _Id_max)
+			{
 				I = _Id_max;
+				iterate = true;
+			}
 		}
 	}
+	return iterate;
 }
-void dispatch_t::restrict_power(double &I)
+bool dispatch_t::restrict_power(double &I)
 {
-
+	bool iterate = false;
 	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
 
 		double dP = 0;
 
 		// charging
-		if (fabs(_P_tofrom_batt) < 0)
+		if (_P_tofrom_batt < 0)
 		{
-			if (fabs(_P_tofrom_batt) > _Pc_max)
+			if (fabs(_P_tofrom_batt) > _Pc_max * (1 + low_tolerance))
 			{
-				dP = _Pc_max - fabs(_P_tofrom_batt);
+				dP = fabs(_Pc_max - fabs(_P_tofrom_batt));
 
 				// increase (reduce) charging magnitude by percentage
-				I += dP / fabs(_P_tofrom_batt);
+				I -= (dP / fabs(_P_tofrom_batt)) * I;
+				iterate = true;
 			}
 		}
 		else
 		{
-			if (fabs(_P_tofrom_batt) > _Pd_max)
+			if (fabs(_P_tofrom_batt) > _Pd_max * (1 + low_tolerance))
 			{
-				dP = _Pd_max - _P_tofrom_batt;
+				dP = fabs(_Pd_max - _P_tofrom_batt);
 
 				// decrease discharging magnitude
-				I -= dP / fabs(_P_tofrom_batt);
+				I -= (dP / fabs(_P_tofrom_batt)) * I;
+				iterate = true;
 			}
 		}
+		return iterate;
 	}
 }
 void dispatch_t::compute_to_batt()
@@ -476,11 +487,9 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 
 	double I_initial = I;
 
-	// stop iterating after 5 tries
-	if (count > 5)
-		iterate = false;
+
 	// decrease the current draw if took too much
-	else if (_Battery->battery_soc() < _SOC_min - tolerance)
+	if (_Battery->battery_soc() < _SOC_min - tolerance)
 	{
 		double dQ = 0.01 * (_SOC_min - _Battery->battery_soc()) * _Battery->battery_charge_maximum();
 		I -= dQ / _dt_hour;
@@ -510,11 +519,15 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	else
 		iterate = false;
 
-	// don't allow changes to violate current limits
-	restrict_current(I);
+	// don't allow any changes to violate current limits
+	iterate = restrict_current(I);
 
-	// don't all changes to violate power limites
-	restrict_power(I);
+	// don't allow any changes to violate power limites
+	iterate = restrict_power(I);
+
+	// stop iterating after 5 tries
+	if (count > 5)
+		iterate = false;
 
 	// don't allow battery to flip from charging to discharging or vice versa
 	if ((I_initial / I) < 0)

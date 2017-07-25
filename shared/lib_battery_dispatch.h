@@ -95,8 +95,8 @@ protected:
 	void energy_controller();
 	void switch_controller();
 	double current_controller(double battery_voltage);
-	void restrict_current(double &I);
-	void restrict_power(double &I);
+	bool restrict_current(double &I);
+	bool restrict_power(double &I);
 
 	// compute totals
 	void compute_battery_state();
