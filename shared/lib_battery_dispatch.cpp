@@ -153,40 +153,48 @@ double dispatch_t::current_controller(double battery_voltage)
 }
 void dispatch_t::restrict_current(double &I)
 {
-	if (I < 0)
+	if (_current_choice == RESTRICT_CURRENT || _current_choice == RESTRICT_BOTH)
 	{
-		if (fabs(I) > _Ic_max)
-			I = -_Ic_max;
-	}
-	else
-	{
-		if (I > _Id_max)
-			I = _Id_max;
+		if (I < 0)
+		{
+			if (fabs(I) > _Ic_max)
+				I = -_Ic_max;
+		}
+		else
+		{
+			if (I > _Id_max)
+				I = _Id_max;
+		}
 	}
 }
 void dispatch_t::restrict_power(double &I)
 {
-	double dP = 0;
 
-	// charging
-	if (fabs(_P_tofrom_batt) < 0)
+	if (_current_choice == RESTRICT_POWER || _current_choice == RESTRICT_BOTH)
 	{
-		if (fabs(_P_tofrom_batt) > _Pc_max)
-		{
-			dP = _Pc_max - fabs(_P_tofrom_batt);
 
-			// increase (reduce) charging magnitude by percentage
-			I += dP / fabs(_P_tofrom_batt);
+		double dP = 0;
+
+		// charging
+		if (fabs(_P_tofrom_batt) < 0)
+		{
+			if (fabs(_P_tofrom_batt) > _Pc_max)
+			{
+				dP = _Pc_max - fabs(_P_tofrom_batt);
+
+				// increase (reduce) charging magnitude by percentage
+				I += dP / fabs(_P_tofrom_batt);
+			}
 		}
-	}
-	else
-	{
-		if (fabs(_P_tofrom_batt) > _Pd_max)
+		else
 		{
-			dP = _Pd_max - _P_tofrom_batt;
+			if (fabs(_P_tofrom_batt) > _Pd_max)
+			{
+				dP = _Pd_max - _P_tofrom_batt;
 
-			// decrease discharging magnitude
-			I -= dP / fabs(_P_tofrom_batt);
+				// decrease discharging magnitude
+				I -= dP / fabs(_P_tofrom_batt);
+			}
 		}
 	}
 }
