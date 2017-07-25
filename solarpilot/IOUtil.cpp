@@ -405,7 +405,17 @@ void ioutil::parseXMLInputFile(const string &fname,var_map &V, parametric &par_d
         unordered_map<string, spbase*>::iterator v = V._varptrs.find( component + "." + sinst + "." + varname );
         if( v != V._varptrs.end() )
         {
-            v->second->set_from_string( var_node->first_node("value")->value() );
+            if( v->second->ctype == "combo" )
+            {
+                std::string selection = var_node->first_node("value")->value();
+                std::vector< std::string > cbchoices = v->second->combo_get_choices();
+                if( find( cbchoices.begin(), cbchoices.end(), selection ) != cbchoices.end() )
+                    v->second->set_from_string( selection.c_str() );
+            }
+            else
+            {
+                v->second->set_from_string( var_node->first_node("value")->value() );
+            }
             v->second->units = (char*)var_node->first_node("units")->value();
         }
         else
