@@ -51,7 +51,7 @@ public:
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
 		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
 
-		// compute cells, strings, voltage based on desired capacity/power, assume max current is 10 A for a battery
+		// compute cells, strings, voltage based on desired capacity/power, assume max current is 15 A for a battery
 		double batt_kwh = as_double("batt_simple_kwh");
 		double batt_kw = as_double("batt_simple_kw");
 		double batt_time_hour = batt_kwh / batt_kw;
@@ -180,8 +180,11 @@ public:
 		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
 		batt_vars->batt_maximum_SOC = 100.;
 		batt_vars->batt_minimum_SOC = 20.;
+		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
 		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
 		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
+		batt_vars->batt_power_charge_max = batt_kw;
+		batt_vars->batt_power_discharge_max = batt_kw;
 		batt_vars->batt_minimum_modetime = 10;
 
 		batt_vars->batt_topology = charge_controller::AC_CONNECTED;

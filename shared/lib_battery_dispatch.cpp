@@ -4,21 +4,24 @@
 /*
 Dispatch base class
 */
-dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max,
+dispatch_t::dispatch_t(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, int pv_dispatch)
 {
 	_Battery = Battery;
 	_Battery_initial = new battery_t(*_Battery);
-	init(_Battery, dt_hour, SOC_min, SOC_max, Ic_max, Id_max, t_min, mode, pv_dispatch);
+	init(_Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch);
 }
 
-void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, double Ic_max, double Id_max, double t_min, int mode, int pv_dispatch)
+void dispatch_t::init(battery_t * Battery, double dt_hour, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max, double t_min, int mode, int pv_dispatch)
 {
 	_dt_hour = dt_hour; 
 	_SOC_min = SOC_min;
 	_SOC_max = SOC_max;
+	_current_choice = current_choice;
 	_Ic_max = Ic_max;
 	_Id_max = Id_max;
+	_Pc_max = Pc_max;
+	_Pd_max = Pd_max;
 	_t_min = t_min;
 	_mode = mode;
 	_pv_dispatch_to_battery_first = pv_dispatch;
@@ -55,7 +58,7 @@ dispatch_t::dispatch_t(const dispatch_t& dispatch)
 {
 	_Battery = new battery_t(*dispatch._Battery);
 	_Battery_initial = new battery_t(*dispatch._Battery_initial);
-	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._Ic_max, dispatch._Id_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
+	init(_Battery, dispatch._dt_hour, dispatch._SOC_min, dispatch._SOC_max, dispatch._current_choice, dispatch._Ic_max, dispatch._Id_max, dispatch._Pc_max, dispatch._Pd_max, dispatch._t_min, dispatch._mode, dispatch._pv_dispatch_to_battery_first);
 }
 
 // shallow copy from dispatch to this
@@ -63,7 +66,7 @@ void dispatch_t::copy(const dispatch_t * dispatch)
 {
 	_Battery->copy(dispatch->_Battery);
 	_Battery_initial->copy(dispatch->_Battery_initial);
-	init(_Battery, dispatch->_dt_hour, dispatch->_SOC_min, dispatch->_SOC_max, dispatch->_Ic_max, dispatch->_Id_max, dispatch->_t_min, dispatch->_mode, dispatch->_pv_dispatch_to_battery_first);
+	init(_Battery, dispatch->_dt_hour, dispatch->_SOC_min, dispatch->_SOC_max, dispatch->_current_choice, dispatch->_Ic_max, dispatch->_Id_max, dispatch->_Pc_max, dispatch->_Pc_max, dispatch->_t_min, dispatch->_mode, dispatch->_pv_dispatch_to_battery_first);
 }
 void dispatch_t::delete_clone()
 {
@@ -159,6 +162,32 @@ void dispatch_t::restrict_current(double &I)
 	{
 		if (I > _Id_max)
 			I = _Id_max;
+	}
+}
+void dispatch_t::restrict_power(double &I)
+{
+	double dP = 0;
+
+	// charging
+	if (fabs(_P_tofrom_batt) < 0)
+	{
+		if (fabs(_P_tofrom_batt) > _Pc_max)
+		{
+			dP = _Pc_max - fabs(_P_tofrom_batt);
+
+			// increase (reduce) charging magnitude by percentage
+			I += dP / fabs(_P_tofrom_batt);
+		}
+	}
+	else
+	{
+		if (fabs(_P_tofrom_batt) > _Pd_max)
+		{
+			dP = _Pd_max - _P_tofrom_batt;
+
+			// decrease discharging magnitude
+			I -= dP / fabs(_P_tofrom_batt);
+		}
 	}
 }
 void dispatch_t::compute_to_batt()
@@ -263,11 +292,11 @@ void dispatch_t::compute_battery_state()
 /*
 Manual Dispatch
 */
-dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max,
+dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, bool pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
-	: dispatch_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max,
+	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch)
 {
 	init(dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge);
@@ -476,6 +505,9 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 	// don't allow changes to violate current limits
 	restrict_current(I);
 
+	// don't all changes to violate power limites
+	restrict_power(I);
+
 	// don't allow battery to flip from charging to discharging or vice versa
 	if ((I_initial / I) < 0)
 		I = 0;
@@ -573,11 +605,11 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 	return charging;
 }
 
-dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, double Ic_max, double Id_max,
+dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
 	double t_min, int mode, bool pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
-	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, Ic_max, Id_max,
+	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
 	t_min, mode, pv_dispatch,
 	dm_dynamic_sched, dm_dynamic_sched_weekend,
 	dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge){};
@@ -672,8 +704,11 @@ automate_dispatch_t::automate_dispatch_t(
 	double dt_hour,
 	double SOC_min,
 	double SOC_max,
+	int current_choice,
 	double Ic_max,
 	double Id_max,
+	double Pc_max,
+	double Pd_max,
 	double t_min,
 	int mode,
 	bool pv_dispatch,
@@ -685,7 +720,7 @@ automate_dispatch_t::automate_dispatch_t(
 	std::map<int, double> dm_percent_discharge,
 	std::map<int, double> dm_percent_gridcharge,
 	int nyears
-	) : dispatch_manual_t(Battery, dt_hour, SOC_min, SOC_max, Ic_max, Id_max, t_min, mode, pv_dispatch,
+	) : dispatch_manual_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, mode, pv_dispatch,
 	dm_dynamic_sched, dm_dynamic_sched_weekend, dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge)
 {
 	_day_index = 0;

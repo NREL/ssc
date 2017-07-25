@@ -13,10 +13,13 @@ public:
 		double dt,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
-		int mode,
+		int dispatch_mode,
 		int pv_dispatch);
 
 	// deep copy constructor (new memory), from dispatch to this
@@ -45,6 +48,7 @@ public:
 	enum MODES{ LOOK_AHEAD, LOOK_BEHIND, MAINTAIN_TARGET, MANUAL };
 	enum METERING{ BEHIND, FRONT };
 	enum PV_PRIORITY{ MEET_LOAD, CHARGE_BATTERY };
+	enum CURRENT_CHOICE{ RESTRICT_POWER, RESTRICT_CURRENT };
 
 	// Outputs
 	double cycle_efficiency();
@@ -77,8 +81,11 @@ protected:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,
 		int pv_dispatch);
@@ -89,6 +96,7 @@ protected:
 	void switch_controller();
 	double current_controller(double battery_voltage);
 	void restrict_current(double &I);
+	void restrict_power(double &I);
 
 	// compute totals
 	void compute_battery_state();
@@ -131,6 +139,9 @@ protected:
 	// Charge & current limits controllers
 	double _SOC_min;
 	double _SOC_max;
+	int _current_choice;
+	double _Pc_max;
+	double _Pd_max;
 	double _Ic_max;
 	double _Id_max;
 	double _t_min;
@@ -159,8 +170,11 @@ public:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,
 		bool pv_dispatch,
@@ -234,8 +248,11 @@ public:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,
 		bool pv_dispatch,
@@ -302,8 +319,11 @@ public:
 		double dt_hour,
 		double SOC_min,
 		double SOC_max,
+		int current_choice,
 		double Ic_max,
 		double Id_max,
+		double Pc_max,
+		double Pd_max,
 		double t_min,
 		int mode,   // 0/1/2
 		bool pv_dispatch,

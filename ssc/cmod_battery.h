@@ -23,6 +23,7 @@ struct batt_variables
 	int batt_chem;
 	int batt_dispatch;
 	int batt_voltage_choice;
+	int batt_current_choice;
 	int batt_meter_position;
 	int batt_pv_choice;
 	int batt_target_choice;
@@ -93,6 +94,8 @@ struct batt_variables
 	double batt_minimum_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
+	double batt_power_charge_max;
+	double batt_power_discharge_max;
 	double batt_minimum_modetime;
 
 	int batt_topology;

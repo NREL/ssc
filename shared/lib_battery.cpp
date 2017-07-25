@@ -839,7 +839,7 @@ void lifetime_cycle_t::rainflow(double DOD)
 		retCode = rainflow_compareRanges();
 
 		// We break to get more data, or if we are done with step 5
-		if (retCode == LT_GET_DATA)
+		if (retCode == LT_GET_DATA) 
 			break;
 	}
 
