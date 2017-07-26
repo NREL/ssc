@@ -181,8 +181,17 @@ void Land::getExtents(var_map &V, double rval[])
 				if(fabs(rad) > trmax) trmax = rad;
 			}
 		}
-		if(trmax < 0.) trmax = tht*7.5;	//use the default if nothing is set
-		if(trmax < radmax || radmax == NULL) radmax = trmax;
+        if( V.land.inclusions.val.size() > 0 )
+        {
+		    if(trmax < 0. ) trmax = tht*7.5;	//use the default if nothing is set
+		    if(trmax < radmax || radmax == NULL) radmax = trmax;
+        }
+        else
+        {
+            if( ! (is_bounds_scaled || is_bounds_fixed ) )
+                //insufficient info provided
+                throw exception("Insufficient information provided to specify land bounds. At least 1 'inclusion' region must be provided if not specifying fixed or scaled bounds.");
+        }
 
 		//Find the minimum radius depending on the exclusions vector
 		//values for finding the minimum radius
