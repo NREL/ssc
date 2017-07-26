@@ -866,6 +866,9 @@ void sim_result::add_heliostat(Heliostat &H){
 
 void sim_result::process_field_stats(){
 	//Calculate statistics for all of the heliostats
+    if( data_by_helio.size() == 0 )
+        return;
+
 	int nm = (data_by_helio.begin()->second).n_metric;
 	double 
 		*sums = new double[nm],

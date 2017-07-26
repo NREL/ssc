@@ -1756,6 +1756,24 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     //_var_map->land.bound_area.Setval( _land.getLandBoundArea() );
 	//update the layout data
     interop::UpdateMapLayoutData(*_var_map, &_heliostats);
+    //update the layout shell 
+    _layout.clear();
+    _layout.reserve( _heliostats.size() );
+    for(int i=0; i<_heliostats.size(); i++)
+    {
+        layout_obj lo;
+        Heliostat* H = _heliostats.at(i);
+        lo.location = *H->getLocation();
+        lo.aim = *H->getAimPoint();
+        lo.cant = *H->getCantVector();
+        lo.focal_x = H->getFocalX();
+        lo.focal_y = H->getFocalY();
+        lo.is_user_aim = false;
+        lo.is_user_cant = H->IsUserCant();
+        lo.is_user_focus = false;
+
+        _layout.push_back( lo );
+    }
     //update costs
     updateAllCalculatedParameters(*_var_map);
 
