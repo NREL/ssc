@@ -62,8 +62,8 @@ void FluxSimData::updateCalculatedParameters(var_map &V)
 	double az,zen;
 	if (V.flux.flux_time_type.mapval() == var_fluxsim::FLUX_TIME_TYPE::SUN_POSITION){
 		//Sun position are input, just set the corresponding values
-		V.flux.flux_solar_az.Setval( V.flux.flux_solar_az_in.val*D2R );
-		V.flux.flux_solar_el.Setval( V.flux.flux_solar_el_in.val*D2R );
+		V.flux.flux_solar_az.Setval( V.flux.flux_solar_az_in.val );
+		V.flux.flux_solar_el.Setval( V.flux.flux_solar_el_in.val );
 	}
 	else{
 		//hour/day are provided, calculate the solar position

@@ -1221,6 +1221,8 @@ double Toolbox::area_polygon(std::vector<sp_point> &points){
 	*/
 
 	//add the first point to the end of the list
+    if( points.size() == 0 )
+        return 0.;
 	points.push_back(points.front());
 
 	int npt = (int)points.size();

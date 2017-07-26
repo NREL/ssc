@@ -849,6 +849,7 @@ void sim_result::initialize(){
 	eff_reflect.initialize();
 	eff_intercept.initialize();
 	eff_absorption.initialize();
+    eff_cloud.initialize();
 	flux_density.initialize();
 
 	flux_surfaces.clear();
