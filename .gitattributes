@@ -1,3 +1,5 @@
+*.c linugist-language=C++
+
 doc/* linguist-documentation=true
 tcsdata/docs/* linguist-documentation=true
 lpsolve/* linguist-vendored=true
