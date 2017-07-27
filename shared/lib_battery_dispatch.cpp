@@ -184,12 +184,12 @@ void dispatch_t::switch_controller()
 		{
 			_P_tofrom_batt = 0.;
 			_charging = _prev_charging;
-			_t_at_mode += round(_dt_hour * util::hour_to_min);
+			_t_at_mode += (int)(round(_dt_hour * util::hour_to_min));
 		}
 		else
-			_t_at_mode = 0.;
+			_t_at_mode = 0;
 	}
-	_t_at_mode += round(_dt_hour * util::hour_to_min);
+	_t_at_mode += (int)(round(_dt_hour * util::hour_to_min));
 
 }
 double dispatch_t::current_controller(double battery_voltage)

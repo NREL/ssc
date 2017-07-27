@@ -73,7 +73,7 @@ void message::add(std::string message)
 		count[it - messages.begin()]++;
 
 }
-int message::total_message_count(){ return messages.size(); }
+size_t message::total_message_count(){ return messages.size(); }
 size_t message::message_count(int index)
 {
 	if (index < messages.size())
@@ -571,7 +571,7 @@ bool voltage_table_t::exactVoltageFound(double DOD, double & V)
 
 void voltage_table_t::prepareInterpolation(double & DOD_lo, double & V_lo, double & DOD_hi, double & V_hi, double DOD)
 {
-	int nrows = _voltage_table.size();
+	size_t nrows = _voltage_table.size();
 	DOD_lo = _voltage_table[0].DOD();
 	DOD_hi = _voltage_table[nrows - 1].DOD();
 	V_lo = _voltage_table[0].V();
@@ -903,7 +903,7 @@ void lifetime_cycle_t::rainflow_ranges()
 }
 void lifetime_cycle_t::rainflow_ranges_circular(int index)
 {
-	int end = _Peaks.size() - 1;
+	size_t end = _Peaks.size() - 1;
 	if (index == 0)
 	{
 		_Xlt = fabs(_Peaks[0] - _Peaks[end]);
@@ -987,7 +987,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 	std::vector<int> low_indices;
 	std::vector<int> high_indices;
 	double D = 0.;
-	int n = 0;
+	size_t n = 0;
 	double C = 100;
 
 	// get unique values of D
@@ -1112,7 +1112,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 Lifetime Calendar Model
 */
 lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour,
-	double q0, double a, double b, double c) 
+	float q0, float a, float b, float c) 
 {
 	_calendar_choice = calendar_choice;
 	
@@ -1136,7 +1136,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_dt_day = dt_hour / util::hours_per_day;
 
 	// extract and sort calendar life info from table
-	for (int i = 0; i != calendar_matrix.nrows(); i++)
+	for (size_t i = 0; i != calendar_matrix.nrows(); i++)
 	{
 		_calendar_days.push_back(calendar_matrix.at(i, 0));
 		_calendar_capacity.push_back(calendar_matrix.at(i, 1));
@@ -1254,7 +1254,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 	_T_max = 400.;
 
 	// curve fit
-	int n = _cap_vs_temp.nrows();
+	size_t n = _cap_vs_temp.nrows();
 	for (int i = 0; i < n; i++)
 	{
 		_cap_vs_temp(i,0) += 273.15; // convert C to K
@@ -1371,7 +1371,7 @@ void losses_t::copy(losses_t * losses)
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }
-void losses_t::run_losses(double dt_hour, int idx)
+void losses_t::run_losses(double dt_hour, size_t idx)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 	_capacity->updateCapacityForThermal(_thermal->capacity_percent());

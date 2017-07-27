@@ -74,7 +74,7 @@ public:
 
 
 	void add(std::string message);
-	int total_message_count();
+	size_t total_message_count();
 	size_t message_count(int index);
 	std::string get_message(int index);
 	std::string construct_log_count_string(int index);
@@ -420,7 +420,7 @@ protected:
 	int _nCycles;
 	double _q;				// relative capacity %
 	double _Dlt;			// % damage according to rainflow
-	double _jlt;			// last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
+	int _jlt;			    // last index in Peaks, i.e, if Peaks = [0,1], then _jlt = 1
 	double _Xlt;
 	double _Ylt;
 	std::vector<double> _Peaks;
@@ -441,7 +441,7 @@ class lifetime_calendar_t
 {
 public:
 	lifetime_calendar_t(int calendar_choice, util::matrix_t<double> calendar_matrix, double dt_hour, 
-		double q0=1.02, double a=2.66e-3, double b=7280, double c=930);
+		float q0=1.02, float a=2.66e-3, float b=7280, float c=930);
 	virtual ~lifetime_calendar_t(){/* Nothing to do */};
 
 	// deep copy
@@ -593,7 +593,7 @@ public:
 	void copy(losses_t *);
 
 	// main APIs
-	void run_losses(double dt_hour, int index);
+	void run_losses(double dt_hour, size_t index);
 	void replace_battery();
 	double battery_system_loss(int index){ return _full_loss[index]; }
 
