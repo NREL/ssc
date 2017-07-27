@@ -68,7 +68,9 @@
 #include <cmath>
 #ifdef _MSC_VER
 /* taken from wxMSW-2.9.1/include/wx/defs.h - appropriate for Win32/Win64 */
+#ifndef va_copy
 #define va_copy(d, s) ((d)=(s))
+#endif
 #endif
 
 std::vector< std::string > util::split( const std::string &str, const std::string &delim, bool ret_empty, bool ret_delim )
@@ -808,7 +810,7 @@ double util::percent_of_year(int month, int hours)
 	if (month>12) return 1.0;
 
 	int hours_from_months = 0;
-	for (unsigned int i=0; i<month-1; i++)
+	for (int i=0; i<month-1; i++)
 		hours_from_months += (nday[i] * 24);
 	return (hours_from_months + hours)/8760.0;
 }

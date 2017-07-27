@@ -535,7 +535,7 @@ void tcLayoutCtrl::Draw( wxDC &dc, wxSize &client, bool with_status, bool with_b
 			if ( IsAssignedInputValue( &cp )) dc.SetTextForeground( wxColour(0, 100, 0) );
 			else dc.SetTextForeground( wxColour(220, 0, 0) );
 			wxString t = cp.ti->name;
-			double dval;
+			double dval = 0.0;
 			if ( cp.ti->data_type == TCS_NUMBER && GetNumericValue( m_units[i], cp.ti->name, &dval ))
 				t += wxString::Format( " (%lg)", dval );
 			dc.DrawText( t, r.x+5, r.y+cp.pt.y - dc.GetCharHeight()/2 );	
@@ -1622,7 +1622,7 @@ wxString tcLayoutCtrl::GetLKScript()
 			// find variable type
 			int data_type = TCS_INVALID;
 			tcsvarinfo *vl = m_units[i]->type->variables;
-			int idx=0;
+			unsigned int idx=0;
 			while( vl[idx].var_type != TCS_INVALID )
 			{
 				if ( strcmp(vl[idx].name, key) == 0 )
@@ -1648,7 +1648,7 @@ wxString tcLayoutCtrl::GetLKScript()
 					break;
 				case TCS_ARRAY:
 					buf << "\tset_value( u" << i << ", \"" << key << "\", [ ";
-					for ( idx=0;idx<tv.data.array.length;idx++ )
+					for (idx=0;idx<tv.data.array.length;idx++ )
 					{
 						buf << tv.data.array.values[idx];
 						if ( idx < tv.data.array.length-1 )
@@ -1661,7 +1661,7 @@ wxString tcLayoutCtrl::GetLKScript()
 					for ( idx=0;idx<tv.data.matrix.nrows;idx++ )
 					{
 						buf << "[";
-						for (int col=0;col<tv.data.matrix.ncols;col++ )
+						for (unsigned int col=0;col<tv.data.matrix.ncols;col++ )
 						{
 							buf << TCS_MATRIX_INDEX(&tv, idx, col);
 							if ( col < tv.data.matrix.ncols - 1 )

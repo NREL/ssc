@@ -226,8 +226,6 @@ void fcall_var( lk::invoke_t &cxt )
 	wxString name = cxt.arg(0).as_string();
 	if (cxt.arg_count() == 1)
 	{
-		ssc_number_t val, *p;
-		int i, j;
 		var_data *vv = vt->lookup( name.ToStdString() );
 		if (vv)	sscvar_to_lkvar( cxt.result(), vv );
 	}
@@ -408,7 +406,7 @@ public:
 	{
 		Output( tt );
 	}
-	virtual void OnSyntaxCheck( int line, const wxString &err )
+	virtual void OnSyntaxCheck( const wxString &err )
 	{
 		ClearOutput();
 		Output( err );

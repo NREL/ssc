@@ -169,7 +169,7 @@ public:
 		
 		if ( v->type == SSC_MATRIX && row >= v->num.nrows() ) return true;
 
-		if ( v->type == SSC_TABLE && row >= v->table.size() ) return true;
+		if ( v->type == SSC_TABLE && row >= (int)v->table.size() ) return true;
 
 		return false;
 	}
@@ -194,7 +194,7 @@ public:
 
 				return ret;
 			}
-			else if (v->type == SSC_TABLE && row < v->table.size())
+			else if (v->type == SSC_TABLE && (unsigned int)row < v->table.size())
 			{
 				int k = 0;
 				const char *key = v->table.first();
