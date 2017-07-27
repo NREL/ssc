@@ -47,108 +47,126 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
-template< typename Real > Real mymax(Real a, Real b) { return a > b ? a : b; }
+#ifndef __NGCC_PB_
+#define __NGCC_PB_
 
-template< typename Real, typename F, int n >
-Real fminsum ( Real x[n], Real f[n], F &func )
+#include "sam_csp_util.h"
+
+class ngcc_power_cycle
 {
-	Real sum=0;
-	func(x, f);
-	for (int i=0;i<n;i++)
-		sum += f[i]*f[i];
-	return 0.5*sum;
-}
+private:
+	int m_cycle_key;
+	double m_delta_P, m_delta_q, m_delta_T;
+	int m_N_P, m_N_q, m_N_T;
+	double m_P_amb_start, m_q_sf_start, m_T_amb_start;
+	double m_P_amb_end, m_q_sf_end, m_T_amb_end;
+	double m_q_MW, m_T_amb_C, m_P_amb_bar;
+
+	// Performance data 3D tables
+	util::block_t<double> m_solar_steam_mass;
+	util::block_t<double> m_solar_extraction_p;
+	util::block_t<double> m_solar_injection_p;
+	util::block_t<double> m_solar_injection_t;
+	util::block_t<double> m_solar_extraction_t;
+	util::block_t<double> m_solar_extraction_h;
+	util::block_t<double> m_solar_injection_h;
+	util::block_t<double> m_plant_power_net;
+	util::block_t<double> m_solar_heat_max;
+	util::block_t<double> m_plant_fuel_mass;
 	
-template< typename Real, typename F, int n >
-bool search( Real xold[n], const Real fold, Real g[n], Real p[n],
-			Real x[n], Real &f, const Real stpmax, bool &check, F &func, Real fvec[n])
-{
-	const Real ALF=1.0e-4, TOLX = std::numeric_limits<Real>::epsilon();
-	Real a,alam,alam2=0.0,alamin,b,disc,f2=0.0;
-	Real rhs1,rhs2,slope=0.0,sum=0.0,temp,test,tmplam;
-	int i;
-	check = false;
+	// Pointer to util::block_t that can be set to whatever performance metric current call wants
+	util::block_t<double> * p_current_table;
+
+	// Cycle 1 calls
+	void set_cycle_table_props();
 	
-	for (i=0;i<n;i++)
-		sum += p[i]*p[i];
-		
-	sum=sqrt(sum);
-	if (sum > stpmax)
-		for (i=0;i<n;i++)
-			p[i] *= stpmax/sum;
-	
-	for (i=0;i<n;i++)
-		slope += g[i]*p[i];
-	
-	if (slope >= 0.0)
-		return false;
-		
-	test=0.0;
-	for (i=0;i<n;i++)
+	// Generic Cycle Calls
+	double get_performance_results( util::block_t<double> * p_current_table );
+
+
+public:
+	ngcc_power_cycle(){};
+
+	~ngcc_power_cycle(){};
+
+	bool set_cycle_config( int cycle_key )
 	{
-		temp=fabs(p[i])/mymax(fabs(xold[i]),1.0);
-		if (temp > test) test=temp;
-	}
-	
-	alamin=TOLX/test;
-	alam=1.0;
-	int niter = 0;
-	int niter_max = 5000;
-	while (niter++ < niter_max)
-	{
-		for (i=0;i<n;i++)
-			x[i]=xold[i]+alam*p[i];
-			
-		f = fminsum<Real, F, n>( x, fvec, func );
-		if ( (f) != (f) )
+		// cycle_key == 1: NREL's NGCC model
+		// cycle_key == 2: GE's NGCC model
+
+		if( cycle_key != E_nrel_hp_evap )		// Check that cycle key is valid
 			return false;
-			
-		if (alam < alamin)
-		{
-			for (i=0;i<n;i++) x[i]=xold[i];
-			check=true;
-			return true;
-		}
-		else if (f <= fold+ALF*alam*slope)
-		{
-			return true;
-		}
-		else
-		{
-			if (alam == 1.0)
-			{
-				tmplam = -slope/(2.0*(f-fold-slope));
-			}
-			else
-			{
-				rhs1=f-fold-alam*slope;
-				rhs2=f2-fold-alam2*slope;
-				a=(rhs1/(alam*alam)-rhs2/(alam2*alam2))/(alam-alam2);
-				b=(-alam2*rhs1/(alam*alam)+alam*rhs2/(alam2*alam2))/(alam-alam2);
-				if (a == 0.0)
-				{
-					tmplam = -slope/(2.0*b);
-				}
-				else
-				{
-					disc=b*b-3.0*a*slope;
-					if (disc < 0.0) tmplam=0.5*alam;
-					else if (b <= 0.0) tmplam=(-b+sqrt(disc))/(3.0*a);
-					else tmplam=-slope/(b+sqrt(disc));
-				}
 
-				if (tmplam>0.5*alam)
-					tmplam=0.5*alam;
-			}
-		}
+		m_cycle_key = cycle_key;
 
-		alam2=alam;
-		f2 = f;
-		alam=mymax(tmplam,0.1*alam);
+		set_cycle_table_props();
+		return true;
+
 	}
 
-	if (niter == niter_max) return false;
+	void get_table_range(double & T_amb_low, double & T_amb_high, double & P_amb_low, double & P_amb_high )
+	{
+		T_amb_low = m_T_amb_start + 0.001*fabs(m_delta_T);
+		T_amb_high = m_T_amb_end - 0.001*fabs(m_delta_T);
 
-	return true;
-}
+		P_amb_low = m_P_amb_end + 0.001*fabs(m_delta_P);
+		P_amb_high = m_P_amb_start - 0.001*fabs(m_delta_P);
+	}
 
+	/*
+	//output gross power from engine
+		double P_SE_out = (Beale_max_fit*(engine_pressure_fit*10.0e6 
+			* m_V_displaced*frequency)*(1.0-pow(T_compression/T_heater_head_operate,0.5)))/1000.0;
+			*/
+
+	double get_ngcc_data( double q_MW, double T_amb_C, double P_amb_bar, int use_enum_data_descript )
+	{
+		m_q_MW = q_MW;     m_T_amb_C = T_amb_C;     m_P_amb_bar = P_amb_bar;
+
+		switch( use_enum_data_descript )
+		{
+		case E_solar_steam_mass:
+			return get_performance_results( &m_solar_steam_mass );
+		case E_solar_extraction_p:
+			return get_performance_results( &m_solar_extraction_p );
+		case E_solar_injection_p:
+			return get_performance_results( &m_solar_injection_p );
+		case E_solar_injection_t:
+			return get_performance_results( &m_solar_injection_t );
+		case E_solar_extraction_t:
+			return get_performance_results( &m_solar_extraction_t );
+		case E_plant_power_net:
+			return get_performance_results( &m_plant_power_net );
+		case E_plant_fuel_mass:
+			return get_performance_results( &m_plant_fuel_mass) ;
+		case E_solar_heat_max:
+			return get_performance_results( &m_solar_heat_max );
+		default:
+			return -999.9;
+		}
+	}
+
+	enum data_descript
+	{
+		E_solar_steam_mass,
+		E_solar_extraction_p,
+		E_solar_injection_p,
+		E_solar_injection_t,
+		E_solar_extraction_t,
+		E_solar_extraction_h,
+		E_solar_injection_h,
+		E_plant_power_net,
+		E_plant_fuel_mass,
+		E_solar_heat_max
+	};
+
+	enum iscc_cycle_config
+	{
+		E_nrel_hp_evap = 1,
+		//E_ge	
+	};
+
+};
+
+
+#endif

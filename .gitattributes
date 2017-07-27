@@ -1,4 +1,10 @@
+
 doc/* linguist-documentation=true
-lpsolve/* linguist-vendored
-nlopt/* linguist-vendored
-build_*/* linguist_generated
+tcsdata/docs/* linguist-documentation=true
+
+*.c linguist-vendored
+lpsolve/* linguist-vendored=true
+nlopt/* linguist-vendored=true
+examples/* linguist-vendored=true
+
+build_*/* linguist_generated=true
