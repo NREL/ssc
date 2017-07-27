@@ -1593,8 +1593,9 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
 
                 for(size_t j=0; j<npt; j+=3)  //jump through in pairs
                 {
-                    sp_point start = polygon.back();
-                    if( move == 'C' ) //if relative, set the relative adder to the start point location
+                    sp_point start(x0, y0, 0.);
+                    //sp_point start = polygon.back();
+                    if( move == 'c' ) //if relative, set the relative adder to the start point location
                     {
                         xcond = start.x;
                         ycond = start.y;
@@ -1609,16 +1610,17 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
                         double t = (k+1)/(double)(nbz+2);
                         sp_point result;
                         Toolbox::BezierC(start, control1, control2, end, t, result);
-
+                        result.y = -result.y;
                         polygon.push_back( result );
                     }
-
-                    //add the end point
-                    polygon.push_back( end );
 
                     //update cursor position
                     x0 = end.x;
                     y0 = end.y;
+
+                    //add the end point
+                    end.y = -end.y;
+                    polygon.push_back( end );
                 }
                 break;
             }
