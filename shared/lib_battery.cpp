@@ -1376,15 +1376,19 @@ void losses_t::run_losses(double dt_hour, size_t idx)
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
 	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 
+	size_t stepsPerHour = (size_t)(1 / dt_hour);
+	size_t stepsPerYear = util::hours_per_year * stepsPerHour;
+	size_t index = idx % stepsPerYear;
+
 	// update system losses depending on user input
 	if (_loss_mode == losses_t::MONTHLY)
 	{
 		if (_capacity->charge_operation() == capacity_t::CHARGE)
-			_full_loss[idx] = _charge_loss[idx];
+			_full_loss[index] = _charge_loss[index];
 		if (_capacity->charge_operation() == capacity_t::DISCHARGE)
-			_full_loss[idx] = _discharge_loss[idx];
+			_full_loss[index] = _discharge_loss[index];
 		if (_capacity->charge_operation() == capacity_t::NO_CHARGE)
-			_full_loss[idx] = _idle_loss[idx];
+			_full_loss[index] = _idle_loss[index];
 	}
 }
 /* 

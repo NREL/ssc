@@ -84,8 +84,8 @@ namespace util
 	const double kilowatt_to_watt = 1000;
 	const double hour_to_min = 60.;
 	const double Celsius_to_Kelvin = 273.15;
-	const int hours_per_day = 24;
-	const int hours_per_year = 8760;
+	const size_t hours_per_day = 24;
+	const size_t hours_per_year = 8760;
 
 	static const int nday[12] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 

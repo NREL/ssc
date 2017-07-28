@@ -426,7 +426,7 @@ void dispatch_manual_t::copy(const dispatch_t * dispatch)
 }
 
 void dispatch_manual_t::initialize_dispatch(size_t hour_of_year, size_t step, double P_pv_dc_charging, double P_pv_dc_discharging, double P_load_dc_charging, double P_load_dc_discharging)
-{
+{ 
 	int m, h, column;
 	int iprofile = -1;
 	util::month_hour(hour_of_year, m, h);

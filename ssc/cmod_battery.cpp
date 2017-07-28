@@ -54,9 +54,6 @@
 #include "lib_util.h"
 #include "cmod_battery.h"
 
-
-
- 
 var_info vtab_battery_inputs[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                   GROUP           REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
@@ -652,6 +649,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		double charge_loss = charging_loss[0];
 		double discharge_loss = discharging_loss[0];
 		double idle_loss = idling_loss[0];
+
 
 		for (size_t m = 0; m != 12; m++)
 		{
