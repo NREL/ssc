@@ -225,6 +225,9 @@ protected:
 	// does battery need to iterate
 	bool _iterate;
 
+	// index of simulation
+	size_t _index;
+
 };
 
 class dc_connected_battery_controller : public charge_controller
