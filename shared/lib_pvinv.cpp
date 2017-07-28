@@ -82,7 +82,7 @@ bool partload_inverter_t::acpower(
 	// linear interpolation based on Pdc/Pdco and *Partload and *Efficiency arrays
 	double x = 100.0 * Pdc / Pdco; // percentages in partload ratio
 
-	int n = Partload.size();
+	int n = (int)Partload.size();
 
 	bool ascnd = (Partload[n-1] > Partload[0]); // check ascending order
 	int ndx;

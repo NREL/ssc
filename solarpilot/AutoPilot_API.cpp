@@ -1582,8 +1582,8 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         start.at(i) = *optvars.at(i);
 
     //Check feasibility
-    int iht = std::find(names->begin(), names->end(), "receiver.0.rec_height") - names->begin();
-    if( iht < (int)names->size() )
+    unsigned int iht = std::find(names->begin(), names->end(), "receiver.0.rec_height") - names->begin();
+    if( iht < names->size() )
     {
         double *xtemp = new double[ optvars.size() ]; 
         for(int i=0; i<(int)optvars.size(); i++)

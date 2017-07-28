@@ -87,7 +87,7 @@ nlopt_result isres_minimize(int n, nlopt_func f, void *f_data,
 
      if (!population) population = 20 * (n + 1);
      if (population < 1) return NLOPT_INVALID_ARGS;
-     survivors = ceil(population * SURVIVOR);
+	 survivors = ceil(population * SURVIVOR);
 
      taup = PHI / sqrt(2.0*n);
      tau = PHI / sqrt(2.0*sqrt((double)n));

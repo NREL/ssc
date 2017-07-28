@@ -225,7 +225,7 @@ bool util::dir_exists( const char *path )
 	char *wpath = strdup( path );
 	if (!wpath) return false;
 
-	int pos = strlen(wpath)-1;
+	size_t pos = strlen(wpath)-1;
 	while (pos > 1 && (wpath[pos] == '/' || wpath[pos] == '\\'))
 	{
 		if (pos == 3 && wpath[pos-1] == ':') break;
@@ -1035,9 +1035,9 @@ bool util::translate_schedule(int tod[8760], const matrix_t<float> &wkday, const
 			for (int h = 0; h<24; h++)
 			{
 				if (is_weekday)
-					tod[i] = wkday.at(m, h);
+					tod[i] = (int)wkday.at(m, h);
 				else
-					tod[i] = wkend.at(m, h);
+					tod[i] = (int)wkend.at(m, h);
 
 				if (tod[i] < min_val) tod[i] = min_val;
 				if (tod[i] > max_val) tod[i] = max_val;

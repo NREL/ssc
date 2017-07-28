@@ -917,7 +917,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 
 		// determine columns
-		for (size_t i = 0; i<ncols; i++)
+		for (int i = 0; i<ncols; i++)
 		{
 			char *name_cstr = trimboth(cols[i]);
 			if (name_cstr && strlen(name_cstr) > 0)
@@ -1175,21 +1175,21 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[HOUR].data[i] = hour;
 				m_columns[MINUTE].data[i] = 30;
 
-				m_columns[GHI].data[i] = (double)atof(cols[4]);
-				m_columns[DNI].data[i] = (double)atof(cols[7]);
-				m_columns[DHI].data[i] = (double)atof(cols[10]);
-				m_columns[POA].data[i] = (double)(-999);       /* No POA in TMY3 */
+				m_columns[GHI].data[i] = (float)atof(cols[4]);
+				m_columns[DNI].data[i] = (float)atof(cols[7]);
+				m_columns[DHI].data[i] = (float)atof(cols[10]);
+				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
 
-				m_columns[TDRY].data[i] = (double)atof(cols[31]);
-				m_columns[TDEW].data[i] = (double)atof(cols[34]);
+				m_columns[TDRY].data[i] = (float)atof(cols[31]);
+				m_columns[TDEW].data[i] = (float)atof(cols[34]);
 				
-				m_columns[WSPD].data[i] = (double)atof(cols[46]);
-				m_columns[WDIR].data[i] = (double)atof(cols[43]);
+				m_columns[WSPD].data[i] = (float)atof(cols[46]);
+				m_columns[WDIR].data[i] = (float)atof(cols[43]);
 
-				m_columns[RH].data[i] = (double)atof(cols[37]);
-				m_columns[PRES].data[i] = (double)atof(cols[40]);
+				m_columns[RH].data[i] = (float)atof(cols[37]);
+				m_columns[PRES].data[i] = (float)atof(cols[40]);
 				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-				m_columns[ALB].data[i] = (double)atof(cols[61]);
+				m_columns[ALB].data[i] = (float)atof(cols[61]);
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
 				m_columns[TWET].data[i] 
@@ -1237,20 +1237,20 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[HOUR].data[i] = atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
 				m_columns[MINUTE].data[i] = 30;
 
-				m_columns[GHI].data[i] = (double)atof(cols[13]);
-				m_columns[DNI].data[i] = (double)atof(cols[14]);
-				m_columns[DHI].data[i] = (double)atof(cols[15]);
-				m_columns[POA].data[i] = (double)(-999);       /* No POA in EPW */
+				m_columns[GHI].data[i] = (float)atof(cols[13]);
+				m_columns[DNI].data[i] = (float)atof(cols[14]);
+				m_columns[DHI].data[i] = (float)atof(cols[15]);
+				m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
 
-				m_columns[WSPD].data[i] = (double)atof(cols[21]);
-				m_columns[WDIR].data[i] = (double)atof(cols[20]);
+				m_columns[WSPD].data[i] = (float)atof(cols[21]);
+				m_columns[WDIR].data[i] = (float)atof(cols[20]);
 
-				m_columns[TDRY].data[i] = (double)atof(cols[6]);
-				m_columns[TWET].data[i] = (double)atof(cols[7]);
+				m_columns[TDRY].data[i] = (float)atof(cols[6]);
+				m_columns[TWET].data[i] = (float)atof(cols[7]);
 
-				m_columns[RH].data[i] = (double)atof(cols[8]);
-				m_columns[PRES].data[i] = (double)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
-				m_columns[SNOW].data[i] = (double)atof(cols[30]); // snowfall
+				m_columns[RH].data[i] = (float)atof(cols[8]);
+				m_columns[PRES].data[i] = (float)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
+				m_columns[SNOW].data[i] = (float)atof(cols[30]); // snowfall
 				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
 				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
 

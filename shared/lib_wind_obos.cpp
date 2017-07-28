@@ -1975,8 +1975,8 @@ void wobos::ArrayCabCostOptimizer()
 
 void wobos::ExportCabCostOptimizer()
 {
-	int nExpVolts = expCabVolt.size();
-	int nExpCables = expCables[0].size();
+	int nExpVolts = (int)expCabVolt.size();
+	int nExpCables = (int)expCables[0].size();
 
 	vector<vector<double> >nExpCab(nExpVolts, vector<double>(nExpCables));
 	vector<vector<double> >expCabLeng(nExpVolts, vector<double>(nExpCables));

@@ -1201,7 +1201,7 @@ endif
 
 	//Use brute force interpolation.. it is faster in this case than bisection or hunting methods used in the user-specified HTF case
 	
-	int iLastIndex = m_db.ncols()-1;
+	size_t iLastIndex = m_db.ncols()-1;
 	for (size_t i=0; i < m_db.ncols(); i++)
 	{
 		// if we got to the last one, then set bounds and end loop
