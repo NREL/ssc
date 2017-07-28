@@ -85,8 +85,6 @@ public:
 		add_var_info(vtab_technology_outputs);
 	}
 
-
-	
 	batt_variables * setup_variables()
 	{
 		batt_variables * batt_vars = new batt_variables();
@@ -95,12 +93,14 @@ public:
 		batt_vars->batt_chem = as_integer("batt_simple_chemistry");
 		batt_vars->batt_voltage_choice = voltage_t::VOLTAGE_MODEL;
 		batt_vars->batt_voltage_matrix = util::matrix_t<double>();
+		batt_vars->batt_calendar_choice = lifetime_calendar_t::NONE;
+		batt_vars->batt_calendar_lifetime_matrix = util::matrix_t<double>();
 
 		int dispatch = as_integer("batt_simple_dispatch");
 		batt_vars->batt_dispatch = (dispatch == 0 ? dispatch_t::LOOK_AHEAD : dispatch_t::LOOK_BEHIND);
 		batt_vars->batt_meter_position = as_integer("batt_simple_meter_position");
 
-		// compute cells, strings, voltage based on desired capacity/power, assume max current is 10 A for a battery
+		// compute cells, strings, voltage based on desired capacity/power, assume max current is 15 A for a battery
 		double batt_kwh = as_double("batt_simple_kwh");
 		double batt_kw = as_double("batt_simple_kw");
 		double batt_time_hour = batt_kwh / batt_kw;
@@ -125,6 +125,11 @@ public:
 			lifetime_matrix->push_back(80); lifetime_matrix->push_back(300); lifetime_matrix->push_back(87);
 			util::matrix_t<double> batt_lifetime_matrix(6, 3, lifetime_matrix);
 			batt_vars->batt_lifetime_matrix = batt_lifetime_matrix;
+
+			batt_vars->batt_calendar_q0 = 1.02;
+			batt_vars->batt_calendar_a = 2.66e-3;
+			batt_vars->batt_calendar_b = -7280;
+			batt_vars->batt_calendar_c = 930;
 
 			batt_vars->batt_Vnom_default = 3.6;
 			batt_vars->batt_Vfull = 4.1;
@@ -224,8 +229,11 @@ public:
 		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
 		batt_vars->batt_maximum_SOC = 100.;
 		batt_vars->batt_minimum_SOC = 20.;
+		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
 		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
 		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
+		batt_vars->batt_power_charge_max = batt_kw;
+		batt_vars->batt_power_discharge_max = batt_kw;
 		batt_vars->batt_minimum_modetime = 10;
 
 		batt_vars->batt_topology = charge_controller::AC_CONNECTED;
@@ -246,7 +254,10 @@ public:
 
 		batt_vars->batt_loss_choice = losses_t::MONTHLY;
 		batt_vars->batt_losses = batt_losses;
-		batt_vars->batt_losses_monthly = batt_losses_monthly;
+		batt_vars->batt_losses_charging = batt_losses_monthly;
+		batt_vars->batt_losses_discharging = batt_losses_monthly;
+		batt_vars->batt_losses_idle = batt_losses_monthly;
+
 
 		// replacement
 		batt_vars->batt_replacement_capacity = 0.;

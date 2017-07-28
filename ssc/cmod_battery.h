@@ -72,10 +72,12 @@ struct batt_variables
 	int batt_chem;
 	int batt_dispatch;
 	int batt_voltage_choice;
+	int batt_current_choice;
 	int batt_meter_position;
 	int batt_pv_choice;
 	int batt_target_choice;
 	int batt_loss_choice;
+	int batt_calendar_choice;
 
 	size_t ncharge;
 	size_t ndischarge;
@@ -95,16 +97,20 @@ struct batt_variables
 
 	util::matrix_t<float> schedule;
 	util::matrix_t<double>  batt_lifetime_matrix;
+	util::matrix_t<double> batt_calendar_lifetime_matrix;
 	util::matrix_t<double> batt_voltage_matrix;
 
 	std::vector<double> target_power_monthly;
 	std::vector<double> target_power;
 
-	std::vector<double> batt_losses_monthly;
+	std::vector<double> batt_losses_charging;
+	std::vector<double> batt_losses_discharging;
+	std::vector<double> batt_losses_idle;
 	std::vector<double> batt_losses;
 
 	int batt_computed_series;
 	int batt_computed_strings;
+
 	double batt_kw;
 	double batt_kwh;
 
@@ -137,6 +143,8 @@ struct batt_variables
 	double batt_minimum_SOC;
 	double batt_current_charge_max;
 	double batt_current_discharge_max;
+	double batt_power_charge_max;
+	double batt_power_discharge_max;
 	double batt_minimum_modetime;
 
 	int batt_topology;
@@ -151,6 +159,11 @@ struct batt_variables
 	double inv_ds_eff;
 	double inv_pd_eff;
 	double inverter_efficiency;
+
+	double batt_calendar_q0;
+	double batt_calendar_a;
+	double batt_calendar_b;
+	double batt_calendar_c;
 };
 
 
@@ -184,7 +197,9 @@ struct battstor
 
 	// member data
 	voltage_t *voltage_model;
+	lifetime_t * lifetime_model;
 	lifetime_cycle_t *lifetime_cycle_model;
+	lifetime_calendar_t *lifetime_calendar_model;
 	thermal_t *thermal_model;
 	capacity_t *capacity_model;
 	battery_t *battery_model;
