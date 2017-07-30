@@ -84,7 +84,7 @@ OBJECTS = tcskernel.o \
 	csp_solver_core.o \
 	csp_solver_mono_eq_methods.o \
 	csp_system_costs.o \
-	csp_solver_pt_sf_perf_interp \
+	csp_solver_pt_sf_perf_interp.o \
 	ud_power_cycle.o \
 	csp_dispatch.o 
 
