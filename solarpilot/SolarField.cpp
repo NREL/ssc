@@ -894,7 +894,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
 	*/
 	
     if(!refresh_only && !wdata )
-        throw exception("Prepare field layout called without a weather data object.");
+        throw spexception("Prepare field layout called without a weather data object.");
 
 	if(! SF.getSimInfoObject()->addSimulationNotice("Generating solar field heliostat layout") )
     {

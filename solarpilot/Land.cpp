@@ -190,7 +190,7 @@ void Land::getExtents(var_map &V, double rval[])
         {
             if( ! (is_bounds_scaled || is_bounds_fixed ) )
                 //insufficient info provided
-                throw exception("Insufficient information provided to specify land bounds. At least 1 'inclusion' region must be provided if not specifying fixed or scaled bounds.");
+                throw spexception("Insufficient information provided to specify land bounds. At least 1 'inclusion' region must be provided if not specifying fixed or scaled bounds.");
         }
 
 		//Find the minimum radius depending on the exclusions vector
