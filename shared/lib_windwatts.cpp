@@ -174,7 +174,7 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 	if (fTurbine_output <= 0.0)
 	{
 		*FarmP = 0.0;
-		return m_iNumberOfTurbinesInFarm;
+		return (int)m_iNumberOfTurbinesInFarm;
 	}
 
 	// ok, let's calculate the farm output
@@ -310,7 +310,7 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 		wt_id[i] = wid;
 	}
 	
-	return m_iNumberOfTurbinesInFarm;
+	return (int)m_iNumberOfTurbinesInFarm;
 }
 
 
@@ -453,12 +453,12 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			// separation crosswind between turbine i and turbine j
 			double dDistRadialInDiameters = fabs(aDistanceCrosswind[i] - aDistanceCrosswind[j])/2.0;
 			
-			double dWakeRadiusMeters = get_EV_wake_width(j, dDistAxialInDiameters);  // the radius of the wake
+			double dWakeRadiusMeters = get_EV_wake_width((int)j, dDistAxialInDiameters);  // the radius of the wake
 			if (dWakeRadiusMeters<=0.0)
 				continue;
 
 			// calculate the wake deficit
-			double dDef = wake_deficit_EV(j, dDistRadialInDiameters, dDistAxialInDiameters);
+			double dDef = wake_deficit_EV((int)j, dDistRadialInDiameters, dDistAxialInDiameters);
 			double dWindSpeedWaked = adWindSpeed[0] * (1 - dDef); // wind speed = free stream * (1-deficit)
 
 			// keep it if it's bigger
@@ -482,7 +482,7 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			Eff[i] = 100.0*(Power[i]+0.0001)/(Power[0]+0.0001);
 
 		// now that turbine[i] wind speed, output, thrust, etc. have been calculated, calculate wake characteristics for it, because downwind turbines will need the info
-		if (!fill_turbine_wake_arrays_for_EV(i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm-1] - aDistanceDownwind[i])*dTurbineRadius ) )
+		if (!fill_turbine_wake_arrays_for_EV((int)i, adWindSpeed[0], adWindSpeed[i], Power[i], Thrust[i], aTurbulence_intensity[i], fabs(aDistanceDownwind[m_iNumberOfTurbinesInFarm-1] - aDistanceDownwind[i])*dTurbineRadius ) )
 		{
 			if(m_sErrDetails.length() == 0) m_sErrDetails = "Could not calculate the turbine wake arrays in the Eddy-Viscosity model.";
 			return false;

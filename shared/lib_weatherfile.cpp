@@ -266,7 +266,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 	float dpt;
 
 	if (db > 90.0 || rh > 100.0 || rh < 1.0)    /* Check for valid input data */
-		dpt = 99.9;                   /* Missing data value */
+		dpt = (float)99.9;                   /* Missing data value */
 	else
 	{  /* Find water vapor saturation pressure (kPa) for drybulb temperature */
 		t = db + 273.15;           /* Absolute temperature (deg K) */
@@ -285,10 +285,10 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 		pres = pres*rh / 100.0;      /* Partial pressure (kPa) of water vapor */
 		arg = log(pres);
 		if (db >= 0.0)            /* Use equation 35 from ASHRAE */
-			dpt = c14 + c15*arg + c16*pow(arg, 2.0) + c17*pow(arg, 3.0) +
-			c18*pow(pres, 0.1984);
+			dpt = (float)(c14 + c15*arg + c16*pow(arg, 2.0) + c17*pow(arg, 3.0) +
+			c18*pow(pres, 0.1984));
 		if (db < 0.0 || dpt < 0)  /* Use eqn 36 if drybulb or dewpoint < 0 */
-			dpt = 6.09 + 12.608*arg + 0.4959*arg*arg;
+			dpt = (float)(6.09 + 12.608*arg + 0.4959*arg*arg);
 
 		/* For dewpoint temperatures below -20C, check to see that the dewpoint
 		temperature gives the correct vapor saturation pressure.  If not, iterate
@@ -314,7 +314,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 			}
 			while (fabs(pres - pres_dew) > 0.00001 && fabs(pta - ptb) > 0.05)
 			{
-				dpt = ptc - 273.15;
+				dpt = (float)ptc - 273.15;
 				t = ptc;
 				arg = c1 / t + c2 + c3*t + c4*pow(t, 2.0) + c5*pow(t, 3.0) +
 					c6*pow(t, 4.0) + c7*log(t);
@@ -676,7 +676,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		m_hdr.lat = atof(cols[4]);
 		m_hdr.lon = atof(cols[5]);
 		m_hdr.elev = atof(cols[6]);
-		m_stepSec = atof(cols[7]); // time step in seconds
+		m_stepSec = (size_t)atof(cols[7]); // time step in seconds
 		m_startYear = atoi(cols[8]);
 		char *p = cols[9];
 		
@@ -698,7 +698,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		if (!header_only)
 		{
 			m_time = start_hour * 3600 + start_min * 60 + start_sec;
-			m_startSec = m_time;
+			m_startSec = (size_t)m_time;
 
 			m_nRecords = 0;
 			while (fgets(buf, NBUF, fp) != 0)

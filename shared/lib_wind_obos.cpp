@@ -1465,20 +1465,20 @@ void wobos::VesselMobDemobCost()
         mobDemobCostByVessel[9][1] = subFeederBarge[14] * subFeederBarge[15] * subFeederBarge[16];
     }
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 10; i < turbSupportVessels.size(); i++)
+	for (size_t i = 10; i < turbSupportVessels.size(); i++)
 	{
 		mobDemobCostByVessel[i][0] = turbSupportVessels[i-10][0];
 		mobDemobCostByVessel[i][1] = turbSupportVessels[i-10][14] * turbSupportVessels[i-10][15] * turbSupportVessels[i-10][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 10 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
+	for (size_t i = 10 + turbSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size(); i++)
 	{
 		mobDemobCostByVessel[i][0] = subSupportVessels[i - turbSupportVessels.size()-10][0];
 		mobDemobCostByVessel[i][1] = subSupportVessels[i - turbSupportVessels.size()-10][14] * subSupportVessels[i - turbSupportVessels.size()-10][15]
 			* subSupportVessels[i - turbSupportVessels.size()-10][16];
 	}
 	//populate cost vector with support vessel identifier values and costs
-	for (int i = 10 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
+	for (size_t i = 10 + turbSupportVessels.size() + subSupportVessels.size(); i < turbSupportVessels.size() + subSupportVessels.size()
 		+ elecSupportVessels.size(); i++)
 	{
 		mobDemobCostByVessel[i][0] = elecSupportVessels[i - (turbSupportVessels.size() + subSupportVessels.size())-10][0];
@@ -1813,8 +1813,8 @@ double wobos::PlantCommissioning()
 void wobos::ArrayCabCostOptimizer()
 
 {
-	int nArrVolts = arrayVolt.size();
-	int nArrCables = arrCables[0].size();
+	size_t nArrVolts = arrayVolt.size();
+	size_t nArrCables = arrCables[0].size();
 
 	vector<vector<double> > strings(nArrVolts, vector<double>(nArrCables));
 	vector<vector<double> > nTurbPS(nArrVolts, vector<double>(nArrCables));
