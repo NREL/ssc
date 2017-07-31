@@ -813,10 +813,10 @@ public:
 				// convert MWh to kWh 
 				ts_power += timestep_energy_MW[i_ts*step_per_hour + j_sh] * 1000.0;
 				// apply performance adjustments
-				p_gen[idx] = timestep_energy_MW[i_ts*step_per_hour + j_sh] * 1000.0 * haf(i_ts);
+				p_gen[idx] = (ssc_number_t)(timestep_energy_MW[i_ts*step_per_hour + j_sh] * 1000.0 * haf(i_ts));
 				idx++;
 			}
-			ae += ts_power * ts_hour; // honoring Ty's wishes below
+			ae += (ssc_number_t)(ts_power * ts_hour); // honoring Ty's wishes below
 		}
 
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
@@ -833,7 +833,7 @@ public:
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double A_aper_tot = get_unit_value_number(type250_solarfield, "A_aper_tot");
 		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
-		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);		
+		assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
 		// Monthly accumulations
 		accumulate_monthly("gen", "monthly_energy", ts_hour); // already in kWh
@@ -864,7 +864,7 @@ public:
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6))); 
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		assign("system_heat_rate", (ssc_number_t)3.413); // samsim tcstrough_physical
 		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
 		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
 	}

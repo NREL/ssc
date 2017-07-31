@@ -552,23 +552,23 @@ public:
 		{
 			case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
 			{
-				assign("rec_aspect", as_double("rec_height") / as_double("D_rec"));
+				assign("rec_aspect", as_number("rec_height") / as_number("D_rec"));
 				break;
 			}
 			case var_receiver::REC_TYPE::FLAT_PLATE:
-				assign("rec_aspect", as_double("rec_height") / as_double("D_rec"));
+				assign("rec_aspect", as_number("rec_height") / as_number("D_rec"));
 				break;
 		}
 
-		assign("q_design", as_double("P_ref") / as_double("design_eff") * as_double("solarm"));
+		assign("q_design", as_number("P_ref") / as_number("design_eff") * as_number("solarm"));
 
 		// Set up "cmod_solarpilot.cpp" conversions as necessary
-		assign("helio_optical_error", as_double("helio_optical_error_mrad")*1.E-3);				
+		assign("helio_optical_error", (ssc_number_t)(as_number("helio_optical_error_mrad")*1.E-3));
 
 		// Set 'n_flux_x' and 'n_flux_y' here, for now
 		assign("n_flux_y", 1);
 		int n_rec_panels = as_integer("N_panels");
-		assign("n_flux_x", max(12, n_rec_panels));
+		assign("n_flux_x", (ssc_number_t)max(12, n_rec_panels));
 
 		// Calculate system capacity instead of pass in
 		double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor");		//[MWe]
@@ -614,9 +614,9 @@ public:
 					for (size_t i = 0; i<nr; i++){
 
 						for (size_t j = 0; j<steps.front().size(); j++)
-							ssc_hist[i*nc + j] = steps.at(i).at(j);
-						ssc_hist[i*nc + nc - 2] = obj.at(i);
-						ssc_hist[i*nc + nc - 1] = flux.at(i);
+							ssc_hist[i*nc + j] = (ssc_number_t)steps.at(i).at(j);
+						ssc_hist[i*nc + nc - 2] = (ssc_number_t)obj.at(i);
+						ssc_hist[i*nc + nc - 1] = (ssc_number_t)flux.at(i);
 					}
 				}
 			}
@@ -639,7 +639,7 @@ public:
 			assign("A_sf", var_data((ssc_number_t)A_sf));
 
 			double land_area_base = spi.land.land_area.Val();		//[acres] Land area occupied by heliostats
-			assign("land_area_base", land_area_base);
+			assign("land_area_base", (ssc_number_t)land_area_base);
 
 			ssc_number_t *ssc_hl = allocate("helio_positions", nr, 2);
 			for (int i = 0; i<nr; i++)
@@ -702,10 +702,10 @@ public:
 			ssc_number_t *p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
 			for (int i = 0; i < n_h_rows; i++)
 			{
-				p_helio_positions_in[i * 2] = helio_pos_temp(i, 0);
-				p_helio_positions_in[i * 2 + 1] = helio_pos_temp(i, 1);
+				p_helio_positions_in[i * 2] = (ssc_number_t)helio_pos_temp(i, 0);
+				p_helio_positions_in[i * 2 + 1] = (ssc_number_t)helio_pos_temp(i, 1);
 			}
-			assign("N_hel", n_h_rows);
+			assign("N_hel", (ssc_number_t)n_h_rows);
 			// 'calc_fluxmaps' should be true
 			assign("calc_fluxmaps", 1);
 
@@ -759,14 +759,14 @@ public:
 
 			int nr = as_integer("N_hel");
 			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
-			assign("A_sf", A_sf);
+			assign("A_sf", (ssc_number_t)A_sf);
 		}
 		else if (field_model_type == 3)
 		{
 			assign("calc_fluxmaps", 0);
 
 			// The following optional inputs must be set here:
-			assign("A_sf", as_double("A_sf_in"));
+			assign("A_sf", as_number("A_sf_in"));
 		}
 		else
 		{
@@ -1619,7 +1619,7 @@ public:
 
 		//land area
 		sys_costs.ms_par.total_land_area = as_double("land_area_base") * as_double("csp.pt.sf.land_overhead_factor") + as_double("csp.pt.sf.fixed_land_area");
-		assign("csp.pt.cost.total_land_area", sys_costs.ms_par.total_land_area);
+		assign("csp.pt.cost.total_land_area", (ssc_number_t)sys_costs.ms_par.total_land_area);
 
 		sys_costs.ms_par.plant_net_capacity = system_capacity / 1000.0;			//[MWe], convert from kWe
 		sys_costs.ms_par.EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
@@ -1643,24 +1643,24 @@ public:
 		}
 
 		// 1.5.2016 twn: financial model needs an updated total_installed_cost, remaining are for reporting only
-		assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
+		assign("total_installed_cost", (ssc_number_t)sys_costs.ms_out.total_installed_cost);
 
-		assign("csp.pt.cost.site_improvements", sys_costs.ms_out.site_improvement_cost);
-		assign("csp.pt.cost.heliostats", sys_costs.ms_out.heliostat_cost);
-		assign("csp.pt.cost.tower", sys_costs.ms_out.tower_cost);
-		assign("csp.pt.cost.receiver", sys_costs.ms_out.receiver_cost);
-		assign("csp.pt.cost.storage", sys_costs.ms_out.tes_cost);
-		assign("csp.pt.cost.power_block", sys_costs.ms_out.power_cycle_cost);
-		assign("csp.pt.cost.bop", sys_costs.ms_out.bop_cost);
-		assign("csp.pt.cost.fossil", sys_costs.ms_out.fossil_backup_cost);
-		assign("ui_direct_subtotal", sys_costs.ms_out.direct_capital_precontingency_cost);
-		assign("csp.pt.cost.contingency", sys_costs.ms_out.contingency_cost);
-		assign("total_direct_cost", sys_costs.ms_out.total_direct_cost);
-		assign("csp.pt.cost.epc.total", sys_costs.ms_out.epc_and_owner_cost);
-		assign("csp.pt.cost.plm.total", sys_costs.ms_out.total_land_cost);
-		assign("csp.pt.cost.sales_tax.total", sys_costs.ms_out.sales_tax_cost);
-		assign("total_indirect_cost", sys_costs.ms_out.total_indirect_cost);
-		assign("csp.pt.cost.installed_per_capacity", sys_costs.ms_out.estimated_installed_cost_per_cap);
+		assign("csp.pt.cost.site_improvements", (ssc_number_t)sys_costs.ms_out.site_improvement_cost);
+		assign("csp.pt.cost.heliostats", (ssc_number_t)sys_costs.ms_out.heliostat_cost);
+		assign("csp.pt.cost.tower", (ssc_number_t)sys_costs.ms_out.tower_cost);
+		assign("csp.pt.cost.receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
+		assign("csp.pt.cost.storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
+		assign("csp.pt.cost.power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
+		assign("csp.pt.cost.bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
+		assign("csp.pt.cost.fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
+		assign("ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);
+		assign("csp.pt.cost.contingency", (ssc_number_t)sys_costs.ms_out.contingency_cost);
+		assign("total_direct_cost", (ssc_number_t)sys_costs.ms_out.total_direct_cost);
+		assign("csp.pt.cost.epc.total", (ssc_number_t)sys_costs.ms_out.epc_and_owner_cost);
+		assign("csp.pt.cost.plm.total", (ssc_number_t)sys_costs.ms_out.total_land_cost);
+		assign("csp.pt.cost.sales_tax.total", (ssc_number_t)sys_costs.ms_out.sales_tax_cost);
+		assign("total_indirect_cost", (ssc_number_t)sys_costs.ms_out.total_indirect_cost);
+		assign("csp.pt.cost.installed_per_capacity", (ssc_number_t)sys_costs.ms_out.estimated_installed_cost_per_cap);
 
 		// Update construction financing costs, specifically, update: "construction_financing_cost"
 		double const_per_interest_rate1 = as_double("const_per_interest_rate1");
@@ -1705,25 +1705,25 @@ public:
 			const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
 			const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
 
-		assign("const_per_principal1", const_per_principal1);
-		assign("const_per_principal2", const_per_principal2);
-		assign("const_per_principal3", const_per_principal3);
-		assign("const_per_principal4", const_per_principal4);
-		assign("const_per_principal5", const_per_principal5);
-		assign("const_per_interest1", const_per_interest1);
-		assign("const_per_interest2", const_per_interest2);
-		assign("const_per_interest3", const_per_interest3);
-		assign("const_per_interest4", const_per_interest4);
-		assign("const_per_interest5", const_per_interest5);
-		assign("const_per_total1", const_per_total1);
-		assign("const_per_total2", const_per_total2);
-		assign("const_per_total3", const_per_total3);
-		assign("const_per_total4", const_per_total4);
-		assign("const_per_total5", const_per_total5);
-		assign("const_per_percent_total", const_per_percent_total);
-		assign("const_per_principal_total", const_per_principal_total);
-		assign("const_per_interest_total", const_per_interest_total);
-		assign("construction_financing_cost", construction_financing_cost);
+		assign("const_per_principal1", (ssc_number_t)const_per_principal1);
+		assign("const_per_principal2", (ssc_number_t)const_per_principal2);
+		assign("const_per_principal3", (ssc_number_t)const_per_principal3);
+		assign("const_per_principal4", (ssc_number_t)const_per_principal4);
+		assign("const_per_principal5", (ssc_number_t)const_per_principal5);
+		assign("const_per_interest1", (ssc_number_t)const_per_interest1);
+		assign("const_per_interest2", (ssc_number_t)const_per_interest2);
+		assign("const_per_interest3", (ssc_number_t)const_per_interest3);
+		assign("const_per_interest4", (ssc_number_t)const_per_interest4);
+		assign("const_per_interest5", (ssc_number_t)const_per_interest5);
+		assign("const_per_total1", (ssc_number_t)const_per_total1);
+		assign("const_per_total2", (ssc_number_t)const_per_total2);
+		assign("const_per_total3", (ssc_number_t)const_per_total3);
+		assign("const_per_total4", (ssc_number_t)const_per_total4);
+		assign("const_per_total5", (ssc_number_t)const_per_total5);
+		assign("const_per_percent_total", (ssc_number_t)const_per_percent_total);
+		assign("const_per_principal_total", (ssc_number_t)const_per_principal_total);
+		assign("const_per_interest_total", (ssc_number_t)const_per_interest_total);
+		assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
 
 		// Do unit post-processing here
 		float *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
@@ -1755,11 +1755,11 @@ public:
 		}
 		for (int i = 0; i < n_steps_fixed; i++)
 		{
-			p_m_dot_rec[i] = p_m_dot_rec[i] / 3600.0;	//[kg/s] convert from kg/hr
-			p_m_dot_pc[i] = p_m_dot_pc[i] / 3600.0;		//[kg/s] convert from kg/hr
-			p_m_dot_water_pc[i] = p_m_dot_water_pc[i] / 3600.0;	//[kg/s] convert from kg/hr
-			p_m_dot_tes_dc[i] = p_m_dot_tes_dc[i] / 3600.0;		//[kg/s] convert from kg/hr
-			p_m_dot_tes_ch[i] = p_m_dot_tes_ch[i] / 3600.0;		//[kg/s] convert from kg/hr
+			p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0);	//[kg/s] convert from kg/hr
+			p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);		//[kg/s] convert from kg/hr
+			p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0);	//[kg/s] convert from kg/hr
+			p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);		//[kg/s] convert from kg/hr
+			p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);		//[kg/s] convert from kg/hr
 		}		
 
 		// Set output data from heliostat class

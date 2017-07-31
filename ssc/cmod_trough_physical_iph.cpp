@@ -744,12 +744,12 @@ public:
 		for(int i = 0; i < n_steps_fixed; i++)
 		{
 			size_t hour = ceil(p_time_final_hr[i]);
-			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour) * 1.E3;		//[kWt]
+			p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);		//[kWt]
 			p_W_dot_parasitic_tot[i] *= -1.0;			//[kWe] Label is total parasitics, so change to a positive value
-			p_W_dot_par_tot_haf[i] = p_W_dot_parasitic_tot[i] * (ssc_number_t)haf(hour) * 1.E3;		//[kWe]
-			p_q_dot_defocus_est[i] = (1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i];	//[MWt]
-			p_m_dot_tes_dc[i] = p_m_dot_tes_dc[i] / 3600.0;		//[kg/s] convert from kg/hr
-			p_m_dot_tes_ch[i] = p_m_dot_tes_ch[i] / 3600.0;		//[kg/s] convert from kg/hr
+			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]
+			p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i];	//[MWt]
+			p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);		//[kg/s] convert from kg/hr
+			p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);		//[kg/s] convert from kg/hr
 		}
 
 		// Monthly outputs
@@ -771,7 +771,7 @@ public:
 		// Calculate water use
 		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
 		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
-		assign("annual_total_water_use", V_water_mirrors);		//[m3]
+		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
 	}
 
 };

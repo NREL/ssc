@@ -186,7 +186,7 @@ public:
 
 
 
-		assign( "nwarnings", var_data( nwarnings ) );
+		assign("nwarnings", var_data((ssc_number_t)nwarnings));
 	}
 };
 
