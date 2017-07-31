@@ -878,7 +878,7 @@ void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
 		if (hour_of_year + 1 <= tmpSum)
 		{
 			// get the day of the month
-			int tmp = floor((float)(hour_of_year) / 24);
+			int tmp = (int)(floor((float)(hour_of_year) / 24));
 			hour = (hour_of_year + 1) - (tmp * 24);
 			break;
 		}
@@ -894,7 +894,7 @@ int util::hour_of_day(int hour_of_year)
 
 bool util::weekday(int hour_of_year)
 {
-	int day_of_year = floor((float)(hour_of_year) / 24);
+	int day_of_year = (int)(floor((float)(hour_of_year) / 24));
 	int day_of_week = day_of_year;
 
 	if (day_of_week > 6)

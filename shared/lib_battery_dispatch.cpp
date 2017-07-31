@@ -429,14 +429,14 @@ void dispatch_manual_t::initialize_dispatch(size_t hour_of_year, size_t step, do
 { 
 	int m, h, column;
 	int iprofile = -1;
-	util::month_hour(hour_of_year, m, h);
-	bool is_weekday = util::weekday(hour_of_year);
-	_mode == MANUAL ? column = h - 1 : column = (h - 1) / _dt_hour + step;
+	util::month_hour((int)hour_of_year, m, h);
+	bool is_weekday = util::weekday((int)hour_of_year);
+	_mode == MANUAL ? column = h - 1 : column = (int)((h - 1) / _dt_hour + step);
 
 	if (!is_weekday && _mode == MANUAL)
-		iprofile = _sched_weekend(m - 1, column);
+		iprofile = (int)_sched_weekend(m - 1, column);
 	else
-		iprofile = _sched(m - 1, column);  // 1-based
+		iprofile = (int)_sched(m - 1, column);  // 1-based
 
 	_can_charge = _charge_array[iprofile - 1];
 	_can_discharge = _discharge_array[iprofile - 1];
@@ -498,7 +498,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, 1 / _dt_hour);
+	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
 
 	do {
 
@@ -654,7 +654,7 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 	bool charged = (round(SOC) == _SOC_max);
 	bool charging = false;
 
-	if (_can_charge && !charged > 0 && _P_pv_charging > 0)
+	if (_can_charge && !charged != 0 && _P_pv_charging > 0)
 	{
 		if (_P_pv_charging > energy_needed / _dt_hour)
 			_P_pv_to_batt = energy_needed / _dt_hour;
@@ -667,7 +667,7 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 			_P_tofrom_batt = -energy_needed / _dt_hour;
 		charging = true;
 	}
-	else if (_can_grid_charge && !charged > 0)
+	else if (_can_grid_charge && !charged != 0)
 	{
 		_P_tofrom_batt = -energy_needed / _dt_hour;
 		charging = true;

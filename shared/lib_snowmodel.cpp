@@ -79,7 +79,7 @@
 pvsnowmodel::pvsnowmodel()
 {
 	mSlope = -80;
-	sSlope = 1.97;
+	sSlope = (float)1.97;
 	deltaThreshold = 1.00;
 	depthThreshold = 1.00;
 	previousDepth = 0;
@@ -167,7 +167,7 @@ bool pvsnowmodel::getLoss(float poa, float tilt, float wspd, float tdry, float s
 
 	// check if conditions are right for sliding
 	if (tdry - poa / mSlope > 0){
-		coverage -= 0.1 * sSlope * sin(tilt * M_PI / 180) * dt;
+		coverage -= 0.1 * sSlope * (float)(sin(tilt * M_PI / 180) * dt);
 	}
 			// Coverage Override #2
 	//  This override prevents the snow coverage from going below 0
