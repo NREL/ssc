@@ -1104,7 +1104,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[ALB].data[i] = -999; /* no albedo in TMY2 */
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY2 */
 				m_columns[TWET].data[i] 
-					= calc_twet( 
+					= (float)calc_twet( 
 					(double)m_columns[TDRY].data[i],
 					(double)m_columns[RH].data[i],
 					(double)m_columns[PRES].data[i] ); /* must calculate wet bulb */
@@ -1193,7 +1193,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
 				m_columns[TWET].data[i] 
-					= calc_twet( 
+					= (float)calc_twet( 
 					(double)m_columns[TDRY].data[i],
 					(double)m_columns[RH].data[i],
 					(double)m_columns[PRES].data[i]); /* must calculate wet bulb */

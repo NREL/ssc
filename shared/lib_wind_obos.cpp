@@ -1494,7 +1494,7 @@ void wobos::VesselMobDemobCost()
 	it = unique(mobDemobCostByVessel.begin(), mobDemobCostByVessel.end());
 
 	//resize the cost vector to get rid of the duplicate support vessels stored at the end of the vector
-	int resizer = distance(mobDemobCostByVessel.begin(), it);
+	int resizer = (int)distance(mobDemobCostByVessel.begin(), it);
 	mobDemobCostByVessel.resize(resizer);
 	for (size_t i = 0; i < resizer; i++)
 	{

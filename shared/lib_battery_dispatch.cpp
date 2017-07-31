@@ -715,7 +715,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	_Battery_initial->copy(_Battery);
 	bool iterate = true;
 	int count = 0;
-	size_t idx = util::index_year_hour_step(year, hour_of_year, step, 1 / _dt_hour);
+	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
 
 	do {
 
@@ -796,7 +796,7 @@ automate_dispatch_t::automate_dispatch_t(
 	_day_index = 0;
 	_hour_last_updated = -999;
 	_dt_hour = dt_hour;
-	_steps_per_hour = 1. / dt_hour;
+	_steps_per_hour = int(1. / dt_hour);
 	_nyears = nyears;
 	_mode = mode;
 	_num_steps = 24 * _steps_per_hour; // change if do look ahead of more than 24 hours
@@ -817,13 +817,13 @@ void automate_dispatch_t::dispatch(size_t year,
 	double P_load_dc_charging,
 	double P_load_dc_discharging)
 {
-	int step_per_hour = 1 / _dt_hour;
+	int step_per_hour = (int)(1 / _dt_hour);
 	int idx = 0;
 
 	if (_mode == LOOK_AHEAD || _mode == LOOK_BEHIND || _mode == MAINTAIN_TARGET)
-		idx = util::index_year_hour_step(year, hour_of_year, step, step_per_hour);
+		idx = (int)util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)step_per_hour);
 
-	update_dispatch(hour_of_year, step, idx);
+	update_dispatch((int)hour_of_year, (int)step, idx);
 	dispatch_manual_t::dispatch(year, hour_of_year, step, P_pv_dc_charging, P_pv_dc_discharging, P_load_dc_charging, P_load_dc_discharging);
 }
 void automate_dispatch_t::update_pv_load_data(std::vector<double> P_pv_dc, std::vector<double> P_load_dc)
@@ -843,7 +843,6 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 
 	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
 	{
-		double E_useful;  // [kWh] - the cyclable energy available in the battery
 		double E_max;     // [kWh] - the maximum energy that can be cycled
 
 		check_new_month(hour_of_year, step);
@@ -1097,7 +1096,7 @@ void automate_dispatch_t::set_charge(int profile)
 	_charge_array.push_back(true);
 	_discharge_array.push_back(false);
 	_gridcharge_array.push_back(false);
-	_sched.fill(profile);
+	_sched.fill((float)profile);
 }
 int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, double E_max)
 {
@@ -1132,7 +1131,7 @@ int automate_dispatch_t::set_discharge(FILE *p, bool debug, int hour_of_year, do
 			int column = (h - 1)*_steps_per_hour + min;
 
 			// have set profile 0 as charge from solar only as default, start from 1
-			_sched.set_value(profile, m - 1, column); // in hourly case, column is hour-1, sched is 1-based
+			_sched.set_value((float)profile, (size_t)m - 1, (size_t)column); // in hourly case, column is hour-1, sched is 1-based
 			_charge_array.push_back(false);
 			_discharge_array.push_back(true);
 			_gridcharge_array.push_back(false);
@@ -1188,7 +1187,7 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 
 			util::month_hour(hour_of_year + hour, m, h);
 			int column = (h - 1)*_steps_per_hour + step;
-			_sched.set_value(profile, m - 1, column); // hourly, column is h-1
+			_sched.set_value((float)profile, m - 1, column); // hourly, column is h-1
 			_charge_array.push_back(true);
 			_discharge_array.push_back(false);
 			_gridcharge_array.push_back(true);

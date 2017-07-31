@@ -1138,7 +1138,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	// extract and sort calendar life info from table
 	for (size_t i = 0; i != calendar_matrix.nrows(); i++)
 	{
-		_calendar_days.push_back(calendar_matrix.at(i, 0));
+		_calendar_days.push_back((int)calendar_matrix.at(i, 0));
 		_calendar_capacity.push_back(calendar_matrix.at(i, 1));
 	}
 }
@@ -1186,7 +1186,7 @@ void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 }
 void lifetime_calendar_t::runTableModel()
 {
-	int n = _calendar_days.size() - 1;
+	size_t n = _calendar_days.size() - 1;
 	int day_lo = 0;
 	int day_hi = _calendar_days[n];
 	double capacity_lo = 100;
