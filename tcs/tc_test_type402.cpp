@@ -201,8 +201,8 @@ public:
 
 		htfProps.SetFluid(fluid_mat);
 		
-		thermocline.Initialize_TC(h,A,fill_mat,U,U_top,U_bot,f_void,capfac,Thmin,Tcmax,nodes,T_hot_ini,T_cold_ini,
-			TC_break,T_htr_set,max_htr_q,n_pairs,htfProps);
+		thermocline.Initialize_TC(h,A,fill_mat,U,U_top,U_bot,f_void,capfac,Thmin,Tcmax,(int)nodes,T_hot_ini,T_cold_ini,
+			TC_break,T_htr_set,max_htr_q,(int)n_pairs,htfProps);
 
 		return 0;
 	}
@@ -233,7 +233,7 @@ public:
 		double f_cold =            std::numeric_limits<double>::quiet_NaN();
 		double Q_dot_htr =         std::numeric_limits<double>::quiet_NaN();
 
-		thermocline.Solve_TC(T_hot_in, flow_h, T_cold_in, flow_c, T_env, solve_mode, Q_dis_target, Q_cha_target, f_storage,
+		thermocline.Solve_TC(T_hot_in, flow_h, T_cold_in, flow_c, T_env, (int)solve_mode, Q_dis_target, Q_cha_target, f_storage,
 			delta_time, m_dot_dis_avail, T_dis_avail, m_dot_cha_avail, T_cha_avail, Q_dot_out, Q_dot_losses, T_hot_bed,
 			T_cold_bed, T_max_bed, f_hot, f_cold, Q_dot_htr);
 

@@ -219,7 +219,7 @@ public:
 		m_slope_ew = value( P_SLOPE_EW );
 		m_w_slot_gap = value( P_W_SLOT_GAP );
 		m_h_slot_gap = value( P_H_SLOT_GAP );
-		m_manufacturer = value( P_MANUFACTURER );
+		m_manufacturer = (int)value( P_MANUFACTURER );
 
 		switch( m_manufacturer )
 		{
@@ -493,7 +493,7 @@ public:
 		double EW_shade = 0.0;					// initialize
 		double diag_shade = 0.0;
 
-		for( int N_loop = N_loop_1; N_loop <= N_loop_2; N_loop+=one )
+		for( int N_loop = (int)N_loop_1; N_loop <= (int)N_loop_2; N_loop+=(int)one )
 		{
 			double x_dish_1 = N_loop * w_rect;			// position of differential rectangle on x-axis of dish 1 (south)
 			double x_dish_2 = N_loop * w_rect - x_A;	// position of differential rectangle on x-axis of dish 2 (north) that the center of dish 1 projects onto"

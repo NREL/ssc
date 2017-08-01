@@ -72,7 +72,7 @@ bool Linear_Interp::Set_1D_Lookup_Table( const util::matrix_t<double> &table, in
 
 	// check monotonically increasing independent variables
 	for ( int i = 0; i < n_ind_var; i++ )
-		for ( int r = 1; r < table.nrows(); r++ )
+		for ( int r = 1; r < (int)table.nrows(); r++ )
 			if ( table.at(r, ind_var_index[i]) < table.at(r-1, ind_var_index[i]) )
 			{
 				error_index = i;
@@ -340,7 +340,7 @@ bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
 	// Find number of x values in table
 	double first_val = table.at(0,0);
 	int i = 1;
-	for( i; i < table.nrows(); i++ )
+	for( i; i < (int)table.nrows(); i++ )
 		if( table.at(i,0) == first_val )	break;
 	m_nx = i;
 	if( m_nx < 3 )
@@ -392,7 +392,7 @@ bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 	// Find number of x values in table
 	double first_val = table.at(0,0,0);
 	int i = 1;
-	for( i; i < table.nrows(); i++ )
+	for( i; i < (int)table.nrows(); i++ )
 		if( table.at(i,0,0) == first_val )	break;
 	m_nx = i;
 	if( m_nx < 3 )

@@ -711,63 +711,63 @@ public:
 		double nSupportVessels = 27;
 		double nTugs = 4;
 
-		obos.arrayVolt.resize(nArrVolts);
-		obos.arrCables.resize(nArrVolts);
+		obos.arrayVolt.resize((int)nArrVolts);
+		obos.arrCables.resize((int)nArrVolts);
 
-		for (int i = 0; i < obos.arrayVolt.size(); i++)
+		for (int i = 0; i < (int)obos.arrayVolt.size(); i++)
 		{
-			obos.arrayVolt[i].resize(nArrVolts);
+			obos.arrayVolt[i].resize((int)nArrVolts);
 		}
-		for (int i = 0; i < obos.arrCables.size(); i++)
+		for (int i = 0; i < (int)obos.arrCables.size(); i++)
 		{
-			obos.arrCables[i].resize(nArrCables);
+			obos.arrCables[i].resize((int)nArrCables);
 
-			for (int j = 0; j < obos.arrCables[i].size(); j++)
+			for (int j = 0; j < (int)obos.arrCables[i].size(); j++)
 			{
-				obos.arrCables[i][j].resize(nCableAttributes);
+				obos.arrCables[i][j].resize((int)nCableAttributes);
 			}
 		}
 
-		obos.expCabVolt.resize(nExpVolts);
-		obos.expCables.resize(nExpVolts);
+		obos.expCabVolt.resize((int)nExpVolts);
+		obos.expCables.resize((int)nExpVolts);
 
-		for (int i = 0; i < obos.expCabVolt.size(); i++)
+		for (int i = 0; i < (int)obos.expCabVolt.size(); i++)
 		{
-			obos.expCabVolt[i].resize(nExpVolts);
+			obos.expCabVolt[i].resize((int)nExpVolts);
 		}
-		for (int i = 0; i < obos.expCables.size(); i++)
+		for (int i = 0; i < (int)obos.expCables.size(); i++)
 		{
-			obos.expCables[i].resize(nExpCables);
+			obos.expCables[i].resize((int)nExpCables);
 
-			for (int j = 0; j < obos.expCables[i].size(); j++)
+			for (int j = 0; j < (int)obos.expCables[i].size(); j++)
 			{
-				obos.expCables[i][j].resize(nCableAttributes);
+				obos.expCables[i][j].resize((int)nCableAttributes);
 			}
 		}
 
 		//vessel vectors
-		obos.turbInstVessel.resize(nVesselAttributes);
-		obos.turbFeederBarge.resize(nVesselAttributes);
-		obos.turbSupportVessels.resize(nSupportVessels);
-		obos.subInstVessel.resize(nVesselAttributes);
-		obos.scourProtVessel.resize(nVesselAttributes);
-		obos.subFeederBarge.resize(nVesselAttributes);
-		obos.subSupportVessels.resize(nSupportVessels);
-		obos.arrCabInstVessel.resize(nVesselAttributes);
-		obos.expCabInstVessel.resize(nVesselAttributes);
-		obos.substaInstVessel.resize(nVesselAttributes);
-		obos.elecSupportVessels.resize(nSupportVessels);
-		obos.elecTugs.resize(nTugs);
+		obos.turbInstVessel.resize((int)nVesselAttributes);
+		obos.turbFeederBarge.resize((int)nVesselAttributes);
+		obos.turbSupportVessels.resize((int)nSupportVessels);
+		obos.subInstVessel.resize((int)nVesselAttributes);
+		obos.scourProtVessel.resize((int)nVesselAttributes);
+		obos.subFeederBarge.resize((int)nVesselAttributes);
+		obos.subSupportVessels.resize((int)nSupportVessels);
+		obos.arrCabInstVessel.resize((int)nVesselAttributes);
+		obos.expCabInstVessel.resize((int)nVesselAttributes);
+		obos.substaInstVessel.resize((int)nVesselAttributes);
+		obos.elecSupportVessels.resize((int)nSupportVessels);
+		obos.elecTugs.resize((int)nTugs);
 
 		for(int i = 0; i < nTugs; i++)
 		{
-		    obos.elecTugs[i].resize(nVesselAttributes);
+		    obos.elecTugs[i].resize((int)nVesselAttributes);
 		}
 		for (int i = 0; i < nSupportVessels; i++)
 		{
-			obos.turbSupportVessels[i].resize(nVesselAttributes);
-			obos.subSupportVessels[i].resize(nVesselAttributes);
-			obos.elecSupportVessels[i].resize(nVesselAttributes);
+			obos.turbSupportVessels[i].resize((int)nVesselAttributes);
+			obos.subSupportVessels[i].resize((int)nVesselAttributes);
+			obos.elecSupportVessels[i].resize((int)nVesselAttributes);
 		}
 
 		/*

@@ -1283,7 +1283,7 @@ void wobos::TurbInstCost()
 		turbCostsByVessel[0][1] = turbInstVessel[16] * turbInstVessel[14] * turbInstTime;
 		turbCostsByVessel[1][1] = turbFeederBarge[16] * turbFeederBarge[14] * turbInstTime;
 
-		for (int i = 2; i < turbSupportVessels.size(); i++)
+		for (size_t i = 2; i < turbSupportVessels.size(); i++)
 		{
 			turbCostsByVessel[i][0] = turbSupportVessels[i - 2][0];
 			turbCostsByVessel[i][1] = turbSupportVessels[i - 2][16] * turbSupportVessels[i - 2][14]
@@ -1302,7 +1302,7 @@ void wobos::TurbInstCost()
 		turbCostsByVessel[0][0] = turbInstVessel[0];
 		turbCostsByVessel[0][1] = turbInstVessel[16] * turbInstVessel[14] * turbInstTime;
 
-		for (int i = 1; i < turbCostsByVessel.size(); i++)
+		for (size_t i = 1; i < turbCostsByVessel.size(); i++)
 		{
 			turbCostsByVessel[i][0] = turbSupportVessels[i - 1][0];
 			turbCostsByVessel[i][1] = turbSupportVessels[i - 1][16] * turbSupportVessels[i - 1][14]
@@ -1310,7 +1310,7 @@ void wobos::TurbInstCost()
 		}
 	}
 	turbine_install_cost = 0;
-    for(int i = 0; i<turbCostsByVessel.size(); i++)
+    for(size_t i = 0; i<turbCostsByVessel.size(); i++)
     {
         turbine_install_cost += turbCostsByVessel[i][1];
     }
@@ -1349,7 +1349,7 @@ void wobos::SubInstCost()
             subCostsByVessel[2][0] = scourProtVessel[0];
             subCostsByVessel[2][1] = (instScour/24)*nTurb*scourProtVessel[16]*scourProtVessel[14];
         }
-		for (int i = 3; i < subCostsByVessel.size(); i++)
+		for (size_t i = 3; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i][0] = subSupportVessels[i - 3][0];
             if(substructure == SPAR)
@@ -1377,13 +1377,13 @@ void wobos::SubInstCost()
             subCostsByVessel[1][0] = scourProtVessel[0];
             subCostsByVessel[1][1] = (instScour/24)*nTurb*scourProtVessel[16]*scourProtVessel[14];
         }
-		for (int i = 2; i < subCostsByVessel.size(); i++)
+		for (size_t i = 2; i < subCostsByVessel.size(); i++)
 		{
 			subCostsByVessel[i][0] = subSupportVessels[i - 2][0];
 			subCostsByVessel[i][1] = subSupportVessels[i - 2][16] * subSupportVessels[i - 2][14] * subInstTime;
 		}
 	}
-        for(int i = 0; i<subCostsByVessel.size(); i++)
+        for(size_t i = 0; i<subCostsByVessel.size(); i++)
         {
             substructure_install_cost += subCostsByVessel[i][1];
         }
@@ -1417,7 +1417,7 @@ void wobos::ElectricalInstCost()
     }
     elecCostsByVessel[3][1] = elecTugs[0][14] * elecTugs[0][16] * subsInstTime;
     elecCostsByVessel[4][1] = elecTugs[1][14] * elecTugs[1][16] * subsInstTime;
-	for (int i = 5; i < elecCostsByVessel.size(); i++)
+	for (size_t i = 5; i < elecCostsByVessel.size(); i++)
 	{
 		elecCostsByVessel[i][0] = elecSupportVessels[i - 5][0];
 		elecCostsByVessel[i][1] = elecSupportVessels[i - 5][14] * elecSupportVessels[i - 5][16]
@@ -1425,7 +1425,7 @@ void wobos::ElectricalInstCost()
 	}
 	electrical_install_cost = 0;
 	substation_install_cost = elecCostsByVessel[2][1]+elecCostsByVessel[3][1]+elecCostsByVessel[4][1];
-    for(int i = 0; i<elecCostsByVessel.size(); i++)
+    for(size_t i = 0; i<elecCostsByVessel.size(); i++)
     {
         electrical_install_cost += elecCostsByVessel[i][1];
     }
@@ -1496,18 +1496,18 @@ void wobos::VesselMobDemobCost()
 	//resize the cost vector to get rid of the duplicate support vessels stored at the end of the vector
 	int resizer = (int)distance(mobDemobCostByVessel.begin(), it);
 	mobDemobCostByVessel.resize(resizer);
-	for (size_t i = 0; i < resizer; i++)
+	for (int i = 0; i < resizer; i++)
 	{
 		mobDemobCostByVessel[i].resize(2);
 	}
 
     //apply number of install seasons multiplier to mobilization costs
-    for (int i = 0; i < mobDemobCostByVessel.size(); i++)
+    for (size_t i = 0; i < mobDemobCostByVessel.size(); i++)
     {
         mobDemobCostByVessel[i][1] = mobDemobCostByVessel[i][1]*number_install_seasons;
     }
 	mob_demob_cost = 0;
-    for(int i = 0; i<mobDemobCostByVessel.size(); i++)
+    for(size_t i = 0; i<mobDemobCostByVessel.size(); i++)
     {
         mob_demob_cost += mobDemobCostByVessel[i][1];
     }
@@ -1527,19 +1527,19 @@ double wobos::TotInstCost()
 	double sum = 0;
 
 	//following for loops iterate through cost loops adding each cost to sum
-	for (int i = 0; i < turbCostsByVessel.size(); i++)
+	for (size_t i = 0; i < turbCostsByVessel.size(); i++)
 	{
 		sum += turbCostsByVessel[i][1];
 	}
-	for (int i = 0; i < subCostsByVessel.size(); i++)
+	for (size_t i = 0; i < subCostsByVessel.size(); i++)
 	{
 		sum += subCostsByVessel[i][1];
 	}
-	for (int i = 0; i < elecCostsByVessel.size(); i++)
+	for (size_t i = 0; i < elecCostsByVessel.size(); i++)
 	{
 		sum += elecCostsByVessel[i][1];
 	}
-	for (int i = 0; i < mobDemobCostByVessel.size(); i++)
+	for (size_t i = 0; i < mobDemobCostByVessel.size(); i++)
 	{
 		sum += mobDemobCostByVessel[i][1];
 	}
@@ -1877,9 +1877,9 @@ void wobos::ArrayCabCostOptimizer()
 	715,   //630 mm2
 	775,   //800 mm2
 	825};  //1000 mm2*/
-	for (int k = 0; k < nArrVolts; k++)
+	for (size_t k = 0; k < nArrVolts; k++)
 	{
-		for (int i = 0; i < nArrCables; i++) //this for loop calculates values and stores them in the previously
+		for (size_t i = 0; i < nArrCables; i++) //this for loop calculates values and stores them in the previously
 			//created vectors
 		{
 			strings[k][i] = Strings(arrCables[k][i][3], arrayVolt[k][0]);
@@ -1907,11 +1907,11 @@ void wobos::ArrayCabCostOptimizer()
 	double oldCost;
 	double newCost;
 
-	for (int k = 0; k < nArrVolts; k++)
+	for (size_t k = 0; k < nArrVolts; k++)
 	{
-		for (int i = 0; i < nArrCables; i++)
+		for (size_t i = 0; i < nArrCables; i++)
 		{
-			for (int j = i + 1; j < nArrCables; j++)
+			for (size_t j = i + 1; j < nArrCables; j++)
 			{
 
 				nTurbInter1[k][i] = InterfacesCable1(strings[k][j],

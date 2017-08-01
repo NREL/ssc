@@ -832,7 +832,7 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 	//first, correct wind speeds in power curve for site air density. Using method 2 described in https://www.scribd.com/document/38818683/PO310-EWEC2010-Presentation
 	//then, make sure to use corrected wind speeds when calculating power
 	std::vector <double> temp_ws;
-	for (int i = 0; i < m_adDensityCorrectedWS.size(); i++)
+	for (size_t i = 0; i < m_adDensityCorrectedWS.size(); i++)
 		m_adDensityCorrectedWS[i] = m_adPowerCurveWS[i] * pow((physics::AIR_DENSITY_SEA_LEVEL / fAirDensity), (1.0 / 3.0));
 
 	//bug fix jmf 1/11/17- cut in and cut out wind speeds need to be inferred from the power curve, cut in was previously an input but shouldn't be because a) some users are using library turbines, which only have power curves, 

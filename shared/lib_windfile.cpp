@@ -522,8 +522,8 @@ bool windfile::read_line( std::vector<double> &values )
 	char *cols[128];
 	fgets( m_buf, MBUFLEN-1, m_fp );
 	int ncols = locate2( m_buf, cols, 128, ',' );	
-	if (ncols >= m_heights.size() 
-		&& ncols >= m_dataid.size())
+	if (ncols >= (int)m_heights.size() 
+		&& ncols >= (int)m_dataid.size())
 	{
 		values.resize( m_heights.size(), 0.0 );
 		for (size_t i=0;i<m_heights.size();i++)

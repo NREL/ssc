@@ -734,7 +734,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			return false;
 		}
 
-		for (size_t i = 0; i<ncols; i++)
+		for (size_t i = 0; (int)i<ncols; i++)
 		{
 			std::string name = util::lower_case(trimboth(cols[i]));
 			char *value = trimboth(cols1[i]);
@@ -1029,7 +1029,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	int tmy3_hour_shift = 1;
 	int n_leap_data_removed = 0;
 	
-	for (int i = 0; i<m_nRecords; i++)
+	for (int i = 0; i<(int)m_nRecords; i++)
 	{
 		if (m_type == TMY2)
 		{

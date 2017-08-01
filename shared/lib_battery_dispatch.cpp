@@ -255,8 +255,8 @@ bool dispatch_t::restrict_power(double &I)
 				iterate = true;
 			}
 		}
-		return iterate;
 	}
+	return iterate;
 }
 void dispatch_t::compute_to_batt()
 {
@@ -965,7 +965,7 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 void automate_dispatch_t::target_power(FILE*p, bool debug, double E_useful, int idx)
 {
 	// if target power set, use that
-	if (_P_target_input.size() > idx && _P_target_input[idx] >= 0)
+	if ((int)_P_target_input.size() > idx && _P_target_input[idx] >= 0)
 	{
 		double_vec::const_iterator first = _P_target_input.begin() + idx;
 		double_vec::const_iterator last = _P_target_input.begin() + idx + _num_steps;
