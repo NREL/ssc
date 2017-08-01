@@ -175,16 +175,16 @@
     <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)</OutDir>
-    <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)\nlopt</IntDir>
+    <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)\nlopt\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)</OutDir>
     <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)</OutDir>
-    <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)\nlopt</IntDir>
+    <OutDir>$(SolutionDir)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\$(Platform)\$(Configuration)\nlopt\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <SourcePath>$(SolutionDir)\..\nlopt;$(SolutionDir);$(SolutionDir)\..\nlopt\stogo;$(SolutionDir)\..\nlopt\util;$(SolutionDir)\..\nlopt\direct;$(SolutionDir)\..\nlopt\cdirect;$(SolutionDir)\..\nlopt\praxis;$(SolutionDir)\..\nlopt\luksan;$(SolutionDir)\..\nlopt\crs;$(SolutionDir)\..\nlopt\mlsl;$(SolutionDir)\..\nlopt\mma;$(SolutionDir)\..\nlopt\cobyla;$(SolutionDir)\..\nlopt\newuoa;$(SolutionDir)\..\nlopt\neldermead;$(SolutionDir)\..\nlopt\auglag;$(SolutionDir)\..\nlopt\bobyqa;$(SolutionDir)\..\nlopt\isres;$(SolutionDir)\..\nlopt\slsqp;$(SolutionDir)\..\nlopt\esch;$(SolutionDir)\..\nlopt\api;%(AdditionalIncludeDirectories)</SourcePath>

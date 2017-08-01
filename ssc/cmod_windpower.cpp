@@ -294,7 +294,7 @@ public:
 		if (std::fmod((double)nstep, 8784) == 0)
 		{
 			contains_leap_day = true;
-			int leap_steps_per_hr = nstep / 8784; //this will be an even multiple of 8760 because of the if statement above
+			int leap_steps_per_hr = (int)nstep / 8784; //this will be an even multiple of 8760 because of the if statement above
 			log("This weather file appears to contain leap day. SAM will skip all of the lines of the weather file that occur on leap day. If your weather file does not contain a leap day, please check your file.", SSC_WARNING);
 			//throw exec_error("windpower", "Error: this weather file appears to contain leap day. SAM requires weather files to be a multiple of 8760 timesteps long.");
 			nstep = leap_steps_per_hr * 8760; //need to resize nrec so that it is correct for holding output variables
@@ -406,7 +406,7 @@ public:
 		i = 0;
 		for( size_t hr=0;hr<8760;hr++ )
 		{
-			int imonth = util::month_of(hr)-1;
+			int imonth = util::month_of((double)hr)-1;
 
 			for( size_t istep=0;istep < steps_per_hour;istep++ )
 			{

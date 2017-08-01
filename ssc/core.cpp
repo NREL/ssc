@@ -876,7 +876,7 @@ ssc_number_t *compute_module::accumulate_monthly(const std::string &ts_var, cons
 				for( size_t j=0;j<step_per_hour;j++ )
 					monthly[m] += ts[c++];
 
-		monthly[m] *= scale;
+		monthly[m] *= (ssc_number_t)scale;
 	}
 
 	return monthly;
@@ -905,7 +905,7 @@ ssc_number_t *compute_module::accumulate_monthly_for_year(const std::string &ts_
 				for (size_t j = 0; j<step_per_hour; j++)
 					monthly[m] += ts[c++];
 
-		monthly[m] *= scale;
+		monthly[m] *= (ssc_number_t)scale;
 	}
 
 	return monthly;

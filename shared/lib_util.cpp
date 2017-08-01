@@ -68,8 +68,19 @@
 #include <cmath>
 #ifdef _MSC_VER
 /* taken from wxMSW-2.9.1/include/wx/defs.h - appropriate for Win32/Win64 */
+#ifndef va_copy
 #define va_copy(d, s) ((d)=(s))
 #endif
+#endif
+
+#ifdef _MSC_VER  /* Microsoft Visual C++ -- warning level 4 */
+//#pragma warning( disable : 4100)  /* unreferenced formal parameter */
+//#pragma warning( disable : 4127)  /* conditional expression is constant */
+//#pragma warning( disable : 4706)  /* assignment within conditional function */
+#pragma warning( disable : 4996)  /* function was declared deprecated(strcpy, localtime, etc.) */
+#endif
+
+
 
 std::vector< std::string > util::split( const std::string &str, const std::string &delim, bool ret_empty, bool ret_delim )
 {
@@ -127,7 +138,7 @@ size_t util::replace( std::string &s, const std::string &old_text, const std::st
 
 	std::string::size_type pos = 0;
 	size_t uiCount = 0;
-	while(1)
+	for(;;)
 	{
 		pos = s.find(old_text, pos);
 		if ( pos == std::string::npos )
@@ -223,7 +234,7 @@ bool util::dir_exists( const char *path )
 	char *wpath = strdup( path );
 	if (!wpath) return false;
 
-	int pos = strlen(wpath)-1;
+	size_t pos = strlen(wpath)-1;
 	while (pos > 1 && (wpath[pos] == '/' || wpath[pos] == '\\'))
 	{
 		if (pos == 3 && wpath[pos-1] == ':') break;
@@ -339,7 +350,7 @@ std::string util::read_file( const std::string &file )
 	FILE *fp = fopen(file.c_str(), "r");
 	if (fp)
 	{
-		while ( (c=fgetc(fp))!=EOF )
+		while ( (c=(char)fgetc(fp))!=EOF )
 			buf += c;
 		fclose(fp);
 	}
@@ -808,7 +819,7 @@ double util::percent_of_year(int month, int hours)
 	if (month>12) return 1.0;
 
 	int hours_from_months = 0;
-	for (unsigned int i=0; i<month-1; i++)
+	for (int i=0; i<month-1; i++)
 		hours_from_months += (nday[i] * 24);
 	return (hours_from_months + hours)/8760.0;
 }
@@ -876,7 +887,7 @@ void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
 		if (hour_of_year + 1 <= tmpSum)
 		{
 			// get the day of the month
-			int tmp = floor((float)(hour_of_year) / 24);
+			int tmp = (int)(floor((float)(hour_of_year) / 24));
 			hour = (hour_of_year + 1) - (tmp * 24);
 			break;
 		}
@@ -892,7 +903,7 @@ int util::hour_of_day(int hour_of_year)
 
 bool util::weekday(int hour_of_year)
 {
-	int day_of_year = floor((float)(hour_of_year) / 24);
+	int day_of_year = (int)(floor((float)(hour_of_year) / 24));
 	int day_of_week = day_of_year;
 
 	if (day_of_week > 6)
@@ -1033,9 +1044,9 @@ bool util::translate_schedule(int tod[8760], const matrix_t<float> &wkday, const
 			for (int h = 0; h<24; h++)
 			{
 				if (is_weekday)
-					tod[i] = wkday.at(m, h);
+					tod[i] = (int)wkday.at(m, h);
 				else
-					tod[i] = wkend.at(m, h);
+					tod[i] = (int)wkend.at(m, h);
 
 				if (tod[i] < min_val) tod[i] = min_val;
 				if (tod[i] > max_val) tod[i] = max_val;
@@ -1054,15 +1065,15 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 		return std::numeric_limits<double>::quiet_NaN();
 	
 	int ridx=2; // find row position
-	while( ridx < mat.nrows() && rowval > mat.at(ridx, 0) )
+	while( ridx < (int)mat.nrows() && rowval > (int)mat.at(ridx, 0) )
 		ridx++;
 	
 	int cidx=2; // find col position
-	while( cidx < mat.ncols() && colval > mat.at(0, cidx) )
+	while( cidx < (int)mat.ncols() && colval > (int)mat.at(0, cidx) )
 		cidx++;
 
-	if ( ridx == mat.nrows() ) ridx--;
-	if ( cidx == mat.ncols() ) cidx--;
+	if ( ridx == (int)mat.nrows() ) ridx--;
+	if ( cidx == (int)mat.ncols() ) cidx--;
 
 	double r1,c1,r2,c2;
 	
@@ -1134,4 +1145,9 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 			mat( i-1, ixcol ), mat( i-1, iycol ), 
 			mat( i,   ixcol ), mat( i,   iycol ),
 			xval );
+}
+
+size_t util::index_year_hour_step(int year, int hour_of_year, int step_of_hour, int step_per_hour)
+{
+	return (year * util::hours_per_year + hour_of_year)*step_per_hour + step_of_hour;
 }

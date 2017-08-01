@@ -688,7 +688,7 @@ void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecom
 
 		size_t stepsInDay = 24;
 		if( pA->stepScale == 'm'){
-			stepsInDay *= 60 / pA->stepSize;
+			stepsInDay *= 60 / (unsigned int)pA->stepSize;
 		}
 		 
 		size_t noon = pA->dayStart + stepsInDay/2;
@@ -707,7 +707,7 @@ void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecom
 		int count = 0;
 		double avgKtp = 0;
 
-		for( int j = start; j < stop; j++ ){
+		for( size_t j = start; j < stop; j++ ){
 
 
 			if( (pA->inc[j] < r80) && (pA->inc[j] > r65) ){

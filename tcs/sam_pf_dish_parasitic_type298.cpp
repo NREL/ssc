@@ -376,7 +376,7 @@ public:
 			m_P_controls = value( P_P_CONTROLS );
 			m_test_P_pump = value( P_TEST_P_PUMP );
 			m_test_pump_speed = value( P_TEST_PUMP_SPEED ); 	
-			m_test_cooling_fluid = value( P_TEST_COOLING_FLUID );
+			m_test_cooling_fluid = (int)value( P_TEST_COOLING_FLUID );
 			m_test_T_fluid = value( P_TEST_T_FLUID ); 			
 			m_test_V_dot_fluid = value( P_TEST_V_DOT_FLUID )*0.003785/60.0; 	
 			m_test_P_fan = value( P_TEST_P_FAN );			

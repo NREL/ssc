@@ -215,7 +215,7 @@ public:
 		else {
 			cost += 1867 * pow(transportDist, 0.726) * nTurb;
 		}
-		assign("transportation_cost", var_data(cost));
+		assign("transportation_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -228,7 +228,7 @@ public:
 		if (farmSize < 200) multiplier = 1.0;
 		cost += multiplier * 161675;
 		cost += 4000;
-		assign("engineering_cost", var_data(cost));
+		assign("engineering_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -240,7 +240,7 @@ public:
 			multiplier2 = 92600;
 		}
 		double cost = 200000 + permanent*multiplier1 + temporary*multiplier2;
-		assign("power_performance_cost", var_data(cost));
+		assign("power_performance_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -282,7 +282,7 @@ public:
 			+ constructionTime * 55500
 			+ accessRoadEntrances * 3800)*1.05;
 
-		assign("access_roads_cost", var_data(cost));
+		assign("access_roads_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -305,14 +305,14 @@ public:
 			cost += 90000;
 		}
 		cost += farmSize * 60 + 62400;
-		assign("site_compound_security_cost", var_data(cost));
+		assign("site_compound_security_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
 
 	double buildingCost(double buildingSize){
 		double cost = buildingSize * 125 + 176125;
-		assign("building_cost", var_data(cost));
+		assign("building_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -325,7 +325,7 @@ public:
 			cost += 20000;
 		}
 		cost *= nTurb;
-		assign("foundation_cost", var_data(cost));
+		assign("foundation_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -337,7 +337,7 @@ public:
 			cost += 60000 * nTurb;
 		}
 		cost += 20000 * weatherDelayDays + 35000 * craneBreakdowns + 181 * nTurb + 1834;
-		assign("erection_cost", var_data(cost));
+		assign("erection_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -394,7 +394,7 @@ public:
 		cost += floor(farmSize / 25.0) * 35375 + floor(farmSize / 100.0) * 50000
 			+ diameter*nTurb*factor3 + thermalBackfill * 5 + 41945;
 
-		assign("electrical_materials_cost", var_data(cost));
+		assign("electrical_materials_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -450,7 +450,7 @@ public:
 		cost += nTurb*(factor1 + diameter*(factor2 + factor3*rockTrenchingLength / 100.0))
 			+ overheadCollector * 200000 + 10000;
 
-		assign("electrical_installation_cost", var_data(cost));
+		assign("electrical_installation_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -458,7 +458,7 @@ public:
 	double substationCost(double voltage, double farmSize)
 	{
 		double cost = 11652 * (voltage + farmSize) + 11795 * pow(farmSize, 0.3549) + 1526800;
-		assign("substation_cost", var_data(cost));
+		assign("substation_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -468,7 +468,7 @@ public:
 		if (newSwitchyardRequired){
 			cost += 18115 * voltage + 165944;
 		}
-		assign("transmission_cost", var_data(cost));
+		assign("transmission_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -482,7 +482,7 @@ public:
 		else{
 			cost = (constructionTime + 2) * 155000;
 		}
-		assign("project_mgmt_cost", var_data(cost));
+		assign("project_mgmt_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -490,7 +490,7 @@ public:
 	double developmentCost(double developmentFee)
 	{
 		double cost = developmentFee * 1000000;
-		assign("development_cost", var_data(cost));
+		assign("development_cost", var_data((ssc_number_t)cost));
 		return cost;
 	}
 
@@ -506,7 +506,7 @@ public:
 			+ (tcc * farmSize) * (0.7 + 0.4 + 1.0 + pb_rate) //tcc in $/kW times farmSize in MW is equal to per $1000
 			+ 0.02 * foundationCost
 			+ 20000;
-		assign("insurance_cost", var_data(ins));
+		assign("insurance_cost", var_data((ssc_number_t)ins));
 		return ins;
 	}
 
@@ -514,7 +514,7 @@ public:
 	{
 		double markup;
 		markup = cost * (contingency + warranty + useTax + overhead + profitMargin) / 100.0; //convert from percentages to decimal
-		assign("markup_cost", var_data(markup));
+		assign("markup_cost", var_data((ssc_number_t)markup));
 		return markup;
 	}
 
@@ -604,7 +604,7 @@ public:
 
 
 		// run model (execute functions)
-		ssc_number_t output = totalCost(rating, diameter, hubHt, nTurb, voltage, distInter, terrain, layout, soil,
+		ssc_number_t output = (ssc_number_t)totalCost(rating, diameter, hubHt, nTurb, voltage, distInter, terrain, layout, soil,
 			farmSize, tcc, topMass, constructionTime, buildingSize, temporary, permanent, weatherDelayDays, craneBreakdowns, accessRoadEntrances,
 			deliveryAssistRequired, padMountTransformer, newSwitchyardRequired, rockTrenchingLength, thermalBackfill, overheadCollector,
 			performanceBond, contingency, warranty,	useTax, overhead, profitMargin,	developmentFee, transportDist);

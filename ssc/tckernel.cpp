@@ -85,15 +85,15 @@ bool tcKernel::converged( double time )
 {
 	if (m_step != 0.0 )
 	{
-		int istep = (int) (time-m_start)/m_step;
-		int nstep = (int) (m_end-m_start)/m_step;
+		int istep = (int) ((time-m_start)/m_step);
+		int nstep = (int) ((m_end-m_start)/m_step);
 		int nnsteps = nstep/200;
 		if ( nnsteps == 0 ) nnsteps = 1;		
 		if (istep % nnsteps == 0)
 		{
 			double percent = 100 * (((double)istep) / ((double)nstep) );
 
-			if ( !compute_module::update( "", percent, (float)istep ) )
+			if ( !compute_module::update( "", (float)percent, (float)istep ) )
 				return false; // abort simulation if compute_module update returned false from controller
 		}
 	}
@@ -199,7 +199,7 @@ int tcKernel::simulate( double start, double end, double step, int max_iter )
 				char buf[32];
 				sprintf(buf, "%d", i);
 				d.u = &m_units[i];
-				d.uidx = i;
+				d.uidx = (int)i;
 				d.idx = idx;
 				d.group = "Unit " + std::string(buf) + " (" + std::string(m_units[i].type->name) + ")";//: " + m_units[i].name;
 				d.name = vars[idx].name;
@@ -253,7 +253,7 @@ void tcKernel::set_unit_value_ssc_array( int id, const char *name )
 	ssc_number_t * p = as_array(name, &len);
 	double *pt = new double[len];
 	for ( size_t i=0;i<len;i++ ) pt[i] = (double) p[i];
-	set_unit_value(id, name, pt, len); 
+	set_unit_value(id, name, pt, (int)len);
 	delete [] pt;
 	return;
 }
@@ -264,7 +264,7 @@ void tcKernel::set_unit_value_ssc_array(int id, const char *tcs_name, const char
 	ssc_number_t * p = as_array(ssc_name, &len);
 	double *pt = new double[len];
 	for (size_t i = 0; i<len; i++) pt[i] = (double)p[i];
-	set_unit_value(id, tcs_name, pt, len);
+	set_unit_value(id, tcs_name, pt, (int)len);
 	delete[] pt;
 	return;
 }
@@ -276,7 +276,7 @@ void tcKernel::set_unit_value_ssc_matrix(int id, const char *name)
 	ssc_number_t *p = as_matrix(name, &nr, &nc);
 	double *pt = new double[nr*nc];
 	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
-	set_unit_value(id, name, pt, nr, nc);
+	set_unit_value(id, name, pt, (int)nr, (int)nc);
 	delete[] pt;
 	return;
 }
@@ -287,7 +287,7 @@ void tcKernel::set_unit_value_ssc_matrix(int id, const char *tcs_name, const cha
 	ssc_number_t *p = as_matrix(ssc_name, &nr, &nc);
 	double *pt = new double[nr*nc];
 	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
-	set_unit_value(id, tcs_name, pt, nr, nc);
+	set_unit_value(id, tcs_name, pt, (int)nr, (int)nc);
 	delete[] pt;
 	return;
 }
@@ -301,7 +301,7 @@ void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *name)
 		for (size_t c = 0; c< nc; c++)
 			for (size_t r = 0; r < nr; r++)
 				pt[i++] = (double)p[r*nc + c];
-	set_unit_value(id, name, pt, nc, nr);
+		set_unit_value(id, name, pt, (int)nc, (int)nr);
 	delete[] pt;
 	return;
 }
@@ -315,7 +315,7 @@ void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *tcs_name,
 	for (size_t c = 0; c< nc; c++)
 		for (size_t r = 0; r < nr; r++)
 			pt[i++] = (double)p[r*nc + c];
-	set_unit_value(id, tcs_name, pt, nc, nr);
+	set_unit_value(id, tcs_name, pt, (int)nc, (int)nr);
 	delete[] pt;
 	return;
 }
@@ -335,7 +335,7 @@ bool tcKernel::set_output_array(const char *ssc_output_name, const char *tcs_out
 		if ( (d->type == TCS_NUMBER) && (d->name == tcs_output_name) && (d->values.size() == len ) )
 		{
 			for (size_t i=0;i<len;i++)
-				output_array[i] = (ssc_number_t) d->values[i].dval * scaling;
+				output_array[i] = (ssc_number_t)(d->values[i].dval * scaling);
 			return true;
 		}
 	}

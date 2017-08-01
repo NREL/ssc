@@ -473,7 +473,7 @@ bool iec61853_module_t::calculate( util::matrix_t<double> &input, int nseries, i
 			Imp0 = Pmp0/Vmp0;
 			Voc0 = input(i,COL_VOC);
 			Isc0 = input(i,COL_ISC);
-			idx_stc = i;
+			idx_stc = (int)i;
 			break;
 		}
 	}

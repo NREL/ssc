@@ -266,7 +266,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 	float dpt;
 
 	if (db > 90.0 || rh > 100.0 || rh < 1.0)    /* Check for valid input data */
-		dpt = 99.9;                   /* Missing data value */
+		dpt = (float)99.9;                   /* Missing data value */
 	else
 	{  /* Find water vapor saturation pressure (kPa) for drybulb temperature */
 		t = db + 273.15;           /* Absolute temperature (deg K) */
@@ -285,10 +285,10 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 		pres = pres*rh / 100.0;      /* Partial pressure (kPa) of water vapor */
 		arg = log(pres);
 		if (db >= 0.0)            /* Use equation 35 from ASHRAE */
-			dpt = c14 + c15*arg + c16*pow(arg, 2.0) + c17*pow(arg, 3.0) +
-			c18*pow(pres, 0.1984);
+			dpt = (float)(c14 + c15*arg + c16*pow(arg, 2.0) + c17*pow(arg, 3.0) +
+			c18*pow(pres, 0.1984));
 		if (db < 0.0 || dpt < 0)  /* Use eqn 36 if drybulb or dewpoint < 0 */
-			dpt = 6.09 + 12.608*arg + 0.4959*arg*arg;
+			dpt = (float)(6.09 + 12.608*arg + 0.4959*arg*arg);
 
 		/* For dewpoint temperatures below -20C, check to see that the dewpoint
 		temperature gives the correct vapor saturation pressure.  If not, iterate
@@ -314,7 +314,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 			}
 			while (fabs(pres - pres_dew) > 0.00001 && fabs(pta - ptb) > 0.05)
 			{
-				dpt = ptc - 273.15;
+				dpt = (float)(ptc - 273.15);
 				t = ptc;
 				arg = c1 / t + c2 + c3*t + c4*pow(t, 2.0) + c5*pow(t, 3.0) +
 					c6*pow(t, 4.0) + c7*log(t);
@@ -676,7 +676,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		m_hdr.lat = atof(cols[4]);
 		m_hdr.lon = atof(cols[5]);
 		m_hdr.elev = atof(cols[6]);
-		m_stepSec = atof(cols[7]); // time step in seconds
+		m_stepSec = (size_t)atof(cols[7]); // time step in seconds
 		m_startYear = atoi(cols[8]);
 		char *p = cols[9];
 		
@@ -698,7 +698,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		if (!header_only)
 		{
 			m_time = start_hour * 3600 + start_min * 60 + start_sec;
-			m_startSec = m_time;
+			m_startSec = (size_t)m_time;
 
 			m_nRecords = 0;
 			while (fgets(buf, NBUF, fp) != 0)
@@ -734,7 +734,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			return false;
 		}
 
-		for (size_t i = 0; i<ncols; i++)
+		for (size_t i = 0; (int)i<ncols; i++)
 		{
 			std::string name = util::lower_case(trimboth(cols[i]));
 			char *value = trimboth(cols1[i]);
@@ -829,7 +829,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			fgets(buf, NBUF, fp); // header values
 
 			// now determine timestep as best as possible
-			int nmult = m_nRecords / 8760;
+			int nmult = (int)m_nRecords / 8760;
 			// divide by zero error 2/20/19
 			if (nmult <= 0)
 			{
@@ -856,7 +856,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				// Check if the weather file contains a leap day
 				// if so, correct the number of nrecords 
 				m_nRecords = m_nRecords/8784*8760;
-				nmult = m_nRecords/8760;
+				nmult = (int)m_nRecords/8760;
 				m_stepSec = 3600 / nmult;
 				m_startSec = m_stepSec / 2;
 			}
@@ -917,7 +917,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 
 		// determine columns
-		for (size_t i = 0; i<ncols; i++)
+		for (int i = 0; i<ncols; i++)
 		{
 			char *name_cstr = trimboth(cols[i]);
 			if (name_cstr && strlen(name_cstr) > 0)
@@ -1029,7 +1029,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	int tmy3_hour_shift = 1;
 	int n_leap_data_removed = 0;
 	
-	for (int i = 0; i<m_nRecords; i++)
+	for (int i = 0; i<(int)m_nRecords; i++)
 	{
 		if (m_type == TMY2)
 		{
@@ -1085,29 +1085,29 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 					continue;
 				}
 
-				m_columns[YEAR].data[i] = yr + 1900;
-				m_columns[MONTH].data[i] = mn;
-				m_columns[DAY].data[i] = dy;
-				m_columns[HOUR].data[i] = hr - 1;  // hour goes 0-23, not 1-24
+				m_columns[YEAR].data[i] = (float)yr + 1900;
+				m_columns[MONTH].data[i] = (float)mn;
+				m_columns[DAY].data[i] = (float)dy;
+				m_columns[HOUR].data[i] = (float)hr - 1;  // hour goes 0-23, not 1-24
 				m_columns[MINUTE].data[i] = 30;
-				m_columns[GHI].data[i] = (double)d1*1.0;
-				m_columns[DNI].data[i] = (double)d2;           /* Direct radiation */
-				m_columns[DHI].data[i] = (double)d3;           /* Diffuse radiation */
-				m_columns[POA].data[i] = (double)(-999);       /* No POA in TMY2 */
-				m_columns[TDRY].data[i] = (double)d10 / 10.0;       /* Ambient dry bulb temperature(C) */
-				m_columns[TDEW].data[i] = (double)d11 / 10.0; /* dew point temp */
-				m_columns[WSPD].data[i] = (double)d15 / 10.0;       /* Wind speed(m/s) */
-				m_columns[WDIR].data[i] = (double)d14; /* wind dir */
-				m_columns[RH].data[i] = (double)d12;
-				m_columns[PRES].data[i] = (double)d13;
-				m_columns[SNOW].data[i] = (double)d20;
+				m_columns[GHI].data[i] = (float)(d1*1.0);
+				m_columns[DNI].data[i] = (float)d2;           /* Direct radiation */
+				m_columns[DHI].data[i] = (float)d3;           /* Diffuse radiation */
+				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY2 */
+				m_columns[TDRY].data[i] = (float)(d10 / 10.0);       /* Ambient dry bulb temperature(C) */
+				m_columns[TDEW].data[i] = (float)(d11 / 10.0); /* dew point temp */
+				m_columns[WSPD].data[i] = (float)(d15 / 10.0);       /* Wind speed(m/s) */
+				m_columns[WDIR].data[i] = (float)d14; /* wind dir */
+				m_columns[RH].data[i] = (float)d12;
+				m_columns[PRES].data[i] = (float)d13;
+				m_columns[SNOW].data[i] = (float)d20;
 				m_columns[ALB].data[i] = -999; /* no albedo in TMY2 */
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY2 */
 				m_columns[TWET].data[i] 
-					= calc_twet( 
-						m_columns[TDRY].data[i], 
-						m_columns[RH].data[i], 
-						m_columns[PRES].data[i] ); /* must calculate wet bulb */
+					= (float)calc_twet( 
+					(double)m_columns[TDRY].data[i],
+					(double)m_columns[RH].data[i],
+					(double)m_columns[PRES].data[i] ); /* must calculate wet bulb */
 
 				break;
 			}
@@ -1169,34 +1169,34 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 					continue;
 				}
 
-				m_columns[YEAR].data[i] = year;
-				m_columns[MONTH].data[i] = month;
-				m_columns[DAY].data[i] = day;
-				m_columns[HOUR].data[i] = hour;
+				m_columns[YEAR].data[i] = (float)year;
+				m_columns[MONTH].data[i] = (float)month;
+				m_columns[DAY].data[i] = (float)day;
+				m_columns[HOUR].data[i] = (float)hour;
 				m_columns[MINUTE].data[i] = 30;
 
-				m_columns[GHI].data[i] = (double)atof(cols[4]);
-				m_columns[DNI].data[i] = (double)atof(cols[7]);
-				m_columns[DHI].data[i] = (double)atof(cols[10]);
-				m_columns[POA].data[i] = (double)(-999);       /* No POA in TMY3 */
+				m_columns[GHI].data[i] = (float)atof(cols[4]);
+				m_columns[DNI].data[i] = (float)atof(cols[7]);
+				m_columns[DHI].data[i] = (float)atof(cols[10]);
+				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
 
-				m_columns[TDRY].data[i] = (double)atof(cols[31]);
-				m_columns[TDEW].data[i] = (double)atof(cols[34]);
+				m_columns[TDRY].data[i] = (float)atof(cols[31]);
+				m_columns[TDEW].data[i] = (float)atof(cols[34]);
 				
-				m_columns[WSPD].data[i] = (double)atof(cols[46]);
-				m_columns[WDIR].data[i] = (double)atof(cols[43]);
+				m_columns[WSPD].data[i] = (float)atof(cols[46]);
+				m_columns[WDIR].data[i] = (float)atof(cols[43]);
 
-				m_columns[RH].data[i] = (double)atof(cols[37]);
-				m_columns[PRES].data[i] = (double)atof(cols[40]);
+				m_columns[RH].data[i] = (float)atof(cols[37]);
+				m_columns[PRES].data[i] = (float)atof(cols[40]);
 				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-				m_columns[ALB].data[i] = (double)atof(cols[61]);
+				m_columns[ALB].data[i] = (float)atof(cols[61]);
 				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
 
 				m_columns[TWET].data[i] 
-					= calc_twet( 
-						m_columns[TDRY].data[i], 
-						m_columns[RH].data[i], 
-						m_columns[PRES].data[i] ); /* must calculate wet bulb */
+					= (float)calc_twet( 
+					(double)m_columns[TDRY].data[i],
+					(double)m_columns[RH].data[i],
+					(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
 
 				break;
 			}
@@ -1231,30 +1231,30 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 					continue;
 				}
 
-				m_columns[YEAR].data[i] = atoi(cols[0]);
-				m_columns[MONTH].data[i] = atoi(cols[1]);
-				m_columns[DAY].data[i] = atoi(cols[2]);
-				m_columns[HOUR].data[i] = atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
+				m_columns[YEAR].data[i] = (float)atoi(cols[0]);
+				m_columns[MONTH].data[i] = (float)atoi(cols[1]);
+				m_columns[DAY].data[i] = (float)atoi(cols[2]);
+				m_columns[HOUR].data[i] = (float)atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
 				m_columns[MINUTE].data[i] = 30;
 
-				m_columns[GHI].data[i] = (double)atof(cols[13]);
-				m_columns[DNI].data[i] = (double)atof(cols[14]);
-				m_columns[DHI].data[i] = (double)atof(cols[15]);
-				m_columns[POA].data[i] = (double)(-999);       /* No POA in EPW */
+				m_columns[GHI].data[i] = (float)atof(cols[13]);
+				m_columns[DNI].data[i] = (float)atof(cols[14]);
+				m_columns[DHI].data[i] = (float)atof(cols[15]);
+				m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
 
-				m_columns[WSPD].data[i] = (double)atof(cols[21]);
-				m_columns[WDIR].data[i] = (double)atof(cols[20]);
+				m_columns[WSPD].data[i] = (float)atof(cols[21]);
+				m_columns[WDIR].data[i] = (float)atof(cols[20]);
 
-				m_columns[TDRY].data[i] = (double)atof(cols[6]);
-				m_columns[TWET].data[i] = (double)atof(cols[7]);
+				m_columns[TDRY].data[i] = (float)atof(cols[6]);
+				m_columns[TWET].data[i] = (float)atof(cols[7]);
 
-				m_columns[RH].data[i] = (double)atof(cols[8]);
-				m_columns[PRES].data[i] = (double)atof(cols[9]) * 0.01; /* convert Pa in to mbar */
-				m_columns[SNOW].data[i] = (double)atof(cols[30]); // snowfall
+				m_columns[RH].data[i] = (float)atof(cols[8]);
+				m_columns[PRES].data[i] = (float)(atof(cols[9]) * 0.01); /* convert Pa in to mbar */
+				m_columns[SNOW].data[i] = (float)atof(cols[30]); // snowfall
 				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
 				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
 
-				m_columns[TDEW].data[i] = wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
+				m_columns[TDEW].data[i] = (float)wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
 
 				break;
 			}
@@ -1280,7 +1280,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 
 			m_columns[YEAR].data[i] = (float)m_startYear; // start year
 			m_columns[MONTH].data[i] = (float)util::month_of(T / 3600.0); // 1-12
-			m_columns[DAY].data[i] = (float)util::day_of_month(m_columns[MONTH].data[i], T / 3600.0); // 1-nday
+			m_columns[DAY].data[i] = (float)util::day_of_month((int)m_columns[MONTH].data[i], T / 3600.0); // 1-nday
 			m_columns[HOUR].data[i] = (float)(((int)(T / 3600.0)) % 24);  // hour goes 0-23, not 1-24;
 			m_columns[MINUTE].data[i] = (float)fmod(T / 60.0, 60.0);      // minute goes 0-59
 
@@ -1384,7 +1384,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			&& m_stepSec == 3600 && m_nRecords == 8760)
 		{
 			for (size_t i = 0; i<m_nRecords; i++)
-				m_columns[MONTH].data[i] = (float)util::month_of(i);
+				m_columns[MONTH].data[i] = (float)util::month_of((double)i);
 		}
 
 		if (m_columns[DAY].index < 0
@@ -1392,8 +1392,8 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			for (size_t i = 0; i<m_nRecords; i++)
 			{
-				int month = util::month_of(i);
-				m_columns[DAY].data[i] = (float)util::day_of_month(month, i);
+				int month = util::month_of((double)i);
+				m_columns[DAY].data[i] = (float)util::day_of_month(month, (double)i);
 			}
 		}
 
@@ -1402,8 +1402,8 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			for (size_t i = 0; i<m_nRecords; i++)
 			{
-				int day = i / 24;
-				int start_of_day = day * 24;
+				size_t day = i / 24;
+				size_t start_of_day = day * 24;
 				m_columns[HOUR].data[i] = (float)(i - start_of_day);
 			}
 		}
@@ -1418,7 +1418,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
             for (size_t i = 0; i<m_nRecords; i++)
             {
                 float hr = m_columns[HOUR].data[i];
-                m_columns[MINUTE].data[i] = (hr - (int)hr)*60.;
+                m_columns[MINUTE].data[i] = (float)((hr - (int)hr)*60.);
                 m_columns[HOUR].data[i] = (float)(int)hr;
             }
         }
@@ -1516,7 +1516,7 @@ void weatherfile::set_counter_to(int cur_index)
 
 int weatherfile::get_counter_value()
 {
-    return m_index;
+    return (int)m_index;
 }
 
 

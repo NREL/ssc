@@ -3345,7 +3345,7 @@ int C_RecompCycle::C_mono_eq_LTR_des::operator()(double T_LTR_LP_out /*K*/, doub
 			mpc_rc_cycle->m_temp_last[HTR_LP_OUT], mpc_rc_cycle->m_pres_last[HTR_LP_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_last[LTR_LP_OUT],
 			m_Q_dot_LT, mpc_rc_cycle->m_temp_last[LTR_HP_OUT], T_LTR_LP_out_calc);
 	}
-	catch( C_csp_exception & csp_except)
+	catch( C_csp_exception & )
 	{
 		*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 
@@ -3452,7 +3452,7 @@ int C_RecompCycle::C_mono_eq_HTR_des::operator()(double T_HTR_LP_out /*K*/, doub
 		mpc_rc_cycle->m_temp_last[TURB_OUT], mpc_rc_cycle->m_pres_last[TURB_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_last[HTR_LP_OUT],
 		m_Q_dot_HT, mpc_rc_cycle->m_temp_last[HTR_HP_OUT], T_HTR_LP_out_calc);
 	}
-	catch( C_csp_exception &csp_except )
+	catch( C_csp_exception & )
 	{
 		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 		return -1;
@@ -4813,7 +4813,7 @@ int C_RecompCycle::C_mono_eq_LTR_od::operator()(double T_LTR_LP_out_guess /*K*/,
 					mpc_rc_cycle->m_temp_od[HTR_LP_OUT], mpc_rc_cycle->m_pres_od[HTR_LP_OUT], m_m_dot_t, mpc_rc_cycle->m_pres_od[LTR_LP_OUT],
 					m_Q_dot_LTR, mpc_rc_cycle->m_temp_od[LTR_HP_OUT], T_LTR_LP_out_calc);     
 	}
-	catch( C_csp_exception & csp_except )
+	catch( C_csp_exception &  )
 	{
 		*diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
 
@@ -5266,7 +5266,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 		ms_od_phi_par.m_recomp_frac = 0.0;
 	}
 
-	CO2_state co2_props;
+//	CO2_state co2_props;
 
 	// Initialize a few variables
 	m_temp_od[C_RecompCycle::MC_IN] = ms_od_phi_par.m_T_mc_in;

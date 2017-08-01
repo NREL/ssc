@@ -397,7 +397,7 @@ bool solarpilot_invoke::run()
             }
         }
 
-        m_cmod->assign("flux_max_observed", flux_max_observed);
+		m_cmod->assign("flux_max_observed", (ssc_number_t)flux_max_observed);
     }
         
     return true;

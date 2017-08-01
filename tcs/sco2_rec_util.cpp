@@ -190,6 +190,8 @@ double N_sco2_rec::C_rec_des_props::haynes230_enum_creep_temps(int enum_T_F)
 		return 1700.0;
 	case T_1800F:
 		return 1800.0;
+	default:
+		return 0;
 	}
 }
 
@@ -261,6 +263,8 @@ double N_sco2_rec::C_rec_des_props::haynes230_enum_cycle_temps(int enum_T_C)
 		return 871.0;
 	case T_982C:
 		return 982.0;
+	default:
+		return 0;
 	}
 }
 

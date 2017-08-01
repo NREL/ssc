@@ -762,8 +762,8 @@ public:
 
 			for( int i = 0; i < n_solved; i++ )
 			{
-				T_amb_od_out[i] = T_amb_out[i];
-				eta_T_amb[i] = T_amb_eta[i];
+				T_amb_od_out[i] = (ssc_number_t)T_amb_out[i];
+				eta_T_amb[i] = (ssc_number_t)T_amb_eta[i];
 			}
 
 
@@ -778,13 +778,13 @@ public:
 				T_amb_od_less_des[i] = T_amb_od[i] - (T_amb_cycle_des - 273.15);
 			}
 			bool T_amb_success = find_polynomial_coefs(T_amb_od_less_des, T_amb_eta, 5, T_amb_coefs, T_amb_r_squared);
-			assign("T_amb_r_squared", T_amb_r_squared);
+			assign("T_amb_r_squared", (ssc_number_t)T_amb_r_squared);
 
 			ssc_number_t * p_T_amb_coefs = allocate("T_amb_coefs", 5);
 			if( T_amb_success )
 			{
 				for( int i = 0; i < 5; i++ )
-					p_T_amb_coefs[i] = T_amb_coefs[i];
+					p_T_amb_coefs[i] = (ssc_number_t)T_amb_coefs[i];
 			}
 			else
 			{

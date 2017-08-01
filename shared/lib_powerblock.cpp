@@ -1201,14 +1201,14 @@ endif
 
 	//Use brute force interpolation.. it is faster in this case than bisection or hunting methods used in the user-specified HTF case
 	
-	int iLastIndex = m_db.ncols()-1;
+	size_t iLastIndex = m_db.ncols()-1;
 	for (size_t i=0; i < m_db.ncols(); i++)
 	{
 		// if we got to the last one, then set bounds and end loop
 		if(i == iLastIndex)
 		{
-			lbi = iLastIndex;
-			ubi = iLastIndex;
+			lbi = (int)iLastIndex;
+			ubi = (int)iLastIndex;
 			break;
 		}
 
@@ -1222,7 +1222,7 @@ endif
 				}
 				if(X >= m_db.at(XI,iLastIndex))
 				{
-					lbi=iLastIndex; ubi=iLastIndex; break;
+					lbi = (int)iLastIndex; ubi = (int)iLastIndex; break;
 				}
 			}
 			else
@@ -1233,7 +1233,7 @@ endif
 				}
 				if(X <= m_db.at(XI,iLastIndex))
 				{
-					lbi=iLastIndex; ubi=iLastIndex; break;
+					lbi = (int)iLastIndex; ubi = (int)iLastIndex; break;
 				}
 			}
 		}
@@ -1242,8 +1242,8 @@ endif
 		// so the reference [i+1], where i = iLastIndex, will never happen
 		if( ( (X >= m_db.at(XI,i)) && (X < m_db.at(XI,i+1)) ) || ( (X <= m_db.at(XI,i)) && (X > m_db.at(XI,i+1)) ) )
 		{
-			lbi = i;
-			ubi = i+1;
+			lbi = (int)i;
+			ubi = (int)i + 1;
 			break;
 		}
 	}

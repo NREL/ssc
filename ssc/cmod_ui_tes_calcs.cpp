@@ -93,7 +93,7 @@ public:
 
 		double tes_hrs = as_double("tes_hrs");                  //[hrs] Hours of TES relative to q_dot_pb_des
 		double Q_tes_des = q_dot_pb_des*tes_hrs;                //[MWt-hr] TES thermal capacity at design
-		assign("q_tes_des", Q_tes_des);
+		assign("q_tes_des", (ssc_number_t)Q_tes_des);
 
 		// Initialize HTF class
 		HTFProperties tes_htf_props;			// Instance of HTFProperties class for TES HTF
@@ -146,11 +146,11 @@ public:
 			h_min, h_tank, tank_pairs, u_tank,
 			vol_one_temp_avail, vol_one_temp_total, d_tank, q_dot_loss_des);
 
-		assign("vol_one_temp_avail", vol_one_temp_avail);
-		assign("vol_one_temp_total", vol_one_temp_total);
-		assign("d_tank", d_tank);
-		assign("q_dot_loss", q_dot_loss_des);
-		assign("HTF_dens", tes_htf_props.dens(T_HTF_ave+273.15,1.0));
+		assign("vol_one_temp_avail", (ssc_number_t)vol_one_temp_avail);
+		assign("vol_one_temp_total", (ssc_number_t)vol_one_temp_total);
+		assign("d_tank", (ssc_number_t)d_tank);
+		assign("q_dot_loss", (ssc_number_t)q_dot_loss_des);
+		assign("HTF_dens", (ssc_number_t)tes_htf_props.dens(T_HTF_ave + 273.15, 1.0));
 
 		//double rho_ave = tes_htf_props.dens(T_HTF_ave+273.15, 1.0);		//[kg/m^3] Density at average temperature
 		//double cp_ave = tes_htf_props.Cp(T_HTF_ave+273.15);				//[kJ/kg-K] Specific heat at average temperature
