@@ -772,7 +772,7 @@ public:
 		// Run simulation
 		size_t hours = 8760;
 //		int error = simulate(3600, hours * 3600, 3600, 30);
-		int error = simulate(3600, hours * 3600, 3600);
+		int error = simulate(3600.0, hours * 3600.0, 3600.0);
 		if (0 > error)
 			throw exec_error( "tcsmslf", util::format("there was a problem simulating in the TCS molten salt linear fresnel model. Error %d", error) );
 

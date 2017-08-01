@@ -540,7 +540,7 @@ public:
 	bool relay_message(string &msg, double percent)
 	{
 		log(msg);
-		return update(msg, percent);
+		return update(msg, (float)percent);
 	}
 
 	void exec() throw(general_error)
@@ -627,7 +627,7 @@ public:
 			double THT = spi.sf.tht.val;
 
 			int nr = (int)spi.layout.heliostat_positions.size();
-			assign("N_hel", nr);
+			assign("N_hel", (ssc_number_t)nr);
 
 			double A_sf = as_double("helio_height") * as_double("helio_width") * as_double("dens_mirror") * (double)nr;
 
@@ -847,7 +847,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-		int n_steps_full = weather_reader.get_n_records(); //steps_per_hour * 8760;
+		int n_steps_full = (int)weather_reader.get_n_records(); //steps_per_hour * 8760;
 		if (!sf_haf.setup(n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
@@ -891,16 +891,16 @@ public:
 		}
 
 		C_mspt_receiver_222 receiver;
-		receiver.m_n_panels = as_double("N_panels");
+		receiver.m_n_panels = as_integer("N_panels");
 		receiver.m_d_rec = D_rec;
 		receiver.m_h_rec = H_rec;
 		receiver.m_h_tower = as_double("h_tower");
 		receiver.m_od_tube = as_double("d_tube_out");
 		receiver.m_th_tube = as_double("th_tube");
-		receiver.m_mat_tube = as_double("mat_tube");
-		receiver.m_field_fl = (int) as_double("rec_htf");
+		receiver.m_mat_tube = as_integer("mat_tube");
+		receiver.m_field_fl = as_integer("rec_htf");
 		receiver.m_field_fl_props = as_matrix("field_fl_props");
-		receiver.m_flow_type = as_double("Flow_type");
+		receiver.m_flow_type = as_integer("Flow_type");
         receiver.m_crossover_shift = as_integer("crossover_shift");
 		receiver.m_epsilon = as_double("epsilon");
 		receiver.m_hl_ffact = as_double("hl_ffact");
@@ -918,8 +918,8 @@ public:
 		receiver.m_pipe_length_add = as_double("piping_length_const");	//[m]
 		receiver.m_pipe_length_mult = as_double("piping_length_mult");		//[-]
 
-		receiver.m_n_flux_x = as_double("n_flux_x");
-		receiver.m_n_flux_y = as_double("n_flux_y");
+		receiver.m_n_flux_x = as_integer("n_flux_x");
+		receiver.m_n_flux_y = as_integer("n_flux_y");
 
 		receiver.m_T_salt_hot_target = as_double("T_htf_hot_des");
 		receiver.m_eta_pump = as_double("eta_pump");
@@ -993,7 +993,7 @@ public:
 				pc->m_T_amb_des = as_double("T_amb_des");					
 				pc->m_P_boil = as_double("P_boil");
 				pc->m_CT = as_integer("CT");					// cooling tech type: 1=evaporative, 2=air, 3=hybrid	
-				pc->m_tech_type = as_double("tech_type");		// 1: Fixed, 3: Sliding
+				pc->m_tech_type = as_integer("tech_type");		// 1: Fixed, 3: Sliding
 				if (!(pc->m_tech_type == 1 || pc->m_tech_type == 3))
 				{
 					std::string tech_msg = util::format("tech_type must be either 1 (fixed pressure) or 3 (sliding). Input was %d."
@@ -1210,7 +1210,7 @@ public:
 				{
 					for (int j = 0; j < ncols; j++)
 					{
-						p_udpc_T_htf_hot(i, j) = T_htf_parametrics(i, j);
+						p_udpc_T_htf_hot(i, j) = (float)T_htf_parametrics(i, j);
 					}
 				}
 
@@ -1219,7 +1219,7 @@ public:
 				{
 					for (int j = 0; j < ncols; j++)
 					{
-						p_udpc_T_amb(i, j) = T_amb_parametrics(i, j);
+						p_udpc_T_amb(i, j) = (float)T_amb_parametrics(i, j);
 					}
 				}
 
@@ -1228,7 +1228,7 @@ public:
 				{
 					for (int j = 0; j < ncols; j++)
 					{
-						p_udpc_m_dot_htf(i, j) = m_dot_htf_ND_parametrics(i, j);
+						p_udpc_m_dot_htf(i, j) = (float)m_dot_htf_ND_parametrics(i, j);
 					}
 				}
 
@@ -1736,7 +1736,7 @@ public:
 		}
 		for( int i = 0; i < n_steps_fixed; i++ )
 		{
-			p_q_pc_startup[i] = p_q_dot_pc_startup[i] * (sim_setup.m_report_step/3600.0);	//[MWh]
+			p_q_pc_startup[i] = (float)(p_q_dot_pc_startup[i] * (sim_setup.m_report_step / 3600.0));	//[MWh]
 		}
 
 		// Convert mass flow rates from [kg/hr] to [kg/s]
@@ -1781,12 +1781,12 @@ public:
 
 		for( int i = 0; i < n_rows_eta_map; i++ )
 		{
-			flux_maps_out[n_cols_flux_maps*i] = eta_map_out[3*i] = heliostatfield.ms_params.m_eta_map(i,0);		//[deg] Solar azimuth angle
-			flux_maps_out[n_cols_flux_maps*i + 1] = eta_map_out[3 * i + 1] = heliostatfield.ms_params.m_eta_map(i, 1);	//[deg] Solar zenith angle
-			eta_map_out[3*i+2] = heliostatfield.ms_params.m_eta_map(i,2);							//[deg] Solar field optical efficiency
+			flux_maps_out[n_cols_flux_maps*i] = eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);		//[deg] Solar azimuth angle
+			flux_maps_out[n_cols_flux_maps*i + 1] = eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);	//[deg] Solar zenith angle
+			eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);							//[deg] Solar field optical efficiency
 			for( int j = 2; j < n_cols_flux_maps; j++ )
 			{
-				flux_maps_out[n_cols_flux_maps*i + j] = heliostatfield.ms_params.m_flux_maps(i,j-2)*heliostatfield.ms_params.m_eta_map(i,2)*flux_scaling_mult;		//[kW/m^2]
+				flux_maps_out[n_cols_flux_maps*i + j] = (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(i, j - 2)*heliostatfield.ms_params.m_eta_map(i, 2)*flux_scaling_mult);		//[kW/m^2]
 			}
 		}
 
@@ -1803,8 +1803,8 @@ public:
 		ssc_number_t *p_gen = allocate("gen", count);
 		for( int i = 0; i < count; i++ )
 		{
-			size_t hour = ceil(p_time_final_hr[i]);
-			p_gen[i] = p_W_dot_net[i] * 1.E3 * (ssc_number_t)haf(hour);			//[kWe]
+			size_t hour = (size_t)ceil(p_time_final_hr[i]);
+			p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));			//[kWe]
 		}
 
 		accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
@@ -1823,11 +1823,11 @@ public:
 			// Then, add water usage from mirror cleaning
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*as_double("A_sf")*as_double("washing_frequency");
-		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
+		assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
 		ssc_number_t ae = as_number("annual_energy");
 		ssc_number_t pg = as_number("annual_W_cycle_gross");
-		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : 0.0;
+		ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : (ssc_number_t)0.0;
 		assign("conversion_factor", convfactor);
 
 		double kWh_per_kW = 0.0;
@@ -1835,8 +1835,8 @@ public:
 		if(nameplate > 0.0)
 			kWh_per_kW = ae / nameplate;
 
-		assign("capacity_factor", kWh_per_kW/((double)n_steps_fixed/(double)steps_per_hour)*100. );
-		assign("kwh_per_kw", kWh_per_kW);
+		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
+		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 		 
 	}
 };

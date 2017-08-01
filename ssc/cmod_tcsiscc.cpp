@@ -329,9 +329,9 @@ public:
 			for( size_t i = 0; i<nr; i++ ){
 
 				for( size_t j = 0; j<steps.front().size(); j++ )
-					ssc_hist[i*nc + j] = steps.at(i).at(j);
-				ssc_hist[i*nc + nc - 2] = obj.at(i);
-				ssc_hist[i*nc + nc - 1] = flux.at(i);
+					ssc_hist[i*nc + j] = (ssc_number_t)steps.at(i).at(j);
+				ssc_hist[i*nc + nc - 2] = (ssc_number_t)obj.at(i);
+				ssc_hist[i*nc + nc - 1] = (ssc_number_t)flux.at(i);
 
 			}
 
@@ -619,7 +619,7 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > simulate(3600.0, hours*3600.0, 3600.0) )
 			throw exec_error( "tcs_iscc", util::format("there was a problem simulating in tcs_iscc.") );
 
 		// get the outputs

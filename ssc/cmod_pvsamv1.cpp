@@ -1235,7 +1235,7 @@ public:
 					sa[nn].sscalc.nrows = (int)floor((sa[nn].nstrings * modules_per_string) / (sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody));
 					//if nrows comes out to be zero, this will cause a divide by zero error. Give an error in this case.
 					if (sa[nn].sscalc.nrows == 0 && sa[nn].nstrings != 0) //no need to give an error if the subarray has 0 strings
-						throw exec_error("pvsamv1", "Self shading: Number of rows calculated for subarray " + util::to_string(to_double(nn + 1)) + " was zero. Please check your inputs.");
+						throw exec_error("pvsamv1", "Self shading: Number of rows calculated for subarray " + util::to_string(to_double((double)nn + 1)) + " was zero. Please check your inputs.");
 					// Otherwise, if self-shading configuration does not have equal number of modules as specified on system design page for that subarray,
 					// compute dc derate using the self-shading configuration and apply it to the whole subarray. Give warning.
 					if ((sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody * sa[nn].sscalc.nrows) != (sa[nn].nstrings * modules_per_string))
@@ -1872,10 +1872,10 @@ public:
 		ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
 
 
-		ssc_number_t xfmr_rating = ratedACOutput * util::watt_to_kilowatt; // W to kW
-		ssc_number_t xfmr_ll_frac = as_number("transformer_load_loss") *0.01; // % to frac
-		ssc_number_t xfmr_nll = as_number("transformer_no_load_loss") *0.01; // % to frac
-		xfmr_nll *=  ts_hour * xfmr_rating; // kW
+		ssc_number_t xfmr_rating = (ssc_number_t)(ratedACOutput * util::watt_to_kilowatt); // W to kW
+		ssc_number_t xfmr_ll_frac = (ssc_number_t)(as_number("transformer_load_loss") *0.01); // % to frac
+		ssc_number_t xfmr_nll = (ssc_number_t)(as_number("transformer_no_load_loss") *0.01); // % to frac
+		xfmr_nll *=  (ssc_number_t)(ts_hour * xfmr_rating); // kW
 
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
@@ -2027,9 +2027,9 @@ public:
 				sa[nn].poa.poaAll.zen = new double[ 8760*step_per_hour ];
 				sa[nn].poa.poaAll.exTer = new double[ 8760*step_per_hour ];
 					
-				for (int h=0; h<8760; h++){
-					for	(int m=0; m < step_per_hour; m++){
-						int ii = h * step_per_hour + m;
+				for (size_t h=0; h<8760; h++){
+					for	(size_t m=0; m < step_per_hour; m++){
+						size_t ii = h * step_per_hour + m;
 						int month_idx = wf.month - 1;
 
 						if (sa[nn].track_mode == 4) //timeseries tilt input
@@ -2162,7 +2162,7 @@ public:
 					// load data over entrie lifetime period not currently supported.
 					//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
 					//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
-					p_load_full[idx] = cur_load;
+					p_load_full[idx] = (ssc_number_t)cur_load;
 
 					if (!wdprov->read(&wf))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
@@ -2521,7 +2521,7 @@ public:
 
 							//execute self-shading calculations
 							ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
-							if (radmode == DN_DF || radmode == DN_GH) beam_to_use = wf.dn; 
+							if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 							else beam_to_use = p_irrad_calc[2][idx];
 
 							if (linear && trackbool) //one-axis linear
@@ -2600,7 +2600,7 @@ public:
 							p_poashaded[nn][idx] = (ssc_number_t)poashad;
 							p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
 							p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
-							p_poaeff[nn][idx] = (ssc_number_t)(radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
+							p_poaeff[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ibeam + iskydiff + ignddiff);
 							p_shad[nn][idx] = (ssc_number_t)beam_shading_factor;
 							p_rot[nn][idx] = (ssc_number_t)rot;
 							p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
@@ -2847,7 +2847,7 @@ public:
 					if (system_use_lifetime_output == 1 && en_dc_lifetime_losses)
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
-						int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
 						if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (dc_lifetime_losses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
 					}
@@ -2920,7 +2920,7 @@ public:
 
 					// Battery replacement
 					if (en_batt)
-						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour, jj);
+						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
 
 					// Iterative loop over DC battery
 					size_t dc_count = 0; bool iterate_dc = false;
@@ -3092,7 +3092,7 @@ public:
 					if (system_use_lifetime_output == 1 && en_ac_lifetime_losses)
 					{
 						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
-						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
 						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 					}
@@ -3230,9 +3230,9 @@ public:
 		assign("annual_dc_gross", var_data((ssc_number_t)annual_dc_gross));
 		assign("annual_ac_gross", var_data((ssc_number_t)annual_ac_gross));
 
-		assign("xfmr_nll_year1", annual_xfmr_nll);
-		assign("xfmr_ll_year1", annual_xfmr_ll);
-		assign("xfmr_loss_year1", annual_xfmr_loss);
+		assign("xfmr_nll_year1", (ssc_number_t)annual_xfmr_nll);
+		assign("xfmr_ll_year1", (ssc_number_t)annual_xfmr_ll);
+		assign("xfmr_loss_year1", (ssc_number_t)annual_xfmr_loss);
 
 		assign("annual_dc_mismatch_loss", var_data((ssc_number_t)annual_mismatch_loss));
 		assign("annual_dc_diodes_loss", var_data((ssc_number_t)annual_diode_loss));
@@ -3569,7 +3569,7 @@ public:
 					if (da[i] > maxVmp) 
 					{
 						maxVmp = da[i];
-						maxVmpHour = i;
+						maxVmpHour = (int)i;
 					}
 				}
 			}

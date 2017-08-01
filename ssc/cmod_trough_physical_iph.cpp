@@ -314,10 +314,10 @@ public:
 
 		int steps_per_hour = 1;			//[-]
 
-		int n_wf_records = weather_reader.get_n_records();
+		int n_wf_records = (int)weather_reader.get_n_records();
 		steps_per_hour = n_wf_records / 8760;	//[-]
 
-		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
+		int n_steps_fixed = steps_per_hour*8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 		//***************************************************************************
 		//***************************************************************************
@@ -361,7 +361,7 @@ public:
 		c_trough.m_ColTilt = as_double("tilt");						//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 		c_trough.m_ColAz = as_double("azimuth"); 					//[deg] Collector azimuth angle
 		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
-		c_trough.m_accept_init = as_double("accept_init");			//[-] In acceptance testing mode - require steady-state startup
+		c_trough.m_accept_init = as_boolean("accept_init");			//[-] In acceptance testing mode - require steady-state startup
 		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
 		c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
 		c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");	//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
@@ -743,7 +743,7 @@ public:
 		
 		for(int i = 0; i < n_steps_fixed; i++)
 		{
-			size_t hour = ceil(p_time_final_hr[i]);
+			size_t hour = (size_t)ceil(p_time_final_hr[i]);
 			p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);		//[kWt]
 			p_W_dot_parasitic_tot[i] *= -1.0;			//[kWe] Label is total parasitics, so change to a positive value
 			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]

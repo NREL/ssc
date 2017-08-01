@@ -471,7 +471,7 @@ public:
 			assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market
-			assign("annual_energy", var_data(annual_energy / geo_inputs.mi_ProjectLifeYears));
+			assign("annual_energy", var_data((ssc_number_t)(annual_energy / geo_inputs.mi_ProjectLifeYears)));
 
 
 

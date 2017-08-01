@@ -101,14 +101,14 @@ public:
 			I = current_5par( V, 0.9*Il, a, Il, Io, Rs, Rsh );
 		}
 
-		assign( "V", var_data( V ) );
-		assign( "I", var_data( I ) );
+		assign("V", var_data((ssc_number_t)V));
+		assign("I", var_data((ssc_number_t)I));
 
 		double Voc = openvoltage_5par( V, a, Il, Io, Rsh );
 		double Isc = current_5par( 0.0, Il, a, Il, Io, Rs, Rsh );
 
-		assign( "Voc", var_data( Voc ) );
-		assign( "Isc", var_data( Isc ) );
+		assign("Voc", var_data((ssc_number_t)Voc));
+		assign("Isc", var_data((ssc_number_t)Isc));
 	}
 };
 
@@ -178,11 +178,11 @@ public:
 		double Rsh_oper = Rsh*(I_ref/I);
 			
 
-		assign( "Rs", var_data(Rs) );
-		assign( "Rsh", var_data( Rsh_oper ) );
-		assign( "a", var_data(A_oper) );
-		assign( "Io", var_data( IO_oper ) );
-		assign( "Il", var_data( IL_oper ) );		
+		assign("Rs", var_data((ssc_number_t)Rs));
+		assign("Rsh", var_data((ssc_number_t)Rsh_oper));
+		assign("a", var_data((ssc_number_t)A_oper));
+		assign("Io", var_data((ssc_number_t)IO_oper));
+		assign("Il", var_data((ssc_number_t)IL_oper));
 	}
 };
 

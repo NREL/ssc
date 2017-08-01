@@ -179,7 +179,7 @@ public:
 		// nothing to do
 	}
 	
-	virtual bool read_line( std::vector<double> &values )
+	bool read_line( std::vector<double> &values )
 	{
 		if (irecord >= data.nrows() 
 			|| data.ncols() == 0 

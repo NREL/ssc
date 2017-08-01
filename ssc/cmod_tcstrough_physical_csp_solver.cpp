@@ -464,7 +464,7 @@ public:
 		c_trough.m_ColTilt = as_double("tilt");						//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 		c_trough.m_ColAz = as_double("azimuth"); 					//[deg] Collector azimuth angle
 		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
-		c_trough.m_accept_init = as_double("accept_init");			//[-] In acceptance testing mode - require steady-state startup
+		c_trough.m_accept_init = as_boolean("accept_init");			//[-] In acceptance testing mode - require steady-state startup
 		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
 		c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
 		c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");	//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
@@ -722,7 +722,7 @@ public:
 			pc->m_T_amb_des = as_double("T_amb_des");			//[C]
 			pc->m_P_boil = as_double("P_boil");					//[bar]
 			pc->m_CT = as_integer("CT");						//[-]
-			pc->m_tech_type = as_double("tech_type");			//[-]					
+			pc->m_tech_type = as_integer("tech_type");			//[-]					
 			pc->m_T_approach = as_double("T_approach");			//[C/K]
 			pc->m_T_ITD_des = as_double("T_ITD_des");			//[C/K]
 			pc->m_P_cond_ratio = as_double("P_cond_ratio");		//[-]
@@ -884,7 +884,7 @@ public:
 		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
 
 		int steps_per_hour = 1;			//[-]
-		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
+		int n_steps_fixed = steps_per_hour*8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
 		// Instantiate Solver
@@ -1020,7 +1020,7 @@ static bool ssc_trough_physical_sim_progress(void *data, double percent, C_csp_m
 			cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
 		}
 	}
-	bool ret = cm->update("", percent);
+	bool ret = cm->update("", (float)percent);
 
 	return ret;
 }

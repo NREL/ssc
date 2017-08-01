@@ -192,11 +192,11 @@ public:
 
 		for(int i = 0; i < n_HCE_A0; i++)
 		{
-			p_HL[i] = HL[i];
+			p_HL[i] = (ssc_number_t)HL[i];
 		}
 
-		assign("HL_weighted", Rec_HL);
-		assign("HL_weighted_m2", Rec_HL_m2);
+		assign("HL_weighted", (ssc_number_t)Rec_HL);
+		assign("HL_weighted_m2", (ssc_number_t)Rec_HL_m2);
 	}
 
 };

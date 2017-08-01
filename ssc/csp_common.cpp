@@ -133,7 +133,7 @@ bool solarpilot_invoke::run()
 	hf->n_cant_x.val = m_cmod->as_integer("n_facet_x");
 	hf->n_cant_y.val = m_cmod->as_integer("n_facet_y");
 
-    std:string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
+    string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
 
 	int cmap[5];
     cmap[0] = var_heliostat::CANT_METHOD::NO_CANTING;

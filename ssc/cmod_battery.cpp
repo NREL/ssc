@@ -564,7 +564,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	outBatterySystemLoss = cm.allocate("batt_system_loss", nrec*nyears);
 
 	// annual outputs
-	int annual_size = nyears + 1;
+	size_t annual_size = nyears + 1;
 	if (nyears == 1){ annual_size = 1; };
 
 	outBatteryBankReplacement = cm.allocate("batt_bank_replacement", annual_size);
@@ -594,7 +594,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 
 	lifetime_cycle_model = new  lifetime_cycle_t(batt_lifetime_matrix);
 	lifetime_calendar_model = new lifetime_calendar_t(batt_vars->batt_calendar_choice, batt_calendar_lifetime_matrix, _dt_hour, 
-		batt_vars->batt_calendar_q0, batt_vars->batt_calendar_a, batt_vars->batt_calendar_b, batt_vars->batt_calendar_c);
+		(float)batt_vars->batt_calendar_q0, (float)batt_vars->batt_calendar_a, (float)batt_vars->batt_calendar_b, (float)batt_vars->batt_calendar_c);
 	lifetime_model = new lifetime_t(lifetime_cycle_model, lifetime_calendar_model, replacement_option, batt_vars->batt_replacement_capacity);
 
 	util::matrix_t<double> cap_vs_temp = batt_vars->cap_vs_temp;
@@ -660,7 +660,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			if (idling_loss.size() > 1)
 				idle_loss = idling_loss[m];
 
-			for (size_t d = 0; d != util::days_in_month(m); d++)
+			for (size_t d = 0; d != util::days_in_month((int)m); d++)
 			{
 				for (size_t h = 0; h != 24; h++)
 				{
@@ -719,7 +719,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			batt_vars->batt_dispatch, batt_vars->batt_pv_choice,
 			dm_dynamic_sched, dm_dynamic_sched_weekend,
 			dm_charge, dm_discharge, dm_gridcharge, dm_percent_discharge, dm_percent_gridcharge,
-			nyears);
+			(int)nyears);
 	}
 
 	ac_dc = dc_ac = 100.;
@@ -759,14 +759,14 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		automate_dispatch_t * automated_dispatch = dynamic_cast<automate_dispatch_t*>(dispatch_model);
 
 		// automatic look ahead or behind
-		int nrec = nyears * 8760 * step_per_hour;
+		size_t nrec = nyears * 8760 * step_per_hour;
 		
 		if (pv != 0) 
 		{
 			// look ahead
 			if (look_ahead)
 			{
-				for (int idx = 0; idx != nrec; idx++)
+				for (size_t idx = 0; idx != nrec; idx++)
 				{
 					pv_prediction.push_back(pv[idx]);
 					load_prediction.push_back(load[idx]);
@@ -775,7 +775,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 			else if (look_behind)
 			{
 				// day one is zeros
-				for (int idx = 0; idx != 24 * step_per_hour; idx++)
+				for (size_t idx = 0; idx != 24 * step_per_hour; idx++)
 				{
 					pv_prediction.push_back(0);
 					load_prediction.push_back(0);
@@ -827,7 +827,7 @@ void battstor::check_replacement_schedule(int batt_replacement_option, size_t co
 		bool replace = false;
 		if (iyear < count_batt_replacement)
 		{
-			int num_repl = batt_replacement[iyear];
+			ssc_number_t num_repl = batt_replacement[iyear];
 			for (int j_repl = 0; j_repl < num_repl; j_repl++)
 			{
 				if ((hour == (int)(j_repl*8760.0 / num_repl)) && step == 0)
@@ -860,7 +860,7 @@ void battstor::advance(compute_module &cm, size_t year, size_t hour_of_year, siz
 
 void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
 {
-	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
+	size_t idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 	if (idx == total_steps - 1)
 		process_messages(cm);
 
@@ -875,15 +875,15 @@ void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_yea
 		}
 		outMaxCharge[idx] = (ssc_number_t)(capacity_model->qmax());
 		outTotalCharge[idx] = (ssc_number_t)(capacity_model->q0());
-		outCurrent[idx] = (capacity_model->I());
+		outCurrent[idx] = (ssc_number_t)(capacity_model->I());
 		outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());
-		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery()) - 273.15;
+		outBatteryTemperature[idx] = (ssc_number_t)(thermal_model->T_battery() - 273.15);
 		outCapacityThermalPercent[idx] = (ssc_number_t)(thermal_model->capacity_percent());
 	}
 
 	// Lifetime outputs
 	outCellVoltage[idx] = (ssc_number_t)(voltage_model->cell_voltage());
-	outCycles[idx] = (int)(lifetime_cycle_model->cycles_elapsed());
+	outCycles[idx] = (ssc_number_t)(lifetime_cycle_model->cycles_elapsed());
 	outSOC[idx] = (ssc_number_t)(capacity_model->SOC());
 	outDOD[idx] = (ssc_number_t)(lifetime_cycle_model->cycle_range());
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
@@ -891,7 +891,7 @@ void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_yea
 
 void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
 {
-	int idx = (year * 8760 + hour_of_year)*step_per_hour + step;
+	size_t idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
 	// Power output (all Powers in kWac)
 	outBatteryPower[idx] = (ssc_number_t)(charge_control->power_tofrom_battery());
@@ -921,7 +921,7 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 
 void battstor::metrics(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
 {
-	int annual_index;
+	size_t annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
 	outBatteryBankReplacement[annual_index] = (ssc_number_t)(lifetime_model->replacements());
 
@@ -981,7 +981,7 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	// single value metrics
 	cm.assign("average_cycle_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
 	cm.assign("batt_pv_charge_percent", var_data((ssc_number_t)outPVChargePercent));
-	cm.assign("batt_bank_installed_capacity", batt_vars->batt_kwh);
+	cm.assign("batt_bank_installed_capacity", (ssc_number_t)batt_vars->batt_kwh);
 
 	// monthly outputs
 	cm.accumulate_monthly_for_year("pv_to_batt", "monthly_pv_to_batt", _dt_hour, step_per_hour);

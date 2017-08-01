@@ -403,7 +403,7 @@ public:
         set_unit_value_ssc_array(type260_genericsolar, "sf_adjust");
 
 		// Run simulation
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > simulate(3600.0, hours*3600.0, 3600.0) )
 			throw exec_error( "tcsgeneric_solar", util::format("there was a problem simulating in tcsgeneric_solar.") );
 
 		// get the outputs
@@ -469,7 +469,7 @@ public:
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 
-		assign("system_heat_rate", 3.413); // samsim tcsgeneric_solar
+		assign("system_heat_rate", (ssc_number_t)3.413); // samsim tcsgeneric_solar
 		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_MWht * 1000.0)));
 
 

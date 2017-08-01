@@ -116,28 +116,28 @@ public:
 		if ( input.ncols() != iec61853_module_t::COL_MAX )
 			throw exec_error( "iec61853", "six data columns required for input matrix: IRR,TC,PMP,VMP,VOC,ISC");
 
-		if (!solver.calculate( input, as_number("nser"), as_number("type"), par, as_boolean("verbose") ))
+		if (!solver.calculate( input, as_integer("nser"), as_integer("type"), par, as_boolean("verbose") ))
 			throw exec_error( "iec61853", "failed to solve for parameters");
 
-		assign( "n", var_data(solver.n) );
-		assign( "alphaIsc", var_data(solver.alphaIsc) );
-		assign( "betaVoc", var_data(solver.betaVoc) );
-		assign( "gammaPmp", var_data(solver.gammaPmp) );
-		assign( "Il", var_data(solver.Il) );
-		assign( "Io", var_data(solver.Io) );
-		assign( "C1", var_data(solver.C1) );
-		assign( "C2", var_data(solver.C2) );
-		assign( "C3", var_data(solver.C3) );
-		assign( "D1", var_data(solver.D1) );
-		assign( "D2", var_data(solver.D2) );
-		assign( "D3", var_data(solver.D3) );
-		assign( "Egref", var_data(solver.Egref) );
+		assign("n", var_data((ssc_number_t)solver.n));
+		assign("alphaIsc", var_data((ssc_number_t)solver.alphaIsc));
+		assign("betaVoc", var_data((ssc_number_t)solver.betaVoc));
+		assign( "gammaPmp", var_data((ssc_number_t)solver.gammaPmp) );
+		assign( "Il", var_data((ssc_number_t)solver.Il) );
+		assign( "Io", var_data((ssc_number_t)solver.Io) );
+		assign( "C1", var_data((ssc_number_t)solver.C1) );
+		assign( "C2", var_data((ssc_number_t)solver.C2) );
+		assign( "C3", var_data((ssc_number_t)solver.C3) );
+		assign( "D1", var_data((ssc_number_t)solver.D1) );
+		assign( "D2", var_data((ssc_number_t)solver.D2) );
+		assign( "D3", var_data((ssc_number_t)solver.D3) );
+		assign( "Egref", var_data((ssc_number_t)solver.Egref) );
 
 		ssc_number_t *output = allocate( "output", par.nrows(), par.ncols() );
 		size_t c = 0;
 		for( size_t i=0;i<par.nrows();i++ )
 			for( size_t j=0;j<par.ncols();j++ )
-				output[c++] = par(i,j);
+				output[c++] = (ssc_number_t)par(i, j);
 	}
 };
 
@@ -210,7 +210,7 @@ public:
 			if ( d < dist )
 			{
 				dist = d;
-				idist = i;
+				idist = (int)i;
 			}
 			
 			std::vector<double> it(2,0.0);
@@ -357,11 +357,11 @@ public:
 		if ( is_assigned( "quiet" ) )
 			quiet = true;
 
-		assign( "a", var_data( interpolate( data, par, I, T, A, quiet ) ) );
-		assign( "Il", var_data( interpolate( data, par, I, T, IL, quiet ) ) );
-		assign( "Io", var_data( interpolate( data, par, I, T, IO, quiet ) ) );
-		assign( "Rs", var_data( interpolate( data, par, I, T, RS, quiet ) ) );
-		assign( "Rsh", var_data( interpolate( data, par, I, T, RSH, quiet ) ) );
+		assign( "a", var_data((ssc_number_t) interpolate( data, par, I, T, A, quiet ) ) );
+		assign("Il", var_data((ssc_number_t)interpolate(data, par, I, T, IL, quiet)));
+		assign("Io", var_data((ssc_number_t)interpolate(data, par, I, T, IO, quiet)));
+		assign("Rs", var_data((ssc_number_t)interpolate(data, par, I, T, RS, quiet)));
+		assign("Rsh", var_data((ssc_number_t)interpolate(data, par, I, T, RSH, quiet)));
 
 	}
 };

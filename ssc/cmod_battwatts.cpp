@@ -200,8 +200,8 @@ public:
 		batt_vars->pv_dc_dc_mppt_efficiency = 99;
 
 		double batt_bank_voltage = batt_kw * 1000. / current_max;
-		batt_vars->batt_computed_series = std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
-		batt_vars->batt_computed_strings = std::ceil((batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
+		batt_vars->batt_computed_series = (int)std::ceil(batt_bank_voltage / batt_vars->batt_Vnom_default);
+		batt_vars->batt_computed_strings = (int)std::ceil((batt_kwh * 1000.) / (batt_vars->batt_Qfull * batt_vars->batt_computed_series * batt_vars->batt_Vnom_default)) - 1;
 
 		if (batt_vars->batt_chem == battery_t::LEAD_ACID)
 		{
@@ -291,10 +291,10 @@ public:
 
 			p_ac = as_array("ac", &n_ac);
 			for (int i = 0; i != n_ac; i++)
-				p_ac[i] = p_ac[i] * 0.001;
+				p_ac[i] = (ssc_number_t)(p_ac[i] * 0.001);
 
 			p_load = as_array("load", &n_load);
-			step_per_hour = n_ac / 8760;
+			step_per_hour = (int)n_ac / 8760;
 			ts_hour = 1. / step_per_hour;
 
 			batt_variables * batt_vars = setup_variables();

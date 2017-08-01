@@ -607,7 +607,7 @@ public:
 		ssc_number_t output = (ssc_number_t)totalCost(rating, diameter, hubHt, nTurb, voltage, distInter, terrain, layout, soil,
 			farmSize, tcc, topMass, constructionTime, buildingSize, temporary, permanent, weatherDelayDays, craneBreakdowns, accessRoadEntrances,
 			deliveryAssistRequired, padMountTransformer, newSwitchyardRequired, rockTrenchingLength, thermalBackfill, overheadCollector,
-			performanceBond, contingency, warranty,	useTax, overhead, profitMargin,	developmentFee, transportDist);
+			(int)performanceBond, contingency, warranty,	useTax, overhead, profitMargin,	developmentFee, transportDist);
 
 		// assign outputs
 		assign( "project_total_budgeted_cost", var_data(output) );

@@ -182,27 +182,27 @@ public:
         spi.run();
         AutoPilot_S *sapi = spi.GetSAPI();
 
-        assign("h_tower_opt", spi.sf.tht.val);
-        assign("rec_height_opt", spi.recs.front().rec_height.val);
-        assign("rec_aspect_opt", spi.recs.front().rec_aspect.Val() );
-        assign("cost_rec_tot", spi.fin.rec_cost.Val() );
-        assign("cost_sf_tot", spi.fin.heliostat_cost.Val() );
-        assign("cost_tower_tot", spi.fin.tower_cost.Val() );
-        assign("cost_land_tot", spi.fin.land_cost.Val() );
-        assign("cost_site_tot", spi.fin.site_cost.Val() );
-        assign("land_area", spi.land.land_area.Val() );
-        assign("area_sf", spi.sf.sf_area.Val() );
+		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
+		assign("rec_height_opt", (ssc_number_t)spi.recs.front().rec_height.val);
+		assign("rec_aspect_opt", (ssc_number_t)spi.recs.front().rec_aspect.Val());
+		assign("cost_rec_tot", (ssc_number_t)spi.fin.rec_cost.Val());
+		assign("cost_sf_tot", (ssc_number_t)spi.fin.heliostat_cost.Val());
+		assign("cost_tower_tot", (ssc_number_t)spi.fin.tower_cost.Val());
+		assign("cost_land_tot", (ssc_number_t)spi.fin.land_cost.Val());
+		assign("cost_site_tot", (ssc_number_t)spi.fin.site_cost.Val());
+		assign("land_area", (ssc_number_t)spi.land.land_area.Val());
+		assign("area_sf", (ssc_number_t)spi.sf.sf_area.Val());
 
         if( is_assigned("helio_positions_in") )
         {
             util::matrix_t<double> hposin = as_matrix("helio_positions_in");
 			ssc_number_t *hpos = allocate( "heliostat_positions",  hposin.nrows(), 2 );
 			for(size_t i=0; i< hposin.nrows(); i++){
-				hpos[ i*2     ] = hposin.at(i,0);
-				hpos[ i*2 + 1 ] = hposin.at(i,1);
+				hpos[i * 2] = (ssc_number_t)hposin.at(i, 0);
+				hpos[i * 2 + 1] = (ssc_number_t)hposin.at(i, 1);
 			}
             //return the number of heliostats
-		    assign("number_heliostats",  hposin.nrows() );
+			assign("number_heliostats", (ssc_number_t)hposin.nrows());
         }
         else
         {
@@ -219,13 +219,13 @@ public:
 			    throw exec_error("solarpilot", "failed to generate a heliostat field layout");
  		    
             //return the number of heliostats
-		    assign("number_heliostats",  spi.layout.heliostat_positions.size() );
+			assign("number_heliostats", (ssc_number_t)spi.layout.heliostat_positions.size());
         }
 
  
 		
 		//return the land area
-		assign("base_land_area",  spi.land.land_area.Val() );
+		assign("base_land_area", (ssc_number_t)spi.land.land_area.Val());
 
 		//check if flux map calculations are desired
 		if( as_boolean("calc_fluxmaps") ){
@@ -239,9 +239,9 @@ public:
 				ssc_number_t *opteff = allocate( "opteff_table", nvals, 3 );
 				for( size_t i=0;i<nvals;i++ )
                 {
-					opteff[ i*3     ] = (float)spi.fluxtab.azimuths[i]*180./pi - 180.;      //Convention is usually S=0, E<0, W>0 
-                    opteff[ i*3 + 1 ] = (float)spi.fluxtab.zeniths[i]*180./pi;     //Provide zenith angle
-                    opteff[ i*3 + 2 ] = (float)spi.fluxtab.efficiency[i];
+					opteff[i * 3] = (ssc_number_t)(spi.fluxtab.azimuths[i] * 180. / pi - 180.);      //Convention is usually S=0, E<0, W>0 
+					opteff[i * 3 + 1] = (ssc_number_t)(spi.fluxtab.zeniths[i] * 180. / pi);     //Provide zenith angle
+					opteff[i * 3 + 2] = (ssc_number_t)spi.fluxtab.efficiency[i];
                 }
 			}
 			else

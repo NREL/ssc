@@ -394,7 +394,7 @@ public:
 				temp_sum += T_amb[idx];
 				temp_count++;
 
-				int imonth = util::month_of(hour) - 1;
+				int imonth = util::month_of((double)hour) - 1;
 				monthly_avg_temp[ imonth ] += T_amb[idx];
 				monthly_avg_count[ imonth ]++;
 
@@ -525,7 +525,7 @@ public:
 					hour = 24;
 				else
 				{
-					hour = (i + 1) - (julian_day * 24);
+					hour = ((int)i + 1) - (julian_day * 24);
 					julian_day++;
 				}
 				if (wfile.lat() > 0.)
@@ -781,9 +781,9 @@ public:
 				if (Q_useful < 0) Q_useful = 0.0;
 
 				// save output variables - convert Q values to kWh 
-				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total) * watt_to_kw;
-				out_Q_useful[idx] = (ssc_number_t)(Q_useful)* watt_to_kw;
-				out_Q_deliv[idx] = (ssc_number_t)(Q_deliv)* watt_to_kw; //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
+				out_Q_transmitted[idx] = (ssc_number_t)(I_transmitted[idx] * area_total * watt_to_kw);
+				out_Q_useful[idx] = (ssc_number_t)(Q_useful* watt_to_kw);
+				out_Q_deliv[idx] = (ssc_number_t)(Q_deliv* watt_to_kw); //this is currently being output from a financial model as "Hourly Energy Delivered", they are equivalent
 				out_Q_loss[idx] = (ssc_number_t)(Q_tankloss* watt_to_kw);
 				out_T_tank[idx] = (ssc_number_t)T_tank;
 				out_T_deliv[idx] = (ssc_number_t)T_deliv;
