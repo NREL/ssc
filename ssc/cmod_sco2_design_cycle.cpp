@@ -163,8 +163,8 @@ public:
 		double LT_frac = ms_rc_cycle.get_design_solved()->m_UA_LT / (ms_rc_cycle.get_design_solved()->m_UA_LT + ms_rc_cycle.get_design_solved()->m_UA_HT);
 
 		assign("O_LT_frac_des", var_data((ssc_number_t) LT_frac));		//[-]
-		assign("O_P_mc_out_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_pres[2-1]/1000.0));	//[MPa] convert from kPa
-		assign("O_PR_mc_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_pres[2-1]/ms_rc_cycle.get_design_solved()->m_pres[1-1]));	//[-]
+		assign("O_P_mc_out_des", var_data((ssc_number_t) (ms_rc_cycle.get_design_solved()->m_pres[2-1]/1000.0)));	//[MPa] convert from kPa
+		assign("O_PR_mc_des", var_data((ssc_number_t) (ms_rc_cycle.get_design_solved()->m_pres[2-1]/ms_rc_cycle.get_design_solved()->m_pres[1-1])));	//[-]
 		assign("O_recomp_frac_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_recomp_frac));	//[-]
 		assign("O_eta_thermal_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->m_eta_thermal));	//[-]
 		assign("O_N_mc_des", var_data((ssc_number_t) ms_rc_cycle.get_design_solved()->ms_mc_des_solved.m_N_design));		//[-]
@@ -172,10 +172,10 @@ public:
 		
 		// Assign temperatures to array
 		const std::vector<double> T_vector = ms_rc_cycle.get_design_solved()->m_temp;
-		int l_T_array = T_vector.size();
+		size_t l_T_array = T_vector.size();
 		ssc_number_t * T_array = new ssc_number_t[l_T_array];
 		
-		for( int i = 0; i < l_T_array; i++ )
+		for( size_t i = 0; i < l_T_array; i++ )
 			T_array[i] = (ssc_number_t)(T_vector[i]);
 
 		// Assign temp array to var_data

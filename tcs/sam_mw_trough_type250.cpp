@@ -882,18 +882,18 @@ public:
 
 	virtual ~sam_mw_trough_type250()
 	{
-		for( int i = 0; i < AbsorberPropMat.nrows(); i ++ )
+		for( int i = 0; i < (int)AbsorberPropMat.nrows(); i ++ )
 		{
-			for( int j = 0; j < AbsorberPropMat.ncols(); j++ )
+			for( int j = 0; j < (int)AbsorberPropMat.ncols(); j++ )
 			{
 				if( AbsorberPropMat(i, j) != NULL )
 					delete AbsorberPropMat(i, j);
 			}
 		}
 		
-		for( int i = 0; i < AnnulusGasMat.nrows(); i++ )
+		for( int i = 0; i < (int)AnnulusGasMat.nrows(); i++ )
 		{
-			for( int j = 0; j < AnnulusGasMat.ncols(); j++ )
+			for( int j = 0; j < (int)AnnulusGasMat.ncols(); j++ )
 			{
 				if( AnnulusGasMat(i, j) != NULL )
 					delete AnnulusGasMat(i, j);

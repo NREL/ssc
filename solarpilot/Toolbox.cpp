@@ -1442,7 +1442,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
 
                 if( npt > 1 )  //any subsequent points are assumed to be 'l'
                 {
-                    for(size_t j=1; j<npt; j++)
+                    for(int j=1; j<npt; j++)
                     {
                         x0 += points.at(j).at(0);
                         y0 += points.at(j).at(1);
@@ -1460,7 +1460,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
 
                 if( npt > 1 )  //any subsequent points are assumed to be 'l'
                 {
-                    for(size_t j=1; j<npt; j++)
+                    for(int j=1; j<npt; j++)
                     {
                         x0 += points.at(j).at(0);
                         y0 += points.at(j).at(1);
@@ -1472,7 +1472,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
             case 'l':
 
                 //trace all points
-                for(size_t j=0; j<npt; j++)
+                for(int j=0; j<npt; j++)
                 {
                     x0 += points.at(j).at(0);
                     y0 += points.at(j).at(1);
@@ -1483,7 +1483,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
             case 'L':
 
                 //trace all points - absolute
-                for(size_t j=0; j<npt; j++)
+                for(int j=0; j<npt; j++)
                 {
                     x0 = points.at(j).at(0);
                     y0 = points.at(j).at(1);
@@ -1494,7 +1494,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
             case 'h':
 
                 //horizontal line relative
-                for(size_t j=0; j<npt; j++)
+                for(int j=0; j<npt; j++)
                 {
                     x0 += points.at(j).front();
                     polygon.push_back( sp_point(x0, -y0, 0.) );
@@ -1504,7 +1504,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
             case 'H':
                 
                 //horizontal line absolute
-                for(size_t j=0; j<npt; j++)
+                for(int j=0; j<npt; j++)
                 {
                     x0 = points.at(j).front();
                     polygon.push_back( sp_point(x0, -y0, 0.) );
@@ -1514,7 +1514,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
             case 'v':
 
                 //vertical line relative
-                for(size_t j=0; j<npt; j++)
+                for(int j=0; j<npt; j++)
                 {
                     y0 += points.at(j).front();
                     polygon.push_back( sp_point(x0, -y0, 0.) );
@@ -1524,7 +1524,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
             case 'V':
 
                 //vertical line absolute
-                for(size_t j=0; j<npt; j++)
+                for(int j=0; j<npt; j++)
                 {
                     y0 = points.at(j).front();
                     polygon.push_back( sp_point(x0, -y0, 0.) );
@@ -1544,7 +1544,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
 
                 int nbz = 5;    //number of internal bezier points
 
-                for(size_t j=0; j<npt; j+=2)  //jump through in pairs
+                for(int j=0; j<npt; j+=2)  //jump through in pairs
                 {
                     sp_point start(x0, y0, 0.);
 
@@ -1591,7 +1591,7 @@ void Toolbox::poly_from_svg(std::string &svg, std::vector< sp_point > &polygon, 
 
                 int nbz = 7;    //number of internal bezier points
 
-                for(size_t j=0; j<npt; j+=3)  //jump through in pairs
+                for(int j=0; j<npt; j+=3)  //jump through in pairs
                 {
                     sp_point start = polygon.back();
                     if( move == 'C' ) //if relative, set the relative adder to the start point location

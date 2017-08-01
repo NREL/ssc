@@ -73,6 +73,15 @@
 #endif
 #endif
 
+#ifdef _MSC_VER  /* Microsoft Visual C++ -- warning level 4 */
+//#pragma warning( disable : 4100)  /* unreferenced formal parameter */
+//#pragma warning( disable : 4127)  /* conditional expression is constant */
+//#pragma warning( disable : 4706)  /* assignment within conditional function */
+#pragma warning( disable : 4996)  /* function was declared deprecated(strcpy, localtime, etc.) */
+#endif
+
+
+
 std::vector< std::string > util::split( const std::string &str, const std::string &delim, bool ret_empty, bool ret_delim )
 {
 	std::vector< std::string > list;
@@ -129,7 +138,7 @@ size_t util::replace( std::string &s, const std::string &old_text, const std::st
 
 	std::string::size_type pos = 0;
 	size_t uiCount = 0;
-	while(1)
+	for(;;)
 	{
 		pos = s.find(old_text, pos);
 		if ( pos == std::string::npos )
@@ -341,7 +350,7 @@ std::string util::read_file( const std::string &file )
 	FILE *fp = fopen(file.c_str(), "r");
 	if (fp)
 	{
-		while ( (c=fgetc(fp))!=EOF )
+		while ( (c=(char)fgetc(fp))!=EOF )
 			buf += c;
 		fclose(fp);
 	}
@@ -878,7 +887,7 @@ void util::month_hour(int hour_of_year, int & out_month, int & out_hour)
 		if (hour_of_year + 1 <= tmpSum)
 		{
 			// get the day of the month
-			int tmp = floor((float)(hour_of_year) / 24);
+			int tmp = (int)(floor((float)(hour_of_year) / 24));
 			hour = (hour_of_year + 1) - (tmp * 24);
 			break;
 		}
@@ -894,7 +903,7 @@ int util::hour_of_day(int hour_of_year)
 
 bool util::weekday(int hour_of_year)
 {
-	int day_of_year = floor((float)(hour_of_year) / 24);
+	int day_of_year = (int)(floor((float)(hour_of_year) / 24));
 	int day_of_week = day_of_year;
 
 	if (day_of_week > 6)
@@ -1056,15 +1065,15 @@ double util::bilinear( double rowval, double colval, const matrix_t<double> &mat
 		return std::numeric_limits<double>::quiet_NaN();
 	
 	int ridx=2; // find row position
-	while( ridx < mat.nrows() && rowval > mat.at(ridx, 0) )
+	while( ridx < (int)mat.nrows() && rowval > (int)mat.at(ridx, 0) )
 		ridx++;
 	
 	int cidx=2; // find col position
-	while( cidx < mat.ncols() && colval > mat.at(0, cidx) )
+	while( cidx < (int)mat.ncols() && colval > (int)mat.at(0, cidx) )
 		cidx++;
 
-	if ( ridx == mat.nrows() ) ridx--;
-	if ( cidx == mat.ncols() ) cidx--;
+	if ( ridx == (int)mat.nrows() ) ridx--;
+	if ( cidx == (int)mat.ncols() ) cidx--;
 
 	double r1,c1,r2,c2;
 	

@@ -118,7 +118,7 @@ bool Thermocline_TES::Initialize_TC( double H_m, double A_m2, int Fill_in, doubl
 		m_T_final_ave_prev += m_T_prev[i];   // .at(i, 0);
 	m_T_final_ave_prev /= m_nodes;
 
-	if( !fillProps.Set_TC_Material( Fill ) )
+	if( !fillProps.Set_TC_Material((int) Fill ) )
 		return false;		// Invalid fill material number
 
 	double T_prop = 0.5*(m_T_hot_init + m_T_cold_init);
@@ -438,9 +438,9 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 		{
 			// Okay, so if the simulation timestep is not divisible by the thermocline timestep then we need to adjust the TC timestep so it is.  Lower TC timestep to accomplish this
 			if( delt - (int)(delt/TC_timestep)*TC_timestep != 0.0 )
-				num_TC = ceil(delt/TC_timestep);		//[-] Number of thermocline timesteps per simulation timestep
+				num_TC = (int)ceil(delt/TC_timestep);		//[-] Number of thermocline timesteps per simulation timestep
 			else
-				num_TC = delt/TC_timestep;				//[-]
+				num_TC = (int)(delt/TC_timestep);				//[-]
 
 			num_TC = min( m_num_TC_max, num_TC );
 			TC_timestep = delt / (double) num_TC;		//[hr] Corrected timestep (such that the number of TC timesteps in a sim timestep is an integer) at which to evaluate thermocline

@@ -107,7 +107,7 @@ void HTFProperties::set_temp_enth_lookup()
 
 	double delta_T_target = 1.0;
 
-	int n_rows = ceil((T_high - T_low)/delta_T_target) + 1.0;
+	int n_rows = (int)(ceil((T_high - T_low)/delta_T_target) + 1.0);
 	double delta_T = (T_high - T_low)/double(n_rows-1);
 
 	util::matrix_t<double> table(n_rows, 2);
@@ -657,7 +657,7 @@ double HTFProperties::Cv(double T_K)
 
 	switch(m_fluid)
 	{
-	Air:
+	case Air:
 		return 0.750466 - 0.000305497*T_K + 7.49335E-07*T_K*T_K - 3.39363E-10*pow(T_K,3);
 	case Argon_ideal:
 		return 0.3122;

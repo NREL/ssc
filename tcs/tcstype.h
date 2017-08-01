@@ -181,7 +181,7 @@ public:
 protected:
 	double *allocate( size_t idx, int len, double fill = 0 )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if ( v && len > 0 )
 		{
 			double *p = new double[len];
@@ -195,7 +195,7 @@ protected:
 
 	double *allocate( size_t idx, int nr, int nc, double fill = 0 )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if (v && nr > 0 && nc > 0)
 		{
 			double *p = new double[nr*nc];
@@ -212,35 +212,35 @@ protected:
 	
 	double value( size_t idx )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if ( !v || v->type != TCS_NUMBER ) return std::numeric_limits<double>::quiet_NaN();
 		return v->data.value;
 	}
 
 	void value( size_t idx, double val )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if ( !v || v->type != TCS_NUMBER ) return;
 		v->data.value = val;
 	}
 	
 	std::string value_str( size_t idx )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if ( !v || v->type != TCS_STRING ) return std::string();
 		return std::string( v->data.cstr );
 	}
 
 	void value_str( size_t idx, const std::string &str )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if ( !v || v->type != TCS_STRING ) return;
 		m_context->tcsvalue_set_string( v, str.c_str() );
 	}
 
 	double *value( size_t idx, int *len )
 	{	
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if (!v || v->type != TCS_ARRAY )
 		{
 			if (len) *len = 0;
@@ -252,7 +252,7 @@ protected:
 
 	double *value( size_t idx, int *nr, int *nc )
 	{
-		tcsvalue *v = var(idx);
+		tcsvalue *v = var((int)idx);
 		if ( !v || v->type != TCS_MATRIX )
 		{
 			if (nr) *nr = 0;

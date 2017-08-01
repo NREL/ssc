@@ -760,7 +760,7 @@ weatherdata::weatherdata( var_data *data_table )
 		// Check if the weather file contains a leap day
 		// if so, correct the number of nrecords 
 		m_nRecords = m_nRecords/8784*8760;
-		nmult = m_nRecords/8760;
+		nmult = (int)m_nRecords/8760;
 		m_stepSec = 3600 / nmult;
 		m_startSec = m_stepSec / 2;
 	}
@@ -776,25 +776,25 @@ weatherdata::weatherdata( var_data *data_table )
 		{
 			weather_record *r = new weather_record;
 
-			if ( i < year.len ) r->year = year.p[i]; 
+			if ( i < year.len ) r->year = (int)year.p[i]; 
 			else r->year = 2000;
 
-			if ( i < month.len ) r->month = month.p[i];
+			if ( i < month.len ) r->month = (int)month.p[i];
 			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				r->month = util::month_of(i);
+				r->month = util::month_of((double)i);
 			}
 
-			if ( i < day.len ) r->day = day.p[i];
+			if ( i < day.len ) r->day = (int)day.p[i];
 			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				int month = util::month_of( i );
-				r->day = util::day_of_month( month, i );
+				int month = util::month_of( (double)i );
+				r->day = util::day_of_month( month, (double)i );
 			}
 
-			if ( i < hour.len ) r->hour = hour.p[i];
+			if ( i < hour.len ) r->hour = (int)hour.p[i];
 			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				int day = i / 24;
-				int start_of_day = day * 24;
-				r->hour = (float)(i - start_of_day);
+				size_t day = i / 24;
+				size_t start_of_day = day * 24;
+				r->hour = (int)(i - start_of_day);
 			}
 
 			if ( i < minute.len ) r->minute = minute.p[i];
@@ -932,5 +932,5 @@ bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data
 	if (log_msg != "")
 		cm->log(log_msg, SSC_WARNING);
 	
-	return cm->update(progress_msg, progress);
+	return cm->update(progress_msg, (float)progress);
 }

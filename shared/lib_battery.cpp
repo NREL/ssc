@@ -76,14 +76,14 @@ void message::add(std::string message)
 size_t message::total_message_count(){ return messages.size(); }
 size_t message::message_count(int index)
 {
-	if (index < messages.size())
+	if (index < (int)messages.size())
 		return count[index];
 	else
 		return 0;
 }
 std::string message::get_message(int index)
 {
-	if (index < messages.size())
+	if (index < (int)messages.size())
 		return messages[index];
 	else
 		return NULL;
@@ -822,7 +822,7 @@ lifetime_cycle_t::lifetime_cycle_t(const util::matrix_t<double> &batt_lifetime_m
 {
 
 	_batt_lifetime_matrix = batt_lifetime_matrix;
-	for (int i = 0; i < _batt_lifetime_matrix.nrows(); i++)
+	for (int i = 0; i <(int)_batt_lifetime_matrix.nrows(); i++)
 	{
 		_DOD_vect.push_back(batt_lifetime_matrix.at(i,0));
 		_cycles_vect.push_back(batt_lifetime_matrix.at(i,1));
@@ -992,9 +992,9 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 
 	// get unique values of D
 	D_unique_vect.push_back(_DOD_vect[0]);
-	for (int i = 0; i < _DOD_vect.size(); i++){
+	for (int i = 0; i < (int)_DOD_vect.size(); i++){
 		bool contained = false;
-		for (int j = 0; j < D_unique_vect.size(); j++){
+		for (int j = 0; j < (int)D_unique_vect.size(); j++){
 			if (_DOD_vect[i] == D_unique_vect[j]){
 				contained = true;
 				break;
@@ -1012,7 +1012,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 		double D_lo = 0;
 		double D_hi = 100;
 
-		for (int i = 0; i < _DOD_vect.size(); i++)
+		for (int i = 0; i < (int)_DOD_vect.size(); i++)
 		{
 			D = _DOD_vect[i];
 			if (D < DOD && D > D_lo)
@@ -1025,7 +1025,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 		double D_min = 100.;
 		double D_max = 0.;
 
-		for (int i = 0; i < _DOD_vect.size(); i++)
+		for (int i = 0; i < (int)_DOD_vect.size(); i++)
 		{
 			D = _DOD_vect[i];
 			if (D == D_lo)
@@ -1044,7 +1044,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 		if (n_rows_lo == 0)
 		{
 			// Assumes 0% DOD
-			for (int i = 0; i < n_rows_hi; i++)
+			for (int i = 0; i < (int)n_rows_hi; i++)
 			{
 				C_n_low_vect.push_back(0. + i * 500); // cycles
 				C_n_low_vect.push_back(100.); // 100 % capacity
@@ -1053,7 +1053,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 		else if (n_rows_hi == 0)
 		{
 			// Assume 100% DOD
-			for (int i = 0; i < n_rows_lo; i++)
+			for (int i = 0; i < (int)n_rows_lo; i++)
 			{
 				C_n_high_vect.push_back(100. + i * 500); // cycles
 				C_n_high_vect.push_back(80 - i*10); // % capacity
@@ -1062,7 +1062,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 
 		if (n_rows_lo != 0)
 		{
-			for (int i = 0; i < n_rows_lo; i++)
+			for (int i = 0; i < (int)n_rows_lo; i++)
 			{
 				C_n_low_vect.push_back(_cycles_vect[low_indices[i]]);
 				C_n_low_vect.push_back(_capacities_vect[low_indices[i]]);
@@ -1070,7 +1070,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 		}
 		if (n_rows_hi != 0)
 		{
-			for (int i = 0; i < n_rows_hi; i++)
+			for (int i = 0; i < (int)n_rows_hi; i++)
 			{
 				C_n_high_vect.push_back(_cycles_vect[high_indices[i]]);
 				C_n_high_vect.push_back(_capacities_vect[high_indices[i]]);
@@ -1138,7 +1138,7 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	// extract and sort calendar life info from table
 	for (size_t i = 0; i != calendar_matrix.nrows(); i++)
 	{
-		_calendar_days.push_back(calendar_matrix.at(i, 0));
+		_calendar_days.push_back((int)calendar_matrix.at(i, 0));
 		_calendar_capacity.push_back(calendar_matrix.at(i, 1));
 	}
 }
@@ -1186,7 +1186,7 @@ void lifetime_calendar_t::runLithiumIonModel(double T, double SOC)
 }
 void lifetime_calendar_t::runTableModel()
 {
-	int n = _calendar_days.size() - 1;
+	size_t n = _calendar_days.size() - 1;
 	int day_lo = 0;
 	int day_hi = _calendar_days[n];
 	double capacity_lo = 100;
@@ -1255,7 +1255,7 @@ thermal_t::thermal_t(double mass, double length, double width, double height,
 
 	// curve fit
 	size_t n = _cap_vs_temp.nrows();
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < (int)n; i++)
 	{
 		_cap_vs_temp(i,0) += 273.15; // convert C to K
 	}

@@ -188,7 +188,7 @@ bool winddata_provider::find_closest( int& closest_index, int id, int ncols, dou
 					if ( (m_heights[i] > requested_height) && (m_heights[index_to_exclude] > requested_height) ) continue;
 					if ( (m_heights[i] < requested_height) && (m_heights[index_to_exclude] < requested_height) ) continue;
 				}
-				closest_index = i;
+				closest_index = (int)i;
 				height_diff = fabs(m_heights[i] - requested_height);
 			}
 		}
@@ -223,7 +223,7 @@ bool winddata_provider::read( double requested_height,
 	if (values.size() < m_heights.size() || values.size() < m_dataid.size())
 		return false;
 
-	size_t ncols = values.size();
+	int ncols = (int)values.size();
 
 	*speed = *direction = *temperature = *pressure = *closest_speed_meas_height_in_file = *closest_dir_meas_height_in_file = std::numeric_limits<double>::quiet_NaN();
 
@@ -522,8 +522,8 @@ bool windfile::read_line( std::vector<double> &values )
 	char *cols[128];
 	fgets( m_buf, MBUFLEN-1, m_fp );
 	int ncols = locate2( m_buf, cols, 128, ',' );	
-	if (ncols >= m_heights.size() 
-		&& ncols >= m_dataid.size())
+	if (ncols >= (int)m_heights.size() 
+		&& ncols >= (int)m_dataid.size())
 	{
 		values.resize( m_heights.size(), 0.0 );
 		for (size_t i=0;i<m_heights.size();i++)

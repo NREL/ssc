@@ -825,21 +825,21 @@ public:
 		if (double *fm = get_unit_value(type_hel_field, "flux_maps", &nr, &nc))
 		{
 			ssc_number_t *ssc_fm = allocate("flux_lookup", nr, nc);
-			for (size_t i = 0; i<nr*nc; i++)
+			for (int i = 0; i<nr*nc; i++)
 				ssc_fm[i] = (ssc_number_t)fm[i];
 		}
 
 		if (double *etam = get_unit_value(type_hel_field, "eta_map", &nr, &nc))
 		{
 			ssc_number_t *ssc_etam = allocate("eff_lookup", nr, nc);
-			for (size_t i = 0; i<nr*nc; i++)
+			for (int i = 0; i<nr*nc; i++)
 				ssc_etam[i] = (ssc_number_t)etam[i];
 		}
 
 		if (double *fpm = get_unit_value(type_hel_field, "flux_positions", &nr, &nc))
 		{
 			ssc_number_t *ssc_fpm = allocate("sunpos_eval", nr, nc);
-			for (size_t i = 0; i<nr*nc; i++)
+			for (int i = 0; i<nr*nc; i++)
 				ssc_fpm[i] = (ssc_number_t)fpm[i];
 		}
 		assign("land_area", var_data((ssc_number_t)get_unit_value_number(type_hel_field, "land_area")));
@@ -879,7 +879,7 @@ public:
 		// Then, add water usage from mirror cleaning
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
-		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
+		assign("annual_total_water_use", var_data((ssc_number_t)(V_water_cycle + V_water_mirrors)));
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
@@ -897,7 +897,7 @@ public:
 			throw exec_error("tcsmolten_salt", "q_aux_fuel count incorrect (should be 8760): " + count);
 		for (size_t i = 0; i < count; i++)
 			fuel_usage_mmbtu += hourly_fuel[i];
-		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		assign("system_heat_rate", var_data((ssc_number_t)3.413)); // samsim tcstrough_physical
 		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
 		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
 

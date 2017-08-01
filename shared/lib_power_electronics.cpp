@@ -218,7 +218,7 @@ void dc_connected_battery_controller::process_dispatch()
 		P_battery_dc_post_bms = P_battery_dc / _dc_dc_charge_controller->batt_dc_dc_bms_efficiency();
 	
 	// extract input system losses and apply
-	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss(_index);
+	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss((int)_index);
 
 	// compute generation
 	double P_gen_dc = _P_pv + P_battery_dc_post_bms - _P_system_loss;
@@ -464,7 +464,7 @@ void ac_connected_battery_controller::process_dispatch()
 		P_battery_ac = P_battery_dc / _bidirectional_inverter->ac_dc_efficiency();
 
 	// extract user input system loss to apply
-	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss(_index);
+	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss((int)_index);
 
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
 }

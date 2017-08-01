@@ -797,7 +797,7 @@ public:
 
 		// Get hourly energy
 		for( size_t i = 0; i < count; i++ )
-			p_hourly_energy[i] = timestep_energy_MW[i] * 1000.0;	// convert to kW
+			p_hourly_energy[i] = (ssc_number_t)(timestep_energy_MW[i] * 1000.0);	// convert to kW
 
 		//1.7.15, twn: Need to calculated the conversion factor before the performance adjustments are applied to "hourly energy"
 		accumulate_annual("gen", "annual_energy"); // already in kWh
@@ -833,7 +833,7 @@ public:
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double A_aper_tot = get_unit_value_number(solarfield, "A_aper_tot");
 		double V_water_mirrors = as_double("water_per_wash") / 1000.0*A_aper_tot*as_double("washes_per_year");
-		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
+		assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
 		double fuel_usage_mmbtu = 0;
 		ssc_number_t *hourly_fuel = as_array("q_aux_fuel", &count);//MWh
@@ -841,7 +841,7 @@ public:
 			throw exec_error("tcslinear_fresnel", "q_aux_fuel count incorrect (should be 8760): " + count);
 		for (size_t i = 0; i < count; i++)
 			fuel_usage_mmbtu += hourly_fuel[i];
-		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		assign("system_heat_rate", (ssc_number_t)3.413); // samsim tcstrough_physical
 		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
 		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
 
