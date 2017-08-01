@@ -1054,7 +1054,7 @@ public:
 		for( int i = 0; i < m_n_rows_matrix; i++ )
 		{
 			m_AbsorberMaterial.at(i,0) = new AbsorberProps;
-			m_AbsorberMaterial.at(i,0)->setMaterial( AbsorberMaterial.at(i,0) );
+			m_AbsorberMaterial.at(i, 0)->setMaterial((int)AbsorberMaterial.at(i, 0));
 		}
 
 		n_rows = n_cols = 0;
@@ -1260,7 +1260,7 @@ public:
 			for( int j = 0; j < 4; j++ )
 			{
 				m_AnnulusGas.at(i,j) = new HTFProperties;
-				m_AnnulusGas.at(i,j)->SetFluid( AnnulusGas.at(i,j) );
+				m_AnnulusGas.at(i, j)->SetFluid((int)AnnulusGas.at(i, j));
 			}
 		}
 
@@ -2945,7 +2945,7 @@ public:
 			// Do we have enough to do standby?
 			if( q_avail_tot > m_q_pb_des*m_q_sby_frac && m_t_sby_prev > 0.0 && m_is_pb_on_prev )
 			{
-				standby_control = 2.0;	// Operate in standby mode
+				standby_control = 2;	// Operate in standby mode
 				m_t_sby = max( 0.0, m_t_sby_prev-step/3600.0 );		
 				q_aux = max( m_q_sby_frac*m_q_pb_des - q_field_delivered, 0.0 );
 				m_dot_aux = 0.0;		// It's not meaningful to report the aux mass flow rate

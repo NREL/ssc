@@ -89,7 +89,7 @@ void C_csp_reported_outputs::C_output::set_m_is_ts_weighted(int subts_weight_typ
 
 int C_csp_reported_outputs::C_output::get_vector_size()
 {
-	return mv_temp_outputs.size();
+	return (int)mv_temp_outputs.size();
 }
 
 void C_csp_reported_outputs::C_output::set_timestep_output(double output_value)

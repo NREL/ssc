@@ -1943,16 +1943,16 @@ void wobos::ArrayCabCostOptimizer()
 				if ((k == 0) && (i == 0) && (j == 1))
 				{
 					oldCost = newCost;
-					cabIndex1 = i;
-					cabIndex2 = j;
-					arrVoltIndex = k;
+					cabIndex1 = (int)i;
+					cabIndex2 = (int)j;
+					arrVoltIndex = (int)k;
 				}
 				else if (newCost < oldCost)
 				{
 					oldCost = newCost;
-					cabIndex1 = i;
-					cabIndex2 = j;
-					arrVoltIndex = k;
+					cabIndex1 = (int)i;
+					cabIndex2 = (int)j;
+					arrVoltIndex = (int)k;
 				}
 
 				counter1 += 1;

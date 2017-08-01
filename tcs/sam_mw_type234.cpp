@@ -684,7 +684,7 @@ public:
 
 		XI--; YI--; // C++ arrays start index at 0 instead of 1, like Fortran arrays
 
-		int i_last_index = m_db.ncols() - 1;
+		int i_last_index = (int)m_db.ncols() - 1;
 		int lbi, ubi;
 		for( int i = 0; i < (int)m_db.ncols(); i++ )
 		{

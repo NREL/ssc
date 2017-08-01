@@ -644,14 +644,14 @@ public:
 		*/
 
     // use_refprop = .false.				// Can't call refprop with current setup
-		m_fossil_mode = value( P_fossil_mode );			//[-] The fossil fill operation strategy mode
+		m_fossil_mode = (int)value( P_fossil_mode );			//[-] The fossil fill operation strategy mode
 		m_q_pb_design = value( P_q_pb_design )*1.0E6;	//[W] Heat rate into powerblock at design
 		m_q_aux_max = value( P_q_aux_max )*1.0E6;		//[W] Maximum heat rate of aux heater    
 		m_lhv_eff = value( P_lhv_eff );					//[-] Aux Heater lower heating value efficiency
 		
 		m_h_tower = value( P_h_tower );					//[m] Tower height   
-		int n_panels = value( P_n_panels );				//[-] Number of vertical panels on receiver
-		int flowtype = value( P_flowtype );				//[-] Flow pattern
+		int n_panels = (int)value(P_n_panels);				//[-] Number of vertical panels on receiver
+		int flowtype = (int)value(P_flowtype);				//[-] Flow pattern
 
 		m_n_flux_x = (int)value(P_n_flux_x);
 		m_n_flux_y = (int)value(P_n_flux_y);
@@ -1154,7 +1154,7 @@ public:
 						index_start = index_stop;
 
 						if (is_div)
-							index_stop = m_n_flux_x / n_panels*(i + 1) - 1;
+							index_stop = (int)(m_n_flux_x / n_panels*(i + 1) - 1);
 						else
 							index_stop = (int)ceil(((double)(m_n_flux_x / n_panels)*(i + 1))) - 1;
 

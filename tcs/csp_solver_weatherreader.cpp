@@ -118,12 +118,12 @@ void C_csp_weatherreader::init()
 
 double C_csp_weatherreader::get_n_records()
 {
-	return m_wfile.nrecords();		//[-] Number of weather records in weather file
+	return (double)m_wfile.nrecords();		//[-] Number of weather records in weather file
 }
 
 double C_csp_weatherreader::get_step_seconds()
 {
-    return m_wfile.step_sec();
+	return (double)m_wfile.step_sec();
 }
 
 void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)

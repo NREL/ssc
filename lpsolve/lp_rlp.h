@@ -356,7 +356,7 @@ static void lp_yy_fatal_error (lp_yyconst char msg[] ,lp_yyscan_t lp_yyscanner )
  */
 #define YY_DO_BEFORE_ACTION \
 	lp_yyg->lp_yytext_ptr = lp_yy_bp; \
-	lp_yyleng = (size_t) (lp_yy_cp - lp_yy_bp); \
+	lp_yyleng = (int) (lp_yy_cp - lp_yy_bp); \
 	lp_yyg->lp_yy_hold_char = *lp_yy_cp; \
 	*lp_yy_cp = '\0'; \
 	lp_yyg->lp_yy_c_buf_p = lp_yy_cp;
@@ -1458,7 +1458,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 	else
 		{
-			int num_to_read =
+			size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->lp_yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1472,7 +1472,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 			if ( b->lp_yy_is_our_buffer )
 				{
-				int new_size = b->lp_yy_buf_size * 2;
+				size_t new_size = b->lp_yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->lp_yy_buf_size += b->lp_yy_buf_size / 8;
@@ -1629,7 +1629,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 		lp_yy_cp += (int) (dest - source);
 		lp_yy_bp += (int) (dest - source);
 		YY_CURRENT_BUFFER_LVALUE->lp_yy_n_chars =
-			lp_yyg->lp_yy_n_chars = YY_CURRENT_BUFFER_LVALUE->lp_yy_buf_size;
+			lp_yyg->lp_yy_n_chars = (int)YY_CURRENT_BUFFER_LVALUE->lp_yy_buf_size;
 
 		if ( lp_yy_cp < YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf + 2 )
 			YY_FATAL_ERROR( "flex scanner push-back overflow" );
@@ -1991,7 +1991,7 @@ static void lp_yyensure_buffer_stack (lp_yyscan_t lp_yyscanner)
 		/* Increase the buffer to prepare for a possible push. */
 		int grow_size = 8 /* arbitrary grow size */;
 
-		num_to_alloc = lp_yyg->lp_yy_buffer_stack_max + grow_size;
+		num_to_alloc = (int)lp_yyg->lp_yy_buffer_stack_max + grow_size;
 		lp_yyg->lp_yy_buffer_stack = (struct lp_yy_buffer_state**)lp_yyrealloc
 								(lp_yyg->lp_yy_buffer_stack,
 								num_to_alloc * sizeof(struct lp_yy_buffer_state*)
@@ -2029,7 +2029,7 @@ YY_BUFFER_STATE lp_yy_scan_buffer  (char * base, lp_yy_size_t  size , lp_yyscan_
 	b->lp_yy_buf_pos = b->lp_yy_ch_buf = base;
 	b->lp_yy_is_our_buffer = 0;
 	b->lp_yy_input_file = 0;
-	b->lp_yy_n_chars = b->lp_yy_buf_size;
+	b->lp_yy_n_chars = (int)b->lp_yy_buf_size;
 	b->lp_yy_is_interactive = 0;
 	b->lp_yy_at_bol = 1;
 	b->lp_yy_fill_buffer = 0;
@@ -2051,7 +2051,7 @@ YY_BUFFER_STATE lp_yy_scan_buffer  (char * base, lp_yy_size_t  size , lp_yyscan_
 YY_BUFFER_STATE lp_yy_scan_string (lp_yyconst char * lp_yystr , lp_yyscan_t lp_yyscanner)
 {
     
-	return lp_yy_scan_bytes(lp_yystr,strlen(lp_yystr) ,lp_yyscanner);
+	return lp_yy_scan_bytes(lp_yystr, (int)strlen(lp_yystr), lp_yyscanner);
 }
 
 /** Setup the input buffer state to scan the given bytes. The next call to lp_yylex() will

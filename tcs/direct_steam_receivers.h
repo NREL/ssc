@@ -112,7 +112,7 @@ public:
 
 	C_DSG_Boiler()
 	{
-		flow_pattern = flow_pattern_adj = 0.0;
+		flow_pattern = flow_pattern_adj = 0;
 	}
 
 private:

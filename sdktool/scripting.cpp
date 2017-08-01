@@ -406,7 +406,7 @@ public:
 	{
 		Output( tt );
 	}
-	virtual void OnSyntaxCheck(int line, const wxString &err)
+	virtual void OnSyntaxCheck(int, const wxString &err)
 	{
 		ClearOutput();
 		Output( err );

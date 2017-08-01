@@ -1728,7 +1728,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
 	if( !(od_solve_code == 0 || od_solve_code == E_TURBINE_INLET_OVER_TEMP || od_solve_code == E_OVER_PRESSURE ||
 		od_solve_code == E_TIP_RATIO || od_solve_code == E_MC_SURGE || od_solve_code == E_RC_SURGE) )
-		return 0.0;
+		return 0;
 
 	if( eta_solved > ms_od_opt_eta_tracking.m_eta_max )
 	{

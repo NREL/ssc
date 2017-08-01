@@ -84,7 +84,7 @@ double CSP::interp(util::matrix_t<double> *data, double x, int low_bound, int up
 	*/
 
 	if(low_bound < 0) low_bound = 0;
-	if(up_bound < 0) up_bound = data->ncols()-1;	//Index of the last entry
+	if (up_bound < 0) up_bound = (int)data->ncols() - 1;	//Index of the last entry
 
 	if(up_bound < low_bound) return NULL;
 	if(up_bound == low_bound) return data->at(1,low_bound);
