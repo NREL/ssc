@@ -234,8 +234,8 @@ void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr
 			}
 		}
 
-		mc_optical_table.AddXAxis(xax, ms_params.m_optical_table.ncols() - 1);
-		mc_optical_table.AddYAxis(yax, ms_params.m_optical_table.nrows() - 1);
+		mc_optical_table.AddXAxis(xax, (int)ms_params.m_optical_table.ncols() - 1);
+		mc_optical_table.AddYAxis(yax, (int)ms_params.m_optical_table.nrows() - 1);
 		mc_optical_table.AddData(data);
 		delete[] xax, yax, data;	
 	}
@@ -261,7 +261,7 @@ void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr
 		MatDoub sunpos;
 		vector<double> effs;
 
-		int nrows = ms_params.m_optical_table.nrows();
+		int nrows = (int)ms_params.m_optical_table.nrows();
 
 		//read the data from the array into the local storage arrays
 		sunpos.resize(nrows, VectDoub(2));

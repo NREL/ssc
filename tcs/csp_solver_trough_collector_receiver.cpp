@@ -275,8 +275,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 	else if (m_Fluid == HTFProperties::User_defined)
 	{
-		int n_rows = m_field_fl_props.nrows();
-		int n_cols = m_field_fl_props.ncols();
+		int n_rows = (int)m_field_fl_props.nrows();
+		int n_cols = (int)m_field_fl_props.ncols();
 		if (n_rows > 2 && n_cols == 7)
 		{
 			if (!m_htfProps.SetUserDefinedFluid(m_field_fl_props))
@@ -301,8 +301,8 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_ColAz = m_ColAz*m_d2r;		//[rad] Collector azimuth angle, convert from [deg]
 
 	// Check m_IAM matrix against number of collectors: m_nColt
-	m_n_r_iam_matrix = m_IAM_matrix.nrows();
-	m_n_c_iam_matrix = m_IAM_matrix.ncols();
+	m_n_r_iam_matrix = (int)m_IAM_matrix.nrows();
+	m_n_c_iam_matrix = (int)m_IAM_matrix.ncols();
 
 	if (m_n_c_iam_matrix < 3)
 	{

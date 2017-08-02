@@ -94,7 +94,7 @@ protected:
 		_setup_ok,	//The variable structure has been created
 		_simflag;	//add bool flags here to indicate simulation/setup status
 
-    sp_optimize _opt;
+    sp_optimize *_opt;
 
 	vector<double> interpolate_vectors( vector<double> &A, vector<double> &B, double alpha);
 

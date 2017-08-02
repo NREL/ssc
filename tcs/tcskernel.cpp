@@ -171,7 +171,7 @@ int tcstypeprovider::load_library( const std::string &name )
 			std::ostringstream ss;
 			ss << "loaded " << idx << " dynamic type(s) from " << path;
 			m_messages.push_back( ss.str() );
-			return idx;
+			return (int)idx;
 		}
 
 		if (pdl) dll_close( pdl );
@@ -281,7 +281,7 @@ static bool tcsvalue_parse_array( tcsvalue *v, const char *s )
 	tcsvalue_free( v );		
 	v->type = TCS_ARRAY;
 	v->data.array.values = new double[ vals.size() ];
-	v->data.array.length = vals.size();
+	v->data.array.length = (unsigned int)vals.size();
 	for (int i=0;i<(int)vals.size();i++)
 		v->data.array.values[i] = vals[i];	
 
@@ -317,13 +317,13 @@ static bool tcsvalue_parse_matrix( tcsvalue *v, const char *s )
 	
 	if ( mat.size() == 0 || maxcol == 0 ) return false;
 	
-	int len = mat.size() * maxcol;
+	int len = (int)(mat.size() * maxcol);
 
 	tcsvalue_free( v );
 	v->type = TCS_MATRIX;
 	v->data.matrix.values = new double[ len ];
-	v->data.matrix.nrows = mat.size();
-	v->data.matrix.ncols = maxcol;
+	v->data.matrix.nrows = (int)mat.size();
+	v->data.matrix.ncols = (int)maxcol;
 	
 	for (int i=0;i<len;i++) v->data.matrix.values[i] = 0;
 	
@@ -733,7 +733,7 @@ int tcskernel::copy( tcskernel &tk )
 			std::vector<connection> &cc = u.conn[j];
 			for ( size_t k=0;k<cc.size();k++)
 			{
-				connect( id, j, cc[k].target_unit, cc[k].target_index, 
+				connect( (int)id, (int)j, cc[k].target_unit, cc[k].target_index, 
 					cc[k].ftol, cc[k].arridx );
 			}
 		}
@@ -756,7 +756,7 @@ int tcskernel::add_unit( const std::string &type, const std::string &name )
 	
 	// push an empty unit, obtain a reference to it
 	m_units.push_back( unit() );
-	int id = m_units.size() - 1;
+	int id = (int)m_units.size() - 1;
 	unit &u = m_units[ id ];
 	u.id = id;
 	u.name = name;
@@ -964,7 +964,7 @@ int tcskernel::solve( double time, double step )
 			}*/
 
 			if ( m_units[i].type->invoke( &m_units[i].context, m_units[i].instance, TCS_INVOKE,
-					&m_units[i].values[0], m_units[i].values.size(),
+					&m_units[i].values[0], (unsigned int)m_units[i].values.size(),
 					time, step, m_units[i].ncall ) < 0 )
 			{
 				message( TCS_ERROR,"unit %d (%s) type '%s' failed at time %.2lf", i, m_units[i].name.c_str(),
@@ -1108,7 +1108,7 @@ int tcskernel::simulate( double start, double end, double step )
 	for (size_t i=0;i<m_units.size();i++)
 	{
 		if( m_units[i].type->invoke( &m_units[i].context, m_units[i].instance, TCS_INIT,
-				&m_units[i].values[0], m_units[i].values.size(),
+				&m_units[i].values[0], (unsigned int)m_units[i].values.size(),
 				-1, step, -1 )  < 0 )
 		{
 			message( TCS_ERROR, "unit %d (%s) type '%s' failed at initialization", i, 
@@ -1140,7 +1140,7 @@ int tcskernel::simulate( double start, double end, double step )
 			if ( m_units[i].type->call_after_convergence > 0 )
 			{
 				if ( m_units[i].type->invoke( &m_units[i].context, m_units[i].instance, TCS_CONVERGED,
-					&m_units[i].values[0], m_units[i].values.size(),
+					&m_units[i].values[0], (unsigned int)m_units[i].values.size(),
 					m_currentTime, m_timeStep, -2 ) < 0 )
 				{
 					free_instances();

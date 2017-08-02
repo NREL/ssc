@@ -243,7 +243,7 @@ void quicksort( vector<Comparable> & a, int left, int right )
 template <typename Comparable, typename Tag>
 void quicksort( vector<Comparable> & a, vector<Tag> & b)
 {
-    quicksort( a, b, 0, a.size( ) - 1 );
+    quicksort( a, b, 0, (int)a.size( ) - 1 );
 }
 
 /*------------------ Quicksort for one vector -------------------- */

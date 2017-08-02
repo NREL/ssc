@@ -495,6 +495,7 @@ AutoPilot::AutoPilot()
 	_detail_callback_data = 0;
 	_summary_siminfo = 0;
 	_detail_siminfo = 0;
+    _opt = new sp_optimize();
 }
 
 AutoPilot::~AutoPilot()
@@ -515,6 +516,10 @@ AutoPilot::~AutoPilot()
 		}
 		catch(...){}
 	}
+
+    if( _opt != 0 )
+        delete _opt;
+
 	return;
 }
 
@@ -1526,7 +1531,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
         }
         dimsimpt.push_back(tmp);
     }
-	_opt.setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
+	_opt->setOptimizationSimulationHistory(dimsimpt, objective, max_flux);
 
 	return true;
 
@@ -1659,7 +1664,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
         }
         dimsimpt.push_back(tmp);
     }
-    _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
+    _opt->setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
 
     V->opt.flux_penalty.val = flux_penalty_save; //reset
     return true;
@@ -1942,7 +1947,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
             }
             dimsimpt.push_back(tmp);
         }
-        _opt.setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
+        _opt->setOptimizationSimulationHistory( dimsimpt, AO.m_objective, AO.m_flux );
     }
     //reset
     V->opt.max_iter.val = tot_max_iter;   
@@ -1959,7 +1964,7 @@ bool AutoPilot::IsSimulationCancelled()
 
 sp_optimize *AutoPilot::GetOptimizationObject()
 {
-    return &_opt;
+    return _opt;
 }
 
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, double &flux, double &cost, std::string *note)

@@ -186,7 +186,7 @@ public:
 				message(TCS_WARNING, out_msg.c_str());
 		}
 
-		value(O_TOU_VALUE, ms_outputs.m_csp_op_tou);
+		value(O_TOU_VALUE, (double)ms_outputs.m_csp_op_tou);
 
 		return 0;
 	}

@@ -4794,7 +4794,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		mc_reported_outputs.value(C_solver_outputs::HOUR_DAY, (int)(m_report_time_end/3600) % 24);	//[hr]
 
 
-		int n_sub_ts = mv_time_local.size();
+		int n_sub_ts = (int)mv_time_local.size();
 		mc_reported_outputs.overwrite_vector_to_constant(C_solver_outputs::N_OP_MODES, n_sub_ts);	//[-]
 		if( n_sub_ts == 1 )
 		{
@@ -4822,7 +4822,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 		}
 		
 
-		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, tou_period);        //[-]       
+		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)tou_period);        //[-]       
 		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	//[-] 
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);          //[MW]     
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);        //[MW]    
@@ -4899,7 +4899,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		// Report series of operating modes attempted during the timestep as a 'double' using 0s to separate the enumerations 
 		// ... (10 is set as a dummy enumeration so it won't show up as a potential operating mode)
-		int n_op_modes = m_op_mode_tracking.size();
+		int n_op_modes = (int)m_op_mode_tracking.size();
 		double op_mode_key = 0.0;
 		for( int i = 0; i < fmin(3,n_op_modes); i++ )
 		{
@@ -4975,7 +4975,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				bool delete_last_step = false;
 				int pop_back_start = 1;
 
-				int n_time_local = mv_time_local.size();
+				int n_time_local = (int)mv_time_local.size();
 				if( mv_time_local[n_time_local - 1] == m_report_time_end )
 				{
 					delete_last_step = true;
@@ -4996,7 +4996,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 				}
 
-				int n_time_local_refresh = mv_time_local.size();
+				int n_time_local_refresh = (int)mv_time_local.size();
 				if(n_time_local_refresh > 0)
 				{
 					mc_reported_outputs.value(C_solver_outputs::N_OP_MODES, 1);	//[-]

@@ -46,6 +46,11 @@
    the critical numbers).  Please cite them.  Just that I needed
    a free/open-source implementation. */
 
+//disable unary operator warning - mjw/nrel
+#ifdef _MSC_VER
+#pragma warning(disable : 4146 )
+#endif
+
 #include <stdlib.h>
 #include <math.h>
 

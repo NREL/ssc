@@ -321,8 +321,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_EPSILON_5 = m_EPSILON_4;	
 
 	//m_AbsorberMaterial
-	int n_rows_abs = m_AbsorberMaterial_in.nrows();
-	int n_cols_abs = m_AbsorberMaterial_in.ncols();
+	int n_rows_abs = (int)m_AbsorberMaterial_in.nrows();
+	int n_cols_abs = (int)m_AbsorberMaterial_in.ncols();
 
 	int n_rows_matrix_lk_in = 2;
 	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 1) )
@@ -345,8 +345,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	//m_AnnulusGas [-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
-	n_rows_abs = m_AnnulusGas_in.nrows();
-	n_cols_abs = m_AnnulusGas_in.ncols();
+	n_rows_abs = (int)m_AnnulusGas_in.nrows();
+	n_cols_abs = (int)m_AnnulusGas_in.ncols();
 	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 4) )
 	{
 		std::string err_msg = util::format("HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", 
@@ -406,8 +406,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	//[-] Boiler Optical Table
-	n_rows_abs = m_b_OpticalTable.nrows();
-	n_cols_abs = m_b_OpticalTable.ncols();
+	n_rows_abs = (int)m_b_OpticalTable.nrows();
+	n_cols_abs = (int)m_b_OpticalTable.ncols();
 
 	// Set up the optical table object..
 
@@ -450,8 +450,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//0608
 	if (m_is_multgeom)
 	{
-		int n_rows = m_sh_OpticalTable.nrows();
-		int n_cols = m_sh_OpticalTable.ncols();
+		int n_rows = (int)m_sh_OpticalTable.nrows();
+		int n_cols = (int)m_sh_OpticalTable.ncols();
 
 		// Set up the optical table object..
 
