@@ -147,8 +147,8 @@ void C_mspt_receiver_222::init()
 	else if( m_field_fl == HTFProperties::User_defined )
 	{
 		// Check that 'm_field_fl_props' is allocated and correct dimensions
-		int n_rows = m_field_fl_props.nrows();
-		int n_cols = m_field_fl_props.ncols();
+		int n_rows = (int)m_field_fl_props.nrows();
+		int n_cols = (int)m_field_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
 			if( !field_htfProps.SetUserDefinedFluid(m_field_fl_props) )
@@ -350,14 +350,14 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	double I_bn = weather.m_beam;
 
 
-	int n_flux_y = flux_map_input->nrows();
+	int n_flux_y = (int)flux_map_input->nrows();
 	if(n_flux_y > 1)
 	{
 		error_msg = util::format("The Molten Salt External Receiver (Type222) model does not currently support 2-dimensional "
 			"flux maps. The flux profile in the vertical dimension will be averaged. NY=%d", n_flux_y);
 		csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 	}
-	int n_flux_x = flux_map_input->ncols();
+	int n_flux_x = (int)flux_map_input->ncols();
 	m_flux_in.resize(n_flux_x);
 
 	double T_sky = CSP::skytemp(T_amb, T_dp, hour);

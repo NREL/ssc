@@ -107,8 +107,8 @@ void C_pc_heat_sink::init(C_csp_power_cycle::S_solved_params &solved_params)
 	else if( ms_params.m_pc_fl == HTFProperties::User_defined )
 	{
 		// Check that 'm_field_fl_props' is allocated and correct dimensions
-		int n_rows = ms_params.m_pc_fl_props.nrows();
-		int n_cols = ms_params.m_pc_fl_props.ncols();
+		int n_rows = (int)ms_params.m_pc_fl_props.nrows();
+		int n_cols = (int)ms_params.m_pc_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
 			if( !mc_pc_htfProps.SetUserDefinedFluid(ms_params.m_pc_fl_props) )

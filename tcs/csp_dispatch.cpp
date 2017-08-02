@@ -346,7 +346,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             double fhfi = 0.;
             double fhfi_2 = 0.;
             vector<double> fiv;
-            int m = optinst->params.eff_table_load.get_size();
+            int m = (int)optinst->params.eff_table_load.get_size();
             for(int i=0; i<m; i++)
             {
                 if( i==0 ) continue; // first data point is zero, so skip
