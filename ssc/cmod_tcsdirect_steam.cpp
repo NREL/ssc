@@ -809,7 +809,7 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		int error = simulate(3600, hours * 3600, 3600, 30);
+		int error = simulate(3600.0, hours * 3600.0, 3600.0, 30);
 //		if (0 > simulate(3600, hours*3600, 3600) )
 		if (0>error)
 			throw exec_error( "tcsdirect_steam", util::format("there was a problem simulating in the TCS direct steam power tower model.") );

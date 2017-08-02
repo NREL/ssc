@@ -467,7 +467,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 	{
 		double P_cycle, T_htf_cold, m_dot_demand, m_dot_htf_ref, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
 
-		water_state wprop;
+//		water_state wprop;
 
 		double Twet = calc_twet(T_degC, relhum_pct, P_atm*1.01325e6);
 
@@ -528,7 +528,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		mdot *= load_frac;
 
 		//ambient calculations
-		water_state wprop;
+//		water_state wprop;
 		double Twet = calc_twet(ms_params.m_T_amb_des, 45, 1.01325e6);
 
 		//Call

@@ -479,7 +479,7 @@ public:
 
 		double x_low = std::numeric_limits<double>::quiet_NaN();
 		double x_high = std::numeric_limits<double>::quiet_NaN();
-		int iter_limit = 50.0;
+		int iter_limit = 50;
 		eq_solv.settings(0.001, iter_limit, x_low, x_high, true);
 
 		double x_solved, tol_solved;
@@ -620,12 +620,12 @@ public:
 		double T_htf_cold = rc_cycle.get_design_solved()->m_temp[5 - 1] + delta_T_t - 273.15;	//[C]
 
 		// Assign SSC outputs
-		assign("eta_thermal_calc", eta_thermal_calc);
-		assign("UA_total", UA_total);
-		assign("recomp_frac", recomp_frac);
-		assign("P_comp_in", P_comp_in);
-		assign("P_comp_out", P_comp_out);
-		assign("T_htf_cold", T_htf_cold); 
+		assign("eta_thermal_calc", (ssc_number_t)eta_thermal_calc);
+		assign("UA_total", (ssc_number_t)UA_total);
+		assign("recomp_frac", (ssc_number_t)recomp_frac);
+		assign("P_comp_in", (ssc_number_t)P_comp_in);
+		assign("P_comp_out", (ssc_number_t)P_comp_out);
+		assign("T_htf_cold", (ssc_number_t)T_htf_cold);
 
 		if( error_msg[0] == NULL )
 			log("Design point optimization was successful!");
@@ -682,7 +682,7 @@ public:
 			{
 				opt_target_od_params.m_T_mc_in = rc_params.m_T_mc_in;		//[K]
 
-				for( int i = 0; i < n_f_pl; i++ )
+				for( size_t i = 0; i < n_f_pl; i++ )
 				{
 					opt_target_od_params.m_target = (double)f_pl[i] * q_dot_in_des;				//[kWt]
 					log(util::format("Off design simulation at part load = %lg", f_pl[i]));
@@ -695,7 +695,7 @@ public:
 					}
 				}
 
-				n_solved = part_load_fracs_out.size();
+				n_solved = (int)part_load_fracs_out.size();
 			}
 						
 			ssc_number_t * f_pl_out = allocate("part_load_fracs_out", n_solved);
@@ -703,21 +703,21 @@ public:
 
 			for( int i = 0; i < n_solved; i++ )
 			{
-				f_pl_out[i] = part_load_fracs_out[i];
-				eta_f_pl[i] = part_load_eta[i];
+				f_pl_out[i] = (ssc_number_t)part_load_fracs_out[i];
+				eta_f_pl[i] = (ssc_number_t)part_load_eta[i];
 			}
 
 			// Find and write polynomial coefficients for part load
 			std::vector<double> pl_coefs;
 			double pl_r_squared = std::numeric_limits<double>::quiet_NaN();
 			bool pl_success = find_polynomial_coefs(part_load_fracs_out, part_load_eta, 5, pl_coefs, pl_r_squared);
-			assign("Part_load_r_squared", pl_r_squared);
+			assign("Part_load_r_squared", (ssc_number_t)pl_r_squared);
 
 			ssc_number_t * p_pl_coefs = allocate("part_load_coefs", 5);
 			if(pl_success)
 			{
 				for( int i = 0; i < 5; i++ )
-					p_pl_coefs[i] = pl_coefs[i];
+					p_pl_coefs[i] = (ssc_number_t)pl_coefs[i];
 			}
 			else
 			{
@@ -740,7 +740,7 @@ public:
 			{
 				opt_target_od_params.m_target = q_dot_in_des;
 
-				for( int i = 0; i < n_T_amb_od; i++ )
+				for( size_t i = 0; i < n_T_amb_od; i++ )
 				{
 					opt_target_od_params.m_T_mc_in = max(rc_cycle.get_design_limits().m_T_mc_in_min, (double)T_amb_od[i] + delta_T_acc + 273.15);	//[K] convert from C and add air cooler deltaT
 					log(util::format("Off design simulation at ambient temperature = %lg", T_amb_od[i]));
@@ -754,7 +754,7 @@ public:
 					}
 				}
 
-				n_solved = T_amb_out.size();
+				n_solved = (int)T_amb_out.size();
 			}						
 
 			ssc_number_t * T_amb_od_out = allocate("T_amb_array_out", n_solved);

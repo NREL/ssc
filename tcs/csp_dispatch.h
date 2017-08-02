@@ -194,6 +194,7 @@ public:
 
                 x = table.at(index).x;
                 eta = table.at(index).eta;
+				return true;
             }
 
             double get_point_eff(int index)

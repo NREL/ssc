@@ -1565,7 +1565,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 	if( phx_cycle_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		int n_call_history = c_phx_cycle_solver.get_solver_call_history()->size();
+		int n_call_history = (int)c_phx_cycle_solver.get_solver_call_history()->size();
 
 		eta_solved = 0.0;
 		
@@ -1728,7 +1728,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
 	if( !(od_solve_code == 0 || od_solve_code == E_TURBINE_INLET_OVER_TEMP || od_solve_code == E_OVER_PRESSURE ||
 		od_solve_code == E_TIP_RATIO || od_solve_code == E_MC_SURGE || od_solve_code == E_RC_SURGE) )
-		return 0.0;
+		return 0;
 
 	if( eta_solved > ms_od_opt_eta_tracking.m_eta_max )
 	{
@@ -2677,32 +2677,44 @@ double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
-	if( frame != NULL ) return frame->od_fix_T_mc_approach__nl_opt_shell(x);
+	if( frame != NULL ) 
+		return frame->od_fix_T_mc_approach__nl_opt_shell(x);
+	else
+		return 0;
 }
 
 double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
-	if( frame != NULL ) return frame->opt_f_recomp_max_eta(x[0]);
+	if( frame != NULL ) 
+		return frame->opt_f_recomp_max_eta(x[0]);
+	else
+		return 0;
 }
 
 double fmin_f_recomp_cycle_eta(double x, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
-
-	return -(frame->opt_f_recomp_max_eta(x));
+	if( frame != NULL ) 
+		return -(frame->opt_f_recomp_max_eta(x));
+	else
+		return 0;
 }
 
 double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
-	
-	if( frame != NULL )  return frame->opt_P_mc_in_nest_f_recomp_max_eta(x[0]);	
+	if( frame != NULL )  
+		return frame->opt_P_mc_in_nest_f_recomp_max_eta(x[0]);	
+	else
+		return 0;
 }
 
 double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
-
-	return -(frame->opt_P_mc_in_nest_f_recomp_max_eta(x));
+	if( frame != NULL )  
+		return -(frame->opt_P_mc_in_nest_f_recomp_max_eta(x));
+	else
+		return 0;
 }

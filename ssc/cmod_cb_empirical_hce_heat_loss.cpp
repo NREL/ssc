@@ -144,7 +144,7 @@ public:
 		HCEFrac.resize(n_PerfFac);
 		RefMirrAper.resize(n_PerfFac);
 
-		for(int i = 0; i < n_HCE_A0; i++)
+		for(size_t i = 0; i < n_HCE_A0; i++)
 		{
 			PerfFac[i] = (double)p_PerfFac[i];
 			HCE_A0[i] = (double)p_HCE_A0[i];
@@ -171,7 +171,7 @@ public:
 		double Rec_HL = 0.0;		//[W/m]
 		double Rec_HL_m2 = 0.0;		//[W/m2]
 
-		for(int i = 0; i < n_HCE_A0; i++)
+		for(size_t i = 0; i < n_HCE_A0; i++)
 		{
 			if(SfTi >= SfTo)
 				SfTo = SfTi + 0.1;		//HP: Keeps HL curve fits from blowing up
@@ -190,13 +190,13 @@ public:
 
 		ssc_number_t *p_HL = allocate("HL", n_HCE_A0);
 
-		for(int i = 0; i < n_HCE_A0; i++)
+		for(size_t i = 0; i < n_HCE_A0; i++)
 		{
-			p_HL[i] = HL[i];
+			p_HL[i] = (ssc_number_t)HL[i];
 		}
 
-		assign("HL_weighted", Rec_HL);
-		assign("HL_weighted_m2", Rec_HL_m2);
+		assign("HL_weighted", (ssc_number_t)Rec_HL);
+		assign("HL_weighted_m2", (ssc_number_t)Rec_HL_m2);
 	}
 
 };

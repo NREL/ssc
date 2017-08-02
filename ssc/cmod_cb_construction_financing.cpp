@@ -112,27 +112,27 @@ public:
 	void exec() throw(general_error)
 	{
 		
-		double total_installed_cost     = as_double("total_installed_cost");    
-		double const_per_interest_rate1 = as_double("const_per_interest_rate1");
-		double const_per_interest_rate2 = as_double("const_per_interest_rate2");
-		double const_per_interest_rate3 = as_double("const_per_interest_rate3");
-		double const_per_interest_rate4 = as_double("const_per_interest_rate4");
-		double const_per_interest_rate5 = as_double("const_per_interest_rate5");
-		double const_per_months1        = as_double("const_per_months1");
-		double const_per_months2        = as_double("const_per_months2");       
-		double const_per_months3        = as_double("const_per_months3");       
-		double const_per_months4        = as_double("const_per_months4");       
-		double const_per_months5        = as_double("const_per_months5");       
-		double const_per_percent1       = as_double("const_per_percent1");      
-		double const_per_percent2       = as_double("const_per_percent2");      
-		double const_per_percent3       = as_double("const_per_percent3");      
-		double const_per_percent4       = as_double("const_per_percent4");      
-		double const_per_percent5       = as_double("const_per_percent5");      
-		double const_per_upfront_rate1  = as_double("const_per_upfront_rate1"); 
-		double const_per_upfront_rate2  = as_double("const_per_upfront_rate2"); 
-		double const_per_upfront_rate3  = as_double("const_per_upfront_rate3"); 
-		double const_per_upfront_rate4  = as_double("const_per_upfront_rate4"); 
-		double const_per_upfront_rate5  = as_double("const_per_upfront_rate5"); 
+		ssc_number_t total_installed_cost     = as_number("total_installed_cost");    
+		ssc_number_t const_per_interest_rate1 = as_number("const_per_interest_rate1");
+		ssc_number_t const_per_interest_rate2 = as_number("const_per_interest_rate2");
+		ssc_number_t const_per_interest_rate3 = as_number("const_per_interest_rate3");
+		ssc_number_t const_per_interest_rate4 = as_number("const_per_interest_rate4");
+		ssc_number_t const_per_interest_rate5 = as_number("const_per_interest_rate5");
+		ssc_number_t const_per_months1        = as_number("const_per_months1");
+		ssc_number_t const_per_months2        = as_number("const_per_months2");       
+		ssc_number_t const_per_months3        = as_number("const_per_months3");       
+		ssc_number_t const_per_months4        = as_number("const_per_months4");       
+		ssc_number_t const_per_months5        = as_number("const_per_months5");       
+		ssc_number_t const_per_percent1       = as_number("const_per_percent1");      
+		ssc_number_t const_per_percent2       = as_number("const_per_percent2");      
+		ssc_number_t const_per_percent3       = as_number("const_per_percent3");      
+		ssc_number_t const_per_percent4       = as_number("const_per_percent4");      
+		ssc_number_t const_per_percent5       = as_number("const_per_percent5");      
+		ssc_number_t const_per_upfront_rate1  = as_number("const_per_upfront_rate1"); 
+		ssc_number_t const_per_upfront_rate2  = as_number("const_per_upfront_rate2"); 
+		ssc_number_t const_per_upfront_rate3  = as_number("const_per_upfront_rate3"); 
+		ssc_number_t const_per_upfront_rate4  = as_number("const_per_upfront_rate4"); 
+		ssc_number_t const_per_upfront_rate5  = as_number("const_per_upfront_rate5"); 
 
 		double const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5;
 		double const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5;
@@ -155,25 +155,25 @@ public:
 			const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
 			const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
 
-		assign("const_per_principal1",        const_per_principal1);         
-		assign("const_per_principal2",        const_per_principal2);      
-		assign("const_per_principal3",        const_per_principal3);      
-		assign("const_per_principal4",        const_per_principal4);      
-		assign("const_per_principal5",        const_per_principal5);      
-		assign("const_per_interest1",         const_per_interest1);       
-		assign("const_per_interest2",         const_per_interest2);       
-		assign("const_per_interest3",         const_per_interest3);       
-		assign("const_per_interest4",         const_per_interest4);       
-		assign("const_per_interest5",         const_per_interest5);       
-		assign("const_per_total1",            const_per_total1);          
-		assign("const_per_total2",            const_per_total2);          
-		assign("const_per_total3",            const_per_total3);          
-		assign("const_per_total4",            const_per_total4);          
-		assign("const_per_total5",            const_per_total5);          
-		assign("const_per_percent_total",	  const_per_percent_total);	 
-		assign("const_per_principal_total",   const_per_principal_total); 
-		assign("const_per_interest_total",	  const_per_interest_total);	 
-		assign("construction_financing_cost", construction_financing_cost);
+		assign("const_per_principal1",        (ssc_number_t)const_per_principal1);         
+		assign("const_per_principal2",        (ssc_number_t)const_per_principal2);      
+		assign("const_per_principal3",        (ssc_number_t)const_per_principal3);      
+		assign("const_per_principal4",        (ssc_number_t)const_per_principal4);      
+		assign("const_per_principal5",        (ssc_number_t)const_per_principal5);      
+		assign("const_per_interest1",         (ssc_number_t)const_per_interest1);       
+		assign("const_per_interest2",         (ssc_number_t)const_per_interest2);       
+		assign("const_per_interest3",         (ssc_number_t)const_per_interest3);       
+		assign("const_per_interest4",         (ssc_number_t)const_per_interest4);       
+		assign("const_per_interest5",         (ssc_number_t)const_per_interest5);       
+		assign("const_per_total1",            (ssc_number_t)const_per_total1);          
+		assign("const_per_total2",            (ssc_number_t)const_per_total2);          
+		assign("const_per_total3",            (ssc_number_t)const_per_total3);          
+		assign("const_per_total4",            (ssc_number_t)const_per_total4);          
+		assign("const_per_total5",            (ssc_number_t)const_per_total5);          
+		assign("const_per_percent_total",	  (ssc_number_t)const_per_percent_total);	 
+		assign("const_per_principal_total",   (ssc_number_t)const_per_principal_total); 
+		assign("const_per_interest_total",	  (ssc_number_t)const_per_interest_total);	 
+		assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
 
 
 		/* Useful for lk script:

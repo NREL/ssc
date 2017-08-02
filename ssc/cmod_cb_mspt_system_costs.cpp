@@ -178,28 +178,28 @@ public:
 		{
 			sys_costs.calculate_costs();
 		}
-		catch(C_csp_exception &csp_exception)
+		catch(C_csp_exception &)
 		{
 			throw exec_error("MSPT system costs", util::format("System cost calculations failed. Check that all inputs are properly defined"));
 		}
 		
-		assign("csp.pt.cost.site_improvements", sys_costs.ms_out.site_improvement_cost);
-		assign("csp.pt.cost.heliostats", sys_costs.ms_out.heliostat_cost);
-		assign("csp.pt.cost.tower", sys_costs.ms_out.tower_cost);
-		assign("csp.pt.cost.receiver", sys_costs.ms_out.receiver_cost);
-		assign("csp.pt.cost.storage", sys_costs.ms_out.tes_cost);
-		assign("csp.pt.cost.power_block", sys_costs.ms_out.power_cycle_cost);
-		assign("csp.pt.cost.bop", sys_costs.ms_out.bop_cost);
-		assign("csp.pt.cost.fossil", sys_costs.ms_out.fossil_backup_cost);
-		assign("ui_direct_subtotal", sys_costs.ms_out.direct_capital_precontingency_cost);
-		assign("csp.pt.cost.contingency", sys_costs.ms_out.contingency_cost);
-		assign("total_direct_cost", sys_costs.ms_out.total_direct_cost);
-		assign("csp.pt.cost.epc.total", sys_costs.ms_out.epc_and_owner_cost);
-		assign("csp.pt.cost.plm.total", sys_costs.ms_out.total_land_cost);
-		assign("csp.pt.cost.sales_tax.total", sys_costs.ms_out.sales_tax_cost);
-		assign("total_indirect_cost", sys_costs.ms_out.total_indirect_cost);
-		assign("total_installed_cost", sys_costs.ms_out.total_installed_cost);
-		assign("csp.pt.cost.installed_per_capacity", sys_costs.ms_out.estimated_installed_cost_per_cap);
+		assign("csp.pt.cost.site_improvements", (ssc_number_t)sys_costs.ms_out.site_improvement_cost);
+		assign("csp.pt.cost.heliostats", (ssc_number_t)sys_costs.ms_out.heliostat_cost);
+		assign("csp.pt.cost.tower", (ssc_number_t)sys_costs.ms_out.tower_cost);
+		assign("csp.pt.cost.receiver", (ssc_number_t)sys_costs.ms_out.receiver_cost);
+		assign("csp.pt.cost.storage", (ssc_number_t)sys_costs.ms_out.tes_cost);
+		assign("csp.pt.cost.power_block", (ssc_number_t)sys_costs.ms_out.power_cycle_cost);
+		assign("csp.pt.cost.bop", (ssc_number_t)sys_costs.ms_out.bop_cost);
+		assign("csp.pt.cost.fossil", (ssc_number_t)sys_costs.ms_out.fossil_backup_cost);
+		assign("ui_direct_subtotal", (ssc_number_t)sys_costs.ms_out.direct_capital_precontingency_cost);
+		assign("csp.pt.cost.contingency", (ssc_number_t)sys_costs.ms_out.contingency_cost);
+		assign("total_direct_cost", (ssc_number_t)sys_costs.ms_out.total_direct_cost);
+		assign("csp.pt.cost.epc.total", (ssc_number_t)sys_costs.ms_out.epc_and_owner_cost);
+		assign("csp.pt.cost.plm.total", (ssc_number_t)sys_costs.ms_out.total_land_cost);
+		assign("csp.pt.cost.sales_tax.total", (ssc_number_t)sys_costs.ms_out.sales_tax_cost);
+		assign("total_indirect_cost", (ssc_number_t)sys_costs.ms_out.total_indirect_cost);
+		assign("total_installed_cost", (ssc_number_t)sys_costs.ms_out.total_installed_cost);
+		assign("csp.pt.cost.installed_per_capacity", (ssc_number_t)sys_costs.ms_out.estimated_installed_cost_per_cap);
 
 	}
 

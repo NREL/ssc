@@ -490,7 +490,7 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > simulate(3600.0, hours*3600.0, 3600) )
 			throw exec_error( "tcsdish", util::format("there was a problem simulating in tcsdish.") );
 
 		// get the outputs
@@ -521,7 +521,7 @@ public:
 			throw exec_error("tcsdish", "Failed to retrieve hourly data");
 
 		ssc_number_t collectors = as_number("n_ns") * as_number("n_ew");
-		ssc_number_t converter = collectors * 0.001; // convert from kWh per collector to MWh for the field
+		ssc_number_t converter = (ssc_number_t)(collectors * 0.001); // convert from kWh per collector to MWh for the field
 
 		ssc_number_t *hourly = allocate("gen", count);
 		ssc_number_t *po1 = allocate("hourly_Power_in_collector", count);
@@ -539,7 +539,7 @@ public:
 			throw exec_error("dish", "failed to setup adjustment factors: " + haf.error());
 
 
-		for (int i = 0; i < count; i++) {
+		for (size_t i = 0; i < count; i++) {
 			hourly[i] = enet[i] * collectors*haf(i);
 			po1[i] = p1[i] * converter;
 			po2[i] = p2[i] * converter;

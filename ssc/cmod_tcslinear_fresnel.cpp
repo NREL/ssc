@@ -578,7 +578,7 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > simulate(3600.0, hours*3600.0, 3600.0) )
 			throw exec_error( "tcslinear_fresnel", util::format("there was a problem simulating in the TCS linear fresnel model.") );
 
 		// get the outputs
@@ -623,7 +623,7 @@ public:
 		ssc_number_t V_water_cycle = as_number("annual_total_water_use");
 		double A_aper_tot = get_unit_value_number(type261_solarfield, "A_aper_tot");
 		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
-		assign("annual_total_water_use", V_water_cycle + V_water_mirrors);
+		assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
 
 		double fuel_usage_mmbtu = 0;
@@ -632,7 +632,7 @@ public:
 			throw exec_error("tcslinear_fresnel", "q_aux_fuel count incorrect (should be 8760): " + count);
 		for (size_t i = 0; i < count; i++)
 			fuel_usage_mmbtu += hourly_fuel[i];
-		assign("system_heat_rate", 3.413); // samsim tcstrough_physical
+		assign("system_heat_rate", (ssc_number_t)3.413); // samsim tcstrough_physical
 		// www.unitjuggler.com/convert-energy-from-MMBtu-to-kWh.html
 		assign("annual_fuel_usage", var_data((ssc_number_t)(fuel_usage_mmbtu * 293.297)));
 

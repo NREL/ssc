@@ -316,41 +316,41 @@ public:
 		assign("recomp_frac", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);		//[-]
 			// Compressor
 		assign("P_comp_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[1 - 1] / 1000.0));		//[MPa] convert from kPa
-		assign("P_comp_out", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[2 - 1] / 1000.0);		//[MPa] convert from kPa
-		assign("mc_phi_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
-		assign("mc_tip_ratio_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_w_tip_ratio);		//[-]
-		assign("mc_n_stages", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_n_stages);	//[-]
-		assign("mc_N_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);	//[rpm]
-		assign("mc_D", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_D_rotor);			//[m]
-		assign("mc_phi_surge", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);	//[-]
+		assign("P_comp_out", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[2 - 1] / 1000.0));		//[MPa] convert from kPa
+		assign("mc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
+		assign("mc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_w_tip_ratio);		//[-]
+		assign("mc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_n_stages);	//[-]
+		assign("mc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);	//[rpm]
+		assign("mc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_D_rotor);			//[m]
+		assign("mc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);	//[-]
 			// Recompressor
-		assign("rc_phi_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_des);	//[-]
-		assign("rc_tip_ratio1_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_1);	//[-]
-		assign("rc_tip_ratio2_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_2);	//[-]
-		assign("rc_n_stages", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_n_stages);	//[-]
-		assign("rc_N_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
-		assign("rc_D1", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
-		assign("rc_D2", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
-		assign("rc_phi_surge", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge);//[-]
+		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_des);	//[-]
+		assign("rc_tip_ratio1_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_1);	//[-]
+		assign("rc_tip_ratio2_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_2);	//[-]
+		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_n_stages);	//[-]
+		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
+		assign("rc_D1", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
+		assign("rc_D2", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
+		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge);//[-]
 			// Turbine
-		assign("t_nu_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
-		assign("t_tip_ratio_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
-		assign("t_N_des", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
-		assign("t_D", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_D_rotor);                  //[m]
+		assign("t_nu_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
+		assign("t_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
+		assign("t_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
+		assign("t_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_D_rotor);                  //[m]
 			// Recuperator
 		double UA_LTR = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_UA_LT;		//[kW/K]
 		double UA_HTR = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_UA_HT;		//[kW/K]
-		assign("UA_recup_total",UA_LTR + UA_HTR);		//[kW/K]
-		assign("UA_LTR",UA_LTR);						//[kW/K]
-		assign("eff_LTR", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_LT_recup_des_solved.m_eff_design);		//[-]
-		assign("NTU_LTR", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_LT_recup_des_solved.m_NTU_design);		//[-]
-		assign("UA_HTR",UA_HTR);						//[kW/K]
-		assign("eff_HTR", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_HT_recup_des_solved.m_eff_design);		//[-]
-		assign("NTU_HTR", p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_HT_recup_des_solved.m_NTU_design);		//[-]
+		assign("UA_recup_total", (ssc_number_t)(UA_LTR + UA_HTR));		//[kW/K]
+		assign("UA_LTR", (ssc_number_t)UA_LTR);						//[kW/K]
+		assign("eff_LTR", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_LT_recup_des_solved.m_eff_design);		//[-]
+		assign("NTU_LTR", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_LT_recup_des_solved.m_NTU_design);		//[-]
+		assign("UA_HTR", (ssc_number_t)UA_HTR);						//[kW/K]
+		assign("eff_HTR", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_HT_recup_des_solved.m_eff_design);		//[-]
+		assign("NTU_HTR", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_HT_recup_des_solved.m_NTU_design);		//[-]
 			// PHX
-		assign("UA_PHX", p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_UA_design_total);			//[kW/K]
-		assign("eff_PHX", p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
-		assign("NTU_PHX", p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
+		assign("UA_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_UA_design_total);			//[kW/K]
+		assign("eff_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
+		assign("NTU_PHX", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
 			// Air Cooler
 
 			// State Points
@@ -359,8 +359,8 @@ public:
 		ssc_number_t *p_P_co2_des = allocate("P_co2_des", n_sp);
 		for(int i = 0; i < n_sp; i++)
 		{
-			p_T_co2_des[i] = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[i]-273.15;		//[C]
-			p_P_co2_des[i] = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[i]/1.E3;		//[MPa]
+			p_T_co2_des[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_temp[i] - 273.15);		//[C]
+			p_P_co2_des[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[i] / 1.E3);		//[MPa]
 		}
 
 
@@ -400,18 +400,18 @@ public:
 			throw exec_error("sco2_csp_system", csp_exception.m_error_message);
 		}
 
-		int n_T_htf_hot = T_htf_parametrics.nrows();
-		int n_T_amb = T_amb_parametrics.nrows();
-		int n_m_dot_htf_ND = m_dot_htf_ND_parametrics.nrows();
+		int n_T_htf_hot = (int)T_htf_parametrics.nrows();
+		int n_T_amb = (int)T_amb_parametrics.nrows();
+		int n_m_dot_htf_ND = (int)m_dot_htf_ND_parametrics.nrows();
 
-		int ncols = T_htf_parametrics.ncols();
+		int ncols = (int)T_htf_parametrics.ncols();
 
 		ssc_number_t *p_T_htf_ind = allocate("T_htf_ind", n_T_htf_hot, ncols);
 		for(int i = 0; i < n_T_htf_hot; i++)
 		{
 			for(int j = 0; j < ncols; j++)
 			{
-				p_T_htf_ind[i*ncols + j] = T_htf_parametrics(i,j);
+				p_T_htf_ind[i*ncols + j] = (ssc_number_t)T_htf_parametrics(i, j);
 			}
 		}
 
@@ -420,7 +420,7 @@ public:
 		{
 			for(int j = 0; j < ncols; j++)
 			{
-				p_T_amb_ind[i*ncols + j] = T_amb_parametrics(i,j);
+				p_T_amb_ind[i*ncols + j] = (ssc_number_t)T_amb_parametrics(i, j);
 			}
 		}
 
@@ -429,7 +429,7 @@ public:
 		{
 			for(int j = 0; j < ncols; j++)
 			{
-				p_m_dot_htf_ND_ind[i*ncols + j] = m_dot_htf_ND_parametrics(i,j);
+				p_m_dot_htf_ND_ind[i*ncols + j] = (ssc_number_t)m_dot_htf_ND_parametrics(i, j);
 			}
 		}
 

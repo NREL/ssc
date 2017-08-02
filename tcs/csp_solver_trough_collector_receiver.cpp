@@ -1828,7 +1828,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		m_step_recirc = 10.0*60.0;	//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
+	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
 	
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s]
@@ -1979,7 +1979,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		m_step_recirc = 10.0*60.0;	//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
+	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-] Number of recirculation steps required
 
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s]
@@ -2492,6 +2492,8 @@ int C_csp_trough_collector_receiver::freeze_protection(const C_csp_weatherreader
 
 	T_cold_in = T_cold_in_solved;				//[K]
 	Q_fp = c_freeze_protection_eq.m_Q_htf_fp;	//[MJ]
+
+	return fp_code;
 }
 
 int C_csp_trough_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_htf_cold_in /*K*/, double *E_loss_balance /*-*/)

@@ -114,8 +114,8 @@ public:
 		}
 		else if( tes_fl == HTFProperties::User_defined )
 		{
-			int n_rows = tes_fl_props.nrows();
-			int n_cols = tes_fl_props.ncols();
+			size_t n_rows = tes_fl_props.nrows();
+			size_t n_cols = tes_fl_props.ncols();
 			if( n_rows > 2 && n_cols == 7 )
 			{
 				if( !tes_htf_props.SetUserDefinedFluid(tes_fl_props) )
@@ -143,7 +143,7 @@ public:
 		double vol_one_temp_avail, vol_one_temp_total, d_tank, q_dot_loss_des;
 		vol_one_temp_avail = vol_one_temp_total = d_tank = q_dot_loss_des = std::numeric_limits<double>::quiet_NaN();
 		two_tank_tes_sizing(tes_htf_props, Q_tes_des, T_HTF_hot+273.15, T_HTF_cold+273.15, 
-			h_min, h_tank, tank_pairs, u_tank,
+			h_min, h_tank, (int)tank_pairs, u_tank,
 			vol_one_temp_avail, vol_one_temp_total, d_tank, q_dot_loss_des);
 
 		assign("vol_one_temp_avail", (ssc_number_t)vol_one_temp_avail);

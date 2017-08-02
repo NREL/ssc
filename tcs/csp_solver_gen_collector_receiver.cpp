@@ -220,16 +220,16 @@ void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr
 		double *data = new double[(ms_params.m_optical_table.ncols() - 1) * (ms_params.m_optical_table.nrows() - 1)];
 
 		//get the xaxis data values
-		for( int i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
+		for( size_t i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
 			xax[i - 1] = ms_params.m_optical_table(0,i)*CSP::pi/180.0;
 		}
 		//get the yaxis data values
-		for( int j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
+		for( size_t j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
 			yax[j - 1] = ms_params.m_optical_table(j,0)*CSP::pi / 180.0;
 		}
 		//Get the data values
-		for( int j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
-			for( int i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
+		for( size_t j = 1; j<ms_params.m_optical_table.nrows(); j++ ){
+			for( size_t i = 1; i<ms_params.m_optical_table.ncols(); i++ ){
 				data[i - 1 + (ms_params.m_optical_table.ncols() - 1)*(j - 1)] = ms_params.m_optical_table(j, i);
 			}
 		}
@@ -526,11 +526,11 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 	double f_sfhl_qdni = 0.0;
 	double f_sfhl_tamb = 0.0;
 	double f_sfhl_vwind = 0.0;
-	for( int i = 0; i<ms_params.mv_sfhlQ_coefs.size(); i++ )
+	for( size_t i = 0; i<ms_params.mv_sfhlQ_coefs.size(); i++ )
 		f_sfhl_qdni += ms_params.mv_sfhlQ_coefs[i] * pow(irr_used / ms_params.m_irr_des, i);
-	for( int i = 0; i<ms_params.mv_sfhlT_coefs.size(); i++ )
+	for( size_t i = 0; i<ms_params.mv_sfhlT_coefs.size(); i++ )
 		f_sfhl_tamb += ms_params.mv_sfhlT_coefs[i] * pow(tdb - ms_params.m_T_sfdes, i);
-	for( int i = 0; i<ms_params.mv_sfhlV_coefs.size(); i++ )
+	for( size_t i = 0; i<ms_params.mv_sfhlV_coefs.size(); i++ )
 		f_sfhl_vwind += ms_params.mv_sfhlV_coefs[i] * pow(vwind, i);
 
 	double f_sfhl = 1.0 - ms_params.m_f_sfhl_ref * (f_sfhl_qdni + f_sfhl_tamb + f_sfhl_vwind);  //sf thermal efficiency

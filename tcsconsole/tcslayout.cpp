@@ -274,8 +274,8 @@ bool tcLayoutCtrl::Read( wxInputStream &is )
 		tcConnPt *p1, *p2;
 		if ( ustart < units.size()
 			&& uend < units.size()
-			&& (p1 = FindConnPt( units[ustart], startidx ))
-			&& (p2 = FindConnPt( units[uend], endidx )) )
+			&& ((p1 = FindConnPt( units[ustart], startidx ))!=0)
+			&& ((p2 = FindConnPt( units[uend], endidx ))!=0) )
 		{
 			tcConn *c = new tcConn;
 			c->start = units[ustart];
@@ -410,7 +410,7 @@ bool tcLayoutCtrl::IsModified()
 	return m_modified;
 }
 
-void tcLayoutCtrl::OnSize( wxSizeEvent &evt )
+void tcLayoutCtrl::OnSize( wxSizeEvent & )
 {
 	m_statusText->SetSize(0,0,GetClientSize().GetWidth(), 23 );
 }
@@ -604,7 +604,7 @@ void tcLayoutCtrl::Draw( wxDC &dc, wxSize &client, bool with_status, bool with_b
 
 }
 
-void tcLayoutCtrl::OnPaint( wxPaintEvent &evt )
+void tcLayoutCtrl::OnPaint( wxPaintEvent & )
 {
 	wxAutoBufferedPaintDC dc(this);
 	wxSize sz(GetClientSize());
@@ -695,7 +695,7 @@ void tcLayoutCtrl::OnLeftDown( wxMouseEvent &evt )
 
 }
 
-void tcLayoutCtrl::OnLeftDouble( wxMouseEvent &evt )
+void tcLayoutCtrl::OnLeftDouble( wxMouseEvent & )
 {
 	if (m_currentUnit != 0 )
 		EditUnit( m_currentUnit );
@@ -769,7 +769,7 @@ void tcLayoutCtrl::DrawWaypointMoveOutline()
 	dc.SetLogicalFunction( wxINVERT );
 #endif
 
-	dc.SetPen( wxPen( *wxBLACK, 1, wxDOT ) );
+	dc.SetPen( wxPen( *wxBLACK, 1, wxPENSTYLE_DOT ) );
 	wxSize cr = GetClientSize();
 	int x = m_moveWaypointLastXY.x + m_offsetX;
 	int y = m_moveWaypointLastXY.y + m_offsetY;

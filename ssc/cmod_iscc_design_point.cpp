@@ -103,9 +103,9 @@ public:
 				mat.assign(htf_mat, nrows, ncols);
 
 				util::matrix_t<double> mat_double(nrows, ncols);
-				for( int i = 0; i < nrows; i++ )
+				for( size_t i = 0; i < nrows; i++ )
 				{
-					for( int j = 0; j < ncols; j++ )
+					for( size_t j = 0; j < ncols; j++ )
 					{
 						mat_double(i, j) = (double)mat(i, j);
 					}
@@ -219,11 +219,11 @@ public:
 		double T_ms_econo_out = T_ms_evap_out - q_dot_econo / (m_dot_ms_des*cp_ms);		//[C] Temperature of molten salt at outlet of economizer
 
 		// Return outputs
-		assign("W_dot_fossil", W_dot_fossil);
-		assign("T_st_inject", T_st_inject);
-		assign("q_solar_max", q_pb_max);
-		assign("T_htf_cold", T_ms_econo_out);
-		assign("W_dot_solar", W_dot_solar);
+		assign("W_dot_fossil", (ssc_number_t)W_dot_fossil);
+		assign("T_st_inject", (ssc_number_t)T_st_inject);
+		assign("q_solar_max", (ssc_number_t)q_pb_max);
+		assign("T_htf_cold", (ssc_number_t)T_ms_econo_out);
+		assign("W_dot_solar", (ssc_number_t)W_dot_solar);
 	}
 
 

@@ -142,7 +142,7 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		size_t count, i, j, nrows, ncols; 
+		size_t i, j, nrows, ncols; 
 		// rated output ac
 		double Paco = as_double("inv_cec_cg_paco");
 		bool kW_units = (as_integer("inv_cec_cg_sample_power_units") == 1);
@@ -196,7 +196,7 @@ public:
 				if (kW_units) Pout *= 1000; // kW to W
 				eff = inv_cec_cg_test_samples.at(i, j*columns_per_sample+2);
 				Pin = Pout;
-				if (eff != 0.0f) Pin = 100.0*Pout / eff;
+				if (eff != 0.0f) Pin = (ssc_number_t)(100.0*Pout) / eff;
 				Pin2 = Pin*Pin;
 				if (i < 6) // Vmin 0 offset
 				{
@@ -249,9 +249,9 @@ public:
 			throw exec_error("inv_cec_cg", util::format("error in nonlinear least squares fit, error %d", info));
 			return;
 		}
-		inv_cec_cg_Vmin_abc[0] = C[0];
-		inv_cec_cg_Vmin_abc[1] = C[1];
-		inv_cec_cg_Vmin_abc[2] = C[2];
+		inv_cec_cg_Vmin_abc[0] = (ssc_number_t)C[0];
+		inv_cec_cg_Vmin_abc[1] = (ssc_number_t)C[1];
+		inv_cec_cg_Vmin_abc[2] = (ssc_number_t)C[2];
 
 		// Vnom non-linear
 		for (i = 0; i < inv_cec_cg_Vnom.nrows(); i++)
@@ -267,9 +267,9 @@ public:
 			throw exec_error("inv_cec_cg", util::format("error in nonlinear least squares fit, error %d", info));
 			return;
 		}
-		inv_cec_cg_Vnom_abc[0] = C[0];
-		inv_cec_cg_Vnom_abc[1] = C[1];
-		inv_cec_cg_Vnom_abc[2] = C[2];
+		inv_cec_cg_Vnom_abc[0] = (ssc_number_t)C[0];
+		inv_cec_cg_Vnom_abc[1] = (ssc_number_t)C[1];
+		inv_cec_cg_Vnom_abc[2] = (ssc_number_t)C[2];
 
 		// Vmax non-linear
 		for (i = 0; i < inv_cec_cg_Vmax.nrows(); i++)
@@ -285,9 +285,9 @@ public:
 			throw exec_error("inv_cec_cg", util::format("error in nonlinear least squares fit, error %d", info));
 			return;
 		}
-		inv_cec_cg_Vmax_abc[0] = C[0];
-		inv_cec_cg_Vmax_abc[1] = C[1];
-		inv_cec_cg_Vmax_abc[2] = C[2];
+		inv_cec_cg_Vmax_abc[0] = (ssc_number_t)C[0];
+		inv_cec_cg_Vmax_abc[1] = (ssc_number_t)C[1];
+		inv_cec_cg_Vmax_abc[2] = (ssc_number_t)C[2];
 
 		// Fill in intermediate values
 		//Vdc (Vmin, Vnom, Vmax)
@@ -303,38 +303,38 @@ public:
 		a = inv_cec_cg_Vmin_abc[0];
 		b = inv_cec_cg_Vmin_abc[1];
 		c = inv_cec_cg_Vmin_abc[2];
-		inv_cec_cg_Pdco[0] = (-b + sqrt(b*b - 4 * a*(c - Paco)));
+		inv_cec_cg_Pdco[0] = (ssc_number_t)(-b + sqrt(b*b - 4 * a*(c - Paco)));
 		inv_cec_cg_Psco[0] = (-b + sqrt(b*b - 4 * a*c));
 		inv_cec_cg_C0[0] = a;
 		if (a != 0)
 		{
-			inv_cec_cg_Pdco[0] /= (2.0*a);
-			inv_cec_cg_Psco[0] /= (2.0*a);
+			inv_cec_cg_Pdco[0] /= (ssc_number_t)(2.0*a);
+			inv_cec_cg_Psco[0] /= (ssc_number_t)(2.0*a);
 		}
 
 		a = inv_cec_cg_Vnom_abc[0];
 		b = inv_cec_cg_Vnom_abc[1];
 		c = inv_cec_cg_Vnom_abc[2];
-		inv_cec_cg_Pdco[1] = (-b + sqrt(b*b - 4 * a*(c - Paco)));
+		inv_cec_cg_Pdco[1] = (ssc_number_t)(-b + sqrt(b*b - 4 * a*(c - Paco)));
 		inv_cec_cg_Psco[1] = (-b + sqrt(b*b - 4 * a*c));
 		inv_cec_cg_C0[1] = a;
 		if (a != 0)
 		{
-			inv_cec_cg_Pdco[1] /= (2.0*a);
-			inv_cec_cg_Psco[1] /= (2.0*a);
+			inv_cec_cg_Pdco[1] /= (ssc_number_t)(2.0*a);
+			inv_cec_cg_Psco[1] /= (ssc_number_t)(2.0*a);
 		}
 
 		// TODO - limit Psco max to not be less than zero per note in Workbook
 		a = inv_cec_cg_Vmax_abc[0];
 		b = inv_cec_cg_Vmax_abc[1];
 		c = inv_cec_cg_Vmax_abc[2];
-		inv_cec_cg_Pdco[2] = (-b + sqrt(b*b - 4 * a*(c - Paco)));
+		inv_cec_cg_Pdco[2] = (ssc_number_t)(-b + sqrt(b*b - 4 * a*(c - Paco)));
 		inv_cec_cg_Psco[2] = (-b + sqrt(b*b - 4 * a*c));
 		inv_cec_cg_C0[2] = a;
 		if (a != 0)
 		{
-			inv_cec_cg_Pdco[2] /= (2.0*a);
-			inv_cec_cg_Psco[2] /= (2.0*a);
+			inv_cec_cg_Pdco[2] /= (ssc_number_t)(2.0*a);
+			inv_cec_cg_Psco[2] /= (ssc_number_t)(2.0*a);
 		}
 
 		// C1, C2, C3 linear least squares
@@ -354,8 +354,8 @@ public:
 			throw exec_error("inv_cec_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
 		}
-		inv_cec_cg_C1[0] = slope;
-		inv_cec_cg_C1[1] = intercept;
+		inv_cec_cg_C1[0] = (ssc_number_t)slope;
+		inv_cec_cg_C1[1] = (ssc_number_t)intercept;
 
 
 		// C2 using linear least squares fit
@@ -369,8 +369,8 @@ public:
 			throw exec_error("inv_cec_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
 		}
-		inv_cec_cg_C2[0] = slope;
-		inv_cec_cg_C2[1] = intercept;
+		inv_cec_cg_C2[0] = (ssc_number_t)slope;
+		inv_cec_cg_C2[1] = (ssc_number_t)intercept;
 
 		// C2 using linear least squares fit
 		for (i = 0; i < 3; i++)
@@ -383,8 +383,8 @@ public:
 			throw exec_error("inv_cec_cg", util::format("error in linear least squares fit, error %d", info));
 			return;
 		}
-		inv_cec_cg_C3[0] = slope;
-		inv_cec_cg_C3[1] = intercept;
+		inv_cec_cg_C3[0] = (ssc_number_t)slope;
+		inv_cec_cg_C3[1] = (ssc_number_t)intercept;
 
 		// vdco is the average of Vnom of all samples column 2 and rows 7 through 12
 

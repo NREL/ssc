@@ -137,16 +137,16 @@ public:
 		const C_CO2_to_air_cooler::S_hx_design_solved *p_hx_des_sol;
 		p_hx_des_sol = c_air_cooler.get_design_solved();
 
-		assign("d_tube_out", p_hx_des_sol->m_d_out*1.E2);		//[cm] convert from m
-		assign("d_tube_in", p_hx_des_sol->m_d_in*1.E2);			//[cm] convert from m
-		assign("depth_footprint", p_hx_des_sol->m_Depth);		//[m]
-		assign("width_footprint", p_hx_des_sol->m_W_par);		//[m]
-		assign("parallel_paths", p_hx_des_sol->m_N_par);		//[-]
-		assign("number_of_tubes", p_hx_des_sol->m_N_tubes);		//[-]
-		assign("length", p_hx_des_sol->m_L_tube);				//[m]
-		assign("n_passes_series", p_hx_des_sol->m_N_passes);	//[-]
-		assign("UA_total", p_hx_des_sol->m_UA_total/1.E3);		//[kW/K]
-		assign("m_V_hx_material", p_hx_des_sol->m_V_material_total);	//[m^3]
+		assign("d_tube_out", (ssc_number_t)(p_hx_des_sol->m_d_out*1.E2));		//[cm] convert from m
+		assign("d_tube_in", (ssc_number_t)(p_hx_des_sol->m_d_in*1.E2));			//[cm] convert from m
+		assign("depth_footprint", (ssc_number_t)p_hx_des_sol->m_Depth);		//[m]
+		assign("width_footprint", (ssc_number_t)p_hx_des_sol->m_W_par);		//[m]
+		assign("parallel_paths", (ssc_number_t)p_hx_des_sol->m_N_par);		//[-]
+		assign("number_of_tubes", (ssc_number_t)p_hx_des_sol->m_N_tubes);		//[-]
+		assign("length", (ssc_number_t)p_hx_des_sol->m_L_tube);				//[m]
+		assign("n_passes_series", (ssc_number_t)p_hx_des_sol->m_N_passes);	//[-]
+		assign("UA_total", (ssc_number_t)(p_hx_des_sol->m_UA_total / 1.E3));		//[kW/K]
+		assign("m_V_hx_material", (ssc_number_t)p_hx_des_sol->m_V_material_total);	//[m^3]
 	}
 
 

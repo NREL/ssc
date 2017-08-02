@@ -341,7 +341,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
 		m_AbsorberMaterial.at(i, 0) = new AbsorberProps;
-		m_AbsorberMaterial.at(i, 0)->setMaterial(m_AbsorberMaterial_in.at(i, 0));
+		m_AbsorberMaterial.at(i, 0)->setMaterial((int)m_AbsorberMaterial_in.at(i, 0));
 	}
 
 	//m_AnnulusGas [-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
@@ -362,7 +362,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		for (int j = 0; j < 4; j++)
 		{
 			m_AnnulusGas.at(i, j) = new HTFProperties;
-			m_AnnulusGas.at(i, j)->SetFluid(m_AnnulusGas_in.at(i, j));
+			m_AnnulusGas.at(i, j)->SetFluid((int)m_AnnulusGas_in.at(i, j));
 		}
 	}
 
@@ -583,9 +583,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		// IAM polynomials
 		double iam_t = 0.0;
 		double iam_l = 0.0;
-		for (int i = 0; i < m_IAM_L.ncols(); i++)
+		for (size_t i = 0; i < m_IAM_L.ncols(); i++)
 			iam_l += m_IAM_L.at(0, i)*pow(theta_L, i);
-		for (int i = 0; i < m_IAM_T.ncols(); i++)
+		for (size_t i = 0; i < m_IAM_T.ncols(); i++)
 			iam_t += m_IAM_T.at(0, i)*pow(phi_t, i);
 		m_opteff_des.at(0, 0) = m_eta_opt_fixed.at(0, 0) * iam_t * iam_l;
 	}
@@ -614,9 +614,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			// IAM polynomials
 			double iam_t = 0.0;
 			double iam_l = 0.0;
-			for (int i = 0; i < m_IAM_L.ncols(); i++)
+			for (size_t i = 0; i < m_IAM_L.ncols(); i++)
 				iam_l += m_IAM_L.at(1, i)*pow(theta_L, i);
-			for (int i = 0; i < m_IAM_T.ncols(); i++)
+			for (size_t i = 0; i < m_IAM_T.ncols(); i++)
 				iam_t += m_IAM_T.at(1, i)*pow(phi_t, i);
 			m_opteff_des.at(1, 0) = m_eta_opt_fixed.at(1, 0) * iam_t * iam_l;
 		}
@@ -1182,7 +1182,7 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 	{
 		fp_code = c_fp_solver.solve(T_guess_lower, T_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
 	}
-	catch( C_csp_exception &csp_except )
+	catch( C_csp_exception & )
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed"));
 	}
@@ -1220,7 +1220,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		m_step_recirc = 10.0*60.0;		//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
+	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
 
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
@@ -1396,7 +1396,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		m_step_recirc = 10.0*60.0;		//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
+	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
 
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
@@ -1753,7 +1753,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				defocus_code = c_defocus_solver.solve(defocus_guess_lower, defocus_guess_upper, 0.0, 
 													defocus_solved, defocus_tol_solved, defocus_iter);
 			}
-			catch( C_csp_exception & csp_except )
+			catch( C_csp_exception &  )
 			{
 				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus method reached exception."));
 				on_success = false;
@@ -1802,7 +1802,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				m_dot_code = c_h_out_target_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0, 
 													m_dot_loop, tol_solved, iter_solved);
 			}
-			catch( C_csp_exception &csp_except )
+			catch( C_csp_exception & )
 			{
 				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
 				on_success = false;
@@ -1970,6 +1970,8 @@ double C_csp_lf_dsg_collector_receiver::turb_pres_frac(double m_dot_nd, int fmod
 		return max(fP_min, m_dot_nd);
 	case 4:
 		return 1.0;	// IPH case where heat sink is not utilizing pressure for expansion
+	default:
+		return 0;
 	}
 }
 
@@ -2800,7 +2802,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	{
 		h_out_t_end_code = c_h_out_t_end_solver.solve(h_out_t_end_prev, h_out_t_end_guess2, 0.0, h_out_t_end, tol_solved, iter_solved);
 	}
-	catch( C_csp_exception & csp_excpet )
+	catch( C_csp_exception &  )
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed"));
 	}
@@ -3897,7 +3899,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		// Do we have enough to do standby?
 		if (q_avail_tot > m_q_pb_des*m_q_sby_frac && m_t_sby_prev > 0.0 && m_is_pb_on_prev)
 		{
-			standby_control = 2.0;	// Operate in standby mode
+			standby_control = 2;	// Operate in standby mode
 			m_t_sby = max(0.0, m_t_sby_prev - m_dt / 3600.0);
 			q_aux = max(m_q_sby_frac*m_q_pb_des - q_field_delivered, 0.0);
 			m_dot_aux = 0.0;		// It's not meaningful to report the aux mass flow rate

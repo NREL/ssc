@@ -81,7 +81,7 @@ bool Linear_Interp::Set_1D_Lookup_Table( const util::matrix_t<double> &table, in
 
 	// Set class member data
 	m_userTable = table;	
-	m_rows = table.nrows();
+	m_rows = (int)table.nrows();
 	m_lastIndex = m_rows * 2;	// So "hunt" scheme cannot be called 3rd property call
 	m_dj = min(1, (int) pow(m_rows, 0.25) );
 	m_cor = false;
@@ -333,7 +333,7 @@ bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
 {
 	// Initialize class member data
 	m_2axis_table = table;
-	double nrows = table.nrows();
+	int nrows = (int)table.nrows();
 	if( nrows < 9 )
 		return false;
 	
@@ -383,8 +383,8 @@ bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 	// Initialize class member data
 	m_3axis_table = table;
 
-	int nrows = table.nrows();
-	int nlayers = table.nlayers();
+	int nrows = (int)table.nrows();
+	int nlayers = (int)table.nlayers();
 
 	if( nrows < 9 || nlayers < 3)
 		return false;
@@ -570,7 +570,7 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 
 void LUdcmp::solve(MatDoub &b, MatDoub &x)
 {
-    int i,j,m=b.front().size();
+    int i,j,m=(int)b.front().size();
     if (b.size() != n || x.size() != n || b.front().size() != x.front().size())
         throw("LUdcmp::solve bad sizes");
     VectDoub xx(n);
@@ -622,7 +622,7 @@ Powvargram::Powvargram(MatDoub &x, VectDoub &y, const double beta, const double 
 	bet = beta;
 	nugsq = nug*nug;
 
-	int i,j,k,npt=x.size(),ndim=x.front().size();
+	int i,j,k,npt=(int)x.size(),ndim=(int)x.front().size();
 	double rb,num=0.,denom=0.;
 	for (i=0;i<npt;i++) {
 		for (j=i+1;j<npt;j++) {
@@ -649,8 +649,8 @@ GaussMarkov::GaussMarkov(MatDoub &xx, VectDoub &yy, Powvargram &vargram, const d
 	//create local copies as needed
 	vgram = vargram;
 	x = xx;
-	npt = xx.size();
-	ndim = xx.front().size();
+	npt = (int)xx.size();
+	ndim = (int)xx.front().size();
 	dstar.resize(npt+1);
 	vstar.resize(npt+1);
 	v.resize(npt+1,VectDoub(npt+1));

@@ -997,7 +997,7 @@ public:
 		accept_mode = (int)value(P_ACCEPT_MODE);				// Acceptance testing mode? (1=yes, 0=no) [none]
 		accept_init = value(P_ACCEPT_INIT) == 1;				// In acceptance testing mode - require steady-state startup [none]
 		accept_loc = (int)value(P_ACCEPT_LOC);					// In acceptance testing mode - temperature sensor location (1=hx,2=loop) [none]
-		is_using_input_gen = (bool)value(P_USING_INPUT_GEN);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
+		is_using_input_gen = (value(P_USING_INPUT_GEN)>0);	// Is model getting inputs from input generator (true) or from other components in physical trough SYSTEM model (false)
 		
 		solar_mult = value(P_SOLAR_MULT);		//Solar multiple [none]
 		mc_bal_hot = value(P_MC_BAL_HOT);		//The heat capacity of the balance of plant on the hot side [kWht/K-MWt]

@@ -104,7 +104,7 @@ bool C_DSG_Boiler::Initialize_Boiler( C_DSG_macro_receiver dsg_rec, double h_rec
 	m_th_tube = th_tube;
 	m_eps_tube = eps_tube;
 	m_mat_tube = mat_tube;
-	tube_material.SetFluid(m_mat_tube);
+	tube_material.SetFluid((int)m_mat_tube);
 	m_th_fin = th_fin;
 	m_L_fin = L_fin;
 	m_eps_fin = eps_fin;

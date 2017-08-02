@@ -216,8 +216,8 @@ public:
 		if(nloaded + 1 == ntables) return false;
 		
 		//Get the dimensions of the table thats up for addition
-		int nr = table->nrows();
-		int nc = table->ncols();
+		int nr = (int)table->nrows();
+		int nc = (int)table->ncols();
 
 		// 11.17.14 twn: SAM is reporting single emis as 1 value, instead of original TCS convention of (0, emis)
 		// maybe we can make a quick fix here?

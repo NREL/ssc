@@ -189,7 +189,6 @@ public:
 		ssc_number_t en_belpe = as_boolean("en_belpe");
 		if (!en_belpe)
 		{
-			size_t count;
 			//these inputs are required if en_belpe = 0, so no additional checks are necessary here
 			if ( !is_assigned("load") )
 				throw general_error("variable 'load' is required but not assigned." );
@@ -997,7 +996,7 @@ public:
 			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[inext] / Renv + TAnew[i] / hsurf)) / bar;
 
 			//HVAC Loads completed
-			hvac_load[i] = fabs(QHV2[i]); //Wh
+			hvac_load[i] = (ssc_number_t)fabs(QHV2[i]); //Wh
 
 			//Total load for the hour
 			load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
@@ -1100,9 +1099,9 @@ public:
 		for (int i = 0; i < 8760; i++)
 		{
 			if (monthly_hvac_load[month[i]] > 0)
-				load[i] = load[i] * (1 - NewScale[month[i]]) - x_hvac[month[i]] * hvac_load[i]; //new from Sara 11/21
+				load[i] = (ssc_number_t)(load[i] * (1 - NewScale[month[i]]) - x_hvac[month[i]] * hvac_load[i]); //new from Sara 11/21
 			else
-				load[i] = load[i] * (1 - monthly_scale[month[i]]);
+				load[i] = load[i] * (ssc_number_t)(1 - monthly_scale[month[i]]);
 
 			if (monthly_util[month[i]] == 0) //set all loads for the month to zero if the input month was zero
 				load[i] = 0;
@@ -1114,7 +1113,7 @@ public:
 				nneg++;
 			}
 
-			load[i] *= 0.001; // convert to kWh
+			load[i] *= (ssc_number_t)0.001; // convert to kWh
 		}
 		
 		if (nneg > 0)

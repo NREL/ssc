@@ -113,11 +113,11 @@ public:
 
 
 		//return the results
-		assign("area", area*0.000247105 );	//acres
+		assign("area", (ssc_number_t)(area*0.000247105));	//acres
 		ssc_number_t *hull_t = allocate( "convex_hull", hull.size(), 2);
 		for(int i=0; i<(int)hull.size(); i++){
-			hull_t[i*2] = hull.at(i).x;
-			hull_t[i*2 + 1] = hull.at(i).y;
+			hull_t[i * 2] = (ssc_number_t)hull.at(i).x;
+			hull_t[i * 2 + 1] = (ssc_number_t)hull.at(i).y;
 		}
 		
 

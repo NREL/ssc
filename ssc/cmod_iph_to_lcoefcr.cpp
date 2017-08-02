@@ -71,9 +71,9 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		double foc = as_double("fixed_operating_cost");		//[$]
+		ssc_number_t foc = as_number("fixed_operating_cost");		//[$]
 		
-		assign("fixed_operating_cost", foc + as_double("electricity_rate")*as_double("annual_electricity_consumption"));		
+		assign("fixed_operating_cost", foc + as_number("electricity_rate")*as_number("annual_electricity_consumption"));		
 	}
 	
 };

@@ -363,7 +363,7 @@ SCFrame::~SCFrame()
 }
 
 
-void SCFrame::SetProgress( int percent, const wxString &msg )
+void SCFrame::SetProgress( int percent, const wxString & )
 {
 	m_progressBar->SetValue( percent );
 }
@@ -737,8 +737,8 @@ public:
 };
 */
 
-ssc_bool_t my_handler( ssc_module_t p_mod, ssc_handler_t p_handler, int action, 
-	float f0, float f1, const char *s0, const char *s1, void *user_data )
+ssc_bool_t my_handler( ssc_module_t , ssc_handler_t , int action, 
+	float f0, float f1, const char *s0, const char *, void * )
 {
 	if (action == SSC_LOG)
 	{
@@ -933,7 +933,7 @@ wxArrayString SCFrame::GetAvailableCMs()
 		while (const ssc_entry_t p_entry = ::ssc_module_entry(idx++))
 			list.Add( ::ssc_entry_name(p_entry) );
 
-	} catch(sscdll_error &e) {
+	} catch(sscdll_error &) {
 	}
 
 	return list;

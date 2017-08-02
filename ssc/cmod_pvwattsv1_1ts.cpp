@@ -188,7 +188,7 @@ public:
 
 		irr.set_sky_model( 2, alb );
 		irr.set_beam_diffuse( beam, diff );
-		irr.set_surface( track_mode, tilt, azimuth, rlim, -1, -1 );
+		irr.set_surface( track_mode, tilt, azimuth, rlim, true, -1 );
 			
 		double ibeam, iskydiff, ignddiff;
 		double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
@@ -231,10 +231,10 @@ public:
 		}
 
 
-		assign( "poa", var_data(out_poa) );
-		assign( "tcell", var_data(out_tcell) );
-		assign( "dc", var_data(out_dc) );
-		assign( "ac", var_data(out_ac) );		
+		assign("poa", var_data((ssc_number_t)out_poa));
+		assign("tcell", var_data((ssc_number_t)out_tcell));
+		assign("dc", var_data((ssc_number_t)out_dc));
+		assign("ac", var_data((ssc_number_t)out_ac));
 	}
 };
 

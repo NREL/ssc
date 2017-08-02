@@ -775,7 +775,7 @@ public:
 		// size_t hours = 8760; 
 		// size_t start_hour = ts_hour;
 		// if ( 0 != simulate(3600, hours * 3600, 3600))
-		if( 0 != simulate(start_hour*3600, hours_year*3600, ts_hour*3600))
+		if( 0 != simulate(start_hour*3600.0, hours_year*3600.0, ts_hour*3600.0))
 			throw exec_error( "tcstrough_physical", "there was a problem simulating in tcskernel(physical trough)" );
 
 		// get the outputs

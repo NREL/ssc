@@ -188,7 +188,7 @@ void compute_module::clear_log()
 	m_loglist.clear();
 }
 
-bool compute_module::extproc( const std::string &command, const std::string &workdir )
+bool compute_module::extproc( const std::string &, const std::string & )
 {
 /*
 	if (m_handler) return m_handler->on_exec( command, workdir);
@@ -536,7 +536,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 					else if (lhs == "abt") // check if variable in 'rhs' is assigned, boolean type, and value true
 					{
 						var_data *v;
-						if ( (v = lookup(rhs)) && v->type == SSC_NUMBER &&  ((int)v->num) != 0)
+						if ( ((v = lookup(rhs) ) != 0) && v->type == SSC_NUMBER &&  ((int)v->num) != 0)
 							return 1;
 						else
 							return 0;
@@ -544,7 +544,7 @@ bool compute_module::check_required( const std::string &name ) throw( general_er
 					else if (lhs == "abf") // check if variable in 'rhs' is assigned, boolean type, and value false
 					{
 						var_data *v;
-						if ( (v = lookup(rhs)) && v->type == SSC_NUMBER &&  ((int)v->num) == 0)
+						if ( ((v = lookup(rhs)) !=0) && v->type == SSC_NUMBER &&  ((int)v->num) == 0)
 							return 1;
 						else
 							return 0;

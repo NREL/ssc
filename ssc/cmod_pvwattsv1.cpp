@@ -235,7 +235,7 @@ public:
 		double gcr = 0.3;
 		if ( is_assigned("gcr") ) gcr = as_double("gcr");
 
-		double use_ar_glass = false;
+		bool use_ar_glass = false;
 		if ( is_assigned("ar_glass") ) use_ar_glass = as_boolean("ar_glass");
 
 		// check system size

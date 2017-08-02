@@ -179,7 +179,7 @@ public:
 		// nothing to do
 	}
 	
-	virtual bool read_line( std::vector<double> &values )
+	bool read_line( std::vector<double> &values )
 	{
 		if (irecord >= data.nrows() 
 			|| data.ncols() == 0 
@@ -419,7 +419,7 @@ public:
 				if (contains_leap_day)
 				{
 					if (hr == 1416) //(31 days in Jan  + 28 days in Feb) * 24 hours a day, +1 to be the start of Feb 29, -1 because of 0 indexing
-						for (int j = 0; j < 24 * steps_per_hour; j++) //trash 24 hours' worth of lines in the weather file to skip the entire day of Feb 29
+						for (size_t j = 0; j < 24 * steps_per_hour; j++) //trash 24 hours' worth of lines in the weather file to skip the entire day of Feb 29
 						{
 							if (!wdprov->read(wpc.m_dHubHeight, &wind, &dir, &temp, &pres, &wpc.m_dMeasurementHeight, &closest_dir_meas_ht, true))
 								throw exec_error("windpower", util::format("error reading wind resource file at %d: ", i) + wdprov->error());

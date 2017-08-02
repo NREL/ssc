@@ -116,7 +116,7 @@ public:
 
 			for (int i = 0; i < 8760; i++)
 			{
-				enet[i] = output*haf(i);
+				enet[i] = (ssc_number_t)(output*haf(i));
 //				p_gen[i] = enet[i];
 			}
 		}
@@ -128,22 +128,22 @@ public:
 			if (!data)
 				throw exec_error("generic", util::format("energy_output_array variable had no values."));
 
-			int nmult = count / 8760;
+			size_t nmult = count / 8760;
 			if (nmult * 8760 != count)
 				throw exec_error("generic", util::format("energy_output_array not a multiple of 8760: len=%d.", count));
 
 			int c = 0;
 			int i = 0;
-			while (c<8760 && i<count)
+			while (c<8760 && i<(int)count)
 			{
 				double integ = 0;
-				for (int j = 0; j<nmult; j++)
+				for (size_t j = 0; j<nmult; j++)
 				{
 					integ += data[i];
 					i++;
 				}
 
-				enet[c] = integ*derate*haf(c);
+				enet[c] = (ssc_number_t)(integ*derate*haf(c));
 //				p_gen[c] = enet[c];
 
 				annual_output += enet[c];
@@ -158,10 +158,10 @@ public:
 		double fuel_usage = 0.0;
 		if (as_double("conv_eff") != 0.0)
 			fuel_usage = annual_output * 100.0 / as_double("conv_eff");
-		assign("annual_fuel_usage", fuel_usage);
+		assign("annual_fuel_usage", (ssc_number_t)fuel_usage);
 
 		assign("water_usage", 0.0);
-		assign("system_heat_rate", as_double("heat_rate") *  as_double("conv_eff") / 100.0);
+		assign("system_heat_rate", (ssc_number_t)(as_number("heat_rate") *  as_number("conv_eff") / 100.0));
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;

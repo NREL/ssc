@@ -112,7 +112,7 @@ C_mspt_receiver_222::C_mspt_receiver_222()
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
 
-	m_flow_pattern = 0.0;
+	m_flow_pattern = 0;
 	m_n_lines = -1;
 
 	m_m_mixed = std::numeric_limits<double>::quiet_NaN();

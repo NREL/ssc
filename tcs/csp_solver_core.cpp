@@ -502,7 +502,7 @@ void C_csp_solver::init()
 int C_csp_solver::steps_per_hour()
 {
 	// Get number of records in weather file
-	int n_wf_records = mc_weather.get_n_records();
+	int n_wf_records = (int)mc_weather.get_n_records();
 	int step_per_hour = n_wf_records / 8760;
 	return step_per_hour;
 }
@@ -510,7 +510,7 @@ int C_csp_solver::steps_per_hour()
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 {
 	// Get number of records in weather file
-	int n_wf_records = mc_weather.get_n_records();
+	int n_wf_records = (int)mc_weather.get_n_records();
 	int step_per_hour = n_wf_records / 8760;
 
 	double wf_step = 3600.0 / step_per_hour;	//[s] Weather file time step - would like to check this against weather file, some day
@@ -854,7 +854,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 //if this is the last day of the year, update the optimization horizon to be no more than the last 24 hours. 
 				
                 if( hour_now >= (8760 - opt_horizon) )
-                    opt_horizon = min((double)opt_horizon, (double)(8761-hour_now));
+                    opt_horizon = (int)min((double)opt_horizon, (double)(8761-hour_now));
 
                 //message
                 stringstream ss;
@@ -912,10 +912,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
                 //predict performance for the time horizon
                 if( 
-                    dispatch.predict_performance(
-                            mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1, 
-                            opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour, 
-                            (int)(3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour
+                    dispatch.predict_performance((int)
+                            (mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1), 
+                            (int)(opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour), 
+                            (int)((3600./baseline_step)/mc_tou.mc_dispatch_params.m_disp_steps_per_hour)
                             ) 
                     )
                 {
@@ -940,7 +940,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             //running from the optimized profile 
             if(
                 dispatch.m_last_opt_successful 
-                && dispatch.m_current_read_step < dispatch.outputs.q_pb_target.size()
+                && dispatch.m_current_read_step < (int)dispatch.outputs.q_pb_target.size()
                 )
             {
 

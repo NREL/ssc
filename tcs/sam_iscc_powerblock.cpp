@@ -255,7 +255,7 @@ public:
 		}
 
 		// Set cycle configuration in class
-		int cycle_config = value(P_CYCLE_CONFIG);
+		int cycle_config = (int)value(P_CYCLE_CONFIG);
 		cycle_calcs.set_cycle_config(cycle_config);
 
 		// Get table limits

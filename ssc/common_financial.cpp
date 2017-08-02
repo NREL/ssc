@@ -2275,9 +2275,9 @@ bool dispatch_calculations::compute_dispatch_output_ts()
 	{
 		for (int d = 0; d<util::nday[m]; d++)
 		{
-			for (int h = 0; h<24 && i<nrec_gen_per_year; h++)
+			for (int h = 0; h<24 && i<(int)nrec_gen_per_year; h++)
 			{
-				for (int k = 0; k < step_per_hour_gen; k++)
+				for (int k = 0; k < (int)step_per_hour_gen; k++)
 				{
 					switch (m)
 					{
@@ -2450,9 +2450,9 @@ bool dispatch_calculations::compute_lifetime_dispatch_output_ts()
 		{
 			for (int d = 0; d < util::nday[m]; d++)
 			{
-				for (int h = 0; h < 24 && i < nrec_gen_per_year; h++)
+				for (int h = 0; h < 24 && i < (int)nrec_gen_per_year; h++)
 				{
-					for (int k = 0; k < step_per_hour_gen; k++)
+					for (int k = 0; k < (int)step_per_hour_gen; k++)
 					{
 						switch (m)
 						{
@@ -3228,7 +3228,7 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 	ssc_number_t ts_power = 0;
 	if (m_cm->as_integer("system_use_lifetime_output") == 1)
 	{   // availability, curtailment and degradation included in lifetime output
-		for (size_t y = 0; y < m_nyears; y++)
+		for (int y = 0; y < m_nyears; y++)
 		{
 			for (size_t i = 0; i < 8760; i++)
 			{

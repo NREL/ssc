@@ -407,7 +407,6 @@ public:
 	m_Tau_envelope, 		 //[-] Envelope transmittance
 	m_EPSILON_4, 			 //[-] Inner glass envelope emissivities
 	m_EPSILON_5,			 //[-] Outer glass envelope emissivities
-	m_GlazingIntact,         //[-] Glazing intact (broken glass) flag {1=true, else=false}
 	m_P_a, 					 //[torr] Annulus gas pressure				 
 	m_AnnulusGas, 			 //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
 	m_AbsorberMaterial, 	 //[-] Absorber material type
@@ -418,6 +417,8 @@ public:
 
 	util::matrix_t<double> m_IAM_matrix;		//[-] IAM coefficients, matrix for 4 collectors
 	
+	util::matrix_t<bool> m_GlazingIntact;		//[-] Glazing intact (broken glass) flag {1=true, else=false}
+
 	// **************************************************************************
 	// **************************************************************************
 	// **************************************************************************

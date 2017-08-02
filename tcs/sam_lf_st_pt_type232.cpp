@@ -440,7 +440,7 @@ public:
 		// Set fluid number or copy over fluid matrix, depending on specified fluid.
 		if( htf != HTFProperties::User_defined )
 		{
-			if( !rec_htf.SetFluid( htf ) ); // store_fl should match up with the constants
+			if( !rec_htf.SetFluid( htf ) ) // store_fl should match up with the constants
 			{
 				message(TCS_ERROR, "Receiver HTF code is not recognized");
 				return -1;
@@ -1104,7 +1104,7 @@ public:
 			else
 			{
 				// Set nightime outputs
-				mode = 0.0;
+				mode = 0;
 				NullOutputs();
 				return 0;
 			}
@@ -1186,7 +1186,7 @@ public:
 			if( q_solar_total < q_solar_critical )
 			{
 				// Set nightime outputs and get out
-				mode = 0.0;
+				mode = 0;
 				NullOutputs();
 				return 0;
 			}
@@ -1665,7 +1665,7 @@ public:
 							double Pr_htf_node = c_htf_node*mu_htf_node/k_htf_node;						// [-]
 							
 							double f_htf_dummy, Nu_htf_node;
-							PipeFlowCavity( Re_htf_node, Pr_htf_node, L_over_D, relRough, q_solar.at(i,j), is_fd.at(i,j), Nu_htf_node, f_htf_dummy );				
+							PipeFlowCavity(Re_htf_node, Pr_htf_node, L_over_D, relRough, q_solar.at(i, j), (int)is_fd.at(i, j), Nu_htf_node, f_htf_dummy);
 				        
 							// The heat transfer coefficient for thermal energy transfer from the tube walls to the HTF
 							double h_htf_node = Nu_htf_node*k_htf_node/d_tube_in;
@@ -1743,7 +1743,7 @@ public:
 					for( int k = 0; k < m_n_panels; k++ )
 						for( int j = 0; j < m_n_nodes; j++ )
 						{
-							q_htf.at(j,k) = q_htf_1D.at(j+k*m_n_nodes,0.0);
+							q_htf.at(j,k) = q_htf_1D.at((size_t)j+k*m_n_nodes,(size_t)0.0);
 						}
 
 					// This must be edited for FLOWPATTERNS 1 and 2   !ST ??? I did not change anything about the flow patterns - should probably be reviewed
@@ -2247,7 +2247,7 @@ public:
 					if( (qq > qq_max) && (gamma<0.1) )
 					{
 						// Set null outputs
-						mode = 0.0;
+						mode = 0;
 						NullOutputs();
 						return 0;
 					}
@@ -2267,9 +2267,9 @@ public:
 					continue;
 				}
 
-				T_F = T_s_1D.at(m_n_panels*m_n_nodes,0.0);
-				T_CE = T_s_1D.at(m_n_panels*m_n_nodes+1,0.0);
-				T_L = T_s_1D.at(m_n_panels*m_n_nodes+2,0.0);
+				T_F = T_s_1D.at((size_t)m_n_panels*m_n_nodes, (size_t)0.0);
+				T_CE = T_s_1D.at((size_t)m_n_panels*m_n_nodes + 1, (size_t)0.0);
+				T_L = T_s_1D.at((size_t)m_n_panels*m_n_nodes + 2, (size_t)0.0);
 																												
 				// Thermal radiation losses are calculated using the NEW surface temperatures
 				for( int i = 0; i < m_n_nodes*m_n_panels+4; i++ )
@@ -2364,7 +2364,7 @@ public:
 			if( (m_htf_total < 0.0) || (q_htf_total < 0.0) )
 			{
 				// Set nightime outputs
-				mode = 0.0;
+				mode = 0;
 				NullOutputs();
 				return 0;
 			}
@@ -2392,7 +2392,7 @@ public:
 		if( m_htf_total < m_dot_htf_min )
 		{
 			// Set outputs to 0 and get out
-			mode = 0.0;
+			mode = 0;
 			NullOutputs();
 			return 0;
 		}
@@ -2404,7 +2404,7 @@ public:
 		    t_su = max(0.0, t_su_prev - step/3600.0);
 		    if(E_su + t_su > 0.0)
 			{
-		        mode = 1.0;		// If either are greater than 0, we're starting up but not finished
+		        mode = 1;		// If either are greater than 0, we're starting up but not finished
 		        q_startup = (E_su_prev - E_su)/(step/3600.0)*1.0E-6;			// mjw 3.10.11
 		        // goto 900  !mjw 3.10.11
 				// Set nightime outputs
@@ -2413,7 +2413,7 @@ public:
 			}
 		    else				// Only part of the timestep/energy was needed to startup.  
 			{
-		        mode= 2.0;
+		        mode= 2;
 		        // Adjust the available mass flow to reflect startup
 		        m_htf_total = min( (1.0-t_su_prev/(step/3600.0))*m_htf_total, m_htf_total - E_su_prev/(step/3600.0*c_htf*(T_htf_hot - T_htf_cold)) );
 			}

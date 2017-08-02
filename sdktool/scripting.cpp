@@ -112,18 +112,18 @@ static bool sscvar_to_lkvar( lk::vardata_t &out, var_data *vv)
 	case SSC_ARRAY:
 		out.empty_vector();
 		out.vec()->reserve( (size_t) vv->num.length() );
-		for (int i=0;i<vv->num.length();i++)
+		for (size_t i=0;i<vv->num.length();i++)
 			out.vec_append( vv->num[i] );
 		break;
 	case SSC_MATRIX:
 		out.empty_vector();
 		out.vec()->reserve( vv->num.nrows() );
-		for (int i=0;i<vv->num.nrows();i++)
+		for (size_t i=0;i<vv->num.nrows();i++)
 		{
 			out.vec()->push_back( lk::vardata_t() );
 			out.vec()->at(i).empty_vector();
 			out.vec()->at(i).vec()->reserve( vv->num.ncols() );
-			for (int j=0;j<vv->num.ncols();j++)
+			for (size_t j=0;j<vv->num.ncols();j++)
 				out.vec()->at(i).vec_append( vv->num.at(i,j) );
 		}
 		break;
@@ -406,7 +406,7 @@ public:
 	{
 		Output( tt );
 	}
-	virtual void OnSyntaxCheck(int line, const wxString &err)
+	virtual void OnSyntaxCheck(int, const wxString &err)
 	{
 		ClearOutput();
 		Output( err );

@@ -337,7 +337,7 @@ bool adjustment_factors::setup(int nsteps)
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
 		if ( p != 0 && n == nsteps )
 		{
-			for( size_t i=0;i<nsteps;i++ )
+			for( int i=0;i<nsteps;i++ )
 				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
 		}
 	}
@@ -394,7 +394,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
 		if (p != 0 && n == nsteps)
 		{
-			for (size_t i = 0; i < nsteps; i++)
+			for (int i = 0; i < nsteps; i++)
 				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
 		}
 		if (n!=nsteps)
@@ -772,7 +772,7 @@ weatherdata::weatherdata( var_data *data_table )
 	if ( nrec > 0 && nmult >= 1 )
 	{
 		m_data.resize( nrec );
-		for( size_t i=0;i<nrec;i++ )
+		for( int i=0;i<nrec;i++ )
 		{
 			weather_record *r = new weather_record;
 

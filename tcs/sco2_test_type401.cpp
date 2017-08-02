@@ -522,8 +522,8 @@ public:
 		int n_tube_nodes = 5;
 		double q_abs_total_input = 150000/(CSP::pi/2.0);
 		tube_flux_map.resize(n_tube_nodes,1);
-		int n_axial = tube_flux_map.nrows();
-		int n_circ = tube_flux_map.ncols();
+		int n_axial = (int)tube_flux_map.nrows();
+		int n_circ = (int)tube_flux_map.ncols();
 		for( int i = 0; i < n_axial; i++ )
 		{
 			for( int j = 0; j < n_circ; j++ )
@@ -534,8 +534,8 @@ public:
 		n_tube_nodes = 10;
 		q_abs_total_input = 300000.0;
 		tube_flux_map.resize(n_tube_nodes, 1);
-		n_axial = tube_flux_map.nrows();
-		n_circ = tube_flux_map.ncols();
+		n_axial = (int)tube_flux_map.nrows();
+		n_circ = (int)tube_flux_map.ncols();
 		for( int i = 0; i < n_axial; i++ )
 		{
 			for( int j = 0; j < n_circ; j++ )

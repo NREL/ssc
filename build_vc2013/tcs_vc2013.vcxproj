@@ -214,6 +214,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\..\ssc;$(SolutionDir)\..\ssc\nlopt;$(SolutionDir)\..\ssc\lpsolve;$(SolutionDir)\..\ssc\shared;$(SolutionDir)\..\ssc\solarpilot;$(SolutionDir)\..;%(AdditionalIncludeDirectories);$(SolutionDir)\..\tcs\FIT_props;$(SolutionDir)\..\nlopt;$(SolutionDir)\..\shared;$(SolutionDir)\..\solarpilot;$(SolutionDir)\..\lpsolve</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>LPWINAPP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

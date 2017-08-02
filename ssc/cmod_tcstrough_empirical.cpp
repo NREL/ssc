@@ -549,7 +549,7 @@ public:
 
 		// Run simulation
 		size_t hours = 8760;
-		if (0 > simulate(3600, hours*3600, 3600) )
+		if (0 > simulate(3600.0, hours*3600.0, 3600.0) )
 			throw exec_error( "tcstrough_empirical", util::format("there was a problem simulating in tcstrough_empirical.") );
 
 		// get the outputs

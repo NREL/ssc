@@ -133,7 +133,7 @@ bool solarpilot_invoke::run()
 	hf->n_cant_x.val = m_cmod->as_integer("n_facet_x");
 	hf->n_cant_y.val = m_cmod->as_integer("n_facet_y");
 
-    std:string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
+    string cant_choices[] = {"No canting","On-axis at slant","On-axis, user-defined","Off-axis, day and hour","User-defined vector"};
 
 	int cmap[5];
     cmap[0] = var_heliostat::CANT_METHOD::NO_CANTING;
@@ -314,7 +314,7 @@ bool solarpilot_invoke::run()
         util::matrix_t<double> hpos = m_cmod->as_matrix("helio_positions_in");
 
         char row[200];
-		for( int i=0; i<hpos.nrows(); i++)
+		for( size_t i=0; i<hpos.nrows(); i++)
 		{
             sprintf(row, format.c_str(), hpos.at(i,0), hpos.at(i,1),  0. );
 
@@ -388,9 +388,9 @@ bool solarpilot_invoke::run()
         
         double flux_max_observed = 0.;
 
-        for(int i=0; i<flux_data->nrows(); i++)
+        for(size_t i=0; i<flux_data->nrows(); i++)
         {
-            for(int j=0; j<flux_data->ncols(); j++)
+            for(size_t j=0; j<flux_data->ncols(); j++)
             {
                 if( flux_data->at(i, j, 0) > flux_max_observed ) 
                     flux_max_observed = flux_data->at(i, j, 0);

@@ -198,7 +198,8 @@ public:
 
 		S_params()
 		{
-			m_field_fl = m_tes_fl = m_is_hx = m_tank_pairs = -1;		
+			m_field_fl = m_tes_fl = m_tank_pairs = -1;		
+			m_is_hx = true;
 
 			m_ts_hours = 0.0;		//[hr] Default to 0 so that if storage isn't defined, simulation won't crash
 

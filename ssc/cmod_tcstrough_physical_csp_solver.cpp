@@ -464,7 +464,7 @@ public:
 		c_trough.m_ColTilt = as_double("tilt");						//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 		c_trough.m_ColAz = as_double("azimuth"); 					//[deg] Collector azimuth angle
 		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
-		c_trough.m_accept_init = as_double("accept_init");			//[-] In acceptance testing mode - require steady-state startup
+		c_trough.m_accept_init = as_boolean("accept_init");			//[-] In acceptance testing mode - require steady-state startup
 		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
 		c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
 		c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");	//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
@@ -474,84 +474,84 @@ public:
 		size_t nval_W_aperture = -1;
 		ssc_number_t *W_aperture = as_array("W_aperture", &nval_W_aperture);
 		c_trough.m_W_aperture.resize(nval_W_aperture);
-		for (int i = 0; i < nval_W_aperture; i++)
+		for (size_t i = 0; i < nval_W_aperture; i++)
 			c_trough.m_W_aperture[i] = (double)W_aperture[i];
 		
 		//[m^2] Reflective aperture area of the collector
 		size_t nval_A_aperture = -1;
 		ssc_number_t *A_aperture = as_array("A_aperture", &nval_A_aperture);
 		c_trough.m_A_aperture.resize(nval_A_aperture);
-		for (int i = 0; i < nval_A_aperture; i++)
+		for (size_t i = 0; i < nval_A_aperture; i++)
 			c_trough.m_A_aperture[i] = (double)A_aperture[i];
 
 		//[-] Tracking error derate
 		size_t nval_TrackingError = -1;
 		ssc_number_t *TrackingError = as_array("TrackingError", &nval_TrackingError);
 		c_trough.m_TrackingError.resize(nval_TrackingError);
-		for (int i = 0; i < nval_TrackingError; i++)
+		for (size_t i = 0; i < nval_TrackingError; i++)
 			c_trough.m_TrackingError[i] = (double)TrackingError[i];
 		
 		//[-] Geometry effects derate
 		size_t nval_GeomEffects = -1;
 		ssc_number_t *GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
 		c_trough.m_GeomEffects.resize(nval_GeomEffects);
-		for (int i = 0; i < nval_GeomEffects; i++)
+		for (size_t i = 0; i < nval_GeomEffects; i++)
 			c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
 
 		//[-] Clean mirror reflectivity
 		size_t nval_Rho_mirror_clean = -1;
 		ssc_number_t *Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
 		c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
-		for (int i = 0; i < nval_Rho_mirror_clean; i++)
+		for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
 			c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
 		
 		//[-] Dirt on mirror derate
 		size_t nval_Dirt_mirror = -1;
 		ssc_number_t *Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
 		c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
-		for (int i = 0; i < nval_Dirt_mirror; i++)
+		for (size_t i = 0; i < nval_Dirt_mirror; i++)
 			c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
 		
 		//[-] General optical error derate
 		size_t nval_Error = -1;
 		ssc_number_t *Error = as_array("Error", &nval_Error);
 		c_trough.m_Error.resize(nval_Error);
-		for (int i = 0; i < nval_Error; i++)
+		for (size_t i = 0; i < nval_Error; i++)
 			c_trough.m_Error[i] = (double)Error[i];
 		
 		//[m] The average focal length of the collector 
 		size_t nval_Ave_Focal_Length = -1;
 		ssc_number_t *Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
 		c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
-		for (int i = 0; i < nval_Ave_Focal_Length; i++)
+		for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
 			c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
 		
 		//[m] The length of the SCA 
 		size_t nval_L_SCA = -1;
 		ssc_number_t *L_SCA = as_array("L_SCA", &nval_L_SCA);
 		c_trough.m_L_SCA.resize(nval_L_SCA);
-		for (int i = 0; i < nval_L_SCA; i++)
+		for (size_t i = 0; i < nval_L_SCA; i++)
 			c_trough.m_L_SCA[i] = (double)L_SCA[i];
 
 		//[m] The length of a single mirror/HCE unit
 		size_t nval_L_aperture = -1;
 		ssc_number_t *L_aperture = as_array("L_aperture", &nval_L_aperture);
 		c_trough.m_L_aperture.resize(nval_L_aperture);
-		for (int i = 0; i < nval_L_aperture; i++)
+		for (size_t i = 0; i < nval_L_aperture; i++)
 			c_trough.m_L_aperture[i] = (double)L_aperture[i];
 		
 		//[-] The number of individual collector sections in an SCA
 		size_t nval_ColperSCA = -1;
 		ssc_number_t *ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
 		c_trough.m_ColperSCA.resize(nval_ColperSCA);
-		for (int i = 0; i < nval_ColperSCA; i++)
+		for (size_t i = 0; i < nval_ColperSCA; i++)
 			c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
 
 		//[m] Piping distance between SCA's in the field
 		size_t nval_Distance_SCA = -1;
 		ssc_number_t *Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
 		c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
-		for (int i = 0; i < nval_Distance_SCA; i++)
+		for (size_t i = 0; i < nval_Distance_SCA; i++)
 			c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
 
 		c_trough.m_IAM_matrix = as_matrix("IAM_matrix");		//[-] IAM coefficients, matrix for 4 collectors
@@ -590,7 +590,7 @@ public:
 		c_trough.m_Tau_envelope = as_matrix("Tau_envelope");             //[-] Envelope transmittance
 		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                   //[-] Inner glass envelope emissivities
 		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                   //[-] Outer glass envelope emissivities
-		c_trough.m_GlazingIntact = as_matrix("GlazingIntactIn");         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn")> 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
 		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
 		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
 		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type
@@ -604,7 +604,7 @@ public:
 		size_t nval_SCADefocusArray = -1;
 		ssc_number_t *SCADefocusArray = as_array("SCADefocusArray", &nval_SCADefocusArray);
 		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
-		for (int i = 0; i < nval_SCADefocusArray; i++)
+		for (size_t i = 0; i < nval_SCADefocusArray; i++)
 			c_trough.m_SCADefocusArray[i] = (int)SCADefocusArray[i];
 
 		// Test the trough component class
@@ -722,7 +722,7 @@ public:
 			pc->m_T_amb_des = as_double("T_amb_des");			//[C]
 			pc->m_P_boil = as_double("P_boil");					//[bar]
 			pc->m_CT = as_integer("CT");						//[-]
-			pc->m_tech_type = as_double("tech_type");			//[-]					
+			pc->m_tech_type = as_integer("tech_type");			//[-]					
 			pc->m_T_approach = as_double("T_approach");			//[C/K]
 			pc->m_T_ITD_des = as_double("T_ITD_des");			//[C/K]
 			pc->m_P_cond_ratio = as_double("P_cond_ratio");		//[-]
@@ -733,7 +733,7 @@ public:
 			size_t n_F_wc = -1;
 			ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);	//[-]
 			pc->m_F_wc.resize(n_F_wc, 0.0);
-			for( int i = 0; i < n_F_wc; i++ )
+			for( size_t i = 0; i < n_F_wc; i++ )
 				pc->m_F_wc[i] = (double)p_F_wc[i];
 
 			// Set User Defined cycle parameters to appropriate values
@@ -838,7 +838,7 @@ public:
 		ssc_number_t *p_f_turbine = as_array("tslogic_c", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-		for( int i = 0; i < n_f_turbine; i++ )
+		for( size_t i = 0; i < n_f_turbine; i++ )
 			tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
 
@@ -884,7 +884,7 @@ public:
 		sim_setup.m_sim_time_end = nhourssim*3600.0;	//[s] full year simulation
 
 		int steps_per_hour = 1;			//[-]
-		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
+		int n_steps_fixed = steps_per_hour*8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 
 		// Instantiate Solver
@@ -1020,7 +1020,7 @@ static bool ssc_trough_physical_sim_progress(void *data, double percent, C_csp_m
 			cm->log(message, out_type == C_csp_messages::WARNING ? SSC_WARNING : SSC_NOTICE, time_sec);
 		}
 	}
-	bool ret = cm->update("", percent);
+	bool ret = cm->update("", (float)percent);
 
 	return ret;
 }

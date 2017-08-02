@@ -709,7 +709,7 @@ public:
 	}
 
 	int relay_message( string &msg, double percent ){
-		return progress( percent, msg.c_str() ) ? 0 : -1;
+		return progress( (float)percent, msg.c_str() ) ? 0 : -1;
 	}
 
 	double rdist(VectDoub *p1, VectDoub *p2, int dim=2){

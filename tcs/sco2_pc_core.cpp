@@ -371,7 +371,7 @@ void C_HeatExchanger::initialize(const S_design_parameters & des_par_in)
 
 void C_HeatExchanger::hxr_pressure_drops(const std::vector<double> & m_dots, std::vector<double> & hxr_deltaP)
 {
-	int N = m_dots.size();
+	int N = (int)m_dots.size();
 	hxr_deltaP.resize(N);
 	for( int i = 0; i < N; i++ )
 		hxr_deltaP[i] = ms_des_par.m_DP_design[i] * pow((m_dots[i] / ms_des_par.m_m_dot_design[i]), 1.75);
@@ -379,7 +379,7 @@ void C_HeatExchanger::hxr_pressure_drops(const std::vector<double> & m_dots, std
 
 void C_HeatExchanger::hxr_conductance(const std::vector<double> & m_dots, double & hxr_UA)
 {
-	int N = m_dots.size();
+	int N = (int)m_dots.size();
 	double m_dot_ratio = 0.5*(m_dots[0] / ms_des_par.m_m_dot_design[0] + m_dots[1] / ms_des_par.m_m_dot_design[1]);
 	hxr_UA = ms_des_par.m_UA_design*pow(m_dot_ratio, 0.8);
 }
@@ -1048,7 +1048,7 @@ void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_
 
 	if( phi_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		int n_call_history = c_rd_od_solver.get_solver_call_history()->size();
+		int n_call_history = (int)c_rd_od_solver.get_solver_call_history()->size();
 
 		if( n_call_history > 0 )
 			error_code = -(*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
@@ -4864,7 +4864,7 @@ int C_RecompCycle::C_mono_eq_HTR_od::operator()(double T_HTR_LP_out_guess /*K*/,
 	if(T_LTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
 	{
 		*diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
-		int n_call_history = LTR_od_solver.get_solver_call_history()->size();
+		int n_call_history = (int)LTR_od_solver.get_solver_call_history()->size();
 		int error_code = 0;
 		if( n_call_history > 0 )
 			error_code = (*(LTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
@@ -5222,7 +5222,7 @@ int C_RecompCycle::C_mono_eq_x_f_recomp_y_N_rc::operator()(double f_recomp /*-*/
 
 	if( T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		int n_call_history = HTR_od_solver.get_solver_call_history()->size();
+		int n_call_history = (int)HTR_od_solver.get_solver_call_history()->size();
 		int error_code = 0;
 		if( n_call_history > 0 )
 			error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
@@ -5372,7 +5372,7 @@ void C_RecompCycle::off_design_fix_shaft_speeds_core(int & error_code)
 
 		if( f_recomp_code != C_monotonic_eq_solver::CONVERGED )
 		{
-			int n_call_history = c_turbo_bal_f_recomp_solver.get_solver_call_history()->size();
+			int n_call_history = (int)c_turbo_bal_f_recomp_solver.get_solver_call_history()->size();
 
 			if( n_call_history > 0 )
 				error_code = -(*(c_turbo_bal_f_recomp_solver.get_solver_call_history()))[n_call_history - 1].err_code;
@@ -5557,7 +5557,7 @@ void C_RecompCycle::off_design_phi_core(int & error_code)
 
 	if( T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		int n_call_history = HTR_od_solver.get_solver_call_history()->size();
+		int n_call_history = (int)HTR_od_solver.get_solver_call_history()->size();
 		if( n_call_history > 0 )
 			error_code = (*(HTR_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
 		if(error_code == 0)
@@ -7404,25 +7404,37 @@ double fmin_callback_opt_eta_1(double x, void *data)
 double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->design_point_eta(x);
+	if( frame != NULL ) 
+		return frame->design_point_eta(x);
+	else 
+		return 0.0;
 }
 
 double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->off_design_point_value(x);
+	if( frame != NULL ) 
+		return frame->off_design_point_value(x);
+	else 
+		return 0.0;
 }
 
 double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->eta_at_target(x);
+	if( frame != NULL ) 
+		return frame->eta_at_target(x);
+	else 
+		return 0.0;
 }
 
 double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->opt_od_eta(x);
+	if( frame != NULL ) 
+		return frame->opt_od_eta(x);
+	else 
+		return 0.0;
 }
 
 double P_pseudocritical_1(double T_K)
@@ -7439,7 +7451,7 @@ bool C_poly_curve_r_squared::init(const std::vector<double> x_data, const std::v
 	m_x = x_data;
 	m_y = y_data;
 
-	m_n_points = x_data.size();
+	m_n_points = (int)x_data.size();
 	if(m_n_points != y_data.size() || m_n_points < 5)
 	{
 		return false;
@@ -7467,7 +7479,7 @@ bool C_poly_curve_r_squared::init(const std::vector<double> x_data, const std::v
 double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
 {
 	double SS_res = 0.0;
-	int n_coefs = coefs.size();
+	int n_coefs = (int)coefs.size();
 	double y_pred = 0.0;
 	for( int i = 0; i < m_n_points; i++ )
 	{
@@ -7485,7 +7497,10 @@ double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
 double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_poly_curve_r_squared *frame = static_cast<C_poly_curve_r_squared*>(data);
-	if( frame != NULL ) return frame->calc_r_squared(x);
+	if( frame != NULL ) 
+		return frame->calc_r_squared(x);
+	else 
+		return 0.0;
 }
 
 bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared)

@@ -361,7 +361,7 @@ void dispatch_t::compute_battery_state()
 Manual Dispatch
 */
 dispatch_manual_t::dispatch_manual_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
-	double t_min, int mode, bool pv_dispatch,
+	double t_min, int mode, int pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
 	: dispatch_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
@@ -676,7 +676,7 @@ bool dispatch_manual_t::compute_energy_battery_priority_charging(double energy_n
 }
 
 dispatch_manual_front_of_meter_t::dispatch_manual_front_of_meter_t(battery_t * Battery, double dt, double SOC_min, double SOC_max, int current_choice, double Ic_max, double Id_max, double Pc_max, double Pd_max,
-	double t_min, int mode, bool pv_dispatch,
+	double t_min, int mode, int pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched, util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge, bool *dm_discharge, bool * dm_gridcharge, std::map<int, double>  dm_percent_discharge, std::map<int, double>  dm_percent_gridcharge)
 	: dispatch_manual_t(Battery, dt, SOC_min, SOC_max, current_choice, Ic_max, Id_max,Pc_max, Pd_max,
@@ -781,7 +781,7 @@ automate_dispatch_t::automate_dispatch_t(
 	double Pd_max,
 	double t_min,
 	int mode,
-	bool pv_dispatch,
+	int pv_dispatch,
 	util::matrix_t<float> dm_dynamic_sched,
 	util::matrix_t<float> dm_dynamic_sched_weekend,
 	bool * dm_charge,

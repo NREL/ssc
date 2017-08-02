@@ -314,7 +314,7 @@ int ResultsTable::GetNumberCols()
 wxString ResultsTable::GetValue( int row, int col )
 {
 	if ( col < 0 || col >= (int)m_results.size() 
-		|| row < 0 || row >= m_results[col]->values.size() ) return wxEmptyString;
+		|| row < 0 || row >= (int)m_results[col]->values.size() ) return wxEmptyString;
 	tcKernel::dataitem &it = m_results[col]->values[row];
 	if ( m_results[col]->type == TCS_NUMBER )
 		return wxString::Format("%lf", it.dval);
@@ -559,7 +559,7 @@ public:
 
 void tcFrame::ClearDataTableSelections( )
 {
-	for (int i=0; i<m_varSelector->GetCount(); i++)
+	for (int i=0; i<(int)m_varSelector->GetCount(); i++)
 		if (m_varSelector->IsChecked(i))
 			m_varSelector->Check(i,false);
 	UpdateGrid();
@@ -568,7 +568,7 @@ void tcFrame::ClearDataTableSelections( )
 void tcFrame::AddVariableToDataTable( const wxString &varname )
 {
 	int ndx = -1;
-	for (int i=0; i<m_varSelector->GetCount(); i++)
+	for (int i=0; i<(int)m_varSelector->GetCount(); i++)
 		if (m_varSelector->GetString(i).Lower().Find( varname.Lower() ) > -1)
 		{
 			ndx = i;
@@ -611,7 +611,7 @@ int tcFrame::Simulate( double start, double end, double step, int iter, bool sto
 			selections.Add( m_varSelector->GetString(i) );
 	
 	std::vector<int> colsizes;
-	for ( size_t i=0;i<m_grid->GetNumberCols();i++ )
+	for ( int i=0;i<m_grid->GetNumberCols();i++ )
 		colsizes.push_back( m_grid->GetColSize( i ) );
 
 	m_varSelector->Freeze();
@@ -640,7 +640,7 @@ int tcFrame::Simulate( double start, double end, double step, int iter, bool sto
 
 	UpdateGrid();
 	
-	for ( size_t i=0;i<m_grid->GetNumberCols()
+	for ( size_t i=0;(int)i<m_grid->GetNumberCols()
 		&& i < colsizes.size();i++ )
 		m_grid->SetColSize( i, colsizes[i] );
 	
@@ -662,7 +662,7 @@ void tcFrame::UpdateGrid()
 	m_grid->Refresh();
 }
 
-void tcFrame::OnSelectVar( wxCommandEvent &e )
+void tcFrame::OnSelectVar( wxCommandEvent & )
 {
 	UpdateGrid();
 }

@@ -218,8 +218,8 @@ public:
 
 	double azaltinterp(double azimuth, double altitude, const util::matrix_t<ssc_number_t> &azaltvals)
 	{
-		int r = azaltvals.nrows();
-		int c = azaltvals.ncols();
+		int r = (int)azaltvals.nrows();
+		int c = (int)azaltvals.ncols();
 
 		int i, j;
 		double reduc = 1.0;
@@ -322,14 +322,14 @@ public:
 		if (rad_count != eff_count)
 			throw exec_error("hcpv", "hcpv model radiation and efficiency arrays must have the same number of values");
 
-		for (int i = 0; i<rad_count; i++)
+		for (size_t i = 0; i<rad_count; i++)
 		{
 			if (i > 0 && dnrad[i] <= dnrad[i - 1])
 				throw exec_error("hcpv", "hcpv model radiation levels must increase monotonically");	
 		}
 
 		int refidx = as_integer("module_reference");
-		if (refidx < 0 || refidx >= rad_count)
+		if (refidx < 0 || refidx >= (int)rad_count)
 			throw exec_error("hcpv", util::format("invalid reference condition, [0..%d] reqd", rad_count - 1));
 
 		double Ib_ref = dnrad[refidx];
@@ -436,7 +436,7 @@ public:
 			irr.set_location(wFile.lat(), wFile.lon(), wFile.tz());
 			irr.set_sky_model(0, 0.2); // isotropic sky, 0.2 albedo (doesn't matter for CPV) and diffuse shading factor not enabled (set to 1.0 by default)
 			irr.set_beam_diffuse(wf.dn, wf.df);
-			irr.set_surface(2, 0, 0, 90, -1, -1); // 2 axis tracking, other parameters don't matter
+			irr.set_surface(2, 0, 0, 90, true, -1); // 2 axis tracking, other parameters don't matter
 			int code = irr.calc();
 
 			if (code < 0)
@@ -522,7 +522,7 @@ public:
 
 				// compute module power (max power point)
 
-				double celleff = eff_interpolate( wf.dn, dnrad, mjeff, rad_count);
+				double celleff = eff_interpolate(wf.dn, dnrad, mjeff, (int)rad_count);
 				double cellpwr = (celleff / 100.0*poa*concen*cellarea);
 
 				// todo: check reference conditions for 20 'C tdry and 4 m/s wspd
@@ -581,24 +581,24 @@ public:
 				p_sunup[istep] = (ssc_number_t)sunup;
 				p_airmass[istep] = (ssc_number_t)air_mass;
 				p_poa[istep] = (ssc_number_t)poa;
-				p_inprad[istep] = (ssc_number_t)wf.dn * modarea * modules_per_tracker * ntrackers * 0.001; // kWh
+				p_inprad[istep] = (ssc_number_t)(wf.dn * modarea * modules_per_tracker * ntrackers * 0.001); // kWh
 				p_tmod[istep] = (ssc_number_t)tmod;
 				p_tcell[istep] = (ssc_number_t)tcell;
 				p_celleff[istep] = (ssc_number_t)celleff;
 				p_modeff[istep] = (ssc_number_t)modeff;
-				p_dc[istep] = (ssc_number_t)dcgross * 0.001; // kwh
-				p_dcnet[istep] = (ssc_number_t)dcpwr * 0.001; // kwh
-				p_ac[istep] = (ssc_number_t)acgross * 0.001; // kwh
+				p_dc[istep] = (ssc_number_t)(dcgross * 0.001); // kwh
+				p_dcnet[istep] = (ssc_number_t)(dcpwr * 0.001); // kwh
+				p_ac[istep] = (ssc_number_t)(acgross * 0.001); // kwh
 				p_enet[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
 //				p_gen[istep] = (ssc_number_t)(acpwr * 0.001 * haf(istep)); // kwh
 
 			}
 
 			// record at all hours (pass through from weather file)
-			p_beam[istep] = wf.dn;
-			p_tdry[istep] = wf.tdry;
-			p_wspd[istep] = wf.wspd;
-			p_sf[istep] = shad_derate;
+			p_beam[istep] = (ssc_number_t)wf.dn;
+			p_tdry[istep] = (ssc_number_t)wf.tdry;
+			p_wspd[istep] = (ssc_number_t)wf.wspd;
+			p_sf[istep] = (ssc_number_t)shad_derate;
 
 			istep++;
 		}
@@ -622,12 +622,12 @@ public:
 
 		// Other single value outputs
 		assign("tracker_nameplate_watts", var_data((ssc_number_t)tracker_nameplate_watts));
-		assign("dc_loss_stowing_kwh", var_data((ssc_number_t)dc_loss_stowing*0.001));
-		assign("ac_loss_tracker_kwh", var_data((ssc_number_t)ac_loss_tracker*0.001));
+		assign("dc_loss_stowing_kwh", var_data((ssc_number_t)(dc_loss_stowing*0.001)));
+		assign("ac_loss_tracker_kwh", var_data((ssc_number_t)(ac_loss_tracker*0.001)));
 		assign("modeff_ref", var_data((ssc_number_t)modeff_ref));
 
 		ssc_number_t inp_rad = as_number("annual_input_radiation");
-		assign("dc_nominal", var_data((ssc_number_t)modeff_ref * inp_rad / 100.0));
+		assign("dc_nominal", var_data((ssc_number_t)(modeff_ref * inp_rad / 100.0)));
 
 		// metric outputs moved to technology
 		double kWhperkW = 0.0;
