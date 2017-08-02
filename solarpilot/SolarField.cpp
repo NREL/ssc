@@ -1759,7 +1759,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
     //update the layout shell 
     _layout.clear();
     _layout.reserve( _heliostats.size() );
-    for(int i=0; i<_heliostats.size(); i++)
+    for(int i=0; i<(int)_heliostats.size(); i++)
     {
         layout_obj lo;
         Heliostat* H = _heliostats.at(i);

@@ -176,7 +176,7 @@ public:
 
 	virtual int init() = 0;
 	virtual int call( double time, double step, int ncall ) = 0;
-	virtual int converged( double time ) { return 0; }
+	virtual int converged( double  ) { return 0; }
 
 protected:
 	double *allocate( size_t idx, int len, double fill = 0 )

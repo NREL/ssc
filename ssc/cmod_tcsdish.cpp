@@ -539,7 +539,7 @@ public:
 			throw exec_error("dish", "failed to setup adjustment factors: " + haf.error());
 
 
-		for (int i = 0; i < count; i++) {
+		for (size_t i = 0; i < count; i++) {
 			hourly[i] = enet[i] * collectors*haf(i);
 			po1[i] = p1[i] * converter;
 			po2[i] = p2[i] * converter;

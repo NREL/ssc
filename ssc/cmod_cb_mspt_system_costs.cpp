@@ -178,7 +178,7 @@ public:
 		{
 			sys_costs.calculate_costs();
 		}
-		catch(C_csp_exception &csp_exception)
+		catch(C_csp_exception &)
 		{
 			throw exec_error("MSPT system costs", util::format("System cost calculations failed. Check that all inputs are properly defined"));
 		}

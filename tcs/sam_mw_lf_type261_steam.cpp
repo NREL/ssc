@@ -562,7 +562,7 @@ public:
 		m_I_bn_des = std::numeric_limits<double>::quiet_NaN();		
 		m_is_sh = false;			
 		m_is_oncethru = std::numeric_limits<double>::quiet_NaN();		
-		m_is_multgeom = std::numeric_limits<double>::quiet_NaN();		
+		m_is_multgeom = false;		
 		m_nModBoil = -1;		
 		m_nModSH = -1;			
 		m_nLoops = -1;			
@@ -660,6 +660,8 @@ public:
 			return max( fP_min, max( m_dot_nd, min(1.0, m_dot_nd + ffrac)) );
 		case 3:			// Temperature topping mode - series
 			return max( fP_min, m_dot_nd );
+		default:
+			return 0.0;
 		}
 	}
 
@@ -698,9 +700,9 @@ public:
 		m_T_startup = value( P_T_STARTUP ) + 273.15;				  //[C] Startup temperature (same as field startup)
 		m_fossil_mode = (int) value( P_FOSSIL_MODE );				// [none] Operation mode for the fossil backup {1=Normal.. 2=supp.. 3=topping}
 		m_I_bn_des = value( P_I_BN_DES );							// [W/m2] Design point irradiation value
-		m_is_sh = (bool) value( P_IS_SH );							// [-] Does the solar field include a superheating section
-		m_is_oncethru = (bool) value( P_IS_ONCETHRU );				// [-] Flag indicating whether flow is once through with superheat
-		m_is_multgeom = (bool) value( P_IS_MULTGEOM );				// [-] Does the superheater have a different geometry from the boiler {1=yes}?
+		m_is_sh = ( value( P_IS_SH ) > 0);							// [-] Does the solar field include a superheating section
+		m_is_oncethru = ( value( P_IS_ONCETHRU ) > 0);				// [-] Flag indicating whether flow is once through with superheat
+		m_is_multgeom = ( value( P_IS_MULTGEOM ) > 0);				// [-] Does the superheater have a different geometry from the boiler {1=yes}?
 		m_nModBoil = (int) value( P_NMODBOIL );						// [none] Number of modules in the boiler section
 		m_nModSH = (int) value( P_NMODSH );							// [none] Number of modules in the superheater section
 		m_nLoops = (int) value( P_NLOOPS );							// [none] Number of loops 
@@ -1239,7 +1241,7 @@ public:
 		m_GlazingIntactIn.resize( n_rows, n_cols );
 		for( int i = 0; i < n_rows; i++ )
 			for( int j = 0; j < n_cols; j++ )
-				m_GlazingIntactIn.at(i,j) = (bool) glaz_intact.at(i,j);
+				m_GlazingIntactIn.at(i,j) =  (glaz_intact.at(i,j) > 0);
 
 		//[-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
 		n_rows = n_cols = 0;
@@ -1490,9 +1492,9 @@ public:
 			// IAM polynomials
 			double iam_t = 0.0;
 			double iam_l = 0.0;
-			for( int i = 0; i < m_IAM_L.ncols(); i++ )
+			for( size_t i = 0; i < m_IAM_L.ncols(); i++ )
 				iam_l += m_IAM_L.at(0,i)*pow(theta_L,i);
-			for( int i = 0; i < m_IAM_T.ncols(); i++ )
+			for( size_t i = 0; i < m_IAM_T.ncols(); i++ )
 				iam_t += m_IAM_T.at(0,i)*pow(phi_t,i);
 			m_opteff_des.at(0,0) = m_eta_opt_fixed.at(0,0) * iam_t * iam_l;
 		}
@@ -1520,9 +1522,9 @@ public:
 				// IAM polynomials
 				double iam_t = 0.0;
 				double iam_l = 0.0;
-				for( int i = 0; i < m_IAM_L.ncols(); i++ )
+				for( size_t i = 0; i < m_IAM_L.ncols(); i++ )
 					iam_l += m_IAM_L.at(1,i)*pow(theta_L,i);
-				for( int i = 0; i < m_IAM_T.ncols(); i++ )
+				for( size_t i = 0; i < m_IAM_T.ncols(); i++ )
 					iam_t += m_IAM_T.at(1,i)*pow(phi_t,i);
 				m_opteff_des.at(1,0) = m_eta_opt_fixed.at(1,0) * iam_t * iam_l;
 			}

@@ -611,7 +611,7 @@ public:
 				{
 					int nc = steps.front().size() + 2;
 					ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-					for (size_t i = 0; i<nr; i++){
+					for (int i = 0; i<nr; i++){
 
 						for (size_t j = 0; j<steps.front().size(); j++)
 							ssc_hist[i*nc + j] = (ssc_number_t)steps.at(i).at(j);
@@ -1010,7 +1010,7 @@ public:
 				size_t n_F_wc = -1;
 				ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
 				pc->m_F_wc.resize(n_F_wc, 0.0);
-				for( int i = 0; i < n_F_wc; i++ )
+				for( size_t i = 0; i < n_F_wc; i++ )
 					pc->m_F_wc[i] = (double)p_F_wc[i];
 
 				// Set User Defined cycle parameters to appropriate values
@@ -1390,7 +1390,7 @@ public:
 		ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine,0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-		for( int i = 0; i < n_f_turbine; i++ )
+		for( size_t i = 0; i < n_f_turbine; i++ )
 			tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
 		bool is_timestep_input = (as_integer("ppa_multiplier_model") == 1);
@@ -1637,7 +1637,7 @@ public:
 		{
 			sys_costs.calculate_costs();
 		}
-		catch (C_csp_exception &csp_exception)
+		catch (C_csp_exception &)
 		{
 			throw exec_error("MSPT system costs", util::format("System cost calculations failed. Check that all inputs are properly defined"));
 		}
@@ -1801,7 +1801,7 @@ public:
 
 
 		ssc_number_t *p_gen = allocate("gen", count);
-		for( int i = 0; i < count; i++ )
+		for( size_t i = 0; i < count; i++ )
 		{
 			size_t hour = (size_t)ceil(p_time_final_hr[i]);
 			p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));			//[kWe]

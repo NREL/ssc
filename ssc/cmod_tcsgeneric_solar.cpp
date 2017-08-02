@@ -398,7 +398,7 @@ public:
 			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         ssc_number_t *sf_adjust = allocate("sf_adjust", hours);
-        for( int i=0; i<hours; i++)
+        for( size_t i=0; i<hours; i++)
             sf_adjust[i] = sf_haf(i);
         set_unit_value_ssc_array(type260_genericsolar, "sf_adjust");
 
@@ -422,7 +422,7 @@ public:
 
 
 		ssc_number_t *hourly = allocate("gen", count);
-		for (int i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			hourly[i] = enet[i] * 1000 * haf(i); // convert from MWh to kWh
 		}

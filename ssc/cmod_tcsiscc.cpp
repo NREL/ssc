@@ -326,7 +326,7 @@ public:
 			int nr = steps.size();
 			int nc = steps.front().size() + 2;
 			ssc_number_t *ssc_hist = allocate("opt_history", nr, nc);
-			for( size_t i = 0; i<nr; i++ ){
+			for( int i = 0; i<nr; i++ ){
 
 				for( size_t j = 0; j<steps.front().size(); j++ )
 					ssc_hist[i*nc + j] = (ssc_number_t)steps.at(i).at(j);

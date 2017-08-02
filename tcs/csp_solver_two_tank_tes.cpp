@@ -386,8 +386,8 @@ void C_csp_two_tank_tes::init()
 	}
 	else if( ms_params.m_field_fl == HTFProperties::User_defined )
 	{
-		int n_rows = ms_params.m_field_fl_props.nrows();
-		int n_cols = ms_params.m_field_fl_props.ncols();
+		int n_rows = (int)ms_params.m_field_fl_props.nrows();
+		int n_cols = (int)ms_params.m_field_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
 			if( !mc_field_htfProps.SetUserDefinedFluid(ms_params.m_field_fl_props) )
@@ -419,8 +419,8 @@ void C_csp_two_tank_tes::init()
 	}
 	else if( ms_params.m_tes_fl == HTFProperties::User_defined )
 	{
-		int n_rows = ms_params.m_tes_fl_props.nrows();
-		int n_cols = ms_params.m_tes_fl_props.ncols();
+		int n_rows = (int)ms_params.m_tes_fl_props.nrows();
+		int n_cols = (int)ms_params.m_tes_fl_props.ncols();
 		if( n_rows > 2 && n_cols == 7 )
 		{
 			if( !mc_store_htfProps.SetUserDefinedFluid(ms_params.m_tes_fl_props) )

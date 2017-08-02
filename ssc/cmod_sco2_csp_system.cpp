@@ -913,35 +913,35 @@ public:
 			else
 			{	// Off-design call failed, write NaN outptus
 					// Control parameters
-				p_P_comp_in_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_mc_phi_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_recomp_frac_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_P_comp_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_mc_phi_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_recomp_frac_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// System
-				p_eta_thermal_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_P_mc_out[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_T_htf_cold_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_m_dot_co2_full_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_W_dot_net_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_Q_dot_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_eta_thermal_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_P_mc_out[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_T_htf_cold_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_m_dot_co2_full_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_W_dot_net_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_Q_dot_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Compressor
-				p_N_mc_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_mc_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_N_mc_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_mc_tip_ratio_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Recompressor
-				p_rc_phi_1_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_rc_phi_2_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_rc_N_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_rc_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_rc_phi_1_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_phi_2_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_tip_ratio_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Turbine
-				p_t_nu_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_t_N_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_t_tip_ratio_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_t_nu_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_t_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_t_tip_ratio_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Recuperator
-				p_eff_LTR_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_eff_HTR_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_eff_LTR_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_eff_HTR_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// PHX
-				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<double>::quiet_NaN();
-				p_phx_eff_od[n_run] = std::numeric_limits<double>::quiet_NaN();
+				p_T_co2_PHX_in_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_T_co2_PHX_out_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_phx_eff_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 			}
 
 

@@ -57,7 +57,7 @@
 class inverter
 {
 public:
-	inverter(int inverter_type, int num_inverters){
+	inverter(int inverter_type, int ){
 		_inverter_type = inverter_type;
 	}
 
@@ -265,7 +265,7 @@ public:
 	void compute_to_batt_load_grid( double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency = 0.);
 
 	double gen_ac();
-	double update_gen_ac(double P_gen_ac)
+	double update_gen_ac(double )
 	{	
 		// nothing to do
 		return 0.;

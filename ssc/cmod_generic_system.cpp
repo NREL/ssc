@@ -134,7 +134,7 @@ public:
 
 			int c = 0;
 			int i = 0;
-			while (c<8760 && i<count)
+			while (c<8760 && i<(int)count)
 			{
 				double integ = 0;
 				for (size_t j = 0; j<nmult; j++)

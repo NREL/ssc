@@ -1219,7 +1219,7 @@ public:
 			for (int i = 0; i<nyears; i++)
 				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
 
-			for (int i = 0; i < nyears && i<count; i++)
+			for (int i = 0; i < nyears && i<(int)count; i++)
 				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
 					cf.at(CF_battery_replacement_cost_schedule, i + 1);
 		}

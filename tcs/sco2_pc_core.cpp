@@ -7404,25 +7404,37 @@ double fmin_callback_opt_eta_1(double x, void *data)
 double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->design_point_eta(x);
+	if( frame != NULL ) 
+		return frame->design_point_eta(x);
+	else 
+		return 0.0;
 }
 
 double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->off_design_point_value(x);
+	if( frame != NULL ) 
+		return frame->off_design_point_value(x);
+	else 
+		return 0.0;
 }
 
 double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->eta_at_target(x);
+	if( frame != NULL ) 
+		return frame->eta_at_target(x);
+	else 
+		return 0.0;
 }
 
 double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
-	if( frame != NULL ) return frame->opt_od_eta(x);
+	if( frame != NULL ) 
+		return frame->opt_od_eta(x);
+	else 
+		return 0.0;
 }
 
 double P_pseudocritical_1(double T_K)
@@ -7485,7 +7497,10 @@ double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
 double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_poly_curve_r_squared *frame = static_cast<C_poly_curve_r_squared*>(data);
-	if( frame != NULL ) return frame->calc_r_squared(x);
+	if( frame != NULL ) 
+		return frame->calc_r_squared(x);
+	else 
+		return 0.0;
 }
 
 bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<double> y_data, int n_coefs, std::vector<double> & coefs_out, double & r_squared)

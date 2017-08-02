@@ -142,7 +142,7 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 		int nread = 1;
 		if( m_first )
 		{
-			nread = (int)time / step;
+			nread = (int)(time / step);
 			m_first = false;
 		}
 

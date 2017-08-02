@@ -1113,7 +1113,7 @@ void Cavity_Calcs::ConvectionClausing1987( int n_panels, util::matrix_t<double> 
 			sum_T_lower += T_s.at(i,j);
 
 	double sum_T_upper = 0.0;
-	for( int i = m_n_nodes - CE; i < m_n_nodes; i++ )
+	for( int i = m_n_nodes - (int)CE; i < m_n_nodes; i++ )
 		for( int j = 0; j < n_panels; j++ )
 			sum_T_upper += T_s.at(i,j);
 

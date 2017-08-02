@@ -461,7 +461,7 @@ public:
 			double kWhperkW = 0.0;
 			double nameplate = geo_outputs.md_GrossPlantOutputMW*1000; // in kW
 			double annual_energy = 0.0;
-			for (int i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)
+			for (size_t i = 0; i < geo_inputs.mi_ProjectLifeYears * 8760; i++)
 			{
 				annual_energy += geo_outputs.maf_hourly_power[i];
 //				pgen[i] = geo_outputs.maf_hourly_power[i];

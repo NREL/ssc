@@ -112,7 +112,7 @@ public:
 
 		bool bHeaderOnly = as_boolean("scan_header_only");
 
-		double wind, dir, temp, pres, closest_speed_meas_ht, closest_dir_meas_ht;
+		double wind, dir, temp, pres, closest_speed_meas_ht=0, closest_dir_meas_ht=0;
 		if (bHeaderOnly) {
 			if (!wf.read(as_double("requested_ht"), &wind, &dir, &temp, &pres, &closest_speed_meas_ht, &closest_dir_meas_ht))
 				throw exec_error("windpower", util::format("error reading wind resource file at %d: ", 1) + wf.error());

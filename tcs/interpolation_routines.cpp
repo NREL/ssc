@@ -333,7 +333,7 @@ bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
 {
 	// Initialize class member data
 	m_2axis_table = table;
-	double nrows = table.nrows();
+	int nrows = (int)table.nrows();
 	if( nrows < 9 )
 		return false;
 	
@@ -570,7 +570,7 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 
 void LUdcmp::solve(MatDoub &b, MatDoub &x)
 {
-    unsigned int i,j,m=b.front().size();
+    int i,j,m=(int)b.front().size();
     if (b.size() != n || x.size() != n || b.front().size() != x.front().size())
         throw("LUdcmp::solve bad sizes");
     VectDoub xx(n);
@@ -622,7 +622,7 @@ Powvargram::Powvargram(MatDoub &x, VectDoub &y, const double beta, const double 
 	bet = beta;
 	nugsq = nug*nug;
 
-	unsigned int i,j,k,npt=x.size(),ndim=x.front().size();
+	int i,j,k,npt=(int)x.size(),ndim=(int)x.front().size();
 	double rb,num=0.,denom=0.;
 	for (i=0;i<npt;i++) {
 		for (j=i+1;j<npt;j++) {

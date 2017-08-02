@@ -127,24 +127,24 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
 			double time_prev = report_time_start;		//[s]
 			for( int i = 0; i < n_report; i++ )
 			{
-				mp_reporting_ts_array[m_counter_reporting_ts_array] += (fmin(v_temp_ts_time_end[i], report_time_end) - time_prev)*mv_temp_outputs[i];	//[units]*[s]
+				mp_reporting_ts_array[m_counter_reporting_ts_array] += (float)((fmin(v_temp_ts_time_end[i], report_time_end) - time_prev)*mv_temp_outputs[i]);	//[units]*[s]
 				time_prev = fmin(v_temp_ts_time_end[i], report_time_end);
 			}
-			mp_reporting_ts_array[m_counter_reporting_ts_array] /= m_report_step;
+			mp_reporting_ts_array[m_counter_reporting_ts_array] /= (float)m_report_step;
 		}
 		else if (m_subts_weight_type == TS_1ST)
 		{	// ************************************************************
 			// Set instantaneous outputs that are reported as the first value
 			//   if multiple csp-timesteps for one reporting timestep
 			// ************************************************************
-			mp_reporting_ts_array[m_counter_reporting_ts_array] = mv_temp_outputs[0];
+			mp_reporting_ts_array[m_counter_reporting_ts_array] = (float)mv_temp_outputs[0];
 		}
 		else if (m_subts_weight_type == TS_LAST)
 		{	// ************************************************************
 			// Set instantaneous outputs that are reported as the first value
 			//   if multiple csp-timesteps for one reporting timestep
 			// ************************************************************
-			mp_reporting_ts_array[m_counter_reporting_ts_array] = mv_temp_outputs[n_report - 1];
+			mp_reporting_ts_array[m_counter_reporting_ts_array] = (float)mv_temp_outputs[n_report - 1];
 		}
 		else
 		{
@@ -169,7 +169,7 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
 void C_csp_reported_outputs::send_to_reporting_ts_array(double report_time_start,
 	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
-	int n_report = v_temp_ts_time_end.size();
+	int n_report = (int)v_temp_ts_time_end.size();
 	if( n_report < 1 )
 	{
 		throw(C_csp_exception("No data to report", "C_csp_reported_outputs::send_to_reporting_ts_array"));

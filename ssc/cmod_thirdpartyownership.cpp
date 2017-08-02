@@ -205,7 +205,7 @@ public:
 		arrp = as_array("annual_energy_value", &count);
 		if (count != nyears+1)
 			throw exec_error("third party ownership", util::format("energy value input wron length (%d) should be (%d)",count, nyears+1));
-		for (i = 0; i < count; i++)
+		for (i = 0; i < (int)count; i++)
 			cf.at(CF_energy_value, i) = (double) arrp[i];
 		
 	

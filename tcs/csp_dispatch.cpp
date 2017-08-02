@@ -1716,7 +1716,7 @@ std::string csp_dispatch_opt::write_ampl()
         
         std::sort( keys.begin(), keys.end(), strcompare );
 
-        for(int k=0; k<keys.size(); k++)
+        for(size_t k=0; k<keys.size(); k++)
             fout << "param " << keys.at(k) << " := " << pars[keys.at(k)] << ";\n";
 
         fout << "# --- indexed parameters ---\n";

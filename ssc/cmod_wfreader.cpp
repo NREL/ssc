@@ -199,7 +199,7 @@ public:
 
 		weather_record wf;
 
-		for (int i=0;i<records;i++)
+		for (int i=0;i<(int)records;i++)
 		{
 			if (!wfile.read( &wf ))
 				throw exec_error("wfreader", "could not read data line " + util::to_string(i+1) + " of 8760");

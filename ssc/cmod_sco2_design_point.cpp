@@ -682,7 +682,7 @@ public:
 			{
 				opt_target_od_params.m_T_mc_in = rc_params.m_T_mc_in;		//[K]
 
-				for( int i = 0; i < n_f_pl; i++ )
+				for( size_t i = 0; i < n_f_pl; i++ )
 				{
 					opt_target_od_params.m_target = (double)f_pl[i] * q_dot_in_des;				//[kWt]
 					log(util::format("Off design simulation at part load = %lg", f_pl[i]));
@@ -740,7 +740,7 @@ public:
 			{
 				opt_target_od_params.m_target = q_dot_in_des;
 
-				for( int i = 0; i < n_T_amb_od; i++ )
+				for( size_t i = 0; i < n_T_amb_od; i++ )
 				{
 					opt_target_od_params.m_T_mc_in = max(rc_cycle.get_design_limits().m_T_mc_in_min, (double)T_amb_od[i] + delta_T_acc + 273.15);	//[K] convert from C and add air cooler deltaT
 					log(util::format("Off design simulation at ambient temperature = %lg", T_amb_od[i]));

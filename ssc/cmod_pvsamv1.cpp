@@ -2305,7 +2305,7 @@ public:
 						}
 						// beam, skydiff, and grounddiff IN THE PLANE OF ARRAY
 						double ibeam, iskydiff, ignddiff;
-						double ipoa; // Container for direct POA measurements
+						double ipoa=0; // Container for direct POA measurements
 						double aoi, stilt, sazi, rot, btd;
 
 

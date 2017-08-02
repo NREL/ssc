@@ -144,7 +144,7 @@ void fcall_get_result( lk::invoke_t &cxt )
 	tcKernel *kern = tcFrame::Instance()->GetKernel();
 	tcKernel::dataset *ds = 0;
 	int idx = 0;
-	while ( ds = kern->get_results( idx++ ) )
+	while ( (ds = kern->get_results( idx++ )) != 0 )
 	{
 		if (ds->uidx == unit && wxString(ds->name.c_str()) == var)
 		{
@@ -290,7 +290,7 @@ public:
 
 	void Update(int ThreadNum, float percent)
 	{
-		if (ThreadNum >= 0 && ThreadNum < m_progbars.size())
+		if (ThreadNum >= 0 && ThreadNum < (int)m_progbars.size())
 		{
 			m_progbars[ThreadNum]->SetValue( (int)percent );
 			m_percents[ThreadNum]->SetValue( wxString::Format("%.1f %%", percent) );
@@ -337,12 +337,12 @@ public:
 		SetSizer(szv);
 	}
 	
-	void OnCancel(wxCommandEvent &evt)
+	void OnCancel(wxCommandEvent &)
 	{
 		m_canceled = true;
 	}
 
-	void OnDialogClose(wxCloseEvent &evt)
+	void OnDialogClose(wxCloseEvent &)
 	{
 		m_canceled = true;
 	}
@@ -487,7 +487,7 @@ void fcall_parallel( lk::invoke_t &cxt )
 	lk::vardata_t &parlist = cxt.arg(0);
 	if ( parlist.type() == lk::vardata_t::VECTOR )
 	{
-		for ( size_t i=0;i<parlist.length() && i < nthread;i++ )
+		for ( int i=0;i<(int)parlist.length() && i < nthread;i++ )
 		{
 			lk::vardata_t &vallist = *parlist.index(i);
 
@@ -637,7 +637,7 @@ public:
 	{
 	}
 
-	virtual bool OnEval( int line )
+	virtual bool OnEval( int  )
 	{
 		wxGetApp().Yield( true );
 		return true;

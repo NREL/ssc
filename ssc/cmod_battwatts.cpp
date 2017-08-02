@@ -247,7 +247,7 @@ public:
 
 		size_t n_recs = 0;
 		ssc_number_t * p_ac = as_array("ac", &n_recs);
-		for (int i = 0; i != n_recs; i++)
+		for (int i = 0; i != (int)n_recs; i++)
 			batt_losses.push_back(0.);
 		for (int m = 0; m != 12; m++)
 			batt_losses_monthly.push_back(0.);
@@ -290,7 +290,7 @@ public:
 			double ts_hour;
 
 			p_ac = as_array("ac", &n_ac);
-			for (int i = 0; i != n_ac; i++)
+			for (int i = 0; i != (int)n_ac; i++)
 				p_ac[i] = (ssc_number_t)(p_ac[i] * 0.001);
 
 			p_load = as_array("load", &n_load);
@@ -311,7 +311,7 @@ public:
 
 			for (hour = 0; hour < 8760; hour++)
 			{
-				for (size_t jj = 0; jj < step_per_hour; jj++)
+				for (int jj = 0; jj < step_per_hour; jj++)
 				{
 					batt.advance(*this, 0, hour, jj, p_ac[count], p_load[count]);
 					p_gen[count] = batt.outGenPower[count];

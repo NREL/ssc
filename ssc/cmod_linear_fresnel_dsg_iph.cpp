@@ -363,7 +363,7 @@ public:
 		{
 			for(int j = 0; j < n_gl_col; j++)
 			{
-				c_lf_dsg.m_GlazingIntactIn(i,j) = glazing_intact_double(i,j);
+				c_lf_dsg.m_GlazingIntactIn(i,j) = (glazing_intact_double(i,j) > 0);
 			}
 		}
 		

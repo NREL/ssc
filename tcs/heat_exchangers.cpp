@@ -1634,8 +1634,8 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 		double inlet = mult_inlet*const_inlet + 1;
 
 		// Set loop inlet conditions
-		mpc_ac->mm_T_co2(inlet, j) = mpc_ac->mm_T_co2((size_t)inlet, j - 1);		//[K]
-		mpc_ac->mm_P_co2(inlet, j) = mpc_ac->mm_P_co2((size_t)inlet, j - 1);		//[kPa]
+		mpc_ac->mm_T_co2((int)inlet, j) = mpc_ac->mm_T_co2((int)inlet, j - 1);		//[K]
+		mpc_ac->mm_P_co2((int)inlet, j) = mpc_ac->mm_P_co2((int)inlet, j - 1);		//[kPa]
 
 		//double deltaT_prev = numeric_limits<double>::quiet_NaN();
 

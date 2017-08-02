@@ -416,14 +416,14 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		int discharge_index = 0;
 		int gridcharge_index = 0;
 		;
-		for (size_t i = 0; i < 6; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			dm_charge[i] = pcharge[i] != 0.0f ? 1 : 0;
 			dm_discharge[i] = pdischarge[i] != 0.0f ? 1 : 0;
 			dm_gridcharge[i] = pgridcharge[i] != 0.0f ? 1 : 0;
 			if (dm_discharge[i])
 			{
-				if (discharge_index < batt_vars->ndischarge_percent)
+				if (discharge_index < (int)batt_vars->ndischarge_percent)
 				{
 					dm_percent_discharge[i + 1] = pdischarge_percent[discharge_index];
 					discharge_index++;
@@ -433,7 +433,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			}
 			if (dm_gridcharge[i])
 			{
-				if (gridcharge_index < batt_vars->ngridcharge_percent)
+				if (gridcharge_index < (int)batt_vars->ngridcharge_percent)
 				{
 					dm_percent_gridcharge[i + 1] = pgridcharge_percent[gridcharge_index];
 					gridcharge_index++;
@@ -464,7 +464,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 					double target = target_power_monthly[month];
 					for (int hour = 0; hour != util::hours_in_month(month + 1); hour++)
 					{
-						for (int step = 0; step != step_per_hour; step++)
+						for (size_t step = 0; step != step_per_hour; step++)
 							target_power.push_back(target);
 					}
 				}
@@ -651,7 +651,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 		double idle_loss = idling_loss[0];
 
 
-		for (size_t m = 0; m != 12; m++)
+		for (int m = 0; m != 12; m++)
 		{
 			if (charging_loss.size() > 1)
 				charge_loss = charging_loss[m];
@@ -660,9 +660,9 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			if (idling_loss.size() > 1)
 				idle_loss = idling_loss[m];
 
-			for (size_t d = 0; d != util::days_in_month((int)m); d++)
+			for (int d = 0; d != util::days_in_month((int)m); d++)
 			{
-				for (size_t h = 0; h != 24; h++)
+				for (int h = 0; h != 24; h++)
 				{
 					for (size_t s = 0; s != step_per_hour; s++)
 					{
@@ -780,7 +780,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 					pv_prediction.push_back(0);
 					load_prediction.push_back(0);
 				}
-				for (int idx = 0;  idx != nrec - 24 * step_per_hour; idx++)
+				for (size_t idx = 0;  idx != nrec - 24 * step_per_hour; idx++)
 				{
 					pv_prediction.push_back(pv[idx]);
 					load_prediction.push_back(load[idx]);
@@ -789,7 +789,7 @@ void battstor::initialize_automated_dispatch(ssc_number_t *pv, ssc_number_t *loa
 		}
 		else
 		{
-			for (int idx = 0; idx != nrec; idx++)
+			for (size_t idx = 0; idx != nrec; idx++)
 			{
 				pv_prediction.push_back(0.);
 				load_prediction.push_back(0.);
@@ -825,7 +825,7 @@ void battstor::check_replacement_schedule(int batt_replacement_option, size_t co
 			return;
 
 		bool replace = false;
-		if (iyear < count_batt_replacement)
+		if (iyear < (int)count_batt_replacement)
 		{
 			ssc_number_t num_repl = batt_replacement[iyear];
 			for (int j_repl = 0; j_repl < num_repl; j_repl++)
@@ -889,7 +889,7 @@ void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_yea
 	outCapacityPercent[idx] = (ssc_number_t)(lifetime_model->capacity_percent());
 }
 
-void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
+void battstor::outputs_topology_dependent(compute_module &, size_t year, size_t hour_of_year, size_t step)
 {
 	size_t idx = (year * 8760 + hour_of_year)*step_per_hour + step;
 
@@ -919,7 +919,7 @@ void battstor::outputs_topology_dependent(compute_module &cm, size_t year, size_
 	}
 }
 
-void battstor::metrics(compute_module &cm, size_t year, size_t hour_of_year, size_t step)
+void battstor::metrics(compute_module &, size_t year, size_t hour_of_year, size_t step)
 {
 	size_t annual_index;
 	nyears > 1 ? annual_index = year + 1 : annual_index = 0;
@@ -927,7 +927,7 @@ void battstor::metrics(compute_module &cm, size_t year, size_t hour_of_year, siz
 
 	if ((hour_of_year == 8759) && (step == step_per_hour - 1))
 	{
-		int replacements = lifetime_model->replacements();
+//		int replacements = lifetime_model->replacements();
 		lifetime_model->reset_replacements();
 		outAnnualGridImportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_import_annual());
 		outAnnualGridExportEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_grid_export_annual());
@@ -1004,9 +1004,9 @@ void battstor::process_messages(compute_module &cm)
 	message dispatch_messages = dispatch_model->get_messages();
 	message thermal_messages = thermal_model->get_messages();
 
-	for (int i = 0; i != dispatch_messages.total_message_count(); i++)
+	for (int i = 0; i != (int)dispatch_messages.total_message_count(); i++)
 		cm.log(dispatch_messages.construct_log_count_string(i), SSC_NOTICE);
-	for (int i = 0; i != thermal_messages.total_message_count(); i++)
+	for (int i = 0; i != (int)thermal_messages.total_message_count(); i++)
 		cm.log(thermal_messages.construct_log_count_string(i), SSC_NOTICE);
 }
 
@@ -1052,6 +1052,8 @@ public:
 			len = nrec;
 			if (batt_meter_position == dispatch_t::BEHIND)
 				power_load = as_array("load", &len);
+			else 
+				power_load = NULL;
 
 			if (len != nrec)
 				throw exec_error("battery", "Load and PV power do not match weatherfile length");
@@ -1065,7 +1067,7 @@ public:
 
 			if (batt_meter_position == dispatch_t::BEHIND)
 			{
-				int batt_dispatch = as_integer("batt_dispatch_choice");
+//				int batt_dispatch = as_integer("batt_dispatch_choice");
 				batt.initialize_automated_dispatch(power_input, power_load);
 			}
 			/* *********************************************************************************************

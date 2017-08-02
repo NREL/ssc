@@ -1503,7 +1503,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf[number_to_move]),
-			lp_yyg->lp_yy_n_chars, (size_t) num_to_read );
+			lp_yyg->lp_yy_n_chars, (int) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->lp_yy_n_chars = lp_yyg->lp_yy_n_chars;
 		}
@@ -1671,7 +1671,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 		else
 			{ /* need more input */
-			int offset = lp_yyg->lp_yy_c_buf_p - lp_yyg->lp_yytext_ptr;
+			int offset = (int)(lp_yyg->lp_yy_c_buf_p - lp_yyg->lp_yytext_ptr);
 			++lp_yyg->lp_yy_c_buf_p;
 
 			switch ( lp_yy_get_next_buffer( lp_yyscanner ) )

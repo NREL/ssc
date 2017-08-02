@@ -109,9 +109,9 @@ public:
 			mat.assign(fl_props1, nrows, ncols);
 
 			util::matrix_t<double> mat_double(nrows, ncols);
-			for( int i = 0; i < nrows; i++ )
+			for( size_t i = 0; i < nrows; i++ )
 			{
-				for( int j = 0; j < ncols; j++ )
+				for( size_t j = 0; j < ncols; j++ )
 				{
 					mat_double(i, j) = (double)mat(i, j);
 				}
@@ -141,9 +141,9 @@ public:
 			mat.assign(fl_props2, nrows, ncols);
 
 			util::matrix_t<double> mat_double(nrows, ncols);
-			for( int i = 0; i < nrows; i++ )
+			for( size_t i = 0; i < nrows; i++ )
 			{
-				for( int j = 0; j < ncols; j++ )
+				for( size_t j = 0; j < ncols; j++ )
 				{
 					mat_double(i, j) = (double)mat(i, j);
 				}

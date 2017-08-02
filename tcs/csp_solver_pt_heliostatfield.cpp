@@ -554,7 +554,7 @@ void C_pt_heliostatfield::init()
 			effs.reserve(npos);
 
             //eta_map = allocate( P_eta_map, npos, 3, 0.);
-			ms_params.m_eta_map.resize_fill(npos, 3.0, 0.0);
+			ms_params.m_eta_map.resize_fill(npos, 3, 0.0);
 
 			m_flux_positions.resize(npos, VectDoub(2) );
 

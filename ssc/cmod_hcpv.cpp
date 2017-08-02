@@ -322,14 +322,14 @@ public:
 		if (rad_count != eff_count)
 			throw exec_error("hcpv", "hcpv model radiation and efficiency arrays must have the same number of values");
 
-		for (int i = 0; i<rad_count; i++)
+		for (size_t i = 0; i<rad_count; i++)
 		{
 			if (i > 0 && dnrad[i] <= dnrad[i - 1])
 				throw exec_error("hcpv", "hcpv model radiation levels must increase monotonically");	
 		}
 
 		int refidx = as_integer("module_reference");
-		if (refidx < 0 || refidx >= rad_count)
+		if (refidx < 0 || refidx >= (int)rad_count)
 			throw exec_error("hcpv", util::format("invalid reference condition, [0..%d] reqd", rad_count - 1));
 
 		double Ib_ref = dnrad[refidx];

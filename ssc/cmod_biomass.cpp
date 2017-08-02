@@ -405,7 +405,7 @@ public:
 		if (tou_opt == 1)
 		{
 			disp = as_array("biopwr.plant.disp.power", &disp_count);
-			for (int i = 0; i<disp_count; i++)
+			for (size_t i = 0; i<disp_count; i++)
 			{
 				if (disp[i]>max_turb)
 				{

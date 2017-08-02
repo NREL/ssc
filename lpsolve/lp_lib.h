@@ -56,6 +56,12 @@
 /* Define user program feature option switches                               */
 /* ------------------------------------------------------------------------- */
 
+// redefinition of macros
+#ifdef _MSC_VER  /* Microsoft Visual C++ -- warning level 4 */
+#pragma warning( disable : 4005)  /* redefinition of macros isnan */
+#endif
+
+
 # if defined _WIN32 && !defined __GNUC__
 #  define isnan _isnan
 # endif
