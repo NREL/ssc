@@ -713,7 +713,7 @@ weatherdata::weatherdata( var_data *data_table )
 
 	if ( data_table->type != SSC_TABLE ) 
 	{
-		m_error = "solar data must be an SSC table variable with fields: "
+		m_message = "solar data must be an SSC table variable with fields: "
 			"(numbers): lat, lon, tz, elev, "
 			"(arrays): year, month, day, hour, minute, gh, dn, df, poa, wspd, wdir, tdry, twet, tdew, rhum, pres, snow, alb, aod";
 		return;
@@ -747,11 +747,11 @@ weatherdata::weatherdata( var_data *data_table )
 	
 	m_nRecords = (size_t)nrec;
 
-	int nmult = nrec / 8760;
-
 	// estimate time step
-	if ( nmult * 8760 == nrec )
+	int nmult = 0;
+	if ( m_nRecords%8760 == 0 )
 	{
+		nmult = nrec / 8760;
 		m_stepSec = 3600 / nmult;
 		m_startSec = m_stepSec / 2;
 	}
@@ -766,6 +766,8 @@ weatherdata::weatherdata( var_data *data_table )
 	}
 	else
 	{
+		m_message = "could not determine timestep in weatherdata";
+		m_ok = false;
 		return;
 	}
 
@@ -831,10 +833,6 @@ weatherdata::~weatherdata()
 		delete m_data[i];
 }
 
-const char *weatherdata::error( size_t idx )
-{
-	return ( idx == 0 && m_error.size() > 0 ) ? m_error.c_str() : 0;
-}
 
 int weatherdata::name_to_id( const char *name )
 {
@@ -896,12 +894,6 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 	return std::numeric_limits<ssc_number_t>::quiet_NaN();
 }
 
-bool weatherdata::header( weather_header *h )
-{
-	*h = m_hdr;
-	return true;
-}
-
 bool weatherdata::read( weather_record *r )
 {
 	if ( m_index >= 0 && m_index < m_data.size() )
@@ -911,11 +903,6 @@ bool weatherdata::read( weather_record *r )
 	}
 	else
 		return false;
-}
-
-void weatherdata::rewind()
-{
-	m_index = 0;
 }
 
 bool weatherdata::has_data_column( size_t id )

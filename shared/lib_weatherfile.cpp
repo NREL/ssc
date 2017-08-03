@@ -493,11 +493,6 @@ void weatherfile::reset()
 }
 
 
-bool weatherfile::ok()
-{
-	return m_ok;
-}
-
 int weatherfile::type()
 {
 	return m_type;
@@ -1459,18 +1454,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	return true;
 }
 
-void weatherfile::rewind()
-{
-	m_index = 0;
-}
-
-bool weatherfile::header( weather_header *h )
-{
-	if ( !h ) return false;
-	*h = m_hdr;
-	return true;
-}
-
 bool weatherfile::read( weather_record *r )
 {
 	if ( r && m_index >= 0 && m_index < m_nRecords)
@@ -1512,35 +1495,6 @@ void weatherfile::set_counter_to(int cur_index)
 {
     //set the m_index to a specified value. next read will be at this time step index.
     m_index = cur_index;
-}
-
-int weatherfile::get_counter_value()
-{
-    return (int)m_index;
-}
-
-
-
-
-
-size_t weatherfile::start_sec() // start time in seconds, 0 = jan 1st midnight
-{
-	return m_startSec;
-}
-
-size_t weatherfile::step_sec() // step time in seconds
-{
-	return m_stepSec;
-}
-
-size_t weatherfile::nrecords() // number of data records in file	
-{
-	return m_nRecords;
-}
-
-const char *weatherfile::error( size_t idx )
-{
-	return ( idx == 0 && m_message.size() > 0 ) ? m_message.c_str() : 0;
 }
 
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )
@@ -1618,3 +1572,4 @@ bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string 
 	return true;
 
 }
+

@@ -136,10 +136,7 @@ struct weather_record {
 
 class weather_data_provider
 {
-	bool m_hdrInitialized;
-	weather_header m_hdr;
 public:
-	
 	enum { YEAR, MONTH, DAY, HOUR, MINUTE,
 		GHI, DNI, DHI, POA, 
 		TDRY, TWET, TDEW, 
@@ -147,62 +144,71 @@ public:
 		RH, PRES, SNOW, ALB, AOD,
 	_MAXCOL_ };
 
+protected:
+	bool m_ok;
+	bool m_msg;
+	int m_startYear;
+	double m_time;
+	// error messages
+	std::string m_message;
+
+	size_t m_startSec;
+	size_t m_stepSec;
+	size_t m_nRecords;
+	size_t m_index;
+	
+	weather_header m_hdr;
+	bool m_hdrInitialized;
+
+public:
 	weather_data_provider() : m_hdrInitialized( false ) { }
 	virtual ~weather_data_provider() { }
 	
-	// pure virtuals
-	virtual bool header( weather_header *hdr ) = 0;		
-	virtual size_t start_sec() = 0; // start time in seconds, 0 = jan 1st midnight
-	virtual size_t step_sec() = 0; // step time in seconds
-	virtual size_t nrecords() = 0; // number of data records in file		
-	virtual bool read( weather_record *r ) = 0; // reads one more record
-	virtual void rewind() = 0;
-	virtual const char *error( size_t idx = 0 ) = 0;
-	virtual bool has_data_column( size_t id ) = 0;
-
-	
-	// some helper methods for ease of use of htis class
-	virtual weather_header &header()  {
-		if ( !m_hdrInitialized )
-			m_hdrInitialized = header( &m_hdr );
-			
-		return m_hdr;
+	bool header(weather_header *hdr)
+	{
+		if (!hdr) return false;
+		*hdr = m_hdr;
+		return true;
 	}
+	bool ok(){ return m_ok; }
+	size_t start_sec(){ return m_startSec; } // start time in seconds, 0 = jan 1st midnight
+	size_t step_sec(){ return m_stepSec; } // step time in seconds
+	size_t nrecords(){ return m_nRecords; } // number of data records in file	
+	int get_counter_value(){ return (int)m_index; }
+	void rewind(){ m_index = 0; }
+	
+	bool has_message() { return m_message.size() > 0; }
+	std::string message() { return m_message; }
 
 	double lat() { return header().lat; }
 	double lon() { return header().lon; }
 	double tz() { return header().tz; }
 	double elev() { return header().elev; }
 
+	// virtual functions specific to weather data source
+	virtual bool has_data_column(size_t id) = 0;
+	virtual bool read( weather_record *r ) = 0; // reads one more record
+	// some helper methods for ease of use of this class
+	virtual weather_header &header()  {
+		if ( !m_hdrInitialized )
+			m_hdrInitialized = header( &m_hdr );
+			
+		return m_hdr;
+	}
 };
 
 class weatherfile : public weather_data_provider
 {
 private:
-	bool m_ok;
-	bool m_msg;
 	int m_type;
 	std::string m_file;
-	int m_startYear;
-	double m_time;
-	std::string m_message;
-
 
 	struct column
 	{
 		int index; // used for wfcsv to get column index in CSV file from which to read
 		std::vector<float> data;
 	};
-	
-	size_t m_startSec;
-	size_t m_stepSec;
-	size_t m_nRecords;
-
 	column m_columns[_MAXCOL_];
-	size_t m_index;
-
-
-	weather_header m_hdr;
 
 public:
 	weatherfile();
@@ -210,34 +216,21 @@ public:
 	virtual ~weatherfile();
 
 	void reset();
-
-    void set_counter_to(int cur_index); 
-    int get_counter_value();
 	enum { INVALID, TMY2, TMY3, EPW, SMW, WFCSV };
-
-	bool ok();
 	int type();
 	std::string filename();
+
 	bool open( const std::string &file, bool header_only = false, bool interp = false );
 
-	bool has_message() { return m_message.size() > 0; }
-	std::string message() { return m_message; }
-
-
+	bool read( weather_record *r ); // reads one more record
+	bool has_data_column( size_t id );
+    void set_counter_to(int cur_index); 
+	
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );
-
-	
-	virtual bool header( weather_header *hdr );		
-	virtual bool read( weather_record *r ); // reads one more record
-	virtual void rewind();	
-	virtual size_t start_sec(); // start time in seconds, 0 = jan 1st midnight
-	virtual size_t step_sec(); // step time in seconds
-	virtual size_t nrecords(); // number of data records in file		
-	virtual const char *error( size_t idx = 0 );
-	virtual bool has_data_column( size_t id );
 	
 };
+
 
 
 #endif
