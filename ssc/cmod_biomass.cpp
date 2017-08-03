@@ -341,7 +341,7 @@ public:
 		int transport_fuel = as_integer("biopwr.emissions.transport_fuel"); /*0 if diesel, 1 if biodiesel*/
 		int transport_legs = as_integer("biopwr.emissions.transport_legs"); /*0 if 1-stage, 1 if 2-stage*/
 		double transport_predist = as_double("biopwr.emissions.transport_predist"); /*distance to preprocessing*/
-		int transport_long = as_integer("biopwr.emissions.transport_long"); /*0 if no long distance option, 1 if yes*/
+//		int transport_long = as_integer("biopwr.emissions.transport_long"); /*0 if no long distance option, 1 if yes*/
 		double transport_longmiles = as_double("biopwr.emissions.transport_longmiles"); /*max distance for truck transport*/
 		int transport_longopt = as_integer("biopwr.emissions.transport_longopt"); /*0 if rail, 1 if barge*/
 		int pre_chipopt = as_integer("biopwr.emissions.pre_chipopt"); /*0 if no, 1 if yes*/
@@ -1099,9 +1099,9 @@ public:
 			ash += frac[i] * _ash[i];
 		}
 		double tpy_ash = total_feedstock * ash;
-		double tpy_nitrogen = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*2.6290) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*2.501) + (((frac[10] + frac[11])*4.7587) + (frac[12] * 3.8076))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
-		double tpy_sulfur = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*0.1) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*0.3) + (((frac[10] + frac[11])*5.8540) + (frac[12] * 10.3309))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
-		double tpy_gwp = 0 + (total_coal*((frac[10] * 0.767*(1 - 0.062)*3.7) + (frac[11] * 0.608*(1 - 0.091)*3.7) + (frac[12] * 0.498*(1 - 0.177)*3.7))); /*accounts for carbon released from any coal feedstocks*/
+//		double tpy_nitrogen = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*2.6290) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*2.501) + (((frac[10] + frac[11])*4.7587) + (frac[12] * 3.8076))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
+//		double tpy_sulfur = (((frac[5] + frac[6] + frac[7] + frac[8] + frac[9])*0.1) + ((frac[0] + frac[1] + frac[2] + frac[3] + frac[4])*0.3) + (((frac[10] + frac[11])*5.8540) + (frac[12] * 10.3309))) / 2000.0 * annual_output / 1000.0; /*from eGrid*/
+//		double tpy_gwp = 0 + (total_coal*((frac[10] * 0.767*(1 - 0.062)*3.7) + (frac[11] * 0.608*(1 - 0.091)*3.7) + (frac[12] * 0.498*(1 - 0.177)*3.7))); /*accounts for carbon released from any coal feedstocks*/
 
 		//Emissions calculations - block 1 (Biomass growth/avoided residue and harvest/collection), for details see Excel file SAM Equations_12_19_11
 		double npci = 1628.491234; /*g CO2/lb nitrogen used*/
@@ -1196,7 +1196,7 @@ public:
 		double preprocessing_diesel = pre_chipopt * (0.02387 + 0.01982) * dry_total * 1000000.0 / annual_output;
 		double preprocessing_kwh = ((pre_grindopt * (dry_total * 0.2137 * 1000000.0 / 3412.14)) + (pre_pelletopt * (dry_total * 0.2835 * 1000000.0 / 3412.14))); /*kWh / year*/
 		double preprocessing_ems = (preprocessing_kwh * grid_intensity / annual_output) + (preprocessing_diesel * 0.09474); /*g CO2/kWh*/
-		double preprocessing_ele = preprocessing_kwh / annual_output; /*kWh used/kWh out*/
+//		double preprocessing_ele = preprocessing_kwh / annual_output; /*kWh used/kWh out*/
 
 		//Emissions calculations block 4: Drying and storage
 		double drying_kwh = 0; /*kwh used/kwh produced*/
@@ -1211,7 +1211,7 @@ public:
 
 		//Emissions calculations block 5: combustion
 		double comb_ems = frac_c * total * (44.0 / 12.0) * 907184.74 / annual_output; /*g CO2/kwh */
-		double comb_ash = ash * total; /*tons/year*/
+//		double comb_ash = ash * total; /*tons/year*/
 		double comb_ems_neg = -(biomass_frac_c * dry_total * (44.0 / 12.0) * 907184.74 / annual_output); /*negative g CO2/kwh */
 
 		double final_emissions[7];

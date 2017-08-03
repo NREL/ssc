@@ -257,9 +257,9 @@ c     windmd = wind speed at module height
 c     xlen = hydrodynamic length of module              */
 
 	int i,j,iflagc=0;
-	double absorb=0.83,backrt,boltz=5.669e-8,cap,capo=11000.0,conair,convrt,denair;
+	double absorb=0.83,backrt,boltz=5.669e-8,cap=0,capo=11000.0,conair,convrt=0,denair;
 	double dtime,eigen,emmis=0.84,grashf,hconv,hforce,hfree,hgrnd,reynld,sunn;
-	double suno,tamb,tave,tgrat,tgrnd,tmod,tmodo,tsky,visair,windmd,xlen=0.5;
+	double suno,tamb,tave,tgrat=0,tgrnd,tmod,tmodo,tsky,visair,windmd,xlen=0.5;
 	double hsky,ex;
 
 /* Set time step to a large number for very first calc. After
@@ -749,7 +749,7 @@ static void incident2(int mode,double tilt,double sazm,double rlim,double zen,do
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
 	When xsazm = azm : rot = 0, tilt = xtilt, and sazm = xsazm = azm  */
 
-	double arg,pi=3.1415927,DTOR=0.017453293,inc,xsazm,xtilt,rot;
+	double arg,pi=3.1415927,DTOR=0.017453293,inc=0,xsazm,xtilt,rot;
 
 	switch ( mode )
 		{

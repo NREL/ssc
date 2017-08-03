@@ -129,7 +129,7 @@ public:
 
 		// HP turbine actual outlet conditions
 		water_PH(P_HP_out, h_HP_out_des, &wp);
-		double T_rh_in_des = wp.temp;			//[K] Design reheat inlet temperature
+//		double T_rh_in_des = wp.temp;			//[K] Design reheat inlet temperature
 
 		// Reheater outlet (LP turbine inlet)
 		water_TP(T_rh_out_ref, P_HP_out, &wp);

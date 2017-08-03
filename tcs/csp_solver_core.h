@@ -360,8 +360,8 @@ public:
 
 	struct S_csp_tou_outputs
 	{
-        size_t m_csp_op_tou;
-		size_t m_pricing_tou;
+        int m_csp_op_tou;
+		int m_pricing_tou;
 		double m_f_turbine;
 		double m_price_mult;
 

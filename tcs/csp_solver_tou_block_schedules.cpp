@@ -252,13 +252,13 @@ void C_csp_tou_block_schedules::call(double time_s, C_csp_tou::S_csp_tou_outputs
 
 	size_t csp_op_tou = (size_t)ms_params.mc_csp_ops.m_hr_tou[i_hour];
 
-	tou_outputs.m_csp_op_tou = csp_op_tou;
+	tou_outputs.m_csp_op_tou = (int)csp_op_tou;
 	
 	tou_outputs.m_f_turbine = ms_params.mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][csp_op_tou-1];
 	
 	if (ms_params.mc_pricing.mv_is_diurnal)
 	{
-		size_t pricing_tou = (size_t)ms_params.mc_pricing.m_hr_tou[i_hour];
+		int pricing_tou = (int)ms_params.mc_pricing.m_hr_tou[i_hour];
 		tou_outputs.m_pricing_tou = pricing_tou;
 		tou_outputs.m_price_mult = ms_params.mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][pricing_tou - 1];
 	}
