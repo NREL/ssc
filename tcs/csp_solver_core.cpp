@@ -1744,8 +1744,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+                        //sim failed
+                        m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+                        are_models_converged = false;
+                        break;
+
+						/*throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));*/
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -4233,8 +4238,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, CR_DF__PC_MAX__TES_FULL__AUX_OFF failed to find a solution"
-							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+                        if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
+                        {
+                            m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+                            are_models_converged = false;
+                            break;
+                        }
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
