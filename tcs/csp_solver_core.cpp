@@ -4255,10 +4255,12 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 				if ((q_dot_pc_defocus - q_pc_max) / q_pc_max > 1.E-3)
 				{
-					if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
+
+                    if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, %s should not need to defocus to meet thermal power requirements"
-							" because STARTUP_CONTROLLED should choose a mass flow rate that satisfies thermal power limits", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+						m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+                        are_models_converged = false;
+                        break;
 					}
 
 					C_mono_eq_cr_on__pc_target__tes_full__defocus c_eq(this, pc_mode, q_pc_max);
