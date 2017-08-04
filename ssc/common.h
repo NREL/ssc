@@ -149,13 +149,14 @@ class weatherdata : public weather_data_provider
 	vec get_vector(var_data *v, const char *name, int *maxlen = 0);
 	ssc_number_t get_number(var_data *v, const char *name);
 
-	int name_to_id(const char *name);
+	size_t name_to_id(const char *name);
 
 public:
 	// creates vector of weather_records to store data
 	weatherdata(var_data *data_table);
 	virtual ~weatherdata();
 
+	void set_counter_to(size_t cur_index);
 	bool read(weather_record *r); // reads one more record	
 	bool has_data_column(size_t id);
 };

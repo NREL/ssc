@@ -834,7 +834,7 @@ weatherdata::~weatherdata()
 }
 
 
-int weatherdata::name_to_id( const char *name )
+size_t weatherdata::name_to_id( const char *name )
 {
 	std::string n( util::lower_case( name ) );
 
@@ -875,7 +875,7 @@ weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *ma
 			if ( maxlen && x.len > *maxlen )
 				*maxlen = x.len;
 
-			int id = name_to_id(name);
+			size_t id = name_to_id(name);
 			if ( id >= 0 && !has_data_column( id ) ) m_columns.push_back( id );
 		}
 	}
@@ -892,6 +892,12 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 	}
 
 	return std::numeric_limits<ssc_number_t>::quiet_NaN();
+}
+
+void weatherdata::set_counter_to(size_t cur_index){
+	if (cur_index >= 0 && cur_index < m_data.size()){
+		m_index = cur_index;
+	}
 }
 
 bool weatherdata::read( weather_record *r )

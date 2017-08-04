@@ -224,7 +224,8 @@ public:
 
 	bool read( weather_record *r ); // reads one more record
 	bool has_data_column( size_t id );
-    void set_counter_to(int cur_index); 
+	//set the m_index to a specified value. next read will be at this time step index.
+    void set_counter_to(size_t cur_index); 
 	
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );

@@ -1491,10 +1491,11 @@ bool weatherfile::has_data_column( size_t id )
 }
 
 
-void weatherfile::set_counter_to(int cur_index)
+void weatherfile::set_counter_to(size_t cur_index)
 {
-    //set the m_index to a specified value. next read will be at this time step index.
-    m_index = cur_index;
+	if (cur_index >= 0 && cur_index < m_nRecords){
+		m_index = cur_index;
+	}
 }
 
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )
