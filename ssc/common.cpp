@@ -47,6 +47,7 @@
 *  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************************************/
 
+#include <string>
 #include "common.h"
 
 var_info vtab_standard_financial[] = {
@@ -719,17 +720,38 @@ weatherdata::weatherdata( var_data *data_table )
 		return;
 	}
 
+
 	m_hdr.lat = get_number( data_table, "lat" );
 	m_hdr.lon = get_number( data_table, "lon" );
 	m_hdr.tz = get_number( data_table, "tz" );
 	m_hdr.elev = get_number( data_table, "elev" );
 
-	int nrec = 0;
-	vec year = get_vector( data_table, "year", &nrec );
-	vec month = get_vector( data_table, "month", &nrec );
-	vec day = get_vector( data_table, "day", &nrec );
-	vec hour = get_vector( data_table, "hour", &nrec );
-	vec minute = get_vector( data_table, "minute", &nrec );
+	// make sure all data columns have same number of entries, using irradiance as reference
+	size_t nrec = 0;
+	if (var_data *value = data_table->table.lookup("gh"))
+	{
+		if (value->type == SSC_ARRAY) nrec = value->num.length();
+	}
+	else if (var_data *value = data_table->table.lookup("dn"))
+	{
+		if (value->type == SSC_ARRAY) nrec = value->num.length();
+	}
+	else if (var_data *value = data_table->table.lookup("df"))
+	{
+		if (value->type == SSC_ARRAY) nrec = value->num.length();
+	}
+	if (nrec == 0)
+	{
+		m_message = "could not find gh, dn, nor df columns";
+		m_ok = false;
+		return;
+	}
+
+	vec year = get_vector( data_table, "year");
+	vec month = get_vector( data_table, "month");
+	vec day = get_vector( data_table, "day");
+	vec hour = get_vector( data_table, "hour");
+	vec minute = get_vector( data_table, "minute");
 	vec gh = get_vector( data_table, "gh", &nrec );
 	vec dn = get_vector( data_table, "dn", &nrec );
 	vec df = get_vector( data_table, "df", &nrec );
@@ -744,11 +766,11 @@ weatherdata::weatherdata( var_data *data_table )
 	vec snow = get_vector( data_table, "snow", &nrec ); 
 	vec alb = get_vector( data_table, "alb", &nrec ); 
 	vec aod = get_vector( data_table, "aod", &nrec ); 
-	
-	m_nRecords = (size_t)nrec;
+
+	m_nRecords = nrec;
 
 	// estimate time step
-	int nmult = 0;
+	size_t nmult = 0;
 	if ( m_nRecords%8760 == 0 )
 	{
 		nmult = nrec / 8760;
@@ -760,7 +782,7 @@ weatherdata::weatherdata( var_data *data_table )
 		// Check if the weather file contains a leap day
 		// if so, correct the number of nrecords 
 		m_nRecords = m_nRecords/8784*8760;
-		nmult = (int)m_nRecords/8760;
+		nmult = m_nRecords/8760;
 		m_stepSec = 3600 / nmult;
 		m_startSec = m_stepSec / 2;
 	}
@@ -861,7 +883,7 @@ size_t weatherdata::name_to_id( const char *name )
 	return -1;
 }
 
-weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *maxlen )
+weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, size_t *len )
 {
 	vec x;
 	x.p = 0;
@@ -870,11 +892,13 @@ weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *ma
 	{
 		if ( value->type == SSC_ARRAY )
 		{
-			x.len = (int) value->num.length();
+			x.len = value->num.length();
 			x.p = value->num.data();
-			if ( maxlen && x.len > *maxlen )
-				*maxlen = x.len;
-
+			if (len && *len != x.len) {
+				std::string name_s(name);
+				m_message = name_s + " number of entries doesn't match with other fields";
+				m_ok = false;
+			}
 			size_t id = name_to_id(name);
 			if ( id >= 0 && !has_data_column( id ) ) m_columns.push_back( id );
 		}

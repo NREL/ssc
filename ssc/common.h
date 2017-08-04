@@ -143,10 +143,10 @@ class weatherdata : public weather_data_provider
 
 	struct vec {
 		ssc_number_t *p;
-		int len;
+		size_t len;
 	};
 
-	vec get_vector(var_data *v, const char *name, int *maxlen = 0);
+	vec get_vector(var_data *v, const char *name, size_t *len = 0);
 	ssc_number_t get_number(var_data *v, const char *name);
 
 	size_t name_to_id(const char *name);
