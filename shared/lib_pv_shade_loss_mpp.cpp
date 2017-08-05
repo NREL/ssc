@@ -87,7 +87,6 @@ bool ShadeDB8_mpp::get_index(const size_t &N, const size_t &d, const  size_t &t,
 	bool ret_val = false;
 	//size_t ret_ndx=-1;
 	size_t length=0, offset=0;
-	size_t length_t =10, length_d=10;
 	size_t iN = 0, id = 0, it = 0;
 
 	// ret_ndx==0 is an error condition.
@@ -448,8 +447,6 @@ double ShadeDB8_mpp::get_shade_loss(double &gpoa, double &dpoa, std::vector<doub
 				double deltaTc = n*k*(Tc + 273.15) / q; //Thermal voltage
 				double VMaxSTCStrUnshaded = str_vmp_stc;
 				double scale_g = gpoa / 1000.0;
-				double TcVmpMax = vmpp[p_max_ind] * VMaxSTCStrUnshaded + C2*Ns*deltaTc*::log(scale_g) + C3*Ns*pow((deltaTc*::log(scale_g)), 2) + BetaVmp*(Tc - 25);
-				double TcVmpScale = TcVmpMax / vmpp[p_max_ind] / VMaxSTCStrUnshaded;
 
 				std::vector<double> TcVmps;
 

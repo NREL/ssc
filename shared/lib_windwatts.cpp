@@ -442,7 +442,6 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 	for (size_t i=0; i<m_iNumberOfTurbinesInFarm; i++) // downwind turbines, but starting with most upwind and working downwind
 	{
 		double dDeficit = 0, Iadd = 0, dTotalTI = aTurbulence_intensity[i];
-		double dTOut=0, dThrustCoeff=0;
 		for (size_t j=0; j<i; j++) // upwind turbines - turbines upwind of turbine[i]
 		{
 			// distance downwind = distance from turbine i to turbine j along axis of wind direction
@@ -706,7 +705,6 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 	matEVWakeWidths.at(iTurbineNumber,0) = Bw;
 
 	// j = 0 is initial conditions, j = 1 is the first step into the unknown
-	int iterations = 5;
 	for(size_t j=0; j<matEVWakeDeficits.ncols()-1; j++)
 	{
 		x = MIN_DIAM_EV + (double)(j) * m_dAxialResolution;	
@@ -907,7 +905,6 @@ void wind_power_calculator::turbine_power( double fWindVelocityAtDataHeight, dou
 
 		// this is a curve specific to a particular turbine, ONLY USEFUL FOR COMPARING SAM TO openWind
 		double dThrustCurve[26] = {0.0, 0.0, 0.0, 0.8, 0.8, 0.82, 0.84, 0.79, 0.72, 0.66, 0.59, 0.53, 0.46,0.40,0.33,0.28,0.23,0.20,0.16,0.13,0.12,0.12,0.11,0.11,0.10,0.10};
-		bool found=false;
 
 		int i = (int) fabs(fWindSpeedAtHubHeight);
 		if ( fabs(fWindSpeedAtHubHeight)>25 )

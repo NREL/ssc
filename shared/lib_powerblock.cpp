@@ -1599,27 +1599,25 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 	// Only call the parameter equations at the beginning of the simulation. Once they're established, they don't need to be reset each time.
 	//if(fcall == 1.0)
 	//if(m_bFirstCall)
-	if(true)
-	{
-		// Values that can be estimated--------
-		//-dry
-		T_hot_diff = 3.0;				//[C] Temperature difference between saturation steam and condenser outlet air temp
-		eta_acfan_s = 0.8;				//[-] Fan isentropic efficiency
-		eta_acfan = pow(0.98,3);		//[-] Fan mechanical efficiency
-		C_air = 1005.0;					//[J/kg-K] specific heat of air (This is relatively constant)
-		R = 286.986538;					//[J/kg-K] Gas constant for air = 8314./28.97
 
-		//-wet
-		drift_loss_frac = 0.001;		//Drift loss fraction
-		blowdown_frac = 0.003;			//Blowdown fraction
-		dP_evap = 0.37*1.e5;			//[Pa] Pressure drop across the condenser and cooling tower
-		eta_pump = 0.75;				//Total pump efficiency
-		eta_pcw_s = 0.8;				//Isentropic cooling water pump efficiency
-		eta_wcfan = 0.75;				//Fan mechanical efficiency
-		eta_wcfan_s = 0.8;				//Fan isentropic efficiency
-		P_ratio_wcfan = 1.0025;			//Fan pressure ratio
-		mass_ratio_wcfan = 1.01;		//Ratio of air flow to water flow in the cooling tower
-	}
+	// Values that can be estimated--------
+	//-dry
+	T_hot_diff = 3.0;				//[C] Temperature difference between saturation steam and condenser outlet air temp
+	eta_acfan_s = 0.8;				//[-] Fan isentropic efficiency
+	eta_acfan = pow(0.98, 3);		//[-] Fan mechanical efficiency
+	C_air = 1005.0;					//[J/kg-K] specific heat of air (This is relatively constant)
+	R = 286.986538;					//[J/kg-K] Gas constant for air = 8314./28.97
+
+	//-wet
+	drift_loss_frac = 0.001;		//Drift loss fraction
+	blowdown_frac = 0.003;			//Blowdown fraction
+	dP_evap = 0.37*1.e5;			//[Pa] Pressure drop across the condenser and cooling tower
+	eta_pump = 0.75;				//Total pump efficiency
+	eta_pcw_s = 0.8;				//Isentropic cooling water pump efficiency
+	eta_wcfan = 0.75;				//Fan mechanical efficiency
+	eta_wcfan_s = 0.8;				//Fan isentropic efficiency
+	P_ratio_wcfan = 1.0025;			//Fan pressure ratio
+	mass_ratio_wcfan = 1.01;		//Ratio of air flow to water flow in the cooling tower
 
 	//**** Calculations for design conditions
 	Q_reject_des = P_cycle*(1.0/eta_ref - 1.0);    	    //Heat rejection from the cycle

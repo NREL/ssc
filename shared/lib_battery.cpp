@@ -638,7 +638,6 @@ void voltage_dynamic_t::parameter_compute()
 {
 	// Determines parameters according to page 2 of:
 	// Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
-	double eta = 0.995;
 	double I = _Qfull*_C_rate; // [A]
 	//_R = _Vnom*(1. - eta) / (_C_rate*_Qnom); // [Ohm]
 	_A = _Vfull - _Vexp; // [V]
@@ -699,7 +698,7 @@ void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 	_V_ref_50 = tmp->_V_ref_50;
 	_R = tmp->_R;
 }
-void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
+void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double)
 {
 
 	double Q = capacity->qmax();
@@ -1324,7 +1323,6 @@ double thermal_t::implicit_euler(double I, double dt)
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
-	double T_prime = f(_T_battery, I);	// [K]
 
 	return (_T_battery + dt*(B*C*_T_room + D)) / (1 + dt*B*C);
 }

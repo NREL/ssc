@@ -197,7 +197,7 @@ bool winddata_provider::read( double requested_height,
 	{
 		// interpolating direction is a little more complicated
 		double dir1 = -1, dir2 = -1, angle = -1;
-		double ht1, ht2;
+		double ht1 = 0.0, ht2 = 0.0;
 		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
 		if ( interp_direction )
 		{

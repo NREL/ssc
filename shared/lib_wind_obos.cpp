@@ -1904,7 +1904,7 @@ void wobos::ArrayCabCostOptimizer()
 	int cabIndex1 = -1;
 	int cabIndex2 = -1;
 	int arrVoltIndex = -1;
-	double oldCost;
+	double oldCost = 0.0;
 	double newCost;
 
 	for (size_t k = 0; k < nArrVolts; k++)
@@ -1959,7 +1959,7 @@ void wobos::ArrayCabCostOptimizer()
 			}
 		}
 	}
-	if (cabIndex1 == -1 | cabIndex2 == -1 | arrVoltage == -1) return;
+	if ((cabIndex1 == -1) | (cabIndex2 == -1) | (arrVoltage == -1)) return;
 	arrVoltage = arrayVolt[arrVoltIndex][0];
 	cab1CR = arrCables[arrVoltIndex][cabIndex1][1];
 	cab2CR = arrCables[arrVoltIndex][cabIndex2][1];
