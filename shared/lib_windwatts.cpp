@@ -314,7 +314,7 @@ int wind_power_calculator::wind_power(/*INPUTS */ double dWindSpeed, double dWin
 }
 
 
-double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double max_cp, double avg_speed, double ref_height, double energy_turbine[])
+double wind_power_calculator::turbine_output_using_weibull(double weibull_k, double , double avg_speed, double ref_height, double energy_turbine[])
 {	// returns same units as 'power_curve'
 
 	double hub_ht_windspeed = pow((m_dHubHeight / ref_height), m_dShearExponent) * avg_speed;
@@ -747,7 +747,7 @@ bool wind_power_calculator::fill_turbine_wake_arrays_for_EV(int iTurbineNumber, 
 	return true;
 }
 
-void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double Ct, double airDensity, VMLN& vmln)
+void wind_power_calculator::calc_EV_vm_for_turbine(double U, double Ii, double Ct, double, VMLN& vmln)
 {
 	// Ii is incident TI in percent at upstream turbine
 	Ct = max_of(min_of(0.999,Ct), m_dMinThrustCoeff);

@@ -172,7 +172,9 @@ std::string weatherfile::normalize_city(const std::string &in)
 	for (size_t i = 0; i<city.length(); i++)
 	{
 		if (i == 0 || city[i - 1] == ' ')
-			city[i] = toupper(city[i]);
+		{
+			putchar(toupper(city[i]));
+		}
 	}
 	return city;
 }

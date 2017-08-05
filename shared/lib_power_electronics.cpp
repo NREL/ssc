@@ -75,7 +75,7 @@ double rectifier::convert_to_dc(double P_ac, double * P_dc)
 	return P_loss;
 }
 
-charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiency_1, double efficiency_2)
+charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double , double )
 {	
 	_dispatch = dispatch;
 
@@ -469,7 +469,7 @@ void ac_connected_battery_controller::process_dispatch()
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
 }
 
-void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency)
+void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double )
 {
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 

@@ -252,7 +252,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
  *********************************************************************************************
  *********************************************************************************************/
 
-bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
+bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double , double &Tcell )
 {
 	double G_total, Geff_total;
 	double tau_al = fabs(TauAlpha);

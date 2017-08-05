@@ -550,7 +550,7 @@ double CPowerBlock_Type224::f_Tsat_p(double P)
 
 //************************************************************************************************************
 //************************************************************************************************************
-double CPowerBlock_Type224::specheat(int fnum, double T, double P)
+double CPowerBlock_Type224::specheat(int fnum, double T, double )
 {
 	//use global_props
 	// This function accepts as inputs temperature [K] and pressure [Pa]
@@ -614,7 +614,7 @@ double CPowerBlock_Type224::specheat(int fnum, double T, double P)
 //************************************************************************************************************
 //************************************************************************************************************
 void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb, 
-				  double P_amb, double dT_cw_ref, /*double HTF,*/ double c_p_w, double T_htf_hot, double m_dot_htf, int /*double*/ mode, 
+				  double P_amb, double dT_cw_ref, /*double HTF,*/ double , double T_htf_hot, double m_dot_htf, int /*double*/ mode, 
 				  double demand_var, double P_boil, /*double tech_type,*/ double T_amb_des, double T_approach, double F_wc, double F_wcmin, 
 				  double F_wcmax, double T_ITD_des, double P_cond_ratio, /*double CT,*/ double P_cond_min, /*double n_pl_inc,*/
 				  /*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref, 
@@ -1412,7 +1412,7 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 //************************************************************************************************************
 //************************************************************************************************************
 void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref, 
-		 double T_db, double P_amb, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
+		 double T_db, double , double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
 		 double f_hrsys)
 {
 	//use cooling property functions

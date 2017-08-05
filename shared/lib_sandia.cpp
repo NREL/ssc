@@ -447,7 +447,7 @@ bool sandia_inverter_t::acpower(
 
 
 
-double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double poaIrr, double fd, double DT0)
+double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double poaIrr, double , double DT0)
 {
 	/*
 C Returns cell temperature, deg C
@@ -464,7 +464,7 @@ C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
 	return Tm + E / 1000.0 * DT0;
 }
 
-double sandia_celltemp_t::sandia_module_temperature( double poaIrr, double Ws, double Ta, double fd, double a, double b )
+double sandia_celltemp_t::sandia_module_temperature( double poaIrr, double Ws, double Ta, double , double a, double b )
 {
 	/*
 C Returns back-of-module temperature, deg C
@@ -483,7 +483,7 @@ C b   = empirical constant
 	return E * exp(a + b * Ws) + Ta;
 }
 
-bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
+bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &, double opvoltage, double &Tcell )
 {
 	//Sev 2015-09-14: changed to permit direct poa data
 	double Itotal;

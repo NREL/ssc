@@ -535,7 +535,7 @@ void voltage_table_t::copy(voltage_t * voltage)
 }
 
 
-void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
+void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
 	double cell_voltage = _cell_voltage;
 	double DOD = capacity->DOD();
@@ -647,7 +647,7 @@ void voltage_dynamic_t::parameter_compute()
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
-void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * themal, double dt)
+void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
 
 	double Q = capacity->qmax();

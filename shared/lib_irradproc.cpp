@@ -639,7 +639,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 	return Ktp;
 }
 
-void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
+void poaDecomp( double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
 	/* added by Severin Ryberg. Decomposes POA into direct normal and diffuse irradiances
 
 	List of Parameters Passed to Function:
@@ -751,7 +751,7 @@ void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecom
 	}
 }
 
-void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
+void isotropic( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* added aug2011 by aron dobos. Defines isotropic sky model for diffuse irradiance on a tilted surface
 	
@@ -798,7 +798,7 @@ void isotropic( double hextra, double dn, double df, double alb, double inc, dou
 	}
 }
 
-void perez( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
+void perez( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
 	Total POA is poa[0]+poa[1]+poa[2]
@@ -1262,7 +1262,7 @@ int irrad::calc()
 			ghi = idiff;
 		} 
 		else { // Sev 2015/09/11 - perform a POA decomp.
-			poaDecomp( wfpoa, angle, sun, alb, poaAll, dn, df, gh, poa, diffc);
+			poaDecomp( angle, sun, alb, poaAll, dn, df, gh, poa, diffc);
 		}
 	} else { gh=0; dn=0; df=0;}
 

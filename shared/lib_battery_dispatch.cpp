@@ -901,7 +901,7 @@ void automate_dispatch_t::check_new_month(int hour_of_year, int step)
 		_month < 12 ? _month++ : _month = 1;
 	}
 }
-void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
+void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int )
 {
 	// for now, don't enable
 	// debug = true;
