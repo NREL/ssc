@@ -12,7 +12,7 @@
 
 
 /* MUST MODIFY */
-MYBOOL BFP_CALLMODEL bfp_compatible(lprec *lp, int bfpversion, int lpversion, int sizeofvar)
+MYBOOL BFP_CALLMODEL bfp_compatible(lprec *lp, int bfpversion, int sizeofvar)
 {
   MYBOOL status = FALSE;
 
@@ -32,7 +32,7 @@ int BFP_CALLMODEL bfp_status(lprec *lp)
 }
 
 /* DON'T MODIFY */
-int BFP_CALLMODEL bfp_indexbase(lprec *lp)
+int BFP_CALLMODEL bfp_indexbase()
 {
   return( MATINDEXBASE );
 }

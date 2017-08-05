@@ -52,8 +52,8 @@ int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_findredundant)(lprec *lp, int items,
 
 /* Routines SHARED for all inverse implementations; located in lp_BFP1.c              */
 /* ---------------------------------------------------------------------------------- */
-MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_compatible)(lprec *lp, int bfpversion, int lpversion, int sizeofvar);
-int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_indexbase)(lprec *lp);
+MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_compatible)(lprec *lp, int bfpversion, int sizeofvar);
+int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_indexbase)();
 int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_rowoffset)(lprec *lp);
 int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_pivotmax)(lprec *lp);
 REAL   __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_efficiency)(lprec *lp);
@@ -69,12 +69,12 @@ int    BFP_CALLMODEL bfp_rowextra(lprec *lp);
 /* Routines with OPTIONAL SHARED code; template routines suitable for canned          */
 /* inverse engines are located in lp_BFP2.c                                           */
 /* ---------------------------------------------------------------------------------- */
-MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_init)(lprec *lp, int size, int deltasize, char *options);
+MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_init)(lprec *lp, int size, char *options);
 MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_restart)(lprec *lp);
-MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_implicitslack)(lprec *lp);
-MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_pivotalloc)(lprec *lp, int newsize);
+MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_implicitslack)();
+MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_pivotalloc)();
 int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_colcount)(lprec *lp);
-MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_canresetbasis)(lprec *lp);
+MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_canresetbasis)();
 void   __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_finishfactorization)(lprec *lp);
 LREAL  __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_prepareupdate)(lprec *lp, int row_nr, int col_nr, REAL *pcol);
 REAL   __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_pivotRHS)(lprec *lp, LREAL theta, REAL *pcol);

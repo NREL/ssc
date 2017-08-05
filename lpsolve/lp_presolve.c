@@ -431,7 +431,7 @@ STATIC MYBOOL presolve_rowfeasible(presolverec *psdata, int rownr, MYBOOL userow
     if(value < LHS-lp->epssolution) {
       contype = get_constr_type(lp, rownr);
       report(lp, NORMAL, "presolve_rowfeasible: Lower bound infeasibility in %s row %s (%g << %g)\n",
-                          get_str_constr_type(lp, contype), get_row_name(lp, rownr), value, LHS);
+                          get_str_constr_type(contype), get_row_name(lp, rownr), value, LHS);
       if(rownr != origrownr)
       report(lp, NORMAL, "        ...           Input row base used for testing was %s\n",
                                                     get_row_name(lp, origrownr));
@@ -444,7 +444,7 @@ STATIC MYBOOL presolve_rowfeasible(presolverec *psdata, int rownr, MYBOOL userow
     if(value > RHS+lp->epssolution) {
       contype = get_constr_type(lp, rownr);
       report(lp, NORMAL, "presolve_rowfeasible: Upper bound infeasibility in %s row %s (%g >> %g)\n",
-                          get_str_constr_type(lp, contype), get_row_name(lp, rownr), value, RHS);
+                          get_str_constr_type(contype), get_row_name(lp, rownr), value, RHS);
       status = FALSE;
     }
     if(userowmap)

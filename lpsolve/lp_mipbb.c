@@ -156,7 +156,7 @@ STATIC BBrec *push_BB(lprec *lp, BBrec *parentBB, int varno, int vartype, int va
     else if(MIP_count(lp) > 0) {
       if( (lp->bb_level <= 1) && (lp->bb_varactive == NULL) &&
           (!allocINT(lp, &lp->bb_varactive, lp->columns+1, TRUE) ||
-           !initcuts_BB(lp)) )
+           !initcuts_BB()) )
         newBB = pop_BB(newBB);
       if(varno > 0) {
         lp->bb_varactive[varno-lp->rows]++;
@@ -304,7 +304,7 @@ STATIC REAL probe_BB(BBrec *BB)
   return( sum );
 }
 
-STATIC REAL presolve_BB(BBrec *BB)
+STATIC REAL presolve_BB()
 {
   return( 0 );
 }
@@ -741,12 +741,12 @@ STATIC MYBOOL nextbranch_BB(BBrec *BB)
 
 
 /* Cut generation and management routines */
-STATIC MYBOOL initcuts_BB(lprec *lp)
+STATIC MYBOOL initcuts_BB()
 {
   return( TRUE );
 }
 
-STATIC int updatecuts_BB(lprec *lp)
+STATIC int updatecuts_BB()
 {
   return( 0 );
 }
@@ -854,7 +854,7 @@ STATIC int solve_LP(lprec *lp, BBrec *BB)
         lp->spx_perturbed = TRUE;
         if(lp->spx_trace)
           report(lp, DETAILED, "solve_LP: Starting bound relaxation #%d ('%s')\n",
-                               tilted, get_statustext(lp, status));
+                               tilted, get_statustext(status));
       }
       else  {
         if(lp->spx_trace)
@@ -1368,11 +1368,11 @@ STATIC MYBOOL strongbranch_BB(lprec *lp, BBrec *BB, int varno, int vartype, int 
 }
 
 /* Future functions */
-STATIC MYBOOL pre_BB(lprec *lp)
+STATIC MYBOOL pre_BB()
 {
   return( TRUE );
 }
-STATIC MYBOOL post_BB(lprec *lp)
+STATIC MYBOOL post_BB()
 {
   return( TRUE );
 }

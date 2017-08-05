@@ -1934,11 +1934,9 @@ STATIC MYBOOL mat_validate(MATrec *mat)
 #endif
         *colnr = i;
         if(*rownr == 0)
-          mat_set_rowmap(mat, rownum[*rownr],
-                              *rownr, i, j);
+          mat_set_rowmap(mat, rownum[*rownr], j);
         else
-          mat_set_rowmap(mat, mat->row_end[*rownr - 1] + rownum[*rownr],
-                              *rownr, i, j);
+          mat_set_rowmap(mat, mat->row_end[*rownr - 1] + rownum[*rownr], j);
         rownum[*rownr]++;
       }
     }
@@ -1990,7 +1988,7 @@ MYBOOL mat_get_data(lprec *lp, int matindex, MYBOOL isrow, int **rownr, int **co
 }
 
 
-MYBOOL mat_set_rowmap(MATrec *mat, int row_mat_index, int rownr, int colnr, int col_mat_index)
+MYBOOL mat_set_rowmap(MATrec *mat, int row_mat_index, int col_mat_index)
 {
 #if MatrixRowAccess == RAM_Index
   mat->row_mat[row_mat_index] = col_mat_index;
@@ -3063,7 +3061,7 @@ STATIC MYBOOL fimprove(lprec *lp, REAL *pcol, int *nzidx, REAL roundzero)
   MEMCOPY(errors, pcol, lp->rows + 1);
   lp->bfp_ftran_normal(lp, pcol, nzidx);
   prod_Ax(lp, NULL, pcol, NULL, 0.0, -1,
-                                errors, NULL, MAT_ROUNDDEFAULT);
+                                errors, MAT_ROUNDDEFAULT);
   lp->bfp_ftran_normal(lp, errors, NULL);
 
   sdp = 0;
@@ -3130,7 +3128,7 @@ STATIC MYBOOL bimprove(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
   return(Ok);
 }
 
-STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
+STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx)
 {
 #if 0
   if(is_action(lp->improve, IMPROVE_SOLUTION) && lp->bfp_pivotcount(lp))
@@ -3140,7 +3138,7 @@ STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
     lp->bfp_ftran_normal(lp, rhsvector, nzidx);
 }
 
-STATIC void btran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
+STATIC void btran(lprec *lp, REAL *rhsvector, int *nzidx)
 {
 #if 0
   if(is_action(lp->improve, IMPROVE_SOLUTION) && lp->bfp_pivotcount(lp))
@@ -3163,7 +3161,7 @@ STATIC MYBOOL fsolve(lprec *lp, int varin, REAL *pcol, int *nzidx, REAL roundzer
   if(prepareupdate)
     lp->bfp_ftran_prepare(lp, pcol, nzidx);
   else
-    ftran(lp, pcol, nzidx, roundzero);
+    ftran(lp, pcol, nzidx);
 
   return(ok);
 
@@ -3179,7 +3177,7 @@ STATIC MYBOOL bsolve(lprec *lp, int row_nr, REAL *rhsvector, int *nzidx, REAL ro
 
   /* Solve, adjusted for objective function scalar */
   rhsvector[0] *= ofscalar;
-  btran(lp, rhsvector, nzidx, roundzero);
+  btran(lp, rhsvector, nzidx);
 
   return(ok);
 
@@ -3319,7 +3317,7 @@ STATIC MYBOOL get_colIndexA(lprec *lp, int varset, int *colindex, MYBOOL append)
 
 STATIC int prod_Ax(lprec *lp, int *coltarget, REAL *input, int *nzinput,
                               REAL roundzero, REAL ofscalar,
-                              REAL *output, int *nzoutput, int roundmode)
+                              REAL *output, int roundmode)
 /* prod_Ax is only used in fimprove; note that it is NOT VALIDATED/verified as of 20030801 - KE */
 {
   int      j, colnr, ib, ie, vb, ve;

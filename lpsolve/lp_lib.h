@@ -941,7 +941,7 @@ typedef MYBOOL (__WINAPI is_integerscaling_func)(lprec *lp);
 typedef MYBOOL (__WINAPI is_lag_trace_func)(lprec *lp);
 typedef MYBOOL (__WINAPI is_maxim_func)(lprec *lp);
 typedef MYBOOL (__WINAPI is_nativeBFP_func)(lprec *lp);
-typedef MYBOOL (__WINAPI is_nativeXLI_func)(lprec *lp);
+typedef MYBOOL (__WINAPI is_nativeXLI_func)();
 typedef MYBOOL (__WINAPI is_negative_func)(lprec *lp, int colnr);
 typedef MYBOOL (__WINAPI is_obj_in_basis_func)(lprec *lp);
 typedef MYBOOL (__WINAPI is_piv_mode_func)(lprec *lp, int testmask);
@@ -1732,7 +1732,7 @@ void __EXPORT_TYPE __WINAPI lp_solve_version(int *majorversion, int *minorversio
 lprec __EXPORT_TYPE * __WINAPI make_lp(int rows, int columns);
 MYBOOL __EXPORT_TYPE __WINAPI resize_lp(lprec *lp, int rows, int columns);
 int __EXPORT_TYPE __WINAPI get_status(lprec *lp);
-char __EXPORT_TYPE * __WINAPI get_statustext(lprec *lp, int statuscode);
+char __EXPORT_TYPE * __WINAPI get_statustext(int statuscode);
 MYBOOL __EXPORT_TYPE __WINAPI is_obj_in_basis(lprec *lp);
 void __EXPORT_TYPE __WINAPI set_obj_in_basis(lprec *lp, MYBOOL obj_in_basis);
 /* Create and initialise a lprec structure defaults */
@@ -1805,9 +1805,9 @@ MYBOOL __EXPORT_TYPE __WINAPI set_constr_type(lprec *lp, int rownr, int con_type
 int __EXPORT_TYPE __WINAPI get_constr_type(lprec *lp, int rownr);
 REAL __EXPORT_TYPE __WINAPI get_constr_value(lprec *lp, int rownr, int count, REAL *primsolution, int *nzindex);
 MYBOOL __EXPORT_TYPE __WINAPI is_constr_type(lprec *lp, int rownr, int mask);
-STATIC char *get_str_constr_type(lprec *lp, int con_type);
+STATIC char *get_str_constr_type(int con_type);
 STATIC int get_constr_class(lprec *lp, int rownr);
-STATIC char *get_str_constr_class(lprec *lp, int con_class);
+STATIC char *get_str_constr_class(int con_class);
 /* Set the type of constraint in row Row (LE, GE, EQ) */
 
 MYBOOL __EXPORT_TYPE __WINAPI set_rh(lprec *lp, int rownr, REAL value);
@@ -2172,7 +2172,7 @@ STATIC MYBOOL init_rowcol_names(lprec *lp);
 STATIC MYBOOL inc_row_space(lprec *lp, int deltarows);
 STATIC MYBOOL inc_col_space(lprec *lp, int deltacols);
 STATIC MYBOOL shift_rowcoldata(lprec *lp, int base, int delta, LLrec *usedmap, MYBOOL isrow);
-STATIC MYBOOL shift_basis(lprec *lp, int base, int delta, LLrec *usedmap, MYBOOL isrow);
+STATIC MYBOOL shift_basis(lprec *lp, int base, int delta, MYBOOL isrow);
 STATIC MYBOOL shift_rowdata(lprec *lp, int base, int delta, LLrec *usedmap);
 STATIC MYBOOL shift_coldata(lprec *lp, int base, int delta, LLrec *usedmap);
 
@@ -2253,7 +2253,7 @@ STATIC MYBOOL isDualFeasible(lprec *lp, REAL tol, int *boundflips, int infeasibl
 /* Main simplex driver routines */
 STATIC int preprocess(lprec *lp);
 STATIC void postprocess(lprec *lp);
-STATIC MYBOOL performiteration(lprec *lp, int rownr, int varin, LREAL theta, MYBOOL primal, MYBOOL allowminit, REAL *prow, int *nzprow, REAL *pcol, int *nzpcol, int *boundswaps);
+STATIC MYBOOL performiteration(lprec *lp, int rownr, int varin, LREAL theta, MYBOOL primal, MYBOOL allowminit, REAL *prow, int *nzprow, int *boundswaps);
 STATIC void transfer_solution_var(lprec *lp, int uservar);
 STATIC void transfer_solution(lprec *lp, MYBOOL dofinal);
 
@@ -2271,7 +2271,7 @@ STATIC void varmap_delete(lprec *lp, int base, int delta, LLrec *varmap);
 STATIC void varmap_compact(lprec *lp, int prev_rows, int prev_cols);
 STATIC MYBOOL varmap_validate(lprec *lp, int varno);
 /* STATIC MYBOOL del_varnameex(lprec *lp, hashelem **namelist, hashtable *ht, int varnr, LLrec *varmap); */
- STATIC MYBOOL del_varnameex(lprec *lp, hashelem **namelist, int items, hashtable *ht, int varnr, LLrec *varmap);
+ STATIC MYBOOL del_varnameex(hashelem **namelist, int items, hashtable *ht, int varnr, LLrec *varmap);
 
 /* Pseudo-cost routines (internal) */
 STATIC BBPSrec *init_pseudocost(lprec *lp, int pseudotype);

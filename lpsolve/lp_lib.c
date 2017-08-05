@@ -1345,7 +1345,7 @@ int __WINAPI get_status(lprec *lp)
   return(lp->spx_status);
 }
 
-char * __WINAPI get_statustext(lprec *lp, int statuscode)
+char * __WINAPI get_statustext(int statuscode)
 {
   if (statuscode == NOBFP)             return("No basis factorization package");
   else if (statuscode == DATAIGNORED)  return("Invalid input data provided");
@@ -2279,7 +2279,7 @@ STATIC MYBOOL shift_rowcoldata(lprec *lp, int base, int delta, LLrec *usedmap, M
   return(TRUE);
 }
 
-STATIC MYBOOL shift_basis(lprec *lp, int base, int delta, LLrec *usedmap, MYBOOL isrow)
+STATIC MYBOOL shift_basis(lprec *lp, int base, int delta, MYBOOL isrow)
 /* Note: Assumes that "lp->sum" and "lp->rows" HAVE NOT been updated to the new counts */
 {
   int i, ii;
@@ -2436,7 +2436,7 @@ STATIC MYBOOL shift_rowdata(lprec *lp, int base, int delta, LLrec *usedmap)
     }
   }
 
-  shift_basis(lp, base, delta, usedmap, TRUE);
+  shift_basis(lp, base, delta, TRUE);
   shift_rowcoldata(lp, base, delta, usedmap, TRUE);
   inc_rows(lp, delta);
 
@@ -2671,7 +2671,7 @@ STATIC MYBOOL shift_coldata(lprec *lp, int base, int delta, LLrec *usedmap)
 
   }
 
-  shift_basis(lp, lp->rows+base, delta, usedmap, FALSE);
+  shift_basis(lp, lp->rows+base, delta, FALSE);
   if(SOS_count(lp) > 0)
     SOS_shift_col(lp->SOS, 0, base, delta, usedmap, FALSE);
   shift_rowcoldata(lp, lp->rows+base, delta, usedmap, FALSE);
@@ -3204,7 +3204,7 @@ STATIC MYBOOL del_constraintex(lprec *lp, LLrec *rowmap)
   if(!lp->varmap_locked) {
     presolve_setOrig(lp, lp->rows, lp->columns);
     if(lp->names_used)
-      del_varnameex(lp, lp->row_name, lp->rows, lp->rowname_hashtab, 0, rowmap);
+      del_varnameex(lp->row_name, lp->rows, lp->rowname_hashtab, 0, rowmap);
   }
 
 #ifdef Paranoia
@@ -3263,7 +3263,7 @@ MYBOOL __WINAPI del_constraint(lprec *lp, int rownr)
   {
     presolve_setOrig(lp, lp->rows, lp->columns);
     if(lp->names_used)
-      del_varnameex(lp, lp->row_name, lp->rows, lp->rowname_hashtab, rownr, NULL);
+      del_varnameex(lp->row_name, lp->rows, lp->rowname_hashtab, rownr, NULL);
   }
 
 #ifdef Paranoia
@@ -3445,7 +3445,7 @@ MYBOOL __WINAPI str_add_column(lprec *lp, char *col_string)
   return( ret );
 }
 
-STATIC MYBOOL del_varnameex(lprec *lp, hashelem **namelist, int items, hashtable *ht, int varnr, LLrec *varmap)
+STATIC MYBOOL del_varnameex(hashelem **namelist, int items, hashtable *ht, int varnr, LLrec *varmap)
 {
   int i, n;
 
@@ -3497,7 +3497,7 @@ STATIC MYBOOL del_columnex(lprec *lp, LLrec *colmap)
   if(!lp->varmap_locked) {
     presolve_setOrig(lp, lp->rows, lp->columns);
     if(lp->names_used)
-      del_varnameex(lp, lp->col_name, lp->columns, lp->colname_hashtab, 0, colmap);
+      del_varnameex(lp->col_name, lp->columns, lp->colname_hashtab, 0, colmap);
   }
 #ifdef Paranoia
   if(is_BasisReady(lp) && (lp->P1extraDim == 0) && !verify_basis(lp))
@@ -3531,7 +3531,7 @@ MYBOOL __WINAPI del_column(lprec *lp, int colnr)
   if(!lp->varmap_locked) {
     presolve_setOrig(lp, lp->rows, lp->columns);
     if(lp->names_used)
-      del_varnameex(lp, lp->col_name, lp->columns, lp->colname_hashtab, colnr, NULL);
+      del_varnameex(lp->col_name, lp->columns, lp->colname_hashtab, colnr, NULL);
   }
 #ifdef Paranoia
   if(is_BasisReady(lp) && (lp->P1extraDim == 0) && !verify_basis(lp))
@@ -4407,7 +4407,7 @@ REAL __WINAPI get_constr_value(lprec *lp, int rownr, int count, REAL *primsoluti
   return( value );
 }
 
-STATIC char *get_str_constr_class(lprec *lp, int con_class)
+STATIC char *get_str_constr_class(int con_class)
 {
   switch(con_class) {
     case ROWCLASS_Unknown:     return("Unknown");
@@ -4425,7 +4425,7 @@ STATIC char *get_str_constr_class(lprec *lp, int con_class)
   }
 }
 
-STATIC char *get_str_constr_type(lprec *lp, int con_type)
+STATIC char *get_str_constr_type(int con_type)
 {
   switch(con_type) {
     case FR: return("FR");
@@ -5566,7 +5566,7 @@ MYBOOL __WINAPI has_XLI(lprec *lp)
         );
 }
 
-MYBOOL __WINAPI is_nativeXLI(lprec *lp)
+MYBOOL __WINAPI is_nativeXLI()
 {
 #ifdef ExcludeNativeLanguage
   return( FALSE );
@@ -8082,7 +8082,7 @@ STATIC MYBOOL check_degeneracy(lprec *lp, REAL *pcol, int *degencount)
 }
 
 STATIC MYBOOL performiteration(lprec *lp, int rownr, int varin, LREAL theta, MYBOOL primal, MYBOOL allowminit,
-                               REAL *prow, int *nzprow, REAL *pcol, int *nzpcol, int *boundswaps)
+                               REAL *prow, int *nzprow, int *boundswaps)
 {
   int    varout;
   REAL   pivot, epsmargin, leavingValue, leavingUB, enteringUB;
@@ -8156,7 +8156,7 @@ STATIC MYBOOL performiteration(lprec *lp, int rownr, int varin, LREAL theta, MYB
 
     /* Solve for bound flip update vector (note that this does not
        overwrite the stored update vector for the entering variable) */
-    ftran(lp, hold, NULL, lp->epsmachine);
+    ftran(lp, hold, NULL);
     if(!lp->obj_in_basis)
       hold[0] = 0; /* The correct reduced cost goes here (adjusted for bound state) ****** */
 
@@ -9357,7 +9357,7 @@ STATIC int findBasisPos(lprec *lp, int notint, int *var_basic)
   return( i );
 }
 
-STATIC void replaceBasisVar(lprec *lp, int rownr, int var, int *var_basic, MYBOOL *is_basic)
+STATIC void replaceBasisVar(int rownr, int var, int *var_basic, MYBOOL *is_basic)
 {
   int out;
 
@@ -9728,7 +9728,7 @@ STATIC MYBOOL pre_MIPOBJ(lprec *lp)
   lp->bb_deltaOF = MIP_stepOF(lp);
   return( TRUE );
 }
-STATIC MYBOOL post_MIPOBJ(lprec *lp)
+STATIC MYBOOL post_MIPOBJ()
 {
 #ifdef MIPboundWithOF
 /*

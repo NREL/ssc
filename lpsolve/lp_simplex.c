@@ -898,8 +898,7 @@ Optimality:
       minit = performiteration(lp, rownr, colnr, theta, primal,
                                                  (MYBOOL) (/*(candidatecount > 1) && */
                                                            (stallaccept != AUTOMATIC)),
-                                                 NULL, NULL,
-                                                 pcol, NULL, NULL);
+                                                 NULL, NULL, NULL);
       if(minit != ITERATE_MAJORMAJOR)
         minitcount++;
 
@@ -1110,7 +1109,7 @@ STATIC int dualloop(lprec *lp, MYBOOL dualfeasible, int dualinfeasibles[], REAL 
       for(i = 2; i <= dualinfeasibles[0]; i++)
         mat_multadd(lp->matA, pcol, dualinfeasibles[i], 1.0);
       /* Solve (note that solved pcol will be used instead of lp->rhs) */
-      ftran(lp, pcol, NULL, lp->epsmachine);
+      ftran(lp, pcol, NULL);
     }
 
     /* Do minor iterations (non-basic variable bound flips) for as
@@ -1330,8 +1329,7 @@ RetryRow:
           colnr = find_rowReplacement(lp, rownr, prow, nzprow);
           if(colnr > 0) {
             theta = 0;
-            performiteration(lp, rownr, colnr, theta, TRUE, FALSE, prow, NULL,
-                                                            NULL, NULL, NULL);
+            performiteration(lp, rownr, colnr, theta, TRUE, FALSE, prow, NULL, NULL);
             lp->fixedvars--;
           }
         }
@@ -1448,8 +1446,7 @@ RetryRow:
       minit = performiteration(lp, rownr, colnr, theta, primal,
                                                  (MYBOOL) (/*(candidatecount > 1) && */
                                                            (stallaccept != AUTOMATIC)),
-                                                 prow, nzprow,
-                                                 pcol, NULL, boundswaps);
+                                                 prow, nzprow, boundswaps);
 
       /* Check if we should abandon iterations on finding that there is no
         hope that this branch can improve on the incumbent B&B solution */

@@ -184,7 +184,7 @@ STATIC MATrec *mat_extractmat(MATrec *mat, LLrec *rowmap, LLrec *colmap, MYBOOL 
 STATIC int mat_appendrow(MATrec *mat, int count, REAL *row, int *colno, REAL mult, MYBOOL checkrowmode);
 STATIC int mat_appendcol(MATrec *mat, int count, REAL *column, int *rowno, REAL mult, MYBOOL checkrowmode);
 MYBOOL mat_get_data(lprec *lp, int matindex, MYBOOL isrow, int **rownr, int **colnr, REAL **value);
-MYBOOL mat_set_rowmap(MATrec *mat, int row_mat_index, int rownr, int colnr, int col_mat_index);
+MYBOOL mat_set_rowmap(MATrec *mat, int row_mat_index, int col_mat_index);
 STATIC MYBOOL mat_indexrange(MATrec *mat, int index, MYBOOL isrow, int *startpos, int *endpos);
 STATIC MYBOOL mat_validate(MATrec *mat);
 STATIC MYBOOL mat_equalRows(MATrec *mat, int baserow, int comprow);
@@ -217,16 +217,16 @@ STATIC MYBOOL vec_expand(REAL *nzvector, int *nzindex, REAL *densevector, int st
 
 /* Sparse matrix products */
 STATIC MYBOOL get_colIndexA(lprec *lp, int varset, int *colindex, MYBOOL append);
-STATIC int prod_Ax(lprec *lp, int *coltarget, REAL *input, int *nzinput, REAL roundzero, REAL ofscalar, REAL *output, int *nzoutput, int roundmode);
+STATIC int prod_Ax(lprec *lp, int *coltarget, REAL *input, int *nzinput, REAL roundzero, REAL ofscalar, REAL *output, int roundmode);
 STATIC int prod_xA(lprec *lp, int *coltarget, REAL *input, int *nzinput, REAL roundzero, REAL ofscalar, REAL *output, int *nzoutput, int roundmode);
 STATIC MYBOOL prod_xA2(lprec *lp, int *coltarget, REAL *prow, REAL proundzero, int *pnzprow,
                                                   REAL *drow, REAL droundzero, int *dnzdrow, REAL ofscalar, int roundmode);
 
 /* Equation solution */
 STATIC MYBOOL fimprove(lprec *lp, REAL *pcol, int *nzidx, REAL roundzero);
-STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero);
+STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx);
 STATIC MYBOOL bimprove(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero);
-STATIC void btran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero);
+STATIC void btran(lprec *lp, REAL *rhsvector, int *nzidx);
 
 /* Combined equation solution and matrix product for simplex operations */
 STATIC MYBOOL fsolve(lprec *lp, int varin, REAL *pcol, int *nzidx, REAL roundzero, REAL ofscalar, MYBOOL prepareupdate);

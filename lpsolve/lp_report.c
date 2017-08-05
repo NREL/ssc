@@ -670,7 +670,7 @@ void REPORT_constraintinfo(lprec *lp, char *datainfo)
 
   for(i = 0; i <= ROWCLASS_MAX; i++)
     if(tally[i] > 0)
-      report(lp, NORMAL, "%-15s %4d\n", get_str_constr_class(lp, i), tally[i]);
+      report(lp, NORMAL, "%-15s %4d\n", get_str_constr_class(i), tally[i]);
 }
 
 void REPORT_modelinfo(lprec *lp, MYBOOL doName, char *datainfo)
