@@ -866,6 +866,8 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 			return (1 - dWaterLossFractionOfGF);
 		}
 
+		// Calculate injection pump items, on [7A.GF Pumps] unless otherwise noted
+		double dInjectionPressure = mo_geo_in.md_AdditionalPressure;
 		double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
 
 		//dInjectionPumpPower = geothermal::pumpWorkInWattHr(dWaterLoss, dInjectionPumpHeadFt, geothermal::EFFICIENCY_PUMP_GF, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
