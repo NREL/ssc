@@ -464,8 +464,6 @@ bool wind_power_calculator::wake_calculations_EddyViscosity_Simple(/*INPUTS */ d
 			// keep it if it's bigger
 			dDeficit = max_of(dDeficit, dDef);
 
-			double temp1 = Iamb[j];
-			double temp2 = aTurbulence_intensity[j];
 			Iadd = calc_EV_added_turbulence_intensity(Iamb[j], Thrust[j], dDistAxialInDiameters*m_dRotorDiameter, vmln[j]);
 			
 			double dFractionOfOverlap = simple_intersect(dDistRadialInDiameters*m_dRotorDiameter, dTurbineRadius, dWakeRadiusMeters);

@@ -330,7 +330,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
 	When xsazm = azm : rot = 0, tilt = xtilt, and sazm = xsazm = azm  */
 
-	double arg,inc=0,xsazm,xtilt,rot,btdiff=0;
+	double arg, inc = 0, xsazm, xtilt, rot = 0, btdiff = 0;
 
 	if (mode == 4)
 		mode = 0; //treat timeseries tilt as fixed tilt for each timestep
@@ -1272,8 +1272,6 @@ int irrad::calc()
 
 static double cosd( double x ) { return cos( DTOR*x ); }
 static double sind( double x ) { return sin( DTOR*x ); }
-static double tand( double x ) { return tan( DTOR*x ); }
-static double acosd( double x ) { return acos(x)/DTOR; }
 
 static double vec_dot(double a[3], double b[3])
 {

@@ -173,7 +173,7 @@ std::string weatherfile::normalize_city(const std::string &in)
 	{
 		if (i == 0 || city[i - 1] == ' ')
 		{
-			putchar(toupper(city[i]));
+			city[i] = (char)toupper(city[i]);
 		}
 	}
 	return city;
@@ -265,7 +265,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 		c13 = 6.5459673, c14 = 6.54, c15 = 14.526, c16 = 0.7389, c17 = 0.09486,
 		c18 = 0.4569;
 	double arg, t, pres, pres_dew, pta, ptb, ptc;
-	float dpt;
+	float dpt = -1;
 
 	if (db > 90.0 || rh > 100.0 || rh < 1.0)    /* Check for valid input data */
 		dpt = (float)99.9;                   /* Missing data value */
@@ -365,7 +365,7 @@ double calc_twet(double T, double RH, double P)
 		hiflag = false,
 		lowflag = false;
 	double
-		hival, lowval, err;
+		hival = 0.0, lowval = 0.0, err = 0.0;
 	const double tol = 0.05;
 
 	int i = 0;

@@ -342,14 +342,8 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 			//C Calculate Ix:
 			double Ix = sandia_ix(TcellC,Ee,Ix0,aIsc,aImp,C4,C5);
 
-			//C Calculate Vx:
-			double Vx = Voc/2.0;
-
 			//C Calculate Ixx:
 			double Ixx = sandia_ixx(TcellC,Ee,Ixx0,aImp,C6,C7);
-
-			//C Calculate Vxx:
-			double Vxx = 0.5*(Voc + Vmp);
 			
 			// calculate current at operating voltage
 			V = opvoltage;

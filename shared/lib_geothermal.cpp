@@ -842,8 +842,6 @@ double CGeothermalAnalyzer::NumberOfReservoirs(void)
 
 double CGeothermalAnalyzer::CalculatePumpWorkInKW(double dFlowLbPerHr, double dPumpHeadFt)
 {
-	double test = geothermal::pumpWorkInWattHr(dFlowLbPerHr, dPumpHeadFt, geothermal::EFFICIENCY_PUMP_FLASH, ms_ErrorString);
-
 	return geothermal::HPtoKW((dFlowLbPerHr * dPumpHeadFt)/(60 * 33000 * geothermal::EFFICIENCY_PUMP_FLASH));
 }
 
