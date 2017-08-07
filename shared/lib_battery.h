@@ -171,7 +171,7 @@ class thermal_t;
 class voltage_t
 {
 public:
-	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table);
+	voltage_t(int mode, int num_cells_series, int num_strings, double voltage, util::matrix_t<double> voltage_table);
 	virtual voltage_t * clone()=0;
 	virtual void copy(voltage_t *&);
 	virtual ~voltage_t(){};
