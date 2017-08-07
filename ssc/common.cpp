@@ -711,6 +711,7 @@ weatherdata::weatherdata( var_data *data_table )
 {
 	m_startSec = m_stepSec = m_nRecords = 0;
 	m_index = 0;
+	m_ok = true;
 
 	if ( data_table->type != SSC_TABLE ) 
 	{
@@ -726,19 +727,29 @@ weatherdata::weatherdata( var_data *data_table )
 	m_hdr.tz = get_number( data_table, "tz" );
 	m_hdr.elev = get_number( data_table, "elev" );
 
-	// make sure all data columns have same number of entries, using irradiance as reference
+	// make sure two types of irradiance are provided
 	size_t nrec = 0;
+	int n_irr = 0;
+	if (var_data *value = data_table->table.lookup("df"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (var_data *value = data_table->table.lookup("dn"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
 	if (var_data *value = data_table->table.lookup("gh"))
 	{
-		if (value->type == SSC_ARRAY) nrec = value->num.length();
-	}
-	else if (var_data *value = data_table->table.lookup("dn"))
-	{
-		if (value->type == SSC_ARRAY) nrec = value->num.length();
-	}
-	else if (var_data *value = data_table->table.lookup("df"))
-	{
-		if (value->type == SSC_ARRAY) nrec = value->num.length();
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
 	}
 	if (nrec == 0)
 	{
@@ -746,7 +757,13 @@ weatherdata::weatherdata( var_data *data_table )
 		m_ok = false;
 		return;
 	}
+	else if (n_irr < 2){
+		m_message = "could not find at least 2 of gh, dn and df";
+		m_ok = false;
+		return;
+	}
 
+	// check that all vectors are of same length as irradiance vectors
 	vec year = get_vector( data_table, "year");
 	vec month = get_vector( data_table, "month");
 	vec day = get_vector( data_table, "day");
@@ -766,6 +783,9 @@ weatherdata::weatherdata( var_data *data_table )
 	vec snow = get_vector( data_table, "snow", &nrec ); 
 	vec alb = get_vector( data_table, "alb", &nrec ); 
 	vec aod = get_vector( data_table, "aod", &nrec ); 
+	if (m_ok == false){
+		return;
+	}
 
 	m_nRecords = nrec;
 
