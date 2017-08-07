@@ -881,7 +881,7 @@ YY_DECL
 lp_yy_match:
 		do
 			{
-			register YY_CHAR lp_yy_c = lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)];
+			register YY_CHAR lp_yy_c = (YY_CHAR)lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)];
 			if ( lp_yy_accept[lp_yy_current_state] )
 				{
 				lp_yyg->lp_yy_last_accepting_state = lp_yy_current_state;
@@ -891,7 +891,7 @@ lp_yy_match:
 				{
 				lp_yy_current_state = (int) lp_yy_def[lp_yy_current_state];
 				if ( lp_yy_current_state >= 144 )
-					lp_yy_c = lp_yy_meta[(unsigned int) lp_yy_c];
+					lp_yy_c = (YY_CHAR)lp_yy_meta[(unsigned int)lp_yy_c];
 				}
 			lp_yy_current_state = lp_yy_nxt[lp_yy_base[lp_yy_current_state] + (unsigned int) lp_yy_c];
 			++lp_yy_cp;
@@ -1557,7 +1557,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 	for ( lp_yy_cp = lp_yyg->lp_yytext_ptr + YY_MORE_ADJ; lp_yy_cp < lp_yyg->lp_yy_c_buf_p; ++lp_yy_cp )
 		{
-		register YY_CHAR lp_yy_c = (*lp_yy_cp ? lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)] : 1);
+		register YY_CHAR lp_yy_c = (YY_CHAR)(*lp_yy_cp ? lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)] : 1);
 		if ( lp_yy_accept[lp_yy_current_state] )
 			{
 			lp_yyg->lp_yy_last_accepting_state = lp_yy_current_state;
@@ -1567,7 +1567,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 			{
 			lp_yy_current_state = (int) lp_yy_def[lp_yy_current_state];
 			if ( lp_yy_current_state >= 144 )
-				lp_yy_c = lp_yy_meta[(unsigned int) lp_yy_c];
+				lp_yy_c = (YY_CHAR)lp_yy_meta[(unsigned int)lp_yy_c];
 			}
 		lp_yy_current_state = lp_yy_nxt[lp_yy_base[lp_yy_current_state] + (unsigned int) lp_yy_c];
 		}
@@ -1596,7 +1596,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 		{
 		lp_yy_current_state = (int) lp_yy_def[lp_yy_current_state];
 		if ( lp_yy_current_state >= 144 )
-			lp_yy_c = lp_yy_meta[(unsigned int) lp_yy_c];
+			lp_yy_c = (YY_CHAR)lp_yy_meta[(unsigned int)lp_yy_c];
 		}
 	lp_yy_current_state = lp_yy_nxt[lp_yy_base[lp_yy_current_state] + (unsigned int) lp_yy_c];
 	lp_yy_is_jam = (lp_yy_current_state == 143);
