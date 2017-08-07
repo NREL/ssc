@@ -751,16 +751,13 @@ weatherdata::weatherdata( var_data *data_table )
 			n_irr++;
 		}
 	}
-	if (nrec == 0)
+	if (nrec == 0 || n_irr < 2)
 	{
-		m_message = "could not find gh, dn, nor df columns";
-		m_ok = false;
-		return;
-	}
-	else if (n_irr < 2){
-		m_message = "could not find at least 2 of gh, dn and df";
-		m_ok = false;
-		return;
+		if (data_table->table.lookup("poa") == nullptr){
+			m_message = "missing irradiance: could not find at least 2 of gh, dn and df; or poa";
+			m_ok = false;
+			return;
+		}
 	}
 
 	// check that all vectors are of same length as irradiance vectors
