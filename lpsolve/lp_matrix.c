@@ -3152,6 +3152,7 @@ STATIC MYBOOL fsolve(lprec *lp, int varin, REAL *pcol, int *nzidx, REAL roundzer
 /* Was setpivcol in versions earlier than 4.0.1.8 - KE */
 {
   MYBOOL ok = TRUE;
+  (void)roundzero;
 
   if(varin > 0)
     obtain_column(lp, varin, pcol, nzidx, NULL);
@@ -3171,6 +3172,7 @@ STATIC MYBOOL fsolve(lprec *lp, int varin, REAL *pcol, int *nzidx, REAL roundzer
 STATIC MYBOOL bsolve(lprec *lp, int row_nr, REAL *rhsvector, int *nzidx, REAL roundzero, REAL ofscalar)
 {
   MYBOOL ok = TRUE;
+  (void)roundzero;
 
   if(row_nr >= 0) /* Note that row_nr == 0 returns the [1, 0...0 ] vector */
     row_nr = obtain_column(lp, row_nr, rhsvector, nzidx, NULL);

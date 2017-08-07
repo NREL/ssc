@@ -169,6 +169,7 @@ extern "C" {
 
 static int isatty(int f)
 {
+  (void)f;
   return(FALSE);
 }
 

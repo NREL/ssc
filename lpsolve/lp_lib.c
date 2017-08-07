@@ -1345,8 +1345,9 @@ int __WINAPI get_status(lprec *lp)
   return(lp->spx_status);
 }
 
-char * __WINAPI get_statustext(int statuscode)
+char * __WINAPI get_statustext(lprec *lp, int statuscode)
 {
+  (void)*lp;
   if (statuscode == NOBFP)             return("No basis factorization package");
   else if (statuscode == DATAIGNORED)  return("Invalid input data provided");
   else if (statuscode == NOMEMORY)     return("Not enough memory available");
@@ -5559,7 +5560,7 @@ MYBOOL __WINAPI write_XLI(lprec *lp, char *filename, char *options, MYBOOL resul
 
 MYBOOL __WINAPI has_XLI(lprec *lp)
 {
-  return( is_nativeXLI(lp)
+  return( is_nativeXLI()
 #if LoadLanguageLib == TRUE
        || (MYBOOL) (lp->hXLI != NULL)
 #endif

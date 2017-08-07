@@ -114,6 +114,7 @@ STATIC int scan_lineFIXED(lprec *lp, int section, char* line, char *field1, char
 {
   int  items = 0, line_len;
   char buf[16], *ptr1, *ptr2;
+  (void)section;
 
   line_len = (int) strlen(line);
   while ((line_len) && ((line[line_len-1] == '\n') || (line[line_len-1] == '\r') || (line[line_len-1] == ' ')))
@@ -249,6 +250,7 @@ STATIC int scan_lineFREE(lprec *lp, int section, char* line, char *field1, char 
 {
   int  items = 0, line_len, len;
   char buf[256], *ptr1 = NULL, *ptr2;
+  (void)(*lp);
 
   line_len = (int) strlen(line);
   while ((line_len) && ((line[line_len-1] == '\n') || (line[line_len-1] == '\r') || (line[line_len-1] == ' ')))

@@ -44,7 +44,7 @@ STATIC MYBOOL fillbranches_BB(BBrec *BB);
 STATIC MYBOOL nextbranch_BB(BBrec *BB);
 STATIC MYBOOL strongbranch_BB(lprec *lp, BBrec *BB, int varno, int vartype, int varcus);
 STATIC MYBOOL initcuts_BB();
-STATIC int updatecuts_BB(lprec *lp);
+STATIC int updatecuts_BB();
 STATIC MYBOOL freecuts_BB(lprec *lp);
 STATIC BBrec *findself_BB(BBrec *BB);
 STATIC int solve_LP(lprec *lp, BBrec *BB);

@@ -2097,7 +2097,8 @@ YY_BUFFER_STATE lp_yy_scan_bytes  (lp_yyconst char * lp_yybytes, int  _lp_yybyte
 
 static void lp_yy_fatal_error (lp_yyconst char* msg , lp_yyscan_t lp_yyscanner)
 {
-    	(void) fprintf( stderr, "%s\n", msg );
+	(void)lp_yyscanner;
+	(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -2429,6 +2430,7 @@ static int lp_yy_flex_strlen (lp_yyconst char * s , lp_yyscan_t lp_yyscanner)
 
 void *lp_yyalloc (lp_yy_size_t  size , lp_yyscan_t lp_yyscanner)
 {
+	(void)lp_yyscanner;
 	return (void *) malloc( size );
 }
 
@@ -2441,11 +2443,13 @@ void *lp_yyrealloc  (void * ptr, lp_yy_size_t  size , lp_yyscan_t lp_yyscanner)
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
+	(void)lp_yyscanner;
 	return (void *) realloc( (char *) ptr, size );
 }
 
 void lp_yyfree (void * ptr , lp_yyscan_t lp_yyscanner)
 {
+	(void)lp_yyscanner;
 	free( (char *) ptr );	/* see lp_yyrealloc() for (char *) cast */
 }
 

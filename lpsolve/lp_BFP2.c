@@ -70,6 +70,7 @@ int BFP_CALLMODEL bfp_colcount(lprec *lp)
 /* DON'T MODIFY */
 MYBOOL BFP_CALLMODEL bfp_canresetbasis(lprec *lp)
 {
+  (void)(*lp);
   return( FALSE );
 }
 

@@ -111,6 +111,7 @@ void LU6U0_v(LUSOLrec *LUSOL, LUSOLmat *mat, REAL V[], REAL W[], int NZidx[], in
   SMALL = LUSOL->parmlu[LUSOL_RP_ZEROTOLERANCE];
   *INFORM = LUSOL_INFORM_LUSUCCESS;
   NRANK1 = NRANK+1;
+  (void)NZidx;
 /*      Find the first nonzero in v(1:nrank), counting backwards. */
   for(KLAST = NRANK; KLAST >= 1; KLAST--) {
     I = LUSOL->ip[KLAST];

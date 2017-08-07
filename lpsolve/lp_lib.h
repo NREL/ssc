@@ -1732,7 +1732,7 @@ void __EXPORT_TYPE __WINAPI lp_solve_version(int *majorversion, int *minorversio
 lprec __EXPORT_TYPE * __WINAPI make_lp(int rows, int columns);
 MYBOOL __EXPORT_TYPE __WINAPI resize_lp(lprec *lp, int rows, int columns);
 int __EXPORT_TYPE __WINAPI get_status(lprec *lp);
-char __EXPORT_TYPE * __WINAPI get_statustext(int statuscode);
+char __EXPORT_TYPE * __WINAPI get_statustext(lprec *lp, int statuscode);
 MYBOOL __EXPORT_TYPE __WINAPI is_obj_in_basis(lprec *lp);
 void __EXPORT_TYPE __WINAPI set_obj_in_basis(lprec *lp, MYBOOL obj_in_basis);
 /* Create and initialise a lprec structure defaults */
@@ -1758,7 +1758,7 @@ MYBOOL __EXPORT_TYPE __WINAPI set_BFP(lprec *lp, char *filename);
 lprec __EXPORT_TYPE * __WINAPI read_XLI(char *xliname, char *modelname, char *dataname, char *options, int verbose);
 MYBOOL __EXPORT_TYPE __WINAPI write_XLI(lprec *lp, char *filename, char *options, MYBOOL results);
 MYBOOL __EXPORT_TYPE __WINAPI has_XLI(lprec *lp);
-MYBOOL __EXPORT_TYPE __WINAPI is_nativeXLI(lprec *lp);
+MYBOOL __EXPORT_TYPE __WINAPI is_nativeXLI();
 MYBOOL __EXPORT_TYPE __WINAPI set_XLI(lprec *lp, char *filename);
 /* Set external language interface */
 

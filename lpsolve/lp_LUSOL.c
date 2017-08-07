@@ -346,6 +346,7 @@ int BFP_CALLMODEL bfp_factorize(lprec *lp, int uservars, int Bsize, MYBOOL *used
            singularities = 0,
            dimsize = lp->invB->dimcount;
   LUSOLrec *LUSOL = lp->invB->LUSOL;
+  (void)(*usedpos);
 
  /* Set dimensions and create work array */
   SETMAX(lp->invB->max_Bsize, Bsize+(1+lp->rows-uservars));

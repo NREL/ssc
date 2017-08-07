@@ -120,6 +120,8 @@ void LU6L0T_v(LUSOLrec *LUSOL, LUSOLmat *mat, REAL V[], int NZidx[], int *INFORM
 
   NUML0 = LUSOL->luparm[LUSOL_IP_ROWCOUNT_L0];
   SMALL = LUSOL->parmlu[LUSOL_RP_ZEROTOLERANCE];
+  (void)*INFORM;
+  (void)NZidx;
 
   /* Loop over the nz columns of L0' - from the end, going forward. */
   for(K = NUML0; K > 0; K--) {

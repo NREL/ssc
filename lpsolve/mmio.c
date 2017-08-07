@@ -264,6 +264,8 @@ int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
         double val[], MM_typecode matcode)
 {
     int i;
+	(void)N;
+	(void)M;
     if (mm_is_complex(matcode))
     {
         for (i=0; i<nz; i++)

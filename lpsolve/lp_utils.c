@@ -601,6 +601,7 @@ STATIC void chsign_bounds(REAL *lobound, REAL *upbound)
 STATIC REAL rand_uniform(lprec *lp, REAL range)
 {
   static MYBOOL randomized = FALSE; /* static ok here for reentrancy/multithreading */
+  (void)*lp;
 
   if(!randomized) {
     randomized = TRUE;
@@ -853,6 +854,8 @@ STATIC int nextInactiveLink(LLrec *linkmap, int backitemnr)
 
 STATIC int prevInactiveLink(LLrec *linkmap, int forwitemnr)
 {
+  (void)forwitemnr;
+  (void)*linkmap;
   return( 0 );
 }
 

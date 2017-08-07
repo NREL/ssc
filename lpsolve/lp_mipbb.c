@@ -854,7 +854,7 @@ STATIC int solve_LP(lprec *lp, BBrec *BB)
         lp->spx_perturbed = TRUE;
         if(lp->spx_trace)
           report(lp, DETAILED, "solve_LP: Starting bound relaxation #%d ('%s')\n",
-                               tilted, get_statustext(status));
+                               tilted, get_statustext(lp, status));
       }
       else  {
         if(lp->spx_trace)
@@ -1290,7 +1290,7 @@ STATIC int solve_BB(BBrec *BB)
   if(K > 0) {
 
     /* Update cuts, if specified */
-    updatecuts_BB(lp);
+    updatecuts_BB();
 
     /* BRANCH_FLOOR: Force the variable to be smaller than the B&B upper bound */
     if(BB->isfloor)
