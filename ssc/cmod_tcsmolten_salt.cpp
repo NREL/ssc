@@ -184,10 +184,25 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",         "Energy-based rcvr startup delay (fraction of rated thermal power)", "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "csp.pt.rec.max_oper_frac",  "Maximum receiver mass flow rate fraction",                     "",             "",            "receiver",       "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "eta_pump",             "Receiver HTF pump efficiency",                                      "",             "",            "receiver",       "*",                       "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "piping_loss",          "Thermal loss per meter of piping",                                  "Wt/m",         "",            "tower",          "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "piping_length_mult",   "Piping length multiplier",                                          "",             "",            "tower",          "*",                       "",                      "" },
+	
+	{ SSC_INPUT,        SSC_NUMBER,      "piping_length_mult",   "Piping length multiplier",                                          "",             "",            "tower",          "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "piping_length_const",  "Piping constant length",                                            "m",            "",            "tower",          "*",                       "",                      "" },
-													     																	  
+	{ SSC_INPUT,        SSC_NUMBER,      "piping_loss",          "Thermal loss per meter of piping",                                  "Wt/m",         "",            "tower",          "?=10200",                 "",                      "" },
+    { SSC_INPUT,		SSC_NUMBER,		 "piping_loss_coeff",	 "Wetted loss coefficient for riser or downcomer",					  "W/m2/K",		  "",			 "tower",		   "?=5.0",					  "",					   "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_model_trans",	 "Formulate receiver model as transient?",							  "",			  "",			 "receiver",	   "?=0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_startup_trans", "Formulate receiver startup model as transient?",					  "",			  "",			 "receiver",	   "?=0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "rec_tm_mult",			 "Receiver thermal mass multiplier",								  "",			  "",			 "receiver",	   "?=1.0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "riser_tm_mult",		 "Riser thermal mass multiplier",									  "",			  "",			 "tower",		   "?=1.0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "downc_tm_mult",		 "Downcomer thermal mass multiplier",								  "",			  "",			 "tower",		   "?=1.0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "u_riser",				 "Design point HTF velocity in riser",								  "m/s",		  "",			 "tower",		   "*",						  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "th_riser",			 "Riser or downcomer tube wall thickness",							  "mm",			  "",			 "tower",		   "?=15.0",				  "",					   "" },
+	
+	{ SSC_INPUT,		SSC_NUMBER,		 "heat_trace_power",	 "Riser/downcomer heat trace power during startup",				      "kW/m",		  "",			 "receiver",	   "?=5.0e3",				  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_flux",	     "Tube absorbed solar flux during preheat",							  "kW/m2",		  "",			 "receiver",	   "?=50.0",				  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_target_Tdiff", "Target tube T at end of preheat - design pt cold HTF temperature",  "C",			  "",			 "receiver",	   "?=25.0",				  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "startup_target_Tdiff", "Target HTF T at end of startup - design pt hot HTF temperature",	  "C",			  "",			 "receiver",	   "?=-5.0",					  "",					   "" },
+
 	
 	// TES parameters - general
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.tes.init_hot_htf_percent", "Initial fraction of avail. vol that is hot",             "%",            "",            "TES",            "*",                       "",                      "" },
@@ -421,6 +436,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_piping_losses",      "Rec. header/tower piping losses",                              "MWt",          "",            "CR",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_thermal_loss",       "Rec. convection and emission losses",                          "MWt",          "",            "CR",             "*",                       "",           "" },
 	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rec_out_end",		 "Rec. HTF outlet temperature at end of timestep",				 "C",			 "",			"CR",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rec_out_max",		 "Rec. maximum HTF outlet temperature during timestep",			 "C",			 "",			"CR",			  "*",						 "",		   "" },
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_panel_out_max",		 "Rec. panel maximum HTF outlet temperature during timestep",	 "C",			 "",			"CR",			  "*",						 "",		   "" },	
+	
 		// Power cycle outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "PC efficiency: gross",                                         "",             "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		         "PC input energy",                                              "MWt",          "",            "PC",             "*",                       "",           "" },
@@ -451,7 +470,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_cooling_tower_tot",  "Parasitic power condenser operation",                          "MWe",          "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",              "Parasitic power fixed load",                                   "MWe",          "",            "System",         "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",  "Parasitic power generation-dependent load",                    "MWe",          "",            "System",         "*",                       "",           "" },
-	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "P_rec_heattrace",		 "Receiver heat trace parasitic load",							 "MWe",			 "",			"System",		  "*",						 "",		   "" },
+
 		// System outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "P_out_net",            "Total electric power to grid",                                 "MWe",          "",            "System",         "*",                       "",           "" },
 	
@@ -918,6 +938,19 @@ public:
 		receiver.m_pipe_length_add = as_double("piping_length_const");	//[m]
 		receiver.m_pipe_length_mult = as_double("piping_length_mult");		//[-]
 
+		receiver.m_is_transient = as_boolean("is_rec_model_trans");
+		receiver.m_is_startup_transient = as_boolean("is_rec_startup_trans");
+		receiver.m_u_riser = as_double("u_riser");						//[m/s]
+		receiver.m_th_riser = as_double("th_riser");					//[mm]
+		receiver.m_piping_loss_coeff = as_double("piping_loss_coeff");	//[W/m2/K]
+		receiver.m_rec_tm_mult = as_double("rec_tm_mult");
+		receiver.m_riser_tm_mult = as_double("riser_tm_mult");
+		receiver.m_downc_tm_mult = as_double("downc_tm_mult");
+		receiver.m_heat_trace_power = as_double("heat_trace_power");	//[kW/m]
+		receiver.m_tube_flux_startup = as_double("preheat_flux");		//[kW/m2]
+		receiver.m_preheat_target = receiver.m_T_htf_cold_des + as_double("preheat_target_Tdiff");
+		receiver.m_startup_target = receiver.m_T_htf_hot_des + as_double("startup_target_Tdiff");
+
 		receiver.m_n_flux_x = as_integer("n_flux_x");
 		receiver.m_n_flux_y = as_integer("n_flux_y");
 
@@ -957,6 +990,10 @@ public:
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_piping_losses", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
 
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, allocate("T_rec_out_end", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT_MAX, allocate("T_rec_out_max", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_PANEL_OUT_MAX, allocate("T_panel_out_max", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_P_HEATTRACE, allocate("P_rec_heattrace", n_steps_fixed), n_steps_fixed);
 		
 		// ***********************************************
 		// ***********************************************

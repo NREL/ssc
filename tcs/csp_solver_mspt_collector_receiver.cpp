@@ -65,6 +65,10 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+	{ C_csp_mspt_collector_receiver::E_T_HTF_OUT_END, C_csp_reported_outputs::TS_LAST },
+	{ C_csp_mspt_collector_receiver::E_T_HTF_OUT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_T_HTF_PANEL_OUT_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE },
+	{ C_csp_mspt_collector_receiver::E_P_HEATTRACE, C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	
 	csp_info_invalid	
 };
@@ -100,12 +104,31 @@ int C_csp_mspt_collector_receiver::get_operating_state()
 
 double C_csp_mspt_collector_receiver::get_startup_time()
 {
-    return mc_mspt_receiver_222.m_rec_su_delay * 3600.; //sec   
+	double startup_time = std::numeric_limits<double>::quiet_NaN();
+	double startup_energy = std::numeric_limits<double>::quiet_NaN();
+	double fract = 0.4;  // Approximate mass flow / design point mass flow during startup
+
+	if (!mc_mspt_receiver_222.m_is_startup_transient)
+		startup_time = mc_mspt_receiver_222.m_rec_su_delay * 3600.; //sec   
+	else
+		mc_mspt_receiver_222.est_startup_time_energy(fract, startup_time, startup_energy);
+
+	return startup_time;	//[s]
+
 }
 
 double C_csp_mspt_collector_receiver::get_startup_energy() //MWh
 {
-    return mc_mspt_receiver_222.m_rec_qf_delay * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
+	double startup_time = std::numeric_limits<double>::quiet_NaN();
+	double startup_energy = std::numeric_limits<double>::quiet_NaN();
+	double fract = 0.4;  // Approximate mass flow / design point mass flow during startup
+	if (!mc_mspt_receiver_222.m_is_startup_transient)
+		startup_energy = mc_mspt_receiver_222.m_rec_qf_delay * mc_mspt_receiver_222.m_q_rec_des*1.e-6;
+	else
+		mc_mspt_receiver_222.est_startup_time_energy(fract, startup_time, startup_energy);		// Startup energy in MWt-hr
+
+	return startup_energy;
+
 }
 
 double C_csp_mspt_collector_receiver::get_pumping_parasitic_coef()  //MWe/MWt
@@ -201,6 +224,8 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	cr_out_solver.m_W_dot_col_tracking = mc_pt_heliostatfield.ms_outputs.m_pparasi;		//[MWe]
 
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	//[s]
+	cr_out_solver.m_q_rec_heattrace = mc_mspt_receiver_222.ms_outputs.m_q_heattrace / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
+
 
 	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
@@ -216,6 +241,10 @@ void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &w
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_rad_sum + mc_mspt_receiver_222.ms_outputs.m_q_conv_sum ); //MWt
+	mc_reported_outputs.value(E_T_HTF_OUT_END, mc_mspt_receiver_222.ms_outputs.m_inst_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT_MAX, mc_mspt_receiver_222.ms_outputs.m_max_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_PANEL_OUT_MAX, mc_mspt_receiver_222.ms_outputs.m_max_rec_tout);	//[C]
+	mc_reported_outputs.value(E_P_HEATTRACE, mc_mspt_receiver_222.ms_outputs.m_q_heattrace / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
 }
 
 void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -249,7 +278,8 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	cr_out_solver.m_W_dot_htf_pump = mc_mspt_receiver_222.ms_outputs.m_W_dot_pump;			 //[MWe]
 		// Not sure that we want 'startup time required' calculated in 'off' call
 	cr_out_solver.m_time_required_su = mc_mspt_receiver_222.ms_outputs.m_time_required_su;	 //[s]
-	
+	cr_out_solver.m_q_rec_heattrace = mc_mspt_receiver_222.ms_outputs.m_q_heattrace / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0);		//[MWt])
+
 	mc_reported_outputs.value(E_FIELD_Q_DOT_INC, mc_pt_heliostatfield.ms_outputs.m_q_dot_field_inc);	//[MWt]
 	mc_reported_outputs.value(E_FIELD_ETA_OPT, mc_pt_heliostatfield.ms_outputs.m_eta_field);			//[-]
 	mc_reported_outputs.value(E_FIELD_ADJUST, mc_pt_heliostatfield.ms_outputs.m_sf_adjust_out);			//[-]
@@ -264,7 +294,11 @@ void C_csp_mspt_collector_receiver::off(const C_csp_weatherreader::S_outputs &we
 	mc_reported_outputs.value(E_T_HTF_OUT, mc_mspt_receiver_222.ms_outputs.m_T_salt_hot);		//[C]
 	mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_dot_piping_loss);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, mc_mspt_receiver_222.ms_outputs.m_q_rad_sum + mc_mspt_receiver_222.ms_outputs.m_q_conv_sum ); //MWt
-    
+	mc_reported_outputs.value(E_T_HTF_OUT_END, mc_mspt_receiver_222.ms_outputs.m_inst_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT_MAX, mc_mspt_receiver_222.ms_outputs.m_max_T_salt_hot);	//[C]
+	mc_reported_outputs.value(E_T_HTF_PANEL_OUT_MAX, mc_mspt_receiver_222.ms_outputs.m_max_rec_tout);	//[C]
+	mc_reported_outputs.value(E_P_HEATTRACE, mc_mspt_receiver_222.ms_outputs.m_q_heattrace / (mc_mspt_receiver_222.ms_outputs.m_time_required_su / 3600.0));		//[MWt])
+
 	return;
 }
 
