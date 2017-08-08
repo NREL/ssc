@@ -5595,7 +5595,7 @@ MYBOOL __WINAPI set_XLI(lprec *lp, char *filename)
 #endif
 
   if(filename == NULL) {
-    if(!is_nativeXLI(lp))
+    if(!is_nativeXLI())
       return( FALSE );
 #ifndef ExcludeNativeLanguage
     lp->xli_name = xli_name;

@@ -74,7 +74,7 @@ MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_restart)(lprec *lp);
 MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_implicitslack)();
 MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_pivotalloc)();
 int    __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_colcount)(lprec *lp);
-MYBOOL __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_canresetbasis)();
+MYBOOL __BFP_EXPORT_TYPE(BFP_CALLMODEL bfp_canresetbasis)(lprec *lp);
 void   __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_finishfactorization)(lprec *lp);
 LREAL  __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_prepareupdate)(lprec *lp, int row_nr, int col_nr, REAL *pcol);
 REAL   __BFP_EXPORT_TYPE (BFP_CALLMODEL bfp_pivotRHS)(lprec *lp, LREAL theta, REAL *pcol);

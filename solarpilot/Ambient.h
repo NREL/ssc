@@ -74,7 +74,6 @@ class Ambient : public mod_base
 	//enum CLRSKY_MODEL { MEINEL, HOTTEL, CONSTANT, MOON, ALLEN, WEATHER=-1 };
 
 	void Create(var_map &V);
-    void updateCalculatedParameters(var_map &V);
 	void Clean();
 
 	static std::string getDefaultSimStep();	//d.o.m., hour, month, dni, pressure, wind

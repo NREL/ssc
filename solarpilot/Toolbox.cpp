@@ -364,7 +364,7 @@ int DateTime::GetDayOfYear(){
 	return val;
 }
 
-int DateTime::GetDayOfYear(int year, int month, int mday){
+int DateTime::GetDayOfYear(int , int month, int mday){
 	//Return the day of the year specified by the class day/month/year class members
 	//Day of the year runs from 1-365
 
@@ -1142,7 +1142,6 @@ void Toolbox::ellipse_bounding_box(double &A, double &B, double &phi, double sid
 	--> t = aan( B*cot(phi)/A )
 	
 	*/
-	double pi = PI;
 
 	//X first
 	//double tx = atan( -B*tan(phi)/A );
@@ -1692,7 +1691,6 @@ double Toolbox::ZRotationTransform(Vect &normal_vect){
 
 
 	*/
-	double Pi = PI;
 	double az = atan3(normal_vect.i,normal_vect.j);
 	double el = asin(normal_vect.k);
 
@@ -1778,8 +1776,6 @@ double Toolbox::intersect_ellipse_rect(double rect[4], double ellipse[2]){
 
 	//Unpack
 	double
-		a = rect[0] - rect[2]/2.,	//Lower left corner X location
-		b = rect[1] - rect[3]/2.,	//Lower left corner Y location
 		c = rect[2],	//Rect width
 		d = rect[3];	//Rect height
 	double
