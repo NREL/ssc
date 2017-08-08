@@ -5560,14 +5560,14 @@ MYBOOL __WINAPI write_XLI(lprec *lp, char *filename, char *options, MYBOOL resul
 
 MYBOOL __WINAPI has_XLI(lprec *lp)
 {
-  return( is_nativeXLI(lp)
+  return( is_nativeXLI()
 #if LoadLanguageLib == TRUE
        || (MYBOOL) (lp->hXLI != NULL)
 #endif
         );
 }
 
-MYBOOL __WINAPI is_nativeXLI(lprec *lp)
+MYBOOL __WINAPI is_nativeXLI()
 {
 #ifdef ExcludeNativeLanguage
   return( FALSE );
