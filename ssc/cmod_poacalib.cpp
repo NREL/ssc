@@ -143,7 +143,6 @@ public:
 					x.set_sky_model(2, alb);
 					x.set_beam_diffuse(B, D);
 					double solaz, zen;
-					int err = x.calc();
 					x.get_sun(&solaz, &zen, 0, 0, 0, 0, 0, 0, 0, 0);
 					solaz = solaz*DTOR;
 					zen = zen*DTOR;

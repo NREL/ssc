@@ -246,7 +246,6 @@ public:
 		double_vec batt_losses_monthly = { 0 };
 
 		size_t n_recs = 0;
-		ssc_number_t * p_ac = as_array("ac", &n_recs);
 		for (int i = 0; i != (int)n_recs; i++)
 			batt_losses.push_back(0.);
 		for (int m = 0; m != 12; m++)

@@ -70,16 +70,15 @@ and function definitions.
 
 */
 
-void __WINAPI opt_logfunction(lprec *lp, void *userhandle, char *buf)
+void __WINAPI opt_logfunction(lprec *, void *userhandle, char *buf)
 {
-
     /* do something with buf (the message) */
     csp_dispatch_opt::s_solver_params* par = static_cast<csp_dispatch_opt::s_solver_params*>(userhandle);
     string line = buf;
     par->log_message.append( line );
 }
 
-int __WINAPI opt_abortfunction(lprec *lp, void *userhandle)
+int __WINAPI opt_abortfunction(lprec *, void *userhandle)
 {
     csp_dispatch_opt::s_solver_params* par = static_cast<csp_dispatch_opt::s_solver_params*>(userhandle);
     return par->is_abort_flag ? TRUE : FALSE;
@@ -188,7 +187,6 @@ void csp_dispatch_opt::clear_output_arrays()
 bool csp_dispatch_opt::check_setup(int nstep)
 {
     //check parameters and inputs to make sure everything has been set up correctly
-    bool ok = true;
 
     if( (int)price_signal.size() < nstep )   return false;
 
@@ -346,7 +344,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             double fhfi = 0.;
             double fhfi_2 = 0.;
             vector<double> fiv;
-            int m = optinst->params.eff_table_load.get_size();
+            int m = (int)optinst->params.eff_table_load.get_size();
             for(int i=0; i<m; i++)
             {
                 if( i==0 ) continue; // first data point is zero, so skip
@@ -373,7 +371,6 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             pars["Z_2"] = 1./(double)m * ( fi - pars["Z_1"] * fhfi );
         }
 
-        double rate1 = 0;
         pars["etap"] = pars["Z_1"]*optinst->params.eta_cycle_ref; //rate2
 
         double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
@@ -466,7 +463,6 @@ bool csp_dispatch_opt::optimize()
 
         //Calculate the number of variables
         int nt = (int)m_nstep_opt;
-        int nz = (int)params.eff_table_load.get_size();
 
         //set up the variable structure
         optimization_vars O;
@@ -1796,7 +1792,6 @@ bool csp_dispatch_opt::optimize_ampl()
     else exit(EXIT_FAILURE);
 
     //int sysret = system(tstring.str().c_str());
-    int sysret = system( solver_params.ampl_exec_call.c_str() );
     
 
 
@@ -1990,7 +1985,7 @@ REAL &optimization_vars::operator()(char *varname, int ind)    //Access for 1D v
 
 }
 
-REAL &optimization_vars::operator()(char *varname, int ind1, int ind2)     //Access for 2D var
+REAL &optimization_vars::operator()(char *varname, int ind1, int )     //Access for 2D var
 {
     return data[ column(varname, ind1, ind1)-1 ];
 }

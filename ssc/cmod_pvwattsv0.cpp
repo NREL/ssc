@@ -257,9 +257,9 @@ c     windmd = wind speed at module height
 c     xlen = hydrodynamic length of module              */
 
 	int i,j,iflagc=0;
-	double absorb=0.83,backrt,boltz=5.669e-8,cap,capo=11000.0,conair,convrt,denair;
+	double absorb = 0.83, backrt, boltz = 5.669e-8, cap = 0.0, capo = 11000.0, conair, convrt = 0.0, denair;
 	double dtime,eigen,emmis=0.84,grashf,hconv,hforce,hfree,hgrnd,reynld,sunn;
-	double suno,tamb,tave,tgrat,tgrnd,tmod,tmodo,tsky,visair,windmd,xlen=0.5;
+	double suno, tamb, tave, tgrat = 0.0, tgrnd, tmod, tmodo, tsky, visair, windmd, xlen = 0.5;
 	double hsky,ex;
 
 /* Set time step to a large number for very first calc. After
@@ -488,28 +488,6 @@ static void dctoac(double pcrate,double efffp,double dc[24],double ac[24])
 		else         /* dc in equals 0 */
 			ac[i] = 0.0;
 		}
-}
-
-static int houradj(char *wban,char *state,int i,int m)   /* Function to adjust to daylight savings time if needed */
-{
-	int j,k;
-	char sts[5][3]={"AZ","HI","IN","PR","PI"};
-	char wban2[6]="93817";        /* Evansville Indiana observes daylight time */
-
-	if( m > 93 && m < 302 )       /* Daylight savings time from April 4 thru October 28 */
-		{
-		k = i + 2;                 /* time in hours for stations that observe daylight savings time */
-		for( j=0;j<=4;j++ )
-			{
-			if(strncmp(state,sts[j],2) == 0 && strncmp(wban,wban2,5) != 0 )
-				k = i + 1;           /* Arizona, Hawaii, Indiana, Puerto Rico, and Guam don't observe daylight savings time */
-			}
-		if( k == 25 )
-			k = 1;
-		}
-	else
-		k = i + 1;
-	return(k);
 }
 
 static int julian(int yr,int month,int day)    /* Calculates julian day of year */
@@ -1056,7 +1034,6 @@ public:
 		ssc_number_t *p_dn = allocate("dn", 8760);
 		ssc_number_t *p_df = allocate("df", 8760);
 		ssc_number_t *p_tamb = allocate("tamb", 8760);
-		ssc_number_t *p_tdew = allocate("tdew", 8760);
 		ssc_number_t *p_wspd = allocate("wspd", 8760);
 
 		ssc_number_t *p_dc = allocate("dc", 8760);

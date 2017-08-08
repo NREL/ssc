@@ -128,7 +128,6 @@ public:
 		double tamb = as_double("tamb");
 		double wspd = as_double("wspd");
 
-		double time_step = as_double("time_step");
 		double snow = as_double("snow");
 
 		double dcrate = as_double("system_size");

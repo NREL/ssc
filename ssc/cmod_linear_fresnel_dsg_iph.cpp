@@ -450,8 +450,7 @@ public:
 		// Now add the storage class
 		// ********************************
 		// ********************************
-		C_csp_two_tank_tes storage;
-		C_csp_two_tank_tes::S_params *tes = &storage.ms_params;		
+		C_csp_two_tank_tes storage;	
 
 		// Instantiate Solver
 		C_csp_solver csp_solver(weather_reader, 

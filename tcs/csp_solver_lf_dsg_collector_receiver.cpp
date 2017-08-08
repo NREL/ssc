@@ -321,8 +321,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_EPSILON_5 = m_EPSILON_4;	
 
 	//m_AbsorberMaterial
-	int n_rows_abs = m_AbsorberMaterial_in.nrows();
-	int n_cols_abs = m_AbsorberMaterial_in.ncols();
+	int n_rows_abs = (int)m_AbsorberMaterial_in.nrows();
+	int n_cols_abs = (int)m_AbsorberMaterial_in.ncols();
 
 	int n_rows_matrix_lk_in = 2;
 	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 1) )
@@ -336,7 +336,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	util::matrix_t<AbsorberProps*> m_AbsorberMaterial;
 	util::matrix_t<HTFProperties*> m_AnnulusGas;
 
-	int ii = 3;
 	m_AbsorberMaterial.resize(n_rows_abs, n_cols_abs);
 	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
@@ -345,8 +344,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	//m_AnnulusGas [-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
-	n_rows_abs = m_AnnulusGas_in.nrows();
-	n_cols_abs = m_AnnulusGas_in.ncols();
+	n_rows_abs = (int)m_AnnulusGas_in.nrows();
+	n_cols_abs = (int)m_AnnulusGas_in.ncols();
 	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 4) )
 	{
 		std::string err_msg = util::format("HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", 
@@ -406,8 +405,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	//[-] Boiler Optical Table
-	n_rows_abs = m_b_OpticalTable.nrows();
-	n_cols_abs = m_b_OpticalTable.ncols();
+	n_rows_abs = (int)m_b_OpticalTable.nrows();
+	n_cols_abs = (int)m_b_OpticalTable.ncols();
 
 	// Set up the optical table object..
 
@@ -450,8 +449,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//0608
 	if (m_is_multgeom)
 	{
-		int n_rows = m_sh_OpticalTable.nrows();
-		int n_cols = m_sh_OpticalTable.ncols();
+		int n_rows = (int)m_sh_OpticalTable.nrows();
+		int n_cols = (int)m_sh_OpticalTable.ncols();
 
 		// Set up the optical table object..
 
@@ -838,7 +837,6 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		q_rec_tot_loop += m_q_rec[i];			//[kWt] LOOP total incident thermal power after *optical* losses and *defocus*
 		q_loss_tot_loop += m_q_loss[i];			//[kWt] LOOP total thermal losses
 	}
-	double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
 	double m_q_rec_tot_des = q_rec_tot_loop*(double)m_nLoops;			//[kWt] SYSTEM total design incident thermal power after *optical* losses
 	double q_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
 	m_q_dot_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;			//[kWt]
@@ -1198,7 +1196,7 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 }
 
 void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &htf_state_in,
+	const C_csp_solver_htf_1state &,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1277,7 +1275,6 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 			if(m_Q_field_losses_total > 0.0)
 			{
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
-				int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
 
 				Q_fp_sum += Q_fp_i;		//[MJ]
 			}
@@ -1369,7 +1366,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 
 void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &htf_state_in,
+	const C_csp_solver_htf_1state &,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1459,7 +1456,6 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			if(m_Q_field_losses_total > 0.0)
 			{
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
-				int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
 
 				Q_fp_sum += Q_fp_i;		//[MJ]
 			}
@@ -1761,11 +1757,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
 			{
-				if( defocus_tol_solved == defocus_tol_solved && defocus_tol_solved < 0.1 )
-				{
-					double blah = 1.23;
-				}
-				else
+				if( defocus_tol_solved != defocus_tol_solved && defocus_tol_solved < 0.1 )
 				{
 					throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed to converge"));
 				}
@@ -1810,11 +1802,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
 			{
-				if(tol_solved == tol_solved && tol_solved < 0.1)
-				{
-					double blah = 1.23;
-				}
-				else
+				if(tol_solved != tol_solved && tol_solved < 0.1)
 				{
 					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration did not"
 						"within a relative tolerance of 0.1."));
@@ -2035,7 +2023,7 @@ void C_csp_lf_dsg_collector_receiver::write_output_intervals(double report_time_
 		v_temp_ts_time_end, report_time_end);
 }
 
-double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
+double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &, const C_csp_solver_sim_info &)
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
@@ -2043,7 +2031,7 @@ double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_lf_dsg_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
+double C_csp_lf_dsg_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &, double  /*MW*/)
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
@@ -2066,9 +2054,6 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	loop_optical_eta_off();
 
 	double I_bn = weather.m_beam;					//[W/m2] Current DNI
-	double T_db = weather.m_tdry + 273.15;			//[K] Dry bulb temp, convert from C
-	double T_dp = weather.m_tdew + 273.15;			//[K] Dewpoint temp, convert from C
-	double P_amb = weather.m_pres*100.0;			//[Pa] Ambient pressure, convert from mbar
 	double V_wind = weather.m_wspd;					//[m/s] Ambient windspeed
 
 	double shift = weather.m_shift*0.0174533;				//[rad] Shift in longitude from local standard meridian
@@ -2147,7 +2132,6 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	double StdTime = MidTrack;
 	double SolarTime = StdTime + ((shift)* 180 / CSP::pi) / 15.0 + EOT / 60.0;
 	// hour angle (arc of sun) in radians
-	double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;		//[rad]
 
 	if (SolarZen < CSP::pi / 2.0)
 	{
@@ -2809,11 +2793,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	if( h_out_t_end_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		if( tol_solved == tol_solved && tol_solved < 0.1 )
-		{
-			double blah = 1.23;
-		}
-		else
+		if( tol_solved != tol_solved && tol_solved < 0.1 )
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}		

@@ -173,7 +173,6 @@ public:
 	//averages an 8760 array ("hourly") into an array of 12 monthly averages ("monthly")
 	void monthly_averages( ssc_number_t *hourly, ssc_number_t *monthly )
 	{
-		int c = 0; //8760 counter
 		monthly_sums(hourly, monthly);
 		for (int i=0;i<12;i++) 
 			monthly[i] /= (util::nday[i]*24); //divide the monthly sum by the number of hours in the month for an hourly average		
@@ -508,9 +507,7 @@ public:
 		double A_Walls = sqrt(A_Floor / Stories) * 4 * (H_ceiling)*Stories - A_Wins;   //It's a cube
 		double Aenv = A_Walls + 2 * A_Floor; //This one includes floor
 		double V_bldg = A_Floor * H_ceiling * Stories; //Exclude the plenum from conditioned volume
-		double AIntWall = A_Floor / 2; //Interior partition walls - typical default
 		double AIntMass = 0.4*A_Floor; //Bldg AM default for internal mass
-		double AIntTot = A_Wins + Aenv + AIntWall + AIntMass;
 		double Cair = 0.075*0.245*V_bldg * 10; //BTU / degF  Note adjust factor of 10 --MJB
 
 		//INTERNAL LOADS	

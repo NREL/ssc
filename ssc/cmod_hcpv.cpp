@@ -448,7 +448,6 @@ public:
 
 			// apply monthly soiling factor to incident poa
 			int midx = wf.month - 1;
-			double soiling_factor = 1.0;
 			if (midx >= 0 && midx < 12)
 				poa *= soiling[midx];
 
