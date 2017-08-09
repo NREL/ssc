@@ -138,9 +138,9 @@ int tcstypeprovider::load_library( const std::string &name )
 		
 		void *pdl, *pf;
 		tcstypeinfo **ti;
-		if ( (pdl = dll_open( path.c_str() ))
-			&& (pf = dll_sym( pdl, "tcsdynamictypes" ))
-			&& (ti = (*((tcstypeinfo**(*)())pf))() ) )
+		if ( ((pdl = dll_open( path.c_str() ))!=0)
+			&& ((pf = dll_sym( pdl, "tcsdynamictypes" ))!=0)
+			&& ((ti = (*((tcstypeinfo**(*)())pf))()) !=0) )
 		{
 
 			m_libraries.push_back( dyndata() );

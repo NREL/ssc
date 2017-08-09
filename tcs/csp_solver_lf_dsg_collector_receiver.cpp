@@ -1034,42 +1034,28 @@ int C_csp_lf_dsg_collector_receiver::get_operating_state()
 double C_csp_lf_dsg_collector_receiver::get_startup_time()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_csp_lf_dsg_collector_receiver::get_startup_energy()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_csp_lf_dsg_collector_receiver::get_pumping_parasitic_coef()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_csp_lf_dsg_collector_receiver::get_min_power_delivery()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_lf_dsg_collector_receiver::get_tracking_power()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_tracking_power() is not complete"));
-	return std::numeric_limits<double>::quiet_NaN(); //MWe
 }
 
 double C_csp_lf_dsg_collector_receiver::get_col_startup_power()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::get_col_startup_power() is not complete"));
-	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
 }
 
 int C_csp_lf_dsg_collector_receiver::C_mono_eq_freeze_prot_E_bal::operator()(double T_cold_in /*K*/, double *E_loss_balance /*-*/)
@@ -1752,7 +1738,6 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			catch( C_csp_exception &  )
 			{
 				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus method reached exception."));
-				on_success = false;
 			}
 
 			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
@@ -1797,7 +1782,6 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			catch( C_csp_exception & )
 			{
 				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
-				on_success = false;
 			}
 
 			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
@@ -2026,25 +2010,16 @@ void C_csp_lf_dsg_collector_receiver::write_output_intervals(double report_time_
 double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &, const C_csp_solver_sim_info &)
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_lf_dsg_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &, double  /*MW*/)
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_lf_dsg_collector_receiver::get_collector_area()
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
-
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader::S_outputs &weather,

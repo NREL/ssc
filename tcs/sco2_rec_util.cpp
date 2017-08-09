@@ -77,8 +77,6 @@ double N_sco2_rec::C_rec_des_props::alpha_inst(double T_C)
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double N_sco2_rec::C_rec_des_props::modE(double T_C)
@@ -94,8 +92,6 @@ double N_sco2_rec::C_rec_des_props::modE(double T_C)
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double N_sco2_rec::C_rec_des_props::cond(double T_C)
@@ -112,8 +108,6 @@ double N_sco2_rec::C_rec_des_props::cond(double T_C)
 	default:
 		return std::numeric_limits<double>::quiet_NaN();
 	}
-
-	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double N_sco2_rec::C_rec_des_props::poisson()
@@ -409,7 +403,8 @@ double N_sco2_rec::C_rec_des_props::haynes230_cycles_to_failure(int enum_T_C, do
 			}
 			if( counter > 100 )
 				return -999.9;
-		} while( true );
+		} 
+		while( true );
 	}
 }
 

@@ -2251,13 +2251,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			catch( C_csp_exception )
 			{
 				throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
-				on_success = false;
 			}
 
 			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
 			{
 				throw(C_csp_exception("C_csp_trough_collector::on(...) COMPONENT defocus failed."));
-				on_success = false;
 			}
 		}
 		else
@@ -2290,13 +2288,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 			catch( C_csp_exception )
 			{
 				throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
-				on_success = false;
 			}
 
 			if( m_dot_htf_code != C_monotonic_eq_solver::CONVERGED )
 			{
 				throw(C_csp_exception("C_csp_trough_collector::on(...) HTF mass flow rate iteration failed."));
-				on_success = false;
 			}
 		}
 	}
