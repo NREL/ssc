@@ -1745,8 +1745,23 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					catch (C_csp_exception)
 					{
                         //sim failed
-                        m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
-                        are_models_converged = false;
+						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+							"failed to find a solution. Controller will shut-down CR and PC",
+							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+
+						if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
+						{
+							m_is_CR_DF__PC_SU__TES_OFF__AUX_OFF_avail = false;
+						}
+						else
+						{
+							// Next operating_mode = CR_OFF__PC_OFF__TES_OFF__AUX_OFF;
+							m_is_CR_DF__PC_MAX__TES_OFF__AUX_OFF_avail = false;
+						}
+
+						are_models_converged = false;
+
                         break;
 
 						/*throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
