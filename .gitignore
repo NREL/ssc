@@ -323,3 +323,9 @@ build_osx/ssc\.dylib
 build_osx/TCSConsole\.app/Contents/
 
 build_ios/libssc\.zip
+
+build_android/libssc\.zip
+
+android_make_output\.txt
+
+ios_make_output\.txt
