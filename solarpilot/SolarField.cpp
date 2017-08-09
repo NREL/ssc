@@ -1418,8 +1418,6 @@ bool SolarField::DoLayout( SolarField *SF, sim_results *results, WeatherData *wd
 	bool is_pmt_factors = SF->getVarMap()->fin.is_pmt_factors.val;
 
     vector<double> *tous = &SF->getVarMap()->fin.pricing_array.Val();
-
-	int Npos = SF->getHeliostats()->size();
 				
 	//Simulate for each time
 	//int nsim_actual=0;	//keep track of the day of the year for _des_sim_detail = 3
@@ -2403,7 +2401,6 @@ void SolarField::radialStaggerPositions(vector<sp_point> &HelPos)
             }
 
             double Hd = Htv->width.val;	//Heliostat diameter
-		    double Hrad = Hd/2.;
 
 			//----Add heliostats to this row----
 			
@@ -2784,8 +2781,7 @@ void SolarField::cornfieldPositions(vector<sp_point> &HelPos){
 		radmint = rad[0],
 		radmaxt = rad[1];
 	//First determine how to split up the templates
-	int Nht = _helio_templates.size();	//Number in the radial direction
-
+	int Nht = _helio_templates.size();	//Number in the radial directio
 	//Calculate an upper estimate of the size of the heliostat positions array to avoid resizing all the time
 	double 
 		r_coll_temp,
@@ -2999,7 +2995,7 @@ void SolarField::RefactorHeliostatImages(Vect &Sun){
 //	return SimulateTime(hour, dom, month, args, 5);
 //}
 
-bool SolarField::SimulateTime(int hour, int day_of_month, int month, sim_params &P){
+bool SolarField::SimulateTime(int , int , int , sim_params &P){
 	/* 
 	Simulate a particular date/time for the current solar field geometry.
 
@@ -3015,7 +3011,6 @@ bool SolarField::SimulateTime(int hour, int day_of_month, int month, sim_params 
 
 	//Convert the day of the month to a day of year
     DateTime DT;
-	int doy = DT.GetDayOfYear(2011, month, day_of_month); 
 
 	//Calculate the sun position
 	double az, zen;
@@ -3183,8 +3178,6 @@ void SolarField::SimulateHeliostatEfficiency(SolarField *SF, Vect &Sun, Heliosta
         return;
     }
 
-	int hid = helios->getId();
-
 	//Cosine loss
 	helios->setEfficiencyCosine( Toolbox::dotprod(Sun, *helios->getTrackVector()) );
 	
@@ -3281,11 +3274,9 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 			H_inter = H->getTowerVector();
 		}
 
-		double zen = acos(H_inter->k);	//The zenith angle for interference
 
 		//Get the interfering heliostat tracking angles
 		Vect 
-			*HIt = HI->getTrackVector(),	//Interfering heliostat track vector
 			*Ht = H->getTrackVector();	//Base heliostat track vector
 		
 		//Is the heliostat in a position to shadow/block?
@@ -3373,7 +3364,6 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 		double 
 			Hh = H->getVarMap()->height.val,	//Shaded heliostat height
 			Hw = H->getVarMap()->width.val;	//Shaded heliostat width
-		double Hr = sqrt(pow(Hh/2.,2) + pow(Hw/2.,2));
 		//If the heliostat is not in front of the other with respect to the solar position, it also can't shadow
 		if( Toolbox::dotprod(Hnn, *H_inter) < 0.) return 0.; 
 
@@ -3453,7 +3443,7 @@ double SolarField::calcShadowBlock(Heliostat *H, Heliostat *HI, int mode, Vect &
 
 }
 
-double *SolarField::getPlotBounds(bool use_land){
+double *SolarField::getPlotBounds(bool ){
 	/* 
 	Returns the field bound extents for plotting based on the field layout 
 	
@@ -3925,8 +3915,6 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 	}
 	//Receiver surface area
 	double Arec = calcReceiverTotalArea();	//[m2]
-	//Convert to kW/m2
-	double q_rec_spec = q_to_rec / Arec;
 
 	//Simulate for each receiver
 	int nrec = _receivers.size();

@@ -172,7 +172,9 @@ std::string weatherfile::normalize_city(const std::string &in)
 	for (size_t i = 0; i<city.length(); i++)
 	{
 		if (i == 0 || city[i - 1] == ' ')
-			city[i] = toupper(city[i]);
+		{
+			city[i] = (char)toupper(city[i]);
+		}
 	}
 	return city;
 }
@@ -263,7 +265,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 		c13 = 6.5459673, c14 = 6.54, c15 = 14.526, c16 = 0.7389, c17 = 0.09486,
 		c18 = 0.4569;
 	double arg, t, pres, pres_dew, pta, ptb, ptc;
-	float dpt;
+	float dpt = -1;
 
 	if (db > 90.0 || rh > 100.0 || rh < 1.0)    /* Check for valid input data */
 		dpt = (float)99.9;                   /* Missing data value */
@@ -363,7 +365,7 @@ double calc_twet(double T, double RH, double P)
 		hiflag = false,
 		lowflag = false;
 	double
-		hival, lowval, err;
+		hival = 0.0, lowval = 0.0, err = 0.0;
 	const double tol = 0.05;
 
 	int i = 0;
@@ -1043,75 +1045,69 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			char *pret = 0;
 			int nread = 0;
 
-			while ( 1 )
+			pret = fgets(buf, NBUF, fp);
+			nread = sscanf(buf,
+				"%2d%2d%2d%2d"
+				"%4d%4d"
+				"%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
+				"%2d%1s%1d%2d%1s%1d%4d%1s%1d%4d%1s%1d%3d%1s%1d%4d%1s%1d%3d%1s%1d"
+				"%3d%1s%1d%4d%1s%1d%5d%1s%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%3d%1s%1d%3d%1s%1d%3d%1s%1d%2d%1s%1d\n",
+				&yr, &mn, &dy, &hr,
+				&ethor, /* extraterrestrial horizontal radiation */
+				&etdn, /* extraterrestrial direct normal radiation */
+				&d1, f1, &u1, /* GH data value 0-1415 Wh/m2, Source, Uncertainty */
+				&d2, f2, &u2, /* DN data value 0-1200 Wh/m2, Source, Uncertainty */
+				&d3, f3, &u3, /* DF data value 0-700 Wh/m2, Source, Uncertainty */
+				&d4, f4, &u4, /* GH illum data value, Source, Uncertainty */
+				&d5, f5, &u5, /* DN illum data value, Source, Uncertainty */
+				&d6, f6, &u6, /* DF illum data value, Source, Uncertainty */
+				&d7, f7, &u7, /* Zenith illum data value, Source, Uncertainty */
+				&d8, f8, &u8, /* Total sky cover */
+				&d9, f9, &u9, /* opaque sky cover */
+				&d10, f10, &u10, /* dry bulb temp -500 to 500 = -50.0 to 50.0 'C */
+				&d11, f11, &u11, /* dew point temp -600 to 300 = -60.0 to 30.0 'C */
+				&d12, f12, &u12, /* relative humidity 0-100 */
+				&d13, f13, &u13, /* pressure millibars */
+				&d14, f14, &u14, /* wind direction */
+				&d15, &f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
+				&d16, &f16, &u16, // visibility
+				&d17, &f17, &u17, // ceiling height
+				&w1, &w2, &w3, &w4, &w5, &w6, &w7, &w8, &w9, &w10, // present weather
+				&d18, &f18, &u18, // precipitable water
+				&d19, &f19, &u19, // aerosol optical depth
+				&d20, &f20, &u20, // snow depth 0-150 cm
+				&d21, &f21, &u21); // days since last snowfall 0-88
+
+			if (mn == 2 && dy == 29)
 			{
-				pret = fgets(buf, NBUF, fp);
-				nread = sscanf(buf,
-					"%2d%2d%2d%2d"
-					"%4d%4d"
-					"%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d%4d%1s%1d"
-					"%2d%1s%1d%2d%1s%1d%4d%1s%1d%4d%1s%1d%3d%1s%1d%4d%1s%1d%3d%1s%1d"
-					"%3d%1s%1d%4d%1s%1d%5d%1s%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%1d%3d%1s%1d%3d%1s%1d%3d%1s%1d%2d%1s%1d\n",
-					&yr, &mn, &dy, &hr,
-					&ethor, /* extraterrestrial horizontal radiation */
-					&etdn, /* extraterrestrial direct normal radiation */
-					&d1, f1, &u1, /* GH data value 0-1415 Wh/m2, Source, Uncertainty */
-					&d2, f2, &u2, /* DN data value 0-1200 Wh/m2, Source, Uncertainty */
-					&d3, f3, &u3, /* DF data value 0-700 Wh/m2, Source, Uncertainty */
-					&d4, f4, &u4, /* GH illum data value, Source, Uncertainty */
-					&d5, f5, &u5, /* DN illum data value, Source, Uncertainty */
-					&d6, f6, &u6, /* DF illum data value, Source, Uncertainty */
-					&d7, f7, &u7, /* Zenith illum data value, Source, Uncertainty */
-					&d8, f8, &u8, /* Total sky cover */
-					&d9, f9, &u9, /* opaque sky cover */
-					&d10, f10, &u10, /* dry bulb temp -500 to 500 = -50.0 to 50.0 'C */
-					&d11, f11, &u11, /* dew point temp -600 to 300 = -60.0 to 30.0 'C */
-					&d12, f12, &u12, /* relative humidity 0-100 */
-					&d13, f13, &u13, /* pressure millibars */
-					&d14, f14, &u14, /* wind direction */
-					&d15, &f15, &u15, // wind speed 0 to 400 = 0.0 to 40.0 m/s
-					&d16, &f16, &u16, // visibility
-					&d17, &f17, &u17, // ceiling height
-					&w1, &w2, &w3, &w4, &w5, &w6, &w7, &w8, &w9, &w10, // present weather
-					&d18, &f18, &u18, // precipitable water
-					&d19, &f19, &u19, // aerosol optical depth
-					&d20, &f20, &u20, // snow depth 0-150 cm
-					&d21, &f21, &u21); // days since last snowfall 0-88
-
-				if ( mn == 2 && dy == 29 )
-				{
-					// skip data lines for february 29th if they exist in the file
-					n_leap_data_removed++;
-					continue;
-				}
-
-				m_columns[YEAR].data[i] = (float)yr + 1900;
-				m_columns[MONTH].data[i] = (float)mn;
-				m_columns[DAY].data[i] = (float)dy;
-				m_columns[HOUR].data[i] = (float)hr - 1;  // hour goes 0-23, not 1-24
-				m_columns[MINUTE].data[i] = 30;
-				m_columns[GHI].data[i] = (float)(d1*1.0);
-				m_columns[DNI].data[i] = (float)d2;           /* Direct radiation */
-				m_columns[DHI].data[i] = (float)d3;           /* Diffuse radiation */
-				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY2 */
-				m_columns[TDRY].data[i] = (float)(d10 / 10.0);       /* Ambient dry bulb temperature(C) */
-				m_columns[TDEW].data[i] = (float)(d11 / 10.0); /* dew point temp */
-				m_columns[WSPD].data[i] = (float)(d15 / 10.0);       /* Wind speed(m/s) */
-				m_columns[WDIR].data[i] = (float)d14; /* wind dir */
-				m_columns[RH].data[i] = (float)d12;
-				m_columns[PRES].data[i] = (float)d13;
-				m_columns[SNOW].data[i] = (float)d20;
-				m_columns[ALB].data[i] = -999; /* no albedo in TMY2 */
-				m_columns[AOD].data[i] = -999; /* no AOD in TMY2 */
-				m_columns[TWET].data[i] 
-					= (float)calc_twet( 
-					(double)m_columns[TDRY].data[i],
-					(double)m_columns[RH].data[i],
-					(double)m_columns[PRES].data[i] ); /* must calculate wet bulb */
-
-				break;
+				// skip data lines for february 29th if they exist in the file
+				n_leap_data_removed++;
+				continue;
 			}
 
+			m_columns[YEAR].data[i] = (float)yr + 1900;
+			m_columns[MONTH].data[i] = (float)mn;
+			m_columns[DAY].data[i] = (float)dy;
+			m_columns[HOUR].data[i] = (float)hr - 1;  // hour goes 0-23, not 1-24
+			m_columns[MINUTE].data[i] = 30;
+			m_columns[GHI].data[i] = (float)(d1*1.0);
+			m_columns[DNI].data[i] = (float)d2;           /* Direct radiation */
+			m_columns[DHI].data[i] = (float)d3;           /* Diffuse radiation */
+			m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY2 */
+			m_columns[TDRY].data[i] = (float)(d10 / 10.0);       /* Ambient dry bulb temperature(C) */
+			m_columns[TDEW].data[i] = (float)(d11 / 10.0); /* dew point temp */
+			m_columns[WSPD].data[i] = (float)(d15 / 10.0);       /* Wind speed(m/s) */
+			m_columns[WDIR].data[i] = (float)d14; /* wind dir */
+			m_columns[RH].data[i] = (float)d12;
+			m_columns[PRES].data[i] = (float)d13;
+			m_columns[SNOW].data[i] = (float)d20;
+			m_columns[ALB].data[i] = -999; /* no albedo in TMY2 */
+			m_columns[AOD].data[i] = -999; /* no AOD in TMY2 */
+			m_columns[TWET].data[i]
+				= (float)calc_twet(
+				(double)m_columns[TDRY].data[i],
+				(double)m_columns[RH].data[i],
+				(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
 
 			if ( nread != 79 || pret != buf )
 			{
@@ -1123,83 +1119,78 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		else if (m_type == TMY3)
 		{
 			char *pret = 0;
-			while( 1 )
+			pret = fgets(buf, NBUF, fp);
+
+			int ncols = locate(buf, cols, NCOL, ',');
+			if (ncols < 68)
 			{
-				pret = fgets(buf, NBUF, fp);
-
-				int ncols = locate(buf, cols, NCOL, ',');
-				if (ncols < 68)
-				{
-					m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
-					return false;
-				}
-
-				char *p = cols[0];
-
-				int month = atoi(p);
-				p = strchr(p, '/');
-				if (!p)
-				{
-					m_message = "TMY3: invalid date format at record " + util::to_string(i);
-					return false;
-				}
-				p++;
-				int day = atoi(p);
-				p = strchr(p, '/');
-				if (!p)
-				{
-					m_message = "TMY3: invalid date format at record " + util::to_string(i);
-					return false;
-				}
-				p++;
-				int year = atoi(p);
-
-				int hour = atoi(cols[1]) - tmy3_hour_shift;  // hour goes 0-23, not 1-24
-				if (i == 0 && hour < 0)
-				{
-					// this was a TMY3 file but with hours going 0-23 (against the tmy3 spec)
-					// handle it anyway by NOT subtracting from the hour to convert from 1-24
-					tmy3_hour_shift = 0;
-					hour = 0;
-				}
-
-				if ( month == 2 && day == 29 )
-				{
-					n_leap_data_removed++;
-					continue;
-				}
-
-				m_columns[YEAR].data[i] = (float)year;
-				m_columns[MONTH].data[i] = (float)month;
-				m_columns[DAY].data[i] = (float)day;
-				m_columns[HOUR].data[i] = (float)hour;
-				m_columns[MINUTE].data[i] = 30;
-
-				m_columns[GHI].data[i] = (float)atof(cols[4]);
-				m_columns[DNI].data[i] = (float)atof(cols[7]);
-				m_columns[DHI].data[i] = (float)atof(cols[10]);
-				m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
-
-				m_columns[TDRY].data[i] = (float)atof(cols[31]);
-				m_columns[TDEW].data[i] = (float)atof(cols[34]);
-				
-				m_columns[WSPD].data[i] = (float)atof(cols[46]);
-				m_columns[WDIR].data[i] = (float)atof(cols[43]);
-
-				m_columns[RH].data[i] = (float)atof(cols[37]);
-				m_columns[PRES].data[i] = (float)atof(cols[40]);
-				m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
-				m_columns[ALB].data[i] = (float)atof(cols[61]);
-				m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
-
-				m_columns[TWET].data[i] 
-					= (float)calc_twet( 
-					(double)m_columns[TDRY].data[i],
-					(double)m_columns[RH].data[i],
-					(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
-
-				break;
+				m_message = "TMY3: data line does not have at least 68 fields at record " + util::to_string(i);
+				return false;
 			}
+
+			char *p = cols[0];
+
+			int month = atoi(p);
+			p = strchr(p, '/');
+			if (!p)
+			{
+				m_message = "TMY3: invalid date format at record " + util::to_string(i);
+				return false;
+			}
+			p++;
+			int day = atoi(p);
+			p = strchr(p, '/');
+			if (!p)
+			{
+				m_message = "TMY3: invalid date format at record " + util::to_string(i);
+				return false;
+			}
+			p++;
+			int year = atoi(p);
+
+			int hour = atoi(cols[1]) - tmy3_hour_shift;  // hour goes 0-23, not 1-24
+			if (i == 0 && hour < 0)
+			{
+				// this was a TMY3 file but with hours going 0-23 (against the tmy3 spec)
+				// handle it anyway by NOT subtracting from the hour to convert from 1-24
+				tmy3_hour_shift = 0;
+				hour = 0;
+			}
+
+			if (month == 2 && day == 29)
+			{
+				n_leap_data_removed++;
+				continue;
+			}
+
+			m_columns[YEAR].data[i] = (float)year;
+			m_columns[MONTH].data[i] = (float)month;
+			m_columns[DAY].data[i] = (float)day;
+			m_columns[HOUR].data[i] = (float)hour;
+			m_columns[MINUTE].data[i] = 30;
+
+			m_columns[GHI].data[i] = (float)atof(cols[4]);
+			m_columns[DNI].data[i] = (float)atof(cols[7]);
+			m_columns[DHI].data[i] = (float)atof(cols[10]);
+			m_columns[POA].data[i] = (float)(-999);       /* No POA in TMY3 */
+
+			m_columns[TDRY].data[i] = (float)atof(cols[31]);
+			m_columns[TDEW].data[i] = (float)atof(cols[34]);
+
+			m_columns[WSPD].data[i] = (float)atof(cols[46]);
+			m_columns[WDIR].data[i] = (float)atof(cols[43]);
+
+			m_columns[RH].data[i] = (float)atof(cols[37]);
+			m_columns[PRES].data[i] = (float)atof(cols[40]);
+			m_columns[SNOW].data[i] = -999.0; // no snowfall in TMY3
+			m_columns[ALB].data[i] = (float)atof(cols[61]);
+			m_columns[AOD].data[i] = -999; /* no AOD in TMY3 */
+
+			m_columns[TWET].data[i]
+				= (float)calc_twet(
+				(double)m_columns[TDRY].data[i],
+				(double)m_columns[RH].data[i],
+				(double)m_columns[PRES].data[i]); /* must calculate wet bulb */
 
 			if (pret != buf)
 			{
@@ -1211,53 +1202,48 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			char *pret = 0;
 
-			while( 1 )
+			pret = fgets(buf, NBUF, fp);
+			int ncols = locate(buf, cols, NCOL, ',');
+
+			if (ncols < 32)
 			{
-				pret = fgets(buf, NBUF, fp);
-				int ncols = locate(buf, cols, NCOL, ',');
-
-				if (ncols < 32)
-				{
-					m_message = "EPW: data line does not have at least 32 fields at record " + util::to_string(i);
-					return false;
-				}
-
-				int month = atoi(cols[1]);
-				int day = atoi(cols[2] );
-
-				if ( month == 2 && day == 29 )
-				{
-					n_leap_data_removed++;
-					continue;
-				}
-
-				m_columns[YEAR].data[i] = (float)atoi(cols[0]);
-				m_columns[MONTH].data[i] = (float)atoi(cols[1]);
-				m_columns[DAY].data[i] = (float)atoi(cols[2]);
-				m_columns[HOUR].data[i] = (float)atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
-				m_columns[MINUTE].data[i] = 30;
-
-				m_columns[GHI].data[i] = (float)atof(cols[13]);
-				m_columns[DNI].data[i] = (float)atof(cols[14]);
-				m_columns[DHI].data[i] = (float)atof(cols[15]);
-				m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
-
-				m_columns[WSPD].data[i] = (float)atof(cols[21]);
-				m_columns[WDIR].data[i] = (float)atof(cols[20]);
-
-				m_columns[TDRY].data[i] = (float)atof(cols[6]);
-				m_columns[TWET].data[i] = (float)atof(cols[7]);
-
-				m_columns[RH].data[i] = (float)atof(cols[8]);
-				m_columns[PRES].data[i] = (float)(atof(cols[9]) * 0.01); /* convert Pa in to mbar */
-				m_columns[SNOW].data[i] = (float)atof(cols[30]); // snowfall
-				m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
-				m_columns[AOD].data[i] = -999; /* no AOD in EPW */
-
-				m_columns[TDEW].data[i] = (float)wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
-
-				break;
+				m_message = "EPW: data line does not have at least 32 fields at record " + util::to_string(i);
+				return false;
 			}
+
+			int month = atoi(cols[1]);
+			int day = atoi(cols[2]);
+
+			if (month == 2 && day == 29)
+			{
+				n_leap_data_removed++;
+				continue;
+			}
+
+			m_columns[YEAR].data[i] = (float)atoi(cols[0]);
+			m_columns[MONTH].data[i] = (float)atoi(cols[1]);
+			m_columns[DAY].data[i] = (float)atoi(cols[2]);
+			m_columns[HOUR].data[i] = (float)atoi(cols[3]) - 1;  // hour goes 0-23, not 1-24;
+			m_columns[MINUTE].data[i] = 30;
+
+			m_columns[GHI].data[i] = (float)atof(cols[13]);
+			m_columns[DNI].data[i] = (float)atof(cols[14]);
+			m_columns[DHI].data[i] = (float)atof(cols[15]);
+			m_columns[POA].data[i] = (float)(-999);       /* No POA in EPW */
+
+			m_columns[WSPD].data[i] = (float)atof(cols[21]);
+			m_columns[WDIR].data[i] = (float)atof(cols[20]);
+
+			m_columns[TDRY].data[i] = (float)atof(cols[6]);
+			m_columns[TWET].data[i] = (float)atof(cols[7]);
+
+			m_columns[RH].data[i] = (float)atof(cols[8]);
+			m_columns[PRES].data[i] = (float)(atof(cols[9]) * 0.01); /* convert Pa in to mbar */
+			m_columns[SNOW].data[i] = (float)atof(cols[30]); // snowfall
+			m_columns[ALB].data[i] = -999; /* no albedo in EPW file */
+			m_columns[AOD].data[i] = -999; /* no AOD in EPW */
+
+			m_columns[TDEW].data[i] = (float)wiki_dew_calc(m_columns[TDRY].data[i], m_columns[RH].data[i]);
 
 			if ( pret!=buf )
 			{
@@ -1312,39 +1298,27 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		}
 		else if (m_type == WFCSV)
 		{	
-
-			while( 1 )
+			buf[0] = 0;
+			fgets(buf, NBUF, fp);
+			pbuf = trimboth(buf);
+			if (!pbuf || !*pbuf)
 			{
-				buf[0] = 0;
-				fgets(buf, NBUF, fp);
-				pbuf = trimboth(buf);
-				if (!pbuf || !*pbuf)
-				{
-					m_message = "CSV: data line formatting error at record " + util::to_string(i);
-					return false;
-				}
-
-				int ncols = locate(pbuf, cols, NCOL, ',');			
-				for (size_t k = 0; k < _MAXCOL_; k++)
-				{
-					if (m_columns[k].index >= 0
-						&& m_columns[k].index < ncols)
-					{
-						m_columns[k].data[i] = (float)atof(trimboth(cols[m_columns[k].index]));
-					} 
-				}
-
-				if ( m_columns[MONTH].data[i] == 2
-					&& m_columns[DAY].data[i] == 29 )
-				{
-					n_leap_data_removed++;
-					continue;
-				}
-				else
-					break;
+				m_message = "CSV: data line formatting error at record " + util::to_string(i);
+				return false;
 			}
 
+			int ncols = locate(pbuf, cols, NCOL, ',');
+			for (size_t k = 0; k < _MAXCOL_; k++)
+			{
+				if (m_columns[k].index >= 0
+					&& m_columns[k].index < ncols)
+				{
+					m_columns[k].data[i] = (float)atof(trimboth(cols[m_columns[k].index]));
+				}
+			}
 
+			if (m_columns[MONTH].data[i] == 2
+				&& m_columns[DAY].data[i] == 29) n_leap_data_removed++;
 		}
 
 	}

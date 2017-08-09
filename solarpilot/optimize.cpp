@@ -70,13 +70,13 @@ void testoptclass::random_start(vector<double> &x, vector<vector<double> > &rang
 	}
 }
 
-double testoptclass::memfunc(unsigned n, const double *x, double *grad, void *my_func_data){
+double testoptclass::memfunc(unsigned , const double *x, double *, void *){
 	call_count ++;
 	return sqrt(x[1]);
 };
 
 
-double testoptclass::styb_tang_test(unsigned n, const double *x, double *grad, void *data){
+double testoptclass::styb_tang_test(unsigned n, const double *x, double *, void *){
 	/* x* = {-2.903534, .....}, f(x*) = -39.16599*n */
 	double y=0.;
 	for(unsigned i=0; i<n; i++){
@@ -87,7 +87,7 @@ double testoptclass::styb_tang_test(unsigned n, const double *x, double *grad, v
 	return y;
 }
 
-double testoptclass::rosenbrock_test(unsigned n, const double *x, double *grad, void *data){
+double testoptclass::rosenbrock_test(unsigned n, const double *x, double *, void *){
 	double y=0.;
 
 	for(unsigned i=1; i<n; i++){
@@ -98,7 +98,7 @@ double testoptclass::rosenbrock_test(unsigned n, const double *x, double *grad, 
 	return y;
 };
 
-double testoptclass::matyas_test(unsigned n, const double *x, double *grad, void *data){
+double testoptclass::matyas_test(unsigned n, const double *x, double *, void *){
 	/* Convex.. Valid from -10..10. */
 	call_count++;
 	double y=0.;

@@ -6,7 +6,7 @@
 
 
 /* DON'T MODIFY */
-MYBOOL BFP_CALLMODEL bfp_init(lprec *lp, int size, int delta, char *options)
+MYBOOL BFP_CALLMODEL bfp_init(lprec *lp, int size, char *options)
 {
   INVrec *lu;
 
@@ -55,7 +55,7 @@ MYBOOL BFP_CALLMODEL bfp_restart(lprec *lp)
 }
 
 /* DON'T MODIFY */
-MYBOOL BFP_CALLMODEL bfp_implicitslack(lprec *lp)
+MYBOOL BFP_CALLMODEL bfp_implicitslack()
 {
   return( FALSE );
 }
@@ -70,12 +70,13 @@ int BFP_CALLMODEL bfp_colcount(lprec *lp)
 /* DON'T MODIFY */
 MYBOOL BFP_CALLMODEL bfp_canresetbasis(lprec *lp)
 {
+  (void)(*lp);
   return( FALSE );
 }
 
 
 /* DON'T MODIFY */
-MYBOOL BFP_CALLMODEL bfp_pivotalloc(lprec *lp, int newsize)
+MYBOOL BFP_CALLMODEL bfp_pivotalloc()
 {
   /* Does nothing in the default implementation */
   return( TRUE );

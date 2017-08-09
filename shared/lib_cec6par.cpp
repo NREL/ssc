@@ -252,7 +252,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
  *********************************************************************************************
  *********************************************************************************************/
 
-bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
+bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double , double &Tcell )
 {
 	double G_total, Geff_total;
 	double tau_al = fabs(TauAlpha);
@@ -452,7 +452,6 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double tau3       = TransCoverAbs3*TransSurf3;
 	double TADIR      = tau1/tau2;
 	double TADIFF     = tau3/tau2;
-	double THETA3X	   = THETA3;
 
 	// !Evaluating transmittance at equivalent angle for ground reflected radiation 
 	THETA3 = 90.0 - 0.5788*input.Tilt  + 0.002693*pow(input.Tilt,2);
@@ -478,7 +477,6 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double SUNDIR=input.Ibeam*TADIR;
 	double SUNEFF = SUNDIFF+SUNGND+SUNDIR;
 
-	double TAU_AL     = TauAlpha;
 	//IF (SUNTILT.GT.0) TAU_AL = TAMAX*SUNEFF/SUNTILT  !DAA: = TAMAX is used for CEC study
 	if (SUNEFF < 0)  SUNEFF=0;
 

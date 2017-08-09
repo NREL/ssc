@@ -239,7 +239,7 @@ int bfp_LUSOLidentity(lprec *lp, int *rownum)
 
 
 /* LOCAL HELPER ROUTINE */
-int bfp_LUSOLfactorize(lprec *lp, MYBOOL *usedpos, int *rownum, int *singular)
+int bfp_LUSOLfactorize(lprec *lp, int *rownum, int *singular)
 {
   int    i, j, nz, deltarows = bfp_rowoffset(lp);
   INVrec *invB = lp->invB;
@@ -346,6 +346,7 @@ int BFP_CALLMODEL bfp_factorize(lprec *lp, int uservars, int Bsize, MYBOOL *used
            singularities = 0,
            dimsize = lp->invB->dimcount;
   LUSOLrec *LUSOL = lp->invB->LUSOL;
+  (void)(*usedpos);
 
  /* Set dimensions and create work array */
   SETMAX(lp->invB->max_Bsize, Bsize+(1+lp->rows-uservars));
@@ -366,7 +367,7 @@ int BFP_CALLMODEL bfp_factorize(lprec *lp, int uservars, int Bsize, MYBOOL *used
 
 
  /* Reload B and factorize */
-  inform = bfp_LUSOLfactorize(lp, usedpos, rownum, NULL);
+  inform = bfp_LUSOLfactorize(lp, rownum, NULL);
 
  /* Do some checks */
 #ifdef Paranoia
@@ -449,7 +450,7 @@ int BFP_CALLMODEL bfp_factorize(lprec *lp, int uservars, int Bsize, MYBOOL *used
       }
 
       /* Refactorize with slack substitutions */
-      inform = bfp_LUSOLfactorize(lp, NULL, rownum, NULL);
+      inform = bfp_LUSOLfactorize(lp, rownum, NULL);
       replacedcols += singularcols;
     }
 

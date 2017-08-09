@@ -550,7 +550,7 @@ double CPowerBlock_Type224::f_Tsat_p(double P)
 
 //************************************************************************************************************
 //************************************************************************************************************
-double CPowerBlock_Type224::specheat(int fnum, double T, double P)
+double CPowerBlock_Type224::specheat(int fnum, double T, double )
 {
 	//use global_props
 	// This function accepts as inputs temperature [K] and pressure [Pa]
@@ -614,7 +614,7 @@ double CPowerBlock_Type224::specheat(int fnum, double T, double P)
 //************************************************************************************************************
 //************************************************************************************************************
 void CPowerBlock_Type224::RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb, 
-				  double P_amb, double dT_cw_ref, /*double HTF,*/ double c_p_w, double T_htf_hot, double m_dot_htf, int /*double*/ mode, 
+				  double P_amb, double dT_cw_ref, /*double HTF,*/ double , double T_htf_hot, double m_dot_htf, int /*double*/ mode, 
 				  double demand_var, double P_boil, /*double tech_type,*/ double T_amb_des, double T_approach, double F_wc, double F_wcmin, 
 				  double F_wcmax, double T_ITD_des, double P_cond_ratio, /*double CT,*/ double P_cond_min, /*double n_pl_inc,*/
 				  /*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref, 
@@ -1412,7 +1412,7 @@ void CPowerBlock_Type224::evap_tower(double P_cond_min, int n_pl_inc, double Del
 //************************************************************************************************************
 //************************************************************************************************************
 void CPowerBlock_Type224::ACC(double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref, 
-		 double T_db, double P_amb, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
+		 double T_db, double , double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
 		 double f_hrsys)
 {
 	//use cooling property functions
@@ -1599,27 +1599,25 @@ void CPowerBlock_Type224::HybridHR(/*double fcall,*/ double P_cond_min, int n_pl
 	// Only call the parameter equations at the beginning of the simulation. Once they're established, they don't need to be reset each time.
 	//if(fcall == 1.0)
 	//if(m_bFirstCall)
-	if(true)
-	{
-		// Values that can be estimated--------
-		//-dry
-		T_hot_diff = 3.0;				//[C] Temperature difference between saturation steam and condenser outlet air temp
-		eta_acfan_s = 0.8;				//[-] Fan isentropic efficiency
-		eta_acfan = pow(0.98,3);		//[-] Fan mechanical efficiency
-		C_air = 1005.0;					//[J/kg-K] specific heat of air (This is relatively constant)
-		R = 286.986538;					//[J/kg-K] Gas constant for air = 8314./28.97
 
-		//-wet
-		drift_loss_frac = 0.001;		//Drift loss fraction
-		blowdown_frac = 0.003;			//Blowdown fraction
-		dP_evap = 0.37*1.e5;			//[Pa] Pressure drop across the condenser and cooling tower
-		eta_pump = 0.75;				//Total pump efficiency
-		eta_pcw_s = 0.8;				//Isentropic cooling water pump efficiency
-		eta_wcfan = 0.75;				//Fan mechanical efficiency
-		eta_wcfan_s = 0.8;				//Fan isentropic efficiency
-		P_ratio_wcfan = 1.0025;			//Fan pressure ratio
-		mass_ratio_wcfan = 1.01;		//Ratio of air flow to water flow in the cooling tower
-	}
+	// Values that can be estimated--------
+	//-dry
+	T_hot_diff = 3.0;				//[C] Temperature difference between saturation steam and condenser outlet air temp
+	eta_acfan_s = 0.8;				//[-] Fan isentropic efficiency
+	eta_acfan = pow(0.98, 3);		//[-] Fan mechanical efficiency
+	C_air = 1005.0;					//[J/kg-K] specific heat of air (This is relatively constant)
+	R = 286.986538;					//[J/kg-K] Gas constant for air = 8314./28.97
+
+	//-wet
+	drift_loss_frac = 0.001;		//Drift loss fraction
+	blowdown_frac = 0.003;			//Blowdown fraction
+	dP_evap = 0.37*1.e5;			//[Pa] Pressure drop across the condenser and cooling tower
+	eta_pump = 0.75;				//Total pump efficiency
+	eta_pcw_s = 0.8;				//Isentropic cooling water pump efficiency
+	eta_wcfan = 0.75;				//Fan mechanical efficiency
+	eta_wcfan_s = 0.8;				//Fan isentropic efficiency
+	P_ratio_wcfan = 1.0025;			//Fan pressure ratio
+	mass_ratio_wcfan = 1.01;		//Ratio of air flow to water flow in the cooling tower
 
 	//**** Calculations for design conditions
 	Q_reject_des = P_cycle*(1.0/eta_ref - 1.0);    	    //Heat rejection from the cycle

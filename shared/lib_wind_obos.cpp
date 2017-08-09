@@ -1901,10 +1901,10 @@ void wobos::ArrayCabCostOptimizer()
 	}
 
 	int counter1 = 0;
-	int cabIndex1;
-	int cabIndex2;
-	int arrVoltIndex;
-	double oldCost;
+	int cabIndex1 = -1;
+	int cabIndex2 = -1;
+	int arrVoltIndex = -1;
+	double oldCost = 0.0;
 	double newCost;
 
 	for (size_t k = 0; k < nArrVolts; k++)
@@ -1959,7 +1959,7 @@ void wobos::ArrayCabCostOptimizer()
 			}
 		}
 	}
-
+	if ((cabIndex1 == -1) | (cabIndex2 == -1) | (arrVoltage == -1)) return;
 	arrVoltage = arrayVolt[arrVoltIndex][0];
 	cab1CR = arrCables[arrVoltIndex][cabIndex1][1];
 	cab2CR = arrCables[arrVoltIndex][cabIndex2][1];
@@ -1986,9 +1986,9 @@ void wobos::ExportCabCostOptimizer()
 	vector<vector<double> >expCabInstTime(nExpVolts, vector<double>(nExpCables));
 
 	double newCost;
-	double oldCost;
-	int expCabIndex;
-	int expVoltIndex;
+	double oldCost = 0.0;
+	int expCabIndex = -1;
+	int expVoltIndex = -1;
 
 	//($/m) ,(kg/m)  ,(ancillary cost $/interface)
 	/*double export132kvData[10][3] =  {
@@ -2061,6 +2061,7 @@ void wobos::ExportCabCostOptimizer()
 			}
 		}
 	}
+	if (expCabIndex == -1 || expVoltIndex == -1) return;
 	expVoltage = expCabVolt[expVoltIndex][0];
 	expCurrRating = expCables[expVoltIndex][expCabIndex][3];
 	expCabMass = expCables[expVoltIndex][expCabIndex][2];

@@ -431,7 +431,7 @@ STATIC MYBOOL presolve_rowfeasible(presolverec *psdata, int rownr, MYBOOL userow
     if(value < LHS-lp->epssolution) {
       contype = get_constr_type(lp, rownr);
       report(lp, NORMAL, "presolve_rowfeasible: Lower bound infeasibility in %s row %s (%g << %g)\n",
-                          get_str_constr_type(lp, contype), get_row_name(lp, rownr), value, LHS);
+                          get_str_constr_type(contype), get_row_name(lp, rownr), value, LHS);
       if(rownr != origrownr)
       report(lp, NORMAL, "        ...           Input row base used for testing was %s\n",
                                                     get_row_name(lp, origrownr));
@@ -444,7 +444,7 @@ STATIC MYBOOL presolve_rowfeasible(presolverec *psdata, int rownr, MYBOOL userow
     if(value > RHS+lp->epssolution) {
       contype = get_constr_type(lp, rownr);
       report(lp, NORMAL, "presolve_rowfeasible: Upper bound infeasibility in %s row %s (%g >> %g)\n",
-                          get_str_constr_type(lp, contype), get_row_name(lp, rownr), value, RHS);
+                          get_str_constr_type(contype), get_row_name(lp, rownr), value, RHS);
       status = FALSE;
     }
     if(userowmap)
@@ -1055,6 +1055,7 @@ STATIC MYBOOL presolve_fixSOS1(presolverec *psdata, int colnr, REAL fixvalue, in
   SOSrec   *SOS;
   REAL     newvalue;
   MYBOOL   *fixed = NULL, status = FALSE;
+  (void)*nr;
 
   /* Allocate working member list */
   if(!allocMYBOOL(lp, &fixed, lp->columns+1, TRUE) )
@@ -1341,6 +1342,7 @@ STATIC MYBOOL isnz_origobj(lprec *lp, int colnr)
 
 STATIC MYBOOL presolve_testrow(presolverec *psdata, int lastrow)
 {
+  (void)lastrow;
   if(psdata->forceupdate) {
     presolve_updatesums(psdata);
     psdata->forceupdate = FALSE;
@@ -2602,6 +2604,7 @@ STATIC int presolve_singularities(presolverec *psdata, int *nn, int *nr, int *nv
 {
   lprec *lp = psdata->lp;
   int i, j, n, *rmapin = NULL, *rmapout = NULL, *cmapout = NULL;
+  (void)*nv;
 
   if(lp->bfp_findredundant(lp, 0, NULL, NULL, NULL) == 0)
     return( 0 );
@@ -4087,6 +4090,7 @@ STATIC int presolve_coldominance01(presolverec *psdata, NATURAL *nConRemoved, NA
            *colvalues = NULL, *colobj = NULL;
   LLrec    *sets = NULL;
   UNIONTYPE QSORTrec *QS = (UNIONTYPE QSORTrec *) calloc(n+1, sizeof(*QS));
+  (void)*nConRemoved;
 
   /* Check if we were able to obtain working memory */
   if(QS == NULL)
@@ -4275,6 +4279,7 @@ STATIC int presolve_aggregate(presolverec *psdata, int *nConRemoved, int *nVarsF
            *coldel = NULL, status = RUNNING, iVarFixed = 0;
   REAL     scale, *colvalues = NULL;
   UNIONTYPE QSORTrec *QScand = (UNIONTYPE QSORTrec *) calloc(lp->columns+1, sizeof(*QScand));
+  (void)*nConRemoved;
 
   /* Check if we were able to obtain working memory */
   if(QScand == NULL)
@@ -4491,6 +4496,7 @@ STATIC int presolve_makesparser(presolverec *psdata, int *nCoeffChanged, int *nC
   REAL     test, ratio, value, valueEQ, *valptr;
   LLrec    *EQlist = NULL;
   UNIONTYPE QSORTrec *QS = (UNIONTYPE QSORTrec *) calloc(lp->rows, sizeof(*QS));
+  (void)*nVarFixed;
 
   /* Check if we were able to obtain working memory */
   if((QS == NULL) || (psdata->rows->varmap->count == 0) || (psdata->EQmap->count == 0))
@@ -4765,6 +4771,7 @@ STATIC int presolve_SOS1(presolverec *psdata, int *nCoeffChanged, int *nConRemov
            i,ix,iix, j,jx,jjx, status = RUNNING;
   REAL     Value1;
   MATrec   *mat = lp->matA;
+  (void)*nVarFixed;
 
   for(i = lastActiveLink(psdata->rows->varmap); i > 0; ) {
     candelete = FALSE;

@@ -169,6 +169,7 @@ extern "C" {
 
 static int isatty(int f)
 {
+  (void)f;
   return(FALSE);
 }
 
@@ -1400,7 +1401,7 @@ int lp_yynerrs;
   lp_yyssp++;
 
  lp_yysetstate:
-  *lp_yyssp = lp_yystate;
+  *lp_yyssp = (lp_yytype_int16)lp_yystate;
 
   if (lp_yyss + lp_yystacksize - 1 <= lp_yyssp)
     {

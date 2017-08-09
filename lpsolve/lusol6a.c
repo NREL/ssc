@@ -364,6 +364,7 @@ void LU6L(LUSOLrec *LUSOL, int *INFORM, REAL V[], int NZidx[])
   int  I, J;
 #endif
 
+  (void)NZidx;
   NUML0 = LUSOL->luparm[LUSOL_IP_COLCOUNT_L0];
   LENL0 = LUSOL->luparm[LUSOL_IP_NONZEROS_L0];
   LENL  = LUSOL->luparm[LUSOL_IP_NONZEROS_L];
@@ -449,6 +450,7 @@ void LU6LD(LUSOLrec *LUSOL, int *INFORM, int MODE, REAL V[], int NZidx[])
   int  IPIV, K, L, L1, LEN, NUML0;
   REAL DIAG, SMALL;
   register REAL VPIV;
+  (void)NZidx;
 #ifdef LUSOLFastSolve
   REAL *aptr;
   int  *jptr;
@@ -726,6 +728,7 @@ void LU6UT(LUSOLrec *LUSOL, int *INFORM, REAL V[], REAL W[], int NZidx[])
        *ip = LUSOL->ip + 1, *iq = LUSOL->iq + 1;
   REAL SMALL;
   register REAL T;
+  (void)NZidx;
 #ifdef LUSOLFastSolve
   REAL *aptr;
   int  *jptr;

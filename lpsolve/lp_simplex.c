@@ -572,6 +572,7 @@ STATIC int primloop(lprec *lp, MYBOOL primalfeasible, REAL primaloffset)
          *drow = lp->drow;
   int    *workINT = NULL,
          *nzdrow = lp->nzdrow;
+  (void)primaloffset;
 
   if(lp->spx_trace)
     report(lp, DETAILED, "Entered primal simplex algorithm with feasibility %s\n",
@@ -898,8 +899,7 @@ Optimality:
       minit = performiteration(lp, rownr, colnr, theta, primal,
                                                  (MYBOOL) (/*(candidatecount > 1) && */
                                                            (stallaccept != AUTOMATIC)),
-                                                 NULL, NULL,
-                                                 pcol, NULL, NULL);
+                                                 NULL, NULL, NULL);
       if(minit != ITERATE_MAJORMAJOR)
         minitcount++;
 
@@ -1110,7 +1110,7 @@ STATIC int dualloop(lprec *lp, MYBOOL dualfeasible, int dualinfeasibles[], REAL 
       for(i = 2; i <= dualinfeasibles[0]; i++)
         mat_multadd(lp->matA, pcol, dualinfeasibles[i], 1.0);
       /* Solve (note that solved pcol will be used instead of lp->rhs) */
-      ftran(lp, pcol, NULL, lp->epsmachine);
+      ftran(lp, pcol, NULL);
     }
 
     /* Do minor iterations (non-basic variable bound flips) for as
@@ -1330,8 +1330,7 @@ RetryRow:
           colnr = find_rowReplacement(lp, rownr, prow, nzprow);
           if(colnr > 0) {
             theta = 0;
-            performiteration(lp, rownr, colnr, theta, TRUE, FALSE, prow, NULL,
-                                                            NULL, NULL, NULL);
+            performiteration(lp, rownr, colnr, theta, TRUE, FALSE, prow, NULL, NULL);
             lp->fixedvars--;
           }
         }
@@ -1448,8 +1447,7 @@ RetryRow:
       minit = performiteration(lp, rownr, colnr, theta, primal,
                                                  (MYBOOL) (/*(candidatecount > 1) && */
                                                            (stallaccept != AUTOMATIC)),
-                                                 prow, nzprow,
-                                                 pcol, NULL, boundswaps);
+                                                 prow, nzprow, boundswaps);
 
       /* Check if we should abandon iterations on finding that there is no
         hope that this branch can improve on the incumbent B&B solution */
@@ -1527,6 +1525,7 @@ STATIC int spx_run(lprec *lp, MYBOOL validInvB)
   int    i, j, singular_count, lost_feas_count, *infeasibles = NULL, *boundflip_count;
   MYBOOL primalfeasible, dualfeasible, lost_feas_state, isbb;
   REAL   primaloffset = 0, dualoffset = 0;
+  (void)validInvB;
 
   lp->current_iter  = 0;
   lp->current_bswap = 0;
@@ -1738,6 +1737,7 @@ STATIC int heuristics(lprec *lp, int mode)
 {
   lprec *hlp;
   int   status = PROCFAIL;
+  (void)mode;
 
   if(lp->bb_level > 1)
     return( status );

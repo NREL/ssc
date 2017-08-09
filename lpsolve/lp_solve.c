@@ -28,6 +28,7 @@ int EndOfPgr(int i)
 
 void SIGABRT_func(int sig)
  {
+   (void)sig;
    EndOfPgr(FORCED_EXIT);
  }
 
@@ -271,6 +272,7 @@ static void DoReport(lprec *lp, char *str)
 
 static void __WINAPI LPMessageCB(lprec *lp, void *USERHANDLE, int msg)
 {
+  (void*)&USERHANDLE;
   if(msg==MSG_LPFEASIBLE)
     DoReport(lp, "Feasible solution ");
   else if(msg==MSG_LPOPTIMAL)

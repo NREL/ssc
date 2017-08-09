@@ -116,6 +116,7 @@ static void error(parse_parm *pp, int verbose, char *string)
  */
 void read_error(parse_parm *pp, void *scanner, char *string)
 {
+  (void)scanner;
   error(pp, CRITICAL, string);
 }
 
@@ -619,6 +620,7 @@ int negate_constraint(parse_parm *pp)
  */
 int rhs_store(parse_parm *pp, REAL value, int HadConstraint, int HadVar, int Had_lineair_sum)
 {
+  (void)Had_lineair_sum;
   if(/* pp->Lin_term_count > 1 */ (HadConstraint && HadVar) || (pp->Rows == 0)){ /* not a bound */
     if (pp->Rows == 0)
       value = -value;
@@ -667,7 +669,9 @@ int rhs_store(parse_parm *pp, REAL value, int HadConstraint, int HadVar, int Had
 int var_store(parse_parm *pp, char *var, REAL value, int HadConstraint, int HadVar, int Had_lineair_sum)
 {
   int row;
-
+  (void)Had_lineair_sum;
+  (void)HadVar;
+  (void)HadConstraint;
   row = pp->Rows;
 
   /* also in a bound the same var name can occur more than once. Check for

@@ -84,7 +84,7 @@ struct poaDecompReq {
 // 2015/09/11 - Sev
 // Create functions for POA decomposition
 
-void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
+void poaDecomp( double angle[], double sun[], double alb, poaDecompReq* pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]);
 double ModifiedDISC(const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 void ModifiedDISC(const double kt[3], const double kt1[3], const double g[3], const double z[3], double td, double alt, int doy, double &dn);
 
