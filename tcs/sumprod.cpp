@@ -89,7 +89,7 @@ public:
 		return 0;
 	}
 	
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int  )
 	{
 		double a = value( I_A );
 		double b = value( I_B );

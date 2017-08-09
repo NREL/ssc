@@ -399,7 +399,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int  )
 	{		
 		double gross_power = value( I_GROSS_POWER );                
 		double T_amb = value( I_T_AMB ) + 273.15;     
@@ -413,14 +413,10 @@ public:
 		double Q_reject  = value( I_Q_REJECT );          
 		double Tower_water_outlet_temp  = value( I_TOWER_WATER_OUTLET_TEMP );        
 		double P_amb_Pa  = value( I_P_AMB_PA )*100.0; 
-		double NS_dish_separation  = value( I_NS_DISH_SEPARATION );             
-		double EW_dish_separation  = value( I_EW_DISH_SEPARATION );
+		double NS_dish_separation  = value( I_NS_DISH_SEPARATION );  
 		double P_tower_fan  = value( I_P_TOWER_FAN );
 		double P_in_collector  = value( I_POWER_IN_COLLECTOR );                  
 
-		double k_air = 0.00169319 + 0.0000794814*T_amb;
-		double beta_air = 0.00949962 - 0.0000297215*T_amb + 3.06353*10E-08*pow(T_amb,2);
-		double mu_air = 0.00000499562 + 4.50917E-08*T_amb;
 		double M_air = 28.97;		// [kg/kmol]  molar mass of air
 		double R_bar = 8314;		// [J/kmol-K]  gas constant
 		double R_air = R_bar / M_air;
@@ -430,9 +426,6 @@ public:
 		double P_SE_losses = Q_reject;
 		double Q_losses = 1000*P_SE_losses;				// [W] Heat rejected to the cooling system
 		double Q_reject_total = Number_of_Collectors*Q_reject*1000.0;	// W/kW		
-		
-		double T_amb_C = T_amb;		
-		double P_amb_atm = P_amb_Pa * 0.000009869;
 
 		// Determine properties of the cooling fluid during test conditions
 		
@@ -716,7 +709,6 @@ public:
 					
 				// solve for new cooler effectiveness (counter-flow correlation)
 				double Cr_tower = C_dot_min_tower / C_dot_max_tower;
-				double epsilon_tower = (1-exp(-NTU_tower*(1-Cr_tower))) / (1-Cr_tower*exp(-NTU_tower*(1-Cr_tower)));
 
 				// ==========================================================================
 				// Heater effectiveness-NTU for determining cooler effectiveness with changing mass in engine
@@ -757,7 +749,6 @@ public:
 					T_cool_in= -Q_losses/(C_dot_cool_fluid+1E-8)+T_cool_out;			// energy balance
 				}
 					
-				double T_cool_water_ave =  (T_cool_out + T_cool_in) / 2.0;
 				C_dot_min_cooler = min(C_dot_H2, C_dot_cool_fluid);
 					
 				// solve for temp of hydrogen into the cooler
@@ -899,7 +890,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double )
 	{
 		
 		return 0;

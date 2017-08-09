@@ -287,9 +287,7 @@ public:
 
 	virtual int init()
 	{
-
-		double tstep = time_step();
-
+		
 		m_P_ref			= value( P_P_REF )*1.E3;				//[kW] Reference output electric power at design condition
 		m_eta_ref		= value( P_ETA_REF );					//[-] Reference conversion efficiency at design condition		
 		m_T_hot_ref		= value( P_T_HOT_REF );					//[C] Reference inlet temperature at design
@@ -536,7 +534,6 @@ public:
 				double h_t_outs = wp.enth;	//[kJ/kg] Isentropic HP outlet enthlapy
 				h_t_out = h_hot_ref - (h_hot_ref - h_t_outs)*0.88;		//[kJ/kg] HP outlet enthalpy
 				water_PH( m_P_rh_ref*100.0, h_t_out, &wp );
-				double T_rh_in = wp.temp - 273.15;	//[C] Reheat inlet temperature
 				water_TP(m_T_rh_hot_ref + 273.15, m_P_rh_ref*100.0, &wp);
 				h_rh_out = wp.enth;	//[kJ/kg] LP turbine inlet conditions
 				double s_rh_out = wp.entr;	//[kJ/kg-K]
@@ -583,7 +580,6 @@ public:
 				double h_t_in = h_hot_ref;
 				h_t_out = h_t_in - (h_t_in - h_t_outs)*0.88;		//[kJ/kg]
 				water_PH( m_P_rh_ref*100, h_t_out, &wp );		
-				double T_rh_in = wp.temp - 273.15;		//[C]
 				water_TP(m_T_rh_hot_ref + 273.15, m_P_rh_ref*100.0, &wp);
 				h_rh_out = wp.enth;
 			}
@@ -1026,7 +1022,7 @@ public:
 	}
 
 
-	virtual int call(double time, double step, int ncall){
+	virtual int call(double , double step, int ncall){
 		
 		int mode = (int)value( I_MODE );					//[-] Cycle part load control... from plant controller
 		double T_hot = value( I_T_HOT );			//[C] Hot inlet temperature
@@ -1039,7 +1035,6 @@ public:
 		double P_amb = value( I_P_AMB )*100.0;		//[Pa] Ambient pressure, convert from mbar
 		//int tou = value( I_TOU );					//[-] Current Time-Of-Use period
 		int tou = (int)value(I_TOU) - 1;			// control value between 1 & 9, have to change to 0-8 for array index
-		double rh = value( I_RH )/100.0;			//[-] Relative humidity of the ambient air, convert from %
 
 		double F_wc_tou = m_F_wc[tou];				//[-] Hybrid fraction at current Time-Of-Use period
 
@@ -1225,7 +1220,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged(double time)
+	virtual int converged(double )
 	{
 
 		m_standby_control_prev = m_standby_control;

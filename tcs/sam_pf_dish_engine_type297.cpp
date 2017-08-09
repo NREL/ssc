@@ -258,11 +258,9 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int )
 	{		
 		double P_SE = value( I_P_SE );
-		double T_amb = value( I_T_AMB ) + 273.15;
-		double Number_of_Collectors = value( I_N_COLS );
 		double T_compression = value( I_T_COMPRESSION );
 		double T_heater_head_operate = value( I_T_HEATER_HEAD_OPERATE );
 		double P_in_collector = value( I_P_IN_COLLECTOR );
@@ -340,7 +338,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double )
 	{
 		
 		return 0;

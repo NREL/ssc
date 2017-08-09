@@ -376,7 +376,7 @@ public:
 		return 0; // success
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double time, double , int ncall )
 	{
 		if ( ncall == 0 ) // only read data values once per timestep
 		{

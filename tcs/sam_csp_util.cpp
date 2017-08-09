@@ -643,7 +643,6 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	}
 	water_TP( T_cond - 3.0 + 273.15, P_amb/1000.0, &wp );
 	double h_pcw_in = wp.enth*1000.0;
-	double s_pcw_in = wp.entr*1000.0;
 	double rho_cw = wp.dens;	
 	
 	double h_pcw_out_s = (dp_evap/rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
@@ -697,7 +696,7 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 
 // Air cooling calculations
 void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref, 
-		 double T_db, double P_amb, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
+		 double T_db, double , double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
 		 double& f_hrsys)
 {
 	/*
@@ -795,7 +794,6 @@ void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des,
 	double T_fan_in_K = T_db + 273.15;									// [K] Fan inlet temperature
 	double T_fan_out_K = T_fan_in_K * pow(P_cond_ratio,(R/c_air));
 	double T_fan_out = T_fan_out_K - 273.15;							// [C] Fan outlet temperature
-	double dT_fan = T_fan_out - T_db;									// [C] Difference in temperature including irreversibilities in fan
 
 	double h_fan_out_s = f_h_air_T(T_fan_out);							// [J/kg] Isentropic fan outlet temperature
 	double h_fan_out = h_fan_in + (h_fan_out_s - h_fan_in)/eta_fan_s;	// [J/kg] Actual fan outlet temperature
@@ -1011,7 +1009,6 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 	double T_acfan_in_K = T_db + 273.15;  //[K] Fan inlet temperature
 	double T_acfan_out_K = T_acfan_in_K * pow(P_cond_ratio,(R/C_air));
 	double T_acfan_out = T_acfan_out_K - 273.15;    //[C] Fan outlet temperature
-	double dT_acfan = T_acfan_out - T_db;   //[C] Difference in temperature including irreversibilities in fan
 
 	double h_acfan_out_s = f_h_air_T(T_acfan_out);	//[J/kg] Isentropic fan outlet temperature
 	double h_acfan_out = h_acfan_in + (h_acfan_out_s - h_acfan_in)/eta_acfan_s;   //[J/kg] Actual fan outlet temperature
@@ -1030,7 +1027,6 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 		// rho_cw = f_rho_P(P_amb);         //[kg/m3] cooling water density in the pump
 		water_TP( T_cond - 3.0 + 273.15, P_amb/1000.0, &wp );
 		double h_pcw_in = wp.enth * 1000.0;
-		double s_pcw_in = wp.entr * 1000.0;
 		double rho_cw = wp.dens;
 		
 		double h_pcw_out_s = dP_evap/rho_cw + h_pcw_in;                         //[J/kg] isentropic outlet enthalpy.. incompressible fluid
@@ -1162,8 +1158,6 @@ bool CSP::flow_patterns( int n_panels, int crossover_shift, int flow_type, int &
             messages->append("The number of panels must be divisible by 2. Simulation initialization failed.\n");
         return false;
     }
-    
-	int n_p_quarter = n_panels/4;
 
 	switch( flow_type )
 	{
@@ -1805,7 +1799,7 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 				Copyright:  National Renewable Energy Lab (Golden, CO) 2009
 					note  :  Tested against original EES version
 */
-double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int hn, int hv){
+double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int , int ){
 	//           units                    ( K ,  K , bar, m/s)
 	
 	double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
@@ -2084,7 +2078,7 @@ double Evacuated_Receiver::fT_2(double q_12conv, double T_1, double T_2g, double
 { Based on linear fit of data from "Alloy Digest, Sourcebook, Stainless Steels"; ASM International, 2000.}
 */
 
-double Evacuated_Receiver::FK_23(double T_2, double T_3, int hn, int hv)
+double Evacuated_Receiver::FK_23(double T_2, double T_3, int hn, int )
 {
 	double T_23;
 
@@ -2205,8 +2199,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	double T_save_tot, colopteff_tot;
 	*/
 	//cc--> note that xx and yy have size 'nea'
-		
-	bool glazingIntact = m_Glazing_intact.at(hn,hv);
+	
 	bool reguess = false;
 	
 	double T_save_tot = 0.0;

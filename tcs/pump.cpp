@@ -96,7 +96,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int  )
 	{
 		if ( value(I_T2) - value(I_T1) > value(I_TDIFF) )
 		{

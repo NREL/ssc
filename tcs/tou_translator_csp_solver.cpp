@@ -93,14 +93,12 @@ public:
 	virtual int init()
 	{
 		int nrows, ncols;
-		double *weekdays = value( P_WEEKDAY_SCHEDULE, &nrows, &ncols );
 		mc_tou.ms_params.mc_csp_ops.mc_weekdays.resize(nrows,ncols);
 		for( int r = 0; r < nrows; r++ )
 			for( int c = 0; c < ncols; c++ )
 				mc_tou.ms_params.mc_csp_ops.mc_weekdays(r, c) = TCS_MATRIX_INDEX(var(P_WEEKDAY_SCHEDULE), r, c);
 
 		nrows = ncols = 0;
-		double *weekends = value( P_WEEKEND_SCHEDULE, &nrows, &ncols );		
 		mc_tou.ms_params.mc_csp_ops.mc_weekends.resize(nrows, ncols);
 		for( int r = 0; r < nrows; r++ )
 			for( int c = 0; c < ncols; c++ )
@@ -151,7 +149,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double time, double , int )
 	{
 		
 		int out_type = -1;

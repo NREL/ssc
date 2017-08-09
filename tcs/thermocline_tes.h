@@ -191,7 +191,7 @@ public:
 					  double & Q_dot_out_W, double & Q_dot_losses, double & T_hot_bed_C, double & T_cold_bed_C, double & T_max_bed_C,
 					  double & f_hot, double & f_cold, double & Q_dot_htr_kJ);
 
-	void Converged( double time )
+	void Converged( double )
 	{
 		m_T_prev = m_T_end;
 		m_T_final_ave_prev = m_T_final_ave;

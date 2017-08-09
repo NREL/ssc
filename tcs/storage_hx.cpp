@@ -76,7 +76,7 @@ Storage_HX::Storage_HX()
 bool Storage_HX::define_storage( HTFProperties &fluid_field, HTFProperties &fluid_store, bool is_direct,
 		int config, double duty_des, double vol_des, double h_des, 
 		double u_des, double tank_pairs_des, double hot_htr_set_point_des, double cold_htr_set_point_des,
-		double max_q_htr_cold, double max_q_htr_hot, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des )
+		double max_q_htr_cold, double max_q_htr_hot, double dt_hot_des, double dt_cold_des, double T_h_in_des, double T_h_out_des)
 {	
 	/* Author: Michael J. Wagner
 	Converted from Fortran (sam_mw_trough_Type251) to c++ in November 2012 by Ty Neises	*/
@@ -393,14 +393,12 @@ bool Storage_HX::mixed_tank( bool is_hot_tank, double dt, double m_prev, double 
 	// Calculate conditions at last time step
 	double rho	= m_store_htfProps.dens( T_prev, 1.0 );		//[kg/m^3] Density
 	double cp	= m_store_htfProps.Cp( T_prev )*1000.0;		//[J/kg-K] Specific heat
-	double vol_prev	= m_prev / rho;		//[m^3] Volume 
 
 	// Calculate ending volume levels
 	m_fin = max(0.001, m_prev + dt*(m_dot_in - m_dot_out));	//[kg] Available mass at the end of the timestep, mjw 8.3.11 limit to nonzero positive number
 	double m_ave	= (m_prev + m_fin)/2.0;	//[kg] Average mass 
 	vol_fin	= m_fin/rho;					//[m3] Available volume at the end of the timestep
 	vol_ave	= m_ave/rho;					//[m3] Average volume
-	double h_ave	= vol_ave/m_a_cs;		//[m] Average HTF height
 
 	// Check for no flow
 	double B = m_dot_in + m_ua/cp;					//[kg/s] + [W/K]*[kg-K/J]

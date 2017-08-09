@@ -1704,7 +1704,6 @@ public:
 			q_rec_tot_loop += m_q_rec.at(i,0);
 			q_loss_tot_loop += m_q_loss.at(i,0);
 		}
-		double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
 		m_q_rec_tot_des = q_rec_tot_loop*(double)m_nLoops;
 		double q_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
 		double q_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;
@@ -1845,14 +1844,11 @@ public:
 	virtual int call( double time, double step, int ncall )
 	{		
 		
-		double dnifc = value( I_DNIFC );					//[W/m2] Forecast DNI
 		double I_bn = value( I_I_BN );						//[W/m2] Current DNI
 		double T_db = value( I_T_DB )+273.15;				//[K] Dry bulb temp, convert from C
 		double T_dp = value( I_T_DP )+273.15;				//[K] Dewpoint temp, convert from C
 		double P_amb = value( I_P_AMB )*100.0;				//[Pa] Ambient pressure, convert from mbar
 		double V_wind = value( I_V_WIND );					//[m/s] Ambient windspeed
-		double m_dot_htf_ref = value( I_M_DOT_HTF_REF )/3600.0;	//[kg/s] Reference HTF flow rate at design conditions, convert from kg/hr
-		double m_pb_demand = value( I_M_PB_DEMAND )/3600.0;		//[kg/s] Demand HTF flow from the power block, convert from kg/hr
 		double shift = value( I_SHIFT )*0.0174533;			//[deg] Shift in longitude from local standard meridian
 		double SolarAz = value( I_SOLARAZ );				//[deg] Solar azimuth angle
 		double SolarZen = value(I_SOLARZEN)*0.0174533;;		//Solar zenith angle [deg]
@@ -2094,7 +2090,6 @@ public:
 				// Guess the loop inlet/outlet enthalpies
 				water_TP( T_pb_out, check_pressure.P_check( P_turb_in_guess+dP_basis_guess*(m_fP_sf_tot-m_fP_hdr_c))*100.0, &wp );
 				double h_b_in_guess = wp.enth;		//[kJ/kg]
-				double h_pb_out_guess = h_b_in_guess;	//[kJ/kg]
 				water_TP( m_T_field_out_des, check_pressure.P_check( P_turb_in_guess+dP_basis_guess*m_fP_hdr_h)*100.0, &wp );
 				double h_sh_out_guess = wp.enth;		//[kJ/kg]
 				
@@ -2711,10 +2706,6 @@ public:
 					}	// Main superheater iteration
 
 				}		// End superheater
-				else
-				{
-					double m_dot_field = m_dot_b*m_x_b_des*(double)m_nLoops;	//[kg/s] The total field mass flow rate is just the saturated steam coming from the boiler section
-				}
 
 				m_dot_b_tot = m_dot_b * (double)m_nLoops;
 			
@@ -3076,7 +3067,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double )
 	{
 		for( int i = 0; i < m_nModTot; i++ )
 			m_T_ave_prev.at(i,0) = m_T_ave.at(i,0);

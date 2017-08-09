@@ -194,7 +194,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int )
 	{	
 		double W_dot_tracking = value( I_W_DOT_TRACKING );		//[MWe] Solar field startup and tracking power
 		double W_dot_rec_pump = value( I_W_DOT_REC_PUMP );		//[MWe] Power required to pump HTF through receiver
@@ -270,7 +270,7 @@ public:
 
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double )
 	{
 
 		return 0;

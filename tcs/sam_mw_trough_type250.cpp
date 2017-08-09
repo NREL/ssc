@@ -1016,7 +1016,6 @@ public:
 
 		n_c_iam_matrix = -1;
 		n_r_iam_matrix = -1;
-		double *p_iam_matrix = value(P_IAM_MATRIX, &n_r_iam_matrix, &n_c_iam_matrix);
 		
 		if( n_c_iam_matrix < 3 )
 		{
@@ -1320,7 +1319,7 @@ public:
 
 			//Need to loop through to calculate the weighted average optical efficiency at design
 			//Start by initializing sensitive variables
-			double x1 = 0.0, x2 = 0.0, loss_tot = 0.0;
+			double x1 = 0.0, loss_tot = 0.0;
 			opteff_des = 0.0;
 			m_dot_design = 0.0;																		
 
@@ -1515,7 +1514,7 @@ public:
 		return true;
 	}
 
-	virtual int call(double time, double step, int ncall){
+	virtual int call(double time, double , int ncall){
 
 		//ncall_track = ncall;
 
@@ -1958,7 +1957,6 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 					}
 
 					//Keep a running sum of all of the absorbed/lost heat for each SCA in the loop
-					double temp[] = {q_loss[j], q_abs[j], L_actSCA[CT], HCE_FieldFrac(HT,j)}; 
 
 					q_abs_SCAtot[i] += q_abs[j]*L_actSCA[CT]*HCE_FieldFrac(HT,j);
 					q_loss_SCAtot[i] += q_loss[j]*L_actSCA[CT]*HCE_FieldFrac(HT,j);
@@ -2909,7 +2907,7 @@ set_outputs_and_return:
 		return 0;
 	}
 
-	virtual int converged(double time){
+	virtual int converged(double ){
 		/* 
 		-- Post-convergence call --
 
@@ -3042,10 +3040,7 @@ set_outputs_and_return:
 
 		double T_save_tot, colopteff_tot;
 		//cc--> note that xx and yy have size 'nea'
-		
-		//-------
 
-		bool glazingIntact = GlazingIntact(hn,hv); //.at(hn, hv);
 
 		//---Re-guess criteria:---
 		if(reguess_args == NULL) goto lab_reguess;
@@ -4138,7 +4133,7 @@ lab_keep_guess:
 					Copyright:  National Renewable Energy Lab (Golden, CO) 2009
 					   note  :  Tested against original EES version
 	*/
-	double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int hn, int hv){
+	double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int , int ){
 		//           units                    ( K ,  K , bar, m/s)
 	
 		double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
@@ -4568,8 +4563,8 @@ lab_keep_guess:
 	
 		//resize the header matrices if they are incorrect
 		//real(8),intent(out):: D_hdr(nhsec), D_runner(nrunsec)
-		if(D_hdr.ncells() != nhsec) D_hdr.resize(nhsec);
-		if(D_runner.ncells() != nrunsec) D_runner.resize(nrunsec);
+		if((int)D_hdr.ncells() != nhsec) D_hdr.resize(nhsec);
+		if ((int)D_runner.ncells() != nrunsec) D_runner.resize(nrunsec);
 
 		//----
 		int nst,nend, nd;

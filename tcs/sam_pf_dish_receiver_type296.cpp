@@ -284,18 +284,15 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int  )
 	{		
 		double Power_in = value( I_POWER_IN_REC );
 		double T_amb = value( I_T_AMB ) + 273.15;
 		double P_atm = value( I_P_ATM ) * 100.0;
 		double wind_speed = value( I_WIND_SPEED );
 		double sun_angle = 90.0 - value( I_SUN_ANGLE );
-		double N_collectors = value( I_N_COLLECTORS );
 		//double T_heater_head_high = value( I_T_HEATER_HEAD_HIGH );
 		//double T_heater_head_low = value( I_T_HEATER_HEAD_LOW );
-		double DNI = value( I_DNI );
-		double I_cut_in = value( I_I_CUT_IN );
 		double d_ap = value( I_D_AP );		
 
 		/*========================================================
@@ -334,7 +331,6 @@ public:
 		double R_air = R_bar / M_air;
 		double rho_air = P_atm/(R_air*T_amb);  // ideal gas law
 		double nu_air = mu_air / (rho_air+0.0000001);
-		double Pr_air = 0.832636 - 0.000460708*T_amb + 3.67609E-07*pow(T_amb,2);
 		
 		// Receiver conduction (losses)
 		double h_out = 20.0;	//[W/K-m^2]	External housing convective estimate
@@ -457,7 +453,6 @@ public:
 
 					// forced convection from outside plate
 					double Re_air_out = rho_air_out * wind_speed*d_ap/mu_air_out;		// Reynolds number
-					double Pe_out = Re_air_out * Pr_out;								// Peclet number
 					
 					double Nusselt_out_forced;
 					if (Re_air_out >= 500000 )
@@ -521,7 +516,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double  )
 	{
 		
 		return 0;

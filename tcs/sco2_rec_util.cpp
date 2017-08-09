@@ -612,7 +612,6 @@ bool N_sco2_rec::C_calc_tube_min_th::calc_min_thick_general()
 	m_h_conv_ave.resize(m_n_tube_elements);	
 
 	// Calculate total absorbed flux
-	double A_surf_per_node = m_d_out*CSP::pi*m_L_node;			//[m^2] Total tube surface area
 	double q_abs_total = 0.0;
 	for( int i = 0; i < m_n_tube_elements; i++ )
 	{

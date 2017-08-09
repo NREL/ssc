@@ -484,7 +484,7 @@ public:
 !*****************************************************************/
 	
 	//Enthalpy of User Fluid, [J/kg]
-	double H_user(double T,int fn) //T [C]
+	double H_user(double ,int ) //T [C]
 	{
 		double enthalpy=0;
 		return enthalpy;
@@ -652,7 +652,7 @@ public:
 		return dens;
 	}
 
-	double specheat( int fluid, double T, double P) // need to port from type 229
+	double specheat( int fluid, double T, double ) // need to port from type 229
 	{
 		double spht=1.0;
 		double Td = T - 273.15;
@@ -724,7 +724,7 @@ public:
 		return spht;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double time, double step, int )
 	{
 		double AveSfTemp0Next = m_AveSfTemp0Next;
 
@@ -798,15 +798,12 @@ public:
 
 		//Parasitic inputs
 		double sfpar      = value(I_SfPar);
-		double SfParPF   = value(I_SfParPF);
 		double ChtfPar   = value(I_ChtfPar);
-		double CHTFParPF = value(I_ChtfParPF);
 		double CHTFParF0 = value(I_CHTFParF0);
 		double ChtfParF1 = value(I_CHTFParF1);
 		double ChtfParF2 = value(I_CHTFParF2);
 		double AntiFrPar = value(I_AntiFrPar);
 		double Site_Lat    = value(I_Site_Lat)*M_PI/180.0;
-		double Site_LongD  = value(I_Site_LongD)*M_PI/180.0; // trnsys has negative convention
 //		double SHIFT       = value(I_SHIFT)*M_PI/180.0;
 		//double SHIFT = (value(I_Site_LongD) - value(I_SHIFT)*15.)*M_PI/180.0; // from Mike
 		
@@ -863,8 +860,6 @@ public:
 		double time_hour = time / 3600.0;
 
 		int Julian_Day = int(time_hour/24)+1;
-		int StartDay = int(m_time0/24) + 1;
-		int StopDay = int(m_tFinal/24) + 1;
 
 		// Hour of day in standard time
 		double  TimeDay = time_hour - ((Julian_Day-1)*24.0);
@@ -890,10 +885,6 @@ public:
 
 		// Number of daylight hours
 		double DayLightHrs = 2.0 / 15.0 * acos(-tan(Site_Lat) * tan(Dec)) * 180.0 / M_PI;
-	
-		// Sunrise and set in hours
-		double SunRise = SolarNoon - (DayLightHrs / 2.0);
-		double SunSet = SolarNoon + (DayLightHrs / 2.0);
 
 		// Deploy & stow times in hours
 		// Calculations modified by MJW 11/13/2009 to correct bug
