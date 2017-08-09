@@ -321,3 +321,7 @@ build_osx/SDKtool\.app/Contents/
 build_osx/ssc\.dylib
 
 build_osx/TCSConsole\.app/Contents/
+
+build_android/libssc\.zip
+
+build_ios/libssc\.zip
