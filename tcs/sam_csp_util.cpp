@@ -387,7 +387,7 @@ double CSP::Nusselt_FC( double ksDin, double Re )
 	double Nomval = ksD;
 	int rerun = 0;
 
-	double Nu_FC, ValHi, ValLo, Nu_Lo, Nu_Hi, ValHi2, ValLo2;
+	double Nu_FC = 0.0, ValHi = 0.0, ValLo = 0.0, Nu_Lo = 0.0, Nu_Hi = 0.0, ValHi2 = 0.0, ValLo2 = 0.0;
 	// Select the bounding conditions
 	
 	bool repeat_loop = true;
@@ -1469,11 +1469,11 @@ void Evacuated_Receiver::FQ_34CONV(double T_3, double T_4, double P_6, double v_
 {
    //      UNITS   ( K , K ,  Pa , m/s,  K , -, -, W/m, W/m2-K)
 
-	double a, Alpha_34, b, Beta_34, C, C1, Cp_34, Cv_34, Delta, Gamma, k_34, Lambda, 
-		  m, mu_34, n, nu_34, P, Pr_34, P_A1, Ra_D3, Ra_D4, rho_34, T_34, T_36, 
-		  grav, Nu_bar, rho_3, rho_6, mu_36, rho_36, cp_36,
-		  k_36, nu_36, alpha_36, beta_36, Pr_36, h_36, mu_3, mu_6, k_3, k_6, cp_3, Cp_6, nu_6, nu_3,
-		  Alpha_3, alpha_6, Re_D3, Pr_3, Pr_6, Natq_34conv, Kineticq_34conv;
+	double a = 0.0, Alpha_34 = 0.0, b = 0.0, Beta_34 = 0.0, C = 0.0, C1 = 0.0, Cp_34 = 0.0, Cv_34 = 0.0, Delta = 0.0, Gamma = 0.0, k_34 = 0.0, Lambda = 0.0, 
+		  m = 0.0, mu_34 = 0.0, n = 0.0, nu_34 = 0.0, P = 0.0, Pr_34 = 0.0, P_A1 = 0.0, Ra_D3 = 0.0, Ra_D4 = 0.0, rho_34 = 0.0, T_34 = 0.0, T_36 = 0.0, 
+		  grav = 0.0, Nu_bar = 0.0, rho_3 = 0.0, rho_6 = 0.0, mu_36 = 0.0, rho_36 = 0.0, cp_36 = 0.0,
+		  k_36 = 0.0, nu_36 = 0.0, alpha_36 = 0.0, beta_36 = 0.0, Pr_36 = 0.0, h_36 = 0.0, mu_3 = 0.0, mu_6 = 0.0, k_3 = 0.0, k_6 = 0.0, cp_3 = 0.0, 
+		  Cp_6 = 0.0, nu_6 = 0.0, nu_3 = 0.0, Alpha_3 = 0.0, alpha_6 = 0.0, Re_D3 = 0.0, Pr_3 = 0.0, Pr_6 = 0.0, Natq_34conv = 0.0, Kineticq_34conv = 0.0;
 
 	grav = 9.81; //m/s2  gravitation constant
 
@@ -1693,9 +1693,9 @@ void Evacuated_Receiver::FQ_34RAD(double T_3, double T_4, double T_7, double eps
 void Evacuated_Receiver::FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hn, int hv, double &q_56conv, double &h_6)
 //           units   ( K ,  K , torr, m/s,  W/m    , W/m2-K)
 {
-double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, mu_6, n, Nus_6,
-			nu_5, nu_6, Pr_5, Pr_6, Re_D5, rho_5, rho_56, rho_6, T_56, Nu_bar,
-			nu_56, alpha_56, beta_56, Ra_D5, Pr_56;
+double alpha_5 = 0.0, alpha_6 = 0.0, C = 0.0, Cp_5 = 0.0, Cp_56 = 0.0, Cp_6 = 0.0, k_5 = 0.0, k_56 = 0.0, k_6 = 0.0, m = 0.0, mu_5 = 0.0, mu_56 = 0.0, 
+		mu_6 = 0.0, n = 0.0, Nus_6 = 0.0, nu_5 = 0.0, nu_6 = 0.0, Pr_5 = 0.0, Pr_6 = 0.0, Re_D5 = 0.0, rho_5 = 0.0, rho_56 = 0.0, rho_6 = 0.0, 
+		T_56 = 0.0, Nu_bar = 0.0, nu_56 = 0.0, alpha_56 = 0.0, beta_56 = 0.0, Ra_D5 = 0.0, Pr_56 = 0.0;
 
 	T_56 = (T_5 + T_6)/2.0;  //[K]
 
@@ -1802,10 +1802,10 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int , int ){
 	//           units                    ( K ,  K , bar, m/s)
 	
-	double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
-			Cp_brac6, k_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
-			mu_brac, mu_6, rho_6, rho_brac, k_6, Cp_brac, nu_6, Cp_6, Nu_brac, Alpha_brac,
-			Re_Dbrac, Pr_brac, Pr_6, n, C, m, L_HCE, alpha_6;
+	double P_brac = 0.0, D_brac = 0.0, A_CS_brac = 0.0, k_brac = 0.0, T_base = 0.0, T_brac = 0.0, T_brac6 = 0.0, mu_brac6 = 0.0, rho_brac6 = 0.0, 
+			Cp_brac6 = 0.0, k_brac6 = 0.0, nu_brac6 = 0.0, Alpha_brac6 = 0.0, Beta_brac6 = 0.0, Ra_Dbrac = 0.0, Pr_brac6 = 0.0, Nu_bar = 0.0, h_brac6 = 0.0,
+			mu_brac = 0.0, mu_6 = 0.0, rho_6 = 0.0, rho_brac = 0.0, k_6 = 0.0, Cp_brac = 0.0, nu_6 = 0.0, Cp_6 = 0.0, Nu_brac = 0.0, Alpha_brac = 0.0,
+			Re_Dbrac = 0.0, Pr_brac = 0.0, Pr_6 = 0.0, n = 0.0, C = 0.0, m = 0.0, L_HCE = 0.0, alpha_6 = 0.0;
 
 
 	// effective bracket perimeter for convection heat transfer

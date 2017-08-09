@@ -536,7 +536,8 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			P_mc_in_upper = P_mc_in_guess;
 			// Increase compressor inlet temperature until off design returns error code
 			int iter_P_mc_in_upper = 0;
-			while (true)
+			bool loop = true;
+			while (loop)
 			{
 				iter_P_mc_in_upper++;
 				P_mc_in_upper = 0.95*P_mc_in_upper + 0.05*ms_des_par.m_P_high_limit;	//[kPa]
@@ -553,7 +554,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 				}
 				else
 				{
-					break;
+					loop = false;
 				}				
 			}
 

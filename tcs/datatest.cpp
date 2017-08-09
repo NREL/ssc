@@ -100,7 +100,6 @@ public:
 
 	virtual int init()
 	{
-		int len;
 		
 		allocate( O_VEC, 4 );
 

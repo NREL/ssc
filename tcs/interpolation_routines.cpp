@@ -497,8 +497,8 @@ LUdcmp::LUdcmp(MatDoub &a)
 	indx.resize(n);
 
     const double TINY=1.0e-40;
-    int i,imax,j,k;
-    double big,temp;
+    int i = 0, imax = 0, j = 0, k = 0;
+	double big = 0.0, temp = 0.0;
     VectDoub vv(n);
     d=1.0;
     for (i=0;i<n;i++) {
@@ -563,7 +563,7 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 void LUdcmp::solve(MatDoub &b, MatDoub &x)
 {
     int i,j,m=(int)b.front().size();
-    if (b.size() != n || x.size() != n || b.front().size() != x.front().size())
+	if ((int)b.size() != n || (int)x.size() != n || b.front().size() != x.front().size())
         throw("LUdcmp::solve bad sizes");
     VectDoub xx(n);
     for (j=0;j<m;j++) {

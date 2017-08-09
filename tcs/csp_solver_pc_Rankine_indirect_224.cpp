@@ -1366,7 +1366,7 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X)
 	for( size_t i = 0; i < m_db.ncols(); i++ )
 	{
 		// if we got to the last one, then set bounds and end loop
-		if( i == iLastIndex )
+		if ((int)i == iLastIndex)
 		{
 			lbi = iLastIndex;
 			ubi = iLastIndex;

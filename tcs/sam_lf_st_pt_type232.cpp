@@ -1063,30 +1063,30 @@ public:
 		util::matrix_t<double> m_htf_p( m_n_panels, 1, 0.0 );	*/	
 
 
-		double err_coupled_conv, q_convection_guess, q_convection;
-		int iter_coupled_conv;
-		double deltaT_htfX;
-		double err_defocus, field_eff_adj;
-		double q_solar_total, T_O, T_F_guess, T_CE_guess, T_L_guess, T_F, T_CE, T_L;
-		double T_htf_average, rho_htf, k_htf, mu_htf, c_htf, Pr_htf;
-		double gamma;
-		int gamma_count;
+		double err_coupled_conv = 0.0, q_convection_guess = 0.0, q_convection = 0.0;
+		int iter_coupled_conv = 0;
+		double deltaT_htfX = 0.0;
+		double err_defocus = 0.0, field_eff_adj = 0.0;
+		double q_solar_total = 0.0, T_O, T_F_guess = 0.0, T_CE_guess = 0.0, T_L_guess = 0.0, T_F = 0.0, T_CE = 0.0, T_L = 0.0;
+		double T_htf_average = 0.0, rho_htf = 0.0, k_htf = 0.0, mu_htf = 0.0, c_htf = 0.0, Pr_htf = 0.0;
+		double gamma = 0.0;
+		int gamma_count = 0;
 		double gamma_calc_array[7] = {1, 0.8, 0.6, 0.4, 0.2, 0.1, 0.05};												
-		double q_losses_therm_guess, q_losses_rad_guess, q_outX, h_FX, h_avgX, h_stagX, T_stagX;
-		int SX;
-		double T_bulk;		
-		double q_htf_total;								
-		double errorsum_temp, errorsum_flow;
-		bool cycle_out_loop;
-		double Q_radiation_loss, Q_radiation_loss_solar, Q_radiation_loss_therm, Q_radiation_loss_semi_sum;
-		double T_s_ave, A_cavity, h_clausing1983, h_clausing1987;
-		double q_convection_Clausing1983, q_convection_Clausing1987, h_F, h_ave, h_stag, T_stag;
-		int S;
-		double h_SK_forced;
-		double m_htf_total, err_od;
-		bool defocus_rec;
-		double q_startup, eta_thermal;		
-		double deltaP_ave;														
+		double q_losses_therm_guess = 0.0, q_losses_rad_guess = 0.0, q_outX = 0.0, h_FX = 0.0, h_avgX = 0.0, h_stagX = 0.0, T_stagX = 0.0;
+		int SX = 0;
+		double T_bulk = 0.0;
+		double q_htf_total = 0.0;
+		double errorsum_temp = 0.0, errorsum_flow = 0.0;
+		bool cycle_out_loop = false;
+		double Q_radiation_loss = 0.0, Q_radiation_loss_solar = 0.0, Q_radiation_loss_therm = 0.0, Q_radiation_loss_semi_sum = 0.0;
+		double T_s_ave = 0.0, A_cavity = 0.0, h_clausing1983 = 0.0, h_clausing1987 = 0.0;
+		double q_convection_Clausing1983 = 0.0, q_convection_Clausing1987 = 0.0, h_F = 0.0, h_ave = 0.0, h_stag = 0.0, T_stag = 0.0;
+		int S = 0;
+		double h_SK_forced = 0.0;
+		double m_htf_total = 0.0, err_od = 0.0;
+		bool defocus_rec = 0.0;
+		double q_startup = 0.0, eta_thermal = 0.0;
+		double deltaP_ave = 0.0;
 
 		mode = -1;		// Mode should be set every time
 		E_su = std::numeric_limits<double>::quiet_NaN(); 
@@ -1121,7 +1121,7 @@ public:
 				double * flux_array_1D = new double[120];
 				// Get flux array: f(azimuth, zenith, flux_map, flux_array_1D)
 				double hold = 1.e6;
-				int p1;
+				int p1 = -2;
 				for( int i = 0; i < num_sol_pos; i++ )
 				{
 					double azi_i = fluxmap_angles.at(0,i);

@@ -1936,7 +1936,7 @@ void optimization_vars::add_var(char *vname, int var_type /* VAR_TYPE enum */, i
     }
 
     //calculate the required memory space for this type of variable
-    int mem_size;
+    int mem_size = -1;
     switch (var_dim)
     {
     case optimization_vars::VAR_DIM::DIM_T:

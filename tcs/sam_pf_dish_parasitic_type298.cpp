@@ -432,7 +432,7 @@ public:
 		double T_K2 = m_test_T_fluid;
 		double T_K1 = m_test_T_fluid;
 
-		double mu_water, mu_fluid_test, rho_cool_fluid_test, cp_fluid_test;
+		double mu_water = 0.0, mu_fluid_test = 0.0, rho_cool_fluid_test = 0.0, cp_fluid_test = 0.0;
 		if( m_test_cooling_fluid == 1 )				// Water
 		{
 			mu_water = 3.50542 - 0.0539638*T_K2 + 0.000333345*pow(T_K2,2) - 0.0000010319*pow(T_K2,3) + 1.59983E-09*pow(T_K2,4) - 9.93386E-13*pow(T_K2,5);
@@ -481,7 +481,7 @@ public:
 		double T_cool_speed2 = m_T_cool_speed2+273.15;			// convert C to K
 		double T_cool_speed3 = m_T_cool_speed3+273.15;			// convert C to K
 		
-		double mu_cool_fluid, rho_tower, T1, fan_speed_use, T_compression, Tower_water_inlet_temp, P_pump, P_fan;
+		double mu_cool_fluid = 0.0, rho_tower = 0.0, T1 = 0.0, fan_speed_use = 0.0, T_compression = 0.0, Tower_water_inlet_temp = 0.0, P_pump = 0.0, P_fan = 0.0;
 		double T_cool_out = -987.6;
 		for( double T_res = 260; T_res <= 600; T_res += d_T )
 		{
@@ -676,28 +676,7 @@ public:
 				// Cooling Tower loop HX effectiveness-NTU for effectiveness with changing pump/tower flow
 				// ==========================================================================
 				T1 = Tower_water_outlet_temp+273.15;
-				double b_tower = 0.7;
 				rho_tower = 589.132 + 2.98577*T1 - 0.00542465*pow(T1,2);
-				double rho_tower_test = 1000;
-				double cp_tower_water_test = 4185;
-				double cp_tower_water = 5.64111E+06 - 93046.6*T1 + 614.276*pow(T1,2) - 2.02742*pow(T1,3) + 0.00334536*pow(T1,4) - 0.00000220776*pow(T1,5);
-				double C_dot_tower_test = m_tower_m_dot_water_test * cp_tower_water_test;
-				double C_dot_tower = m_tower_m_dot_water * cp_tower_water;
-				double V_dot_tower = m_tower_m_dot_water / (rho_tower+1E-8);
-				double V_dot_tower_test = m_tower_m_dot_water_test/(rho_tower_test+1E-8);
-					
-					
-				double C_dot_min_test_tower = min(C_dot_tower_test,C_dot_cool_fluid_test);
-				double C_dot_max_test_tower = max(C_dot_tower_test,C_dot_cool_fluid_test);
-				double V_dot_min_tower = min(V_dot_tower,V_dot_cool_fluid);
-				double V_dot_min_test_tower = min(V_dot_tower_test,m_test_V_dot_fluid);
-										
-				// Counter-flow Concentric-Tube NTU-effectiveness correlation
-				double Cr_tower_test = C_dot_min_test_tower / C_dot_max_test_tower;
-				double NTU_tower_test = 1.0/(Cr_tower_test-1.0)*log((m_epsilon_tower_test-1.0)/(m_epsilon_tower_test*Cr_tower_test-1+1E-8));
-					
-				// Determine overall heat xfer coef UA at test conditions
-				double UA_tower_test = NTU_tower_test * C_dot_min_test_tower;
 
 				// ==========================================================================
 				// Heater effectiveness-NTU for determining cooler effectiveness with changing mass in engine
@@ -795,7 +774,7 @@ public:
 		double mu_tower = 0.299062 - 0.00283786*T1 + 0.0000090396*pow(T1,2) - 9.64494E-09*pow(T1,3);
 		double Re_tower = rho_tower * vel_tower * m_d_pipe_tower / (mu_tower+1E-8);
 		
-		double epsilon_wall;
+		double epsilon_wall = 0.0;
 		if( m_tower_pipe_material == 1 )		// Plastic
 			epsilon_wall = 0.0000015;
 		else if( m_tower_pipe_material == 2)	// cast iron

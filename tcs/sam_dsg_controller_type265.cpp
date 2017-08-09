@@ -963,12 +963,35 @@ public:
 			skip_rec_calcs = true;
 		// IF( (success==0) .and.(info(7)>0) ) GOTO 375    
 
-		double m_dot_sh, m_dot_rh, dp_sh, dp_rh, q_therm_in_b, q_therm_in_sh, q_therm_in_rh, q_therm_in_rec, deltaP1, W_dot_fw, W_dot_boost;
-		double eta_rh, eta_sh, eta_b, h_fw_Jkg, P_sh_in, P_hp_in, P_lp_in, q_boiler_abs, q_sh_abs, q_rh_abs, rho_fw, T_in, P_b_out, T_boil, h_hp_in, h_lp_in, h_rh_in;
-		
-		m_dot_sh, m_dot_rh, dp_sh, dp_rh, q_therm_in_b, q_therm_in_sh, q_therm_in_rh, q_therm_in_rec, deltaP1, W_dot_fw, W_dot_boost  = std::numeric_limits<double>::quiet_NaN();
-		eta_rh, eta_sh, eta_b, h_fw_Jkg, P_sh_in, P_hp_in, P_lp_in, q_boiler_abs, q_sh_abs, q_rh_abs, rho_fw, T_in, P_b_out, T_boil, h_hp_in, h_lp_in, h_rh_in  = std::numeric_limits<double>::quiet_NaN();
-		
+		double m_dot_sh = std::numeric_limits<double>::quiet_NaN(), 
+			   m_dot_rh = std::numeric_limits<double>::quiet_NaN(),
+			   dp_sh = std::numeric_limits<double>::quiet_NaN(),
+			   dp_rh = std::numeric_limits<double>::quiet_NaN(),
+			   q_therm_in_b = std::numeric_limits<double>::quiet_NaN(),
+			   q_therm_in_sh = std::numeric_limits<double>::quiet_NaN(),
+			   q_therm_in_rh = std::numeric_limits<double>::quiet_NaN(),
+			   q_therm_in_rec = std::numeric_limits<double>::quiet_NaN(),
+			   deltaP1 = std::numeric_limits<double>::quiet_NaN(),
+			   W_dot_fw = std::numeric_limits<double>::quiet_NaN(),
+			   W_dot_boost = std::numeric_limits<double>::quiet_NaN();
+		double eta_rh = std::numeric_limits<double>::quiet_NaN(),
+			   eta_sh = std::numeric_limits<double>::quiet_NaN(),
+			   eta_b = std::numeric_limits<double>::quiet_NaN(),
+			   h_fw_Jkg = std::numeric_limits<double>::quiet_NaN(),
+			   P_sh_in = std::numeric_limits<double>::quiet_NaN(),
+			   P_hp_in = std::numeric_limits<double>::quiet_NaN(),
+			   P_lp_in = std::numeric_limits<double>::quiet_NaN(),
+			   q_boiler_abs = std::numeric_limits<double>::quiet_NaN(),
+			   q_sh_abs = std::numeric_limits<double>::quiet_NaN(),
+			   q_rh_abs = std::numeric_limits<double>::quiet_NaN(),
+			   rho_fw = std::numeric_limits<double>::quiet_NaN(),
+			   T_in = std::numeric_limits<double>::quiet_NaN(),
+			   P_b_out = std::numeric_limits<double>::quiet_NaN(),
+			   T_boil = std::numeric_limits<double>::quiet_NaN(),
+			   h_hp_in = std::numeric_limits<double>::quiet_NaN(),
+			   h_lp_in = std::numeric_limits<double>::quiet_NaN(),
+			   h_rh_in = std::numeric_limits<double>::quiet_NaN();
+
 		double dp_b = 0.0;
 		double P_sh_out = 0.0;
 		double P_rh_out = 0.0;
@@ -1338,8 +1361,10 @@ public:
 
 			eta_b = m_eta_b_ref;	eta_sh = m_eta_sh_ref; eta_rh = m_eta_rh_ref;	 // new for tcs -> initialize here - should overwrite before use
 			int iter_T_rh = -1;				//[-] Number of iterations on reheater fraction	
-			double df_upper, y_df_upper, df_lower, y_df_lower;
-			df_upper, y_df_upper, df_lower, y_df_lower = std::numeric_limits<double>::quiet_NaN();
+			double df_upper = std::numeric_limits<double>::quiet_NaN(),
+				   y_df_upper = std::numeric_limits<double>::quiet_NaN(), 
+				   df_lower = std::numeric_limits<double>::quiet_NaN(),
+				   y_df_lower = std::numeric_limits<double>::quiet_NaN();
 			bool break_def_calcs = false;
 
 			do
@@ -1653,9 +1678,10 @@ public:
 
 					int sh_exit = -1; 
 					int boiler_exit = -1;
-					double y_upper, y_lower, f_adjust;		
-					y_upper, y_lower, f_adjust = std::numeric_limits<double>::quiet_NaN();
-					bool checkflux;
+					double y_upper = std::numeric_limits<double>::quiet_NaN(), 
+						   y_lower = std::numeric_limits<double>::quiet_NaN(), 
+						   f_adjust = std::numeric_limits<double>::quiet_NaN();
+					bool checkflux = false;
 					// *********************************************************************************************
 					// ***** Loop to determine the fraction of remaing flux on boiler, given a set reheater fraction
 					// *********************************************************************************************

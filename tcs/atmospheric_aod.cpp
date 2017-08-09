@@ -179,25 +179,25 @@ private:
 
 	//inputs
 	double
-		SunEl,
-		dni_act,
-		press,
-		temp,
-		rh,
-		albedo,
-		O3cm,
-		Ta3,
-		Ta5;
+		SunEl = 0.0,
+		dni_act = 0.0,
+		press = 0.0,
+		temp = 0.0,
+		rh = 0.0,
+		albedo = 0.0,
+		O3cm = 0.0,
+		Ta3 = 0.0,
+		Ta5 = 0.0;
 	//Outputs
 	double
-		Id,
-		Ics,
-		AOD,	//AOD
-		H2Ocm;	//water depth
+		Id = 0.0,
+		Ics = 0.0,
+		AOD = 0.0,	//AOD
+		H2Ocm = 0.0;	//water depth
 
 	//Others
-	double pi, d2r;
-	double H2Ocm_last, AOD_last;
+	double pi = 0.0, d2r = 0.0;
+	double H2Ocm_last = 0.0, AOD_last = 0.0;
 
 
 public:
@@ -339,14 +339,14 @@ public:
 
 		Ics = Io * 0.9751 * Tr * Toz * Tm;	//DNI before accounting for water vapor or aerosols
 
-		double Ta, TAA, TAS, Rs, Tau;
+		double Ta = 0.0, TAA = 0.0, TAS = 0.0, Rs = 0.0, Tau = 0.0;
 
 		if (dni_act > 1.){
 			//begin loop here
 			Ta3 = .5;
 			double err = 999.;
 			double tol = 0.001;
-			double Ta3_0, Id0;
+			double Ta3_0 = 0.0, Id0 = 0.0;
 			int qi = 0;			//iteration
 			while (fabs(err) > tol){
 				Ta5 = Ta3 * 0.75;
