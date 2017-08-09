@@ -313,3 +313,11 @@ ssc/examples/sco2_csp_ud_pc_tables_SAM_test.lk
 ssc/examples/sco2_design_point.lk
 ssc/examples/solar_pilot_example.lk
 set_env_sj.bat
+
+build_osx/dltest\.dSYM/Contents/
+
+build_osx/SDKtool\.app/Contents/
+
+build_osx/ssc\.dylib
+
+build_osx/TCSConsole\.app/Contents/
