@@ -675,7 +675,6 @@ int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q_enth::operator()(double q_dot /*kWt*
 	}
 	catch (C_csp_exception &csp_except)
 	{
-		int hx_error_code = csp_except.m_error_code;
 
 		// Reset solved OD parameters to NaN
 		m_T_c_out = m_T_h_out = std::numeric_limits<double>::quiet_NaN();
@@ -780,10 +779,6 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 		{
 			throw(C_csp_exception("Off-design heat exchanger method failed"));
 		}
-	}
-	else
-	{
-		double hit_max_eff = 1.23;
 	}
 
 	T_c_out = od_hx_eq.m_T_c_out;	//[K]
@@ -1401,9 +1396,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	{
 		throw(C_csp_exception("Air cooler design parameters need to specify either m_Q_dot_des or m_m_dot_total as positive numbers"));
 	}
-	
-	double deltaT_hot = ms_des_par_cycle_dep.m_T_hot_in_des - ms_des_par_cycle_dep.m_T_hot_out_des;	//[K,C] Hot side temperature difference
-
+ 
 	ms_hx_des_sol.m_Depth = m_s_h * ms_hx_des_sol.m_N_passes;	//[m] Dimension parallel to air flow
 
 	// 1) Guess dimension perpendicular to air AND hot fluid flow
@@ -1468,11 +1461,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 			throw(C_csp_exception("Air cooler iteration on the parallel width did not converge"));
 		}
 	}
-
-	// Probably have a non-integer number of parallel paths, so round up and recalculate geometry
-	// C++ (int) rounds down
-	int N_par = (int)c_eq.m_N_par + 1;
-
+ 
 	// Final reporting metrics
 	ms_hx_des_sol.m_W_par = W_par_solved;			//[m] Dimension perpendicular to loop/air flow direction
 	ms_hx_des_sol.m_N_par = c_eq.m_N_par;			//[-] Number of parallel flow paths
@@ -1552,8 +1541,7 @@ int C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out::operator()(double
 }
 
 int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_tube /*m*/, double *delta_P_co2 /*kPa*/)
-{
-	double L_total = L_tube*mpc_ac->ms_hx_des_sol.m_N_passes;	//[m] Total length of flow path including loops
+{ 
 	double L_node = L_tube/mpc_ac->m_N_nodes;	//[m] Length of one node
 	double V_node = L_node*mpc_ac->m_s_v*mpc_ac->m_s_h;	//[m^3] Volume of one node
 	m_V_total = L_tube*mpc_ac->ms_hx_des_sol.m_Depth*m_W_par;		//[m^3] Total HX footprint volume
@@ -1738,8 +1726,6 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 			double u_m = m_m_dot_tube / (rho_co2*mpc_ac->m_A_cs);		//[m/s]
 			mpc_ac->mm_P_co2((size_t)out, j) = mpc_ac->mm_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*mpc_ac->ms_hx_des_sol.m_d_in) / 1000.0;	//[kPa]
 
-			double deltaP_node = mpc_ac->mm_P_co2((size_t)out, j) - mpc_ac->mm_P_co2((size_t)in, j);	//[kPa]
-
 			mpc_ac->mm_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mpc_ac->mm_P_co2((size_t)out, j)));
 
 		}	// End iteration through nodes in flow path		
@@ -1869,7 +1855,6 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 	CO2_TP(T_hot_out, P_hot_in, &co2_props);
 	double h_out = co2_props.enth*1000.0;					//[J/kg]
 	double Q_dot = m_dot_hot*(h_in - h_out);				//[W]
-	double deltaT_hot = T_hot_in - T_hot_out;				//[K,C] Hot side temperature difference
 
 	// Set up matrices for HX
 	util::matrix_t<double>    T_co2(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1);
@@ -2065,7 +2050,6 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 					double T_out_ave = 0.5*(T_out_guess + T_co2((size_t)in, j));
 
 					// Check this error?
-					int co2_prop_error = CO2_TP(T_out_ave, P_hot_in, &co2_props);
 					double cp_co2_ave = co2_props.cp*1000.0;
 
 					// Capacitance rates
@@ -2083,8 +2067,6 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 
 					deltaT_prev = T_co2((size_t)out, j) - T_co2((size_t)in, j);
 
-					double T_last = T_co2((size_t)in, j);
-
 					diff_T_in = (T_in_check - T_co2((size_t)in, j)) / T_co2((size_t)in, j);
 
 				}	// **** End T_out (node) iteration ***********************
@@ -2095,7 +2077,6 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 			}	// **** End one row of nodes iteration		
 		}	// **** End number of passes iteration
 
-		double T_last = T_co2(m_final_outlet_index, ms_hx_des_sol.m_N_passes);
 
 		diff_T_hot_in = (T_co2(m_final_outlet_index, ms_hx_des_sol.m_N_passes) - T_hot_in) / T_hot_in;
 

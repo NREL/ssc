@@ -203,14 +203,14 @@ double C_pc_heat_sink::get_min_thermal_power()
 	return 0.0;		//[MWt]
 }
 
-double C_pc_heat_sink::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
+double C_pc_heat_sink::get_efficiency_at_TPH(double , double , double , double *)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_efficiency_at_TPH() is not complete"));
 
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_pc_heat_sink::get_efficiency_at_load(double load_frac, double *w_dot_condenser)
+double C_pc_heat_sink::get_efficiency_at_load(double , double *)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_efficiency_at_load() is not complete"));
 
@@ -227,11 +227,11 @@ double C_pc_heat_sink::get_htf_pumping_parasitic_coef()
 	return ms_params.m_htf_pump_coef* (m_m_dot_htf_des) / (ms_params.m_q_dot_des*1000.0);	// kWe/kWt
 }
 
-void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &weather,
+void C_pc_heat_sink::call(const C_csp_weatherreader::S_outputs &,
 	C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_power_cycle::S_control_inputs &inputs,
 	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
-	const C_csp_solver_sim_info &sim_info)
+	const C_csp_solver_sim_info &)
 {
 	double T_htf_hot = htf_state_in.m_temp;		//[C]
 	double m_dot_htf = inputs.m_m_dot/3600.0;	//[kg/s]

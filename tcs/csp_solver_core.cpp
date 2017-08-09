@@ -666,7 +666,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
     double disp_qsf_last = 0.;
     double disp_qsf_effadj = 1.;
     double disp_effadj_weight = 0.;
-    int disp_effadj_count = 0;
 
 	// Block dispatch saved variables
 	bool is_q_dot_pc_target_overwrite = false;
@@ -3108,7 +3107,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
 
 				double relaxed_tol_mult = 5.0;				//[-]
-				double relaxed_tol = relaxed_tol_mult*tol;	//[-]
 
 				double q_dot_pc_fixed = q_pc_min;			//[MWt]
 
@@ -4785,7 +4783,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
             e_tes_disch *= mc_kernel.mc_sim_info.ms_ts.m_step / 3600.;  //MWh
         }
 
-		double step_hr = mc_kernel.mc_sim_info.ms_ts.m_step / 3600.0;
 		// Save timestep outputs
 		// This is after timestep convergence, so be sure convergence() methods don't unexpectedly change outputs
 		
@@ -5027,7 +5024,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();			//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;	//[s]
 
-			double blah = 1.23;
 		}
 		else if( mc_kernel.mc_sim_info.ms_ts.m_time == mc_kernel.get_baseline_end_time() )
 		{
@@ -5047,8 +5043,6 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 			mc_kernel.mc_sim_info.ms_ts.m_time_start = mc_kernel.mc_sim_info.ms_ts.m_time;	//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_time = mc_kernel.get_baseline_end_time();			//[s]
 			mc_kernel.mc_sim_info.ms_ts.m_step = mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.mc_sim_info.ms_ts.m_time_start;	//[s]
-
-			double blah = 1.23;
 		}
 		else
 		{
@@ -5216,10 +5210,10 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 	return 0;
 }
 
-void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
-	double field_control_in,
-	double tol,
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance)
+void C_csp_solver::solver_cr_on__pc_float__tes_full(int ,
+	double ,
+	double ,
+	int &, double &)
 {
 	// The collector-receiver is on and delivering hot HTF to the PC and TES
 	// The PC accepts floating input
@@ -5228,20 +5222,20 @@ void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
 	throw(C_csp_exception("Retiring solver_cr_on__pc_float__tes_full for mass flow constraint updates..", ""));
 }
 
-void C_csp_solver::solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double tol,
-	int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance,
-	double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/)
+void C_csp_solver::solver_pc_on_fixed__tes_dc(double  /*MWt*/, int ,
+	double ,
+	int &, double &,
+	int &, double &,
+	double & /*MWt*/, double & /*kg/hr*/)
 {
 	throw(C_csp_exception("Retiring solver__pc_on_fixed__tes_dc for mass flow constraint updates..", ""));
 }
 
 void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
-	double tol,
+	double ,
 	double & time_tes_dc,
-	int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
+	int &, double &,
+	int &, double &)
 {
 
 	// CR is either off or in startup. It's flow (if applicable) is not connected to TES or PC
@@ -5297,20 +5291,20 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 	return;
 }
 
-void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double field_control_in,
-	double tol,
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
+void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double  /*MWt*/, int ,
+	double ,
+	double ,
+	int &, double &,
+	int &, double &)
 {
 	throw(C_csp_exception("Retiring solver_cr_on__pc_fixed__tes_dc for mass flow constraint updates..", ""));	
 }
 
-void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double field_control_in, 
-	double tol, 
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
+void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double  /*MWt*/, int ,
+	double , 
+	double , 
+	int &, double &,
+	int &, double &)
 {
 	// CR in on
 	// PC is controlled for a fixed q_dot_in

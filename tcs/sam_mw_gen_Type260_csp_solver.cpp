@@ -659,7 +659,7 @@ public:
 		return true;
 	}
 
-	virtual int call(double time, double step, int ncall){
+	virtual int call(double time, double step, int ){
 		/* 
 		-- Standard timestep call --
 		
@@ -1190,7 +1190,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged(double time){
+	virtual int converged(double ){
 		/* 
 		-- Post-convergence call --
 

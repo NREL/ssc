@@ -106,8 +106,7 @@ void C_pt_sf_perf_interp::init()
 	int nfposdim = 2;
 
 	flux_maps = ms_params.m_flux_maps;
-	int nfluxmap = flux_maps.nrows();
-	int nfluxcol = flux_maps.ncols();
+	int nfluxmap = (int)flux_maps.nrows();
 
 	//check that flux maps match dimensions
 	if( nfluxmap % nfluxpos != 0 )

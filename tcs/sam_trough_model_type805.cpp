@@ -883,9 +883,6 @@ public:
 		//SolarNoon = 12 - ((StdLongD - Site_LongD)*180.0/pi) / 15 - EOT / 60
 		double SolarNoon = 12 - ((SHIFT)*180.0/M_PI) / 15 - EOT / 60;
 
-		// Number of daylight hours
-		double DayLightHrs = 2.0 / 15.0 * acos(-tan(Site_Lat) * tan(Dec)) * 180.0 / M_PI;
-
 		// Deploy & stow times in hours
 		// Calculations modified by MJW 11/13/2009 to correct bug
 		DepAngle = MAX(DepAngle,1.e-6);

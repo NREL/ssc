@@ -3607,7 +3607,6 @@ void C_RecompCycle::opt_design_core(int & )
 
 		// Set max objective function
 		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
-		double max_f = std::numeric_limits<double>::quiet_NaN();
 		
 		ms_des_par = ms_des_par_optimal;
 
@@ -4558,7 +4557,6 @@ void C_RecompCycle::optimize_od_turbo_balance_csp(S_od_turbo_bal_csp_par in_para
 
 	// Set max objective function
 	opt_turb_bal.set_max_objective(nlopt_callback_tub_bal_opt, this);
-	double max_W_net = std::numeric_limits<double>::quiet_NaN();
 
 	opt_params = x_bal;
 }
@@ -6471,7 +6469,6 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 
 		// Set max objective function
 		opt_od_cycle.set_max_objective(nlopt_cb_opt_od, this);
-		double max_f = std::numeric_limits<double>::quiet_NaN();
 
 		int opt_od_error_code = 0;
 		if(m_W_dot_net_max > 0.0)
@@ -6755,7 +6752,6 @@ void C_RecompCycle::optimal_target_off_design_no_check(S_opt_target_od_parameter
 
 		// Set max objective function
 		opt_tar_od_cycle.set_max_objective(nlopt_cb_eta_at_target, this);
-		double max_f = std::numeric_limits<double>::quiet_NaN();
 	}
 	else
 	{

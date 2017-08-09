@@ -101,7 +101,6 @@ public:
 	virtual int init()
 	{
 		int len;
-		double *vec = value( I_VEC, &len );
 		
 		allocate( O_VEC, 4 );
 
@@ -115,7 +114,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double , double , int )
 	{
 		double v[4], scale = value( I_SCALE );
 		v[0] = value( I_IN1 );

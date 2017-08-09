@@ -241,7 +241,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double time, double , int  )
 	{						
 		
 		//Collect input values
@@ -437,7 +437,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double  )
 	{
 		return 0;
 	}

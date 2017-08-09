@@ -593,7 +593,6 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	m_ncall++;
 
 	// Get sim info
-	double time = sim_info.ms_ts.m_time;			//[s]
 	double step_sec = sim_info.ms_ts.m_step;		//[s]
 	//int ncall = p_sim_info->m_ncall;
 
@@ -1084,7 +1083,6 @@ void C_pc_Rankine_indirect_224::RankineCycle(double T_db, double T_wb,
     double T_htf_hot_ref = ms_params.m_T_htf_hot_ref;
     double T_htf_cold_ref = ms_params.m_T_htf_cold_ref;
     double dT_cw_ref = ms_params.m_dT_cw_ref;
-    double T_amb_des = ms_params.m_T_amb_des;
     double T_approach = ms_params.m_T_approach;
     double T_ITD_des = ms_params.m_T_ITD_des;
     double P_cond_ratio = ms_params.m_P_cond_ratio;

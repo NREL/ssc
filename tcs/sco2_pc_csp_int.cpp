@@ -515,8 +515,6 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	// Prior to calling, need to set :
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
 	
-	// Get density at design point
-	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
 	double mc_pres_dens_des_od = co2_props.pres;	//[kPa]
@@ -706,8 +704,6 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
 	// Prior to calling, need to set :
 	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
 
-	// Get density at design point
-	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 
 	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
@@ -1399,14 +1395,12 @@ int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, 
 	return opt_eta_code;
 }
 
-int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par, double T_mc_in /*K*/,
+int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par, double /*K*/,
 	S_od_operation_inputs & od_op_inputs)
 {
 	// Set-up off-design operation inputs
 	//C_sco2_recomp_csp::S_od_operation_inputs sco2_rc_od_op_par;
 	
-	// Get density at design point
-	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 
 	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature

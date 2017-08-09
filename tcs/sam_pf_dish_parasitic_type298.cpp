@@ -689,8 +689,6 @@ public:
 					
 				double C_dot_min_test_tower = min(C_dot_tower_test,C_dot_cool_fluid_test);
 				double C_dot_max_test_tower = max(C_dot_tower_test,C_dot_cool_fluid_test);
-				double C_dot_min_tower = min(C_dot_tower,C_dot_cool_fluid);
-				double C_dot_max_tower = max(C_dot_tower,C_dot_cool_fluid);
 				double V_dot_min_tower = min(V_dot_tower,V_dot_cool_fluid);
 				double V_dot_min_test_tower = min(V_dot_tower_test,m_test_V_dot_fluid);
 										
@@ -700,15 +698,6 @@ public:
 					
 				// Determine overall heat xfer coef UA at test conditions
 				double UA_tower_test = NTU_tower_test * C_dot_min_test_tower;
-					
-				// determine overall heat xfer coef UA at operating conditions
-				double UA_tower = UA_tower_test*pow( (V_dot_min_tower/(V_dot_min_test_tower+1E-8)), b_tower );
-					
-				// determine new NTU value based on new C_dot of the engine
-				double NTU_tower = UA_tower / (C_dot_min_tower+1E-8);
-					
-				// solve for new cooler effectiveness (counter-flow correlation)
-				double Cr_tower = C_dot_min_tower / C_dot_max_tower;
 
 				// ==========================================================================
 				// Heater effectiveness-NTU for determining cooler effectiveness with changing mass in engine
