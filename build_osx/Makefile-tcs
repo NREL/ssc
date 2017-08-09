@@ -42,7 +42,6 @@ OBJECTS = tcskernel.o \
     sam_mw_lf_type261_steam.o \
     sam_mw_lf_type261_Wnet.o \
     sam_mw_lf_type262_salt.o \
-    sam_mw_pt_type221.o \
     sam_mw_pt_type222_csp_solver.o \
     sam_mw_pt_type224_csp_solver.o \
     sam_mw_pt_type228.o \
@@ -62,11 +61,12 @@ OBJECTS = tcskernel.o \
     solarcollector.o \
     storage_hx.o \
     sumprod.o \
-    trnsys_weatherreader.o \
-    typelib.o \
-    waterprop.o \
-    weatherreader.o \
-    csp_solver_weatherreader.o \
+	trnsys_weatherreader.o \
+	typelib.o \
+	waterprop.o \
+	weatherreader.o \
+	weatherreader_csp_solver.o \
+	csp_solver_weatherreader.o \
 	csp_solver_util.o \
 	csp_solver_two_tank_tes.o \
 	csp_solver_tou_block_schedules.o \
@@ -84,8 +84,9 @@ OBJECTS = tcskernel.o \
 	csp_solver_core.o \
 	csp_solver_mono_eq_methods.o \
 	csp_system_costs.o \
+	csp_solver_pt_sf_perf_interp.o \
 	ud_power_cycle.o \
-	csp_dispatch.o
+	csp_dispatch.o 
 
 TARGET=tcs.a
 
