@@ -291,7 +291,7 @@ void C_sco2_recomp_csp_10MWe_scale::design(C_sco2_rc_csp_template::S_des_par des
 	return;
 }
 
-int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double )
+int C_sco2_recomp_csp_10MWe_scale::off_design_nested_opt(C_sco2_rc_csp_template::S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	// Check if callback info has changed. If so, pass to member sco2 10MWe cycle
 	mc_rc_csp_10MWe.mf_callback_update = mf_callback_update;
@@ -519,6 +519,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
 	// Then calculate the compressor inlet pressure that achieves this density at the off-design ambient temperature
+	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
 	double mc_pres_dens_des_od = co2_props.pres;	//[kPa]
 	ms_rc_cycle_od_phi_par.m_P_mc_in = mc_pres_dens_des_od;	//[kPa]
 
@@ -695,6 +696,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 	}
 
+	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
 	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
@@ -709,6 +711,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
 	// Get density at design point
 	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
+	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
 
 	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
 	double P_mc_in_feasible = co2_props.pres;		//[kPa]
@@ -989,6 +992,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
 		nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_max_opt_P_mc_in_nest_f_recomp, this);
 
 		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result    nlopt_result = nlopt_P_mc_in_opt_max_of.optimize(x, nlopt_max_eta);
 
 		P_mc_in_opt = x[0];
 
@@ -1066,6 +1070,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
 			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
 	}
 
+	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
 	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
 	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
 
@@ -1293,6 +1298,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 		f_recomp_opt_max_eta.set_max_objective(nlopt_max_f_recomp_cycle_eta, this);
 
 		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result       nlopt_result = f_recomp_opt_max_eta.optimize(x, nlopt_max_eta);
 
 		f_recomp_opt = x[0];
 
@@ -1339,7 +1345,7 @@ bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
 	return true;
 }
 
-int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, double )
+int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
 	ms_od_par = od_par;
 
@@ -1408,6 +1414,7 @@ int C_sco2_recomp_csp::find_a_feasible_off_design_solution(S_od_par od_par, doub
 	// Get density at design point
 	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
 	CO2_state co2_props;
+	int co2_code = CO2_TD(T_mc_in, mc_dens_in_des, &co2_props);
 
 	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
 	double P_mc_in_dens_des = co2_props.pres;		//[kPa]
@@ -1505,6 +1512,7 @@ double C_sco2_recomp_csp::adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double 
 	else
 	{
 		double P_lower = 0.99*P_mc_in_restricted;
+		double P_mid = 0.995*P_mc_in_restricted;
 		if (P_mc_in > P_lower)
 		{
 			return P_lower + (P_mc_in - P_lower)/(P_mc_in_restricted - P_lower)*(P_mc_in-P_lower);
@@ -1855,6 +1863,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	double max_f = std::numeric_limits<double>::quiet_NaN();
 	nlopt::result          result_od_cycle = opt_od_eta.optimize(x, max_f);
 
+	if( max_f != max_f )
+	{
+		double blahhhh = 1.23;
+	}
+
 	int n_opts_found = 0;
 	double obj_max_1 = std::numeric_limits<double>::quiet_NaN();
 	double obj_max_2 = std::numeric_limits<double>::quiet_NaN();
@@ -1909,6 +1922,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 
 			max_f = std::numeric_limits<double>::quiet_NaN();
 			result_od_cycle = opt_od_eta.optimize(x,max_f);			
+
+			if( max_f != max_f )
+			{
+				double blahhhh = 1.23;
+			}
 
 			if( !ms_od_opt_eta_tracking.m_is_opt_found && ms_od_opt_eta_tracking.m_eta_max <= 0.0 )
 			{
@@ -2038,6 +2056,11 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 			max_f = std::numeric_limits<double>::quiet_NaN();
 			result_od_cycle = opt_od_eta.optimize(x, max_f);
 
+			if(max_f != max_f)
+			{
+				double blahhhh = 1.23;
+			}
+
 			if( ms_od_opt_eta_tracking.m_is_opt_found || ms_od_opt_eta_tracking.m_eta_max > 0.0 )
 			{
 				n_opts_found = 2;
@@ -2088,6 +2111,7 @@ int C_sco2_recomp_csp::od_fix_T_mc__nl_opt_shell__opt_eta()
 	}
 
 	// Call a final time with optimized parameters
+	double opt_metric = od_fix_T_mc_approach__nl_opt_shell(x);
 
 	double eta_at_opt = mc_rc_cycle.get_od_solved()->m_eta_thermal;		//[-]
 
@@ -2138,6 +2162,7 @@ double C_sco2_recomp_csp::od_fix_T_mc_approach__nl_opt_shell(const std::vector<d
 	}
 
 	double eta_solved = std::numeric_limits<double>::quiet_NaN();
+	int od_code = off_design_core(eta_solved);
 
 	//// Want to make an efficiency value available to the optimization although it may be decreased by system operation constraints
 	//if( !(od_code == 0 || od_code == E_TURBINE_INLET_OVER_TEMP || od_code == E_OVER_PRESSURE || 
@@ -2366,6 +2391,8 @@ int C_sco2_recomp_csp::C_sco2_csp_od::operator()(S_f_inputs inputs, S_f_outputs 
 	double W_dot_gross_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net;	//[kWe]
 	double Q_dot_in_design = mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_W_dot_net
 								/ mpc_sco2_rc->get_design_solved()->ms_rc_cycle_solved.m_eta_thermal;	//[kWt]
+	double W_dot_cooling_design = mpc_sco2_rc->get_design_par()->m_frac_fan_power*W_dot_gross_design;	//[kWe]
+	double m_dot_water_design = 0.0;		//[kg/s]
 
 	outputs.m_W_dot_gross_ND = mpc_sco2_rc->get_od_solved()->ms_rc_cycle_od_solved.m_W_dot_net
 								/ W_dot_gross_design;
@@ -2429,11 +2456,20 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 
 	double eta_max_f_recomp_opt = std::numeric_limits<double>::quiet_NaN();
 
-	if (m_off_design_turbo_operation != E_FIXED_MC_FIXED_RC_FIXED_T && m_off_design_turbo_operation != E_VFD_MC_VFD_RC_FIXED_T)
+	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+	{
+		int od_err_code = off_design_core(eta_max_f_recomp_opt);
+	}
+	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+	{
+		bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();		
+	}
+	else
 	{
 		throw(C_csp_exception("Off design turbomachinery operation strategy not recognized"));
 	}
 
+	double f_recomp_opt = mc_rc_cycle.get_od_solved()->m_recomp_frac;	//[-]
 	double eta_solved = mc_rc_cycle.get_od_solved()->m_eta_thermal;		//[-]
 
 	if( eta_max_f_recomp_opt != eta_max_f_recomp_opt )
@@ -2638,7 +2674,7 @@ double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 	return eta_return;
 }
 
-double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
 	if( frame != NULL ) 
@@ -2647,7 +2683,7 @@ double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vect
 		return 0;
 }
 
-double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
 	if( frame != NULL ) 
@@ -2665,7 +2701,7 @@ double fmin_f_recomp_cycle_eta(double x, void *data)
 		return 0;
 }
 
-double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_sco2_recomp_csp *frame = static_cast<C_sco2_recomp_csp*>(data);
 	if( frame != NULL )  

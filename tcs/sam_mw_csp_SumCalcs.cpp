@@ -174,7 +174,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double , double step, int ){
+	virtual int call(double time, double step, int ncall){
 
 		/*
 		
@@ -245,7 +245,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged(double ){
+	virtual int converged(double time){
 
 		return 0;
 	}

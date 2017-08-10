@@ -95,7 +95,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double , double , int )
+	virtual int call(double time, double step, int ncall)
 	{
 
 		double W_dot_pb_gross = value( I_W_CYCLE_GROSS );
@@ -107,7 +107,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged(double )
+	virtual int converged(double time)
 	{
 
 		return 0;

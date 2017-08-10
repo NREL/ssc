@@ -164,6 +164,7 @@ public:
 		Repeat list for each layer
 		*/
 		int rows, cols;
+		double *p_map = value( P_eta_map, &rows, &cols );
 
 		//get initial values. Track the change in values over the list
 		double
@@ -277,7 +278,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double , double step, int )
+	virtual int call( double time, double step, int ncall )
 	{						
 		// GET AND CHECK INPUT VALUES
 		double v_wind = value( I_v_wind );	// [m/s] wind speed
@@ -332,7 +333,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double )
+	virtual int converged( double time )
 	{
 		eta_prev = value( O_eta_field );
 		v_wind_prev = value( I_v_wind );

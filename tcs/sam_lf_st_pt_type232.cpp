@@ -569,6 +569,7 @@ public:
 
 		// Initial Calculations
 		r_rec = rec_d_spec/2.0;			// [m]
+		double dt = time_step();		// [s]
 
 		itermode = 1;		// 1 solve for design temp, 2 solve to match mass flow restriction
 		tol_od	= .001;		// tolerance for over-design iteration
@@ -995,7 +996,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int )
+	virtual int call( double time, double step, int ncall )
 	{ 
 		double azimuth		= value( I_azimuth );
 		double zenith		= value( I_zenith ); 
@@ -1010,7 +1011,9 @@ public:
 		double T_dp			= value( I_T_dp )+273.15;			// [K] Convert from C      
 		double I_bn			= value( I_I_bn );					// [W/m2]
 		double eta_field	= value( I_eta_field );
-		double T_amb		= value( I_T_amb )+273.15;			// [K] Convert from C
+		double T_amb		= value( I_T_amb )+273.15;			// [K] Convert from C					
+		double u_wind		= value( I_u_wind );
+		double deg_wind		= value( I_deg_wind );
 		
 		double T_sky = CSP::skytemp( T_amb, T_dp, hour );
 
@@ -2559,7 +2562,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double )
+	virtual int converged( double time )
 	{
 		if( mode == 0 )
 		{
@@ -2672,7 +2675,9 @@ void PipeFlowCavity( double Re, double Pr, double LoverD, double relRough, doubl
 	    double Gz = Re*Pr/LoverD;	// Eq. 5-79 Nellis and Klein
 	    double x = LoverD/Re;		// Eq. 5-58 Nellis and Klein
 	    double fR = 3.44/sqrt(x)+(1.25/(4*x)+16-3.44/sqrt(x))/(1+0.00021*pow(x,-2));	// Eq. 5-57 () Nellis and Klein
+	    double f = 4.0*fR/Re;		// Eq. 5-57 Nellis and Klein
 	    double Nusselt_T = 3.66+((0.049+0.02/Pr)*pow(Gz,1.12))/(1.0+0.065*pow(Gz,0.7));	// Eq. 5-80 Nellis and Klein
+		double Nusselt_H = 4.36+((0.1156 +0.08569/pow(Pr,0.4)*Gz)/(1.0+0.1158*pow(Gz,0.6)));	// Eq. 5-81 Nellis and Klein
 	    Nusselt = Nusselt_T;		// Constant temperature Nu is better approximation
 	}  
 	else

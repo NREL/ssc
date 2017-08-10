@@ -379,6 +379,7 @@ void C_HeatExchanger::hxr_pressure_drops(const std::vector<double> & m_dots, std
 
 void C_HeatExchanger::hxr_conductance(const std::vector<double> & m_dots, double & hxr_UA)
 {
+	int N = (int)m_dots.size();
 	double m_dot_ratio = 0.5*(m_dots[0] / ms_des_par.m_m_dot_design[0] + m_dots[1] / ms_des_par.m_m_dot_design[1]);
 	hxr_UA = ms_des_par.m_UA_design*pow(m_dot_ratio, 0.8);
 }
@@ -590,6 +591,8 @@ void C_compressor::od_comp_phi(double phi_in /*-*/, double T_in /*K*/, double P_
 		return;
 	}
 	double rho_in = co2_props.dens;
+	double h_in = co2_props.enth;
+	double s_in = co2_props.entr;
 
 	// Want design-point value of phi
 	double U_tip = m_dot / (rho_in*pow(ms_des_solved.m_D_rotor, 2)*phi_in);	//[m/s]
@@ -3030,6 +3033,8 @@ void C_RecompCycle::design_core_standard(int & error_code)
 		// HTR
 	mc_HT_recup.initialize(ms_des_par.m_N_sub_hxrs);
 
+	int max_iter = 500;
+	double temperature_tolerance = 1.E-6;		// Temp differences below this are considered zero
 
 	// Initialize a few variables
 	double m_dot_t, m_dot_mc, m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
@@ -3517,7 +3522,7 @@ void C_RecompCycle::opt_design(S_opt_design_parameters & opt_des_par_in, int & e
 	error_code = opt_design_error_code;
 }
 
-void C_RecompCycle::opt_design_core(int & )
+void C_RecompCycle::opt_design_core(int & error_code)
 {
 	// Map ms_opt_des_par to ms_des_par
 	ms_des_par.m_W_dot_net = ms_opt_des_par.m_W_dot_net;
@@ -3608,6 +3613,7 @@ void C_RecompCycle::opt_design_core(int & )
 		// Set max objective function
 		opt_des_cycle.set_max_objective(nlopt_callback_opt_des_1, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
 		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
 		
 		ms_des_par = ms_des_par_optimal;
 
@@ -3778,6 +3784,9 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	// Outer optimization loop
 	m_eta_thermal_auto_opt = 0.0;
 
+	double best_P_high = fminbr(
+		ms_auto_opt_des_par.m_P_high_limit*0.2, ms_auto_opt_des_par.m_P_high_limit, &fmin_callback_opt_eta_1, this, 1.0);
+
 	// Check model with P_mc_out set at P_high_limit for a recompression and simple cycle and use the better configuration
 	double PR_mc_guess = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
 
@@ -3891,6 +3900,8 @@ void C_RecompCycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters
 	ms_auto_opt_des_par.m_fixed_PR_mc = auto_opt_des_hit_eta_in.m_fixed_PR_mc;			//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess		
 
 	// At this point, 'auto_opt_des_hit_eta_in' should only be used to access the targer thermal efficiency: 'm_eta_thermal'
+
+	double Q_dot_rec_des = ms_auto_opt_des_par.m_W_dot_net / auto_opt_des_hit_eta_in.m_eta_thermal;		//[kWt] Receiver thermal input at design
 
 	error_msg = "";
 	error_code = 0;
@@ -4439,6 +4450,9 @@ int C_RecompCycle::C_mono_eq_turbo_m_dot::operator()(double m_dot_t_in /*kg/s*/,
 	mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] = P_mc_out;	//[kPa]
 	mpc_rc_cycle->m_temp_od[C_RecompCycle::MC_OUT] = T_mc_out;	//[K]
 
+		// Calculate main compressor power
+	int prop_err_code = CO2_TP(T_mc_out, P_mc_out, &mc_co2_props);
+
 	// Calculate scaled pressure drops through heat exchanger
 	std::vector<double> DP_LT, DP_HT, DP_PHX, DP_PC;
 	//std::vector<double> m_dot_LT;
@@ -4559,6 +4573,12 @@ void C_RecompCycle::optimize_od_turbo_balance_csp(S_od_turbo_bal_csp_par in_para
 	// Set max objective function
 	opt_turb_bal.set_max_objective(nlopt_callback_tub_bal_opt, this);
 	double max_W_net = std::numeric_limits<double>::quiet_NaN();
+	nlopt::result      W_net_opt_result = opt_turb_bal.optimize(x_bal, max_W_net);
+
+	if( ms_od_turbo_bal_csp_solved.m_W_dot_net_adj < ms_od_turbo_bal_csp_solved.m_W_dot_net )
+	{
+		double wat_to_do_here = 1.23;
+	}
 
 	opt_params = x_bal;
 }
@@ -4728,7 +4748,7 @@ double C_RecompCycle::od_turbo_bal_csp_Wnet(const std::vector<double> &x)
 	return W_dot_net_adjusted;
 }
 
-double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_callback_tub_bal_opt(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) 
@@ -5022,6 +5042,9 @@ int C_RecompCycle::C_mono_eq_turbo_N_fixed_m_dot::operator()(double m_dot_t_in /
 
 	mpc_rc_cycle->m_pres_od[C_RecompCycle::MC_OUT] = P_mc_out;	//[kPa]
 	mpc_rc_cycle->m_temp_od[C_RecompCycle::MC_OUT] = T_mc_out;	//[K]
+
+	// Calculate main compressor power
+	int prop_err_code = CO2_TP(T_mc_out, P_mc_out, &mc_co2_props);
 
 	// Calculate scaled pressure drops through heat exchangers
 		// LTR
@@ -6343,6 +6366,7 @@ void C_RecompCycle::target_off_design_core(int & error_code)
 		
 		if( od_error_code != 0 )			// results not valid; choose a random value between P_low and P_high for next guess
 		{
+			double P_frac = rand() / (double)(RAND_MAX);
 			P_guess = P_low + (P_high - P_low)*P_guess;
 			continue;
 		}
@@ -6460,6 +6484,7 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 	}
 
 	m_W_dot_net_max = 0.0;
+	bool solution_found = false;
 	if(index > 0)		// need to call subplex
 	{
 		// Set up instance of nlopt class and set optimization parameters
@@ -6472,6 +6497,7 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 		// Set max objective function
 		opt_od_cycle.set_max_objective(nlopt_cb_opt_od, this);
 		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result   result_od_cycle = opt_od_cycle.optimize(x, max_f);
 
 		int opt_od_error_code = 0;
 		if(m_W_dot_net_max > 0.0)
@@ -6492,6 +6518,10 @@ void C_RecompCycle::optimal_off_design_core(int & error_code)
 			return;
 		}
 
+	}
+	else		// Just call off design subroutine (with fixed inputs)
+	{
+		double blah = 1.23;
 	}
 
 }
@@ -6742,6 +6772,7 @@ void C_RecompCycle::optimal_target_off_design_no_check(S_opt_target_od_parameter
 		scale.push_back(100.0);
 	}
 
+	bool solution_found = false;
 	m_eta_best = 0.0;
 
 	if( index > 0 )
@@ -6756,6 +6787,7 @@ void C_RecompCycle::optimal_target_off_design_no_check(S_opt_target_od_parameter
 		// Set max objective function
 		opt_tar_od_cycle.set_max_objective(nlopt_cb_eta_at_target, this);
 		double max_f = std::numeric_limits<double>::quiet_NaN();
+		nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
 	}
 	else
 	{
@@ -7331,6 +7363,8 @@ double C_RecompCycle::opt_od_eta(const std::vector<double> &x)
 
 		T_t_in_calc = co2_props.temp;
 
+		double T_htf_cold = ms_phx_od_par.m_T_htf_hot - Q_dot_PHX / C_dot_htf;
+
 		diff_T_t_in = (T_t_in_calc - T_t_in_guess) / T_t_in_guess;
 	}
 
@@ -7367,7 +7401,7 @@ double fmin_callback_opt_eta_1(double x, void *data)
 	return frame->opt_eta(x);
 }
 
-double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) 
@@ -7376,7 +7410,7 @@ double nlopt_callback_opt_des_1(const std::vector<double> &x, std::vector<double
 		return 0.0;
 }
 
-double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) 
@@ -7385,7 +7419,7 @@ double nlopt_cb_opt_od(const std::vector<double> &x, std::vector<double> &, void
 		return 0.0;
 }
 
-double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) 
@@ -7394,7 +7428,7 @@ double nlopt_cb_eta_at_target(const std::vector<double> &x, std::vector<double> 
 		return 0.0;
 }
 
-double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_cb_opt_od_eta(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_RecompCycle *frame = static_cast<C_RecompCycle*>(data);
 	if( frame != NULL ) 
@@ -7418,7 +7452,7 @@ bool C_poly_curve_r_squared::init(const std::vector<double> x_data, const std::v
 	m_y = y_data;
 
 	m_n_points = (int)x_data.size();
-	if (m_n_points != (int)y_data.size() || m_n_points < 5)
+	if(m_n_points != y_data.size() || m_n_points < 5)
 	{
 		return false;
 	}
@@ -7460,7 +7494,7 @@ double C_poly_curve_r_squared::calc_r_squared(const std::vector<double> coefs)
 	return 1.0 - SS_res / m_SS_tot;
 }
 
-double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &, void *data)
+double nlopt_callback_poly_coefs(const std::vector<double> &x, std::vector<double> &grad, void *data)
 {
 	C_poly_curve_r_squared *frame = static_cast<C_poly_curve_r_squared*>(data);
 	if( frame != NULL ) 
@@ -7492,6 +7526,8 @@ bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<d
 	}
 
 	std::vector<double> x(n_coefs);
+
+	bool solution_found = false;
 	
 	// Set up instance of nlopt class and set optimization parameters
 		// nlopt::opt surf(nlopt::LN_NELDERMEAD, nbeta); from Autopilot_api.cpp
@@ -7501,6 +7537,7 @@ bool find_polynomial_coefs(const std::vector<double> x_data, const std::vector<d
 	// Set max objective function
 	opt_tar_od_cycle.set_max_objective(nlopt_callback_poly_coefs, &mc_data);
 	double max_f = std::numeric_limits<double>::quiet_NaN();
+	nlopt::result     result_tar_od_cycle = opt_tar_od_cycle.optimize(x, max_f);
 
 
 	if( max_f > 0.01 && max_f <= 1.00 )

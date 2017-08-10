@@ -568,6 +568,7 @@ public:
 
 	virtual int init()
 	{
+		double dt = time_step();
 						
 		// Declare instance of fluid class for FIELD fluid.
 		// Set fluid number and copy over fluid matrix if it makes sense.
@@ -943,6 +944,7 @@ public:
 
 		double I_bn			= value(I_I_bn);				// [W/m2]
 		double m_dot_field	= value(I_m_dot_field)/3600.;	// [kg/s] convert from [kg/hr]
+		double m_dot_htf_ref= value(I_m_dot_htf_ref)/3600.;	// [kg/s] convert from [kg/hr]
 		double T_field_out	= value(I_T_field_out)+273.15;	// [K] convert from [C]
 		double T_pb_out		= value(I_T_pb_out)+273.15;		// [K] convert from [C]
 		double T_amb		= value(I_T_amb)+273.15;		// [K] convert from [C]

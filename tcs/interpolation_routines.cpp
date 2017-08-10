@@ -308,14 +308,18 @@ double Bilinear_Interp::bilinear_2D_interp( double x, double y )
 	double z1 = m_2axis_table.at( i1, 2 );
 
 	int i2 = m_nx*i_y2 + i_x1;
+	double x2 = m_2axis_table.at( i2, 0 );
 	double y2 = m_2axis_table.at( i2, 1 );
 	double z2 = m_2axis_table.at( i2, 2 );
 
 	int i3 = m_nx*i_y2 + i_x2;
+	double x3 = m_2axis_table.at( i3, 0 );
+	double y3 = m_2axis_table.at( i3, 1 );
 	double z3 = m_2axis_table.at( i3, 2 );
 
 	int i4 = m_nx*i_y1 + i_x2;
 	double x4 = m_2axis_table.at( i4, 0 );
+	double y4 = m_2axis_table.at( i4, 1 );
 	double z4 = m_2axis_table.at( i4, 2 );
 
 	double x_frac = (x - x1)/(x4 - x1);
@@ -458,16 +462,20 @@ double Trilinear_Interp::trilinear_3D_interp( double x, double y, double z )
 	double q1 = m_3axis_table.at( i1, 3, i_z2 );
 
 	int i2 = m_nx*i_y2 + i_x1;
+	double x2 = m_3axis_table.at( i2, 0, i_z1 );
 	double y2 = m_3axis_table.at( i2, 1, i_z1 );
 	double p2 = m_3axis_table.at( i2, 3, i_z1 );
 	double q2 = m_3axis_table.at( i2, 3, i_z2 );
 
 	int i3 = m_nx*i_y2 + i_x2;
+	double x3 = m_3axis_table.at( i3, 0, i_z1 );
+	double y3 = m_3axis_table.at( i3, 1, i_z1 );
 	double p3 = m_3axis_table.at( i3, 3, i_z1 );
 	double q3 = m_3axis_table.at( i3, 3, i_z2 );
 	
 	int i4 = m_nx*i_y1 + i_x2;
 	double x4 = m_3axis_table.at( i4, 0, i_z1 );
+	double y4 = m_3axis_table.at( i4, 1, i_z1 );
 	double p4 = m_3axis_table.at( i4, 3, i_z1 );
 	double q4 = m_3axis_table.at( i4, 3, i_z2 );
 	
@@ -540,7 +548,7 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 {
     int i,ii=0,ip,j;
     double sum;
-	if ((int)b.size() != n || (int)x.size() != n)
+    if (b.size() != n || x.size() != n)
         throw("LUdcmp::solve bad sizes");
     for (i=0;i<n;i++) x[i] = b[i];
     for (i=0;i<n;i++) {

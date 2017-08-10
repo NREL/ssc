@@ -424,12 +424,16 @@ public:
 		ac_des_par_cycle_dep.m_W_dot_fan_des = 0.35;				//[MW] Cooler air fan power at design
 
 
+		bool air_cooler_success = air_cooler.design_hx(ac_des_par_ind,ac_des_par_cycle_dep);
+
 		double W_dot_od = 0.0;
 		
 		int air_cooler_error_code = 0;
 
 		air_cooler.off_design_hx(32.0 + 273.15, 101325.0, 100.0 + 273.15, 8000.0,
 			938.9, 48.0 + 273.15, W_dot_od, air_cooler_error_code);
+
+		double adfadf = 1.23;
 
 		// ************************************
 		// ** Test procedure to find Haynes Allowable Cycles for Fatige Cycles and Creept Life ***
@@ -561,13 +565,23 @@ public:
 		//bool is_tube_feasible = calc_min_th.calc_th_1Dmaxflux_Tout(
 		//	                    max_flux_in, L_tube, d_out, T_fluid_in, T_fluid_out, P_fluid_in);
 
+		double d_in_min = calc_min_th.get_min_d_in();
+		double m_dot_class = calc_min_th.get_m_dot_tube_kgsec();
+		double deltaP = calc_min_th.get_deltaP_kPa();
+
+		double check = 1.23;
+
 		for( int i = 0; i < n_tube_nodes; i++ )
 			max_flux_in[i] *= 0.9;
 
 		//MJW 2015.6.9 -- Commenting out because call structure changed and this type is not maintained.
         //bool is_tube2_feasible = calc_min_th.calc_th_1Dmaxflux_mdot(
 		//						max_flux_in, L_tube, d_out, T_fluid_in, P_fluid_in, m_dot_class);
-				
+
+		double d_in_min2 = calc_min_th.get_min_d_in();
+		double T_out_C = calc_min_th.get_T_out_C();
+		double deltaP2 = calc_min_th.get_deltaP_kPa();
+		
 		// Know flux and tube surface area, so calculate total absorbed flux
 		double A_surf_total = d_out*CSP::pi*tube_length;			//[m^2] Total tube surface area
 		double A_surf_per_node = A_surf_total/(n_axial*n_circ);		//[m^2] Total surface area per axial/circ control area
@@ -906,12 +920,12 @@ public:
 		return 0;
 	}
 
-	virtual int call(double , double , int )
+	virtual int call(double time, double step, int ncall)
 	{
 		return 0;
 	}
 
-	virtual int converged(double )
+	virtual int converged(double time)
 	{
 
 		return 0;

@@ -100,7 +100,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double , double , int )
+	virtual int call( double time, double step, int ncall )
 	{
 		double Ti = value( I_TINLET );
 		double A = value( I_AREA );

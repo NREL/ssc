@@ -206,7 +206,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int  )
+	virtual int call( double time, double step, int ncall )
 	{
 		// set sim info
 		ms_sim_info.ms_ts.m_time = time;
@@ -279,7 +279,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double  )
+	virtual int converged( double time )
 	{
 		int out_type = -1;
 		std::string out_msg = "";

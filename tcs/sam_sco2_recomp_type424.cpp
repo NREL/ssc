@@ -456,6 +456,8 @@ public:
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
 		m_T_t_in_des = m_T_htf_hot - m_delta_T_t;			//[K] Turbine inlet temperature		
 
+		double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+
 		// ******************************************************************************************
 		// ******************************************************************************************
 		// Define error and warning message strings
@@ -569,7 +571,9 @@ public:
 
 		// Design metrics
 		double design_eta = ms_rc_cycle.get_design_solved()->m_eta_thermal;
+		double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
 		m_m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;			//[kg/s]
+		double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
 		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5 - 1];			//[kPa]
 
 		double T_htf_cold_est = value(P_T_htf_cold_est) + 273.15;
@@ -599,6 +603,7 @@ public:
 		// Cycle/cold side
 		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + T_PHX_co2_in);		//[K]
 		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);
+		double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
 
 		// Because C_dot_c = C_dot_h, q_dot_max = 
 		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - T_PHX_co2_in);		//[kW]
@@ -694,6 +699,8 @@ public:
 
 		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
 
+		double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
+
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
 		m_T_htf_cold_sby = m_T_PHX_in_sby + 5.0;		// Estimate htf return temp w/o heat exchanger
@@ -709,7 +716,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double , double step, int ncall)
+	virtual int call(double time, double step, int ncall)
 	{
 		double T_htf_hot = value(I_T_HTF_HOT) + 273.15;			//[K] Hot HTF temp from the receiver, convert from C
 		double m_dot_htf = value(I_M_DOT_HTF)/3600.0;			//[kg/s] Mass flow rate of htf from receiver, convert from kg/s
@@ -921,7 +928,7 @@ public:
 		return 0;										 
 	}													 
 														 
-	virtual int converged(double )					 
+	virtual int converged(double time)					 
 	{
 		if(m_standby_control == 3)
 		{

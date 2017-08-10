@@ -392,12 +392,13 @@ public:
 		return 0;
 	}
 
-	virtual int call( double , double step, int ncall )
+	virtual int call( double time, double step, int ncall )
 	{	
 		// 1) Get inputs from receiver and weather reader
 		double T_amb = value( I_T_AMB );					//[C] Ambient temperature
 		double P_amb = value( I_P_AMB )/1000.0;				//[bar] Ambient pressure, convert from [mbar]
 			// This input (m_dot_ms_rec, isn't used anywhere: is it necessary??)
+		double m_dot_ms_rec = value( I_M_DOT_MS )/3600.0;	//[kg/s] Molten salt mass flow rate from receiver, convert from [kg/hr]
 		double q_dot_rec = value( I_Q_DOT_REC_SS )*1000.0;		//[kWt] Receiver thermal output, convert from [MWt]
 		double T_rec_in_prev = value( I_T_REC_IN );			//[C] Receiver inlet molten salt temperature - used to solve previous call to tower model
 		double T_rec_out = value( I_T_REC_OUT );		    //[C] Receiver outlet molten salt temperature - used to solve previous call to tower model
@@ -498,6 +499,7 @@ public:
 		// **************************************
 		double T_ms_out_guess = T_st_sh_in;
 
+		bool T_lowflag = true;
 		double T_lower = T_st_extract;				//[C]
 		bool T_upflag = true;
 		double T_upper = T_st_inject;				//[C]
@@ -611,6 +613,7 @@ public:
 			double NTU_evap = -log(1 - epsilon_evap);									//[-] NTU of evaporator
 			double UA_evap_guess = NTU_evap * C_dot_ms;									//[kW/K] Conductance of evaporator
 				// Economizer performance
+			double T_ms_econo_out = T_ms_evap_out - q_dot_econo/(m_dot_ms*m_cp_ms);		//[C]
 			double q_dot_max_econo = C_dot_min_econo*(T_ms_evap_out - T_st_extract);	//[kW]
 			double epsilon_econo = q_dot_econo/q_dot_max_econo;							//[-]
 			double NTU_econo = log( (epsilon_econo - 1.0)/(epsilon_econo*CR_econo - 1.0) )/(CR_econo - 1.0);		//[-] NTU
@@ -656,7 +659,7 @@ public:
 
 	}
 
-	virtual int converged( double )
+	virtual int converged( double time )
 	{
 		m_T_lowflag_ncall = false;
 		m_T_upflag_ncall = false;

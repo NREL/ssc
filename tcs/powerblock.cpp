@@ -663,7 +663,7 @@ bool C_Indirect_PB::Execute(const long lSecondsFromStart, const S_Indirect_PB_In
 //************************************************************************************************************
 //************************************************************************************************************
 void C_Indirect_PB::RankineCycle(/*double time,*/double P_ref, double eta_ref, double T_htf_hot_ref, double T_htf_cold_ref, double T_db, double T_wb, 
-				  double P_amb, double dT_cw_ref, /*double HTF,*/ double , double T_htf_hot, double m_dot_htf, int /*double*/ mode, 
+				  double P_amb, double dT_cw_ref, /*double HTF,*/ double c_p_w, double T_htf_hot, double m_dot_htf, int /*double*/ mode, 
 				  double demand_var, double P_boil, /*double tech_type,*/ double T_amb_des, double T_approach, double F_wc, double F_wcmin, 
 				  double F_wcmax, double T_ITD_des, double P_cond_ratio, /*double CT,*/ double P_cond_min, /*double n_pl_inc,*/
 				  /*double& fcall, */ double& P_cycle, double& eta, double& T_htf_cold, double& m_dot_demand, double& m_dot_htf_ref, 
@@ -1290,7 +1290,7 @@ endif
 	//Use brute force interpolation.. it is faster in this case than bisection or hunting methods used in the user-specified HTF case
 	
 	int iLastIndex = (int)m_db.ncols() - 1;
-	for (int i=0; i < (int)m_db.ncols(); i++)
+	for (size_t i=0; i < m_db.ncols(); i++)
 	{
 		// if we got to the last one, then set bounds and end loop
 		if(i == iLastIndex)

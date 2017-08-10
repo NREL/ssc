@@ -253,6 +253,7 @@ public:
 
 		int n_rows = -1;
 		int n_cols = -1;
+		double *pc_fl_props = value(P_FIELD_FL_PROPS, &n_rows, &n_cols);
 		p_params->m_pc_fl_props.resize(n_rows, n_cols);
 		for( int r = 0; r < n_rows; r++ )
 			for( int c = 0; c < n_cols; c++ )
@@ -296,18 +297,21 @@ public:
 			p_params->m_m_dot_htf_high = value(P_UD_M_DOT_HTF_HIGH);//[-]
 
 			n_rows = n_cols = -1;
+			double *p_T_htf_ind = value(P_UD_T_HTF_IND_OD, &n_rows, &n_cols);
 			p_params->mc_T_htf_ind.resize(n_rows, n_cols);
 			for( int r = 0; r < n_rows; r++ )
 				for( int c = 0; c < n_cols; c++ )
 					p_params->mc_T_htf_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_HTF_IND_OD),r,c);
 
 			n_rows = n_cols = -1;
+			double *p_T_amb_ind = value(P_UD_T_AMB_IND_OD, &n_rows, &n_cols);
 			p_params->mc_T_amb_ind.resize(n_rows, n_cols);
 			for( int r = 0; r < n_rows; r++ )
 				for( int c = 0; c < n_cols; c++ )
 					p_params->mc_T_amb_ind(r,c) = TCS_MATRIX_INDEX(var(P_UD_T_AMB_IND_OD),r,c);
 
 			n_rows = n_cols = -1;
+			double *p_m_dot_htf_ind = value(P_UD_M_DOT_HTF_IND_OD, &n_rows, &n_cols);
 			p_params->mc_m_dot_htf_ind.resize(n_rows, n_cols);
 			for( int r = 0; r < n_rows; r++ )
 				for( int c = 0; c < n_cols; c++ )
@@ -350,7 +354,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double time, double step, int )
+	virtual int call(double time, double step, int ncall)
 	{
 
 		ms_htf_state_in.m_temp = value(I_T_HTF_HOT);	//Hot HTF inlet temperature, from storage tank [C]
@@ -425,7 +429,7 @@ public:
 
 	}
 
-	virtual int converged(double )
+	virtual int converged(double time)
 	{
 
 		int out_type = -1;

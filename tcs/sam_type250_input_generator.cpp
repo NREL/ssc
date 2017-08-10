@@ -197,7 +197,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double , double , int )
+	virtual int call(double time, double step, int ncall)
 	{
 		if(nval_current > nval_I_b)
 		{
@@ -216,7 +216,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged(double )
+	virtual int converged(double time)
 	{
 		nval_current++;		// Advanced index counter
 
