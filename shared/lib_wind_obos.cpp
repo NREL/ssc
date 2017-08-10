@@ -1901,11 +1901,11 @@ void wobos::ArrayCabCostOptimizer()
 	}
 
 	int counter1 = 0;
-	int cabIndex1;
-	int cabIndex2;
-	int arrVoltIndex;
-	double oldCost;
-	double newCost;
+	int cabIndex1 = 0;
+	int cabIndex2 = 0;
+	int arrVoltIndex = 0;
+	double oldCost= 0;
+	double newCost = 0;
 
 	for (size_t k = 0; k < nArrVolts; k++)
 	{
@@ -1985,10 +1985,10 @@ void wobos::ExportCabCostOptimizer()
 	vector<vector<double> >expCabSecPerTrip(nExpVolts, vector<double>(nExpCables));
 	vector<vector<double> >expCabInstTime(nExpVolts, vector<double>(nExpCables));
 
-	double newCost;
-	double oldCost;
-	int expCabIndex;
-	int expVoltIndex;
+	double newCost = 0;
+	double oldCost = 0;
+	int expCabIndex = 0;
+	int expVoltIndex = 0;
 
 	//($/m) ,(kg/m)  ,(ancillary cost $/interface)
 	/*double export132kvData[10][3] =  {

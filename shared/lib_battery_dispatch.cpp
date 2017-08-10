@@ -479,8 +479,8 @@ void dispatch_manual_t::dispatch(size_t year,
 	double battery_voltage = _Battery->battery_voltage();										 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
-	double charge_total = _Battery->battery_charge_total();								         // [Ah]
-	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
+//	double charge_total = _Battery->battery_charge_total();								         // [Ah]
+//	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
 
 	// Options for how to use PV
@@ -640,8 +640,8 @@ void dispatch_manual_t::compute_energy_load_priority(double energy_needed)
 
 void dispatch_manual_t::compute_energy_battery_priority(double energy_needed)
 {
-	double SOC = _Battery->capacity_model()->SOC();
-	bool charged = (round(SOC) == _SOC_max);
+//	double SOC = _Battery->capacity_model()->SOC();
+//	bool charged = (round(SOC) == _SOC_max);
 
 	bool charging = compute_energy_battery_priority_charging(energy_needed);
 
@@ -699,8 +699,8 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 	double battery_voltage = _Battery->battery_voltage();
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
-	double charge_total = _Battery->battery_charge_total();								         // [Ah]
-	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
+//	double charge_total = _Battery->battery_charge_total();								         // [Ah]
+//	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
 
 	// Options for how to use PV
@@ -745,8 +745,8 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 
 void dispatch_manual_front_of_meter_t::compute_energy_no_load(double energy_needed)
 {
-	double SOC = _Battery->capacity_model()->SOC();
-	bool charged = (round(SOC) == _SOC_max);
+//	double SOC = _Battery->capacity_model()->SOC();
+//	bool charged = (round(SOC) == _SOC_max);
 
 	bool charging = compute_energy_battery_priority_charging(energy_needed);
 
@@ -901,7 +901,7 @@ void automate_dispatch_t::check_new_month(int hour_of_year, int step)
 		_month < 12 ? _month++ : _month = 1;
 	}
 }
-void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int idx)
+void automate_dispatch_t::check_debug(FILE *&p, bool & debug, int hour_of_year, int )
 {
 	// for now, don't enable
 	// debug = true;
@@ -1147,9 +1147,9 @@ void automate_dispatch_t::set_gridcharge(FILE *p, bool debug, int hour_of_year, 
 	profile++;
 	int m, h;
 	std::vector<int> grid_profiles;
-	int peak_hour = grid[0].Hour();
+//	int peak_hour = grid[0].Hour();
 	double charge_energy = 0;
-	int steps_grid_charged = 0;
+//	int steps_grid_charged = 0;
 	double charge_percent = 0;
 
 	// Count charge all day

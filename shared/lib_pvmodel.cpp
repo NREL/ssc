@@ -154,7 +154,7 @@ double spe_module_t::eff_interpolate( double irrad, double rad[5], double eff[5]
 	return (1-wx)*eff[i1]+wx*eff[i];
 }
 
-bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &output)
+bool spe_module_t::operator() ( pvinput_t &input, double TcellC, double , pvoutput_t &output)
 {
 	double idiff = fd*(input.Idiff + input.Ignd);
 

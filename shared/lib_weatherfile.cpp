@@ -172,7 +172,7 @@ std::string weatherfile::normalize_city(const std::string &in)
 	for (size_t i = 0; i<city.length(); i++)
 	{
 		if (i == 0 || city[i - 1] == ' ')
-			city[i] = toupper(city[i]);
+			city[i] = (char)toupper((int)city[i]);
 	}
 	return city;
 }
@@ -263,7 +263,7 @@ float calc_dewpt(float db, float rh)  /* Function to find dewpoint temperature *
 		c13 = 6.5459673, c14 = 6.54, c15 = 14.526, c16 = 0.7389, c17 = 0.09486,
 		c18 = 0.4569;
 	double arg, t, pres, pres_dew, pta, ptb, ptc;
-	float dpt;
+	float dpt =0;
 
 	if (db > 90.0 || rh > 100.0 || rh < 1.0)    /* Check for valid input data */
 		dpt = (float)99.9;                   /* Missing data value */
@@ -363,7 +363,7 @@ double calc_twet(double T, double RH, double P)
 		hiflag = false,
 		lowflag = false;
 	double
-		hival, lowval, err;
+		hival = 0, lowval = 0, err;
 	const double tol = 0.05;
 
 	int i = 0;
@@ -845,7 +845,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 				m_stepSec = hdr_step_sec;
 				m_startSec = m_stepSec / 2;
 			}
-			else if (nmult * 8760 == m_nRecords)
+			else if (nmult * 8760 == (int)m_nRecords)
 			{
 				// multiple of 8760 records: assume 1 year of data
 				m_stepSec = 3600 / nmult;
@@ -1043,7 +1043,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 			char *pret = 0;
 			int nread = 0;
 
-			while ( 1 )
+			for(;;)
 			{
 				pret = fgets(buf, NBUF, fp);
 				nread = sscanf(buf,
@@ -1123,7 +1123,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		else if (m_type == TMY3)
 		{
 			char *pret = 0;
-			while( 1 )
+			for(;;)
 			{
 				pret = fgets(buf, NBUF, fp);
 
@@ -1211,7 +1211,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		{
 			char *pret = 0;
 
-			while( 1 )
+			for(;;)
 			{
 				pret = fgets(buf, NBUF, fp);
 				int ncols = locate(buf, cols, NCOL, ',');
@@ -1313,7 +1313,7 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 		else if (m_type == WFCSV)
 		{	
 
-			while( 1 )
+			for(;;)
 			{
 				buf[0] = 0;
 				fgets(buf, NBUF, fp);

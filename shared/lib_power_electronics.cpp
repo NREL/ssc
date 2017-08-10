@@ -75,7 +75,7 @@ double rectifier::convert_to_dc(double P_ac, double * P_dc)
 	return P_loss;
 }
 
-charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double efficiency_1, double efficiency_2)
+charge_controller::charge_controller(dispatch_t * dispatch, battery_metrics_t * battery_metrics, double , double )
 {	
 	_dispatch = dispatch;
 
@@ -209,7 +209,7 @@ void dc_connected_battery_controller::process_dispatch()
 {
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 	double P_battery_dc_post_bms = 0;
-	double P_battery_ac = 0;
+//	double P_battery_ac = 0;
 
 	// post DC/DC w/BMS
 	if (P_battery_dc > 0)
@@ -398,7 +398,7 @@ void ac_connected_battery_controller::preprocess_pv_load()
 	int pv_batt_choice = _dispatch->pv_dispatch_priority();
 	double P_load_system = _P_load + _P_system_loss;
 	double P_grid_ac = _P_pv - P_load_system;
-	double P_grid_dc = 0.;
+//	double P_grid_dc = 0.;
 
 	// compute effective PV and Load if battery is discharging
 	_P_pv_dc_discharge_input = _P_pv / _bidirectional_inverter->dc_ac_efficiency();
@@ -422,7 +422,7 @@ void ac_connected_battery_controller::preprocess_pv_load()
 	{
 		double P_to_fill_dc = _dispatch->battery_power_to_fill();
 		double P_to_fill_ac = P_to_fill_dc / _bidirectional_inverter->ac_dc_efficiency();
-		double P_loss_inverter = P_to_fill_ac - P_to_fill_dc;
+//		double P_loss_inverter = P_to_fill_ac - P_to_fill_dc;
 
 		if (_P_pv > P_to_fill_ac)
 			_P_pv_dc_charge_input = _P_pv - P_to_fill_ac;
@@ -469,7 +469,7 @@ void ac_connected_battery_controller::process_dispatch()
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
 }
 
-void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double inverter_efficiency)
+void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery_ac, double P_pv_ac, double P_load_ac, double )
 {
 	double P_battery_dc = _dispatch->power_tofrom_battery();
 
@@ -641,10 +641,10 @@ double ac_connected_battery_controller::gen_ac()
 	double P_loss_gen = P_gen_dc - _P_gen;
 
 	// extra metrics if desired
-	double P_loss_battery_to_load = P_battery_to_load_dc - _P_battery_to_load;
-	double P_loss_pv_to_load = P_pv_to_load_dc - _P_pv_to_load;
-	double P_loss_pv_to_battery = P_pv_to_battery_dc - _P_pv_to_battery;
-	double P_loss_battery = P_battery_dc - _P_battery;
+//	double P_loss_battery_to_load = P_battery_to_load_dc - _P_battery_to_load;
+//	double P_loss_pv_to_load = P_pv_to_load_dc - _P_pv_to_load;
+//	double P_loss_pv_to_battery = P_pv_to_battery_dc - _P_pv_to_battery;
+//	double P_loss_battery = P_battery_dc - _P_battery;
 
 
 	return P_loss_gen;

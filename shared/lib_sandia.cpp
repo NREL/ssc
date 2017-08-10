@@ -99,33 +99,33 @@ C c2,c3 = empirical module-specIFic constants
 	else
 		return 0.0;
 }
-
-static double sandia_ixx( double Tc, double Ee, double Ixx0, double aImp, double C6, double C7 )
-{
-	/*
-C Returns current "Ix" at V=0.5*(Voc+Vmp) (A)
-C Tc = cell temperature (deg C)
-C Ee = effective irradiance
-C Ixx0 = Ixx at SRC (1000 W/m2, 25 C) (A)
-C aImp = Imp temp coefficient (/C)
-C c4,c5 = empirical module-specIFic constants
-*/
-	return Ixx0*(C6*Ee+C7*Ee*Ee)*(1.0+aImp*(Tc-25.0));
-}
-
-static double sandia_ix(double Tc, double Ee, double Ix0, double aIsc, double aImp, double C4, double C5 )
-{
-	/*
-C Returns current "Ix" at V=0.5*Voc (A)
-C Tc = cell temperature (deg C)
-C Ee = effective irradiance
-C Ix0 = Ix at SRC (1000 W/m2, 25 C) (A)
-C aIsc = Isc temp coefficient (/C)
-C aImp = Imp temp coefficient (/C)
-C c4,c5 = empirical module-specIFic constants
-*/
-	return Ix0*(C4*Ee+C5*Ee*Ee)*(1.0+((aIsc+aImp)/2.0*(Tc-25.0)));
-}
+//
+//static double sandia_ixx( double Tc, double Ee, double Ixx0, double aImp, double C6, double C7 )
+//{
+//	/*
+//C Returns current "Ix" at V=0.5*(Voc+Vmp) (A)
+//C Tc = cell temperature (deg C)
+//C Ee = effective irradiance
+//C Ixx0 = Ixx at SRC (1000 W/m2, 25 C) (A)
+//C aImp = Imp temp coefficient (/C)
+//C c4,c5 = empirical module-specIFic constants
+//*/
+//	return Ixx0*(C6*Ee+C7*Ee*Ee)*(1.0+aImp*(Tc-25.0));
+//}
+//
+//static double sandia_ix(double Tc, double Ee, double Ix0, double aIsc, double aImp, double C4, double C5 )
+//{
+//	/*
+//C Returns current "Ix" at V=0.5*Voc (A)
+//C Tc = cell temperature (deg C)
+//C Ee = effective irradiance
+//C Ix0 = Ix at SRC (1000 W/m2, 25 C) (A)
+//C aIsc = Isc temp coefficient (/C)
+//C aImp = Imp temp coefficient (/C)
+//C c4,c5 = empirical module-specIFic constants
+//*/
+//	return Ix0*(C4*Ee+C5*Ee*Ee)*(1.0+((aIsc+aImp)/2.0*(Tc-25.0)));
+//}
 
 static double sandia_isc( double Tc, double Isc0, double Ibc, double Idc, double F1, double F2, double fd, double aIsc, int radmode, double poaIrr )
 {
@@ -340,16 +340,16 @@ bool sandia_module_t::operator() ( pvinput_t &in, double TcellC, double opvoltag
 		else
 		{		
 			//C Calculate Ix:
-			double Ix = sandia_ix(TcellC,Ee,Ix0,aIsc,aImp,C4,C5);
+//			double Ix = sandia_ix(TcellC,Ee,Ix0,aIsc,aImp,C4,C5);
 
 			//C Calculate Vx:
-			double Vx = Voc/2.0;
+//			double Vx = Voc/2.0;
 
 			//C Calculate Ixx:
-			double Ixx = sandia_ixx(TcellC,Ee,Ixx0,aImp,C6,C7);
+//			double Ixx = sandia_ixx(TcellC,Ee,Ixx0,aImp,C6,C7);
 
 			//C Calculate Vxx:
-			double Vxx = 0.5*(Voc + Vmp);
+//			double Vxx = 0.5*(Voc + Vmp);
 			
 			// calculate current at operating voltage
 			V = opvoltage;
@@ -447,7 +447,7 @@ bool sandia_inverter_t::acpower(
 
 
 
-double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double poaIrr, double fd, double DT0)
+double sandia_celltemp_t::sandia_tcell_from_tmodule( double Tm, double poaIrr, double , double DT0)
 {
 	/*
 C Returns cell temperature, deg C
@@ -464,7 +464,7 @@ C DT0 = (Tc-Tm) at E=1000 W/m2 (empirical constant known as dTc), deg C
 	return Tm + E / 1000.0 * DT0;
 }
 
-double sandia_celltemp_t::sandia_module_temperature( double poaIrr, double Ws, double Ta, double fd, double a, double b )
+double sandia_celltemp_t::sandia_module_temperature( double poaIrr, double Ws, double Ta, double , double a, double b )
 {
 	/*
 C Returns back-of-module temperature, deg C
@@ -483,7 +483,7 @@ C b   = empirical constant
 	return E * exp(a + b * Ws) + Ta;
 }
 
-bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
+bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &, double , double &Tcell )
 {
 	//Sev 2015-09-14: changed to permit direct poa data
 	double Itotal;
