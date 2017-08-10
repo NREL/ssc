@@ -673,7 +673,7 @@ int NS_HX_counterflow_eqs::C_mono_eq_UA_v_q_enth::operator()(double q_dot /*kWt*
 			m_h_h_out, m_T_h_out, m_h_c_out, m_T_c_out,
 			m_UA_calc, m_min_DT, m_eff, m_NTU, q_dot_calc);
 	}
-	catch (C_csp_exception &)
+	catch (C_csp_exception &csp_except)
 	{
 
 		// Reset solved OD parameters to NaN
@@ -2046,6 +2046,8 @@ void C_CO2_to_air_cooler::off_design_hx(double T_amb_K, double P_amb_Pa, double 
 					{
 						break;
 					}
+
+					double T_out_ave = 0.5*(T_out_guess + T_co2((size_t)in, j));
 
 					// Check this error?
 					double cp_co2_ave = co2_props.cp*1000.0;

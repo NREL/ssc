@@ -2129,6 +2129,9 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	if (V_wind >= m_V_wind_max)
 		m_ftrack = 0.0;
 
+	double StdTime = MidTrack;
+	double SolarTime = StdTime + ((shift)* 180 / CSP::pi) / 15.0 + EOT / 60.0;
+
 	if (SolarZen < CSP::pi / 2.0)
 	{
 		//[rad] Convert the solar angles to collector incidence angles

@@ -1010,21 +1010,21 @@ public:
 		int ITER = 0;
 		bool CALCSFTi = false;
 		double SfTo_hold = 1000;
-		double SfTo = m_SfToO = 0.0;
+		double SfTo=m_SfToO;
 
-		double AveSfTemp = 0.0;
-		double RecHL = 0.0;
-		double ColOptEff = 0.0, SfOptEff = 0.0;
-		double Qabs = 0.0, dTemp = 0.0;
-		double SfPipeHl = 0.0, Qhl = 0.0, Qcol = 0.0, Qnip = 0.0;
-		double QnipCosTh = 0.0, Qdni = 0.0, QsfNipCosTh = 0.0;
-		double Qsf = 0.0, QsfHceHl = 0.0, QsfPipeHl = 0.0;
-		int qmode = 0;
-		double QsfAbs = 0.0, QHtfFreezeProt = 0.0, SfMassFlow = 0.0, H_thermMin = 0.0;
+		double AveSfTemp;
+		double RecHL;
+		double ColOptEff, SfOptEff;
+		double Qabs, dTemp;
+		double SfPipeHl, Qhl, Qcol, Qnip;
+		double QnipCosTh, Qdni, QsfNipCosTh;
+		double Qsf, QsfHceHl, QsfPipeHl;
+		int qmode;
+		double QsfAbs,QHtfFreezeProt,SfMassFlow, H_thermMin;
 
-		double QsfWarmUp = 0.0, SfLoad = 0.0;
+		double QsfWarmUp, SfLoad;
 
-		double Ttemp = 0.0, HtfVolGal = 0.0, HtfMassKg = 0.0, dThtf = 0.0;
+		double Ttemp, HtfVolGal, HtfMassKg, dThtf;
 		
 		//DO WHILE ((fabs(SfTo - SfTo_hold) > 0.1).AND.(CALCSFTi.EQ..FALSE.)) // HP Changed 12-08-06
 		//DO WHILE ((fabs(SfTo - SfTo_hold) > 0.1).OR.(CALCSFTi.EQ..FALSE.)) // HP Changed AND 12-08-06

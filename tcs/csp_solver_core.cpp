@@ -3106,6 +3106,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				double tol_C = 1.0;								//[C]
 				double tol = tol_C / m_cycle_T_htf_hot_des;		//[-]
 
+				double relaxed_tol_mult = 5.0;				//[-]
+
 				double q_dot_pc_fixed = q_pc_min;			//[MWt]
 
 				double time_tes_dc, T_tes_in_exit_tolerance, q_pc_exit_tolerance;

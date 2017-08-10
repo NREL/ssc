@@ -993,44 +993,44 @@ public:
 		// Need to fill in iteration controls once inner loops are finished
 		
 		// Calculate available mass flow and volume from hot and cold tanks
-		double rho_tank_hot_avg = 0.0, T_tank_hot_avg_guess = 0.0, V_tank_hot_avg = 0.0, V_tank_hot_avail = 0.0, m_tank_disch_avail = 0.0;
-		double rho_tank_cold_avg = 0.0, T_tank_cold_avg_guess = 0.0, V_tank_cold_avg = 0.0, V_tank_cold_avail = 0.0, m_tank_charge_avail = 0.0;
+		double rho_tank_hot_avg, T_tank_hot_avg_guess, V_tank_hot_avg, V_tank_hot_avail, m_tank_disch_avail;
+		double rho_tank_cold_avg, T_tank_cold_avg_guess, V_tank_cold_avg, V_tank_cold_avail, m_tank_charge_avail;
 		T_tank_hot_avg_guess	= T_tank_hot_prev;		//[K] Guess average (w/r/t timestep) hot tank temp - will update after controller calculations
 		T_tank_cold_avg_guess	= T_tank_cold_prev;		//[K] Guess average (w/r/t timestep) cold tank temp - will update after controller calculations
-		double ms_disch_avail = 0.0;	//Actual discharge available to PB HTF
-		double ms_charge_avail = 0.0;	//Actual charge avaiable to field HTF
-		double T_tank_hot_out = 0.0, eff_disch = 0.0, q_disch = 0.0, T_tank_cold_in = 0.0, Ts_hot = 0.0;
-		double T_tank_cold_out = 0.0, eff_charge = 0.0, q_charge = 0.0, T_tank_hot_in = 0.0, Ts_cold = 0.0;
-		double c_htf_aux = 0.0, m_dot_aux_avail = 0.0;
-		double m_avail_tot = 0.0, q_pb_demand = 0.0;
-		double T_field_in_guess = 0.0;
-		double T_field_in = 0.0;
+		double ms_disch_avail;	//Actual discharge available to PB HTF
+		double ms_charge_avail;	//Actual charge avaiable to field HTF
+		double T_tank_hot_out, eff_disch, q_disch, T_tank_cold_in, Ts_hot;
+		double T_tank_cold_out, eff_charge, q_charge, T_tank_hot_in, Ts_cold;
+		double c_htf_aux, m_dot_aux_avail;
+		double m_avail_tot, q_pb_demand;
+		double T_field_in_guess;
+		double T_field_in;
 		
 		//*********************************************************
 		//double T_pb_in = T_field_out;	// This is different than TRNSYS because of a mistake in TRNSYS
 		//T_pb_in = 664.63;				// So for testing, set to the value TRNSYS uses on the first iteration when time=39
 		//*********************************************************
 
-		double c_htf_disch = 0.0, c_htf_charge = 0.0, c_htf_field = 0.0, c_htf_pb = 0.0;
-		double q_pb_demand_guess = 0.0;
-		double qs_disch_avail = 0.0, qs_charge_avail = 0.0;
-		double q_aux_avail = 0.0, q_field_avail = 0.0;
-		double q_int = 0.0, T_int = 0.0, m_int = 0.0;
-		bool called_TC = false;
+		double c_htf_disch, c_htf_charge, c_htf_field, c_htf_pb;
+		double q_pb_demand_guess;
+		double qs_disch_avail, qs_charge_avail;
+		double q_aux_avail,	q_field_avail;
+		double q_int, T_int, m_int;
+		bool called_TC;
 		double ms_disch=0., ms_charge=0.;
-		double q_aux = 0.0, m_dot_aux = 0.0, q_demand_aux = 0.0;
-		int mode = -1;
+		double q_aux, m_dot_aux, q_demand_aux;
+		int mode;
 		double defocus = defocus_prev_ncall;
-		int cycle_pl_control = 0, standby_control = 0;
-		double m_dot_pb = 0.0;
+		int cycle_pl_control, standby_control;
+		double m_dot_pb;
 		//int tempmode=0;
-		double err = 0.0, err_prev_iter = 0.0, derr = 0.0;
-		double defocus_prev_iter = 0.0, tol = 0.0;
-		int iter = -1, iter_tank = -1;
-		bool iterate_mass_temp = false, iterate_tank_temp = false;
-		double m_tank_disch = 0.0, m_tank_charge = 0.0;
-		double T_tank_hot_avg = 0.0, vol_tank_hot_avg = 0.0, q_loss_tank_hot = 0.0, q_htr_tank_hot = 0.0;
-		double T_tank_cold_avg = 0.0, vol_tank_cold_avg = 0.0, q_loss_tank_cold = 0.0, q_htr_tank_cold = 0.0;
+		double err, err_prev_iter, derr;
+		double defocus_prev_iter, tol;
+		int iter, iter_tank;
+		bool iterate_mass_temp, iterate_tank_temp;
+		double m_tank_disch, m_tank_charge;
+		double T_tank_hot_avg, vol_tank_hot_avg, q_loss_tank_hot, q_htr_tank_hot;
+		double T_tank_cold_avg, vol_tank_cold_avg, q_loss_tank_cold, q_htr_tank_cold;
 
 		t_standby = t_standby_prev;	//[s] Initialize t_standby
 
@@ -1854,7 +1854,7 @@ public:
 		}
 		else	{aux_par = 0.0;}
 
-		double q_to_tes = 0.0;
+		double q_to_tes;
 		if(has_TES)
 		{
 			if(ms_disch != 0)	q_to_tes = -ms_disch*c_htf_disch*(Ts_hot - T_pb_out)*1.e-6;			//[MW]

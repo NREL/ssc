@@ -610,7 +610,7 @@ public:
 	{
 		//Set_PB_coefficients();
 
-		int XI = 0, YI = 0;
+		int XI, YI;
 		if( m_tech_type != 5 )
 		{
 			switch( XT )
@@ -681,7 +681,7 @@ public:
 		XI--; YI--; // C++ arrays start index at 0 instead of 1, like Fortran arrays
 
 		int i_last_index = (int)m_db.ncols() - 1;
-		int lbi = 0, ubi = 0;
+		int lbi, ubi;
 		for( int i = 0; i < (int)m_db.ncols(); i++ )
 		{
 			// if we got to the last one, then set bounds and end loop
@@ -836,11 +836,11 @@ public:
 			err = 0.0;
 		}
 
-		double P_dem_ND = 0.0;
-		double P_ND[3] = { 0, 0, 0 };
-		double Q_ND[3] = { 0, 0, 0 };
+		double P_dem_ND;
+		double P_ND[3];
+		double Q_ND[3];
 		double R_ND[3] = {0,0,0};
-		double R_ND_tot = 0.0;
+		double R_ND_tot;
 
 		double P_cond_guess = 0.0;
 		double P_cond_low = -1.0;
@@ -1069,7 +1069,7 @@ public:
 		m_dot_rh = m_dot_st_bd = P_turb_in = P_rh_in = T_rh_in = T_rh_out = 0.0;
 
 		// Declare variables that will be solved by 'switch' options
-		double P_cycle = 0.0, eta = 0.0, T_cold = 0.0, m_dot_demand = 0.0, m_dot_makeup = 0.0, W_cool_par = 0.0, f_hrsys = 0.0, P_cond = 0.0;
+		double P_cycle, eta, T_cold, m_dot_demand, m_dot_makeup, W_cool_par, f_hrsys, P_cond;
 
 		switch (m_standby_control)
 		{

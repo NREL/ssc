@@ -1572,17 +1572,17 @@ public:
 		}
 		// **********************************************************************************************************************
 
-		double rho_hdr_cold = 0.0, rho_hdr_hot = 0.0;
-		double c_hdr_cold_last = 0.0, m_dot_lower = 0.0, m_dot_upper = 0.0;
-		bool upflag, lowflag = false, fp_lowflag = false, fp_upflag = false;
-		double T_in_lower = 0.0, y_fp_lower = 0.0, T_in_upper = 0.0, y_fp_upper = 0.0;
-		double y_upper = 0.0, y_lower = 0.0;
-		double upmult = 0.0, t_tol = 0.0, err = 0.0;
-		double DP_IOCOP = 0.0, DP_loop = 0.0, m_dot_run_in = 0.0, x3 = 0.0, m_dot_temp = 0.0;
-		double DP_toField = 0.0, DP_fromField = 0.0;
-		double m_dot_header_in = 0.0, m_dot_header = 0.0, DP_hdr_cold = 0.0, DP_hdr_hot = 0.0;
-		double E_avail_tot = 0.0, rho_ave = 0.0, E_int_sum = 0.0;
-		double q_abs_maxOT = 0.0;
+		double rho_hdr_cold, rho_hdr_hot;
+		double c_hdr_cold_last, m_dot_lower, m_dot_upper;
+		bool upflag, lowflag, fp_lowflag, fp_upflag;
+		double T_in_lower, y_fp_lower, T_in_upper, y_fp_upper;
+		double y_upper, y_lower;
+		double upmult, t_tol, err;
+		double DP_IOCOP, DP_loop, m_dot_run_in, x3, m_dot_temp;
+		double DP_toField, DP_fromField;
+		double m_dot_header_in, m_dot_header, DP_hdr_cold, DP_hdr_hot;
+		double E_avail_tot, rho_ave, E_int_sum;
+		double q_abs_maxOT;
 		q_abs_maxOT=0;
 
 		if (ncall==0)  //mjw 3.5.11 We only need to calculate these values once per timestep..
@@ -3028,18 +3028,17 @@ set_outputs_and_return:
 		//		number of the HCE and collector need to be passed here.
 
 		//---Variable declarations------
-		bool reguess = false;
-		double T_2 = 0.0, T_3 = 0.0, T_4 = 0.0, T_5 = 0.0, T_6 = 0.0, T_7 = 0.0,v_1 = 0.0, k_23 = 0.0, q_34conv = 0.0, q_34rad = 0.0, h_34conv = 0.0, 
-			h_34rad = 0.0, q_23cond = 0.0, k_45 = 0.0, q_45cond = 0.0, q_56conv = 0.0, h_56conv = 0.0, q_57rad = 0.0, q_3SolAbs = 0.0, q_5solabs = 0.0, 
-			q_cond_bracket = 0.0, R_45cond = 0.0, T_2g = 0.0, cp_1 = 0.0, T3_tol = 0.0, q5_tol = 0.0, T1_tol = 0.0, T2_tol = 0.0, Diff_T3 = 0.0, 
-			diff_q5 = 0.0, T_lower = 0.0, T_upper = 0.0, q_5out = 0.0, T_1_out = 0.0, diff_T1 = 0.0, T_1_ave = 0.0, T_1_out1 = 0.0, diff_T2 = 0.0, 
-			eps_3 = 0.0, q_in_W = 0.0, T_upper_max = 0.0, y_upper = 0.0, y_lower = 0.0, upmult = 0.0, q5_tol_1 = 0.0, T3_upper = 0.0, T3_lower = 0.0, 
-			y_T3_upper = 0.0, y_T3_lower = 0.0, abs_diffT3 = 0.0;
+		bool reguess;
+		double T_2, T_3, T_4, T_5, T_6, T_7,v_1, k_23, q_34conv, q_34rad, h_34conv, h_34rad, q_23cond, 
+			k_45, q_45cond, q_56conv, h_56conv, q_57rad, q_3SolAbs, q_5solabs, q_cond_bracket, R_45cond,
+			T_2g, cp_1, T3_tol, q5_tol, T1_tol, T2_tol, Diff_T3, diff_q5, T_lower, T_upper, 
+			q_5out, T_1_out, diff_T1, T_1_ave, T_1_out1, diff_T2, eps_3, q_in_W, T_upper_max, y_upper,
+			y_lower, upmult, q5_tol_1, T3_upper, T3_lower, y_T3_upper, y_T3_lower, abs_diffT3;
 
-		bool UPFLAG = false, LOWFLAG = false, T3upflag = false, T3lowflag = false, is_e_table = false;
-		int qq, q5_iter = -1, T1_iter = -1, q_conv_iter = -1;
+		bool UPFLAG, LOWFLAG, T3upflag, T3lowflag, is_e_table;
+		int qq, q5_iter, T1_iter, q_conv_iter;
 
-		double T_save_tot = 0.0, colopteff_tot = 0.0;
+		double T_save_tot, colopteff_tot;
 		//cc--> note that xx and yy have size 'nea'
 
 
@@ -3805,11 +3804,11 @@ lab_keep_guess:
 	void FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hn, int hv, double &q_34conv, double &h_34){
 	   //      UNITS   ( K , K ,  Pa , m/s,  K , -, -, W/m, W/m2-K)
 	
-	double a = 0.0, Alpha_34 = 0.0, b = 0.0, Beta_34 = 0.0, C = 0.0, C1 = 0.0, Cp_34 = 0.0, Cv_34 = 0.0, Delta = 0.0, Gamma = 0.0, k_34 = 0.0, Lambda = 0.0, 
-			  m = 0.0, mu_34 = 0.0, n = 0.0, nu_34 = 0.0, P = 0.0, Pr_34 = 0.0, P_A1 = 0.0, Ra_D3 = 0.0, Ra_D4 = 0.0, rho_34 = 0.0, T_34 = 0.0, T_36 = 0.0, 
-			  grav = 0.0, Nu_bar = 0.0, rho_3 = 0.0, rho_6 = 0.0, mu_36 = 0.0, rho_36 = 0.0, cp_36 = 0.0,
-			  k_36 = 0.0, nu_36 = 0.0, alpha_36 = 0.0, beta_36 = 0.0, Pr_36 = 0.0, h_36 = 0.0, mu_3 = 0.0, mu_6 = 0.0, k_3 = 0.0, k_6 = 0.0, cp_3 = 0.0, 
-			  Cp_6 = 0.0, nu_6 = 0.0, nu_3 = 0.0, Alpha_3 = 0.0, alpha_6 = 0.0, Re_D3 = 0.0, Pr_3 = 0.0, Pr_6 = 0.0, Natq_34conv = 0.0, Kineticq_34conv = 0.0;
+	double a, Alpha_34, b, Beta_34, C, C1, Cp_34, Cv_34, Delta, Gamma, k_34, Lambda, 
+			  m, mu_34, n, nu_34, P, Pr_34, P_A1, Ra_D3, Ra_D4, rho_34, T_34, T_36, 
+			  grav, Nu_bar, rho_3, rho_6, mu_36, rho_36, cp_36,
+			  k_36, nu_36, alpha_36, beta_36, Pr_36, h_36, mu_3, mu_6, k_3, k_6, cp_3, Cp_6, nu_6, nu_3,
+			  Alpha_3, alpha_6, Re_D3, Pr_3, Pr_6, Natq_34conv, Kineticq_34conv;
 	
 	grav = 9.81; //m/s2  gravitation constant
 
@@ -4026,9 +4025,9 @@ lab_keep_guess:
 	void FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hn, int hv, double &q_56conv, double &h_6)
 	//           units   ( K ,  K , torr, m/s,  W/m    , W/m2-K)
 	{
-	double alpha_5 = 0.0, alpha_6 = 0.0, C = 0.0, Cp_5 = 0.0, Cp_56 = 0.0, Cp_6 = 0.0, k_5 = 0.0, k_56 = 0.0, k_6 = 0.0, m = 0.0, mu_5 = 0.0, mu_56 = 0.0, 
-		mu_6 = 0.0, n = 0.0, Nus_6 = 0.0, nu_5 = 0.0, nu_6 = 0.0, Pr_5 = 0.0, Pr_6 = 0.0, Re_D5 = 0.0, rho_5 = 0.0, rho_56 = 0.0, rho_6 = 0.0, T_56 = 0.0, 
-		Nu_bar = 0.0, nu_56 = 0.0, alpha_56 = 0.0, beta_56 = 0.0, Ra_D5 = 0.0, Pr_56 = 0.0;
+	double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, mu_6, n, Nus_6,
+			  nu_5, nu_6, Pr_5, Pr_6, Re_D5, rho_5, rho_56, rho_6, T_56, Nu_bar,
+			  nu_56, alpha_56, beta_56, Ra_D5, Pr_56;
 
 		T_56 = (T_5 + T_6)/2.0;  //[K]
 
@@ -4137,10 +4136,10 @@ lab_keep_guess:
 	double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int , int ){
 		//           units                    ( K ,  K , bar, m/s)
 	
-		double P_brac = 0.0, D_brac = 0.0, A_CS_brac = 0.0, k_brac = 0.0, T_base = 0.0, T_brac = 0.0, T_brac6 = 0.0, mu_brac6 = 0.0, rho_brac6 = 0.0, 
-			  Cp_brac6 = 0.0, k_brac6 = 0.0, nu_brac6 = 0.0, Alpha_brac6 = 0.0, Beta_brac6 = 0.0, Ra_Dbrac = 0.0, Pr_brac6 = 0.0, Nu_bar = 0.0, h_brac6 = 0.0,
-			  mu_brac = 0.0, mu_6 = 0.0, rho_6 = 0.0, rho_brac = 0.0, k_6 = 0.0, Cp_brac = 0.0, nu_6 = 0.0, Cp_6 = 0.0, Nu_brac = 0.0, Alpha_brac = 0.0,
-			  Re_Dbrac = 0.0, Pr_brac = 0.0, Pr_6 = 0.0, n = 0.0, C = 0.0, m = 0.0, L_HCE = 0.0, alpha_6 = 0.0;
+		double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
+			  Cp_brac6, k_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
+			  mu_brac, mu_6, rho_6, rho_brac, k_6, Cp_brac, nu_6, Cp_6, Nu_brac, Alpha_brac,
+			  Re_Dbrac, Pr_brac, Pr_6, n, C, m, L_HCE, alpha_6;
 
 
 		// effective bracket perimeter for convection heat transfer

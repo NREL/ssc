@@ -655,7 +655,7 @@ public:
 		double A_shade_combined = A_shade_NS + A_shade_EW + A_shade_diag;
 		double A_shade_interior = (m_n_ns-1)*(m_n_ew-1)*A_shade_combined;
 
-		double A_shade_exterior = 0.0;
+		double A_shade_exterior;
 		if (solar_azimuth <= -90.0)		// Northeast quadrant
 			A_shade_exterior = (m_n_ns-1.0)*A_shade_NS + (m_n_ew-1.0)*A_shade_EW;
 

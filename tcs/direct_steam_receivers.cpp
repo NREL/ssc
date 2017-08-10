@@ -556,8 +556,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 			double m_dot_total = m_dot_in /( (double) m_n_par );	//[kg/s]
 			m_m_dot_path.fill( m_dot_total / (double) m_n_fr );		//[kg/s] mass flow rate in each flow path
 
-			double h_n_in = 0.0, rho_n_in = 0.0, P_n_in = 0.0, dp = 0.0, diff_T_ht = 0.0, m_dot = 0.0;
-			double h_n_out = 0.0, P_out = 0.0, rho_n_ave = 0.0, u_n = 0.0;
+			double h_n_in, rho_n_in, P_n_in, dp, diff_T_ht, m_dot;
+			double h_n_out, P_out, rho_n_ave, u_n;
 			// Solve for outlet conditions of each flow path
 			for( int j = 0; j < m_n_fr; j++ )
 			{
@@ -675,8 +675,8 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						// Need properties at saturated vapor in case some guess in energy balance results in x<1
 						water_PQ( min(P_ave/1000.0,19.E3),1.0, &wp );
 						double h_b_max = wp.enth;		//[kJ/kg]
-						double T_2_guess = 0.0, T_2 = 0.0;		//[K]
-						double q_wf = 0.0, x_n_ave = 0.0, mu_l = 0.0, mu_v = 0.0, rho_l = 0.0, f_fd = 0.0;				//[W]
+						double T_2_guess, T_2;		//[K]
+						double q_wf,x_n_ave,mu_l,mu_v,rho_l,f_fd;				//[W]
 						q_wf = x_n_ave = mu_l = mu_v = rho_l = f_fd = std::numeric_limits<double>::quiet_NaN();
 
 						// This loop ensures that the outlet flow conditions for each panel are solved correctly by finding the correct T1 (outer surface temp)
@@ -981,6 +981,7 @@ bool C_DSG_Boiler::Solve_Boiler( double I_T_amb_K, double I_T_sky_K, double I_v_
 						{
 
 							// Frictional pressure drop equations taken from Chexal et al. pages 7-6, 7-7, 7-9
+							double mu_f = (1.0 - x_n_ave)*mu_l + x_n_ave*mu_v;	//[kg/m-s] Mixture viscosity
 							double Re_LO = G*m_d_in / mu_l;						//[-] Liquid only Reynolds number
 
 							double f_wLO = 0.0791/pow(Re_LO,0.25);				//[-] Liquid only friction factor: Blasius single-phase Fanning friction factor
@@ -1289,7 +1290,7 @@ bool C_DSG_Boiler::Solve_Superheater( double I_T_amb_K, double I_T_sky_K, double
 		double diff_T_ht = 45.0;	//[K] Estimate of difference between surface temp and inlet temp
 		double m_dot = m_m_dot_path.at(j);	//[kg/s] Use m_dot so we don't have to carry array through
 
-		double T_n_ave = 0.0, h_n_out = 0.0, P_out = 0.0, u_n = 0.0;
+		double T_n_ave, h_n_out, P_out, u_n;
 		for( int i = 0; i < m_nodes; i++ )
 		{
 			if(i==0)	T_1 = T_n_in + 45.0;
@@ -1725,7 +1726,7 @@ END SUBROUTINE
 //***** Flow Boiling Model: local HT coefficient: Nellis and Klein (2008)
 //****************************************************************************************
 double Flow_Boiling( double T_sat, double T_surf, double G, double d, double x_in, double q_t_flux, double rho_l, double rho_v, double k_l,
-					 double mu_l, double Pr_l, double , double h_diff, double , double mu_v, double c_v, double k_v, double RelRough )
+					 double mu_l, double Pr_l, double , double h_diff, double grav, double mu_v, double c_v, double k_v, double RelRough )
 {
 	double x = x_in;					//[-] Set quality
 	double Re_l = G*d*(1.0-x)/mu_l;		//[-] Eq. 7-10: Reynolds number of saturated liquid flow
@@ -1781,7 +1782,7 @@ double Flow_Boiling( double T_sat, double T_surf, double G, double d, double x_i
 	else
 	{
 		bool interp = false;
-		double h_fluid_v = 0.0;
+		double h_fluid_v;
 		if( Re_l < 2300 )		// If Re < 2300
 		{
 			Re_l = 2300.0;				// Set Re to 2300

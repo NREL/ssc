@@ -754,7 +754,7 @@ double Cavity_Calcs::calG( double x, double y, double eta, double xi_1, double x
 	double step = min_step;
 
 	double xi = xi_1; double G = 0.0; double xi0 = xi;
-	double v1 = 0.0, v2 = 0.0, v3 = 0.0, dx32 = 0.0, dx21 = 0.0, dv32 = 0.0, vexp = 0.0, err = 0.0;
+	double v1, v2, v3, dx32, dx21, dv32, vexp, err;
 
 	int i = 0, n = 0;
 

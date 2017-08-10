@@ -340,7 +340,7 @@ bool Thermocline_TES::Solve_TC( double T_hot_in_C, double flow_h_kghr, double T_
 	double y_lower = std::numeric_limits<double>::quiet_NaN();
 	double q_calc = std::numeric_limits<double>::quiet_NaN();
 
-	bool full = false;
+	bool full;
 	int num_TC = -1;
 
 	double T_disch_avail = std::numeric_limits<double>::quiet_NaN();
