@@ -514,7 +514,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
-		double loss_tot = 0.0;
+		double x1 = 0.0, x2 = 0.0, loss_tot = 0.0;
 		m_opteff_des = 0.0;
 		m_m_dot_design = 0.0;
 
@@ -856,7 +856,7 @@ double C_csp_trough_collector_receiver::get_col_startup_power()
 }
 
 
-void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & )
+void C_csp_trough_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	return;
 }
@@ -1108,6 +1108,11 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			(m_T_sys_c_t_end_last - T_htf_cold_in) *(exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_cold*rho_hdr_cold + m_mc_bal_cold / c_hdr_cold_last)*sim_info.ms_ts.m_step) - 1.0)
 			/ sim_info.ms_ts.m_step;		
 
+		// Now calculate an energy balance using the timestep-average Bulk Temperature
+		// ** THIS IS JUST A TEST: can comment out if necessary **
+		double E_bal_T_t_ave = -m_dot_htf_loop*float(m_nLoops)*c_hdr_cold_last*(m_T_sys_c_t_int - T_htf_cold_in)*sim_info.ms_ts.m_step - 
+					(m_v_cold*rho_hdr_cold*c_hdr_cold_last + m_mc_bal_cold)*(m_T_sys_c_t_end - m_T_sys_c_t_end_last);	//[J]
+
 		double m_cp_sys_c_t_int = m_htfProps.Cp(m_T_sys_c_t_int)*1000.0; //mjw 1.6.2011 Adding mc_bal to the cold header inertia
 			//Consider heat loss from cold piping
 		m_Header_hl_cold = 0.0;
@@ -1131,6 +1136,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 		E_HR_cold = (m_v_cold*rho_hdr_cold*m_cp_sys_c_t_int + m_mc_bal_cold)*(m_T_sys_c_t_end - m_T_sys_c_t_end_last)*1.E-6;		//[MJ]
 		E_HR_cold_htf = m_dot_htf_loop*float(m_nLoops)*m_cp_sys_c_t_int*(m_T_htf_in_t_int[0] - T_htf_cold_in)*sim_info.ms_ts.m_step / 1.E6;	//[MJ]
 		E_HR_cold_bal = -E_HR_cold_losses - E_HR_cold_htf - E_HR_cold;		//[MJ]
+		double blah = 0.0;
 	}
 	else		// m_accept_loc == 2, only modeling loop
 	{
@@ -1286,6 +1292,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			E_xover_abs[i] = -q_dot_loss_xover[i]*sim_info.ms_ts.m_step/1.E6;		//[MJ]
 			E_xover_htf[i] = m_dot_htf_loop*c_htf_i*(m_T_htf_in_t_int[i+1] - m_T_htf_out_t_int[i])*sim_info.ms_ts.m_step/1.E6;	//[MJ]
 			E_xover_bal[i] = E_xover_abs[i] - E_xover_htf[i] - E_xover[i];			//[MJ]
+			double blahadfa = 1.23;
 		}
 	}
 
@@ -1328,12 +1335,16 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 			(m_T_sys_h_t_end_last - T_sys_h_in) *(exp(-(m_dot_htf_loop*float(m_nLoops)) / (m_v_hot*rho_hdr_hot + m_mc_bal_hot / m_c_hdr_hot)*sim_info.ms_ts.m_step) - 1.0)
 			/ sim_info.ms_ts.m_step;
 
+		double E_bal_T_h_t_ave = -(m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot*(m_T_sys_h_t_int - T_sys_h_in)*sim_info.ms_ts.m_step +
+			(m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h_t_end - m_T_sys_h_t_end_last) );	//[J]
+
 		E_HR_hot_htf = m_dot_htf_loop*float(m_nLoops)*m_c_hdr_hot*(m_T_sys_h_t_int - m_T_htf_out_t_int[m_nSCA - 1])*sim_info.ms_ts.m_step/1.E6;	//[MJ]
 
 		E_HR_hot = (m_v_hot*rho_hdr_hot*m_c_hdr_hot + m_mc_bal_hot)*(m_T_sys_h_t_end - m_T_sys_h_t_end_last)*1.E-6;		//[MJ]
 
 		E_HR_hot_bal = -E_HR_hot_losses - E_HR_hot_htf - E_HR_hot;		//[MJ]
 
+		double fadfafa = 1.23;
 	}
 	else
 	{
@@ -1376,6 +1387,11 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5)*1000.0;	//[J/kg-K]
 	m_q_dot_htf_to_sink_subts = m_m_dot_htf_tot*m_c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*1.E-6;
 
+	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_subts - m_q_dot_xover_loss_summed_subts -
+									m_q_dot_HR_cold_loss_subts - m_q_dot_HR_hot_loss_subts - 
+									m_E_dot_sca_summed_subts - m_E_dot_xover_summed_subts -
+									m_E_dot_HR_cold_subts - m_E_dot_HR_hot_subts - m_q_dot_htf_to_sink_subts;	//[MWt]
+
 	// Calculate total field energy balance:
 	double Q_abs_scas_summed = 0.0;		//[MJ]
 	double Q_loss_xover = 0.0;			//[MJ]
@@ -1407,11 +1423,15 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 
 	double Q_htf = m_m_dot_htf_tot*m_c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
+	double E_htf_bal = E_HR_cold_htf + E_scas_htf_summed + E_xovers_htf_summed + E_HR_hot_htf - Q_htf;				//[MJ]
 
 	double Q_loss_HR_cold = q_dot_loss_HR_cold*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 	double Q_loss_HR_hot = q_dot_loss_HR_hot*sim_info.ms_ts.m_step*1.E-6;		//[MJ]
 
 	m_Q_field_losses_total_subts = Q_loss_xover + Q_loss_HR_cold + Q_loss_HR_hot - Q_abs_scas_summed;		//[MJ]
+
+	double E_bal = Q_abs_scas_summed - Q_loss_xover - Q_loss_HR_cold  - Q_loss_HR_hot
+					- Q_htf - E_HR_cold - E_scas_summed - E_xovers_summed - E_HR_hot;
 
 	return E_loop_energy_balance_exit::SOLVED;
 }
@@ -1787,7 +1807,7 @@ void C_csp_trough_collector_receiver::set_output_value()
 }
 
 void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &,
+	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1850,6 +1870,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 			{
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
 				double T_cold_in_i = T_cold_in;
+				int fp_code = freeze_protection(weather, T_cold_in_i, m_dot_htf_loop, sim_info_temp, Q_fp_i);
 
 				T_cold_in = T_cold_in_i;	//[K]
 				Q_fp_sum += Q_fp_i;			//[MJ]
@@ -1932,7 +1953,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 }
 
 void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &,
+	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -2005,6 +2026,7 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			{
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
 				double T_cold_in_i = T_cold_in;
+				int fp_code = freeze_protection(weather, T_cold_in_i, m_dot_htf_loop, sim_info_temp, Q_fp_i);
 
 				T_cold_in = T_cold_in_i;	//[K]
 				Q_fp_sum += Q_fp_i;			//[MJ]
@@ -2059,6 +2081,11 @@ void C_csp_trough_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 	m_q_dot_htf_to_sink_fullts /= nd_steps_recirc;				//[MWt]
 
 	m_q_dot_freeze_protection = Q_fp_sum / sim_info.ms_ts.m_step;	//[MWt]
+
+	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
+		m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+		m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
+		m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 	// Check if startup is achieved in current controller/kernel timestep
 	if( !is_T_startup_achieved )
@@ -2152,6 +2179,7 @@ void C_csp_trough_collector_receiver::apply_component_defocus(double defocus /*-
 	{
 		for( int i = 0; i < m_nSCA; i++ )
 		{
+			int CT = (int)m_SCAInfoArray(i, 1) - 1;    // Collector type
 			m_q_SCA[i] = defocus*m_q_SCA_control_df[i];
 		}
 	}
@@ -2321,6 +2349,11 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		m_E_dot_HR_hot_fullts = m_E_dot_HR_hot_subts;						//[MWt]
 		m_q_dot_htf_to_sink_fullts = m_q_dot_htf_to_sink_subts;				//[MWt]
 		m_q_dot_freeze_protection = 0.0;									//[MWt]
+
+		double Q_dot_balance_subts = m_q_dot_sca_abs_summed_fullts - m_q_dot_xover_loss_summed_fullts -
+			m_q_dot_HR_cold_loss_fullts - m_q_dot_HR_hot_loss_fullts -
+			m_E_dot_sca_summed_fullts - m_E_dot_xover_summed_fullts -
+			m_E_dot_HR_cold_fullts - m_E_dot_HR_hot_fullts - m_q_dot_htf_to_sink_fullts;	//[MWt]
 
 		// Solve for pressure drop and pumping power
 		field_pressure_drop();
@@ -2556,12 +2589,14 @@ void C_csp_trough_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	//reset m_defocus counter
 	int dfcount = 0;
 
+	double time = sim_info.ms_ts.m_time;		//[hr]
 	double dt = sim_info.ms_ts.m_step;		//[s]
 	//******************************************************************************************************************************
 	//               Time-dependent conditions
 	//******************************************************************************************************************************
 	double I_b = weather.m_beam;			//[W/m^2] DNI 	
 	double T_db = weather.m_tdry;			//[C] Dry bulb air temperature 
+	double V_wind = weather.m_wspd;			//[m/s] Ambient windspeed 
 	double P_amb = weather.m_pres;			//[mbar] Ambient pressure 
 	double T_dp = weather.m_tdew;			//[C] The dewpoint temperature 
 	double T_cold_in = htf_state_in.m_temp;	//[C] HTF return temperature 
@@ -3487,6 +3522,11 @@ set_outputs_and_return:
 	double m_dot_avail_out = m_dot_avail*3600.;			//[kg/hr] from kg/s
 	double W_dot_pump_out = W_dot_pump / 1000.;			//[MW] from kW
 	double E_fp_tot_out = E_fp_tot*1.e-6;				//[MW] from W
+	double T_sys_c_out = m_TCS_T_sys_c - 273.15;			//[C] from K
+	double EqOpteff_out = m_EqOpteff*m_CosTh_ave;
+	double m_dot_htf_tot_out = m_m_dot_htf_tot *3600.;	//[kg/hr] from kg/s
+	double E_bal_startup_out = E_bal_startup / (dt*1.e6);	//[MW] from J
+	double q_inc_sf_tot = m_Ap_tot*I_b / 1.e6;
 	double q_abs_tot = 0.;
 	double q_loss_tot = 0.;
 	double q_loss_spec_tot = 0.;
@@ -3504,13 +3544,22 @@ set_outputs_and_return:
 		q_loss_tot *= float(m_nLoops);
 	}
 
-	double SCA_par_tot_out = SCA_par_tot * 1.e-6;
+	double
+		SCA_par_tot_out = SCA_par_tot * 1.e-6,
+		Pipe_hl_out = piping_hl_total * 1.e-6,		//[MW] convert from W
+		Theta_ave_out = m_Theta_ave / m_d2r,
+		CosTh_ave_out = m_CosTh_ave;
 
 	double dni_costh = I_b*m_CosTh_ave;
+	double qinc_costh = dni_costh * m_Ap_tot / 1.e6;
+	double T_loop_outlet = m_TCS_T_htf_out[m_nSCA - 1] - 273.15;
 
 	double E_loop_accum_out = E_loop_accum * 3.6e-9;
 	double E_hdr_accum_out = E_hdr_accum * 3.6e-9;
 
+	double E_tot_accum = E_loop_accum_out + E_hdr_accum_out;
+
+	double E_field_out = E_field*3.6e-9;
 	//------------------------------------------------------------------
 
 	//Set outputs
@@ -3628,12 +3677,12 @@ void C_csp_trough_collector_receiver::write_output_intervals(double report_time_
 		v_temp_ts_time_end, report_time_end);
 }
 
-double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &, const C_csp_solver_sim_info &)
+double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &, double  /*MW*/)
+double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
 {
 	return std::numeric_limits<double>::quiet_NaN();
 }
@@ -3756,6 +3805,10 @@ void C_csp_trough_collector_receiver::EvacReceiver(double T_1_in, double m_dot, 
 	double T_save_tot, colopteff_tot;
 	
 	//cc--> note that xx and yy have size 'nea'
+
+	//-------
+
+	bool glazingIntact = m_GlazingIntact(hn, hv); //.at(hn, hv);
 
 	//---Re-guess criteria:---
 	if (m_reguess_args == NULL) goto lab_reguess;
@@ -4850,7 +4903,7 @@ Implemented and revised:  M.J. Wagner (10/2009)
 Copyright:  National Renewable Energy Lab (Golden, CO) 2009
 note  :  Tested against original EES version
 */
-double C_csp_trough_collector_receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int, int){
+double C_csp_trough_collector_receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int hn, int hv){
 	//           units                    ( K ,  K , bar, m/s)
 
 	double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6,

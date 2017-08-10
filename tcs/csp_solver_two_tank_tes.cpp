@@ -55,7 +55,7 @@ C_heat_exchanger::C_heat_exchanger()
 	m_m_dot_des_ave = m_eff_des = m_UA_des = std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_heat_exchanger::init(HTFProperties &, HTFProperties &, double q_transfer_des /*W*/,
+void C_heat_exchanger::init(HTFProperties &fluid_field, HTFProperties &fluid_store, double q_transfer_des /*W*/,
 	double dt_des, double T_h_in_des /*K*/, double T_h_out_des /*K*/)
 {
 	// Counter flow heat exchanger

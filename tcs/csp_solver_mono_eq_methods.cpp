@@ -1214,6 +1214,7 @@ int C_csp_solver::C_mono_eq_cr_on__pc_max_m_dot__tes_full::operator()(double T_h
 	}
 
 	// Get receiver HTF outputs
+	double m_dot_receiver = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
 	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
 
 	// First, call power cycle, because if it's in startup mode, we need the new timestep
@@ -1509,6 +1510,10 @@ int C_csp_solver::C_MEQ_cr_on__pc_max_m_dot__tes_off__T_htf_cold::operator()(dou
 		return -1;
 	}
 
+	// Get receiver HTF outputs
+	double m_dot_receiver = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;		//[C]
+
 	// Solve the PC performance at MAX PC HTF FLOW RATE
 	// Need to do this to get back PC T_htf_cold
 	// HTF State
@@ -1612,6 +1617,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::operator()(doub
 
 	// Get the receiver mass flow rate
 	double m_dot_rec_full_ts = mpc_csp_solver->mc_cr_out_solver.m_m_dot_salt_tot;	//[kg/hr]
+	double T_htf_rec_hot = mpc_csp_solver->mc_cr_out_solver.m_T_salt_hot;	//[C]
 
 	// Get the maximum possible mass flow rate from TES discharge
 	// ... using the guess value for the TES cold inlet temperature

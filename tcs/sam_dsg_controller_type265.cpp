@@ -745,6 +745,8 @@ public:
 		double emis_fin = 0.0;			//value( P_emis_fin );			//[-] Emissivity of fin
 		double mat_fin = 0.0;			//value( P_mat_fin );			//[-] Numerical code for fin material (2:Stainless_AISI316, 28: T-91 Steel)
 		// ***********************************************************
+		
+		double A_cs_b = CSP::pi*0.25*pow(d_t_boiler,2);	//[m^2] Cross-sectional area of boiler tube
 
 		if( !dsg_rec.Initialize_Receiver( n_panels, d_rec, per_rec, hl_ffact, flowtype, false, 0, 0.0 ))
 		{
@@ -767,6 +769,7 @@ public:
 		m_emis_sh = value( P_emis_sh );				//[-] Emissivity of superheater tube
 		m_abs_sh = value( P_abs_sh );				//[-] Absorptivity of superheater tube
 		m_mat_sh = value( P_mat_sh );				//[-] Material of superheater tube
+		double A_cs_sh = CSP::pi*0.25*pow(m_th_sh, 2);	//[m^2] Cross-sectional area of superheating tube
 		double h_sh_max = 4658519.0;		//[J/kg] Corresponds to maximum possible temperature of lookup tables so steam code doesn't bug out
    
 		if( !superheater.Initialize_Boiler( dsg_rec, m_h_sh, m_d_sh, m_th_sh, m_emis_sh, m_mat_sh, h_sh_max, 0.0, 0.0, 0.0, 0.0, false ) )
@@ -783,6 +786,7 @@ public:
 		m_emis_rh = value( P_emis_rh );				//[-] Emissivity of reheater tube
 		m_abs_rh = value( P_abs_rh );				//[-] Absorptivity of reheater tube
 		m_mat_rh = value( P_mat_rh );				//[-] Material of reheater tube
+		double A_cs_rh = CSP::pi*0.25*pow(m_th_rh, 2);	//[m^2] Cross-sectional area of reheater tube
 		double h_rh_max = 4658519.0;				//[J/kg]
 
 		if( !reheater.Initialize_Boiler( dsg_rec, m_h_rh, m_d_rh, m_th_rh, m_emis_rh, m_mat_rh, h_rh_max, 0.0, 0.0, 0.0, 0.0, false ) )
@@ -806,7 +810,7 @@ public:
 		water_state wp;
 		
 		water_TP( m_T_sh_out_des, m_P_hp_in_des, &wp ); 
-		double h_hp_in_des = wp.enth;	double s_hp_in_des = wp.entr; //Design high pressure turbine inlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density (kg/m^3)
+		double h_hp_in_des = wp.enth;	double s_hp_in_des = wp.entr; double rho_hp_in_des = wp.dens;	//Design high pressure turbine inlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density (kg/m^3)
 		
 		water_PS( m_P_hp_out_des, s_hp_in_des, &wp );
 		double h_hp_out_isen = wp.enth;		//[kJ/kg] Design reheat extraction enthalpy assuming isentropic expansion
@@ -815,7 +819,7 @@ public:
 		water_PH( m_P_hp_out_des, h_hp_out_des, &wp );
 
 		water_TP( m_T_rh_out_des, m_P_hp_out_des, &wp );
-		double h_rh_out_des = wp.enth; double s_rh_out_des = wp.entr; //Reheater outlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density [kg/m^3]
+		double h_rh_out_des = wp.enth; double s_rh_out_des = wp.entr; double rho_lp_in_des = wp.dens;	//Reheater outlet enthalpy(kJ/kg), entropy(kJ/kg-K), and density [kg/m^3]
 
 		//Design Condenser Pressure [kPa]
 		if(m_ct==1)
@@ -848,13 +852,17 @@ public:
 		//Governing equation: q_b_des = (h_sh_in_des - h_fw_out_des)*m_dot_des
 		double h_fw_out_des = h_sh_in_des - q_b_des/m_m_dot_des;
 		water_PH( m_P_hp_in_des, h_fw_out_des, &wp );
+		double T_fw_out_des = wp.temp; double rho_fw_out_des = wp.dens;	//[K] Design feedwater outlet temp, [kg/m^3] Design feedwater outlet density
+
+		double m_dot_tube_b = (m_m_dot_des/m_x_b_target)/boiler.Get_n_flowpaths()/(per_rec/(double)dsg_rec.Get_n_panels_rec()/d_t_boiler);	//[kg/s]
+		double m_dot_tube_sh = (m_m_dot_des/superheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_sh);				//[kg/s]
+		double m_dot_tube_rh = (m_m_dot_des/reheater.Get_n_flowpaths())/(per_rec/(double)dsg_rec.Get_n_panels_rec()/m_d_rh);					//[kg/s]
 
 		//Specific heat rate of receivers
 		m_q_sh_des_sp = h_hp_in_des - h_sh_in_des;		//[kJ/kg]
 		m_q_rh_des_sp = h_rh_out_des - h_hp_out_des;	//[kJ/kg]
 		m_q_b_des_sp = h_sh_in_des - h_fw_out_des;		//[kJ/kg]
 
-		double T_fw_out_des = wp.temp;
 		m_deltaT_fw_des = T_boil_des - T_fw_out_des;		//[K] Design difference between boiling temperature and feedwater outlet temperature
 		m_Psat_des *= 1.E3;		//[Pa] convert from kPa for calcs later in code
 

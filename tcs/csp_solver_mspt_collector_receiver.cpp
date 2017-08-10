@@ -80,7 +80,7 @@ C_csp_mspt_collector_receiver::C_csp_mspt_collector_receiver(C_pt_sf_perf_interp
 C_csp_mspt_collector_receiver::~C_csp_mspt_collector_receiver()
 {}
 
-void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs , 
+void C_csp_mspt_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
 				C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	mc_pt_heliostatfield.init();

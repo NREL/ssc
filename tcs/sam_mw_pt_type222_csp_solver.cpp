@@ -223,6 +223,7 @@ public:
 
 		int n_rows = 0; 
 		int n_cols = 0;
+		double *field_fl_props = value(P_field_fl_props, &n_rows, &n_cols);
 		mspt_receiver.m_field_fl_props.resize(n_rows, n_cols);
 		for( int r = 0; r < n_rows; r++ )
 			for( int c = 0; c < n_cols; c++ )
@@ -265,6 +266,9 @@ public:
 		mspt_receiver.m_eta_pump = value(I_eta_pump);
 		mspt_receiver.m_night_recirc = (int) value(I_night_recirc);
 		mspt_receiver.m_hel_stow_deploy = value(I_hel_stow_deploy);
+
+		//allocate the input array for the flux map
+		double *p_i_flux_map = allocate(I_flux_map, mspt_receiver.m_n_flux_y, mspt_receiver.m_n_flux_x);
 
 		// Are we modeling a direct ISCC case?
 		mspt_receiver.m_is_iscc = value(P_IS_DIRECT_ISCC) == 1;
@@ -309,7 +313,7 @@ public:
 
 	}
 
-	virtual int call( double time, double step, int )
+	virtual int call( double time, double step, int ncall )
 	{		
 		// Pass inputs to mspt_receiver class - NO CONVERSIONS!
 		ms_weather.m_solazi = value(I_azimuth);							//[deg] Solar azimuth angle 0 - 360, clockwise from due north, northern hemisphere
@@ -403,7 +407,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double )
+	virtual int converged( double time )
 	{
 		int out_type = -1;
 		std::string out_msg = "";

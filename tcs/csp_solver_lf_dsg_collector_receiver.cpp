@@ -336,6 +336,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	util::matrix_t<AbsorberProps*> m_AbsorberMaterial;
 	util::matrix_t<HTFProperties*> m_AnnulusGas;
 
+	int ii = 3;
 	m_AbsorberMaterial.resize(n_rows_abs, n_cols_abs);
 	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
@@ -837,6 +838,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		q_rec_tot_loop += m_q_rec[i];			//[kWt] LOOP total incident thermal power after *optical* losses and *defocus*
 		q_loss_tot_loop += m_q_loss[i];			//[kWt] LOOP total thermal losses
 	}
+	double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
 	double m_q_rec_tot_des = q_rec_tot_loop*(double)m_nLoops;			//[kWt] SYSTEM total design incident thermal power after *optical* losses
 	double q_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
 	m_q_dot_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;			//[kWt]
@@ -1196,7 +1198,7 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 }
 
 void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &,
+	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1275,6 +1277,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 			if(m_Q_field_losses_total > 0.0)
 			{
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+				int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
 
 				Q_fp_sum += Q_fp_i;		//[MJ]
 			}
@@ -1366,7 +1369,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 
 
 void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &,
+	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -1456,6 +1459,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 			if(m_Q_field_losses_total > 0.0)
 			{
 				double Q_fp_i = std::numeric_limits<double>::quiet_NaN();
+				int fp_code = freeze_protection(weather, P_field_out, T_cold_in, m_dot_loop, h_target, sim_info_temp, Q_fp_i);
 
 				Q_fp_sum += Q_fp_i;		//[MJ]
 			}
@@ -1757,7 +1761,11 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( defocus_code != C_monotonic_eq_solver::CONVERGED )
 			{
-				if( defocus_tol_solved != defocus_tol_solved && defocus_tol_solved < 0.1 )
+				if( defocus_tol_solved == defocus_tol_solved && defocus_tol_solved < 0.1 )
+				{
+					double blah = 1.23;
+				}
+				else
 				{
 					throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus failed to converge"));
 				}
@@ -1802,7 +1810,11 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 
 			if( m_dot_code != C_monotonic_eq_solver::CONVERGED )
 			{
-				if(tol_solved != tol_solved && tol_solved < 0.1)
+				if(tol_solved == tol_solved && tol_solved < 0.1)
+				{
+					double blah = 1.23;
+				}
+				else
 				{
 					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration did not"
 						"within a relative tolerance of 0.1."));
@@ -2023,7 +2035,7 @@ void C_csp_lf_dsg_collector_receiver::write_output_intervals(double report_time_
 		v_temp_ts_time_end, report_time_end);
 }
 
-double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &, const C_csp_solver_sim_info &)
+double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
@@ -2031,7 +2043,7 @@ double C_csp_lf_dsg_collector_receiver::calculate_optical_efficiency(const C_csp
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_lf_dsg_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &, double  /*MW*/)
+double C_csp_lf_dsg_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
 {
 	throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::write_output_intervals() is not complete"));
 
@@ -2054,6 +2066,9 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 	loop_optical_eta_off();
 
 	double I_bn = weather.m_beam;					//[W/m2] Current DNI
+	double T_db = weather.m_tdry + 273.15;			//[K] Dry bulb temp, convert from C
+	double T_dp = weather.m_tdew + 273.15;			//[K] Dewpoint temp, convert from C
+	double P_amb = weather.m_pres*100.0;			//[Pa] Ambient pressure, convert from mbar
 	double V_wind = weather.m_wspd;					//[m/s] Ambient windspeed
 
 	double shift = weather.m_shift*0.0174533;				//[rad] Shift in longitude from local standard meridian
@@ -2131,6 +2146,8 @@ void C_csp_lf_dsg_collector_receiver::loop_optical_eta(const C_csp_weatherreader
 
 	double StdTime = MidTrack;
 	double SolarTime = StdTime + ((shift)* 180 / CSP::pi) / 15.0 + EOT / 60.0;
+	// hour angle (arc of sun) in radians
+	double omega = (SolarTime - 12.0)*15.0*CSP::pi / 180.0;		//[rad]
 
 	if (SolarZen < CSP::pi / 2.0)
 	{
@@ -2792,7 +2809,11 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 
 	if( h_out_t_end_code != C_monotonic_eq_solver::CONVERGED )
 	{
-		if( tol_solved != tol_solved && tol_solved < 0.1 )
+		if( tol_solved == tol_solved && tol_solved < 0.1 )
+		{
+			double blah = 1.23;
+		}
+		else
 		{
 			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}		
@@ -2891,7 +2912,7 @@ void C_csp_lf_dsg_collector_receiver::set_output_values()
 
 void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
-	const C_csp_collector_receiver::S_csp_cr_inputs &,
+	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
@@ -2902,6 +2923,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double T_dp = weather.m_tdew + 273.15;				//[K] Dewpoint temp, convert from C
 	double P_amb = weather.m_pres*100.0;				//[Pa] Ambient pressure, convert from mbar
 	double V_wind = weather.m_wspd;						//[m/s] Ambient windspeed
+	double shift = weather.m_shift*0.0174533;			//[deg] Shift in longitude from local standard meridian
 	double SolarAz = weather.m_solazi;					//[deg] Solar azimuth angle
 	double SolarZen = weather.m_solzen*0.0174533;;		//Solar zenith angle [deg]
 	double T_pb_out = htf_state_in.m_temp + 273.15;		//[K] Fluid temperature from the power block, convert from C
@@ -3008,6 +3030,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 			// Guess the loop inlet/outlet enthalpies
 			water_TP(T_pb_out, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*(m_fP_sf_tot - m_fP_hdr_c))*100.0, &wp);
 			double h_b_in_guess = wp.enth;		//[kJ/kg]
+			double h_pb_out_guess = h_b_in_guess;	//[kJ/kg]
 			water_TP(m_T_field_out_des, check_pressure.P_check(P_turb_in_guess + dP_basis_guess*m_fP_hdr_h)*100.0, &wp);
 			double h_sh_out_guess = wp.enth;		//[kJ/kg]
 
@@ -3644,6 +3667,10 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 				}	// Main superheater iteration
 
 			}		// End superheater
+			else
+			{
+				double m_dot_field = m_dot_b*m_x_b_des*(double)m_nLoops;	//[kg/s] The total field mass flow rate is just the saturated steam coming from the boiler section
+			}
 
 			m_dot_b_tot = m_dot_b * (double)m_nLoops;
 
@@ -3692,6 +3719,12 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	double q_loss_sf = q_loss_rec + q_loss_piping;	//[MW] Total solar field losses, receiver + piping loss
 	double q_field_delivered = m_dot_field*max(h_to_pb - h_pb_out, 0.0);	//[kW] Energy balance indicating total energy delivered from the solar field
 	double h_field_out = h_to_pb;					// h_field_out is corrected later if fossil energy is supplied in topping mode
+
+	// 11.2.15 twn: corrected q_dump equation
+	double q_dump = (1.0 - m_defocus)*q_inc_tot;	//[MW] Total amount of energy dumped by collector defocusing
+	// this also works, assuming defocus is last multiplier before q_rec_tot:
+	//double q_dump = q_inc_tot*(1.0/m_defocus - 1.0);
+
 
 	double eta_thermal = 0.0;
 	if (q_rec_tot > 0.0)
@@ -3933,7 +3966,11 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 	else
 		W_dot_pump = (m_dot_field*(m_fP_hdr_c + m_fP_boil_to_sh + m_fP_sf_sh + m_fP_hdr_h) + m_dot_field / m_x_b_des*m_fP_sf_boil)*dP_basis / rho_fw / m_eta_pump*0.1;	//[MWe] P_turb in in bar
 
+	// Solar field efficiency
+	double eta_sf = eta_opt_ave * eta_thermal;
+
 	// Limit the reported values of solar azimuth/elevation
+	double solaralt = max(0.0, CSP::pi / 2 - SolarZen);
 	if (SolarZen >= CSP::pi / 2)
 		SolarAz = 0.0;
 

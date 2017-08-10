@@ -608,7 +608,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int )
+	virtual int call( double time, double step, int ncall )
 	{						
 		ms_weather.m_wspd = value(I_v_wind);
 		double field_control_csp = value(I_field_control);
@@ -671,7 +671,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double )
+	virtual int converged( double time )
 	{
 		int out_type = -1;
 		std::string out_msg = "";

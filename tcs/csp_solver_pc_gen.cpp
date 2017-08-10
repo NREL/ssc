@@ -225,13 +225,13 @@ double C_pc_gen::get_min_thermal_power()
 
 	return std::numeric_limits<double>::quiet_NaN();	//[MW]
 }
-double C_pc_gen::get_efficiency_at_TPH(double , double , double , double *)
+double C_pc_gen::get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_efficiency_at_TPH() is not complete"));
 
 	return std::numeric_limits<double>::quiet_NaN();
 }
-double C_pc_gen::get_efficiency_at_load(double , double *)
+double C_pc_gen::get_efficiency_at_load(double load_frac, double *w_dot_condenser)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_efficiency_at_load() is not complete"));
 
@@ -259,7 +259,7 @@ void C_pc_gen::call(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_power_cycle::S_control_inputs &inputs,
 	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
 	//C_csp_power_cycle::S_csp_pc_out_report &out_report,
-	const C_csp_solver_sim_info &)
+	const C_csp_solver_sim_info &sim_info)
 {
 	double twb = weather.m_twet+273.15;		//[K] Wet-bulb temperature, convert from C
 	double tdb = weather.m_tdry+273.15;		//[K] Dry-bulb temperature, convert from C

@@ -150,8 +150,8 @@ void C_csp_gen_collector_receiver::check_double_params_are_set()
 	}
 }
 
-void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs , 
-			C_csp_collector_receiver::S_csp_cr_solved_params & )
+void C_csp_gen_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
+			C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
 	// Check that ms_params are set
 	check_double_params_are_set();
@@ -394,18 +394,18 @@ double C_csp_gen_collector_receiver::get_col_startup_power()
 	return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
 }
 
-void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &,
-	const C_csp_solver_htf_1state &,
-	double ,
-	C_csp_collector_receiver::S_csp_cr_out_solver &,
+void C_csp_gen_collector_receiver::on(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	double field_control,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-	const C_csp_solver_sim_info &)
+	const C_csp_solver_sim_info &sim_info)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::on(...) is not complete"));
 }
 
 void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
-	const C_csp_solver_htf_1state &,
+	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
@@ -572,32 +572,32 @@ void C_csp_gen_collector_receiver::call(const C_csp_weatherreader::S_outputs &we
 
 }
 
-void C_csp_gen_collector_receiver::startup(const C_csp_weatherreader::S_outputs &,
-	const C_csp_solver_htf_1state &,
-	C_csp_collector_receiver::S_csp_cr_out_solver &,
+void C_csp_gen_collector_receiver::startup(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-	const C_csp_solver_sim_info &)
+	const C_csp_solver_sim_info &sim_info)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::startup(...) is not complete"));
 	
 	return;
 }
 
-void C_csp_gen_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &,
-	const C_csp_solver_htf_1state &,
-	C_csp_collector_receiver::S_csp_cr_est_out &,
-	const C_csp_solver_sim_info &)
+void C_csp_gen_collector_receiver::estimates(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
+	C_csp_collector_receiver::S_csp_cr_est_out &est_out,
+	const C_csp_solver_sim_info &sim_info)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::estimates(...) is not complete"));
 
 	return;
 }
 
-void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &,
-	const C_csp_solver_htf_1state &,
+void C_csp_gen_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
 	C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 	//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-	const C_csp_solver_sim_info &)
+	const C_csp_solver_sim_info &sim_info)
 {
 	m_mode = C_csp_collector_receiver::OFF;
 
@@ -636,20 +636,20 @@ void C_csp_gen_collector_receiver::converged()
 	return;
 }
 
-void C_csp_gen_collector_receiver::write_output_intervals(double ,
-	const std::vector<double> & , double )
+void C_csp_gen_collector_receiver::write_output_intervals(double report_time_start,
+	const std::vector<double> & v_temp_ts_time_end, double report_time_end)
 {
 	return;
 }
 
-double C_csp_gen_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &, const C_csp_solver_sim_info &)
+double C_csp_gen_collector_receiver::calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::calculate_optical_efficiency() is not complete"));
 
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_gen_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &, double /*MW*/)
+double C_csp_gen_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::calculate_thermal_efficiency_approx() is not complete"));
 

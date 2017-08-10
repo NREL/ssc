@@ -338,6 +338,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	T_salt_cold_in += 273.15;				//[K] Cold salt inlet temp, convert from C
 	double P_amb = weather.m_pres*100.0;	//[Pa] Ambient pressure, convert from mbar
 	double hour = time / 3600.0;			//[hr] Hour of the year
+	double hour_day = (int) hour%24;		//[hr] Hour of the day
 	double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
 	double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
 	// **************************************************************************************
@@ -624,12 +625,14 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			double T_s_sum = 0.0;
 			for( int i = 0; i < m_n_panels; i++ )
 				T_s_sum += m_T_s.at(i);
+			double T_s_ave = T_s_sum / m_n_panels;
 			double T_film_ave = (T_amb + m_T_salt_hot_target) / 2.0;
 
 			// Convective coefficient for external forced convection using Siebers & Kraabel
 			double k_film = ambient_air.cond(T_film_ave);				//[W/m-K] The conductivity of the ambient air
 			double mu_film = ambient_air.visc(T_film_ave);			//[kg/m-s] Dynamic viscosity of the ambient air
 			double rho_film = ambient_air.dens(T_film_ave, P_amb);	//[kg/m^3] Density of the ambient air
+			double c_p_film = ambient_air.Cp(T_film_ave);				//[kJ/kg-K] Specific heat of the ambient air
 			double Re_for = rho_film*v_wind*m_d_rec / mu_film;			//[-] Reynolds number
 			double ksD = (m_od_tube / 2.0) / m_d_rec;						//[-] The effective roughness of the cylinder [Siebers, Kraabel 1984]
 			double Nusselt_for = CSP::Nusselt_FC(ksD, Re_for);		//[-] S&K
@@ -736,6 +739,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			for( int i = 0; i < m_n_panels; i++ )
 			{
 				q_conv_sum += m_q_dot_conv.at(i);
+				double blah = m_q_dot_conv.at(i);
 				q_rad_sum += m_q_dot_rad.at(i);
 				//q_inc_sum += m_q_dot_inc.at(i,0);
 				q_abs_sum += m_q_dot_abs.at(i);
@@ -750,6 +754,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 			if( m_Q_dot_piping_loss > 0.0 )
 			{
 				double m_dot_salt_tot_temp = m_dot_salt*m_n_lines;		//[kg/s]
+				double delta_T_piping = m_Q_dot_piping_loss / (m_dot_salt_tot_temp*c_p_coolant);	//[K]
 				T_salt_hot_guess = T_salt_hot_guess - m_Q_dot_piping_loss/(m_dot_salt_tot_temp*c_p_coolant);	//[K]
 			}
 
@@ -779,6 +784,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		// Now we can calculate some of the parasitics associated with pumping the coolant fluid
 		// Calculating the pressure drop across the receiver panels
 		m_dot_salt_tot = m_dot_salt*m_n_lines;
+		double m_dot_tube = m_dot_salt / (double)m_n_t;		//[kg/s] The mass flow through each individual tube
 
 		// Limit the HTF mass flow rate to the maximum, if needed
 		if( (m_dot_salt_tot > m_dot_htf_max) || m_itermode == 2 )
@@ -990,8 +996,8 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	m_eta_field_iter_prev = field_eff;	//[-]
 }
 
-void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &,
-	const C_csp_solver_htf_1state &,
+void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
+	const C_csp_solver_htf_1state &htf_state_in,
 	const C_csp_solver_sim_info &sim_info)
 {
 	// Don't currently need *any* of these inputs, but if we add recirculation or thermal capacitance it would be helpful to have in place

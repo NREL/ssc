@@ -163,7 +163,7 @@ public:
 		3 column: result value	[(nx*ny) values]
 		Repeat list for each layer
 		*/
-		int rows;
+		int rows, cols;
 
 		//get initial values. Track the change in values over the list
 		double
