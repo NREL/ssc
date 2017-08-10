@@ -224,11 +224,15 @@ double C_pc_steam_heat_sink::get_htf_pumping_parasitic_coef()
 double C_pc_steam_heat_sink::get_efficiency_at_TPH(double , double , double , double *)
 {
 	throw(C_csp_exception("C_pc_steam_heat_sink::get_efficiency_at_TPH() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_pc_steam_heat_sink::get_efficiency_at_load(double , double *)
 {
 	throw(C_csp_exception("C_pc_steam_heat_sink::get_efficiency_at_load() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_pc_steam_heat_sink::get_max_q_pc_startup()

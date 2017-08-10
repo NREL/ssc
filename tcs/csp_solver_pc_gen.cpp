@@ -174,57 +174,83 @@ int C_pc_gen::get_operating_state()
 double C_pc_gen::get_cold_startup_time()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_cold_startup_time() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_pc_gen::get_warm_startup_time()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_warm_startup_time() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_pc_gen::get_hot_startup_time()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_hot_startup_time() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_pc_gen::get_standby_energy_requirement()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_standby_energy_requirement() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWt]
 }
 double C_pc_gen::get_cold_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_cold_startup_energy() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
 }
 double C_pc_gen::get_warm_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_warm_startup_energy() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
 }
 double C_pc_gen::get_hot_startup_energy()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_hot_startup_energy() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWh]
 }
 double C_pc_gen::get_max_thermal_power()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_max_thermal_power() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MW]
 } 
 double C_pc_gen::get_min_thermal_power()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_min_thermal_power() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MW]
 }
 double C_pc_gen::get_efficiency_at_TPH(double , double , double , double *)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_efficiency_at_TPH() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_pc_gen::get_efficiency_at_load(double , double *)
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_efficiency_at_load() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 // This can vary between timesteps for Type224, depending on remaining startup energy and time
 double C_pc_gen::get_max_q_pc_startup()
 {
 	throw(C_csp_exception("C_csp_gen_pc::get_max_q_pc_startup() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWt]
 }
 
 double C_pc_gen::get_htf_pumping_parasitic_coef()
 {
 	throw(C_csp_exception("C_pc_gen::get_htf_pumping_parasitic_coef() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();	//[MWt]	// kWe/kWt
 }
 
 

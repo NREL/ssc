@@ -218,10 +218,14 @@ double C_pc_sco2::get_min_thermal_power()
 double C_pc_sco2::get_efficiency_at_TPH(double , double , double , double *)
 {
 	throw(C_csp_exception("C_pc_sco2::get_efficiency_at_TPH() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 double C_pc_sco2::get_efficiency_at_load(double , double *)
 {
 	throw(C_csp_exception("C_pc_sco2::get_efficiency_at_load() is not complete"));
+
+	return std::numeric_limits<double>::quiet_NaN();
 }
 
 // This can vary between timesteps for Type224, depending on remaining startup energy and time

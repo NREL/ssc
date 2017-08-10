@@ -1658,6 +1658,8 @@ bool csp_dispatch_opt::optimize()
 
         return false;
     }
+
+    return false;
 }
 
 bool strcompare(std::string a, std::string b)

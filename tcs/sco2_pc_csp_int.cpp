@@ -1033,6 +1033,7 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
 
 					ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
 					continue;
+					fmin_rerun = false;
 				}
 				else
 				{

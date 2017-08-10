@@ -537,7 +537,7 @@ public:
 				return -1;
 			}
 		}
-		else if( (rec_fl = HTFProperties::User_defined)!=0 )
+		else if( rec_fl = HTFProperties::User_defined )
 		{
 			int nrows = 0, ncols = 0;
 			double *fl_mat = value(P_rec_fl_props, &nrows, &ncols);
