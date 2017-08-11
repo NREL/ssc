@@ -61,8 +61,8 @@ int C_csp_solver::C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus::operator()(double
 
 	c_solver.settings(1.E-3, 50, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), false);
 
-	double T_htf_cold_guess_colder = mpc_csp_solver->m_T_htf_pc_cold_est - 273.15;		//[C], convert from [K]
-	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;	//[C]
+	double T_htf_cold_guess_colder = mpc_csp_solver->m_T_htf_pc_cold_est;	//[C], convert from [K]
+	double T_htf_cold_guess_warmer = T_htf_cold_guess_colder + 10.0;		//[C]
 
 	double T_htf_cold_solved, tol_solved;
 	T_htf_cold_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
@@ -89,7 +89,8 @@ int C_csp_solver::C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus::operator()(double
 		}
 		else
 		{
-			throw(C_csp_exception("C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr received exception from mono equation solver"));
+			*q_dot_pc = std::numeric_limits<double>::quiet_NaN();
+			return -1;
 		}
 	}
 
