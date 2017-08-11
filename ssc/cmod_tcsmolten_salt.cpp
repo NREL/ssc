@@ -74,6 +74,7 @@
 static var_info _cm_vtab_tcsmolten_salt[] = {
 	/*   VARTYPE           DATATYPE         NAME                           LABEL                                                     UNITS            META           GROUP            REQUIRED_IF                 CONSTRAINTS         UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",           "" },
+	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",  "solar resouce data in memory",									  "",			  "",			 "WindPower",      "?",						  "",					  "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
@@ -782,7 +783,14 @@ public:
 
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("solar_resource_file");
+		if (is_assigned("solar_resource_filename")){
+			weatherfile wf(as_string("solar_resource_file"));
+			
+		}
+		if (is_assigned("solar_resource_data")){
+
+		}
+
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
@@ -802,7 +810,7 @@ public:
         //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
         if( steps_per_hour < 0 )
         {
-            double sph_d = 3600. / weather_reader.get_step_seconds();
+            double sph_d = 3600. / weather_reader.m_wdp->step_sec();
             steps_per_hour = (int)( sph_d + 1.e-5 );
             if( (double)steps_per_hour != sph_d )
                 throw spexception("The time step duration must be evenly divisible within an hour.");

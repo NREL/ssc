@@ -188,6 +188,7 @@ public:
 	// virtual functions specific to weather data source
 	virtual bool has_data_column(size_t id) = 0;
 	virtual bool read( weather_record *r ) = 0; // reads one more record
+	virtual void set_counter_to(size_t cur_index);
 	// some helper methods for ease of use of this class
 	virtual weather_header &header()  {
 		if ( !m_hdrInitialized )

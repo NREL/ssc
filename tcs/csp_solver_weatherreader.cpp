@@ -71,16 +71,15 @@ C_csp_weatherreader::C_csp_weatherreader()
 
 void C_csp_weatherreader::init()
 {
-	if(m_is_wf_init)
+	if (m_is_wf_init)
 		return;
-	
-	if( !m_wfile.open(m_filename) )
-	{
-		m_error_msg = util::format("Could not open %s for reading", m_filename.c_str());
+
+	if (m_weather_data_provider->has_message()){
+		m_error_msg = m_weather_data_provider->message();
 		throw(C_csp_exception(m_error_msg, ""));
 	}
 	
-	m_wfile.header( &m_hdr );
+	m_weather_data_provider->header( &m_hdr );
 	
 	// Set solved parameters
 	ms_solved_params.m_lat = m_hdr.lat;		//[deg]
@@ -95,12 +94,12 @@ void C_csp_weatherreader::init()
         The year is also evenly divisible by 400. Then it is a leap year.
     */
     weather_record r;
-    m_wfile.read( &r );
-    m_wfile.rewind();
+    m_weather_data_provider->read( &r );
+    m_weather_data_provider->rewind();
 
     ms_solved_params.m_leapyear = (r.year % 4 == 0) && ( (r.year % 100 != 0) || (r.year % 400 == 0) );
     //do a special check to see if it's a leap year but the weather file supplies 8760 values nonetheless
-    if( ms_solved_params.m_leapyear && (m_wfile.nrecords() % 8760 == 0) )
+    if( ms_solved_params.m_leapyear && (m_weather_data_provider->nrecords() % 8760 == 0) )
         ms_solved_params.m_leapyear = false;
     
 	// ***********************************************************
@@ -114,16 +113,6 @@ void C_csp_weatherreader::init()
 	}
 
 	m_is_wf_init = true;
-}
-
-double C_csp_weatherreader::get_n_records()
-{
-	return (double)m_wfile.nrecords();		//[-] Number of weather records in weather file
-}
-
-double C_csp_weatherreader::get_step_seconds()
-{
-	return (double)m_wfile.step_sec();
 }
 
 void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
@@ -148,9 +137,9 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 
 		for( int i = 0; i<nread; i++ )		//for all calls except the first, nread=1
 		{
-			if( !m_wfile.read( &m_rec ) )
+			if( !m_weather_data_provider->read( &m_rec ) )
 			{
-				m_error_msg = util::format("failed to read from weather file %s at time %lg", m_wfile.filename().c_str(), time);
+				m_error_msg = m_weather_data_provider->message();
 				throw(C_csp_exception(m_error_msg, ""));
 			}
 		}
@@ -237,7 +226,7 @@ bool C_csp_weatherreader::read_time_step(int time_step, C_csp_solver_sim_info &p
 
     if(time_step < 0)
     {
-        m_wfile.rewind();
+		m_weather_data_provider->rewind();
         converged();
     }
     else
@@ -246,7 +235,7 @@ bool C_csp_weatherreader::read_time_step(int time_step, C_csp_solver_sim_info &p
     
 		p_sim_info.ms_ts.m_time = (time_step + 1.) * p_sim_info.ms_ts.m_step;
     
-        m_wfile.set_counter_to( time_step );
+		m_weather_data_provider->set_counter_to(time_step);
         m_first = false;
 
         timestep_call(p_sim_info);
@@ -254,11 +243,6 @@ bool C_csp_weatherreader::read_time_step(int time_step, C_csp_solver_sim_info &p
         converged();
     }
     return true;
-}
-
-int C_csp_weatherreader::get_current_step()
-{
-    return m_wfile.get_counter_value();
 }
 
 void C_csp_weatherreader::converged()

@@ -156,9 +156,6 @@ public:
 class C_csp_weatherreader
 {
 private:
-	weatherfile m_wfile;
-	weather_header m_hdr;
-	weather_record m_rec;
 	bool m_first;		// flag to indicate whether this is the first call
 
 	// member string for exception messages
@@ -171,6 +168,10 @@ private:
 	bool m_is_wf_init;
 
 public:
+	weather_data_provider* m_weather_data_provider;
+	weather_header m_hdr;
+	weather_record m_rec;
+
 	C_csp_weatherreader();
 
 	~C_csp_weatherreader(){};
@@ -179,15 +180,9 @@ public:
 
 	void timestep_call(const C_csp_solver_sim_info &p_sim_info);
 
-	double get_n_records();
-
-    double get_step_seconds();
-
 	void converged();
 
     bool read_time_step(int time_step, C_csp_solver_sim_info &p_sim_info);
-
-    int get_current_step();
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
