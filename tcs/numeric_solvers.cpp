@@ -95,15 +95,15 @@ void C_monotonic_eq_solver::settings( double tol, int iter_limit, double x_lower
 
 double C_monotonic_eq_solver::check_against_limits(double x)
 {
-	if( m_func_x_lower != m_func_x_lower && m_func_x_upper != m_func_x_upper )
+	if( !std::isfinite(m_func_x_lower) && !std::isfinite(m_func_x_upper) )
 	{
 		return x;
 	}
-	else if( m_func_x_lower != m_func_x_lower )
+	else if ( !std::isfinite(m_func_x_lower) )
 	{
 		return std::min(m_func_x_upper, x);
 	}
-	else if( m_func_x_upper != m_func_x_upper )
+	else if ( !std::isfinite(m_func_x_upper) )
 	{
 		return std::max(m_func_x_lower, x);
 	}
@@ -194,14 +194,14 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	// *****************************************************************
 
 	// Check whether function returned real results
-	if( y1 != y1 && y2 != y2 )
+	if ( !std::isfinite(y1) && !std::isfinite(y2) )
 	{
 		// Neither x guess produced a real result. Get out.
 		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		iter_solved = 0;
 		return NO_SOLUTION;
 	}
-	else if( y1 != y1 )
+	else if( !std::isfinite(y1) )
 	{
 		// y2 produced a real result, but y1 did not
 		// So try guessing a new x1 on other side of x2
@@ -222,14 +222,14 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// Check if this worked...
-		if( y1 != y1 )
+		if( !std::isfinite(y1) )
 		{
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
 			return NO_SOLUTION;
 		}
 	}
-	else if( y2 != y2 )
+	else if( !std::isfinite(y2) )
 	{
 		// y1 produced a real result, but y2 did not
 		// So try guessing a new x2 on the other side of x1
@@ -250,7 +250,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// Check if this worked...
-		if( y2 != y2 )
+		if( !std::isfinite(y2) )
 		{
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
@@ -409,11 +409,11 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		double diff_x_bounds = std::numeric_limits<double>::quiet_NaN();
 		if( E_slope > 0.0 )
 		{
-			if( m_x_pos_err != m_x_pos_err )
+			if ( !std::isfinite(m_x_pos_err) )
 			{	// Haven't set x bound on positive error. Because slope > 0, then check neg err x against Upper bound
 				diff_x_bounds = m_func_x_upper - m_x_neg_err;
 			}
-			else if( m_x_neg_err != m_x_neg_err )
+			else if ( !std::isfinite(m_x_neg_err) )
 			{	// Haven't set x bound on negative error. Because slope > 0, then check pos err x against Lower bound
 				diff_x_bounds = m_x_pos_err - m_func_x_lower;
 			}
@@ -424,11 +424,11 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 		else
 		{
-			if( m_x_pos_err != m_x_pos_err )
+			if ( !std::isfinite(m_x_pos_err) )
 			{	// Haven't set x bound on positive error. Because slope < 0, then check neg err x against Lower bound
 				diff_x_bounds = m_x_neg_err - m_func_x_lower;
 			}
-			else if( m_x_neg_err != m_x_neg_err )
+			else if ( !std::isfinite(m_x_neg_err) )
 			{	// Haven't set x bound on negative error. Because slope < 0, then check pos err x against Upper bound
 				diff_x_bounds = m_func_x_upper - m_x_pos_err;
 			}
@@ -552,7 +552,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		// Subsequent iterations need to re-calculate x
 		if( m_iter > 1 )
 		{
-			if( m_y_err != m_y_err )
+			if ( !std::isfinite(m_y_err) )
 			{	// Function isn't returning a real value with which to calculate an error
 				if( !m_is_neg_bound && !m_is_pos_bound )
 				{	// This shouldn't occur, as we need at least one bound to find the error slope, but let's keep it...
