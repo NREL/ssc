@@ -5216,27 +5216,6 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 	return 0;
 }
 
-void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
-	double field_control_in,
-	double tol,
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance)
-{
-	// The collector-receiver is on and delivering hot HTF to the PC and TES
-	// The PC accepts floating input
-	// The TES is fully charging over the timestep
-
-	throw(C_csp_exception("Retiring solver_cr_on__pc_float__tes_full for mass flow constraint updates..", ""));
-}
-
-void C_csp_solver::solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double tol,
-	int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance,
-	double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/)
-{
-	throw(C_csp_exception("Retiring solver__pc_on_fixed__tes_dc for mass flow constraint updates..", ""));
-}
-
 void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 	double tol,
 	double & time_tes_dc,
@@ -5295,28 +5274,6 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 	time_tes_dc = c_eq.m_step;	//[s]
 
 	return;
-}
-
-void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double field_control_in,
-	double tol,
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
-{
-	throw(C_csp_exception("Retiring solver_cr_on__pc_fixed__tes_dc for mass flow constraint updates..", ""));	
-}
-
-void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double field_control_in, 
-	double tol, 
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
-{
-	// CR in on
-	// PC is controlled for a fixed q_dot_in
-	// excess CR output is charging TES
-	
-	throw(C_csp_exception("Retiring solver_cr_on__pc_fixed__tes_ch for mass flow constraint updates..", ""));
 }
 
 void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, double tol, int &exit_mode, double &exit_tolerance)

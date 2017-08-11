@@ -1011,35 +1011,12 @@ private:
 	void solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		double &time_pc_su /*s*/, 
 		int & exit_mode, double &T_pc_in_exit_tolerance);
-	
-	void solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode, 
-		double field_control_in, 
-		double tol, 
-		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
-
-	void solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-		double field_control_in,
-		double tol,
-		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
 
 	void solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		double tol,
 		double & time_tes_dc,
 		int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
 		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
-
-	void solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-		double tol,
-		int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance,
-		double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/);
-
-	void solver_cr_on__pc_float__tes_full(int power_cycle_mode,
-		double field_control_in,
-		double tol,
-		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance);
 
 	int solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_in);
 
