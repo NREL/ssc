@@ -1741,7 +1741,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						else
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code "
 								"failed to find a solution to achieve a PC HTF mass flow rate less than maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
@@ -1794,7 +1794,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					catch (C_csp_exception)
 					{
 						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time/3600.0, op_mode_str.c_str()), ""));
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -1811,7 +1811,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								"failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
+								" failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -3009,7 +3009,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_OFF__TES_FULL__AUX_OFF operating mode, but the code"
-								"failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -4173,7 +4173,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					{
 						// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-							"failed to solve at defocus = %lg. Controller will shut-down CR and PC",
+							" failed to solve at defocus = %lg. Controller will shut-down CR and PC",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -4226,7 +4226,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								"failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -4302,7 +4302,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_FULL__AUX_OFF operating mode, but the code"
-								"failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -5202,7 +5202,7 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 		if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 		{
 			std::string msg = util::format("At time = %lg C_csp_solver::solver_cr_on__pc_match__tes_full iteration "
-				"failed to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
+				" failed to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
 			mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
