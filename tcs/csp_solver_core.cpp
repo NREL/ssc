@@ -990,17 +990,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
                 
 				// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
-				double eta_diff = 1.;
-				double eta_calc = dispatch.params.eta_cycle_ref;
-				int i = 0;
 				if (dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
 					q_pc_max = 0.0;
 				else
 				{
+					double wcond;
+					double eta_corr = mc_power_cycle.get_efficiency_at_TPH(mc_weather.ms_outputs.m_tdry, 1., 30., &wcond) / m_cycle_eta_des; 
+					double eta_calc = dispatch.params.eta_cycle_ref * eta_corr;
+					double eta_diff = 1.;
+					int i = 0;
 					while (eta_diff > 0.001 && i<20)
 					{
 						double q_pc_est = dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
-						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des);		// Calculated power cycle efficiency
+						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des) * eta_corr;		// Calculated power cycle efficiency
 						eta_diff = fabs(eta_calc - eta_new);
 						eta_calc = eta_new;
 						i++;
