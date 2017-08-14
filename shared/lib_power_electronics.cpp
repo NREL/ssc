@@ -255,7 +255,7 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	compute_to_batt_load_grid(P_battery_dc, _P_pv, _P_load, inverter_efficiency);
 	
 	// add battery power inversion loss to total loss
-	double P_battery_ac = _P_battery;
+	double P_battery_ac = _P_battery; 
 	_P_loss += fabs(P_battery_ac - P_battery_dc);
 
 	// check assumption on inverter efficiency

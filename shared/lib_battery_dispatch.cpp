@@ -479,8 +479,6 @@ void dispatch_manual_t::dispatch(size_t year,
 	double battery_voltage = _Battery->battery_voltage();										 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
-//	double charge_total = _Battery->battery_charge_total();								         // [Ah]
-//	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
 
 	// Options for how to use PV
@@ -501,7 +499,7 @@ void dispatch_manual_t::dispatch(size_t year,
 	size_t idx = util::index_year_hour_step((int)year, (int)hour_of_year, (int)step, (int)(1 / _dt_hour));
 
 	do {
-
+		 
 		// Recompute
 		if (!_pv_dispatch_to_battery_first)
 			compute_energy_load_priority(energy_needed_to_fill);

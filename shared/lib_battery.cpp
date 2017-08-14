@@ -163,14 +163,19 @@ bool capacity_t::check_SOC(double q0_old)
 
 	// check if overcharged
 	if (_q0 > _qmax * _SOC_max * 0.01)
+	{
 		_q0 = _qmax * _SOC_max * 0.01;
+		_I = -(_q0 - q0_old) / _dt_hour;
+	}
 	// check if undercharged 
 	else if (_q0 < _qmax * _SOC_min * 0.01)
+	{
 		_q0 = _qmax * _SOC_min * 0.01;
+		_I += (_q0 - q0_old) / _dt_hour;
+	}
 	else
 		SOC_violated = false;
 
-	_I = -(_q0 - q0_old) / _dt_hour;
 	if (fabs(_I) < low_tolerance)
 	{
 		_I = 0;
@@ -457,12 +462,16 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 	double qmax_tmp = _qmax*capacity_percent*0.01;
 	if (_q0 > qmax_tmp)
 	{
-		// investigate more, do we actually need to adjust current?
+		/*
+		investigate more, do we actually need to adjust current? 
+		Specifically in the case where battery is discharging, does it make sense to increase I to reduce q0?
+
 		if (fabs(_I) > 0)
 		{
 			_I_loss += (_q0 - qmax_tmp) / _dt_hour;
 			_I += (_q0 - qmax_tmp) / _dt_hour;
 		}
+		*/
 		_q0 = qmax_tmp;
 	}
 	update_SOC();
