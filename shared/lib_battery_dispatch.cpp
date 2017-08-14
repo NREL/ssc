@@ -841,7 +841,9 @@ void automate_dispatch_t::update_dispatch(int hour_of_year, int step, int idx)
 
 	if (hour_of_day == 0 && hour_of_year != _hour_last_updated)
 	{
-		double E_max;     // [kWh] - the maximum energy that can be cycled
+
+		// [kWh] - the maximum energy that can be cycled
+		double E_max = 0;     
 
 		check_new_month(hour_of_year, step);
 

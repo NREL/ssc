@@ -160,18 +160,20 @@ int capacity_t::charge_operation(){ return _charge; }
 bool capacity_t::check_SOC(double q0_old)
 {
 	bool SOC_violated = true;
+	double q_upper = _qmax * _SOC_max * 0.01;
+	double q_lower = _qmax * _SOC_min * 0.01;
 
 	// check if overcharged
-	if (_q0 > _qmax * _SOC_max * 0.01)
+	if (_q0 > q_upper)
 	{
-		_q0 = _qmax * _SOC_max * 0.01;
-		_I = -(_q0 - q0_old) / _dt_hour;
+		_I += (_q0 - q_upper) / _dt_hour;
+		_q0 = q_upper;
 	}
 	// check if undercharged 
-	else if (_q0 < _qmax * _SOC_min * 0.01)
+	else if (_q0 < q_lower)
 	{
-		_q0 = _qmax * _SOC_min * 0.01;
-		_I += (_q0 - q0_old) / _dt_hour;
+		_I += (_q0 - q_lower) / _dt_hour;
+		_q0 = q_lower;
 	}
 	else
 		SOC_violated = false;
@@ -446,7 +448,7 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 	_dt_hour = dt;
 	double q0_old = _q0;
 	_I = I;
-
+	 
 	// compute charge change ( I > 0 discharging, I < 0 charging)
 	_q0 -= _I*dt;
 
