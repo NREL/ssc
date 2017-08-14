@@ -152,7 +152,9 @@ class weatherdata : public weather_data_provider
 	size_t name_to_id(const char *name);
 
 public:
-	// creates vector of weather_records to store data
+	/* Detects file format, read header information, detects which data columns are available and at what index
+	and read weather record information.
+	Calculates twet if missing, and interpolates meteorological data if requested.*/
 	weatherdata(var_data *data_table);
 	virtual ~weatherdata();
 

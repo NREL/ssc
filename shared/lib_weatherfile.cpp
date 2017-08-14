@@ -417,25 +417,6 @@ double calc_twet(double T, double RH, double P)
 	return Twet;
 }
 
-static double wiki_dew_calc(double T, double RH)
-{
-	// ref: http://en.wikipedia.org/wiki/Dew_point
-
-	if ( RH > 0 && RH < 100 )
-	{
-		static const double a = 17.271;
-		static const double b = 237.7;
-		double gamma = a*T / (b + T) + log(RH / 100.0);
-		double denom = a - gamma;
-		if ( denom != 0.0 )
-			return b*gamma / denom;
-	}
-
-	// ultra-simple equation (OK as long as RH > 50%)
-	return  T - (100 - RH) / 5;
-}
-
-
 void weather_header::reset()
 {
 	location = city = state = country = source = description = url = "";
@@ -447,8 +428,8 @@ void weather_record::reset()
 {
 	year = month = day = hour = 0;
 	minute = std::numeric_limits<double>::quiet_NaN();
-	gh = dn = df = wspd = wdir = std::numeric_limits<double>::quiet_NaN();
-	tdry = twet = tdew = rhum = pres = snow = alb = aod = std::numeric_limits<double>::quiet_NaN();
+	gh = dn = df = poa = wspd = wdir = std::numeric_limits<double>::quiet_NaN();
+	tdry = twet = tdew = rhum = pres = snow = alb =  aod = std::numeric_limits<double>::quiet_NaN();
 }
 
 

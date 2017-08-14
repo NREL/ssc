@@ -49,6 +49,7 @@
 
 #include <string>
 #include "common.h"
+#include "lib_weatherfile.h"
 
 var_info vtab_standard_financial[] = {
 
@@ -852,6 +853,12 @@ weatherdata::weatherdata( var_data *data_table )
 
 			if ( i < tdry.len ) r->tdry = tdry.p[i];
 			if ( i < twet.len ) r->twet = twet.p[i];
+			else{
+				// calculate twet if tdry & rh are available
+				if ((i < tdry.len) && (i < rhum.len)){
+					r->twet = (float)wiki_dew_calc(tdry.p[i], rhum.p[i]);
+				}
+			}
 			if ( i < tdew.len ) r->tdew = tdew.p[i];
 
 			if ( i < rhum.len ) r->rhum = rhum.p[i];

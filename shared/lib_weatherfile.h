@@ -53,8 +53,6 @@
 #include <string>
 #include <vector>  // needed to compile in typelib_vc2012
 
-
-
 /***************************************************************************\
 
    Function humidity()
@@ -89,6 +87,24 @@ float calc_dewpt(float db,float rh);
 // Calculate wet bulb temperature from T (dry bulb, 'C), RH (%), Pressure (mbar)
 // see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
 double calc_twet( double T, double RH, double P );
+
+static double wiki_dew_calc(double T, double RH)
+{
+	// ref: http://en.wikipedia.org/wiki/Dew_point
+
+	if (RH > 0 && RH < 100)
+	{
+		static const double a = 17.271;
+		static const double b = 237.7;
+		double gamma = a*T / (b + T) + log(RH / 100.0);
+		double denom = a - gamma;
+		if (denom != 0.0)
+			return b*gamma / denom;
+	}
+
+	// ultra-simple equation (OK as long as RH > 50%)
+	return  T - (100 - RH) / 5;
+};
 
 struct weather_header {	
 	weather_header() { reset(); }
@@ -167,7 +183,7 @@ public:
 	bool header(weather_header *hdr)
 	{
 		if (!hdr) return false;
-		*hdr = m_hdr;
+		hdr = &m_hdr;
 		return true;
 	}
 	bool ok(){ return m_ok; }
@@ -188,7 +204,7 @@ public:
 	// virtual functions specific to weather data source
 	virtual bool has_data_column(size_t id) = 0;
 	virtual bool read( weather_record *r ) = 0; // reads one more record
-	virtual void set_counter_to(size_t cur_index);
+	virtual void set_counter_to(size_t cur_index) = 0;
 	// some helper methods for ease of use of this class
 	virtual weather_header &header()  {
 		if ( !m_hdrInitialized )
@@ -213,6 +229,9 @@ private:
 
 public:
 	weatherfile();
+	/* Detects file format, read header information, detects which data columns are available and at what index
+	and read weather record information.
+	Calculates twet if missing, and interpolates meteorological data if requested.*/
 	weatherfile( const std::string &file, bool header_only = false, bool interp = false );
 	virtual ~weatherfile();
 

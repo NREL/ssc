@@ -169,7 +169,7 @@ private:
 
 public:
 	weather_data_provider* m_weather_data_provider;
-	weather_header m_hdr;
+	weather_header* m_hdr;
 	weather_record m_rec;
 
 	C_csp_weatherreader();

@@ -239,7 +239,7 @@ public:
 
 		int steps_per_hour = 1;			//[-]
 
-		int n_wf_records = (int)weather_reader.get_n_records();
+		int n_wf_records = (int)weather_reader.m_weather_data_provider->get_counter_value();
 		steps_per_hour = n_wf_records / 8760;	//[-]
 
 		int n_steps_fixed = steps_per_hour*8760;	//[-]

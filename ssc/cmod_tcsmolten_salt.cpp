@@ -810,7 +810,7 @@ public:
         //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
         if( steps_per_hour < 0 )
         {
-            double sph_d = 3600. / weather_reader.m_wdp->step_sec();
+            double sph_d = 3600. / weather_reader.m_weather_data_provider->step_sec();
             steps_per_hour = (int)( sph_d + 1.e-5 );
             if( (double)steps_per_hour != sph_d )
                 throw spexception("The time step duration must be evenly divisible within an hour.");
@@ -855,7 +855,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-		int n_steps_full = (int)weather_reader.get_n_records(); //steps_per_hour * 8760;
+		int n_steps_full = (int)(weather_reader.m_weather_data_provider->get_counter_value()); //steps_per_hour * 8760;
 		if (!sf_haf.setup(n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
