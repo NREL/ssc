@@ -183,7 +183,7 @@ public:
 	bool header(weather_header *hdr)
 	{
 		if (!hdr) return false;
-		hdr = &m_hdr;
+		*hdr = m_hdr;
 		return true;
 	}
 	bool ok(){ return m_ok; }
