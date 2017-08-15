@@ -294,7 +294,7 @@ struct byDOD
 class voltage_table_t : public voltage_t
 {
 public:
-	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table);
+	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R);
 
 	// deep copy
 	voltage_table_t * clone();
@@ -361,7 +361,9 @@ public:
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
 protected:
-	double voltage_model(double q0, double qmax, double T);
+	
+	// cell voltage model
+	double voltage_model(double q0, double qmax, double I_string, double T);
 
 private:
 	double _V_ref_50;				// Reference voltage at 50% SOC

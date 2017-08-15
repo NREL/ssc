@@ -527,13 +527,15 @@ double voltage_t::cell_voltage(){ return _cell_voltage; }
 double voltage_t::R_battery(){ return _R_battery; }
 
 // Voltage Table 
-voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table) :
+voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R) :
 voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, voltage_table)
 {
 	for (int r = 0; r != (int)_batt_voltage_matrix.nrows(); r++)
 		_voltage_table.push_back(table_point(_batt_voltage_matrix.at(r, 0), _batt_voltage_matrix.at(r, 1)));
 	
 	std::sort(_voltage_table.begin(), _voltage_table.end(), byDOD());
+
+	_R = R;
 }
 
 voltage_table_t * voltage_table_t::clone(){ return new voltage_table_t(*this); }
@@ -550,17 +552,17 @@ void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double 
 {
 	double cell_voltage = _cell_voltage;
 	double DOD = capacity->DOD();
-	double I = capacity->I();
+	double I_string = capacity->I() / _num_strings;
 	double DOD_lo, DOD_hi, V_lo, V_hi;
 	bool voltage_found = exactVoltageFound(DOD, cell_voltage);
 	if (!voltage_found)
 	{
 		prepareInterpolation(DOD_lo, V_lo, DOD_hi, V_hi, DOD);
-		cell_voltage = util::interpolate(DOD_lo, V_lo, DOD_hi, V_hi, DOD);
+		cell_voltage = util::interpolate(DOD_lo, V_lo, DOD_hi, V_hi, DOD) - I_string * _R;
 	}
 
 	// the cell voltage should not increase when the battery is discharging
-	if (I <= 0 || (I > 0 && cell_voltage <= _cell_voltage))
+	if (I_string <= 0 || (I_string > 0 && cell_voltage <= _cell_voltage))
 		_cell_voltage = cell_voltage;
 	
 }
@@ -722,13 +724,13 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, T);
+	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, _I/ _num_strings, T);
 
 	// the cell voltage should not increase when the battery is discharging
 	if (_I <= 0 || (_I > 0 && cell_voltage <= _cell_voltage))
 		_cell_voltage = cell_voltage;
 }
-double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
+double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double I_string, double T)
 {
 	double SOC = q0 / qmax;
 	double SOC_use = SOC;
@@ -737,11 +739,15 @@ double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
-	double V_stack_cell = 0.;
-	if (std::isfinite(A))
-		V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
+	
+	double V_cell = 0.;
 
-	return V_stack_cell;
+	if (std::isfinite(A))
+	{
+		double V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
+		V_cell = V_stack_cell - I_string * _R;
+	}
+	return V_cell;
 }
 
 /*
