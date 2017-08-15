@@ -204,11 +204,13 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_charge_energy",                  "Battery annual energy charged",                         "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_energy_loss",                    "Battery annual energy loss",                            "kWh",      "",                      "Battery",       "",                           "",                               "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_annual_energy_system_loss",             "Battery annual system energy loss",                     "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "annual_export_to_grid_energy",               "Annual energy exported to grid",                        "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "annual_import_to_grid_energy",               "Annual energy imported from grid",                      "kWh",      "",                      "Battery",       "",                           "",                               "" },
 	
 	// single value metrics
-	{ SSC_OUTPUT,        SSC_NUMBER,     "average_cycle_efficiency",                   "Battery average cycle efficiency",                      "%",        "",                      "Annual",        "",                           "",                               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_battery_conversion_efficiency",      "Battery average cycle conversion efficiency",           "%",        "",                      "Annual",        "",                           "",                               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "average_battery_roundtrip_efficiency",       "Battery average roundtrip efficiency",                  "%",        "",                      "Annual",        "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_pv_charge_percent",                     "Battery percent energy charged from PV",                "%",        "",                      "Annual",        "",                           "",                               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
 
@@ -572,6 +574,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	outAnnualDischargeEnergy = cm.allocate("batt_annual_discharge_energy", annual_size);
 	outAnnualGridImportEnergy = cm.allocate("annual_import_to_grid_energy", annual_size);
 	outAnnualGridExportEnergy = cm.allocate("annual_export_to_grid_energy", annual_size);
+	outAnnualEnergySystemLoss = cm.allocate("batt_annual_energy_system_loss", annual_size);
 	outAnnualEnergyLoss = cm.allocate("batt_annual_energy_loss", annual_size);
 	outAnnualPVChargeEnergy = cm.allocate("batt_annual_charge_from_pv", annual_size);
 	outAnnualGridChargeEnergy = cm.allocate("batt_annual_charge_from_grid", annual_size);
@@ -936,16 +939,24 @@ void battstor::metrics(compute_module &, size_t year, size_t hour_of_year, size_
 		outAnnualChargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_charge_annual());
 		outAnnualDischargeEnergy[annual_index] = (ssc_number_t)(battery_metrics->energy_discharge_annual());
 		outAnnualEnergyLoss[annual_index] = (ssc_number_t)(battery_metrics->energy_loss_annual());
+		outAnnualEnergySystemLoss[annual_index] = (ssc_number_t)(battery_metrics->energy_system_loss_annual());
 		battery_metrics->new_year();
 		year++;
 	}
-
-	// Average efficiency
-	outAverageCycleEfficiency = (ssc_number_t)battery_metrics->average_efficiency();
+	 
+	// Average battery conversion efficiency
+	outAverageCycleEfficiency = (ssc_number_t)battery_metrics->average_battery_conversion_efficiency();
 	if (outAverageCycleEfficiency > 100)
 		outAverageCycleEfficiency = 100;
 	else if (outAverageCycleEfficiency < 0)
 		outAverageCycleEfficiency = 0;
+
+	// Average battery roundtrip efficiency
+	outAverageRoundtripEfficiency = (ssc_number_t)battery_metrics->average_battery_roundtrip_efficiency();
+	if (outAverageRoundtripEfficiency > 100)
+		outAverageRoundtripEfficiency = 100;
+	else if (outAverageRoundtripEfficiency < 0)
+		outAverageRoundtripEfficiency = 0;
 
 	// PV charge ratio
 	outPVChargePercent = (ssc_number_t)battery_metrics->pv_charge_percent();
@@ -979,7 +990,8 @@ void battstor::calculate_monthly_and_annual_outputs( compute_module &cm )
 	int step_per_hour = (int)( 1.0 / _dt_hour );
 
 	// single value metrics
-	cm.assign("average_cycle_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
+	cm.assign("average_battery_conversion_efficiency", var_data( (ssc_number_t) outAverageCycleEfficiency ));
+	cm.assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)outAverageRoundtripEfficiency));
 	cm.assign("batt_pv_charge_percent", var_data((ssc_number_t)outPVChargePercent));
 	cm.assign("batt_bank_installed_capacity", (ssc_number_t)batt_vars->batt_kwh);
 

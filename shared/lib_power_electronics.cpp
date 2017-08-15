@@ -127,7 +127,7 @@ void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
 bool charge_controller::check_iterate(){ return _iterate; }
 void charge_controller::finalize()
 {
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_system_loss, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
 	_dispatch_initial->copy(_dispatch);
 }
 
@@ -448,7 +448,7 @@ void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, siz
 	process_dispatch();
 
 	// AC charging metrics
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_system_loss, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
 }
 void ac_connected_battery_controller::process_dispatch()
 {
@@ -462,6 +462,9 @@ void ac_connected_battery_controller::process_dispatch()
 		P_battery_ac = P_battery_dc * _bidirectional_inverter->dc_ac_efficiency();
 	else if (P_battery_dc < 0)
 		P_battery_ac = P_battery_dc / _bidirectional_inverter->ac_dc_efficiency();
+
+	// extract user input system loss to apply
+	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss((int)_index);
 
 	compute_to_batt_load_grid(P_battery_ac, P_pv_ac, P_load_ac);
 }
@@ -591,9 +594,6 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 
 	// report losses due to charging and discharging
 	_P_loss = P_grid_to_batt_loss + P_pv_to_batt_loss + P_batt_to_load_loss;
-
-	// extract user input system loss to apply
-	_P_system_loss = _dispatch->battery_model()->losses_model()->battery_system_loss((int)_index);
 
 }
 
