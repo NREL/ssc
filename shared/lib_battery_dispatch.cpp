@@ -946,6 +946,7 @@ void automate_dispatch_t::sort_grid(FILE *p, bool debug, int idx)
 
 void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 {
+	/*
 	if (capacity_kibam_t * capacity = dynamic_cast<capacity_kibam_t *>(_Battery->capacity_model()))
 	{
 		E_max = _Battery->battery_voltage() *_Battery->capacity_model()->q1()*util::watt_to_kilowatt;
@@ -953,7 +954,8 @@ void automate_dispatch_t::compute_energy(FILE *p, bool debug, double & E_max)
 			E_max = 0;
 	}
 	else
-		E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max - _SOC_min) *0.01 *util::watt_to_kilowatt;
+	*/
+	E_max = _Battery->battery_voltage() *_Battery->battery_charge_maximum()*(_SOC_max - _SOC_min) *0.01 *util::watt_to_kilowatt;
 
 	if (debug)
 	{
