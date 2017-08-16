@@ -1173,13 +1173,15 @@ public:
 				double T_htf_hot_low = p_sco2_recomp_csp->get_design_par()->m_T_htf_hot_in - 273.15 - 50.0;	//[C]
 				double T_htf_hot_high = p_sco2_recomp_csp->get_design_par()->m_T_htf_hot_in - 273.15 + 15.0;	//[C]
 				//int n_T_htf_hot_in = floor((T_htf_hot_high - T_htf_hot_low)/2.0)+1;			//[-]
-				int n_T_htf_hot_in = 10;				//[-]
+				int n_T_htf_hot_in = 5;				//[-]
 				double T_amb_low = 0.0;				//[C]
 				double T_amb_high = 55.0;			//[C]
 				//int n_T_amb_in = floor((T_amb_high - T_amb_low)/2.5)+1;					//[-]
 				int n_T_amb_in = 10;				//[-]
-				double m_dot_htf_ND_low = as_double("cycle_cutoff_frac");	// - 0.01;	//[-]
-				double m_dot_htf_ND_high = max(1.2, as_double("cycle_max_frac"));		// + 0.01;		//[-]
+					// Design is always = 1.0, so low needs to be a value < 1.0
+				double m_dot_htf_ND_low = min(0.95, as_double("cycle_cutoff_frac"));	// - 0.01;	//[-]
+					// Design is always = 1.0, so high needs to be a value > 1.0
+				double m_dot_htf_ND_high = max(1.05, as_double("cycle_max_frac"));		// + 0.01;		//[-]
 				//int n_m_dot_htf_ND_in = floor((m_dot_htf_ND_high - m_dot_htf_ND_low)/0.025)+1;			//[-]
 				int n_m_dot_htf_ND_in = 10;
 
