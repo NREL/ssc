@@ -1381,12 +1381,15 @@ void losses_t::copy(losses_t * losses)
 	_lifetime = losses->_lifetime;
 	_thermal = losses->_thermal;
 	_capacity = losses->_capacity;
+	_loss_mode = losses->_loss_mode;
+	_nCycle = losses->_nCycle;
+
+	// don't copy these, they don't change and are slow (need to re-design)
+	/*
 	_charge_loss = losses->_charge_loss;
 	_discharge_loss = losses->_discharge_loss;
 	_idle_loss = losses->_idle_loss;
-	_full_loss = losses->_full_loss;
-	_loss_mode = losses->_loss_mode;
-	_nCycle = losses->_nCycle;
+	_full_loss = losses->_full_loss;*/
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }

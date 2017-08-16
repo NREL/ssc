@@ -597,20 +597,22 @@ public:
 	// main APIs
 	void run_losses(double dt_hour, size_t index);
 	void replace_battery();
-	double battery_system_loss(int index){ return _full_loss[index]; }
+	double battery_system_loss(int index){ return (_full_loss)[index]; }
 
 	enum { MONTHLY, TIMESERIES};
 
 protected:
+	
+	int _loss_mode;
+	int _nCycle;
+	
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
 	capacity_t * _capacity;
-	double_vec _charge_loss;
-	double_vec _discharge_loss;
-	double_vec _idle_loss;
-	double_vec _full_loss;
-	int _loss_mode;
-	int _nCycle;
+	double_vec  _charge_loss;
+	double_vec  _discharge_loss;
+	double_vec  _idle_loss;
+	double_vec  _full_loss;
 };
 
 /*
