@@ -519,7 +519,7 @@ double voltage_t::R_battery(){ return _R_battery; }
 voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table) :
 voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, voltage_table)
 {
-	for (int r = 0; r != _batt_voltage_matrix.nrows(); r++)
+	for (int r = 0; r != (int)_batt_voltage_matrix.nrows(); r++)
 		_voltage_table.push_back(table_point(_batt_voltage_matrix.at(r, 0), _batt_voltage_matrix.at(r, 1)));
 	
 	std::sort(_voltage_table.begin(), _voltage_table.end(), byDOD());
@@ -535,7 +535,7 @@ void voltage_table_t::copy(voltage_t * voltage)
 }
 
 
-void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
+void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
 	double cell_voltage = _cell_voltage;
 	double DOD = capacity->DOD();
@@ -638,7 +638,7 @@ void voltage_dynamic_t::parameter_compute()
 {
 	// Determines parameters according to page 2 of:
 	// Tremblay 2009 "A Generic Bettery Model for the Dynamic Simulation of Hybrid Electric Vehicles"
-	double eta = 0.995;
+//	double eta = 0.995;
 	double I = _Qfull*_C_rate; // [A]
 	//_R = _Vnom*(1. - eta) / (_C_rate*_Qnom); // [Ohm]
 	_A = _Vfull - _Vexp; // [V]
@@ -647,7 +647,7 @@ void voltage_dynamic_t::parameter_compute()
 	_E0 = _Vfull + _K + _R*I - _A;
 }
 
-void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * themal, double dt)
+void voltage_dynamic_t::updateVoltage(capacity_t * capacity, thermal_t * , double )
 {
 
 	double Q = capacity->qmax();
@@ -699,7 +699,7 @@ void voltage_vanadium_redox_t::copy(voltage_t * voltage)
 	_V_ref_50 = tmp->_V_ref_50;
 	_R = tmp->_R;
 }
-void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt)
+void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * thermal, double )
 {
 
 	double Q = capacity->qmax();
@@ -1193,7 +1193,7 @@ void lifetime_calendar_t::runTableModel()
 	double capacity_hi = 0;
 
 	// interpolation mode
-	for (int i = 0; i != _calendar_days.size(); i++)
+	for (int i = 0; i != (int)_calendar_days.size(); i++)
 	{
 		int day = _calendar_days[i];
 		double capacity = _calendar_capacity[i];
@@ -1324,7 +1324,7 @@ double thermal_t::implicit_euler(double I, double dt)
 	double B = 1 / (_mass*_Cp); // [K/J]
 	double C = _h*_A;			// [W/K]
 	double D = pow(I, 2)*_R;	// [Ohm A*A]
-	double T_prime = f(_T_battery, I);	// [K]
+//	double T_prime = f(_T_battery, I);	// [K]
 
 	return (_T_battery + dt*(B*C*_T_room + D)) / (1 + dt*B*C);
 }

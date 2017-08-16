@@ -990,17 +990,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
                 
 				// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
-				double eta_diff = 1.;
-				double eta_calc = dispatch.params.eta_cycle_ref;
-				int i = 0;
 				if (dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
 					q_pc_max = 0.0;
 				else
 				{
+					double wcond;
+					double eta_corr = mc_power_cycle.get_efficiency_at_TPH(mc_weather.ms_outputs.m_tdry, 1., 30., &wcond) / m_cycle_eta_des; 
+					double eta_calc = dispatch.params.eta_cycle_ref * eta_corr;
+					double eta_diff = 1.;
+					int i = 0;
 					while (eta_diff > 0.001 && i<20)
 					{
 						double q_pc_est = dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
-						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des);		// Calculated power cycle efficiency
+						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des) * eta_corr;		// Calculated power cycle efficiency
 						eta_diff = fabs(eta_calc - eta_new);
 						eta_calc = eta_new;
 						i++;
@@ -1741,7 +1743,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						else
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
-							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code "
 								"failed to find a solution to achieve a PC HTF mass flow rate less than maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
@@ -1794,7 +1796,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					catch (C_csp_exception)
 					{
 						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time/3600.0, op_mode_str.c_str()), ""));
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -1811,7 +1813,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								"failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
+								" failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -3009,7 +3011,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_OFF__TES_FULL__AUX_OFF operating mode, but the code"
-								"failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -4173,7 +4175,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					{
 						// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-							"failed to solve at defocus = %lg. Controller will shut-down CR and PC",
+							" failed to solve at defocus = %lg. Controller will shut-down CR and PC",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
 						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -4226,7 +4228,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
-								"failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -4302,7 +4304,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						{
 							// Weird that controller chose Defocus operating mode, so report message and shut down CR and PC
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_FULL__AUX_OFF operating mode, but the code"
-								"failed to solve. Controller will shut-down CR and PC",
+								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
 							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
@@ -5202,7 +5204,7 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 		if (T_cold_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.1)
 		{
 			std::string msg = util::format("At time = %lg C_csp_solver::solver_cr_on__pc_match__tes_full iteration "
-				"failed to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
+				" failed to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
 			mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
@@ -5214,27 +5216,6 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 	}
 
 	return 0;
-}
-
-void C_csp_solver::solver_cr_on__pc_float__tes_full(int power_cycle_mode,
-	double field_control_in,
-	double tol,
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance)
-{
-	// The collector-receiver is on and delivering hot HTF to the PC and TES
-	// The PC accepts floating input
-	// The TES is fully charging over the timestep
-
-	throw(C_csp_exception("Retiring solver_cr_on__pc_float__tes_full for mass flow constraint updates..", ""));
-}
-
-void C_csp_solver::solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double tol,
-	int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance,
-	double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/)
-{
-	throw(C_csp_exception("Retiring solver__pc_on_fixed__tes_dc for mass flow constraint updates..", ""));
 }
 
 void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
@@ -5295,28 +5276,6 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 	time_tes_dc = c_eq.m_step;	//[s]
 
 	return;
-}
-
-void C_csp_solver::solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double field_control_in,
-	double tol,
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
-{
-	throw(C_csp_exception("Retiring solver_cr_on__pc_fixed__tes_dc for mass flow constraint updates..", ""));	
-}
-
-void C_csp_solver::solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-	double field_control_in, 
-	double tol, 
-	int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-	int &q_pc_exit_mode, double &q_pc_exit_tolerance)
-{
-	// CR in on
-	// PC is controlled for a fixed q_dot_in
-	// excess CR output is charging TES
-	
-	throw(C_csp_exception("Retiring solver_cr_on__pc_fixed__tes_ch for mass flow constraint updates..", ""));
 }
 
 void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, double tol, int &exit_mode, double &exit_tolerance)

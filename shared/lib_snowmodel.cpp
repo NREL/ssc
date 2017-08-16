@@ -109,7 +109,7 @@ bool pvsnowmodel::setup(int nmody_in, float baseTilt_in){
 }
 
 
-bool pvsnowmodel::getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float *returnLoss){
+bool pvsnowmodel::getLoss(float poa, float tilt, float , float tdry, float snowDepth, int sunup, float dt, float *returnLoss){
 
 	bool isGood = true;
 
