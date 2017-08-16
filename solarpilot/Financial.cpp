@@ -155,6 +155,7 @@ void Financial::calcPlantCapitalCost(var_map &V){
     double power_gross = V.plt.power_gross.Val(); 
     double power_net = V.plt.power_net.Val();
 	double Aland = V.land.land_area.Val(); 
+	(void*)&Aland;
 
 	_tower_cost =  V.fin.tower_fixed_cost.val * exp(V.sf.tht.val * V.fin.tower_exp.val ) ;
 	
