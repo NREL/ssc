@@ -300,7 +300,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double /*time*/, double /*step*/, int /*ncall*/ )
 	{
 
 		double Qsf = value(I_Qsf);
@@ -311,7 +311,7 @@ public:
 		double TurSUE  = value(I_TurSUE);
 		// m_ESMAX     = XIN(10)
 		double HhtfPar = value(I_HhtfPar);        // Hot HTF pump parasitics coefficient 1.1000
-		double HhtfParPF = value(I_HhtfParPF);      //  Hot HTF Pump parasitics coefficient 1.000
+		//double HhtfParPF = value(I_HhtfParPF);      //  Hot HTF Pump parasitics coefficient 1.000
 		double HhtfParF0 = value(I_HhtfParF0);      //  Hot HTF Pump parasitics coefficient	-0.036
 		double HhtfParF1 = value(I_HhtfParF1);      //  Hot HTF Pump parasitics coefficient	0.242
 		double HhtfParF2 = value(I_HhtfParF2);			//  Hot HTF Pump parasitics coefficient	0.794

@@ -670,7 +670,7 @@ public:
 
 			double q_dot_in_des = rc_cycle.get_design_solved()->m_W_dot_net / rc_cycle.get_design_solved()->m_eta_thermal;	//[kWt]
 
-			size_t n_f_pl = -1;
+			size_t n_f_pl = 0;
 			ssc_number_t * f_pl = as_array("part_load_fracs", &n_f_pl);
 
 			int n_solved = 0;
@@ -728,7 +728,7 @@ public:
 			// ********************************************
 
 						
-			size_t n_T_amb_od = -1;
+			size_t n_T_amb_od = 0;
 			ssc_number_t * T_amb_od = as_array("T_amb_array", &n_T_amb_od);
 
 			n_solved = 0;

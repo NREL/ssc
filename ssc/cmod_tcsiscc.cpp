@@ -310,7 +310,7 @@ public:
 		double H_rec, D_rec, rec_aspect, THT, A_sf;
 
 		// Assume ISCC has no storage!!!
-		double tshours = 0.0;
+		//double tshours = 0.0;
 
 		if( is_optimize )
 		{

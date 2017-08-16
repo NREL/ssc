@@ -1007,7 +1007,7 @@ public:
 				pc->m_P_cond_min = as_double("P_cond_min");		
 				pc->m_n_pl_inc = as_integer("n_pl_inc");
 
-				size_t n_F_wc = -1;
+				size_t n_F_wc = 0;
 				ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
 				pc->m_F_wc.resize(n_F_wc, 0.0);
 				for( size_t i = 0; i < n_F_wc; i++ )
@@ -1371,7 +1371,7 @@ public:
 
 			if (as_boolean("is_wlim_series"))
 			{
-				size_t n_wlim_series = -1;
+				size_t n_wlim_series = 0;
 				ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
 				if (n_wlim_series != n_steps_full)
 					throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have "+util::to_string(n_steps_full)+" rows.");
@@ -1388,7 +1388,7 @@ public:
 		tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
 		tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
 
-        size_t n_f_turbine = -1;
+        size_t n_f_turbine = 0;
 		ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine,0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);

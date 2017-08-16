@@ -526,7 +526,7 @@ public:
 			sco2_rc_od_op_par.m_P_mc_in = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[C_RecompCycle::MC_IN];		//[kPa]
 			sco2_rc_od_op_par.m_phi_mc = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des;	//[-]
 
-			double T_mc_in_sweep = sco2_rc_od_par.m_T_amb + p_sco2_recomp_csp->get_design_par()->m_dt_mc_approach;	//[K]
+			//double T_mc_in_sweep = sco2_rc_od_par.m_T_amb + p_sco2_recomp_csp->get_design_par()->m_dt_mc_approach;	//[K]
 
 			//sco2_recomp_csp.sweep_turbomachinery_deltaP(T_mc_in_sweep, sco2_rc_od_op_par.m_P_mc_in,
 			//								sco2_recomp_csp.get_design_solved()->ms_rc_cycle_solved.m_temp[C_RecompCycle::TURB_IN],
@@ -544,7 +544,7 @@ public:
 				
 				sco2_rc_od_op_par.m_recomp_frac = f_recomp_od;	//[-]
 
-				int sco2_od_code = 0;
+				//int sco2_od_code = 0;
 				std::clock_t clock_start = std::clock();
 
 				//try
@@ -565,7 +565,7 @@ public:
 				//}
 				std::clock_t clock_end = std::clock();
 
-				double od_opt_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+				//double od_opt_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
 
 				//p_od_code[n_run] = sco2_od_code;
 				//// Can we just... see what happens getting metrics from sco2_recomp_csp when off-design fails
@@ -846,7 +846,7 @@ public:
 			sco2_rc_od_par.m_m_dot_htf = m_dot_htf_design*p_m_dot_htf_fracs[n_run];	//[kg/s]
 			sco2_rc_od_par.m_T_amb = p_T_amb_od[n_run] + 273.15;				//[K]
 			int od_strategy = (int)p_od_opt_obj_code[n_run];		//[-]
-			double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
+			//double od_opt_tol = p_od_opt_conv_tol[n_run];			//[-]
 
 			int off_design_code = 0;
 			std::clock_t clock_start = std::clock();

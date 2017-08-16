@@ -3145,9 +3145,9 @@ public:
 
 		// scale by ts_hour to convert power -> energy
 		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", ts_hour, step_per_hour);
-		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
+		//double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
 		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", ts_hour, step_per_hour);
-		double annual_dc_invmppt_loss = accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
+		//double annual_dc_invmppt_loss = accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
 
 		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);

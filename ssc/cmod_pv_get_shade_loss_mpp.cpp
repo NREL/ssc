@@ -110,7 +110,7 @@ public:
 		size_t step_per_hour = nrec / 8760;
 		if (step_per_hour < 1 || step_per_hour > 60 || step_per_hour * 8760 != nrec)
 			throw exec_error("pv_get_shade_loss_mpp", util::format("invalid number of global POA records (%d): must be an integer multiple of 8760", (int)nrec));
-		double ts_hour = 1.0 / step_per_hour;
+		//double ts_hour = 1.0 / step_per_hour;
 
 		ssc_number_t* diffuse_irrad = as_array("diffuse_irrad", &count);
 		if (count != nrec)
@@ -397,7 +397,7 @@ public:
 						double VMaxSTCStrUnshaded = str_vmp_stc[irec];
 						double scale_g = global_poa_irrad[irec] / 1000.0;
 						double TcVmpMax = vmpp[p_max_ind] * VMaxSTCStrUnshaded + C2*Ns*deltaTc*::log(scale_g) + C3*Ns*pow((deltaTc*::log(scale_g)), 2) + BetaVmp*(Tc - 25);
-						double TcVmpScale = TcVmpMax / vmpp[p_max_ind] / VMaxSTCStrUnshaded;
+						//double TcVmpScale = TcVmpMax / vmpp[p_max_ind] / VMaxSTCStrUnshaded;
 
 						std::vector<double> TcVmps;
 

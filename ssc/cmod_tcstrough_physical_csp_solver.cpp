@@ -423,7 +423,7 @@ public:
 
 		double lat = hdr.lat;	//[deg]
 		double lon = hdr.lon;	//[deg]
-		double shift = (lon - hdr.tz*15.0);		//[deg]
+		//double shift = (lon - hdr.tz*15.0);		//[deg]
 		// ******************************************************************************
 
 		// Weather reader
@@ -471,84 +471,84 @@ public:
 		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); 			//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 		
 		//[m] The collector aperture width (Total structural area.. used for shadowing)
-		size_t nval_W_aperture = -1;
+		size_t nval_W_aperture = 0;
 		ssc_number_t *W_aperture = as_array("W_aperture", &nval_W_aperture);
 		c_trough.m_W_aperture.resize(nval_W_aperture);
 		for (size_t i = 0; i < nval_W_aperture; i++)
 			c_trough.m_W_aperture[i] = (double)W_aperture[i];
 		
 		//[m^2] Reflective aperture area of the collector
-		size_t nval_A_aperture = -1;
+		size_t nval_A_aperture = 0;
 		ssc_number_t *A_aperture = as_array("A_aperture", &nval_A_aperture);
 		c_trough.m_A_aperture.resize(nval_A_aperture);
 		for (size_t i = 0; i < nval_A_aperture; i++)
 			c_trough.m_A_aperture[i] = (double)A_aperture[i];
 
 		//[-] Tracking error derate
-		size_t nval_TrackingError = -1;
+		size_t nval_TrackingError = 0;
 		ssc_number_t *TrackingError = as_array("TrackingError", &nval_TrackingError);
 		c_trough.m_TrackingError.resize(nval_TrackingError);
 		for (size_t i = 0; i < nval_TrackingError; i++)
 			c_trough.m_TrackingError[i] = (double)TrackingError[i];
 		
 		//[-] Geometry effects derate
-		size_t nval_GeomEffects = -1;
+		size_t nval_GeomEffects = 0;
 		ssc_number_t *GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
 		c_trough.m_GeomEffects.resize(nval_GeomEffects);
 		for (size_t i = 0; i < nval_GeomEffects; i++)
 			c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
 
 		//[-] Clean mirror reflectivity
-		size_t nval_Rho_mirror_clean = -1;
+		size_t nval_Rho_mirror_clean = 0;
 		ssc_number_t *Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
 		c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
 		for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
 			c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
 		
 		//[-] Dirt on mirror derate
-		size_t nval_Dirt_mirror = -1;
+		size_t nval_Dirt_mirror = 0;
 		ssc_number_t *Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
 		c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
 		for (size_t i = 0; i < nval_Dirt_mirror; i++)
 			c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
 		
 		//[-] General optical error derate
-		size_t nval_Error = -1;
+		size_t nval_Error = 0;
 		ssc_number_t *Error = as_array("Error", &nval_Error);
 		c_trough.m_Error.resize(nval_Error);
 		for (size_t i = 0; i < nval_Error; i++)
 			c_trough.m_Error[i] = (double)Error[i];
 		
 		//[m] The average focal length of the collector 
-		size_t nval_Ave_Focal_Length = -1;
+		size_t nval_Ave_Focal_Length = 0;
 		ssc_number_t *Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
 		c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
 		for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
 			c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
 		
 		//[m] The length of the SCA 
-		size_t nval_L_SCA = -1;
+		size_t nval_L_SCA = 0;
 		ssc_number_t *L_SCA = as_array("L_SCA", &nval_L_SCA);
 		c_trough.m_L_SCA.resize(nval_L_SCA);
 		for (size_t i = 0; i < nval_L_SCA; i++)
 			c_trough.m_L_SCA[i] = (double)L_SCA[i];
 
 		//[m] The length of a single mirror/HCE unit
-		size_t nval_L_aperture = -1;
+		size_t nval_L_aperture = 0;
 		ssc_number_t *L_aperture = as_array("L_aperture", &nval_L_aperture);
 		c_trough.m_L_aperture.resize(nval_L_aperture);
 		for (size_t i = 0; i < nval_L_aperture; i++)
 			c_trough.m_L_aperture[i] = (double)L_aperture[i];
 		
 		//[-] The number of individual collector sections in an SCA
-		size_t nval_ColperSCA = -1;
+		size_t nval_ColperSCA = 0;
 		ssc_number_t *ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
 		c_trough.m_ColperSCA.resize(nval_ColperSCA);
 		for (size_t i = 0; i < nval_ColperSCA; i++)
 			c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
 
 		//[m] Piping distance between SCA's in the field
-		size_t nval_Distance_SCA = -1;
+		size_t nval_Distance_SCA = 0;
 		ssc_number_t *Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
 		c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
 		for (size_t i = 0; i < nval_Distance_SCA; i++)
@@ -601,7 +601,7 @@ public:
 		c_trough.m_SCAInfoArray = as_matrix("SCAInfoArray");			 //[-] Receiver (,1) and collector (,2) type for each assembly in loop 
 		
 		//[-] Collector defocus order
-		size_t nval_SCADefocusArray = -1;
+		size_t nval_SCADefocusArray = 0;
 		ssc_number_t *SCADefocusArray = as_array("SCADefocusArray", &nval_SCADefocusArray);
 		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
 		for (size_t i = 0; i < nval_SCADefocusArray; i++)
@@ -730,7 +730,7 @@ public:
 			pc->m_P_cond_min = as_double("P_cond_min");			//[inHg]
 			pc->m_n_pl_inc = as_integer("n_pl_inc");			//[-]
 
-			size_t n_F_wc = -1;
+			size_t n_F_wc = 0;
 			ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);	//[-]
 			pc->m_F_wc.resize(n_F_wc, 0.0);
 			for( size_t i = 0; i < n_F_wc; i++ )
@@ -834,7 +834,7 @@ public:
 		tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
 		tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
 
-		size_t n_f_turbine = -1;
+		size_t n_f_turbine = 0;
 		ssc_number_t *p_f_turbine = as_array("tslogic_c", &n_f_turbine);
 		tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
 		//tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
