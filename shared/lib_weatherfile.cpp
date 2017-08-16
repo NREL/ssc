@@ -417,25 +417,6 @@ double calc_twet(double T, double RH, double P)
 	return Twet;
 }
 
-static double wiki_dew_calc(double T, double RH)
-{
-	// ref: http://en.wikipedia.org/wiki/Dew_point
-
-	if ( RH > 0 && RH < 100 )
-	{
-		static const double a = 17.271;
-		static const double b = 237.7;
-		double gamma = a*T / (b + T) + log(RH / 100.0);
-		double denom = a - gamma;
-		if ( denom != 0.0 )
-			return b*gamma / denom;
-	}
-
-	// ultra-simple equation (OK as long as RH > 50%)
-	return  T - (100 - RH) / 5;
-}
-
-
 void weather_header::reset()
 {
 	location = city = state = country = source = description = url = "";
@@ -447,8 +428,8 @@ void weather_record::reset()
 {
 	year = month = day = hour = 0;
 	minute = std::numeric_limits<double>::quiet_NaN();
-	gh = dn = df = wspd = wdir = std::numeric_limits<double>::quiet_NaN();
-	tdry = twet = tdew = rhum = pres = snow = alb = aod = std::numeric_limits<double>::quiet_NaN();
+	gh = dn = df = poa = wspd = wdir = std::numeric_limits<double>::quiet_NaN();
+	tdry = twet = tdew = rhum = pres = snow = alb =  aod = std::numeric_limits<double>::quiet_NaN();
 }
 
 
@@ -492,11 +473,6 @@ void weatherfile::reset()
 	//m_rec.reset();
 }
 
-
-bool weatherfile::ok()
-{
-	return m_ok;
-}
 
 int weatherfile::type()
 {
@@ -1459,18 +1435,6 @@ bool weatherfile::open(const std::string &file, bool header_only, bool interp)
 	return true;
 }
 
-void weatherfile::rewind()
-{
-	m_index = 0;
-}
-
-bool weatherfile::header( weather_header *h )
-{
-	if ( !h ) return false;
-	*h = m_hdr;
-	return true;
-}
-
 bool weatherfile::read( weather_record *r )
 {
 	if ( r && m_index >= 0 && m_index < m_nRecords)
@@ -1508,39 +1472,11 @@ bool weatherfile::has_data_column( size_t id )
 }
 
 
-void weatherfile::set_counter_to(int cur_index)
+void weatherfile::set_counter_to(size_t cur_index)
 {
-    //set the m_index to a specified value. next read will be at this time step index.
-    m_index = cur_index;
-}
-
-int weatherfile::get_counter_value()
-{
-    return (int)m_index;
-}
-
-
-
-
-
-size_t weatherfile::start_sec() // start time in seconds, 0 = jan 1st midnight
-{
-	return m_startSec;
-}
-
-size_t weatherfile::step_sec() // step time in seconds
-{
-	return m_stepSec;
-}
-
-size_t weatherfile::nrecords() // number of data records in file	
-{
-	return m_nRecords;
-}
-
-const char *weatherfile::error( size_t idx )
-{
-	return ( idx == 0 && m_message.size() > 0 ) ? m_message.c_str() : 0;
+	if (cur_index >= 0 && cur_index < m_nRecords){
+		m_index = cur_index;
+	}
 }
 
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )
@@ -1618,3 +1554,4 @@ bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string 
 	return true;
 
 }
+

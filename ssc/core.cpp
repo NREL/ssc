@@ -51,10 +51,8 @@
 #include <fstream>
 
 #include "core.h"
-#include "tcskernel.h"
 
 const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-tcstypeprovider sg_tcsTypeProvider;
 
 compute_module::compute_module( )
 	:  m_infomap(NULL), m_handler(NULL), m_vartab(NULL)

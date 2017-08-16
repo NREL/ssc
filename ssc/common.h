@@ -136,38 +136,31 @@ public:
 	double dc_shade_factor();
 };
 
-
-	
 class weatherdata : public weather_data_provider
 {
-	std::string m_error;
-	size_t m_startSec, m_stepSec, m_nRecords;
-	weather_header m_hdr;
 	std::vector< weather_record* > m_data;
-	size_t m_index;
 	std::vector<size_t> m_columns;
 
 	struct vec {
 		ssc_number_t *p;
-		int len;
+		size_t len;
 	};
 
-	vec get_vector( var_data *v, const char *name, int *maxlen = 0 );	
-	ssc_number_t get_number( var_data *v, const char *name );
-	
-	int name_to_id( const char *name );
+	vec get_vector(var_data *v, const char *name, size_t *len = nullptr);
+	ssc_number_t get_number(var_data *v, const char *name);
+
+	size_t name_to_id(const char *name);
+
 public:
-	weatherdata( var_data *data_table );
+	/* Detects file format, read header information, detects which data columns are available and at what index
+	and read weather record information.
+	Calculates twet if missing, and interpolates meteorological data if requested.*/
+	weatherdata(var_data *data_table);
 	virtual ~weatherdata();
 
-	virtual bool header( weather_header *h );		
-	virtual bool read( weather_record *r ); // reads one more record
-	virtual void rewind();	
-	virtual size_t start_sec() { return m_startSec; } // start time in seconds, 0 = jan 1st midnight
-	virtual size_t step_sec() { return m_stepSec; } // step time in seconds
-	virtual size_t nrecords() { return m_nRecords; } // number of data records in file		
-	virtual const char *error( size_t idx = 0 );
-	virtual bool has_data_column( size_t id );
+	void set_counter_to(size_t cur_index);
+	bool read(weather_record *r); // reads one more record	
+	bool has_data_column(size_t id);
 };
 
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress);

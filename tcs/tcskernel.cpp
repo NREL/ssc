@@ -78,6 +78,8 @@ void *dll_sym( void *handle, const char *name ) { return dlsym( handle, name ); 
 
 extern "C" tcstypeinfo **tcsdynamictypes();
 
+tcstypeprovider sg_tcsTypeProvider;
+
 tcstypeprovider::tcstypeprovider()
 {
 

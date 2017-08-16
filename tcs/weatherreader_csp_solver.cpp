@@ -161,7 +161,7 @@ public:
 	weatherreader( tcscontext *cxt, tcstypeinfo *ti )
 		: tcstypeinterface( cxt, ti ) { }
 
-	virtual ~weatherreader() { }
+	virtual ~weatherreader() { delete c_wr.m_weather_data_provider; }
 
 	virtual int init()
 	{
@@ -176,6 +176,15 @@ public:
 
 		try
 		{
+			if (c_wr.m_filename.size() > 0)
+			{
+				weatherfile* wf = new weatherfile(c_wr.m_filename);
+				c_wr.m_weather_data_provider = wf;
+				if (c_wr.m_weather_data_provider->has_message()){
+					message(TCS_ERROR, c_wr.m_weather_data_provider->message().c_str());
+					return -1;
+				}
+			}
 			c_wr.init();
 		}
 

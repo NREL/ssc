@@ -74,6 +74,7 @@
 static var_info _cm_vtab_tcsmolten_salt[] = {
 	/*   VARTYPE           DATATYPE         NAME                           LABEL                                                     UNITS            META           GROUP            REQUIRED_IF                 CONSTRAINTS         UI_HINTS*/
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",           "" },
+	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",  "solar resouce data in memory",									  "",			  "",			 "WindPower",      "?",						  "",					  "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
@@ -782,7 +783,16 @@ public:
 
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("solar_resource_file");
+		if (is_assigned("solar_resource_filename")){
+			weatherfile* wf = new weatherfile(as_string("solar_resource_file"));
+			weather_reader.m_weather_data_provider = wf;
+			
+		}
+		if (is_assigned("solar_resource_data")){
+			weatherdata* wd = new weatherdata(lookup("wind_resource_data"));
+			weather_reader.m_weather_data_provider = wd;
+		}
+
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
@@ -802,7 +812,7 @@ public:
         //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
         if( steps_per_hour < 0 )
         {
-            double sph_d = 3600. / weather_reader.get_step_seconds();
+            double sph_d = 3600. / weather_reader.m_weather_data_provider->step_sec();
             steps_per_hour = (int)( sph_d + 1.e-5 );
             if( (double)steps_per_hour != sph_d )
                 throw spexception("The time step duration must be evenly divisible within an hour.");
@@ -847,7 +857,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-		int n_steps_full = (int)weather_reader.get_n_records(); //steps_per_hour * 8760;
+		int n_steps_full = (int)(weather_reader.m_weather_data_provider->get_counter_value()); //steps_per_hour * 8760;
 		if (!sf_haf.setup(n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
@@ -1838,6 +1848,8 @@ public:
 		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
 		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 		 
+		// delete dynamically-allocated weather_data_provider
+		delete weather_reader.m_weather_data_provider;
 	}
 };
 
