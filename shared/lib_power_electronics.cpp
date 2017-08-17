@@ -345,7 +345,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	{
 		P_pv_ac = P_pv_dc * inverter_efficiency;
 		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
+		if (P_pv_ac >= P_load_ac)
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
@@ -542,7 +542,7 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	else
 	{
 		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
+		if (P_pv_ac >= P_load_ac)
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
