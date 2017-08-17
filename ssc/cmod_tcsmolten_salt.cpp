@@ -783,7 +783,7 @@ public:
 
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		if (is_assigned("solar_resource_filename")){
+		if (is_assigned("solar_resource_file")){
 			weatherfile* wf = new weatherfile(as_string("solar_resource_file"));
 			weather_reader.m_weather_data_provider = wf;
 			
