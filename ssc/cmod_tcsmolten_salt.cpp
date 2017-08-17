@@ -636,7 +636,10 @@ public:
 
 		//Run solarpilot right away to update values as needed
 		solarpilot_invoke spi(this);
-		spi.run();
+		if (run_type == 0 || run_type == 1)
+		{
+			spi.run();
+		}
 
 		if (run_type == 0)		// Auto-design. Generate a new field layout
 		{
