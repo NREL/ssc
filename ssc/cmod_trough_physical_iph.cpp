@@ -299,6 +299,8 @@ public:
 		//***************************************************************************
 			// Weather reader
 		C_csp_weatherreader weather_reader;
+		weatherfile* wf = new weatherfile(as_string("file_name"));
+		weather_reader.m_weather_data_provider = wf;
 		weather_reader.m_filename = as_string("file_name");
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
@@ -772,8 +774,10 @@ public:
 		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
 		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
 		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
-	}
 
+		delete wf;
+	}
+	
 };
 
 DEFINE_MODULE_ENTRY(trough_physical_process_heat, "Physical trough process heat applications", 1)
