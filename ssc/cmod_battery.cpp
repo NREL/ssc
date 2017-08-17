@@ -821,7 +821,7 @@ battstor::~battstor()
 
 void battstor::check_replacement_schedule(int batt_replacement_option, size_t count_batt_replacement, ssc_number_t *batt_replacement, int iyear, int hour, int step)
 {
-	if (batt_replacement_option == 2)
+	if (batt_replacement_option == battery_t::REPLACE_BY_SCHEDULE)
 	{
 		// don't allow replacement on first hour of first year
 		if (hour == 0 && iyear == 0)

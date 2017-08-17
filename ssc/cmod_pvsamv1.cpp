@@ -2916,10 +2916,8 @@ public:
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
 
-
-
 					// Battery replacement
-					if (en_batt)
+					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
 
 					// Iterative loop over DC battery
@@ -3076,6 +3074,10 @@ public:
 
 					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
 					{
+						// Battery replacement
+						if (en_batt)
+							batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
+
 						batt.advance(*this, iyear, hour, jj, p_gen[idx], p_load_full[idx]);
 						p_gen[idx] = batt.outGenPower[idx];
 					}

@@ -1243,6 +1243,8 @@ void lifetime_calendar_t::replaceBattery()
 {
 	_day_age_of_battery = 0;
 	_q = _q0 * 100;
+	_dq_new = 0;
+	_dq_old = 0;
 }
 
 /*
