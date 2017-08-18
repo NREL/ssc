@@ -973,6 +973,7 @@ bool weatherdata::has_data_column( size_t id )
 
 bool weatherdata::has_calculated_data(size_t id){
 	if (id == 10) return !std::isnan(m_data[m_nRecords - 1]->twet);
+	else if (id == 11) return !std::isnan(m_data[m_nRecords - 1]->tdew);
 	else return false;
 }
 
