@@ -440,6 +440,12 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_rec_out_max",		 "Rec. maximum HTF outlet temperature during timestep",			 "C",			 "",			"CR",			  "*",						 "",		   "" },
 	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_panel_out_max",		 "Rec. panel maximum HTF outlet temperature during timestep",	 "C",			 "",			"CR",			  "*",						 "",		   "" },	
 	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_wall_rec_inlet",	 "Rec. inlet panel wall temperature at end of timestep",		 "C",			 "",			"CR",			  "*",						 "",		   "" },	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_wall_rec_outlet",	 "Rec. outlet panel wall temperature at end of timestep",		 "C",			 "",			"CR",			  "*",						 "",		   "" },	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_wall_riser",		 "Rec. riser wall temperature at end of timestep",				 "C",			 "",			"CR",			  "*",						 "",		   "" },	
+	{ SSC_OUTPUT,		SSC_ARRAY,		 "T_wall_downcomer",	 "Rec. downcomer wall temperature at end of timestep",			 "C",			 "",			"CR",			  "*",						 "",		   "" },	
+	
+
 		// Power cycle outputs
 	{ SSC_OUTPUT,       SSC_ARRAY,       "eta",                  "PC efficiency: gross",                                         "",             "",            "PC",             "*",                       "",           "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "q_pb",		         "PC input energy",                                              "MWt",          "",            "PC",             "*",                       "",           "" },
@@ -950,6 +956,7 @@ public:
 		receiver.m_tube_flux_startup = as_double("preheat_flux");		//[kW/m2]
 		receiver.m_preheat_target = receiver.m_T_htf_cold_des + as_double("preheat_target_Tdiff");
 		receiver.m_startup_target = receiver.m_T_htf_hot_des + as_double("startup_target_Tdiff");
+		receiver.m_initial_temperature = 5.0; //[C]
 
 		receiver.m_n_flux_x = as_integer("n_flux_x");
 		receiver.m_n_flux_y = as_integer("n_flux_y");
@@ -994,6 +1001,11 @@ public:
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT_MAX, allocate("T_rec_out_max", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_PANEL_OUT_MAX, allocate("T_panel_out_max", n_steps_fixed), n_steps_fixed);
 		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_P_HEATTRACE, allocate("P_rec_heattrace", n_steps_fixed), n_steps_fixed);
+
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_WALL_INLET, allocate("T_wall_rec_inlet", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_WALL_OUTLET, allocate("T_wall_rec_outlet", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_RISER, allocate("T_wall_riser", n_steps_fixed), n_steps_fixed);
+		collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_DOWNC, allocate("T_wall_downcomer", n_steps_fixed), n_steps_fixed);
 		
 		// ***********************************************
 		// ***********************************************

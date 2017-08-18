@@ -83,7 +83,11 @@ public:
 		E_T_HTF_OUT_END,		//[C] Instantaneous receiver HTF outlet temperature at the end of the time step
 		E_T_HTF_OUT_MAX,		//[C] Receiver maximum HTF outlet temperature at any point during time step
 		E_T_HTF_PANEL_OUT_MAX,	//[C] Receiver panel maximum HTF outlet temperature at any point during time step
-		E_P_HEATTRACE			//[MWe] Receiver heat trace parasitic
+		E_P_HEATTRACE,			//[MWe] Receiver heat trace parasitic
+		E_T_WALL_INLET,			//[C] Receiver inlet wall temperature at end of time step
+		E_T_WALL_OUTLET,		//[C] Receiver inlet wall temperature at end of time step
+		E_T_RISER,				//[C] Riser temperature at the end of the time step
+		E_T_DOWNC				//[C] Downcomer temperature at the end of the time step
 	};
 	
 	C_csp_reported_outputs mc_reported_outputs;

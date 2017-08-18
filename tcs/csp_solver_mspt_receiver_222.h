@@ -152,7 +152,7 @@ private:
 		int nelem;
 		int nztot;
 		int npath;
-		util::matrix_t<double> lam1, lam2, cval, tinit;
+		util::matrix_t<double> lam1, lam2, cval, tinit, tinit_wall, Rtube;
 		vector<double> length, zpts;
 		vector<int> nz, startpt;
 	} trans_inputs;
@@ -171,9 +171,13 @@ private:
 		double timeavg_qnet;					// Average net thermal power absorbed by the receiver during the time step [W]
 		double timeavg_eta_therm;				// Time-averaged thermal efficiency of the receiver 
 		double time_min_tout;					// Time at which minimum downcomer outlet T occurs
+		double tube_temp_inlet;					// Receiver inlet tube wall temperature at the end of the the time step [K]
+		double tube_temp_outlet;				// Receiver outlet tube wall temperature at the end of the the time step [K]
 
 		util::matrix_t<double> t_profile;		// Axial temperature profile at the end of the time step[K]
+		util::matrix_t<double> t_profile_wall;	// Axial wall temperature profile at the end of the time step[K]
 		util::matrix_t<double> timeavg_temp;	// Time-average outlet temperature of each flow element [K]
+
 	} trans_outputs;
 
 	struct parameter_eval_inputs
@@ -183,17 +187,17 @@ private:
 		util::matrix_t<double> Tfeval, Tseval, qinc;
 	} param_inputs;
 
-
+	double calc_external_convection_coeff(const C_csp_weatherreader::S_outputs &weather, double Twall);
 	void calc_header_size(double pdrop, double mdot, double rhof, double muf, double Lh, double &id_calc, double &th_calc, double &od_calc);
 	double interpolate(double x, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
 	double integrate(double xlow, double xhigh, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
-	void calc_ss_profile(double inlet_temp, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
+	void calc_ss_profile(double inlet_temp, const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall);
 	void calc_timeavg_temp(double inlet_temp, double tstep, const transient_inputs &tinputs, util::matrix_t<double> &timeavg);
 	void calc_axial_profile(double inlet_temp, double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
 	double calc_single_pt(double inlet_temp, double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs);
 	void calc_extreme_outlet_values(double inlet_temp, double tstep, const transient_inputs &tinputs, double *tmin, double *tmax, double *tptmin, double *tptmax);
-	void update_pde_parameters(double mflow_tot, const parameter_eval_inputs &pinputs, util::matrix_t<double> &Rtube, transient_inputs &tinputs);
-	void solve_transient_model(double mflow_tot, double inlet_temp, double tstep, double allowable_Trise, util::matrix_t<double> &Rtube, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
+	void update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, const parameter_eval_inputs &pinputs, transient_inputs &tinputs);
+	void solve_transient_model(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, double inlet_temp, double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
 
 	enum startup_modes
 	{
@@ -251,6 +255,7 @@ public:
 	double m_tube_flux_startup;		//[kW/m2]
 	double m_preheat_target;		//[K]
 	double m_startup_target;		//[K]
+	double m_initial_temperature;	//[C], convert to [K] in init()
 
 	// Calculate in init()
 	double m_q_dot_inc_min;			//[Wt]
@@ -319,6 +324,11 @@ public:
 		double m_max_rec_tout;			//[C] Maximum salt T (receiver outlet) during the time step
 		double m_q_heattrace;			//[MWt-hr] Power required for heat tracing
 
+		double m_Twall_inlet;			//[C] Receiver inlet tube wall temperature at the end of the timestep
+		double m_Twall_outlet;			//[C] Receiver outlet tube wall temperature at the end of the timestep
+		double m_Triser;				//[C] Riser wall temperature at the end of the timestep
+		double m_Tdownc;				//[C] Downcomer wall temperature at the end of the timestep
+
 		S_outputs()
 		{
 			m_m_dot_salt_tot = m_eta_therm = m_W_dot_pump = m_q_conv_sum = m_q_rad_sum = m_Q_thermal =
@@ -327,6 +337,8 @@ public:
 				m_time_required_su = m_q_dot_piping_loss = std::numeric_limits<double>::quiet_NaN();
 
 			m_inst_T_salt_hot = m_max_T_salt_hot = m_min_T_salt_hot = m_max_rec_tout = m_q_heattrace = std::numeric_limits<double>::quiet_NaN();
+
+			m_Twall_inlet = m_Twall_outlet = m_Triser = m_Tdownc = std::numeric_limits<double>::quiet_NaN();
 
 		}
 	};
