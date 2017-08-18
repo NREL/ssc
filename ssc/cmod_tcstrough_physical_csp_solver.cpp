@@ -428,7 +428,7 @@ public:
 
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("file_name");
+		weather_reader.m_weather_data_provider = &wfile;
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;

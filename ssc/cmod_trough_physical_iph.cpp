@@ -316,7 +316,7 @@ public:
 
 		int steps_per_hour = 1;			//[-]
 
-		int n_wf_records = (int)weather_reader.m_weather_data_provider->get_counter_value();
+		int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
 		steps_per_hour = n_wf_records / 8760;	//[-]
 
 		int n_steps_fixed = steps_per_hour*8760;	//[-]
