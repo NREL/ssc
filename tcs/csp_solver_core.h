@@ -257,6 +257,9 @@ public:
 
 	S_outputs ms_outputs;
 	S_csp_weatherreader_solved_params ms_solved_params;
+
+	bool has_error(){ return (m_error_msg.size() > 0); }
+	std::string get_error(){ return m_error_msg; }
 };
 
 class C_csp_tou

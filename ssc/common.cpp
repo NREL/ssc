@@ -842,7 +842,8 @@ weatherdata::weatherdata( var_data *data_table )
 			if ( i < minute.len ) r->minute = minute.p[i];
 			else r->minute = (double)((m_stepSec / 2) / 60);
 
-
+			r->gh = r->dn = r->df = r->poa = r->wspd = r->wdir = r->tdry = r->twet = r->tdew 
+				= r->rhum = r->pres = r->snow = r->alb = r->aod = std::numeric_limits<double>::quiet_NaN();
 			if ( i < gh.len ) r->gh = gh.p[i];
 			if ( i < dn.len ) r->dn = dn.p[i];
 			if ( i < df.len ) r->df = df.p[i];
@@ -854,12 +855,18 @@ weatherdata::weatherdata( var_data *data_table )
 			if ( i < tdry.len ) r->tdry = tdry.p[i];
 			if ( i < twet.len ) r->twet = twet.p[i];
 			else{
-				// calculate twet if tdry & rh are available
-				if ((i < tdry.len) && (i < rhum.len)){
-					r->twet = (float)wiki_dew_calc(tdry.p[i], rhum.p[i]);
+				// calculate twet using calc_twet if tdry & rh & pres are available
+				if ((i < tdry.len) && (i < rhum.len) && (i < pres.len)){
+					r->twet = (float)calc_twet(tdry.p[i], rhum.p[i], pres.p[i]);
 				}
 			}
 			if ( i < tdew.len ) r->tdew = tdew.p[i];
+			else{
+				// calculate tdew using wiki_dew_calc if tdry & rh are available
+				if ((i < tdry.len) && (i < rhum.len)){
+					r->tdew = (float)wiki_dew_calc(tdry.p[i], rhum.p[i]);
+				}
+			}
 
 			if ( i < rhum.len ) r->rhum = rhum.p[i];
 			if ( i < pres.len ) r->pres = pres.p[i];
@@ -962,6 +969,11 @@ bool weatherdata::read( weather_record *r )
 bool weatherdata::has_data_column( size_t id )
 {
 	return std::find( m_columns.begin(), m_columns.end(), id ) != m_columns.end();
+}
+
+bool weatherdata::has_calculated_data(size_t id){
+	if (id == 10) return !std::isnan(m_data[m_nRecords - 1]->twet);
+	else return false;
 }
 
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress)

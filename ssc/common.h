@@ -154,13 +154,15 @@ class weatherdata : public weather_data_provider
 public:
 	/* Detects file format, read header information, detects which data columns are available and at what index
 	and read weather record information.
-	Calculates twet if missing, and interpolates meteorological data if requested.*/
+	If wet-bulb temperature or dew point are missing, calculate using tdry, pres & rhum or tdry & rhum, respectively.
+	Interpolates meteorological data if requested.*/
 	weatherdata(var_data *data_table);
 	virtual ~weatherdata();
 
 	void set_counter_to(size_t cur_index);
 	bool read(weather_record *r); // reads one more record	
 	bool has_data_column(size_t id);
+	bool has_calculated_data(size_t id);
 };
 
 bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress);

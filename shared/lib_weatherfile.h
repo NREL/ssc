@@ -202,9 +202,18 @@ public:
 	double elev() { return header().elev; }
 
 	// virtual functions specific to weather data source
+	/// check if the data is available from weather file
 	virtual bool has_data_column(size_t id) = 0;
-	virtual bool read( weather_record *r ) = 0; // reads one more record
+
+	/// check if twet or tdew data was calculated from weather data
+	virtual bool has_calculated_data(size_t id) = 0;
+
+	/// reads one more record
+	virtual bool read( weather_record *r ) = 0; 
+
+	///set the m_index to a specified value. next read will be at this time step index.
 	virtual void set_counter_to(size_t cur_index) = 0;
+
 	// some helper methods for ease of use of this class
 	virtual weather_header &header()  {
 		if ( !m_hdrInitialized )
@@ -242,9 +251,9 @@ public:
 
 	bool open( const std::string &file, bool header_only = false, bool interp = false );
 
-	bool read( weather_record *r ); // reads one more record
+	bool read( weather_record *r ); 
 	bool has_data_column( size_t id );
-	//set the m_index to a specified value. next read will be at this time step index.
+	bool has_calculated_data(size_t id);
     void set_counter_to(size_t cur_index); 
 	
 	static std::string normalize_city( const std::string &in );

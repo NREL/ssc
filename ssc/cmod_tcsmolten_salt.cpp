@@ -798,6 +798,8 @@ public:
 		weather_reader.m_azimuth = 0.0;
 			// Initialize to get weather file info
 		weather_reader.init();
+		if (weather_reader.has_error()) throw exec_error("tcsmolten_salt", weather_reader.get_error());
+
 
 		// Get info from the weather reader initialization
 		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]

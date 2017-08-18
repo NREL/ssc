@@ -76,9 +76,15 @@ void C_csp_weatherreader::init()
 
 	if (m_weather_data_provider->has_message()){
 		m_error_msg = m_weather_data_provider->message();
-		throw(C_csp_exception(m_error_msg, ""));
+		return;
 	}
 	m_hdr = &m_weather_data_provider->header();
+
+	// check that it has tdew & twet
+	if (!m_weather_data_provider->has_calculated_data(10)){
+		m_error_msg = "No wet-bulb temperature. Does weather input contain relative humidity, pressure and dry-bulb temp?\n";
+		return;
+	}
 
 	// Set solved parameters
 	ms_solved_params.m_lat = m_hdr->lat;		//[deg]
@@ -107,7 +113,7 @@ void C_csp_weatherreader::init()
 	if(m_trackmode < 0 || m_trackmode > 2)
 	{
 		m_error_msg = util::format("invalid tracking mode specified %d [0..2]", m_trackmode);
-		throw(C_csp_exception(m_error_msg, ""));
+		return;
 	}
 
 	m_is_wf_init = true;
