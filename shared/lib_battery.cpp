@@ -160,17 +160,24 @@ int capacity_t::charge_operation(){ return _charge; }
 bool capacity_t::check_SOC(double q0_old)
 {
 	bool SOC_violated = true;
+	double q_upper = _qmax * _SOC_max * 0.01;
+	double q_lower = _qmax * _SOC_min * 0.01;
 
 	// check if overcharged
-	if (_q0 > _qmax * _SOC_max * 0.01)
-		_q0 = _qmax * _SOC_max * 0.01;
+	if (_q0 > q_upper)
+	{
+		_I += (_q0 - q_upper) / _dt_hour;
+		_q0 = q_upper;
+	}
 	// check if undercharged 
-	else if (_q0 < _qmax * _SOC_min * 0.01)
-		_q0 = _qmax * _SOC_min * 0.01;
+	else if (_q0 < q_lower)
+	{
+		_I += (_q0 - q_lower) / _dt_hour;
+		_q0 = q_lower;
+	}
 	else
 		SOC_violated = false;
 
-	_I = -(_q0 - q0_old) / _dt_hour;
 	if (fabs(_I) < low_tolerance)
 	{
 		_I = 0;
@@ -441,7 +448,7 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 	_dt_hour = dt;
 	double q0_old = _q0;
 	_I = I;
-
+	 
 	// compute charge change ( I > 0 discharging, I < 0 charging)
 	_q0 -= _I*dt;
 
@@ -457,12 +464,16 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 	double qmax_tmp = _qmax*capacity_percent*0.01;
 	if (_q0 > qmax_tmp)
 	{
-		// investigate more, do we actually need to adjust current?
+		/*
+		investigate more, do we actually need to adjust current? 
+		Specifically in the case where battery is discharging, does it make sense to increase I to reduce q0?
+
 		if (fabs(_I) > 0)
 		{
 			_I_loss += (_q0 - qmax_tmp) / _dt_hour;
 			_I += (_q0 - qmax_tmp) / _dt_hour;
 		}
+		*/
 		_q0 = qmax_tmp;
 	}
 	update_SOC();
@@ -516,13 +527,15 @@ double voltage_t::cell_voltage(){ return _cell_voltage; }
 double voltage_t::R_battery(){ return _R_battery; }
 
 // Voltage Table 
-voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table) :
+voltage_table_t::voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R) :
 voltage_t(voltage_t::VOLTAGE_TABLE, num_cells_series, num_strings, voltage, voltage_table)
 {
 	for (int r = 0; r != (int)_batt_voltage_matrix.nrows(); r++)
 		_voltage_table.push_back(table_point(_batt_voltage_matrix.at(r, 0), _batt_voltage_matrix.at(r, 1)));
 	
 	std::sort(_voltage_table.begin(), _voltage_table.end(), byDOD());
+
+	_R = R;
 }
 
 voltage_table_t * voltage_table_t::clone(){ return new voltage_table_t(*this); }
@@ -539,17 +552,17 @@ void voltage_table_t::updateVoltage(capacity_t * capacity, thermal_t * , double 
 {
 	double cell_voltage = _cell_voltage;
 	double DOD = capacity->DOD();
-	double I = capacity->I();
+	double I_string = capacity->I() / _num_strings;
 	double DOD_lo, DOD_hi, V_lo, V_hi;
 	bool voltage_found = exactVoltageFound(DOD, cell_voltage);
 	if (!voltage_found)
 	{
 		prepareInterpolation(DOD_lo, V_lo, DOD_hi, V_hi, DOD);
-		cell_voltage = util::interpolate(DOD_lo, V_lo, DOD_hi, V_hi, DOD);
+		cell_voltage = util::interpolate(DOD_lo, V_lo, DOD_hi, V_hi, DOD) - I_string * _R;
 	}
 
 	// the cell voltage should not increase when the battery is discharging
-	if (I <= 0 || (I > 0 && cell_voltage <= _cell_voltage))
+	if (I_string <= 0 || (I_string > 0 && cell_voltage <= _cell_voltage))
 		_cell_voltage = cell_voltage;
 	
 }
@@ -711,13 +724,13 @@ void voltage_vanadium_redox_t::updateVoltage(capacity_t * capacity, thermal_t * 
 
 	// is on a per-cell basis.
 	// I, Q, q0 are on a per-string basis since adding cells in series does not change current or charge
-	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, T);
+	double cell_voltage = voltage_model(Q / _num_strings, q0 / _num_strings, _I/ _num_strings, T);
 
 	// the cell voltage should not increase when the battery is discharging
 	if (_I <= 0 || (_I > 0 && cell_voltage <= _cell_voltage))
 		_cell_voltage = cell_voltage;
 }
-double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
+double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double I_string, double T)
 {
 	double SOC = q0 / qmax;
 	double SOC_use = SOC;
@@ -726,11 +739,15 @@ double voltage_vanadium_redox_t::voltage_model(double qmax, double q0, double T)
 
 	double A = std::log(std::pow(SOC_use, 2) / std::pow(1 - SOC_use, 2));
 
-	double V_stack_cell = 0.;
-	if (std::isfinite(A))
-		V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
+	
+	double V_cell = 0.;
 
-	return V_stack_cell;
+	if (std::isfinite(A))
+	{
+		double V_stack_cell = _V_ref_50 + (_R_molar * T / _F) * A *_C0;
+		V_cell = V_stack_cell - I_string * _R;
+	}
+	return V_cell;
 }
 
 /*
@@ -1017,14 +1034,14 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 			D = _DOD_vect[i];
 			if (D < DOD && D > D_lo)
 				D_lo = D;
-			else if (D > DOD && D < D_hi)
+			else if (D >= DOD && D < D_hi)
 				D_hi = D;
 		}
 
 		// Seperate table into bins
 		double D_min = 100.;
 		double D_max = 0.;
-
+		
 		for (int i = 0; i < (int)_DOD_vect.size(); i++)
 		{
 			D = _DOD_vect[i];
@@ -1036,6 +1053,17 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 			if (D < D_min){ D_min = D; }
 			else if (D > D_max){ D_max = D; }
 		}
+
+		// if we're out of the bounds, just make the upper bound equal to the highest input
+		if (high_indices.size() == 0)
+		{
+			for (int i = 0; i != (int)_DOD_vect.size(); i++)
+			{
+				if (_DOD_vect[i] == D_max)
+					high_indices.push_back(i);
+			}
+		}
+
 		size_t n_rows_lo = low_indices.size();
 		size_t n_rows_hi = high_indices.size();
 		size_t n_cols = 2;
@@ -1050,16 +1078,7 @@ double lifetime_cycle_t::bilinear(double DOD, int cycle_number)
 				C_n_low_vect.push_back(100.); // 100 % capacity
 			}
 		}
-		else if (n_rows_hi == 0)
-		{
-			// Assume 100% DOD
-			for (int i = 0; i < (int)n_rows_lo; i++)
-			{
-				C_n_high_vect.push_back(100. + i * 500); // cycles
-				C_n_high_vect.push_back(80 - i*10); // % capacity
-			}
-		}
-
+		
 		if (n_rows_lo != 0)
 		{
 			for (int i = 0; i < (int)n_rows_lo; i++)
@@ -1224,6 +1243,8 @@ void lifetime_calendar_t::replaceBattery()
 {
 	_day_age_of_battery = 0;
 	_q = _q0 * 100;
+	_dq_new = 0;
+	_dq_old = 0;
 }
 
 /*
@@ -1362,12 +1383,15 @@ void losses_t::copy(losses_t * losses)
 	_lifetime = losses->_lifetime;
 	_thermal = losses->_thermal;
 	_capacity = losses->_capacity;
+	_loss_mode = losses->_loss_mode;
+	_nCycle = losses->_nCycle;
+
+	// don't copy these, they don't change and are slow (need to re-design)
+	/*
 	_charge_loss = losses->_charge_loss;
 	_discharge_loss = losses->_discharge_loss;
 	_idle_loss = losses->_idle_loss;
-	_full_loss = losses->_full_loss;
-	_loss_mode = losses->_loss_mode;
-	_nCycle = losses->_nCycle;
+	_full_loss = losses->_full_loss;*/
 }
 
 void losses_t::replace_battery(){ _nCycle = 0; }

@@ -127,7 +127,7 @@ void charge_controller::initialize(double P_pv, double P_load_ac, size_t index)
 bool charge_controller::check_iterate(){ return _iterate; }
 void charge_controller::finalize()
 {
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_system_loss, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
 	_dispatch_initial->copy(_dispatch);
 }
 
@@ -255,7 +255,7 @@ double dc_connected_battery_controller::update_gen_ac(double P_gen_ac)
 	compute_to_batt_load_grid(P_battery_dc, _P_pv, _P_load, inverter_efficiency);
 	
 	// add battery power inversion loss to total loss
-	double P_battery_ac = _P_battery;
+	double P_battery_ac = _P_battery; 
 	_P_loss += fabs(P_battery_ac - P_battery_dc);
 
 	// check assumption on inverter efficiency
@@ -345,7 +345,7 @@ void dc_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	{
 		P_pv_ac = P_pv_dc * inverter_efficiency;
 		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
+		if (P_pv_ac >= P_load_ac)
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
@@ -448,7 +448,7 @@ void ac_connected_battery_controller::run( size_t year, size_t hour_of_year, siz
 	process_dispatch();
 
 	// AC charging metrics
-	_battery_metrics->compute_metrics_ac(_P_battery, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
+	_battery_metrics->compute_metrics_ac(_P_battery, _P_system_loss, _P_pv_to_battery, _P_grid_to_batt, _P_grid);
 }
 void ac_connected_battery_controller::process_dispatch()
 {
@@ -542,7 +542,7 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	else
 	{
 		P_pv_to_load_ac = P_pv_ac;
-		if (P_pv_ac > P_load_ac)
+		if (P_pv_ac >= P_load_ac)
 		{
 			P_pv_to_load_ac = P_load_ac;
 			P_batt_to_load_ac = 0;
@@ -592,8 +592,8 @@ void ac_connected_battery_controller::compute_to_batt_load_grid(double P_battery
 	_P_grid_to_load = P_grid_to_load_ac;
 	_P_grid_to_batt = P_grid_to_batt_ac;
 
-	// report only the loss due to pv charging and batt discharging
-	_P_loss = P_pv_to_batt_loss + P_batt_to_load_loss;
+	// report losses due to charging and discharging
+	_P_loss = P_grid_to_batt_loss + P_pv_to_batt_loss + P_batt_to_load_loss;
 
 }
 

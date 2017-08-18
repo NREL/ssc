@@ -294,7 +294,7 @@ struct byDOD
 class voltage_table_t : public voltage_t
 {
 public:
-	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table);
+	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R);
 
 	// deep copy
 	voltage_table_t * clone();
@@ -361,7 +361,9 @@ public:
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
 protected:
-	double voltage_model(double q0, double qmax, double T);
+	
+	// cell voltage model
+	double voltage_model(double q0, double qmax, double I_string, double T);
 
 private:
 	double _V_ref_50;				// Reference voltage at 50% SOC
@@ -595,20 +597,22 @@ public:
 	// main APIs
 	void run_losses(double dt_hour, size_t index);
 	void replace_battery();
-	double battery_system_loss(int index){ return _full_loss[index]; }
+	double battery_system_loss(int index){ return (_full_loss)[index]; }
 
 	enum { MONTHLY, TIMESERIES};
 
 protected:
+	
+	int _loss_mode;
+	int _nCycle;
+	
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
 	capacity_t * _capacity;
-	double_vec _charge_loss;
-	double_vec _discharge_loss;
-	double_vec _idle_loss;
-	double_vec _full_loss;
-	int _loss_mode;
-	int _nCycle;
+	double_vec  _charge_loss;
+	double_vec  _discharge_loss;
+	double_vec  _idle_loss;
+	double_vec  _full_loss;
 };
 
 /*
@@ -667,6 +671,7 @@ public:
 	double timestep_hour();
 
 	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW};
+	enum REPLACE{ NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE};
 
 
 private:

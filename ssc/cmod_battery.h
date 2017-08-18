@@ -269,9 +269,11 @@ struct battstor
 		*outAnnualDischargeEnergy,
 		*outAnnualGridImportEnergy,
 		*outAnnualGridExportEnergy,
+		*outAnnualEnergySystemLoss,
 		*outAnnualEnergyLoss;
 
 	double outAverageCycleEfficiency;
+	double outAverageRoundtripEfficiency;
 	double outPVChargePercent;
 };
 
