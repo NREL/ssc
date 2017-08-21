@@ -281,7 +281,7 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
                         //if no stochastic data was provided, copy over the actual from the weather file here. Don't reassign the value in the weatherstep object.
                         forecast_outputs.dni_scenarios.at(t, w) = weatherstep->m_beam;  
 
-                    if( forecast_params.is_dni_scenarios )
+                    if( forecast_params.is_tdry_scenarios )
                         //if tdry is stochastic, assign the current tdry to be the value provided in the scenarios table
                         weatherstep->m_tdry = forecast_outputs.tdry_scenarios.at(t, w);
                     else
@@ -296,7 +296,8 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
 
 
                 //get DNI
-                double dni = m_weather->ms_outputs.m_beam;
+                //double dni = m_weather->ms_outputs.m_beam;
+				double dni = weatherstep->m_beam;
 
                 if( m_weather->ms_outputs.m_solzen > 90. || dni < 0. )
                     dni = 0.;

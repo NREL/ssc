@@ -877,8 +877,10 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                     int nstepopt = opt_horizon * mc_tou.mc_dispatch_params.m_disp_steps_per_hour;
                     int stepstart = mc_kernel.mc_sim_info.ms_ts.m_time/ baseline_step - 1;
 
-                    if( dispatch.forecast_params.is_stochastic )
+					if (mc_tou.mc_dispatch_params.m_is_stochastic_dispatch)
                     {
+						dispatch.forecast_params.is_stochastic = mc_tou.mc_dispatch_params.m_is_stochastic_dispatch;
+
                         //check which scenario tables are provided
                         dispatch.forecast_params.is_dni_scenarios = mc_tou.mc_dispatch_params.m_is_dni_scenarios;
                         dispatch.forecast_params.is_price_scenarios = mc_tou.mc_dispatch_params.m_is_price_scenarios;
