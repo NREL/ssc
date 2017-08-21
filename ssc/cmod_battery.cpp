@@ -1110,7 +1110,7 @@ public:
 			batt.calculate_monthly_and_annual_outputs(*this);
 		}
 		else
-			assign("average_cycle_efficiency", var_data((ssc_number_t)0.));
+			assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));
 	}
 };
 

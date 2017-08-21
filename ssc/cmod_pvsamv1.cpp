@@ -1736,8 +1736,11 @@ public:
 		if (system_use_lifetime_output == 1)
 			nyears = as_integer("analysis_period");
 
-		if ( __ARCHBITS__ == 32 && system_use_lifetime_output )
+		// Warning workaround
+		static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
+		if (is32BitLifetime)
 			throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
+
 
 		ssc_number_t *p_dc_degrade_factor = 0;
 
@@ -3168,7 +3171,7 @@ public:
 
 		// accumulate annual and monthly battery model outputs
 		if ( en_batt ) batt.calculate_monthly_and_annual_outputs( *this );
-		else assign( "average_cycle_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
+		else assign( "average_battery_roundtrip_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
