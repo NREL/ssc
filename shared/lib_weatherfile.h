@@ -192,6 +192,13 @@ public:
 	size_t nrecords(){ return m_nRecords; } // number of data records in file	
 	int get_counter_value(){ return (int)m_index; }
 	void rewind(){ m_index = 0; }
+
+	///set the m_index to a specified value. next read will be at this time step index.
+	void set_counter_to(size_t cur_index){
+		if (cur_index >= 0 && cur_index < m_nRecords){
+			m_index = cur_index;
+		}
+	}
 	
 	bool has_message() { return m_message.size() > 0; }
 	std::string message() { return m_message; }
@@ -211,8 +218,6 @@ public:
 	/// reads one more record
 	virtual bool read( weather_record *r ) = 0; 
 
-	///set the m_index to a specified value. next read will be at this time step index.
-	virtual void set_counter_to(size_t cur_index) = 0;
 
 	// some helper methods for ease of use of this class
 	virtual weather_header &header()  {
@@ -254,7 +259,6 @@ public:
 	bool read( weather_record *r ); 
 	bool has_data_column( size_t id );
 	bool has_calculated_data(size_t id);
-    void set_counter_to(size_t cur_index); 
 	
 	static std::string normalize_city( const std::string &in );
 	static bool convert_to_wfcsv( const std::string &input, const std::string &output );

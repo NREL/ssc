@@ -1475,13 +1475,6 @@ bool weatherfile::has_calculated_data(size_t id){
 	return !isnan(m_columns[id].data[0]);
 }
 
-void weatherfile::set_counter_to(size_t cur_index)
-{
-	if (cur_index >= 0 && cur_index < m_nRecords){
-		m_index = cur_index;
-	}
-}
-
 bool weatherfile::convert_to_wfcsv( const std::string &input, const std::string &output )
 {
 	weatherfile wf( input );
