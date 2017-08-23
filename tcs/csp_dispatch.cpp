@@ -75,6 +75,7 @@ csp_dispatch_opt::csp_dispatch_opt()
     params.is_pb_standby0 = false;
     params.is_rec_operating0 = false;
     params.q_pb0 = numeric_limits<double>::quiet_NaN();
+    params.w_pb0 = numeric_limits<double>::quiet_NaN();
     params.dt = numeric_limits<double>::quiet_NaN();
     params.e_tes_init = numeric_limits<double>::quiet_NaN();          
     params.e_tes_min = numeric_limits<double>::quiet_NaN();           
@@ -276,6 +277,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["y0"] = (optinst->params.is_pb_operating0 ? 1 : 0) ;
         pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
         pars["q0"] =  optinst->params.q_pb0 ;
+        pars["Wdot0"] = optinst->params.w_pb0;
         pars["qrecmaxobs"] = 1.;
         for(int i=0; i<optinst->outputs.q_sfavail_expected.size(); i++)
             pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i) : pars["qrecmaxobs"];
@@ -329,9 +331,9 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
 
         double limit1 = (-pars["Z_2"]*pars["W_dot_cycle"])/(pars["Z_1"]*optinst->params.eta_cycle_ref);  //q at point where power curve crosses x-axis
 
-        pars["Wdot0"] = 0.;
-        if( pars["q0"] >= pars["Ql"] )
-            pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0);
+        //pars["Wdot0"] = 0.;
+        //if( pars["q0"] >= pars["Ql"] )
+        //    pars["Wdot0"]= pars["etap"]*pars["q0"]*optinst->outputs.eta_pb_expected.at(0);
 
         pars["Wdotu"] = (pars["Qu"] - limit1) * pars["etap"];
         pars["Wdotl"] = (pars["Ql"] - limit1) * pars["etap"];

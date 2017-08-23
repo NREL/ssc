@@ -1,0 +1,62 @@
+Build SSC instructions for Debian systems with apt-get
+**********************************************
+
+1.) Install build tools
+    $ sudo apt-get install build-essential
+    
+2.) Install Git tool to clone and manage repository access
+    $ sudo apt-get install git
+    
+3.) Install prerequisites for wxWidgets
+    $ sudo apt-get install freeglut3-dev libgtk2.0-dev 
+    
+4.) Create or move to a suitable directory to store the build code
+    $ cd ~/<projects>/
+    
+5.) Download wxWidgets 3.1.x
+    $ wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.0/wxWidgets-3.1.0.tar.bz2
+    
+6.) Unzip wxWidgets
+    $ bunzip2 wxWidgets-3.1.0.tar.bz2
+    $ tar -xvf wxWidgets-3.1.0.tar
+    
+7.) Change directories to wxWidgets-3.1.0
+
+8.) Configure wxWidgets
+    $ ./configure --prefix=$HOME/local/wx-3.1.0 --enable-shared=no --enable-stl=yes --enable-debug=no --with-gtk=2 --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --without-libjbig --without-liblzma --without-gtkprint --with-libnotify=no --with-libmspack=no --with-gnomevfs=no --with-opengl=yes --with-sdl=no --with-cxx=11
+    
+9.) Make wxWidgets (sudo may be required)
+    $ sudo make -j6
+    $ sudo make install
+    
+10.) Create symbolic link for wx-config-3
+    $ cd ~/local
+    $ mkdir bin
+    $ sudo ln -s /home/<user>/local/wx-3.1.0/bin/wx-config wx-config-3
+    
+11.) Add new bin folder to path
+    $ nano ~/.bashrc 
+    .. go to end of script, and add a new line:
+    $ PATH=$PATH:/home/<user>/local/wx-3.1.0/bin
+    .. reload the bash startup script
+    $ . ~/.bashrc
+    
+12.) Clone NREL code
+    $ git clone https://github.com/NREL/lk.git
+    $ git clone https://github.com/NREL/wex.git
+    $ git clone https://github.com/NREL/ssc.git
+    
+13.) Make sure compiler settings are correct. For Ubuntu or Mint distributions, the c++11 option should be used, and this needs to be correct in each makefile. For lk, wex, and ssc:
+    $ cd <lk, wex, or ssc>/build_linux
+    $ nano Makefile*
+    .. edit each makefile to replace any c++0x with c++11
+    .. save
+    
+14.) Build packages in order
+    $ cd lk/build_linux
+    $ make
+    $ cd ../../wex/build_linux
+    $ make
+    $ cd ../../ssc/build_linux
+    $ make
+    

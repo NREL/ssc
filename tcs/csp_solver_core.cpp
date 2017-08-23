@@ -845,9 +845,13 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 dispatch.params.is_pb_standby0 = mc_power_cycle.get_operating_state() == 2;
                 dispatch.params.is_rec_operating0 = mc_collector_receiver.get_operating_state() == C_csp_collector_receiver::ON;
                 dispatch.params.q_pb0 = mc_pc_out_solver.m_q_dot_htf * 1000.;
+                dispatch.params.w_pb0 = mc_pc_out_solver.m_P_cycle * 1000.;
 
                 if(dispatch.params.q_pb0 != dispatch.params.q_pb0 )
                     dispatch.params.q_pb0 = 0.;
+                
+                if(dispatch.params.w_pb0 != dispatch.params.w_pb0 )
+                    dispatch.params.w_pb0 = 0.;
             
                 //time
                 dispatch.params.info_time = mc_kernel.mc_sim_info.ms_ts.m_time; //s
