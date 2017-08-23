@@ -460,6 +460,8 @@ int C_csp_solver::steps_per_hour()
 
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 {
+	bool replace_exceptions_with_warnings = 1; 
+
 	// Get number of records in weather file
 	int n_wf_records = mc_weather.get_n_records();
 	int step_per_hour = n_wf_records / 8760;
@@ -1679,8 +1681,21 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-							" to achieve a PC HTF mass flow less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
+						if (replace_exceptions_with_warnings)
+						{
+							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code "
+								"failed to find a solution. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
+							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+								" to achieve a PC HTF mass flow less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
+						}
+
 					}
 					
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
@@ -1748,13 +1763,24 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-                        //sim failed
-                        m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
-                        are_models_converged = false;
-                        break;
+						if (replace_exceptions_with_warnings)
+						{
+							//sim failed
+							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
+								"failed to find a solution. Controller shut off plant",
+								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
+							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
 
-						/*throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));*/
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+							" to achieve a PC thermal power less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+						}
+
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -1855,8 +1881,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						}
 						catch (C_csp_exception)
 						{
-							throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-								" at defocus = 1", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
+							if (replace_exceptions_with_warnings)
+							{
+								error_msg = util::format("At time = %lg, %s failed to find a solution at defocus = 1. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
+								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+								turn_off_plant();
+								are_models_converged = false;
+								break;
+							}
+							else
+							{
+								throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+									" at defocus = 1", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
+							}
+
 						}
 
 						if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -2484,7 +2522,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception("CR_ON__PC_OFF__TES_CH__AUX_OFF received exception from mono equation solver"));
+					if (replace_exceptions_with_warnings)
+					{
+						error_msg = util::format("At time = %lg CR_ON__PC_OFF__TES_CH__AUX_OFF received exception from mono equation solver. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{ 
+						throw(C_csp_exception("CR_ON__PC_OFF__TES_CH__AUX_OFF received exception from mono equation solver"));
+					}
 				}
 
 				if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -2579,7 +2628,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, %s failed", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg %s failed. Contoller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, %s failed", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str()), ""));
+					}
+
 				}
 
 				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -2693,7 +2754,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, CR_ON__PC_TARGET__TES_DC__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_DC__AUX_OFF failed. Contoller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, CR_ON__PC_TARGET__TES_DC__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0), ""));
+					}
+
+					
 				}
 
 				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -2809,7 +2883,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception("CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF received exception from mono equation solver"));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF received exception from mono equation solver. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception("CR_ON__PC_RM_LO__TES_EMPTY__AUX_OFF received exception from mono equation solver"));
+					}
+					
 				}
 
 				if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -2952,7 +3038,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, CR_DF__PC_OFF__TES_FULL__AUX_OFF failed to find a solution", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+						if (replace_exceptions_with_warnings)
+						{
+							std::string msg = util::format("At time = %lg CR_DF__PC_OFF__TES_FULL__AUX_OFF failed to find a solution. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception(util::format("At time = %lg, CR_DF__PC_OFF__TES_FULL__AUX_OFF failed to find a solution", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+						}
+						
+						
 					}
 
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
@@ -3005,7 +3104,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception("CR_ON__PC_OFF__TES_FULL__AUX_OFF received exception from mono equation solver"));
+						if (replace_exceptions_with_warnings)
+						{
+							std::string msg = util::format("At time = %lg CR_ON__PC_OFF__TES_FULL__AUX_OFF received exception from mono equation solver. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception("CR_ON__PC_OFF__TES_FULL__AUX_OFF received exception from mono equation solver"));
+						}
+
 					}
 
 					if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -3222,11 +3333,37 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				{
 					if (operating_mode == CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF)
 					{
-						throw(C_csp_exception("CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+						if (replace_exceptions_with_warnings)
+						{
+							std::string msg = util::format("At time = %lg CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption."
+								" Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception("CR_OFF__PC_RM_LO__TES_EMPTY__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+						}
+
 					}
 					else if (operating_mode == CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF)
 					{
-						throw(C_csp_exception("CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+						if (replace_exceptions_with_warnings)
+						{
+							std::string msg = util::format("At time = %lg CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption."
+								" Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception("CR_SU__PC_RM_LO__TES_EMPTY__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+						}
+
 					}
 				}
 
@@ -3396,7 +3533,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_SU__PC_MIN__TES_EMPTY failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg C_csp_solver::CR_SU__PC_MIN__TES_EMPTY failed. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_SU__PC_MIN__TES_EMPTY failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					}
+					
 				}
 
 				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -3556,7 +3705,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, CR_ON__PC_SB__TES_DC__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg CR_ON__PC_SB__TES_DC__AUX_OFF failed.  Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, CR_ON__PC_SB__TES_DC__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0), ""));
+					}
+
 				}
 
 				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -3755,7 +3916,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, %s failed", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg, %s failed.  Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600, op_mode_str.c_str());
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, %s failed", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+					}
+
 				}
 
 				if (T_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -3878,7 +4051,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_ON__PC_RM_HI__TES_FULL failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg, C_csp_solver::CR_ON__PC_RM_HI__TES_FULL failed.  Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_ON__PC_RM_HI__TES_FULL failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					}
 				}
 
 				if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -3964,7 +4148,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception("CR_ON__PC_MIN__TES_EMPTY__AUX_OFF received exception from mono equation solver"));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg, CR_ON__PC_MIN__TES_EMPTY__AUX_OFF received exception from mono equation solver. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception("CR_ON__PC_MIN__TES_EMPTY__AUX_OFF received exception from mono equation solver"));
+					}
+	
 				}
 
 				if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -4168,8 +4364,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					}
 					catch (C_csp_exception)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
-							" to achieve a PC HTF mass flow less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+						if (replace_exceptions_with_warnings)
+						{
+							std::string msg = util::format("At time = %lg, %s failed to find a solution to achieve a PC HTF mass flow less than the maximum. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time / 3600, op_mode_str.c_str());
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							turn_off_plant();
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception(util::format("At time = %lg, %s failed to find a solution"
+								" to achieve a PC HTF mass flow less than the maximum", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+						}
 					}
 
 					if (defocus_code != C_monotonic_eq_solver::CONVERGED)
@@ -4217,8 +4424,20 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				{
 					if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
 					{
-						throw(C_csp_exception(util::format("At time = %lg, %s should not need to defocus to meet thermal power requirements"
-							" because STARTUP_CONTROLLED should choose a mass flow rate that satisfies thermal power limits", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+						if (replace_exceptions_with_warnings)
+						{
+							std::string msg = util::format("At time = %lg, %s should not need to defocus to meet thermal power requirements"
+								" because STARTUP_CONTROLLED should choose a mass flow rate that satisfies thermal power limits", mc_kernel.mc_sim_info.ms_ts.m_time / 3600, op_mode_str.c_str());
+							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							m_is_CR_DF__PC_SU__TES_FULL__AUX_OFF_avail = false;
+							are_models_converged = false;
+							break;
+						}
+						else
+						{
+							throw(C_csp_exception(util::format("At time = %lg, %s should not need to defocus to meet thermal power requirements"
+								" because STARTUP_CONTROLLED should choose a mass flow rate that satisfies thermal power limits", mc_kernel.mc_sim_info.ms_ts.m_time, op_mode_str.c_str()), ""));
+						}	
 					}
 
 					C_mono_eq_cr_on__pc_target__tes_full__defocus c_eq(this, pc_mode, q_pc_max);
@@ -4332,7 +4551,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						}
 						catch (C_csp_exception)
 						{
-							throw(C_csp_exception("CR_DF_PC_SU__TES_FULL__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+							if (replace_exceptions_with_warnings)
+							{
+								std::string msg = util::format("At time = %lg, CR_DF_PC_SU__TES_FULL__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption. "
+									" Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time);
+								mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+								turn_off_plant();
+								are_models_converged = false;
+								break;
+							}
+							else
+							{
+								throw(C_csp_exception("CR_DF_PC_SU__TES_FULL__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+							}
 						}
 
 						if (T_htf_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -4376,7 +4607,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						}
 						catch (C_csp_exception)
 						{
-							throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_DF_1__PC_RM_HI__TES_FULL failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+							if (replace_exceptions_with_warnings)
+							{
+								std::string msg = util::format("At time = %lg, C_csp_solver::CR_DF_1__PC_RM_HI__TES_FULL failed. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time);
+								mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+								turn_off_plant();
+								are_models_converged = false;
+								break;
+							}
+							else
+							{
+								throw(C_csp_exception(util::format("At time = %lg, C_csp_solver::CR_DF_1__PC_RM_HI__TES_FULL failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+							}
 						}
 
 						if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -4454,7 +4696,18 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception(util::format("At time = %lg, CR_ON__PC_SB__TES_FULL__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg, CR_ON__PC_SB__TES_FULL__AUX_OFF failed. Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception(util::format("At time = %lg, CR_ON__PC_SB__TES_FULL__AUX_OFF failed", mc_kernel.mc_sim_info.ms_ts.m_time), ""));
+					}
 				}
 
 				if (solver_code != C_monotonic_eq_solver::CONVERGED)
@@ -4666,7 +4919,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
 				catch (C_csp_exception)
 				{
-					throw(C_csp_exception("CR_ON__PC_SU__TES_CH__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+					if (replace_exceptions_with_warnings)
+					{
+						std::string msg = util::format("At time = %lg, CR_ON__PC_SU__TES_CH__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption. "
+							" Controller shut off plant", mc_kernel.mc_sim_info.ms_ts.m_time);
+						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						turn_off_plant();
+						are_models_converged = false;
+						break;
+					}
+					else
+					{
+						throw(C_csp_exception("CR_ON__PC_SU__TES_CH__AUX_OFF solver to converge the HTF cold temperature returned an unexpected exemption"));
+					}
 				}
 
 				if (T_htf_cold_code != C_monotonic_eq_solver::CONVERGED)
@@ -5247,10 +5512,11 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		}
 		else
 		{
+			//throw(C_csp_exception(msg, ""));
 			std::string msg = util::format("At time = %lg C_csp_solver::solver_cr_on__pc_fixed__tes_empty iteration "
 				"to find the cold HTF temperature to balance energy between the CR, TES, and PC failed",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-			throw(C_csp_exception(msg, ""));
+			mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
 		}
 	}
 

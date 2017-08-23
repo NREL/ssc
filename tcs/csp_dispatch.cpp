@@ -1313,12 +1313,30 @@ bool csp_dispatch_opt::optimize()
 				set_bb_rule(lp, NODE_PSEUDOCOSTSELECT + NODE_DYNAMICMODE);
 		}
         
+		lprec *lp_original;
+		lp_original = copy_lp(lp);
  
        //Problem scaling loop
         int scaling_iter = 0;
         bool return_ok = false;
-        while(scaling_iter < 5)
+        while(scaling_iter < 8)
         {
+			delete_lp(lp);
+			lp = copy_lp(lp_original);
+			//set the log function
+			solver_params.reset();
+			put_msgfunc(lp, opt_iter_function, (void*)(&solver_params), MSG_ITERATION | MSG_MILPBETTER | MSG_MILPFEASIBLE);
+			put_abortfunc(lp, opt_abortfunction, (void*)(&solver_params));
+			if (solver_params.disp_reporting > 0)
+			{
+				put_logfunc(lp, opt_logfunction, (void*)(&solver_params));
+				set_verbose(lp, solver_params.disp_reporting); //http://web.mit.edu/lpsolve/doc/set_verbose.htm
+			}
+			else
+			{
+				set_verbose(lp, 0);
+			}
+
 
             if( solver_params.scaling_type < 0 && scaling_iter == 0)
             {
@@ -1348,6 +1366,15 @@ bool csp_dispatch_opt::optimize()
             case 4:
                 set_scaling(lp,  SCALE_INTEGERS | SCALE_LINEAR | SCALE_GEOMETRIC | SCALE_EQUILIBRATE);  //default
                 break;
+			case 5:
+				set_scaling(lp, SCALE_RANGE + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS);
+				break;
+			case 6:
+				set_scaling(lp, SCALE_CURTISREID + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE + SCALE_INTEGERS);
+				break;
+			case 7:
+				set_scaling(lp, SCALE_MEAN + SCALE_LOGARITHMIC + SCALE_POWER2 + SCALE_EQUILIBRATE);
+				break;
             }
 
 
@@ -1380,6 +1407,8 @@ bool csp_dispatch_opt::optimize()
 
             scaling_iter ++;
         }
+
+		delete_lp(lp_original);
 
         //keep track of problem efficiency
         outputs.presolve_nconstr = get_Nrows(lp);
