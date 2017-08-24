@@ -177,9 +177,9 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		
+		shared_ptr<weather_data_provider> wdata = make_shared<weatherfile>(as_string("solar_resource_file"));
         solarpilot_invoke spi( this );
-        spi.run();
+        spi.run(wdata);
         AutoPilot_S *sapi = spi.GetSAPI();
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
