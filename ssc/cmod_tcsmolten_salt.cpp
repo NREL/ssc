@@ -73,8 +73,8 @@
 
 static var_info _cm_vtab_tcsmolten_salt[] = {
 	/*   VARTYPE           DATATYPE         NAME                           LABEL                                                     UNITS            META           GROUP            REQUIRED_IF                 CONSTRAINTS         UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",           "" },
-	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",  "solar resouce data in memory",									  "",			  "",			 "WindPower",      "?",						  "",					  "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "?",                       "LOCAL_FILE",           "" },
+	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",  "solar resouce data in memory",									  "",			  "",			 "Weather",        "?",						  "",					  "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
 	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
