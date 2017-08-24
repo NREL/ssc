@@ -52,6 +52,7 @@
 
 #include <numeric>
 #include <limits>
+#include <memory>
 
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
@@ -168,7 +169,7 @@ private:
 	bool m_is_wf_init;
 
 public:
-	weather_data_provider* m_weather_data_provider;
+	std::shared_ptr<weather_data_provider> m_weather_data_provider;
 	weather_header* m_hdr;
 	weather_record m_rec;
 

@@ -129,11 +129,6 @@ void C_csp_weatherreader::timestep_call(const C_csp_solver_sim_info &p_sim_info)
 	double step = p_sim_info.ms_ts.m_step;		//[s]
 	//int ncall = p_sim_info->m_ncall;
 
-	int stop = 0;
-	if (abs(time - 31456800) < 1){
-		stop++;
-	}
-
 	if( m_ncall == 0 ) // only read data values once per timestep
 	{
 		//If the start time does not correspond to the first record in the weather file, loop to the correct record

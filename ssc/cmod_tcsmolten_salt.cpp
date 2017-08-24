@@ -784,13 +784,11 @@ public:
 		// Weather reader
 		C_csp_weatherreader weather_reader;
 		if (is_assigned("solar_resource_file")){
-			weatherfile* wf = new weatherfile(as_string("solar_resource_file"));
-			weather_reader.m_weather_data_provider = wf;
+			weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
 			
 		}
 		if (is_assigned("solar_resource_data")){
-			weatherdata* wd = new weatherdata(lookup("wind_resource_data"));
-			weather_reader.m_weather_data_provider = wd;
+			weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("wind_resource_data"));
 		}
 
 		weather_reader.m_trackmode = 0;
@@ -1850,8 +1848,6 @@ public:
 		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
 		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 		 
-		// delete dynamically-allocated weather_data_provider
-		delete weather_reader.m_weather_data_provider;
 	}
 };
 
