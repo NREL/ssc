@@ -476,7 +476,6 @@ void dispatch_manual_t::dispatch(size_t year,
 
 	// current charge state of battery from last time step.  
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();						 // [V] 
-	double battery_voltage = _Battery->battery_voltage();										 // [V] 
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
@@ -694,11 +693,8 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 
 	// current charge state of battery from last time step.  
 	double battery_voltage_nominal = _Battery->battery_voltage_nominal();						  // [V] 
-	double battery_voltage = _Battery->battery_voltage();
 	double charge_needed_to_fill = _Battery->battery_charge_needed();						     // [Ah] - qmax - q0
 	double energy_needed_to_fill = (charge_needed_to_fill * battery_voltage_nominal)*util::watt_to_kilowatt;   // [kWh]
-//	double charge_total = _Battery->battery_charge_total();								         // [Ah]
-//	double charge_max = _Battery->battery_charge_maximum();								         // [Ah]
 	double I = 0.;															                     // [A] - The  current input/draw from battery after losses
 
 	// Options for how to use PV
