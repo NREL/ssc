@@ -512,7 +512,7 @@ void dispatch_manual_t::dispatch(size_t year,
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->battery_voltage();
-		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
+		_P_tofrom_batt = I * battery_voltage_new * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
 		compute_generation();
@@ -726,7 +726,7 @@ void dispatch_manual_front_of_meter_t::dispatch(size_t year,
 		// Update how much power was actually used to/from battery
 		I = _Battery->capacity_model()->I();
 		double battery_voltage_new = _Battery->battery_voltage();
-		_P_tofrom_batt = I * 0.5*(battery_voltage + battery_voltage_new) * util::watt_to_kilowatt;// [kW]
+		_P_tofrom_batt = I * battery_voltage_new * util::watt_to_kilowatt;// [kW]
 
 		compute_battery_state();
 		compute_generation();
