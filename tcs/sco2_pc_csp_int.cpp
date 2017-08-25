@@ -703,647 +703,647 @@ bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core()
 	return true;
 }
 
-bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
-{
-	// Prior to calling, need to set :
-	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
-
-	// Get density at design point
-	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
-	CO2_state co2_props;
-	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
-
-	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
-	double P_mc_in_feasible = co2_props.pres;		//[kPa]
-	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_feasible;
-
-	bool is_P_mc_in_feasible = false;
-	
-	int od_core_error_code_dens = 0;
-	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
-	{
-		double eta_od_core = std::numeric_limits<double>::quiet_NaN();
-		od_core_error_code_dens = off_design_core(eta_od_core);
-		if( od_core_error_code_dens != 0 )
-		{
-			is_P_mc_in_feasible = false;
-		}
-		else
-		{
-			is_P_mc_in_feasible = true;
-		}
-	}
-	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
-	{
-		is_P_mc_in_feasible = opt_f_recomp_fix_P_mc_in_max_eta_core();
-	}
-
-
-	double eta_max_P_at_dens_des = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
-
-	double P_mc_in_lower = std::numeric_limits<double>::quiet_NaN();
-	double P_mc_in_upper = std::numeric_limits<double>::quiet_NaN();
-
-	double sign_mult = 1.0;
-	double mag_mult = 0.05;
-	while( !is_P_mc_in_feasible )
-	{
-		// Try to find an inlet pressure that solves
-			// First, try a lower pressure
-		double P_mc_in_guess = (1.0 - sign_mult*mag_mult)*P_mc_in_feasible;	//[kPa]
-		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;		//[kPa]
-		
-		
-		bool is_P_mc_in_guess = false;
-		int od_core_error_code_iter = 0;
-
-		if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
-		{
-			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
-			od_core_error_code_iter = off_design_core(eta_od_core);
-			if( od_core_error_code_iter != 0 )
-			{
-				is_P_mc_in_guess = false;
-			}
-			else
-			{
-				is_P_mc_in_guess = true;
-			}
-		}
-		else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
-		{
-			is_P_mc_in_guess = opt_f_recomp_fix_P_mc_in_max_eta_core();
-		}
-
-
-		if( is_P_mc_in_guess )
-		{
-			P_mc_in_feasible = P_mc_in_guess;		//[kPa]
-			break;
-		}
-		else if( mc_rc_cycle.get_od_solved()->m_eta_thermal > eta_max_P_at_dens_des )
-		{
-			bool is_feasible_found = false;
-			while(true)
-			{				
-				P_mc_in_guess = (1.0 - sign_mult*0.1)*P_mc_in_guess;	//[kPa]
-				ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;		//[kPa]
-				
-				
-				bool is_P_mc_in_guess = false;
-				if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
-				{
-					double eta_od_core = std::numeric_limits<double>::quiet_NaN();
-					int od_core_error_code = off_design_core(eta_od_core);
-					if( od_core_error_code != 0 )
-					{
-						is_P_mc_in_guess = false;
-					}
-					else
-					{
-						is_P_mc_in_guess = true;
-					}
-				}
-				else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
-				{
-					is_P_mc_in_guess = opt_f_recomp_fix_P_mc_in_max_eta_core();
-				}
-				
-				
-				if( is_P_mc_in_guess )
-				{
-					P_mc_in_feasible = P_mc_in_guess;		//[kPa]
-					is_feasible_found = true;
-				}
-				if( mc_rc_cycle.get_od_solved()->m_eta_thermal == 0.0 )
-				{
-					break;
-				}
-			}
-			if( is_feasible_found )
-			{
-				break;
-			}
-		}
-		else if( od_core_error_code_iter != od_core_error_code_dens && mag_mult > 0.002 )
-		{
-			mag_mult = 0.8*mag_mult;
-			continue;
-		}
-		else if( od_core_error_code_iter == -14 && mag_mult > 0.002 )
-		{
-			mag_mult *= 1.05;
-			continue;
-		}		
-		if( true )
-		{		// If decreasing pressure is not promising, try increasing
-			mag_mult = 0.05;
-			sign_mult = -1.0;
-			
-			//throw("C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core can't find inlet pressure guess values");	
-		}
-
-	}
-
-	// Should have a P_mc_in_feasible that returns a feasible solution
-	// Now find bounds for the optimization routine
-
-	P_mc_in_upper = P_mc_in_feasible;
-	int iter_P_mc_in_upper = 0;
-		
-	while(true)
-	{
-		iter_P_mc_in_upper++;
-		P_mc_in_upper = 0.95*P_mc_in_upper + 0.05*ms_des_par.m_P_high_limit;	//[kPa]
-		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_upper;		//[kPa]
-		
-		
-		bool is_P_mc_in_upper = false;
-		if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
-		{
-			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
-			int od_core_error_code = off_design_core(eta_od_core);
-			if( od_core_error_code != 0 )
-			{
-				is_P_mc_in_upper = false;
-			}
-			else
-			{
-				is_P_mc_in_upper = true;
-			}
-		}
-		else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
-		{
-			is_P_mc_in_upper = opt_f_recomp_fix_P_mc_in_max_eta_core();
-		}
-		
-
-		if( !is_P_mc_in_upper )
-		{
-			break;
-		}
-		else
-		{
-			if( eta_max_P_at_dens_des - mc_rc_cycle.get_od_solved()->m_eta_thermal > 0.02 )
-			{
-				break;
-			}
-		}
-		if( iter_P_mc_in_upper > 20 )
-		{
-			P_mc_in_upper = ms_des_par.m_P_high_limit;		//[kPa]
-		}
-	}
-		
-	P_mc_in_lower = P_mc_in_feasible;
-	int iter_P_mc_in_lower = 0;
-
-	while(true)
-	{
-		iter_P_mc_in_lower++;
-		P_mc_in_lower *= 0.95;						//[kPa]
-		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_lower;	//[kPa]
-		
-		
-		bool is_P_mc_in_lower = false;
-		if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
-		{
-			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
-			int od_core_error_code = off_design_core(eta_od_core);
-			if( od_core_error_code != 0 )
-			{
-				is_P_mc_in_lower = false;
-			}
-			else
-			{
-				is_P_mc_in_lower = true;
-			}
-		}
-		else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
-		{
-			is_P_mc_in_lower = opt_f_recomp_fix_P_mc_in_max_eta_core();
-		}
-		
-		
-		if( !is_P_mc_in_lower )
-		{
-			break;
-		}
-		else
-		{
-			if( eta_max_P_at_dens_des - mc_rc_cycle.get_od_solved()->m_eta_thermal > 0.02 )
-			{
-				break;
-			}
-		}
-		if( iter_P_mc_in_lower > 20 )
-		{
-			P_mc_in_lower = 200;	//[kPa]
-		}
-	}
-
-
-	if( m_is_write_mc_out_file )
-	{
-		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
-			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
-			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15);
-
-		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_vary_f_recomp_opt_file.open(file_name.c_str());
-
-		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,phi_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
-	}
-
-
-	bool use_nlopt = m_true_nlopt_false_fmin;
-
-	double P_mc_in_opt = std::numeric_limits<double>::quiet_NaN();
-
-	if( use_nlopt )
-	{
-		std::vector<double> x;
-		std::vector<double> lb;
-		std::vector<double> ub;
-		std::vector<double> scale;
-
-		x.resize(1);
-		double P_mc_in_guess = 0.38*P_mc_in_upper + 0.68*P_mc_in_lower;		//[kPa]
-		x[0] = P_mc_in_guess;		//[kPa]
-
-		lb.resize(1);
-		lb[0] = P_mc_in_lower;		//[kPa]
-
-		ub.resize(1);
-		ub[0] = P_mc_in_upper;		//[kPa]
-
-		scale.resize(1);
-		scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
-
-		// Set up instance of nlopt class and set optimization parameters
-		nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
-		nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
-		nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
-		nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
-		nlopt_P_mc_in_opt_max_of.set_xtol_rel(m_od_opt_xtol);
-		nlopt_P_mc_in_opt_max_of.set_ftol_rel(m_od_opt_ftol);
-
-		// Set max objective function
-		nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_max_opt_P_mc_in_nest_f_recomp, this);
-
-		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
-		nlopt::result    nlopt_result = nlopt_P_mc_in_opt_max_of.optimize(x, nlopt_max_eta);
-
-		P_mc_in_opt = x[0];
-
-		if( nlopt_max_eta != nlopt_max_eta )
-		{
-			P_mc_in_opt = P_mc_in_guess;
-		}
-	}
-	else
-	{
-		// Optimize compressor inlet pressure
-		P_mc_in_opt = fminbr(
-			P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
-	}
-
-
-	// Would be nice to have the corresponding optimal recompression fraction
-	// ... so that we don't have to re-optimize it at the optimal pressure
-	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
-	
-	bool is_P_opt_success = false;
-	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
-	{
-		bool fmin_rerun = true;
-		if( use_nlopt )
-			fmin_rerun = false;
-		while( true )
-		{
-			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
-			int od_core_error_code = off_design_core(eta_od_core);
-			if( od_core_error_code != 0 )
-			{
-				is_P_opt_success = false;
-				if( fmin_rerun )
-				{
-					double r = (3. - sqrt(5.0)) / 2;       /* Gold section ratio           */
-
-					double prev_1st_guess = P_mc_in_lower + r * (P_mc_in_upper - P_mc_in_lower);
-
-					P_mc_in_upper = prev_1st_guess;
-
-					// Optimize compressor inlet pressure
-					P_mc_in_opt = fminbr(
-						P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
-
-					ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
-					continue;
-					fmin_rerun = false;
-				}
-				else
-				{
-					break;
-				}
-			}
-			else
-			{
-				is_P_opt_success = true;
-				break;
-			}
-		}
-	}
-	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
-	{
-		is_P_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
-	}
-
-	if( m_is_write_mc_out_file )
-	{
-		mc_P_mc_vary_f_recomp_opt_file.close();
-	}
-
-	if( !is_P_opt_success )
-	{
-		throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
-			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
-	}
-
-	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
-	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
-	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
-
-	return true;
-}
-
-bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
-{
-	//Prior to calling, need to set :
-	//	*ms_od_par, ms_rc_cycle_od_phi_par (will set f_recomp here), ms_phx_od_par
-
-	if( m_is_write_mc_out_file )
-	{
-		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
-			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
-			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15) +
-			util::format("%.1f", ms_rc_cycle_od_phi_par.m_P_mc_in);
-
-		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name.c_str());
-	}
-
-	// Estimate the turbine inlet temperature for the turbomachinery balance
-	double T_t_in_est = ms_od_par.m_T_htf_hot - ms_des_par.m_phx_dt_hot_approach;	//[K]
-
-	int mc_error_code, rc_error_code;
-	double mc_w_tip_ratio, P_mc_out, rc_w_tip_ratio, rc_phi;
-
-	double f_recomp_step = 0.01;
-
-	bool is_f_recomp_min_found = false;
-	double f_recomp_min = std::numeric_limits<double>::quiet_NaN();
-
-	bool is_f_recomp_max_found = false;
-	double f_recomp_max = std::numeric_limits<double>::quiet_NaN();
-
-	if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_error_code,rc_phi,rc_tip_ratio\n";
-		mc_P_mc_in_fixed_f_recomp_vary_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
-	}
-
-	double f_recomp_guess = 0.0;
-
-	for( f_recomp_guess = 0.01; f_recomp_guess < 1.0; f_recomp_guess = f_recomp_guess + f_recomp_step )
-	{
-		mc_error_code = rc_error_code = 0;
-		mc_w_tip_ratio = P_mc_out = rc_w_tip_ratio = rc_phi = std::numeric_limits<double>::quiet_NaN();
-
-		mc_rc_cycle.estimate_od_turbo_operation(ms_rc_cycle_od_phi_par.m_T_mc_in, ms_rc_cycle_od_phi_par.m_P_mc_in, f_recomp_guess, T_t_in_est, ms_rc_cycle_od_phi_par.m_phi_mc,
-			mc_error_code, mc_w_tip_ratio, P_mc_out,
-			rc_error_code, rc_w_tip_ratio, rc_phi,
-			m_is_write_mc_out_file);
-
-		if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
-		{
-			double deltaP = 0.0;
-			double P_mc_out_of = 0.0;
-			double m_dot_mc = 0.0;
-			double m_dot_t = 0.0;
-			double N_mc = 0.0;
-			double mc_tip_ratio_of = 0.0;
-			double f_recomp_of = 0.0;
-			double m_dot_rc = 0.0;
-			double rc_phi_of = 0.0;
-			double rc_tip_ratio_of = 0.0; 
-
-			if(mc_error_code == 0)
-			{
-				deltaP = P_mc_out - ms_rc_cycle_od_phi_par.m_P_mc_in;
-				P_mc_out_of = P_mc_out;
-				m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
-				m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
-				m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
-				N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
-				mc_tip_ratio_of = mc_w_tip_ratio;
-				f_recomp_of = f_recomp_guess;
-
-				if(rc_error_code == 0)
-				{
-					rc_phi_of = rc_phi;
-					rc_tip_ratio_of = rc_w_tip_ratio;
-				}
-			}
-
-			mc_P_mc_in_fixed_f_recomp_vary_file << ms_rc_cycle_od_phi_par.m_P_mc_in << ","
-						<< deltaP << ","
-						<< P_mc_out_of << ","
-						<< m_dot_mc << ","
-						<< m_dot_t << ","
-						<< N_mc << ","
-						<< mc_tip_ratio_of << ","
-						<< f_recomp_of << ","
-						<< m_dot_rc << ","
-						<< rc_error_code << ","
-						<< rc_phi_of << ","
-						<< rc_tip_ratio_of << "\n";
-		}
-
-		if( !is_f_recomp_min_found )
-		{	// Looking for smallest recompression fraction where the turbomachinery balance succeeds
-			// Okay to be over pressure, too fast tip speed, etc.
-			if( rc_error_code == 0 && mc_error_code == 0 )
-			{
-				f_recomp_min = f_recomp_guess;
-				is_f_recomp_min_found = true;
-
-				if( mc_w_tip_ratio > 1.1 || P_mc_out > 1.1*ms_des_par.m_P_high_limit )
-				{	// At small recompression fractions, already exceeding tip speed and over pressure conditions
-					// So don't try to find f_recomp_max
-					ms_rc_cycle_od_phi_par.m_recomp_frac = f_recomp_guess;	//[-]
-
-					mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
-					
-					double eta_f_recomp_local = opt_f_recomp_max_eta(f_recomp_guess);
-
-					ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
-					ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
-
-					if( eta_f_recomp_local != eta_f_recomp_local )
-					{
-						eta_f_recomp_local = 0.0;
-					}
-
-					if( m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters )
-					{
-						mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_opt,eta_max\n";
-						mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_guess << "," << eta_f_recomp_local << "\n";
-					}
-
-					if( m_is_write_mc_out_file )
-					{
-						mc_P_mc_in_fixed_f_recomp_vary_file.close();
-					}
-
-					if( eta_f_recomp_local > 0.0 )
-						return true;
-					else
-						return false;
-				}
-			}
-			else
-			{
-				continue;
-			}
-		}
-		else
-		{	// Looking for the smallest recompression fraction where either:
-			// * method fails (mc or rc error code)
-			// * high side pressure exceeds limit
-			// * mc tip ratio exceeds 1.05 (build in some tolerance)
-			// (... so basically it's okay here if the RC tip speed is too fast)
-			double P_high_mult_overshoot = 1.25;
-			if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
-				P_high_mult_overshoot = 1.5;
-
-			if( rc_error_code == 0 && mc_error_code == 0
-				&& mc_w_tip_ratio < 1.05 && P_mc_out < P_high_mult_overshoot*ms_des_par.m_P_high_limit )
-			{
-				continue;
-			}
-			else
-			{
-				f_recomp_max = f_recomp_guess;
-				is_f_recomp_max_found = true;
-				break;
-			}
-		}	// End if/then of recompresion max/min logic	
-
-	}	// End loop on recompression fraction
-
-	// Check that max and min recompression fractions found
-	if( !is_f_recomp_min_found || !is_f_recomp_max_found )
-	{
-		// Can't find a solution at this compressor inlet pressure
-		throw(C_csp_exception("Estimates of off-design turbomachinery balance can't find a workable recompression fraction",
-			"C_sco2_recomp_csp::off_design_nested_opt"));
-	}
-
-	if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_iter_min,f_recomp_iter_max\n";
-		mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_min << "," << f_recomp_max << "\n";
-		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
-		mc_P_mc_in_fixed_f_recomp_vary_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-,-\n";
-	}
-	else if(m_is_write_mc_out_file)
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
-	}
-
-	// Set up recompression fraction optimization (at constant mc inlet pressure) options
-	bool use_nlopt = m_true_nlopt_false_fmin;
-	double f_recomp_opt = std::numeric_limits<double>::quiet_NaN();
-
-	if( use_nlopt )
-	{
-		std::vector<double> x;
-		std::vector<double> lb;
-		std::vector<double> ub;
-		std::vector<double> scale;
-
-		x.resize(1);
-		double nlopt_f_recomp_guess = 0.75*f_recomp_max + 0.25*f_recomp_min;	//[-]
-		x[0] = nlopt_f_recomp_guess;	//[-]
-
-		lb.resize(1);
-		lb[0] = f_recomp_min;		//[-]
-
-		ub.resize(1);
-		ub[0] = f_recomp_max;		//[-]
-
-		scale.resize(1);
-		scale[0] = (0.65*f_recomp_max + 0.35*f_recomp_min) - x[0];
-
-		// Set up instance of nlopt class and set optimization parameters
-		nlopt::opt          f_recomp_opt_max_eta(nlopt::LN_NELDERMEAD, 1);
-		f_recomp_opt_max_eta.set_lower_bounds(lb);
-		f_recomp_opt_max_eta.set_upper_bounds(ub);
-		f_recomp_opt_max_eta.set_initial_step(scale);
-		f_recomp_opt_max_eta.set_xtol_rel(m_od_opt_xtol);
-		f_recomp_opt_max_eta.set_ftol_rel(m_od_opt_ftol);
-
-		// Set max objective function
-		f_recomp_opt_max_eta.set_max_objective(nlopt_max_f_recomp_cycle_eta, this);
-
-		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
-		nlopt::result       nlopt_result = f_recomp_opt_max_eta.optimize(x, nlopt_max_eta);
-
-		f_recomp_opt = x[0];
-
-		if( nlopt_max_eta != nlopt_max_eta )
-		{
-			f_recomp_opt = nlopt_f_recomp_guess;
-		}
-
-	}
-	else
-	{
-		f_recomp_opt = fminbr(
-			f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, m_od_opt_ftol);
-	}
-
-	// Call final time with optimized recompression fraction
-	ms_rc_cycle_od_phi_par.m_recomp_frac = f_recomp_opt;
-
-	double eta_f_recomp_max = std::numeric_limits<double>::quiet_NaN();
-	int sco2_od_code = off_design_core(eta_f_recomp_max);
-
-	if(eta_f_recomp_max != eta_f_recomp_max)
-	{
-		eta_f_recomp_max = 0.0;
-	}
-
-	if( m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters )
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_opt,eta_max\n";
-		mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_opt << "," << eta_f_recomp_max << "\n";
-	}
-
-	if( m_is_write_mc_out_file )
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file.close();
-	}
-
-	if( sco2_od_code != 0 )
-		return false;
-
-	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
-	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
-
-	return true;
-}
+//bool C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working()
+//{
+//	// Prior to calling, need to set :
+//	//	*ms_od_par, ms_rc_cycle_od_phi_par, ms_phx_od_par, ms_od_op_inputs(will set P_mc_in here and f_recomp downstream)
+//
+//	// Get density at design point
+//	double mc_dens_in_des = ms_des_solved.ms_rc_cycle_solved.m_dens[C_RecompCycle::MC_IN];		//[kg/m^3]
+//	CO2_state co2_props;
+//	int co2_code = CO2_TD(ms_rc_cycle_od_phi_par.m_T_mc_in, mc_dens_in_des, &co2_props);
+//
+//	// And calculate the compressor inlet temperature that achieves this pressure at a new ambient temperature
+//	double P_mc_in_feasible = co2_props.pres;		//[kPa]
+//	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_feasible;
+//
+//	bool is_P_mc_in_feasible = false;
+//	
+//	int od_core_error_code_dens = 0;
+//	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+//	{
+//		double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+//		od_core_error_code_dens = off_design_core(eta_od_core);
+//		if( od_core_error_code_dens != 0 )
+//		{
+//			is_P_mc_in_feasible = false;
+//		}
+//		else
+//		{
+//			is_P_mc_in_feasible = true;
+//		}
+//	}
+//	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+//	{
+//		is_P_mc_in_feasible = opt_f_recomp_fix_P_mc_in_max_eta_core();
+//	}
+//
+//
+//	double eta_max_P_at_dens_des = mc_rc_cycle.get_od_solved()->m_eta_thermal;	//[-]
+//
+//	double P_mc_in_lower = std::numeric_limits<double>::quiet_NaN();
+//	double P_mc_in_upper = std::numeric_limits<double>::quiet_NaN();
+//
+//	double sign_mult = 1.0;
+//	double mag_mult = 0.05;
+//	while( !is_P_mc_in_feasible )
+//	{
+//		// Try to find an inlet pressure that solves
+//			// First, try a lower pressure
+//		double P_mc_in_guess = (1.0 - sign_mult*mag_mult)*P_mc_in_feasible;	//[kPa]
+//		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;		//[kPa]
+//		
+//		
+//		bool is_P_mc_in_guess = false;
+//		int od_core_error_code_iter = 0;
+//
+//		if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+//		{
+//			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+//			od_core_error_code_iter = off_design_core(eta_od_core);
+//			if( od_core_error_code_iter != 0 )
+//			{
+//				is_P_mc_in_guess = false;
+//			}
+//			else
+//			{
+//				is_P_mc_in_guess = true;
+//			}
+//		}
+//		else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+//		{
+//			is_P_mc_in_guess = opt_f_recomp_fix_P_mc_in_max_eta_core();
+//		}
+//
+//
+//		if( is_P_mc_in_guess )
+//		{
+//			P_mc_in_feasible = P_mc_in_guess;		//[kPa]
+//			break;
+//		}
+//		else if( mc_rc_cycle.get_od_solved()->m_eta_thermal > eta_max_P_at_dens_des )
+//		{
+//			bool is_feasible_found = false;
+//			while(true)
+//			{				
+//				P_mc_in_guess = (1.0 - sign_mult*0.1)*P_mc_in_guess;	//[kPa]
+//				ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_guess;		//[kPa]
+//				
+//				
+//				bool is_P_mc_in_guess = false;
+//				if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+//				{
+//					double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+//					int od_core_error_code = off_design_core(eta_od_core);
+//					if( od_core_error_code != 0 )
+//					{
+//						is_P_mc_in_guess = false;
+//					}
+//					else
+//					{
+//						is_P_mc_in_guess = true;
+//					}
+//				}
+//				else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+//				{
+//					is_P_mc_in_guess = opt_f_recomp_fix_P_mc_in_max_eta_core();
+//				}
+//				
+//				
+//				if( is_P_mc_in_guess )
+//				{
+//					P_mc_in_feasible = P_mc_in_guess;		//[kPa]
+//					is_feasible_found = true;
+//				}
+//				if( mc_rc_cycle.get_od_solved()->m_eta_thermal == 0.0 )
+//				{
+//					break;
+//				}
+//			}
+//			if( is_feasible_found )
+//			{
+//				break;
+//			}
+//		}
+//		else if( od_core_error_code_iter != od_core_error_code_dens && mag_mult > 0.002 )
+//		{
+//			mag_mult = 0.8*mag_mult;
+//			continue;
+//		}
+//		else if( od_core_error_code_iter == -14 && mag_mult > 0.002 )
+//		{
+//			mag_mult *= 1.05;
+//			continue;
+//		}		
+//		if( true )
+//		{		// If decreasing pressure is not promising, try increasing
+//			mag_mult = 0.05;
+//			sign_mult = -1.0;
+//			
+//			//throw("C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core can't find inlet pressure guess values");	
+//		}
+//
+//	}
+//
+//	// Should have a P_mc_in_feasible that returns a feasible solution
+//	// Now find bounds for the optimization routine
+//
+//	P_mc_in_upper = P_mc_in_feasible;
+//	int iter_P_mc_in_upper = 0;
+//		
+//	while(true)
+//	{
+//		iter_P_mc_in_upper++;
+//		P_mc_in_upper = 0.95*P_mc_in_upper + 0.05*ms_des_par.m_P_high_limit;	//[kPa]
+//		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_upper;		//[kPa]
+//		
+//		
+//		bool is_P_mc_in_upper = false;
+//		if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+//		{
+//			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+//			int od_core_error_code = off_design_core(eta_od_core);
+//			if( od_core_error_code != 0 )
+//			{
+//				is_P_mc_in_upper = false;
+//			}
+//			else
+//			{
+//				is_P_mc_in_upper = true;
+//			}
+//		}
+//		else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+//		{
+//			is_P_mc_in_upper = opt_f_recomp_fix_P_mc_in_max_eta_core();
+//		}
+//		
+//
+//		if( !is_P_mc_in_upper )
+//		{
+//			break;
+//		}
+//		else
+//		{
+//			if( eta_max_P_at_dens_des - mc_rc_cycle.get_od_solved()->m_eta_thermal > 0.02 )
+//			{
+//				break;
+//			}
+//		}
+//		if( iter_P_mc_in_upper > 20 )
+//		{
+//			P_mc_in_upper = ms_des_par.m_P_high_limit;		//[kPa]
+//		}
+//	}
+//		
+//	P_mc_in_lower = P_mc_in_feasible;
+//	int iter_P_mc_in_lower = 0;
+//
+//	while(true)
+//	{
+//		iter_P_mc_in_lower++;
+//		P_mc_in_lower *= 0.95;						//[kPa]
+//		ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_lower;	//[kPa]
+//		
+//		
+//		bool is_P_mc_in_lower = false;
+//		if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+//		{
+//			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+//			int od_core_error_code = off_design_core(eta_od_core);
+//			if( od_core_error_code != 0 )
+//			{
+//				is_P_mc_in_lower = false;
+//			}
+//			else
+//			{
+//				is_P_mc_in_lower = true;
+//			}
+//		}
+//		else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+//		{
+//			is_P_mc_in_lower = opt_f_recomp_fix_P_mc_in_max_eta_core();
+//		}
+//		
+//		
+//		if( !is_P_mc_in_lower )
+//		{
+//			break;
+//		}
+//		else
+//		{
+//			if( eta_max_P_at_dens_des - mc_rc_cycle.get_od_solved()->m_eta_thermal > 0.02 )
+//			{
+//				break;
+//			}
+//		}
+//		if( iter_P_mc_in_lower > 20 )
+//		{
+//			P_mc_in_lower = 200;	//[kPa]
+//		}
+//	}
+//
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
+//			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
+//			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15);
+//
+//		std::string file_name = mstr_base_name + case_name + ".csv";
+//		mc_P_mc_vary_f_recomp_opt_file.open(file_name.c_str());
+//
+//		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,phi_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
+//	}
+//
+//
+//	bool use_nlopt = m_true_nlopt_false_fmin;
+//
+//	double P_mc_in_opt = std::numeric_limits<double>::quiet_NaN();
+//
+//	if( use_nlopt )
+//	{
+//		std::vector<double> x;
+//		std::vector<double> lb;
+//		std::vector<double> ub;
+//		std::vector<double> scale;
+//
+//		x.resize(1);
+//		double P_mc_in_guess = 0.38*P_mc_in_upper + 0.68*P_mc_in_lower;		//[kPa]
+//		x[0] = P_mc_in_guess;		//[kPa]
+//
+//		lb.resize(1);
+//		lb[0] = P_mc_in_lower;		//[kPa]
+//
+//		ub.resize(1);
+//		ub[0] = P_mc_in_upper;		//[kPa]
+//
+//		scale.resize(1);
+//		scale[0] = (0.5*P_mc_in_upper + 0.5*P_mc_in_lower) - x[0];	//[kPa]
+//
+//		// Set up instance of nlopt class and set optimization parameters
+//		nlopt::opt  nlopt_P_mc_in_opt_max_of(nlopt::LN_NELDERMEAD, 1);
+//		nlopt_P_mc_in_opt_max_of.set_lower_bounds(lb);
+//		nlopt_P_mc_in_opt_max_of.set_upper_bounds(ub);
+//		nlopt_P_mc_in_opt_max_of.set_initial_step(scale);
+//		nlopt_P_mc_in_opt_max_of.set_xtol_rel(m_od_opt_xtol);
+//		nlopt_P_mc_in_opt_max_of.set_ftol_rel(m_od_opt_ftol);
+//
+//		// Set max objective function
+//		nlopt_P_mc_in_opt_max_of.set_max_objective(nlopt_max_opt_P_mc_in_nest_f_recomp, this);
+//
+//		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+//		nlopt::result    nlopt_result = nlopt_P_mc_in_opt_max_of.optimize(x, nlopt_max_eta);
+//
+//		P_mc_in_opt = x[0];
+//
+//		if( nlopt_max_eta != nlopt_max_eta )
+//		{
+//			P_mc_in_opt = P_mc_in_guess;
+//		}
+//	}
+//	else
+//	{
+//		// Optimize compressor inlet pressure
+//		P_mc_in_opt = fminbr(
+//			P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
+//	}
+//
+//
+//	// Would be nice to have the corresponding optimal recompression fraction
+//	// ... so that we don't have to re-optimize it at the optimal pressure
+//	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
+//	
+//	bool is_P_opt_success = false;
+//	if( m_off_design_turbo_operation == E_FIXED_MC_FIXED_RC_FIXED_T )
+//	{
+//		bool fmin_rerun = true;
+//		if( use_nlopt )
+//			fmin_rerun = false;
+//		while( true )
+//		{
+//			double eta_od_core = std::numeric_limits<double>::quiet_NaN();
+//			int od_core_error_code = off_design_core(eta_od_core);
+//			if( od_core_error_code != 0 )
+//			{
+//				is_P_opt_success = false;
+//				if( fmin_rerun )
+//				{
+//					double r = (3. - sqrt(5.0)) / 2;       /* Gold section ratio           */
+//
+//					double prev_1st_guess = P_mc_in_lower + r * (P_mc_in_upper - P_mc_in_lower);
+//
+//					P_mc_in_upper = prev_1st_guess;
+//
+//					// Optimize compressor inlet pressure
+//					P_mc_in_opt = fminbr(
+//						P_mc_in_lower, P_mc_in_upper, &fmin_opt_P_mc_in_nest_f_recomp_max_eta, this, m_od_opt_ftol);
+//
+//					ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in_opt;	//[kPa]
+//					continue;
+//					fmin_rerun = false;
+//				}
+//				else
+//				{
+//					break;
+//				}
+//			}
+//			else
+//			{
+//				is_P_opt_success = true;
+//				break;
+//			}
+//		}
+//	}
+//	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
+//	{
+//		is_P_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();
+//	}
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_P_mc_vary_f_recomp_opt_file.close();
+//	}
+//
+//	if( !is_P_opt_success )
+//	{
+//		throw(C_csp_exception("Off-design optimization on compressor inlet pressure failed",
+//			"C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta_core"));
+//	}
+//
+//	double eta_max = mc_rc_cycle.get_od_solved()->m_eta_thermal;
+//	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+//	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+//
+//	return true;
+//}
+
+//bool C_sco2_recomp_csp::opt_f_recomp_fix_P_mc_in_max_eta_core()
+//{
+//	//Prior to calling, need to set :
+//	//	*ms_od_par, ms_rc_cycle_od_phi_par (will set f_recomp here), ms_phx_od_par
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
+//			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
+//			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15) +
+//			util::format("%.1f", ms_rc_cycle_od_phi_par.m_P_mc_in);
+//
+//		std::string file_name = mstr_base_name + case_name + ".csv";
+//		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name.c_str());
+//	}
+//
+//	// Estimate the turbine inlet temperature for the turbomachinery balance
+//	double T_t_in_est = ms_od_par.m_T_htf_hot - ms_des_par.m_phx_dt_hot_approach;	//[K]
+//
+//	int mc_error_code, rc_error_code;
+//	double mc_w_tip_ratio, P_mc_out, rc_w_tip_ratio, rc_phi;
+//
+//	double f_recomp_step = 0.01;
+//
+//	bool is_f_recomp_min_found = false;
+//	double f_recomp_min = std::numeric_limits<double>::quiet_NaN();
+//
+//	bool is_f_recomp_max_found = false;
+//	double f_recomp_max = std::numeric_limits<double>::quiet_NaN();
+//
+//	if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_error_code,rc_phi,rc_tip_ratio\n";
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-\n";
+//	}
+//
+//	double f_recomp_guess = 0.0;
+//
+//	for( f_recomp_guess = 0.01; f_recomp_guess < 1.0; f_recomp_guess = f_recomp_guess + f_recomp_step )
+//	{
+//		mc_error_code = rc_error_code = 0;
+//		mc_w_tip_ratio = P_mc_out = rc_w_tip_ratio = rc_phi = std::numeric_limits<double>::quiet_NaN();
+//
+//		mc_rc_cycle.estimate_od_turbo_operation(ms_rc_cycle_od_phi_par.m_T_mc_in, ms_rc_cycle_od_phi_par.m_P_mc_in, f_recomp_guess, T_t_in_est, ms_rc_cycle_od_phi_par.m_phi_mc,
+//			mc_error_code, mc_w_tip_ratio, P_mc_out,
+//			rc_error_code, rc_w_tip_ratio, rc_phi,
+//			m_is_write_mc_out_file);
+//
+//		if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
+//		{
+//			double deltaP = 0.0;
+//			double P_mc_out_of = 0.0;
+//			double m_dot_mc = 0.0;
+//			double m_dot_t = 0.0;
+//			double N_mc = 0.0;
+//			double mc_tip_ratio_of = 0.0;
+//			double f_recomp_of = 0.0;
+//			double m_dot_rc = 0.0;
+//			double rc_phi_of = 0.0;
+//			double rc_tip_ratio_of = 0.0; 
+//
+//			if(mc_error_code == 0)
+//			{
+//				deltaP = P_mc_out - ms_rc_cycle_od_phi_par.m_P_mc_in;
+//				P_mc_out_of = P_mc_out;
+//				m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
+//				m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
+//				m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
+//				N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
+//				mc_tip_ratio_of = mc_w_tip_ratio;
+//				f_recomp_of = f_recomp_guess;
+//
+//				if(rc_error_code == 0)
+//				{
+//					rc_phi_of = rc_phi;
+//					rc_tip_ratio_of = rc_w_tip_ratio;
+//				}
+//			}
+//
+//			mc_P_mc_in_fixed_f_recomp_vary_file << ms_rc_cycle_od_phi_par.m_P_mc_in << ","
+//						<< deltaP << ","
+//						<< P_mc_out_of << ","
+//						<< m_dot_mc << ","
+//						<< m_dot_t << ","
+//						<< N_mc << ","
+//						<< mc_tip_ratio_of << ","
+//						<< f_recomp_of << ","
+//						<< m_dot_rc << ","
+//						<< rc_error_code << ","
+//						<< rc_phi_of << ","
+//						<< rc_tip_ratio_of << "\n";
+//		}
+//
+//		if( !is_f_recomp_min_found )
+//		{	// Looking for smallest recompression fraction where the turbomachinery balance succeeds
+//			// Okay to be over pressure, too fast tip speed, etc.
+//			if( rc_error_code == 0 && mc_error_code == 0 )
+//			{
+//				f_recomp_min = f_recomp_guess;
+//				is_f_recomp_min_found = true;
+//
+//				if( mc_w_tip_ratio > 1.1 || P_mc_out > 1.1*ms_des_par.m_P_high_limit )
+//				{	// At small recompression fractions, already exceeding tip speed and over pressure conditions
+//					// So don't try to find f_recomp_max
+//					ms_rc_cycle_od_phi_par.m_recomp_frac = f_recomp_guess;	//[-]
+//
+//					mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
+//					
+//					double eta_f_recomp_local = opt_f_recomp_max_eta(f_recomp_guess);
+//
+//					ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+//					ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+//
+//					if( eta_f_recomp_local != eta_f_recomp_local )
+//					{
+//						eta_f_recomp_local = 0.0;
+//					}
+//
+//					if( m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters )
+//					{
+//						mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_opt,eta_max\n";
+//						mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_guess << "," << eta_f_recomp_local << "\n";
+//					}
+//
+//					if( m_is_write_mc_out_file )
+//					{
+//						mc_P_mc_in_fixed_f_recomp_vary_file.close();
+//					}
+//
+//					if( eta_f_recomp_local > 0.0 )
+//						return true;
+//					else
+//						return false;
+//				}
+//			}
+//			else
+//			{
+//				continue;
+//			}
+//		}
+//		else
+//		{	// Looking for the smallest recompression fraction where either:
+//			// * method fails (mc or rc error code)
+//			// * high side pressure exceeds limit
+//			// * mc tip ratio exceeds 1.05 (build in some tolerance)
+//			// (... so basically it's okay here if the RC tip speed is too fast)
+//			double P_high_mult_overshoot = 1.25;
+//			if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
+//				P_high_mult_overshoot = 1.5;
+//
+//			if( rc_error_code == 0 && mc_error_code == 0
+//				&& mc_w_tip_ratio < 1.05 && P_mc_out < P_high_mult_overshoot*ms_des_par.m_P_high_limit )
+//			{
+//				continue;
+//			}
+//			else
+//			{
+//				f_recomp_max = f_recomp_guess;
+//				is_f_recomp_max_found = true;
+//				break;
+//			}
+//		}	// End if/then of recompresion max/min logic	
+//
+//	}	// End loop on recompression fraction
+//
+//	// Check that max and min recompression fractions found
+//	if( !is_f_recomp_min_found || !is_f_recomp_max_found )
+//	{
+//		// Can't find a solution at this compressor inlet pressure
+//		throw(C_csp_exception("Estimates of off-design turbomachinery balance can't find a workable recompression fraction",
+//			"C_sco2_recomp_csp::off_design_nested_opt"));
+//	}
+//
+//	if(m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters)
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_iter_min,f_recomp_iter_max\n";
+//		mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_min << "," << f_recomp_max << "\n";
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "kPa,kPa,kPa,kg/s,kg/s,rpm,-,-,kg/s,-,-,-,-\n";
+//	}
+//	else if(m_is_write_mc_out_file)
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
+//	}
+//
+//	// Set up recompression fraction optimization (at constant mc inlet pressure) options
+//	bool use_nlopt = m_true_nlopt_false_fmin;
+//	double f_recomp_opt = std::numeric_limits<double>::quiet_NaN();
+//
+//	if( use_nlopt )
+//	{
+//		std::vector<double> x;
+//		std::vector<double> lb;
+//		std::vector<double> ub;
+//		std::vector<double> scale;
+//
+//		x.resize(1);
+//		double nlopt_f_recomp_guess = 0.75*f_recomp_max + 0.25*f_recomp_min;	//[-]
+//		x[0] = nlopt_f_recomp_guess;	//[-]
+//
+//		lb.resize(1);
+//		lb[0] = f_recomp_min;		//[-]
+//
+//		ub.resize(1);
+//		ub[0] = f_recomp_max;		//[-]
+//
+//		scale.resize(1);
+//		scale[0] = (0.65*f_recomp_max + 0.35*f_recomp_min) - x[0];
+//
+//		// Set up instance of nlopt class and set optimization parameters
+//		nlopt::opt          f_recomp_opt_max_eta(nlopt::LN_NELDERMEAD, 1);
+//		f_recomp_opt_max_eta.set_lower_bounds(lb);
+//		f_recomp_opt_max_eta.set_upper_bounds(ub);
+//		f_recomp_opt_max_eta.set_initial_step(scale);
+//		f_recomp_opt_max_eta.set_xtol_rel(m_od_opt_xtol);
+//		f_recomp_opt_max_eta.set_ftol_rel(m_od_opt_ftol);
+//
+//		// Set max objective function
+//		f_recomp_opt_max_eta.set_max_objective(nlopt_max_f_recomp_cycle_eta, this);
+//
+//		double nlopt_max_eta = std::numeric_limits<double>::quiet_NaN();
+//		nlopt::result       nlopt_result = f_recomp_opt_max_eta.optimize(x, nlopt_max_eta);
+//
+//		f_recomp_opt = x[0];
+//
+//		if( nlopt_max_eta != nlopt_max_eta )
+//		{
+//			f_recomp_opt = nlopt_f_recomp_guess;
+//		}
+//
+//	}
+//	else
+//	{
+//		f_recomp_opt = fminbr(
+//			f_recomp_min, f_recomp_max, &fmin_f_recomp_cycle_eta, this, m_od_opt_ftol);
+//	}
+//
+//	// Call final time with optimized recompression fraction
+//	ms_rc_cycle_od_phi_par.m_recomp_frac = f_recomp_opt;
+//
+//	double eta_f_recomp_max = std::numeric_limits<double>::quiet_NaN();
+//	int sco2_od_code = off_design_core(eta_f_recomp_max);
+//
+//	if(eta_f_recomp_max != eta_f_recomp_max)
+//	{
+//		eta_f_recomp_max = 0.0;
+//	}
+//
+//	if( m_is_write_mc_out_file && !m_is_only_write_frecomp_opt_iters )
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "f_recomp_opt,eta_max\n";
+//		mc_P_mc_in_fixed_f_recomp_vary_file << f_recomp_opt << "," << eta_f_recomp_max << "\n";
+//	}
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file.close();
+//	}
+//
+//	if( sco2_od_code != 0 )
+//		return false;
+//
+//	ms_od_solved.ms_rc_cycle_od_solved = *mc_rc_cycle.get_od_solved();
+//	ms_od_solved.ms_phx_od_solved = mc_phx.ms_od_solved;
+//
+//	return true;
+//}
 
 int C_sco2_recomp_csp::off_design_opt(S_od_par od_par, int off_design_strategy, double od_opt_tol)
 {
@@ -2462,7 +2462,8 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 	}
 	else if( m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{
-		bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();		
+		//bool f_opt_success = opt_f_recomp_fix_P_mc_in_max_eta_core();		
+		throw(C_csp_exception("Cycle off-design mode E_VFD_MC_VFD_RC_FIXED_T currently unavailable"));
 	}
 	else
 	{
@@ -2548,62 +2549,62 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 	return eta_max_f_recomp_opt;
 }
 
-void C_sco2_recomp_csp::off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/)
-{
-	if( m_is_write_mc_out_file )
-	{
-		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
-			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
-			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15);
+//void C_sco2_recomp_csp::off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/)
+//{
+//	if( m_is_write_mc_out_file )
+//	{
+//		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
+//			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
+//			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15);
+//
+//		std::string file_name = mstr_base_name + case_name + ".csv";
+//		mc_P_mc_vary_f_recomp_opt_file.open(file_name.c_str());
+//
+//		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,phi_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
+//	}
+//
+//	for(double P_mc_in = P_mc_in_min; P_mc_in <= P_mc_in_max; P_mc_in += P_mc_in_inc)
+//	{
+//		opt_P_mc_in_nest_f_recomp_max_eta(P_mc_in);
+//	}
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_P_mc_vary_f_recomp_opt_file.close();
+//	}
+//}
 
-		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_vary_f_recomp_opt_file.open(file_name.c_str());
 
-		mc_P_mc_vary_f_recomp_opt_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,phi_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
-	}
-
-	for(double P_mc_in = P_mc_in_min; P_mc_in <= P_mc_in_max; P_mc_in += P_mc_in_inc)
-	{
-		opt_P_mc_in_nest_f_recomp_max_eta(P_mc_in);
-	}
-
-	if( m_is_write_mc_out_file )
-	{
-		mc_P_mc_vary_f_recomp_opt_file.close();
-	}
-}
-
-
-void C_sco2_recomp_csp::off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/)
-{
-	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in;		//[kPa]
-
-	if( m_is_write_mc_out_file )
-	{
-		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
-			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
-			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15) +
-			util::format("%.1f", P_mc_in);
-
-		std::string file_name = mstr_base_name + case_name + ".csv";
-		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name.c_str());
-	}
-
-	if( m_is_write_mc_out_file )
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
-	}
-
-	for(double f_recomp = f_recomp_min; f_recomp <= f_recomp_max; f_recomp = f_recomp + f_recomp_inc)
-	{
-		opt_f_recomp_max_eta(f_recomp);
-	}
-
-	if( m_is_write_mc_out_file )
-	{
-		mc_P_mc_in_fixed_f_recomp_vary_file.close();
-	}
-}
+//void C_sco2_recomp_csp::off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/)
+//{
+//	ms_rc_cycle_od_phi_par.m_P_mc_in = P_mc_in;		//[kPa]
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		std::string case_name = util::format("%.2f_", ms_od_par.m_T_amb - 273.15) +
+//			util::format("%.2f_", ms_od_par.m_m_dot_htf / ms_phx_des_par.m_m_dot_hot_des) +
+//			util::format("%.2f_", ms_od_par.m_T_htf_hot - 273.15) +
+//			util::format("%.1f", P_mc_in);
+//
+//		std::string file_name = mstr_base_name + case_name + ".csv";
+//		mc_P_mc_in_fixed_f_recomp_vary_file.open(file_name.c_str());
+//	}
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file << "T_amb,m_dot_ND,T_htf_hot,P_mc_in,deltaP,P_mc_out,m_dot_mc,m_dot_t,N_mc,mc_tip_ratio,f_recomp,m_dot_rc,rc_phi,rc_tip_ratio,eta_thermal,W_dot_net,Q_dot_in,T_htf_cold,is_error_code\n";
+//	}
+//
+//	for(double f_recomp = f_recomp_min; f_recomp <= f_recomp_max; f_recomp = f_recomp + f_recomp_inc)
+//	{
+//		opt_f_recomp_max_eta(f_recomp);
+//	}
+//
+//	if( m_is_write_mc_out_file )
+//	{
+//		mc_P_mc_in_fixed_f_recomp_vary_file.close();
+//	}
+//}
 
 double C_sco2_recomp_csp::opt_f_recomp_max_eta(double f_recomp)
 {

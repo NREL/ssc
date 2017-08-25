@@ -340,17 +340,17 @@ public:
 
 	virtual void design(C_sco2_rc_csp_template::S_des_par des_par);
 
-	void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
+	//void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
 
-	void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
+	//void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
 
 	virtual int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
-	bool opt_f_recomp_fix_P_mc_in_max_eta_core();
+	//bool opt_f_recomp_fix_P_mc_in_max_eta_core();
 
 	bool opt_P_mc_in_nest_f_recomp_max_eta_core();
 
-	bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
+	//bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
 
 	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
