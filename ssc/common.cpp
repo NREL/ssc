@@ -752,10 +752,10 @@ weatherdata::weatherdata( var_data *data_table )
 			n_irr++;
 		}
 	}
-	if (nrec == 0 || n_irr < 2)
+	if (nrec == 0 || n_irr < 1)
 	{
 		if (data_table->table.lookup("poa") == nullptr){
-			m_message = "missing irradiance: could not find at least 2 of gh, dn and df; or poa";
+			m_message = "missing irradiance: could not find gh, dn, df, or poa";
 			m_ok = false;
 			return;
 		}
