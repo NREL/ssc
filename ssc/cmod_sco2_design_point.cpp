@@ -601,7 +601,7 @@ public:
 		sco2_rc_od_par.m_m_dot_htf = m_dot_htf;
 		sco2_rc_od_par.m_T_amb = T_amb_cycle_des;
 		int od_strategy = C_sco2_recomp_csp::E_MAX_ETA;
-		sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
+		//sco2_recomp_csp.off_design_opt(sco2_rc_od_par, od_strategy);
 
 
 
