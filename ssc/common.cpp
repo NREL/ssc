@@ -731,6 +731,35 @@ weatherdata::weatherdata( var_data *data_table )
 	// make sure two types of irradiance are provided
 	size_t nrec = 0;
 	int n_irr = 0;
+	if (var_data *value = data_table->table.lookup("df"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (var_data *value = data_table->table.lookup("dn"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (var_data *value = data_table->table.lookup("gh"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (nrec == 0 || n_irr < 2)
+	{
+		if (data_table->table.lookup("poa") == nullptr){
+			m_message = "missing irradiance: could not find at least 2 of gh, dn and df; or poa";
+			m_ok = false;
+			return;
+		}
+	}
 
 	// check that all vectors are of same length as irradiance vectors
 	vec year = get_vector( data_table, "year");
