@@ -296,7 +296,9 @@ util::matrix_t<ssc_number_t>& compute_module::allocate_matrix( const std::string
 var_data &compute_module::value( const std::string &name ) throw( general_error )
 {
 	var_data *v = lookup( name );
-	if (!v)	throw general_error("ssc variable does not exist: '" + name + "'");
+	if (!v){
+		throw general_error("ssc variable does not exist: '" + name + "'");
+	}
 	return (*v);
 }
 

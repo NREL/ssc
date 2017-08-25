@@ -76,8 +76,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "?",                       "LOCAL_FILE",           "" },
 	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",  "solar resouce data in memory",									  "",			  "",			 "Weather",        "?",						  "",					  "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"ppa_multiplier_model",	 "PPA multiplier model",											  "0/1",  "0=diurnal,1=timestep","Time of Delivery","?=0",					  "INTEGER,MIN=0",		  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		"dispatch_factors_ts",	 "Dispatch payment factor array",									  "",			  "",			"Time of Delivery","ppa_multiplier_model=1",  "",					  "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "field_model_type",     "0=design field and tower/receiver geometry 1=design field 2=user field, calculate performance 3=user performance maps vs solar position", "", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                   "",             "",            "system_design",  "*",                       "",                     "" },
@@ -546,6 +546,28 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		if (is_assigned("solar_resource_file")){
+			weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
+			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+		}
+		if (is_assigned("solar_resource_data")){
+			weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
+			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+		}
+
+		weather_reader.m_trackmode = 0;
+		weather_reader.m_tilt = 0.0;
+		weather_reader.m_azimuth = 0.0;
+		// Initialize to get weather file info
+		weather_reader.init();
+		if (weather_reader.has_error()) throw exec_error("tcsmolten_salt", weather_reader.get_error());
+
+		// Get info from the weather reader initialization
+		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
+
+
 		int tes_type = 1;
 
 		int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
@@ -599,7 +621,7 @@ public:
 
 			assign("calc_fluxmaps", 1);
 
-			spi.run();
+			spi.run(weather_reader.m_weather_data_provider);
 
 			if (is_optimize)
 			{
@@ -710,7 +732,7 @@ public:
 			// 'calc_fluxmaps' should be true
 			assign("calc_fluxmaps", 1);
 
-			spi.run();
+			spi.run(weather_reader.m_weather_data_provider);
 
 			//collect the optical efficiency data and sun positions
 			if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
@@ -781,26 +803,6 @@ public:
 			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
 		}
 
-		// Weather reader
-		C_csp_weatherreader weather_reader;
-		if (is_assigned("solar_resource_file")){
-			weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
-			
-		}
-		if (is_assigned("solar_resource_data")){
-			weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("wind_resource_data"));
-		}
-
-		weather_reader.m_trackmode = 0;
-		weather_reader.m_tilt = 0.0;
-		weather_reader.m_azimuth = 0.0;
-			// Initialize to get weather file info
-		weather_reader.init();
-		if (weather_reader.has_error()) throw exec_error("tcsmolten_salt", weather_reader.get_error());
-
-
-		// Get info from the weather reader initialization
-		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
         
         // Set steps per hour
 		C_csp_solver::S_sim_setup sim_setup;

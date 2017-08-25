@@ -1040,6 +1040,7 @@ public:
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
 			wdprov = std::auto_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+			if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
 		}
 		else
 			throw exec_error("pvsamv1", "no weather data supplied");

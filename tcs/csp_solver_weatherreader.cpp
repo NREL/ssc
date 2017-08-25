@@ -80,12 +80,6 @@ void C_csp_weatherreader::init()
 	}
 	m_hdr = &m_weather_data_provider->header();
 
-	// check that it has tdew & twet
-	if (!m_weather_data_provider->has_calculated_data(10)){
-		m_error_msg = "No wet-bulb temperature. Does weather input contain relative humidity, pressure and dry-bulb temp?\n";
-		return;
-	}
-
 	// Set solved parameters
 	ms_solved_params.m_lat = m_hdr->lat;		//[deg]
 	ms_solved_params.m_lon = m_hdr->lon;		//[deg]
