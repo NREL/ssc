@@ -107,6 +107,72 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// Test out multi-stage compressor model
+		CO2_state co2_props;
+		double P_in = 8000.0;		//[kPa]
+		double T_in = 35 + 273.15;	//[K]
+		int prop_err_code = CO2_TP(T_in, P_in, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return;
+		}
+		double h_in = co2_props.enth;
+		double s_in = co2_props.entr;
+		double D_in = co2_props.dens;
+
+		double P_out = 25000.0;		//[kPa]
+		double s_out_isen = s_in;	//[kJ/kg-K]
+		prop_err_code = CO2_PS(P_out, s_out_isen, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return;
+		}
+		double h_out_isen = co2_props.enth;
+
+		double eta_isen = 0.9;
+		double h_out = h_in + (h_out_isen - h_in) / eta_isen;
+		prop_err_code = CO2_PH(P_out, h_out, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return;
+		}
+		double T_out = co2_props.temp;	//[K]
+		double s_out = co2_props.entr;	//[kJ/kg-K]
+		double D_out = co2_props.dens;	//[kg/m^3]
+
+		C_compressor c_comp_old;
+		C_compressor::S_design_parameters s_des_comp_old;
+		s_des_comp_old.m_T_in = T_in;
+		s_des_comp_old.m_P_in = P_in;
+		s_des_comp_old.m_D_in = D_in;
+		s_des_comp_old.m_h_in = h_in;
+		s_des_comp_old.m_s_in = s_in;
+
+		s_des_comp_old.m_T_out = T_out;
+		s_des_comp_old.m_P_out = P_out;
+		s_des_comp_old.m_h_out = h_out;
+		s_des_comp_old.m_D_out = D_out;
+
+		double m_dot_mc = 3000.0 / (h_out - h_in);	//[kg/s] mass flow for 3 MWe compressor
+		s_des_comp_old.m_m_dot = m_dot_mc;
+
+		int comp_old_err_code = 0;
+		c_comp_old.compressor_sizing(s_des_comp_old, comp_old_err_code);
+
+		double diameter_old = c_comp_old.get_design_solved()->m_D_rotor;	//[m]
+		double N_old = c_comp_old.get_design_solved()->m_N_design;			//[rpm]
+		double tip_ratio_old = c_comp_old.get_design_solved()->m_w_tip_ratio;	//[-]
+
+		C_comp_multi_stage c_comp_ms;
+		c_comp_ms.design_given_outlet_state(T_in, P_in, m_dot_mc, T_out, P_out);
+
+		double diameter_new = c_comp_ms.mv_stages[0].ms_des_solved.m_D_rotor;
+		double N_new = c_comp_ms.ms_des_solved.m_N_design;
+		double tip_ratio_new = c_comp_ms.mv_stages[0].ms_des_solved.m_tip_ratio;
+
+		double new_cmop = 1.23;
+
+
 		// Hot sCO2 to water heat exchanger
 
 		double W_dot_net = 10.0*1.E3;	//[KWe]
@@ -123,8 +189,8 @@ public:
 		double T_water_hot = 39.0;		//[C] Groundwater outlet
 		double x_water = -1;			//[-]
 
-		CO2_state co2_props;
-		int prop_err_code = CO2_TP(T_co2_hot+273.15, P_co2, &co2_props);
+		//CO2_state co2_props;
+		prop_err_code = CO2_TP(T_co2_hot+273.15, P_co2, &co2_props);
 		if (prop_err_code != 0)
 		{
 			log("CO2 hot props failed", SSC_ERROR, -1.0);

@@ -204,6 +204,162 @@ public:
 	void od_turbine_at_N_des(double T_in, double P_in, double P_out, int & error_code, double & m_dot, double & T_out);
 };
 
+class C_comp_single_stage
+{
+public:
+
+	struct S_des_solved
+	{
+		// Compressor inlet conditions
+		double m_T_in;			//[K]
+		double m_P_in;			//[kPa]
+		double m_D_in;			//[kg/m^3]
+		double m_h_in;			//[kJ/kg]
+		double m_s_in;			//[kJ/kg-K]
+		// Compressor outlet conditions
+		double m_T_out;			//[K]
+		double m_P_out;			//[kPa]
+		double m_h_out;			//[kJ/kg]
+		double m_D_out;			//[kg/m^3]
+		// Mass flow
+		double m_m_dot;			//[kg/s]
+
+		// Geometry
+		double m_D_rotor;		//[m]
+		double m_N_design;		//[rpm]
+		double m_tip_ratio;		//[-]
+		double m_eta_design;	//[-]
+
+		double m_phi_des;		//[-]
+		double m_phi_surge;		//[-]
+		double m_phi_max;		//[-]
+
+		S_des_solved()
+		{
+			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in = 
+				m_T_out = m_P_out = m_h_out = m_D_out =
+				m_m_dot = m_D_rotor = m_N_design = m_tip_ratio = m_eta_design =
+				m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	S_des_solved ms_des_solved; 
+
+	~C_comp_single_stage(){};
+
+	C_comp_single_stage(){};
+
+	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+
+	const S_des_solved * get_design_solved()
+	{
+		return &ms_des_solved;
+	}
+
+	int design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
+		double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/);
+
+	int design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		double T_out /*K*/, double P_out /*K*/);
+};
+
+class C_comp_multi_stage
+{
+public:
+
+	std::vector<C_comp_single_stage> mv_stages;
+
+	struct S_des_solved
+	{
+		// Compressor inlet conditions
+		double m_T_in;			//[K]
+		double m_P_in;			//[kPa]
+		double m_D_in;			//[kg/m^3]
+		double m_h_in;			//[kJ/kg]
+		double m_s_in;			//[kJ/kg-K]
+		// Compressor outlet conditions
+		double m_T_out;			//[K]
+		double m_P_out;			//[kPa]
+		double m_h_out;			//[kJ/kg]
+		double m_D_out;			//[kg/m^3]
+		// Mass flow
+		double m_m_dot;			//[kg/s]
+
+		// Geometry
+		double m_N_design;		//[rpm]
+
+		S_des_solved()
+		{
+			m_T_in = m_P_in = m_D_in = m_h_in = m_s_in = 
+				m_T_out = m_P_out = m_h_out = m_D_out = 
+				m_m_dot = m_N_design = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
+	S_des_solved ms_des_solved;
+
+	~C_comp_multi_stage(){};
+
+	C_comp_multi_stage(){};
+
+	const S_des_solved * get_design_solved()
+	{
+		return &ms_des_solved;
+	}
+
+	class C_MEQ_eta_isen__h_out : public C_monotonic_equation
+	{
+	private:
+		C_comp_multi_stage *mpc_multi_stage;
+		double m_T_in;	//[K]
+		double m_P_in;	//[kPa]
+		double m_P_out;	//[kPa]
+		double m_m_dot;	//[kg/s]
+
+	public:
+		C_MEQ_eta_isen__h_out(C_comp_multi_stage *pc_multi_stage,
+			double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double m_dot /*kg/s*/)
+		{
+			mpc_multi_stage = pc_multi_stage;
+			m_T_in = T_in;
+			m_P_in = P_in;
+			m_P_out = P_out;
+			m_m_dot = m_dot;
+		}
+
+		virtual int operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/);
+	};
+
+	class C_MEQ_N_rpm__P_out : public C_monotonic_equation
+	{
+	private:
+		C_comp_multi_stage *mpc_multi_stage;
+		double m_T_in;	//[K]
+		double m_P_in;	//[kPa]
+		double m_m_dot;	//[kg/s]
+		double m_eta_isen;	//[-]
+
+	public:
+		C_MEQ_N_rpm__P_out(C_comp_multi_stage *pc_multi_stage,
+			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double eta_isen /*-*/)
+		{
+			mpc_multi_stage = pc_multi_stage;
+			m_T_in = T_in;	//[K]
+			m_P_in = P_in;	//[kPa]
+			m_m_dot = m_dot;	//[kg/s]
+			m_eta_isen = eta_isen;	//[-]
+		}
+
+		virtual int operator()(double N_rpm /*rpm*/, double *P_comp_out /*kPa*/);
+	};
+
+	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		double T_out /*K*/, double P_out /*K*/);
+	
+};
+
 class C_compressor
 {
 public:

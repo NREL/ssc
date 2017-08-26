@@ -71,6 +71,10 @@ const double C_compressor::m_snl_phi_max = 0.05;				//[-] Approximate x-intercep
 const double C_recompressor::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
 const double C_recompressor::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
 const double C_recompressor::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+const double C_comp_single_stage::m_snl_phi_design = 0.02971;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+const double C_comp_single_stage::m_snl_phi_min = 0.02;				//[-] Approximate surge limit for SNL compressor
+const double C_comp_single_stage::m_snl_phi_max = 0.05;				//[-] Approximate x-intercept for SNL compressor
+
 
 void calculate_turbomachinery_outlet_1(double T_in /*K*/, double P_in /*kPa*/, double P_out /*kPa*/, double eta /*-*/, bool is_comp, int & error_code, double & spec_work /*kJ/kg*/)
 {
@@ -523,6 +527,333 @@ void C_turbine::od_turbine_at_N_des(double T_in, double P_in, double P_out, int 
 	off_design_turbine(T_in, P_in, P_out, N, error_code, m_dot, T_out);
 
 	return;
+}
+
+int C_comp_single_stage::design_given_shaft_speed(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, 
+				double N_rpm /*rpm*/, double eta_isen /*-*/, double & P_out /*kPa*/, double & T_out /*K*/, double & tip_ratio /*-*/)
+{
+	CO2_state co2_props;
+
+	// Get inlet state
+	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	double h_in = co2_props.enth;	//[kJ/kg]
+	double s_in = co2_props.entr;	//[kJ/kg-K]
+	double rho_in = co2_props.dens;	//[kg/m^3]
+
+	// Convert shaft speed to rad/s
+	double N_rad_s = N_rpm / 9.549296590;		//[rad/s]
+
+	// Solve for the diameter that gives the design flow coefficient
+	double D_rotor = std::pow(m_dot / (m_snl_phi_design * rho_in * 0.5 * N_rad_s), 1.0/3.0);		//[m]
+
+	// Calculate psi at the design-point phi using Horner's method
+	double psi_design = ((((-498626.0*m_snl_phi_design) + 53224.0) * m_snl_phi_design - 2505.0) * m_snl_phi_design + 54.6) *
+		m_snl_phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+
+	// Solve for idea head
+	double U_tip = 0.5 * D_rotor * N_rad_s;		//[m/s]
+	double w_i = psi_design * std::pow(U_tip, 2) * 0.001;		//[kJ/kg]
+
+	// Solve for isentropic outlet enthalpy
+	double h_out_isen = h_in + w_i;		//[kJ/kg]
+
+	// Get isentropic outlet state
+	prop_error_code = CO2_HS(h_out_isen, s_in, &co2_props);
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	P_out = co2_props.pres;		//[kPa]
+
+	// Get actual outlet state
+	double h_out = h_in + w_i / eta_isen;	//[kJ/kg]
+	prop_error_code = CO2_PH(P_out, h_out, &co2_props);
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	T_out = co2_props.temp;		//[K]
+	double ssnd_out = co2_props.ssnd;	//[m/s]
+
+	// Solve for tip ratio
+	tip_ratio = U_tip / ssnd_out;
+
+	ms_des_solved.m_T_in = T_in;	//[K]
+	ms_des_solved.m_P_in = P_in;	//[kPa]
+	ms_des_solved.m_D_in = rho_in;	//[kg/m^3]
+	ms_des_solved.m_h_in = h_in;	//[kJ/kg]
+	ms_des_solved.m_s_in = s_in;	//[kJ/kg-K]
+
+	ms_des_solved.m_T_out = T_out;	//[K]
+	ms_des_solved.m_P_out = P_out;	//[kPa]
+	ms_des_solved.m_h_out = h_out;	//[kJ/kg]
+	ms_des_solved.m_D_out = co2_props.dens;	//[kg/m^3]
+
+	ms_des_solved.m_m_dot = m_dot;	//[kg/s]
+
+	ms_des_solved.m_D_rotor = D_rotor;	//[m]
+	ms_des_solved.m_N_design = N_rpm;	//[rpm]
+	ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
+	ms_des_solved.m_eta_design = eta_isen;		//[-]
+
+	ms_des_solved.m_phi_des = m_snl_phi_design;
+	ms_des_solved.m_phi_surge = m_snl_phi_min;
+	ms_des_solved.m_phi_max = m_snl_phi_max;
+
+	return 0;
+}
+
+int C_comp_multi_stage::C_MEQ_eta_isen__h_out::operator()(double eta_isen /*-*/, double *h_comp_out /*kJ/kg*/)
+{
+	C_MEQ_N_rpm__P_out c_stages(mpc_multi_stage, m_T_in, m_P_in, m_m_dot, eta_isen);
+	C_monotonic_eq_solver c_solver(c_stages);
+
+	// Set lowr bound
+	double N_rpm_lower = 0.0;
+	double N_rpm_upper = std::numeric_limits<double>::quiet_NaN();
+
+	// Generate guess values
+	double N_rpm_guess_1 = 3000.0;
+	double N_rpm_guess_2 = 30000.0;
+
+	c_solver.settings(1.E-4, 50, N_rpm_lower, N_rpm_upper, true);
+
+	// Now solve for the shaft speed
+	double N_rpm_solved = std::numeric_limits<double>::quiet_NaN();
+	double tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int N_rpm_code = 0;
+	try
+	{
+		N_rpm_code = c_solver.solve(N_rpm_guess_1, N_rpm_guess_2, m_P_out, N_rpm_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		throw(C_csp_exception("C_comp_multi_stage::C_MEQ_eta_isen__h_out threw an exception"));
+	}
+
+	if (N_rpm_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		if (!(N_rpm_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.01))
+		{
+			throw(C_csp_exception("C_comp_multi_stage::C_MEQ_eta_isen__h_out failed to converge within a reasonable tolerance"));
+		}
+	}
+
+	int n_stages = mpc_multi_stage->mv_stages.size();
+
+	*h_comp_out = mpc_multi_stage->mv_stages[n_stages - 1].ms_des_solved.m_h_out;	//[kJ/kg]
+
+	return 0;
+}
+
+int C_comp_multi_stage::C_MEQ_N_rpm__P_out::operator()(double N_rpm /*rpm*/, double *P_comp_out /*kPa*/)
+{
+	int n_stages = mpc_multi_stage->mv_stages.size();
+
+	double T_in = m_T_in;	//[K]
+	double P_in = m_P_in;	//[kPa]
+
+	double P_out = std::numeric_limits<double>::quiet_NaN();
+	double T_out = std::numeric_limits<double>::quiet_NaN();
+	double tip_ratio = std::numeric_limits<double>::quiet_NaN();
+
+	for (int i = 0; i < n_stages; i++)
+	{
+		if (i > 0)
+		{
+			T_in = T_out;	//[K]
+			P_in = P_out;	//[kPa]
+		}
+
+		mpc_multi_stage->mv_stages[i].design_given_shaft_speed(T_in, P_in, m_m_dot, N_rpm, m_eta_isen, P_out, T_out, tip_ratio);
+	}
+
+	*P_comp_out = P_out;	//[kPa]
+
+	return 0;
+}
+
+int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	double T_out /*K*/, double P_out /*K*/)
+{
+	mv_stages.resize(1);
+	mv_stages[0].design_single_stage_comp(T_in, P_in, m_dot, T_out, P_out);
+
+	if (mv_stages[0].ms_des_solved.m_tip_ratio > 0.9)
+	{
+		CO2_state co2_props;
+
+		double h_in = mv_stages[0].ms_des_solved.m_h_in;
+		double s_in = mv_stages[0].ms_des_solved.m_s_in;
+
+		int prop_err_code = CO2_PS(P_out, s_in, &co2_props);
+		if (prop_err_code != 0)
+		{
+			return -1;
+		}
+		double h_out_isen = co2_props.enth;
+
+		double h_out = mv_stages[0].ms_des_solved.m_h_out;
+
+		double eta_isen_total = (h_out_isen - h_in) / (h_out - h_in);
+		
+		bool is_add_stages = true;
+		int n_stages = 1;
+
+		while (is_add_stages)
+		{
+			n_stages++;
+			
+			mv_stages.resize(n_stages);
+
+			C_MEQ_eta_isen__h_out c_stages(this, T_in, P_in, P_out, m_dot);
+			C_monotonic_eq_solver c_solver(c_stages);
+
+			// Set bounds on isentropic efficiency
+			double eta_isen_lower = 0.1;
+			double eta_isen_upper = 1.0;
+
+			// Generate guess values
+			double eta_isen_guess_1 = eta_isen_total;
+			double eta_isen_guess_2 = 0.95*eta_isen_total;
+
+			c_solver.settings(1.E-4, 50, eta_isen_lower, eta_isen_upper, true);
+
+			// Now solve for the isentropic efficiency for each stage that results in the total compressor design isentropic efficiency
+			double eta_isen_solved = std::numeric_limits<double>::quiet_NaN();
+			double tol_solved = std::numeric_limits<double>::quiet_NaN();
+			int iter_solved = -1;
+
+			int eta_isen_code = 0;
+
+			try
+			{
+				eta_isen_code = c_solver.solve(eta_isen_guess_1, eta_isen_guess_2, h_out, eta_isen_solved, tol_solved, iter_solved);
+			}
+			catch (C_csp_exception)
+			{
+				throw(C_csp_exception("C_comp_multi_stage::design_given_outlet_state threw an exception"));
+			}
+
+			if (eta_isen_code != C_monotonic_eq_solver::CONVERGED)
+			{
+				if (!(eta_isen_code > C_monotonic_eq_solver::CONVERGED && fabs(tol_solved) < 0.01))
+				{
+					throw(C_csp_exception("C_comp_multi_stage::design_given_outlet_state failed to converge within a reasonable tolerance"));
+				}
+			}
+
+			double max_calc_tip_speed = 0.0;
+			for (int i = 0; i < n_stages; i++)
+			{
+				max_calc_tip_speed = std::max(max_calc_tip_speed, mv_stages[i].ms_des_solved.m_tip_ratio);
+			}
+
+			if (max_calc_tip_speed < 0.9)
+			{
+				is_add_stages = false;
+			}
+
+			if (n_stages > 20)
+			{
+				return -1;
+			}
+		}
+	}
+
+	int n_stages = mv_stages.size();
+
+	ms_des_solved.m_T_in = T_in;	//[K]
+	ms_des_solved.m_P_in = P_in;	//[kPa]
+	ms_des_solved.m_D_in = mv_stages[0].ms_des_solved.m_D_in;	//[kg/m^3]
+	ms_des_solved.m_s_in = mv_stages[0].ms_des_solved.m_s_in;	//[kJ/kg-K]
+	ms_des_solved.m_h_in = mv_stages[0].ms_des_solved.m_h_in;	//[kJ/kg]
+
+	ms_des_solved.m_T_out = mv_stages[n_stages-1].ms_des_solved.m_T_out;	//[K]
+	ms_des_solved.m_P_out = mv_stages[n_stages-1].ms_des_solved.m_P_out;	//[kPa]
+	ms_des_solved.m_h_out = mv_stages[n_stages-1].ms_des_solved.m_h_out;	//[kJ/kg]
+	ms_des_solved.m_D_out = mv_stages[n_stages-1].ms_des_solved.m_D_out;	//[kg/m^3]
+
+	ms_des_solved.m_m_dot = m_dot;					//[kg/s]
+
+	ms_des_solved.m_N_design = mv_stages[n_stages-1].ms_des_solved.m_N_design;		//[rpm]
+
+	return 0;
+}
+
+int C_comp_single_stage::design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	double T_out /*K*/, double P_out /*K*/)
+{
+	CO2_state in_props;
+	int prop_err_code = CO2_TP(T_in, P_in, &in_props);
+	if (prop_err_code != 0)
+	{
+		return -1;
+	}
+	double s_in = in_props.entr;	//[kJ/kg-K]
+	double h_in = in_props.enth;	//[kJ/kg]
+	double rho_in = in_props.dens;	//[kg/m^3]
+
+	CO2_state isen_out_props;
+	prop_err_code = CO2_PS(P_out, s_in, &isen_out_props);
+	if (prop_err_code != 0)
+	{
+		return -1;
+	}
+	double h_isen_out = isen_out_props.enth;	//[kJ/kg]
+
+	CO2_state out_props;
+	prop_err_code = CO2_TP(T_out, P_out, &out_props);
+	if (prop_err_code != 0)
+	{
+		return -1;
+	}
+	double h_out = out_props.enth;
+
+	// Calculate psi at the design-point phi using Horner's method
+	double psi_design = ((((-498626.0*m_snl_phi_design) + 53224.0) * m_snl_phi_design - 2505.0) * m_snl_phi_design + 54.6) *
+		m_snl_phi_design + 0.04049;		// from dimensionless modified head curve(at design - point, psi and modified psi are equal)
+
+	// Determine required size and speed of compressor
+	double w_i = h_isen_out - h_in;						//[kJ/kg] positive isentropic specific work of compressor
+	double U_tip = sqrt(1000.0*w_i / psi_design);		//[m/s]
+	double D_rotor = sqrt(m_dot / (m_snl_phi_design*rho_in*U_tip));
+	double N_rad_s = U_tip*2.0 / D_rotor;				//[rad/s] shaft speed
+
+	double ssnd_out = out_props.ssnd;	//[m/s]
+
+	// Solve for tip ratio
+	double tip_ratio = U_tip / ssnd_out;
+
+	ms_des_solved.m_T_in = T_in;	//[K]
+	ms_des_solved.m_P_in = P_in;	//[kPa]
+	ms_des_solved.m_D_in = rho_in;	//[kg/m^3]
+	ms_des_solved.m_h_in = h_in;	//[kJ/kg]
+	ms_des_solved.m_s_in = s_in;	//[kJ/kg-K]
+
+	ms_des_solved.m_T_out = T_out;	//[K]
+	ms_des_solved.m_P_out = P_out;	//[kPa]
+	ms_des_solved.m_h_out = h_out;	//[kJ/kg]
+	ms_des_solved.m_D_out = out_props.dens;	//[kg/m^3]
+
+	ms_des_solved.m_m_dot = m_dot;	//[kg/s]
+
+	ms_des_solved.m_D_rotor = D_rotor;	//[m]
+	ms_des_solved.m_N_design = N_rad_s * 9.549296590;			//[rpm] shaft speed
+	ms_des_solved.m_tip_ratio = tip_ratio;	//[-]
+	ms_des_solved.m_eta_design = (h_isen_out - h_in) / (h_out - h_in);		//[-]
+
+	ms_des_solved.m_phi_des = m_snl_phi_design;
+	ms_des_solved.m_phi_surge = m_snl_phi_min;
+	ms_des_solved.m_phi_max = m_snl_phi_max;
+
+	return 0;
 }
 
 void C_compressor::compressor_sizing(const S_design_parameters & des_par_in, int & error_code)
