@@ -369,7 +369,7 @@ const C_sco2_recomp_csp_10MWe_scale::S_od_solved * C_sco2_recomp_csp_10MWe_scale
 
 	// Scale Cycle Components
 		// Main Compressor
-	ms_od_solved.ms_rc_cycle_od_solved.ms_mc_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
+	ms_od_solved.ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
 		// Recompressor
 	ms_od_solved.ms_rc_cycle_od_solved.ms_rc_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
 		// Turbine
@@ -466,7 +466,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 
 	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/fixed_N_recomp/";
 
-	ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_des_solved.m_phi_des;	//[-]
+	//ms_rc_cycle_od_phi_par.m_phi_mc = mc_rc_cycle.get_design_solved()->ms_mc_ms_des_solved.m_phi_des;	//[-]
 
 	//double P_mc_in_min = 5000.0;		//[kPa]
 	//double P_mc_in_max = 8000.0;		//[kPa]
@@ -1589,7 +1589,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double over_P_high = max(0.0, (mc_rc_cycle.get_od_solved()->m_pres[C_RecompCycle::MC_OUT] - 0.9999*ms_des_par.m_P_high_limit) / 1.E3);
 
 	// 3) Check compressor(s) tip ratio?
-	double mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
+	double mc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
 	// Recompressor has multiple stages, it's reporting the fastest tip speed
 	double rc_w_tip_ratio = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
@@ -1601,8 +1601,8 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 
 	// 4) Check for compressor(s) surge?
 	// Main compressor
-	double mc_phi = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi;
-	double over_surge_mc = max(0.0, C_compressor::m_snl_phi_min - mc_phi);
+	double mc_phi = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_phi;
+	double over_surge_mc = max(0.0, C_comp_single_stage::m_snl_phi_min - mc_phi);
 	// Recompressor
 	double rc_phi_s1, rc_phi_s2;
 	rc_phi_s1 = rc_phi_s2 = 0.0;
@@ -2192,7 +2192,8 @@ int C_sco2_recomp_csp::C_mono_eq_T_t_in::operator()(double T_t_in /*K*/, double 
 	}
 	else if( mpc_sco2_rc->m_off_design_turbo_operation == E_VFD_MC_VFD_RC_FIXED_T )
 	{
-		mpc_sco2_rc->mc_rc_cycle.off_design_phi(mpc_sco2_rc->ms_rc_cycle_od_phi_par, rc_od_error_code);
+		//mpc_sco2_rc->mc_rc_cycle.off_design_phi(mpc_sco2_rc->ms_rc_cycle_od_phi_par, rc_od_error_code);
+		throw(C_csp_exception("Cycle off-design mode E_VFD_MC_VFD_RC_FIXED_T currently unavailable"));
 	}
 	else
 	{
@@ -2504,9 +2505,9 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			m_dot_mc = mc_rc_cycle.get_od_solved()->m_m_dot_mc;
 			m_dot_t = mc_rc_cycle.get_od_solved()->m_m_dot_t;
 			m_dot_rc = mc_rc_cycle.get_od_solved()->m_m_dot_rc;
-			N_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;
-			phi_mc = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_phi;
-			mc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_mc_od_solved.m_w_tip_ratio;
+			N_mc = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_N;
+			phi_mc = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_phi;
+			mc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_w_tip_ratio;
 			f_recomp_of = mc_rc_cycle.get_od_solved()->m_recomp_frac;	//[-]
 			
 			if( mc_rc_cycle.get_design_solved()->m_is_rc )
