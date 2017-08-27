@@ -170,6 +170,22 @@ public:
 		double N_new = c_comp_ms.ms_des_solved.m_N_design;
 		double tip_ratio_new = c_comp_ms.mv_stages[0].ms_des_solved.m_tip_ratio;
 
+		double P_in_od = 1.15*P_in;
+		double T_in_od = T_in + 5.0;
+		double m_dot_od = 0.90*m_dot_mc;
+
+		double P_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		double T_out_od_old = std::numeric_limits<double>::quiet_NaN();
+		c_comp_old.od_comp_at_N_des(T_in_od, P_in_od, m_dot_od, comp_old_err_code, T_out_od_old, P_out_od_old);
+
+		double P_out_od_new = std::numeric_limits<double>::quiet_NaN();
+		double T_out_od_new = std::numeric_limits<double>::quiet_NaN();
+
+		int comp_new_err_code = 0;
+		c_comp_ms.off_design_at_N_des(T_in_od, P_in_od, m_dot_od, comp_new_err_code, T_out_od_new, P_out_od_new);
+
+
+
 		double new_cmop = 1.23;
 
 

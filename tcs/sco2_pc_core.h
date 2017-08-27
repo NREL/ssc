@@ -243,7 +243,41 @@ public:
 		}
 	};
 
+	struct S_od_solved
+	{
+		double m_P_in;			//[kPa] Inlet pressure
+		double m_h_in;			//[kJ/kg] Inlet enthalpy
+		double m_T_in;			//[K] Inlet temperature
+		double m_s_in;			//[kJ/kg-K] Inlet entropy
+
+		double m_P_out;			//[kPa] Outlet pressure
+		double m_h_out;			//[kPa] Outlet enthalpy
+		double m_T_out;			//[K] Outlet temperature
+		double m_s_out;			//[kJ/kg-K] Outlet entropy
+
+		
+		bool m_surge;			//[-]
+		double m_eta;			//[-]
+		double m_phi;			//[-]
+		double m_w_tip_ratio;	//[-]
+
+		double m_N;			//[rpm]
+
+		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
+		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
+
+		S_od_solved()
+		{
+			m_P_in = m_h_in = m_T_in = m_s_in =
+				m_P_out = m_h_out = m_T_out = m_s_out = std::numeric_limits<double>::quiet_NaN();
+			m_surge = false;
+			m_eta = m_phi = m_w_tip_ratio = m_N =
+				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	S_des_solved ms_des_solved; 
+	S_od_solved ms_od_solved;
 
 	~C_comp_single_stage(){};
 
@@ -263,6 +297,9 @@ public:
 
 	int design_single_stage_comp(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
+
+	int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+		double & T_out /*K*/, double & P_out /*kPa*/);
 };
 
 class C_comp_multi_stage
@@ -298,7 +335,30 @@ public:
 		}
 	};
 
+	struct S_od_solved
+	{
+		bool m_surge;			//[-]
+		double m_eta;			//[-]
+		double m_phi;			//[-]
+		double m_w_tip_ratio;	//[-]
+
+		double m_N;			//[rpm]
+
+		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
+		double m_P_in;			//[kPa] Inlet pressure
+		double m_P_out;			//[kPa] Outlet pressure
+		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
+
+		S_od_solved()
+		{
+			m_surge = false;
+			m_eta = m_phi = m_w_tip_ratio = m_N =
+				m_W_dot_in = m_P_in = m_P_out = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+		}
+	};
+
 	S_des_solved ms_des_solved;
+	S_od_solved ms_od_solved;
 
 	~C_comp_multi_stage(){};
 
@@ -358,6 +418,12 @@ public:
 	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
 	
+	void off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
+		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
+
+	void off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
+
 };
 
 class C_compressor
