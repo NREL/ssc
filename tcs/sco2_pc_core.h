@@ -300,6 +300,8 @@ public:
 
 	int off_design_given_N(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double N_rpm /*rpm*/,
 		double & T_out /*K*/, double & P_out /*kPa*/);
+
+	int calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/);
 };
 
 class C_comp_multi_stage
@@ -345,6 +347,12 @@ public:
 
 	struct S_od_solved
 	{
+		double m_P_in;			//[kPa] Inlet pressure
+		double m_T_in;			//[K] Inlet temperature
+
+		double m_P_out;			//[kPa] Outlet pressure
+		double m_T_out;			//[K] Outlet temperature
+		
 		bool m_surge;			//[-]
 		double m_eta;			//[-]
 		double m_phi;			//[-] Min phi over all stages
@@ -353,15 +361,16 @@ public:
 		double m_N;			//[rpm]
 
 		double m_W_dot_in;		//[KWe] Power required by compressor, positive value expected
-		double m_P_in;			//[kPa] Inlet pressure
-		double m_P_out;			//[kPa] Outlet pressure
 		double m_surge_safety;	//[-] Flow coefficient / min flow coefficient
 
 		S_od_solved()
 		{
+			m_P_in = m_T_in =
+				m_P_out = m_T_out = std::numeric_limits<double>::quiet_NaN();
+
 			m_surge = false;
 			m_eta = m_phi = m_w_tip_ratio = m_N =
-				m_W_dot_in = m_P_in = m_P_out = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+				m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -428,6 +437,27 @@ public:
 		virtual int operator()(double N_rpm /*rpm*/, double *P_comp_out /*kPa*/);
 	};
 
+	class C_MEQ_phi_od__P_out : public C_monotonic_equation
+	{
+	private:
+		C_comp_multi_stage *mpc_multi_stage;
+		double m_T_in;	//[K]
+		double m_P_in;	//[kPa]
+		double m_m_dot;	//[kg/s]
+
+	public:
+		C_MEQ_phi_od__P_out(C_comp_multi_stage *pc_multi_stage,
+			double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/)
+		{
+			mpc_multi_stage = pc_multi_stage;
+			m_T_in = T_in;		//[K]
+			m_P_in = P_in;		//[kPa]
+			m_m_dot = m_dot;	//[kg/s]
+		}
+
+		virtual int operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/);
+	};
+
 	int design_given_outlet_state(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		double T_out /*K*/, double P_out /*K*/);
 	
@@ -436,6 +466,9 @@ public:
 
 	void off_design_at_N_des(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
 		int & error_code, double & T_out /*K*/, double & P_out /*kPa*/);
+
+	void off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+							double P_out /*kPa*/, int & error_code, double & T_out /*K*/);
 
 };
 

@@ -751,6 +751,7 @@ int C_comp_multi_stage::design_given_outlet_state(double T_in /*K*/, double P_in
 				}
 			}
 			
+			max_calc_tip_speed = 0.0;
 			for (int i = 0; i < n_stages; i++)
 			{
 				max_calc_tip_speed = std::max(max_calc_tip_speed, mv_stages[i].ms_des_solved.m_tip_ratio);
@@ -1021,6 +1022,12 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 
 	double h_out = mv_stages[n_stages - 1].ms_od_solved.m_h_out;	//[kJ/kg]
 
+	ms_od_solved.m_P_in = P_in;
+	ms_od_solved.m_T_in = T_in;
+
+	ms_od_solved.m_P_out = P_out;
+	ms_od_solved.m_T_out = T_out;
+
 	ms_od_solved.m_surge = is_surge;
 	ms_od_solved.m_eta = (h_out_isen - h_in) / (h_out - h_in);
 	ms_od_solved.m_phi = mv_stages[0].ms_od_solved.m_phi;
@@ -1029,8 +1036,6 @@ void C_comp_multi_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_N = N_rpm;
 
 	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);
-	ms_od_solved.m_P_in = P_in;
-	ms_od_solved.m_P_out = P_out;
 	ms_od_solved.m_surge_safety = surge_safety_min;
 
 }
@@ -1114,6 +1119,25 @@ int C_comp_single_stage::off_design_given_N(double T_in /*K*/, double P_in /*kPa
 	ms_od_solved.m_surge_safety = phi / m_snl_phi_min;	//[-] If > 1, then not in surge
 	ms_od_solved.m_w_tip_ratio = U_tip / ssnd_out;
 	ms_od_solved.m_W_dot_in = m_dot*(h_out - h_in);	//[kWe]
+
+	return 0;
+}
+
+int C_comp_single_stage::calc_N_from_phi(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/, double phi_in /*-*/, double & N_rpm /*rpm*/)
+{
+	CO2_state co2_props;
+
+	// Fully define the inlet state of the compressor
+	int prop_error_code = CO2_TP(T_in, P_in, &co2_props);
+	if (prop_error_code != 0)
+	{
+		return prop_error_code;
+	}
+	double rho_in = co2_props.dens;	//[kg/m^3]
+	double h_in = co2_props.enth;	//[kJ/kg]
+
+	double U_tip = m_dot / (phi_in*rho_in*std::pow(ms_des_solved.m_D_rotor,2));		//[m/s]
+	N_rpm = (U_tip*2.0 / ms_des_solved.m_D_rotor)*9.549296590;		//[rpm]
 
 	return 0;
 }
@@ -1429,6 +1453,136 @@ int C_recompressor::C_mono_eq_phi_off_design::operator()(double phi_1 /*-*/, dou
 	mpc_recompressor->ms_od_solved.m_surge_safety = min(phi_1, phi_2) / m_snl_phi_min;
 
 	return 0;
+}
+
+int C_comp_multi_stage::C_MEQ_phi_od__P_out::operator()(double phi_od /*-*/, double *P_comp_out /*kPa*/)
+{
+	int error_code = 0;
+	double N_rpm = std::numeric_limits<double>::quiet_NaN();
+	error_code = mpc_multi_stage->mv_stages[0].calc_N_from_phi(m_T_in, m_P_in, m_m_dot, phi_od, N_rpm);
+	if (error_code != 0)
+	{
+		*P_comp_out = std::numeric_limits<double>::quiet_NaN();
+		return error_code;
+	}
+
+	double T_out = std::numeric_limits<double>::quiet_NaN();
+	error_code = 0;
+	mpc_multi_stage->off_design_given_N(m_T_in, m_P_in, m_m_dot, N_rpm, error_code, T_out, *P_comp_out);
+
+	if (error_code != 0)
+	{
+		*P_comp_out = std::numeric_limits<double>::quiet_NaN();
+		return error_code;
+	}
+
+	return 0;
+}
+
+void C_comp_multi_stage::off_design_given_P_out(double T_in /*K*/, double P_in /*kPa*/, double m_dot /*kg/s*/,
+	double P_out /*kPa*/, int & error_code, double & T_out /*K*/)
+{
+	// Apply 1 var solver to find the phi that results in a converged recompressor
+	C_MEQ_phi_od__P_out c_rc_od(this, T_in, P_in, m_dot);
+	C_monotonic_eq_solver c_rd_od_solver(c_rc_od);
+
+	// Set upper and lower bounds
+	double phi_upper = mv_stages[0].ms_des_solved.m_phi_max;
+	double phi_lower = mv_stages[0].ms_des_solved.m_phi_surge;
+
+	// Generate first x-y pair
+	double phi_guess_lower = ms_des_solved.m_phi_des;
+	double P_solved_phi_guess_lower = std::numeric_limits<double>::quiet_NaN();
+	int test_code = c_rd_od_solver.test_member_function(phi_guess_lower, &P_solved_phi_guess_lower);
+	if (test_code != 0)
+	{
+		for (int i = 1; i < 9; i++)
+		{
+			phi_guess_lower = ms_des_solved.m_phi_des*(10 - i) / 10.0 + mv_stages[0].ms_des_solved.m_phi_max*i / 10.0;
+			test_code = c_rd_od_solver.test_member_function(phi_guess_lower, &P_solved_phi_guess_lower);
+			if (test_code == 0)
+				break;
+		}
+	}
+	if (test_code != 0)
+	{
+		// Can't find a RC phi guess value that returns an outlet pressure
+		error_code = -20;
+		return;
+	}
+	C_monotonic_eq_solver::S_xy_pair phi_pair_lower;
+	phi_pair_lower.x = phi_guess_lower;
+	phi_pair_lower.y = P_solved_phi_guess_lower;
+
+	// Generate second x-y pair
+	double phi_guess_upper = phi_guess_lower*0.5 + mv_stages[0].ms_des_solved.m_phi_max*0.5;
+	double P_solved_phi_guess_upper = std::numeric_limits<double>::quiet_NaN();
+	test_code = c_rd_od_solver.test_member_function(phi_guess_upper, &P_solved_phi_guess_upper);
+	if (test_code != 0)
+	{
+		for (int i = 6; i < 10; i++)
+		{
+			phi_guess_upper = phi_guess_lower*i / 10.0 + mv_stages[0].ms_des_solved.m_phi_max*(10 - i) / 10.0;
+			test_code = c_rd_od_solver.test_member_function(phi_guess_upper, &P_solved_phi_guess_upper);
+			if (test_code == 0)
+				break;
+		}
+		if (test_code != 0 && phi_guess_lower == ms_des_solved.m_phi_des)
+		{
+			for (int i = 6; i < 10; i++)
+			{
+				phi_guess_upper = phi_guess_lower*i / 10.0 + ms_des_solved.m_phi_surge*(10 - i) / 10.0;
+				test_code = c_rd_od_solver.test_member_function(phi_guess_upper, &P_solved_phi_guess_upper);
+				if (test_code == 0)
+					break;
+			}
+		}
+	}
+	if (test_code != 0)
+	{
+		// Can't find a RC 2nd guess value (which, if we've found a first, means the solution space is really small?)
+		error_code = -20;
+		return;
+	}
+	C_monotonic_eq_solver::S_xy_pair phi_pair_upper;
+	phi_pair_upper.x = phi_guess_upper;
+	phi_pair_upper.y = P_solved_phi_guess_upper;
+
+	// Set solver settings
+	c_rd_od_solver.settings(0.001, 50, phi_lower, phi_upper, true);
+
+	// Now, solve for the flow coefficient
+	double phi_solved, tol_solved;
+	phi_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
+	int iter_solved = -1;
+
+	int phi_code = 0;
+	try
+	{
+		phi_code = c_rd_od_solver.solve(phi_pair_lower, phi_pair_upper, P_out, phi_solved, tol_solved, iter_solved);
+	}
+	catch (C_csp_exception)
+	{
+		error_code = -1;
+		return;
+	}
+
+	if (phi_code != C_monotonic_eq_solver::CONVERGED)
+	{
+		int n_call_history = (int)c_rd_od_solver.get_solver_call_history()->size();
+
+		if (n_call_history > 0)
+			error_code = -(*(c_rd_od_solver.get_solver_call_history()))[n_call_history - 1].err_code;
+
+		if (error_code == 0)
+		{
+			error_code = phi_code;
+		}
+
+		return;
+	}
+
+	T_out = ms_od_solved.m_T_out;		//[K]
 }
 
 void C_recompressor::off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out)
