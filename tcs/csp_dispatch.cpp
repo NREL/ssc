@@ -981,6 +981,17 @@ bool csp_dispatch_opt::optimize()
                     add_constraintex(lp, 2, row, col, LE, 1.);
                 }
 
+				//cycle startup can't be enabled after a time step where the cycle was in standby
+				if (t>0)
+				{
+					row[0] = 1.;
+					col[0] = O.column("ycsu", t);
+
+					row[1] = 1.;
+					col[1] = O.column("ycsb", t - 1);
+
+					add_constraintex(lp, 2, row, col, LE, 1.);
+				}
 
                 //Standby mode entry
                 i=0;
