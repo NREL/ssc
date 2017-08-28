@@ -689,7 +689,7 @@ public:
 
 		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
 
-		ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
+		//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
 
 		if( q_sby_error_code != 0 )
 		{
@@ -781,7 +781,7 @@ public:
 			ms_phx_od_par.m_cp_htf = m_cp_rec;
 
 			int hx_od_error = 0;
-			ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
+			//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
 
 			if( hx_od_error != 0 )
 			{
@@ -804,7 +804,7 @@ public:
 			P_main_comp_in = ms_rc_cycle.get_od_solved()->m_pres[1-1];
 			P_main_comp_out = ms_rc_cycle.get_od_solved()->m_pres[2-1];
 			frac_recomp = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;		//[rpm]
+			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_N;		//[rpm]
 
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
 

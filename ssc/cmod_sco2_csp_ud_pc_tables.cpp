@@ -111,12 +111,10 @@ static var_info _cm_vtab_sco2_csp_ud_pc_tables[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "?=1.2345",     "",       "" },
 		// Recompressor																															
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_des",           "Recompressor design flow coefficient",                   "",           "",    "",      "?=1.2345",     "",       "" },					
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio1_des",    "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "?=1.2345",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio2_des",    "Recompressor 2nd stage design tip speed ratio",          "",           "",    "",      "?=1.2345",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio_des",     "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "?=1.2345",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_n_stages",          "Recompressor stages",                                    "",           "",    "",      "?=1.2345",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_N_des",             "Recompressor design shaft speed",                        "rpm",        "",    "",      "?=1.2345",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D1",                "Recompressor first stage diameter",                      "m",          "",    "",      "?=1.2345",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D2",                "Recompressor second stage diameter",                     "m",          "",    "",      "?=1.2345",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D",                 "Recompressor first stage diameter",                      "m",          "",    "",      "?=1.2345",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "?=1.2345",     "",       "" },
 		// Turbine																																
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "",    "",      "?=1.2345",     "",       "" },
@@ -317,21 +315,19 @@ public:
 			// Compressor
 		assign("P_comp_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[1 - 1] / 1000.0));		//[MPa] convert from kPa
 		assign("P_comp_out", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[2 - 1] / 1000.0));		//[MPa] convert from kPa
-		assign("mc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
-		assign("mc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_w_tip_ratio);		//[-]
-		assign("mc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_n_stages);	//[-]
-		assign("mc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);	//[rpm]
-		assign("mc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_D_rotor);			//[m]
-		assign("mc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);	//[-]
+		assign("mc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);
+		assign("mc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_w_tip_ratio);		//[-]
+		assign("mc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_n_stages);	//[-]
+		assign("mc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_N_design);	//[rpm]
+		assign("mc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_D_rotor);			//[m]
+		assign("mc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_surge);	//[-]
 			// Recompressor
-		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_des);	//[-]
-		assign("rc_tip_ratio1_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_1);	//[-]
-		assign("rc_tip_ratio2_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_2);	//[-]
-		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_n_stages);	//[-]
-		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
-		assign("rc_D1", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
-		assign("rc_D2", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
-		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge);//[-]
+		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_des);	//[-]
+		assign("rc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_w_tip_ratio);	//[-]
+		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_n_stages);	//[-]
+		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_N_design);	//[rpm]
+		assign("rc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_D_rotor);		//[m] 
+		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_surge);//[-]
 			// Turbine
 		assign("t_nu_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
