@@ -139,6 +139,7 @@ private:
 	double m_Rtot_downc;		//[K*m/W]
 	double m_total_startup_time; // [s]
 	double m_total_startup_time_initial; //[s]
+	double m_minimum_startup_time; //s
 	int m_n_elem;
 	int m_nz_tot;
 	vector<double> m_tm;		 //[J/K/m]
@@ -182,7 +183,7 @@ private:
 
 	struct parameter_eval_inputs
 	{
-		double hfor, T_amb, T_sky, nu_amb, c_htf, rho_htf, mu_htf, k_htf, Pr_htf;
+		double T_amb, T_sky, c_htf, rho_htf, mu_htf, k_htf, Pr_htf;
 		vector<double> tm;
 		util::matrix_t<double> Tfeval, Tseval, qinc;
 	} param_inputs;
@@ -196,7 +197,7 @@ private:
 	void calc_axial_profile(double inlet_temp, double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
 	double calc_single_pt(double inlet_temp, double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs);
 	void calc_extreme_outlet_values(double inlet_temp, double tstep, const transient_inputs &tinputs, double *tmin, double *tmax, double *tptmin, double *tptmax);
-	void update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, const parameter_eval_inputs &pinputs, transient_inputs &tinputs);
+	void update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs);
 	void solve_transient_model(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, double inlet_temp, double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
 
 	enum startup_modes
@@ -253,9 +254,12 @@ public:
 	double m_downc_tm_mult;			//[]
 	double m_heat_trace_power;		//[kW/m], convert to [W/m] in init()
 	double m_tube_flux_startup;		//[kW/m2]
-	double m_preheat_target;		//[K]
-	double m_startup_target;		//[K]
+	double m_preheat_target;		//[C], convert to [k] in init()
+	double m_startup_target;		//[C], convert to [k] in init()
 	double m_initial_temperature;	//[C], convert to [K] in init()
+
+	bool m_is_startup_from_solved_profile;  // Begin receiver startup from solved temperature profiles?
+	bool m_is_enforce_min_startup;		// Always enforce minimum startup time?  If false, minimum startup time is ignored when receiver starts above preheat temperature
 
 	// Calculate in init()
 	double m_q_dot_inc_min;			//[Wt]

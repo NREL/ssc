@@ -203,6 +203,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_target_Tdiff", "Target tube T at end of preheat - design pt cold HTF temperature",  "C",			  "",			 "receiver",	   "?=25.0",				  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "startup_target_Tdiff", "Target HTF T at end of startup - design pt hot HTF temperature",	  "C",			  "",			 "receiver",	   "?=-5.0",					  "",					   "" },
 
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_startup_from_T_soln", "Begin receiver startup from solved temperature profiles?",	  "",			  "",			 "receiver",	   "?=0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_enforce_min_startup", "Always enforce minimum startup time",						  "",			  "",			 "receiver",	   "?=1",					  "",					   "" },
+	
 	
 	// TES parameters - general
 	{ SSC_INPUT,        SSC_NUMBER,      "csp.pt.tes.init_hot_htf_percent", "Initial fraction of avail. vol that is hot",             "%",            "",            "TES",            "*",                       "",                      "" },
@@ -957,6 +960,18 @@ public:
 		receiver.m_preheat_target = receiver.m_T_htf_cold_des + as_double("preheat_target_Tdiff");
 		receiver.m_startup_target = receiver.m_T_htf_hot_des + as_double("startup_target_Tdiff");
 		receiver.m_initial_temperature = 5.0; //[C]
+
+		
+		receiver.m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
+		if (!receiver.m_is_startup_transient && receiver.m_is_startup_from_solved_profile)
+			throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
+		
+		receiver.m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
+		if (!receiver.m_is_startup_from_solved_profile && !receiver.m_is_enforce_min_startup)
+		{
+			log("Both 'is_rec_enforce_min_startup' and 'is_rec_startup_from_T_soln' were set to 'false'. Minimum startup time will always be enforced unless 'is_rec_startup_from_T_soln' is set to 'true'", SSC_WARNING);
+			receiver.m_is_enforce_min_startup = 1;
+		}
 
 		receiver.m_n_flux_x = as_integer("n_flux_x");
 		receiver.m_n_flux_y = as_integer("n_flux_y");
