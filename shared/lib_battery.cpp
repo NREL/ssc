@@ -259,7 +259,7 @@ void capacity_kibam_t::copy(capacity_t * capacity)
 void capacity_kibam_t::replace_battery()
 {
 	// Assume initial charge is max capacity
-	_q0 = _qmax*_SOC_max*0.01;
+	_q0 = _qmax0*_SOC_max*0.01;
 	_q1_0 = _q0*_c;
 	_q2_0 = _q0 - _q1_0;
 	_qmax = _qmax0;
