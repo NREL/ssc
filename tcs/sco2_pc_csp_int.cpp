@@ -371,7 +371,7 @@ const C_sco2_recomp_csp_10MWe_scale::S_od_solved * C_sco2_recomp_csp_10MWe_scale
 		// Main Compressor
 	ms_od_solved.ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
 		// Recompressor
-	ms_od_solved.ms_rc_cycle_od_solved.ms_rc_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
+	ms_od_solved.ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_W_dot_in *= m_r_W_scale;	//[kWe]
 		// Turbine
 	ms_od_solved.ms_rc_cycle_od_solved.ms_t_od_solved.m_W_dot_out *= m_r_W_scale;	//[kWe]
 		// Low Temp Recuperator
@@ -1594,7 +1594,7 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double rc_w_tip_ratio = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
-		rc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_w_tip_ratio;
+		rc_w_tip_ratio = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
 	}
 	double comp_tip_ratio = max(mc_w_tip_ratio, rc_w_tip_ratio);
 	double over_tip_ratio = max(0.0, 10.0*(comp_tip_ratio - 0.999));
@@ -1609,10 +1609,11 @@ int C_sco2_recomp_csp::off_design_core(double & eta_solved)
 	double over_surge_rc = 0.0;
 	if( ms_des_solved.ms_rc_cycle_solved.m_is_rc )
 	{
-		rc_phi_s1 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi;
-		rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
-		double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
-		over_surge_rc = max(0.0, (C_recompressor::m_snl_phi_min - rc_phi_min)/C_recompressor::m_snl_phi_min*100.0);
+		//rc_phi_s1 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi;
+		//rc_phi_s2 = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_phi_2;
+		//double rc_phi_min = min(rc_phi_s1, rc_phi_s2);
+		double rc_phi_min = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_phi;
+		over_surge_rc = max(0.0, (C_comp_single_stage::m_snl_phi_min - rc_phi_min) / C_comp_single_stage::m_snl_phi_min*100.0);
 	}
 
 
@@ -2512,10 +2513,11 @@ double C_sco2_recomp_csp::opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa
 			
 			if( mc_rc_cycle.get_design_solved()->m_is_rc )
 			{
-				rc_phi_of = mc_rc_cycle.get_od_solved()->ms_rc_od_solved.m_w_tip_ratio;
-				double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
-				double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
-				rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
+				rc_tip_ratio_of = mc_rc_cycle.get_od_solved()->ms_rc_ms_od_solved.m_w_tip_ratio;
+				//double rc_phi_s1 = mc_rc_cycle.get_rc_od_solved()->m_phi;
+				//double rc_phi_s2 = mc_rc_cycle.get_rc_od_solved()->m_phi_2;
+				//rc_tip_ratio_of = min(rc_phi_s1, rc_phi_s2);
+				rc_phi_of = mc_rc_cycle.get_rc_od_solved()->m_phi;
 			}
 
 			W_dot_net_of = mc_rc_cycle.get_od_solved()->m_W_dot_net / 1.E3;		//[MWe]

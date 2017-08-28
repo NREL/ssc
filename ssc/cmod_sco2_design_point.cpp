@@ -164,36 +164,38 @@ public:
 		//double tip_ratio_old = c_comp_old.get_design_solved()->m_w_tip_ratio;	//[-]
 
 
-		C_recompressor::S_design_parameters s_rc_des_old;
+		//C_recompressor::S_design_parameters s_rc_des_old;
 
 		double T_rc_in = 100.0 + 273.15;	//[K]
 		double P_rc_in = P_in;				//[kPa]
 		
 		CO2_TP(T_rc_in, P_rc_in, &co2_props);
-		s_rc_des_old.m_P_in = P_rc_in;
-		s_rc_des_old.m_D_in = co2_props.dens;
-		s_rc_des_old.m_h_in = co2_props.enth;
-		s_rc_des_old.m_s_in = co2_props.entr;
+		double s_rc_in = co2_props.entr;
+		double h_rc_in = co2_props.enth;
+		//s_rc_des_old.m_P_in = P_rc_in;
+		//s_rc_des_old.m_D_in = co2_props.dens;
+		//s_rc_des_old.m_h_in = co2_props.enth;
+		//s_rc_des_old.m_s_in = co2_props.entr;
 
 		double P_rc_out = P_out;			//[kPa]
-		CO2_PS(P_rc_out, s_rc_des_old.m_s_in, &co2_props);
+		CO2_PS(P_rc_out, s_rc_in, &co2_props);
 		double h_rc_out_isen = co2_props.enth;	//[kJ/kg]
 
 		double eta_rc_isen = 0.9;
-		double h_rc_out = s_rc_des_old.m_h_in + (h_rc_out_isen - s_rc_des_old.m_h_in) / eta_isen;
+		double h_rc_out = h_rc_in + (h_rc_out_isen - h_rc_in) / eta_isen;
 		CO2_PH(P_rc_out, h_rc_out, &co2_props);
-		s_rc_des_old.m_T_out = co2_props.temp;
-		s_rc_des_old.m_P_out = co2_props.pres;
-		s_rc_des_old.m_h_out = co2_props.enth;
-		s_rc_des_old.m_D_out = co2_props.dens;
+		//s_rc_des_old.m_T_out = co2_props.temp;
+		//s_rc_des_old.m_P_out = co2_props.pres;
+		//s_rc_des_old.m_h_out = co2_props.enth;
+		//s_rc_des_old.m_D_out = co2_props.dens;
 		double T_rc_out = co2_props.temp;		//[K]
 
 		double m_dot_rc = m_dot_mc / (0.8) * 0.2;
-		s_rc_des_old.m_m_dot = m_dot_rc;
+		//s_rc_des_old.m_m_dot = m_dot_rc;
 
-		C_recompressor c_rc_old;
-		int rc_err_code = 0;
-		c_rc_old.recompressor_sizing(s_rc_des_old, rc_err_code);
+		//C_recompressor c_rc_old;
+		//int rc_err_code = 0;
+		//c_rc_old.recompressor_sizing(s_rc_des_old, rc_err_code);
 
 
 
@@ -209,7 +211,7 @@ public:
 
 		int rc_od_err_code = 0;
 		double T_rc_out_od = std::numeric_limits<double>::quiet_NaN();
-		c_rc_old.off_design_recompressor(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od);
+		//c_rc_old.off_design_recompressor(T_rc_in_od, P_rc_in_od, m_dot_rc_od, P_rc_out, rc_od_err_code, T_rc_out_od);
 
 
 		double T_rc_out_od_ms = std::numeric_limits<double>::quiet_NaN();

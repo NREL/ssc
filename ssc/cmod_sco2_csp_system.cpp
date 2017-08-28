@@ -111,12 +111,10 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "*",     "",       "" },
 		// Recompressor
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_des",           "Recompressor design flow coefficient",                   "",           "",    "",      "*",     "",       "" },					
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio1_des",    "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio2_des",    "Recompressor 2nd stage design tip speed ratio",          "",           "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio_des",    "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_n_stages",          "Recompressor stages",                                    "",           "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_N_des",             "Recompressor design shaft speed",                        "rpm",        "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D1",                "Recompressor first stage diameter",                      "m",          "",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D2",                "Recompressor second stage diameter",                     "m",          "",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D",                "Recompressor first stage diameter",                      "m",          "",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "*",     "",       "" },
 		// Turbine
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "",    "",      "*",     "",       "" },
@@ -171,8 +169,7 @@ static var_info _cm_vtab_sco2_csp_system[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,   "N_mc_od",              "Off-design main compressor speed",                       "rpm",        "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "mc_tip_ratio_od",      "Off-design main compressor tip speed ratio",             "-",          "",    "",      "",     "",       "" },
 		// Recompressor
-	{ SSC_OUTPUT, SSC_ARRAY,   "rc_phi_1_od",          "Off-design recompressor 1st stage flow coefficient",     "-",		   "",    "",      "",     "",       "" },
-	{ SSC_OUTPUT, SSC_ARRAY,   "rc_phi_2_od",          "Off-design recompressor 2nd stage flow coefficient",     "-",          "",    "",      "",     "",       "" },
+	{ SSC_OUTPUT, SSC_ARRAY,   "rc_phi_od",            "Off-design recompressor 1st stage flow coefficient",     "-",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_N_od",              "Off-design recompressor shaft speed",                    "rpm",		   "",    "",      "",     "",       "" },
 	{ SSC_OUTPUT, SSC_ARRAY,   "rc_tip_ratio_od",      "Off-design recompressor tip speed ratio",                "-",		   "",    "",      "",     "",       "" },
 		// Turbine																											   
@@ -231,8 +228,7 @@ public:
 	ssc_number_t *p_N_mc_od;
 	ssc_number_t *p_mc_tip_ratio_od;
 	// Recompressor
-	ssc_number_t *p_rc_phi_1_od;
-	ssc_number_t *p_rc_phi_2_od;
+	ssc_number_t *p_rc_phi_od;
 	ssc_number_t *p_rc_N_od;
 	ssc_number_t *p_rc_tip_ratio_od;
 	// Turbine
@@ -426,14 +422,12 @@ public:
 		assign("mc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_D_rotor);			//[m]
 		assign("mc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_surge);	//[-]
 		// Recompressor
-		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_des);	//[-]
-		assign("rc_tip_ratio1_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_1);	//[-]
-		assign("rc_tip_ratio2_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_2);	//[-]
-		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_n_stages);	//[-]
-		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
-		assign("rc_D1", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
-		assign("rc_D2", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
-		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge);//[-]
+		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_des);	//[-]
+		assign("rc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_w_tip_ratio);	//[-]
+		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_n_stages);	//[-]
+		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_N_design);	//[rpm]
+		assign("rc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_D_rotor);		//[m] 
+		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_surge);//[-]
 		// Turbine
 		assign("t_nu_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
@@ -894,10 +888,9 @@ public:
 				p_N_mc_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_N;		//[rpm]
 				p_mc_tip_ratio_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_mc_ms_od_solved.m_w_tip_ratio;	//[-]
 					// Recompressor
-				p_rc_phi_1_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_phi;	//[-]
-				p_rc_phi_2_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_phi_2;	//[-]
-				p_rc_N_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_N;			//[rpm]
-				p_rc_tip_ratio_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_od_solved.m_w_tip_ratio;	//[-]
+				p_rc_phi_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_phi;	//[-]
+				p_rc_N_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_N;			//[rpm]
+				p_rc_tip_ratio_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_rc_ms_od_solved.m_w_tip_ratio;	//[-]
 					// Turbine
 				p_t_nu_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_nu;		//[-]
 				p_t_N_od[n_run] = (ssc_number_t)p_sco2_recomp_csp->get_od_solved()->ms_rc_cycle_od_solved.ms_t_od_solved.m_N;		//[rpm]
@@ -927,8 +920,7 @@ public:
 				p_N_mc_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_mc_tip_ratio_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Recompressor
-				p_rc_phi_1_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-				p_rc_phi_2_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+				p_rc_phi_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_N_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 				p_rc_tip_ratio_od[n_run] = std::numeric_limits<ssc_number_t>::quiet_NaN();
 					// Turbine
@@ -981,8 +973,7 @@ public:
 		p_N_mc_od = allocate("N_mc_od", n_od_runs);
 		p_mc_tip_ratio_od = allocate("mc_tip_ratio_od", n_od_runs);
 		// Recompressor
-		p_rc_phi_1_od = allocate("rc_phi_1_od", n_od_runs);
-		p_rc_phi_2_od = allocate("rc_phi_2_od", n_od_runs);
+		p_rc_phi_od = allocate("rc_phi_od", n_od_runs);
 		p_rc_N_od = allocate("rc_N_od", n_od_runs);
 		p_rc_tip_ratio_od = allocate("rc_tip_ratio_od", n_od_runs);
 		// Turbine

@@ -576,133 +576,133 @@ public:
 //		int &error_code, double &T_out /*K*/, double &P_out /*kPa*/);
 //};
 
-class C_recompressor
-{
-public:
-	struct S_design_parameters
-	{
-			// Compressor inlet conditions
-		double m_P_in;
-		double m_D_in;
-		double m_h_in;
-		double m_s_in;
-			// Compressor outlet conditions
-		double m_T_out;
-		double m_P_out;
-		double m_h_out;
-		double m_D_out;
-			// Flow conditions
-		double m_m_dot;
-
-		S_design_parameters()
-		{
-			m_P_in = m_D_in = m_h_in = m_s_in = 
-			m_T_out = m_P_out = m_h_out = m_D_out =
-			m_m_dot = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-	struct S_design_solved
-	{
-		double m_D_rotor;
-		double m_D_rotor_2;
-		double m_N_design;
-		double m_eta_design;
-		
-		double m_w_tip_ratio_1;	//[-] Max tip ratio at design, first stage
-		double m_w_tip_ratio_2;	//[-] Max tip ratio at design, 2nd stage
-
-		double m_phi_des;		//[-]
-		double m_phi_surge;		//[-]
-		double m_phi_max;		//[-]
-		int m_n_stages;			//[-]
-
-		S_design_solved()
-		{
-			m_D_rotor = m_D_rotor_2 = m_N_design = m_eta_design =
-				m_w_tip_ratio_1 = m_w_tip_ratio_2 = m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
-
-			m_n_stages = -1;
-		}
-	};
-
-	struct S_od_inputs
-	{
-		double m_m_dot;		//[kg/s]
-		double m_rho_in;		//[kg/m^3]
-		double m_h_in;		//[kJ/kg]
-		double m_s_in;		//[kJ/kg-K]
-
-		S_od_inputs()
-		{
-			m_m_dot = m_rho_in = m_h_in = m_s_in = std::numeric_limits<double>::quiet_NaN();
-		}
-	};
-
-	struct S_od_solved
-	{
-		double m_N;
-		double m_eta;
-		double m_phi;
-		double m_phi_2;
-		double m_w_tip_ratio;	//[-] Maximum of multiple stages
-		bool m_surge;
-
-		double m_T_out;			//[K] Compressor outlet temperature
-		double m_W_dot_in;		//[kWe] Power required to operate compressor. Expect positive value.
-		double m_surge_safety;	//[-] min of stages: Flow coefficient / min flow coefficient
-
-		S_od_solved()
-		{
-			m_N = m_eta = m_phi = m_phi_2 = m_w_tip_ratio = 
-				m_T_out = m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
-			m_surge = false;
-		}
-	};
-
-private:
-	S_design_parameters ms_des_par;
-	S_design_solved ms_des_solved;
-	S_od_solved ms_od_solved;
-	S_od_inputs ms_od_inputs;
-
-public:
-	~C_recompressor(){};
-
-	C_recompressor(){};
-
-	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
-	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
-	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
-
-	class C_mono_eq_phi_off_design : public C_monotonic_equation
-	{
-	private:
-		C_recompressor *mpc_recompressor;
-
-	public:
-		C_mono_eq_phi_off_design(C_recompressor *pc_recompressor)
-		{
-			mpc_recompressor = pc_recompressor;
-		}
-
-		virtual int operator()(double phi /*-*/, double *P_high /*kPa*/);
-	};
-
-	const S_design_solved * get_design_solved()
-	{
-		return &ms_des_solved;
-	}
-
-	const S_od_solved * get_od_solved()
-	{
-		return &ms_od_solved;
-	}
-
-	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code);	
-
-	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out);
-	
-};
+//class C_recompressor
+//{
+//public:
+//	struct S_design_parameters
+//	{
+//			// Compressor inlet conditions
+//		double m_P_in;
+//		double m_D_in;
+//		double m_h_in;
+//		double m_s_in;
+//			// Compressor outlet conditions
+//		double m_T_out;
+//		double m_P_out;
+//		double m_h_out;
+//		double m_D_out;
+//			// Flow conditions
+//		double m_m_dot;
+//
+//		S_design_parameters()
+//		{
+//			m_P_in = m_D_in = m_h_in = m_s_in = 
+//			m_T_out = m_P_out = m_h_out = m_D_out =
+//			m_m_dot = std::numeric_limits<double>::quiet_NaN();
+//		}
+//	};
+//	struct S_design_solved
+//	{
+//		double m_D_rotor;
+//		double m_D_rotor_2;
+//		double m_N_design;
+//		double m_eta_design;
+//		
+//		double m_w_tip_ratio_1;	//[-] Max tip ratio at design, first stage
+//		double m_w_tip_ratio_2;	//[-] Max tip ratio at design, 2nd stage
+//
+//		double m_phi_des;		//[-]
+//		double m_phi_surge;		//[-]
+//		double m_phi_max;		//[-]
+//		int m_n_stages;			//[-]
+//
+//		S_design_solved()
+//		{
+//			m_D_rotor = m_D_rotor_2 = m_N_design = m_eta_design =
+//				m_w_tip_ratio_1 = m_w_tip_ratio_2 = m_phi_surge = m_phi_des = m_phi_max = std::numeric_limits<double>::quiet_NaN();
+//
+//			m_n_stages = -1;
+//		}
+//	};
+//
+//	struct S_od_inputs
+//	{
+//		double m_m_dot;		//[kg/s]
+//		double m_rho_in;		//[kg/m^3]
+//		double m_h_in;		//[kJ/kg]
+//		double m_s_in;		//[kJ/kg-K]
+//
+//		S_od_inputs()
+//		{
+//			m_m_dot = m_rho_in = m_h_in = m_s_in = std::numeric_limits<double>::quiet_NaN();
+//		}
+//	};
+//
+//	struct S_od_solved
+//	{
+//		double m_N;
+//		double m_eta;
+//		double m_phi;
+//		double m_phi_2;
+//		double m_w_tip_ratio;	//[-] Maximum of multiple stages
+//		bool m_surge;
+//
+//		double m_T_out;			//[K] Compressor outlet temperature
+//		double m_W_dot_in;		//[kWe] Power required to operate compressor. Expect positive value.
+//		double m_surge_safety;	//[-] min of stages: Flow coefficient / min flow coefficient
+//
+//		S_od_solved()
+//		{
+//			m_N = m_eta = m_phi = m_phi_2 = m_w_tip_ratio = 
+//				m_T_out = m_W_dot_in = m_surge_safety = std::numeric_limits<double>::quiet_NaN();
+//			m_surge = false;
+//		}
+//	};
+//
+//private:
+//	S_design_parameters ms_des_par;
+//	S_design_solved ms_des_solved;
+//	S_od_solved ms_od_solved;
+//	S_od_inputs ms_od_inputs;
+//
+//public:
+//	~C_recompressor(){};
+//
+//	C_recompressor(){};
+//
+//	static const double m_snl_phi_design;		//[-] Design-point flow coef. for Sandia compressor (corresponds to max eta)
+//	static const double m_snl_phi_min;				//[-] Approximate surge limit for SNL compressor
+//	static const double m_snl_phi_max;				//[-] Approximate x-intercept for SNL compressor
+//
+//	class C_mono_eq_phi_off_design : public C_monotonic_equation
+//	{
+//	private:
+//		C_recompressor *mpc_recompressor;
+//
+//	public:
+//		C_mono_eq_phi_off_design(C_recompressor *pc_recompressor)
+//		{
+//			mpc_recompressor = pc_recompressor;
+//		}
+//
+//		virtual int operator()(double phi /*-*/, double *P_high /*kPa*/);
+//	};
+//
+//	const S_design_solved * get_design_solved()
+//	{
+//		return &ms_des_solved;
+//	}
+//
+//	const S_od_solved * get_od_solved()
+//	{
+//		return &ms_od_solved;
+//	}
+//
+//	void recompressor_sizing(const S_design_parameters & des_par_in, int & error_code);	
+//
+//	void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, int & error_code, double & T_out);
+//	
+//};
 
 class C_RecompCycle
 {
@@ -957,7 +957,8 @@ public:
 
 		//C_compressor::S_design_solved ms_mc_des_solved;
 		C_comp_multi_stage::S_des_solved ms_mc_ms_des_solved;
-		C_recompressor::S_design_solved ms_rc_des_solved;
+		//C_recompressor::S_design_solved ms_rc_des_solved;
+		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
 		C_turbine::S_design_solved ms_t_des_solved;
 		C_HX_counterflow::S_des_solved ms_LT_recup_des_solved;
 		C_HX_counterflow::S_des_solved ms_HT_recup_des_solved;
@@ -1036,7 +1037,8 @@ public:
 
 		//C_compressor::S_od_solved ms_mc_od_solved;
 		C_comp_multi_stage::S_od_solved ms_mc_ms_od_solved;
-		C_recompressor::S_od_solved ms_rc_od_solved;
+		//C_recompressor::S_od_solved ms_rc_od_solved;
+		C_comp_multi_stage::S_od_solved ms_rc_ms_od_solved;
 		C_turbine::S_od_solved ms_t_od_solved;
 		C_HX_counterflow::S_od_solved ms_LT_recup_od_solved;
 		C_HX_counterflow::S_od_solved ms_HT_recup_od_solved;
@@ -1213,7 +1215,8 @@ private:
 	C_turbine m_t;
 	//C_compressor m_mc;
 	C_comp_multi_stage m_mc_ms;
-	C_recompressor m_rc;
+	//C_recompressor m_rc;
+	C_comp_multi_stage m_rc_ms;
 	C_HeatExchanger /*m_LT, m_HT,*/ m_PHX, m_PC;
 	
 	C_HX_co2_to_co2 mc_LT_recup, mc_HT_recup;
@@ -1403,9 +1406,9 @@ public:
 							int & rc_error_code, double & rc_w_tip_ratio /*-*/, double & rc_phi /*-*/,
 							bool is_update_ms_od_solved = false);
 
-	const C_recompressor::S_od_solved * get_rc_od_solved()
+	const C_comp_multi_stage::S_od_solved * get_rc_od_solved()
 	{
-		return m_rc.get_od_solved();
+		return m_rc_ms.get_od_solved();
 	}
 
 	const S_design_solved * get_design_solved()
