@@ -571,7 +571,7 @@ public:
 		assign("n_flux_x", (ssc_number_t)max(12, n_rec_panels));
 
 		// Calculate system capacity instead of pass in
-		double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor");		//[MWe]
+		double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") *1.E3;		//[kWe]
 
 		// 'sf_model_type'
 		// 0 = design field and tower/receiver geometry
@@ -1833,7 +1833,7 @@ public:
 		assign("conversion_factor", convfactor);
 
 		double kWh_per_kW = 0.0;
-		double nameplate = system_capacity;
+		double nameplate = system_capacity;		//[kWe]
 		if(nameplate > 0.0)
 			kWh_per_kW = ae / nameplate;
 
