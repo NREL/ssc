@@ -52,7 +52,7 @@
 
 #include <string>
 #include "sscapi.h"
-
+#include "lib_util.h"
 
 
 #include <unordered_map>

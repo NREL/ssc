@@ -48,6 +48,7 @@
 *******************************************************************************************************/
 
 #define _TCSTYPEINTERFACE_
+#include <memory>
 #include "tcstype.h"
 
 #include <shared/lib_weatherfile.h>
@@ -161,7 +162,7 @@ public:
 	weatherreader( tcscontext *cxt, tcstypeinfo *ti )
 		: tcstypeinterface( cxt, ti ) { }
 
-	virtual ~weatherreader() { }
+	virtual ~weatherreader() {}
 
 	virtual int init()
 	{
@@ -176,6 +177,14 @@ public:
 
 		try
 		{
+			if (c_wr.m_filename.size() > 0)
+			{
+				c_wr.m_weather_data_provider = std::make_shared<weatherfile>(c_wr.m_filename);
+				if (c_wr.m_weather_data_provider->has_message()){
+					message(TCS_ERROR, c_wr.m_weather_data_provider->message().c_str());
+					return -1;
+				}
+			}
 			c_wr.init();
 		}
 

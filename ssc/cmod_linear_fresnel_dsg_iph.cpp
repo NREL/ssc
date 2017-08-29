@@ -224,7 +224,7 @@ public:
 	{
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("file_name");
+		weather_reader.m_weather_data_provider = std::make_shared<weatherfile>(as_string("file_name"));
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
@@ -239,7 +239,7 @@ public:
 
 		int steps_per_hour = 1;			//[-]
 
-		int n_wf_records = (int)weather_reader.get_n_records();
+		int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
 		steps_per_hour = n_wf_records / 8760;	//[-]
 
 		int n_steps_fixed = steps_per_hour*8760;	//[-]
@@ -569,6 +569,7 @@ public:
 		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
 		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
 		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
+
 	}
 
 };

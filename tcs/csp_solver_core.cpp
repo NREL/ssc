@@ -502,7 +502,7 @@ void C_csp_solver::init()
 int C_csp_solver::steps_per_hour()
 {
 	// Get number of records in weather file
-	int n_wf_records = (int)mc_weather.get_n_records();
+	int n_wf_records = (int)mc_weather.m_weather_data_provider->nrecords();
 	int step_per_hour = n_wf_records / 8760;
 	return step_per_hour;
 }
@@ -510,7 +510,7 @@ int C_csp_solver::steps_per_hour()
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 {
 	// Get number of records in weather file
-	int n_wf_records = (int)mc_weather.get_n_records();
+	int n_wf_records = (int)mc_weather.m_weather_data_provider->nrecords();
 	int step_per_hour = n_wf_records / 8760;
 
 	double wf_step = 3600.0 / step_per_hour;	//[s] Weather file time step - would like to check this against weather file, some day

@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -73,10 +73,11 @@
 
 static var_info _cm_vtab_tcsmolten_salt[] = {
 	/*   VARTYPE           DATATYPE         NAME                           LABEL                                                     UNITS            META           GROUP            REQUIRED_IF                 CONSTRAINTS         UI_HINTS*/
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "*",                       "LOCAL_FILE",           "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",  "local weather file path",                                           "",             "",            "Weather",        "?",                       "LOCAL_FILE",           "" },
+	{ SSC_INPUT,        SSC_TABLE,       "solar_resource_data",  "solar resouce data in memory",									  "",			  "",			 "Weather",        "?",						  "",					  "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
+	{ SSC_INPUT,		SSC_NUMBER,		"ppa_multiplier_model",	 "PPA multiplier model",											  "0/1",  "0=diurnal,1=timestep","Time of Delivery","?=0",					  "INTEGER,MIN=0",		  "" },
+	{ SSC_INPUT,		SSC_ARRAY,		"dispatch_factors_ts",	 "Dispatch payment factor array",									  "",			  "",			"Time of Delivery","ppa_multiplier_model=1",  "",					  "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "field_model_type",     "0=design field and tower/receiver geometry 1=design field 2=user field, calculate performance 3=user performance maps vs solar position", "", "", "heliostat", "*", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                   "",             "",            "system_design",  "*",                       "",                     "" },
@@ -545,6 +546,28 @@ public:
 
 	void exec() throw(general_error)
 	{
+		// Weather reader
+		C_csp_weatherreader weather_reader;
+		if (is_assigned("solar_resource_file")){
+			weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("solar_resource_file"));
+			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+		}
+		if (is_assigned("solar_resource_data")){
+			weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
+			if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+		}
+
+		weather_reader.m_trackmode = 0;
+		weather_reader.m_tilt = 0.0;
+		weather_reader.m_azimuth = 0.0;
+		// Initialize to get weather file info
+		weather_reader.init();
+		if (weather_reader.has_error()) throw exec_error("tcsmolten_salt", weather_reader.get_error());
+
+		// Get info from the weather reader initialization
+		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
+
+
 		int tes_type = 1;
 
 		int rec_type = var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL;
@@ -598,7 +621,7 @@ public:
 
 			assign("calc_fluxmaps", 1);
 
-			spi.run();
+			spi.run(weather_reader.m_weather_data_provider);
 
 			if (is_optimize)
 			{
@@ -709,7 +732,7 @@ public:
 			// 'calc_fluxmaps' should be true
 			assign("calc_fluxmaps", 1);
 
-			spi.run();
+			spi.run(weather_reader.m_weather_data_provider);
 
 			//collect the optical efficiency data and sun positions
 			if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
@@ -780,17 +803,6 @@ public:
 			throw exec_error("MSPT CSP Solver", "Thermocline thermal energy storage is not yet supported by the new CSP Solver and Dispatch Optimization models.\n");
 		}
 
-		// Weather reader
-		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("solar_resource_file");
-		weather_reader.m_trackmode = 0;
-		weather_reader.m_tilt = 0.0;
-		weather_reader.m_azimuth = 0.0;
-			// Initialize to get weather file info
-		weather_reader.init();
-
-		// Get info from the weather reader initialization
-		double site_elevation = weather_reader.ms_solved_params.m_elev;		//[m]
         
         // Set steps per hour
 		C_csp_solver::S_sim_setup sim_setup;
@@ -802,7 +814,7 @@ public:
         //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
         if( steps_per_hour < 0 )
         {
-            double sph_d = 3600. / weather_reader.get_step_seconds();
+            double sph_d = 3600. / weather_reader.m_weather_data_provider->step_sec();
             steps_per_hour = (int)( sph_d + 1.e-5 );
             if( (double)steps_per_hour != sph_d )
                 throw spexception("The time step duration must be evenly divisible within an hour.");

@@ -414,12 +414,12 @@ public:
 
 		// ******************************************************************************
 		// Do some stuff to get site information from weather file; can probably maybe delete this after testing component classes...
-		weatherfile wfile(as_string("file_name"));
-		if( !wfile.ok() ) throw exec_error("Physical Trough", wfile.message());
-		if( wfile.has_message() ) log(wfile.message(), SSC_WARNING);
+		std::shared_ptr<weatherfile> wfile = make_shared<weatherfile>(as_string("file_name"));
+		if( !wfile->ok() ) throw exec_error("Physical Trough", wfile->message());
+		if( wfile->has_message() ) log(wfile->message(), SSC_WARNING);
 
 		weather_header hdr;
-		wfile.header(&hdr);
+		wfile->header(&hdr);
 
 		double lat = hdr.lat;	//[deg]
 		double lon = hdr.lon;	//[deg]
@@ -428,7 +428,7 @@ public:
 
 		// Weather reader
 		C_csp_weatherreader weather_reader;
-		weather_reader.m_filename = as_string("file_name");
+		weather_reader.m_weather_data_provider = wfile;
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
 		weather_reader.m_azimuth = 0.0;
