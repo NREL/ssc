@@ -153,6 +153,7 @@ private:
 		int nelem;
 		int nztot;
 		int npath;
+		double inlet_temp;
 		util::matrix_t<double> lam1, lam2, cval, tinit, tinit_wall, Rtube;
 		vector<double> length, zpts;
 		vector<int> nz, startpt;
@@ -183,7 +184,7 @@ private:
 
 	struct parameter_eval_inputs
 	{
-		double T_amb, T_sky, c_htf, rho_htf, mu_htf, k_htf, Pr_htf;
+		double T_amb, T_sky, c_htf, rho_htf, mu_htf, k_htf, Pr_htf, mflow_tot;
 		vector<double> tm;
 		util::matrix_t<double> Tfeval, Tseval, qinc;
 	} param_inputs;
@@ -192,13 +193,14 @@ private:
 	void calc_header_size(double pdrop, double mdot, double rhof, double muf, double Lh, double &id_calc, double &th_calc, double &od_calc);
 	double interpolate(double x, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
 	double integrate(double xlow, double xhigh, const vector<double> &xarray, const vector<double> &yarray, int klow, int khigh);
-	void calc_ss_profile(double inlet_temp, const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall);
-	void calc_timeavg_temp(double inlet_temp, double tstep, const transient_inputs &tinputs, util::matrix_t<double> &timeavg);
-	void calc_axial_profile(double inlet_temp, double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
-	double calc_single_pt(double inlet_temp, double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs);
-	void calc_extreme_outlet_values(double inlet_temp, double tstep, const transient_inputs &tinputs, double *tmin, double *tmax, double *tptmin, double *tptmax);
-	void update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs);
-	void solve_transient_model(const C_csp_weatherreader::S_outputs &weather, double mflow_tot, double inlet_temp, double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
+	void calc_ss_profile(const transient_inputs &tinputs, util::matrix_t<double> &tprofile, util::matrix_t<double> &tprofile_wall);
+	void calc_timeavg_temp(double tstep, const transient_inputs &tinputs, util::matrix_t<double> &timeavg);
+	void calc_axial_profile( double tpt, const transient_inputs &tinputs, util::matrix_t<double> &tprofile);
+	double calc_single_pt(double tpt, double zpt, int flowid, int pathid, const transient_inputs &tinputs);
+	void calc_extreme_outlet_values(double tstep, const transient_inputs &tinputs, double *tmin, double *tmax, double *tptmin, double *tptmax);
+	void update_pde_parameters(const C_csp_weatherreader::S_outputs &weather, bool use_initial_t, parameter_eval_inputs &pinputs, transient_inputs &tinputs);
+	void solve_transient_model(const C_csp_weatherreader::S_outputs &weather, double tstep, double allowable_Trise, parameter_eval_inputs &pinputs, transient_inputs &tinputs, transient_outputs &toutputs);
+	void solve_transient_startup_model(const C_csp_weatherreader::S_outputs &weather, parameter_eval_inputs &pinputs, transient_inputs &tinputs, int startup_mode, double target_temperature, double min_time, double max_time, transient_outputs &toutputs, double &startup_time, double &energy);
 
 	enum startup_modes
 	{
