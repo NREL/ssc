@@ -198,10 +198,10 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,		SSC_NUMBER,		 "u_riser",				 "Design point HTF velocity in riser",								  "m/s",		  "",			 "tower",		   "*",						  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "th_riser",			 "Riser or downcomer tube wall thickness",							  "mm",			  "",			 "tower",		   "?=15.0",				  "",					   "" },
 	
-	{ SSC_INPUT,		SSC_NUMBER,		 "heat_trace_power",	 "Riser/downcomer heat trace power during startup",				      "kW/m",		  "",			 "receiver",	   "?=5.0e3",				  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "heat_trace_power",	 "Riser/downcomer heat trace power during startup",				      "kW/m",		  "",			 "receiver",	   "?=500.0",				  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_flux",	     "Tube absorbed solar flux during preheat",							  "kW/m2",		  "",			 "receiver",	   "?=50.0",				  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "preheat_target_Tdiff", "Target tube T at end of preheat - design pt cold HTF temperature",  "C",			  "",			 "receiver",	   "?=25.0",				  "",					   "" },
-	{ SSC_INPUT,		SSC_NUMBER,		 "startup_target_Tdiff", "Target HTF T at end of startup - design pt hot HTF temperature",	  "C",			  "",			 "receiver",	   "?=-5.0",					  "",					   "" },
+	{ SSC_INPUT,		SSC_NUMBER,		 "startup_target_Tdiff", "Target HTF T at end of startup - design pt hot HTF temperature",	  "C",			  "",			 "receiver",	   "?=-5.0",				  "",					   "" },
 
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_startup_from_T_soln", "Begin receiver startup from solved temperature profiles?",	  "",			  "",			 "receiver",	   "?=0",					  "",					   "" },
 	{ SSC_INPUT,		SSC_NUMBER,		 "is_rec_enforce_min_startup", "Always enforce minimum startup time",						  "",			  "",			 "receiver",	   "?=1",					  "",					   "" },

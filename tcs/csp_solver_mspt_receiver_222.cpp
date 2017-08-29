@@ -1227,15 +1227,16 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 								param_inputs.mflow_tot = 0.0;
 								solve_transient_startup_model(weather, param_inputs, trans_inputs, HEAT_TRACE, heat_trace_target, 0.0, time_remaining, trans_outputs, time_heattrace, q_heat_trace_energy);
 								m_total_startup_time += time_heattrace;		
-								time_remaining -= time_heattrace;					
+								time_remaining -= time_heattrace;	
+								q_startup_energy += q_heat_trace_energy;   
 								m_startup_mode = HEAT_TRACE;
 								if (time_remaining > 0)						// Heat tracing startup stage is completed before the end of the time step --> move to preheat stage
 								{
 									m_startup_mode = PREHEAT;
 									trans_inputs.tinit = trans_outputs.t_profile;
 									trans_inputs.tinit_wall = trans_outputs.t_profile_wall;
-									param_inputs.qinc = q_inc_panel_full;		// Update to full flux profile
 								}
+									
 							}
 						}
 						break;
@@ -1286,7 +1287,7 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 							m_dot_salt_startup = fmax(m_dot_salt_tot, m_f_rec_min *m_dot_rec_des);	// HTF mass flow rate during startup (kg/s)	
 							param_inputs.mflow_tot = m_dot_salt_startup;
 							param_inputs.tm = m_tm;
-							param_inputs.qinc = q_inc_panel_full;		// Update to full flux profile
+							param_inputs.qinc = q_inc_panel_full;		
 
 							double circulate_energy = std::numeric_limits<double>::quiet_NaN();
 							solve_transient_startup_model(weather, param_inputs, trans_inputs, CIRCULATE, circulation_target, min_circulate_time, time_remaining, trans_outputs, time_circulate, circulate_energy);
@@ -1317,15 +1318,15 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 							double required_hold_time = m_minimum_startup_time - m_total_startup_time;	// Time remaining (s) to satisfy the minimum required startup time
 							time_hold = fmin(required_hold_time, time_remaining);
 							param_inputs.tm = m_tm;		
-							
+							param_inputs.qinc = q_inc_panel_full;
 							m_dot_salt_startup = fmax(m_dot_salt_tot, m_f_rec_min*m_dot_rec_des);
 							param_inputs.mflow_tot = m_dot_salt_startup;
-							if (time_hold > time_remaining)		// Startup time requirement will not be fulfilled in the current time step
+							if (time_hold >= time_remaining)		// Startup time requirement will not be fulfilled in the current time step
 							{
 								solve_transient_model(weather, time_hold, 150.0, param_inputs, trans_inputs, trans_outputs);	// Continue circulating fluid through receiver during hold time
-								q_startup_energy = q_startup_energy + trans_outputs.timeavg_qnet* time_hold;					// Energy [J] used for startup during the time step	
-								m_total_startup_time = m_total_startup_time + time_hold;
-								time_remaining = time_remaining - time_hold;	// Remaining time in current timestep
+								q_startup_energy += trans_outputs.timeavg_qnet* time_hold;					// Energy [J] used for startup during the time step	
+								m_total_startup_time += time_hold;
+								time_remaining -= time_hold;	
 								m_startup_mode = HOLD;
 							}
 							else  // Startup time requirement will be fulfilled in the current time step --> call in "circulate" mode to ensure that temperature requirement will also be met
@@ -1550,18 +1551,21 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_q_dot_ss = q_thermal_ss / 1.E6;				//[MW] convert from W
 	ms_outputs.m_f_timestep = f_rec_timestep;					//[-]
 	ms_outputs.m_time_required_su = time_required_su*3600.0;	//[s], convert from hr in code
-
-	ms_outputs.m_inst_T_salt_hot = T_salt_hot_guess - 273.15;		//[C] Instantaneous salt outlet T at the end of the time step
-	ms_outputs.m_max_T_salt_hot = T_salt_hot_guess - 273.15;	//[C] Maximum salt outlet T during the time step
-	ms_outputs.m_min_T_salt_hot = T_salt_hot_guess - 273.15;	//[C] Minimum salt outlet T during the time step
-	ms_outputs.m_max_rec_tout = T_salt_hot_rec - 273.15;		//[C] Maximum salt T (receiver outlet) during the time step
-	ms_outputs.m_q_heattrace = 0.0;								//[MWt-hr] Power required for heat tracing 
-
 	if(q_thermal > 0.0)
 		ms_outputs.m_q_dot_piping_loss = m_Q_dot_piping_loss/1.E6;	//[MWt]
 	else
 		ms_outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
 
+
+	ms_outputs.m_inst_T_salt_hot = T_salt_hot_guess - 273.15;
+	ms_outputs.m_max_T_salt_hot = T_salt_hot_guess - 273.15;
+	ms_outputs.m_min_T_salt_hot = T_salt_hot_guess - 273.15;
+	ms_outputs.m_max_rec_tout = T_salt_hot_rec - 273.15;
+	ms_outputs.m_q_heattrace = 0.0;
+	ms_outputs.m_Twall_inlet = 0.0;
+	ms_outputs.m_Twall_outlet = 0.0;
+	ms_outputs.m_Triser = 0.0;
+	ms_outputs.m_Tdownc = 0.0;
 
 	// Transient model outputs
 	if ((m_is_transient && input_operation_mode == C_csp_collector_receiver::ON) || (m_is_startup_transient && input_operation_mode == C_csp_collector_receiver::STARTUP))		// Transient model is solved
@@ -1575,16 +1579,16 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs &weather,
 		ms_outputs.m_q_rad_sum = trans_outputs.timeavg_rad_loss / 1.e6;		//[MWt] Time-averaged receiver radiative heat loss
 		ms_outputs.m_Q_thermal = trans_outputs.timeavg_qthermal / 1.e6;		//[MWt] Time-averaged thermal power delivered to TES/PC
 		ms_outputs.m_q_dot_piping_loss = trans_outputs.timeavg_piping_loss / 1.e6;			//[MWt] Time-averaged piping loss
-		ms_outputs.m_q_heattrace = q_heat_trace_energy / 1.e6 / 3600.0;	//[MWt-hr] Power required for heat tracing during the time step
+		ms_outputs.m_q_heattrace = q_heat_trace_energy / 1.e6 / 3600.0;		//[MWt-hr] Power required for heat tracing during the time step
 		ms_outputs.m_T_salt_hot = trans_outputs.timeavg_tout - 273.15;		//[C] Time-averaged downcomer outlet T during the time step
 		ms_outputs.m_inst_T_salt_hot = trans_outputs.tout - 273.15;			//[C] Instantaneous salt outlet T at the end of the time step
 		ms_outputs.m_max_T_salt_hot = trans_outputs.max_tout - 273.15;		//[C] Maximum salt outlet T during the time step
 		ms_outputs.m_min_T_salt_hot = trans_outputs.min_tout - 273.15;		//[C] Minimum salt outlet T during the time step
-		ms_outputs.m_max_rec_tout = trans_outputs.max_rec_tout - 273.15;		//[C] Maximum salt T (receiver outlet) during the time step
-		ms_outputs.m_Twall_inlet = trans_outputs.tube_temp_inlet - 273.15;
-		ms_outputs.m_Twall_outlet = trans_outputs.tube_temp_outlet - 273.15;
-		ms_outputs.m_Triser = trans_outputs.t_profile.at(0, 0) - 273.15;
-		ms_outputs.m_Tdownc = trans_outputs.t_profile.at(trans_inputs.startpt.at(m_n_elem-1), 0) - 273.15;
+		ms_outputs.m_max_rec_tout = trans_outputs.max_rec_tout - 273.15;	//[C] Maximum salt T (receiver outlet) during the time step
+		ms_outputs.m_Twall_inlet = trans_outputs.tube_temp_inlet - 273.15;	//[C] Average receiver wall temperature at inlet
+		ms_outputs.m_Twall_outlet = trans_outputs.tube_temp_outlet - 273.15;  //[C] Average receiver wall temperature at receiver outlet
+		ms_outputs.m_Triser = trans_outputs.t_profile.at(0, 0) - 273.15;	//[C] Average riser wall temperature at inlet
+		ms_outputs.m_Tdownc = trans_outputs.t_profile.at(m_nz_tot-1, 0) - 273.15;  //[C] Average downcomer wall temperature at outlet
 
 	}
 
@@ -1630,6 +1634,7 @@ void C_mspt_receiver_222::off(const C_csp_weatherreader::S_outputs &weather,
 	ms_outputs.m_Triser = 0.0;
 	ms_outputs.m_Tdownc = 0.0;
 
+	m_startup_mode = -1;
 	
 	// Solve transient model for receiver wall temperatures
 	if (m_is_startup_from_solved_profile)
@@ -3002,6 +3007,15 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 			toutputs.t_profile_wall = toutputs.t_profile;
 			heat_trace_energy += m_heat_trace_power * tinputs.length.at(jlast) * (heat_trace_time - min_time_heattrace);		// Energy [J] used for heat tracing 
 		}
+
+		// Calculate average receiver inlet / outlet wall temperatures
+		toutputs.tube_temp_inlet = toutputs.tube_temp_outlet = 0.0;
+		for (int i = 0; i < m_n_lines; i++)			
+		{
+			toutputs.tube_temp_inlet += toutputs.t_profile_wall.at(tinputs.startpt.at(1), i) / double(m_n_lines);
+			toutputs.tube_temp_outlet += toutputs.t_profile_wall.at(tinputs.startpt.at(m_n_elem - 1) - 1, i) / double(m_n_lines);
+		}
+
 		energy = heat_trace_energy;
 		startup_time = heat_trace_time;
 	}
@@ -3048,6 +3062,15 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 		preheat_time = fmin(preheat_time, max_time);					// Time that preheating is applied during the current time step [s]
 		calc_axial_profile(preheat_time, tinputs, toutputs.t_profile);	// Calculate axial temperature profiles after preheating 
 		toutputs.t_profile_wall = toutputs.t_profile;
+
+		// Calculate average receiver inlet / outlet wall temperatures
+		toutputs.tube_temp_inlet = toutputs.tube_temp_outlet = 0.0;
+		for (int i = 0; i < m_n_lines; i++)
+		{
+			toutputs.tube_temp_inlet += toutputs.t_profile_wall.at(tinputs.startpt.at(1), i) / double(m_n_lines);
+			toutputs.tube_temp_outlet += toutputs.t_profile_wall.at(tinputs.startpt.at(m_n_elem - 1) - 1, i) / double(m_n_lines);
+		}
+
 		preheat_energy = (pinputs.qinc.at(1, 0)*m_n_panels) * preheat_time;	// Energy [J] used for startup during the time step
 		energy = preheat_energy;
 		startup_time = preheat_time;
@@ -3064,22 +3087,19 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 		// Estimate time required to reach SS downcomer outlet T
 		update_pde_parameters(weather, true, pinputs, tinputs);  // only need lam1 --> no temperature dependence
 		double time_ss_outlet = 0.0;
-		double time_ss_receiver = 0.0;
 		for (int i = 0; i < m_n_lines; i++)
 		{
 			double time_ss = 0.0;
-			for (int j = 0; j < m_n_elem - 1; j++)
-				time_ss = time_ss + tinputs.length.at(j) / tinputs.lam1.at(j, i);	// Time to reach steady state temperature at the receiver outlet [s] 
-			double time_ss_d = time_ss + tinputs.length.at(m_n_elem - 1) / tinputs.lam1.at(m_n_elem - 1, i);		// Time to reach steady state temperature at the downcomer outlet [s] --> Upper bound for end of circulation startup stage
-			time_ss_receiver = fmax(time_ss_receiver, time_ss);
-			time_ss_outlet = fmax(time_ss_outlet, time_ss_d);
+			for (int j = 0; j < m_n_elem; j++)
+				time_ss = time_ss + tinputs.length.at(j) / tinputs.lam1.at(j, i);	
+			time_ss_outlet = fmax(time_ss_outlet, time_ss);
 		}
 
 		// Find time at which outlet temperature reaches target value 
 		double temp_tol = 2.0;
-		double time_tol = 15.0;
+		double time_tol = 20.0;
+		double lowerbound = 0.0;
 		double upperbound = fmin(time_ss_outlet, max_time);	// Upper bound for circulation time = time for downcomer outlet to reach SS
-		double lowerbound = fmin(time_ss_receiver - (tinputs.length.at(0) / tinputs.lam1.at(0, 0)), max_time);	// Lower bound for circulation time 
 		if (min_time > 0.01)
 			lowerbound = fmin(min_time, max_time);		// Redefine lower bound if previously defined from "Hold" mode
 
@@ -3105,6 +3125,8 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 				else
 					upperbound = circulate_time;
 			}
+			if (circulate_time == max_time)
+				circulate_time -= 0.5;   // Target temperature achieved, report time < max_time to move to next stage
 		}
 
 		circulate_energy = toutputs.timeavg_qnet * circulate_time; // Energy [J] used for startup during the time step
