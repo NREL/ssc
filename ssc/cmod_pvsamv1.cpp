@@ -2240,6 +2240,16 @@ public:
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;
 						}
+						if (wf.tdry != wf.tdry){
+							log(util::format("missing temperature %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.tdry, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
+						if (wf.wspd != wf.wspd){
+							log(util::format("missing wind speed %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.wspd, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
 
 						// Check for bad data
 						if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == DN_GH || radmode == GH_DF))
