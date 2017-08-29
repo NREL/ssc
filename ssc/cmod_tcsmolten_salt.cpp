@@ -1233,7 +1233,7 @@ public:
 
         //Load the solar field adjustment factors
         sf_adjustment_factors sf_haf(this);
-		int n_steps_full = (int)weather_reader.get_n_records(); //steps_per_hour * 8760;
+		int n_steps_full = (int)weather_reader.m_weather_data_provider->nrecords(); //steps_per_hour * 8760;
 		if (!sf_haf.setup(n_steps_full))
 			throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
