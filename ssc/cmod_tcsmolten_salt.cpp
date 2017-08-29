@@ -1055,7 +1055,7 @@ public:
 
 				// Ambient temperature parametric
 				double T_amb_low = 0.0;				//[C]
-				double T_amb_high = std::max(sco2_rc_csp_par.m_T_amb_des - 273.15, 45.0);			//[C]
+				double T_amb_high = std::max(sco2_rc_csp_par.m_T_amb_des - 273.15 + 5.0, 45.0);			//[C]
 				int n_T_amb_in = 10;				//[-]
 
 				// HTF mass flow rate parametric
