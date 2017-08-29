@@ -1043,8 +1043,8 @@ public:
 				log("sCO2 design point calculations complete.", SSC_WARNING);
 				double T_rec_htf_cold = as_double("T_htf_cold_des");			//[C]
 				assign("T_htf_cold_des", T_htf_cold_calc - 273.15);				//[C]
-				log(util::format("The user input receiver design HTF cold temperature, %lg [C], was reset"
-					" to the calculated sCO2 cycle HTF cold return temperature, %lg [C]", T_rec_htf_cold, T_htf_cold_calc - 273.15), SSC_WARNING);
+				log(util::format("\nThe user input receiver design HTF cold temperature, %lg [C], was reset"
+					" to the calculated sCO2 cycle HTF cold return temperature, %lg [C]\n", T_rec_htf_cold, T_htf_cold_calc - 273.15), SSC_WARNING);
 				update("Preprocessing cycle off-design...", 0.0);
 
 				// Get user-defined power cycle parameters
@@ -1064,7 +1064,7 @@ public:
 				if (cycle_f_min < sco2_f_min)
 				{
 					log(util::format("The user input cutoff fraction, %lg, was reset to the minimum allowable cutoff fraction"
-						" for this sCO2 cycle off-design model, %lg", cycle_f_min, sco2_f_min), SSC_WARNING);
+						" for this sCO2 cycle off-design model, %lg\n", cycle_f_min, sco2_f_min), SSC_WARNING);
 					update("Preprocessing cycle off-design...", 0.0);
 					cycle_f_min = sco2_f_min;
 					assign("cycle_cutoff", cycle_f_min);

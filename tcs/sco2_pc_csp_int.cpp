@@ -461,7 +461,7 @@ int C_sco2_recomp_csp::off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par,
 	ms_phx_od_par.m_P_c_in = std::numeric_limits<double>::quiet_NaN();		//[kPa]
 	ms_phx_od_par.m_m_dot_c = std::numeric_limits<double>::quiet_NaN();		//[kg/s]
 
-	m_is_write_mc_out_file = true;
+	m_is_write_mc_out_file = false;
 	m_is_only_write_frecomp_opt_iters = true;
 
 	mstr_base_name = "C:/Users/tneises/Documents/Brayton-Rankine/APOLLO/Off_design_turbo_balance/fixed_N_recomp/";
