@@ -1060,11 +1060,18 @@ public:
 
 				// HTF mass flow rate parametric
 				double cycle_f_min = as_double("cycle_cutoff_frac");		//[-]
+				bool is_des_rc = p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_is_rc;	//[-]
 				double sco2_f_min = 0.5;
+				std::string cycle_type = "recompression";
+				if (!is_des_rc)
+				{
+					sco2_f_min = 0.7;
+					cycle_type = "simple";
+				}
 				if (cycle_f_min < sco2_f_min)
 				{
 					log(util::format("The user input cutoff fraction, %lg, was reset to the minimum allowable cutoff fraction"
-						" for this sCO2 cycle off-design model, %lg\n", cycle_f_min, sco2_f_min), SSC_WARNING);
+						" for this sCO2 %s cycle off-design model, %lg\n", cycle_f_min, cycle_type, sco2_f_min), SSC_WARNING);
 					update("Preprocessing cycle off-design...", 0.0);
 					cycle_f_min = sco2_f_min;
 					assign("cycle_cutoff", cycle_f_min);
