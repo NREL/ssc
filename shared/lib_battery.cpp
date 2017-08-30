@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -1155,10 +1155,13 @@ lifetime_calendar_t::lifetime_calendar_t(int calendar_choice, util::matrix_t<dou
 	_dt_day = dt_hour / util::hours_per_day;
 
 	// extract and sort calendar life info from table
-	for (size_t i = 0; i != calendar_matrix.nrows(); i++)
+	if (_calendar_choice == CALENDAR_LOSS_TABLE)
 	{
-		_calendar_days.push_back((int)calendar_matrix.at(i, 0));
-		_calendar_capacity.push_back(calendar_matrix.at(i, 1));
+		for (size_t i = 0; i != calendar_matrix.nrows(); i++)
+		{
+			_calendar_days.push_back((int)calendar_matrix.at(i, 0));
+			_calendar_capacity.push_back(calendar_matrix.at(i, 1));
+		}
 	}
 }
 lifetime_calendar_t * lifetime_calendar_t::clone(){ return new lifetime_calendar_t(*this); }
