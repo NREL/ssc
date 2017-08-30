@@ -222,7 +222,7 @@ public:
 	C_csp_messages mc_messages;
 
 	// Callback function with progress bar
-	bool(*mf_callback_update)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+	bool(*mf_callback_update)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 	void *mp_mf_update;
 	
 	C_sco2_rc_csp_template()

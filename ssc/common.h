@@ -165,7 +165,7 @@ public:
 	bool has_calculated_data(size_t id);
 };
 
-bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 
 #endif
 

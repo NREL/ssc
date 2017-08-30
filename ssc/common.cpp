@@ -977,14 +977,14 @@ bool weatherdata::has_calculated_data(size_t id){
 	else return false;
 }
 
-bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress)
+bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int log_type)
 {
 	compute_module *cm = static_cast<compute_module*> (data);
 	if (!cm)
 		return false;
 
 	if (log_msg != "")
-		cm->log(log_msg, SSC_WARNING);
+		cm->log(log_msg, log_type);
 	
 	return cm->update(progress_msg, (float)progress);
 }

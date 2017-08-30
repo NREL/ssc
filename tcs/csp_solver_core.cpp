@@ -244,7 +244,7 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 	C_csp_tes &tes,
 	C_csp_tou &tou,
 	S_csp_system_params &system,
-	bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress),
+	bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type),
 	void *p_cmod_active) :
 	mc_weather(weather), 
 	mc_collector_receiver(collector_receiver), 
@@ -291,17 +291,17 @@ void C_csp_solver::send_callback(double percent)
 {
 	if (mpf_callback && mp_cmod_active)
 	{
-		int out_type = -1;
+		int out_type = 1;
 		std::string out_msg = "";
 		std::string prg_msg = "Simulation Progress";
 
 		while (mc_csp_messages.get_message(&out_type, &out_msg))
 		{
-			mpf_callback(out_msg, prg_msg, mp_cmod_active, percent);
+			mpf_callback(out_msg, prg_msg, mp_cmod_active, percent, out_type);
 		}
 
 		out_msg = "";
-		bool cmod_ret = mpf_callback(out_msg, prg_msg, mp_cmod_active, percent);
+		bool cmod_ret = mpf_callback(out_msg, prg_msg, mp_cmod_active, percent, out_type);
 
 		if (!cmod_ret)
 		{
@@ -1660,7 +1660,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					error_msg = util::format("At time = %lg the controller chose %s operating mode, but the collector/receiver "
 						"and power cycle did not converge on a cold HTF temp at defocus = 1. Controller will shut-down CR and PC",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
 					{
@@ -1694,7 +1694,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the collector/receiver "
 							"and power cycle did not converge on a cold HTF temp at defocus guess = %lg. Controller will shut-down CR and PC",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
 						{
@@ -1738,7 +1738,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								"iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 						}
 						else
 						{
@@ -1746,7 +1746,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code "
 								"failed to find a solution to achieve a PC HTF mass flow rate less than maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 							if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
 							{
@@ -1807,7 +1807,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								"iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 						}
 						else
 						{
@@ -1815,7 +1815,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
 								" failed to achieve a PC thermal powre less than the maximum. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 							if (operating_mode == CR_DF__PC_SU__TES_OFF__AUX_OFF)
 							{
@@ -1909,7 +1909,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 									"iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
 									"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 									mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
-								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+								mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 							}
 							else
 							{
@@ -1999,7 +1999,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the collector/receiver and power cycle solution only reached a convergence"
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time/ 3600.0, exit_tolerance);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						// update 'exit_mode' for following logic branches
 						exit_mode = CSP_CONVERGED;
@@ -2156,7 +2156,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -2169,7 +2169,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -2183,7 +2183,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" less than the minimum PC thermal power %lg [MWt].",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_min);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -2196,7 +2196,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" less than the minimum PC HTF mass flow rate %lg [kg/s].",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_min / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					m_is_CR_ON__PC_SB__TES_OFF__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -2310,7 +2310,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							" mass flow rate input, %lg [kg/s], greater than the maximum allowable %lg [kg/s].",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_cr_out_solver.m_m_dot_salt_tot/3600.0, m_m_dot_pc_max/3600.0);
 					}
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 				}
 
 				are_models_converged = true;
@@ -2536,7 +2536,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the CR_ON__PC_OFF__TES_CH__AUX_OFF iteration to find the cold HTF temperature connecting the TES and receiver only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 					else
 					{
@@ -2632,7 +2632,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"to find the cold HTF temperature to balance energy between the CR, TES, and PC only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -2659,7 +2659,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg %s solved with a PC HTF mass flow rate %lg [kg/s]"
 							" smaller than the minimum %lg [kg/s]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), m_dot_pc_solved/3600.0, m_m_dot_pc_min/3600.0);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -2746,7 +2746,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"to find the cold HTF temperature to balance energy between the CR, TES, and PC only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -2771,7 +2771,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_DC__AUX_OFF solved with a PC thermal power %lg [MWt]"
 							" greater than the maximum %lg [MWt]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_pc_solved, q_pc_max);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -2782,7 +2782,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_DC__AUX_OFF solved with a PC thermal power %lg [MWt]"
 							" greater than the target %lg [MWt]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_pc_solved, q_dot_pc_fixed);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 				}
 				if (m_dot_pc_solved < m_m_dot_pc_min)
@@ -2790,7 +2790,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					error_msg = util::format("At time = %lg CR_ON__PC_TARGET__TES_DC__AUX_OFF solved with a PC HTF mass flow rate %lg [kg/s]"
 						" less than the minimum %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, m_dot_pc_solved / 3600.0, m_m_dot_pc_min / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -2861,7 +2861,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the power cycle and receiver only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 					else
 					{
@@ -2883,7 +2883,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -2895,7 +2895,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_target, q_pc_max);
 						
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 				}
 
@@ -2905,7 +2905,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -2961,7 +2961,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					error_msg = util::format("At time = %lg the controller chose CR_DF__PC_OFF__TES_FULL__AUX_OFF, but the collector/receiver "
 						"did not produce power with the design inlet temperature. Controller will shut-down CR and PC",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					are_models_converged = false;
 
@@ -3005,7 +3005,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								"iteration to find a defocus resulting in fully charged TES only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 						}
 						else
 						{
@@ -3013,7 +3013,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_OFF__TES_FULL__AUX_OFF operating mode, but the code"
 								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 							m_is_CR_DF__PC_OFF__TES_FULL__AUX_OFF_avail = false;
 
@@ -3057,7 +3057,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							error_msg = util::format("At time = %lg the CR_ON__PC_OFF__TES_FULL__AUX_OFF iteration to find the cold HTF temperature connecting the TES and receiver only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 						}
 						else
 						{
@@ -3146,7 +3146,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -3160,7 +3160,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -3279,7 +3279,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the iteration to find the hot HTF temperature connecting the power cycle startup and tes discharge only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 					else
 					{
@@ -3322,7 +3322,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 						}
 
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -3342,7 +3342,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_target, q_pc_max);
 						}
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 				}
 
@@ -3361,7 +3361,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf/3600.0, m_m_dot_pc_max/3600.0);
 					}
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -3449,7 +3449,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"to find the cold HTF temperature to balance energy between TES and PC target only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -3501,7 +3501,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -3514,7 +3514,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -3528,7 +3528,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" less than the minimum PC thermal power %lg [MWt].",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_min);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -3541,7 +3541,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" less than the minimum PC HTF mass flow rate %lg [kg/s].",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_min / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					m_is_CR_SU__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -3558,7 +3558,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				std::string msg = util::format("At time = %lg CR_ON__PC_SB__TES_DC__AUX_OFF "
 					"was called. This isn't a common operating mode and should be stepped through to confirm it's working.",
 					mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-				mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+				mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 
 				// The collector receiver is on and returning hot HTF to the PC
 				// TES is discharging hot HTF that is mixed with the CR HTF
@@ -3609,7 +3609,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"to find the cold HTF temperature to balance energy between the CR, TES, and PC only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -3634,7 +3634,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_DC__AUX_OFF solved with a PC thermal power %lg [MWt]"
 							" greater than the maximum %lg [MWt]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_pc_solved, q_pc_max);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -3645,7 +3645,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_DC__AUX_OFF solved with a PC thermal power %lg [MWt]"
 							" greater than the target %lg [MWt]",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, q_dot_pc_solved, q_dot_pc_fixed);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 				}
 				if (m_dot_pc_solved < m_m_dot_pc_min)
@@ -3653,7 +3653,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					error_msg = util::format("At time = %lg CR_ON__PC_SB__TES_DC__AUX_OFF solved with a PC HTF mass flow rate %lg [kg/s]"
 						" less than the minimum %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, m_dot_pc_solved / 3600.0, m_m_dot_pc_min / 3600.0);
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -3808,7 +3808,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -3837,7 +3837,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg %s converged to a PC thermal power %lg [MWt]"
 							" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), q_dot_solved, q_pc_max);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						turn_off_plant();
 						are_models_converged = false;
@@ -3849,7 +3849,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							" larger than the target PC thermal power %lg [MWt] but less than the maximum thermal power %lg [MWt]",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), q_dot_solved, q_dot_pc_fixed, q_pc_max);
 
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 				}
 				else if ((q_dot_solved - q_dot_pc_fixed) / q_dot_pc_fixed < -1.E-3)
@@ -3931,7 +3931,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -4016,7 +4016,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the CR_ON__PC_MIN__TES_EMPTY__AUX_OFF iteration to find the cold HTF temperature connecting the power cycle, receiver, & TES only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 					else
 					{
@@ -4047,7 +4047,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC thermal power %lg [MWt]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_max);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -4060,7 +4060,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" larger than the maximum PC mass flow rate %lg [kg/s]. Controller shut off plant",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_max / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					turn_off_plant();
 					are_models_converged = false;
@@ -4074,7 +4074,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" less than the minimum PC thermal power %lg [MWt]. Controller moved to next operating mode.",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_q_dot_htf, q_pc_min);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4087,7 +4087,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						" less than the minimum PC HTF mass flow rate %lg [kg/s]. Controller moved to next operating mode.",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, mc_pc_out_solver.m_m_dot_htf / 3600.0, m_m_dot_pc_min / 3600.0);
 
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					m_is_CR_ON__PC_MIN__TES_EMPTY__AUX_OFF_avail = false;
 					are_models_converged = false;
@@ -4143,7 +4143,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 					error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
 						" failed to solve at defocus = 1. Controller will shut-down CR and PC",
 						mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-					mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+					mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 					if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
 					{
@@ -4177,7 +4177,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
 							" failed to solve at defocus = %lg. Controller will shut-down CR and PC",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), xy2.x);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 						if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
 						{
@@ -4222,7 +4222,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								"iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str(), tol_solved);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 						}
 						else
 						{
@@ -4230,7 +4230,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							error_msg = util::format("At time = %lg the controller chose %s operating mode, but the code"
 								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, op_mode_str.c_str());
-							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 							if (operating_mode == CR_DF__PC_SU__TES_FULL__AUX_OFF)
 							{
@@ -4298,7 +4298,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								"iteration to find a defocus resulting in the maximum power cycle heat input only reached a convergence "
 								"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 						}
 						else
 						{
@@ -4306,7 +4306,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							error_msg = util::format("At time = %lg the controller chose CR_DF__PC_MAX__TES_FULL__AUX_OFF operating mode, but the code"
 								" failed to solve. Controller will shut-down CR and PC",
 								mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0);
-							mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+							mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 
 							m_is_CR_DF__PC_MAX__TES_FULL__AUX_OFF_avail = false;
 
@@ -4382,7 +4382,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 								error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the receiver, power cycle startup, and tes charge only reached a convergence "
 									"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 									mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-								mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+								mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 							}
 							else
 							{
@@ -4427,7 +4427,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 									"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 									"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 									mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-								mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+								mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 							}
 							else
 							{
@@ -4505,7 +4505,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 					}
 					else
 					{
@@ -4716,7 +4716,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 						error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the receiver, power cycle startup, and tes charge only reached a convergence "
 							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 							mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-						mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+						mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 					}
 					else
 					{
@@ -5107,7 +5107,7 @@ void C_csp_solver::solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 			error_msg = util::format("At time = %lg the iteration to find the hot HTF temperature connecting the power cycle startup and tes discharge only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+			mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 		}
 		else
 		{
@@ -5207,7 +5207,7 @@ int C_csp_solver::solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_i
 				" failed to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -5262,7 +5262,7 @@ void C_csp_solver::solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 				"to find the cold HTF temperature to balance energy between TES and PC target only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -5315,7 +5315,7 @@ void C_csp_solver::solver_cr_to_pc_to_cr(int pc_mode, double field_control_in, d
 			error_msg = util::format("At time = %lg the iteration to find the cold HTF temperature connecting the power cycle and receiver only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mc_csp_messages.add_message(C_csp_messages::WARNING, error_msg);
+			mc_csp_messages.add_message(C_csp_messages::NOTICE, error_msg);
 		}
 		else
 		{

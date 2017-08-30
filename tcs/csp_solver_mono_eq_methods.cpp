@@ -85,7 +85,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_q_dot_max__tes_off__defocus::operator()(double
 			mpc_csp_solver->error_msg = util::format("At time = %lg the C_MEQ_cr_on__pc_max__tes_off__defocus->C_mono_eq_cr_to_pc_to_cr iteration to find the cold HTF temperature connecting the power cycle and receiver only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 		}
 		else
 		{
@@ -374,7 +374,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_dc__T_cold::operator()(double T_htf_co
 				"iteration to find a mass flow rate resulting in the target power cycle heat input only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -625,7 +625,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_ch__T_cold::operator()(double T_
 				mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the power cycle HTF mass flow rate resulting in the target thermal power only reached a convergence "
 					"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 					mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-				mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+				mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 			}
 			else
 			{
@@ -941,7 +941,7 @@ int C_csp_solver::C_mono_eq_pc_target_tes_empty__T_cold::operator()(double T_htf
 			mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the time step resulting in emptying TES at the target thermal power only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 		}
 		else
 		{
@@ -1087,7 +1087,7 @@ int C_csp_solver::C_mono_eq_cr_on_pc_target_tes_dc::operator()(double T_htf_cold
 					mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the TES discharge mass flow rate resulting in the target thermal power only reached a convergence "
 						"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 						mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-					mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+					mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 				}
 				else
 				{
@@ -1343,7 +1343,7 @@ int C_csp_solver::C_mono_eq_cr_on__pc_m_dot_max__tes_full_defocus::operator()(do
 				"iteration to find the cold HTF temperature to balance energy between the TES and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -1475,7 +1475,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_m_dot_max__tes_off__defocus::operator()(double
 				"iteration to find the cold HTF temperature to balance energy between the CR and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{
@@ -1728,7 +1728,7 @@ int C_csp_solver::C_MEQ_cr_on__pc_target__tes_empty__T_htf_cold::operator()(doub
 			mpc_csp_solver->error_msg = util::format("At time = %lg the iteration to find the time step resulting in emptying TES at the target thermal power only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, mpc_csp_solver->error_msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, mpc_csp_solver->error_msg);
 		}
 		else
 		{
@@ -1914,7 +1914,7 @@ int C_csp_solver::C_MEQ_cr_df__pc_off__tes_full__defocus::operator()(double defo
 				"iteration to find the cold HTF temperature to balance energy between the CR and PC only reached a convergence "
 				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
 				mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_time / 3600.0, tol_solved);
-			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::WARNING, msg);
+			mpc_csp_solver->mc_csp_messages.add_message(C_csp_messages::NOTICE, msg);
 		}
 		else
 		{

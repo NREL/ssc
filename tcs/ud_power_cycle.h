@@ -209,7 +209,7 @@ public:
 		util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ind);
 
 	// Callback funtion
-	bool(*mf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+	bool(*mf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 	void *mp_mf_active;
 
 };

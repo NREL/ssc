@@ -399,7 +399,7 @@ void C_ud_pc_table_generator::send_callback(int run_number, int n_runs_total,
 			T_htf_hot, m_dot_htf_ND, T_amb,
 			W_dot_gross_ND, Q_dot_in_ND,
 			W_dot_cooling_ND, m_dot_water_ND);
-		if (!mf_callback(m_log_msg, m_progress_msg, mp_mf_active, 100.0*run_number / n_runs_total))
+		if (!mf_callback(m_log_msg, m_progress_msg, mp_mf_active, 100.0*run_number / n_runs_total, 2))
 		{
 			std::string error_msg = "User terminated simulation...";
 			std::string loc_msg = "C_ud_pc_table_generator";

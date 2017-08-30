@@ -1035,7 +1035,7 @@ private:
 	
 	std::vector<double> mv_time_local;
 
-	bool(*mpf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+	bool(*mpf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int log_type);
 	void *mp_cmod_active;
 
 	void send_callback(double percent);
@@ -1114,7 +1114,7 @@ public:
 		C_csp_tes &tes,
 		C_csp_tou &tou,
 		S_csp_system_params &system,
-		bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress) = 0,
+		bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type) = 0,
 		void *p_cmod_active = 0);
 
 	~C_csp_solver(){};

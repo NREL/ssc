@@ -855,7 +855,7 @@ public:
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		// Callback function only log
-		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 		void *mp_mf_active;
 
 		S_auto_opt_design_hit_eta_parameters()
@@ -911,7 +911,7 @@ public:
 		bool m_fixed_PR_mc;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
 		// Callback function only log
-		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+		bool(*mf_callback_log)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 		void *mp_mf_active;
 
 		S_auto_opt_design_parameters()
