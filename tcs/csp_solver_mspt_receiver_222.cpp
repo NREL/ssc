@@ -3053,7 +3053,7 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 		else
 		{
 			double preheat_ss_temp = tinputs.cval.at(1, 0) / tinputs.lam2.at(1, 0);		// Steady state temperature during preheating
-			if (preheat_ss_temp > target_temperature)										// Steady state temperature exceeds preheat target
+			if (preheat_ss_temp > target_temperature)										
 				preheat_time = 1.0 / tinputs.lam2.at(1, 0) * log((Tmin_rec - tinputs.cval.at(1, 0) / tinputs.lam2.at(1, 0)) / (target_temperature - tinputs.cval.at(1, 0) / tinputs.lam2.at(1, 0)));
 			else				// Steady state temperature is below preheat target
 				preheat_time = max_time;
@@ -3071,7 +3071,7 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 			toutputs.tube_temp_outlet += toutputs.t_profile_wall.at(tinputs.startpt.at(m_n_elem - 1) - 1, i) / double(m_n_lines);
 		}
 
-		preheat_energy = (pinputs.qinc.at(1, 0)*m_n_panels) * preheat_time;	// Energy [J] used for startup during the time step
+		preheat_energy = (pinputs.qinc.at(1, 0)*m_n_t*m_n_panels) * preheat_time;	// Energy [J] used for startup during the time step
 		energy = preheat_energy;
 		startup_time = preheat_time;
 	}
@@ -3109,7 +3109,7 @@ void C_mspt_receiver_222::solve_transient_startup_model(const C_csp_weatherreade
 
 		if (toutputs.tout < target_temperature)	// Target outlet temperature not achieved within the current time step
 			circulate_time = max_time;
-		else	// Target outlet temperature can be achieved within the current time step
+		else	
 		{
 			if (toutputs.min_tout < target_temperature)		// Outlet temperature drops below the target during the time step --> set lower bound to time when minimum outlet T occurs
 				lowerbound = fmax(lowerbound, toutputs.time_min_tout);
