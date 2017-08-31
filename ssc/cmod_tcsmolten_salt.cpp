@@ -250,7 +250,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "fan_power_perc_net",   "% of net cycle output used for fan power at design",			      "%",	          "",            "sco2_pc",     "pc_config=2",                "",                      "" },	
 	{ SSC_INPUT,        SSC_NUMBER,      "sco2_T_amb_des",       "Ambient temperature at design point",                                      "C",     "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sco2_T_approach",      "Temperature difference between main compressor CO2 inlet and ambient air", "C",     "",            "sco2_pc",     "pc_config=2",                "",                      "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "is_preprocess_udpc",   "1 = Preprocess model and interpolate results, 0 = No preprocess",   "-",            "",            "sco2_pc",     "pc_config=2",                "",                      "" },
 				     																	  
 	// System Control	
     { SSC_INPUT,        SSC_NUMBER,      "time_start",           "Simulation start time",                                             "s",            "",            "sys_ctrl",          "?=0",                     "",                      "" },
@@ -988,7 +987,7 @@ public:
 
 			sco2_pc.ms_params.ms_mc_sco2_recomp_params = sco2_rc_csp_par;
 
-			bool is_preprocess_udpc = as_integer("is_preprocess_udpc") == 1;
+			bool is_preprocess_udpc = true;		// "is_preprocess_udpc"
 
 			if (is_preprocess_udpc)
 			{
