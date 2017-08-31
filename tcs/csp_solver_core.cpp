@@ -926,9 +926,25 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
                 is_pc_sb_allowed = dispatch.outputs.pb_standby.at( dispatch.m_current_read_step );
                 is_pc_su_allowed = dispatch.outputs.pb_operation.at( dispatch.m_current_read_step ) || is_pc_sb_allowed;
 
-                q_pc_target = (dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) 
-                    + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
-                    / 1000. ;
+                //q_pc_target = (dispatch.outputs.q_pb_target.at( dispatch.m_current_read_step ) 
+                 //  + dispatch.outputs.q_pb_startup.at( dispatch.m_current_read_step ) )
+                  // / 1000. ;
+				
+				double fstart = 0.0;  // Fraction of time step used for power block startup
+				int t = dispatch.m_current_read_step;
+				if (dispatch.outputs.q_pb_startup.at(t) > 0.0 && dispatch.outputs.q_pb_target.at(t) > 0.0)  // Power block is both starting up and operating
+				{
+					double avail_storage;
+					if (t>0)
+						avail_storage = dispatch.outputs.tes_charge_expected.at(t - 1) / dispatch.params.dt;
+					else
+						avail_storage = dispatch.params.e_tes_init / dispatch.params.dt;
+
+					fstart = dispatch.outputs.q_pb_startup.at(t) / min(dispatch.params.q_pb_max, avail_storage + dispatch.outputs.q_sf_expected.at(t));
+					//fstart = dispatch.outputs.q_pb_startup.at(t) / dispatch.params.q_pb_max;
+					fstart = min(fstart, 0.999);
+				}
+				q_pc_target = (dispatch.outputs.q_pb_target.at(t)) / (1. - fstart) / 1000.;
 
                 //quality checks
 				/*
@@ -947,17 +963,19 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 				}
                 
 				// Calculate approximate upper limit for power cycle thermal input at current electricity generation limit
-				double eta_diff = 1.;
-				double eta_calc = dispatch.params.eta_cycle_ref;
-				int i = 0;
 				if (dispatch.w_lim.at(dispatch.m_current_read_step) < 1.e-6)
 					q_pc_max = 0.0;
 				else
 				{
+					double wcond;
+					double eta_corr = mc_power_cycle.get_efficiency_at_TPH(mc_weather.ms_outputs.m_tdry, 1., 30., &wcond) / m_cycle_eta_des;
+					double eta_calc = dispatch.params.eta_cycle_ref * eta_corr;
+					double eta_diff = 1.;
+					int i = 0;
 					while (eta_diff > 0.001 && i<20)
 					{
 						double q_pc_est = dispatch.w_lim.at(dispatch.m_current_read_step)*1.e-3 / eta_calc;			// Estimated power cycle thermal input at w_lim
-						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des);		// Calculated power cycle efficiency
+						double eta_new = mc_power_cycle.get_efficiency_at_load(q_pc_est / m_cycle_q_dot_des) * eta_corr;		// Calculated power cycle efficiency
 						eta_diff = fabs(eta_calc - eta_new);
 						eta_calc = eta_new;
 						i++;
