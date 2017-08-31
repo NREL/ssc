@@ -359,6 +359,7 @@ public:
 	int m_fthrctrl;			//[-] Defocusing strategy
 	double m_ColTilt;		//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 	double m_ColAz;			//[deg] Collector azimuth angle
+	double m_wind_stow_speed;//[m/s] Wind speed at and above which the collectors will be stowed
 
 	int m_accept_mode;		//[-] Acceptance testing mode? (1=yes, 0=no)
 	bool m_accept_init;		//[-] In acceptance testing mode - require steady-state startup
@@ -521,6 +522,8 @@ public:
 		const C_csp_solver_sim_info &sim_info);
 
 	void loop_optical_eta_off();
+
+	void loop_optical_wind_stow();
 
 	void update_last_temps();
 
