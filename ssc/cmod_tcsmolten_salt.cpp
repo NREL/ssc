@@ -1155,7 +1155,7 @@ public:
 				pc->m_is_user_defined_pc = true;
 
 				pc->m_T_amb_des = p_sco2_recomp_csp->get_design_par()->m_T_amb_des - 273.15;	//[C]
-				pc->m_W_dot_cooling_des = 0.0;		//[MWe]
+				pc->m_W_dot_cooling_des = as_double("fan_power_perc_net") / 100.0*as_double("P_ref");	//[MWe]
 				pc->m_m_dot_water_des = 0.0;		//[kg/s]
 
 				// Also need lower and upper levels for the 3 independent variables...
