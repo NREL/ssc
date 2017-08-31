@@ -160,16 +160,16 @@ int capacity_t::charge_operation(){ return _charge; }
 bool capacity_t::check_SOC(double q0_old)
 {
 	bool SOC_violated = true;
-	double q_upper = _qmax * _SOC_max * 0.01;
-	double q_lower = _qmax * _SOC_min * 0.01;
+	double q_upper = _qmax_thermal * _SOC_max * 0.01;
+	double q_lower = _qmax_thermal * _SOC_min * 0.01;
 
-	// check if overcharged
+	// check if overcharged, 
 	if (_q0 > q_upper)
 	{
 		_I += (_q0 - q_upper) / _dt_hour;
 		_q0 = q_upper;
 	}
-	// check if undercharged 
+	// check if undercharged, but 
 	else if (_q0 < q_lower)
 	{
 		_I += (_q0 - q_lower) / _dt_hour;
@@ -178,6 +178,7 @@ bool capacity_t::check_SOC(double q0_old)
 	else
 		SOC_violated = false;
 
+	// don't modify capacity if it's just a thermal effect in idle operation
 	if (fabs(_I) < low_tolerance)
 	{
 		_I = 0;
@@ -190,7 +191,7 @@ bool capacity_t::check_SOC(double q0_old)
 void capacity_t::update_SOC()
 { 
 	if (_qmax > 0)
-		_SOC = 100.*(_q0 / _qmax);
+		_SOC = 100.*(_q0 / _qmax_thermal);
 	else
 		_SOC = 0.;
 
@@ -370,13 +371,13 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 	q1 = q1_compute(_q1_0, _q0, dt_hour, _I);
 	q2 = q2_compute(_q2_0, _q0, dt_hour, _I);
 
-	// potentially a bug that needs to be fixed, for now hack
-	if (q1 + q2 > _qmax)
+	// Check for thermal effects
+	if (q1 + q2 > _qmax_thermal)
 	{
 		double q0 = q1 + q2;
 		double p1 = q1 / q0;
 		double p2 = q2 / q0;
-		_q0 = _qmax;
+		_q0 = _qmax_thermal;
 		q1 = _q0*p1;
 		q2 = _q0*p2;
 	}
@@ -391,18 +392,8 @@ void capacity_kibam_t::updateCapacity(double I, double dt_hour)
 }
 void capacity_kibam_t::updateCapacityForThermal(double capacity_percent)
 {
-	double qmax_tmp = _qmax*capacity_percent*0.01;
-	if (_q0 > qmax_tmp)
-	{
-		double q0_orig = _q0;
-		double p = qmax_tmp / _q0;
-		_q0 *= p;
-		_q1 *= p;
-		_q2 *= p;
-		_I_loss += (q0_orig - _q0) / _dt_hour;
-		_I += (_q0 - qmax_tmp) / _dt_hour;
-	}
-	update_SOC();
+	// Modify the lifetime degraded capacity by the thermal effect
+	_qmax_thermal = _qmax*capacity_percent*0.01;
 }
 void capacity_kibam_t::updateCapacityForLifetime(double capacity_percent)
 {
@@ -461,23 +452,8 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 }
 void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent)
 {
-	double qmax_tmp = _qmax*capacity_percent*0.01;
-	if (_q0 > qmax_tmp)
-	{
-		/*
-		investigate more, do we actually need to adjust current? 
-		Specifically in the case where battery is discharging, does it make sense to increase I to reduce q0?
-
-		if (fabs(_I) > 0)
-		{
-			_I_loss += (_q0 - qmax_tmp) / _dt_hour;
-			_I += (_q0 - qmax_tmp) / _dt_hour;
-		}
-		*/
-		_q0 = qmax_tmp;
-	}
-	update_SOC();
-
+	// Modify the lifetime degraded capacity by the thermal effect
+	_qmax_thermal = _qmax*capacity_percent*0.01;
 }
 void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent)
 {
@@ -1401,7 +1377,6 @@ void losses_t::replace_battery(){ _nCycle = 0; }
 void losses_t::run_losses(double dt_hour, size_t idx)
 {	
 	_capacity->updateCapacityForLifetime(_lifetime->capacity_percent());
-	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 
 	size_t stepsPerHour = (size_t)(1 / dt_hour);
 	size_t stepsPerYear = util::hours_per_year * stepsPerHour;
@@ -1494,6 +1469,8 @@ void battery_t::runThermalModel(double I)
 
 void battery_t::runCapacityModel(double I)
 {
+	// Need to first update capacity model to ensure temperature accounted for
+	_capacity->updateCapacityForThermal(_thermal->capacity_percent());
 	_capacity->updateCapacity(I, _dt_hour );
 }
 

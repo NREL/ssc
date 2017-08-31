@@ -132,6 +132,7 @@ public:
 protected:
 	double _q0;  // [Ah] - Total capacity at timestep 
 	double _qmax; // [Ah] - maximum possible capacity
+	double _qmax_thermal; // [Ah] - maximum capacity adjusted for temperature affects
 	double _qmax0; // [Ah] - original maximum capacity
 	double _I;   // [A]  - Current draw during last step
 	double _I_loss; // [A] - Lifetime and thermal losses

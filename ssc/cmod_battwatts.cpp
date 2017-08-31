@@ -227,8 +227,8 @@ public:
 		
 		// control constraints
 		batt_vars->batt_pv_choice = dispatch_t::MEET_LOAD;
-		batt_vars->batt_maximum_SOC = 100.;
-		batt_vars->batt_minimum_SOC = 20.;
+		batt_vars->batt_maximum_SOC = 95.;
+		batt_vars->batt_minimum_SOC = 15.;
 		batt_vars->batt_current_choice = dispatch_t::RESTRICT_CURRENT;
 		batt_vars->batt_current_charge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
 		batt_vars->batt_current_discharge_max = 1000 * batt_C_rate_discharge * batt_kwh / batt_bank_voltage;
