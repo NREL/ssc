@@ -239,6 +239,7 @@ struct battstor
 		*outBoundCharge,
 		*outMaxChargeAtCurrent,
 		*outMaxCharge,
+		*outMaxChargeThermal,
 		*outSOC,
 		*outDOD,
 		*outCurrent,

@@ -113,7 +113,7 @@ public:
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 	void check_charge_change(); 
-	bool check_SOC(double q0_old);
+	void check_SOC(double q0_old);
 	void update_SOC();
 
 	// common outputs
@@ -122,6 +122,7 @@ public:
 	double prev_DOD();
 	double q0();
 	double qmax(); 
+	double qmax_thermal();
 	double I();
 	bool chargeChanged();
 	double I_loss();

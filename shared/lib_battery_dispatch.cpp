@@ -331,6 +331,10 @@ void dispatch_t::compute_to_load()
 void dispatch_t::compute_to_grid()
 {
 	_P_pv_to_grid = _P_pv - _P_pv_to_load - _P_pv_to_batt;
+
+	// shouldn't have battery to grid, but calculate to check
+	if (_P_grid > 0 && _P_tofrom_batt > 0)
+		_P_battery_to_grid = _P_grid - _P_pv_to_grid;
 }
 void dispatch_t::compute_generation()
 {
@@ -530,9 +534,11 @@ void dispatch_manual_t::dispatch(size_t year,
 bool dispatch_manual_t::check_constraints(double &I, int count)
 {
 	bool iterate = true;
-
 	double I_initial = I;
 
+	bool front_of_meter = false;
+	if (dispatch_manual_front_of_meter_t * dispatch = dynamic_cast<dispatch_manual_front_of_meter_t*>(this))
+		front_of_meter = true;
 
 	// decrease the current draw if took too much
 	if (_Battery->battery_soc() < _SOC_min - tolerance)
@@ -562,14 +568,26 @@ bool dispatch_manual_t::check_constraints(double &I, int count)
 		else
 			I -= (_P_pv_to_grid / fabs(_P_tofrom_batt)) *fabs(I);
 	}
+	// Don't let battery export to the grid if behind the meter
+	else if (!front_of_meter && _P_battery_to_grid > tolerance)
+	{
+		if (fabs(_P_tofrom_batt) < tolerance)
+			I -= (_P_battery_to_grid * util::kilowatt_to_watt / _Battery->battery_voltage());
+		else
+			I -= (_P_battery_to_grid / fabs(_P_tofrom_batt)) * fabs(I);
+	}
 	else
 		iterate = false;
 
 	// don't allow any changes to violate current limits
-	iterate = restrict_current(I);
+	bool current_iterate = restrict_current(I);
 
 	// don't allow any changes to violate power limites
-	iterate = restrict_power(I);
+	bool power_iterate = restrict_power(I);
+
+	// iterate if any of the conditions are met
+	if (iterate || current_iterate || power_iterate)
+		iterate = true;
 
 	// stop iterating after 5 tries
 	if (count > 5)

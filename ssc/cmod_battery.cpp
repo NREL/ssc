@@ -161,7 +161,8 @@ var_info vtab_battery_outputs[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_SOC",                                   "Battery state of charge",                                "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_DOD",                                   "Battery cycle depth of discharge",                       "%",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmaxI",                                 "Battery maximum capacity at current",                    "Ah",       "",                     "Battery",       "",                           "",                              "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmax",                                  "Battery maximum charge",                                 "Ah",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmax",                                  "Battery maximum charge with degradation",                "Ah",       "",                     "Battery",       "",                           "",                              "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_qmax_thermal",                          "Battery maximum charge at temperature",                  "Ah",       "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_I",                                     "Battery current",                                        "A",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage_cell",                          "Battery cell voltage",                                   "V",        "",                     "Battery",       "",                           "",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "batt_voltage",                               "Battery voltage",	                                     "V",        "",                     "Battery",       "",                           "",                              "" },
@@ -354,6 +355,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 	outAvailableCharge = 0;
 	outBoundCharge = 0;
 	outMaxChargeAtCurrent = 0;
+	outMaxChargeThermal = 0;
 	outMaxCharge = 0;
 	outSOC = 0;
 	outDOD = 0;
@@ -531,6 +533,7 @@ battstor::battstor(compute_module &cm, bool setup_model, int replacement_option,
 			outBoundCharge = cm.allocate("batt_q2", nrec*nyears);
 		}
 		outMaxCharge = cm.allocate("batt_qmax", nrec*nyears);
+		outMaxChargeThermal = cm.allocate("batt_qmax_thermal", nrec*nyears);
 		outCurrent = cm.allocate("batt_I", nrec*nyears);
 		outBatteryVoltage = cm.allocate("batt_voltage", nrec*nyears);
 		outBatteryTemperature = cm.allocate("batt_temperature", nrec*nyears);
@@ -877,6 +880,7 @@ void battstor::outputs_fixed(compute_module &cm, size_t year, size_t hour_of_yea
 			outBoundCharge[idx] = (ssc_number_t)(kibam->q2());
 		}
 		outMaxCharge[idx] = (ssc_number_t)(capacity_model->qmax());
+		outMaxChargeThermal[idx] = (ssc_number_t)(capacity_model->qmax_thermal());
 		outTotalCharge[idx] = (ssc_number_t)(capacity_model->q0());
 		outCurrent[idx] = (ssc_number_t)(capacity_model->I());
 		outBatteryVoltage[idx] = (ssc_number_t)(voltage_model->battery_voltage());

@@ -157,35 +157,48 @@ void capacity_t::check_charge_change()
 	}
 }
 int capacity_t::charge_operation(){ return _charge; }
-bool capacity_t::check_SOC(double q0_old)
+void capacity_t::check_SOC(double q0_old)
 {
-	bool SOC_violated = true;
-	double q_upper = _qmax_thermal * _SOC_max * 0.01;
-	double q_lower = _qmax_thermal * _SOC_min * 0.01;
+	double q_upper = _qmax * _SOC_max * 0.01;
+	double q_lower = _qmax * _SOC_min * 0.01;
+	double I_orig = _I;
 
-	// check if overcharged, 
-	if (_q0 > q_upper)
+	// set capacity to upper thermal limit
+	if (q_upper > _qmax_thermal)
+		q_upper = _qmax_thermal;
+		
+	// check if overcharged
+	if (_q0 > q_upper )
 	{
-		_I += (_q0 - q_upper) / _dt_hour;
+		if (fabs(_I) > tolerance)
+		{
+			_I += (_q0 - q_upper) / _dt_hour;
+			if (_I / I_orig < 0)
+				_I = 0;
+		}
 		_q0 = q_upper;
 	}
-	// check if undercharged, but 
+	// check if undercharged
 	else if (_q0 < q_lower)
 	{
-		_I += (_q0 - q_lower) / _dt_hour;
+		if (fabs(_I) > tolerance)
+		{
+			_I += (_q0 - q_lower) / _dt_hour;
+			if (_I / I_orig < 0)
+				_I = 0;
+		}
 		_q0 = q_lower;
 	}
-	else
-		SOC_violated = false;
 
-	// don't modify capacity if it's just a thermal effect in idle operation
+
+	/*
+	// don't modify capacity if it's just a thermal effect in idle operation 
 	if (fabs(_I) < low_tolerance)
 	{
 		_I = 0;
 		_q0 = q0_old;
 	}
-
-	return SOC_violated;
+	*/
 }
 
 void capacity_t::update_SOC()
@@ -209,6 +222,7 @@ double capacity_t::DOD(){ return _DOD; }
 double capacity_t::prev_DOD(){ return _DOD_prev; }
 double capacity_t::q0(){ return _q0;}
 double capacity_t::qmax(){ return _qmax; }
+double capacity_t::qmax_thermal(){ return _qmax_thermal; }
 double capacity_t::I(){ return _I; }
 double capacity_t::I_loss() { return _I_loss; }
 
