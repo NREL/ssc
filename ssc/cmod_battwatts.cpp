@@ -136,6 +136,7 @@ public:
 			batt_vars->batt_Vexp = 4.05;
 			batt_vars->batt_Vnom = 3.4;
 			batt_vars->batt_Qfull = 2.25;
+			batt_vars->batt_Qfull_flow = 0;
 			batt_vars->batt_Qexp = 1.78;
 			batt_vars->batt_Qnom = 88.9;
 			batt_vars->batt_C_rate = 0.2;
