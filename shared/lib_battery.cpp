@@ -157,7 +157,7 @@ void capacity_t::check_charge_change()
 	}
 }
 int capacity_t::charge_operation(){ return _charge; }
-void capacity_t::check_SOC(double q0_old)
+void capacity_t::check_SOC()
 {
 	double q_upper = _qmax * _SOC_max * 0.01;
 	double q_lower = _qmax * _SOC_min * 0.01;
@@ -189,16 +189,6 @@ void capacity_t::check_SOC(double q0_old)
 		}
 		_q0 = q_lower;
 	}
-
-
-	/*
-	// don't modify capacity if it's just a thermal effect in idle operation 
-	if (fabs(_I) < low_tolerance)
-	{
-		_I = 0;
-		_q0 = q0_old;
-	}
-	*/
 }
 
 void capacity_t::update_SOC()
@@ -458,7 +448,7 @@ void capacity_lithium_ion_t::updateCapacity(double I, double dt)
 	_q0 -= _I*dt;
 
 	// check if SOC constraints violated, update q0, I if so
-	check_SOC(q0_old);
+	check_SOC();
 
 	// update SOC, DOD
 	update_SOC();

@@ -113,7 +113,7 @@ public:
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 	void check_charge_change(); 
-	void check_SOC(double q0_old);
+	void check_SOC();
 	void update_SOC();
 
 	// common outputs
@@ -231,7 +231,6 @@ public:
 
 protected:
 };
-
 
 /*
 Voltage Base class.  

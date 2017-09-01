@@ -119,6 +119,7 @@ struct batt_variables
 	double batt_Vexp;
 	double batt_Vnom;
 	double batt_Qfull;
+	double batt_Qfull_flow;
 	double batt_Qexp;
 	double batt_Qnom;
 	double batt_C_rate;
