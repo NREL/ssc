@@ -1070,7 +1070,7 @@ public:
 				if (cycle_f_min < sco2_f_min)
 				{
 					log(util::format("The user input cutoff fraction, %lg, was reset to the minimum allowable cutoff fraction"
-						" for this sCO2 %s cycle off-design model, %lg\n", cycle_f_min, cycle_type, sco2_f_min), SSC_WARNING);
+						" for this sCO2 %s cycle off-design model, %lg\n", cycle_f_min, cycle_type.c_str(), sco2_f_min), SSC_WARNING);
 					update("Preprocessing cycle off-design...", 0.0);
 					cycle_f_min = sco2_f_min;
 					assign("cycle_cutoff", cycle_f_min);
