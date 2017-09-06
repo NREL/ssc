@@ -248,7 +248,7 @@ void C_sco2_recomp_csp::design_core()
 	
 	
 	// 4.12.2017 twn: comment this out for now
-	//mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
+	mc_air_cooler.design_hx(ms_air_cooler_des_par_ind, ms_air_cooler_des_par_dep);
 
 
 
