@@ -1323,11 +1323,13 @@ C_CO2_to_air_cooler::C_CO2_to_air_cooler()
 	m_th = m_eta_fan = m_roughness =
 		m_A_cs = m_relRough = 
 		m_L_path = m_A_surf_total = m_V_footprint =
-		m_V_material_tubes = m_V_material_fins = m_P_amb_des =
+		m_V_material_tubes = m_V_material_fins =
 		m_m_dot_air_des = m_Q_dot_des = m_P_hot_out_des =
 		m_fin_pitch = m_D_h = m_fin_thk = m_sigma = m_alpha = m_A_fin_to_surf = m_s_h = m_s_v = m_fin_V_per_m = numeric_limits<double>::quiet_NaN();
 
 	m_N_nodes = m_enum_compact_hx_config = -1;
+
+	m_T_co2_hot_max = 700.0 + 273.15;	//[K]
 
 	mc_air.SetFluid(mc_air.Air);
 }
@@ -1339,7 +1341,7 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	ms_des_par_cycle_dep = des_par_cycle_dep;
 
 	// Calculate ambient pressure
-	m_P_amb_des = 101325.0*pow(1 - 2.25577E-5*ms_des_par_ind.m_elev, 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+	ms_hx_des_sol.m_P_amb_des = 101325.0*pow(1 - 2.25577E-5*ms_des_par_ind.m_elev, 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 	
 	//m_enum_compact_hx_config = fc_tubes_s80_38T;
 	m_enum_compact_hx_config = N_compact_hx::fc_tubes_sCF_88_10Jb;
@@ -1368,16 +1370,16 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	// Set up 'matrix_t's for temperature and pressure
 	// Using index 1 for m_N_nodes, so 0 index remains undefined
 	// Also, each node requires inlet&outlet temp, so in total, m_N_nodes + 2 required
-	mm_T_co2.resize_fill(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1, std::numeric_limits<double>::quiet_NaN());
-	mm_P_co2.resize_fill(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1, std::numeric_limits<double>::quiet_NaN());
-	mm_T_air.resize_fill(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1, std::numeric_limits<double>::quiet_NaN());
+	//mm_T_co2.resize_fill(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1, std::numeric_limits<double>::quiet_NaN());
+	//mm_P_co2.resize_fill(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1, std::numeric_limits<double>::quiet_NaN());
+	//mm_T_air.resize_fill(m_N_nodes + 2, ms_hx_des_sol.m_N_passes + 1, std::numeric_limits<double>::quiet_NaN());
 
 	// index that gives outlet temperatur and pressure: depends on whether odd or even loops
 	m_final_outlet_index = ((ms_hx_des_sol.m_N_passes + 2) % 2)*m_N_nodes + 1;
 
 	// Assume air props don't change significantly in air cooler
 	double mu_air = mc_air.visc(ms_des_par_ind.m_T_amb_des);		//[kg/m-s] dynamic viscosity
-	double v_air = 1.0 / mc_air.dens(ms_des_par_ind.m_T_amb_des, m_P_amb_des);	//[1/m3] specific volume
+	double v_air = 1.0 / mc_air.dens(ms_des_par_ind.m_T_amb_des, ms_hx_des_sol.m_P_amb_des);	//[1/m3] specific volume
 	double cp_air = mc_air.Cp(ms_des_par_ind.m_T_amb_des)*1000.0;	//[J/kg-K] specific heat convert from kJ/kg-K
 	double k_air = mc_air.cond(ms_des_par_ind.m_T_amb_des);			//[W/m-K] conductivity
 	double Pr_air = (cp_air*mu_air / k_air);						//[-] Prandtl number
@@ -1493,24 +1495,24 @@ bool C_CO2_to_air_cooler::design_hx(S_des_par_ind des_par_ind, S_des_par_cycle_d
 	return true;
 };
 
-int C_CO2_to_air_cooler::C_MEQ_target_W_dot_fan__m_dot_air::operator()(double m_dot_air /*kg/s*/, double *W_dot_fan /*MWe*/)
+int C_MEQ_target_W_dot_fan__m_dot_air::operator()(double m_dot_air /*kg/s*/, double *W_dot_fan /*MWe*/)
 {
 	m_h_conv_air = std::numeric_limits<double>::quiet_NaN();
 
-	double G_air = m_dot_air / (mpc_ac->m_sigma*m_L_tube*m_W_par);
-	double Re_air = G_air*mpc_ac->m_D_h / m_mu_air;
+	double G_air = m_dot_air / (m_sigma*m_L_tube*m_W_par);
+	double Re_air = G_air*m_D_h / m_mu_air;
 	
 	double f_air, j_H_air;
 	f_air, j_H_air = numeric_limits<double>::quiet_NaN();
 
-	if (!N_compact_hx::get_compact_hx_f_j(mpc_ac->m_enum_compact_hx_config, Re_air, f_air, j_H_air))
+	if (!N_compact_hx::get_compact_hx_f_j(m_comp_hx_config, Re_air, f_air, j_H_air))
 		return -1;
 
-	double deltaP_air = pow(G_air, 2.0)*m_v_air*0.5*f_air*mpc_ac->m_alpha*m_V_total / (mpc_ac->m_sigma*m_L_tube*m_W_par);
+	double deltaP_air = pow(G_air, 2.0)*m_v_air*0.5*f_air*m_alpha*m_V_total / (m_sigma*m_L_tube*m_W_par);
 	m_h_conv_air = j_H_air*G_air*m_cp_air / pow(m_Pr_air, (2.0 / 3.0));	//[W/m^2-K]
 
 	double V_dot_air_total = m_dot_air*m_v_air;
-	*W_dot_fan = deltaP_air*V_dot_air_total / mpc_ac->m_eta_fan / 1.E6;
+	*W_dot_fan = deltaP_air*V_dot_air_total / m_eta_fan / 1.E6;
 
 	return 0;
 }
@@ -1526,12 +1528,12 @@ int C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out::operator()(double
 
 	double T_co2_ave = 0.5*(T_co2_hot_in + m_T_co2_cold_out);		//[K]
 
-	int co2_prop_error = CO2_TP(T_co2_ave, m_P_co2_ave, &mpc_ac->mc_co2_props);
+	int co2_prop_error = CO2_TP(T_co2_ave, m_P_co2_ave, mpc_co2_props);
 	if (co2_prop_error != 0)
 	{
 		return -2;
 	}
-	double cp_co2_ave = mpc_ac->mc_co2_props.cp*1000.0;		//[J/kg-K]
+	double cp_co2_ave = mpc_co2_props->cp*1000.0;		//[J/kg-K]
 
 	// Capacitance rates
 	double C_dot_co2 = cp_co2_ave*m_m_dot_co2_tube;			//[W/K]
@@ -1551,10 +1553,212 @@ int C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out::operator()(double
 	return 0;
 }
 
+//int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_tube /*m*/, double *delta_P_co2 /*kPa*/)
+//{
+//	double L_total = L_tube*mpc_ac->ms_hx_des_sol.m_N_passes;	//[m] Total length of flow path including loops
+//	double L_node = L_tube/mpc_ac->m_N_nodes;	//[m] Length of one node
+//	double V_node = L_node*mpc_ac->m_s_v*mpc_ac->m_s_h;	//[m^3] Volume of one node
+//	m_V_total = L_tube*mpc_ac->ms_hx_des_sol.m_Depth*m_W_par;		//[m^3] Total HX footprint volume
+//
+//	m_h_conv_air = std::numeric_limits<double>::quiet_NaN();		//[W/m2-K]
+//	m_m_dot_air_total = std::numeric_limits<double>::quiet_NaN();	//[kg/s]
+//	m_A_surf_node = std::numeric_limits<double>::quiet_NaN();		//[m2]
+//
+//	// Iterate to find air mass flow rate resulting in target fan power
+//	C_MEQ_target_W_dot_fan__m_dot_air c_m_dot_air_eq(L_tube, m_W_par, m_V_total,
+//		m_mu_air, m_v_air, m_cp_air, m_Pr_air,
+//		mpc_ac->m_sigma, mpc_ac->m_D_h,
+//		mpc_ac->m_enum_compact_hx_config,
+//		mpc_ac->m_alpha, mpc_ac->m_eta_fan);
+//	C_monotonic_eq_solver c_m_dot_air_solver(c_m_dot_air_eq);
+//
+//	double tol_m_dot = m_tol_upper / 2.0;					//[-] Relative tolerance for convergence
+//	c_m_dot_air_solver.settings(tol_m_dot, 50, 1.E-10, std::numeric_limits<double>::quiet_NaN(), true);
+//
+//	double m_dot_air_guess = mpc_ac->m_Q_dot_des / (5.0*m_cp_air);	//[kg/s] Guess assuming 5k temp rise
+//	double m_dot_air_guess2 = 1.05*m_dot_air_guess;		//[kg/s] Another guess...
+//
+//	double m_dot_air_solved, m_dot_air_tol_solved;
+//	m_dot_air_solved = m_dot_air_tol_solved = std::numeric_limits<double>::quiet_NaN();
+//	int m_dot_air_iter_solved = -1;
+//
+//	int m_dot_air_solver_code = 0;
+//	try
+//	{
+//		m_dot_air_solver_code = c_m_dot_air_solver.solve(m_dot_air_guess, m_dot_air_guess2,
+//			mpc_ac->ms_des_par_cycle_dep.m_W_dot_fan_des, m_dot_air_solved, m_dot_air_tol_solved, m_dot_air_iter_solved);
+//	}
+//	catch (C_csp_exception)
+//	{
+//		throw(C_csp_exception("Air cooler iteration on air mass flow rate received exception from mono equation solver"));
+//	}
+//	if (m_dot_air_solver_code != C_monotonic_eq_solver::CONVERGED)
+//	{
+//		if (m_dot_air_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(m_dot_air_tol_solved) <= 0.1)
+//		{
+//			std::string error_msg = util::format("Air cooler iteration on air mass flow rate only reached a convergence "
+//				"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+//				m_dot_air_tol_solved);
+//			mpc_ac->mc_messages.add_message(C_csp_messages::WARNING, error_msg);
+//		}
+//		else
+//		{
+//			return -1;
+//			//throw(C_csp_exception("Air cooler iteration on air mass flow rate did not converge"));
+//		}
+//	}
+//
+//	m_m_dot_air_total = m_dot_air_solved;			//[kg/s]
+//	m_h_conv_air = c_m_dot_air_eq.m_h_conv_air;		//[W/m2-K]
+//
+//	m_A_surf_node = V_node*mpc_ac->m_alpha;			//[m2] Air-side surface area of node
+//	double UA_node = m_A_surf_node*m_h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+//
+//	// Set known inlet conditions: iteration thru # of loops needs previous loop info
+//	mpc_ac->mm_T_co2(1, 0) = mpc_ac->ms_des_par_cycle_dep.m_T_hot_out_des;
+//	mpc_ac->mm_P_co2(1, 0) = mpc_ac->ms_des_par_cycle_dep.m_P_hot_in_des - mpc_ac->ms_des_par_cycle_dep.m_delta_P_des;	//[kPa]
+//	for (int i = 1; i < mpc_ac->m_N_nodes + 2; i++)
+//		mpc_ac->mm_T_air(i, 0) = mpc_ac->ms_des_par_ind.m_T_amb_des;
+//
+//	// Assuming constant air props, so can set those
+//	double m_dot_air_tube = m_m_dot_air_total / (m_N_par*mpc_ac->m_N_nodes);
+//	double C_dot_air = m_cp_air*m_dot_air_tube;	//[W/K]
+//
+//	for (int j = 1; j < mpc_ac->ms_hx_des_sol.m_N_passes + 1; j++)
+//	{
+//		// Set up constants and multipliers to switch direction of flow
+//		double mult_const = (j + 1) % 2;
+//		double constant = mpc_ac->m_N_nodes + 2;
+//		double mult_index = 1.0 - 2.0*mult_const;
+//		double out_const = mult_index;
+//
+//		// Set inlet temperatures & pressures of current row
+//		double mult_inlet = (j + 1) % 2;
+//		double const_inlet = mpc_ac->m_N_nodes;
+//		double inlet = mult_inlet*const_inlet + 1;
+//
+//		// Set loop inlet conditions
+//		mpc_ac->mm_T_co2((int)inlet, j) = mpc_ac->mm_T_co2((int)inlet, j - 1);		//[K]
+//		mpc_ac->mm_P_co2((int)inlet, j) = mpc_ac->mm_P_co2((int)inlet, j - 1);		//[kPa]
+//
+//		//double deltaT_prev = numeric_limits<double>::quiet_NaN();
+//
+//		for (int i = 1; i < mpc_ac->m_N_nodes + 1; i++)
+//		{
+//			double in = mult_const*constant + mult_index*i;
+//			double out = in + out_const;
+//			double air_in = fmin(in, out);
+//
+//			// Get CO2 and Air inlet temperatures to node
+//			double T_co2_cold_local = mpc_ac->mm_T_co2((size_t)in, j);			//[K]
+//			double T_air_cold_in_local = mpc_ac->mm_T_air((size_t)air_in, j - 1);	//[K]
+//
+//			// Set max allowable CO2 temp here, for now
+//			double T_co2_hot_max = 700.0 + 273.15;		//[K]
+//
+//			C_MEQ_node_energy_balance__T_co2_out c_node_bal_eq(&mpc_ac->mc_co2_props,
+//				T_co2_cold_local, m_P_hot_ave,
+//				m_m_dot_tube,
+//				T_air_cold_in_local, C_dot_air,
+//				UA_node);
+//			C_monotonic_eq_solver c_node_bal_solver(c_node_bal_eq);
+//
+//			double tol_T_in = tol_m_dot / 5.0;		//[-] Relative tolerance for convergence
+//			c_node_bal_solver.settings(tol_T_in, 50, T_co2_cold_local, T_co2_hot_max, false);
+//
+//			double diff_T_co2_cold_calc = std::numeric_limits<double>::quiet_NaN();
+//			int diff_T_co2_cold_calc_code = c_node_bal_solver.test_member_function(T_co2_hot_max, &diff_T_co2_cold_calc);
+//			if (diff_T_co2_cold_calc_code != 0)
+//			{
+//				throw(C_csp_exception("Air cooler UA calculation failed at maximum CO2 temperature"));
+//			}
+//
+//			double T_co2_hot_solved = std::numeric_limits<double>::quiet_NaN();
+//			if (diff_T_co2_cold_calc >= 0.0)
+//			{	// Use monotonic equation solver to fine T_co2_hot
+//				double T_co2_hot_local_guess = T_co2_cold_local + 0.02;			//[K]
+//				double T_co2_hot_local_guess_2 = T_co2_hot_local_guess + 1.5;	//[K]
+//
+//				double T_co2_hot_tol_solved;
+//				T_co2_hot_tol_solved = std::numeric_limits<double>::quiet_NaN();
+//				int T_co2_hot_iter_solved = -1;
+//
+//				int T_co2_hot_solver_code = 0;
+//				try
+//				{
+//					T_co2_hot_solver_code = c_node_bal_solver.solve(T_co2_hot_local_guess, T_co2_hot_local_guess_2, 0.0, T_co2_hot_solved, T_co2_hot_tol_solved, T_co2_hot_iter_solved);
+//				}
+//				catch (C_csp_exception)
+//				{
+//					throw(C_csp_exception("Air cooler calculation to find T_co2_hot that matched node UA returned an exception"));
+//				}
+//
+//				if (T_co2_hot_solver_code != C_monotonic_eq_solver::CONVERGED)
+//				{
+//					if (T_co2_hot_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(T_co2_hot_tol_solved) <= 0.1)
+//					{
+//						std::string error_msg = util::format("Air cooler iteration on nodal hot co2 temperature rate only reached a convergence "
+//							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+//							T_co2_hot_tol_solved);
+//						mpc_ac->mc_messages.add_message(C_csp_messages::WARNING, error_msg);
+//					}
+//					else
+//					{
+//						return -2;
+//						//throw(C_csp_exception("Air cooler iteration on air mass flow rate did not converge"));
+//					}
+//				}
+//			}
+//			else
+//			{	// CO2 is unrealistically hot. stop here before property routine gets weird
+//				//    (although, generally, returning a unique value is useful...)
+//				//    (which is why we let it get this hot instead of say using the target outlet temp)
+//				T_co2_hot_solved = T_co2_hot_max;
+//			}
+//
+//			double Q_dot_node = c_node_bal_eq.m_Q_dot_node;		//[W]
+//			mpc_ac->mm_T_co2((size_t)out, j) = T_co2_hot_solved;		//[K]
+//			mpc_ac->mm_T_air((size_t)air_in, j) = mpc_ac->mm_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
+//
+//			// Add pressure drop calcs (co2_props is up-to-date)
+//			// ** Could also move this to a function if also called to guess length
+//			double visc_dyn_co2 = CO2_visc(mpc_ac->mc_co2_props.dens, mpc_ac->mc_co2_props.temp)*1.E-6;	//[Pa-s] convert from (uPa-s)
+//			double Re_co2 = m_m_dot_tube*mpc_ac->ms_hx_des_sol.m_d_in / (mpc_ac->m_A_cs*visc_dyn_co2);		//[-]
+//
+//			double rho_co2 = mpc_ac->mc_co2_props.dens;				//[kg/s]
+//			double visc_kin_co2 = visc_dyn_co2 / rho_co2;	//[m2/s]
+//			double cond_co2 = CO2_cond(mpc_ac->mc_co2_props.dens, mpc_ac->mc_co2_props.temp);	//[W/m-K]
+//			double specheat_co2 = mpc_ac->mc_co2_props.cp*1000.0;		//[J/kg-K] convert from kJ/kg-K
+//			double alpha_co2 = cond_co2 / (specheat_co2*rho_co2);	//[m2/s]
+//			double Pr_co2 = visc_kin_co2 / alpha_co2;		//[-]
+//
+//			double Nusselt_co2 = -999.9;	//[-]
+//			double f_co2 = -999.9;			//[-]
+//
+//			// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
+//			// CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
+//			CSP::PipeFlow(Re_co2, Pr_co2, L_node / mpc_ac->ms_hx_des_sol.m_d_in, mpc_ac->m_relRough, Nusselt_co2, f_co2);
+//
+//			double u_m = m_m_dot_tube / (rho_co2*mpc_ac->m_A_cs);		//[m/s]
+//			mpc_ac->mm_P_co2((size_t)out, j) = mpc_ac->mm_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*mpc_ac->ms_hx_des_sol.m_d_in) / 1000.0;	//[kPa]
+//
+//			double deltaP_node = mpc_ac->mm_P_co2((size_t)out, j) - mpc_ac->mm_P_co2((size_t)in, j);	//[kPa]
+//
+//			mpc_ac->mm_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mpc_ac->mm_P_co2((size_t)out, j)));
+//
+//		}	// End iteration through nodes in flow path		
+//
+//	}	// End iteration through loop in flow path
+//
+//	*delta_P_co2 = mpc_ac->mm_P_co2(mpc_ac->m_final_outlet_index, mpc_ac->ms_hx_des_sol.m_N_passes) - mpc_ac->m_P_hot_out_des;	//[kPa]
+//
+//	return 0;
+//}
+
 int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_tube /*m*/, double *delta_P_co2 /*kPa*/)
 {
 	double L_total = L_tube*mpc_ac->ms_hx_des_sol.m_N_passes;	//[m] Total length of flow path including loops
-	double L_node = L_tube/mpc_ac->m_N_nodes;	//[m] Length of one node
+	double L_node = L_tube / mpc_ac->m_N_nodes;	//[m] Length of one node
 	double V_node = L_node*mpc_ac->m_s_v*mpc_ac->m_s_h;	//[m^3] Volume of one node
 	m_V_total = L_tube*mpc_ac->ms_hx_des_sol.m_Depth*m_W_par;		//[m^3] Total HX footprint volume
 
@@ -1563,9 +1767,11 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 	m_A_surf_node = std::numeric_limits<double>::quiet_NaN();		//[m2]
 
 	// Iterate to find air mass flow rate resulting in target fan power
-	C_MEQ_target_W_dot_fan__m_dot_air c_m_dot_air_eq(mpc_ac,
-		L_tube, m_W_par, m_V_total,
-		m_mu_air, m_v_air, m_cp_air, m_Pr_air);
+	C_MEQ_target_W_dot_fan__m_dot_air c_m_dot_air_eq(L_tube, m_W_par, m_V_total,
+		m_mu_air, m_v_air, m_cp_air, m_Pr_air,
+		mpc_ac->m_sigma, mpc_ac->m_D_h,
+		mpc_ac->m_enum_compact_hx_config,
+		mpc_ac->m_alpha, mpc_ac->m_eta_fan);
 	C_monotonic_eq_solver c_m_dot_air_solver(c_m_dot_air_eq);
 
 	double tol_m_dot = m_tol_upper / 2.0;					//[-] Relative tolerance for convergence
@@ -1608,145 +1814,24 @@ int C_CO2_to_air_cooler::C_MEQ_target_CO2_dP__L_tube_pass::operator()(double L_t
 	m_h_conv_air = c_m_dot_air_eq.m_h_conv_air;		//[W/m2-K]
 
 	m_A_surf_node = V_node*mpc_ac->m_alpha;			//[m2] Air-side surface area of node
-	double UA_node = m_A_surf_node*m_h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
 
-	// Set known inlet conditions: iteration thru # of loops needs previous loop info
-	mpc_ac->mm_T_co2(1, 0) = mpc_ac->ms_des_par_cycle_dep.m_T_hot_out_des;
-	mpc_ac->mm_P_co2(1, 0) = mpc_ac->ms_des_par_cycle_dep.m_P_hot_in_des - mpc_ac->ms_des_par_cycle_dep.m_delta_P_des;	//[kPa]
-	for (int i = 1; i < mpc_ac->m_N_nodes + 2; i++)
-		mpc_ac->mm_T_air(i, 0) = mpc_ac->ms_des_par_ind.m_T_amb_des;
+	double tol_T_in = tol_m_dot / 5.0;		//[-] Relative tolerance
 
-	// Assuming constant air props, so can set those
-	double m_dot_air_tube = m_m_dot_air_total / (m_N_par*mpc_ac->m_N_nodes);
-	double C_dot_air = m_cp_air*m_dot_air_tube;	//[W/K]
+	double T_co2_in_calc = std::numeric_limits<double>::quiet_NaN();
+	// Solve air cooler performance with known geometry and inputs
+	int air_cooler_code = outlet_given_geom_and_air_m_dot(mpc_ac->ms_des_par_cycle_dep.m_T_hot_out_des, m_m_dot_tube,
+		mpc_ac->ms_des_par_cycle_dep.m_delta_P_des, m_P_hot_ave, mpc_ac->ms_des_par_cycle_dep.m_P_hot_in_des,
+		mpc_ac->ms_des_par_ind.m_T_amb_des,
+		tol_T_in,
+		&mpc_ac->mc_messages, &mpc_ac->mc_co2_props,
+		mpc_ac->ms_hx_des_sol.m_d_in, mpc_ac->m_A_cs, mpc_ac->m_relRough,
+		L_node, V_node, mpc_ac->m_N_nodes, 
+		m_N_par, mpc_ac->ms_hx_des_sol.m_N_passes,
+		mpc_ac->m_alpha, m_cp_air, 
+		m_m_dot_air_total, m_h_conv_air,
+		*delta_P_co2, T_co2_in_calc);
 
-	for (int j = 1; j < mpc_ac->ms_hx_des_sol.m_N_passes + 1; j++)
-	{
-		// Set up constants and multipliers to switch direction of flow
-		double mult_const = (j + 1) % 2;
-		double constant = mpc_ac->m_N_nodes + 2;
-		double mult_index = 1.0 - 2.0*mult_const;
-		double out_const = mult_index;
-
-		// Set inlet temperatures & pressures of current row
-		double mult_inlet = (j + 1) % 2;
-		double const_inlet = mpc_ac->m_N_nodes;
-		double inlet = mult_inlet*const_inlet + 1;
-
-		// Set loop inlet conditions
-		mpc_ac->mm_T_co2((int)inlet, j) = mpc_ac->mm_T_co2((int)inlet, j - 1);		//[K]
-		mpc_ac->mm_P_co2((int)inlet, j) = mpc_ac->mm_P_co2((int)inlet, j - 1);		//[kPa]
-
-		//double deltaT_prev = numeric_limits<double>::quiet_NaN();
-
-		for (int i = 1; i < mpc_ac->m_N_nodes + 1; i++)
-		{
-			double in = mult_const*constant + mult_index*i;
-			double out = in + out_const;
-			double air_in = fmin(in, out);
-
-			// Get CO2 and Air inlet temperatures to node
-			double T_co2_cold_local = mpc_ac->mm_T_co2((size_t)in, j);			//[K]
-			double T_air_cold_in_local = mpc_ac->mm_T_air((size_t)air_in, j - 1);	//[K]
-
-			// Set max allowable CO2 temp here, for now
-			double T_co2_hot_max = 700.0 + 273.15;		//[K]
-
-			C_MEQ_node_energy_balance__T_co2_out c_node_bal_eq(mpc_ac,
-				T_co2_cold_local, m_P_hot_ave,
-				m_m_dot_tube,
-				T_air_cold_in_local, C_dot_air,
-				UA_node);
-			C_monotonic_eq_solver c_node_bal_solver(c_node_bal_eq);
-
-			double tol_T_in = tol_m_dot / 5.0;		//[-] Relative tolerance for convergence
-			c_node_bal_solver.settings(tol_T_in, 50, T_co2_cold_local, T_co2_hot_max, false);
-
-			double diff_T_co2_cold_calc = std::numeric_limits<double>::quiet_NaN();
-			int diff_T_co2_cold_calc_code = c_node_bal_solver.test_member_function(T_co2_hot_max, &diff_T_co2_cold_calc);
-			if (diff_T_co2_cold_calc_code != 0)
-			{
-				throw(C_csp_exception("Air cooler UA calculation failed at maximum CO2 temperature"));
-			}
-
-			double T_co2_hot_solved = std::numeric_limits<double>::quiet_NaN();
-			if (diff_T_co2_cold_calc >= 0.0)
-			{	// Use monotonic equation solver to fine T_co2_hot
-				double T_co2_hot_local_guess = T_co2_cold_local + 0.02;			//[K]
-				double T_co2_hot_local_guess_2 = T_co2_hot_local_guess + 1.5;	//[K]
-
-				double T_co2_hot_tol_solved;
-				T_co2_hot_tol_solved = std::numeric_limits<double>::quiet_NaN();
-				int T_co2_hot_iter_solved = -1;
-
-				int T_co2_hot_solver_code = 0;
-				try
-				{
-					T_co2_hot_solver_code = c_node_bal_solver.solve(T_co2_hot_local_guess, T_co2_hot_local_guess_2, 0.0, T_co2_hot_solved, T_co2_hot_tol_solved, T_co2_hot_iter_solved);
-				}
-				catch (C_csp_exception)
-				{
-					throw(C_csp_exception("Air cooler calculation to find T_co2_hot that matched node UA returned an exception"));
-				}
-
-				if (T_co2_hot_solver_code != C_monotonic_eq_solver::CONVERGED)
-				{
-					if (T_co2_hot_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(T_co2_hot_tol_solved) <= 0.1)
-					{
-						std::string error_msg = util::format("Air cooler iteration on nodal hot co2 temperature rate only reached a convergence "
-							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
-							T_co2_hot_tol_solved);
-						mpc_ac->mc_messages.add_message(C_csp_messages::WARNING, error_msg);
-					}
-					else
-					{
-						return -2;
-						//throw(C_csp_exception("Air cooler iteration on air mass flow rate did not converge"));
-					}
-				}
-			}
-			else
-			{	// CO2 is unrealistically hot. stop here before property routine gets weird
-				//    (although, generally, returning a unique value is useful...)
-				//    (which is why we let it get this hot instead of say using the target outlet temp)
-				T_co2_hot_solved = T_co2_hot_max;
-			}
-
-			double Q_dot_node = c_node_bal_eq.m_Q_dot_node;		//[W]
-			mpc_ac->mm_T_co2((size_t)out, j) = T_co2_hot_solved;		//[K]
-			mpc_ac->mm_T_air((size_t)air_in, j) = mpc_ac->mm_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
-
-			// Add pressure drop calcs (co2_props is up-to-date)
-			// ** Could also move this to a function if also called to guess length
-			double visc_dyn_co2 = CO2_visc(mpc_ac->mc_co2_props.dens, mpc_ac->mc_co2_props.temp)*1.E-6;	//[Pa-s] convert from (uPa-s)
-			double Re_co2 = m_m_dot_tube*mpc_ac->ms_hx_des_sol.m_d_in / (mpc_ac->m_A_cs*visc_dyn_co2);		//[-]
-
-			double rho_co2 = mpc_ac->mc_co2_props.dens;				//[kg/s]
-			double visc_kin_co2 = visc_dyn_co2 / rho_co2;	//[m2/s]
-			double cond_co2 = CO2_cond(mpc_ac->mc_co2_props.dens, mpc_ac->mc_co2_props.temp);	//[W/m-K]
-			double specheat_co2 = mpc_ac->mc_co2_props.cp*1000.0;		//[J/kg-K] convert from kJ/kg-K
-			double alpha_co2 = cond_co2 / (specheat_co2*rho_co2);	//[m2/s]
-			double Pr_co2 = visc_kin_co2 / alpha_co2;		//[-]
-
-			double Nusselt_co2 = -999.9;	//[-]
-			double f_co2 = -999.9;			//[-]
-
-			// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
-			// CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
-			CSP::PipeFlow(Re_co2, Pr_co2, L_node / mpc_ac->ms_hx_des_sol.m_d_in, mpc_ac->m_relRough, Nusselt_co2, f_co2);
-
-			double u_m = m_m_dot_tube / (rho_co2*mpc_ac->m_A_cs);		//[m/s]
-			mpc_ac->mm_P_co2((size_t)out, j) = mpc_ac->mm_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*mpc_ac->ms_hx_des_sol.m_d_in) / 1000.0;	//[kPa]
-
-			double deltaP_node = mpc_ac->mm_P_co2((size_t)out, j) - mpc_ac->mm_P_co2((size_t)in, j);	//[kPa]
-
-			mpc_ac->mm_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mpc_ac->mm_P_co2((size_t)out, j)));
-
-		}	// End iteration through nodes in flow path		
-
-	}	// End iteration through loop in flow path
-
-	*delta_P_co2 = mpc_ac->mm_P_co2(mpc_ac->m_final_outlet_index, mpc_ac->ms_hx_des_sol.m_N_passes) - mpc_ac->m_P_hot_out_des;	//[kPa]
+	m_T_co2_in_calc = T_co2_in_calc;
 
 	return 0;
 }
@@ -1840,8 +1925,176 @@ int C_CO2_to_air_cooler::C_MEQ_target_T_hot__width_parallel::operator()(double W
 	m_m_dot_air_total = c_eq.m_m_dot_air_total;	//[kg/s]
 	m_A_surf_node = c_eq.m_A_surf_node;	//[m2]
 
-	*T_co2_hot = mpc_ac->mm_T_co2(mpc_ac->m_final_outlet_index, mpc_ac->ms_hx_des_sol.m_N_passes);		//[K]
+	//*T_co2_hot = mpc_ac->mm_T_co2(mpc_ac->m_final_outlet_index, mpc_ac->ms_hx_des_sol.m_N_passes);		//[K]
+	*T_co2_hot = c_eq.m_T_co2_in_calc;	//[K]
 
+	return 0;
+}
+
+int outlet_given_geom_and_air_m_dot(double T_co2_out /*K*/, double m_dot_co2_tube /*kg/s*/,
+	double delta_P_co2 /*kPa*/, double P_co2_ave /*kPa*/, double P_hot_in /*kPa*/,
+	double T_amb /*K*/,
+	double tol_T_in /*-*/,
+	C_csp_messages *mc_messages, CO2_state *co2_props,
+	double d_in_tube /*m*/, double A_cs_tube /*m2*/, double relrough /*-*/,
+	double L_node /*m*/, double V_node /*m3*/, int N_nodes /*-*/,
+	double N_par /*-*/, int N_passes /*-*/,
+	double alpha /*1/m*/, double cp_air /*J/kg-K*/,
+	double m_dot_air_total /*kg/s*/, double h_conv_air /*W/m2-K*/,
+	double & delta_P_co2_calc /*kPa*/, double & T_co2_in_calc /*K*/)
+{
+	double m_T_co2_hot_max = 700.0 + 273.15;	//[K]
+
+	double A_surf_node = V_node*alpha;			//[m2] Air-side surface area of node
+	double UA_node = A_surf_node*h_conv_air;	//[W/K] Conductance of node - assuming air convective heat transfer is governing resistance
+
+	// Set known inlet conditions: iteration thru # of loops needs previous loop info
+	util::matrix_t<double> mt_T_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
+	util::matrix_t<double> mt_P_co2(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[kPa]
+	util::matrix_t<double> mt_T_air(N_nodes + 2, N_passes + 1, std::numeric_limits<double>::quiet_NaN());	//[K]
+	
+	mt_T_co2(1, 0) = T_co2_out;		//[K]
+	mt_P_co2(1, 0) = P_hot_in - delta_P_co2;	//[kPa]
+	for (int i = 1; i < N_nodes + 2; i++)
+		mt_T_air(i, 0) = T_amb;		//[K]
+
+	// Assuming constant air props, so can set those
+	double m_dot_air_tube = m_dot_air_total / (N_par*N_nodes);
+	double C_dot_air = cp_air*m_dot_air_tube;	//[W/K]
+
+	for (int j = 1; j < N_passes + 1; j++)
+	{
+		// Set up constants and multipliers to switch direction of flow
+		int mult_const = (j + 1) % 2;
+		int constant = N_nodes + 2;
+		int mult_index = 1 - 2*mult_const;
+		int out_const = mult_index;
+
+		// Set inlet temperatures & pressures of current row
+		int mult_inlet = (j + 1) % 2;
+		int const_inlet = N_nodes;
+		int inlet = mult_inlet*const_inlet + 1;
+
+		// Set loop inlet conditions
+		mt_T_co2((int)inlet, j) = mt_T_co2((int)inlet, j - 1);		//[K]
+		mt_P_co2((int)inlet, j) = mt_P_co2((int)inlet, j - 1);		//[kPa]
+
+		for (int i = 1; i < N_nodes + 1; i++)
+		{
+			int in = mult_const*constant + mult_index*i;
+			int out = in + out_const;
+			int air_in = fmin(in, out);
+
+			// Get CO2 and Air inlet temperatures to node
+			double T_co2_cold_local = mt_T_co2((size_t)in, j);			//[K]
+			double T_air_cold_in_local = mt_T_air((size_t)air_in, j - 1);	//[K]
+
+			C_CO2_to_air_cooler::C_MEQ_node_energy_balance__T_co2_out c_node_bal_eq(co2_props,
+				T_co2_cold_local, P_co2_ave,
+				m_dot_co2_tube,
+				T_air_cold_in_local, C_dot_air,
+				UA_node);
+			C_monotonic_eq_solver c_node_bal_solver(c_node_bal_eq);
+
+			c_node_bal_solver.settings(tol_T_in, 50, T_co2_cold_local, m_T_co2_hot_max, false);
+
+			double diff_T_co2_cold_calc = std::numeric_limits<double>::quiet_NaN();
+			int diff_T_co2_cold_calc_code = c_node_bal_solver.test_member_function(m_T_co2_hot_max, &diff_T_co2_cold_calc);
+			if (diff_T_co2_cold_calc_code != 0)
+			{
+				throw(C_csp_exception("Air cooler UA calculation failed at maximum CO2 temperature"));
+			}
+
+			double T_co2_hot_solved = std::numeric_limits<double>::quiet_NaN();
+			if (diff_T_co2_cold_calc >= 0.0)
+			{	// Use monotonic equation solver to fine T_co2_hot
+				double T_co2_hot_local_guess = T_co2_cold_local + 0.02;			//[K]
+				double T_co2_hot_local_guess_2 = T_co2_hot_local_guess + 1.5;	//[K]
+
+				double T_co2_hot_tol_solved;
+				T_co2_hot_tol_solved = std::numeric_limits<double>::quiet_NaN();
+				int T_co2_hot_iter_solved = -1;
+
+				int T_co2_hot_solver_code = 0;
+				try
+				{
+					T_co2_hot_solver_code = c_node_bal_solver.solve(T_co2_hot_local_guess, T_co2_hot_local_guess_2, 0.0, T_co2_hot_solved, T_co2_hot_tol_solved, T_co2_hot_iter_solved);
+				}
+				catch (C_csp_exception)
+				{
+					throw(C_csp_exception("Air cooler calculation to find T_co2_hot that matched node UA returned an exception"));
+				}
+
+				if (T_co2_hot_solver_code != C_monotonic_eq_solver::CONVERGED)
+				{
+					if (T_co2_hot_solver_code > C_monotonic_eq_solver::CONVERGED && fabs(T_co2_hot_tol_solved) <= 0.1)
+					{
+						std::string error_msg = util::format("Air cooler iteration on nodal hot co2 temperature rate only reached a convergence "
+							"= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
+							T_co2_hot_tol_solved);
+						mc_messages->add_message(C_csp_messages::WARNING, error_msg);
+					}
+					else
+					{
+						return -2;
+						//throw(C_csp_exception("Air cooler iteration on air mass flow rate did not converge"));
+					}
+				}
+			}
+			else
+			{	// CO2 is unrealistically hot. stop here before property routine gets weird
+				//    (although, generally, returning a unique value is useful...)
+				//    (which is why we let it get this hot instead of say using the target outlet temp)
+				T_co2_hot_solved = m_T_co2_hot_max;
+			}
+
+			double Q_dot_node = c_node_bal_eq.m_Q_dot_node;		//[W]
+			mt_T_co2((size_t)out, j) = T_co2_hot_solved;		//[K]
+			mt_T_air((size_t)air_in, j) = mt_T_air((size_t)air_in, j - 1) + Q_dot_node / C_dot_air;	//[K]
+
+			// Add pressure drop calcs (co2_props is up-to-date)
+			// ** Could also move this to a function if also called to guess length
+			double visc_dyn_co2 = CO2_visc(co2_props->dens, co2_props->temp)*1.E-6;	//[Pa-s] convert from (uPa-s)
+			double Re_co2 = m_dot_co2_tube*d_in_tube / (A_cs_tube*visc_dyn_co2);		//[-]
+
+			double rho_co2 = co2_props->dens;				//[kg/s]
+			double visc_kin_co2 = visc_dyn_co2 / rho_co2;	//[m2/s]
+			double cond_co2 = CO2_cond(co2_props->dens, co2_props->temp);	//[W/m-K]
+			double specheat_co2 = co2_props->cp*1000.0;		//[J/kg-K] convert from kJ/kg-K
+			double alpha_co2 = cond_co2 / (specheat_co2*rho_co2);	//[m2/s]
+			double Pr_co2 = visc_kin_co2 / alpha_co2;		//[-]
+
+			double Nusselt_co2 = -999.9;	//[-]
+			double f_co2 = -999.9;			//[-]
+
+			// Specifying the length over diameter = 1000 sets the problem as Fully Developed Flow
+			// CSP::PipeFlow(Re_co2, Pr_co2, 1000.0, m_relRough, Nusselt_co2, f_co2);
+			CSP::PipeFlow(Re_co2, Pr_co2, L_node / d_in_tube, relrough, Nusselt_co2, f_co2);
+
+			double u_m = m_dot_co2_tube / (rho_co2*A_cs_tube);		//[m/s]
+
+			mt_P_co2((size_t)out, j) = mt_P_co2((size_t)in, j) + f_co2*L_node*rho_co2*pow(u_m, 2) / (2.0*d_in_tube) / 1000.0;	//[kPa]
+
+			double deltaP_node = mt_P_co2((size_t)out, j) - mt_P_co2((size_t)in, j);	//[kPa]
+
+			mt_P_co2((size_t)out, j) = fmin(25000.0, fmax(1000.0, mt_P_co2((size_t)out, j)));
+
+		}
+	}
+
+	// index that gives outlet temperatur and pressure: depends on whether odd or even loops
+	int final_outlet_index = ((N_passes + 2) % 2)*N_nodes + 1;
+
+	delta_P_co2_calc = mt_P_co2(final_outlet_index, N_passes) - mt_P_co2(1, 0);	//[kPa]
+	T_co2_in_calc = mt_T_co2(final_outlet_index, N_passes);						//[K]
+
+	return 0;
+}
+
+int C_CO2_to_air_cooler::off_design_given_T_out(double T_amb /*K*/, double P_amb /*Pa*/, double T_hot_in /*K*/, double P_hot_in /*kPa*/,
+	double m_dot_hot /*kg/s*/, double T_hot_out /*K*/, double & W_dot_fan /*MWe*/)
+{
+	
 	return 0;
 }
 
