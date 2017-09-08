@@ -713,7 +713,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array DC energy",                                   "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "System AC energy",                                     "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                              "kWh/m2/yr", "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                              "Wh/m2/yr", "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA irradiance total nominal",                          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA irradiance beam nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA irradiancetotal after shading only",                 "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
@@ -1040,6 +1040,7 @@ public:
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
 			wdprov = std::auto_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+			if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
 		}
 		else
 			throw exec_error("pvsamv1", "no weather data supplied");
@@ -1736,8 +1737,11 @@ public:
 		if (system_use_lifetime_output == 1)
 			nyears = as_integer("analysis_period");
 
-		if ( __ARCHBITS__ == 32 && system_use_lifetime_output )
+		// Warning workaround
+		static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
+		if (is32BitLifetime)
 			throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
+
 
 		ssc_number_t *p_dc_degrade_factor = 0;
 
@@ -2234,6 +2238,16 @@ public:
 						if ((wf.poa != wf.poa) && (radmode == POA_R || radmode == POA_P)){
 							log(util::format("missing POA irradiance %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
+						if (wf.tdry != wf.tdry){
+							log(util::format("missing temperature %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.tdry, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
+						if (wf.wspd != wf.wspd){
+							log(util::format("missing wind speed %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.wspd, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;
 						}
 
@@ -2916,10 +2930,8 @@ public:
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
 
-
-
 					// Battery replacement
-					if (en_batt)
+					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
 						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
 
 					// Iterative loop over DC battery
@@ -3076,6 +3088,10 @@ public:
 
 					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
 					{
+						// Battery replacement
+						if (en_batt)
+							batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
+
 						batt.advance(*this, iyear, hour, jj, p_gen[idx], p_load_full[idx]);
 						p_gen[idx] = batt.outGenPower[idx];
 					}
@@ -3145,9 +3161,9 @@ public:
 
 		// scale by ts_hour to convert power -> energy
 		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", ts_hour, step_per_hour);
-		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
+		accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
 		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", ts_hour, step_per_hour);
-		double annual_dc_invmppt_loss = accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
+		accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
 
 		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
@@ -3166,7 +3182,7 @@ public:
 
 		// accumulate annual and monthly battery model outputs
 		if ( en_batt ) batt.calculate_monthly_and_annual_outputs( *this );
-		else assign( "average_cycle_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
+		else assign( "average_battery_roundtrip_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);

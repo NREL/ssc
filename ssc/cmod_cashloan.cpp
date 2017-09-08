@@ -182,6 +182,14 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "Weighted average cost of capital (WACC)",                          "",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective tax rate",                       "%",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 
+// NTE additions 8/10/17
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Nominal LNTE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+
 
 var_info_invalid };
 
@@ -267,6 +275,8 @@ enum {
 
 	CF_battery_replacement_cost_schedule,
 	CF_battery_replacement_cost,
+
+	CF_nte,
 
 	CF_max };
 
@@ -940,6 +950,42 @@ public:
 
 	assign("wacc", var_data( (ssc_number_t) wacc));
 	assign("effective_tax_rate", var_data((ssc_number_t)(cf.at(CF_effective_tax_frac, 1)*100.0)));
+
+
+
+		// NTE
+		ssc_number_t *ub_w_sys = 0;
+		ub_w_sys = as_array("elec_cost_with_system", &count);
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
+		ssc_number_t *ub_wo_sys = 0;
+		ub_wo_sys = as_array("elec_cost_without_system", &count);
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
+
+		for (i = 0; i < (int)count; i++)
+			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
+		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
+
+		for (i = 0; i < (int)count; i++)
+			if (cf.at(CF_energy_net,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_net,i);
+
+		double lnte_nom = lnte_real;
+		if (npv_energy_real == 0.0) 
+			lnte_real = std::numeric_limits<double>::quiet_NaN();
+		else
+			lnte_real /= npv_energy_real;
+		if (npv_energy_nom == 0.0) 
+			lnte_nom = std::numeric_limits<double>::quiet_NaN();
+		else
+			lnte_nom /= npv_energy_nom;
+
+		assign( "lnte_real", var_data((ssc_number_t)lnte_real) );
+		assign( "lnte_nom", var_data((ssc_number_t)lnte_nom) );
+		save_cf(CF_nte, nyears, "cf_nte");
+		assign( "year1_nte", var_data((ssc_number_t)cf.at(CF_nte,1)) );
+
+
 
 
 

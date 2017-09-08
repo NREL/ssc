@@ -52,6 +52,7 @@
 
 #include <numeric>
 #include <limits>
+#include <memory>
 
 #include "lib_weatherfile.h"
 #include "csp_solver_util.h"
@@ -156,9 +157,6 @@ public:
 class C_csp_weatherreader
 {
 private:
-	weatherfile m_wfile;
-	weather_header m_hdr;
-	weather_record m_rec;
 	bool m_first;		// flag to indicate whether this is the first call
 
 	// member string for exception messages
@@ -171,6 +169,10 @@ private:
 	bool m_is_wf_init;
 
 public:
+	std::shared_ptr<weather_data_provider> m_weather_data_provider;
+	weather_header* m_hdr;
+	weather_record m_rec;
+
 	C_csp_weatherreader();
 
 	~C_csp_weatherreader(){};
@@ -179,15 +181,9 @@ public:
 
 	void timestep_call(const C_csp_solver_sim_info &p_sim_info);
 
-	double get_n_records();
-
-    double get_step_seconds();
-
 	void converged();
 
     bool read_time_step(int time_step, C_csp_solver_sim_info &p_sim_info);
-
-    int get_current_step();
 
 	// Class to save messages for up stream classes
 	C_csp_messages mc_csp_messages;
@@ -262,6 +258,9 @@ public:
 
 	S_outputs ms_outputs;
 	S_csp_weatherreader_solved_params ms_solved_params;
+
+	bool has_error(){ return (m_error_msg.size() > 0); }
+	std::string get_error(){ return m_error_msg; }
 };
 
 class C_csp_tou
@@ -1014,35 +1013,12 @@ private:
 	void solver_pc_su_controlled__tes_dc(double step_tol /*s*/,
 		double &time_pc_su /*s*/, 
 		int & exit_mode, double &T_pc_in_exit_tolerance);
-	
-	void solver_cr_on__pc_fixed__tes_ch(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode, 
-		double field_control_in, 
-		double tol, 
-		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
-
-	void solver_cr_on__pc_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-		double field_control_in,
-		double tol,
-		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
 
 	void solver_pc_fixed__tes_empty(double q_dot_pc_fixed /*MWt*/,
 		double tol,
 		double & time_tes_dc,
 		int &T_tes_in_exit_mode, double &T_tes_in_exit_tolerance,
 		int &q_pc_exit_mode, double &q_pc_exit_tolerance);
-
-	void solver_pc_on_fixed__tes_dc(double q_dot_pc_fixed /*MWt*/, int power_cycle_mode,
-		double tol,
-		int &T_cold_exit_mode, double &T_cold_exit_tolerance,
-		int &q_pc_exit_mode, double &q_pc_exit_tolerance,
-		double &q_dot_solved /*MWt*/, double &m_dot_solved /*kg/hr*/);
-
-	void solver_cr_on__pc_float__tes_full(int power_cycle_mode,
-		double field_control_in,
-		double tol,
-		int &T_rec_in_exit_mode, double &T_rec_in_exit_tolerance);
 
 	int solver_cr_on__pc_match__tes_full(int pc_mode, double defocus_in);
 
@@ -1062,7 +1038,7 @@ private:
 	
 	std::vector<double> mv_time_local;
 
-	bool(*mpf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+	bool(*mpf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int log_type);
 	void *mp_cmod_active;
 
 	void send_callback(double percent);
@@ -1141,7 +1117,7 @@ public:
 		C_csp_tes &tes,
 		C_csp_tou &tou,
 		S_csp_system_params &system,
-		bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress) = 0,
+		bool(*pf_callback)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type) = 0,
 		void *p_cmod_active = 0);
 
 	~C_csp_solver(){};

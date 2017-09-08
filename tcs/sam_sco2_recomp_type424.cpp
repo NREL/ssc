@@ -456,7 +456,7 @@ public:
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
 		m_T_t_in_des = m_T_htf_hot - m_delta_T_t;			//[K] Turbine inlet temperature		
 
-		double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+		//double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 
 		// ******************************************************************************************
 		// ******************************************************************************************
@@ -571,9 +571,9 @@ public:
 
 		// Design metrics
 		double design_eta = ms_rc_cycle.get_design_solved()->m_eta_thermal;
-		double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
+		//double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
 		m_m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;			//[kg/s]
-		double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
+		//double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
 		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5 - 1];			//[kPa]
 
 		double T_htf_cold_est = value(P_T_htf_cold_est) + 273.15;
@@ -603,7 +603,7 @@ public:
 		// Cycle/cold side
 		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + T_PHX_co2_in);		//[K]
 		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);
-		double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
+		//double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
 
 		// Because C_dot_c = C_dot_h, q_dot_max = 
 		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - T_PHX_co2_in);		//[kW]
@@ -689,7 +689,7 @@ public:
 
 		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
 
-		ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
+		//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
 
 		if( q_sby_error_code != 0 )
 		{
@@ -699,7 +699,7 @@ public:
 
 		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
 
-		double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
+		//double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
 
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
@@ -716,7 +716,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double time, double step, int ncall)
+	virtual int call(double /*time*/, double step, int ncall)
 	{
 		double T_htf_hot = value(I_T_HTF_HOT) + 273.15;			//[K] Hot HTF temp from the receiver, convert from C
 		double m_dot_htf = value(I_M_DOT_HTF)/3600.0;			//[kg/s] Mass flow rate of htf from receiver, convert from kg/s
@@ -781,7 +781,7 @@ public:
 			ms_phx_od_par.m_cp_htf = m_cp_rec;
 
 			int hx_od_error = 0;
-			ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
+			//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
 
 			if( hx_od_error != 0 )
 			{
@@ -804,7 +804,7 @@ public:
 			P_main_comp_in = ms_rc_cycle.get_od_solved()->m_pres[1-1];
 			P_main_comp_out = ms_rc_cycle.get_od_solved()->m_pres[2-1];
 			frac_recomp = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;		//[rpm]
+			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_N;		//[rpm]
 
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
 
@@ -928,7 +928,7 @@ public:
 		return 0;										 
 	}													 
 														 
-	virtual int converged(double time)					 
+	virtual int converged(double /*time*/)					 
 	{
 		if(m_standby_control == 3)
 		{

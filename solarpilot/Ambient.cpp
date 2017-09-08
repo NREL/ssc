@@ -78,7 +78,7 @@ void Ambient::Create(var_map &V)
 
 void Ambient::Clean(){};
 
-void Ambient::updateCalculatedParameters(var_map &V)
+void Ambient::updateCalculatedParameters(var_map &/*V*/)
 {
 
 }
@@ -334,7 +334,7 @@ void Ambient::calcSpacedDaysHours(double lat, double lon, double tmz, int nday, 
 	
 }
 
-double Ambient::calcInsolation(var_map &V, double azimuth, double zenith, int day_of_year) //calculate clear-sky radiation using one of the DELSOL models
+double Ambient::calcInsolation(var_map &V, double /*azimuth*/, double zenith, int day_of_year) //calculate clear-sky radiation using one of the DELSOL models
 {
 	/* 
 	Inputs:

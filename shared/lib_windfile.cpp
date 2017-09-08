@@ -111,54 +111,54 @@ static int locate2(char *buf, char **colidx, int colmax, char delim)
 	return ncols;
 }
 
-/* 
-   version of strtok_r from (2010/9/24)
-   http://www.koders.com/c/fid9E7961E1E818E911DA7C34DD56DD8782726B3FCD.aspx
-   */
-static char *gettoken2 (char *s, const char *delim, char **save_ptr)
-{
-	char *token;
-
-	if (s == NULL)
-		s = *save_ptr;
-
-	/* Scan leading delimiters.  */
-	s += strspn (s, delim);
-	if (*s == '\0')
-	{
-		*save_ptr = s;
-		return NULL;
-	}
-
-	/* Find the end of the token.  */
-	token = s;
-	s = strpbrk (token, delim);
-	
-	if (s == NULL)
-		/* This token finishes the string.  */
-		*save_ptr = strchr (token, '\0');
-	else
-	{
-		/* Terminate the token and make *SAVE_PTR point past it.  */
-		*s = '\0';
-		*save_ptr = s + 1;
-	}
-	return token;
-}
-
-static int cmp_ext(const char *file, const char *ext)
-{
-	size_t len_ext, len_file;
-	const char *extp;
-	
-	if (!file || !ext) return 0;
-	len_ext = strlen(ext);
-	len_file = strlen(file);
-	extp = file+len_file-len_ext;
-	
-	if (extp < file) return 0;
-	return CASENCMP(extp, ext, len_ext)==0 ? 1 : 0;
-}
+///* 
+//   version of strtok_r from (2010/9/24)
+//   http://www.koders.com/c/fid9E7961E1E818E911DA7C34DD56DD8782726B3FCD.aspx
+//   */
+//static char *gettoken2 (char *s, const char *delim, char **save_ptr)
+//{
+//	char *token;
+//
+//	if (s == NULL)
+//		s = *save_ptr;
+//
+//	/* Scan leading delimiters.  */
+//	s += strspn (s, delim);
+//	if (*s == '\0')
+//	{
+//		*save_ptr = s;
+//		return NULL;
+//	}
+//
+//	/* Find the end of the token.  */
+//	token = s;
+//	s = strpbrk (token, delim);
+//	
+//	if (s == NULL)
+//		/* This token finishes the string.  */
+//		*save_ptr = strchr (token, '\0');
+//	else
+//	{
+//		/* Terminate the token and make *SAVE_PTR point past it.  */
+//		*s = '\0';
+//		*save_ptr = s + 1;
+//	}
+//	return token;
+//}
+//
+//static int cmp_ext(const char *file, const char *ext)
+//{
+//	size_t len_ext, len_file;
+//	const char *extp;
+//	
+//	if (!file || !ext) return 0;
+//	len_ext = strlen(ext);
+//	len_file = strlen(file);
+//	extp = file+len_file-len_ext;
+//	
+//	if (extp < file) return 0;
+//	return CASENCMP(extp, ext, len_ext)==0 ? 1 : 0;
+//}
 
 #define MBUFLEN 4096
 
@@ -179,7 +179,7 @@ bool winddata_provider::find_closest( int& closest_index, int id, int ncols, dou
 	double height_diff = 1e99;
 	for ( size_t i=0;i<m_dataid.size();i++ )
 	{
-		if ( (m_dataid[i] == id) && (i != index_to_exclude) )
+		if ( (m_dataid[i] == id) && ((int)i != index_to_exclude) )
 		{
 			if ( fabs(m_heights[i] - requested_height) < height_diff )
 			{
@@ -245,8 +245,8 @@ bool winddata_provider::read( double requested_height,
 	if (find_closest(index, DIR, ncols, requested_height) )
 	{
 		// interpolating direction is a little more complicated
-		double dir1, dir2, angle;
-		double ht1, ht2;
+		double dir1=0, dir2=0, angle;
+		double ht1=0, ht2=0;
 		bool interp_direction = ( (bInterpolate) && (m_heights[index] != requested_height) && find_closest(index2, DIR, ncols, requested_height, index) && can_interpolate(index, index2, ncols, requested_height)  );
 		if ( interp_direction )
 		{

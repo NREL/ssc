@@ -86,7 +86,7 @@ AutoPilot_S *solarpilot_invoke::GetSAPI()
     return m_sapi;
 }
 
-bool solarpilot_invoke::run()
+bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 {
     /* 
     
@@ -218,13 +218,15 @@ bool solarpilot_invoke::run()
     
 	
 	//set up the weather data for simulation
-	const char *wffile = m_cmod->as_string("solar_resource_file" );
-	if ( !wffile ) throw compute_module::exec_error( "solarpilot", "no weather file specified" );
-	weatherfile wFile( wffile );
-	if ( !wFile.ok() || wFile.type() == weatherfile::INVALID ) throw compute_module::exec_error("solarpilot", wFile.message());
+	if (wdata == nullptr){
+		const char *wffile = m_cmod->as_string("solar_resource_file" );
+		wdata = make_shared<weatherfile>( wffile );
+		if ( !wdata ) throw compute_module::exec_error( "solarpilot", "no weather file specified" );
+		if ( !wdata->ok() || wdata->has_message() ) throw compute_module::exec_error("solarpilot", wdata->message());
+	}
 
 	weather_header hdr;
-	wFile.header( &hdr );
+	wdata->header(&hdr);
 		
     amb.latitude.val = hdr.lat;
 	amb.longitude.val = hdr.lon;
@@ -246,8 +248,8 @@ bool solarpilot_invoke::run()
 	    char buf[1024];
 	    for( int i=0;i<8760;i++ )
 	    {
-		    if( !wFile.read( &wf ) )
-			    throw compute_module::exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather file");
+			if (!wdata->read(&wf))
+			    throw compute_module::exec_error("solarpilot", "could not read data line " + util::to_string(i+1) + " of 8760 in weather data");
 
 		    mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres/1000., wf.wspd);
 		    wfdata.push_back( std::string(buf) );

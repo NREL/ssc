@@ -233,7 +233,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double /*time*/, double /*step*/, int /*ncall*/ )
 	{
 		// inputs
 		double Qtpb = value(I_Qtpb);
@@ -280,10 +280,10 @@ public:
 		double TempCorr3 = value(I_TempCorr3);
 		double TempCorr4 = value(I_TempCorr4);
 		double TurTesEffAdj = value(I_TurTesEffAdj);
-		double TurTesOutAdj = value(I_TurTesOutAdj);
+		//double TurTesOutAdj = value(I_TurTesOutAdj);
 		double MinGrOut = value(I_MinGrOut);
 		double MaxGrOut = value(I_MaxGrOut);
-		double NUMTOU = value(I_NUMTOU);
+		//double NUMTOU = value(I_NUMTOU);
 
 //Fossil Operation: This fills gas use to this fraction for every hour of month
 // len should be 9 or current number of dispatch periods
@@ -293,17 +293,17 @@ public:
 
 		double PbFixPar = value(I_PbFixPar);
 		double BOPPar = value(I_BOPPar);
-		double BOPParPF = value(I_BOPParPF);
+		//double BOPParPF = value(I_BOPParPF);
 		double BOPParF0 = value(I_BOPParF0);
 		double BOPParF1 = value(I_BOPParF1);
 		double BOPParF2 = value(I_BOPParF2);
 		double CtPar = value(I_CtPar);
-		double CtParPF = value(I_CtParPF);
+		//double CtParPF = value(I_CtParPF);
 		double CtParF0 = value(I_CtParF0);
 		double CtParF1 = value(I_CtParF1);
 		double CtParF2 = value(I_CtParF2);
 		double HtrPar = value(I_HtrPar);
-		double HtrParPF = value(I_HtrParPF);
+		//double HtrParPF = value(I_HtrParPF);
 		double HtrParF0 = value(I_HtrParF0);
 		double HtrParF1 = value(I_HtrParF1);
 		double HtrParF2 = value(I_HtrParF2);

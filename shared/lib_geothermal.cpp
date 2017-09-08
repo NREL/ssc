@@ -62,6 +62,11 @@
 #include "lib_physics.h"
 #include "lib_geothermal.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4127)  // ignore warning: 'warning C4127: conditional expression is constant'
+#endif
+
+
 #ifndef MAX
 #define MAX(a,b)  ((a>b)?a:b)
 #endif
@@ -842,7 +847,7 @@ double CGeothermalAnalyzer::NumberOfReservoirs(void)
 
 double CGeothermalAnalyzer::CalculatePumpWorkInKW(double dFlowLbPerHr, double dPumpHeadFt)
 {
-	double test = geothermal::pumpWorkInWattHr(dFlowLbPerHr, dPumpHeadFt, geothermal::EFFICIENCY_PUMP_FLASH, ms_ErrorString);
+//	double test = geothermal::pumpWorkInWattHr(dFlowLbPerHr, dPumpHeadFt, geothermal::EFFICIENCY_PUMP_FLASH, ms_ErrorString);
 
 	return geothermal::HPtoKW((dFlowLbPerHr * dPumpHeadFt)/(60 * 33000 * geothermal::EFFICIENCY_PUMP_FLASH));
 }
@@ -872,8 +877,8 @@ double CGeothermalAnalyzer::GetPumpWorkWattHrPerLb(void)
 		double dInjectionPressure = mo_geo_in.md_AdditionalPressure;
 		if (mo_geo_in.md_AdditionalPressure < 0)
 		{
-			double injectionPressurePSI = 150 - (pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI() );
-			double dInjectionPressure = (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // G40,  If it's less than zero, use zero.
+//			double injectionPressurePSI = 150 - (pressureInjectionWellBottomHolePSI() - pressureHydrostaticPSI() );
+//			double dInjectionPressure = (injectionPressurePSI < 0) ? 0 : injectionPressurePSI; // G40,  If it's less than zero, use zero.
 		}
 		double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
 
@@ -1707,7 +1712,7 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
 
 	// Go through time step (hours or months) one by one
-    bool bReDrill = false;
+//    bool bReDrill = false;
 	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
 	float fMonthlyPowerTotal;
 	for (unsigned int year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)

@@ -122,7 +122,7 @@ public:
 		return yret;
 	};
 	
-	void AddGenerator(vector<vector<int> > &design, int a, int b = 0, int c = 0, int d = 0, int e = 0)
+	void AddGenerator(vector<vector<int> > &/*design*/, int a, int b = 0, int c = 0, int d = 0, int e = 0)
 	{
 		vector<int> newgen;
 		if(a>0) newgen.push_back(a);
@@ -335,7 +335,7 @@ struct AutoOptHelper
         m_opt_names.clear();
     };
 
-    double Simulate(const double *x, int n, std::string *note=0)
+    double Simulate(const double *x, int /*n*/, std::string *note=0)
     {
         /* 
         Run a simulation and update points as needed. Report outcome from each step.
@@ -379,7 +379,7 @@ struct AutoOptHelper
     };
 };
 
-double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_leastsq_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
 	/* 
 	Evaluate the residual sum of squares
@@ -407,7 +407,7 @@ double optimize_leastsq_eval(unsigned n, const double *x, double *grad, void *da
 
 };
 
-double optimize_stdesc_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_stdesc_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
 	/* 
 	Minimize the response surface value subject to a maximum step size.
@@ -431,7 +431,7 @@ double optimize_stdesc_eval(unsigned n, const double *x, double *grad, void *dat
 
 };
 
-double optimize_maxstep_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_maxstep_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
 	
 	response_surface_data *D = static_cast<response_surface_data*>(data);
@@ -450,7 +450,7 @@ double optimize_maxstep_eval(unsigned n, const double *x, double *grad, void *da
 
 }
 
-double optimize_auto_eval(unsigned n, const double *x, double *grad, void *data)
+double optimize_auto_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
     AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
     //Only calls to methods available in AutoPilot base class are allowed!
@@ -459,7 +459,7 @@ double optimize_auto_eval(unsigned n, const double *x, double *grad, void *data)
 };
 
 
-double constraint_auto_eval(unsigned n, const double *x, double *grad, void *data)
+double constraint_auto_eval(unsigned n, const double *x, double * /*grad*/, void *data)
 {
     AutoOptHelper *D = static_cast<AutoOptHelper*>( data );
     
@@ -523,7 +523,7 @@ AutoPilot::~AutoPilot()
 	return;
 }
 
-bool AutoPilot::CreateLayout(sp_layout &layout, bool do_post_process)
+bool AutoPilot::CreateLayout(sp_layout &/*layout*/, bool /*do_post_process*/)
 {
 	
 	//override in inherited class
@@ -531,14 +531,14 @@ bool AutoPilot::CreateLayout(sp_layout &layout, bool do_post_process)
 	return false;
 };
 
-bool AutoPilot::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
+bool AutoPilot::CalculateOpticalEfficiencyTable(sp_optical_table &/*opttab*/)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
 	return false;
 };
 
-bool AutoPilot::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot::CalculateFluxMaps(sp_flux_table &/*fluxtab*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
@@ -577,7 +577,7 @@ void AutoPilot::SetExternalSFObject( SolarField *SF )
 	_is_solarfield_external = true;
 }
 
-bool AutoPilot::Setup(var_map &V, bool for_optimize)
+bool AutoPilot::Setup(var_map &V, bool /*for_optimize*/)
 {
 
 	/* 
@@ -778,7 +778,7 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
     
 }
 
-void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)
+void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool /*is_normalized*/)
 {
 	var_map *V = _SF->getVarMap();
     V->amb.sim_time_step.Setval(0.);    //sest the simulation time step for flux
@@ -787,6 +787,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	vector<Receiver*> rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
 	int fluxmap_format = V->par.fluxmap_format.mapval();
+	(void*)&fluxmap_format; // cast to reference variable
 	
 	if(flux_res_y > 1)
         V->flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY );
@@ -974,6 +975,8 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 
 	//Set the optimization objective value
 	double flux_overage_ratio = max(flux_max/V->recs.front().peak_flux.val, 1.);
+	(void*)&flux_overage_ratio;
+
 	obj_metric = tot_cost/power 
 		//* (1. + (flux_overage_ratio - 1.) * V->opt.flux_penalty.val) 
 		* (1. + (1. - power_shortage_ratio) * V->opt.power_penalty.val);
@@ -981,7 +984,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, double &flux_max, double &tot
 	return true;
 }
 
-bool AutoPilot::Optimize(int method, vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<double> &stepsize, vector<string> *names)
+bool AutoPilot::Optimize(int /*method*/, vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<double> &stepsize, vector<string> *names)
 {
 	/* 
 	
@@ -1003,7 +1006,7 @@ bool AutoPilot::Optimize(int method, vector<double*> &optvars, vector<double> &u
 
 }
 
-bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
+bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &/*is_range_constr*/, vector<string> *names)
 {
 	//Number of variables to be optimized
 	int nvars = (int)optvars.size();
@@ -1165,7 +1168,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		double min_ss;
 		try{
 			nlopt::result sres = surf.optimize(Reg.Beta, min_ss);
-			
+			(void*)&sres;
 		}
 		catch( std::exception &e ){
 			_summary_siminfo->addSimulationNotice( e.what() );
@@ -1320,7 +1323,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 						if( all_steep_objs.at(i) < best_steep_obj ) best_steep_obj = all_steep_objs.at(i);
 					if(best_fact_obj < best_steep_obj){
 						double zero=0.;
-						
+						(void*)&zero;
 						//Calculate a new step vector
 						vector<double> new_step_vector( step_vector );
 
@@ -1397,7 +1400,7 @@ bool AutoPilot::OptimizeRSGS(vector<double*> &optvars, vector<double> &upper_ran
 		this region to find the true minimum.
 		*/
 		double golden_ratio = 1./1.61803398875;
-		double alpha = 0.;
+		//double alpha = 0.;
 		int nsimpts = (int)all_sim_points.size();
 		vector<double>
 				lower_gs = all_sim_points.at( nsimpts - 1 - min( 2, minmax_iter ) ),
@@ -1624,7 +1627,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
     double fmin;
     try{
         nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+		(void*)&resopt;
         _summary_siminfo->addSimulationNotice( ol.c_str() );
         
         //int iopt = 0;
@@ -1671,7 +1674,7 @@ bool AutoPilot::OptimizeAuto(vector<double*> &optvars, vector<double> &upper_ran
 }
 
 
-bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper_range, vector<double> &lower_range, vector<bool> &is_range_constr, vector<string> *names)
+bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &/*upper_range*/, vector<double> & /*lower_range*/, vector<bool> & /*is_range_constr*/, vector<string> *names)
 {
     /* 
     Use canned algorithm to optimize
@@ -1758,7 +1761,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1836,7 +1839,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -1907,7 +1910,7 @@ bool AutoPilot::OptimizeSemiAuto(vector<double*> &optvars, vector<double> &upper
         double fmin;
         try{
             nlopt::result resopt = nlobj.optimize( start, fmin );
-        
+			(void*)&resopt;
             _summary_siminfo->addSimulationNotice( ol.c_str() );
         
             int iopt = 0;
@@ -2019,7 +2022,7 @@ bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vec
 	return true;
 }
 
-bool AutoPilot::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
+bool AutoPilot::CalculateFluxMaps(vector<vector<double> > & /*sunpos*/, vector<vector<double> > & /*fluxtab*/, vector<double> & /*efficiency*/, int /*flux_res_x*/, int /*flux_res_y*/, bool /*is_normalized*/)
 {
 	//override in inherited class
 	throw spexception("Virtual method cannot be called directly! Use derived class AutoPilot_S or AutoPilot_MT instead.");
@@ -2036,7 +2039,7 @@ bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 	PreSimCallbackUpdate();
 
 	int nsim_req = _SF->calcNumRequiredSimulations();
-
+	(void*)&nsim_req;
 	//if(! _SF->isSolarFieldCreated()){
 		//throw spexception("The solar field Create() method must be called before generating the field layout.");
 	//}

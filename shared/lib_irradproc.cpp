@@ -330,7 +330,7 @@ void incidence(int mode,double tilt,double sazm,double rlim,double zen,double az
 	counter clockwise the angle is negative. Range is -180 to +180 degrees.
 	When xsazm = azm : rot = 0, tilt = xtilt, and sazm = xsazm = azm  */
 
-	double arg,inc=0,xsazm,xtilt,rot,btdiff=0;
+	double arg,inc=0,xsazm,xtilt,rot=0,btdiff=0;
 
 	if (mode == 4)
 		mode = 0; //treat timeseries tilt as fixed tilt for each timestep
@@ -569,7 +569,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 	
 	double diff = 1E6;
 	double bestDiff = 1E6;
-	double Ktp;
+	double Ktp=0;
 	double GTI[] = { poa[0], poa[1], poa[2] };
 
 	double Ci[30] = {1., 1., 1., 0.5, 0.5,
@@ -582,14 +582,14 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 	double poa_tmp[3], diffc_tmp[3], poaBest[3];
 	
 	// Begin iterative solution for Kt
-	double Io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn (Taken from DIRINT Model)
+//	double Io = 1367.0 * (1.0 + 0.033 * cos(0.0172142 * doy));    // Extraterrestrial dn (Taken from DIRINT Model)
 	double cz = cos(zen);
 	int i = 0;
 	
 	while (fabs(diff) > 1.0 && i++ < 30 ){
 
 		// Calculate Kt using GTI and Eq. 2
-		double Kt_inc = GTI[1] / (Io * Max(0.065, cos(inc[1])));
+//		double Kt_inc = GTI[1] / (Io * Max(0.065, cos(inc[1])));
 
 		//Calculate GNI using Kt and DIRINT Eq.s
 		double dn_tmp;
@@ -639,7 +639,7 @@ double GTI_DIRINT( const double poa[3], const double inc[3], double zen, double 
 	return Ktp;
 }
 
-void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
+void poaDecomp( double , double angle[], double sun[], double alb, poaDecompReq *pA, double &dn, double &df, double &gh, double poa[3], double diffc[3]){
 	/* added by Severin Ryberg. Decomposes POA into direct normal and diffuse irradiances
 
 	List of Parameters Passed to Function:
@@ -751,7 +751,7 @@ void poaDecomp( double wfPOA, double angle[], double sun[], double alb, poaDecom
 	}
 }
 
-void isotropic( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
+void isotropic( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* added aug2011 by aron dobos. Defines isotropic sky model for diffuse irradiance on a tilted surface
 	
@@ -798,7 +798,7 @@ void isotropic( double hextra, double dn, double df, double alb, double inc, dou
 	}
 }
 
-void perez( double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
+void perez( double , double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] )
 {
 /* Modified aug2011 by aron dobos to split out beam, diffuse, ground for output.
 	Total POA is poa[0]+poa[1]+poa[2]
@@ -1272,8 +1272,8 @@ int irrad::calc()
 
 static double cosd( double x ) { return cos( DTOR*x ); }
 static double sind( double x ) { return sin( DTOR*x ); }
-static double tand( double x ) { return tan( DTOR*x ); }
-static double acosd( double x ) { return acos(x)/DTOR; }
+//static double tand( double x ) { return tan( DTOR*x ); }
+//static double acosd( double x ) { return acos(x)/DTOR; }
 
 static double vec_dot(double a[3], double b[3])
 {

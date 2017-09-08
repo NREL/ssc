@@ -55,7 +55,7 @@
 
 SSCEXPORT int ssc_version()
 {
-	return 176;
+	return 178;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -506,20 +506,20 @@ public:
 };
 */
 
-static ssc_bool_t default_internal_handler_no_print( ssc_module_t p_mod, ssc_handler_t p_handler,
-	int action_type, float f0, float f1, 
-	const char *s0, const char *s1,
-	void *p_data )
+static ssc_bool_t default_internal_handler_no_print( ssc_module_t /*p_mod*/, ssc_handler_t /*p_handler*/,
+	int /*action_type*/, float /*f0*/, float /*f1*/, 
+	const char * /*s0*/, const char * /*s1*/,
+	void * /*p_data*/ )
 {
 	// ignore all warnings and errors
 	// don't print progress updates
 	return 1;
 }
 
-static ssc_bool_t default_internal_handler( ssc_module_t p_mod, ssc_handler_t p_handler,
+static ssc_bool_t default_internal_handler( ssc_module_t /*p_mod*/, ssc_handler_t /*p_handler*/,
 	int action_type, float f0, float f1, 
-	const char *s0, const char *s1,
-	void *p_data )
+	const char *s0, const char * /*s1*/,
+	void * /*p_data*/ )
 {
 	if (action_type == SSC_LOG)
 	{

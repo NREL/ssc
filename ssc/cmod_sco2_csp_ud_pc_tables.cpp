@@ -82,16 +82,19 @@ static var_info _cm_vtab_sco2_csp_ud_pc_tables[] = {
 		// Air Cooler Design
 	{ SSC_INPUT,  SSC_NUMBER,  "fan_power_frac",       "Fraction of net cycle power consumed by air cooler fan", "",           "",    "",      "?=0.01",       "", "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of cycle high pressure that is design point cooler CO2 pressure drop", "", "", "", "?=0.002", "", "" },
-		// User Defined Power Cycle Table Inputs
-	{ SSC_INPUT,  SSC_NUMBER,  "T_htf_hot_low",        "Lower level of HTF hot temperature",					  "C",         "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "T_htf_hot_high",	   "Upper level of HTF hot temperature",					  "C",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "n_T_htf_hot",		   "Number of HTF hot temperature parametric runs",			  "",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "T_amb_low",			   "Lower level of ambient temperature",					  "C",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "T_amb_high",		   "Upper level of ambient temperature",					  "C",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "n_T_amb",			   "Number of ambient temperature parametric runs",			  "",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "m_dot_htf_ND_low",	   "Lower level of normalized HTF mass flow rate",			  "",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "m_dot_htf_ND_high",	   "Upper level of normalized HTF mass flow rate",			  "",		   "",    "",      "*",     "",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "n_m_dot_htf_ND",	   "Number of normalized HTF mass flow rate parametric runs", "",		   "",    "",      "*",     "",       "" },
+		// Off Design UDPC Options
+	{ SSC_INPUT,  SSC_NUMBER,  "is_generate_udpc",     "1 = generate udpc tables, 0 = only calculate design point cyle", "",   "",    "",      "?=1",   "",       "" },
+	{ SSC_INPUT,  SSC_NUMBER,  "is_apply_default_htf_mins", "1 = yes (0.5 rc, 0.7 simple), 0 = no, only use 'm_dot_htf_ND_low'", "", "", "",   "?=1",   "",       "" },
+	// User Defined Power Cycle Table Inputs
+	{ SSC_INOUT,  SSC_NUMBER,  "T_htf_hot_low",        "Lower level of HTF hot temperature",					  "C",         "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "T_htf_hot_high",	   "Upper level of HTF hot temperature",					  "C",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "n_T_htf_hot",		   "Number of HTF hot temperature parametric runs",			  "",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "T_amb_low",			   "Lower level of ambient temperature",					  "C",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "T_amb_high",		   "Upper level of ambient temperature",					  "C",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "n_T_amb",			   "Number of ambient temperature parametric runs",			  "",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "m_dot_htf_ND_low",	   "Lower level of normalized HTF mass flow rate",			  "",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "m_dot_htf_ND_high",	   "Upper level of normalized HTF mass flow rate",			  "",		   "",    "",      "",     "",       "" },
+	{ SSC_INOUT,  SSC_NUMBER,  "n_m_dot_htf_ND",	   "Number of normalized HTF mass flow rate parametric runs", "",		   "",    "",      "",     "",       "" },
 
 	// ** Design OUTPUTS **
 		// System Design Solution
@@ -111,12 +114,10 @@ static var_info _cm_vtab_sco2_csp_ud_pc_tables[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "?=1.2345",     "",       "" },
 		// Recompressor																															
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_des",           "Recompressor design flow coefficient",                   "",           "",    "",      "?=1.2345",     "",       "" },					
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio1_des",    "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "?=1.2345",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio2_des",    "Recompressor 2nd stage design tip speed ratio",          "",           "",    "",      "?=1.2345",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_tip_ratio_des",     "Recompressor 1st stage design tip speed ratio",          "",           "",    "",      "?=1.2345",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_n_stages",          "Recompressor stages",                                    "",           "",    "",      "?=1.2345",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_N_des",             "Recompressor design shaft speed",                        "rpm",        "",    "",      "?=1.2345",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D1",                "Recompressor first stage diameter",                      "m",          "",    "",      "?=1.2345",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D2",                "Recompressor second stage diameter",                     "m",          "",    "",      "?=1.2345",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "rc_D",                 "Recompressor first stage diameter",                      "m",          "",    "",      "?=1.2345",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "rc_phi_surge",         "Compressor flow coefficient where surge occurs",         "",           "",    "",      "?=1.2345",     "",       "" },
 		// Turbine																																
 	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "",    "",      "?=1.2345",     "",       "" },
@@ -317,21 +318,19 @@ public:
 			// Compressor
 		assign("P_comp_in", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[1 - 1] / 1000.0));		//[MPa] convert from kPa
 		assign("P_comp_out", (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[2 - 1] / 1000.0));		//[MPa] convert from kPa
-		assign("mc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_des);
-		assign("mc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_w_tip_ratio);		//[-]
-		assign("mc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_n_stages);	//[-]
-		assign("mc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_N_design);	//[rpm]
-		assign("mc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_D_rotor);			//[m]
-		assign("mc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_des_solved.m_phi_surge);	//[-]
+		assign("mc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_des);
+		assign("mc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_w_tip_ratio);		//[-]
+		assign("mc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_n_stages);	//[-]
+		assign("mc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_N_design);	//[rpm]
+		assign("mc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_D_rotor);			//[m]
+		assign("mc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_phi_surge);	//[-]
 			// Recompressor
-		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_des);	//[-]
-		assign("rc_tip_ratio1_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_1);	//[-]
-		assign("rc_tip_ratio2_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_w_tip_ratio_2);	//[-]
-		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_n_stages);	//[-]
-		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_N_design);	//[rpm]
-		assign("rc_D1", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor);		//[m] 
-		assign("rc_D2", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_D_rotor_2);		//[m]
-		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_des_solved.m_phi_surge);//[-]
+		assign("rc_phi_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_des);	//[-]
+		assign("rc_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_w_tip_ratio);	//[-]
+		assign("rc_n_stages", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_n_stages);	//[-]
+		assign("rc_N_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_N_design);	//[rpm]
+		assign("rc_D", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_D_rotor);		//[m] 
+		assign("rc_phi_surge", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_rc_ms_des_solved.m_phi_surge);//[-]
 			// Turbine
 		assign("t_nu_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
 		assign("t_tip_ratio_des", (ssc_number_t)p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
@@ -363,17 +362,83 @@ public:
 			p_P_co2_des[i] = (ssc_number_t)(p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_pres[i] / 1.E3);		//[MPa]
 		}
 
+		double sco2_f_min = 0.5;
+		if (!p_sco2_recomp_csp->get_design_solved()->ms_rc_cycle_solved.m_is_rc)
+			sco2_f_min = 0.7;
 
-		// Get user-defined power cycle parameters
-		double T_htf_hot_low = as_double("T_htf_hot_low");		//[C]
-		double T_htf_hot_high = as_double("T_htf_hot_high");	//[C]
-		int n_T_htf_hot_in = as_integer("n_T_htf_hot");			//[-]
-		double T_amb_low = as_double("T_amb_low");				//[C]
-		double T_amb_high = as_double("T_amb_high");			//[C]
-		int n_T_amb_in = as_integer("n_T_amb");					//[-]
-		double m_dot_htf_ND_low = as_double("m_dot_htf_ND_low");	//[-]
-		double m_dot_htf_ND_high = as_double("m_dot_htf_ND_high");	//[-]
-		int n_m_dot_htf_ND_in = as_integer("n_m_dot_htf_ND");			//[-]
+		double m_dot_htf_ND_low = sco2_f_min;;
+		if (is_assigned("m_dot_htf_ND_low"))
+		{
+			if (as_boolean("is_apply_default_htf_mins"))
+				m_dot_htf_ND_low = std::max(sco2_f_min, as_double("m_dot_htf_ND_low"));	//[-]
+			else
+				m_dot_htf_ND_low = as_double("m_dot_htf_ND_low");
+		}
+
+		assign("m_dot_htf_ND_low", m_dot_htf_ND_low);
+
+		if (as_integer("is_generate_udpc") == 0)
+		{
+			log("\n Design calculations complete; no off-design cases requested");
+			return;
+		}
+
+		// Get or calculate user-defined power cycle parameters
+		double T_htf_hot_low = sco2_rc_des_par.m_T_htf_hot_in - 273.15 - 20.0;		//[C]
+		if (is_assigned("T_htf_hot_low"))
+		{
+			T_htf_hot_low = as_double("T_htf_hot_low");		//[C]
+		}
+		assign("T_htf_hot_low", T_htf_hot_low);
+
+		double T_htf_hot_high = sco2_rc_des_par.m_T_htf_hot_in - 273.15 + 15.0;	//[C]
+		if (is_assigned("T_htf_hot_high"))
+		{
+			T_htf_hot_high = as_double("T_htf_hot_high");	//[C]
+		}
+		assign("T_htf_hot_high", T_htf_hot_high);
+
+		int n_T_htf_hot_in = 5;
+		if (is_assigned("n_T_htf_hot"))
+		{
+			n_T_htf_hot_in = as_integer("n_T_htf_hot");			//[-]
+		}
+		assign("n_T_htf_hot", n_T_htf_hot_in);
+
+		double T_amb_low = 0.0;
+		if (is_assigned("T_amb_low"))
+		{
+			T_amb_low = as_double("T_amb_low");				//[C]
+		}
+		assign("T_amb_low", T_amb_low);
+
+		double T_amb_high = std::max(45.0, sco2_rc_des_par.m_T_amb_des-273.15 + 5.0);
+		if (is_assigned("T_amb_high"))
+		{
+			T_amb_high = as_double("T_amb_high");			//[C]
+		}
+		assign("T_amb_high", T_amb_high);
+
+		int n_T_amb_in = 10;
+		if (is_assigned("n_T_amb"))
+		{
+			n_T_amb_in = as_integer("n_T_amb");					//[-]
+		}		
+		assign("n_T_amb", n_T_amb_in);
+
+		double m_dot_htf_ND_high = 1.05;
+		if (is_assigned("m_dot_htf_ND_high"))
+		{
+			m_dot_htf_ND_high = as_double("m_dot_htf_ND_high");
+		}
+		assign("m_dot_htf_ND_high", m_dot_htf_ND_high);
+
+		int n_m_dot_htf_ND_in = 10;
+		if (is_assigned("n_m_dot_htf_ND"))
+		{
+			n_m_dot_htf_ND_in = as_integer("n_m_dot_htf_ND");
+		}
+		assign("n_m_dot_htf_ND", n_m_dot_htf_ND_in);
 
 		if (n_T_htf_hot_in < 3 || n_T_amb_in < 3 || n_m_dot_htf_ND_in < 3)
 		{
@@ -439,6 +504,7 @@ public:
 			log(out_msg);
 		}
 		
+		log("\n UDPC tables complete");
 	}
 
 };

@@ -96,6 +96,14 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
+// NTE additions 8/10/17
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Nominal LNTE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+
 
 
 
@@ -116,6 +124,7 @@ enum {
 	CF_payback_with_expenses,
 	CF_cumulative_payback_with_expenses,
 	
+	CF_nte,
 
 	CF_max };
 
@@ -204,10 +213,10 @@ public:
 		// output from utility rate already nyears+1 - no offset
 		arrp = as_array("annual_energy_value", &count);
 		if (count != nyears+1)
-			throw exec_error("third party ownership", util::format("energy value input wron length (%d) should be (%d)",count, nyears+1));
+			throw exec_error("third party ownership", util::format("energy value input wrong length (%d) should be (%d)",count, nyears+1));
 		for (i = 0; i < (int)count; i++)
 			cf.at(CF_energy_value, i) = (double) arrp[i];
-		
+
 	
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		
@@ -262,24 +271,50 @@ public:
 		double npv_energy_real = npv( CF_energy_net, nyears, real_discount_rate );
 		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_real == 0.0) 
-		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
-		}
 		else
-		{
 			lcoe_real /= npv_energy_real;
-		}
 
 		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
 		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_nom == 0.0) 
-		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
-		}
 		else
-		{
 			lcoe_nom /= npv_energy_nom;
-		}
+
+
+		// NTE
+		ssc_number_t *ub_w_sys = 0;
+		ub_w_sys = as_array("elec_cost_with_system", &count);
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
+		ssc_number_t *ub_wo_sys = 0;
+		ub_wo_sys = as_array("elec_cost_without_system", &count);
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
+
+		for (i = 0; i < (int)count; i++)
+			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
+		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
+
+		for (i = 0; i < (int)count; i++)
+			if (cf.at(CF_energy_net,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_net,i);
+
+		double lnte_nom = lnte_real;
+		if (npv_energy_real == 0.0) 
+			lnte_real = std::numeric_limits<double>::quiet_NaN();
+		else
+			lnte_real /= npv_energy_real;
+		if (npv_energy_nom == 0.0) 
+			lnte_nom = std::numeric_limits<double>::quiet_NaN();
+		else
+			lnte_nom /= npv_energy_nom;
+
+		assign( "lnte_real", var_data((ssc_number_t)lnte_real) );
+		assign( "lnte_nom", var_data((ssc_number_t)lnte_nom) );
+		save_cf(CF_nte, nyears, "cf_nte");
+		assign( "year1_nte", var_data((ssc_number_t)cf.at(CF_nte,1)) );
+
 
 		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
@@ -291,7 +326,6 @@ public:
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
-		
 		
 		save_cf(CF_agreement_cost, nyears, "cf_agreement_cost");
 		save_cf(CF_energy_net, nyears, "cf_energy_net");

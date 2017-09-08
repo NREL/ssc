@@ -212,7 +212,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double /*time*/, double /*step*/, int /*ncall*/ )
 	{						
 		double P_cooling_tower = value( I_P_cooling_tower );	//[MWe] Cooling parasitics from power cycle model
 		double P_tower_pump = value( I_P_tower_pump );			//[MWe] Power required to pump HTF through the tower
@@ -281,7 +281,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		
 		return 0;

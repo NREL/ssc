@@ -77,7 +77,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "flux_max",                  "Maximum flux",                               "kW/m2",  "",         "SolarPILOT",   "*",                "",                "" },
 	*/
 
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "*",                "LOCAL_FILE",      "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "?",                "LOCAL_FILE",      "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_width",               "Heliostat width",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_height",              "Heliostat height",                           "m",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -177,9 +177,9 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		
+		shared_ptr<weather_data_provider> wdata = make_shared<weatherfile>(as_string("solar_resource_file"));
         solarpilot_invoke spi( this );
-        spi.run();
+        spi.run(wdata);
         AutoPilot_S *sapi = spi.GetSAPI();
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);

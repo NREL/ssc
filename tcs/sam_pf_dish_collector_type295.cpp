@@ -412,13 +412,13 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double /*time*/, double /*step*/, int /*ncall*/ )
 	{						
 		double I_beam_in = value( I_I_BEAM );			//[W/m^2]
-		double T_amb_in = value( I_T_AMB );
+		//double T_amb_in = value( I_T_AMB );
 		double wind_speed = value( I_WIND_SPEED );
 		double sun_angle_in = value( I_ZENITH );
-		double P_atm_in = value( I_P_ATM )*100.0;			//[Pa] Ambient pressure, convert from mbar
+		//double P_atm_in = value( I_P_ATM )*100.0;			//[Pa] Ambient pressure, convert from mbar
 		double solar_azimuth = value( I_AZIMUTH ) - 180.0;	//[deg] Convert to TRNSYS convention
 
 		m_x_mirror_gap = m_w_slot_gap;
@@ -466,7 +466,7 @@ public:
 			slope_diag = (rise_NS - rise_EW) / pow( (pow(L_NS,2)+pow(L_EW,2)) , 0.5 );
 
 		double rise_diag = 0.01*slope_diag*pow( (pow(L_NS,2)+pow(L_EW,2)) , 0.5 );
-		double phi_slope_diag = atan(rise_diag/pow( (pow(L_NS,2)+pow(L_EW,2)) , 0.5 ));
+		//double phi_slope_diag = atan(rise_diag/pow( (pow(L_NS,2)+pow(L_EW,2)) , 0.5 ));
 	
 		// N-S shade
 		double x_A = sin(phi_A)*L_NS;		// distance shading line from south dish is offset from center of north dish x-direction
@@ -739,7 +739,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		
 		return 0;

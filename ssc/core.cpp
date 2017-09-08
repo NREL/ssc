@@ -49,12 +49,11 @@
 
 #include <sstream>
 #include <fstream>
+#include <cstring>
 
 #include "core.h"
-#include "tcskernel.h"
 
 const var_info var_info_invalid = {	0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-tcstypeprovider sg_tcsTypeProvider;
 
 compute_module::compute_module( )
 	:  m_infomap(NULL), m_handler(NULL), m_vartab(NULL)
@@ -298,7 +297,9 @@ util::matrix_t<ssc_number_t>& compute_module::allocate_matrix( const std::string
 var_data &compute_module::value( const std::string &name ) throw( general_error )
 {
 	var_data *v = lookup( name );
-	if (!v)	throw general_error("ssc variable does not exist: '" + name + "'");
+	if (!v){
+		throw general_error("ssc variable does not exist: '" + name + "'");
+	}
 	return (*v);
 }
 

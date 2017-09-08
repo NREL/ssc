@@ -207,7 +207,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double time, double step, int ncall)
+	virtual int call(double /*time*/, double /*step*/, int /*ncall*/)
 	{
 		double T_hot_in =          value(I_T_hot_in);    
 		double flow_h =      	   value(I_flow_h);      

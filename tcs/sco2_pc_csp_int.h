@@ -222,7 +222,7 @@ public:
 	C_csp_messages mc_messages;
 
 	// Callback function with progress bar
-	bool(*mf_callback_update)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+	bool(*mf_callback_update)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 	void *mp_mf_update;
 	
 	C_sco2_rc_csp_template()
@@ -297,7 +297,7 @@ private:
 
 	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 
-	int od_fix_T_mc__nl_opt_shell__opt_eta();
+	//int od_fix_T_mc__nl_opt_shell__opt_eta();
 
 public:	
 
@@ -340,29 +340,29 @@ public:
 
 	virtual void design(C_sco2_rc_csp_template::S_des_par des_par);
 
-	void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
+	//void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
 
-	void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
+	//void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
 
 	virtual int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
-	bool opt_f_recomp_fix_P_mc_in_max_eta_core();
+	//bool opt_f_recomp_fix_P_mc_in_max_eta_core();
 
 	bool opt_P_mc_in_nest_f_recomp_max_eta_core();
 
-	bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
+	//bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
 
-	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+	//int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	int off_design(C_sco2_recomp_csp::S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
-	int find_a_feasible_off_design_solution(C_sco2_recomp_csp::S_od_par od_par, double T_mc_in /*K*/,
-				S_od_operation_inputs & od_op_inputs);
+	//int find_a_feasible_off_design_solution(C_sco2_recomp_csp::S_od_par od_par, double T_mc_in /*K*/,
+	//			S_od_operation_inputs & od_op_inputs);
 
 	int off_design_core(double & eta_solved);
 
 	// Class methods linked to nlopt callbacks - must be public
-	double od_fix_T_mc_approach__nl_opt_shell(const std::vector<double> &x);
+	//double od_fix_T_mc_approach__nl_opt_shell(const std::vector<double> &x);
 
 	double get_T_mc_in_min()
 	{
@@ -378,10 +378,10 @@ public:
 
 	virtual const S_od_solved * get_od_solved();
 
-	void sweep_turbomachinery_deltaP(double T_mc_in /*K*/, double P_mc_in /*kPa*/,
-							double T_t_in /*K*/, double phi_mc /*-*/);
+	//void sweep_turbomachinery_deltaP(double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+	//						double T_t_in /*K*/, double phi_mc /*-*/);
 
-	double opt_f_recomp_max_eta(double f_recomp);
+	//double opt_f_recomp_max_eta(double f_recomp);
 
 	double opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/);
 
@@ -393,16 +393,16 @@ public:
 	std::string mstr_base_name;
 };
 
-double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_f_recomp_cycle_eta(double x, void *data);
+//double fmin_f_recomp_cycle_eta(double x, void *data);
 
-double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data);
 
 // Optimization method callbacks
-double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
 class C_sco2_recomp_csp_10MWe_scale : public C_sco2_rc_csp_template

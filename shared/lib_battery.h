@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (�Alliance�) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  ("Alliance") under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -113,7 +113,7 @@ public:
 	virtual double q10() = 0; // capacity at 10 hour discharge rate
 
 	void check_charge_change(); 
-	bool check_SOC(double q0_old);
+	void check_SOC();
 	void update_SOC();
 
 	// common outputs
@@ -122,6 +122,7 @@ public:
 	double prev_DOD();
 	double q0();
 	double qmax(); 
+	double qmax_thermal();
 	double I();
 	bool chargeChanged();
 	double I_loss();
@@ -132,6 +133,7 @@ public:
 protected:
 	double _q0;  // [Ah] - Total capacity at timestep 
 	double _qmax; // [Ah] - maximum possible capacity
+	double _qmax_thermal; // [Ah] - maximum capacity adjusted for temperature affects
 	double _qmax0; // [Ah] - original maximum capacity
 	double _I;   // [A]  - Current draw during last step
 	double _I_loss; // [A] - Lifetime and thermal losses
@@ -230,7 +232,6 @@ public:
 protected:
 };
 
-
 /*
 Voltage Base class.  
 All voltage models are based on one-cell, but return the voltage for one battery
@@ -294,7 +295,7 @@ struct byDOD
 class voltage_table_t : public voltage_t
 {
 public:
-	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table);
+	voltage_table_t(int num_cells_series, int num_strings, double voltage, util::matrix_t<double> &voltage_table, double R);
 
 	// deep copy
 	voltage_table_t * clone();
@@ -361,7 +362,9 @@ public:
 	void updateVoltage(capacity_t * capacity, thermal_t * thermal, double dt);
 
 protected:
-	double voltage_model(double q0, double qmax, double T);
+	
+	// cell voltage model
+	double voltage_model(double q0, double qmax, double I_string, double T);
 
 private:
 	double _V_ref_50;				// Reference voltage at 50% SOC
@@ -595,20 +598,22 @@ public:
 	// main APIs
 	void run_losses(double dt_hour, size_t index);
 	void replace_battery();
-	double battery_system_loss(int index){ return _full_loss[index]; }
+	double battery_system_loss(int index){ return (_full_loss)[index]; }
 
 	enum { MONTHLY, TIMESERIES};
 
 protected:
+	
+	int _loss_mode;
+	int _nCycle;
+	
 	lifetime_t * _lifetime;
 	thermal_t * _thermal;
 	capacity_t * _capacity;
-	double_vec _charge_loss;
-	double_vec _discharge_loss;
-	double_vec _idle_loss;
-	double_vec _full_loss;
-	int _loss_mode;
-	int _nCycle;
+	double_vec  _charge_loss;
+	double_vec  _discharge_loss;
+	double_vec  _idle_loss;
+	double_vec  _full_loss;
 };
 
 /*
@@ -667,6 +672,7 @@ public:
 	double timestep_hour();
 
 	enum CHEMS{ LEAD_ACID, LITHIUM_ION, VANADIUM_REDOX, IRON_FLOW};
+	enum REPLACE{ NO_REPLACEMENTS, REPLACE_BY_CAPACITY, REPLACE_BY_SCHEDULE};
 
 
 private:

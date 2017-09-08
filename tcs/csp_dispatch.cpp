@@ -1605,7 +1605,7 @@ bool csp_dispatch_opt::optimize()
             break;
         case SUBOPTIMAL:
             type = C_csp_messages::NOTICE;
-            s << "Suboptimal solution identified.";
+			s << "Suboptimal solution identified.";
             break;
         case INFEASIBLE:
             type = C_csp_messages::WARNING;
@@ -1630,7 +1630,7 @@ bool csp_dispatch_opt::optimize()
             break;
         case OPTIMAL:
             type = C_csp_messages::NOTICE;
-            s << "Optimal solution identified.";
+			s << "Optimal solution identified.";
         default:
             break;
         }

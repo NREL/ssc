@@ -49,9 +49,11 @@
 
 #ifndef _CSP_COMMON_
 #define _CSP_COMMON_ 1
+#include <memory>
 
 #include "core.h"
 #include "AutoPilot_API.h"
+#include "lib_weatherfile.h"
 
 class solarpilot_invoke : public var_map
 {
@@ -79,7 +81,7 @@ public:
     solarpilot_invoke( compute_module *cm );
     ~solarpilot_invoke();
     AutoPilot_S *GetSAPI();
-    bool run();
+    bool run(std::shared_ptr<weather_data_provider> wdata = nullptr);
     bool postsim_calcs( compute_module *cm );
 };
 

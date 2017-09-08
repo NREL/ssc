@@ -2606,7 +2606,7 @@ public:
 		3=Single meter with monthly rollover credits in $ (Net Billing $)
 		4=Two meters with all generation sold and all load purchaseded
 		*/
-		int metering_option = as_integer("ur_metering_option");
+		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;
