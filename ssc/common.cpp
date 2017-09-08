@@ -1,4 +1,55 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
+#include <string>
 #include "common.h"
+#include "lib_weatherfile.h"
 
 var_info vtab_standard_financial[] = {
 
@@ -288,7 +339,7 @@ bool adjustment_factors::setup(int nsteps)
 		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
 		if ( p != 0 && n == nsteps )
 		{
-			for( size_t i=0;i<nsteps;i++ )
+			for( int i=0;i<nsteps;i++ )
 				m_factors[i] *= (1 - p[i]/100); //convert from percentages to factors
 		}
 	}
@@ -345,7 +396,7 @@ bool sf_adjustment_factors::setup(int nsteps)
 		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
 		if (p != 0 && n == nsteps)
 		{
-			for (size_t i = 0; i < nsteps; i++)
+			for (int i = 0; i < nsteps; i++)
 				m_factors[i] *= (1 - p[i] / 100); //convert from percentages to factors
 		}
 		if (n!=nsteps)
@@ -661,26 +712,61 @@ weatherdata::weatherdata( var_data *data_table )
 {
 	m_startSec = m_stepSec = m_nRecords = 0;
 	m_index = 0;
+	m_ok = true;
 
 	if ( data_table->type != SSC_TABLE ) 
 	{
-		m_error = "solar data must be an SSC table variable with fields: "
+		m_message = "solar data must be an SSC table variable with fields: "
 			"(numbers): lat, lon, tz, elev, "
 			"(arrays): year, month, day, hour, minute, gh, dn, df, poa, wspd, wdir, tdry, twet, tdew, rhum, pres, snow, alb, aod";
 		return;
 	}
+
 
 	m_hdr.lat = get_number( data_table, "lat" );
 	m_hdr.lon = get_number( data_table, "lon" );
 	m_hdr.tz = get_number( data_table, "tz" );
 	m_hdr.elev = get_number( data_table, "elev" );
 
-	int nrec = 0;
-	vec year = get_vector( data_table, "year", &nrec );
-	vec month = get_vector( data_table, "month", &nrec );
-	vec day = get_vector( data_table, "day", &nrec );
-	vec hour = get_vector( data_table, "hour", &nrec );
-	vec minute = get_vector( data_table, "minute", &nrec );
+	// make sure two types of irradiance are provided
+	size_t nrec = 0;
+	int n_irr = 0;
+	if (var_data *value = data_table->table.lookup("df"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (var_data *value = data_table->table.lookup("dn"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (var_data *value = data_table->table.lookup("gh"))
+	{
+		if (value->type == SSC_ARRAY){
+			nrec = value->num.length();
+			n_irr++;
+		}
+	}
+	if (nrec == 0 || n_irr < 1)
+	{
+		if (data_table->table.lookup("poa") == nullptr){
+			m_message = "missing irradiance: could not find gh, dn, df, or poa";
+			m_ok = false;
+			return;
+		}
+	}
+
+	// check that all vectors are of same length as irradiance vectors
+	vec year = get_vector( data_table, "year");
+	vec month = get_vector( data_table, "month");
+	vec day = get_vector( data_table, "day");
+	vec hour = get_vector( data_table, "hour");
+	vec minute = get_vector( data_table, "minute");
 	vec gh = get_vector( data_table, "gh", &nrec );
 	vec dn = get_vector( data_table, "dn", &nrec );
 	vec df = get_vector( data_table, "df", &nrec );
@@ -695,14 +781,17 @@ weatherdata::weatherdata( var_data *data_table )
 	vec snow = get_vector( data_table, "snow", &nrec ); 
 	vec alb = get_vector( data_table, "alb", &nrec ); 
 	vec aod = get_vector( data_table, "aod", &nrec ); 
-	
-	m_nRecords = (size_t)nrec;
+	if (m_ok == false){
+		return;
+	}
 
-	int nmult = nrec / 8760;
+	m_nRecords = nrec;
 
 	// estimate time step
-	if ( nmult * 8760 == nrec )
+	size_t nmult = 0;
+	if ( m_nRecords%8760 == 0 )
 	{
+		nmult = nrec / 8760;
 		m_stepSec = 3600 / nmult;
 		m_startSec = m_stepSec / 2;
 	}
@@ -717,41 +806,44 @@ weatherdata::weatherdata( var_data *data_table )
 	}
 	else
 	{
+		m_message = "could not determine timestep in weatherdata";
+		m_ok = false;
 		return;
 	}
 
 	if ( nrec > 0 && nmult >= 1 )
 	{
 		m_data.resize( nrec );
-		for( size_t i=0;i<nrec;i++ )
+		for( int i=0;i<nrec;i++ )
 		{
 			weather_record *r = new weather_record;
 
-			if ( i < year.len ) r->year = year.p[i]; 
+			if ( i < year.len ) r->year = (int)year.p[i]; 
 			else r->year = 2000;
 
-			if ( i < month.len ) r->month = month.p[i];
+			if ( i < month.len ) r->month = (int)month.p[i];
 			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				r->month = util::month_of(i);
+				r->month = util::month_of((double)i);
 			}
 
-			if ( i < day.len ) r->day = day.p[i];
+			if ( i < day.len ) r->day = (int)day.p[i];
 			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				int month = util::month_of( i );
-				r->day = util::day_of_month( month, i );
+				int month = util::month_of( (double)i );
+				r->day = util::day_of_month( month, (double)i );
 			}
 
-			if ( i < hour.len ) r->hour = hour.p[i];
+			if ( i < hour.len ) r->hour = (int)hour.p[i];
 			else if ( m_stepSec == 3600 && m_nRecords == 8760 ) {
-				int day = i / 24;
-				int start_of_day = day * 24;
-				r->hour = (float)(i - start_of_day);
+				size_t day = i / 24;
+				size_t start_of_day = day * 24;
+				r->hour = (int)(i - start_of_day);
 			}
 
 			if ( i < minute.len ) r->minute = minute.p[i];
 			else r->minute = (double)((m_stepSec / 2) / 60);
 
-
+			r->gh = r->dn = r->df = r->poa = r->wspd = r->wdir = r->tdry = r->twet = r->tdew 
+				= r->rhum = r->pres = r->snow = r->alb = r->aod = std::numeric_limits<double>::quiet_NaN();
 			if ( i < gh.len ) r->gh = gh.p[i];
 			if ( i < dn.len ) r->dn = dn.p[i];
 			if ( i < df.len ) r->df = df.p[i];
@@ -762,7 +854,19 @@ weatherdata::weatherdata( var_data *data_table )
 
 			if ( i < tdry.len ) r->tdry = tdry.p[i];
 			if ( i < twet.len ) r->twet = twet.p[i];
+			else{
+				// calculate twet using calc_twet if tdry & rh & pres are available
+				if ((i < tdry.len) && (i < rhum.len) && (i < pres.len)){
+					r->twet = (float)calc_twet(tdry.p[i], rhum.p[i], pres.p[i]);
+				}
+			}
 			if ( i < tdew.len ) r->tdew = tdew.p[i];
+			else{
+				// calculate tdew using wiki_dew_calc if tdry & rh are available
+				if ((i < tdry.len) && (i < rhum.len)){
+					r->tdew = (float)wiki_dew_calc(tdry.p[i], rhum.p[i]);
+				}
+			}
 
 			if ( i < rhum.len ) r->rhum = rhum.p[i];
 			if ( i < pres.len ) r->pres = pres.p[i];
@@ -782,12 +886,8 @@ weatherdata::~weatherdata()
 		delete m_data[i];
 }
 
-const char *weatherdata::error( size_t idx )
-{
-	return ( idx == 0 && m_error.size() > 0 ) ? m_error.c_str() : 0;
-}
 
-int weatherdata::name_to_id( const char *name )
+size_t weatherdata::name_to_id( const char *name )
 {
 	std::string n( util::lower_case( name ) );
 
@@ -814,7 +914,7 @@ int weatherdata::name_to_id( const char *name )
 	return -1;
 }
 
-weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *maxlen )
+weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, size_t *len )
 {
 	vec x;
 	x.p = 0;
@@ -823,12 +923,14 @@ weatherdata::vec weatherdata::get_vector( var_data *v, const char *name, int *ma
 	{
 		if ( value->type == SSC_ARRAY )
 		{
-			x.len = (int) value->num.length();
+			x.len = value->num.length();
 			x.p = value->num.data();
-			if ( maxlen && x.len > *maxlen )
-				*maxlen = x.len;
-
-			int id = name_to_id(name);
+			if (len && *len != x.len) {
+				std::string name_s(name);
+				m_message = name_s + " number of entries doesn't match with other fields";
+				m_ok = false;
+			}
+			size_t id = name_to_id(name);
 			if ( id >= 0 && !has_data_column( id ) ) m_columns.push_back( id );
 		}
 	}
@@ -847,10 +949,10 @@ ssc_number_t weatherdata::get_number( var_data *v, const char *name )
 	return std::numeric_limits<ssc_number_t>::quiet_NaN();
 }
 
-bool weatherdata::header( weather_header *h )
-{
-	*h = m_hdr;
-	return true;
+void weatherdata::set_counter_to(size_t cur_index){
+	if (cur_index >= 0 && cur_index < m_data.size()){
+		m_index = cur_index;
+	}
 }
 
 bool weatherdata::read( weather_record *r )
@@ -864,24 +966,25 @@ bool weatherdata::read( weather_record *r )
 		return false;
 }
 
-void weatherdata::rewind()
-{
-	m_index = 0;
-}
-
 bool weatherdata::has_data_column( size_t id )
 {
 	return std::find( m_columns.begin(), m_columns.end(), id ) != m_columns.end();
 }
 
-bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress)
+bool weatherdata::has_calculated_data(size_t id){
+	if (id == 10) return !std::isnan(m_data[m_nRecords - 1]->twet);
+	else if (id == 11) return !std::isnan(m_data[m_nRecords - 1]->tdew);
+	else return false;
+}
+
+bool ssc_cmod_update(std::string &log_msg, std::string &progress_msg, void *data, double progress, int log_type)
 {
 	compute_module *cm = static_cast<compute_module*> (data);
 	if (!cm)
 		return false;
 
 	if (log_msg != "")
-		cm->log(log_msg, SSC_WARNING);
+		cm->log(log_msg, log_type);
 	
-	return cm->update(progress_msg, progress);
+	return cm->update(progress_msg, (float)progress);
 }

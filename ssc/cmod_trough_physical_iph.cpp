@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 // Trough CSP - physical model
 #include "core.h"
 #include "tckernel.h"
@@ -53,7 +102,7 @@ static var_info _cm_vtab_trough_physical_process_heat[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "none",         "",               "solar_field",    "*",                       "",                      "" },
-    
+	{ SSC_INPUT,        SSC_NUMBER,      "wind_stow_speed",           "Trough wind stow speed",                                                           "m/s",          "",               "solar_field",    "?=50",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                         "-",            "",             "controller",     "*",                       "",                      "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "V_hdr_max",                 "Maximum HTF velocity in the header at design",                                     "W/m2",         "",               "solar_field",    "*",                       "",                      "" },
@@ -250,6 +299,7 @@ public:
 		//***************************************************************************
 			// Weather reader
 		C_csp_weatherreader weather_reader;
+		weather_reader.m_weather_data_provider = std::make_shared<weatherfile>(as_string("file_name"));
 		weather_reader.m_filename = as_string("file_name");
 		weather_reader.m_trackmode = 0;
 		weather_reader.m_tilt = 0.0;
@@ -265,10 +315,10 @@ public:
 
 		int steps_per_hour = 1;			//[-]
 
-		int n_wf_records = weather_reader.get_n_records();
+		int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
 		steps_per_hour = n_wf_records / 8760;	//[-]
 
-		int n_steps_fixed = steps_per_hour*8760.0;	//[-]
+		int n_steps_fixed = steps_per_hour*8760;	//[-]
 		sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;	//[s]
 		//***************************************************************************
 		//***************************************************************************
@@ -311,95 +361,96 @@ public:
 		c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec");  //[W/SCA] Tracking power, in Watts per SCA drive
 		c_trough.m_ColTilt = as_double("tilt");						//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
 		c_trough.m_ColAz = as_double("azimuth"); 					//[deg] Collector azimuth angle
+		c_trough.m_wind_stow_speed = as_double("wind_stow_speed");	//[m/s] Wind speed at and above which the collectors will be stowed
 		c_trough.m_accept_mode = as_integer("accept_mode");			//[-] Acceptance testing mode? (1=yes, 0=no)
-		c_trough.m_accept_init = as_double("accept_init");			//[-] In acceptance testing mode - require steady-state startup
+		c_trough.m_accept_init = as_boolean("accept_init");			//[-] In acceptance testing mode - require steady-state startup
 		c_trough.m_solar_mult = as_double("solar_mult");			//[-] Solar Multiple
 		c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
 		c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");	//[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
 		c_trough.m_mc_bal_sca = as_double("mc_bal_sca"); 			//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 		
 		//[m] The collector aperture width (Total structural area.. used for shadowing)
-		size_t nval_W_aperture = -1;
+		size_t nval_W_aperture = 0;
 		ssc_number_t *W_aperture = as_array("W_aperture", &nval_W_aperture);
 		c_trough.m_W_aperture.resize(nval_W_aperture);
-		for (int i = 0; i < nval_W_aperture; i++)
+		for (size_t i = 0; i < nval_W_aperture; i++)
 			c_trough.m_W_aperture[i] = (double)W_aperture[i];
 		
 		//[m^2] Reflective aperture area of the collector
-		size_t nval_A_aperture = -1;
+		size_t nval_A_aperture = 0;
 		ssc_number_t *A_aperture = as_array("A_aperture", &nval_A_aperture);
 		c_trough.m_A_aperture.resize(nval_A_aperture);
-		for (int i = 0; i < nval_A_aperture; i++)
+		for (size_t i = 0; i < nval_A_aperture; i++)
 			c_trough.m_A_aperture[i] = (double)A_aperture[i];
 
 		//[-] Tracking error derate
-		size_t nval_TrackingError = -1;
+		size_t nval_TrackingError = 0;
 		ssc_number_t *TrackingError = as_array("TrackingError", &nval_TrackingError);
 		c_trough.m_TrackingError.resize(nval_TrackingError);
-		for (int i = 0; i < nval_TrackingError; i++)
+		for (size_t i = 0; i < nval_TrackingError; i++)
 			c_trough.m_TrackingError[i] = (double)TrackingError[i];
 		
 		//[-] Geometry effects derate
-		size_t nval_GeomEffects = -1;
+		size_t nval_GeomEffects = 0;
 		ssc_number_t *GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
 		c_trough.m_GeomEffects.resize(nval_GeomEffects);
-		for (int i = 0; i < nval_GeomEffects; i++)
+		for (size_t i = 0; i < nval_GeomEffects; i++)
 			c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
 
 		//[-] Clean mirror reflectivity
-		size_t nval_Rho_mirror_clean = -1;
+		size_t nval_Rho_mirror_clean = 0;
 		ssc_number_t *Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
 		c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
-		for (int i = 0; i < nval_Rho_mirror_clean; i++)
+		for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
 			c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
 		
 		//[-] Dirt on mirror derate
-		size_t nval_Dirt_mirror = -1;
+		size_t nval_Dirt_mirror = 0;
 		ssc_number_t *Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
 		c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
-		for (int i = 0; i < nval_Dirt_mirror; i++)
+		for (size_t i = 0; i < nval_Dirt_mirror; i++)
 			c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
 		
 		//[-] General optical error derate
-		size_t nval_Error = -1;
+		size_t nval_Error = 0;
 		ssc_number_t *Error = as_array("Error", &nval_Error);
 		c_trough.m_Error.resize(nval_Error);
-		for (int i = 0; i < nval_Error; i++)
+		for (size_t i = 0; i < nval_Error; i++)
 			c_trough.m_Error[i] = (double)Error[i];
 		
 		//[m] The average focal length of the collector 
-		size_t nval_Ave_Focal_Length = -1;
+		size_t nval_Ave_Focal_Length = 0;
 		ssc_number_t *Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
 		c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
-		for (int i = 0; i < nval_Ave_Focal_Length; i++)
+		for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
 			c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
 		
 		//[m] The length of the SCA 
-		size_t nval_L_SCA = -1;
+		size_t nval_L_SCA = 0;
 		ssc_number_t *L_SCA = as_array("L_SCA", &nval_L_SCA);
 		c_trough.m_L_SCA.resize(nval_L_SCA);
-		for (int i = 0; i < nval_L_SCA; i++)
+		for (size_t i = 0; i < nval_L_SCA; i++)
 			c_trough.m_L_SCA[i] = (double)L_SCA[i];
 
 		//[m] The length of a single mirror/HCE unit
-		size_t nval_L_aperture = -1;
+		size_t nval_L_aperture = 0;
 		ssc_number_t *L_aperture = as_array("L_aperture", &nval_L_aperture);
 		c_trough.m_L_aperture.resize(nval_L_aperture);
-		for (int i = 0; i < nval_L_aperture; i++)
+		for (size_t i = 0; i < nval_L_aperture; i++)
 			c_trough.m_L_aperture[i] = (double)L_aperture[i];
 		
 		//[-] The number of individual collector sections in an SCA
-		size_t nval_ColperSCA = -1;
+		size_t nval_ColperSCA = 0;
 		ssc_number_t *ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
 		c_trough.m_ColperSCA.resize(nval_ColperSCA);
-		for (int i = 0; i < nval_ColperSCA; i++)
+		for (size_t i = 0; i < nval_ColperSCA; i++)
 			c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
 
 		//[m] Piping distance between SCA's in the field
-		size_t nval_Distance_SCA = -1;
+		size_t nval_Distance_SCA = 0;
 		ssc_number_t *Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
 		c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
-		for (int i = 0; i < nval_Distance_SCA; i++)
+		for (size_t i = 0; i < nval_Distance_SCA; i++)
 			c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
 
 		c_trough.m_IAM_matrix = as_matrix("IAM_matrix");		//[-] IAM coefficients, matrix for 4 collectors
@@ -438,7 +489,7 @@ public:
 		c_trough.m_Tau_envelope = as_matrix("Tau_envelope");             //[-] Envelope transmittance
 		c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                   //[-] Inner glass envelope emissivities
 		c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                   //[-] Outer glass envelope emissivities
-		c_trough.m_GlazingIntact = as_matrix("GlazingIntactIn");         //[-] Glazing intact (broken glass) flag {1=true, else=false}
+		c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);         //[-] Glazing intact (broken glass) flag {1=true, else=false}
 		c_trough.m_P_a = as_matrix("P_a");		                         //[torr] Annulus gas pressure				 
 		c_trough.m_AnnulusGas = as_matrix("AnnulusGas");		         //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
 		c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");	 //[-] Absorber material type
@@ -449,10 +500,10 @@ public:
 		c_trough.m_SCAInfoArray = as_matrix("SCAInfoArray");			 //[-] Receiver (,1) and collector (,2) type for each assembly in loop 
 		
 		//[-] Collector defocus order
-		size_t nval_SCADefocusArray = -1;
+		size_t nval_SCADefocusArray = 0;
 		ssc_number_t *SCADefocusArray = as_array("SCADefocusArray", &nval_SCADefocusArray);
 		c_trough.m_SCADefocusArray.resize(nval_SCADefocusArray);
-		for (int i = 0; i < nval_SCADefocusArray; i++)
+		for (size_t i = 0; i < nval_SCADefocusArray; i++)
 			c_trough.m_SCADefocusArray[i] = (int)SCADefocusArray[i];
 
 		// Allocate trough outputs
@@ -684,13 +735,23 @@ public:
 		if (count != n_steps_fixed)
 			throw exec_error("trough_physical_iph", "The number of fixed steps does not match the length of output data arrays3");
 
+		ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count);
+		if (count != n_steps_fixed)
+			throw exec_error("trough_physical_iph", "The number of fixed steps for 'm_dot_tes_dc' does not match the length of output data arrays");
+
+		ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
+		if (count != n_steps_fixed)
+			throw exec_error("trough_physical_iph", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
+		
 		for(int i = 0; i < n_steps_fixed; i++)
 		{
-			size_t hour = ceil(p_time_final_hr[i]);
-			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)haf(hour) * 1.E3;		//[kWt]
+			size_t hour = (size_t)ceil(p_time_final_hr[i]);
+			p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);		//[kWt]
 			p_W_dot_parasitic_tot[i] *= -1.0;			//[kWe] Label is total parasitics, so change to a positive value
-			p_W_dot_par_tot_haf[i] = p_W_dot_parasitic_tot[i] * (ssc_number_t)haf(hour) * 1.E3;		//[kWe]
-			p_q_dot_defocus_est[i] = (1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i];	//[MWt]
+			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]
+			p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i];	//[MWt]
+			p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);		//[kg/s] convert from kg/hr
+			p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);		//[kg/s] convert from kg/hr
 		}
 
 		// Monthly outputs
@@ -712,9 +773,10 @@ public:
 		// Calculate water use
 		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
 		double V_water_mirrors = as_double("water_usage_per_wash")/1000.0*A_aper_tot*as_double("washing_frequency");
-		assign("annual_total_water_use", V_water_mirrors);		//[m3]
-	}
+		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
 
+	}
+	
 };
 
 DEFINE_MODULE_ENTRY(trough_physical_process_heat, "Physical trough process heat applications", 1)

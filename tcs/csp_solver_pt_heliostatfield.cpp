@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "csp_solver_pt_heliostatfield.h"
 #include "sam_csp_util.h"
 #include "csp_solver_core.h"
@@ -140,9 +189,9 @@ void C_pt_heliostatfield::init()
 		//nrows2 = ms_params.m_nrows_land_bound_list;
 		//land_bound_list = value(P_land_bound_list, &nrows2);
 
-		m_p_start = ms_params.m_p_start;
-		m_p_track = ms_params.m_p_track;
-		m_hel_stow_deploy = ms_params.m_hel_stow_deploy*CSP::pi / 180.0;
+		m_p_start = ms_params.m_p_start;		//[kWe-hr] Heliostat startup energy
+		m_p_track = ms_params.m_p_track;		//[kWe] Heliostat tracking power
+		m_hel_stow_deploy = ms_params.m_hel_stow_deploy*CSP::pi / 180.0;	//[rad]
 		m_v_wind_max = ms_params.m_v_wind_max;
 		
 		interp_nug = ms_params.m_interp_nug;
@@ -296,6 +345,7 @@ void C_pt_heliostatfield::init()
             var_heliostat *hf = &V.hels.front();
 			hf->width.val = helio_width;
 			hf->height.val = helio_height;
+			hf->err_azimuth.val = hf->err_elevation.val = hf->err_reflect_x.val = hf->err_reflect_y.val = 0.;   //all other error =0
 			hf->err_surface_x.val = hf->err_surface_y.val = helio_optical_error;
 			hf->reflect_ratio.val = helio_active_fraction * dens_mirror;   //availability * mirror area fraction
 			hf->reflectivity.val = helio_reflectance;
@@ -340,11 +390,14 @@ void C_pt_heliostatfield::init()
             var_receiver *rf = &V.recs.front();
 			rf->absorptance.val = rec_absorptance;
 			rf->rec_height.val = rec_height;
-			rf->rec_diameter.val = rec_height / rec_aspect;
+			rf->rec_width.val = rf->rec_diameter.val = rec_height / rec_aspect;
 			rf->therm_loss_base.val = rec_hl_perm2;
 			
 			V.sf.q_des.val = q_design;
 			V.sf.dni_des.val = dni_des;
+			V.land.is_bounds_scaled.val = true;
+			V.land.is_bounds_fixed.val = false;
+			V.land.is_bounds_array.val = false;
 			V.land.max_scaled_rad.val = land_max;
 			V.land.min_scaled_rad.val = land_min;
 			V.sf.tht.val = h_tower;
@@ -377,8 +430,22 @@ void C_pt_heliostatfield::init()
 			V.amb.atm_coefs.val.at(var_ambient::ATM_MODEL::USERDEFINED, 2) = c_atm_2;
 			V.amb.atm_coefs.val.at(var_ambient::ATM_MODEL::USERDEFINED, 3) = c_atm_3;
 
+			V.recs.front().peak_flux.val = 1000.0;
+			V.opt.max_step.val = 0.06;
+			V.opt.max_iter.val = 200;
+			V.opt.converge_tol.val = 0.001;
+			V.opt.algorithm.combo_select_by_mapval(1);
+			V.opt.flux_penalty.val = 0.25;
+
 			if(run_type == RUN_TYPE::AUTO)
 			{
+				V.recs.front().peak_flux.val = 1000.0;
+				V.opt.max_step.val = 0.06;
+				V.opt.max_iter.val = 200;
+				V.opt.converge_tol.val = 0.001;
+				V.opt.algorithm.combo_select_by_mapval(1);
+				V.opt.flux_penalty.val = 0.25;
+
 				/* 
 				Generate the heliostat field layout using the settings provided by the user				
 				*/
@@ -464,7 +531,8 @@ void C_pt_heliostatfield::init()
 
 			
 
-			//set up flux map resolution
+			// set up flux map resolution
+			sp_flux_table fluxtab;
 			fluxtab.is_user_spacing = true;
 			fluxtab.n_flux_days = n_flux_days;
 			fluxtab.delta_flux_hrs = delta_flux_hrs;
@@ -486,7 +554,7 @@ void C_pt_heliostatfield::init()
 			effs.reserve(npos);
 
             //eta_map = allocate( P_eta_map, npos, 3, 0.);
-			ms_params.m_eta_map.resize_fill(npos, 3.0, 0.0);
+			ms_params.m_eta_map.resize_fill(npos, 3, 0.0);
 
 			m_flux_positions.resize(npos, VectDoub(2) );
 
@@ -661,7 +729,7 @@ void C_pt_heliostatfield::call(const C_csp_weatherreader::S_outputs &weather, do
 		sf_adjust = ms_params.m_sf_adjust.at((int)(time / full_step) - 1);
 	}
 
-	double v_wind = weather.m_wspd;
+	double v_wind = weather.m_wspd;			//[m/s]
 	m_v_wind_current = v_wind;
 	double field_control = field_control_in;	// Control Parameter ( range from 0 to 1; 0=off, 1=all on)
 	if( field_control_in > 1.0 )

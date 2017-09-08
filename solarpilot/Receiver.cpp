@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "Receiver.h"
 #include <math.h>
 #include "exceptions.hpp"
@@ -14,7 +63,7 @@ void FluxPoint::Setup(double xloc, double yloc, double zloc, Vect &norm, double 
 	over_flux = false;
 	area_factor = Area_factor;
 };
-void FluxPoint::Setup(Point &loc, Vect &norm, double flux_max, double Area_factor){
+void FluxPoint::Setup(sp_point &loc, Vect &norm, double flux_max, double Area_factor){
 	location.x = loc.x; location.y = loc.y; location.z = loc.z;
 	normal.i = norm.i; normal.j = norm.j; normal.k = norm.k;
 	maxflux = flux_max;
@@ -29,7 +78,7 @@ int FluxSurface::getId() {return _id;};
 FluxGrid *FluxSurface::getFluxMap(){return &_flux_grid;}
 int FluxSurface::getFluxNX(){return _nflux_x;}
 int FluxSurface::getFluxNY(){return _nflux_y;}
-Point *FluxSurface::getSurfaceOffset(){return &_offset;}
+sp_point *FluxSurface::getSurfaceOffset(){return &_offset;}
 double FluxSurface::getSurfaceWidth(){return _width;}
 double FluxSurface::getSurfaceHeight(){return _height;}
 double FluxSurface::getSurfaceRadius(){return _radius;}
@@ -42,7 +91,7 @@ void FluxSurface::setMaxFlux(double maxflux){_max_flux = maxflux;}
 void FluxSurface::setNormalVector(Vect &vect){
 	_normal = vect;
 }
-void FluxSurface::setSurfaceOffset(Point &loc){_offset = loc;}
+void FluxSurface::setSurfaceOffset(sp_point &loc){_offset = loc;}
 void FluxSurface::setSurfaceSpanAngle(double span_min, double span_max){_span_ccw = span_min; _span_cw = span_max;}
 void FluxSurface::setSurfaceGeometry(double height, double width, double radius){
 	_width = width;
@@ -90,7 +139,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double daz = (_span_cw - _span_ccw)/double(_nflux_x);	
 
 		double faz;
-		Point floc;
+		sp_point floc;
 		Vect fnorm;
 		double dz = _height/double(_nflux_y);	//height of each flux node
 		for(int i=0; i<_nflux_x; i++){
@@ -143,7 +192,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double rec_dh = _height/double(_nflux_y);
 
 		double faz, fzen;
-		Point floc;
+		sp_point floc;
 		Vect fnorm;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
@@ -188,7 +237,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double rec_dh = _height/double(_nflux_y);
 		double rec_dw = _width/double(_nflux_x);
 
-		Point floc;
+		sp_point floc;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 			for(int j=0; j<_nflux_y; j++){
@@ -223,7 +272,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 		double rec_dh = _height/double(_nflux_y);
 		double rec_dw = _width/double(_nflux_x);
 		
-		Point floc;
+		sp_point floc;
 		for(int i=0; i<_nflux_x; i++){
 			_flux_grid.at(i).resize(_nflux_y);	//number of columns
 			for(int j=0; j<_nflux_y; j++){
@@ -264,6 +313,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 
 		int npanels = V.n_panels.val; 
 		double panel_az = V.panel_rotation.val * D2R; 
+		(void*)&panel_az;
 		//calculate the angular span each panel occupies
 		double panel_az_span = span / (double)npanels;
 		
@@ -308,7 +358,7 @@ void FluxSurface::DefineFluxPoints(var_receiver &V, int rec_geom, int nx, int ny
 			double h = panel_radii.at(i)/cos( panel_azimuths.at(i) - faz ); //hypotenuse 
 
 			//x-y location of flux point
-			Point floc;
+			sp_point floc;
 			floc.x = h * sin(faz - rec_az);
 			floc.y = h * cos(faz - rec_az);
 
@@ -370,17 +420,19 @@ void FluxSurface::Reshape(int nx, int ny){
 	Take the current flux map and shape it into the specified dimension while maintaining total power
 	*/
 	double flux_tot = getTotalFlux();
-
+	(void*)&flux_tot;
 	int
 		index_start = 0,
 		index_now = 0,
 		nx_old = _nflux_x,
 		ny_old = _nflux_y;
-
+	(void*)&index_start;
+	(void*)&index_now;
 	double
 		ifact_x = (float)nx/(float)nx_old,
 		ifact_y = (float)ny/(float)ny_old;
-
+	(void*)&ifact_x;
+	(void*)&ifact_y;
 	//FluxGrid grid_temp(nx,ny);
 
 	//Code Here -- TO DO
@@ -572,12 +624,12 @@ void Receiver::isReceiverEnabled(bool enable)
 
 void Receiver::CalculateNormalVector(PointVect &NV){
 	//If no normal vector is supplied, provide the default
-	Point Vn;
+	sp_point Vn;
 	Vn.Set(0., 0., 0.);
 	Receiver::CalculateNormalVector(Vn, NV);
 }
 
-void Receiver::CalculateNormalVector(Point &Hloc, PointVect &NV){
+void Receiver::CalculateNormalVector(sp_point &Hloc, PointVect &NV){
 	/* 
 	This subroutine should be used to calculate the normal vector to the receiver for a given heliostat location.
 	Ultimately, the optical calculations should not use this method to calculate the normal vector. Instead, use
@@ -676,7 +728,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 		S->setParent(this);
 
 		//Do setup
-		Point loc;
+		sp_point loc;
         loc.Set(_var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val);
 		S->setSurfaceGeometry( _var_receiver->rec_height.val, 0., _var_receiver->rec_diameter.val/2. );
 		S->setSurfaceOffset( loc );
@@ -760,7 +812,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 		//	S->setNormalVector(nv);
 
 		//	//Calculate the centroid of the panel in global XYZ coords
-		//	Point pc;
+		//	sp_point pc;
 		//	pc.x = nv.i * _var_receiver->rec_diameter.val/2.;
 		//	pc.y = nv.j * _var_receiver->rec_diameter.val/2.;
 		//	pc.z = nv.k * _var_receiver->rec_diameter.val/2.;
@@ -787,7 +839,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 
 	//		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 
-	//		Point loc;
+	//		sp_point loc;
  //           loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
 	//		S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, _var_receiver->rec_diameter.val/2. );
 	//		S->setSurfaceOffset( loc );
@@ -855,7 +907,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 	//			S->setNormalVector(nv);
 
 	//			//Calculate the centroid of the panel in global XYZ coords
-	//			Point pc;
+	//			sp_point pc;
 	//			pc.x = nv.i * _var_receiver->rec_diameter.val/2.;
 	//			pc.y = nv.j * _var_receiver->rec_diameter.val/2.;
 	//			pc.z = nv.k * _var_receiver->rec_diameter.val/2.;
@@ -886,7 +938,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y) {
 
 		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 
-		Point loc;
+		sp_point loc;
         loc.Set( _var_receiver->rec_offset_x.val, _var_receiver->rec_offset_y.val, _var_receiver->rec_offset_z.val );
 		S->setSurfaceGeometry( _var_receiver->rec_height.val, _var_receiver->rec_width.val, 0. );
 		S->setSurfaceOffset( loc );
@@ -1007,7 +1059,7 @@ void Receiver::CalculateThermalEfficiency(double dni, double dni_des, double v_w
 
 }
 
-double Receiver::CalculateApparentDiameter(Point &Hloc)
+double Receiver::CalculateApparentDiameter(sp_point &Hloc)
 { 
 	/* 
 	[m] Return the apparent receiver diameter given the polygonal structure

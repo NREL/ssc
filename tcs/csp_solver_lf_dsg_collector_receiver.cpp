@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "csp_solver_lf_dsg_collector_receiver.h"
 
 #include "water_properties.h"
@@ -272,8 +321,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_EPSILON_5 = m_EPSILON_4;	
 
 	//m_AbsorberMaterial
-	int n_rows_abs = m_AbsorberMaterial_in.nrows();
-	int n_cols_abs = m_AbsorberMaterial_in.ncols();
+	int n_rows_abs = (int)m_AbsorberMaterial_in.nrows();
+	int n_cols_abs = (int)m_AbsorberMaterial_in.ncols();
 
 	int n_rows_matrix_lk_in = 2;
 	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 1) )
@@ -292,12 +341,12 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	for( int i = 0; i < n_rows_matrix_lk_in; i++ )
 	{
 		m_AbsorberMaterial.at(i, 0) = new AbsorberProps;
-		m_AbsorberMaterial.at(i, 0)->setMaterial(m_AbsorberMaterial_in.at(i, 0));
+		m_AbsorberMaterial.at(i, 0)->setMaterial((int)m_AbsorberMaterial_in.at(i, 0));
 	}
 
 	//m_AnnulusGas [-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
-	n_rows_abs = m_AnnulusGas_in.nrows();
-	n_cols_abs = m_AnnulusGas_in.ncols();
+	n_rows_abs = (int)m_AnnulusGas_in.nrows();
+	n_cols_abs = (int)m_AnnulusGas_in.ncols();
 	if( !(n_rows_abs == n_rows_matrix_lk_in && n_cols_abs == 4) )
 	{
 		std::string err_msg = util::format("HCE annulus gas type matrix should have %d rows (b,SH) and 4 columns (HCE options) - the input matrix has %d rows and %d columns", 
@@ -313,7 +362,7 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		for (int j = 0; j < 4; j++)
 		{
 			m_AnnulusGas.at(i, j) = new HTFProperties;
-			m_AnnulusGas.at(i, j)->SetFluid(m_AnnulusGas_in.at(i, j));
+			m_AnnulusGas.at(i, j)->SetFluid((int)m_AnnulusGas_in.at(i, j));
 		}
 	}
 
@@ -357,8 +406,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	}
 
 	//[-] Boiler Optical Table
-	n_rows_abs = m_b_OpticalTable.nrows();
-	n_cols_abs = m_b_OpticalTable.ncols();
+	n_rows_abs = (int)m_b_OpticalTable.nrows();
+	n_cols_abs = (int)m_b_OpticalTable.ncols();
 
 	// Set up the optical table object..
 
@@ -401,8 +450,8 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	//0608
 	if (m_is_multgeom)
 	{
-		int n_rows = m_sh_OpticalTable.nrows();
-		int n_cols = m_sh_OpticalTable.ncols();
+		int n_rows = (int)m_sh_OpticalTable.nrows();
+		int n_cols = (int)m_sh_OpticalTable.ncols();
 
 		// Set up the optical table object..
 
@@ -534,9 +583,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 		// IAM polynomials
 		double iam_t = 0.0;
 		double iam_l = 0.0;
-		for (int i = 0; i < m_IAM_L.ncols(); i++)
+		for (size_t i = 0; i < m_IAM_L.ncols(); i++)
 			iam_l += m_IAM_L.at(0, i)*pow(theta_L, i);
-		for (int i = 0; i < m_IAM_T.ncols(); i++)
+		for (size_t i = 0; i < m_IAM_T.ncols(); i++)
 			iam_t += m_IAM_T.at(0, i)*pow(phi_t, i);
 		m_opteff_des.at(0, 0) = m_eta_opt_fixed.at(0, 0) * iam_t * iam_l;
 	}
@@ -565,9 +614,9 @@ void C_csp_lf_dsg_collector_receiver::init(const C_csp_collector_receiver::S_csp
 			// IAM polynomials
 			double iam_t = 0.0;
 			double iam_l = 0.0;
-			for (int i = 0; i < m_IAM_L.ncols(); i++)
+			for (size_t i = 0; i < m_IAM_L.ncols(); i++)
 				iam_l += m_IAM_L.at(1, i)*pow(theta_L, i);
-			for (int i = 0; i < m_IAM_T.ncols(); i++)
+			for (size_t i = 0; i < m_IAM_T.ncols(); i++)
 				iam_t += m_IAM_T.at(1, i)*pow(phi_t, i);
 			m_opteff_des.at(1, 0) = m_eta_opt_fixed.at(1, 0) * iam_t * iam_l;
 		}
@@ -1055,7 +1104,7 @@ int C_csp_lf_dsg_collector_receiver::C_mono_eq_h_loop_out_target::operator()(dou
 {
 	// Need to recalculate pressure, and therefore target enthalpy
 		// Calculate the field outlet pressure as a function of mass flow rate [bar]
-	m_P_field_out = mpc_dsg_lf->od_pressure(m_dot_loop);
+	m_P_field_out = mpc_dsg_lf->od_pressure(m_dot_loop);	//[bar]
 	// Calculate the target outlet enthalpy
 	int wp_code = 0;
 	m_h_sca_out_target = std::numeric_limits<double>::quiet_NaN();
@@ -1133,7 +1182,7 @@ int C_csp_lf_dsg_collector_receiver::freeze_protection(const C_csp_weatherreader
 	{
 		fp_code = c_fp_solver.solve(T_guess_lower, T_guess_upper, 0.0, T_cold_in_solved, tol_solved, iter_solved);
 	}
-	catch( C_csp_exception &csp_except )
+	catch( C_csp_exception & )
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::off - freeze protection failed"));
 	}
@@ -1171,7 +1220,7 @@ void C_csp_lf_dsg_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 		m_step_recirc = 10.0*60.0;		//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
+	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
 
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
@@ -1347,7 +1396,7 @@ void C_csp_lf_dsg_collector_receiver::startup(const C_csp_weatherreader::S_outpu
 		m_step_recirc = 10.0*60.0;		//[s]
 
 	// Calculate number of steps required given timestep from solver and recirculation step
-	int n_steps_recirc = std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
+	int n_steps_recirc = (int)std::ceil(sim_info.ms_ts.m_step / m_step_recirc);	//[-]
 
 	// Define a copy of the sim_info structure
 	double time_start = sim_info.ms_ts.m_time - sim_info.ms_ts.m_step;	//[s] Time at start of step
@@ -1704,7 +1753,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				defocus_code = c_defocus_solver.solve(defocus_guess_lower, defocus_guess_upper, 0.0, 
 													defocus_solved, defocus_tol_solved, defocus_iter);
 			}
-			catch( C_csp_exception & csp_except )
+			catch( C_csp_exception &  )
 			{
 				throw(C_csp_exception("C_csp_lf_dsg_collector::on(...) COMPONENT defocus method reached exception."));
 				on_success = false;
@@ -1753,7 +1802,7 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				m_dot_code = c_h_out_target_solver.solve(m_dot_guess_lower, m_dot_guess_upper, 0.0, 
 													m_dot_loop, tol_solved, iter_solved);
 			}
-			catch( C_csp_exception &csp_except )
+			catch( C_csp_exception & )
 			{
 				throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
 				on_success = false;
@@ -1767,7 +1816,8 @@ void C_csp_lf_dsg_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 				}
 				else
 				{
-					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration failed."));
+					throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::on(...) mass flow rate iteration did not"
+						"within a relative tolerance of 0.1."));
 				}				
 				//on_success = false;
 			}
@@ -1920,6 +1970,8 @@ double C_csp_lf_dsg_collector_receiver::turb_pres_frac(double m_dot_nd, int fmod
 		return max(fP_min, m_dot_nd);
 	case 4:
 		return 1.0;	// IPH case where heat sink is not utilizing pressure for expansion
+	default:
+		return 0;
 	}
 }
 
@@ -2587,18 +2639,44 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int_ave(doubl
 	double T_out_t_end_local = 0.0;
 	for(int i = 0; i < n_steps; i++)
 	{
-		transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
-										step_subts, h_out_t_start_local, h_out_t_end_local, T_out_t_end_local);
-		//
-		//
-		//
-		//double q_bal_htf = m_dot*(0.5*(h_out_t_start_local+h_out_t_end_local) - h_in);
-		//
-		//double q_bal_int_energy = C_thermal*(T_out_t_end_local - T_out_t_end_prev_local) / step_subts;
-		//
-		//double q_bal_sca = q_dot_abs - q_bal_htf - q_bal_int_energy;
-		//
-		//
+		try
+		{
+			transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
+				step_subts, h_out_t_start_local, h_out_t_end_local, T_out_t_end_local);
+		}
+		catch (C_csp_exception &csp_except)
+		{
+			int error_code = csp_except.m_error_code;
+
+			if (error_code != 5)
+			{
+				throw(C_csp_exception(csp_except));
+			}
+
+			int n_steps_lx = 20;
+			double steps_subts_local = step_subts / (double)n_steps;
+
+			double h_out_t_int_sum_lx = 0.0;
+			double h_out_t_end_lx = 0.0;
+			double h_out_t_start_lx = 0.0;
+			double T_out_t_end_lx = 0.0;
+
+			for (int j = 0; j < n_steps_lx; j++)
+			{
+
+				transient_energy_bal_numeric_int(h_in, P_in, q_dot_abs, m_dot, T_out_t_end_prev_local, C_thermal,
+					steps_subts_local, h_out_t_start_lx, h_out_t_end_lx, T_out_t_end_lx);
+
+				h_out_t_int_sum_lx += 0.5*(h_out_t_start_lx + h_out_t_end_lx);
+				T_out_t_end_prev_local = T_out_t_end_lx;
+			}
+			
+			h_out_t_end_local = h_out_t_end_lx;
+			double h_out_t_int_lx = h_out_t_int_sum_lx / (double)n_steps;
+			h_out_t_start_local = 2.0*h_out_t_int_lx - h_out_t_end_local;
+			T_out_t_end_local = T_out_t_end_lx;
+		}
+
 		h_out_t_int_sum += 0.5*(h_out_t_start_local + h_out_t_end_local);	//[kJ/K]
 		T_out_t_end_prev_local = T_out_t_end_local;		//[K]
 
@@ -2724,7 +2802,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 	{
 		h_out_t_end_code = c_h_out_t_end_solver.solve(h_out_t_end_prev, h_out_t_end_guess2, 0.0, h_out_t_end, tol_solved, iter_solved);
 	}
-	catch( C_csp_exception & csp_excpet )
+	catch( C_csp_exception &  )
 	{
 		throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed"));
 	}
@@ -2737,7 +2815,7 @@ void C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int(double h_
 		}
 		else
 		{
-			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence"));
+			throw(C_csp_exception("C_csp_lf_dsg_collector_receiver::transient_energy_bal_numeric_int monotonic solver failed to reach convergence","",5));
 		}		
 	}
 
@@ -3821,7 +3899,7 @@ void C_csp_lf_dsg_collector_receiver::call(const C_csp_weatherreader::S_outputs 
 		// Do we have enough to do standby?
 		if (q_avail_tot > m_q_pb_des*m_q_sby_frac && m_t_sby_prev > 0.0 && m_is_pb_on_prev)
 		{
-			standby_control = 2.0;	// Operate in standby mode
+			standby_control = 2;	// Operate in standby mode
 			m_t_sby = max(0.0, m_t_sby_prev - m_dt / 3600.0);
 			q_aux = max(m_q_sby_frac*m_q_pb_des - q_field_delivered, 0.0);
 			m_dot_aux = 0.0;		// It's not meaningful to report the aux mass flow rate

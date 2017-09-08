@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 
 #include <string>
 #include <cmath>
@@ -664,7 +713,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "PV array DC energy",                                   "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "System AC energy",                                     "kWh/mo",    "",                      "Monthly",       "*",                    "LENGTH=12",                              "" },
 
-	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                              "kWh/m2/yr", "",                      "Annual (Year 1)",       "*",                    "",                              "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                              "Wh/m2/yr", "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA irradiance total nominal",                          "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_beam_nom",                         "POA irradiance beam nominal",                           "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_shaded",                           "POA irradiancetotal after shading only",                 "kWh/yr",    "",                      "Annual (Year 1)",       "*",                    "",                              "" },
@@ -991,6 +1040,7 @@ public:
 		else if ( is_assigned( "solar_resource_data" ) )
 		{
 			wdprov = std::auto_ptr<weather_data_provider>( new weatherdata( lookup("solar_resource_data") ) );
+			if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
 		}
 		else
 			throw exec_error("pvsamv1", "no weather data supplied");
@@ -1186,7 +1236,7 @@ public:
 					sa[nn].sscalc.nrows = (int)floor((sa[nn].nstrings * modules_per_string) / (sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody));
 					//if nrows comes out to be zero, this will cause a divide by zero error. Give an error in this case.
 					if (sa[nn].sscalc.nrows == 0 && sa[nn].nstrings != 0) //no need to give an error if the subarray has 0 strings
-						throw exec_error("pvsamv1", "Self shading: Number of rows calculated for subarray " + util::to_string(to_double(nn + 1)) + " was zero. Please check your inputs.");
+						throw exec_error("pvsamv1", "Self shading: Number of rows calculated for subarray " + util::to_string(to_double((double)nn + 1)) + " was zero. Please check your inputs.");
 					// Otherwise, if self-shading configuration does not have equal number of modules as specified on system design page for that subarray,
 					// compute dc derate using the self-shading configuration and apply it to the whole subarray. Give warning.
 					if ((sa[nn].sscalc.nmodx * sa[nn].sscalc.nmody * sa[nn].sscalc.nrows) != (sa[nn].nstrings * modules_per_string))
@@ -1687,8 +1737,11 @@ public:
 		if (system_use_lifetime_output == 1)
 			nyears = as_integer("analysis_period");
 
-		if ( __ARCHBITS__ == 32 && system_use_lifetime_output )
+		// Warning workaround
+		static bool is32BitLifetime = (__ARCHBITS__ == 32 && system_use_lifetime_output);
+		if (is32BitLifetime)
 			throw exec_error( "pvsamv1", "Lifetime simulation of PV systems is only available in the 64 bit version of SAM.");
+
 
 		ssc_number_t *p_dc_degrade_factor = 0;
 
@@ -1823,10 +1876,10 @@ public:
 		ssc_number_t *p_xfmr_loss_ts = allocate("xfmr_loss_ts", nrec);
 
 
-		ssc_number_t xfmr_rating = ratedACOutput * util::watt_to_kilowatt; // W to kW
-		ssc_number_t xfmr_ll_frac = as_number("transformer_load_loss") *0.01; // % to frac
-		ssc_number_t xfmr_nll = as_number("transformer_no_load_loss") *0.01; // % to frac
-		xfmr_nll *=  ts_hour * xfmr_rating; // kW
+		ssc_number_t xfmr_rating = (ssc_number_t)(ratedACOutput * util::watt_to_kilowatt); // W to kW
+		ssc_number_t xfmr_ll_frac = (ssc_number_t)(as_number("transformer_load_loss") *0.01); // % to frac
+		ssc_number_t xfmr_nll = (ssc_number_t)(as_number("transformer_no_load_loss") *0.01); // % to frac
+		xfmr_nll *=  (ssc_number_t)(ts_hour * xfmr_rating); // kW
 
 		// allocate output arrays for all subarray-specific parameters
 		for (int nn=0;nn<4;nn++)
@@ -1978,9 +2031,9 @@ public:
 				sa[nn].poa.poaAll.zen = new double[ 8760*step_per_hour ];
 				sa[nn].poa.poaAll.exTer = new double[ 8760*step_per_hour ];
 					
-				for (int h=0; h<8760; h++){
-					for	(int m=0; m < step_per_hour; m++){
-						int ii = h * step_per_hour + m;
+				for (size_t h=0; h<8760; h++){
+					for	(size_t m=0; m < step_per_hour; m++){
+						size_t ii = h * step_per_hour + m;
 						int month_idx = wf.month - 1;
 
 						if (sa[nn].track_mode == 4) //timeseries tilt input
@@ -2113,7 +2166,7 @@ public:
 					// load data over entrie lifetime period not currently supported.
 					//					log(util::format("year=%d, hour=%d, step per hour=%d, load=%g",
 					//						iyear, hour, jj, cur_load), SSC_WARNING, (float)idx);
-					p_load_full[idx] = cur_load;
+					p_load_full[idx] = (ssc_number_t)cur_load;
 
 					if (!wdprov->read(&wf))
 						throw exec_error("pvsamv1", "could not read data line " + util::to_string((int)(idx + 1)) + " in weather file");
@@ -2187,6 +2240,16 @@ public:
 								wf.poa, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
 							return;
 						}
+						if (wf.tdry != wf.tdry){
+							log(util::format("missing temperature %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.tdry, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
+						if (wf.wspd != wf.wspd){
+							log(util::format("missing wind speed %lg W/m2 at time [y:%d m:%d d:%d h:%d], exiting",
+								wf.wspd, wf.year, wf.month, wf.day, wf.hour), SSC_ERROR, (float)idx);
+							return;
+						}
 
 						// Check for bad data
 						if ((wf.gh < 0 || wf.gh > IRRMAX) && (radmode == DN_GH || radmode == GH_DF))
@@ -2256,7 +2319,7 @@ public:
 						}
 						// beam, skydiff, and grounddiff IN THE PLANE OF ARRAY
 						double ibeam, iskydiff, ignddiff;
-						double ipoa; // Container for direct POA measurements
+						double ipoa=0; // Container for direct POA measurements
 						double aoi, stilt, sazi, rot, btd;
 
 
@@ -2472,7 +2535,7 @@ public:
 
 							//execute self-shading calculations
 							ssc_number_t beam_to_use; //some self-shading calculations require DNI, NOT ibeam (beam in POA). Need to know whether to use DNI from wf or calculated, depending on radmode
-							if (radmode == DN_DF || radmode == DN_GH) beam_to_use = wf.dn; 
+							if (radmode == DN_DF || radmode == DN_GH) beam_to_use = (ssc_number_t)wf.dn;
 							else beam_to_use = p_irrad_calc[2][idx];
 
 							if (linear && trackbool) //one-axis linear
@@ -2551,7 +2614,7 @@ public:
 							p_poashaded[nn][idx] = (ssc_number_t)poashad;
 							p_poaeffbeam[nn][idx] = (ssc_number_t)ibeam;
 							p_poaeffdiff[nn][idx] = (ssc_number_t)(iskydiff + ignddiff);
-							p_poaeff[nn][idx] = (ssc_number_t)(radmode == POA_R) ? ipoa : (ibeam + iskydiff + ignddiff);
+							p_poaeff[nn][idx] = (radmode == POA_R) ? (ssc_number_t)ipoa : (ssc_number_t)(ibeam + iskydiff + ignddiff);
 							p_shad[nn][idx] = (ssc_number_t)beam_shading_factor;
 							p_rot[nn][idx] = (ssc_number_t)rot;
 							p_idealrot[nn][idx] = (ssc_number_t)(rot - btd);
@@ -2798,7 +2861,7 @@ public:
 					if (system_use_lifetime_output == 1 && en_dc_lifetime_losses)
 					{
 						//current index of the lifetime daily DC losses is the number of years that have passed (iyear, because it is 0-indexed) * the number of days + the number of complete days that have passed
-						int dc_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						int dc_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
 						if (iyear == 0) annual_dc_lifetime_loss += dcpwr_net * (dc_lifetime_losses[dc_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						dcpwr_net *= (100 - dc_lifetime_losses[dc_loss_index]) / 100;
 					}
@@ -2867,11 +2930,9 @@ public:
 				for (size_t jj = 0; jj < step_per_hour; jj++)
 				{
 
-
-
 					// Battery replacement
-					if (en_batt)
-						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, iyear, hour, jj);
+					if (en_batt && (ac_or_dc == charge_controller::DC_CONNECTED))
+						batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
 
 					// Iterative loop over DC battery
 					size_t dc_count = 0; bool iterate_dc = false;
@@ -3027,6 +3088,10 @@ public:
 
 					if (en_batt && ac_or_dc == charge_controller::AC_CONNECTED)
 					{
+						// Battery replacement
+						if (en_batt)
+							batt.check_replacement_schedule(batt_replacement_option, count_batt_replacement, batt_replacement, (int)iyear, (int)hour, (int)jj);
+
 						batt.advance(*this, iyear, hour, jj, p_gen[idx], p_load_full[idx]);
 						p_gen[idx] = batt.outGenPower[idx];
 					}
@@ -3043,7 +3108,7 @@ public:
 					if (system_use_lifetime_output == 1 && en_ac_lifetime_losses)
 					{
 						//current index of the lifetime daily AC losses is the number of years that have passed (iyear, because it is 0-indexed) * days in a year + the number of complete days that have passed
-						int ac_loss_index = iyear * 365 + (int)floor(hour / 24); //in units of days
+						int ac_loss_index = (int)iyear * 365 + (int)floor(hour / 24); //in units of days
 						if (iyear == 0) annual_ac_lifetime_loss += p_gen[idx] * (ac_lifetime_losses[ac_loss_index] / 100) * util::watt_to_kilowatt * ts_hour; //this loss is still in percent, only keep track of it for year 0, convert from power W to energy kWh
 						p_gen[idx] *= (100 - ac_lifetime_losses[ac_loss_index]) / 100;
 					}
@@ -3096,9 +3161,9 @@ public:
 
 		// scale by ts_hour to convert power -> energy
 		double annual_dc_net = accumulate_annual_for_year("dc_net", "annual_dc_net", ts_hour, step_per_hour);
-		double annual_ac_net = accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
+		accumulate_annual_for_year("gen", "annual_ac_net", ts_hour, step_per_hour);
 		double annual_inv_cliploss = accumulate_annual_for_year("inv_cliploss", "annual_inv_cliploss", ts_hour, step_per_hour);
-		double annual_dc_invmppt_loss = accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
+		accumulate_annual_for_year("dc_invmppt_loss", "annual_dc_invmppt_loss", ts_hour, step_per_hour);
 
 		double annual_inv_psoloss = accumulate_annual_for_year("inv_psoloss", "annual_inv_psoloss", ts_hour, step_per_hour );
 		double annual_inv_pntloss = accumulate_annual_for_year("inv_pntloss", "annual_inv_pntloss", ts_hour, step_per_hour);
@@ -3117,7 +3182,7 @@ public:
 
 		// accumulate annual and monthly battery model outputs
 		if ( en_batt ) batt.calculate_monthly_and_annual_outputs( *this );
-		else assign( "average_cycle_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
+		else assign( "average_battery_roundtrip_efficiency", var_data( 0.0f ) ); // if battery disabled, since it's shown in the metrics table
 
 		// calculate nominal dc input
 		double annual_dc_nominal = (inp_rad * mod_eff / 100.0);
@@ -3181,9 +3246,9 @@ public:
 		assign("annual_dc_gross", var_data((ssc_number_t)annual_dc_gross));
 		assign("annual_ac_gross", var_data((ssc_number_t)annual_ac_gross));
 
-		assign("xfmr_nll_year1", annual_xfmr_nll);
-		assign("xfmr_ll_year1", annual_xfmr_ll);
-		assign("xfmr_loss_year1", annual_xfmr_loss);
+		assign("xfmr_nll_year1", (ssc_number_t)annual_xfmr_nll);
+		assign("xfmr_ll_year1", (ssc_number_t)annual_xfmr_ll);
+		assign("xfmr_loss_year1", (ssc_number_t)annual_xfmr_loss);
 
 		assign("annual_dc_mismatch_loss", var_data((ssc_number_t)annual_mismatch_loss));
 		assign("annual_dc_diodes_loss", var_data((ssc_number_t)annual_diode_loss));
@@ -3398,8 +3463,6 @@ public:
 		double kWhperkW = 0.0;
 		double nameplate = as_double("system_capacity");
 		if (nameplate > 0) kWhperkW = annual_energy / nameplate;
-		// adjustment for timestep values
-		kWhperkW *= ts_hour;
 		assign("capacity_factor", var_data((ssc_number_t)(kWhperkW / 87.6)));
 		assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 	}
@@ -3522,7 +3585,7 @@ public:
 					if (da[i] > maxVmp) 
 					{
 						maxVmp = da[i];
-						maxVmpHour = i;
+						maxVmpHour = (int)i;
 					}
 				}
 			}

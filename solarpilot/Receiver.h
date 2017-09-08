@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #ifndef _RECEIVER_H_
 #define _RECEIVER_H_ 1
 
@@ -18,7 +67,7 @@ class SolarField;
 
 /*Define a structure that contains information on each mesh point for the receiver surface*/
 struct FluxPoint {
-	Point location;
+	sp_point location;
 	Vect normal;
 	double 
 		/*x, //[m] Node x-position (-East, +West) in global coordinates
@@ -35,7 +84,7 @@ struct FluxPoint {
 	FluxPoint();
 	
 	void Setup(double xloc, double yloc, double zloc, Vect &norm, double flux_max, double Area_factor = 1.);
-	void Setup(Point &loc, Vect &norm, double flux_max, double Area_factor = 1.);
+	void Setup(sp_point &loc, Vect &norm, double flux_max, double Area_factor = 1.);
 
 };
 
@@ -82,7 +131,7 @@ class FluxSurface : public mod_base
 
 	Vect
 		_normal;
-	Point
+	sp_point
 		_offset;
 
 	FluxGrid _flux_grid; // std::vector containing grid
@@ -96,7 +145,7 @@ public:
 	FluxGrid *getFluxMap();
 	int getFluxNX();
 	int getFluxNY();
-	Point *getSurfaceOffset();
+	sp_point *getSurfaceOffset();
 	double getSurfaceWidth();
 	double getSurfaceHeight();
 	double getSurfaceRadius();
@@ -108,7 +157,7 @@ public:
 	void setFluxPrecision(int nx, int ny);
 	void setMaxFlux(double maxflux);
 	void setNormalVector(Vect &vect);
-	void setSurfaceOffset(Point &loc);
+	void setSurfaceOffset(sp_point &loc);
 	void setSurfaceSpanAngle(double span_min, double span_max);
 	void setSurfaceGeometry(double height, double width, double radius = 0.);
 	void setMaxObservedFlux(double fmax);
@@ -167,7 +216,7 @@ public:
     int getGeometryType();
     var_receiver* getVarMap();
 	void CalculateNormalVector(PointVect &NV);	//Returns the normal std::vector and receiver centroid that represents the optimal optical incidence
-	void CalculateNormalVector(Point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal std::vector given a viewpoint std::vector
+	void CalculateNormalVector(sp_point &Hloc, PointVect &NV);	//(Overload) for non-flat receivers, closest normal std::vector given a viewpoint std::vector
 	FluxSurfaces *getFluxSurfaces();
 
     bool isReceiverEnabled();
@@ -178,7 +227,7 @@ public:
 	void CalculateAbsorberArea();
 	void CalculateThermalLoss(double load, double v_wind);
 	void CalculateThermalEfficiency(double dni, double dni_des, double v_wind, double q_des);
-	double CalculateApparentDiameter(Point &Hloc); //[m] Return the apparent receiver diameter given the polygonal structure
+	double CalculateApparentDiameter(sp_point &Hloc); //[m] Return the apparent receiver diameter given the polygonal structure
 
  } ;
 

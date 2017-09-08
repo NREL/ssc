@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <numeric>
 #include <limits>
 #include <math.h>
@@ -46,15 +95,15 @@ void C_monotonic_eq_solver::settings( double tol, int iter_limit, double x_lower
 
 double C_monotonic_eq_solver::check_against_limits(double x)
 {
-	if( m_func_x_lower != m_func_x_lower && m_func_x_upper != m_func_x_upper )
+	if( !std::isfinite(m_func_x_lower) && !std::isfinite(m_func_x_upper) )
 	{
 		return x;
 	}
-	else if( m_func_x_lower != m_func_x_lower )
+	else if ( !std::isfinite(m_func_x_lower) )
 	{
 		return std::min(m_func_x_upper, x);
 	}
-	else if( m_func_x_upper != m_func_x_upper )
+	else if ( !std::isfinite(m_func_x_upper) )
 	{
 		return std::max(m_func_x_lower, x);
 	}
@@ -145,14 +194,14 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 	// *****************************************************************
 
 	// Check whether function returned real results
-	if( y1 != y1 && y2 != y2 )
+	if ( !std::isfinite(y1) && !std::isfinite(y2) )
 	{
 		// Neither x guess produced a real result. Get out.
 		x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 		iter_solved = 0;
 		return NO_SOLUTION;
 	}
-	else if( y1 != y1 )
+	else if( !std::isfinite(y1) )
 	{
 		// y2 produced a real result, but y1 did not
 		// So try guessing a new x1 on other side of x2
@@ -173,14 +222,14 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// Check if this worked...
-		if( y1 != y1 )
+		if( !std::isfinite(y1) )
 		{
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
 			return NO_SOLUTION;
 		}
 	}
-	else if( y2 != y2 )
+	else if( !std::isfinite(y2) )
 	{
 		// y1 produced a real result, but y2 did not
 		// So try guessing a new x2 on the other side of x1
@@ -201,7 +250,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 
 		// Check if this worked...
-		if( y2 != y2 )
+		if( !std::isfinite(y2) )
 		{
 			x_solved = tol_solved = std::numeric_limits<double>::quiet_NaN();
 			iter_solved = 0;
@@ -360,11 +409,11 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		double diff_x_bounds = std::numeric_limits<double>::quiet_NaN();
 		if( E_slope > 0.0 )
 		{
-			if( m_x_pos_err != m_x_pos_err )
+			if ( !std::isfinite(m_x_pos_err) )
 			{	// Haven't set x bound on positive error. Because slope > 0, then check neg err x against Upper bound
 				diff_x_bounds = m_func_x_upper - m_x_neg_err;
 			}
-			else if( m_x_neg_err != m_x_neg_err )
+			else if ( !std::isfinite(m_x_neg_err) )
 			{	// Haven't set x bound on negative error. Because slope > 0, then check pos err x against Lower bound
 				diff_x_bounds = m_x_pos_err - m_func_x_lower;
 			}
@@ -375,11 +424,11 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		}
 		else
 		{
-			if( m_x_pos_err != m_x_pos_err )
+			if ( !std::isfinite(m_x_pos_err) )
 			{	// Haven't set x bound on positive error. Because slope < 0, then check neg err x against Lower bound
 				diff_x_bounds = m_x_neg_err - m_func_x_lower;
 			}
-			else if( m_x_neg_err != m_x_neg_err )
+			else if ( !std::isfinite(m_x_neg_err) )
 			{	// Haven't set x bound on negative error. Because slope < 0, then check pos err x against Upper bound
 				diff_x_bounds = m_func_x_upper - m_x_pos_err;
 			}
@@ -503,7 +552,7 @@ int C_monotonic_eq_solver::solver_core(double x_guess_1, double y1, double x_gue
 		// Subsequent iterations need to re-calculate x
 		if( m_iter > 1 )
 		{
-			if( m_y_err != m_y_err )
+			if ( !std::isfinite(m_y_err) )
 			{	// Function isn't returning a real value with which to calculate an error
 				if( !m_is_neg_bound && !m_is_pos_bound )
 				{	// This shouldn't occur, as we need at least one bound to find the error slope, but let's keep it...

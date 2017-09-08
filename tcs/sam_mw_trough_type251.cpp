@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 #include "htf_props.h"
@@ -519,7 +568,7 @@ public:
 
 	virtual int init()
 	{
-		double dt = time_step();
+		//double dt = time_step();
 						
 		// Declare instance of fluid class for FIELD fluid.
 		// Set fluid number and copy over fluid matrix if it makes sense.
@@ -760,7 +809,7 @@ public:
 		hx_err_flag = false;
 		*/
 
-		pb_tech_type = value(P_PB_TECH_TYPE);
+		pb_tech_type = (int)value(P_PB_TECH_TYPE);
 
 		if( pb_tech_type != 424 )
 		{
@@ -895,7 +944,7 @@ public:
 
 		double I_bn			= value(I_I_bn);				// [W/m2]
 		double m_dot_field	= value(I_m_dot_field)/3600.;	// [kg/s] convert from [kg/hr]
-		double m_dot_htf_ref= value(I_m_dot_htf_ref)/3600.;	// [kg/s] convert from [kg/hr]
+		//double m_dot_htf_ref= value(I_m_dot_htf_ref)/3600.;	// [kg/s] convert from [kg/hr]
 		double T_field_out	= value(I_T_field_out)+273.15;	// [K] convert from [C]
 		double T_pb_out		= value(I_T_pb_out)+273.15;		// [K] convert from [C]
 		double T_amb		= value(I_T_amb)+273.15;		// [K] convert from [C]
@@ -1014,7 +1063,7 @@ public:
 				{				
 					double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8;
 					dummy1 = dummy2 = dummy3 = dummy4 = dummy5 = dummy6 = dummy7 = dummy8 = -999.9;
-					thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 2.0, 0.0, 0.0, f_storage, step/3600.0,
+					thermocline.Solve_TC( T_field_out - 273.15, 0.0, T_pb_out - 273.15, 0.0, T_amb - 273.15, 2, 0.0, 0.0, f_storage, step/3600.0,
 						                     m_tank_disch_avail, Ts_hot, m_tank_charge_avail, Ts_cold, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8 );
 					
 					m_tank_disch_avail /= 3600.0;		//[kg/s] Estimated discharge mass flow rate
@@ -1073,7 +1122,7 @@ public:
 				ms_charge_avail = 0.0;
                 rho_tank_hot_avg = 0.;
                 V_tank_hot_avg = 0.;
-                V_tank_hot_avail - 0.;
+                V_tank_hot_avail = 0.;
                 m_tank_disch_avail = 0.;
                 rho_tank_cold_avg = 0.;
                 V_tank_cold_avg = 0.;

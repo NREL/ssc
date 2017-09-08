@@ -2299,7 +2299,7 @@ struct lsq_vars_struct {
   void *user_data;
 };
 
-static int mpcall(int m, int n, double *p, double *dy, double **dvec, void *vars)
+static int mpcall(int m, int , double *p, double *dy, double **, void *vars)
 {
   struct lsq_vars_struct *v = (struct lsq_vars_struct *) vars;
   double *x = v->x;

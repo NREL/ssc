@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 
 #include <limits>
 #include <cmath>
@@ -124,7 +173,7 @@ public:
 	//averages an 8760 array ("hourly") into an array of 12 monthly averages ("monthly")
 	void monthly_averages( ssc_number_t *hourly, ssc_number_t *monthly )
 	{
-		int c = 0; //8760 counter
+//		int c = 0; //8760 counter
 		monthly_sums(hourly, monthly);
 		for (int i=0;i<12;i++) 
 			monthly[i] /= (util::nday[i]*24); //divide the monthly sum by the number of hours in the month for an hourly average		
@@ -140,7 +189,6 @@ public:
 		ssc_number_t en_belpe = as_boolean("en_belpe");
 		if (!en_belpe)
 		{
-			size_t count;
 			//these inputs are required if en_belpe = 0, so no additional checks are necessary here
 			if ( !is_assigned("load") )
 				throw general_error("variable 'load' is required but not assigned." );
@@ -460,9 +508,9 @@ public:
 		double A_Walls = sqrt(A_Floor / Stories) * 4 * (H_ceiling)*Stories - A_Wins;   //It's a cube
 		double Aenv = A_Walls + 2 * A_Floor; //This one includes floor
 		double V_bldg = A_Floor * H_ceiling * Stories; //Exclude the plenum from conditioned volume
-		double AIntWall = A_Floor / 2; //Interior partition walls - typical default
+//		double AIntWall = A_Floor / 2; //Interior partition walls - typical default
 		double AIntMass = 0.4*A_Floor; //Bldg AM default for internal mass
-		double AIntTot = A_Wins + Aenv + AIntWall + AIntMass;
+//		double AIntTot = A_Wins + Aenv + AIntWall + AIntMass;
 		double Cair = 0.075*0.245*V_bldg * 10; //BTU / degF  Note adjust factor of 10 --MJB
 
 		//INTERNAL LOADS	
@@ -948,7 +996,7 @@ public:
 			TSnew[i] = (Tsurf[i] + dT / Cenv*(SolEnvFrac*(Q_SolWin[i] / Aenv + QInt_Rad[i] / Aenv) + T_solairF[inext] / Renv + TAnew[i] / hsurf)) / bar;
 
 			//HVAC Loads completed
-			hvac_load[i] = fabs(QHV2[i]); //Wh
+			hvac_load[i] = (ssc_number_t)fabs(QHV2[i]); //Wh
 
 			//Total load for the hour
 			load[i] = hvac_load[i] + non_hvac_load[i]; //Wh
@@ -1051,9 +1099,9 @@ public:
 		for (int i = 0; i < 8760; i++)
 		{
 			if (monthly_hvac_load[month[i]] > 0)
-				load[i] = load[i] * (1 - NewScale[month[i]]) - x_hvac[month[i]] * hvac_load[i]; //new from Sara 11/21
+				load[i] = (ssc_number_t)(load[i] * (1 - NewScale[month[i]]) - x_hvac[month[i]] * hvac_load[i]); //new from Sara 11/21
 			else
-				load[i] = load[i] * (1 - monthly_scale[month[i]]);
+				load[i] = load[i] * (ssc_number_t)(1 - monthly_scale[month[i]]);
 
 			if (monthly_util[month[i]] == 0) //set all loads for the month to zero if the input month was zero
 				load[i] = 0;
@@ -1065,7 +1113,7 @@ public:
 				nneg++;
 			}
 
-			load[i] *= 0.001; // convert to kWh
+			load[i] *= (ssc_number_t)0.001; // convert to kWh
 		}
 		
 		if (nneg > 0)

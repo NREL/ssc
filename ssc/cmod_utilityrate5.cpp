@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include <algorithm>
 #include <sstream>
@@ -1650,9 +1699,10 @@ public:
 						num_tiers = (int)m_dc_tou_periods_tiers[ndx].size();
 				}
 						m_month[m].dc_tou_ub.resize_fill(num_periods, num_tiers, (ssc_number_t)1e38);
-						m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
+				m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
 				for (i = 0; i < m_month[m].dc_periods.size(); i++)
-					{
+				{
+					// find all periods and check that number of tiers the same for all for the month, if not through error
 					std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
 					period = (*per_num);
 					int ndx = (int)(per_num - m_dc_tou_periods.begin());
@@ -1671,71 +1721,70 @@ public:
 								found = true;
 							}
 						}
-
 					}
 				}
 			}
-				// flat demand charge
-				// 4 columns month, tier, max usage, charge
-				ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
-				if (ncols != 4)
+			// flat demand charge
+			// 4 columns month, tier, max usage, charge
+			ssc_number_t *dc_flat_in = as_matrix("ur_dc_flat_mat", &nrows, &ncols);
+			if (ncols != 4)
+			{
+				std::ostringstream ss;
+				ss << "The demand rate table by month must have 4 columns. Instead it has " << ncols << " columns";
+				throw exec_error("utilityrate5", ss.str());
+			}
+			util::matrix_t<float> dc_flat_mat(nrows, ncols);
+			dc_flat_mat.assign(dc_flat_in, nrows, ncols);
+
+			for (r = 0; r < m_month.size(); r++)
+			{
+				m_dc_flat_tiers.push_back(std::vector<int>());
+			}
+
+			for (r = 0; r < nrows; r++)
+			{
+				month = (int)dc_flat_mat.at(r, 0);
+				tier = (int)dc_flat_mat.at(r, 1);
+				if ((month < 0) || (month >= (int)m_month.size()))
 				{
 					std::ostringstream ss;
-					ss << "The demand rate table by month must have 4 columns. Instead it has " << ncols << " columns";
+					ss << "Demand for Month " << month << " not found.";
 					throw exec_error("utilityrate5", ss.str());
 				}
-				util::matrix_t<float> dc_flat_mat(nrows, ncols);
-				dc_flat_mat.assign(dc_flat_in, nrows, ncols);
+				m_dc_flat_tiers[month].push_back(tier);
+			}
+			// sort tier values for each period
+			for (r = 0; r < m_dc_flat_tiers.size(); r++)
+				std::sort(m_dc_flat_tiers[r].begin(), m_dc_flat_tiers[r].end());
 
-				for (r = 0; r < m_month.size(); r++)
-				{
-					m_dc_flat_tiers.push_back(std::vector<int>());
-				}
 
-				for (r = 0; r < nrows; r++)
+			// months are rows and tiers are columns - note that columns can change based on rows
+			// Initialize each month variables that are constant over the simulation
+
+
+
+			for (m = 0; m < m_month.size(); m++)
+			{
+				m_month[m].dc_flat_ub.clear();
+				m_month[m].dc_flat_ch.clear();
+				for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
 				{
-					month = (int)dc_flat_mat.at(r, 0);
-					tier = (int)dc_flat_mat.at(r, 1);
-					if ((month < 0) || (month >= (int)m_month.size()))
+					tier = m_dc_flat_tiers[m][j];
+					// initialize for each period and tier
+					bool found = false;
+					for (r = 0; (r < nrows) && !found; r++)
 					{
-						std::ostringstream ss;
-						ss << "Demand for Month " << month << " not found.";
-						throw exec_error("utilityrate5", ss.str());
-					}
-					m_dc_flat_tiers[month].push_back(tier);
-				}
-				// sort tier values for each period
-				for (r = 0; r < m_dc_flat_tiers.size(); r++)
-					std::sort(m_dc_flat_tiers[r].begin(), m_dc_flat_tiers[r].end());
-
-
-				// months are rows and tiers are columns - note that columns can change based on rows
-				// Initialize each month variables that are constant over the simulation
-
-
-
-				for (m = 0; m < m_month.size(); m++)
-				{
-					m_month[m].dc_flat_ub.clear();
-					m_month[m].dc_flat_ch.clear();
-					for (j = 0; j < m_dc_flat_tiers[m].size(); j++)
-					{
-						tier = m_dc_flat_tiers[m][j];
-						// initialize for each period and tier
-						bool found = false;
-						for (r = 0; (r < nrows) && !found; r++)
+						if ((m == dc_flat_mat.at(r, 0))
+							&& (tier == (int)dc_flat_mat.at(r, 1)))
 						{
-							if ((m == dc_flat_mat.at(r, 0))
-								&& (tier == (int)dc_flat_mat.at(r, 1)))
-							{
-								m_month[m].dc_flat_ub.push_back(dc_flat_mat.at(r, 2));
-								m_month[m].dc_flat_ch.push_back(dc_flat_mat.at(r, 3));//rate_esc;
-								found = true;
-							}
+							m_month[m].dc_flat_ub.push_back(dc_flat_mat.at(r, 2));
+							m_month[m].dc_flat_ch.push_back(dc_flat_mat.at(r, 3));//rate_esc;
+							found = true;
 						}
-
 					}
+
 				}
+			}
 
 		}
 
@@ -2557,7 +2606,7 @@ public:
 		3=Single meter with monthly rollover credits in $ (Net Billing $)
 		4=Two meters with all generation sold and all load purchaseded
 		*/
-		int metering_option = as_integer("ur_metering_option");
+		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 
 		size_t steps_per_hour = m_num_rec_yearly / 8760;

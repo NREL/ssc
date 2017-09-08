@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 #include "htf_props.h"
@@ -391,7 +440,7 @@ public:
 		// Set fluid number or copy over fluid matrix, depending on specified fluid.
 		if( htf != HTFProperties::User_defined )
 		{
-			if( !rec_htf.SetFluid( htf ) ); // store_fl should match up with the constants
+			if( !rec_htf.SetFluid( htf ) ) // store_fl should match up with the constants
 			{
 				message(TCS_ERROR, "Receiver HTF code is not recognized");
 				return -1;
@@ -520,7 +569,7 @@ public:
 
 		// Initial Calculations
 		r_rec = rec_d_spec/2.0;			// [m]
-		double dt = time_step();		// [s]
+		//double dt = time_step();		// [s]
 
 		itermode = 1;		// 1 solve for design temp, 2 solve to match mass flow restriction
 		tol_od	= .001;		// tolerance for over-design iteration
@@ -947,7 +996,7 @@ public:
 		return 0;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double time, double step, int /*ncall*/ )
 	{ 
 		double azimuth		= value( I_azimuth );
 		double zenith		= value( I_zenith ); 
@@ -963,8 +1012,8 @@ public:
 		double I_bn			= value( I_I_bn );					// [W/m2]
 		double eta_field	= value( I_eta_field );
 		double T_amb		= value( I_T_amb )+273.15;			// [K] Convert from C					
-		double u_wind		= value( I_u_wind );
-		double deg_wind		= value( I_deg_wind );
+		//double u_wind		= value( I_u_wind );
+		//double deg_wind		= value( I_deg_wind );
 		
 		double T_sky = CSP::skytemp( T_amb, T_dp, hour );
 
@@ -1055,7 +1104,7 @@ public:
 			else
 			{
 				// Set nightime outputs
-				mode = 0.0;
+				mode = 0;
 				NullOutputs();
 				return 0;
 			}
@@ -1137,7 +1186,7 @@ public:
 			if( q_solar_total < q_solar_critical )
 			{
 				// Set nightime outputs and get out
-				mode = 0.0;
+				mode = 0;
 				NullOutputs();
 				return 0;
 			}
@@ -1616,7 +1665,7 @@ public:
 							double Pr_htf_node = c_htf_node*mu_htf_node/k_htf_node;						// [-]
 							
 							double f_htf_dummy, Nu_htf_node;
-							PipeFlowCavity( Re_htf_node, Pr_htf_node, L_over_D, relRough, q_solar.at(i,j), is_fd.at(i,j), Nu_htf_node, f_htf_dummy );				
+							PipeFlowCavity(Re_htf_node, Pr_htf_node, L_over_D, relRough, q_solar.at(i, j), (int)is_fd.at(i, j), Nu_htf_node, f_htf_dummy);
 				        
 							// The heat transfer coefficient for thermal energy transfer from the tube walls to the HTF
 							double h_htf_node = Nu_htf_node*k_htf_node/d_tube_in;
@@ -1694,7 +1743,7 @@ public:
 					for( int k = 0; k < m_n_panels; k++ )
 						for( int j = 0; j < m_n_nodes; j++ )
 						{
-							q_htf.at(j,k) = q_htf_1D.at(j+k*m_n_nodes,0.0);
+							q_htf.at(j,k) = q_htf_1D.at((size_t)j+k*m_n_nodes,(size_t)0.0);
 						}
 
 					// This must be edited for FLOWPATTERNS 1 and 2   !ST ??? I did not change anything about the flow patterns - should probably be reviewed
@@ -2198,7 +2247,7 @@ public:
 					if( (qq > qq_max) && (gamma<0.1) )
 					{
 						// Set null outputs
-						mode = 0.0;
+						mode = 0;
 						NullOutputs();
 						return 0;
 					}
@@ -2218,9 +2267,9 @@ public:
 					continue;
 				}
 
-				T_F = T_s_1D.at(m_n_panels*m_n_nodes,0.0);
-				T_CE = T_s_1D.at(m_n_panels*m_n_nodes+1,0.0);
-				T_L = T_s_1D.at(m_n_panels*m_n_nodes+2,0.0);
+				T_F = T_s_1D.at((size_t)m_n_panels*m_n_nodes, (size_t)0.0);
+				T_CE = T_s_1D.at((size_t)m_n_panels*m_n_nodes + 1, (size_t)0.0);
+				T_L = T_s_1D.at((size_t)m_n_panels*m_n_nodes + 2, (size_t)0.0);
 																												
 				// Thermal radiation losses are calculated using the NEW surface temperatures
 				for( int i = 0; i < m_n_nodes*m_n_panels+4; i++ )
@@ -2315,7 +2364,7 @@ public:
 			if( (m_htf_total < 0.0) || (q_htf_total < 0.0) )
 			{
 				// Set nightime outputs
-				mode = 0.0;
+				mode = 0;
 				NullOutputs();
 				return 0;
 			}
@@ -2343,7 +2392,7 @@ public:
 		if( m_htf_total < m_dot_htf_min )
 		{
 			// Set outputs to 0 and get out
-			mode = 0.0;
+			mode = 0;
 			NullOutputs();
 			return 0;
 		}
@@ -2355,7 +2404,7 @@ public:
 		    t_su = max(0.0, t_su_prev - step/3600.0);
 		    if(E_su + t_su > 0.0)
 			{
-		        mode = 1.0;		// If either are greater than 0, we're starting up but not finished
+		        mode = 1;		// If either are greater than 0, we're starting up but not finished
 		        q_startup = (E_su_prev - E_su)/(step/3600.0)*1.0E-6;			// mjw 3.10.11
 		        // goto 900  !mjw 3.10.11
 				// Set nightime outputs
@@ -2364,7 +2413,7 @@ public:
 			}
 		    else				// Only part of the timestep/energy was needed to startup.  
 			{
-		        mode= 2.0;
+		        mode= 2;
 		        // Adjust the available mass flow to reflect startup
 		        m_htf_total = min( (1.0-t_su_prev/(step/3600.0))*m_htf_total, m_htf_total - E_su_prev/(step/3600.0*c_htf*(T_htf_hot - T_htf_cold)) );
 			}
@@ -2513,7 +2562,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		if( mode == 0 )
 		{
@@ -2625,10 +2674,10 @@ void PipeFlowCavity( double Re, double Pr, double LoverD, double relRough, doubl
 	    // and the relative roughness
 	    double Gz = Re*Pr/LoverD;	// Eq. 5-79 Nellis and Klein
 	    double x = LoverD/Re;		// Eq. 5-58 Nellis and Klein
-	    double fR = 3.44/sqrt(x)+(1.25/(4*x)+16-3.44/sqrt(x))/(1+0.00021*pow(x,-2));	// Eq. 5-57 () Nellis and Klein
-	    double f = 4.0*fR/Re;		// Eq. 5-57 Nellis and Klein
+	    //double fR = 3.44/sqrt(x)+(1.25/(4*x)+16-3.44/sqrt(x))/(1+0.00021*pow(x,-2));	// Eq. 5-57 () Nellis and Klein
+	    //double f = 4.0*fR/Re;		// Eq. 5-57 Nellis and Klein
 	    double Nusselt_T = 3.66+((0.049+0.02/Pr)*pow(Gz,1.12))/(1.0+0.065*pow(Gz,0.7));	// Eq. 5-80 Nellis and Klein
-		double Nusselt_H = 4.36+((0.1156 +0.08569/pow(Pr,0.4)*Gz)/(1.0+0.1158*pow(Gz,0.6)));	// Eq. 5-81 Nellis and Klein
+		//double Nusselt_H = 4.36+((0.1156 +0.08569/pow(Pr,0.4)*Gz)/(1.0+0.1158*pow(Gz,0.6)));	// Eq. 5-81 Nellis and Klein
 	    Nusselt = Nusselt_T;		// Constant temperature Nu is better approximation
 	}  
 	else

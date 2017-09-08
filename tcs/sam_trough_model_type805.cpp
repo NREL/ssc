@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 #include "htf_props.h"
@@ -435,7 +484,7 @@ public:
 !*****************************************************************/
 	
 	//Enthalpy of User Fluid, [J/kg]
-	double H_user(double T,int fn) //T [C]
+	double H_user(double /*T*/,int /*fn*/) //T [C]
 	{
 		double enthalpy=0;
 		return enthalpy;
@@ -603,7 +652,7 @@ public:
 		return dens;
 	}
 
-	double specheat( int fluid, double T, double P) // need to port from type 229
+	double specheat( int fluid, double T, double /*P*/) // need to port from type 229
 	{
 		double spht=1.0;
 		double Td = T - 273.15;
@@ -675,7 +724,7 @@ public:
 		return spht;
 	}
 
-	virtual int call( double time, double step, int ncall )
+	virtual int call( double time, double step, int /*ncall*/ )
 	{
 		double AveSfTemp0Next = m_AveSfTemp0Next;
 
@@ -749,15 +798,15 @@ public:
 
 		//Parasitic inputs
 		double sfpar      = value(I_SfPar);
-		double SfParPF   = value(I_SfParPF);
+		//double SfParPF   = value(I_SfParPF);
 		double ChtfPar   = value(I_ChtfPar);
-		double CHTFParPF = value(I_ChtfParPF);
+		//double CHTFParPF = value(I_ChtfParPF);
 		double CHTFParF0 = value(I_CHTFParF0);
 		double ChtfParF1 = value(I_CHTFParF1);
 		double ChtfParF2 = value(I_CHTFParF2);
 		double AntiFrPar = value(I_AntiFrPar);
 		double Site_Lat    = value(I_Site_Lat)*M_PI/180.0;
-		double Site_LongD  = value(I_Site_LongD)*M_PI/180.0; // trnsys has negative convention
+		//double Site_LongD  = value(I_Site_LongD)*M_PI/180.0; // trnsys has negative convention
 //		double SHIFT       = value(I_SHIFT)*M_PI/180.0;
 		//double SHIFT = (value(I_Site_LongD) - value(I_SHIFT)*15.)*M_PI/180.0; // from Mike
 		
@@ -814,8 +863,8 @@ public:
 		double time_hour = time / 3600.0;
 
 		int Julian_Day = int(time_hour/24)+1;
-		int StartDay = int(m_time0/24) + 1;
-		int StopDay = int(m_tFinal/24) + 1;
+		//int StartDay = int(m_time0/24) + 1;
+		//int StopDay = int(m_tFinal/24) + 1;
 
 		// Hour of day in standard time
 		double  TimeDay = time_hour - ((Julian_Day-1)*24.0);
@@ -840,11 +889,11 @@ public:
 		double SolarNoon = 12 - ((SHIFT)*180.0/M_PI) / 15 - EOT / 60;
 
 		// Number of daylight hours
-		double DayLightHrs = 2.0 / 15.0 * acos(-tan(Site_Lat) * tan(Dec)) * 180.0 / M_PI;
+		//double DayLightHrs = 2.0 / 15.0 * acos(-tan(Site_Lat) * tan(Dec)) * 180.0 / M_PI;
 	
 		// Sunrise and set in hours
-		double SunRise = SolarNoon - (DayLightHrs / 2.0);
-		double SunSet = SolarNoon + (DayLightHrs / 2.0);
+		//double SunRise = SolarNoon - (DayLightHrs / 2.0);
+		//double SunSet = SolarNoon + (DayLightHrs / 2.0);
 
 		// Deploy & stow times in hours
 		// Calculations modified by MJW 11/13/2009 to correct bug

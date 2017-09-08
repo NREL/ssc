@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include "lib_financial.h"
 #include "common_financial.h"
@@ -47,6 +96,14 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_payback_with_expenses",                 "Payback with expenses",                    "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
+// NTE additions 8/10/17
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "thirdpartyownership",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Not to exceed (NTE)",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Year 1 NTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Real LNTE",                          "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Nominal LNTE",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
+
 
 
 
@@ -67,6 +124,7 @@ enum {
 	CF_payback_with_expenses,
 	CF_cumulative_payback_with_expenses,
 	
+	CF_nte,
 
 	CF_max };
 
@@ -155,10 +213,10 @@ public:
 		// output from utility rate already nyears+1 - no offset
 		arrp = as_array("annual_energy_value", &count);
 		if (count != nyears+1)
-			throw exec_error("third party ownership", util::format("energy value input wron length (%d) should be (%d)",count, nyears+1));
-		for (i = 0; i < count; i++)
+			throw exec_error("third party ownership", util::format("energy value input wrong length (%d) should be (%d)",count, nyears+1));
+		for (i = 0; i < (int)count; i++)
 			cf.at(CF_energy_value, i) = (double) arrp[i];
-		
+
 	
 		double inflation_rate = as_double("inflation_rate")*0.01;
 		
@@ -213,24 +271,50 @@ public:
 		double npv_energy_real = npv( CF_energy_net, nyears, real_discount_rate );
 		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_real == 0.0) 
-		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
-		}
 		else
-		{
 			lcoe_real /= npv_energy_real;
-		}
 
 		double npv_energy_nom = npv( CF_energy_net, nyears, nom_discount_rate );
 		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_nom == 0.0) 
-		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
-		}
 		else
-		{
 			lcoe_nom /= npv_energy_nom;
-		}
+
+
+		// NTE
+		ssc_number_t *ub_w_sys = 0;
+		ub_w_sys = as_array("elec_cost_with_system", &count);
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
+		ssc_number_t *ub_wo_sys = 0;
+		ub_wo_sys = as_array("elec_cost_without_system", &count);
+		if (count != nyears+1)
+			throw exec_error("third party ownership", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
+
+		for (i = 0; i < (int)count; i++)
+			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
+		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
+
+		for (i = 0; i < (int)count; i++)
+			if (cf.at(CF_energy_net,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_net,i);
+
+		double lnte_nom = lnte_real;
+		if (npv_energy_real == 0.0) 
+			lnte_real = std::numeric_limits<double>::quiet_NaN();
+		else
+			lnte_real /= npv_energy_real;
+		if (npv_energy_nom == 0.0) 
+			lnte_nom = std::numeric_limits<double>::quiet_NaN();
+		else
+			lnte_nom /= npv_energy_nom;
+
+		assign( "lnte_real", var_data((ssc_number_t)lnte_real) );
+		assign( "lnte_nom", var_data((ssc_number_t)lnte_nom) );
+		save_cf(CF_nte, nyears, "cf_nte");
+		assign( "year1_nte", var_data((ssc_number_t)cf.at(CF_nte,1)) );
+
 
 		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
@@ -242,7 +326,6 @@ public:
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
 
 		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
-		
 		
 		save_cf(CF_agreement_cost, nyears, "cf_agreement_cost");
 		save_cf(CF_energy_net, nyears, "cf_energy_net");

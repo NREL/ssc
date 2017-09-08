@@ -31,7 +31,6 @@
     <ClCompile Include="..\solarpilot\interop.cpp" />
     <ClCompile Include="..\solarpilot\IOUtil.cpp" />
     <ClCompile Include="..\solarpilot\Land.cpp" />
-    <ClCompile Include="..\solarpilot\LayoutSimulateThread.cpp" />
     <ClCompile Include="..\solarpilot\mod_base.cpp" />
     <ClCompile Include="..\solarpilot\OpticalMesh.cpp" />
     <ClCompile Include="..\solarpilot\optimize.cpp" />
@@ -41,7 +40,6 @@
     <ClCompile Include="..\solarpilot\solpos.cpp" />
     <ClCompile Include="..\solarpilot\STObject.cpp" />
     <ClCompile Include="..\solarpilot\string_util.cpp" />
-    <ClCompile Include="..\solarpilot\STSimulateThread.cpp" />
     <ClCompile Include="..\solarpilot\Toolbox.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -58,7 +56,6 @@
     <ClInclude Include="..\solarpilot\interop.h" />
     <ClInclude Include="..\solarpilot\IOUtil.h" />
     <ClInclude Include="..\solarpilot\Land.h" />
-    <ClInclude Include="..\solarpilot\LayoutSimulateThread.h" />
     <ClInclude Include="..\solarpilot\mod_base.h" />
     <ClInclude Include="..\solarpilot\OpticalMesh.h" />
     <ClInclude Include="..\solarpilot\optimize.h" />
@@ -73,7 +70,6 @@
     <ClInclude Include="..\solarpilot\sort_method.h" />
     <ClInclude Include="..\solarpilot\STObject.h" />
     <ClInclude Include="..\solarpilot\string_util.h" />
-    <ClInclude Include="..\solarpilot\STSimulateThread.h" />
     <ClInclude Include="..\solarpilot\Toolbox.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -145,11 +141,12 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SSCDIR);$(SSCDIR)\shared\;$(SSCDIR)\nlopt\;$(SolutionDir)\..\src;$(CORETRACEDIR)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -157,7 +154,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SSCDIR);$(SSCDIR)\shared\;$(SSCDIR)\nlopt\;$(SolutionDir)\..\src;$(CORETRACEDIR)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
@@ -169,7 +166,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -187,7 +184,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>

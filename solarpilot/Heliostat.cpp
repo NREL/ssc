@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <vector>
 #include "math.h"
 
@@ -25,9 +74,9 @@ matrix_t<Reflector> *Heliostat::getPanels(){return &_panels;}
 Vect *Heliostat::getTrackVector(){return &_track;}	//return the tracking vector
 Vect *Heliostat::getTowerVector(){return &_tower_vect;} // return the helio-tower unit vector
 Vect *Heliostat::getCantVector(){return &_cant_vect;}	//Return the canting vector (not normalized)
-Point *Heliostat::getLocation(){return &_location;} //Get location vector
-Point *Heliostat::getAimPoint(){return &_aim_point;}	//Get the heliostat aim point on the receiver
-Point *Heliostat::getAimPointFluxPlane(){return &_aim_fluxplane;}	//aim point in the flux plane coordinates 
+sp_point *Heliostat::getLocation(){return &_location;} //Get location vector
+sp_point *Heliostat::getAimPoint(){return &_aim_point;}	//Get the heliostat aim point on the receiver
+sp_point *Heliostat::getAimPointFluxPlane(){return &_aim_fluxplane;}	//aim point in the flux plane coordinates 
 helio_perf_data *Heliostat::getEfficiencyObject(){return &eff_data;}
 double Heliostat::getTotalReflectivity(){return eff_data.reflectivity * eff_data.soiling;}
 double Heliostat::getEfficiencyTotal(){return eff_data.eta_tot;}
@@ -45,8 +94,8 @@ double Heliostat::getZenithTrack(){return _zenith;}
 double Heliostat::getCollisionRadius(){return _r_collision;}
 double Heliostat::getArea(){return _area;}
 vector<Heliostat*> *Heliostat::getNeighborList(){return _neighbors;}
-vector<Point> *Heliostat::getCornerCoords(){return &_corners;}
-vector<Point> *Heliostat::getShadowCoords(){return &_shadow;}
+vector<sp_point> *Heliostat::getCornerCoords(){return &_corners;}
+vector<sp_point> *Heliostat::getShadowCoords(){return &_shadow;}
 matrix_t<double> *Heliostat::getMirrorShapeNormCoefObject(){return &_mu_MN;}
 matrix_t<double> *Heliostat::getMirrorShapeCoefObject(){return &_mu_M;}
 matrix_t<double> *Heliostat::getSunShapeCoefObject(){return &_mu_S;}
@@ -77,7 +126,7 @@ void Heliostat::setEfficiencyShading(double eta_shadow){eff_data.eta_shadow = et
 void Heliostat::setEfficiencyCloudiness(double eta_cloud){eff_data.eta_cloud = eta_cloud;}
 void Heliostat::setEfficiencyTotal(double eta_tot){eff_data.eta_tot = eta_tot;}
 void Heliostat::setRankingMetricValue(double rval){eff_data.rank_metric = rval;}
-void Heliostat::setAimPointFluxPlane(Point &Aim){_aim_fluxplane.Set( Aim.x, Aim.y, Aim.z );}
+void Heliostat::setAimPointFluxPlane(sp_point &Aim){_aim_fluxplane.Set( Aim.x, Aim.y, Aim.z );}
 void Heliostat::setAimPointFluxPlane(double x, double y, double z){ _aim_fluxplane.Set(x, y, z); }
 void Heliostat::setTrackVector(Vect &tr){ _track = tr; }	//Set the tracking vector
 void Heliostat::setTowerVector(Vect &tow){ _tower_vect = tow; } //Set the helio-tower vector
@@ -311,7 +360,7 @@ void Heliostat::setAimPoint(double x, double y, double z){
 	_aim_point.z = z;
 }
 
-void Heliostat::setAimPoint(Point &Aim){
+void Heliostat::setAimPoint(sp_point &Aim){
 	setAimPoint(Aim.x, Aim.y, Aim.z);
 }
 
@@ -376,7 +425,7 @@ void Heliostat::installPanels() {
 		_panels.resize(V->n_cant_y.val, V->n_cant_x.val);
         
 		//back-calculate the aim point
-        Point paim;     //heliostat aimpoint
+        sp_point paim;     //heliostat aimpoint
 		paim.x = _location.x + _slant*_tower_vect.i;
 		paim.y = _location.y + _slant*_tower_vect.j;
 		paim.z = _location.z + _slant*_tower_vect.k;
@@ -427,7 +476,7 @@ void Heliostat::installPanels() {
 					//Calculate the panel's actual x-y-z location w/r/t the global coordinates
 					double prad = sqrt(pow(x,2)+pow(y*sin(track_zen),2));	//the radius of the panel from the heliostat centroid
 					double theta_rot = atan2(x,y);	//angle of rotation of the centroid of the point w/r/t the heliostat coordinates
-                    Point pg;
+                    sp_point pg;
 					pg.x = _location.x + prad*sin(track_az+theta_rot);
 					pg.y = _location.y + prad*cos(track_az+theta_rot);
 					pg.z = _location.z + y*sin(track_zen);
@@ -593,7 +642,7 @@ void Heliostat::updateTrackVector(Vect &sunvect) {
 
 }
 
-void Heliostat::calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, Heliostat &H)
+void Heliostat::calcAndSetAimPointFluxPlane(sp_point &aimpos_abs, Receiver &Rec, Heliostat &H)
 {
     /* 
     Given a particular aim point in space, translate the position to an aimpoint on the actual
@@ -601,7 +650,7 @@ void Heliostat::calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, He
     receiver, but the final aim point will be.
     */    
     
-    Point aimpos(aimpos_abs);    
+    sp_point aimpos(aimpos_abs);    
     PointVect NV;
 	Rec.CalculateNormalVector(*H.getLocation(), NV);	//Get the receiver normal vector
 
@@ -609,6 +658,7 @@ void Heliostat::calcAndSetAimPointFluxPlane(Point &aimpos_abs, Receiver &Rec, He
     double el = atan2(NV.k*NV.k, NV.i*NV.i + NV.j*NV.j); 
 
     var_receiver* R = Rec.getVarMap();
+	(void*)&R;
 
     //rotate into flux plane coordinates
     Toolbox::rotation(PI - az,2,aimpos);

@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 // Functions for interpolation routines
 #include <algorithm>
 
@@ -23,7 +72,7 @@ bool Linear_Interp::Set_1D_Lookup_Table( const util::matrix_t<double> &table, in
 
 	// check monotonically increasing independent variables
 	for ( int i = 0; i < n_ind_var; i++ )
-		for ( int r = 1; r < table.nrows(); r++ )
+		for ( int r = 1; r < (int)table.nrows(); r++ )
 			if ( table.at(r, ind_var_index[i]) < table.at(r-1, ind_var_index[i]) )
 			{
 				error_index = i;
@@ -32,7 +81,7 @@ bool Linear_Interp::Set_1D_Lookup_Table( const util::matrix_t<double> &table, in
 
 	// Set class member data
 	m_userTable = table;	
-	m_rows = table.nrows();
+	m_rows = (int)table.nrows();
 	m_lastIndex = m_rows * 2;	// So "hunt" scheme cannot be called 3rd property call
 	m_dj = min(1, (int) pow(m_rows, 0.25) );
 	m_cor = false;
@@ -284,14 +333,14 @@ bool Bilinear_Interp::Set_2D_Lookup_Table( const util::matrix_t<double> &table )
 {
 	// Initialize class member data
 	m_2axis_table = table;
-	double nrows = table.nrows();
+	int nrows = (int)table.nrows();
 	if( nrows < 9 )
 		return false;
 	
 	// Find number of x values in table
 	double first_val = table.at(0,0);
 	int i = 1;
-	for( i; i < table.nrows(); i++ )
+	for( i; i < (int)table.nrows(); i++ )
 		if( table.at(i,0) == first_val )	break;
 	m_nx = i;
 	if( m_nx < 3 )
@@ -334,8 +383,8 @@ bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 	// Initialize class member data
 	m_3axis_table = table;
 
-	int nrows = table.nrows();
-	int nlayers = table.nlayers();
+	int nrows = (int)table.nrows();
+	int nlayers = (int)table.nlayers();
 
 	if( nrows < 9 || nlayers < 3)
 		return false;
@@ -343,7 +392,7 @@ bool Trilinear_Interp::Set_3D_Lookup_Table( const util::block_t<double> &table )
 	// Find number of x values in table
 	double first_val = table.at(0,0,0);
 	int i = 1;
-	for( i; i < table.nrows(); i++ )
+	for( i; i < (int)table.nrows(); i++ )
 		if( table.at(i,0,0) == first_val )	break;
 	m_nx = i;
 	if( m_nx < 3 )
@@ -521,7 +570,7 @@ void LUdcmp::solve(VectDoub &b, VectDoub &x)
 
 void LUdcmp::solve(MatDoub &b, MatDoub &x)
 {
-    int i,j,m=b.front().size();
+    int i,j,m=(int)b.front().size();
     if (b.size() != n || x.size() != n || b.front().size() != x.front().size())
         throw("LUdcmp::solve bad sizes");
     VectDoub xx(n);
@@ -573,7 +622,7 @@ Powvargram::Powvargram(MatDoub &x, VectDoub &y, const double beta, const double 
 	bet = beta;
 	nugsq = nug*nug;
 
-	int i,j,k,npt=x.size(),ndim=x.front().size();
+	int i,j,k,npt=(int)x.size(),ndim=(int)x.front().size();
 	double rb,num=0.,denom=0.;
 	for (i=0;i<npt;i++) {
 		for (j=i+1;j<npt;j++) {
@@ -600,8 +649,8 @@ GaussMarkov::GaussMarkov(MatDoub &xx, VectDoub &yy, Powvargram &vargram, const d
 	//create local copies as needed
 	vgram = vargram;
 	x = xx;
-	npt = xx.size();
-	ndim = xx.front().size();
+	npt = (int)xx.size();
+	ndim = (int)xx.front().size();
 	dstar.resize(npt+1);
 	vstar.resize(npt+1);
 	v.resize(npt+1,VectDoub(npt+1));

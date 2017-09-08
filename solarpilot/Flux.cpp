@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "Flux.h"
 #include "math.h"
 #include "Toolbox.h"
@@ -426,11 +475,11 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 				theta = (double)i*25./(double)npt;
 				temp_sun.at(i, 0) = theta;
 				if(theta > 4.65){
-					temp_sun.at(i,1) = exp(kappa)*pow(theta, gamma);
+					temp_sun.at(i,1) = exp(kappa)*pow(theta, gamma)*.1;
 				}
 				else
 				{
-					temp_sun.at(i,1) = cos(0.326 * theta)/cos(0.308 * theta);
+					temp_sun.at(i,1) = cos(0.326 * theta)/cos(0.308 * theta)*.1;
 				}
 			}
 			user_sun = &temp_sun;
@@ -440,8 +489,10 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
 			user_sun = &V.amb.user_sun.val; //A.getUserSun();
 		}
 		
-		double azmin[8];
-		for(int i=0; i<8; i++) azmin[i] = 0.0;;			//Set up an array
+		std::vector<double> azmin;
+        azmin.resize(12,0.);
+
+		//for(int i=0; i<8; i++) azmin[i] = 0.0;;			//Set up an array
 
         int nn = (int)user_sun->nrows()-1;		
         for (int n=1; n<nn+1; n+=1) {		//DELSOL goes 1..nn
@@ -464,20 +515,24 @@ void Flux::hermiteSunCoefs(var_map &V, matrix_t<double> &mSun) {
                 int L = m+1;
                 double temp1 = (pow(disc_angle_next,L) - pow(disc_angle,L))/fm;
                 double temp2 = (pow(disc_angle_next,m+2) - pow(disc_angle,m+2))/(fm+1.);
-                azmin[m-1] += intens*(temp1*(1.+r_steps) - temp2*rel_step)+intens_next*(-temp1*r_steps + temp2*rel_step);
+                azmin.at(m-1) += intens*(temp1*(1.+r_steps) - temp2*rel_step)+intens_next*(-temp1*r_steps + temp2*rel_step);
 			}
 		}
 
         double xnorm = 1.;      //Initialize the normalizing variable.. it will be reset once the new value is calculated below
         //Also initialize an array that's needed for this calculation - see DELSOL3 lines 6238-6244
-		double RSPA[7][7] = {{2.,0.,1.,0.,.75,0.,.625},{0.,0.,0.,0.,0.,0.,0.},{1.,0.,.25,0.,.125,0.,0.},
-							 {0.,0.,0.,0.,0.,0.,0.},{.75,0.,.125,0.,0.,0.,0.},{0.,0.,0.,0.,0.,0.,0.},
+		double RSPA[7][7] = {{2.,0.,1.,0.,.75,0.,.625},
+                             {0.,0.,0.,0.,0.,0.,0.},
+                             {1.,0.,.25,0.,.125,0.,0.},
+							 {0.,0.,0.,0.,0.,0.,0.},
+                             {.75,0.,.125,0.,0.,0.,0.},
+                             {0.,0.,0.,0.,0.,0.,0.},
 							 {.625,0.,0.,0.,0.,0.,0.}};
         for(int i=1; i<_n_terms+1; i+=2){
 		    int jmax = _n_terms - i+1; 
             for (int j=1; j<jmax+1; j+=2) {
                 int ij = i+j;
-                mSun.at(i-1,j-1) = azmin[ij-2]*RSPA[i-1][j-1]/xnorm*pi; 
+                mSun.at(i-1,j-1) = azmin.at(ij-2)*RSPA[i-1][j-1]/xnorm*pi; 
                 xnorm = mSun.at(0,0); 
 			}
 		}
@@ -860,25 +915,43 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
 	double cos_s_az = s_hat.j/sin_s_zen; //cos(theta_s_az),				//Cosine of the solar azimuth angle (CSA)
 	double sin_s_az = s_hat.i/sin_s_zen; //sin(theta_s_az);				//Sine of the solar azimuth angle (SSA)
 	
-	//double theta_n_zen= acos(n_hat.k);	//zenith angle of the tracking vector
+	////double theta_n_zen= acos(n_hat.k);	//zenith angle of the tracking vector
+	//double cos_n_zen = n_hat.k;				//cos of the zenith angle of tracking vector (CNP)
+	//double sin_n_zen = sqrt(1.-n_hat.k*n_hat.k); //sin(theta_n_zen);				//sine of the zenith angle of the tracking vector (SNP)
+ //   sin_n_zen = sin_n_zen == 0. ? 1.e-6 : sin_n_zen;
+
+	////theta_n_az = atan2(n_hat.i;n_hat.j);			//Azimuth angle of the tracking vector (0..360)
+	//double sin_n_az = n_hat.i/sin_n_zen; //sin(theta_n_az);
+	//double cos_n_az = n_hat.j/sin_n_zen; //cos(theta_n_az);
+
+	////double theta_t_zen = acos(dotprod(t_hat, z_hat)); 
+	//double cos_t_zen = dotprod(t_hat, z_hat); //cos of zenith of helio-tower vector
+	//double sin_t_zen = sqrt(1.-cos_t_zen*cos_t_zen); //sin(theta_t_zen);
+ //   sin_t_zen = sin_t_zen == 0. ? 1.e-6 : sin_t_zen;
+	////double theta_t_az = atan2(t_hat.i,t_hat.j); //azimuth angle of the heliostat-to-receiver vector
+	//double sin_t_az = t_hat.i/sin_t_zen; //(theta_t_az);
+	//double cos_t_az = t_hat.j/sin_t_zen; //cos(theta_t_az);
+
+    //-----------------------------------------------------------------------------
+
+    double theta_n_zen= acos(n_hat.k);	//zenith angle of the tracking vector
 	double cos_n_zen = n_hat.k;				//cos of the zenith angle of tracking vector (CNP)
-	double sin_n_zen = sqrt(1.-n_hat.k*n_hat.k); //sin(theta_n_zen);				//sine of the zenith angle of the tracking vector (SNP)
+	double sin_n_zen = sin(theta_n_zen);				//sine of the zenith angle of the tracking vector (SNP)
     sin_n_zen = sin_n_zen == 0. ? 1.e-6 : sin_n_zen;
 
-	//theta_n_az = atan2(n_hat.i;n_hat.j);			//Azimuth angle of the tracking vector (0..360)
-	double sin_n_az = n_hat.i/sin_n_zen; //sin(theta_n_az);
-	double cos_n_az = n_hat.j/sin_n_zen; //cos(theta_n_az);
+	double theta_n_az = atan2(n_hat.i,n_hat.j);			//Azimuth angle of the tracking vector (0..360)
+	double sin_n_az = sin(theta_n_az);
+	double cos_n_az = cos(theta_n_az);
 
-	//double theta_t_zen = acos(dotprod(t_hat, z_hat)); 
+	double theta_t_zen = acos(dotprod(t_hat, z_hat)); 
 	double cos_t_zen = dotprod(t_hat, z_hat); //cos of zenith of helio-tower vector
-	double sin_t_zen = sqrt(1.-cos_t_zen*cos_t_zen); //sin(theta_t_zen);
+	double sin_t_zen = sin(theta_t_zen);
     sin_t_zen = sin_t_zen == 0. ? 1.e-6 : sin_t_zen;
-	//double theta_t_az = atan2(t_hat.i,t_hat.j); //azimuth angle of the heliostat-to-receiver vector
-	double sin_t_az = t_hat.i/sin_t_zen; //(theta_t_az);
-	double cos_t_az = t_hat.j/sin_t_zen; //cos(theta_t_az);
-
+	double theta_t_az = atan2(t_hat.i,t_hat.j); //azimuth angle of the heliostat-to-receiver vector
+	double sin_t_az = sin(theta_t_az);
+	double cos_t_az = cos(theta_t_az);
 	
-		
+	//---------------------------------------------------	
 	//Calculate the heliostat cosine loss
 	double              // sqrt(2)/2
 		eta_cosine = 0.7071067811865*sqrt(1.+cos_s_zen*cos_t_zen+sin_s_zen*sin_t_zen*(cos_t_az*cos_s_az + sin_t_az*sin_s_az));
@@ -1197,6 +1270,7 @@ double Flux::imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *
     int ncanty = Hv->n_cant_y.val;
 	int ncantx = Hv->n_cant_x.val;
 	int N_cant = ncanty*ncantx;
+	(void*)&N_cant;
 
 	double gcanta, gcanty, gcantx, gcantb, tempmult;
 	
@@ -1607,7 +1681,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
 						Rec->getGeometryType() == Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE;	//0=Rectangular, 1=elliptical
 		
 		//Set up for cavity model | 2362
-        Point *hloc = H.getLocation();
+        sp_point *hloc = H.getLocation();
 		double hloc_az = atan2(hloc->x, hloc->y);	//Azimuth angle of the heliostat location, receiver is abscissa
 		double rxn = Rv->rec_width.val/tht/2.;		//Normalized half-width of the aperture
 		double ryn = Rv->rec_height.val/tht/2.;		//Normalized half-height of the aperture
@@ -1634,7 +1708,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
                                                                                                                                                             //            |/
 		double r22 = sin_t_zen * rec_zen_j + cos_t_zen * rec_zen_k * cos_view_az;   //apparent vertical height of the receiver at the centerline
 		
-		Point *aim = H.getAimPointFluxPlane();		//In X and Y coordinates, Y being vertical
+		sp_point *aim = H.getAimPointFluxPlane();		//In X and Y coordinates, Y being vertical
 
 
 		if(is_elliptical){
@@ -2160,7 +2234,7 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
     }
 
 	//Get the flux surface offset
-	Point *offset = flux_surface.getSurfaceOffset();
+	sp_point *offset = flux_surface.getSurfaceOffset();
 	
 	int nh = (int)helios.size();
 	if(show_progress){
@@ -2178,12 +2252,13 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 
 		//Get the heliostat normal vector
 		Vect* hv = helios.at(i)->getTowerVector();
+		(void*)&hv;
 		//Get the image error std dev's
 		double sigx, sigy;	
 		helios.at(i)->getImageSize(sigx, sigy);	//Image size is normalized by the tower height
 		
 		//Get the heliostat aim point
-		Point *aim = helios.at(i)->getAimPoint();
+		sp_point *aim = helios.at(i)->getAimPoint();
 		//Get the height of the receiver that the heliostat is aiming at
 		double tht = helios.at(i)->getWhichReceiver()->getVarMap()->optical_height.Val();
 
@@ -2199,6 +2274,7 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 				//Get the flux point
 				FluxPoint *pt = &grid->at(j).at(k);
 				double pty = pt->location.y;
+				(void*)&pty;
 				//Calculate the dot product between the flux point normal and the helio->tower vector
 				Vect *tv = helios.at(i)->getTowerVector();
 				Vect tvr;
@@ -2211,12 +2287,12 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 					continue;
 				}
 				//Translate the flux point location into global coordinates
-				Point pt_g;
+				sp_point pt_g;
 				pt_g.Set(pt->location.x + offset->x, pt->location.y + offset->y, pt->location.z + tht); //tht include z offset
 
 				//Project the current flux point into the image plane as defined by the 
 				//aim point and the heliostat-to-receiver vector.
-				Point pt_ip;
+				sp_point pt_ip;
 				Toolbox::plane_intersect(*aim, tvr, pt_g, tvr, pt_ip); 
 				
 				//Now the point pt_ip indicates in global coordinates the projection of the flux point onto the image plane.
@@ -2320,7 +2396,7 @@ void Flux::simpleAimPoint(Heliostat &H, SolarField &SF){
 	simpleAimPoint(H.getAimPoint(), H.getAimPointFluxPlane(), H, SF);
 }
 
-void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
+void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarField &SF)
 {
 	/*
 	This script takes a pointer to the result "Aim" point, the heliostat doing the aiming, and the SolarField that has information 
@@ -2339,8 +2415,9 @@ void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
 
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();
-	
+	sp_point *hpos = H.getLocation();
+	(void*)&hpos;
+
 	double tht = SF.getVarMap()->sf.tht.val;
 	
 	int isave;
@@ -2406,8 +2483,8 @@ void Flux::simpleAimPoint(Point *Aim, Point *AimF, Heliostat &H, SolarField &SF)
 
 void Flux::zenithAimPoint(Heliostat &H, Vect &Sun)
 {
-    Point *Aim = H.getAimPoint();
-    Point *AimF = H.getAimPointFluxPlane();
+    sp_point *Aim = H.getAimPoint();
+    sp_point *AimF = H.getAimPointFluxPlane();
 
     //the aimpoint bisects the sun and zenith
     Aim->x = Sun.i / 2. * 1000.;
@@ -2432,8 +2509,9 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 	
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();
-	Point *Aim = H.getAimPoint();
+	sp_point *hpos = H.getLocation();
+	sp_point *Aim = H.getAimPoint();
+	(void*)&hpos;
 
 	double tht = SF.getVarMap()->sf.tht.val;
 
@@ -2456,11 +2534,11 @@ void Flux::sigmaAimPoint(Heliostat &H, SolarField &SF, double args[]){
 	double view_az, w2, h2;
 
 	//Get the simple aim point
-	Point saim, saimf;
+	sp_point saim, saimf;
 	simpleAimPoint(&saim, &saimf, H, SF);
 	
 	double sigx,sigy;
-	Point aimpos;
+	sp_point aimpos;
 
 	switch (recgeom)
 	{
@@ -2553,8 +2631,9 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 	
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();
-	Point *Aim = H.getAimPoint();
+	sp_point *hpos = H.getLocation();
+	sp_point *Aim = H.getAimPoint();
+	(void*)&hpos;
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	
@@ -2579,7 +2658,7 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
     double view_az, w2, h2;
 
 	//Get the simple aim point
-	Point saim, saimf;
+	sp_point saim, saimf;
 	simpleAimPoint(&saim, &saimf, H, SF);
 
 	double window2, rand, sigx, sigy;
@@ -2615,7 +2694,7 @@ void Flux::probabilityShiftAimPoint(Heliostat &H, SolarField &SF, double args[])
 
 		//-- now calculate the aim point position in the flux plane
 		//vector from simple aim point to mod aim point
-		Point aimpos;
+		sp_point aimpos;
 		aimpos.Set(Aim->x - saim.x, Aim->y - saim.y, Aim->z - saim.z);
 		H.calcAndSetAimPointFluxPlane(aimpos, *rec, H);
 		break;
@@ -2655,11 +2734,12 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 
 	*/
 	int hid = H.getId();
-	
+	(void*)&hid;
+
 	vector<Receiver*> *Recs = SF.getReceivers();
 
-	Point *hpos = H.getLocation();	//heliostat position for reference
-	Point *Aim = H.getAimPoint();	//Point to object, this will be set below
+	sp_point *hpos = H.getLocation();	//heliostat position for reference
+	sp_point *Aim = H.getAimPoint();	//Point to object, this will be set below
 
 	double tht = SF.getVarMap()->sf.tht.val;
 	int isave;
@@ -2680,12 +2760,14 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 		opt_height = Rv->optical_height.Val(), // + rec->getOffsetZ(),       << optical height already includes Z offset
 		y_offset = Rv->rec_offset_y.val,
 		x_offset = Rv->rec_offset_x.val;
+	(void*)&x_offset;
+	(void*)&y_offset;
 	int recgeom = rec->getGeometryType(); 
 	
     double w2, h2;
 
 	//Get the simple aim point
-	Point saim, saimf;
+	sp_point saim, saimf;
 	simpleAimPoint(&saim, &saimf, H, SF);
 
 	//----declare varibles that are used in the switch statement
@@ -2693,7 +2775,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 	FluxGrid *FG;
 	FluxPoint *Fp;
 	Vect f_to_h, *fnorm, vtemp;
-    Point *fpos, fint, Fpp, aimpos;
+    sp_point *fpos, fint, Fpp, aimpos;
 	Hvector HV;
 	double dpsave, dprod, sigx, sigy, dx, dy, fsave, imsizex, imsizey, theta_img, rnaz, rnel, stretch_factor, ftmp;
 	double e_bound_box[4];
@@ -2948,7 +3030,8 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     //which receiver is the heliostat currently associated with?
     Receiver *Rec = H.getWhichReceiver(); 
 
-    Point *hpos = H.getLocation();
+    sp_point *hpos = H.getLocation();
+	(void*)&hpos;
     //the current tracking vector
     Vect *track = H.getTrackVector();
     Vect sun;
@@ -2973,11 +3056,11 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     
     //Get the receiver normal vector
     PointVect norm;
-    Point hloc;
+    sp_point hloc;
     hloc.Set( *H.getLocation() );
     Rec->CalculateNormalVector(hloc, norm);
 
-    Point aim_ip;
+    sp_point aim_ip;
     Toolbox::plane_intersect(*norm.point(), *norm.vect(), hloc, R, aim_ip);
 
     switch (recgeom)
@@ -2987,7 +3070,7 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
     {
         
         //Set the heliostat aim point in tower coordinates
-        Point aim_adj( aim_ip );
+        sp_point aim_adj( aim_ip );
         aim_adj.Add( -Rv->rec_offset_x.val, -Rv->rec_offset_y.val, -Rv->rec_offset_z.val - tht );
         H.setAimPoint( aim_adj );
 
@@ -3025,7 +3108,7 @@ void Flux::frozenAimPoint(Heliostat &H, double tht, double args[] )
 
 }
 
-void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
+void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double[] /*args*/)
 {
 
     Receiver *rec = H.getWhichReceiver();
@@ -3040,10 +3123,11 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
     {
         //get the aimpoint, the heliostat location and vector to the aimpoint, and then calculate
         //the relative position of the intersection on the image plain
-        Point *aim = H.getAimPoint();       //global coordinates
-        Point *hloc = H.getLocation();
+        sp_point *aim = H.getAimPoint();       //global coordinates
+        sp_point *hloc = H.getLocation();
 
         int hid = H.getId();
+		(void*)&hid;
 
         Vect h_to_r;
         h_to_r.Set(aim->x - hloc->x, aim->y - hloc->y, aim->z - hloc->z);   //vector from heliostat to receiver -- aimpoint line
@@ -3053,19 +3137,19 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
         Receiver *rec = H.getWhichReceiver();
         PointVect NV;
         rec->CalculateNormalVector(*hloc, NV);
-        /*Point fluxplanept = *NV.point();
+        /*sp_point fluxplanept = *NV.point();
         Vect fluxplanevect = *NV.vect();*/
         
         //calculate the intersection point
-        Point int_pt;
+        sp_point int_pt;
         Toolbox::plane_intersect(*NV.point() /* global coordinates */, *NV.vect(), *aim, h_to_r, int_pt);
 
         //Get the simple aim point
-	    Point saim, saimf;
+	    sp_point saim, saimf;
 	    simpleAimPoint(&saim, &saimf, H, SF);
 
         //Move into receiver coordinates
-        Point aim_rec(int_pt);
+        sp_point aim_rec(int_pt);
         aim_rec.Subtract(saim);
 
         //Rotate the intersection point into receiver coordinates
@@ -3090,10 +3174,10 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
 
 
     
-    //Point *fs = rec->getFluxSurfaces()->front().getSurfaceOffset();
-    //Point *hp = h->getAimPoint();
+    //sp_point *fs = rec->getFluxSurfaces()->front().getSurfaceOffset();
+    //sp_point *hp = h->getAimPoint();
 
-    //Point aim;        //The current aim point in receiver coordinates
+    //sp_point aim;        //The current aim point in receiver coordinates
     //aim.Set(*hp);
     //aim.z = -aim.z +_tht;
     //aim.Add(*fs);
@@ -3103,7 +3187,7 @@ void Flux::keepExistingAimPoint(Heliostat &H, SolarField &SF, double args[])
     ////Get receiver normal vector
     //PointVect NV;
     //rec->CalculateNormalVector(*h->getLocation(), NV);
-    //Point pint;
+    //sp_point pint;
     //Toolbox::plane_intersect(aim, *NV.vect(), Fpp, *NV.vect(), pint);
 
     //Heliostat::calcAndSetAimPointFluxPlane(pint, *h->getWhichReceiver(), *h);
@@ -3125,7 +3209,7 @@ void Flux::calcBestReceiverTarget(Heliostat *H, vector<Receiver*> *Recs, double 
 
 	Nrec = (int)Recs->size();	//The number of receivers to choose from
 	double slant;
-	Point *hpos = H->getLocation();
+	sp_point *hpos = H->getLocation();
 
 	//If we only have 1 receiver, don't bother
 	if(Nrec==1){

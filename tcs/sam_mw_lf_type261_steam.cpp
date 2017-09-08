@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 #include "sam_csp_util.h"
@@ -513,7 +562,7 @@ public:
 		m_I_bn_des = std::numeric_limits<double>::quiet_NaN();		
 		m_is_sh = false;			
 		m_is_oncethru = std::numeric_limits<double>::quiet_NaN();		
-		m_is_multgeom = std::numeric_limits<double>::quiet_NaN();		
+		m_is_multgeom = false;		
 		m_nModBoil = -1;		
 		m_nModSH = -1;			
 		m_nLoops = -1;			
@@ -611,6 +660,8 @@ public:
 			return max( fP_min, max( m_dot_nd, min(1.0, m_dot_nd + ffrac)) );
 		case 3:			// Temperature topping mode - series
 			return max( fP_min, m_dot_nd );
+		default:
+			return 0.0;
 		}
 	}
 
@@ -649,9 +700,9 @@ public:
 		m_T_startup = value( P_T_STARTUP ) + 273.15;				  //[C] Startup temperature (same as field startup)
 		m_fossil_mode = (int) value( P_FOSSIL_MODE );				// [none] Operation mode for the fossil backup {1=Normal.. 2=supp.. 3=topping}
 		m_I_bn_des = value( P_I_BN_DES );							// [W/m2] Design point irradiation value
-		m_is_sh = (bool) value( P_IS_SH );							// [-] Does the solar field include a superheating section
-		m_is_oncethru = (bool) value( P_IS_ONCETHRU );				// [-] Flag indicating whether flow is once through with superheat
-		m_is_multgeom = (bool) value( P_IS_MULTGEOM );				// [-] Does the superheater have a different geometry from the boiler {1=yes}?
+		m_is_sh = ( value( P_IS_SH ) > 0);							// [-] Does the solar field include a superheating section
+		m_is_oncethru = ( value( P_IS_ONCETHRU ) > 0);				// [-] Flag indicating whether flow is once through with superheat
+		m_is_multgeom = ( value( P_IS_MULTGEOM ) > 0);				// [-] Does the superheater have a different geometry from the boiler {1=yes}?
 		m_nModBoil = (int) value( P_NMODBOIL );						// [none] Number of modules in the boiler section
 		m_nModSH = (int) value( P_NMODSH );							// [none] Number of modules in the superheater section
 		m_nLoops = (int) value( P_NLOOPS );							// [none] Number of loops 
@@ -1005,7 +1056,7 @@ public:
 		for( int i = 0; i < m_n_rows_matrix; i++ )
 		{
 			m_AbsorberMaterial.at(i,0) = new AbsorberProps;
-			m_AbsorberMaterial.at(i,0)->setMaterial( AbsorberMaterial.at(i,0) );
+			m_AbsorberMaterial.at(i, 0)->setMaterial((int)AbsorberMaterial.at(i, 0));
 		}
 
 		n_rows = n_cols = 0;
@@ -1190,7 +1241,7 @@ public:
 		m_GlazingIntactIn.resize( n_rows, n_cols );
 		for( int i = 0; i < n_rows; i++ )
 			for( int j = 0; j < n_cols; j++ )
-				m_GlazingIntactIn.at(i,j) = (bool) glaz_intact.at(i,j);
+				m_GlazingIntactIn.at(i,j) =  (glaz_intact.at(i,j) > 0);
 
 		//[-] Annulus gas type (1 = air; 26 = Ar; 27 = H2 )
 		n_rows = n_cols = 0;
@@ -1211,7 +1262,7 @@ public:
 			for( int j = 0; j < 4; j++ )
 			{
 				m_AnnulusGas.at(i,j) = new HTFProperties;
-				m_AnnulusGas.at(i,j)->SetFluid( AnnulusGas.at(i,j) );
+				m_AnnulusGas.at(i, j)->SetFluid((int)AnnulusGas.at(i, j));
 			}
 		}
 
@@ -1441,9 +1492,9 @@ public:
 			// IAM polynomials
 			double iam_t = 0.0;
 			double iam_l = 0.0;
-			for( int i = 0; i < m_IAM_L.ncols(); i++ )
+			for( size_t i = 0; i < m_IAM_L.ncols(); i++ )
 				iam_l += m_IAM_L.at(0,i)*pow(theta_L,i);
-			for( int i = 0; i < m_IAM_T.ncols(); i++ )
+			for( size_t i = 0; i < m_IAM_T.ncols(); i++ )
 				iam_t += m_IAM_T.at(0,i)*pow(phi_t,i);
 			m_opteff_des.at(0,0) = m_eta_opt_fixed.at(0,0) * iam_t * iam_l;
 		}
@@ -1471,9 +1522,9 @@ public:
 				// IAM polynomials
 				double iam_t = 0.0;
 				double iam_l = 0.0;
-				for( int i = 0; i < m_IAM_L.ncols(); i++ )
+				for( size_t i = 0; i < m_IAM_L.ncols(); i++ )
 					iam_l += m_IAM_L.at(1,i)*pow(theta_L,i);
-				for( int i = 0; i < m_IAM_T.ncols(); i++ )
+				for( size_t i = 0; i < m_IAM_T.ncols(); i++ )
 					iam_t += m_IAM_T.at(1,i)*pow(phi_t,i);
 				m_opteff_des.at(1,0) = m_eta_opt_fixed.at(1,0) * iam_t * iam_l;
 			}
@@ -1653,7 +1704,7 @@ public:
 			q_rec_tot_loop += m_q_rec.at(i,0);
 			q_loss_tot_loop += m_q_loss.at(i,0);
 		}
-		double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
+		//double q_inc_tot_des = q_inc_tot_loop*(double)m_nLoops;
 		m_q_rec_tot_des = q_rec_tot_loop*(double)m_nLoops;
 		double q_loss_tot_des = q_loss_tot_loop*(double)m_nLoops + q_loss_piping;
 		double q_abs_tot_des = m_q_rec_tot_des - q_loss_tot_des;
@@ -1794,14 +1845,14 @@ public:
 	virtual int call( double time, double step, int ncall )
 	{		
 		
-		double dnifc = value( I_DNIFC );					//[W/m2] Forecast DNI
+		//double dnifc = value( I_DNIFC );					//[W/m2] Forecast DNI
 		double I_bn = value( I_I_BN );						//[W/m2] Current DNI
 		double T_db = value( I_T_DB )+273.15;				//[K] Dry bulb temp, convert from C
 		double T_dp = value( I_T_DP )+273.15;				//[K] Dewpoint temp, convert from C
 		double P_amb = value( I_P_AMB )*100.0;				//[Pa] Ambient pressure, convert from mbar
 		double V_wind = value( I_V_WIND );					//[m/s] Ambient windspeed
-		double m_dot_htf_ref = value( I_M_DOT_HTF_REF )/3600.0;	//[kg/s] Reference HTF flow rate at design conditions, convert from kg/hr
-		double m_pb_demand = value( I_M_PB_DEMAND )/3600.0;		//[kg/s] Demand HTF flow from the power block, convert from kg/hr
+		//double m_dot_htf_ref = value( I_M_DOT_HTF_REF )/3600.0;	//[kg/s] Reference HTF flow rate at design conditions, convert from kg/hr
+		//double m_pb_demand = value( I_M_PB_DEMAND )/3600.0;		//[kg/s] Demand HTF flow from the power block, convert from kg/hr
 		double shift = value( I_SHIFT )*0.0174533;			//[deg] Shift in longitude from local standard meridian
 		double SolarAz = value( I_SOLARAZ );				//[deg] Solar azimuth angle
 		double SolarZen = value(I_SOLARZEN)*0.0174533;;		//Solar zenith angle [deg]
@@ -2043,7 +2094,7 @@ public:
 				// Guess the loop inlet/outlet enthalpies
 				water_TP( T_pb_out, check_pressure.P_check( P_turb_in_guess+dP_basis_guess*(m_fP_sf_tot-m_fP_hdr_c))*100.0, &wp );
 				double h_b_in_guess = wp.enth;		//[kJ/kg]
-				double h_pb_out_guess = h_b_in_guess;	//[kJ/kg]
+				//double h_pb_out_guess = h_b_in_guess;	//[kJ/kg]
 				water_TP( m_T_field_out_des, check_pressure.P_check( P_turb_in_guess+dP_basis_guess*m_fP_hdr_h)*100.0, &wp );
 				double h_sh_out_guess = wp.enth;		//[kJ/kg]
 				
@@ -2662,7 +2713,7 @@ public:
 				}		// End superheater
 				else
 				{
-					double m_dot_field = m_dot_b*m_x_b_des*(double)m_nLoops;	//[kg/s] The total field mass flow rate is just the saturated steam coming from the boiler section
+					//double m_dot_field = m_dot_b*m_x_b_des*(double)m_nLoops;	//[kg/s] The total field mass flow rate is just the saturated steam coming from the boiler section
 				}
 
 				m_dot_b_tot = m_dot_b * (double)m_nLoops;
@@ -2896,7 +2947,7 @@ public:
 			// Do we have enough to do standby?
 			if( q_avail_tot > m_q_pb_des*m_q_sby_frac && m_t_sby_prev > 0.0 && m_is_pb_on_prev )
 			{
-				standby_control = 2.0;	// Operate in standby mode
+				standby_control = 2;	// Operate in standby mode
 				m_t_sby = max( 0.0, m_t_sby_prev-step/3600.0 );		
 				q_aux = max( m_q_sby_frac*m_q_pb_des - q_field_delivered, 0.0 );
 				m_dot_aux = 0.0;		// It's not meaningful to report the aux mass flow rate
@@ -3025,7 +3076,7 @@ public:
 		return 0;
 	}
 
-	virtual int converged( double time )
+	virtual int converged( double /*time*/ )
 	{
 		for( int i = 0; i < m_nModTot; i++ )
 			m_T_ave_prev.at(i,0) = m_T_ave.at(i,0);

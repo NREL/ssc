@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "tckernel.h"
 
 
@@ -36,15 +85,15 @@ bool tcKernel::converged( double time )
 {
 	if (m_step != 0.0 )
 	{
-		int istep = (int) (time-m_start)/m_step;
-		int nstep = (int) (m_end-m_start)/m_step;
+		int istep = (int) ((time-m_start)/m_step);
+		int nstep = (int) ((m_end-m_start)/m_step);
 		int nnsteps = nstep/200;
 		if ( nnsteps == 0 ) nnsteps = 1;		
 		if (istep % nnsteps == 0)
 		{
 			double percent = 100 * (((double)istep) / ((double)nstep) );
 
-			if ( !compute_module::update( "", percent, (float)istep ) )
+			if ( !compute_module::update( "", (float)percent, (float)istep ) )
 				return false; // abort simulation if compute_module update returned false from controller
 		}
 	}
@@ -150,7 +199,7 @@ int tcKernel::simulate( double start, double end, double step, int max_iter )
 				char buf[32];
 				sprintf(buf, "%d", i);
 				d.u = &m_units[i];
-				d.uidx = i;
+				d.uidx = (int)i;
 				d.idx = idx;
 				d.group = "Unit " + std::string(buf) + " (" + std::string(m_units[i].type->name) + ")";//: " + m_units[i].name;
 				d.name = vars[idx].name;
@@ -204,7 +253,7 @@ void tcKernel::set_unit_value_ssc_array( int id, const char *name )
 	ssc_number_t * p = as_array(name, &len);
 	double *pt = new double[len];
 	for ( size_t i=0;i<len;i++ ) pt[i] = (double) p[i];
-	set_unit_value(id, name, pt, len); 
+	set_unit_value(id, name, pt, (int)len);
 	delete [] pt;
 	return;
 }
@@ -215,7 +264,7 @@ void tcKernel::set_unit_value_ssc_array(int id, const char *tcs_name, const char
 	ssc_number_t * p = as_array(ssc_name, &len);
 	double *pt = new double[len];
 	for (size_t i = 0; i<len; i++) pt[i] = (double)p[i];
-	set_unit_value(id, tcs_name, pt, len);
+	set_unit_value(id, tcs_name, pt, (int)len);
 	delete[] pt;
 	return;
 }
@@ -227,7 +276,7 @@ void tcKernel::set_unit_value_ssc_matrix(int id, const char *name)
 	ssc_number_t *p = as_matrix(name, &nr, &nc);
 	double *pt = new double[nr*nc];
 	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
-	set_unit_value(id, name, pt, nr, nc);
+	set_unit_value(id, name, pt, (int)nr, (int)nc);
 	delete[] pt;
 	return;
 }
@@ -238,7 +287,7 @@ void tcKernel::set_unit_value_ssc_matrix(int id, const char *tcs_name, const cha
 	ssc_number_t *p = as_matrix(ssc_name, &nr, &nc);
 	double *pt = new double[nr*nc];
 	for (size_t i = 0; i<nr*nc; i++) pt[i] = (double)p[i];
-	set_unit_value(id, tcs_name, pt, nr, nc);
+	set_unit_value(id, tcs_name, pt, (int)nr, (int)nc);
 	delete[] pt;
 	return;
 }
@@ -252,7 +301,7 @@ void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *name)
 		for (size_t c = 0; c< nc; c++)
 			for (size_t r = 0; r < nr; r++)
 				pt[i++] = (double)p[r*nc + c];
-	set_unit_value(id, name, pt, nc, nr);
+		set_unit_value(id, name, pt, (int)nc, (int)nr);
 	delete[] pt;
 	return;
 }
@@ -266,7 +315,7 @@ void tcKernel::set_unit_value_ssc_matrix_transpose(int id, const char *tcs_name,
 	for (size_t c = 0; c< nc; c++)
 		for (size_t r = 0; r < nr; r++)
 			pt[i++] = (double)p[r*nc + c];
-	set_unit_value(id, tcs_name, pt, nc, nr);
+	set_unit_value(id, tcs_name, pt, (int)nc, (int)nr);
 	delete[] pt;
 	return;
 }
@@ -286,7 +335,7 @@ bool tcKernel::set_output_array(const char *ssc_output_name, const char *tcs_out
 		if ( (d->type == TCS_NUMBER) && (d->name == tcs_output_name) && (d->values.size() == len ) )
 		{
 			for (size_t i=0;i<len;i++)
-				output_array[i] = (ssc_number_t) d->values[i].dval * scaling;
+				output_array[i] = (ssc_number_t)(d->values[i].dval * scaling);
 			return true;
 		}
 	}

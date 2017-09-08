@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #define _TCSTYPEINTERFACE_
 #include "tcstype.h"
 #include "htf_props.h"
@@ -407,7 +456,7 @@ public:
 		m_T_mc_in_des = T_amb_cycle_des + m_delta_T_acc;	//[K] Compressor inlet temperature
 		m_T_t_in_des = m_T_htf_hot - m_delta_T_t;			//[K] Turbine inlet temperature		
 
-		double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
+		//double P_amb_cycle_des = 101325.0*pow(1 - 2.25577E-5*value(P_PLANT_ELEVATION), 5.25588);	//[Pa] http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 
 		// ******************************************************************************************
 		// ******************************************************************************************
@@ -522,9 +571,9 @@ public:
 
 		// Design metrics
 		double design_eta = ms_rc_cycle.get_design_solved()->m_eta_thermal;
-		double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
+		//double W_dot_net_des_calc = ms_rc_cycle.get_design_solved()->m_W_dot_net;		// Can compare to target net output to check convergence
 		m_m_dot_des = ms_rc_cycle.get_design_solved()->m_m_dot_t;			//[kg/s]
-		double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
+		//double P_PHX_out = ms_rc_cycle.get_design_solved()->m_pres[6-1];		//[kPa]
 		double P_PHX_in = ms_rc_cycle.get_design_solved()->m_pres[5 - 1];			//[kPa]
 
 		double T_htf_cold_est = value(P_T_htf_cold_est) + 273.15;
@@ -554,7 +603,7 @@ public:
 		// Cycle/cold side
 		double T_PHX_co2_ave = 0.5*(m_T_t_in_des + T_PHX_co2_in);		//[K]
 		co2_error = CO2_TP(T_PHX_co2_ave, P_PHX_in, &co2_props);
-		double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
+		//double cp_PHX_co2 = m_Q_dot_rec_des / (m_m_dot_des*(m_T_t_in_des - T_PHX_co2_in));
 
 		// Because C_dot_c = C_dot_h, q_dot_max = 
 		double q_dot_max = m_dot_rec_des*m_cp_rec*(m_T_htf_hot - T_PHX_co2_in);		//[kW]
@@ -640,7 +689,7 @@ public:
 
 		double C_dot_htf_sby = ms_phx_od_par.m_m_dot_htf * ms_phx_od_par.m_cp_htf;
 
-		ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
+		//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, q_sby_error_code);
 
 		if( q_sby_error_code != 0 )
 		{
@@ -650,7 +699,7 @@ public:
 
 		double Q_dot_PHX_sby = ms_rc_cycle.get_od_solved()->m_Q_dot;
 
-		double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
+		//double T_htf_cold_calc = m_T_htf_hot - Q_dot_PHX_sby / C_dot_htf_sby;
 
 		double m_T_PHX_in_sby = ms_rc_cycle.get_od_solved()->m_temp[5 - 1];
 
@@ -667,7 +716,7 @@ public:
 		return 0;
 	}
 
-	virtual int call(double time, double step, int ncall)
+	virtual int call(double /*time*/, double step, int ncall)
 	{
 		double T_htf_hot = value(I_T_HTF_HOT) + 273.15;			//[K] Hot HTF temp from the receiver, convert from C
 		double m_dot_htf = value(I_M_DOT_HTF)/3600.0;			//[kg/s] Mass flow rate of htf from receiver, convert from kg/s
@@ -732,7 +781,7 @@ public:
 			ms_phx_od_par.m_cp_htf = m_cp_rec;
 
 			int hx_od_error = 0;
-			ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
+			//ms_rc_cycle.opt_od_eta_for_hx(ms_rc_od_par, ms_phx_od_par, hx_od_error);
 
 			if( hx_od_error != 0 )
 			{
@@ -755,7 +804,7 @@ public:
 			P_main_comp_in = ms_rc_cycle.get_od_solved()->m_pres[1-1];
 			P_main_comp_out = ms_rc_cycle.get_od_solved()->m_pres[2-1];
 			frac_recomp = ms_rc_cycle.get_od_solved()->m_recomp_frac;
-			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_od_solved.m_N;		//[rpm]
+			N_mc_od = ms_rc_cycle.get_od_solved()->ms_mc_ms_od_solved.m_N;		//[rpm]
 
 			T_htf_cold = ms_phx_od_par.m_T_htf_cold;
 
@@ -879,7 +928,7 @@ public:
 		return 0;										 
 	}													 
 														 
-	virtual int converged(double time)					 
+	virtual int converged(double /*time*/)					 
 	{
 		if(m_standby_control == 3)
 		{

@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #ifndef __SCO2_PC_CSP_INT_
 #define __SCO2_PC_CSP_INT_
 
@@ -173,7 +222,7 @@ public:
 	C_csp_messages mc_messages;
 
 	// Callback function with progress bar
-	bool(*mf_callback_update)(std::string &log_msg, std::string &progress_msg, void *data, double progress);
+	bool(*mf_callback_update)(std::string &log_msg, std::string &progress_msg, void *data, double progress, int out_type);
 	void *mp_mf_update;
 	
 	C_sco2_rc_csp_template()
@@ -248,7 +297,7 @@ private:
 
 	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 
-	int od_fix_T_mc__nl_opt_shell__opt_eta();
+	//int od_fix_T_mc__nl_opt_shell__opt_eta();
 
 public:	
 
@@ -291,29 +340,29 @@ public:
 
 	virtual void design(C_sco2_rc_csp_template::S_des_par des_par);
 
-	void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
+	//void off_design_P_mc_in_parameteric(double P_mc_in_min /*kPa*/, double P_mc_in_max /*kPa*/, double P_mc_in_inc /*kPa*/);
 
-	void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
+	//void off_design_fix_P_mc_in_parametric_f_recomp(double P_mc_in /*kPa*/, double f_recomp_min /*-*/, double f_recomp_max /*-*/, double f_recomp_inc /*-*/);
 
 	virtual int off_design_nested_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
-	bool opt_f_recomp_fix_P_mc_in_max_eta_core();
+	//bool opt_f_recomp_fix_P_mc_in_max_eta_core();
 
 	bool opt_P_mc_in_nest_f_recomp_max_eta_core();
 
-	bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
+	//bool opt_P_mc_in_nest_f_recomp_max_eta_core_old_but_working();
 
-	int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
+	//int off_design_opt(C_sco2_recomp_csp::S_od_par od_par, int off_design_strategy, double od_opt_tol = 1.E-4);
 
 	int off_design(C_sco2_recomp_csp::S_od_par od_par, S_od_operation_inputs od_op_inputs);
 
-	int find_a_feasible_off_design_solution(C_sco2_recomp_csp::S_od_par od_par, double T_mc_in /*K*/,
-				S_od_operation_inputs & od_op_inputs);
+	//int find_a_feasible_off_design_solution(C_sco2_recomp_csp::S_od_par od_par, double T_mc_in /*K*/,
+	//			S_od_operation_inputs & od_op_inputs);
 
 	int off_design_core(double & eta_solved);
 
 	// Class methods linked to nlopt callbacks - must be public
-	double od_fix_T_mc_approach__nl_opt_shell(const std::vector<double> &x);
+	//double od_fix_T_mc_approach__nl_opt_shell(const std::vector<double> &x);
 
 	double get_T_mc_in_min()
 	{
@@ -329,10 +378,10 @@ public:
 
 	virtual const S_od_solved * get_od_solved();
 
-	void sweep_turbomachinery_deltaP(double T_mc_in /*K*/, double P_mc_in /*kPa*/,
-							double T_t_in /*K*/, double phi_mc /*-*/);
+	//void sweep_turbomachinery_deltaP(double T_mc_in /*K*/, double P_mc_in /*kPa*/,
+	//						double T_t_in /*K*/, double phi_mc /*-*/);
 
-	double opt_f_recomp_max_eta(double f_recomp);
+	//double opt_f_recomp_max_eta(double f_recomp);
 
 	double opt_P_mc_in_nest_f_recomp_max_eta(double P_mc_in /*kPa*/);
 
@@ -344,16 +393,16 @@ public:
 	std::string mstr_base_name;
 };
 
-double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_max_f_recomp_cycle_eta(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
-double fmin_f_recomp_cycle_eta(double x, void *data);
+//double fmin_f_recomp_cycle_eta(double x, void *data);
 
-double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_max_opt_P_mc_in_nest_f_recomp(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 double fmin_opt_P_mc_in_nest_f_recomp_max_eta(double x, void *data);
 
 // Optimization method callbacks
-double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);
+//double nlopt_cb_opt_od_eta__float_phx_dt(const std::vector<double> &x, std::vector<double> &grad, void *data);
 
 
 class C_sco2_recomp_csp_10MWe_scale : public C_sco2_rc_csp_template

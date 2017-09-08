@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_util.h"
@@ -28,7 +77,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "flux_max",                  "Maximum flux",                               "kW/m2",  "",         "SolarPILOT",   "*",                "",                "" },
 	*/
 
-	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "*",                "LOCAL_FILE",      "" },
+	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "?",                "LOCAL_FILE",      "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_width",               "Heliostat width",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_height",              "Heliostat height",                           "m",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -58,7 +107,9 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "delta_flux_hrs",            "Hourly frequency in flux map lookup",        "",       "",         "SolarPILOT",   "?=1",              "",                "" },
 
 	{ SSC_INPUT,        SSC_NUMBER,      "calc_fluxmaps",             "Include fluxmap calculations",               "",       "",         "SolarPILOT",   "?=0",              "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "check_max_flux",            "Check max flux at design point",             "",       "",         "SolarPILOT",   "?=0",              "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "n_flux_x",                  "Flux map X resolution",                      "",       "",         "SolarPILOT",   "?=12",             "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_flux_y",                  "Flux map Y resolution",                      "",       "",         "SolarPILOT",   "?=1",              "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "check_max_flux",            "Check max flux at design point",             "",       "",         "SolarPILOT",   "?=0",              "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_fixed_cost",          "Tower fixed cost",                           "$",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "tower_exp",                 "Tower cost scaling exponent",                "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "rec_ref_cost",              "Receiver reference cost",                    "$",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -126,32 +177,32 @@ public:
 
 	void exec( ) throw( general_error )
 	{
-		
+		shared_ptr<weather_data_provider> wdata = make_shared<weatherfile>(as_string("solar_resource_file"));
         solarpilot_invoke spi( this );
-        spi.run();
+        spi.run(wdata);
         AutoPilot_S *sapi = spi.GetSAPI();
 
-        assign("h_tower_opt", spi.sf.tht.val);
-        assign("rec_height_opt", spi.recs.front().rec_height.val);
-        assign("rec_aspect_opt", spi.recs.front().rec_aspect.Val() );
-        assign("cost_rec_tot", spi.fin.rec_cost.Val() );
-        assign("cost_sf_tot", spi.fin.heliostat_cost.Val() );
-        assign("cost_tower_tot", spi.fin.tower_cost.Val() );
-        assign("cost_land_tot", spi.fin.land_cost.Val() );
-        assign("cost_site_tot", spi.fin.site_cost.Val() );
-        assign("land_area", spi.land.land_area.Val() );
-        assign("area_sf", spi.sf.sf_area.Val() );
+		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
+		assign("rec_height_opt", (ssc_number_t)spi.recs.front().rec_height.val);
+		assign("rec_aspect_opt", (ssc_number_t)spi.recs.front().rec_aspect.Val());
+		assign("cost_rec_tot", (ssc_number_t)spi.fin.rec_cost.Val());
+		assign("cost_sf_tot", (ssc_number_t)spi.fin.heliostat_cost.Val());
+		assign("cost_tower_tot", (ssc_number_t)spi.fin.tower_cost.Val());
+		assign("cost_land_tot", (ssc_number_t)spi.fin.land_cost.Val());
+		assign("cost_site_tot", (ssc_number_t)spi.fin.site_cost.Val());
+		assign("land_area", (ssc_number_t)spi.land.land_area.Val());
+		assign("area_sf", (ssc_number_t)spi.sf.sf_area.Val());
 
         if( is_assigned("helio_positions_in") )
         {
             util::matrix_t<double> hposin = as_matrix("helio_positions_in");
 			ssc_number_t *hpos = allocate( "heliostat_positions",  hposin.nrows(), 2 );
 			for(size_t i=0; i< hposin.nrows(); i++){
-				hpos[ i*2     ] = hposin.at(i,0);
-				hpos[ i*2 + 1 ] = hposin.at(i,1);
+				hpos[i * 2] = (ssc_number_t)hposin.at(i, 0);
+				hpos[i * 2 + 1] = (ssc_number_t)hposin.at(i, 1);
 			}
             //return the number of heliostats
-		    assign("number_heliostats",  hposin.nrows() );
+			assign("number_heliostats", (ssc_number_t)hposin.nrows());
         }
         else
         {
@@ -168,13 +219,13 @@ public:
 			    throw exec_error("solarpilot", "failed to generate a heliostat field layout");
  		    
             //return the number of heliostats
-		    assign("number_heliostats",  spi.layout.heliostat_positions.size() );
+			assign("number_heliostats", (ssc_number_t)spi.layout.heliostat_positions.size());
         }
 
  
 		
 		//return the land area
-		assign("base_land_area",  spi.land.land_area.Val() );
+		assign("base_land_area", (ssc_number_t)spi.land.land_area.Val());
 
 		//check if flux map calculations are desired
 		if( as_boolean("calc_fluxmaps") ){
@@ -188,9 +239,9 @@ public:
 				ssc_number_t *opteff = allocate( "opteff_table", nvals, 3 );
 				for( size_t i=0;i<nvals;i++ )
                 {
-					opteff[ i*3     ] = (float)spi.fluxtab.azimuths[i]*180./pi - 180.;      //Convention is usually S=0, E<0, W>0 
-                    opteff[ i*3 + 1 ] = (float)spi.fluxtab.zeniths[i]*180./pi;     //Provide zenith angle
-                    opteff[ i*3 + 2 ] = (float)spi.fluxtab.efficiency[i];
+					opteff[i * 3] = (ssc_number_t)(spi.fluxtab.azimuths[i] * 180. / pi - 180.);      //Convention is usually S=0, E<0, W>0 
+					opteff[i * 3 + 1] = (ssc_number_t)(spi.fluxtab.zeniths[i] * 180. / pi);     //Provide zenith angle
+					opteff[i * 3 + 2] = (ssc_number_t)spi.fluxtab.efficiency[i];
                 }
 			}
 			else

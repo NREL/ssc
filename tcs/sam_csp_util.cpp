@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <algorithm>
 
 #include "sam_csp_util.h"
@@ -35,7 +84,7 @@ double CSP::interp(util::matrix_t<double> *data, double x, int low_bound, int up
 	*/
 
 	if(low_bound < 0) low_bound = 0;
-	if(up_bound < 0) up_bound = data->ncols()-1;	//Index of the last entry
+	if (up_bound < 0) up_bound = (int)data->ncols() - 1;	//Index of the last entry
 
 	if(up_bound < low_bound) return NULL;
 	if(up_bound == low_bound) return data->at(1,low_bound);
@@ -594,7 +643,7 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 	}
 	water_TP( T_cond - 3.0 + 273.15, P_amb/1000.0, &wp );
 	double h_pcw_in = wp.enth*1000.0;
-	double s_pcw_in = wp.entr*1000.0;
+	//double s_pcw_in = wp.entr*1000.0;
 	double rho_cw = wp.dens;	
 	
 	double h_pcw_out_s = (dp_evap/rho_cw) + h_pcw_in;								// [J/kg] isentropic outlet enthalpy.. incompressible fluid
@@ -648,7 +697,7 @@ void CSP::evap_tower(int tech_type, double P_cond_min, int n_pl_inc, double Delt
 
 // Air cooling calculations
 void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des, double P_cond_ratio, double P_cycle, double eta_ref, 
-		 double T_db, double P_amb, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
+		 double T_db, double /*P_amb*/, double q_reject, double& m_dot_air, double& W_dot_fan, double& P_cond, double& T_cond, 
 		 double& f_hrsys)
 {
 	/*
@@ -746,7 +795,7 @@ void CSP::ACC( int tech_type, double P_cond_min, int n_pl_inc, double T_ITD_des,
 	double T_fan_in_K = T_db + 273.15;									// [K] Fan inlet temperature
 	double T_fan_out_K = T_fan_in_K * pow(P_cond_ratio,(R/c_air));
 	double T_fan_out = T_fan_out_K - 273.15;							// [C] Fan outlet temperature
-	double dT_fan = T_fan_out - T_db;									// [C] Difference in temperature including irreversibilities in fan
+	//double dT_fan = T_fan_out - T_db;									// [C] Difference in temperature including irreversibilities in fan
 
 	double h_fan_out_s = f_h_air_T(T_fan_out);							// [J/kg] Isentropic fan outlet temperature
 	double h_fan_out = h_fan_in + (h_fan_out_s - h_fan_in)/eta_fan_s;	// [J/kg] Actual fan outlet temperature
@@ -962,7 +1011,7 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 	double T_acfan_in_K = T_db + 273.15;  //[K] Fan inlet temperature
 	double T_acfan_out_K = T_acfan_in_K * pow(P_cond_ratio,(R/C_air));
 	double T_acfan_out = T_acfan_out_K - 273.15;    //[C] Fan outlet temperature
-	double dT_acfan = T_acfan_out - T_db;   //[C] Difference in temperature including irreversibilities in fan
+	//double dT_acfan = T_acfan_out - T_db;   //[C] Difference in temperature including irreversibilities in fan
 
 	double h_acfan_out_s = f_h_air_T(T_acfan_out);	//[J/kg] Isentropic fan outlet temperature
 	double h_acfan_out = h_acfan_in + (h_acfan_out_s - h_acfan_in)/eta_acfan_s;   //[J/kg] Actual fan outlet temperature
@@ -981,7 +1030,7 @@ void CSP::HybridHR( int tech_type, double P_cond_min, int n_pl_inc, double F_wc,
 		// rho_cw = f_rho_P(P_amb);         //[kg/m3] cooling water density in the pump
 		water_TP( T_cond - 3.0 + 273.15, P_amb/1000.0, &wp );
 		double h_pcw_in = wp.enth * 1000.0;
-		double s_pcw_in = wp.entr * 1000.0;
+		//double s_pcw_in = wp.entr * 1000.0;
 		double rho_cw = wp.dens;
 		
 		double h_pcw_out_s = dP_evap/rho_cw + h_pcw_in;                         //[J/kg] isentropic outlet enthalpy.. incompressible fluid
@@ -1114,7 +1163,7 @@ bool CSP::flow_patterns( int n_panels, int crossover_shift, int flow_type, int &
         return false;
     }
     
-	int n_p_quarter = n_panels/4;
+	//int n_p_quarter = n_panels/4;
 
 	switch( flow_type )
 	{
@@ -1756,7 +1805,7 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 				Copyright:  National Renewable Energy Lab (Golden, CO) 2009
 					note  :  Tested against original EES version
 */
-double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int hn, int hv){
+double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int /*hn*/, int /*hv*/){
 	//           units                    ( K ,  K , bar, m/s)
 	
 	double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
@@ -2035,7 +2084,7 @@ double Evacuated_Receiver::fT_2(double q_12conv, double T_1, double T_2g, double
 { Based on linear fit of data from "Alloy Digest, Sourcebook, Stainless Steels"; ASM International, 2000.}
 */
 
-double Evacuated_Receiver::FK_23(double T_2, double T_3, int hn, int hv)
+double Evacuated_Receiver::FK_23(double T_2, double T_3, int hn, int /*hv*/)
 {
 	double T_23;
 
@@ -2157,7 +2206,7 @@ void Evacuated_Receiver::EvacReceiver(double T_1_in, double m_dot, double T_amb,
 	*/
 	//cc--> note that xx and yy have size 'nea'
 		
-	bool glazingIntact = m_Glazing_intact.at(hn,hv);
+	//bool glazingIntact = m_Glazing_intact.at(hn,hv);
 	bool reguess = false;
 	
 	double T_save_tot = 0.0;

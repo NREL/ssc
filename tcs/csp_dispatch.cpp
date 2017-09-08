@@ -1,3 +1,52 @@
+/*******************************************************************************************************
+*  Copyright 2017 Alliance for Sustainable Energy, LLC
+*
+*  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
+*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
+*  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
+*  copies to the public, perform publicly and display publicly, and to permit others to do so.
+*
+*  Redistribution and use in source and binary forms, with or without modification, are permitted
+*  provided that the following conditions are met:
+*
+*  1. Redistributions of source code must retain the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer.
+*
+*  2. Redistributions in binary form must reproduce the above copyright notice, the above government
+*  rights notice, this list of conditions and the following disclaimer in the documentation and/or
+*  other materials provided with the distribution.
+*
+*  3. The entire corresponding source code of any redistribution, with or without modification, by a
+*  research entity, including but not limited to any contracting manager/operator of a United States
+*  National Laboratory, any institution of higher learning, and any non-profit organization, must be
+*  made publicly available under this license for as long as the redistribution is made available by
+*  the research entity.
+*
+*  4. Redistribution of this software, without modification, must refer to the software by the same
+*  designation. Redistribution of a modified version of this software (i) may not refer to the modified
+*  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
+*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
+*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  designation may not be used to refer to any modified version of this software or any modified
+*  version of the underlying software originally provided by Alliance without the prior written consent
+*  of Alliance.
+*
+*  5. The name of the copyright holder, contributors, the United States Government, the United States
+*  Department of Energy, or any of their employees may not be used to endorse or promote products
+*  derived from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+*  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+*  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER,
+*  CONTRIBUTORS, UNITED STATES GOVERNMENT OR UNITED STATES DEPARTMENT OF ENERGY, NOR ANY OF THEIR
+*  EMPLOYEES, BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+*  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+*  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+*  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*******************************************************************************************************/
+
 #include <fstream>
 #include <sstream>
 #include <stdlib.h>
@@ -205,6 +254,8 @@ bool csp_dispatch_opt::check_setup(int nstep)
     //check parameters and inputs to make sure everything has been set up correctly
     bool ok = true;
 
+    if( (int)price_signal.size() < nstep )   return false;
+
     if( !m_is_weather_setup ) return false;
     if( params.siminfo == 0 ) return false;
     
@@ -385,7 +436,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
         pars["ycsb0"] = (optinst->params.is_pb_standby0 ? 1 : 0) ;
         pars["q0"] =  optinst->params.q_pb0 ;
         pars["qrecmaxobs"] = 1.;
-        for(int i=0; i<optinst->outputs.q_sfavail_expected.nrows(); i++)
+        for(int i=0; i<(int)optinst->outputs.q_sfavail_expected.nrows(); i++)
             pars["qrecmaxobs"] = optinst->outputs.q_sfavail_expected.at(i,0) > pars["qrecmaxobs"] ? optinst->outputs.q_sfavail_expected.at(i,0) : pars["qrecmaxobs"];
 
         pars["Qrsb"] = optinst->params.q_rec_standby; // * dq_rsu;     //.02
@@ -405,7 +456,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             double fhfi = 0.;
             double fhfi_2 = 0.;
             std::vector<double> fiv;
-            int m = optinst->params.eff_table_load.get_size();
+            int m = (int)optinst->params.eff_table_load.get_size();
             for(int i=0; i<m; i++)
             {
                 if( i==0 ) continue; // first data point is zero, so skip
@@ -625,7 +676,7 @@ bool csp_dispatch_opt::optimize()
 
             //calculate the mean price to appropriately weight the receiver production timing derate
             double pmean =0;
-            for(int t=0; t<forecast_outputs.price_scenarios.nrows(); t++)
+            for(int t=0; t<(int)forecast_outputs.price_scenarios.nrows(); t++)
                 pmean += forecast_outputs.price_scenarios.at(t,0);
             pmean /= (double)forecast_outputs.price_scenarios.nrows();
             //--
@@ -1527,10 +1578,10 @@ bool csp_dispatch_opt::optimize()
 
             int ncols = get_Ncolumns(lp);
 
-            char name[15];
+//            char name[15];
             REAL *vars = new REAL[ncols];
             get_variables(lp, vars);
-            int col;
+//            int col;
 
 
             for(int c=1; c<ncols; c++)
@@ -1668,7 +1719,7 @@ bool csp_dispatch_opt::optimize()
             break;
         case SUBOPTIMAL:
             type = C_csp_messages::NOTICE;
-            s << "Suboptimal solution identified.";
+			s << "Suboptimal solution identified.";
             break;
         case INFEASIBLE:
             type = C_csp_messages::WARNING;
@@ -1693,7 +1744,7 @@ bool csp_dispatch_opt::optimize()
             break;
         case OPTIMAL:
             type = C_csp_messages::NOTICE;
-            s << "Optimal solution identified.";
+			s << "Optimal solution identified.";
         default:
             break;
         }
@@ -1784,7 +1835,7 @@ std::string csp_dispatch_opt::write_ampl()
     //write out a data file
     if(solver_params.is_write_ampl_dat || solver_params.is_ampl_engine)
     {
-		int day = params.siminfo->ms_ts.m_time / 3600 / 24;
+		int day = (int)params.siminfo->ms_ts.m_time / 3600 / 24;
         //char outname[200];
         //sprintf(outname, "%sdata_%d.dat", solver_params.ampl_data_dir.c_str(), day);
 
@@ -1816,7 +1867,7 @@ std::string csp_dispatch_opt::write_ampl()
         
         std::sort( keys.begin(), keys.end(), strcompare );
 
-        for(int k=0; k<keys.size(); k++)
+        for(size_t k=0; k<keys.size(); k++)
             fout << "param " << keys.at(k) << " := " << pars[keys.at(k)] << ";\n";
 
         fout << "# --- indexed parameters ---\n";
@@ -2059,7 +2110,7 @@ bool optimization_vars::construct()
     for(int i=0; i<(int)var_objects.size(); i++)
         var_by_name[ var_objects.at(i).name ] = &var_objects.at(i);
 
-
+	return true;
 }
 
 REAL &optimization_vars::operator()(char *varname, int ind)    //Access for 1D var

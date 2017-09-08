@@ -181,7 +181,7 @@ static int __WINAPI lp_input_lp_yyin(void *fpin, char *buf, int max_size)
 {
   int result;
 
-  result = fread( (char*)buf, sizeof(char), max_size, (FILE *)fpin);
+  result = (int)fread( (char*)buf, sizeof(char), max_size, (FILE *)fpin);
 
   return(result);
 }
