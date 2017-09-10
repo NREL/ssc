@@ -329,3 +329,5 @@ build_android/libssc\.zip
 android_make_output\.txt
 
 ios_make_output\.txt
+
+build_osx/Test

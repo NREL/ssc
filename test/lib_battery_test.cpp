@@ -1,5 +1,5 @@
-#include <gtest\gtest.h>
-#include <shared/lib_battery.h>
+#include <gtest/gtest.h>
+#include <lib_battery.h>
 
 class BatteryProperties : public ::testing::Test
 {
