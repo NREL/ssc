@@ -626,13 +626,6 @@ public:
 
 			assign("calc_fluxmaps", 1);
 
-		//Run solarpilot right away to update values as needed
-		solarpilot_invoke spi(this);
-		if (run_type == 0 || run_type == 1)
-		{
-			spi.run();
-		}
-
 			if (is_optimize)
 			{
 				//Optimization iteration history
